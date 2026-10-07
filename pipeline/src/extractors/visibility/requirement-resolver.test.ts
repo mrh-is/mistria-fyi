@@ -48,13 +48,13 @@ describe("resolveToVisibility", () => {
     });
   });
 
-  it("maps reached_mines_level to minesLevel", () => {
+  it("maps reached_mines_level to mineFloor", () => {
     const expr: RequirementExpression = {
       predicate: "reached_mines_level",
       value: 41,
     };
     expect(resolveToVisibility(expr, emptyCutsceneMap)).toEqual({
-      type: "minesLevel",
+      type: "mineFloor",
       floor: 41,
     });
   });
@@ -134,7 +134,7 @@ describe("resolveToVisibility", () => {
       type: "and",
       conditions: [
         { type: "questCompleted", questId: "repair_the_inn" },
-        { type: "minesLevel", floor: 20 },
+        { type: "mineFloor", floor: 20 },
       ],
     });
   });
@@ -209,9 +209,9 @@ describe("simplifyCondition", () => {
             type: "or",
             conditions: [{ type: "always" }, { type: "questCompleted", questId: "q" as never }],
           },
-          { type: "minesLevel", floor: 20 },
+          { type: "mineFloor", floor: 20 },
         ],
       }),
-    ).toEqual({ type: "minesLevel", floor: 20 });
+    ).toEqual({ type: "mineFloor", floor: 20 });
   });
 });

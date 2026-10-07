@@ -89,7 +89,7 @@ function collectGamePredicates(
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "minesLevel":
+    case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":
@@ -154,9 +154,9 @@ function segmentProblems(segments: SourceSegment[]): string[] {
       if (segment.length === 0) problems.push("empty string segment");
       continue;
     }
-    if ("redacted" in segment && segment.redacted === true) continue;
-    problems.push(...segmentProblems(segment.revealed));
-    if (segment.redacted) problems.push(...segmentProblems(segment.redacted));
+    if ("spoilered" in segment && segment.spoilered === true) continue;
+    problems.push(...segmentProblems(segment.unspoilered));
+    if (segment.spoilered) problems.push(...segmentProblems(segment.spoilered));
   }
   return problems;
 }
@@ -284,7 +284,7 @@ describe("generated source rendering contract", () => {
           check(lookups.museumWingNames, "wing", source.wingId);
         }
         if (source.type === "scroll_bundle") {
-          check(lookups.bundleNames, "bundle", source.bundleName);
+          check(lookups.itemNames, "item", source.bundleItemId);
         }
         if (source.type === "station") {
           check(lookups.stationNames, "station", source.stationId);

@@ -55,10 +55,11 @@ test.describe("320-pixel reflow", () => {
       createStoredState({
         availabilityMode: "everything",
         completed: {
-          mines: { floor: 21, spells: [] },
+          heartLevels: { adeline: 10 },
+          mineFloor: 21,
           renown: 14,
           skillLevels: { mining: 22 },
-          villagerLevels: { adeline: 10 },
+          spells: [],
           villagerRelationships: { adeline: "romantic" },
         },
         showSpoilers: true,
@@ -305,7 +306,7 @@ test.describe("tracker paper touch geometry", () => {
       createStoredState({
         availabilityMode: "everything",
         completed: {
-          villagerLevels: { adeline: 10 },
+          heartLevels: { adeline: 10 },
           villagerRelationships: { adeline: "romantic" },
         },
         showSpoilers: true,

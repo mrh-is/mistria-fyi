@@ -2,7 +2,6 @@ import { trackerData } from "#lib/data/index.js";
 import { getName, getNameTable } from "#lib/data/names.js";
 import {
   buildAnimalNames,
-  buildBundleNames,
   buildLocationNames,
   buildMonsterNames,
   buildUnnamedSourceNames,
@@ -26,14 +25,13 @@ import type { QuestType, StoreId } from "#lib/types/tracker-data.js";
  * `source-names.ts` covers them with interim translations.
  */
 export function buildBaseSegmentLookups(
-  redactedStoreIds: ReadonlySet<StoreId>,
+  spoileredStoreIds: ReadonlySet<StoreId>,
   locale: LocaleCode,
 ): Omit<SegmentLookups, "entityVisibility"> {
   return {
     ...staticBaseSegmentLookups,
     ...getLocalizedBaseSegmentLookups(locale),
     locale,
-    redactedStoreIds,
     seasonNames: {
       fall: getName("ui", "fall", locale),
       spring: getName("ui", "spring", locale),
@@ -41,6 +39,7 @@ export function buildBaseSegmentLookups(
       winter: getName("ui", "winter", locale),
     },
     skillNames: getNameTable("skills", locale),
+    spoileredStoreIds,
     villagerNames: getNameTable("villagers", locale),
   };
 }
@@ -51,7 +50,6 @@ const localizedBaseSegmentLookups = new Map<LocaleCode, Pick<SegmentLookups, Loc
 type LocalizedLookupKey =
   | "animalNames"
   | "biomes"
-  | "bundleNames"
   | "festivals"
   | "itemNames"
   | "locationNames"
@@ -69,9 +67,9 @@ function buildStaticBaseSegmentLookups(): Omit<
   SegmentLookups,
   | "entityVisibility"
   | "locale"
-  | "redactedStoreIds"
   | "seasonNames"
   | "skillNames"
+  | "spoileredStoreIds"
   | "villagerNames"
   | LocalizedLookupKey
 > {
@@ -102,7 +100,9 @@ export const SEGMENT_LOOKUP_NAME_CHUNKS = [
   "animals",
   "festivals",
   "items",
+  "locations",
   "mines",
+  "monsters",
   "museum_wings",
   "villagers",
   "perks",
@@ -127,7 +127,6 @@ function getLocalizedBaseSegmentLookups(
       ...biome,
       name: getName("mines", biome.id, locale),
     })),
-    bundleNames: buildBundleNames(locale),
     festivals: Object.fromEntries(
       recordEntries(trackerData.festivals).map(([id, festival]) => [
         id,

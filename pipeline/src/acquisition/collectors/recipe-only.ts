@@ -28,10 +28,10 @@ export function collectRecipeOnlySources(
     farm_bridge: {
       type: "upgrade",
       storeId: "carpenter" as StoreId,
-      upgradeName: "Starter Farm Bridge",
+      upgradeId: "farm_bridge",
     },
     kitchen_salt_and_pepper_shakers: { type: "default" },
-    stairs: { type: "upgrade", storeId: "carpenter" as StoreId, upgradeName: "House Stairs" },
+    stairs: { type: "upgrade", storeId: "carpenter" as StoreId, upgradeId: "stairs" },
     water_sprite_statue_v1: { type: "beach_cave_chest" },
   };
 

@@ -9,8 +9,8 @@
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { searchAllCategories } from "#lib/engine/search.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
+  import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -91,9 +91,9 @@
     ),
   );
 
-  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
+  let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
+  let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   function getSources(result: SearchResult): Source[] {
     if (result.category === "almanac" || result.category === "museum") {

@@ -192,7 +192,7 @@ function projectPredicate(
     }
     case "reached_mines_level":
       if (typeof jsonValue === "number" && Number.isFinite(jsonValue)) {
-        return { type: "minesLevel", floor: jsonValue };
+        return { type: "mineFloor", floor: jsonValue };
       }
       break;
     case "reached_skill_level": {

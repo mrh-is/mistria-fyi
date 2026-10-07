@@ -1,16 +1,16 @@
 {
-  "sapling": "Apparence d'animal : jeune pousse",
+  "sapling": "Jeune pousse",
   "mushroom": "Mushroom",
   "rockclod": "Rockclod",
   "oreclod": "Oreclod",
-  "stalagmite": "Apparence d'animal : stalagmiteux",
-  "lava_cat": "Apparence d'animal : magmatou",
+  "stalagmite": "Stalagmiteux",
+  "lava_cat": "Magmatou",
   "void_cat": "Void Cat",
-  "flame_spirit": "Apparence d'animal : feu follaid",
-  "rock_stack": "Apparence d'animal : bloc de pierre",
-  "griffin_statue": "Apparence d'animal : statue de griffon",
-  "flying_tome": "Apparence d'animal : grimoire possédé",
-  "essence_bat": "Apparence d'animal : chiroptessence",
-  "enchantern": "Apparence d'animal : volterne",
-  "mimic": "Apparence d'animal : coffrofaçon"
+  "flame_spirit": "Feu follaid",
+  "rock_stack": "Bloc de pierre",
+  "griffin_statue": "Statue de griffon",
+  "flying_tome": "Grimoire possédé",
+  "essence_bat": "Chiroptessence",
+  "enchantern": "Volterne",
+  "mimic": "Coffrofaçon"
 }

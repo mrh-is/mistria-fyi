@@ -28,7 +28,7 @@ describe("evaluateAvailabilityCondition", () => {
         { type: "season", seasons: ["summer"] },
         { type: "weather", weathers: ["calm"] },
         { type: "time", start: 600, end: 1800 },
-        { type: "minesLevel", floor: 20 },
+        { type: "mineFloor", floor: 20 },
         { type: "perkUnlocked", perkId: "green_thumb" as PerkId },
         { type: "quest", questId: "main_quest" as QuestId, state: "completed" },
         { type: "skillLevel", level: 10, skillId: "farming" as SkillId },
@@ -39,12 +39,12 @@ describe("evaluateAvailabilityCondition", () => {
     expect(
       evaluateAvailabilityCondition(condition, {
         ...summer,
+        heartLevels: new Map([["adeline" as VillagerId, 4]]),
         mineFloor: 20,
         questStates: new Map([["main_quest" as QuestId, "completed"]]),
         skillLevels: new Map([["farming" as SkillId, 10]]),
         time: 1200,
         unlockedPerks: new Set(["green_thumb" as PerkId]),
-        villagerLevels: new Map([["adeline" as VillagerId, 4]]),
       }),
     ).toBe(true);
   });

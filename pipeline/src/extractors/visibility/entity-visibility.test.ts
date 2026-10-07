@@ -667,7 +667,7 @@ describe("assignEntityVisibility — recipes", () => {
     });
   });
 
-  it("gives a mines_chest source an and(minesLevel, perkUnlocked) entity gate and a bare minesLevel source gate", () => {
+  it("gives a mines_chest source an and(mineFloor, perkUnlocked) entity gate and a bare mineFloor source gate", () => {
     const trackerData = makeTrackerData({
       mines: {
         biomes: [
@@ -694,14 +694,14 @@ describe("assignEntityVisibility — recipes", () => {
     expect(recipe.visibility).toEqual({
       type: "and",
       conditions: [
-        { type: "minesLevel", floor: 1 },
+        { type: "mineFloor", floor: 1 },
         { type: "perkUnlocked", perkId: "taste_maker" },
       ],
     });
     const source = recipe.sources?.[0];
     assert(source);
     assertSourceWithDetails(source);
-    expect(source.visibility).toEqual({ type: "minesLevel", floor: 1 });
+    expect(source.visibility).toEqual({ type: "mineFloor", floor: 1 });
   });
 
   it("leaves a museum_donation source's entity and source both always", () => {
@@ -727,7 +727,13 @@ describe("assignEntityVisibility — recipes", () => {
       recipes: {
         bundle_recipe: {
           name: "Test Recipe",
-          sources: [{ type: "scroll_bundle", bundleName: "Void Set", storeId: "zorel" as StoreId }],
+          sources: [
+            {
+              type: "scroll_bundle",
+              bundleItemId: "void_set_scroll_bundle" as ItemId,
+              storeId: "zorel" as StoreId,
+            },
+          ],
         },
       },
     });
@@ -885,7 +891,7 @@ describe("assignEntityVisibility — recipes", () => {
     });
   });
 
-  it("only converts the nested questCompleted leaf to questAvailable in an or(questCompleted, minesLevel) stock gate", () => {
+  it("only converts the nested questCompleted leaf to questAvailable in an or(questCompleted, mineFloor) stock gate", () => {
     const trackerData = makeTrackerData({
       recipes: {
         or_gated_dish: {
@@ -898,7 +904,7 @@ describe("assignEntityVisibility — recipes", () => {
                 type: "or",
                 conditions: [
                   { type: "questCompleted", questId: "repair_the_general_store" as QuestId },
-                  { type: "minesLevel", floor: 5 },
+                  { type: "mineFloor", floor: 5 },
                 ],
               },
             },
@@ -916,7 +922,7 @@ describe("assignEntityVisibility — recipes", () => {
       type: "or",
       conditions: [
         { type: "questCompleted", questId: "repair_the_general_store" },
-        { type: "minesLevel", floor: 5 },
+        { type: "mineFloor", floor: 5 },
       ],
     });
     const source = recipe.sources?.[0];
@@ -926,7 +932,7 @@ describe("assignEntityVisibility — recipes", () => {
       type: "or",
       conditions: [
         { type: "questAvailable", questId: "repair_the_general_store" },
-        { type: "minesLevel", floor: 5 },
+        { type: "mineFloor", floor: 5 },
       ],
     });
   });

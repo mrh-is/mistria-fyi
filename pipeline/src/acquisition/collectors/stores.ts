@@ -30,12 +30,11 @@ export function collectStoreSources(
   animalCosmeticAccumulator: AnimalCosmeticSourceAccumulator,
   recipes: RecipeAcquisitionContext,
 ): void {
-  const bundleByItem = new Map<string, { name: string; setTag: string }>();
+  const bundleByItem = new Map<string, { setTag: string }>();
   const recipeProductTags = new Map<string, string[]>();
   forEachItem(fiddle, (itemId, item, category, subcategory) => {
     if (typeof item.set_unlock === "string") {
       bundleByItem.set(itemId, {
-        name: typeof item.name === "string" ? item.name : itemId,
         setTag: item.set_unlock,
       });
     }
@@ -56,7 +55,7 @@ export function collectStoreSources(
     string,
     {
       availability?: AvailabilityCondition;
-      bundleName: string;
+      bundleItemId: ItemId;
       storeId: StoreId;
       visibility?: VisibilityCondition;
     }
@@ -78,7 +77,7 @@ export function collectStoreSources(
       );
       const listing = {
         availability: combineAvailability(seasonAvailability, projected.availability),
-        bundleName: bundle.name,
+        bundleItemId: itemId as ItemId,
         storeId: storeId as StoreId,
         ...(projected.visibility.type === "always" ? {} : { visibility: projected.visibility }),
       };
@@ -108,7 +107,7 @@ export function collectStoreSources(
       if (!tags.includes(setTag)) continue;
       recipes.sources.add(recipeId, {
         type: "scroll_bundle",
-        bundleName: listing.bundleName,
+        bundleItemId: listing.bundleItemId,
         storeId: listing.storeId,
         ...(listing.availability ? { availability: listing.availability } : {}),
         ...(listing.visibility ? { visibility: listing.visibility } : {}),

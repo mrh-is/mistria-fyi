@@ -365,14 +365,14 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     {
       type: "upgrade" as const,
       storeId: "carpenter" as StoreId,
-      upgradeName: "adept_kitchen",
+      upgradeId: "adept_kitchen",
     },
   ],
   ["cozy_kitchen" as ItemId]: [
     {
       type: "upgrade" as const,
       storeId: "carpenter" as StoreId,
-      upgradeName: "cozy_kitchen",
+      upgradeId: "cozy_kitchen",
     },
   ],
 

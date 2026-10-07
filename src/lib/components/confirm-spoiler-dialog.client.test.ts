@@ -7,7 +7,7 @@ import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte"
 import type { VillagerId } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
-const invertible: VisibilityCondition = { type: "minesLevel", floor: 20 };
+const invertible: VisibilityCondition = { type: "mineFloor", floor: 20 };
 const nonInvertible: VisibilityCondition = {
   type: "villagerKnown",
   villagerId: "adeline" as VillagerId,

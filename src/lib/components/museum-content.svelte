@@ -14,8 +14,8 @@
   import { isInProgressScope, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
+  import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -38,14 +38,14 @@
 
   const spoilerGuard = createSpoilerGuard();
 
-  function itemNameVisible(itemId: ItemId): boolean {
+  function isItemSpoilered(itemId: ItemId): boolean {
     const visibility = trackerData.items[itemId].visibility;
-    return isConditionVisible(visibility, userState.progressionState);
+    return !isConditionVisible(visibility, userState.progressionState);
   }
 
-  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
+  let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
+  let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   function rowDisplay(itemId: ItemId, sources: Source[]): TrackerRowDisplay {
     const completed = userState.state.completed.museum.has(itemId);
@@ -58,7 +58,7 @@
         userState.state.availabilityWindows,
       ),
       leaving: recentlyCompleted.has(itemId),
-      nameVisible: itemNameVisible(itemId),
+      spoilered: isItemSpoilered(itemId),
     });
   }
 
@@ -128,7 +128,7 @@
   }
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
-    if (!itemNameVisible(itemId)) return false;
+    if (isItemSpoilered(itemId)) return false;
     return matchesName(getName("items", itemId, locale), nameFilter, locale);
   }
 
@@ -227,7 +227,7 @@
                 sprite={itemId}
                 spriteClass="text-(--color-category-museum)"
                 onToggle={() => {
-                  if (itemNameVisible(itemId) || museumCompleted) {
+                  if (!isItemSpoilered(itemId) || museumCompleted) {
                     toggleItem(itemId, set.setId, wingId);
                   } else {
                     spoilerGuard.requestGuardedAction(museumItemVisibility, () => {

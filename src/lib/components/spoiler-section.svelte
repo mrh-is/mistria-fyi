@@ -7,18 +7,18 @@
   let {
     children,
     name,
-    revealed,
+    spoilered,
   }: {
     children: Snippet;
     name: string;
-    revealed: boolean;
+    spoilered: boolean;
   } = $props();
 
-  let spoilerRevealed = $state(false);
-  let effectivelyRevealed = $derived(revealed || spoilerRevealed);
+  let spoilerDismissed = $state(false);
+  let isSpoilered = $derived(spoilered && !spoilerDismissed);
 </script>
 
-{#if effectivelyRevealed}
+{#if !isSpoilered}
   {@render children()}
 {:else}
   <div>
@@ -27,7 +27,7 @@
     >
       <Icon.UI type="disclosure" class="size-4 shrink-0 text-muted-foreground" />
       <span class="flex-1 font-medium">
-        <Spoiler onReveal={() => (spoilerRevealed = true)}>{name}</Spoiler>
+        <Spoiler onReveal={() => (spoilerDismissed = true)}>{name}</Spoiler>
       </span>
     </div>
   </div>
