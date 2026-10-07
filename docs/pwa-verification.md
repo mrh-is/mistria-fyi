@@ -4,9 +4,10 @@ The production service worker precaches build and static assets, claims open cli
 activation, runtime-caches successful same-origin non-API requests, and serves `/offline.html` for
 an uncached navigation when the network fails. Sprites from `assets.mistria.fyi/sprites/` are served
 stale-while-revalidate from their own `sprites-v1` cache: a cached sprite returns at once (so it
-works offline) while a background request, which bypasses the HTTP cache, refreshes it or, on a
-403/404/410, evicts it. That cache holds at most 400 sprites, evicts the least recently used, and
-drops every sprite from an older `?g=` generation once a newer one is cached.
+works offline) while, once the copy is a day old, a background request, which bypasses the HTTP
+cache, refreshes it or, on a 403/404/410, evicts it. That cache holds at most 400 sprites, evicts
+the least recently used, and drops every sprite from an older `?g=` generation once a newer one is
+cached.
 
 ## Offline contract
 
