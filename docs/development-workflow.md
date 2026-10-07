@@ -10,6 +10,8 @@
 - **Node.js**: Use the version in `.node-version` (Node 24 LTS). Every environment, including CI and
   both cloud agents, runs Node 24 so tests match what agents run. `package.json` accepts 24.15 or
   later so Codex cloud can use its preinstalled patch release.
+- **ShellCheck**: `pnpm run lint` runs the system `shellcheck` (`brew install shellcheck`). CI uses
+  the runner image's copy, and `scripts/setup-cloud-agent.sh` installs it with apt.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.
 - **Dependency Installation**:
   ```sh
@@ -338,14 +340,15 @@ other full-suite command during development.
 
 `.github/workflows/ci.yml` runs on every pull request and main push:
 
-| Command                  | Description & Purpose                                                             | Scope                |
-| ------------------------ | --------------------------------------------------------------------------------- | -------------------- |
-| `pnpm run lint`          | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), Stylelint, ShellCheck | All files            |
-| `pnpm run check:i18n`    | Verifies every locale file matches `en.json`'s key shape                          | `messages/`          |
-| `pnpm run check`         | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`      | `src/` & `pipeline/` |
-| `pnpm run test:coverage` | Executes the complete Vitest suite and summarizes coverage (not gated)            | Unit & logic tests   |
-| `pnpm run build`         | Compiles SvelteKit app and verifies Cloudflare adapter                            | Build validation     |
-| `pnpm run check:routes`  | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`  | Build validation     |
+| Command                             | Description & Purpose                                                                 | Scope                |
+| ----------------------------------- | ------------------------------------------------------------------------------------- | -------------------- |
+| `pnpm run lint`                     | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), Stylelint, ShellCheck     | All files            |
+| `pnpm audit --audit-level=moderate` | Fails on moderate or worse advisories in the lockfile, minus `auditConfig` exceptions | Dependencies         |
+| `pnpm run check:i18n`               | Verifies every locale file matches `en.json`'s key shape                              | `messages/`          |
+| `pnpm run check`                    | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`          | `src/` & `pipeline/` |
+| `pnpm run test:coverage`            | Executes the complete Vitest suite and summarizes coverage (not gated)                | Unit & logic tests   |
+| `pnpm run build`                    | Compiles SvelteKit app and verifies Cloudflare adapter                                | Build validation     |
+| `pnpm run check:routes`             | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`      | Build validation     |
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see
@@ -357,13 +360,13 @@ is the one check to require for merging.
 
 `pnpm run lint` runs five tools, each covering what the others can't:
 
-| Tool       | Config                | Covers                                                                                                               |
-| ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| oxfmt      | `.oxfmtrc.json`       | Formatting, import-statement sorting, & Tailwind class sorting, in every file type                                   |
-| oxlint     | `.oxlintrc.json`      | Every script, including `.svelte` `<script>` blocks; type-aware rules through tsgolint                               |
-| ESLint     | `eslint.config.js`    | `.svelte` & `.svelte.{js,ts}` only: eslint-plugin-svelte, template-aware unused variables, & `no-hardcoded-ui-text`  |
-| Stylelint  | `stylelint.config.js` | Scoped CSS; see [styling](styling.md#lint-rules)                                                                     |
-| ShellCheck | `.shellcheckrc`       | Every tracked `*.sh`, through `pnpm run lint:shell`; the `shellcheck` dev dependency fetches the binary on first run |
+| Tool       | Config                | Covers                                                                                                              |
+| ---------- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| oxfmt      | `.oxfmtrc.json`       | Formatting, import-statement sorting, & Tailwind class sorting, in every file type                                  |
+| oxlint     | `.oxlintrc.json`      | Every script, including `.svelte` `<script>` blocks; type-aware rules through tsgolint                              |
+| ESLint     | `eslint.config.js`    | `.svelte` & `.svelte.{js,ts}` only: eslint-plugin-svelte, template-aware unused variables, & `no-hardcoded-ui-text` |
+| Stylelint  | `stylelint.config.js` | Scoped CSS; see [styling](styling.md#lint-rules)                                                                    |
+| ShellCheck | `.shellcheckrc`       | Every tracked `*.sh`, through `pnpm run lint:shell`, which uses the system `shellcheck`                             |
 
 oxlint enables every category except `nursery`, with the `eslint`, `typescript`, `unicorn`, `oxc`,
 `import`, `promise`, `node`, & `jsdoc` plugins (plus `vitest` for `*.test.ts`), and adds

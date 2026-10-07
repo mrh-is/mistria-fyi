@@ -132,7 +132,8 @@ These steps follow OpenAI’s
    ```
 
    Don’t use `scripts/setup-cloud-agent.sh`; it writes to the home directory, which is read-only
-   during Codex’s agent phase.
+   during Codex’s agent phase. If the image lacks `shellcheck`, prepend
+   `apt-get install --yes shellcheck &&` so `pnpm run lint` can check shell scripts.
 
    Keep pnpm’s store and metadata cache writable during both setup and the agent phase by adding
    these non-secret **Environment variables** to this Codex cloud environment:

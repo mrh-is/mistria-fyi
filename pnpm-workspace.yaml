@@ -12,3 +12,13 @@ allowBuilds:
 # miniflare's own range excludes the vulnerable releases.
 overrides:
   "undici@7": "^7.29.1"
+  # Miniflare pins sharp 0.35.4 exactly, which Dependabot flags (patched in
+  # 0.35.5). Drop it once miniflare's own pin moves past 0.35.4.
+  "sharp@<0.35.5": "^0.35.5"
+
+# `pnpm audit` gates CI. Ignore an advisory only while it's disputed or unpatched, with a link to
+# the reason, and remove the entry once a fix or withdrawal lands.
+auditConfig:
+  ignoreGhsas:
+    # braces: disputed, no patched release (https://github.com/micromatch/braces/issues/70).
+    - GHSA-vfj7-8cjw-p6xm
