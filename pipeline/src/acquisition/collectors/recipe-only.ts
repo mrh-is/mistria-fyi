@@ -1,9 +1,16 @@
 import { expectStringArray } from "../../data-shapes.js";
 import { forEachItem } from "../../extractor-helpers.js";
+import {
+  EXCEPTIONS,
+  isDragonForgedItem,
+  PERK_BY_ITEM_ID,
+  PERK_BY_SUBCATEGORY,
+} from "../../overrides/game-facts.js";
 import { sourceFileFor } from "../../parse-fiddle.js";
+import { canonicalSourceJson } from "../source-accumulator.js";
 
-import type { LocationId, Source } from "#lib/types/acquisition.js";
-import type { PerkId, StoreId } from "#lib/types/tracker-data.js";
+import type { Source } from "#lib/types/acquisition.js";
+import type { PerkId, RecipeId } from "#lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { RecipeAcquisitionContext } from "../recipe-target.js";
@@ -13,36 +20,28 @@ export function collectRecipeOnlySources(
   fiddle: ParsedGameData,
   recipes: RecipeAcquisitionContext,
 ): void {
-  const perkBySubCategory: Record<string, string> = {
-    faux_plant_set: "ornamental",
-    void_set: "void_crafting",
+  const nativeSources = new Map(
+    [...recipes.recipeIdByItemId.values()].map((id) => [
+      id,
+      recipes.sources.get(id).map((source) => canonicalSourceJson(source)),
+    ]),
+  );
+  const addReviewed = (recipeId: RecipeId, source: Source): void => {
+    if (nativeSources.get(recipeId)?.includes(canonicalSourceJson(source))) {
+      throw new Error(
+        `Obsolete reviewed recipe source for ${recipeId}: native data now encodes ${canonicalSourceJson(source)}`,
+      );
+    }
+    recipes.sources.add(recipeId, source);
   };
-  const perkByItemId: Record<string, string> = {
-    big_bell: "the_bell_tolls",
-    essence_stone_giant: "magic_design",
-    ocarina_sprite_statue: "the_bell_tolls",
-    water_sprite_statue_large_v1: "big_water_sprites",
-  };
-  const exceptions: Record<string, Source> = {
-    engagement_ring: { type: "engagement" },
-    farm_bridge: {
-      type: "upgrade",
-      storeId: "carpenter" as StoreId,
-      upgradeId: "farm_bridge",
-    },
-    kitchen_salt_and_pepper_shakers: { type: "default" },
-    stairs: { type: "upgrade", storeId: "carpenter" as StoreId, upgradeId: "stairs" },
-    water_sprite_statue_v1: { type: "secret_chest", locationId: "beach_secret" as LocationId },
-  };
-
   forEachItem(fiddle, (itemId, item, category, subcategory) => {
     const recipeId = recipes.recipeIdByItemId.get(itemId);
     if (!recipeId) return;
 
-    const perkId = perkByItemId[itemId] ?? perkBySubCategory[subcategory];
-    if (perkId) recipes.sources.add(recipeId, { type: "perk", perkId: perkId as PerkId });
+    const perkId = PERK_BY_ITEM_ID[itemId] ?? PERK_BY_SUBCATEGORY[subcategory];
+    if (perkId) addReviewed(recipeId, { type: "perk", perkId: perkId as PerkId });
 
-    if (!item.recipe_is_default && itemId.startsWith("dragon_forged_")) {
+    if (!item.recipe_is_default && isDragonForgedItem(itemId)) {
       const tags =
         item.tags === undefined
           ? []
@@ -51,10 +50,10 @@ export function collectRecipeOnlySources(
               fieldPath: "tags",
               sourcePath: sourceFileFor(fiddle, `items.${category}.${subcategory}.${itemId}`),
             });
-      if (tags.includes("blacksmithing")) recipes.sources.add(recipeId, { type: "default" });
+      if (tags.includes("blacksmithing")) addReviewed(recipeId, { type: "default" });
     }
 
-    const exception = exceptions[itemId];
-    if (exception) recipes.sources.add(recipeId, exception);
+    const exception = EXCEPTIONS[itemId];
+    if (exception) addReviewed(recipeId, exception);
   });
 }

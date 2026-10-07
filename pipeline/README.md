@@ -313,3 +313,30 @@ registries. Outputs contain no generation timestamp. String ordering uses one UT
 comparator, independent of host locale or ICU; disk and zip TOML inputs register in sorted relative
 path order. Sprite extraction compares converted bytes and refreshes changed outputs while skipping
 identical ones.
+
+## Reviewed game facts
+
+`src/overrides/` owns the human-reviewed acquisition, exclusion, progression, & display facts. Every
+acquisition exception is represented as `{ id, value, evidence, reason }`; the entry validator
+rejects missing targets, missing provenance, duplicate IDs, & obsolete native equivalents.
+Production pipeline preflight checks unfiltered, evaluated native tables before extraction or
+publication. Acquisition collectors additionally compare reviewed item, cosmetic, replacement, &
+recipe sources against native source accumulators, because native acquisition equivalence is
+determined after collection. Recipe checks snapshot the native accumulator before reviewed additions
+so shared recipe variants cannot falsely obsolete each other.
+
+Some values are projections or assertions rather than acquisition exceptions: English store articles
+& upgrade wording, festival/category identifier aliases, & ordinal localization names. Their native
+targets remain checked; localization assertions deliberately require native English equality through
+`Localizer`, rather than treating that equality as an obsolete override. Native schema predicates,
+quest naming conventions, & accumulator mechanics remain implementation rules.
+
+Baby presentation cosmetics are discovered from their native ID pattern, & Seridia’s equipment comes
+from `misc.seridia_armor`. Runtime wishing-well rewards use `misc.wishing_well.low_price`; neither
+prices nor outfit inventories are duplicated in reviewed tables. The crown visibility gate remains
+20 pending #638 (private beta).
+
+The #414 migration produces byte-identical game 1.0.5 tracker output & identical locale chunks
+compared with its pre-change pipeline run. There are no intentional generated-data changes. The two
+post-seal cutscene mappings remain reviewed runtime facts because native quest links do not derive
+them; the availability projector & cutscene mapper share their central entries.

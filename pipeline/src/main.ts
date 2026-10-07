@@ -21,6 +21,7 @@ import { extractSprites, extractVillagerSprites, publishSprites } from "./extrac
 import { extractVillagerIconSprites } from "./extractors/villagers.js";
 import { assertGameLanguageMapExhaustive } from "./locale-codes.js";
 import { createAssetsLocalizer, generateLocaleManifest } from "./localize.js";
+import { validateReviewedGameFacts } from "./overrides/validate.js";
 import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle.js";
 import { checkParseSmoke } from "./parse-smoke.js";
 
@@ -152,6 +153,7 @@ async function main(): Promise<void> {
 
   console.log("Step 2: Evaluating expressions...");
   evaluateExpressions(fiddle);
+  validateReviewedGameFacts(fiddle);
   console.log();
 
   const { iconSpritesByItemId, iconSpritesByVillagerId, localeChunks, trackerData } =
