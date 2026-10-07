@@ -234,6 +234,7 @@ function acquisitionSourceCondition(
     case "fish":
     case "fish_trap":
     case "forage":
+    case "letter":
     case "lost_and_found":
     case "monster":
     case "monster_feed":
@@ -430,6 +431,7 @@ function acquisitionSourceConditions(
     case "fish":
     case "fish_trap":
     case "forage":
+    case "letter":
     case "lost_and_found":
     case "mine":
     case "mine_fish":

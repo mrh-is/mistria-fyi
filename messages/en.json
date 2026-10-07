@@ -550,6 +550,8 @@
   "source_default": "Available from the start",
   "source_dive": "Dive in {waters}",
   "source_dive_any": "Dive",
+  "source_letter_birthday": "Receive in a birthday letter",
+  "source_letter_condition": "Receive in a letter",
   "source_donate_item": "Receive in a letter after donating {item}",
   "source_ship_item": "Receive in a letter after shipping {item}",
   "source_engagement": "Receive from Elsie after getting to 10 hearts with a dateable villager",

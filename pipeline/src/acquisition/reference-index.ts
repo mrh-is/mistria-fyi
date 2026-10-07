@@ -19,6 +19,7 @@ export type AcquisitionReferenceKind =
   | "dungeonLootGroup"
   | "festival"
   | "item"
+  | "letter"
   | "location"
   | "monster"
   | "perk"
@@ -43,6 +44,7 @@ export interface AcquisitionReferenceRegistries {
   dungeonLootGroups?: ReferenceRegistry;
   festivals?: ReferenceRegistry;
   items?: ReferenceRegistry;
+  letters?: ReferenceRegistry;
   locations?: ReferenceRegistry;
   monsters?: ReferenceRegistry;
   perks?: ReferenceRegistry;
@@ -70,6 +72,7 @@ const REGISTRY_KIND = {
   dungeonLootGroups: "dungeonLootGroup",
   festivals: "festival",
   items: "item",
+  letters: "letter",
   locations: "location",
   monsters: "monster",
   perks: "perk",
@@ -161,6 +164,7 @@ function emptyReferenceSets(): Record<AcquisitionReferenceKind, Set<string>> {
     dungeonLootGroup: new Set(),
     festival: new Set(),
     item: new Set(),
+    letter: new Set(),
     location: new Set(),
     monster: new Set(),
     perk: new Set(),

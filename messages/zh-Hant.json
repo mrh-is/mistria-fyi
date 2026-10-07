@@ -543,6 +543,8 @@
   "source_default": "初始即可獲得",
   "source_dive": "在{waters}潛水",
   "source_dive_any": "潛水",
+  "source_letter_birthday": "透過生日來信獲得",
+  "source_letter_condition": "透過來信獲得",
   "source_donate_item": "捐贈{item}後透過信件獲得",
   "source_ship_item": "出貨{item}後透過信件獲得",
   "source_engagement": "與可約會的村民好感度達到10心後從愛爾西處獲得",

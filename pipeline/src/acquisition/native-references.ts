@@ -27,6 +27,7 @@ export function collectNativeReferenceRegistries(
   return {
     activities: collectActivities(fiddle),
     dates: tableKeys(fiddle, "dates"),
+    letters: fiddle.letters === undefined ? [] : tableKeys(fiddle, "letters"),
     locations: tableKeys(fiddle, "locations"),
     monsters: nestedTableKeys(fiddle, "monsters"),
     quests: collectQuests(fiddle),

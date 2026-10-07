@@ -1,10 +1,28 @@
 import { describe, expect, it } from "vitest";
 
+import { PipelineDiagnostics } from "../../diagnostics.js";
 import { makeFiddle as makeFiddleBase } from "../../test-helpers.js";
-import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
-import { collectExplorationSources } from "./exploration.js";
+import {
+  CosmeticSourceAccumulator,
+  ItemSourceAccumulator,
+  RecipeSourceAccumulator,
+} from "../source-accumulator.js";
+import { collectExplorationSources as collectExplorationSourcesImpl } from "./exploration.js";
 
 import type { CosmeticId, ItemId } from "#lib/types/tracker-data.js";
+
+function collectExplorationSources(
+  fiddle: Parameters<typeof collectExplorationSourcesImpl>[0],
+  items: ItemSourceAccumulator,
+  cosmetics: CosmeticSourceAccumulator,
+): void {
+  collectExplorationSourcesImpl(fiddle, items, cosmetics, {
+    diagnostics: new PipelineDiagnostics(),
+    knownRecipeIds: new Set(),
+    recipeIdByItemId: new Map(),
+    sources: new RecipeSourceAccumulator(),
+  });
+}
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({
@@ -222,8 +240,8 @@ describe("collectExplorationSources", () => {
         },
         wishing_well: {
           common: {
-            large_roll: [{ item: "dragon_road_wall" }],
-            small_roll: [{ item: "small_prize" }],
+            large_roll: [{ item: "dragon_road_wall" }, { cosmetic: "head_teapot" }],
+            small_roll: [{ item: "small_prize" }, { cosmetic: "head_soup_pot" }],
           },
         },
       });
@@ -234,6 +252,12 @@ describe("collectExplorationSources", () => {
 
       expect(acc.get("small_prize" as ItemId)).toEqual([{ type: "wishing_well", cost: 100 }]);
       expect(acc.get("dragon_road_wall" as ItemId)).toEqual([{ type: "wishing_well", cost: 500 }]);
+      expect(cosAcc.get("head_teapot" as CosmeticId)).toEqual([
+        { type: "wishing_well", cost: 500 },
+      ]);
+      expect(cosAcc.get("head_soup_pot" as CosmeticId)).toEqual([
+        { type: "wishing_well", cost: 100 },
+      ]);
     });
   });
 

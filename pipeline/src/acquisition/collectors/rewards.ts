@@ -1,9 +1,17 @@
 import { SEASONS } from "#lib/types/tracker-data.js";
 
 import { expectNumber, expectRecord, expectString } from "../../data-shapes.js";
+import {
+  buildQuestTypeIndex,
+  firstRequiredItemId,
+  scrollTargetOf,
+} from "../../extractor-helpers.js";
 import { sourceFileFor } from "../../parse-fiddle.js";
+import { parseRequirements } from "../../requirements.js";
+import { projectRequirementExpressionToAvailability } from "../availability.js";
+import { addRecipeScrollSource } from "../recipe-target.js";
 
-import type { ActivityId, Source } from "#lib/types/acquisition.js";
+import type { ActivityId, AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 import type {
   AnimalId,
   CosmeticId,
@@ -13,6 +21,7 @@ import type {
   MuseumWingId,
   PetCosmeticSetId,
   QuestId,
+  QuestType,
   Season,
   StoreId,
   VillagerId,
@@ -20,6 +29,8 @@ import type {
 
 import type { SourceFieldLocation } from "../../data-shapes.js";
 import type { ParsedGameData } from "../../parse-fiddle.js";
+import type { RequirementContext } from "../../requirements.js";
+import type { RecipeAcquisitionContext } from "../recipe-target.js";
 import type {
   AnimalCosmeticSourceAccumulator,
   CosmeticSourceAccumulator,
@@ -29,7 +40,7 @@ import type {
 
 type LetterRewardSource = Extract<
   Source,
-  { type: "donate_item" | "reach_day" | "ship_item" | "spouseGift" | "wedding" }
+  { type: "donate_item" | "letter" | "reach_day" | "ship_item" | "spouseGift" | "wedding" }
 >;
 
 const FESTIVAL_SEASON_MAP: Record<string, Season> = {
@@ -49,87 +60,180 @@ const TEN_HEART_SUFFIX = "_ten_hearts";
 export function collectRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
-  cosmeticAccumulator?: CosmeticSourceAccumulator,
-  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
-  petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
+  cosmeticAccumulator: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator: AnimalCosmeticSourceAccumulator,
+  petCosmeticAccumulator: PetCosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
+  requirementContext: RequirementContext,
 ): void {
-  collectQuestRewardSources(fiddle, accumulator, cosmeticAccumulator, animalCosmeticAccumulator);
-  collectFestivalStockSources(fiddle, accumulator, cosmeticAccumulator, animalCosmeticAccumulator);
+  collectQuestRewardSources(
+    fiddle,
+    accumulator,
+    cosmeticAccumulator,
+    animalCosmeticAccumulator,
+    recipes,
+  );
+  collectFestivalStockSources(
+    fiddle,
+    accumulator,
+    cosmeticAccumulator,
+    animalCosmeticAccumulator,
+    recipes,
+  );
   collectAnimalFestivalRewardSources(fiddle, accumulator, animalCosmeticAccumulator);
-  collectRenownRewardSources(fiddle, accumulator, cosmeticAccumulator);
-  collectLetterRewardSources(fiddle, accumulator);
-  collectMuseumDonationRewardSources(fiddle, accumulator, cosmeticAccumulator);
+  collectRenownRewardSources(fiddle, accumulator, cosmeticAccumulator, recipes);
+  collectLetterRewardSources(fiddle, accumulator, recipes, requirementContext);
+  collectMuseumDonationRewardSources(fiddle, accumulator, cosmeticAccumulator, recipes);
   collectProposalSources(fiddle, accumulator);
   collectDateSources(fiddle, accumulator);
   collectEngagementSources(fiddle, accumulator);
   collectWeddingCosmeticSources(fiddle, cosmeticAccumulator);
-  collectChickenStatueLootSources(fiddle, animalCosmeticAccumulator, petCosmeticAccumulator);
+  collectChickenStatueLootSources(
+    fiddle,
+    animalCosmeticAccumulator,
+    petCosmeticAccumulator,
+    recipes,
+  );
 }
 
 const SMALL_ANIMAL_KINDS = ["capybara", "chicken", "duck", "rabbit"];
 const LARGE_ANIMAL_KINDS = ["alpaca", "cow", "horse", "sheep"];
 
+const SUPPORTED_CONDITIONAL_LETTER_KEYS = new Set([
+  "baby_is_due",
+  "completed_quest",
+  "invert",
+  "or",
+  "reached_renown_level",
+  "seen_cutscene",
+  "unlocked_deep_woods",
+  "world_fact_is",
+]);
+
+function projectLetterAvailability(
+  requirements: Record<string, unknown>,
+  context: SourceFieldLocation,
+  requirementContext: RequirementContext,
+): AvailabilityCondition | undefined {
+  if (Object.keys(requirements).length === 0) return undefined;
+  const expression = parseRequirements(
+    requirements,
+    requirementContext.namedRequirements,
+    requirementContext.primitivePredicates,
+    context,
+  );
+  const availability = projectRequirementExpressionToAvailability(
+    expression,
+    requirementContext,
+    context,
+  );
+  return availability.type === "always" ? undefined : availability;
+}
+
 function classifyLetterTrigger(
   reqs: Record<string, unknown> | undefined,
   context: SourceFieldLocation,
-): LetterRewardSource {
-  if (!reqs) {
-    return {
-      type: "reach_day",
-      triggerDate: { day: 1, season: "spring" },
-    };
-  }
-
-  if (typeof reqs.is_spouse === "string") {
-    return { type: "spouseGift", villagerId: reqs.is_spouse as VillagerId };
-  }
-
-  if (typeof reqs.shipped_item === "string") {
-    return { type: "ship_item", triggerItemId: reqs.shipped_item as ItemId };
-  }
-
-  if (typeof reqs.donated_item === "string") {
-    return { type: "donate_item", triggerItemId: reqs.donated_item as ItemId };
-  }
-
-  if (reqs.reached_date !== undefined) {
-    const reachedDate = expectRecord(reqs.reached_date, context);
-    const season =
-      reachedDate.season === undefined
-        ? "spring"
-        : expectString(reachedDate.season, {
-            ...context,
-            fieldPath: `${context.fieldPath}.season`,
-          });
-    if (!isSeason(season)) {
-      throw new Error(
-        `Invalid season for ${context.entityId}.${context.fieldPath}.season in ${context.sourcePath}`,
-      );
-    }
-    return {
-      type: "reach_day",
-      triggerDate: {
-        day:
-          reachedDate.day === undefined
-            ? 1
-            : expectNumber(reachedDate.day, { ...context, fieldPath: `${context.fieldPath}.day` }),
-        season,
-        ...(reachedDate.year === undefined
-          ? {}
-          : {
-              year: expectNumber(reachedDate.year, {
-                ...context,
-                fieldPath: `${context.fieldPath}.year`,
-              }),
-            }),
-      },
-    };
-  }
-
-  return {
-    type: "reach_day",
-    triggerDate: { day: 1, season: "spring" },
+  recipes: RecipeAcquisitionContext,
+  requirementContext: RequirementContext,
+): LetterRewardSource | undefined {
+  const letterId = context.entityId ?? context.fieldPath;
+  const sourceWithRemainder = (source: LetterRewardSource, key: string): LetterRewardSource => {
+    const remainder = Object.fromEntries(
+      Object.entries(reqs ?? {}).filter(([name]) => name !== key),
+    );
+    const availability = projectLetterAvailability(remainder, context, requirementContext);
+    return availability ? { ...source, availability } : source;
   };
+
+  if (reqs?.is_player_birthday === true) {
+    const availability = projectLetterAvailability(reqs, context, requirementContext);
+    return {
+      type: "letter",
+      letterId,
+      trigger: "birthday",
+      ...(availability ? { availability } : {}),
+    };
+  }
+  if (typeof reqs?.is_spouse === "string") {
+    return sourceWithRemainder(
+      { type: "spouseGift", villagerId: reqs.is_spouse as VillagerId },
+      "is_spouse",
+    );
+  }
+  if (typeof reqs?.shipped_item === "string") {
+    return sourceWithRemainder(
+      { type: "ship_item", triggerItemId: reqs.shipped_item as ItemId },
+      "shipped_item",
+    );
+  }
+  if (typeof reqs?.donated_item === "string") {
+    return sourceWithRemainder(
+      { type: "donate_item", triggerItemId: reqs.donated_item as ItemId },
+      "donated_item",
+    );
+  }
+  if (reqs?.reached_date !== undefined) {
+    try {
+      const reachedDate = expectRecord(reqs.reached_date, context);
+      const season =
+        reachedDate.season === undefined
+          ? "spring"
+          : expectString(reachedDate.season, {
+              ...context,
+              fieldPath: `${context.fieldPath}.season`,
+            });
+      if (!isSeason(season)) {
+        throw new Error(
+          `Invalid season for ${context.entityId}.${context.fieldPath}.season in ${context.sourcePath}`,
+        );
+      }
+      const source: LetterRewardSource = {
+        type: "reach_day",
+        triggerDate: {
+          day:
+            reachedDate.day === undefined
+              ? 1
+              : expectNumber(reachedDate.day, {
+                  ...context,
+                  fieldPath: `${context.fieldPath}.day`,
+                }),
+          season,
+          ...(reachedDate.year === undefined
+            ? {}
+            : {
+                year: expectNumber(reachedDate.year, {
+                  ...context,
+                  fieldPath: `${context.fieldPath}.year`,
+                }),
+              }),
+        },
+      };
+      return sourceWithRemainder(source, "reached_date");
+    } catch (error) {
+      throw new Error(`unparseable-reached-date: ${(error as Error).message}`, { cause: error });
+    }
+  }
+  if (
+    reqs &&
+    Object.keys(reqs).length > 0 &&
+    Object.keys(reqs).some((key) => SUPPORTED_CONDITIONAL_LETTER_KEYS.has(key))
+  ) {
+    const availability = projectLetterAvailability(reqs, context, requirementContext);
+    return {
+      type: "letter",
+      letterId,
+      trigger: "condition",
+      ...(availability ? { availability } : {}),
+    };
+  }
+
+  recipes.diagnostics.add({
+    fieldPath: `letters.${letterId}.requirements`,
+    kind: "letter-without-trigger",
+    message: `letter "${letterId}" has rewards but no recognized requirement trigger`,
+    targetId: letterId,
+  });
+  return undefined;
 }
 
 function collectAnimalFestivalRewardSources(
@@ -175,8 +279,9 @@ function collectAnimalFestivalRewardSources(
 
 function collectChickenStatueLootSources(
   fiddle: ParsedGameData,
-  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
-  petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
+  animalCosmeticAccumulator: AnimalCosmeticSourceAccumulator,
+  petCosmeticAccumulator: PetCosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
 ): void {
   const chickenStatue = fiddle.chicken_statue as
     | Record<string, Record<string, unknown>>
@@ -185,17 +290,38 @@ function collectChickenStatueLootSources(
 
   const misc = fiddle.misc as Record<string, unknown> | undefined;
   const chickenMisc = (misc?.chicken_statue as Record<string, unknown>) ?? {};
-  const cost = (chickenMisc.low_price as number | undefined) ?? 10;
+  const lowCost = (chickenMisc.low_price as number | undefined) ?? 10;
+  const highCost = (chickenMisc.high_price as number | undefined) ?? lowCost;
+  if (chickenStatue.common) {
+    for (const [key, value] of [
+      ["low_price", chickenMisc.low_price],
+      ["high_price", chickenMisc.high_price],
+    ] as const) {
+      if (typeof value !== "number" || !Number.isFinite(value)) {
+        throw new TypeError(`Invalid or missing numeric value "misc.chicken_statue.${key}"`);
+      }
+    }
+  }
 
   for (const [, tier] of Object.entries(chickenStatue)) {
     if (typeof tier !== "object" || tier === null) continue;
     for (const rollKey of ["small_roll", "large_roll"]) {
+      const cost = rollKey === "small_roll" ? lowCost : highCost;
       const rolls = tier[rollKey];
       if (!Array.isArray(rolls)) continue;
 
       for (const entry of rolls) {
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
+        const scrollTarget = scrollTargetOf(obj);
+        if (scrollTarget) {
+          addRecipeScrollSource(
+            scrollTarget,
+            { type: "chicken_statue", cost },
+            recipes,
+            "chicken_statue",
+          );
+        }
 
         const animalCosmeticId = obj.animal_cosmetic as CosmeticId | undefined;
         const animalId = obj.animal as AnimalId | undefined;
@@ -270,8 +396,9 @@ function collectEngagementSources(
 function collectFestivalStockSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
-  cosmeticAccumulator?: CosmeticSourceAccumulator,
-  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
+  cosmeticAccumulator: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator: AnimalCosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
 ): void {
   const festivals = fiddle.festivals as Record<string, Record<string, unknown>> | undefined;
   if (!festivals) return;
@@ -297,6 +424,16 @@ function collectFestivalStockSources(
           festivalId: festivalId as FestivalId,
           storeId: storeId as StoreId,
         };
+        const scrollTarget = scrollTargetOf(obj);
+        if (scrollTarget) {
+          addRecipeScrollSource(
+            scrollTarget,
+            source,
+            recipes,
+            `festivals/${festivalId}/${storeId}`,
+          );
+          continue;
+        }
 
         const animalCosmeticId = obj.animal_cosmetic as CosmeticId | undefined;
         const animalId = obj.animal as AnimalId | undefined;
@@ -323,6 +460,8 @@ function collectFestivalStockSources(
 function collectLetterRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
+  requirementContext: RequirementContext,
 ): void {
   const letters = fiddle.letters as Record<string, Record<string, unknown>> | undefined;
   if (!letters) return;
@@ -334,19 +473,25 @@ function collectLetterRewardSources(
     if (items.length === 0) continue;
 
     const reqs = letter.requirements as Record<string, unknown> | undefined;
-    const source = classifyLetterTrigger(reqs, {
-      entityId: letterId,
-      fieldPath: "requirements.reached_date",
-      sourcePath: sourceFileFor(fiddle, `letters.${letterId}`),
-    });
+    const source = classifyLetterTrigger(
+      reqs,
+      {
+        entityId: letterId,
+        fieldPath: "requirements.reached_date",
+        sourcePath: sourceFileFor(fiddle, `letters.${letterId}`),
+      },
+      recipes,
+      requirementContext,
+    );
+    if (!source) continue;
 
     for (const entry of items) {
       if (typeof entry !== "object" || entry === null) continue;
       const obj = entry as Record<string, unknown>;
 
-      if (obj.recipe_scroll || obj.crafting_scroll) {
-        const scrollTarget = (obj.recipe_scroll ?? obj.crafting_scroll) as ItemId;
-        accumulator.add(scrollTarget, source);
+      const scrollTarget = scrollTargetOf(obj);
+      if (scrollTarget) {
+        addRecipeScrollSource(scrollTarget, source, recipes, `letters/${letterId}`);
         continue;
       }
 
@@ -361,7 +506,8 @@ function collectLetterRewardSources(
 function collectMuseumDonationRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
-  cosmeticAccumulator?: CosmeticSourceAccumulator,
+  cosmeticAccumulator: CosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
 ): void {
   const wings = fiddle.museum_wings as Record<string, Record<string, unknown>> | undefined;
   if (!wings) return;
@@ -383,7 +529,20 @@ function collectMuseumDonationRewardSources(
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
 
-        if (obj.crafting_scroll || obj.recipe_scroll) continue;
+        const scrollTarget = scrollTargetOf(obj);
+        if (scrollTarget) {
+          addRecipeScrollSource(
+            scrollTarget,
+            {
+              type: "museum_donation",
+              setCount,
+              wingId: wingId as MuseumWingId,
+            },
+            recipes,
+            `museum_wings/${wingId}`,
+          );
+          continue;
+        }
 
         const cosmeticId = obj.cosmetic as CosmeticId | undefined;
         const itemId = obj.item as ItemId | undefined;
@@ -433,13 +592,15 @@ function collectProposalSources(fiddle: ParsedGameData, accumulator: ItemSourceA
 function collectQuestRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
-  cosmeticAccumulator?: CosmeticSourceAccumulator,
-  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
+  cosmeticAccumulator: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator: AnimalCosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
 ): void {
   const quests = fiddle.quests as Record<string, Record<string, unknown>> | undefined;
   if (!quests) return;
 
-  for (const questGroup of Object.values(quests)) {
+  const questTypeIndex = buildQuestTypeIndex(fiddle);
+  for (const [nativeQuestGroup, questGroup] of Object.entries(quests)) {
     if (typeof questGroup !== "object" || questGroup === null) continue;
 
     for (const [questId, quest] of Object.entries(questGroup)) {
@@ -453,6 +614,10 @@ function collectQuestRewardSources(
         accumulator,
         cosmeticAccumulator,
         animalCosmeticAccumulator,
+        recipes,
+        nativeQuestGroup,
+        questData,
+        questTypeIndex.get(questId as QuestId),
       );
 
       const stages = Array.isArray(questData.stages) ? questData.stages : [];
@@ -466,6 +631,10 @@ function collectQuestRewardSources(
           accumulator,
           cosmeticAccumulator,
           animalCosmeticAccumulator,
+          recipes,
+          nativeQuestGroup,
+          questData,
+          questTypeIndex.get(questId as QuestId),
         );
       }
     }
@@ -475,7 +644,8 @@ function collectQuestRewardSources(
 function collectRenownRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
-  cosmeticAccumulator?: CosmeticSourceAccumulator,
+  cosmeticAccumulator: CosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
 ): void {
   const renown = fiddle.renown as Record<string, unknown> | undefined;
   if (!renown) return;
@@ -486,6 +656,10 @@ function collectRenownRewardSources(
     const reward = rewards[i];
     if (typeof reward !== "object" || reward === null) continue;
     const obj = reward as Record<string, unknown>;
+    if (typeof obj.item === "string") {
+      const recipeId = recipes.recipeIdByItemId.get(obj.item);
+      if (recipeId) recipes.sources.add(recipeId, { type: "renown", level: i + 1 });
+    }
     const cosmeticId = obj.cosmetic as CosmeticId | undefined;
     const itemId = obj.item as ItemId | undefined;
     const targetId = cosmeticId ?? itemId;
@@ -525,12 +699,44 @@ function processQuestRewards(
   rewards: unknown[],
   questId: string,
   accumulator: ItemSourceAccumulator,
-  cosmeticAccumulator?: CosmeticSourceAccumulator,
-  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
+  cosmeticAccumulator: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator: AnimalCosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
+  nativeQuestGroup: string,
+  quest: Record<string, unknown>,
+  questType: QuestType | undefined,
 ): void {
   for (const reward of rewards) {
     if (typeof reward !== "object" || reward === null) continue;
     const obj = reward as Record<string, unknown>;
+    const scrollTarget = scrollTargetOf(obj);
+    if (
+      scrollTarget &&
+      ["fetch_quests", "stillwell_challenges", "story_quests", "tali_challenges"].includes(
+        nativeQuestGroup,
+      )
+    ) {
+      if (!questType) throw new Error(`Unable to normalize quest type for "${questId}"`);
+      const itemId = firstRequiredItemId(questId, quest);
+      const challengeRecipeId = itemId ? recipes.recipeIdByItemId.get(itemId) : undefined;
+      addRecipeScrollSource(
+        scrollTarget,
+        {
+          type: "quest",
+          questId: questId as QuestId,
+          questType,
+          trigger: "completion",
+          ...(nativeQuestGroup === "fetch_quests" && itemId
+            ? { requestedItemId: itemId as ItemId }
+            : {}),
+          ...(nativeQuestGroup === "tali_challenges" && challengeRecipeId
+            ? { challengeRecipeId }
+            : {}),
+        },
+        recipes,
+        `${nativeQuestGroup}/${questId}`,
+      );
+    }
 
     if (obj.item) {
       accumulator.add(obj.item as ItemId, {
@@ -570,6 +776,10 @@ function processQuestRewards(
           accumulator,
           cosmeticAccumulator,
           animalCosmeticAccumulator,
+          recipes,
+          nativeQuestGroup,
+          quest,
+          questType,
         );
       }
     }

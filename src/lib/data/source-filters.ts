@@ -131,7 +131,7 @@ export const SOURCE_FILTERS: readonly SourceFilter[] = [
   {
     id: "progress",
     members: ["default", "quests", "renown", "letters"],
-    types: ["default", "quest", "renown", "reach_day"],
+    types: ["default", "letter", "quest", "renown", "reach_day"],
   },
 ];
 

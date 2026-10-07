@@ -48,6 +48,7 @@ const SOURCE_TYPES: Record<Source["type"], true> = {
   fish: true,
   fish_trap: true,
   forage: true,
+  letter: true,
   lost_and_found: true,
   mine: true,
   mine_fish: true,
@@ -294,14 +295,27 @@ describe("generated source rendering contract", () => {
     expect([...missing].toSorted()).toEqual([]);
   });
 
-  it("has no unsupported predicate diagnostics", () => {
+  it("has no unexpected unsupported predicate diagnostics", () => {
+    // Native letter requirements that the app cannot evaluate remain explicit unknown gates.
+    const preservedLetterPredicates = new Set([
+      "acquired_item",
+      "baby_is_due",
+      "completed_quest",
+      "is_player_birthday",
+      "is_spouse",
+      "reached_renown_level",
+      "world_fact_is",
+    ]);
     const diagnostics: UnsupportedPredicateDiagnostic[] = sourcedEntities
       .flatMap(({ entity, path }) => {
         const { entityId, entityKind } = pathIdentity(path);
         return entity.sources.flatMap((source, sourceIndex) =>
-          collectGamePredicates("availability" in source ? source.availability : undefined).map(
-            ({ predicate }) => ({ entityId, entityKind, predicate, sourceIndex }),
-          ),
+          collectGamePredicates("availability" in source ? source.availability : undefined)
+            .filter(
+              ({ predicate }) =>
+                source.type !== "letter" || !preservedLetterPredicates.has(predicate),
+            )
+            .map(({ predicate }) => ({ entityId, entityKind, predicate, sourceIndex })),
         );
       })
       .toSorted(
