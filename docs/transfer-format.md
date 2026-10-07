@@ -1,12 +1,13 @@
 # Progress transfer format
 
 The device-transfer QR code contains the text `MFGT` (`TRANSFER_MAGIC`) followed by an unpadded
-base64url envelope. The marker, added in v11, identifies the code as a Mistria Field Guide transfer
-code, so an unrelated QR code is never mistaken for one from another version; earlier versions have
-no marker. The envelope’s first decoded byte is the transfer version, and the next four bytes are a
-big-endian CRC-32 integrity checksum of the raw (pre-compression) payload. The remaining bytes are a
-raw-DEFLATE stream containing the packed progress fields. `TRANSFER_VERSION` in
-`src/lib/engine/transfer.ts` identifies the current encoder.
+base64url envelope. The marker identifies the code as a Mistria Field Guide transfer code, so an
+unrelated QR code is never mistaken for one from another version. Pre-launch codes had no marker, so
+the launch layout restarted at version 1 without colliding with them. The envelope’s first decoded
+byte is the transfer version, and the next four bytes are a big-endian CRC-32 integrity checksum of
+the raw (pre-compression) payload. The remaining bytes are a raw-DEFLATE stream containing the
+packed progress fields. `TRANSFER_VERSION` in `src/lib/engine/transfer.ts` identifies the current
+encoder.
 
 Transfers merge decoded progress additively. They are not backups and never replace the recipient’s
 state. The broader compatibility review for tracker-data changes is defined in
@@ -48,18 +49,12 @@ necessarily in-domain; clamping always applies, so a payload can never merge an 
 
 ## Compatibility fixtures
 
-`src/lib/engine/transfer.test.ts` keeps immutable fixtures with these expectations. Versions older
-than v11 are deliberately unsupported: v1 through v9 because their positional layouts no longer
-match the current tracker data, and v10 because it predates the marker. v11 has v10’s layout.
+`src/lib/engine/transfer.test.ts` keeps immutable fixtures with these expectations.
 
-| Version | Purpose                                                                           | Compatibility expectation                                                                    |
-| ------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| v1      | Earliest layout, before perks and later progression fields                        | Reject as `not-transfer-code` (no marker) before decompression.                              |
-| v5      | Historical pre-v6 almanac ordering                                                | Reject as `not-transfer-code` (no marker) before interpreting obsolete almanac positions.    |
-| v8      | Final pre-checksum layout                                                         | Reject as `not-transfer-code` (no marker) before interpreting obsolete positions.            |
-| v9      | Preceding checksummed layout                                                      | Reject as `not-transfer-code` (no marker) before interpreting obsolete positions.            |
-| v10     | Last unmarked layout, identical to v11’s fields                                   | Reject as `not-transfer-code` before interpreting any field.                                 |
-| v11     | Fixed representative `ProgressState` spanning scalar, enum, and positional fields | Encode to the immutable golden payload and decode that payload to the pinned progress state. |
+| Version  | Purpose                                                                           | Compatibility expectation                                                                    |
+| -------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Unmarked | Last pre-launch layout, before the marker                                         | Reject as `not-transfer-code` before interpreting any field.                                 |
+| v1       | Fixed representative `ProgressState` spanning scalar, enum, and positional fields | Encode to the immutable golden payload and decode that payload to the pinned progress state. |
 
 The codec also pins `TRANSFER_ORDERING_HASH` beside `TRANSFER_VERSION`. The hash covers every ID
 array whose position determines an on-wire bit, using code-unit ordering only. A tracker-data change
