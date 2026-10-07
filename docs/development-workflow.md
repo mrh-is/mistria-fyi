@@ -89,11 +89,13 @@ pnpm run prepare
 Codex's default `workspace-write` sandbox disables command-network access & keeps `.git` read-only,
 including the resolved Git directory for linked worktrees. That protects normal source edits, but
 `pnpm install`, `gh`, & remote Git commands need network access, while `git worktree add`, staging,
-commits, & ref updates require an approved sandbox escalation. Enabling command-network access
-requires `[sandbox_workspace_write]` with `network_access = true` in `.codex/config.toml`; that
-change is pending, to be applied by the maintainer. Keep `approval_policy = "on-request"` so
-Git-metadata operations can request a narrow escalation. If the active managed environment disallows
-escalation, report the limitation rather than weakening the sandbox or bypassing isolation.
+commits, & ref updates require an approved sandbox escalation. This project's `.codex/config.toml`
+enables command-network access with `[sandbox_workspace_write]` and `network_access = true`, while
+keeping `sandbox_mode = "workspace-write"`, `approval_policy = "on-request"`, and
+`approvals_reviewer = "user"`. Git-metadata operations can request a narrow escalation; command
+allowlists in `.codex/rules/default.rules` do not grant filesystem or network access. If the active
+managed environment disallows escalation, report the limitation rather than weakening the sandbox or
+bypassing isolation.
 
 ### Shared vs. Isolated Worktree Resources (`.worktreeinclude`)
 
