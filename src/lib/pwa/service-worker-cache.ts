@@ -135,7 +135,7 @@ export async function cacheSpriteResponse(
   response: Response,
   maxEntries = MAX_SPRITE_ENTRIES,
 ): Promise<void> {
-  await cache.put(request, response);
+  await cache.put(request, stampSprite(response));
   const generation = spriteGeneration(request.url);
   const keys = await cache.keys();
   const stale = keys.filter((key) => spriteGeneration(key.url) < generation);
@@ -190,7 +190,7 @@ export async function fetchRuntimeRequest(
 /** Statuses that mean a sprite was withdrawn on purpose (a takedown), not that the network hiccuped. */
 const WITHDRAWN_SPRITE_STATUSES: ReadonlySet<number> = new Set([403, 404, 410]);
 
-/** A cached sprite younger than this (by its `Date` header) isn't revalidated on a hit. */
+/** A cached sprite younger than this (by its worker-set stamp) isn't revalidated on a hit. */
 export const SPRITE_REVALIDATE_AFTER_MS = 24 * 60 * 60 * 1000;
 
 /** Revalidations in flight, by sprite URL, so concurrent hits share one request & one outcome. */
@@ -198,7 +198,7 @@ const spriteRevalidations = new Map<string, Promise<void>>();
 
 /**
  * Serves a sprite stale-while-revalidate. A cached copy returns at once, so sprites keep working
- * offline. Once its `Date` header is a day old (or missing), a background request revalidates it so
+ * offline. Once its cached-at stamp is a day old (or missing), a background request revalidates it so
  * removing a sprite from the bucket reaches installed clients: a fresh response replaces the entry,
  * a 403/404/410 evicts it so the next render shows the placeholder, & anything else (offline, a 5xx)
  * leaves it alone. A younger copy makes no request. The revalidation bypasses the HTTP cache,
@@ -248,9 +248,27 @@ export async function fetchSpriteRequest(
   return response;
 }
 
+/**
+ * Header recording when a sprite was cached. The worker stamps it itself because `Date` is not a
+ * CORS-safelisted header, so a cross-origin sprite response doesn't expose it to script.
+ */
+export const SPRITE_CACHED_AT_HEADER = "x-sprite-cached-at";
+
+/** A copy of `response` stamped with the current time; its body moves to the copy. */
+function stampSprite(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set(SPRITE_CACHED_AT_HEADER, String(Date.now()));
+  return new Response(response.body, {
+    headers,
+    status: response.status,
+    statusText: response.statusText,
+  });
+}
+
+/** Whether a cached sprite is due for revalidation; an unstamped (older) entry is, once. */
 function isSpriteStale(cached: Response): boolean {
-  const date = Date.parse(cached.headers.get("date") ?? "");
-  return !(Date.now() - date < SPRITE_REVALIDATE_AFTER_MS);
+  const cachedAt = Number(cached.headers.get(SPRITE_CACHED_AT_HEADER));
+  return !(Date.now() - cachedAt < SPRITE_REVALIDATE_AFTER_MS);
 }
 
 /**
