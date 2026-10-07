@@ -577,6 +577,10 @@ function createUserState() {
       // Backfill animal maps for any animals added since the imported state was created
       backfillAnimalMaps(completed);
 
+      // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
+      // persistence like a reset or restore (only once the unreadable blob is safely stored).
+      enablePersistenceAfterExplicitReplace();
+
       return { conflicts: household.conflicts, counts };
     },
     get persistenceFailed(): boolean {
