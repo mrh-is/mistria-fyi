@@ -52,7 +52,7 @@
     copiedRecoverySteps = false;
 
     try {
-      const payload = await encodeTransferPayload(userState.state.completed);
+      const payload = await encodeTransferPayload(userState.state.progress);
       qrDataUrl = await generateTransferQr(payload);
     } catch (error) {
       transferError = `${m.transfer_error_generate_prefix()} ${error instanceof Error ? error.message : m.transfer_unknown_error()}`;

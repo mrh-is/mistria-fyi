@@ -79,19 +79,19 @@
         : { category: "villager", displayName: name, entityId: id, page: page.url.pathname },
     ),
   );
-  let storedLevel = $derived(userState.state.completed.heartLevels[id] ?? 0);
+  let storedLevel = $derived(userState.state.progress.heartLevels[id] ?? 0);
   let displayedLevel = $derived(isSpoilered ? 0 : storedLevel);
-  let relationship = $derived(userState.state.completed.villagerRelationships[id] ?? "undecided");
+  let relationship = $derived(userState.state.progress.villagerRelationships[id] ?? "undecided");
   let presentation = $derived(
     relationshipPresentation({
-      childChoice: userState.state.completed.childChoice,
+      childChoice: userState.state.progress.childChoice,
       level: storedLevel,
-      marriedVillager: getSpouseId(userState.state.completed.villagerRelationships),
+      marriedVillager: getSpouseId(userState.state.progress.villagerRelationships),
       relationship,
       villagerId: id,
     }),
   );
-  let completed = $derived(isVillagerComplete(id, userState.state.completed));
+  let completed = $derived(isVillagerComplete(id, userState.state.progress));
   let visibleName = $derived(isSpoilered ? m.villager_spoilered_name() : name);
 
   async function applyAction(value: RelationshipActionValue): Promise<void> {

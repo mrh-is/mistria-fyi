@@ -58,7 +58,7 @@ test.describe("browser accessibility preferences", () => {
     await initializeApplication(
       page,
       "light",
-      createStoredState({ availabilityMode: "everything" }),
+      createStoredState({ availabilityWindows: ["now", "anytime", "later"] }),
     );
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ });

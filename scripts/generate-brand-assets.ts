@@ -112,7 +112,7 @@ function emptyCompletedState(): ProgressState {
 function grandTotal(): number {
   const progress = getAllProgress({
     availabilityWindows: ["now", "anytime", "later"],
-    completed: emptyCompletedState(),
+    progress: emptyCompletedState(),
     worldState: { season: "spring", weather: "calm" },
   });
   return Object.values(progress).reduce((total, category) => total + category.total, 0);

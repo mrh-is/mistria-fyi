@@ -27,7 +27,7 @@ const progressPlayerPath = fileURLToPath(
 test.describe("stateful accessibility", () => {
   test.beforeEach(async ({ page }, testInfo) => {
     const state = testInfo.title.includes("spoiler-hidden")
-      ? createStoredState({ availabilityMode: "everything" })
+      ? createStoredState({ availabilityWindows: ["now", "anytime", "later"] })
       : null;
     await initializeApplication(page, "light", state);
   });

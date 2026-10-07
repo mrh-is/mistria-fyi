@@ -34,7 +34,7 @@
   }
 
   function hasCompletedVariant(animalId: AnimalId, variantId: AnimalVariantId): boolean {
-    return userState.state.completed.animals[animalId]?.has(variantId) ?? false;
+    return userState.state.progress.animals[animalId]?.has(variantId) ?? false;
   }
 
   function hasDisplayableVariant(animalId: AnimalId): boolean {
@@ -81,7 +81,7 @@
   function isVariantSpoilered(animalId: AnimalId, variantId: AnimalVariantId): boolean {
     if (userState.state.showSpoilers) return false;
 
-    const completedVariants = userState.state.completed.animals[animalId];
+    const completedVariants = userState.state.progress.animals[animalId];
     if (completedVariants?.has(variantId)) return false;
 
     const animal = trackerData.animals[animalId];

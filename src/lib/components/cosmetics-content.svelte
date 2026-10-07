@@ -55,7 +55,7 @@
   }
 
   function isSlotComplete(items: CosmeticEntry[]): boolean {
-    return items.every((c) => userState.state.completed.cosmetics.has(c.id));
+    return items.every((c) => userState.state.progress.cosmetics.has(c.id));
   }
 
   /**
@@ -115,7 +115,7 @@
 
   function toggleCosmetic(cosmetic: CosmeticEntry, allInSlot: CosmeticEntry[]): void {
     userState.toggleCosmetic(cosmetic.id);
-    const completed = userState.state.completed.cosmetics.has(cosmetic.id);
+    const completed = userState.state.progress.cosmetics.has(cosmetic.id);
     showUndoToast(getName("cosmetics", cosmetic.id, locale), completed, () => {
       userState.toggleCosmetic(cosmetic.id);
     });
@@ -135,11 +135,11 @@
   {@const allInSlot = subCategories.flatMap(({ cosmetics }) => cosmetics)}
   {@const scopedInSlot = allInSlot.filter((c) => toolbarState.matchesSourceFilters(c.sources))}
   {@const visibleInSlot = scopedInSlot.filter((c) => {
-    const done = userState.state.completed.cosmetics.has(c.id);
+    const done = userState.state.progress.cosmetics.has(c.id);
     return done ? userState.state.showCompleted : true;
   })}
   {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
-    {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
+    {@const completed = userState.state.progress.cosmetics.has(cosmetic.id)}
     {@const spoilered = !isConditionVisible(cosmetic.visibility, userState.progressionState)}
     <TrackerRow
       display={trackerRowDisplay({ completed, spoilered })}
@@ -162,7 +162,7 @@
   {#if visibleInSlot.length > 0 || toolbarState.isSourceFilterNarrowing}
     <ExpandableSection
       {locale}
-      count={scopedInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
+      count={scopedInSlot.filter((c) => userState.state.progress.cosmetics.has(c.id)).length}
       {name}
       reportCategory="cosmetic-slot"
       reportEntityId={slot}
@@ -171,7 +171,7 @@
       {#each subCategories as { cosmetics, key: subCategory, name: subCategoryName } (subCategory)}
         {@const visibleCosmetics = cosmetics.filter((c) => {
           if (!toolbarState.matchesSourceFilters(c.sources)) return false;
-          const done = userState.state.completed.cosmetics.has(c.id);
+          const done = userState.state.progress.cosmetics.has(c.id);
           return done ? userState.state.showCompleted : true;
         })}
         {#if visibleCosmetics.length > 0}
@@ -181,7 +181,7 @@
               count={cosmetics.filter(
                 (c) =>
                   toolbarState.matchesSourceFilters(c.sources) &&
-                  userState.state.completed.cosmetics.has(c.id),
+                  userState.state.progress.cosmetics.has(c.id),
               ).length}
               depth={1}
               name={subCategoryName}

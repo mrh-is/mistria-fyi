@@ -7,11 +7,26 @@ import {
   extractLocaleFromHeader,
   getTextDirection,
   isLocale,
+  locales,
 } from "#lib/paraglide/runtime.js";
 import { paraglideMiddleware } from "#lib/paraglide/server.js";
 import { withSecurityHeaders } from "#lib/security/security-headers.js";
 
 import type { Handle } from "@sveltejs/kit/hooks";
+
+const LOCALES_BY_LOWERCASE = new Map(locales.map((locale) => [locale.toLowerCase(), locale]));
+
+/**
+ * The path with its first segment in canonical locale casing (`/zh-hans/almanac` →
+ * `/zh-Hans/almanac`), or undefined if that segment isn't a miscased locale. Locale matching is
+ * case-sensitive, and retyped or normalized links often lowercase it.
+ */
+function canonicalLocalePath(pathname: string): string | undefined {
+  const [, firstSegment = "", ...rest] = pathname.split("/");
+  if (isLocale(firstSegment)) return undefined;
+  const locale = LOCALES_BY_LOWERCASE.get(firstSegment.toLowerCase());
+  return locale === undefined ? undefined : ["", locale, ...rest].join("/");
+}
 
 function hasLocalePrefix(pathname: string): boolean {
   const firstSegment = pathname.split("/")[1];
@@ -35,6 +50,15 @@ export const bareLocaleRedirect: Handle = ({ event, resolve }) => {
 
   if (isUnlocalizedPath(pathname) || hasLocalePrefix(pathname)) {
     return resolve(event);
+  }
+
+  // Locale URLs are a public contract in BCP 47 casing; other casings redirect there permanently.
+  const canonicalPath = canonicalLocalePath(pathname);
+  if (canonicalPath !== undefined) {
+    return new Response(undefined, {
+      headers: { location: `${canonicalPath}${event.url.search}` },
+      status: 308,
+    });
   }
 
   const cookieLocale = event.cookies.get(cookieName);

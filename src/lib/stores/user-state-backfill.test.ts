@@ -41,7 +41,7 @@ function buildStoredState(overrides?: {
   const { animalCosmetics, animals } = buildPartialAnimalMaps();
   return JSON.stringify({
     availabilityMode: "available",
-    completed: {
+    progress: {
       almanac: [],
       almanacRecipes: [],
       animalCosmetics: overrides?.animalCosmetics ?? animalCosmetics,
@@ -59,14 +59,13 @@ function buildStoredState(overrides?: {
       spells: [],
       unlockedPerks: [],
     },
-    showSpoilers: false,
-    version: "1",
+    version: 1,
     worldState: { season: "spring", weather: "calm" },
   });
 }
 
 function makeStorage(json: string): Storage {
-  return memoryStorage({ "mistria-fyi-v1": json });
+  return memoryStorage({ "mistria-fyi:progress": json });
 }
 
 afterEach(() => {
@@ -86,16 +85,16 @@ describe("animal map backfill on deserialization", () => {
 
     for (const animalId of OMITTED_ANIMALS) {
       expect(
-        userState.state.completed.animals[animalId],
+        userState.state.progress.animals[animalId],
         `animals["${animalId}"] should exist`,
       ).toBeDefined();
-      expect(userState.state.completed.animals[animalId]?.size).toBe(0);
+      expect(userState.state.progress.animals[animalId]?.size).toBe(0);
 
       expect(
-        userState.state.completed.animalCosmetics[animalId],
+        userState.state.progress.animalCosmetics[animalId],
         `animalCosmetics["${animalId}"] should exist`,
       ).toBeDefined();
-      expect(userState.state.completed.animalCosmetics[animalId]?.size).toBe(0);
+      expect(userState.state.progress.animalCosmetics[animalId]?.size).toBe(0);
     }
   });
 
@@ -118,8 +117,8 @@ describe("animal map backfill on deserialization", () => {
     const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
 
-    expect(userState.state.completed.animals[progressAnimal]?.has(progressVariant)).toBe(true);
-    expect(userState.state.completed.animalCosmetics[progressAnimal]?.has(progressCosmetic)).toBe(
+    expect(userState.state.progress.animals[progressAnimal]?.has(progressVariant)).toBe(true);
+    expect(userState.state.progress.animalCosmetics[progressAnimal]?.has(progressCosmetic)).toBe(
       true,
     );
   });
@@ -137,8 +136,8 @@ describe("animal map backfill on deserialization", () => {
     userState.loadFromStorage();
 
     for (const animalId of ALL_ANIMAL_IDS) {
-      expect(userState.state.completed.animals[animalId]).toBeDefined();
-      expect(userState.state.completed.animalCosmetics[animalId]).toBeDefined();
+      expect(userState.state.progress.animals[animalId]).toBeDefined();
+      expect(userState.state.progress.animalCosmetics[animalId]).toBeDefined();
     }
   });
 });
@@ -170,11 +169,11 @@ describe("animal map backfill on merge", () => {
 
     for (const animalId of OMITTED_ANIMALS) {
       expect(
-        userState.state.completed.animals[animalId],
+        userState.state.progress.animals[animalId],
         `animals["${animalId}"] should exist after merge`,
       ).toBeDefined();
       expect(
-        userState.state.completed.animalCosmetics[animalId],
+        userState.state.progress.animalCosmetics[animalId],
         `animalCosmetics["${animalId}"] should exist after merge`,
       ).toBeDefined();
     }
@@ -189,7 +188,7 @@ async function getBackfilledState(): Promise<DeepReadonly<ProgressState>> {
 
   const { userState } = await import("#lib/stores/user-state.svelte.js");
   userState.loadFromStorage();
-  return userState.state.completed;
+  return userState.state.progress;
 }
 
 describe("downstream consumers after backfill", () => {
@@ -198,7 +197,7 @@ describe("downstream consumers after backfill", () => {
     expect(() =>
       getAllProgress({
         availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
-        completed,
+        progress: completed,
         worldState: { season: "spring", weather: "calm" },
       }),
     ).not.toThrow();

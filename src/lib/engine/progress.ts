@@ -36,7 +36,7 @@ export interface NormalizedLevel {
 
 export interface ProgressContext {
   availabilityWindows: readonly AvailabilityWindow[];
-  completed: DeepReadonly<ProgressState>;
+  progress: DeepReadonly<ProgressState>;
   worldState: { season: Season; weather: Weather };
 }
 
@@ -111,7 +111,7 @@ export function getMaxRenownLevel(): number {
 
 // ─── Per-category progress ──────────────────────────────────────────
 
-/** Sums every category's progress into one overall total (home page, `/all`). */
+/** Sums every category's progress into one overall total (home page, `/everything`). */
 export function getOverallProgress(allProgress: AllProgress): CategoryProgress {
   let completed = 0;
   let remainingInScope = 0;
@@ -170,8 +170,8 @@ function almanacEntryProgress(
   const applicableIds = canonicalIds.filter((id) => {
     if (completedSet.has(id)) return true;
     const entry = trackerIndex.almanacEntryByCanonicalId.get(id);
-    if (!entry) return isItemObtainable(id, ctx.completed);
-    return isAlmanacEntryObtainable(entry.itemIds, ctx.completed);
+    if (!entry) return isItemObtainable(id, ctx.progress);
+    return isAlmanacEntryObtainable(entry.itemIds, ctx.progress);
   });
 
   const incompleteIds = applicableIds.filter((id) => !completedSet.has(id));
@@ -190,15 +190,11 @@ function almanacEntryProgress(
 }
 
 function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
-  const entries = almanacEntryProgress(
-    trackerIndex.almanacCanonicalIds,
-    ctx.completed.almanac,
-    ctx,
-  );
+  const entries = almanacEntryProgress(trackerIndex.almanacCanonicalIds, ctx.progress.almanac, ctx);
   return {
-    completed: entries.completed + ctx.completed.dates.size,
+    completed: entries.completed + ctx.progress.dates.size,
     remainingInScope:
-      entries.remainingInScope + trackerIndex.almanacDateCount - ctx.completed.dates.size,
+      entries.remainingInScope + trackerIndex.almanacDateCount - ctx.progress.dates.size,
     total: entries.total + trackerIndex.almanacDateCount,
   };
 }
@@ -210,14 +206,14 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
   for (const [animalId, animal] of recordEntries(trackerData.animals)) {
     const cosmeticCount = recordKeys(animal.cosmetics).length;
     total += cosmeticCount;
-    const completedCosmetics = ctx.completed.animalCosmetics[animalId]?.size ?? 0;
+    const completedCosmetics = ctx.progress.animalCosmetics[animalId]?.size ?? 0;
     completed += completedCosmetics;
     remainingInScope += cosmeticCount - completedCosmetics;
 
     for (const tier of animal.variantTiers) {
       for (const [variantId, variant] of recordEntries(tier)) {
         total++;
-        if (ctx.completed.animals[animalId]?.has(variantId)) {
+        if (ctx.progress.animals[animalId]?.has(variantId)) {
           completed++;
           continue;
         }
@@ -231,7 +227,7 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
   const petCosmeticIds = recordKeys(trackerData.pets.cosmetics);
   total += petCosmeticIds.length;
   for (const id of petCosmeticIds) {
-    if (ctx.completed.petCosmetics.has(id)) {
+    if (ctx.progress.petCosmetics.has(id)) {
       completed++;
     } else {
       remainingInScope++;
@@ -241,7 +237,7 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
   const petSkinIds = recordKeys(trackerData.pets.skins);
   total += petSkinIds.length;
   for (const id of petSkinIds) {
-    if (ctx.completed.petSkins.has(id)) {
+    if (ctx.progress.petSkins.has(id)) {
       completed++;
     } else {
       remainingInScope++;
@@ -253,7 +249,7 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
 
 function getCosmeticsProgress(ctx: ProgressContext): CategoryProgress {
   const total = recordKeys(trackerData.cosmetics).length;
-  const completed = ctx.completed.cosmetics.size;
+  const completed = ctx.progress.cosmetics.size;
   return { completed, remainingInScope: total - completed, total };
 }
 
@@ -262,7 +258,7 @@ function getMinesProgress(ctx: ProgressContext): CategoryProgress {
   const totalFloors = maxFloor;
   const totalSpells = recordKeys(trackerData.mines.spells).length;
   const total = totalFloors + totalSpells;
-  const completed = ctx.completed.mineFloor + ctx.completed.spells.size;
+  const completed = ctx.progress.mineFloor + ctx.progress.spells.size;
   return { completed, remainingInScope: total - completed, total };
 }
 
@@ -270,7 +266,7 @@ function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
   const allIds = recordValues(trackerData.museum).flatMap(({ sets }) =>
     recordValues(sets).flatMap(({ items }) => items),
   );
-  return itemProgress(allIds, ctx.completed.museum, ctx);
+  return itemProgress(allIds, ctx.progress.museum, ctx);
 }
 
 function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
@@ -280,11 +276,11 @@ function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
     for (const id of recordKeys(questType)) {
       if (PREGNANCY_QUEST_IDS.has(id)) continue;
       total++;
-      if (ctx.completed.questStates[id] === "completed") completed++;
+      if (ctx.progress.questStates[id] === "completed") completed++;
     }
   }
 
-  const craving = getCravingQuest(ctx.completed);
+  const craving = getCravingQuest(ctx.progress);
   if (craving.applicable) {
     total++;
     if (craving.completed) completed++;
@@ -295,7 +291,7 @@ function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
 
 function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
   const allIds = recordKeys(trackerData.recipes);
-  const completed = allIds.filter((id) => ctx.completed.almanacRecipes.has(id)).length;
+  const completed = allIds.filter((id) => ctx.progress.almanacRecipes.has(id)).length;
   return { completed, remainingInScope: allIds.length - completed, total: allIds.length };
 }
 
@@ -303,7 +299,7 @@ function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
 
 function getRenownProgress(ctx: ProgressContext): CategoryProgress {
   const total = getMaxRenownLevel();
-  const completed = Math.max(0, Math.min(ctx.completed.renown, total));
+  const completed = Math.max(0, Math.min(ctx.progress.renown, total));
   return { completed, remainingInScope: total - completed, total };
 }
 
@@ -312,7 +308,7 @@ function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
   let completed = 0;
   for (const id of recordKeys(trackerData.skills)) {
     total += MAX_SKILL_LEVEL;
-    completed += Math.min(ctx.completed.skillLevels[id] ?? 0, MAX_SKILL_LEVEL);
+    completed += Math.min(ctx.progress.skillLevels[id] ?? 0, MAX_SKILL_LEVEL);
   }
   return { completed, remainingInScope: total - completed, total };
 }
@@ -326,10 +322,10 @@ function getVillagersProgress(ctx: ProgressContext): CategoryProgress {
   let completed = 0;
   for (const [id, villager] of recordEntries(trackerData.villagers)) {
     total += MAX_HEART_LEVEL;
-    completed += Math.min(ctx.completed.heartLevels[id] ?? 0, MAX_HEART_LEVEL);
+    completed += Math.min(ctx.progress.heartLevels[id] ?? 0, MAX_HEART_LEVEL);
     if (!villager.dateable) continue;
     total++;
-    if (isRelationshipSettled(id, ctx.completed)) completed++;
+    if (isRelationshipSettled(id, ctx.progress)) completed++;
   }
   return { completed, remainingInScope: total - completed, total };
 }
@@ -355,7 +351,7 @@ function itemProgress(
   ctx: ProgressContext,
 ): CategoryProgress {
   const applicableIds = allIds.filter(
-    (id) => completedSet.has(id) || isItemObtainable(id, ctx.completed),
+    (id) => completedSet.has(id) || isItemObtainable(id, ctx.progress),
   );
   const incompleteIds = applicableIds.filter((id) => !completedSet.has(id));
   const remainingInScope = filterAvailableItems(

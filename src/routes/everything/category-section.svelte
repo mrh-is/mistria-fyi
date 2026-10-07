@@ -20,7 +20,7 @@
   import type { LocaleCode } from "#lib/types/locale.js";
 
   /**
-   * How a category renders on `/all`. `compact` asks a record-style view for its condensed form;
+   * How a category renders on `/everything`. `compact` asks a record-style view for its condensed form;
    * `stacked` spaces a list of sections under the header.
    */
   interface SectionContent {

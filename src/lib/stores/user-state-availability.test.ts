@@ -27,46 +27,33 @@ describe("availability windows", () => {
     expect(userState.state.availabilityWindows).toEqual(["anytime"]);
   });
 
-  it("serializes the new windows without the legacy mode", () => {
+  it("keeps preferences out of the backup", () => {
+    userState.toggleAvailabilityWindow("later");
+    userState.toggleShowSpoilers();
+
     const exported = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
-    expect(exported.availabilityWindows).toEqual(["now", "anytime"]);
-    expect(exported).not.toHaveProperty("availabilityMode");
+    expect(exported).not.toHaveProperty("availabilityWindows");
+    expect(exported).not.toHaveProperty("showSpoilers");
   });
 
-  it.each([
-    ["available", ["now", "anytime"]],
-    ["everything", ["now", "anytime", "later"]],
-    ["timely", ["now"]],
-  ] as const)("migrates the legacy %s mode", (availabilityMode, expected) => {
-    const exported = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
-    delete exported.availabilityWindows;
-    exported.availabilityMode = availabilityMode;
+  it("keeps this device's preferences when restoring a backup", () => {
+    const backup = userState.exportBackup();
+    userState.toggleAvailabilityWindow("later");
+    userState.toggleShowSpoilers();
 
-    expect(userState.restoreBackup(JSON.stringify(exported))).toEqual({ ok: true });
-    expect(userState.state.availabilityWindows).toEqual(expected);
+    expect(userState.restoreBackup(backup)).toEqual({ ok: true });
+    expect(userState.state.availabilityWindows).toEqual(["now", "anytime", "later"]);
+    expect(userState.state.showSpoilers).toBe(true);
   });
 
-  it("rejects invalid windows atomically", () => {
-    const original = userState.exportBackup();
-    const exported = JSON.parse(original) as Record<string, unknown>;
-    exported.availabilityWindows = ["now", "eventually"];
+  it("keeps this device's preferences when resetting progress", () => {
+    userState.toggleAvailabilityWindow("later");
+    userState.toggleShowSpoilers();
+    userState.setMineFloor(5);
 
-    expect(userState.restoreBackup(JSON.stringify(exported))).toEqual({
-      error: "invalid-fields",
-      ok: false,
-    });
-    expect(userState.exportBackup()).toBe(original);
-  });
-
-  it("rejects an empty windows array", () => {
-    const original = userState.exportBackup();
-    const exported = JSON.parse(original) as Record<string, unknown>;
-    exported.availabilityWindows = [];
-
-    expect(userState.restoreBackup(JSON.stringify(exported))).toEqual({
-      error: "invalid-fields",
-      ok: false,
-    });
-    expect(userState.exportBackup()).toBe(original);
+    userState.resetProgress();
+    expect(userState.state.progress.mineFloor).toBe(0);
+    expect(userState.state.availabilityWindows).toEqual(["now", "anytime", "later"]);
+    expect(userState.state.showSpoilers).toBe(true);
   });
 });

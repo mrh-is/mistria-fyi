@@ -51,7 +51,7 @@ describe("createSpoilerGuard", () => {
     expect(action).not.toHaveBeenCalled();
     expect(guard.open).toBe(false);
     expect(guard.condition).toBeNull();
-    expect(userState.state.completed.mineFloor).toBe(0);
+    expect(userState.state.progress.mineFloor).toBe(0);
     guard.proceed();
     expect(action).not.toHaveBeenCalled();
   });
@@ -67,20 +67,20 @@ describe("createSpoilerGuard", () => {
     expect(action).toHaveBeenCalledTimes(1);
     expect(guard.open).toBe(false);
     expect(guard.condition).toBeNull();
-    expect(userState.state.completed.mineFloor).toBe(0);
+    expect(userState.state.progress.mineFloor).toBe(0);
   });
 
   it("proceedAndRecordPrerequisites satisfies the condition, then runs the action", () => {
     const guard = createSpoilerGuard();
     const action = vi.fn(() => {
-      expect(userState.state.completed.mineFloor).toBe(12);
+      expect(userState.state.progress.mineFloor).toBe(12);
     });
     guard.requestGuardedAction(FLOOR_CONDITION, action);
 
     guard.proceedAndRecordPrerequisites();
 
     expect(action).toHaveBeenCalledTimes(1);
-    expect(userState.state.completed.mineFloor).toBe(12);
+    expect(userState.state.progress.mineFloor).toBe(12);
     expect(guard.open).toBe(false);
     expect(guard.condition).toBeNull();
   });
@@ -88,7 +88,7 @@ describe("createSpoilerGuard", () => {
   it("applies level caps through store setters before running the action", () => {
     const guard = createSpoilerGuard();
     guard.requestGuardedAction({ type: "renownLevel", level: 1_000_000 }, () => {
-      expect(userState.state.completed.renown).toBeLessThan(1_000_000);
+      expect(userState.state.progress.renown).toBeLessThan(1_000_000);
     });
     guard.proceedAndRecordPrerequisites();
   });
@@ -99,8 +99,8 @@ describe("createSpoilerGuard", () => {
     const guard = createSpoilerGuard();
     guard.requestGuardedAction({ type: "married", villagerId }, vi.fn());
     guard.proceedAndRecordPrerequisites();
-    expect(userState.state.completed.villagerRelationships[villagerId]).toBe("married");
-    expect(userState.state.completed.childChoice).toBe("undeclared");
+    expect(userState.state.progress.villagerRelationships[villagerId]).toBe("married");
+    expect(userState.state.progress.childChoice).toBe("undeclared");
   });
 
   it("proceedAndRecordPrerequisites with no condition still runs the action", () => {
