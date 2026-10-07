@@ -186,7 +186,14 @@ export default defineConfig({
         resolve: { alias: libAlias },
         test: {
           ...plainNodeTestOptions,
-          exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
+          // CLI exclusions are overridden by inline projects, so gate this file here.
+          exclude: [
+            ...sharedTestExcludes,
+            "**/*.assets.test.ts",
+            ...(process.env.VITEST_CLEANUP_CHANGED === "false"
+              ? ["scripts/cleanup-merged-worktrees.test.ts"]
+              : []),
+          ],
           include: ["eslint-rules/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
           name: "node",
         },
