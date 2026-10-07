@@ -19,14 +19,23 @@ interface ListedFile {
 }
 
 /** Every test file Vitest's projects collect, as repo-relative paths with their project names. */
-function listProjectFiles(): ListedFile[] {
+function listProjectFiles(cleanupChanged?: boolean): ListedFile[] {
   const outputDirectory = mkdtempSync(join(tmpdir(), "vitest-projects-"));
   try {
     const outputFile = join(outputDirectory, "list.json");
     execFileSync(
       process.execPath,
       [join(root, "node_modules/vitest/vitest.mjs"), "list", "--filesOnly", `--json=${outputFile}`],
-      { cwd: root, stdio: "ignore" },
+      {
+        cwd: root,
+        env: {
+          ...process.env,
+          ...(cleanupChanged === undefined
+            ? {}
+            : { VITEST_CLEANUP_CHANGED: String(cleanupChanged) }),
+        },
+        stdio: "ignore",
+      },
     );
     return (JSON.parse(readFileSync(outputFile, "utf8")) as ListedFile[]).map((entry) => ({
       file: relative(root, entry.file),
@@ -40,8 +49,15 @@ function listProjectFiles(): ListedFile[] {
 function trackedTestFiles(): string[] {
   return execFileSync("git", ["ls-files", "*.test.ts"], { cwd: root, encoding: "utf8" })
     .split("\n")
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter(
+      (file) =>
+        process.env.VITEST_CLEANUP_CHANGED !== "false" ||
+        file !== "scripts/cleanup-merged-worktrees.test.ts",
+    );
 }
+
+const byFile = (a: ListedFile, b: ListedFile) => a.file.localeCompare(b.file);
 
 describe("Vitest projects", () => {
   const listing: { files: ListedFile[] } = { files: [] };
@@ -53,6 +69,18 @@ describe("Vitest projects", () => {
   it("run every tracked test file", () => {
     const listedFiles = new Set(listing.files.map((entry) => entry.file));
     expect(trackedTestFiles().filter((file) => !listedFiles.has(file))).toEqual([]);
+  });
+
+  it("excludes only cleanup when its script is unchanged", () => {
+    const skipped = listProjectFiles(false);
+    expect(skipped.some(({ file }) => file === "scripts/cleanup-merged-worktrees.test.ts")).toBe(
+      false,
+    );
+    expect(skipped.toSorted(byFile)).toEqual(
+      listing.files
+        .filter(({ file }) => file !== "scripts/cleanup-merged-worktrees.test.ts")
+        .toSorted(byFile),
+    );
   });
 
   it("run each test file in exactly one project", () => {
