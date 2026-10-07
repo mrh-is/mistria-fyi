@@ -79,6 +79,7 @@ r2_upload_tree() {
   export BUCKET ORIGIN FORCE DRY_RUN
   local count
   cd "$dir"
+  # shellcheck disable=SC2016 # The child bash expands $1, the file xargs passes it.
   if ! find . -type f -name "$pattern" | sed 's|^\./||' | sort \
     | xargs -P "$PARALLEL" -I{} bash -c 'upload_one "$1"' _ {}; then
     echo "Some uploads failed; rerun to retry them." >&2

@@ -13,6 +13,7 @@ prefix_rule(
             "fonts:lint",
             "lint",
             "lint:fix",
+            "lint:shell",
             "paraglide:compile",
             "pipeline",
             "pipeline:assets",

@@ -56,6 +56,7 @@ fi
 
 ln -sfn "$install_dir" "$install_root/current"
 
+# shellcheck disable=SC2016 # $HOME stays literal so the startup files expand it at login.
 cloud_node_path='$HOME/.local/share/mistria-node/current/bin'
 path_line="export PATH=\"$cloud_node_path:\$PATH\""
 

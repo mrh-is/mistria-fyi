@@ -187,25 +187,25 @@ interactive `pnpm approve-builds` (unsupported in an agent shell).
 it. Wrangler may need access to Cloudflare's API and to its stored credentials (on macOS, under
 `~/Library/Preferences/.wrangler/`); never read or expose the stored OAuth token.
 
-| Command                       | Purpose                                     |
-| ----------------------------- | ------------------------------------------- |
-| `pnpm run dev`                | Dev server                                  |
-| `pnpm run preview`            | Preview the production build locally        |
-| `pnpm run build`              | Production build (Cloudflare Pages)         |
-| `pnpm run check`              | SvelteKit type checking                     |
-| `pnpm run check:i18n`         | Verify locale files match `en.json`'s keys  |
-| `pnpm run check:routes`       | Verify built static assets bypass Functions |
-| `pnpm run lint`               | oxfmt + oxlint + ESLint + Stylelint check   |
-| `pnpm run lint:fix`           | Auto-fix formatting & lint                  |
-| `pnpm run test`               | Complete Vitest suite (asset-independent)   |
-| `pnpm run test:changed`       | Vitest tests affected by branch changes     |
-| `pnpm run test:coverage`      | Complete suite plus coverage (opt-in)       |
-| `pnpm run test:app`           | App tests (`src/`)                          |
-| `pnpm run test:client`        | App component tests (`*.client.test.ts`)    |
-| `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                |
-| `pnpm run test:accessibility` | Browser accessibility matrix (Playwright)   |
-| `pnpm run verify`             | Full CI matrix locally (see §7 exceptions)  |
-| `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets  |
+| Command                       | Purpose                                        |
+| ----------------------------- | ---------------------------------------------- |
+| `pnpm run dev`                | Dev server                                     |
+| `pnpm run preview`            | Preview the production build locally           |
+| `pnpm run build`              | Production build (Cloudflare Pages)            |
+| `pnpm run check`              | SvelteKit type checking                        |
+| `pnpm run check:i18n`         | Verify locale files match `en.json`'s keys     |
+| `pnpm run check:routes`       | Verify built static assets bypass Functions    |
+| `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, & ShellCheck |
+| `pnpm run lint:fix`           | Auto-fix formatting & lint                     |
+| `pnpm run test`               | Complete Vitest suite (asset-independent)      |
+| `pnpm run test:changed`       | Vitest tests affected by branch changes        |
+| `pnpm run test:coverage`      | Complete suite plus coverage (opt-in)          |
+| `pnpm run test:app`           | App tests (`src/`)                             |
+| `pnpm run test:client`        | App component tests (`*.client.test.ts`)       |
+| `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                   |
+| `pnpm run test:accessibility` | Browser accessibility matrix (Playwright)      |
+| `pnpm run verify`             | Full CI matrix locally (see §7 exceptions)     |
+| `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets     |
 
 ## 5. Architecture boundaries
 
