@@ -3,7 +3,7 @@ import { assert, describe, expect, it } from "vitest";
 import { makeFiddle as makeFiddleWithProvenance } from "../test-helpers.js";
 import {
   assignEntityVisibility,
-  CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
+  CROWN_QUEST_RENOWN_LEVEL,
   extractCategoryVisibility,
   extractFetchQuestVisibility,
   extractHeartLevelChanges,
@@ -233,12 +233,10 @@ describe("extractCategoryVisibility", () => {
     expect(result.fetch).toEqual({ type: "always" });
   });
 
-  it("gates crown behind the placeholder renown level", () => {
+  it("gates crown behind Iron Star (renown level 40), per Ari.gml's crown cooldown", () => {
+    expect(CROWN_QUEST_RENOWN_LEVEL).toBe(40);
     const result = extractCategoryVisibility(mockVillagers);
-    expect(result.crown).toEqual({
-      type: "renownLevel",
-      level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
-    });
+    expect(result.crown).toEqual({ type: "renownLevel", level: 40 });
   });
 
   it("gates dates behind OR of dateable Villagers at heart level 8", () => {
@@ -1112,12 +1110,12 @@ describe("assignEntityVisibility — quests", () => {
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
     expect(trackerData.quests.crown["first_crown_quest" as QuestId].visibility).toEqual({
       type: "renownLevel",
-      level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
+      level: CROWN_QUEST_RENOWN_LEVEL,
     });
     expect(trackerData.quests.crown["second_crown_quest" as QuestId].visibility).toEqual({
       type: "and",
       conditions: [
-        { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER },
+        { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL },
         { type: "questCompleted", questId: "first_crown_quest" },
       ],
     });
