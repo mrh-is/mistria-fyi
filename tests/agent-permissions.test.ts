@@ -15,6 +15,7 @@ const NOT_ALLOWED: Record<string, string> = {
   "fonts:install": "installs a separate dependency tree",
   "fonts:upload": "publishes to production storage",
   "generate:brand-assets": "rewrites committed brand assets",
+  "housekeeping:install": "installs a persistent launchd agent that deletes merged worktrees",
   "optimize-icons": "rewrites committed icon files",
   "sprites:upload": "publishes to production storage",
   "sprites:villagers": "rewrites generated sprites from game assets",

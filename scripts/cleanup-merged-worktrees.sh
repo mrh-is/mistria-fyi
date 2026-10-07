@@ -7,33 +7,48 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/cleanup-merged-worktrees.sh [--apply]
+Usage: scripts/cleanup-merged-worktrees.sh [--apply] [--idle-minutes <minutes>]
 
 Preview or remove local branches and detached worktrees whose tip is reachable from the freshly
 fetched origin default branch, or is confirmed in a merged GitHub pull request. Associated
-worktrees are removed first, but only when clean and unlocked.
+worktrees are removed first, but only when clean, unlocked, and not in use.
 
 Without --apply, the script only reports what it would remove. It never removes branches with an
 open pull request, branches with local commits after the merged pull request, dirty worktrees, or
 worktrees that Git refuses to remove. The invoking and primary worktrees are always preserved.
 If refreshing the default branch fails, only GitHub PR evidence is used.
+
+A worktree is in use when a running process's working directory is inside it, or, with
+--idle-minutes, when its HEAD changed within that many minutes. A fresh agent worktree's tip is
+already in the default branch, so unattended runs need this guard to spare live sessions.
 EOF
 }
 
 apply=false
+idle_minutes=0
 
-case "${1:-}" in
-  "") ;;
-  --apply) apply=true ;;
-  -h | --help)
-    usage
-    exit 0
-    ;;
-  *)
-    usage >&2
-    exit 2
-    ;;
-esac
+while (($# > 0)); do
+  case "$1" in
+    --apply) apply=true ;;
+    --idle-minutes)
+      if [[ ! ${2:-} =~ ^[0-9]+$ ]]; then
+        usage >&2
+        exit 2
+      fi
+      idle_minutes=$2
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
 
 if ! command -v gh >/dev/null; then
   printf 'gh is required to confirm pull-request merge status.\n' >&2
@@ -55,11 +70,42 @@ if [[ -n $default_branch ]]; then
   fi
 fi
 
+# Working directories of this user's processes, such as agent sessions and their shells.
+process_directories=
+if command -v lsof >/dev/null; then
+  process_directories=$(lsof -a -d cwd -u "$(id -u)" -Fn 2>/dev/null | sed -n 's/^n//p' || true)
+fi
+
+worktree_is_in_use() {
+  local target=$1
+  local real_target directory git_directory
+  real_target=$(cd "$target" 2>/dev/null && pwd -P) || real_target=$target
+  while IFS= read -r directory; do
+    case "$directory" in
+      "$target" | "$target"/* | "$real_target" | "$real_target"/*)
+        printf 'Keeping worktree %s: a running process is using it.\n' "$target"
+        return 0
+        ;;
+    esac
+  done <<< "$process_directories"
+  # HEAD and its reflog change on checkout and commit. The index can't serve: the `git status`
+  # in worktree_is_safe rewrites it, so every run would refresh its own idle window.
+  if ((idle_minutes > 0)) && git_directory=$(git -C "$target" rev-parse --absolute-git-dir 2>/dev/null) &&
+    [[ -n $(find "$git_directory/HEAD" "$git_directory/logs/HEAD" -mmin "-$idle_minutes" 2>/dev/null) ]]; then
+    printf 'Keeping worktree %s: its HEAD changed in the last %s minutes.\n' "$target" "$idle_minutes"
+    return 0
+  fi
+  return 1
+}
+
 worktree_is_safe() {
   local target=$1
   local status worktree_path= line
   if [[ $target == "$repository_root" || $target == "$primary_worktree" ]]; then
     printf 'Keeping worktree %s: it is the invoking or primary worktree.\n' "$target"
+    return 1
+  fi
+  if worktree_is_in_use "$target"; then
     return 1
   fi
   while IFS= read -r line; do
