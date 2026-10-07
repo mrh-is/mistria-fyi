@@ -109,7 +109,7 @@ exists but was never awaited throws rather than silently degrading.
   also spreads `SEGMENT_LOOKUP_NAME_CHUNKS` from `src/lib/sources/segment-lookups.ts`. If you add a
   `getName()` call for a new category to a page's component tree, add the category to that route's
   list; the thrown error names the missing chunk.
-- **`/all`** awaits every category (`NAME_CHUNKS`).
+- **`/everything`** awaits every category (`NAME_CHUNKS`).
 - **Sitewide search** (`search-results.svelte`) awaits every category for the active locale, plus
   English (search also matches English terms), on first open, not at page load, and gates its
   results on that load. Chunks are cached per `<locale>/<category>` for the session, so reopening
@@ -174,9 +174,10 @@ is the rule for every layer: a game-data name with no translation, a UI string a
 translated, and a request with no usable locale all resolve to English.
 
 Every page URL carries a locale prefix (`/ja/almanac`); there is no unprefixed default. A bare path
-redirects (307) to the stored preference cookie's locale, then the best `Accept-Language` match,
-then `/en` (`bareLocaleRedirect` in `src/hooks.server.ts`). The redirect sends
-`Vary: Cookie, Accept-Language` so caches don't hand one visitor's locale to another.
+redirects (307) to the stored preference cookie's (`mistria-fyi-locale`) locale, then the best
+`Accept-Language` match, then `/en` (`bareLocaleRedirect` in `src/hooks.server.ts`). The redirect
+sends `Vary: Cookie, Accept-Language` so caches don't hand one visitor's locale to another. A prefix
+in the wrong case (`/zh-hans/almanac`) redirects permanently (308) to its BCP 47 casing.
 
 ## Locale list & Paraglide config
 

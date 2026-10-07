@@ -44,10 +44,10 @@ describe("BackupCard export", () => {
 
 describe("BackupCard restore", () => {
   it("replaces the current state from a valid backup and announces success", async () => {
-    userState.toggleShowSpoilers();
+    userState.setRenown(7);
     const backup = userState.exportBackup();
     userState.resetAll();
-    expect(userState.state.showSpoilers).toBe(false);
+    expect(userState.state.progress.renown).toBe(0);
     render(BackupCard, { open: true });
 
     await restoreFromFile(new File([backup], "backup.json", { type: "application/json" }));
@@ -56,7 +56,7 @@ describe("BackupCard restore", () => {
       expect(screen.getByRole("status")).toHaveTextContent("Backup restored successfully.");
     });
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(userState.state.showSpoilers).toBe(true);
+    expect(userState.state.progress.renown).toBe(7);
     expect(screen.getByRole("button", { name: "Restore from backup" })).toBeEnabled();
   });
 
@@ -75,7 +75,7 @@ describe("BackupCard restore", () => {
   it("rejects a backup missing required fields", async () => {
     render(BackupCard, { open: true });
 
-    await restoreFromFile(new File(['{"version":"1"}'], "partial.json"));
+    await restoreFromFile(new File(['{"version":1}'], "partial.json"));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/missing required data/);
   });
@@ -83,7 +83,7 @@ describe("BackupCard restore", () => {
   it("rejects a backup from a newer version", async () => {
     render(BackupCard, { open: true });
 
-    await restoreFromFile(new File(['{"version":"3"}'], "future.json"));
+    await restoreFromFile(new File(['{"version":2}'], "future.json"));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/newer version/);
   });
@@ -123,7 +123,7 @@ describe("BackupCard unreadable data", () => {
 
   it("downloads stored progress that couldn't be read", async () => {
     const invalid = "{not json";
-    localStorage.setItem("mistria-fyi-v1", invalid);
+    localStorage.setItem("mistria-fyi:progress", invalid);
     userState.loadFromStorage();
     const createObjectURL = vi.fn((_blob: Blob) => "blob:mistria/unreadable");
     vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));

@@ -46,7 +46,7 @@ export function createSpoilerGuard(): SpoilerGuard {
       if (condition) {
         for (const mutation of planConditionMutations(
           condition,
-          userState.state.completed,
+          userState.state.progress,
           trackerData,
         )) {
           switch (mutation.type) {
@@ -63,7 +63,7 @@ export function createSpoilerGuard(): SpoilerGuard {
               userState.setMineFloor(mutation.floor);
               break;
             case "perkUnlocked":
-              if (!userState.state.completed.unlockedPerks.has(mutation.perkId)) {
+              if (!userState.state.progress.unlockedPerks.has(mutation.perkId)) {
                 userState.togglePerk(mutation.perkId);
               }
               break;

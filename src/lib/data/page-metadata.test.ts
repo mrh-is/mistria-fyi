@@ -120,7 +120,7 @@ describe("localized metadata", () => {
   it("renders the home, everything, and error metadata in the page's locale", async () => {
     const [{ load: loadHome }, { load: loadAll }] = await Promise.all([
       import("../../routes/+page.js"),
-      import("../../routes/all/+page.js"),
+      import("../../routes/everything/+page.js"),
     ]);
     const event = { parent: () => Promise.resolve({ locale: "ja" }) } as never;
     const home = (await loadHome(event)) as { metadata: PageMetadata };

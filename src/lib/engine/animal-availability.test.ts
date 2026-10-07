@@ -1,19 +1,27 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
-import { legacyAvailabilityWindows } from "#lib/types/availability.js";
+import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import { getVariantSeason, isVariantInScope } from "./animal-availability.js";
 
-import type { LegacyAvailabilityMode } from "#lib/types/availability.js";
+import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { AnimalVariant, Season } from "#lib/types/tracker-data.js";
 
+/** Window selections named for the retired availability modes, kept as test presets. */
+const WINDOW_PRESETS = {
+  available: DEFAULT_AVAILABILITY_WINDOWS,
+  everything: AVAILABILITY_WINDOWS,
+  timely: ["now"],
+} satisfies Record<string, readonly AvailabilityWindow[]>;
+type WindowPreset = keyof typeof WINDOW_PRESETS;
+
 const SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
-const MODES: LegacyAvailabilityMode[] = ["available", "everything", "timely"];
-const AVAILABLE = legacyAvailabilityWindows("available");
-const EVERYTHING = legacyAvailabilityWindows("everything");
-const TIMELY = legacyAvailabilityWindows("timely");
+const MODES: WindowPreset[] = ["available", "everything", "timely"];
+const AVAILABLE = [...DEFAULT_AVAILABILITY_WINDOWS];
+const EVERYTHING = [...AVAILABILITY_WINDOWS];
+const TIMELY: AvailabilityWindow[] = ["now"];
 
 const SUMMER_BREED: AnimalVariant = {
   source: { type: "breed", availability: { type: "season", seasons: ["summer"] } },
@@ -103,7 +111,7 @@ describe("animal progress vs UI predicate agreement", () => {
     (mode, season) => {
       let uiInScopeCount = 0;
       for (const { variant } of allVariants()) {
-        if (isVariantInScope(variant, season, legacyAvailabilityWindows(mode))) {
+        if (isVariantInScope(variant, season, [...WINDOW_PRESETS[mode]])) {
           uiInScopeCount++;
         }
       }
@@ -112,7 +120,7 @@ describe("animal progress vs UI predicate agreement", () => {
       for (const [, animal] of recordEntries(trackerData.animals)) {
         for (const tier of animal.variantTiers) {
           for (const [, variant] of recordEntries(tier)) {
-            if (isVariantInScope(variant, season, legacyAvailabilityWindows(mode))) {
+            if (isVariantInScope(variant, season, [...WINDOW_PRESETS[mode]])) {
               progressFilteredCount++;
             }
           }

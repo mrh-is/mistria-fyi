@@ -55,32 +55,32 @@
   );
 
   let cosmeticCompletedCount = $derived(
-    scopedPetCosmeticEntries.filter((entry) => userState.state.completed.petCosmetics.has(entry.id))
+    scopedPetCosmeticEntries.filter((entry) => userState.state.progress.petCosmetics.has(entry.id))
       .length,
   );
 
   let skinCompletedCount = $derived(
-    scopedPetSkinEntries.filter((entry) => userState.state.completed.petSkins.has(entry.id)).length,
+    scopedPetSkinEntries.filter((entry) => userState.state.progress.petSkins.has(entry.id)).length,
   );
 
   let visibleCosmeticEntries = $derived(
     scopedPetCosmeticEntries.filter((e) => {
-      const done = userState.state.completed.petCosmetics.has(e.id);
+      const done = userState.state.progress.petCosmetics.has(e.id);
       return done ? userState.state.showCompleted : true;
     }),
   );
 
   let visibleSkinEntries = $derived(
     scopedPetSkinEntries.filter((e) => {
-      const done = userState.state.completed.petSkins.has(e.id);
+      const done = userState.state.progress.petSkins.has(e.id);
       return done ? userState.state.showCompleted : true;
     }),
   );
 
   function arePetsComplete(): boolean {
     return (
-      petCosmeticEntries.every((e) => userState.state.completed.petCosmetics.has(e.id)) &&
-      petSkinEntries.every((e) => userState.state.completed.petSkins.has(e.id))
+      petCosmeticEntries.every((e) => userState.state.progress.petCosmetics.has(e.id)) &&
+      petSkinEntries.every((e) => userState.state.progress.petSkins.has(e.id))
     );
   }
 </script>
@@ -97,7 +97,7 @@
       {#snippet row(entry)}
         <TrackerRow
           display={trackerRowDisplay({
-            completed: userState.state.completed.petCosmetics.has(entry.id),
+            completed: userState.state.progress.petCosmetics.has(entry.id),
           })}
           segmentLookups={baseLookups}
           name={entry.name}
@@ -106,7 +106,7 @@
           sources={entry.sources}
           onToggle={() => {
             userState.togglePetCosmetic(entry.id);
-            const completed = userState.state.completed.petCosmetics.has(entry.id);
+            const completed = userState.state.progress.petCosmetics.has(entry.id);
             showUndoToast(entry.name, completed, () => {
               userState.togglePetCosmetic(entry.id);
             });
@@ -134,7 +134,7 @@
       {#snippet row(entry)}
         <TrackerRow
           display={trackerRowDisplay({
-            completed: userState.state.completed.petSkins.has(entry.id),
+            completed: userState.state.progress.petSkins.has(entry.id),
           })}
           segmentLookups={baseLookups}
           name={entry.name}
@@ -143,7 +143,7 @@
           sources={entry.sources}
           onToggle={() => {
             userState.togglePetSkin(entry.id);
-            const completed = userState.state.completed.petSkins.has(entry.id);
+            const completed = userState.state.progress.petSkins.has(entry.id);
             showUndoToast(entry.name, completed, () => {
               userState.togglePetSkin(entry.id);
             });

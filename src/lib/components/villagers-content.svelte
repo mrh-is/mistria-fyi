@@ -20,7 +20,7 @@
   let visibleVillagers = $derived(
     filterVillagerRoster(
       villagers,
-      userState.state.completed,
+      userState.state.progress,
       userState.state.showCompleted,
       targetedId,
     ),

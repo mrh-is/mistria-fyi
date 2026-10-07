@@ -53,8 +53,8 @@ test.describe("320-pixel reflow", () => {
       page,
       "light",
       createStoredState({
-        availabilityMode: "everything",
-        completed: {
+        availabilityWindows: ["now", "anytime", "later"],
+        progress: {
           heartLevels: { adeline: 10 },
           mineFloor: 21,
           renown: 14,
@@ -66,7 +66,7 @@ test.describe("320-pixel reflow", () => {
       }),
     );
 
-    for (const path of ["/villagers", "/skills", "/mines", "/renown", "/all"]) {
+    for (const path of ["/villagers", "/skills", "/mines", "/renown", "/everything"]) {
       await gotoApplication(page, path);
       expect(findOverflow(await collectVisibleElementBoxes(page), 320), path).toEqual([]);
     }
@@ -267,7 +267,7 @@ test.describe("tracker paper touch geometry", () => {
     await initializeApplication(
       page,
       "light",
-      createStoredState({ availabilityMode: "everything" }),
+      createStoredState({ availabilityWindows: ["now", "anytime", "later"] }),
     );
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
@@ -304,8 +304,8 @@ test.describe("tracker paper touch geometry", () => {
       page,
       "light",
       createStoredState({
-        availabilityMode: "everything",
-        completed: {
+        availabilityWindows: ["now", "anytime", "later"],
+        progress: {
           heartLevels: { adeline: 10 },
           villagerRelationships: { adeline: "romantic" },
         },

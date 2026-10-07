@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { getMaxMineFloor, MAX_HEART_LEVEL, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
+import { PREFERENCES_STORAGE_KEY, PROGRESS_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
-const STORAGE_KEY = "mistria-fyi-v1";
 const UNKNOWN_ID = "removed_from_tracker_data";
 
 function firstAnimalEntry(): {
@@ -90,8 +90,7 @@ function buildStoredState(
   if (malformedNumericScalars) mineFloor = null;
   else if (invalidDomains) mineFloor = getMaxMineFloor() + 50;
   return JSON.stringify({
-    availabilityWindows: invalidDomains ? ["now", "removed_window"] : ["now"],
-    completed: {
+    progress: {
       almanac: [known.almanac, UNKNOWN_ID],
       almanacRecipes: [known.almanacRecipe, UNKNOWN_ID],
       animalCosmetics: {
@@ -134,8 +133,7 @@ function buildStoredState(
         [UNKNOWN_ID]: "romantic",
       },
     },
-    showSpoilers: false,
-    version: "1",
+    version: 1,
     worldState: {
       season: invalidDomains ? "monsoon" : "spring",
       weather: invalidDomains ? "removed_weather" : "calm",
@@ -168,12 +166,44 @@ function expectUnknownIdsRemoved(completed: DeepReadonly<ProgressState>): void {
 }
 
 function makeStorage(json: string): Storage {
-  return memoryStorage({ [STORAGE_KEY]: json });
+  return memoryStorage({ [PROGRESS_STORAGE_KEY]: json });
 }
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.resetModules();
+});
+
+describe("stored preferences", () => {
+  it.each([
+    ["missing", undefined, ["now", "anytime"], false],
+    ["malformed", "not json", ["now", "anytime"], false],
+    [
+      "unknown windows",
+      '{"availabilityWindows":["later","removed","now"]}',
+      ["now", "later"],
+      false,
+    ],
+    [
+      "no valid windows",
+      '{"availabilityWindows":["removed"],"showSpoilers":true}',
+      ["now", "anytime"],
+      true,
+    ],
+  ] as const)("defaults %s values field by field", async (_, stored, windows, showSpoilers) => {
+    vi.stubGlobal("window", {});
+    vi.stubGlobal(
+      "localStorage",
+      memoryStorage(stored === undefined ? {} : { [PREFERENCES_STORAGE_KEY]: stored }),
+    );
+
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.loadFromStorage();
+
+    expect(userState.persistenceFailed).toBe(false);
+    expect(userState.state.availabilityWindows).toEqual(windows);
+    expect(userState.state.showSpoilers).toBe(showSpoilers);
+  });
 });
 
 describe("persisted-state normalization", () => {
@@ -185,29 +215,28 @@ describe("persisted-state normalization", () => {
     userState.loadFromStorage();
 
     expect(userState.persistenceFailed).toBe(false);
-    expect(userState.state.availabilityWindows).toEqual(["now"]);
     expect(userState.state.worldState).toEqual({ season: "spring", weather: "calm" });
-    expect(userState.state.completed.childChoice).toBe("undeclared");
-    expect(userState.state.completed.reachedSeason).toBe("spring");
-    expect(userState.state.completed.mineFloor).toBe(getMaxMineFloor());
-    expect(userState.state.completed.skillLevels[known.skill]).toBe(MAX_SKILL_LEVEL);
-    expect(userState.state.completed.heartLevels[known.villager]).toBe(MAX_HEART_LEVEL);
-    expect(userState.state.completed.questStates).not.toHaveProperty(known.questWithInvalidState);
-    expect(userState.state.completed.skillLevels).not.toHaveProperty(known.skillWithInvalidLevel);
-    expect(userState.state.completed.heartLevels).not.toHaveProperty(known.villagerWithInvalidData);
-    expect(userState.state.completed.villagerRelationships).not.toHaveProperty(
+    expect(userState.state.progress.childChoice).toBe("undeclared");
+    expect(userState.state.progress.reachedSeason).toBe("spring");
+    expect(userState.state.progress.mineFloor).toBe(getMaxMineFloor());
+    expect(userState.state.progress.skillLevels[known.skill]).toBe(MAX_SKILL_LEVEL);
+    expect(userState.state.progress.heartLevels[known.villager]).toBe(MAX_HEART_LEVEL);
+    expect(userState.state.progress.questStates).not.toHaveProperty(known.questWithInvalidState);
+    expect(userState.state.progress.skillLevels).not.toHaveProperty(known.skillWithInvalidLevel);
+    expect(userState.state.progress.heartLevels).not.toHaveProperty(known.villagerWithInvalidData);
+    expect(userState.state.progress.villagerRelationships).not.toHaveProperty(
       known.villagerWithInvalidData,
     );
-    expectUnknownIdsRemoved(userState.state.completed);
+    expectUnknownIdsRemoved(userState.state.progress);
   });
 
   it("filters IDs removed from tracker data when importing a manual backup", async () => {
     const { userState } = await import("#lib/stores/user-state.svelte.js");
 
     expect(userState.restoreBackup(buildStoredState())).toEqual({ ok: true });
-    expectUnknownIdsRemoved(userState.state.completed);
-    expect(userState.state.completed.almanac).toContain(known.almanac);
-    expect((userState.state.completed.questStates as Record<string, string>)[known.quest]).toBe(
+    expectUnknownIdsRemoved(userState.state.progress);
+    expect(userState.state.progress.almanac).toContain(known.almanac);
+    expect((userState.state.progress.questStates as Record<string, string>)[known.quest]).toBe(
       "completed",
     );
   });
@@ -220,10 +249,10 @@ describe("persisted-state normalization", () => {
     userState.loadFromStorage();
 
     expect(userState.persistenceFailed).toBe(false);
-    expect(userState.state.completed.mineFloor).toBe(0);
-    expect(userState.state.completed.renown).toBe(0);
-    expect(userState.state.completed.almanac).toContain(known.almanac);
-    expect((userState.state.completed.questStates as Record<string, string>)[known.quest]).toBe(
+    expect(userState.state.progress.mineFloor).toBe(0);
+    expect(userState.state.progress.renown).toBe(0);
+    expect(userState.state.progress.almanac).toContain(known.almanac);
+    expect((userState.state.progress.questStates as Record<string, string>)[known.quest]).toBe(
       "completed",
     );
   });

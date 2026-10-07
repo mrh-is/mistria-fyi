@@ -24,7 +24,7 @@ const petSkinId = recordKeys(trackerData.pets.skins)[0];
 const COLLECTIONS = [
   {
     name: "cosmetics",
-    read: () => [...userState.state.completed.cosmetics],
+    read: () => [...userState.state.progress.cosmetics],
     toggle: () => {
       userState.toggleCosmetic(cosmeticId);
     },
@@ -32,7 +32,7 @@ const COLLECTIONS = [
   },
   {
     name: "dates",
-    read: () => [...userState.state.completed.dates],
+    read: () => [...userState.state.progress.dates],
     toggle: () => {
       userState.toggleDate(dateId);
     },
@@ -40,7 +40,7 @@ const COLLECTIONS = [
   },
   {
     name: "animal variants",
-    read: () => [...(userState.state.completed.animals[animalId] ?? [])],
+    read: () => [...(userState.state.progress.animals[animalId] ?? [])],
     toggle: () => {
       userState.toggleAnimalVariant(animalId, variantId);
     },
@@ -48,7 +48,7 @@ const COLLECTIONS = [
   },
   {
     name: "animal cosmetics",
-    read: () => [...(userState.state.completed.animalCosmetics[animalId] ?? [])],
+    read: () => [...(userState.state.progress.animalCosmetics[animalId] ?? [])],
     toggle: () => {
       userState.toggleAnimalCosmetic(animalId, animalCosmeticId);
     },
@@ -56,7 +56,7 @@ const COLLECTIONS = [
   },
   {
     name: "pet cosmetics",
-    read: () => [...userState.state.completed.petCosmetics],
+    read: () => [...userState.state.progress.petCosmetics],
     toggle: () => {
       userState.togglePetCosmetic(petCosmeticId);
     },
@@ -64,7 +64,7 @@ const COLLECTIONS = [
   },
   {
     name: "pet skins",
-    read: () => [...userState.state.completed.petSkins],
+    read: () => [...userState.state.progress.petSkins],
     toggle: () => {
       userState.togglePetSkin(petSkinId);
     },
@@ -139,15 +139,5 @@ describe("world state & availability", () => {
     userState.setAvailabilityWindows(["later", "now", "later"]);
 
     expect(userState.state.availabilityWindows).toEqual(["now", "later"]);
-  });
-
-  it("round-trips availability windows through exportBackup & restoreBackup", () => {
-    userState.setAvailabilityWindows(["later"]);
-    const json = userState.exportBackup();
-
-    userState.resetAll();
-    expect(userState.restoreBackup(json)).toEqual({ ok: true });
-
-    expect(userState.state.availabilityWindows).toEqual(["later"]);
   });
 });

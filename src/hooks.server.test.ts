@@ -41,6 +41,19 @@ describe("bareLocaleRedirect", () => {
     expect(resolve).toHaveBeenCalledTimes(2);
   });
 
+  it.each([
+    ["/zh-hans/almanac", "/zh-Hans/almanac"],
+    ["/ZH-HANT", "/zh-Hant"],
+    ["/EN/villagers?x=1", "/en/villagers?x=1"],
+  ])("permanently redirects the miscased locale in %s", async (path, location) => {
+    const resolve = vi.fn();
+    const response = await bareLocaleRedirect({ event: makeEvent(path), resolve });
+
+    expect(resolve).not.toHaveBeenCalled();
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe(location);
+  });
+
   it("redirects a bare path to the cookie-preferred locale", async () => {
     const resolve = vi.fn();
     const response = await bareLocaleRedirect({

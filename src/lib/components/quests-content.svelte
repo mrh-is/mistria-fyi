@@ -36,7 +36,7 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
-  let sections = $derived(buildQuestSections(userState.state.completed, locale));
+  let sections = $derived(buildQuestSections(userState.state.progress, locale));
 
   /** A section's rows within the source filters, with their counter values. */
   interface SectionView {
@@ -70,7 +70,7 @@
   registerSourceFilters("quests", () => trackerIndex.categorySourceTypes.quests);
 
   function getQuestState(id: QuestId): QuestState {
-    return userState.state.completed.questStates[id] ?? "none";
+    return userState.state.progress.questStates[id] ?? "none";
   }
 
   function isRowCompleted(row: QuestRow): boolean {

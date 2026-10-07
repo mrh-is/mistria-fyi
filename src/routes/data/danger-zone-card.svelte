@@ -13,7 +13,7 @@
   let resetDialogOpen = $state(false);
 
   function handleReset() {
-    userState.resetAll();
+    userState.resetProgress();
     resetDialogOpen = false;
   }
 </script>

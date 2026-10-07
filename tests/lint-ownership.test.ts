@@ -100,7 +100,7 @@ describe("lint tool ownership", () => {
       "src/lib/components/source-segment-text.svelte",
       "src/lib/components/future-feature.svelte",
       "src/lib/components/spoiler.svelte",
-      "src/routes/all/+page.svelte",
+      "src/routes/everything/+page.svelte",
       "src/routes/+error.svelte",
     ]) {
       const config = (await eslint.calculateConfigForFile(file)) as

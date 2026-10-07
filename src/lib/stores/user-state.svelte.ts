@@ -19,12 +19,7 @@ import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
 import { applyMarriageCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
-import {
-  AVAILABILITY_WINDOWS,
-  DEFAULT_AVAILABILITY_WINDOWS,
-  LEGACY_AVAILABILITY_MODES,
-  legacyAvailabilityWindows,
-} from "#lib/types/availability.js";
+import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
 import {
   CHILD_CHOICES,
@@ -35,8 +30,14 @@ import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 import { unionInto } from "#lib/utils/set.js";
 
+import {
+  PREFERENCES_STORAGE_KEY,
+  PROGRESS_STORAGE_KEY,
+  QUARANTINE_STORAGE_KEY,
+} from "./storage-keys.js";
+
 import type { UserProgressionState } from "#lib/engine/visibility.js";
-import type { AvailabilityWindow, LegacyAvailabilityMode } from "#lib/types/availability.js";
+import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -84,7 +85,7 @@ export interface QuestCompletion {
 
 export interface UserState {
   availabilityWindows: AvailabilityWindow[];
-  completed: ProgressState;
+  progress: ProgressState;
   showCompleted: boolean;
   showSpoilers: boolean;
   worldState: { season: Season; weather: Weather };
@@ -92,10 +93,13 @@ export interface UserState {
 
 // ─── Serialization ──────────────────────────────────────────────────
 
+/**
+ * The persisted progress blob, also the JSON backup. Field names, the key, & the version are a
+ * public contract (see `docs/app-architecture.md` §3); `user-state.golden.test.ts` pins them.
+ * Fields added after launch must stay optional so older blobs keep loading.
+ */
 export interface SerializedState {
-  availabilityMode?: LegacyAvailabilityMode;
-  availabilityWindows?: AvailabilityWindow[];
-  completed: {
+  progress: {
     almanac: string[];
     almanacRecipes?: string[];
     animalCosmetics: Record<string, string[]>;
@@ -105,44 +109,32 @@ export interface SerializedState {
     dates?: string[];
     hasUpperFloor?: boolean;
     heartLevels?: Record<string, number>;
-    marriedVillager?: null | string;
     mineFloor: number;
     museum: string[];
     petCosmetics?: string[];
     petSkins?: string[];
-    quests?: string[];
     questStates?: Record<string, QuestState>;
     reachedSeason?: Season;
     renown: number;
-    romanticVillagers?: string[];
     skillLevels?: Record<string, number>;
-    skills?: string[];
     spells: string[];
     unlockedPerks?: string[];
     villagerRelationships?: Record<string, VillagerRelationship>;
-    villagers?: string[];
   };
-  showSpoilers?: boolean;
-  version: string;
+  version: number;
   worldState: { season: Season; weather: Weather };
+}
+
+/** Per-device display preferences, stored apart from progress so a backup restore keeps them. */
+export interface SerializedPreferences {
+  availabilityWindows: AvailabilityWindow[];
+  showSpoilers: boolean;
 }
 
 /** Quiet period after the last change before progress is written to localStorage. */
 export const PERSIST_DEBOUNCE_MS = 300;
-const STORAGE_KEY = "mistria-fyi-v1";
-const QUARANTINE_KEY = `${STORAGE_KEY}-quarantine`;
-/**
- * Legacy states stored completed villagers and skills as bare ID lists. A completed villager
- * migrates to the maximum standard heart level (romance unlocks the hearts above it); a completed
- * skill migrates to the maximum skill level.
- */
-const LEGACY_COMPLETED_HEART_LEVEL = 10;
-const LEGACY_COMPLETED_SKILL_LEVEL = MAX_SKILL_LEVEL;
-const SUPPORTED_SERIALIZATION_VERSIONS = new Set(["1", CURRENT_SERIALIZATION_VERSION]);
 
 const VALID_CHILD_CHOICES = new Set<string>(CHILD_CHOICES);
-const VALID_AVAILABILITY_MODES = new Set<string>(LEGACY_AVAILABILITY_MODES);
-const VALID_AVAILABILITY_WINDOWS = new Set<string>(AVAILABILITY_WINDOWS);
 const VALID_RELATIONSHIPS = new Set<string>(VILLAGER_RELATIONSHIPS);
 const VALID_QUEST_STATES = new Set<string>(QUEST_STATES);
 const VALID_SEASONS = new Set<string>(SEASONS);
@@ -150,7 +142,7 @@ const VALID_WEATHER = new Set<string>(WEATHERS);
 
 type DeserializeResult =
   | { error: BackupRestoreErrorKind; ok: false }
-  | { ok: true; source: Record<string, unknown>; state: UserState };
+  | { ok: true; progress: ProgressState; worldState: UserState["worldState"] };
 type ValidationMode = "local" | "strict";
 
 const QUEST_IDS = new Set(
@@ -167,16 +159,16 @@ const PERK_IDS = new Set(
   ),
 );
 
-function addDefaultUnlocks(completed: ProgressState): void {
+function addDefaultUnlocks(progress: ProgressState): void {
   for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
     if (cosmetic.sources.some((s) => s.type === "default")) {
-      completed.cosmetics.add(id);
+      progress.cosmetics.add(id);
     }
   }
 
   for (const [animalId, animal] of recordEntries(trackerData.animals)) {
     const variantSet = getOrCreate(
-      completed.animals,
+      progress.animals,
       animalId,
       () => new SvelteSet<AnimalVariantId>(),
     );
@@ -191,7 +183,7 @@ function addDefaultUnlocks(completed: ProgressState): void {
 
   for (const [id, recipe] of recordEntries(trackerData.recipes)) {
     if (recipe.sources.some((s) => s.type === "default")) {
-      completed.almanacRecipes.add(id);
+      progress.almanacRecipes.add(id);
     }
   }
 }
@@ -202,10 +194,10 @@ function addDefaultUnlocks(completed: ProgressState): void {
  * animals; this backfills empty sets so downstream code can access maps without
  * guarding missing keys.
  */
-function backfillAnimalMaps(completed: ProgressState): void {
+function backfillAnimalMaps(progress: ProgressState): void {
   for (const animalId of recordKeys(trackerData.animals)) {
-    completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>();
-    completed.animalCosmetics[animalId] ??= new SvelteSet<CosmeticId>();
+    progress.animals[animalId] ??= new SvelteSet<AnimalVariantId>();
+    progress.animalCosmetics[animalId] ??= new SvelteSet<CosmeticId>();
   }
 }
 
@@ -243,14 +235,21 @@ function createDefaultProgress(): ProgressState {
 
 // ─── Store ──────────────────────────────────────────────────────────
 
+function createDefaultPreferences(): SerializedPreferences {
+  return { availabilityWindows: [...DEFAULT_AVAILABILITY_WINDOWS], showSpoilers: false };
+}
+
 function createDefaultState(): UserState {
   return {
-    availabilityWindows: [...DEFAULT_AVAILABILITY_WINDOWS],
-    completed: createDefaultProgress(),
+    ...createDefaultPreferences(),
+    progress: createDefaultProgress(),
     showCompleted: false,
-    showSpoilers: false,
-    worldState: { season: "spring", weather: "calm" },
+    worldState: createDefaultWorldState(),
   };
+}
+
+function createDefaultWorldState(): UserState["worldState"] {
+  return { season: "spring", weather: "calm" };
 }
 
 function createUserState() {
@@ -261,7 +260,8 @@ function createUserState() {
   let quarantineAvailable = false;
   let _persistenceFailureKind = $state<PersistenceFailureKind>("unavailable");
   let _unreadableData = $state<null | string>(null);
-  let serializedSource: Record<string, unknown> | undefined;
+  let _preferencesReady = $state(false);
+  let lastKnownPreferencesValue: null | string = null;
   let lastKnownStoredValue: null | string = null;
   let pendingSave: undefined | { expectedStoredValue: null | string; json: string };
   let saveTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -281,14 +281,14 @@ function createUserState() {
   function quarantine(value: string): void {
     _persistenceReady = false;
     persistenceBlocked = true;
-    quarantineAvailable = trySetItem(QUARANTINE_KEY, value);
+    quarantineAvailable = trySetItem(QUARANTINE_STORAGE_KEY, value);
     _unreadableData = value;
     _persistenceFailureKind = "unreadable";
     _persistenceFailureGeneration++;
   }
 
   function persist(json: string, expectedStoredValue: null | string): void {
-    const storedResult = tryGetItem(STORAGE_KEY);
+    const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
     if (!storedResult.ok) {
       reportStorageUnavailable();
       return;
@@ -304,7 +304,7 @@ function createUserState() {
       return;
     }
 
-    if (!trySetItem(STORAGE_KEY, json)) {
+    if (!trySetItem(PROGRESS_STORAGE_KEY, json)) {
       reportStorageUnavailable();
       return;
     }
@@ -322,7 +322,7 @@ function createUserState() {
   function flushCurrentState(): void {
     if (!_persistenceReady) return;
     clearPendingSave();
-    persist(serialize(state, serializedSource), lastKnownStoredValue);
+    persist(serialize(state), lastKnownStoredValue);
   }
 
   function applyStorageValue(value: null | string): void {
@@ -332,8 +332,7 @@ function createUserState() {
 
     const result = deserialize(value, "local");
     if (result.ok) {
-      state = result.state;
-      serializedSource = result.source;
+      replaceProgress(result);
       persistenceBlocked = false;
       quarantineAvailable = false;
       _persistenceFailureGeneration = 0;
@@ -345,10 +344,31 @@ function createUserState() {
   }
 
   function resyncFromStorage(): void {
-    const storedResult = tryGetItem(STORAGE_KEY);
+    const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
     if (storedResult.ok && storedResult.value !== lastKnownStoredValue) {
       applyStorageValue(storedResult.value);
     }
+    const preferencesResult = tryGetItem(PREFERENCES_STORAGE_KEY);
+    if (preferencesResult.ok && preferencesResult.value !== lastKnownPreferencesValue) {
+      applyPreferencesValue(preferencesResult.value);
+    }
+  }
+
+  /** Swaps in loaded progress & world state, leaving this device's preferences untouched. */
+  function replaceProgress(loaded: Pick<UserState, "progress" | "worldState">): void {
+    state.progress = loaded.progress;
+    state.worldState = loaded.worldState;
+  }
+
+  /**
+   * Adopts stored preferences. They're per-device conveniences, so a missing or unreadable value
+   * falls back to defaults field by field instead of blocking anything.
+   */
+  function applyPreferencesValue(value: null | string): void {
+    lastKnownPreferencesValue = value;
+    const preferences = deserializePreferences(value);
+    state.availabilityWindows = preferences.availabilityWindows;
+    state.showSpoilers = preferences.showSpoilers;
   }
 
   function enablePersistenceAfterExplicitReplace(): void {
@@ -360,7 +380,7 @@ function createUserState() {
   }
 
   const progressionState = $derived(
-    deriveProgressionState(state.completed, trackerData, state.showSpoilers),
+    deriveProgressionState(state.progress, trackerData, state.showSpoilers),
   );
 
   // Auto-save to localStorage (debounced)
@@ -369,12 +389,22 @@ function createUserState() {
       $effect(() => {
         if (!_persistenceReady) return;
 
-        const json = serialize(state, serializedSource);
+        const json = serialize(state);
         clearPendingSave();
         if (json === lastKnownStoredValue) return;
 
         pendingSave = { expectedStoredValue: lastKnownStoredValue, json };
         saveTimeout = setTimeout(flushPendingSave, PERSIST_DEBOUNCE_MS);
+      });
+
+      // Preferences are tiny & rarely change, so they're written immediately; a failed write only
+      // costs this device its preferences, which the progress save reports anyway.
+      $effect(() => {
+        if (!_preferencesReady) return;
+
+        const json = serializePreferences(state);
+        if (json === lastKnownPreferencesValue) return;
+        if (trySetItem(PREFERENCES_STORAGE_KEY, json)) lastKnownPreferencesValue = json;
       });
     });
 
@@ -389,48 +419,53 @@ function createUserState() {
       // A null key means another tab called `localStorage.clear()`.
       if (event.key === null) {
         resyncFromStorage();
-      } else if (event.key === STORAGE_KEY) {
+      } else if (event.key === PROGRESS_STORAGE_KEY) {
         applyStorageValue(event.newValue);
+      } else if (event.key === PREFERENCES_STORAGE_KEY) {
+        // Events can arrive after this tab has written something newer, so adopt what's stored now
+        // rather than the event's value; every tab then converges on the last write.
+        const preferencesResult = tryGetItem(PREFERENCES_STORAGE_KEY);
+        if (preferencesResult.ok) applyPreferencesValue(preferencesResult.value);
       }
     });
   }
 
   const hasAnyProgress = $derived(
-    state.completed.almanac.size > 0 ||
-      state.completed.almanacRecipes.size > 0 ||
-      state.completed.cosmetics.size > 0 ||
-      state.completed.hasUpperFloor ||
-      state.completed.museum.size > 0 ||
-      state.completed.dates.size > 0 ||
-      state.completed.reachedSeason !== "spring" ||
-      Object.keys(state.completed.villagerRelationships).length > 0 ||
-      state.completed.childChoice !== "undeclared" ||
-      state.completed.mineFloor > 0 ||
-      state.completed.spells.size > 0 ||
-      state.completed.renown > 0 ||
-      state.completed.petCosmetics.size > 0 ||
-      state.completed.petSkins.size > 0 ||
-      state.completed.unlockedPerks.size > 0 ||
-      recordValues(state.completed.heartLevels).some((v) => v > 0) ||
-      recordValues(state.completed.skillLevels).some((v) => v > 0) ||
-      recordValues(state.completed.questStates).some((v) => v !== "none") ||
-      recordValues(state.completed.animals).some((s) => s.size > 0) ||
-      recordValues(state.completed.animalCosmetics).some((s) => s.size > 0),
+    state.progress.almanac.size > 0 ||
+      state.progress.almanacRecipes.size > 0 ||
+      state.progress.cosmetics.size > 0 ||
+      state.progress.hasUpperFloor ||
+      state.progress.museum.size > 0 ||
+      state.progress.dates.size > 0 ||
+      state.progress.reachedSeason !== "spring" ||
+      Object.keys(state.progress.villagerRelationships).length > 0 ||
+      state.progress.childChoice !== "undeclared" ||
+      state.progress.mineFloor > 0 ||
+      state.progress.spells.size > 0 ||
+      state.progress.renown > 0 ||
+      state.progress.petCosmetics.size > 0 ||
+      state.progress.petSkins.size > 0 ||
+      state.progress.unlockedPerks.size > 0 ||
+      recordValues(state.progress.heartLevels).some((v) => v > 0) ||
+      recordValues(state.progress.skillLevels).some((v) => v > 0) ||
+      recordValues(state.progress.questStates).some((v) => v !== "none") ||
+      recordValues(state.progress.animals).some((s) => s.size > 0) ||
+      recordValues(state.progress.animalCosmetics).some((s) => s.size > 0),
   );
 
   return {
     /** Cycles the quest's state, completing its recipe rewards on the obtained-to-completed step. */
     completeQuestWithRecipes(id: QuestId): QuestCompletion {
-      const previousState = state.completed.questStates[id] ?? "none";
-      state.completed.questStates[id] = nextQuestState(previousState);
+      const previousState = state.progress.questStates[id] ?? "none";
+      state.progress.questStates[id] = nextQuestState(previousState);
 
       if (previousState !== "obtained") return { newlyAdded: [], previousState };
 
       const candidates = findRecipesForQuest(id);
       const newlyAdded: RecipeId[] = [];
       for (const recipeId of candidates) {
-        if (!state.completed.almanacRecipes.has(recipeId)) {
-          state.completed.almanacRecipes.add(recipeId);
+        if (!state.progress.almanacRecipes.has(recipeId)) {
+          state.progress.almanacRecipes.add(recipeId);
           newlyAdded.push(recipeId);
         }
       }
@@ -444,13 +479,19 @@ function createUserState() {
       }
     },
     exportBackup(): string {
-      return serialize(state, serializedSource);
+      return serialize(state);
     },
     get hasAnyProgress(): boolean {
       return hasAnyProgress;
     },
     loadFromStorage() {
-      const storedResult = tryGetItem(STORAGE_KEY);
+      const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
+      const preferencesResult = tryGetItem(PREFERENCES_STORAGE_KEY);
+      if (preferencesResult.ok) {
+        applyPreferencesValue(preferencesResult.value);
+        _preferencesReady = true;
+      }
+
       if (!storedResult.ok) {
         _persistenceReady = false;
         persistenceBlocked = true;
@@ -460,13 +501,12 @@ function createUserState() {
       }
 
       // A blob quarantined on an earlier visit stays retrievable after the tracker moves on.
-      const quarantined = tryGetItem(QUARANTINE_KEY);
+      const quarantined = tryGetItem(QUARANTINE_STORAGE_KEY);
       if (quarantined.ok) _unreadableData = quarantined.value;
 
       const stored = storedResult.value;
       lastKnownStoredValue = stored;
       if (stored === null) {
-        serializedSource = undefined;
         persistenceBlocked = false;
         quarantineAvailable = false;
         _persistenceReady = true;
@@ -475,8 +515,7 @@ function createUserState() {
 
       const result = deserialize(stored, "local");
       if (result.ok) {
-        state = result.state;
-        serializedSource = result.source;
+        replaceProgress(result);
         persistenceBlocked = false;
         quarantineAvailable = false;
         _persistenceReady = true;
@@ -485,28 +524,28 @@ function createUserState() {
       }
     },
     markDefaultUnlocksComplete() {
-      addDefaultUnlocks(state.completed);
+      addDefaultUnlocks(state.progress);
     },
     /**
      * Merges a native save into current progress: sets union, levels take the max, and the
      * household follows {@link mergeHousehold}'s conflict policy. Never removes progress.
      */
     mergeFromSave(imported: Partial<ProgressState>): MergeResult {
-      const completed = state.completed;
+      const progress = state.progress;
       const counts: MergeCounts = emptyMergeCounts();
 
-      counts.almanac = unionInto(completed.almanac, imported.almanac ?? []);
-      counts.almanacRecipes = unionInto(completed.almanacRecipes, imported.almanacRecipes ?? []);
-      counts.cosmetics = unionInto(completed.cosmetics, imported.cosmetics ?? []);
-      counts.dates = unionInto(completed.dates, imported.dates ?? []);
-      counts.museum = unionInto(completed.museum, imported.museum ?? []);
-      counts.perks = unionInto(completed.unlockedPerks, imported.unlockedPerks ?? []);
-      counts.petCosmetics = unionInto(completed.petCosmetics, imported.petCosmetics ?? []);
-      counts.petSkins = unionInto(completed.petSkins, imported.petSkins ?? []);
-      counts.spells = unionInto(completed.spells, imported.spells ?? []);
+      counts.almanac = unionInto(progress.almanac, imported.almanac ?? []);
+      counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
+      counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
+      counts.dates = unionInto(progress.dates, imported.dates ?? []);
+      counts.museum = unionInto(progress.museum, imported.museum ?? []);
+      counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);
+      counts.petCosmetics = unionInto(progress.petCosmetics, imported.petCosmetics ?? []);
+      counts.petSkins = unionInto(progress.petSkins, imported.petSkins ?? []);
+      counts.spells = unionInto(progress.spells, imported.spells ?? []);
       for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
         const existing = getOrCreate(
-          completed.animals,
+          progress.animals,
           animalId,
           () => new SvelteSet<AnimalVariantId>(),
         );
@@ -514,7 +553,7 @@ function createUserState() {
       }
       for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics ?? {})) {
         const existing = getOrCreate(
-          completed.animalCosmetics,
+          progress.animalCosmetics,
           animalId,
           () => new SvelteSet<CosmeticId>(),
         );
@@ -525,57 +564,49 @@ function createUserState() {
       // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
       if (imported.mineFloor !== undefined) {
         const mineFloor = clampMineFloor(imported.mineFloor);
-        if (mineFloor > completed.mineFloor) {
-          counts.mineFloor = mineFloor - completed.mineFloor;
-          completed.mineFloor = mineFloor;
+        if (mineFloor > progress.mineFloor) {
+          counts.mineFloor = mineFloor - progress.mineFloor;
+          progress.mineFloor = mineFloor;
         }
       }
       if (imported.renown !== undefined) {
         const renown = clampRenownLevel(imported.renown);
-        if (renown > completed.renown) {
-          counts.renown = renown - completed.renown;
-          completed.renown = renown;
+        if (renown > progress.renown) {
+          counts.renown = renown - progress.renown;
+          progress.renown = renown;
         }
       }
-      counts.heartLevels = raiseLevels(
-        completed.heartLevels,
-        imported.heartLevels,
-        MAX_HEART_LEVEL,
-      );
-      counts.skillLevels = raiseLevels(
-        completed.skillLevels,
-        imported.skillLevels,
-        MAX_SKILL_LEVEL,
-      );
+      counts.heartLevels = raiseLevels(progress.heartLevels, imported.heartLevels, MAX_HEART_LEVEL);
+      counts.skillLevels = raiseLevels(progress.skillLevels, imported.skillLevels, MAX_SKILL_LEVEL);
 
       // Quest states take the more advanced state: none < obtained < completed.
       for (const [id, importedState] of recordEntries(imported.questStates ?? {})) {
-        if (questStateRank(importedState) > questStateRank(completed.questStates[id] ?? "none")) {
-          completed.questStates[id] = importedState;
+        if (questStateRank(importedState) > questStateRank(progress.questStates[id] ?? "none")) {
+          progress.questStates[id] = importedState;
           counts.quests++;
         }
       }
 
       if (
         imported.reachedSeason !== undefined &&
-        seasonOrdinal(imported.reachedSeason) > seasonOrdinal(completed.reachedSeason)
+        seasonOrdinal(imported.reachedSeason) > seasonOrdinal(progress.reachedSeason)
       ) {
-        completed.reachedSeason = imported.reachedSeason;
+        progress.reachedSeason = imported.reachedSeason;
         counts.reachedSeason = 1;
       }
-      if (imported.hasUpperFloor && !completed.hasUpperFloor) {
-        completed.hasUpperFloor = true;
+      if (imported.hasUpperFloor && !progress.hasUpperFloor) {
+        progress.hasUpperFloor = true;
         counts.hasUpperFloor = 1;
       }
 
-      const household = mergeHousehold(completed, imported);
-      completed.villagerRelationships = household.villagerRelationships;
-      completed.childChoice = household.childChoice;
+      const household = mergeHousehold(progress, imported);
+      progress.villagerRelationships = household.villagerRelationships;
+      progress.childChoice = household.childChoice;
       counts.villagerRelationships = household.counts.villagerRelationships;
       counts.childChoice = household.counts.childChoice;
 
       // Backfill animal maps for any animals added since the imported state was created
-      backfillAnimalMaps(completed);
+      backfillAnimalMaps(progress);
 
       // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
       // persistence like a reset or restore (only once the unreadable blob is safely stored).
@@ -595,17 +626,21 @@ function createUserState() {
     get progressionState(): UserProgressionState {
       return progressionState;
     },
+    /** Restores every field to its default, this device's preferences included. */
     resetAll() {
       state = createDefaultState();
-      serializedSource = undefined;
       enablePersistenceAfterExplicitReplace();
     },
-    /** Import/export user state JSON (full replace) */
+    /** Clears progress & world state; this device's preferences are kept. */
+    resetProgress() {
+      replaceProgress({ progress: createDefaultProgress(), worldState: createDefaultWorldState() });
+      enablePersistenceAfterExplicitReplace();
+    },
+    /** Replaces progress & world state from a backup; this device's preferences are kept. */
     restoreBackup(json: string): BackupRestoreResult {
       const result = deserialize(json, "strict");
       if (!result.ok) return result;
-      state = result.state;
-      serializedSource = result.source;
+      replaceProgress(result);
       enablePersistenceAfterExplicitReplace();
       return { ok: true };
     },
@@ -613,27 +648,27 @@ function createUserState() {
       state.availabilityWindows = AVAILABILITY_WINDOWS.filter((window) => windows.includes(window));
     },
     setChildChoice(choice: ChildChoice) {
-      state.completed.childChoice = choice;
+      state.progress.childChoice = choice;
     },
     setHasUpperFloor(value: boolean) {
-      state.completed.hasUpperFloor = value;
+      state.progress.hasUpperFloor = value;
     },
     setHeartLevel(id: VillagerId, level: number) {
-      state.completed.heartLevels[id] = clampLevel(level, MAX_HEART_LEVEL);
+      state.progress.heartLevels[id] = clampLevel(level, MAX_HEART_LEVEL);
     },
     setMineFloor(floor: number) {
-      state.completed.mineFloor = clampMineFloor(floor);
+      state.progress.mineFloor = clampMineFloor(floor);
     },
     setQuestState(id: QuestId, questState: QuestState) {
-      state.completed.questStates[id] = questState;
+      state.progress.questStates[id] = questState;
     },
     setReachedSeason(season: Season) {
-      if (seasonOrdinal(season) > seasonOrdinal(state.completed.reachedSeason)) {
-        state.completed.reachedSeason = season;
+      if (seasonOrdinal(season) > seasonOrdinal(state.progress.reachedSeason)) {
+        state.progress.reachedSeason = season;
       }
     },
     setRenown(level: number) {
-      state.completed.renown = clampRenownLevel(level);
+      state.progress.renown = clampRenownLevel(level);
     },
     setSeason(season: Season) {
       state.worldState.season = season;
@@ -642,20 +677,20 @@ function createUserState() {
       }
     },
     setSkillLevel(id: SkillId, level: number) {
-      state.completed.skillLevels[id] = clampLevel(level, MAX_SKILL_LEVEL);
+      state.progress.skillLevels[id] = clampLevel(level, MAX_SKILL_LEVEL);
     },
     setVillagerRelationship(villagerId: VillagerId, relationship: VillagerRelationship) {
-      const oldMarried = getSpouseId(state.completed.villagerRelationships);
+      const oldMarried = getSpouseId(state.progress.villagerRelationships);
       if (relationship === "undecided") {
-        const { [villagerId]: _, ...rest } = state.completed.villagerRelationships;
-        state.completed.villagerRelationships = rest;
+        const { [villagerId]: _, ...rest } = state.progress.villagerRelationships;
+        state.progress.villagerRelationships = rest;
       } else {
-        state.completed.villagerRelationships[villagerId] = relationship;
+        state.progress.villagerRelationships[villagerId] = relationship;
       }
-      applyMarriageCascade(state.completed.villagerRelationships);
-      const newMarried = getSpouseId(state.completed.villagerRelationships);
+      applyMarriageCascade(state.progress.villagerRelationships);
+      const newMarried = getSpouseId(state.progress.villagerRelationships);
       if (oldMarried !== newMarried) {
-        state.completed.childChoice = "undeclared";
+        state.progress.childChoice = "undeclared";
       }
     },
     setWeather(weather: Weather) {
@@ -666,14 +701,14 @@ function createUserState() {
       return state;
     },
     toggleAlmanacItem(id: ItemId) {
-      toggleInSet(state.completed.almanac, id);
+      toggleInSet(state.progress.almanac, id);
     },
     toggleAlmanacRecipe(id: RecipeId) {
-      toggleInSet(state.completed.almanacRecipes, id);
+      toggleInSet(state.progress.almanacRecipes, id);
     },
     toggleAnimalCosmetic(animalId: AnimalId, cosmeticId: CosmeticId) {
       const set = getOrCreate(
-        state.completed.animalCosmetics,
+        state.progress.animalCosmetics,
         animalId,
         () => new SvelteSet<CosmeticId>(),
       );
@@ -681,7 +716,7 @@ function createUserState() {
     },
     toggleAnimalVariant(animalId: AnimalId, variantId: AnimalVariantId) {
       const set = getOrCreate(
-        state.completed.animals,
+        state.progress.animals,
         animalId,
         () => new SvelteSet<AnimalVariantId>(),
       );
@@ -701,22 +736,22 @@ function createUserState() {
       );
     },
     toggleCosmetic(id: CosmeticId) {
-      toggleInSet(state.completed.cosmetics, id);
+      toggleInSet(state.progress.cosmetics, id);
     },
     toggleDate(id: DateId) {
-      toggleInSet(state.completed.dates, id);
+      toggleInSet(state.progress.dates, id);
     },
     toggleMuseumItem(id: ItemId) {
-      toggleInSet(state.completed.museum, id);
+      toggleInSet(state.progress.museum, id);
     },
     togglePerk(id: PerkId) {
-      toggleInSet(state.completed.unlockedPerks, id);
+      toggleInSet(state.progress.unlockedPerks, id);
     },
     togglePetCosmetic(id: PetCosmeticSetId) {
-      toggleInSet(state.completed.petCosmetics, id);
+      toggleInSet(state.progress.petCosmetics, id);
     },
     togglePetSkin(id: PetSkinId) {
-      toggleInSet(state.completed.petSkins, id);
+      toggleInSet(state.progress.petSkins, id);
     },
     toggleShowCompleted() {
       state.showCompleted = !state.showCompleted;
@@ -725,13 +760,13 @@ function createUserState() {
       state.showSpoilers = !state.showSpoilers;
     },
     toggleSpell(id: SpellId) {
-      toggleInSet(state.completed.spells, id);
+      toggleInSet(state.progress.spells, id);
     },
     /** Restores the quest's prior state and removes only recipes added by that transition. */
     undoQuestWithRecipes(id: QuestId, { newlyAdded, previousState }: QuestCompletion) {
-      state.completed.questStates[id] = previousState;
+      state.progress.questStates[id] = previousState;
       for (const recipeId of newlyAdded) {
-        state.completed.almanacRecipes.delete(recipeId);
+        state.progress.almanacRecipes.delete(recipeId);
       }
     },
     /** Stored progress that couldn't be read, kept so the player can download it; null if none. */
@@ -759,7 +794,7 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
     return { error: "invalid-fields", ok: false };
   }
 
-  if (typeof raw.version !== "string" || !SUPPORTED_SERIALIZATION_VERSIONS.has(raw.version)) {
+  if (raw.version !== CURRENT_SERIALIZATION_VERSION) {
     return { error: "unsupported-version", ok: false };
   }
 
@@ -770,120 +805,79 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
   try {
     const s = raw;
 
-    // Migrate legacy Set-based data → level/state Records
-    // Old format: villagers/skills/quests as string[]; New format: heartLevels/skillLevels/questStates as Records
-    const rawHeartLevels: Record<string, unknown> = { ...s.completed.heartLevels };
-    if (!s.completed.heartLevels && s.completed.villagers) {
-      for (const id of s.completed.villagers) {
-        rawHeartLevels[id] = LEGACY_COMPLETED_HEART_LEVEL;
-      }
-    }
     const heartLevels = normalizeLevelRecord<VillagerId>(
-      rawHeartLevels,
+      s.progress.heartLevels ?? {},
       trackerData.villagers,
       MAX_HEART_LEVEL,
     );
-
-    const rawSkillLevels: Record<string, unknown> = { ...s.completed.skillLevels };
-    if (!s.completed.skillLevels && s.completed.skills) {
-      for (const id of s.completed.skills) rawSkillLevels[id] = LEGACY_COMPLETED_SKILL_LEVEL;
-    }
     const skillLevels = normalizeLevelRecord<SkillId>(
-      rawSkillLevels,
+      s.progress.skillLevels ?? {},
       trackerData.skills,
       MAX_SKILL_LEVEL,
     );
-
-    const rawQuestStates: Record<string, unknown> = { ...s.completed.questStates };
-    if (!s.completed.questStates && s.completed.quests) {
-      for (const id of s.completed.quests) rawQuestStates[id] = "completed";
-    }
     const questStates = normalizeEnumRecord<QuestId, QuestState>(
-      rawQuestStates,
+      s.progress.questStates ?? {},
       QUEST_IDS,
       VALID_QUEST_STATES,
     );
 
-    // Migrate villagerRelationships from legacy romanticVillagers/marriedVillager
     const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
-    if (s.completed.villagerRelationships) {
-      for (const [id, rel] of Object.entries(s.completed.villagerRelationships)) {
-        if (
-          Object.hasOwn(trackerData.villagers, id) &&
-          isEnumValue(rel, VALID_RELATIONSHIPS) &&
-          rel !== "undecided"
-        ) {
-          villagerRelationships[id as VillagerId] = rel;
-        }
-      }
-    } else {
-      if (s.completed.romanticVillagers) {
-        for (const id of s.completed.romanticVillagers) {
-          if (Object.hasOwn(trackerData.villagers, id)) {
-            villagerRelationships[id as VillagerId] = "romantic";
-          }
-        }
-      }
+    for (const [id, rel] of Object.entries(s.progress.villagerRelationships ?? {})) {
       if (
-        s.completed.marriedVillager &&
-        Object.hasOwn(trackerData.villagers, s.completed.marriedVillager)
+        Object.hasOwn(trackerData.villagers, id) &&
+        isEnumValue(rel, VALID_RELATIONSHIPS) &&
+        rel !== "undecided"
       ) {
-        villagerRelationships[s.completed.marriedVillager as VillagerId] = "married";
+        villagerRelationships[id as VillagerId] = rel;
       }
     }
     applyMarriageCascade(villagerRelationships);
 
     const childChoice: ChildChoice =
-      s.completed.childChoice && VALID_CHILD_CHOICES.has(s.completed.childChoice)
-        ? s.completed.childChoice
+      s.progress.childChoice && VALID_CHILD_CHOICES.has(s.progress.childChoice)
+        ? s.progress.childChoice
         : "undeclared";
 
-    const completed: ProgressState = {
-      almanac: normalizeAlmanacIds(s.completed.almanac),
+    const progress: ProgressState = {
+      almanac: normalizeAlmanacIds(s.progress.almanac),
       almanacRecipes: knownBrandedSet<RecipeId>(
-        s.completed.almanacRecipes ?? [],
+        s.progress.almanacRecipes ?? [],
         trackerData.recipes,
       ),
-      animalCosmetics: normalizeAnimalCosmetics(s.completed.animalCosmetics),
-      animals: normalizeAnimalVariants(s.completed.animals),
+      animalCosmetics: normalizeAnimalCosmetics(s.progress.animalCosmetics),
+      animals: normalizeAnimalVariants(s.progress.animals),
       childChoice,
-      cosmetics: knownBrandedSet<CosmeticId>(s.completed.cosmetics, trackerData.cosmetics),
-      dates: knownBrandedSet<DateId>(s.completed.dates ?? [], trackerData.dates),
+      cosmetics: knownBrandedSet<CosmeticId>(s.progress.cosmetics, trackerData.cosmetics),
+      dates: knownBrandedSet<DateId>(s.progress.dates ?? [], trackerData.dates),
       hasUpperFloor:
-        typeof s.completed.hasUpperFloor === "boolean" ? s.completed.hasUpperFloor : false,
+        typeof s.progress.hasUpperFloor === "boolean" ? s.progress.hasUpperFloor : false,
       heartLevels,
-      mineFloor: isFiniteNumber(s.completed.mineFloor) ? clampMineFloor(s.completed.mineFloor) : 0,
-      museum: knownBrandedSet<ItemId>(s.completed.museum, MUSEUM_ITEM_IDS),
+      mineFloor: isFiniteNumber(s.progress.mineFloor) ? clampMineFloor(s.progress.mineFloor) : 0,
+      museum: knownBrandedSet<ItemId>(s.progress.museum, MUSEUM_ITEM_IDS),
       petCosmetics: knownBrandedSet<PetCosmeticSetId>(
-        s.completed.petCosmetics ?? [],
+        s.progress.petCosmetics ?? [],
         trackerData.pets.cosmetics,
       ),
-      petSkins: knownBrandedSet<PetSkinId>(s.completed.petSkins ?? [], trackerData.pets.skins),
+      petSkins: knownBrandedSet<PetSkinId>(s.progress.petSkins ?? [], trackerData.pets.skins),
       questStates,
-      reachedSeason: isEnumValue(s.completed.reachedSeason, VALID_SEASONS)
-        ? s.completed.reachedSeason
+      reachedSeason: isEnumValue(s.progress.reachedSeason, VALID_SEASONS)
+        ? s.progress.reachedSeason
         : "spring",
-      renown: isFiniteNumber(s.completed.renown) ? clampRenownLevel(s.completed.renown) : 0,
+      renown: isFiniteNumber(s.progress.renown) ? clampRenownLevel(s.progress.renown) : 0,
       skillLevels,
-      spells: knownBrandedSet<SpellId>(s.completed.spells, trackerData.mines.spells),
-      unlockedPerks: knownBrandedSet<PerkId>(s.completed.unlockedPerks ?? [], PERK_IDS),
+      spells: knownBrandedSet<SpellId>(s.progress.spells, trackerData.mines.spells),
+      unlockedPerks: knownBrandedSet<PerkId>(s.progress.unlockedPerks ?? [], PERK_IDS),
       villagerRelationships,
     };
 
-    backfillAnimalMaps(completed);
+    backfillAnimalMaps(progress);
 
     return {
       ok: true,
-      source: raw,
-      state: {
-        availabilityWindows: serializedAvailabilityWindows(s, mode),
-        completed,
-        showCompleted: false,
-        showSpoilers: typeof s.showSpoilers === "boolean" ? s.showSpoilers : false,
-        worldState: {
-          season: isEnumValue(s.worldState.season, VALID_SEASONS) ? s.worldState.season : "spring",
-          weather: isEnumValue(s.worldState.weather, VALID_WEATHER) ? s.worldState.weather : "calm",
-        },
+      progress,
+      worldState: {
+        season: isEnumValue(s.worldState.season, VALID_SEASONS) ? s.worldState.season : "spring",
+        weather: isEnumValue(s.worldState.weather, VALID_WEATHER) ? s.worldState.weather : "calm",
       },
     };
   } catch {
@@ -942,88 +936,64 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isSerializedState(value: unknown, mode: ValidationMode): value is SerializedState {
   if (!isRecord(value)) return false;
-  const completed = value.completed;
+  const progress = value.progress;
   const worldState = value.worldState;
-  if (!isRecord(completed) || !isRecord(worldState)) return false;
+  if (!isRecord(progress) || !isRecord(worldState)) return false;
 
-  const availabilityWindows = isStringArray(value.availabilityWindows)
-    ? value.availabilityWindows
-    : undefined;
-  const hasWindowsShape = availabilityWindows !== undefined && availabilityWindows.length > 0;
-  const hasValidWindows =
-    hasWindowsShape &&
-    new Set(availabilityWindows).size === availabilityWindows.length &&
-    availabilityWindows.every((window) => VALID_AVAILABILITY_WINDOWS.has(window));
-  const hasLegacyModeShape = typeof value.availabilityMode === "string";
-  const hasValidLegacyMode = isEnumValue(value.availabilityMode, VALID_AVAILABILITY_MODES);
-  if (mode === "strict") {
-    if (value.availabilityWindows !== undefined && !hasValidWindows) return false;
-    if (value.availabilityMode !== undefined && !hasValidLegacyMode) return false;
-    if (!hasValidWindows && !hasValidLegacyMode) return false;
-    if (
-      !isEnumValue(worldState.season, VALID_SEASONS) ||
-      !isEnumValue(worldState.weather, VALID_WEATHER)
-    ) {
-      return false;
-    }
-    if (value.showSpoilers !== undefined && typeof value.showSpoilers !== "boolean") return false;
-  } else if (!hasWindowsShape && !hasLegacyModeShape) {
-    return false;
-  }
-
-  if (!isStringArray(completed.almanac)) return false;
   if (
-    !(mode === "local"
-      ? isRecord(completed.animalCosmetics)
-      : isStringArrayRecord(completed.animalCosmetics))
+    mode === "strict" &&
+    (!isEnumValue(worldState.season, VALID_SEASONS) ||
+      !isEnumValue(worldState.weather, VALID_WEATHER))
   ) {
     return false;
   }
-  if (!(mode === "local" ? isRecord(completed.animals) : isStringArrayRecord(completed.animals))) {
+
+  if (!isStringArray(progress.almanac)) return false;
+  if (
+    !(mode === "local"
+      ? isRecord(progress.animalCosmetics)
+      : isStringArrayRecord(progress.animalCosmetics))
+  ) {
     return false;
   }
-  if (!isStringArray(completed.cosmetics)) return false;
-  if (mode === "strict" && !isDomainInteger(completed.mineFloor, getMaxMineFloor())) return false;
-  if (!isStringArray(completed.spells)) return false;
-  if (!isStringArray(completed.museum)) return false;
+  if (!(mode === "local" ? isRecord(progress.animals) : isStringArrayRecord(progress.animals))) {
+    return false;
+  }
+  if (!isStringArray(progress.cosmetics)) return false;
+  if (mode === "strict" && !isDomainInteger(progress.mineFloor, getMaxMineFloor())) return false;
+  if (!isStringArray(progress.spells)) return false;
+  if (!isStringArray(progress.museum)) return false;
   // Strict backup imports require a numeric value; local recovery defaults malformed values and
   // clamps numeric drift so one scalar cannot discard otherwise valid persisted progress.
-  if (mode === "strict" && !isFiniteNumber(completed.renown)) return false;
+  if (mode === "strict" && !isFiniteNumber(progress.renown)) return false;
 
   return (
-    isOptionalStringArray(completed.almanacRecipes) &&
+    isOptionalStringArray(progress.almanacRecipes) &&
     (mode === "local" ||
-      completed.childChoice === undefined ||
-      isEnumValue(completed.childChoice, VALID_CHILD_CHOICES)) &&
-    isOptionalStringArray(completed.dates) &&
+      progress.childChoice === undefined ||
+      isEnumValue(progress.childChoice, VALID_CHILD_CHOICES)) &&
+    isOptionalStringArray(progress.dates) &&
     (mode === "local" ||
-      completed.hasUpperFloor === undefined ||
-      typeof completed.hasUpperFloor === "boolean") &&
-    (completed.marriedVillager === undefined ||
-      completed.marriedVillager === null ||
-      typeof completed.marriedVillager === "string") &&
+      progress.hasUpperFloor === undefined ||
+      typeof progress.hasUpperFloor === "boolean") &&
     (mode === "local"
-      ? isOptionalRecord(completed.heartLevels)
-      : isOptionalIntegerRecord(completed.heartLevels, MAX_HEART_LEVEL)) &&
+      ? isOptionalRecord(progress.heartLevels)
+      : isOptionalIntegerRecord(progress.heartLevels, MAX_HEART_LEVEL)) &&
     (mode === "local"
-      ? isOptionalRecord(completed.villagerRelationships)
-      : isOptionalEnumRecord(completed.villagerRelationships, VALID_RELATIONSHIPS)) &&
-    isOptionalStringArray(completed.villagers) &&
-    isOptionalStringArray(completed.petCosmetics) &&
-    isOptionalStringArray(completed.petSkins) &&
-    isOptionalStringArray(completed.quests) &&
+      ? isOptionalRecord(progress.villagerRelationships)
+      : isOptionalEnumRecord(progress.villagerRelationships, VALID_RELATIONSHIPS)) &&
+    isOptionalStringArray(progress.petCosmetics) &&
+    isOptionalStringArray(progress.petSkins) &&
     (mode === "local"
-      ? isOptionalRecord(completed.questStates)
-      : isOptionalEnumRecord(completed.questStates, VALID_QUEST_STATES)) &&
+      ? isOptionalRecord(progress.questStates)
+      : isOptionalEnumRecord(progress.questStates, VALID_QUEST_STATES)) &&
     (mode === "local" ||
-      completed.reachedSeason === undefined ||
-      isEnumValue(completed.reachedSeason, VALID_SEASONS)) &&
-    isOptionalStringArray(completed.romanticVillagers) &&
+      progress.reachedSeason === undefined ||
+      isEnumValue(progress.reachedSeason, VALID_SEASONS)) &&
     (mode === "local"
-      ? isOptionalRecord(completed.skillLevels)
-      : isOptionalIntegerRecord(completed.skillLevels, MAX_SKILL_LEVEL)) &&
-    isOptionalStringArray(completed.skills) &&
-    isOptionalStringArray(completed.unlockedPerks)
+      ? isOptionalRecord(progress.skillLevels)
+      : isOptionalIntegerRecord(progress.skillLevels, MAX_SKILL_LEVEL)) &&
+    isOptionalStringArray(progress.unlockedPerks)
   );
 }
 
@@ -1131,85 +1101,75 @@ function raiseLevels(
   return raised;
 }
 
-function serialize(state: UserState, source?: Record<string, unknown>): string {
+/** Reads stored preferences, defaulting each missing or invalid field. */
+function deserializePreferences(json: null | string): SerializedPreferences {
+  const defaults = createDefaultPreferences();
+  if (json === null) return defaults;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return defaults;
+  }
+  if (!isRecord(parsed)) return defaults;
+
+  const stored = isStringArray(parsed.availabilityWindows) ? parsed.availabilityWindows : [];
+  const windows = AVAILABILITY_WINDOWS.filter((window) => stored.includes(window));
+  return {
+    availabilityWindows: windows.length > 0 ? windows : defaults.availabilityWindows,
+    showSpoilers:
+      typeof parsed.showSpoilers === "boolean" ? parsed.showSpoilers : defaults.showSpoilers,
+  };
+}
+
+/**
+ * Writes exactly the fields of {@link SerializedState}. Unrecognized fields in a loaded blob are
+ * dropped rather than carried forward, so renamed keys don't linger.
+ */
+function serialize(state: UserState): string {
   const s: SerializedState = {
-    availabilityWindows: [...state.availabilityWindows],
-    completed: {
-      almanac: [...state.completed.almanac].toSorted(),
-      almanacRecipes: [...state.completed.almanacRecipes].toSorted(),
+    progress: {
+      almanac: [...state.progress.almanac].toSorted(),
+      almanacRecipes: [...state.progress.almanacRecipes].toSorted(),
       animalCosmetics: Object.fromEntries(
-        recordEntries(state.completed.animalCosmetics).map(([k, v]) => [k, [...v].toSorted()]),
+        recordEntries(state.progress.animalCosmetics).map(([k, v]) => [k, [...v].toSorted()]),
       ),
       animals: Object.fromEntries(
-        recordEntries(state.completed.animals).map(([k, v]) => [k, [...v].toSorted()]),
+        recordEntries(state.progress.animals).map(([k, v]) => [k, [...v].toSorted()]),
       ),
-      childChoice: state.completed.childChoice,
-      cosmetics: [...state.completed.cosmetics].toSorted(),
-      dates: [...state.completed.dates].toSorted(),
-      hasUpperFloor: state.completed.hasUpperFloor,
-      heartLevels: filterRecord(state.completed.heartLevels, (v) => v > 0),
-      mineFloor: state.completed.mineFloor,
-      museum: [...state.completed.museum].toSorted(),
-      petCosmetics: [...state.completed.petCosmetics].toSorted(),
-      petSkins: [...state.completed.petSkins].toSorted(),
-      questStates: filterRecord(state.completed.questStates, (v) => v !== "none"),
-      reachedSeason: state.completed.reachedSeason,
-      renown: state.completed.renown,
-      skillLevels: filterRecord(state.completed.skillLevels, (v) => v > 0),
-      spells: [...state.completed.spells].toSorted(),
-      unlockedPerks: [...state.completed.unlockedPerks].toSorted(),
+      childChoice: state.progress.childChoice,
+      cosmetics: [...state.progress.cosmetics].toSorted(),
+      dates: [...state.progress.dates].toSorted(),
+      hasUpperFloor: state.progress.hasUpperFloor,
+      heartLevels: filterRecord(state.progress.heartLevels, (v) => v > 0),
+      mineFloor: state.progress.mineFloor,
+      museum: [...state.progress.museum].toSorted(),
+      petCosmetics: [...state.progress.petCosmetics].toSorted(),
+      petSkins: [...state.progress.petSkins].toSorted(),
+      questStates: filterRecord(state.progress.questStates, (v) => v !== "none"),
+      reachedSeason: state.progress.reachedSeason,
+      renown: state.progress.renown,
+      skillLevels: filterRecord(state.progress.skillLevels, (v) => v > 0),
+      spells: [...state.progress.spells].toSorted(),
+      unlockedPerks: [...state.progress.unlockedPerks].toSorted(),
       villagerRelationships: filterRecord(
-        state.completed.villagerRelationships as Record<string, VillagerRelationship>,
+        state.progress.villagerRelationships as Record<string, VillagerRelationship>,
         (v) => v !== "undecided",
       ),
     },
-    showSpoilers: state.showSpoilers,
     version: CURRENT_SERIALIZATION_VERSION,
-    worldState: state.worldState,
+    worldState: { season: state.worldState.season, weather: state.worldState.weather },
   };
-  if (!source) return JSON.stringify(s);
-
-  const sourceCompleted = isRecord(source.completed) ? source.completed : {};
-  const sourceWorldState = isRecord(source.worldState) ? source.worldState : {};
-  const merged: Record<string, unknown> = {
-    ...source,
-    ...s,
-    completed: {
-      ...sourceCompleted,
-      ...s.completed,
-    },
-    worldState: { ...sourceWorldState, ...s.worldState },
-  };
-
-  // These are known legacy fields, not forward-compatible data. Keeping them would make a
-  // migrated backup advertise two sources of truth for the same setting.
-  delete merged.availabilityMode;
-  delete merged.showCompleted;
-  const mergedCompleted = merged.completed as Record<string, unknown>;
-  delete mergedCompleted.marriedVillager;
-  delete mergedCompleted.quests;
-  delete mergedCompleted.romanticVillagers;
-  delete mergedCompleted.skills;
-  delete mergedCompleted.villagers;
-
-  return JSON.stringify(merged);
+  return JSON.stringify(s);
 }
 
-function serializedAvailabilityWindows(
-  state: SerializedState,
-  mode: ValidationMode,
-): AvailabilityWindow[] {
-  if (state.availabilityWindows) {
-    const validWindows = state.availabilityWindows.filter(
-      (window, index, windows) =>
-        VALID_AVAILABILITY_WINDOWS.has(window) && windows.indexOf(window) === index,
-    );
-    if (validWindows.length > 0) return validWindows;
-  }
-  if (isEnumValue(state.availabilityMode, VALID_AVAILABILITY_MODES)) {
-    return legacyAvailabilityWindows(state.availabilityMode);
-  }
-  return mode === "local" ? [...DEFAULT_AVAILABILITY_WINDOWS] : [];
+function serializePreferences(state: UserState): string {
+  const preferences: SerializedPreferences = {
+    availabilityWindows: [...state.availabilityWindows],
+    showSpoilers: state.showSpoilers,
+  };
+  return JSON.stringify(preferences);
 }
 
 function toggleInSet<T>(set: Set<T>, item: T): void {

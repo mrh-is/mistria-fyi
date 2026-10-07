@@ -16,7 +16,7 @@
   let { compact = false, locale }: { compact?: boolean; locale: LocaleCode } = $props();
 
   const feedbackContext = getFeedbackContext();
-  let level = $derived(userState.state.completed.renown);
+  let level = $derived(userState.state.progress.renown);
   let presentation = $derived(getRenownPresentation(level, trackerData.townRanks));
   let reportable = $derived(
     feedbackContext.reportableAttachment({

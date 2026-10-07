@@ -15,7 +15,7 @@ export const accessibilityRoutes = [
   { name: "Recipes", path: "/recipes" },
   { name: "Renown", path: "/renown" },
   { name: "Skills", path: "/skills" },
-  { name: "All categories", path: "/all" },
+  { name: "All categories", path: "/everything" },
   { name: "Data management", path: "/data" },
   { name: "About", path: "/about" },
   { name: "Privacy", path: "/privacy" },

@@ -20,7 +20,7 @@
   let allProgress = $derived(
     getAllProgress({
       availabilityWindows: userState.state.availabilityWindows,
-      completed: userState.state.completed,
+      progress: userState.state.progress,
       worldState: userState.state.worldState,
     }),
   );
@@ -52,7 +52,7 @@
       <CategoryGrid progress={allProgress} />
       <a
         class="everything-link"
-        href={localizedHref("all")}
+        href={localizedHref("everything")}
         aria-label={m.section_progress_label({
           completed: totalCompleted,
           name: m.home_everything_label(),
