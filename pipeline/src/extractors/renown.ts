@@ -1,6 +1,7 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray } from "../data-shapes.js";
+import { RANK_ENGLISH_NAMES } from "../overrides/ordinal-names.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -13,20 +14,6 @@ export interface TownRankExtraction {
   localeNames: Record<LocaleCode, Record<string, string>>;
   townRanks: TrackerData["townRanks"];
 }
-
-const RANK_ENGLISH_NAMES = [
-  "Wood",
-  "Stone",
-  "Copper",
-  "Ruby",
-  "Iron",
-  "Sapphire",
-  "Silver",
-  "Emerald",
-  "Gold",
-  "Diamond",
-  "Mistril",
-] as const;
 
 export function extractTownRanks(fiddle: ParsedGameData, localizer: Localizer): TownRankExtraction {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
