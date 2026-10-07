@@ -39,6 +39,18 @@ export type AvailabilityCondition =
   | { type: "skillLevel"; level: number; skillId: SkillId }
   | { type: "time"; start: number; end: number }
   | { type: "weather"; weathers: Weather[] };
+/**
+ * Cutscenes a reviewed override names as a source. Each has its own wording, since the game names
+ * no cutscene; deriving every `cutscenes.toml` grant natively would replace this closed list.
+ */
+export const CUTSCENE_SOURCE_IDS = ["elsie_dating_tutorial", "great_bird_0"] as const;
+export type CutsceneSourceId = (typeof CUTSCENE_SOURCE_IDS)[number];
+/**
+ * How a date inspiration item drops before its date is unlocked: digging up a dig site or catching
+ * a fish at `locationId`, or opening a Mines chest anywhere.
+ */
+export const DATE_INSPIRATION_DROP_ACTIVITIES = ["dig_site", "fish", "mines_chest"] as const;
+export type DateInspirationDropActivity = (typeof DATE_INSPIRATION_DROP_ACTIVITIES)[number];
 export type DialogueChoiceId = string & { readonly __brand: "DialogueChoiceId" };
 export type DungeonLootGroup = string & { readonly __brand: "DungeonLootGroup" };
 export type JsonValue =
@@ -58,14 +70,21 @@ export type Source =
         | { type: "artifact_dig"; locationIds?: NonEmptyArray<LocationId> }
         | { type: "artifact_replicator"; originalItemId: ItemId }
         | { type: "bait_fish"; baitItemIds: NonEmptyArray<ItemId> }
-        | { type: "beach_cave_chest" }
         | { type: "breed" }
         | { type: "bug_catch"; locationIds?: NonEmptyArray<LocationId> }
         | { type: "chicken_statue"; cost: number }
         | { type: "chicken_statue"; unlockCondition: "breed_all_chicken_tiers" }
         | { type: "crop"; seedItemId: ItemId }
+        | { type: "cutscene"; cutsceneId: CutsceneSourceId }
         | { type: "date"; dateId: DateId }
         | { type: "date_inspiration"; itemId: ItemId }
+        | { type: "date_inspiration_drop"; activity: "mines_chest"; dateId: DateId }
+        | {
+            type: "date_inspiration_drop";
+            activity: Exclude<DateInspirationDropActivity, "mines_chest">;
+            dateId: DateId;
+            locationId: LocationId;
+          }
         | { type: "dive"; waterTypes?: NonEmptyArray<WaterType> }
         | { type: "donate_item"; triggerItemId: ItemId }
         | { type: "engagement" }
@@ -106,6 +125,7 @@ export type Source =
         | { type: "renown"; level: number }
         | { type: "ritual_chamber"; perkId: PerkId }
         | { type: "scroll_bundle"; bundleItemId: ItemId; storeId: StoreId }
+        | { type: "secret_chest"; locationId: LocationId }
         | { type: "ship_item"; triggerItemId: ItemId }
         | { type: "spouseGift"; villagerId: VillagerId }
         | { type: "station"; stationId: StationId }

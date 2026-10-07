@@ -218,13 +218,14 @@ function acquisitionSourceCondition(
     case "animal_product":
     case "artifact_dig":
     case "artifact_replicator":
-    case "beach_cave_chest":
     case "breed":
     case "bug_catch":
     case "chicken_statue":
     case "crop":
+    case "cutscene":
     case "date":
     case "date_inspiration":
+    case "date_inspiration_drop":
     case "default":
     case "dive":
     case "donate_item":
@@ -242,6 +243,7 @@ function acquisitionSourceCondition(
     case "proposal":
     case "reach_day":
     case "recipe":
+    case "secret_chest":
     case "ship_item":
     case "spouseGift":
     case "station":
@@ -414,13 +416,14 @@ function acquisitionSourceConditions(
     case "artifact_dig":
     case "artifact_replicator":
     case "bait_fish":
-    case "beach_cave_chest":
     case "breed":
     case "bug_catch":
     case "chicken_statue":
     case "crop":
+    case "cutscene":
     case "date":
     case "date_inspiration":
+    case "date_inspiration_drop":
     case "default":
     case "dive":
     case "donate_item":
@@ -444,6 +447,7 @@ function acquisitionSourceConditions(
     case "recipe":
     case "renown":
     case "ritual_chamber":
+    case "secret_chest":
     case "ship_item":
     case "spouseGift":
     case "station":

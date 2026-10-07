@@ -9,6 +9,7 @@ import { requireBiome, requireEntry } from "#lib/utils/format.js";
 
 import type {
   AvailabilityCondition,
+  CutsceneSourceId,
   ProductionMethod,
   Source,
   UpgradeId,
@@ -33,6 +34,7 @@ import type { BaseSegmentLookups, NameLookup } from "#lib/utils/format.js";
 export type SegmentLookups = BaseSegmentLookups &
   Pick<TrackerData, "categoryVisibility"> & {
     animalNames: NameLookup<TrackerData["animals"]>;
+    dateNames: NameLookup<TrackerData["dates"]>;
     entityVisibility?: VisibilityCondition;
     itemVisibility: VisibilityLookup<TrackerData["items"]>;
     /** The locale every message & name in these lookups renders in. */
@@ -176,8 +178,6 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     }
     case "bait_fish":
       return [m.source_bait_fish({}, opts)];
-    case "beach_cave_chest":
-      return [m.source_beach_cave_chest({}, opts)];
     case "breed":
       return [m.source_breed({}, opts)];
     case "bug_catch": {
@@ -194,11 +194,25 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       const seed = requireEntry(lookups.itemNames, source.seedItemId, "itemNames");
       return [m.source_crop({ seed }, opts)];
     }
+    case "cutscene":
+      return [buildCutsceneLabel(source.cutsceneId, lookups)];
     case "date":
       return [m.source_date({}, opts)];
     case "date_inspiration": {
       const item = requireEntry(lookups.itemNames, source.itemId, "itemNames");
       return [m.source_date_inspiration({ item }, opts)];
+    }
+    case "date_inspiration_drop": {
+      const date = requireEntry(lookups.dateNames, source.dateId, "dateNames");
+      if (source.activity === "mines_chest") {
+        return [m.source_date_inspiration_mines_chest({ date }, opts)];
+      }
+      const location = requireEntry(lookups.locationNames, source.locationId, "locationNames");
+      return [
+        source.activity === "dig_site"
+          ? m.source_date_inspiration_dig_site({ date, location }, opts)
+          : m.source_date_inspiration_fish({ date, location }, opts),
+      ];
     }
     case "default":
       return [m.source_default({}, opts)];
@@ -376,6 +390,10 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
           ? m.source_store_qualified({ qualifier: slot(qualifier), store: slot(storeName) }, opts)
           : m.source_store({ store: slot(storeName) }, opts),
       );
+    }
+    case "secret_chest": {
+      const location = requireEntry(lookups.locationNames, source.locationId, "locationNames");
+      return [m.source_secret_chest({ location }, opts)];
     }
     case "treasure_chest": {
       const { name } = requireEntry(lookups.treasureChestTiers, source.tier, "treasureChestTiers");
@@ -561,6 +579,19 @@ function buildHeartQuestSegments(
       { locale: lookups.locale },
     ),
   );
+}
+
+/** Each reviewed cutscene's own wording; the game names none of them. */
+function buildCutsceneLabel(cutsceneId: CutsceneSourceId, lookups: SegmentLookups): string {
+  const opts = { locale: lookups.locale };
+  switch (cutsceneId) {
+    case "elsie_dating_tutorial": {
+      const villager = requireEntry(lookups.villagerNames, "elsie" as VillagerId, "villagerNames");
+      return m.source_cutscene_elsie_dating_tutorial({ villager }, opts);
+    }
+    case "great_bird_0":
+      return m.source_cutscene_great_bird_0({}, opts);
+  }
 }
 
 function buildLocationList(locationIds: LocationId[] | undefined, lookups: SegmentLookups): string {

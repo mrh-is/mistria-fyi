@@ -1,4 +1,4 @@
-import type { CosmeticId } from "#lib/types/tracker-data.js";
+import type { CosmeticId, ItemId } from "#lib/types/tracker-data.js";
 
 export interface CosmeticExclusion {
   evidence: string;
@@ -88,3 +88,13 @@ export function getExcludedCosmeticIds(): ReadonlySet<CosmeticId> {
 export function isExcludedCosmetic(id: CosmeticId): boolean {
   return EXCLUDED_COSMETIC_SET.has(id);
 }
+
+/**
+ * Cutscene props the game defines as items so a scene can hand them around. Each uses a cutscene
+ * sprite and the description “This shouldn't be in your inventory...”, and no table or script
+ * gives one to the player, so the tracker leaves them out.
+ */
+export const ITEM_EXCLUSIONS: ReadonlySet<ItemId> = new Set([
+  "balors_crate",
+  "ryis_lumber",
+] as ItemId[]);

@@ -8,25 +8,29 @@ import type { StoreId, StoreUpgradeAction, TrackerData } from "#lib/types/tracke
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
-const KNOWN_STORES: Record<string, { article?: "the" }> = {
-  balor: {},
-  blacksmith: { article: "the" },
-  carpenter: { article: "the" },
-  darcy: {},
-  elsie_spring_festival: {},
-  general: { article: "the" },
-  hayden: {},
-  inn: { article: "the" },
-  louis: {},
-  maple_spring_festival: {},
-  merri: {},
-  nora_souvenir_stall: {},
-  terithia: { article: "the" },
-  valens_clinic: {},
-  vera: {},
-  wheedle: {},
-  zorel: {},
-};
+/**
+ * Every store the pipeline has reviewed. A new store throws so its English grammar
+ * (`STORES_WITH_ARTICLE` in `src/lib/utils/en-grammar.ts`) and upgrade action get a look.
+ */
+const KNOWN_STORES: ReadonlySet<string> = new Set([
+  "balor",
+  "blacksmith",
+  "carpenter",
+  "darcy",
+  "elsie_spring_festival",
+  "general",
+  "hayden",
+  "inn",
+  "louis",
+  "maple_spring_festival",
+  "merri",
+  "nora_souvenir_stall",
+  "terithia",
+  "valens_clinic",
+  "vera",
+  "wheedle",
+  "zorel",
+]);
 
 const UPGRADE_ACTIONS: Partial<Record<string, StoreUpgradeAction>> = {
   general: "repair",
@@ -50,8 +54,7 @@ export function extractStoresMeta(
     const store = stores[storeId];
     if (typeof store !== "object" || store === null) continue;
 
-    const known = KNOWN_STORES[storeId];
-    if (!known) {
+    if (!KNOWN_STORES.has(storeId)) {
       throw new Error(`Unknown store "${storeId}" — add it to KNOWN_STORES in stores-meta.ts`);
     }
 
@@ -61,10 +64,7 @@ export function extractStoresMeta(
     }
 
     const upgradeAction = UPGRADE_ACTIONS[storeId];
-    result[storeId as StoreId] = {
-      ...(known.article ? { article: known.article } : {}),
-      ...(upgradeAction ? { upgradeAction } : {}),
-    };
+    result[storeId as StoreId] = upgradeAction ? { upgradeAction } : {};
     const { values } = localizer.localizeField({
       category: "stores",
       classification: "localizable",

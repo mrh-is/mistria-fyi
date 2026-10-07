@@ -14,6 +14,7 @@ export type AcquisitionReferenceKind =
   | "animal"
   | "biome"
   | "cosmetic"
+  | "cutscene"
   | "date"
   | "dialogueChoice"
   | "dungeonLootGroup"
@@ -39,6 +40,7 @@ export interface AcquisitionReferenceRegistries {
   animals?: ReferenceRegistry;
   biomes?: ReferenceRegistry;
   cosmetics?: ReferenceRegistry;
+  cutscenes?: ReferenceRegistry;
   dates?: ReferenceRegistry;
   dialogueChoices?: ReferenceRegistry;
   dungeonLootGroups?: ReferenceRegistry;
@@ -67,6 +69,7 @@ const REGISTRY_KIND = {
   animals: "animal",
   biomes: "biome",
   cosmetics: "cosmetic",
+  cutscenes: "cutscene",
   dates: "date",
   dialogueChoices: "dialogueChoice",
   dungeonLootGroups: "dungeonLootGroup",
@@ -159,6 +162,7 @@ function emptyReferenceSets(): Record<AcquisitionReferenceKind, Set<string>> {
     animal: new Set(),
     biome: new Set(),
     cosmetic: new Set(),
+    cutscene: new Set(),
     date: new Set(),
     dialogueChoice: new Set(),
     dungeonLootGroup: new Set(),

@@ -56,6 +56,7 @@ const BASE_LOOKUPS: SegmentLookups = {
     },
   ],
   categoryVisibility: {},
+  dateNames: { ["park" as DateId]: "Park Date" },
   entityVisibility: undefined,
   festivals: {},
   itemNames: {},
@@ -81,11 +82,10 @@ const BASE_LOOKUPS: SegmentLookups = {
   stationNames: {},
   stores: {
     ["general" as StoreId]: {
-      article: "the" as const,
       name: "General Store",
       upgradeAction: "repair",
     },
-    ["inn" as StoreId]: { article: "the" as const, name: "Sleeping Dragon Inn" },
+    ["inn" as StoreId]: { name: "Sleeping Dragon Inn" },
   },
   storeVisibility: {},
   treasureChestTiers: {},
@@ -464,9 +464,10 @@ describe("buildSourceSegments — simple types", () => {
     ]);
   });
 
-  it("beach cave chest", () => {
-    const source: Source = { type: "beach_cave_chest" };
-    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
+  it("secret chest", () => {
+    const source: Source = { type: "secret_chest", locationId: "beach_secret" as LocationId };
+    const lookups = { ...BASE_LOOKUPS, locationNames: { beach_secret: "Beach Cave" } };
+    expect(buildSourceSegments(source, lookups)).toEqual([
       "Find in the Gold Treasure Chest in the Beach Cave",
     ]);
   });
@@ -981,6 +982,56 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     expect(buildSourceSegments(source, lookups)).toEqual(["Find the Inn Menu"]);
   });
 
+  it("date_inspiration_drop names the location & the date it unlocks", () => {
+    const source: Source = {
+      type: "date_inspiration_drop",
+      activity: "dig_site",
+      dateId: "park" as DateId,
+      locationId: "eastern_road" as LocationId,
+    };
+    const lookups = { ...BASE_LOOKUPS, locationNames: { eastern_road: "the Eastern Road" } };
+    expect(buildSourceSegments(source, lookups)).toEqual([
+      "Chance to dig up at dig sites on the Eastern Road after unlocking any date, until you unlock the Park Date",
+    ]);
+  });
+
+  it("date_inspiration_drop from Mines chests needs no location", () => {
+    const source: Source = {
+      type: "date_inspiration_drop",
+      activity: "mines_chest",
+      dateId: "park" as DateId,
+    };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
+      "Chance to find in Mines chests after unlocking any date, until you unlock the Park Date",
+    ]);
+  });
+
+  it("date_inspiration_drop throws for a date with no name", () => {
+    const source: Source = {
+      type: "date_inspiration_drop",
+      activity: "mines_chest",
+      dateId: "gem_cutting" as DateId,
+    };
+    expect(() => buildSourceSegments(source, BASE_LOOKUPS)).toThrow(
+      'No "dateNames" entry for id "gem_cutting"',
+    );
+  });
+
+  it("cutscene names the villager in the dating tutorial", () => {
+    const source: Source = { type: "cutscene", cutsceneId: "elsie_dating_tutorial" };
+    const lookups = { ...BASE_LOOKUPS, villagerNames: { ["elsie" as VillagerId]: "Elsie" } };
+    expect(buildSourceSegments(source, lookups)).toEqual([
+      "Receive during Elsie’s dating tutorial",
+    ]);
+  });
+
+  it("cutscene for the Great Bird", () => {
+    const source: Source = { type: "cutscene", cutsceneId: "great_bird_0" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
+      "Receive in a cutscene after you marry",
+    ]);
+  });
+
   it("date_inspiration throws for an item with no name", () => {
     const source: Source = { type: "date_inspiration", itemId: "fancy_seashell" as ItemId };
     expect(() => buildSourceSegments(source, BASE_LOOKUPS)).toThrow(
@@ -1158,7 +1209,7 @@ describe("buildSourceSegments — localized rendering", () => {
       { floors: { start: 20, end: 39 }, id: "tide_caverns" as MinesBiomeId, name: "Mines marines" },
     ],
     locale: "fr",
-    stores: { ["general" as StoreId]: { article: "the" as const, name: "Magasin général" } },
+    stores: { ["general" as StoreId]: { name: "Magasin général" } },
     treasureChestTiers: { ["gold" as TreasureChestTierId]: { name: "Coffre au trésor en or" } },
   };
 
@@ -1263,7 +1314,6 @@ describe("buildSourceSegments — localized rendering", () => {
         locale,
         stores: {
           ["general" as StoreId]: {
-            article: "the" as const,
             name: storeName,
             upgradeAction: "repair",
           },
