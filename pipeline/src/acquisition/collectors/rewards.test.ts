@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { PipelineDiagnostics } from "../../diagnostics.js";
-import { createRequirementContext } from "../../requirements.js";
+import { createRequirementContext } from "../../parse/requirements.js";
 import { makeFiddle as makeFiddleBase } from "../../test-helpers.js";
 import {
   AnimalCosmeticSourceAccumulator,

@@ -1,6 +1,6 @@
 import { forEachQuest, TRACKED_QUEST_GROUPS } from "../extractor-helpers.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse/parse-fiddle.js";
 import type { AcquisitionReferenceRegistries } from "./reference-index.js";
 
 /**
