@@ -3,14 +3,14 @@
  * serializes output. Writes begin only after every transformation succeeds.
  * --parse-only checks parser structure without requiring a particular game version.
  */
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { open } from "yauzl-promise";
 
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { assembleTrackerData } from "./assemble.js";
-import { parseCliOptions } from "./cli-options.js";
+import { parseCliOptions, resolveCallerPath } from "./cli-options.js";
 import { publishFiles } from "./emit/publish.js";
 import { extractSprites, extractVillagerSprites, publishSprites } from "./emit/sprites.js";
 import { extractVillagerIconSprites } from "./extract/villagers.js";
@@ -40,6 +40,18 @@ const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
 const OUTPUT_FILE = "tracker-data.json";
 const SPRITES_OUTPUT_ROOT = resolve(OUTPUT_DIR, "sprites");
 
+/** Reads the game version of the committed tracker data, as a hint when the assets lack one. */
+function readCommittedVersion(): string | undefined {
+  try {
+    const data = JSON.parse(readFileSync(resolve(APP_DATA_DIR, OUTPUT_FILE), "utf8")) as {
+      version?: unknown;
+    };
+    return typeof data.version === "string" ? data.version : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Logs sprite extraction results for a given entity kind. */
 function logSpriteExtraction(label: string, result: SpriteExtractionResult): void {
   console.log(
@@ -58,9 +70,9 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
+  const callerAssetsDir = options.assetsDir ?? process.env.MISTRIA_ASSETS;
   const assetsDir =
-    options.assetsDir ??
-    process.env.MISTRIA_ASSETS ??
+    (callerAssetsDir === undefined ? undefined : resolveCallerPath(callerAssetsDir)) ??
     (existsSync(DEFAULT_WINDOWS_STEAM_ASSETS_DIR) ? DEFAULT_WINDOWS_STEAM_ASSETS_DIR : undefined);
   if (!assetsDir) {
     console.error("Usage: tsx src/main.ts <path-to-assets-dir> [--version=X.Y.Z]");
@@ -143,6 +155,10 @@ async function main(): Promise<void> {
     readInstalledGameVersion(resolveAssetsZipPath(assetsDir));
   if (!version) {
     console.error("❌ No game version found. Pass --version=X.Y.Z or ensure misc.version exists.");
+    const committedVersion = readCommittedVersion();
+    if (committedVersion) {
+      console.error(`  The committed ${OUTPUT_FILE} was generated from ${committedVersion}.`);
+    }
     process.exitCode = 1;
     return;
   }

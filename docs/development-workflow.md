@@ -290,7 +290,7 @@ additional local checks against the installed game assets:
 
 ```sh
 pnpm run test:pipeline:assets
-pnpm run pipeline -- input/assets --version=1.0.5
+pnpm run pipeline:assets -- --version=1.0.5
 ```
 
 `test:pipeline:assets` validates the canonical v1.0.5 fixture and fails when its resolved assets
@@ -642,7 +642,7 @@ offline fallback, registration, or activation behavior.
 - **Symptom**: App UI displays stale item fields after pipeline extractor logic updates.
 - **Recovery**: Run the pipeline with local game assets to regenerate the target dataset:
   ```sh
-  pnpm run pipeline -- input/assets --version=1.0.5
+  pnpm run pipeline:assets -- --version=1.0.5
   ```
   Review `git diff src/lib/data/tracker-data.json` to verify schema and data accuracy.
 
