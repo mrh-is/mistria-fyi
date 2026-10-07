@@ -18,38 +18,63 @@ concurrency:
 
 jobs:
   changes:
-    name: Detect browser-relevant changes
+    name: Detect test-relevant changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      contents: read
       pull-requests: read
     outputs:
       browser: ${{ steps.filter.outputs.browser }}
+      cleanup: ${{ steps.filter.outputs.cleanup }}
     steps:
+      - if: github.event_name == 'push'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
       # Pull requests run the browser suites only when the app, its tests, or their tooling change;
       # main pushes, nightly runs, and manual dispatches always run them.
       - id: filter
         env:
           EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.before }}
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
         run: |
           browser=true
+          cleanup=false
+          files=
           if [ "$EVENT_NAME" = "pull_request" ]; then
             browser=false
-            files=$(gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[].filename')
-            while IFS= read -r file; do
-              case "$file" in
-                src/* | static/* | tests/* | messages/* | project.inlang/* | _headers | \
-                  scripts/playwright-* | playwright*.config.ts | svelte.config.* | vite.config.* | \
-                  package.json | pnpm-lock.yaml | .node-version | .github/workflows/ci.yml)
-                  browser=true
-                  ;;
-              esac
-            done <<< "$files"
+            files=$(gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/files" \
+              --jq '.[] | .filename, (.previous_filename // empty)')
+          elif [ "$EVENT_NAME" = "push" ]; then
+            if [[ "$BASE_SHA" == 0000000000000000000000000000000000000000 ]]; then
+              files=$(git ls-tree -r --name-only HEAD)
+            else
+              if ! git cat-file -e "$BASE_SHA^{commit}"; then
+                gh auth setup-git
+                git fetch --no-tags --depth=1 origin "$BASE_SHA"
+              fi
+              files=$(git diff --no-renames --name-only "$BASE_SHA" HEAD)
+            fi
           fi
+          while IFS= read -r file; do
+            case "$file" in
+              scripts/cleanup-merged-worktrees.sh) cleanup=true ;;
+            esac
+            case "$file" in
+              src/* | static/* | tests/* | messages/* | project.inlang/* | _headers | \
+                scripts/playwright-* | playwright*.config.ts | svelte.config.* | vite.config.* | \
+                package.json | pnpm-lock.yaml | .node-version | .github/workflows/ci.yml)
+                browser=true
+                ;;
+            esac
+          done <<< "$files"
           echo "browser=$browser" >> "$GITHUB_OUTPUT"
+          echo "cleanup=$cleanup" >> "$GITHUB_OUTPUT"
 
   lint:
     name: Lint
@@ -109,6 +134,7 @@ jobs:
 
   test:
     name: Test
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -132,9 +158,23 @@ jobs:
           restore-keys: |
             vitest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
             vitest-${{ runner.os }}-
-      # The same suite as `pnpm run test`, plus a coverage report: reported, not gated.
-      - run: pnpm run test:coverage
+      # Every push runs the complete asset-independent suite; coverage is collected nightly.
+      - name: Test with timing budgets
+        env:
+          VITEST_COVERAGE: ${{ github.event_name == 'schedule' }}
+          VITEST_CLEANUP_CHANGED: ${{ needs.changes.outputs.cleanup }}
+        run: node scripts/vitest-timings.ts
+      - name: Publish Vitest timings
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vitest-timings
+          include-hidden-files: true
+          path: .vitest-artifacts/
+          retention-days: 14
+          if-no-files-found: error
       - name: Summarize coverage
+        if: github.event_name == 'schedule'
         run: node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"
 
   build:

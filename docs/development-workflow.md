@@ -125,6 +125,9 @@ Mistria Field Guide uses explicit planning and approval gates for changes that n
 ### Scope the change
 
 - Read the issue and comments before beginning issue work.
+- Existing clear acceptance criteria satisfy the scope approval gate. Proceed without requesting
+  approval again or drafting a duplicate checklist; ask only about unresolved scope, conflicting
+  requirements, or decisions those criteria do not settle.
 - Identify affected contracts, tests, generated files, and documentation before editing.
 - Use the smallest process that fits the change. Small, well-specified maintenance work does not
   require a separate specification or implementation plan.
@@ -168,7 +171,10 @@ Attribution records authorship separately from active ownership, particularly wh
 participate in one issue or PR. Follow the canonical commit, footer, label, comment, & handoff rules
 in [AGENTS.md](../AGENTS.md#agent-attribution).
 
-### Explicit Approval & Planning Gates
+### Explicit approval & planning gates
+
+These gates apply when requirements need further design or planning. Clear existing acceptance
+criteria authorize implementation within that scope without another approval round.
 
 1. **Design**: Explore intent, requirements, and subsystem impact before planning.
 2. **Specification Gate**: For changes that need a written design, obtain explicit user approval on
@@ -224,15 +230,17 @@ colocated tests don’t double the length of directory listings.
   pnpm run test
   ```
   This command passes in a fresh clone without `pipeline/input/`. CI runs the same suite through
-  `pnpm run test:coverage`.
+  `node scripts/vitest-timings.ts`, which reports per-file timings & enforces budgets.
 - **Measure coverage** (opt-in; the same suite plus v8 coverage):
   ```sh
   pnpm run test:coverage
   ```
   Coverage covers `src/lib/engine/`, `src/lib/stores/`, & `pipeline/src/`. It's reported, not gated:
   the terminal prints a summary, `coverage/index.html` has per-line detail, and CI writes a per-area
-  table with the least-covered files to the test job's summary. Plain `pnpm run test` and
-  single-file runs don't measure coverage, so they cost nothing extra.
+  table with the least-covered files to the nightly test job's summary. PRs & main pushes run the
+  suite without coverage (the cleanup test requires a change to its script); scheduled runs collect
+  coverage. Plain `pnpm run test` and single-file runs don't measure coverage, so they cost nothing
+  extra.
 - **Run tests affected by branch changes**:
 
   ```sh
@@ -264,6 +272,31 @@ colocated tests don’t double the length of directory listings.
   ```sh
   pnpm exec vitest run path/to/file.test.ts
   ```
+
+### Vitest time budgets
+
+CI runs `node scripts/vitest-timings.ts` over every asset-independent project. The cleanup test runs
+only when `scripts/cleanup-merged-worktrees.sh` changes: PRs use their complete changed-file list, &
+main pushes compare the event’s before/after commits. Scheduled & manual runs omit it. Direct local
+runs still include it, so test-only edits can be verified with the focused command. It publishes all
+per-file test & hook durations, slowest first, in the job summary & the `vitest-timings` artifact.
+The timed command uses half the available CPUs (at least one worker, capped at four), leaving
+headroom for files that spawn CLI subprocesses. The JSON also records CPU count, coverage mode,
+whole-command wall time, & the enforced ceilings. Imports, environment setup, transforms, startup, &
+report generation count toward the wall budget. Missing timing reports & unsuccessful tests fail the
+step independently of the budgets.
+
+| Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
+| ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
+| Two CPUs (current private `ubuntu-latest`) | 10 s             | 180 s                 | 300 s                    |
+| Four or more CPUs (public `ubuntu-latest`) | 5 s              | 90 s                  | 300 s                    |
+
+The two-CPU ceilings account for the measured runner class, not local Mac timings: before #689, the
+cleanup file took 5.524 s, the allocation test 9.855 s, & the coverage step 216 s on run
+[37692535010](https://github.com/mrh-is/mistria-fyi/actions/runs/37692535010). The four-CPU wall
+ceiling leaves startup headroom above #687’s 60 s target. Budget changes require measurements on the
+same runner class & an explanation in the PR; do not raise ceilings merely to silence a failure.
+Coverage runs nightly because local measurements do not establish that it is free in CI.
 
 ### Test projects
 
@@ -340,15 +373,15 @@ other full-suite command during development.
 
 `.github/workflows/ci.yml` runs on every pull request and main push:
 
-| Command                             | Description & Purpose                                                                 | Scope                |
-| ----------------------------------- | ------------------------------------------------------------------------------------- | -------------------- |
-| `pnpm run lint`                     | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), Stylelint, ShellCheck     | All files            |
-| `pnpm audit --audit-level=moderate` | Fails on moderate or worse advisories in the lockfile, minus `auditConfig` exceptions | Dependencies         |
-| `pnpm run check:i18n`               | Verifies every locale file matches `en.json`'s key shape                              | `messages/`          |
-| `pnpm run check`                    | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`          | `src/` & `pipeline/` |
-| `pnpm run test:coverage`            | Executes the complete Vitest suite and summarizes coverage (not gated)                | Unit & logic tests   |
-| `pnpm run build`                    | Compiles SvelteKit app and verifies Cloudflare adapter                                | Build validation     |
-| `pnpm run check:routes`             | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`      | Build validation     |
+| Command                             | Description & Purpose                                                                   | Scope                |
+| ----------------------------------- | --------------------------------------------------------------------------------------- | -------------------- |
+| `pnpm run lint`                     | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), Stylelint, ShellCheck       | All files            |
+| `pnpm audit --audit-level=moderate` | Fails on moderate or worse advisories in the lockfile, minus `auditConfig` exceptions   | Dependencies         |
+| `pnpm run check:i18n`               | Verifies every locale file matches `en.json`'s key shape                                | `messages/`          |
+| `pnpm run check`                    | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`            | `src/` & `pipeline/` |
+| `node scripts/vitest-timings.ts`    | Executes the complete Vitest suite with file & wall-time budgets; coverage only nightly | Unit & logic tests   |
+| `pnpm run build`                    | Compiles SvelteKit app and verifies Cloudflare adapter                                  | Build validation     |
+| `pnpm run check:routes`             | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`        | Build validation     |
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see
