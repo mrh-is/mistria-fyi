@@ -10,7 +10,7 @@ import { canonicalSourceJson } from "./source-accumulator.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { CosmeticId, ItemId } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse/parse-fiddle.js";
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
 export interface OverrideDiagnostic {

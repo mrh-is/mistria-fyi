@@ -2,7 +2,7 @@ import { compareStrings } from "./ordering.js";
 
 import type { MinesBiomeId, QuestId, QuestType } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "./parse-fiddle.js";
+import type { ParsedGameData } from "./parse/parse-fiddle.js";
 
 /**
  * The six TOML quest-group keys tracked in the UI.

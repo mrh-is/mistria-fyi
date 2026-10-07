@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { assembleTrackerData } from "../assemble.js";
-import { evaluateExpressions } from "../evaluate.js";
 import { forEachItem } from "../extractor-helpers.js";
-import { createAssetsLocalizer } from "../localize.js";
-import { parseFiddle } from "../parse-fiddle.js";
+import { createAssetsLocalizer } from "../localize/localize.js";
+import { evaluateExpressions } from "../parse/evaluate.js";
+import { parseFiddle } from "../parse/parse-fiddle.js";
 import { requireGameAssetsDir } from "../test-helpers.js";
 import { validateReviewedGameFacts } from "./validate.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse/parse-fiddle.js";
 
 function installedFacts(): ParsedGameData {
   const { data } = parseFiddle(requireGameAssetsDir());

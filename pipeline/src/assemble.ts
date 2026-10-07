@@ -12,6 +12,7 @@ import { collectRewardSources } from "./acquisition/collectors/rewards.js";
 import { collectStoreSources } from "./acquisition/collectors/stores.js";
 import { getExcludedCosmeticIds } from "./acquisition/exclusions.js";
 import { collectNativeReferenceRegistries } from "./acquisition/native-references.js";
+import { assertNoStockGates } from "./acquisition/pipeline-source.js";
 import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
 import { AcquisitionReferenceIndex } from "./acquisition/reference-index.js";
 import { finalizeSources, requireSources } from "./acquisition/required-sources.js";
@@ -31,37 +32,37 @@ import {
 } from "./acquisition/source-accumulator.js";
 import { validateAcquisitionSources } from "./acquisition/validate-sources.js";
 import { PipelineDiagnostics } from "./diagnostics.js";
-import { forEachItem } from "./extractor-helpers.js";
-import { extractAlmanac, readAlmanacCategories } from "./extractors/almanac.js";
-import { extractAnimals } from "./extractors/animals.js";
-import { extractCosmetics } from "./extractors/cosmetics.js";
-import { extractDates } from "./extractors/dates.js";
-import { extractFestivals } from "./extractors/festivals.js";
-import { extractLocationNames } from "./extractors/locations.js";
-import { extractMines } from "./extractors/mines.js";
-import { extractMonsterNames } from "./extractors/monsters.js";
-import { extractMuseum } from "./extractors/museum.js";
-import { extractPetCosmetics, extractPetSkins } from "./extractors/pets.js";
-import { extractQuests } from "./extractors/quests.js";
-import { deriveRecipeLocaleNames, extractRecipes } from "./extractors/recipes.js";
-import { extractTownRanks } from "./extractors/renown.js";
-import { extractSkills } from "./extractors/skills.js";
-import { extractStoresMeta } from "./extractors/stores-meta.js";
-import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
-import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./extractors/ui-strings.js";
-import { extractVillagers } from "./extractors/villagers.js";
-import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
 import {
   assignEntityVisibility,
   extractCategoryVisibility,
   extractHeartLevelChanges,
   stampStoreVisibility,
   stampVillagerVisibility,
-} from "./extractors/visibility/entity-visibility.js";
-import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
+} from "./enrich/entity-visibility.js";
+import { extractAlmanac, readAlmanacCategories } from "./extract/almanac.js";
+import { extractAnimals } from "./extract/animals.js";
+import { extractCosmetics } from "./extract/cosmetics.js";
+import { buildCutsceneQuestMap } from "./extract/cutscene-quest-map.js";
+import { extractDates } from "./extract/dates.js";
+import { extractFestivals } from "./extract/festivals.js";
+import { extractLocationNames } from "./extract/locations.js";
+import { extractMines } from "./extract/mines.js";
+import { extractMonsterNames } from "./extract/monsters.js";
+import { extractMuseum } from "./extract/museum.js";
+import { extractPetCosmetics, extractPetSkins } from "./extract/pets.js";
+import { extractQuestChains } from "./extract/quest-chains.js";
+import { extractQuests } from "./extract/quests.js";
+import { deriveRecipeLocaleNames, extractRecipes } from "./extract/recipes.js";
+import { extractTownRanks } from "./extract/renown.js";
+import { extractSkills } from "./extract/skills.js";
+import { extractStoresMeta } from "./extract/stores-meta.js";
+import { extractTreasureChestTiers } from "./extract/treasure-chest-tiers.js";
+import { extractVillagers } from "./extract/villagers.js";
+import { forEachItem } from "./extractor-helpers.js";
+import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./localize/ui-strings.js";
 import { validateCosmeticExclusionSources } from "./overrides/exclusions.js";
 import { isPregnancyQuest } from "./overrides/game-facts.js";
-import { createRequirementContext } from "./requirements.js";
+import { createRequirementContext } from "./parse/requirements.js";
 import { REVIEWED_PIPELINE_DIAGNOSTICS } from "./reviewed-diagnostics.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -69,10 +70,10 @@ import type { Item, ItemId, QuestId, TrackerData, VillagerId } from "#lib/types/
 
 import type { ReviewedOverrides } from "./acquisition/reviewed-overrides.js";
 import type { ReviewedPipelineDiagnostic } from "./diagnostics.js";
-import type { ItemIconSpriteIndex } from "./extractors/almanac.js";
-import type { VillagerIconSpriteIndex } from "./extractors/villagers.js";
-import type { Localizer } from "./localize.js";
-import type { ParsedGameData } from "./parse-fiddle.js";
+import type { ItemIconSpriteIndex } from "./extract/almanac.js";
+import type { VillagerIconSpriteIndex } from "./extract/villagers.js";
+import type { Localizer } from "./localize/localize.js";
+import type { ParsedGameData } from "./parse/parse-fiddle.js";
 
 export interface AssembleOptions {
   /** Exact diagnostics this run may raise. Defaults to the installed game's reviewed list. */
@@ -373,6 +374,7 @@ export function assembleTrackerData(
   // Validation is the last step before serialization: visibility assignment rewrites sources and
   // injects hard-coded quest gates, so validating any earlier would miss the emitted shape.
   diagnostics.validate();
+  assertNoStockGates(trackerData);
   validateAcquisitionSources(trackerData, buildAcquisitionReferences(trackerData, fiddle));
   console.log("  Tracker data validation passed");
 
