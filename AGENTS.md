@@ -187,6 +187,12 @@ interactive `pnpm approve-builds` (unsupported in an agent shell).
 it. Wrangler may need access to Cloudflare's API and to its stored credentials (on macOS, under
 `~/Library/Preferences/.wrangler/`); never read or expose the stored OAuth token.
 
+**Adding or bumping a dependency:** run `pnpm audit --audit-level=moderate` before committing, and
+check what the new package pulls in (`pnpm why <transitive>` for anything flagged). Don't add a
+package whose tree carries an unpatched advisory; find an alternative. CI's "Audit dependencies" job
+enforces the same threshold. Ignore an advisory only when it's disputed or has no fix, through
+`auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with a comment linking the reason.
+
 | Command                       | Purpose                                        |
 | ----------------------------- | ---------------------------------------------- |
 | `pnpm run dev`                | Dev server                                     |
@@ -287,11 +293,11 @@ compaction.
 
 ### CI (every pull request)
 
-`ci.yml` runs `lint`, `check`, `check:i18n`, `test:coverage` (the `test` suite plus a coverage
-summary that doesn't gate), `build`, & `check:routes`, then the accessibility and PWA suites against
-that build when `src/`, `static/`, `tests/`, or their tooling change. Its "CI passed" job aggregates
-every result. A PR merges only when it passes; fix CI failures on the branch rather than merging
-around them (see §3 step 11).
+`ci.yml` runs `lint`, `pnpm audit`, `check`, `check:i18n`, `test:coverage` (the `test` suite plus a
+coverage summary that doesn't gate), `build`, & `check:routes`, then the accessibility and PWA
+suites against that build when `src/`, `static/`, `tests/`, or their tooling change. Its "CI passed"
+job aggregates every result. A PR merges only when it passes; fix CI failures on the branch rather
+than merging around them (see §3 step 11).
 
 ### Full local matrix (exceptions)
 
