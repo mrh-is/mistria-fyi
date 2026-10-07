@@ -4,6 +4,7 @@ import { isNonEmptyArray } from "#lib/utils/record.js";
 
 import { PipelineDiagnostics } from "../../diagnostics.js";
 import { forEachItem, minesBiomeId } from "../../extractor-helpers.js";
+import { GOLDEN_PRODUCT_TO_ANIMAL, MINE_SUBCAT_TO_BIOME } from "../../overrides/game-facts.js";
 
 import type {
   ActivityId,
@@ -76,14 +77,6 @@ function buildNaturalAvailability(
     conditions: conditions as NonEmptyArray<AvailabilityCondition>,
   });
 }
-
-const MINE_SUBCAT_TO_BIOME: Record<string, MinesBiomeId> = {
-  deep_earth: "deep_earth" as MinesBiomeId,
-  lava_caves: "lava_caves" as MinesBiomeId,
-  ruins: "ancient_ruins" as MinesBiomeId,
-  tide_caverns: "tide_caverns" as MinesBiomeId,
-  upper_mines: "upper_mines" as MinesBiomeId,
-};
 
 function collectAnimalProductSources(
   fiddle: ParsedGameData,
@@ -405,21 +398,6 @@ function collectGoldenAnimalProductSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
 ): void {
-  const GOLDEN_PRODUCT_TO_ANIMAL: Record<string, string> = {
-    animal_currency: "chicken",
-    bull_horn: "cow",
-    golden_alpaca_wool: "alpaca",
-    golden_bristle: "horse",
-    golden_cow_milk: "cow",
-    golden_duck_egg: "duck",
-    golden_duck_feather: "duck",
-    golden_egg: "chicken",
-    golden_feather: "chicken",
-    golden_horse_hair: "horse",
-    golden_rabbit_wool: "rabbit",
-    golden_sheep_wool: "sheep",
-  };
-
   forEachItem(fiddle, (itemId, item) => {
     const animalType = GOLDEN_PRODUCT_TO_ANIMAL[itemId];
     if (!animalType) return;

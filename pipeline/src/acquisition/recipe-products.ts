@@ -1,4 +1,5 @@
 import { forEachItem } from "../extractor-helpers.js";
+import { isDragonForgedItem } from "../overrides/game-facts.js";
 
 import type { Source } from "#lib/types/acquisition.js";
 import type { ItemId, ProductionMethod, RecipeId } from "#lib/types/tracker-data.js";
@@ -33,7 +34,7 @@ export function deriveProductionMethod(
     }
 
     if (tags.includes("blacksmithing")) {
-      result = id.startsWith("dragon_forged_") ? "dragon_forge" : "smith";
+      result = isDragonForgedItem(id) ? "dragon_forge" : "smith";
       return;
     }
 
@@ -90,7 +91,7 @@ function buildMethodIndex(fiddle: ParsedGameData): Map<string, ProductionMethod>
     }
 
     if (tags.includes("blacksmithing")) {
-      index.set(itemId, itemId.startsWith("dragon_forged_") ? "dragon_forge" : "smith");
+      index.set(itemId, isDragonForgedItem(itemId) ? "dragon_forge" : "smith");
       return;
     }
 

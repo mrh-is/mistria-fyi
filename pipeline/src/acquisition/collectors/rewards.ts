@@ -6,6 +6,7 @@ import {
   firstRequiredItemId,
   scrollTargetOf,
 } from "../../extractor-helpers.js";
+import { FESTIVAL_SEASON_MAP } from "../../overrides/game-facts.js";
 import { sourceFileFor } from "../../parse-fiddle.js";
 import { parseRequirements } from "../../requirements.js";
 import { projectRequirementExpressionToAvailability } from "../availability.js";
@@ -42,14 +43,6 @@ type LetterRewardSource = Extract<
   Source,
   { type: "donate_item" | "letter" | "reach_day" | "ship_item" | "spouseGift" | "wedding" }
 >;
-
-const FESTIVAL_SEASON_MAP: Record<string, Season> = {
-  fall: "fall",
-  harvest: "fall",
-  spring: "spring",
-  summer: "summer",
-  winter: "winter",
-};
 
 function isSeason(value: string): value is Season {
   return SEASONS.some((season) => season === value);
