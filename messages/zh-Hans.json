@@ -543,6 +543,8 @@
   "source_default": "初始即可获得",
   "source_dive": "在{waters}潜水",
   "source_dive_any": "潜水",
+  "source_letter_birthday": "通过生日来信获得",
+  "source_letter_condition": "通过来信获得",
   "source_donate_item": "捐赠{item}后通过信件获得",
   "source_ship_item": "出货{item}后通过信件获得",
   "source_engagement": "与可约会的村民达到10颗心后从艾尔西处获得",

@@ -19,6 +19,7 @@ function validTables(overrides: Record<string, unknown> = {}): Record<string, un
       tuna: { water_type: "ocean" },
     },
     fishing: { chest_tables: { default: {}, gold: {} } },
+    letters: { birthday_gift: {}, default: {} },
     locations: { beach: {}, default: {}, farm: {} },
     misc: { pumpkin_patch_options: [] },
     monsters: { cat: { cat: {}, cat_void: {}, default: {} } },
@@ -36,6 +37,7 @@ describe("collectNativeReferenceRegistries", () => {
     expect(collectNativeReferenceRegistries(makeFiddle(validTables()))).toEqual({
       activities: ["pumpkin_patch"],
       dates: ["beach", "wedding"],
+      letters: ["birthday_gift"],
       locations: ["beach", "farm"],
       monsters: ["cat", "cat_void"],
       quests: ["repair_the_bridge", "great_bird_0"],
@@ -81,6 +83,18 @@ describe("validation against native registries", () => {
     expect(() => {
       validate([{ type: "monster", monsterId: "void_cat" }]);
     }).toThrow('Unknown monster ID "void_cat"');
+  });
+
+  it("validates letter IDs against native letters instead of source payloads", () => {
+    expect(() => {
+      validate([{ type: "letter", letterId: "birthday_gift", trigger: "birthday" }]);
+    }).not.toThrow();
+    expect(() => {
+      validate([{ type: "letter", letterId: "birthday_gfit", trigger: "birthday" }]);
+    }).toThrow('Unknown letter ID "birthday_gfit"');
+    expect(() => {
+      validate([{ type: "letter", trigger: "birthday" }]);
+    }).toThrow("items.reward.sources[0].letterId");
   });
 
   it("accepts native and reviewed IDs", () => {

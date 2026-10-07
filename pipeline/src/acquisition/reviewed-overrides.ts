@@ -537,11 +537,6 @@ export const COSMETIC_OVERRIDES: Partial<Record<CosmeticId, Source[]>> = {
   ["head_mimic_hat" as CosmeticId]: [
     { type: "monster_feed" as const, monsterId: "mimic" as MonsterId },
   ],
-  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Wishing_Well
-  // Soup Pot Hat and Teapot Hat are obtainable from the Wishing Well. The native data only stores
-  // price configuration; the reward pool is not encoded in the static game data.
-  ["head_soup_pot" as CosmeticId]: [{ type: "wishing_well" as const, cost: 100 }],
-  ["head_teapot" as CosmeticId]: [{ type: "wishing_well" as const, cost: 100 }],
   ["robe_dragon_cleric" as CosmeticId]: [
     { type: "ritual_chamber" as const, perkId: "lost_to_history" as PerkId },
   ],

@@ -557,6 +557,8 @@
   "source_default": "Disponible desde el principio",
   "source_dive": "Bucear en {waters}",
   "source_dive_any": "Bucear",
+  "source_letter_birthday": "Recibir en una carta de cumpleaños",
+  "source_letter_condition": "Recibir en una carta",
   "source_donate_item": "Recibir por carta tras donar: {item}",
   "source_ship_item": "Recibir por carta tras enviar: {item}",
   "source_engagement": "Recibir de Elsie tras alcanzar 10 corazones con un aldeano con el que se pueda salir",

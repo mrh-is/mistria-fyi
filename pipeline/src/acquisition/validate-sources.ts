@@ -146,6 +146,7 @@ const SOURCE_FIELDS = {
   fish: ["waterTypes"],
   fish_trap: ["baitItemIds"],
   forage: ["locationIds"],
+  letter: ["letterId", "trigger"],
   lost_and_found: [],
   mine: ["biomeId"],
   mine_fish: ["biomeId"],
@@ -1229,6 +1230,18 @@ function validateVariantFields(
       break;
     case "reach_day":
       validateReachedDay(source, targetId, fieldPath, diagnostics);
+      break;
+    case "letter":
+      stringReferences.push(["letterId", "letter"]);
+      if (source.trigger !== "birthday" && source.trigger !== "condition") {
+        malformed(
+          diagnostics,
+          targetId,
+          `${fieldPath}.trigger`,
+          "Expected a letter trigger",
+          source,
+        );
+      }
       break;
     case "recipe":
       stringReferences.push(["recipeId", "recipe"]);

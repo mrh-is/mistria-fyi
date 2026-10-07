@@ -1,10 +1,41 @@
 import { describe, expect, it } from "vitest";
 
+import { PipelineDiagnostics } from "../../diagnostics.js";
+import { createRequirementContext } from "../../requirements.js";
 import { makeFiddle as makeFiddleBase } from "../../test-helpers.js";
-import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
-import { collectRewardSources } from "./rewards.js";
+import {
+  AnimalCosmeticSourceAccumulator,
+  CosmeticSourceAccumulator,
+  ItemSourceAccumulator,
+  PetCosmeticSourceAccumulator,
+  RecipeSourceAccumulator,
+} from "../source-accumulator.js";
+import { collectRewardSources as collectRewardSourcesImpl } from "./rewards.js";
 
-import type { CosmeticId, ItemId } from "#lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, RecipeId } from "#lib/types/tracker-data.js";
+
+function collectRewardSources(
+  fiddle: Parameters<typeof collectRewardSourcesImpl>[0],
+  items: ItemSourceAccumulator,
+  cosmetics = new CosmeticSourceAccumulator(),
+  animalCosmetics = new AnimalCosmeticSourceAccumulator(),
+  petCosmetics = new PetCosmeticSourceAccumulator(),
+): void {
+  collectRewardSourcesImpl(
+    fiddle,
+    items,
+    cosmetics,
+    animalCosmetics,
+    petCosmetics,
+    {
+      diagnostics: new PipelineDiagnostics(),
+      knownRecipeIds: new Set(),
+      recipeIdByItemId: new Map(),
+      sources: new RecipeSourceAccumulator(),
+    },
+    createRequirementContext(fiddle.requirements as Record<string, unknown> | undefined),
+  );
+}
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({
@@ -182,8 +213,9 @@ describe("collectRewardSources", () => {
       });
 
       const acc = new ItemSourceAccumulator();
-      collectRewardSources(fiddle, acc);
-      expect(acc.get("sun_hat" as ItemId)).toEqual([
+      const cosmetics = new CosmeticSourceAccumulator();
+      collectRewardSources(fiddle, acc, cosmetics);
+      expect(cosmetics.get("sun_hat" as CosmeticId)).toEqual([
         {
           type: "festival",
           availability: { type: "season", seasons: ["summer"] },
@@ -203,16 +235,84 @@ describe("collectRewardSources", () => {
       });
 
       const acc = new ItemSourceAccumulator();
-      collectRewardSources(fiddle, acc);
+      const cosmetics = new CosmeticSourceAccumulator();
+      collectRewardSources(fiddle, acc, cosmetics);
 
       expect(acc.get("bronze_medal" as ItemId)).toEqual([{ type: "renown", level: 1 }]);
-      expect(acc.get("silver_hat" as ItemId)).toEqual([{ type: "renown", level: 2 }]);
+      expect(cosmetics.get("silver_hat" as CosmeticId)).toEqual([{ type: "renown", level: 2 }]);
       expect(acc.get("gold_trophy" as ItemId)).toEqual([{ type: "renown", level: 3 }]);
     });
   });
 
   describe("letter rewards", () => {
-    it("adds a letter source for shipped_item trigger with recipe scroll", () => {
+    it("preserves an added unknown gate beside a recognized trigger for items and recipe scrolls", () => {
+      const fiddle = makeFiddle({
+        letters: {
+          conditional_letter: {
+            items: [{ item_name: "gift" }, { recipe_scroll: "soup" }],
+            requirements: { completed_quest: "repair", new_gate: { marker: true } },
+          },
+        },
+      });
+      const diagnostics = new PipelineDiagnostics();
+      const items = new ItemSourceAccumulator();
+      const recipeSources = new RecipeSourceAccumulator();
+      collectRewardSourcesImpl(
+        fiddle,
+        items,
+        new CosmeticSourceAccumulator(),
+        new AnimalCosmeticSourceAccumulator(),
+        new PetCosmeticSourceAccumulator(),
+        {
+          diagnostics,
+          knownRecipeIds: new Set(["soup"]),
+          recipeIdByItemId: new Map([["soup", "soup" as RecipeId]]),
+          sources: recipeSources,
+        },
+        createRequirementContext({}),
+      );
+      const itemSources = items.get("gift" as ItemId);
+      expect(itemSources).toEqual(recipeSources.get("soup" as RecipeId));
+      expect(itemSources).toHaveLength(1);
+      expect(JSON.stringify(itemSources[0])).toContain('"questId":"repair"');
+      expect(JSON.stringify(itemSources[0])).toContain('"new_gate"');
+      expect(() => {
+        diagnostics.validate();
+      }).not.toThrow();
+    });
+
+    it("rejects an unsupported trigger without inventing a source", () => {
+      const fiddle = makeFiddle({
+        letters: {
+          unknown_letter: {
+            items: [{ item_name: "gift" }],
+            requirements: { mystery_trigger: true },
+          },
+        },
+      });
+      const diagnostics = new PipelineDiagnostics();
+      const items = new ItemSourceAccumulator();
+      collectRewardSourcesImpl(
+        fiddle,
+        items,
+        new CosmeticSourceAccumulator(),
+        new AnimalCosmeticSourceAccumulator(),
+        new PetCosmeticSourceAccumulator(),
+        {
+          diagnostics,
+          knownRecipeIds: new Set(),
+          recipeIdByItemId: new Map(),
+          sources: new RecipeSourceAccumulator(),
+        },
+        createRequirementContext({}),
+      );
+      expect(items.get("gift" as ItemId)).toEqual([]);
+      expect(() => {
+        diagnostics.validate();
+      }).toThrow("letter-without-trigger");
+    });
+
+    it("routes a recipe scroll away from item sources", () => {
       const fiddle = makeFiddle({
         letters: {
           baked_potato_recipe: {
@@ -226,9 +326,7 @@ describe("collectRewardSources", () => {
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
 
-      expect(acc.get("baked_potato" as ItemId)).toEqual([
-        { type: "ship_item", triggerItemId: "potato" },
-      ]);
+      expect(acc.get("baked_potato" as ItemId)).toEqual([]);
     });
 
     it("adds a letter source for donated_item trigger", () => {
@@ -244,9 +342,7 @@ describe("collectRewardSources", () => {
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
 
-      expect(acc.get("miners_mushroom_stew" as ItemId)).toEqual([
-        { type: "donate_item", triggerItemId: "upper_mines_mushroom" },
-      ]);
+      expect(acc.get("miners_mushroom_stew" as ItemId)).toEqual([]);
     });
 
     it("adds a letter source for reached_date trigger", () => {
@@ -301,7 +397,7 @@ describe("collectRewardSources", () => {
       ]);
     });
 
-    it("adds a letter source for item_name entries", () => {
+    it("preserves a world-fact letter condition without inventing a date", () => {
       const fiddle = makeFiddle({
         letters: {
           adeline_reward: {
@@ -317,8 +413,18 @@ describe("collectRewardSources", () => {
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
 
-      expect(acc.get("basic_wood" as ItemId)).toHaveLength(1);
-      expect(acc.get("ore_stone" as ItemId)).toHaveLength(1);
+      const source = {
+        type: "letter",
+        availability: {
+          type: "gamePredicate",
+          predicate: "world_fact_is",
+          value: { adeline_4h_materials: true },
+        },
+        letterId: "adeline_reward",
+        trigger: "condition",
+      };
+      expect(acc.get("basic_wood" as ItemId)).toEqual([source]);
+      expect(acc.get("ore_stone" as ItemId)).toEqual([source]);
     });
 
     it("skips letters with empty items array", () => {
@@ -351,12 +457,13 @@ describe("collectRewardSources", () => {
       });
 
       const acc = new ItemSourceAccumulator();
-      collectRewardSources(fiddle, acc);
+      const cosmetics = new CosmeticSourceAccumulator();
+      collectRewardSources(fiddle, acc, cosmetics);
 
       expect(acc.get("treasure_box_wood" as ItemId)).toEqual([
         { type: "museum_donation", setCount: 1, wingId: "archaeology" },
       ]);
-      expect(acc.get("head_explorer_hat" as ItemId)).toEqual([
+      expect(cosmetics.get("head_explorer_hat" as CosmeticId)).toEqual([
         { type: "museum_donation", setCount: 1, wingId: "archaeology" },
       ]);
       expect(acc.get("treasure_box_copper" as ItemId)).toEqual([

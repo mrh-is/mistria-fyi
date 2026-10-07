@@ -174,13 +174,17 @@ describe("projectRequirementExpressionToAvailability", () => {
     });
   });
 
-  it("throws on reached_date with object value (day-level granularity)", () => {
-    expect(() =>
+  it("preserves reached_date with day granularity as an unknown gate", () => {
+    expect(
       project({
         predicate: "reached_date",
         value: { day: 28, exact: true, season: "summer", year: 2 },
       }),
-    ).toThrow("Day-level reached_date is not supported");
+    ).toEqual({
+      type: "gamePredicate",
+      predicate: "reached_date",
+      value: { day: 28, exact: true, season: "summer", year: 2 },
+    });
   });
 
   it("maps has_upper_floor to hasUpperFloor", () => {
