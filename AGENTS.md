@@ -129,13 +129,14 @@ Follow this sequence for every task:
    all cases. Do not start issues labeled `status: blocked` or `status: needs decision`. If an issue
    has `status: in progress` or an `agent:*` label, coordinate with its current owner rather than
    starting duplicate work.
-2. **Ask questions before starting.** After reading the issue but before any implementation, surface
-   uncertainties. If the task has ambiguous scope, multiple valid approaches, or unclear acceptance
-   criteria, ask the user. "I'm about to do X; any concerns?" is cheap. A wrong assumption that
-   compounds across 50 tool calls is expensive.
+2. **Resolve uncertainties before starting.** If the issue already has clear acceptance criteria,
+   proceed without asking for approval again. Ask the user only about unresolved scope, conflicting
+   requirements, or decisions the existing criteria do not settle.
 3. **Scope the change** — identify the affected subsystem, acceptance criteria, & deliverables. For
-   nontrivial features, write a short acceptance checklist (3–7 items describing the states the
-   finished feature must satisfy). Get user approval on the checklist before implementing.
+   nontrivial features without clear acceptance criteria, write a short acceptance checklist (3–7
+   items describing the states the finished feature must satisfy) & get user approval before
+   implementing. Existing clear acceptance criteria satisfy this gate; do not request a second
+   approval or create a duplicate checklist.
 4. **Claim the issue** — replace its current `status:*` label with `status: in progress` and add
    exactly one `agent:*` label identifying the top-level orchestrator. Subagents use their
    orchestrator's identity.
@@ -296,11 +297,13 @@ compaction.
 
 ### CI (every pull request)
 
-`ci.yml` runs `lint`, `pnpm audit`, `check`, `check:i18n`, `test:coverage` (the `test` suite plus a
-coverage summary that doesn't gate), `build`, & `check:routes`, then the accessibility and PWA
-suites against that build when `src/`, `static/`, `tests/`, or their tooling change. Its "CI passed"
-job aggregates every result. A PR merges only when it passes; fix CI failures on the branch rather
-than merging around them (see §3 step 11).
+`ci.yml` runs `lint`, `pnpm audit`, `check`, `check:i18n`, the complete asset-independent test suite
+with per-file & wall-time budgets (the cleanup test runs only when its script changes), `build`, &
+`check:routes`, then the accessibility and PWA suites against that build when `src/`, `static/`,
+`tests/`, or their tooling change. Its "CI passed" job aggregates every result. Coverage runs
+nightly & remains reported, not gated. Timing ceilings are documented in
+[the development workflow](docs/development-workflow.md#vitest-time-budgets). A PR merges only when
+it passes; fix CI failures on the branch rather than merging around them (see §3 step 11).
 
 ### Full local matrix (exceptions)
 
