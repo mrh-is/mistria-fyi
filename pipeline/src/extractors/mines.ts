@@ -2,6 +2,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray, expectNonEmptyString } from "../data-shapes.js";
 import { minesBiomeId } from "../extractor-helpers.js";
+import { BIOME_ENGLISH_NAMES } from "../overrides/ordinal-names.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -21,14 +22,6 @@ export interface MinesExtraction {
   mines: TrackerData["mines"];
   spellLocaleNames: Record<LocaleCode, Record<SpellId, string>>;
 }
-
-const BIOME_ENGLISH_NAMES = [
-  "Upper Mines",
-  "The Tide Caverns",
-  "Deep Earth",
-  "The Lava Caves",
-  "Ancient Ruins",
-] as const;
 
 export function extractMines(fiddle: ParsedGameData, localizer: Localizer): MinesExtraction {
   const biomeLocaleNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<

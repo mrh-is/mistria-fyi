@@ -1,3 +1,4 @@
+import { STORY_PREREQUISITE_OVERRIDES } from "../../overrides/game-facts.js";
 import { buildRequirementDefinitions, parseRequirements } from "../../requirements.js";
 
 import type { QuestId, VillagerId } from "#lib/types/tracker-data.js";
@@ -30,7 +31,7 @@ interface HeartChainEntry {
  * uses to gate unavailable content: story prerequisites and heart-level chains come from
  * `letters.toml`, crown/mission/cooking ordering comes from their registry files' `order` arrays,
  * and fetch-quest requirements come from `request_board.toml`. Fetch requirements are left as raw
- * `RequirementExpression` trees — Task 5's `assignEntityVisibility` resolves them into
+ * `RequirementExpression` trees — `assignEntityVisibility` resolves them into
  * `VisibilityCondition`.
  */
 export function extractQuestChains(fiddle: ParsedGameData): QuestChainData {
@@ -209,15 +210,6 @@ function extractRegistryOrder(
  * reward, or location gate) can't be extracted from letters or cutscene `completed_quest` fields.
  * Each entry maps a quest to the quest(s) that must be completed before it becomes available.
  */
-const STORY_PREREQUISITE_OVERRIDES: Partial<Record<QuestId, QuestId[]>> = {
-  ["breaking_the_final_seal" as QuestId]: ["the_dragonsworn_tablet" as QuestId],
-  ["breaking_the_fire_seal" as QuestId]: ["the_fire_tablet" as QuestId],
-  ["breaking_the_ruins_seal" as QuestId]: ["creating_the_void_mass" as QuestId],
-  ["creating_the_void_mass" as QuestId]: ["find_the_magic_key" as QuestId],
-  ["delivering_the_sealing_scroll" as QuestId]: ["procuring_the_sealing_scroll" as QuestId],
-  ["find_the_magic_key" as QuestId]: ["breaking_the_fire_seal" as QuestId],
-  ["the_dragonsworn_tablet" as QuestId]: ["breaking_the_ruins_seal" as QuestId],
-};
 
 /**
  * Story-quest IDs come from the `story_quests` quest group; every one gets a `story` entry, with

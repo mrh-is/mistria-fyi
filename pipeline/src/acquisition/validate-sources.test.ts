@@ -1,5 +1,6 @@
 import { assert, describe, expect, it } from "vitest";
 
+import { makeFiddle } from "../test-helpers.js";
 import { getExcludedCosmeticIds } from "./exclusions.js";
 import { AcquisitionReferenceIndex } from "./reference-index.js";
 import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
@@ -17,7 +18,7 @@ describe("validateAcquisitionSources", () => {
     const trackerData = { cosmetics: { head_flower_hat: { sources: [{ type: "default" }] } } };
     const references = AcquisitionReferenceIndex.from({
       emitted: { cosmetics: trackerData.cosmetics },
-      excluded: { cosmetics: getExcludedCosmeticIds() },
+      excluded: { cosmetics: getExcludedCosmeticIds(makeFiddle()) },
     });
     expect(captureDiagnostics(trackerData, references)).toEqual([
       expect.objectContaining({
