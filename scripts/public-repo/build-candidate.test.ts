@@ -123,6 +123,27 @@ describe("public candidate reference rewriting", () => {
 });
 
 describe("public candidate source validation", () => {
+  it("keeps the audited home prefix out of the procedure’s own Git history", () => {
+    const prefix = ["", "Users", ""].join("/");
+    const history = execFileSync(
+      "git",
+      [
+        "log",
+        "--format=",
+        "--patch",
+        "--full-history",
+        `-S${prefix}`,
+        "HEAD",
+        "--",
+        "docs/public-repo.md",
+        "scripts/public-repo/rewrite-references.py",
+        "scripts/public-repo/build-candidate.test.ts",
+      ],
+      { encoding: "utf8" },
+    );
+    expect(history).toBe("");
+  });
+
   it.each(["static/sprites/test.webp", "scripts/measure-transfer-size.ts"])(
     "rejects a source tip containing %s before cloning",
     (path) => {
