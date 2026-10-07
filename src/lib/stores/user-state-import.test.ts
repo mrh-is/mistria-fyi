@@ -4,7 +4,6 @@ import { trackerData } from "#lib/data/index.js";
 import { extractSaveProgress } from "#lib/engine/import-save.js";
 import { getMaxRenownLevel, MAX_HEART_LEVEL, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { recordKeys } from "#lib/utils/record.js";
 
 import type { SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
@@ -17,23 +16,21 @@ describe("restoreBackup validation", () => {
 
   it("succeeds with a valid backup", () => {
     const json = userState.exportBackup();
-    expect(JSON.parse(json)).toMatchObject({ version: "2" });
+    expect(JSON.parse(json)).toMatchObject({ version: 1 });
     const result = userState.restoreBackup(json);
     expect(result.ok).toBe(true);
   });
 
-  it("restores a preceding-release backup without losing tracked IDs", () => {
-    const almanacId = Object.values(trackerData.almanac)[0].items[0].itemIds[0];
-    const cosmeticId = recordKeys(trackerData.cosmetics)[0];
+  it("rejects the pre-launch format", () => {
     const data = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
-    data.version = "1";
-    const completed = data.completed as Record<string, unknown>;
-    completed.almanac = [almanacId];
-    completed.cosmetics = [cosmeticId];
+    data.version = "2";
+    data.completed = data.progress;
+    delete data.progress;
 
-    expect(userState.restoreBackup(JSON.stringify(data))).toEqual({ ok: true });
-    expect(userState.state.completed.almanac).toContain(almanacId);
-    expect(userState.state.completed.cosmetics).toContain(cosmeticId);
+    expect(userState.restoreBackup(JSON.stringify(data))).toEqual({
+      error: "unsupported-version",
+      ok: false,
+    });
   });
 
   it("rejects malformed JSON", () => {
@@ -52,26 +49,26 @@ describe("restoreBackup validation", () => {
   });
 
   it("rejects JSON without a version field", () => {
-    const result = userState.restoreBackup(JSON.stringify({ completed: {} }));
+    const result = userState.restoreBackup(JSON.stringify({ progress: {} }));
     expect(result).toEqual({ error: "invalid-fields", ok: false });
   });
 
   it("rejects an unsupported version", () => {
     const json = userState.exportBackup();
     const data = JSON.parse(json) as Record<string, unknown>;
-    data.version = "99";
+    data.version = 99;
     const result = userState.restoreBackup(JSON.stringify(data));
     expect(result).toEqual({ error: "unsupported-version", ok: false });
   });
 
-  it("rejects a backup missing the completed object", () => {
-    const result = userState.restoreBackup(JSON.stringify({ version: "1" }));
+  it("rejects a backup missing the progress object", () => {
+    const result = userState.restoreBackup(JSON.stringify({ version: 1 }));
     expect(result).toEqual({ error: "invalid-fields", ok: false });
   });
 
-  it("rejects a backup with invalid completed structure", () => {
+  it("rejects a backup with invalid progress structure", () => {
     const result = userState.restoreBackup(
-      JSON.stringify({ completed: "not an object", version: "1" }),
+      JSON.stringify({ progress: "not an object", version: 1 }),
     );
     expect(result).toEqual({ error: "invalid-fields", ok: false });
   });
@@ -90,7 +87,6 @@ describe("restoreBackup validation", () => {
   it("rejects malformed required and nested fields atomically", () => {
     const original = userState.exportBackup();
     const cases: { mutate: (data: Record<string, unknown>) => void; name: string }[] = [
-      { mutate: (data) => (data.availabilityMode = "sometimes"), name: "availabilityMode" },
       {
         mutate: (data) => ((data.worldState as Record<string, unknown>).season = "monsoon"),
         name: "worldState.season",
@@ -100,95 +96,94 @@ describe("restoreBackup validation", () => {
         name: "worldState.weather",
       },
       {
-        mutate: (data) => delete (data.completed as Record<string, unknown>).almanac,
-        name: "completed.almanac",
+        mutate: (data) => delete (data.progress as Record<string, unknown>).almanac,
+        name: "progress.almanac",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).animalCosmetics = { chicken: "hat" }),
-        name: "completed.animalCosmetics",
+          ((data.progress as Record<string, unknown>).animalCosmetics = { chicken: "hat" }),
+        name: "progress.animalCosmetics",
+      },
+      {
+        mutate: (data) => ((data.progress as Record<string, unknown>).animals = { chicken: [123] }),
+        name: "progress.animals",
+      },
+      {
+        mutate: (data) => ((data.progress as Record<string, unknown>).cosmetics = "hat"),
+        name: "progress.cosmetics",
+      },
+      {
+        mutate: (data) => ((data.progress as Record<string, unknown>).mineFloor = "deep"),
+        name: "progress.mineFloor",
+      },
+      {
+        mutate: (data) => ((data.progress as Record<string, unknown>).spells = [1]),
+        name: "progress.spells",
+      },
+      {
+        mutate: (data) => delete (data.progress as Record<string, unknown>).museum,
+        name: "progress.museum",
+      },
+      {
+        mutate: (data) => ((data.progress as Record<string, unknown>).renown = "max"),
+        name: "progress.renown",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).animals = { chicken: [123] }),
-        name: "completed.animals",
-      },
-      {
-        mutate: (data) => ((data.completed as Record<string, unknown>).cosmetics = "hat"),
-        name: "completed.cosmetics",
-      },
-      {
-        mutate: (data) => ((data.completed as Record<string, unknown>).mineFloor = "deep"),
-        name: "completed.mineFloor",
-      },
-      {
-        mutate: (data) => ((data.completed as Record<string, unknown>).spells = [1]),
-        name: "completed.spells",
-      },
-      {
-        mutate: (data) => delete (data.completed as Record<string, unknown>).museum,
-        name: "completed.museum",
-      },
-      {
-        mutate: (data) => ((data.completed as Record<string, unknown>).renown = "max"),
-        name: "completed.renown",
+          ((data.progress as Record<string, unknown>).skillLevels = { farming: "sixty" }),
+        name: "progress.skillLevels",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).skillLevels = { farming: "sixty" }),
-        name: "completed.skillLevels",
+          ((data.progress as Record<string, unknown>).questStates = { intro: "finished" }),
+        name: "progress.questStates",
+      },
+      {
+        mutate: (data) => ((data.progress as Record<string, unknown>).mineFloor = 1.5),
+        name: "progress.mineFloor (fractional)",
+      },
+      {
+        mutate: (data) => ((data.progress as Record<string, unknown>).mineFloor = -1),
+        name: "progress.mineFloor (negative)",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).questStates = { intro: "finished" }),
-        name: "completed.questStates",
-      },
-      {
-        mutate: (data) => ((data.completed as Record<string, unknown>).mineFloor = 1.5),
-        name: "completed.mineFloor (fractional)",
-      },
-      {
-        mutate: (data) => ((data.completed as Record<string, unknown>).mineFloor = -1),
-        name: "completed.mineFloor (negative)",
+          ((data.progress as Record<string, unknown>).mineFloor = MAX_MINE_FLOOR + 1),
+        name: "progress.mineFloor (above maximum)",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).mineFloor = MAX_MINE_FLOOR + 1),
-        name: "completed.mineFloor (above maximum)",
+          ((data.progress as Record<string, unknown>).heartLevels = { adeline: 3.5 }),
+        name: "progress.heartLevels (fractional)",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).heartLevels = { adeline: 3.5 }),
-        name: "completed.heartLevels (fractional)",
+          ((data.progress as Record<string, unknown>).heartLevels = { adeline: -1 }),
+        name: "progress.heartLevels (negative)",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).heartLevels = { adeline: -1 }),
-        name: "completed.heartLevels (negative)",
-      },
-      {
-        mutate: (data) =>
-          ((data.completed as Record<string, unknown>).heartLevels = {
+          ((data.progress as Record<string, unknown>).heartLevels = {
             adeline: MAX_HEART_LEVEL + 1,
           }),
-        name: "completed.heartLevels (above maximum)",
+        name: "progress.heartLevels (above maximum)",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).skillLevels = { farming: 3.5 }),
-        name: "completed.skillLevels (fractional)",
+          ((data.progress as Record<string, unknown>).skillLevels = { farming: 3.5 }),
+        name: "progress.skillLevels (fractional)",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).skillLevels = { farming: -1 }),
-        name: "completed.skillLevels (negative)",
+          ((data.progress as Record<string, unknown>).skillLevels = { farming: -1 }),
+        name: "progress.skillLevels (negative)",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).skillLevels = {
+          ((data.progress as Record<string, unknown>).skillLevels = {
             farming: MAX_SKILL_LEVEL + 1,
           }),
-        name: "completed.skillLevels (above maximum)",
+        name: "progress.skillLevels (above maximum)",
       },
     ];
 
@@ -207,28 +202,27 @@ describe("restoreBackup validation", () => {
   it("replaces state on successful import", () => {
     const json = userState.exportBackup();
     const data = JSON.parse(json) as Record<string, unknown>;
-    const completed = data.completed as Record<string, unknown>;
-    completed.renown = 15;
-    data.completed = completed;
+    const progress = data.progress as Record<string, unknown>;
+    progress.renown = 15;
 
     const result = userState.restoreBackup(JSON.stringify(data));
     expect(result.ok).toBe(true);
-    expect(userState.state.completed.renown).toBe(15);
+    expect(userState.state.progress.renown).toBe(15);
   });
 
   it("restores boundary values for every numeric domain", () => {
     const json = userState.exportBackup();
     const data = JSON.parse(json) as Record<string, unknown>;
-    const completed = data.completed as Record<string, unknown>;
-    completed.mineFloor = MAX_MINE_FLOOR;
-    completed.heartLevels = { adeline: MAX_HEART_LEVEL };
-    completed.skillLevels = { farming: MAX_SKILL_LEVEL };
+    const progress = data.progress as Record<string, unknown>;
+    progress.mineFloor = MAX_MINE_FLOOR;
+    progress.heartLevels = { adeline: MAX_HEART_LEVEL };
+    progress.skillLevels = { farming: MAX_SKILL_LEVEL };
 
     const result = userState.restoreBackup(JSON.stringify(data));
     expect(result.ok).toBe(true);
-    expect(userState.state.completed.mineFloor).toBe(MAX_MINE_FLOOR);
-    expect(userState.state.completed.heartLevels["adeline" as VillagerId]).toBe(MAX_HEART_LEVEL);
-    expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
+    expect(userState.state.progress.mineFloor).toBe(MAX_MINE_FLOOR);
+    expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(MAX_HEART_LEVEL);
+    expect(userState.state.progress.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
   });
 });
 
@@ -246,10 +240,10 @@ describe("mergeFromSave numeric domains", () => {
     });
     userState.mergeFromSave(completed);
 
-    expect(userState.state.completed.mineFloor).toBe(MAX_MINE_FLOOR);
-    expect(userState.state.completed.heartLevels["adeline" as VillagerId]).toBe(MAX_HEART_LEVEL);
-    expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
-    expect(userState.state.completed.renown).toBe(getMaxRenownLevel());
+    expect(userState.state.progress.mineFloor).toBe(MAX_MINE_FLOOR);
+    expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(MAX_HEART_LEVEL);
+    expect(userState.state.progress.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
+    expect(userState.state.progress.renown).toBe(getMaxRenownLevel());
     expect(warnings).toHaveLength(3);
   });
 
@@ -261,10 +255,10 @@ describe("mergeFromSave numeric domains", () => {
       skillLevels: { farming: -5 } as never,
     });
 
-    expect(userState.state.completed.mineFloor).toBe(MAX_MINE_FLOOR);
-    expect(userState.state.completed.renown).toBe(0);
-    expect(userState.state.completed.skillLevels["farming" as SkillId]).toBeUndefined();
-    expect(userState.state.completed.heartLevels["adeline" as VillagerId]).toBe(12);
+    expect(userState.state.progress.mineFloor).toBe(MAX_MINE_FLOOR);
+    expect(userState.state.progress.renown).toBe(0);
+    expect(userState.state.progress.skillLevels["farming" as SkillId]).toBeUndefined();
+    expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(12);
   });
 
   it("preserves higher existing progress across an additive import", () => {
@@ -281,10 +275,10 @@ describe("mergeFromSave numeric domains", () => {
     });
     const { counts } = userState.mergeFromSave(completed);
 
-    expect(userState.state.completed.heartLevels["adeline" as VillagerId]).toBe(8);
-    expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(30);
-    expect(userState.state.completed.renown).toBe(5);
-    expect(userState.state.completed.mineFloor).toBe(20);
+    expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(8);
+    expect(userState.state.progress.skillLevels["farming" as SkillId]).toBe(30);
+    expect(userState.state.progress.renown).toBe(5);
+    expect(userState.state.progress.mineFloor).toBe(20);
     expect(counts.heartLevels).toBe(0);
     expect(counts.skillLevels).toBe(0);
     expect(counts.renown).toBe(0);

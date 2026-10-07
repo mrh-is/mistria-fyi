@@ -37,7 +37,7 @@
   let progress = $derived(
     getAllProgress({
       availabilityWindows: userState.state.availabilityWindows,
-      completed: userState.state.completed,
+      progress: userState.state.progress,
       worldState: userState.state.worldState,
     }),
   );

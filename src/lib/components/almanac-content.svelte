@@ -42,7 +42,7 @@
   }
 
   function isItemCompleted(itemId: ItemId): boolean {
-    return userState.state.completed.almanac.has(itemId);
+    return userState.state.progress.almanac.has(itemId);
   }
 
   function isItemSpoilered(item: { visibility?: VisibilityCondition }): boolean {

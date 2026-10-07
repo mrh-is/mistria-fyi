@@ -55,9 +55,10 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
 
 Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$effect`). It:
 
-- Holds the canonical `UserState` shape (`availabilityWindows`, `completed`, `showCompleted`,
+- Holds the canonical `UserState` shape (`availabilityWindows`, `progress`, `showCompleted`,
   `showSpoilers`, `worldState`).
-- Persists to `localStorage` under the key `mistria-fyi-v1` with a 300 ms debounce.
+- Persists progress & world state to `localStorage` with a 300 ms debounce, and this device's
+  preferences under a separate key (see [localStorage](#localstorage)).
 - Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
   resetting.
 - Enforces domain constraints at the mutation boundary (e.g., heart level caps, mine floor bounds,
@@ -67,17 +68,26 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 
 ### localStorage
 
-The `SerializedState` interface defines the persisted shape:
+The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
-- `version: "2"` — used for migration detection; version `"1"` is still accepted on load.
-- `availabilityWindows` — a subset of `now`, `anytime`, & `later`. A legacy `availabilityMode`
-  (`available`, `everything`, `timely`) is migrated on load.
-- `completed` — all sets and records are serialized as sorted arrays or filtered records. Legacy
-  formats (`villagers`, `skills`, `quests` as flat arrays) are migrated on load.
-- `showSpoilers`
-- `worldState`
+- **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
+  - `version: 1`, an integer. Any other value is rejected as `unsupported-version`.
+  - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
+    filtered to non-default entries.
+  - `worldState`: the in-game season & weather the availability filters read.
+- **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
+  `now`, `anytime`, & `later`, and `showSpoilers`). These are per-device conveniences: they're never
+  exported, so restoring a backup or resetting progress keeps them, and a missing or invalid field
+  falls back to its default rather than blocking anything.
 
-The ephemeral UI-only `showCompleted` field is not persisted.
+A progress blob that fails validation is copied to `mistria-fyi:progress-quarantine` and blocks
+persistence until an explicit replace (reset, restore, or save import); the player can download it
+from the Backup & Restore card. The ephemeral UI-only `showCompleted` field is not persisted.
+
+The serializer writes exactly the fields `SerializedState` declares; unrecognized fields in a loaded
+blob are dropped. There are no legacy readers: the launch format starts at version `1`, and a later
+shape change needs a versioned migration. Fields added after launch must be optional so older blobs
+keep loading. `user-state-golden.test.ts` pins the launch shape & the storage keys.
 
 ### Save File Import
 
@@ -94,7 +104,7 @@ The app processes save files entirely client-side. No save data is uploaded.
    shape (a string where a list belongs, `null` where an object belongs) is dropped with a warning,
    and non-text list entries are dropped individually. A quest listed as both completed and active
    imports as `completed`. It returns that state & its warnings; it doesn’t count anything.
-4. `mergeFromSave` unions the imported state into the current `userState.completed`, taking max
+4. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
    values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
    quest state (`none` → `obtained` → `completed`). Relationships & child choice merge as one
    household through the pure `mergeHousehold` in `src/lib/engine/relationships.ts`, which reports
@@ -122,8 +132,8 @@ is clamped there too rather than rejected. See
 
 These flows are not interchangeable:
 
-- **Backup restore** (`restoreBackup`) replaces the entire serialized state with the imported JSON.
-  It is a full-state overwrite.
+- **Backup restore** (`restoreBackup`) replaces progress & world state with the imported JSON. It is
+  a full overwrite of everything the backup holds; this device's preferences aren't part of it.
 - **Save import / device transfer** (`mergeFromSave`) unions imported progress into the current
   state. It is additive and never removes existing entries. The versioned binary contract and
   failure behavior are documented in [the progress transfer format](transfer-format.md).
@@ -141,9 +151,9 @@ Pages are layout compositors. They handle data fetching and composition, not bus
   `src/routes/data/import-card.svelte`).
 - **Shared components** — reusable components live in `src/lib/components/` or vendored
   `src/lib/components/ui/`.
-- **"Everything" view** — `src/routes/all/+page.svelte` computes overall completion and renders one
-  `category-section.svelte` per category. That component owns the category-to-content map (which
-  content component, whether it's compact, whether its rows stack), the sticky
+- **"Everything" view** — `src/routes/everything/+page.svelte` computes overall completion and
+  renders one `category-section.svelte` per category. That component owns the category-to-content
+  map (which content component, whether it's compact, whether its rows stack), the sticky
   `section-header.svelte`, and hiding a completed category unless completed content is shown. A new
   category adds one map entry, not a new section file.
 
@@ -151,8 +161,8 @@ Pages are layout compositors. They handle data fetching and composition, not bus
 
 - **Category content** — each category page renders one
   `src/lib/components/<category>-content.svelte` (`villagers-content.svelte`,
-  `renown-content.svelte`), which takes `locale` and an optional `compact` flag for `/all`. Its
-  records (`skill-record.svelte`, `rank-record.svelte`) live beside it in `src/lib/components/`,
+  `renown-content.svelte`), which takes `locale` and an optional `compact` flag for `/everything`.
+  Its records (`skill-record.svelte`, `rank-record.svelte`) live beside it in `src/lib/components/`,
   named for the root element's class.
 - **Callback props** — name them camelCase `onX` (`onClose`, `onToggle`, `onIncrement`). A lowercase
   name (`onclick`) is reserved for a DOM event handler the component forwards unchanged to its root
@@ -195,14 +205,14 @@ persisted keys, generated condition types, CSS hooks, & prose. See the
   `villagerKnown` condition names the discovery fact that drives a villager's spoilering, so it
   keeps its name.
 - **Mine floor:** the deepest mine floor the player has reached. Use `mineFloor` / `MineFloor`: the
-  persisted key `completed.mineFloor`, the `mineFloor` condition type in `tracker-data.json`, & the
+  persisted key `progress.mineFloor`, the `mineFloor` condition type in `tracker-data.json`, & the
   `setMineFloor` setter. The game's own `maximum_mines_level` & `reached_mines_level` keys keep the
   game's name.
 - **Heart level:** a villager's relationship level (zero through `MAX_HEART_LEVEL`). Villagers don't
   level up; the relationship does. Use `heartLevel` / `heartLevels`: the persisted key
-  `completed.heartLevels`, `MAX_HEART_LEVEL`, & `setHeartLevel`.
+  `progress.heartLevels`, `MAX_HEART_LEVEL`, & `setHeartLevel`.
 
-Player spells are their own persisted field, `completed.spells`: they're attached to the player &
+Player spells are their own persisted field, `progress.spells`: they're attached to the player &
 usable anywhere, though unlocked through mine progression.
 
 ## 6. Response Headers
@@ -214,9 +224,9 @@ usable anywhere, though unlocked through mine progression.
 - **Server responses passing through `handle`** — SvelteKit emits the CSP, with a per-response
   script nonce, from the `csp` option in `vite.config.ts`; the `securityHeaders` hook in
   `hooks.server.ts` adds the rest to pages, bare-path redirects, & API responses. Framework
-  responses emitted before `handle`, such as trailing-slash normalization redirects (`HEAD /en/all/`
-  returns `308`), do not receive these headers. Pages never applies `_headers` to Function
-  responses.
+  responses emitted before `handle`, such as trailing-slash normalization redirects
+  (`HEAD /en/everything/` returns `308`), do not receive these headers. Pages never applies
+  `_headers` to Function responses.
 - **Static files** — the build writes `_headers` (gitignored) from the same directives, and
   `@sveltejs/adapter-cloudflare` copies it into `build/` with its own cache rules. Never commit or
   hand-edit it.
@@ -224,3 +234,38 @@ usable anywhere, though unlocked through mine progression.
 `security-headers.test.ts` pins the full production policy, so any change to it shows up in review.
 The asset origin lives in `src/lib/asset-origin.ts`; `asset-origin.test.ts` holds the copies that
 can't import it (CSS & upload scripts) to the same value.
+
+## 7. Public contract
+
+Shared links, bookmarks, search indexes, installed apps, & players' stored data all depend on the
+identifiers below. Changing a promised one needs a redirect, a migration, or an accepted loss, so
+treat each as an API. See [the decision record](decisions/2026-10-07-launch-contract.md).
+
+### Promised
+
+- **Locale prefixes:** `/en`, `/ja`, `/zh-Hans`, `/zh-Hant`, `/es`, `/fr`, `/ko`, & `/ru`, in BCP 47
+  casing, with no unprefixed default. A bare path redirects (307) to a negotiated locale; a miscased
+  prefix (`/zh-hans/…`) redirects permanently (308) to the canonical casing. Both live in
+  `bareLocaleRedirect` in `src/hooks.server.ts`.
+- **Route slugs:** `almanac`, `animals`, `cosmetics`, `mines`, `museum`, `quests`, `recipes`,
+  `renown`, `skills`, `villagers`, `everything`, `about`, `data`, `privacy`, & `settings`. A rename
+  needs a redirect from the old slug.
+- **Query & fragment links:** `/data?section=import|transfer` (the welcome card) and
+  `/villagers#villager-<id>` (search results, keyed by game villager IDs).
+- **Unlocalized paths:** `/api/feedback` & `/sitemap.xml`.
+- **Storage keys:** `mistria-fyi:progress`, `mistria-fyi:progress-quarantine`,
+  `mistria-fyi:preferences`, & `mistria-fyi:theme`, plus the progress blob's shape & version (see
+  [localStorage](#localstorage)).
+- **Locale cookie:** `mistria-fyi-locale`, set explicitly in `src/lib/i18n/paraglide-options.ts` so
+  a library change can't silently reset every player's language.
+- **PWA identity:** the manifest's `id: "/"` & `start_url: "/"`. Changing the `id` orphans every
+  installed copy.
+- **Service-worker messages:** `mfg:skip-waiting` & `mfg:cache-locales`. An open page posts these to
+  a newer waiting worker, so renaming one strands tabs on the old version.
+
+### Not promised
+
+- **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`): the worker's `activate`
+  deletes every cache it doesn't recognize, so a rename only costs a re-download, or forgets which
+  locales a player kept offline.
+- Internal identifiers such as category keys, message keys, & component names.

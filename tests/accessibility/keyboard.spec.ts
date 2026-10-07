@@ -103,7 +103,7 @@ test.describe("keyboard and focus accessibility", () => {
       page,
       "light",
       createStoredState({
-        completed: {
+        progress: {
           heartLevels: { adeline: 10 },
           villagerRelationships: { adeline: "romantic" },
         },

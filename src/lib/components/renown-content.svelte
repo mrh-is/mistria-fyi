@@ -10,7 +10,7 @@
 
   import type { LocaleCode } from "#lib/types/locale.js";
 
-  /** `compact` (on `/all`) shows only the current-rank record, without the rank register. */
+  /** `compact` (on `/everything`) shows only the current-rank record, without the rank register. */
   let { compact = false, locale }: { compact?: boolean; locale: LocaleCode } = $props();
 
   function isRankVisible(minLevel: number): boolean {
@@ -25,7 +25,7 @@
     {#each trackerData.townRanks as rank, index (index)}
       <RankRecord
         color={townRankColor(index)}
-        currentLevel={userState.state.completed.renown}
+        currentLevel={userState.state.progress.renown}
         {rank}
         name={getName("town-ranks", index.toString(), locale)}
         spoilered={!isRankVisible(rank.levels.start)}

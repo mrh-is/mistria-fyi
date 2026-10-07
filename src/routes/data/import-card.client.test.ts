@@ -32,7 +32,7 @@ describe("save import", () => {
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
     });
-    expect(userState.state.completed.cosmetics.has(cosmeticId)).toBe(true);
+    expect(userState.state.progress.cosmetics.has(cosmeticId)).toBe(true);
     // The duplicate warnings also exercise the index-keyed list, which a text key would break.
     expect(
       screen.getAllByText("player.cosmetic_unlocks: unrecognized ID not_a_cosmetic; skipped"),

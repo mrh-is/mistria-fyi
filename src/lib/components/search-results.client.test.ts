@@ -33,7 +33,7 @@ describe("SearchResults completion dispatch", () => {
     expect(link).toHaveAttribute("href", expect.stringMatching(/\/villagers#villager-adeline$/));
     expect(screen.queryByRole("button", { name: "Check Adeline" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Uncheck Adeline" })).toBeNull();
-    expect(userState.state.completed.heartLevels[id]).toBe(11);
+    expect(userState.state.progress.heartLevels[id]).toBe(11);
   });
 
   it("reports a result under a stable category key, not its localized name", () => {
@@ -48,16 +48,16 @@ describe("SearchResults completion dispatch", () => {
 
   it("toggles and undoes a museum result only in completed.museum", async () => {
     const { id, name } = museumOnlyFixture();
-    const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
+    const animalKeys = Object.keys(userState.state.progress.animalCosmetics);
 
     renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(screen.getByRole("button", { name: `Check ${name}` }));
 
-    expect(userState.state.completed.museum.has(id)).toBe(true);
-    expect(userState.state.completed.almanac.has(id)).toBe(false);
-    expect(Object.keys(userState.state.completed.animalCosmetics)).toEqual(animalKeys);
+    expect(userState.state.progress.museum.has(id)).toBe(true);
+    expect(userState.state.progress.almanac.has(id)).toBe(false);
+    expect(Object.keys(userState.state.progress.animalCosmetics)).toEqual(animalKeys);
     undoLastToggle();
-    expect(userState.state.completed.museum.has(id)).toBe(false);
+    expect(userState.state.progress.museum.has(id)).toBe(false);
   });
 
   it("toggles and undoes the almanac row of an overlapping item only in completed.almanac", async () => {
@@ -66,11 +66,11 @@ describe("SearchResults completion dispatch", () => {
     renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(rowToggle("Almanac", name));
 
-    expect(userState.state.completed.almanac.has(id)).toBe(true);
-    expect(userState.state.completed.museum.has(id)).toBe(false);
+    expect(userState.state.progress.almanac.has(id)).toBe(true);
+    expect(userState.state.progress.museum.has(id)).toBe(false);
     undoLastToggle();
-    expect(userState.state.completed.almanac.has(id)).toBe(false);
-    expect(userState.state.completed.museum.has(id)).toBe(false);
+    expect(userState.state.progress.almanac.has(id)).toBe(false);
+    expect(userState.state.progress.museum.has(id)).toBe(false);
   });
 
   it("toggles and undoes the museum row of an overlapping item only in completed.museum", async () => {
@@ -79,39 +79,39 @@ describe("SearchResults completion dispatch", () => {
     renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(rowToggle("Museum", name));
 
-    expect(userState.state.completed.museum.has(id)).toBe(true);
-    expect(userState.state.completed.almanac.has(id)).toBe(false);
+    expect(userState.state.progress.museum.has(id)).toBe(true);
+    expect(userState.state.progress.almanac.has(id)).toBe(false);
     undoLastToggle();
-    expect(userState.state.completed.museum.has(id)).toBe(false);
-    expect(userState.state.completed.almanac.has(id)).toBe(false);
+    expect(userState.state.progress.museum.has(id)).toBe(false);
+    expect(userState.state.progress.almanac.has(id)).toBe(false);
   });
 
   it("toggles and undoes a pet cosmetic without creating a bogus animal key", async () => {
     const [id] = recordEntries(trackerData.pets.cosmetics)[0];
-    const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
+    const animalKeys = Object.keys(userState.state.progress.animalCosmetics);
 
     const name = getName("pets/cosmetic_sets", id, "en");
     renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(screen.getByRole("button", { name: `Check ${name}` }));
 
-    expect(userState.state.completed.petCosmetics.has(id)).toBe(true);
-    expect(Object.keys(userState.state.completed.animalCosmetics)).toEqual(animalKeys);
+    expect(userState.state.progress.petCosmetics.has(id)).toBe(true);
+    expect(Object.keys(userState.state.progress.animalCosmetics)).toEqual(animalKeys);
     undoLastToggle();
-    expect(userState.state.completed.petCosmetics.has(id)).toBe(false);
+    expect(userState.state.progress.petCosmetics.has(id)).toBe(false);
   });
 
   it("toggles and undoes a pet skin without creating a bogus animal key", async () => {
     const [id] = recordEntries(trackerData.pets.skins)[0];
-    const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
+    const animalKeys = Object.keys(userState.state.progress.animalCosmetics);
     const name = getName("pets/skins", id, "en");
 
     renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(screen.getByRole("button", { name: `Check ${name}` }));
 
-    expect(userState.state.completed.petSkins.has(id)).toBe(true);
-    expect(Object.keys(userState.state.completed.animalCosmetics)).toEqual(animalKeys);
+    expect(userState.state.progress.petSkins.has(id)).toBe(true);
+    expect(Object.keys(userState.state.progress.animalCosmetics)).toEqual(animalKeys);
     undoLastToggle();
-    expect(userState.state.completed.petSkins.has(id)).toBe(false);
+    expect(userState.state.progress.petSkins.has(id)).toBe(false);
   });
 
   it("advances a quest result through the shared quest toast and undoes it", async () => {
@@ -120,7 +120,7 @@ describe("SearchResults completion dispatch", () => {
     renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(rowToggle("Quests", name));
 
-    const nextState = userState.state.completed.questStates[id];
+    const nextState = userState.state.progress.questStates[id];
     expect(nextState).toBeDefined();
     expect(showUndoToast).not.toHaveBeenCalled();
     expect(showQuestToast).toHaveBeenCalledExactlyOnceWith(
@@ -132,7 +132,7 @@ describe("SearchResults completion dispatch", () => {
     );
     const undo = showQuestToast.mock.calls[0]?.[4] as () => void;
     undo();
-    expect(userState.state.completed.questStates[id] ?? "none").toBe("none");
+    expect(userState.state.progress.questStates[id] ?? "none").toBe("none");
   });
 });
 
@@ -143,7 +143,7 @@ function questFixture(): { id: QuestId; name: string } {
       const name = getName("quests", id, "en");
       const results = searchAllCategories(
         name,
-        userState.state.completed,
+        userState.state.progress,
         userState.state.worldState,
         userState.progressionState,
         "en",
@@ -165,7 +165,7 @@ function museumOnlyFixture(): { id: ItemId; name: string } {
         const name = getName("items", id, "en");
         const results = searchAllCategories(
           name,
-          userState.state.completed,
+          userState.state.progress,
           userState.state.worldState,
           userState.progressionState,
           "en",
@@ -189,7 +189,7 @@ function overlappingFixture(): { id: ItemId; name: string } {
         const name = getName("items", id, "en");
         const results = searchAllCategories(
           name,
-          userState.state.completed,
+          userState.state.progress,
           userState.state.worldState,
           userState.progressionState,
           "en",

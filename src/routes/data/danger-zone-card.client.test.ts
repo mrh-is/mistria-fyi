@@ -32,6 +32,7 @@ describe("DangerZoneCard", () => {
   });
 
   it("resets all progress once confirmed and closes the dialog", async () => {
+    userState.setRenown(7);
     userState.toggleShowSpoilers();
     render(DangerZoneCard, { open: true });
 
@@ -43,6 +44,8 @@ describe("DangerZoneCard", () => {
     await waitFor(() => {
       expect(screen.queryByRole("alertdialog")).toBeNull();
     });
-    expect(userState.state.showSpoilers).toBe(false);
+    expect(userState.state.progress.renown).toBe(0);
+    // Preferences belong to the device, not the progress being reset.
+    expect(userState.state.showSpoilers).toBe(true);
   });
 });

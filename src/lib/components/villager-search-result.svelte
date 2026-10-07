@@ -12,7 +12,7 @@
   // Hearts aren't binary, so a villager result links to its record instead of offering a toggle.
   let { completed, id, name }: { completed: boolean; id: VillagerId; name: string } = $props();
 
-  let level = $derived(userState.state.completed.heartLevels[id] ?? 0);
+  let level = $derived(userState.state.progress.heartLevels[id] ?? 0);
 </script>
 
 <div

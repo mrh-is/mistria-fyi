@@ -30,7 +30,7 @@
 
   function toggleSpell(spellId: SpellId): void {
     userState.toggleSpell(spellId);
-    const completed = userState.state.completed.spells.has(spellId);
+    const completed = userState.state.progress.spells.has(spellId);
     showUndoToast(getName("spells", spellId, locale), completed, () => {
       userState.toggleSpell(spellId);
     });
@@ -58,7 +58,7 @@
 
   function allSpellsComplete(): boolean {
     return Object.keys(trackerData.mines.spells).every((id) =>
-      userState.state.completed.spells.has(id as SpellId),
+      userState.state.progress.spells.has(id as SpellId),
     );
   }
 
@@ -67,7 +67,7 @@
   }
 
   let currentBiome = $derived.by(() => {
-    const floor = userState.state.completed.mineFloor;
+    const floor = userState.state.progress.mineFloor;
     let biome = trackerData.mines.biomes[0];
     for (const b of trackerData.mines.biomes) {
       if (b.floors.start <= floor) biome = b;
@@ -77,11 +77,11 @@
 
   function setFloorWithCelebration(floor: number): void {
     const wasMinesComplete = isMinesComplete();
-    const previousFloor = userState.state.completed.mineFloor;
+    const previousFloor = userState.state.progress.mineFloor;
     userState.setMineFloor(floor);
     if (!wasMinesComplete && isMinesComplete()) {
       celebrateCategory();
-    } else if (previousFloor < maxFloors && userState.state.completed.mineFloor >= maxFloors) {
+    } else if (previousFloor < maxFloors && userState.state.progress.mineFloor >= maxFloors) {
       celebrate();
     }
   }
@@ -104,7 +104,7 @@
 
   let visibleSpells = $derived(
     scopedSpells.filter((spell) => {
-      const completed = userState.state.completed.spells.has(spell.id);
+      const completed = userState.state.progress.spells.has(spell.id);
       return completed ? userState.state.showCompleted : true;
     }),
   );
@@ -116,27 +116,27 @@
   <MineFloorRecord
     {biomes}
     compact
-    floor={userState.state.completed.mineFloor}
+    floor={userState.state.progress.mineFloor}
     {locale}
     onChange={setFloorWithCelebration}
   />
 {:else}
   <ExpandableSection
     {locale}
-    count={userState.state.completed.mineFloor}
+    count={userState.state.progress.mineFloor}
     name={m.mines_floor_progress_section()}
     reportCategory="mines"
     reportEntityId="floors"
     reportExtra={{
       biome: getName("mines", currentBiome.id, locale),
-      floor: userState.state.completed.mineFloor,
+      floor: userState.state.progress.mineFloor,
     }}
     {defaultOpen}
     total={maxFloors}
   >
     <MineFloorRecord
       {biomes}
-      floor={userState.state.completed.mineFloor}
+      floor={userState.state.progress.mineFloor}
       isReportable={false}
       {locale}
       onChange={setFloorWithCelebration}
@@ -147,7 +147,7 @@
 {#if scopedSpells.length > 0}
   <ExpandableSection
     {locale}
-    count={scopedSpells.filter((spell) => userState.state.completed.spells.has(spell.id)).length}
+    count={scopedSpells.filter((spell) => userState.state.progress.spells.has(spell.id)).length}
     name={getName("ui", "magic_spells", locale)}
     reportCategory="mines"
     reportEntityId="spells"
@@ -156,7 +156,7 @@
   >
     <TrackerRowList getKey={(spell) => spell.id} items={visibleSpells}>
       {#snippet row(spell)}
-        {@const completed = userState.state.completed.spells.has(spell.id)}
+        {@const completed = userState.state.progress.spells.has(spell.id)}
         <TrackerRow
           display={trackerRowDisplay({ completed, spoilered: isSpellSpoilered(spell.id) })}
           name={spell.name}

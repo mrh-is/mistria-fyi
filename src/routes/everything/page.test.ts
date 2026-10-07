@@ -21,7 +21,7 @@ beforeEach(() => {
   userState.resetAll();
 });
 
-describe("/all page", () => {
+describe("/everything page", () => {
   it("renders a section for every category, including recipes", () => {
     const { container } = renderToFragmentWithFeedback(AllPage, { props });
 
@@ -44,7 +44,7 @@ describe("/all page", () => {
   it("reconciles the header total with every rendered category, recipes included", () => {
     const progress = getAllProgress({
       availabilityWindows: userState.state.availabilityWindows,
-      completed: userState.state.completed,
+      progress: userState.state.progress,
       worldState: userState.state.worldState,
     });
     const overall = getOverallProgress(progress);

@@ -35,7 +35,7 @@
 
   function allDatesComplete(): boolean {
     return Object.keys(trackerData.dates).every((id) =>
-      userState.state.completed.dates.has(id as DateId),
+      userState.state.progress.dates.has(id as DateId),
     );
   }
 
@@ -54,7 +54,7 @@
     }
 
     userState.toggleDate(dateId);
-    const completed = userState.state.completed.dates.has(dateId);
+    const completed = userState.state.progress.dates.has(dateId);
     showUndoToast(getName("dates", dateId, locale), completed, () => {
       userState.toggleDate(dateId);
     });
@@ -80,12 +80,12 @@
   );
 
   let completedCount = $derived(
-    scopedDates.filter((date) => userState.state.completed.dates.has(date.id)).length,
+    scopedDates.filter((date) => userState.state.progress.dates.has(date.id)).length,
   );
 
   let visibleDates = $derived(
     scopedDates.filter((date) => {
-      const completed = userState.state.completed.dates.has(date.id);
+      const completed = userState.state.progress.dates.has(date.id);
       return completed ? userState.state.showCompleted : true;
     }),
   );
@@ -103,7 +103,7 @@
     <div class="flex flex-col gap-0.5">
       <TrackerRowList getKey={(date) => date.id} items={visibleDates}>
         {#snippet row(date)}
-          {@const completed = userState.state.completed.dates.has(date.id)}
+          {@const completed = userState.state.progress.dates.has(date.id)}
           <TrackerRow
             name={date.name}
             reportCategory="date"

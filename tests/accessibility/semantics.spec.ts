@@ -15,7 +15,7 @@ import { critical, criticalWhen } from "./support/tags.js";
 
 const HEADING_NAME_OVERRIDES: Record<string, string | undefined> = {
   "/": "Mistria Field Guide",
-  "/all": "Everything",
+  "/everything": "Everything",
   "/settings": "Data management",
 };
 
@@ -54,7 +54,7 @@ test.describe("semantic accessibility", () => {
       page,
       "light",
       createStoredState({
-        completed: { heartLevels: { adeline: 8 } },
+        progress: { heartLevels: { adeline: 8 } },
         showSpoilers: true,
       }),
     );

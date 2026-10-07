@@ -21,9 +21,9 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [ADELINE]: "married" },
     });
 
-    expect(userState.state.completed.villagerRelationships[ADELINE]).toBe("married");
-    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("platonic");
-    expect(userState.state.completed.childChoice).toBe("yes");
+    expect(userState.state.progress.villagerRelationships[ADELINE]).toBe("married");
+    expect(userState.state.progress.villagerRelationships[CELINE]).toBe("platonic");
+    expect(userState.state.progress.childChoice).toBe("yes");
     expect(counts.villagerRelationships).toBe(1);
     expect(counts.childChoice).toBe(1);
     expect(conflicts).toEqual([]);
@@ -38,7 +38,7 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [ADELINE]: "married" },
     });
 
-    expect(userState.state.completed.childChoice).toBe("yes");
+    expect(userState.state.progress.childChoice).toBe("yes");
     expect(counts.childChoice).toBe(0);
     expect(conflicts).toEqual([
       {
@@ -58,7 +58,7 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [ADELINE]: "married" },
     });
 
-    expect(userState.state.completed.childChoice).toBe("yes");
+    expect(userState.state.progress.childChoice).toBe("yes");
     expect(counts.childChoice).toBe(1);
     expect(conflicts).toEqual([]);
   });
@@ -72,7 +72,7 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [ADELINE]: "married" },
     });
 
-    expect(userState.state.completed.childChoice).toBe("yes");
+    expect(userState.state.progress.childChoice).toBe("yes");
     expect(counts.childChoice).toBe(0);
     expect(conflicts).toEqual([]);
   });
@@ -86,9 +86,9 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [BALOR]: "married" },
     });
 
-    expect(userState.state.completed.villagerRelationships[ADELINE]).toBe("married");
-    expect(userState.state.completed.villagerRelationships[BALOR]).toBe("platonic");
-    expect(userState.state.completed.childChoice).toBe("yes");
+    expect(userState.state.progress.villagerRelationships[ADELINE]).toBe("married");
+    expect(userState.state.progress.villagerRelationships[BALOR]).toBe("platonic");
+    expect(userState.state.progress.childChoice).toBe("yes");
     expect(counts.villagerRelationships).toBe(0);
     expect(counts.childChoice).toBe(0);
     expect(conflicts).toEqual([
@@ -103,7 +103,7 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [ADELINE]: "romantic" },
     });
 
-    expect(userState.state.completed.villagerRelationships[ADELINE]).toBe("married");
+    expect(userState.state.progress.villagerRelationships[ADELINE]).toBe("married");
     expect(counts.villagerRelationships).toBe(0);
     expect(conflicts).toEqual([
       {
@@ -122,8 +122,8 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [CELINE]: "romantic" },
     });
 
-    expect(userState.state.completed.villagerRelationships[BALOR]).toBe("proposed");
-    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("romantic");
+    expect(userState.state.progress.villagerRelationships[BALOR]).toBe("proposed");
+    expect(userState.state.progress.villagerRelationships[CELINE]).toBe("romantic");
     expect(counts.villagerRelationships).toBe(1);
     expect(conflicts).toEqual([]);
   });
@@ -136,9 +136,9 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [CELINE]: "platonic" },
     });
 
-    expect(userState.state.completed.villagerRelationships[ADELINE]).toBe("married");
-    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("platonic");
-    expect(userState.state.completed.childChoice).toBe("yes");
+    expect(userState.state.progress.villagerRelationships[ADELINE]).toBe("married");
+    expect(userState.state.progress.villagerRelationships[CELINE]).toBe("platonic");
+    expect(userState.state.progress.childChoice).toBe("yes");
     expect(counts.villagerRelationships).toBe(0);
     expect(conflicts).toEqual([]);
   });
@@ -146,7 +146,7 @@ describe("mergeFromSave household policy", () => {
   it("ignores a child choice when neither side has a spouse", () => {
     const { conflicts, counts } = userState.mergeFromSave({ childChoice: "yes" });
 
-    expect(userState.state.completed.childChoice).toBe("undeclared");
+    expect(userState.state.progress.childChoice).toBe("undeclared");
     expect(counts.childChoice).toBe(0);
     expect(conflicts).toEqual([]);
   });
@@ -158,7 +158,7 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [CELINE]: "proposed" },
     });
 
-    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("proposed");
+    expect(userState.state.progress.villagerRelationships[CELINE]).toBe("proposed");
     expect(counts.villagerRelationships).toBe(1);
     expect(conflicts).toEqual([]);
   });
@@ -170,7 +170,7 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [CELINE]: "platonic" },
     });
 
-    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("romantic");
+    expect(userState.state.progress.villagerRelationships[CELINE]).toBe("romantic");
     expect(counts.villagerRelationships).toBe(0);
     expect(conflicts).toEqual([
       {
@@ -189,7 +189,7 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [CELINE]: "undecided" },
     });
 
-    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("proposed");
+    expect(userState.state.progress.villagerRelationships[CELINE]).toBe("proposed");
     expect(counts.villagerRelationships).toBe(0);
     expect(conflicts).toEqual([]);
   });
@@ -200,8 +200,8 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [CELINE]: "romantic" },
     });
 
-    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("romantic");
-    expect(userState.state.completed.renown).toBe(5);
+    expect(userState.state.progress.villagerRelationships[CELINE]).toBe("romantic");
+    expect(userState.state.progress.renown).toBe(5);
     expect(counts.villagerRelationships).toBe(1);
     expect(counts.renown).toBe(5);
     expect(conflicts).toEqual([]);
@@ -214,8 +214,8 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [ADELINE]: "married" },
     });
 
-    expect(userState.state.completed.villagerRelationships[ADELINE]).toBe("married");
-    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("platonic");
+    expect(userState.state.progress.villagerRelationships[ADELINE]).toBe("married");
+    expect(userState.state.progress.villagerRelationships[CELINE]).toBe("platonic");
     expect(conflicts).toEqual([]);
   });
 
@@ -228,8 +228,8 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [ADELINE]: "married", [CELINE]: "platonic" },
     });
 
-    expect(userState.state.completed.villagerRelationships[ADELINE]).toBe("married");
-    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("platonic");
+    expect(userState.state.progress.villagerRelationships[ADELINE]).toBe("married");
+    expect(userState.state.progress.villagerRelationships[CELINE]).toBe("platonic");
     expect(conflicts).toEqual([]);
   });
 
@@ -241,7 +241,7 @@ describe("mergeFromSave household policy", () => {
       villagerRelationships: { [ADELINE]: "romantic" },
     });
 
-    expect(userState.state.completed.childChoice).toBe("undeclared");
+    expect(userState.state.progress.childChoice).toBe("undeclared");
     expect(counts.childChoice).toBe(0);
     expect(conflicts).toEqual([
       {

@@ -14,6 +14,11 @@ describe("PARAGLIDE_OPTIONS", () => {
     expect(runtime.strategy).toEqual(PARAGLIDE_OPTIONS.strategy);
     expect(runtime.routeStrategies).toEqual(PARAGLIDE_OPTIONS.routeStrategies);
     expect(runtime.urlPatterns).toEqual(PARAGLIDE_OPTIONS.urlPatterns);
+    expect(runtime.cookieName).toBe(PARAGLIDE_OPTIONS.cookieName);
+  });
+
+  it("keeps the locale cookie players' language choice lives in", () => {
+    expect(PARAGLIDE_OPTIONS.cookieName).toBe("mistria-fyi-locale");
   });
 
   it("is also what the standalone compile uses", () => {
