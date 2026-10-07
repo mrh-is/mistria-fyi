@@ -11,9 +11,7 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
-  cancel-in-progress: false
+# Every metadata event must finish: a shared concurrency group can cancel pending required checks.
 
 jobs:
   guarded-paths:
