@@ -281,9 +281,7 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
       `Unsupported transfer version: ${String(version)}`,
     );
   }
-  if (version < 1) {
-    throw new Error(`Unsupported transfer version: ${String(version)}`);
-  }
+  // Version 0 was never issued; it reads as outdated so the stale-code path stays testable until v2.
   if (version < MIN_SUPPORTED_TRANSFER_VERSION) {
     throw new TransferDecodeError(
       "outdated",

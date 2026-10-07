@@ -37,9 +37,22 @@ bytes are never interpreted as zero-valued progress.
 Every rejection is a `TransferDecodeError` whose code the UI localizes:
 
 - `not-transfer-code`: the payload doesn’t start with the marker.
-- `outdated`: a marked payload older than `MIN_SUPPORTED_TRANSFER_VERSION`.
+- `outdated`: a marked payload older than `MIN_SUPPORTED_TRANSFER_VERSION`. Version 0 was never
+  issued, but it reads as `outdated` so tests can reach this path before a v2 exists.
 - `newer-version`: a marked payload newer than `TRANSFER_VERSION`.
-- `corrupt`: any other failure above, including a version byte of zero.
+- `corrupt`: any other failure above.
+
+## Version skew
+
+Orderings derive from live tracker data, so a game-data update that shifts an ordering bumps the
+transfer version and invalidates every outstanding code. Two devices on different app versions (for
+example, one on a stale PWA cache) can’t transfer until both update, which takes a page reload. This
+is acceptable for a live device-to-device channel. The `outdated` message tells the player to reload
+the device that created the code; the `newer-version` message tells them to reload the scanning
+device.
+
+When v2 ships, confirm that a real v1 payload reads as `outdated` and replace the v0 test payloads
+with it.
 
 After the layout is decoded, mine floor, renown, skill levels, and heart levels are clamped to their
 real domain maxima (from tracker data and `MAX_SKILL_LEVEL`/`MAX_HEART_LEVEL`) always. Every scalar
