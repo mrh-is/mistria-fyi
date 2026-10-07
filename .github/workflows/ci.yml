@@ -184,25 +184,6 @@ jobs:
           cache: true
           install: false
       - run: pnpm install --frozen-lockfile
-      - id: playwright-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('pnpm-lock.yaml') }}
-      # A stalled apt mirror can hang this step indefinitely, so bound each attempt and retry once.
-      - name: Install Playwright Chromium & system dependencies
-        timeout-minutes: 12
-        env:
-          PLAYWRIGHT_INSTALL: >-
-            ${{ steps.playwright-cache.outputs.cache-hit == 'true' && 'install-deps chromium' ||
-            'install --with-deps chromium' }}
-        run: |
-          for attempt in 1 2; do
-            timeout --kill-after=30s 5m pnpm exec playwright $PLAYWRIGHT_INSTALL && exit 0
-            echo "::warning::Playwright install attempt $attempt failed or timed out"
-            sudo pkill -f apt-get || true
-          done
-          exit 1
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: build-output
@@ -261,25 +242,6 @@ jobs:
           cache: true
           install: false
       - run: pnpm install --frozen-lockfile
-      - id: playwright-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('pnpm-lock.yaml') }}
-      # A stalled apt mirror can hang this step indefinitely, so bound each attempt and retry once.
-      - name: Install Playwright Chromium & system dependencies
-        timeout-minutes: 12
-        env:
-          PLAYWRIGHT_INSTALL: >-
-            ${{ steps.playwright-cache.outputs.cache-hit == 'true' && 'install-deps chromium' ||
-            'install --with-deps chromium' }}
-        run: |
-          for attempt in 1 2; do
-            timeout --kill-after=30s 5m pnpm exec playwright $PLAYWRIGHT_INSTALL && exit 0
-            echo "::warning::Playwright install attempt $attempt failed or timed out"
-            sudo pkill -f apt-get || true
-          done
-          exit 1
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: build-output
@@ -343,7 +305,19 @@ jobs:
   ci-passed:
     name: CI passed
     if: always()
-    needs: [changes, lint, audit, check, test, build, accessibility, pwa]
+    needs:
+      [
+        changes,
+        lint,
+        audit,
+        check,
+        test,
+        build,
+        accessibility,
+        pwa,
+        benchmark-host,
+        benchmark-container,
+      ]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -357,3 +331,113 @@ jobs:
               *) exit 1 ;;
             esac
           done
+
+  benchmark-host:
+    name: Benchmark (${{ matrix.variant }}, ${{ matrix.sample }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [baseline, chrome]
+        sample: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          cache: true
+          install: false
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: build-output
+          path: .svelte-kit/output/
+      - if: matrix.variant == 'baseline'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: benchmark-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Baseline browser install
+        if: matrix.variant == 'baseline'
+        timeout-minutes: 12
+        env:
+          PLAYWRIGHT_INSTALL: >-
+            ${{ steps.benchmark-cache.outputs.cache-hit == 'true' && 'install-deps chromium' ||
+            'install --with-deps chromium' }}
+        run: |
+          for attempt in 1 2; do
+            timeout --kill-after=30s 5m pnpm exec playwright $PLAYWRIGHT_INSTALL && exit 0
+            sudo pkill -f apt-get || true
+          done
+          exit 1
+      - name: Record runner & browser
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          nproc
+          if [ "$VARIANT" != chrome ]; then
+            sed -i '/channel: isCi ? "chrome" : undefined,/d' playwright.config.ts playwright.pwa.config.ts
+          fi
+          node --input-type=module -e 'import { chromium } from "@playwright/test"; const browser = await chromium.launch({ channel: process.env.VARIANT === "chrome" ? "chrome" : undefined }); console.log(browser.version()); await browser.close();'
+      - name: Benchmark accessibility
+        run: pnpm run test:accessibility --retries=0
+        env:
+          PLAYWRIGHT_SKIP_BUILD: "true"
+      - name: Benchmark PWA
+        run: pnpm run test:pwa --retries=0
+        env:
+          PLAYWRIGHT_SKIP_BUILD: "true"
+
+  benchmark-container:
+    name: Benchmark (${{ matrix.variant }}, ${{ matrix.sample }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [container]
+        sample: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          cache: true
+          install: false
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: build-output
+          path: .svelte-kit/output/
+      - name: Record runner & browser
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          nproc
+          if [ "$VARIANT" != chrome ]; then
+            sed -i '/channel: isCi ? "chrome" : undefined,/d' playwright.config.ts playwright.pwa.config.ts
+          fi
+          node --input-type=module -e 'import { chromium } from "@playwright/test"; const browser = await chromium.launch({ channel: process.env.VARIANT === "chrome" ? "chrome" : undefined }); console.log(browser.version()); await browser.close();'
+      - name: Benchmark accessibility
+        run: pnpm run test:accessibility --retries=0
+        env:
+          PLAYWRIGHT_SKIP_BUILD: "true"
+      - name: Benchmark PWA
+        run: pnpm run test:pwa --retries=0
+        env:
+          PLAYWRIGHT_SKIP_BUILD: "true"
