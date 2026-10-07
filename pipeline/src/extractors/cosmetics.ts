@@ -1,6 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { isExcludedCosmetic } from "../acquisition/exclusions.js";
+import { getExcludedCosmeticIds } from "../acquisition/exclusions.js";
 import { expectArray, expectNonEmptyString, expectRecord } from "../data-shapes.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
@@ -60,10 +60,11 @@ export function extractCosmetics(fiddle: ParsedGameData, localizer: Localizer): 
   if (!assets) return { cosmetics: {}, cosmeticSlots, localeNames, subCategoryLocaleNames };
 
   const result = {} as Record<CosmeticId, SourceDraft<Cosmetic>>;
+  const excluded = getExcludedCosmeticIds(fiddle);
 
   for (const [id, asset] of Object.entries(assets)) {
     if (id === "default") continue;
-    if (isExcludedCosmetic(id as CosmeticId)) continue;
+    if (excluded.has(id as CosmeticId)) continue;
 
     const rawSlot = asset.ui_slot;
     if (!isCosmeticSlot(rawSlot) || !Object.hasOwn(cosmeticSlots, rawSlot)) {
