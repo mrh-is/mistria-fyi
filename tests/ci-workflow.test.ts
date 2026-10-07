@@ -1,4 +1,6 @@
 /* oxlint-disable no-template-curly-in-string -- these tests assert literal GitHub Actions `${{ }}` expression text */
+
+import playwrightPackage from "@playwright/test/package.json";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
@@ -50,7 +52,7 @@ const requiredJobs = ["changes", "lint", "check", "test", "build", "ci-passed"] 
 const installJobs = ["lint", "check", "test", "build", ...browserJobs, "issue-sync"] as const;
 
 describe("browser selection", () => {
-  it.each(["true", "false", undefined])("selects runner Chrome only when CI is %s", async (ci) => {
+  it.each(["true", "false", undefined])("selects pinned Chromium when CI is %s", async (ci) => {
     vi.stubEnv("CI", ci);
     // Workers skip the preview-owner probe; loading a config must not contact a server here.
     vi.stubEnv("TEST_WORKER_INDEX", "0");
@@ -59,7 +61,8 @@ describe("browser selection", () => {
       const accessibility = await import("../playwright.config.js");
       const pwa = await import("../playwright.pwa.config.js");
       for (const config of [accessibility.default, pwa.default]) {
-        expect(config.use).toHaveProperty("channel", ci === "true" ? "chrome" : undefined);
+        expect(config.use).toMatchObject({ defaultBrowserType: "chromium" });
+        expect(config.use).not.toHaveProperty("channel");
       }
     } finally {
       vi.unstubAllEnvs();
@@ -170,10 +173,13 @@ describe("CI workflow jobs", () => {
     expect(allCommands).not.toMatch(/lint:fix|pipeline --|test:pipeline:assets/);
   });
 
-  it("installs dependencies from a frozen lockfile before running anything", () => {
+  it("installs dependencies from a frozen lockfile before running package commands", () => {
     for (const jobName of installJobs) {
       expect(jobs[jobName]["runs-on"]).toBe("ubuntu-latest");
-      expect(runCommands(jobs[jobName])[0]).toBe("pnpm install --frozen-lockfile");
+      const firstCommand = runCommands(jobs[jobName]).find(
+        (command) => command !== 'git config --global --add safe.directory "$GITHUB_WORKSPACE"',
+      );
+      expect(firstCommand).toBe("pnpm install --frozen-lockfile");
       const setup = jobs[jobName].steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
       expect(setup).toBeDefined();
     }
@@ -299,17 +305,22 @@ describe("CI workflow browser suites", () => {
     expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
   });
 
-  it("runs browser suites with the runner's Chrome without installing browsers or apt deps", () => {
+  it("runs browser suites in the matching pinned image without browser or apt installation", () => {
     for (const jobName of browserJobs) {
-      expect(jobs[jobName].container).toBeUndefined();
+      expect(jobs[jobName].container).toEqual({
+        image: `mcr.microsoft.com/playwright:v${playwrightPackage.version}-noble`,
+        options: "--ipc=host",
+      });
       const steps = jobs[jobName].steps ?? [];
       expect(steps.find((step) => step.id === "playwright-cache")).toBeUndefined();
       expect(steps.find((step) => step.env?.PLAYWRIGHT_INSTALL !== undefined)).toBeUndefined();
       expect(runCommands(jobs[jobName]).join("\n")).not.toMatch(
         /playwright install|install-deps|--with-deps|apt-get/,
       );
-      expect(runCommands(jobs[jobName])).not.toContain(
-        'git config --global --add safe.directory "$GITHUB_WORKSPACE"',
+      const commands = runCommands(jobs[jobName]);
+      expect(commands).toContain('git config --global --add safe.directory "$GITHUB_WORKSPACE"');
+      expect(commands.indexOf('git config --global --add safe.directory "$GITHUB_WORKSPACE"')).toBe(
+        0,
       );
     }
   });
