@@ -6,6 +6,7 @@ import {
   QUEST_TYPE_BY_GROUP,
   TRACKED_QUEST_GROUPS,
 } from "../extractor-helpers.js";
+import { isPregnancyQuest } from "../overrides/game-facts.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -86,7 +87,7 @@ export function extractQuests(
         quest,
         sourceFileFor(fiddle, `quests.${tomlType}`),
       );
-      const isPregnancy = questId.endsWith("_pregnancy_request");
+      const isPregnancy = isPregnancyQuest(questId);
       result.heart[questId as QuestId] = {
         heartLevel: isPregnancy ? 10 : 0,
         sources: [],

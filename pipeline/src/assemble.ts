@@ -19,7 +19,7 @@ import {
   applyReviewedOverrides,
   collectDefaultCosmeticSources,
   collectDefaultItemSources,
-  REVIEWED_OVERRIDES,
+  getReviewedOverrides,
 } from "./acquisition/reviewed-overrides.js";
 import { REVIEWED_NON_NATIVE_REFERENCES } from "./acquisition/reviewed-references.js";
 import {
@@ -59,6 +59,7 @@ import {
   stampVillagerVisibility,
 } from "./extractors/visibility/entity-visibility.js";
 import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
+import { isPregnancyQuest } from "./overrides/game-facts.js";
 import { createRequirementContext } from "./requirements.js";
 import { REVIEWED_PIPELINE_DIAGNOSTICS } from "./reviewed-diagnostics.js";
 
@@ -235,7 +236,7 @@ export function assembleTrackerData(
     cosmeticDrafts,
     itemSources,
     cosmeticSources,
-    options.reviewedOverrides ?? REVIEWED_OVERRIDES,
+    options.reviewedOverrides ?? getReviewedOverrides(fiddle),
   );
   for (const diagnostic of overrideDiagnostics) {
     diagnostics.add({ ...diagnostic, fieldPath: `${diagnostic.namespace}.${diagnostic.targetId}` });
@@ -328,7 +329,7 @@ export function assembleTrackerData(
   console.log("Step 4: Assembling tracker-data.json...");
   const pregnancyQuestByVillager: Partial<Record<VillagerId, QuestId>> = {};
   for (const [questId, quest] of Object.entries(quests.heart)) {
-    if (questId.endsWith("_pregnancy_request")) {
+    if (isPregnancyQuest(questId)) {
       pregnancyQuestByVillager[(quest as { villager: VillagerId }).villager] = questId as QuestId;
     }
   }
@@ -420,7 +421,7 @@ function buildAcquisitionReferences(
       recipes: trackerData.recipes,
     },
     excluded: {
-      cosmetics: getExcludedCosmeticIds(),
+      cosmetics: getExcludedCosmeticIds(fiddle),
     },
     native: {
       ...collectNativeReferenceRegistries(fiddle),
