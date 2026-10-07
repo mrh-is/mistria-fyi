@@ -340,15 +340,16 @@ other full-suite command during development.
 
 `.github/workflows/ci.yml` runs on every pull request and main push:
 
-| Command                             | Description & Purpose                                                                 | Scope                |
-| ----------------------------------- | ------------------------------------------------------------------------------------- | -------------------- |
-| `pnpm run lint`                     | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), Stylelint, ShellCheck     | All files            |
-| `pnpm audit --audit-level=moderate` | Fails on moderate or worse advisories in the lockfile, minus `auditConfig` exceptions | Dependencies         |
-| `pnpm run check:i18n`               | Verifies every locale file matches `en.json`'s key shape                              | `messages/`          |
-| `pnpm run check`                    | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`          | `src/` & `pipeline/` |
-| `pnpm run test:coverage`            | Executes the complete Vitest suite and summarizes coverage (not gated)                | Unit & logic tests   |
-| `pnpm run build`                    | Compiles SvelteKit app and verifies Cloudflare adapter                                | Build validation     |
-| `pnpm run check:routes`             | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`      | Build validation     |
+| Command                             | Description & Purpose                                                                   | Scope                |
+| ----------------------------------- | --------------------------------------------------------------------------------------- | -------------------- |
+| `pnpm run lint`                     | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), Stylelint, ShellCheck       | All files            |
+| `pnpm audit --audit-level=moderate` | Fails on moderate or worse advisories in the lockfile, minus `auditConfig` exceptions   | Dependencies         |
+| `pnpm run check:i18n`               | Verifies every locale file matches `en.json`'s key shape                                | `messages/`          |
+| `pnpm run check`                    | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`            | `src/` & `pipeline/` |
+| `pnpm run test:coverage`            | Executes the complete Vitest suite and summarizes coverage (not gated)                  | Unit & logic tests   |
+| `pnpm run build`                    | Compiles SvelteKit app and verifies Cloudflare adapter                                  | Build validation     |
+| `pnpm run check:built`              | Checks sitemap/head SSR metadata & per-locale gzip budgets against the production build | Build validation     |
+| `pnpm run check:routes`             | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`        | Build validation     |
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see
@@ -475,9 +476,9 @@ above the finding.
 ### Full local matrix
 
 `pnpm run verify` runs CI's non-browser matrix locally (`lint`, `check`, `check:i18n`, `test`,
-`build`, `check:routes`) with compact output, stopping on the first failure. It is read-only: it
-runs `lint`, not `lint:fix`, so run `pnpm run lint:fix` beforehand. Opt-in flags add the local-only
-steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`, `--browser` adds
+`build`, `check:routes`, `check:built`) with compact output, stopping on the first failure. It is
+read-only: it runs `lint`, not `lint:fix`, so run `pnpm run lint:fix` beforehand. Opt-in flags add
+the local-only steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`, `--browser` adds
 `test:accessibility` & `test:pwa`, and `--all` adds both. Run it once, when commit-ready, only for
 the exceptions in [AGENTS.md §7](../AGENTS.md#7-verification). If a step fails, fix the issue and
 rerun only that step, then rerun `pnpm run verify` once.
