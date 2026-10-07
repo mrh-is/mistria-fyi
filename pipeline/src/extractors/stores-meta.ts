@@ -1,36 +1,13 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { compareStrings } from "../ordering.js";
+import { KNOWN_STORES, UPGRADE_ACTIONS } from "../overrides/game-facts.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { StoreId, StoreUpgradeAction, TrackerData } from "#lib/types/tracker-data.js";
+import type { StoreId, TrackerData } from "#lib/types/tracker-data.js";
 
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
-
-const KNOWN_STORES: Record<string, { article?: "the" }> = {
-  balor: {},
-  blacksmith: { article: "the" },
-  carpenter: { article: "the" },
-  darcy: {},
-  elsie_spring_festival: {},
-  general: { article: "the" },
-  hayden: {},
-  inn: { article: "the" },
-  louis: {},
-  maple_spring_festival: {},
-  merri: {},
-  nora_souvenir_stall: {},
-  terithia: { article: "the" },
-  valens_clinic: {},
-  vera: {},
-  wheedle: {},
-  zorel: {},
-};
-
-const UPGRADE_ACTIONS: Partial<Record<string, StoreUpgradeAction>> = {
-  general: "repair",
-};
 
 export function extractStoresMeta(
   fiddle: ParsedGameData,
