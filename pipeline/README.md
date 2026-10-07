@@ -12,7 +12,7 @@ real-asset integration suite and the narrow villager-sprite command also accept 
 directly (see below). Game assets are ignored by Git and are not present in a fresh clone.
 
 ```sh
-pnpm run pipeline -- input/assets --version=1.0.5
+pnpm run pipeline -- pipeline/input/assets --version=1.0.5
 pnpm run pipeline -- /path/to/assets
 MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
@@ -23,6 +23,14 @@ pnpm run pipeline:assets -- --version=1.0.5
 `pnpm run pipeline:assets` is the local-development shortcut for the ignored `pipeline/input/assets`
 directory. Pass pipeline flags after `--`; it avoids a shell environment assignment and is the
 preferred command for routine regeneration in a configured worktree.
+
+A relative assets path (argument or `MISTRIA_ASSETS`) resolves against the directory you ran `pnpm`
+from, even though the script itself runs inside `pipeline/`.
+
+The game version comes from `--version`, the fiddle's `misc.version`, or (on Windows) the installed
+executable. The extracted assets in `pipeline/input/assets` carry none of these, so pass
+`--version`; use the `version` of the committed `src/lib/data/tracker-data.json` unless you're
+importing a new game release. The pipeline names the committed version when it can't find one.
 
 With no path argument and no `MISTRIA_ASSETS`, the pipeline falls back to Fields of Mistria's
 default Steam install location (Steam is the only platform the game ships on):
