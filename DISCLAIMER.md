@@ -36,5 +36,5 @@ the authoritative source.
 
 The presence of game-derived material does not imply that NPC Studio has licensed, approved, or
 endorsed this project. No ownership or redistribution license for that material is claimed. Rights
-holders may [contact the maintainer privately](mailto:me@mrh.is) to request review, correction,
-modification, or removal.
+holders may [contact the maintainer privately](mailto:michael@mistria.fyi) to request review,
+correction, modification, or removal.
