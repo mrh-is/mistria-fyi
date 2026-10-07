@@ -1,0 +1,41 @@
+# Public launch posture & takedown readiness
+
+## Context
+
+Making the repository public (#218) included asking NPC Studio for permission to publish
+game-derived material: the sprites, the generated dataset, & the extraction pipeline. NPC Studio
+hasn’t replied. On 2026-10-07 the maintainer decided to launch anyway rather than block on the
+reply, on the condition that any part can be withdrawn quickly if NPC Studio objects.
+
+Separately, the current repository’s history contains `static/sprites/` (added in `9390ae1`) and a
+personal filesystem path in the since-removed `measure-transfer-size.ts`. Neither should become
+public.
+
+## Decision
+
+- **Launch posture: everything, takedown-ready.** Publish the project source, the `pipeline/`
+  extraction code, & the generated `tracker-data.json`. Keep serving sprites from
+  `assets.mistria.fyi`. If NPC Studio objects to any part, comply promptly by following
+  [the takedown procedure](../takedown.md): block & delete the sprites (the UI falls back to
+  placeholders), remove the dataset or pipeline, or take the repository private.
+- **Publication path: a clean repository with filtered history.** Build a new public repository from
+  `git filter-repo` output that strips `static/sprites/` and the personal path in
+  `measure-transfer-size.ts`. Rename this repository to a private archive and transfer its open
+  issues to the new one.
+- **One removal contact:** `michael@mistria.fyi`, in both `DISCLAIMER.md` & the About page.
+
+## Alternatives
+
+- **Wait for NPC Studio’s reply:** rejected; the inquiry has no deadline, and the posture above
+  keeps compliance cheap if the answer is no.
+- **Launch without sprites or the dataset:** rejected; the tracker is far less useful without
+  artwork, and it can’t function without the dataset. Withdrawing either later costs about the same
+  as withholding it now.
+- **Rewrite this repository’s history in place:** rejected; GitHub retains `refs/pull/*` for every
+  past PR, which keeps the sprite blobs reachable, and only GitHub Support can purge them.
+
+## Revisit if
+
+NPC Studio replies (with permission, conditions, or an objection), any rights holder sends a
+takedown request, or the project starts distributing material beyond sprites & the factual dataset
+(audio, maps, or original game files).
