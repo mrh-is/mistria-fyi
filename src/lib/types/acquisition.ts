@@ -26,6 +26,8 @@ export type AvailabilityCondition =
   | { type: "all"; conditions: NonEmptyArray<AvailabilityCondition> }
   | { type: "always" }
   | { type: "any"; conditions: NonEmptyArray<AvailabilityCondition> }
+  /** A date type is unlocked; without `dateId`, any date type is. */
+  | { type: "dateUnlocked"; dateId?: DateId }
   | { type: "gamePredicate"; predicate: string; value: JsonValue }
   | { type: "hasUpperFloor" }
   | { type: "heartLevel"; level: number; villagerId: VillagerId }

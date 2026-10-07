@@ -88,6 +88,7 @@ function collectGamePredicates(
     case "any":
       return condition.conditions.flatMap(collectGamePredicates);
     case "always":
+    case "dateUnlocked":
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":

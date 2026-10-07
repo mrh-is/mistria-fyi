@@ -69,6 +69,16 @@ describe("collectNativeReferenceRegistries", () => {
   });
 });
 
+/** A Mines-chest date drop gated on `dateId` not yet being unlocked. */
+function dateDropFor(dateId: string) {
+  return {
+    type: "date_inspiration_drop",
+    activity: "mines_chest",
+    availability: { type: "not", condition: { type: "dateUnlocked", dateId } },
+    dateId: "beach",
+  };
+}
+
 describe("validation against native registries", () => {
   it("rejects a bogus override quest ID even though a source names it", () => {
     expect(() => {
@@ -108,6 +118,15 @@ describe("validation against native registries", () => {
     expect(() => {
       validate([{ type: "letter", trigger: "birthday" }]);
     }).toThrow("items.reward.sources[0].letterId");
+  });
+
+  it("validates a date-unlock window's date against native dates", () => {
+    expect(() => {
+      validate([dateDropFor("beach")]);
+    }).not.toThrow();
+    expect(() => {
+      validate([dateDropFor("beech")]);
+    }).toThrow('Unknown date ID "beech"');
   });
 
   it("accepts native and reviewed IDs", () => {

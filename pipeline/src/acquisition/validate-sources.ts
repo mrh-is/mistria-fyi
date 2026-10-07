@@ -75,6 +75,7 @@ const AVAILABILITY_FIELDS = {
   all: ["conditions"],
   always: [],
   any: ["conditions"],
+  dateUnlocked: ["dateId"],
   gamePredicate: ["predicate", "value"],
   hasUpperFloor: [],
   heartLevel: ["level", "villagerId"],
@@ -623,6 +624,22 @@ function validateAvailability(
         break;
       }
       case "always":
+        return;
+      case "dateUnlocked":
+        if (
+          "dateId" in value &&
+          requireString(value, "dateId", targetId, fieldPath, source, diagnostics)
+        ) {
+          reference(
+            diagnostics,
+            references,
+            "date",
+            value.dateId,
+            targetId,
+            `${fieldPath}.dateId`,
+            source,
+          );
+        }
         return;
       case "gamePredicate":
         requireString(value, "predicate", targetId, fieldPath, source, diagnostics);

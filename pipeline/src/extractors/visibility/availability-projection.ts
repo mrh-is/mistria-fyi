@@ -25,6 +25,7 @@ export function availabilityToVisibility(condition?: AvailabilityCondition): Vis
     case "reachedSeason":
     case "skillLevel":
       return condition;
+    case "dateUnlocked":
     case "gamePredicate":
     case "not":
     case "season":

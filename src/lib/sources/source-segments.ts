@@ -727,6 +727,7 @@ function describeStoreAvailability(
       );
       return [same(m.source_clause_after_one_of({ options }, opts))];
     }
+    case "dateUnlocked":
     case "gamePredicate":
     case "not":
       return undefined;

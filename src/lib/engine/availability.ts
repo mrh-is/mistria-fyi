@@ -160,6 +160,7 @@ function hasWindowRestriction(condition: AvailabilityCondition): boolean {
     case "any":
       return condition.conditions.some(hasWindowRestriction);
     case "always":
+    case "dateUnlocked":
     case "gamePredicate":
     case "hasUpperFloor":
     case "heartLevel":
