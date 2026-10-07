@@ -43,8 +43,8 @@ afterEach(async () => {
   await tick();
 });
 
-// A marked v10 version byte: recognized as a transfer code, but from an older version.
-const OLDER_VERSION_PAYLOAD = "MFGTCg";
+// A marked v0 version byte: recognized as a transfer code, but older than the minimum.
+const OLDER_VERSION_PAYLOAD = "MFGTAA";
 
 describe("TransferCard generate", () => {
   it("renders the QR code for the current progress and announces the in-flight state", async () => {

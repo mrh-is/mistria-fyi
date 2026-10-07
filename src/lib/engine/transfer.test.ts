@@ -674,8 +674,11 @@ describe("transfer codec v1", () => {
     },
   );
 
+  it("rejects version zero as outdated", async () => {
+    await expectDecodeError(marked(new Uint8Array([0])), "outdated", /older version/i);
+  });
+
   it.each([
-    ["version zero", marked(new Uint8Array([0])), "corrupt"],
     ["future version", marked(new Uint8Array([TRANSFER_VERSION + 1])), "newer-version"],
     ["far-future version", marked(new Uint8Array([0xff])), "newer-version"],
   ] as const)("rejects unsupported %s", async (_, payload, code) => {
