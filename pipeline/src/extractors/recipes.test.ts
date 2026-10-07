@@ -1493,7 +1493,7 @@ describe("extractRecipes — stock requirement visibility", () => {
       {
         type: "scroll_bundle",
         availability: { type: "quest", questId: "repair_the_general_store", state: "completed" },
-        bundleName: "Void Bundle Scroll",
+        bundleItemId: "void_bundle_scroll",
         storeId: "general",
         visibility: { type: "questCompleted", questId: "repair_the_general_store" },
       },
@@ -1511,7 +1511,7 @@ describe("extractRecipes — stock requirement visibility", () => {
       });
 
       expect(extractRecipes(fiddle).recipes["void_chair" as RecipeId].sources).toEqual([
-        { type: "scroll_bundle", bundleName: "Void Bundle Scroll", storeId: "general" },
+        { type: "scroll_bundle", bundleItemId: "void_bundle_scroll", storeId: "general" },
       ]);
     });
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
-import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { MAX_HEART_LEVEL, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
@@ -226,7 +226,8 @@ function makeGoldenCompleted(): ProgressState {
     cosmetics: new Set(["back_gear_ancient_witch_broom" as CosmeticId]),
     dates: new Set(["inn_meal" as DateId]),
     hasUpperFloor: true,
-    mines: { floor: 20, spells: new Set(["summon_rain" as SpellId]) },
+    heartLevels: { ["balor" as VillagerId]: 4 },
+    mineFloor: 20,
     museum: new Set(["turnip" as ItemId]),
     petCosmetics: new Set(["flower_crown" as PetCosmeticSetId]),
     petSkins: new Set(["sapling" as PetSkinId]),
@@ -234,8 +235,8 @@ function makeGoldenCompleted(): ProgressState {
     reachedSeason: "fall",
     renown: 17,
     skillLevels: { ["farming" as SkillId]: 7 },
+    spells: new Set(["summon_rain" as SpellId]),
     unlockedPerks: new Set(["museum_quality_one" as PerkId]),
-    villagerLevels: { ["balor" as VillagerId]: 4 },
     villagerRelationships: { ["balor" as VillagerId]: "married" },
   });
   completed.animals[chicken] = new Set(["red" as AnimalVariantId]);
@@ -256,6 +257,9 @@ function makeGoldenDecodedExpectation(): Partial<ProgressState> {
       recordEntries(completed.animalCosmetics).filter(([, ids]) => ids.size > 0),
     ),
     animals: Object.fromEntries(recordEntries(completed.animals).filter(([, ids]) => ids.size > 0)),
+    heartLevels: Object.fromEntries(
+      recordKeys(trackerData.villagers).map((id) => [id, completed.heartLevels[id] ?? 0]),
+    ),
     questStates: Object.fromEntries(
       recordValues(trackerData.quests).flatMap((quests) =>
         recordKeys(quests).map((id) => [id, completed.questStates[id] ?? "none"]),
@@ -263,9 +267,6 @@ function makeGoldenDecodedExpectation(): Partial<ProgressState> {
     ),
     skillLevels: Object.fromEntries(
       recordKeys(trackerData.skills).map((id) => [id, completed.skillLevels[id] ?? 0]),
-    ),
-    villagerLevels: Object.fromEntries(
-      recordKeys(trackerData.villagers).map((id) => [id, completed.villagerLevels[id] ?? 0]),
     ),
     villagerRelationships: Object.fromEntries(
       dateableVillagers.map((id) => [id, id === balor ? "married" : "platonic"]),
@@ -400,17 +401,17 @@ describe("transfer codec v11", () => {
     const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
     const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
     const completed = makeCompletedState({
-      mines: { floor: maxFloor, spells: new Set() },
+      heartLevels: Object.fromEntries(villagerIds.map((id) => [id, MAX_HEART_LEVEL])),
+      mineFloor: maxFloor,
       renown: maxRenown,
       skillLevels: Object.fromEntries(skillIds.map((id) => [id, MAX_SKILL_LEVEL])),
-      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, MAX_VILLAGER_LEVEL])),
       villagerRelationships,
     });
 
     const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
 
-    expect(decoded.mines?.floor).toBe(maxFloor);
-    expect(decoded.villagerLevels).toEqual(completed.villagerLevels);
+    expect(decoded.mineFloor).toBe(maxFloor);
+    expect(decoded.heartLevels).toEqual(completed.heartLevels);
     expect(decoded.villagerRelationships).toEqual(villagerRelationships);
     expect(decoded.renown).toBe(maxRenown);
     expect(decoded.skillLevels).toEqual(completed.skillLevels);
@@ -422,18 +423,18 @@ describe("transfer codec v11", () => {
     const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
     const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
     const completed = makeCompletedState({
-      mines: { floor: 0xff, spells: new Set() },
+      heartLevels: Object.fromEntries(villagerIds.map((id) => [id, 0xf])),
+      mineFloor: 0xff,
       renown: 0xff_ff,
       skillLevels: Object.fromEntries(skillIds.map((id) => [id, 0xff])),
-      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, 0xf])),
     });
 
     const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
 
-    expect(decoded.mines?.floor).toBe(maxFloor);
+    expect(decoded.mineFloor).toBe(maxFloor);
     expect(decoded.renown).toBe(maxRenown);
     for (const id of skillIds) expect(decoded.skillLevels?.[id]).toBe(MAX_SKILL_LEVEL);
-    for (const id of villagerIds) expect(decoded.villagerLevels?.[id]).toBe(MAX_VILLAGER_LEVEL);
+    for (const id of villagerIds) expect(decoded.heartLevels?.[id]).toBe(MAX_HEART_LEVEL);
   });
 
   it("round-trips every transferable completion without loss", async () => {
@@ -452,10 +453,10 @@ describe("transfer codec v11", () => {
       ),
       dates: new Set(recordKeys(trackerData.dates)),
       hasUpperFloor: true,
-      mines: {
-        floor: trackerData.mines.biomes.at(-1)?.floors.end ?? 0,
-        spells: new Set(recordKeys(trackerData.mines.spells)),
-      },
+      heartLevels: Object.fromEntries(
+        recordKeys(trackerData.villagers).map((id) => [id, MAX_HEART_LEVEL]),
+      ),
+      mineFloor: trackerData.mines.biomes.at(-1)?.floors.end ?? 0,
       museum: new Set(
         recordValues(trackerData.museum).flatMap(({ sets }) =>
           recordValues(sets).flatMap(({ items }) => items),
@@ -477,9 +478,6 @@ describe("transfer codec v11", () => {
         recordValues(trackerData.skills).flatMap((skill) =>
           skill.perkTiers.flatMap((tier) => recordKeys(tier)),
         ),
-      ),
-      villagerLevels: Object.fromEntries(
-        recordKeys(trackerData.villagers).map((id) => [id, MAX_VILLAGER_LEVEL]),
       ),
     });
     for (const [animalId, animal] of recordEntries(trackerData.animals)) {
@@ -752,9 +750,7 @@ describe("transfer codec v11", () => {
   it("rejects a payload whose compressed content was corrupted, even when it decompresses to the expected length", async () => {
     // Regression test for a corruption that decompresses to a byte-identical length but different
     // content: without an integrity checksum this previously decoded silently into wrong progress.
-    const payload = await encodeTransferPayload(
-      makeCompletedState({ mines: { floor: 40, spells: new Set() } }),
-    );
+    const payload = await encodeTransferPayload(makeCompletedState({ mineFloor: 40 }));
     const raw = await decompressTransferRaw(payload);
     const corruptedRaw = new Uint8Array(raw);
     corruptedRaw[0] ^= 0x01;

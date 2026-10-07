@@ -32,13 +32,13 @@
     if (rankLevelSpan === 1 && currentLevel >= rank.levels.end) return 100;
     return Math.min((levelsIntoRank / rankLevelSpan) * 100, 100);
   });
-  let revealed = $state(false);
-  let isRedacted = $derived(spoilered && !revealed);
+  let spoilerDismissed = $state(false);
+  let isSpoilered = $derived(spoilered && !spoilerDismissed);
   const feedbackContext = getFeedbackContext();
   let reportable = $derived(
     feedbackContext.reportableAttachment({
       category: "rank",
-      displayName: isRedacted ? m.tracker_row_spoilered_item() : name,
+      displayName: isSpoilered ? m.tracker_row_spoilered_item() : name,
       page: page.url.pathname,
     }),
   );
@@ -62,8 +62,8 @@
 
   <span class="rank-copy">
     <strong>
-      {#if isRedacted}
-        <Spoiler onReveal={() => (revealed = true)}>{name}</Spoiler>
+      {#if isSpoilered}
+        <Spoiler onReveal={() => (spoilerDismissed = true)}>{name}</Spoiler>
       {:else}
         {name}
       {/if}

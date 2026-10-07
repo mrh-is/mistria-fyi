@@ -1,3 +1,4 @@
+import { UPGRADE_IDS } from "#lib/types/acquisition.js";
 import { SEASONS, WEATHERS } from "#lib/types/tracker-data.js";
 
 import { compareStrings } from "../ordering.js";
@@ -74,7 +75,7 @@ const AVAILABILITY_FIELDS = {
   hasUpperFloor: [],
   heartLevel: ["level", "villagerId"],
   isDating: [],
-  minesLevel: ["floor"],
+  mineFloor: ["floor"],
   not: ["condition"],
   perkUnlocked: ["perkId"],
   quest: ["questId", "state"],
@@ -92,7 +93,7 @@ const VISIBILITY_FIELDS = {
   heartLevel: ["level", "villagerId"],
   isDating: [],
   married: ["villagerId"],
-  minesLevel: ["floor"],
+  mineFloor: ["floor"],
   or: ["conditions"],
   perkUnlocked: ["perkId"],
   questAvailable: ["questId"],
@@ -162,14 +163,14 @@ const SOURCE_FIELDS = {
   recipe: ["method", "recipeId"],
   renown: ["level"],
   ritual_chamber: ["perkId"],
-  scroll_bundle: ["bundleName", "storeId"],
+  scroll_bundle: ["bundleItemId", "storeId"],
   ship_item: ["triggerItemId"],
   spouseGift: ["villagerId"],
   station: ["stationId"],
   store: ["storeId"],
   treasure_chest: ["tier"],
   tree: ["saplingItemId"],
-  upgrade: ["storeId", "upgradeName"],
+  upgrade: ["storeId", "upgradeId"],
   wedding: [],
   wishing_well: ["cost"],
 } as const satisfies Record<Source["type"], readonly string[]>;
@@ -640,7 +641,7 @@ function validateAvailability(
           );
         }
         return;
-      case "minesLevel":
+      case "mineFloor":
         requireNumber(value, "floor", targetId, fieldPath, source, diagnostics);
         return;
       case "not":
@@ -1260,8 +1261,7 @@ function validateVariantFields(
       requiredNumbers.push("level");
       break;
     case "scroll_bundle":
-      requiredStrings.push("bundleName");
-      stringReferences.push(["storeId", "store"]);
+      stringReferences.push(["bundleItemId", "item"], ["storeId", "store"]);
       break;
     case "spouseGift":
       stringReferences.push(["villagerId", "villager"]);
@@ -1280,7 +1280,15 @@ function validateVariantFields(
       break;
     case "upgrade":
       stringReferences.push(["storeId", "store"]);
-      requiredStrings.push("upgradeName");
+      if (!(UPGRADE_IDS as readonly unknown[]).includes(source.upgradeId)) {
+        malformed(
+          diagnostics,
+          targetId,
+          `${fieldPath}.upgradeId`,
+          "Expected an upgrade id",
+          source,
+        );
+      }
       break;
     case "wishing_well":
       break;
@@ -1674,7 +1682,7 @@ function validateVisibility(
       case "villagerKnown":
         visibilityReference("villagerId", "villager");
         return;
-      case "minesLevel":
+      case "mineFloor":
         requireNumber(value, "floor", targetId, fieldPath, source, diagnostics);
         return;
       case "perkUnlocked":

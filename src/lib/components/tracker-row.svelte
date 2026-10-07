@@ -53,7 +53,7 @@
   const instanceId = rawInstanceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-");
 
   let expanded = $state(false);
-  let spoilerRevealed = $state(false);
+  let spoilerDismissed = $state(false);
   let hasSources = $derived(sources.length > 0);
   let sourceBadges: DisplayBadges[] = $derived(
     sources.map((source) => {
@@ -67,7 +67,7 @@
 
   let isCompleted = $derived(display.mode === "completed");
   let isObtained = $derived(display.mode === "obtained");
-  let isSpoilered = $derived(display.mode === "spoilered" && !spoilerRevealed);
+  let isSpoilered = $derived(display.mode === "spoilered" && !spoilerDismissed);
   let isLeaving = $derived(display.mode === "completed" && (display.leaving ?? false));
   let isDimmed = $derived(display.mode === "incomplete" && (display.dimmed ?? false));
   let sourceContentId = $derived(
@@ -194,7 +194,7 @@
 
     <span class="tracker-row__label">
       {#if isSpoilered}
-        <Spoiler onReveal={() => (spoilerRevealed = true)}>
+        <Spoiler onReveal={() => (spoilerDismissed = true)}>
           {name}
           {#if subtitle}
             <span class="tracker-row__subtitle">{subtitle}</span>

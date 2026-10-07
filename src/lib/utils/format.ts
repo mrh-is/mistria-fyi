@@ -11,6 +11,7 @@ import type {
   Season,
   SkillId,
   StoreId,
+  StoreUpgradeAction,
   TrackerData,
   TreasureChestTierId,
   Weather,
@@ -50,9 +51,11 @@ export type BaseSegmentLookups = Pick<TrackerData, "perkTierLevels"> & {
   perks: Partial<Record<PerkId, { name: string; skillId: SkillId; tier: number }>>;
   questNames: NameLookup<TrackerData["quests"][QuestType]>;
   recipeNames: NameLookup<TrackerData["recipes"]>;
-  redactedStoreIds?: ReadonlySet<StoreId>;
   skillNames: NameLookup<TrackerData["skills"]>;
-  stores: Partial<Record<StoreId, { article?: "the"; name: string; upgradeAction?: string }>>;
+  spoileredStoreIds?: ReadonlySet<StoreId>;
+  stores: Partial<
+    Record<StoreId, { article?: "the"; name: string; upgradeAction?: StoreUpgradeAction }>
+  >;
   treasureChestTiers: Partial<Record<TreasureChestTierId, { name: string }>>;
 };
 

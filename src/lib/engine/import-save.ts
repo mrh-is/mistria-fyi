@@ -3,8 +3,8 @@ import { SEASON_ORDER, seasonFromOrdinal } from "#lib/engine/domain-primitives.j
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
+  MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
-  MAX_VILLAGER_LEVEL,
   normalizeLevel,
 } from "#lib/engine/progress.js";
 import { recordKeys, recordValues } from "#lib/utils/record.js";
@@ -259,7 +259,7 @@ export function extractSaveProgress(bundle: SaveBundle): {
     }
   }
 
-  // ── Numeric levels: mine floor, villager hearts, skill levels, renown ──
+  // ── Numeric levels: mine floor, heart levels, skill levels, renown ──
   // Each fact is normalized into its finite domain (see normalizeLevel). Above-maximum values
   // are clamped and warned about; nonnumeric or negative values are dropped with a warning; a
   // missing fact is silently treated as unset. Import stays additive, so a warned fact never
@@ -282,19 +282,19 @@ export function extractSaveProgress(bundle: SaveBundle): {
     getMaxMineFloor(),
   );
 
-  // Villager levels, skill levels, renown (from gamedata.json → t2_world_facts)
-  const villagerLevels: Record<string, number> = {};
+  // Heart levels, skill levels, renown (from gamedata.json → t2_world_facts)
+  const heartLevels: Record<string, number> = {};
   const skillLevels: Record<string, number> = {};
   let renown = 0;
 
   const facts = gamedata.record("t2_world_facts");
   if (facts) {
-    // Villager heart levels: "{villager}_heart_level" keys in t2_world_facts
+    // Heart levels: "{villager}_heart_level" keys in t2_world_facts
     for (const villagerId of recordKeys(trackerData.villagers)) {
       const key = `${villagerId}_heart_level`;
-      const level = extractLevel(key, facts[key], MAX_VILLAGER_LEVEL);
+      const level = extractLevel(key, facts[key], MAX_HEART_LEVEL);
       if (level > 0) {
-        villagerLevels[villagerId] = level;
+        heartLevels[villagerId] = level;
       }
     }
 
@@ -365,7 +365,8 @@ export function extractSaveProgress(bundle: SaveBundle): {
       animals: animalVariants,
       cosmetics: cosmeticIds,
       hasUpperFloor,
-      mines: { floor: mineFloor, spells },
+      heartLevels,
+      mineFloor,
       museum: museumIds,
       petCosmetics,
       petSkins,
@@ -373,8 +374,8 @@ export function extractSaveProgress(bundle: SaveBundle): {
       reachedSeason,
       renown,
       skillLevels,
+      spells,
       unlockedPerks: perkIds,
-      villagerLevels,
       villagerRelationships,
     },
     warnings,

@@ -4,8 +4,8 @@ import { trackerData } from "#lib/data/index.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
+  MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
-  MAX_VILLAGER_LEVEL,
 } from "#lib/engine/progress.js";
 import { recordKeys, recordValues } from "#lib/utils/record.js";
 
@@ -179,14 +179,14 @@ describe("numeric level domains", () => {
       gamedata: {
         maximum_mines_level: getMaxMineFloor(),
         t2_world_facts: {
-          adeline_heart_level: MAX_VILLAGER_LEVEL,
+          adeline_heart_level: MAX_HEART_LEVEL,
           farming_level: MAX_SKILL_LEVEL,
           renown: getMaxRenownLevel(),
         },
       },
     });
-    expect(completed.mines?.floor).toBe(getMaxMineFloor());
-    expect(completed.villagerLevels?.[ADELINE]).toBe(MAX_VILLAGER_LEVEL);
+    expect(completed.mineFloor).toBe(getMaxMineFloor());
+    expect(completed.heartLevels?.[ADELINE]).toBe(MAX_HEART_LEVEL);
     expect(completed.skillLevels?.[FARMING]).toBe(MAX_SKILL_LEVEL);
     expect(completed.renown).toBe(getMaxRenownLevel());
     expect(warnings).toEqual([]);
@@ -199,13 +199,13 @@ describe("numeric level domains", () => {
         t2_world_facts: { adeline_heart_level: 99, farming_level: 999, renown: 9999 },
       },
     });
-    expect(completed.mines?.floor).toBe(getMaxMineFloor());
-    expect(completed.villagerLevels?.[ADELINE]).toBe(MAX_VILLAGER_LEVEL);
+    expect(completed.mineFloor).toBe(getMaxMineFloor());
+    expect(completed.heartLevels?.[ADELINE]).toBe(MAX_HEART_LEVEL);
     expect(completed.skillLevels?.[FARMING]).toBe(MAX_SKILL_LEVEL);
     expect(completed.renown).toBe(getMaxRenownLevel());
     expect(warnings).toEqual([
       levelWarning("above-max", "maximum_mines_level", "9999", getMaxMineFloor()),
-      levelWarning("above-max", "adeline_heart_level", "99", MAX_VILLAGER_LEVEL),
+      levelWarning("above-max", "adeline_heart_level", "99", MAX_HEART_LEVEL),
       levelWarning("above-max", "farming_level", "999", MAX_SKILL_LEVEL),
     ]);
   });
@@ -214,7 +214,7 @@ describe("numeric level domains", () => {
     const { completed, warnings } = extractSaveProgress(
       worldFacts({ adeline_heart_level: 3.9, farming_level: 7.2, renown: 2.5 }),
     );
-    expect(completed.villagerLevels?.[ADELINE]).toBe(3);
+    expect(completed.heartLevels?.[ADELINE]).toBe(3);
     expect(completed.skillLevels?.[FARMING]).toBe(7);
     expect(completed.renown).toBe(2);
     expect(warnings).toEqual([]);
@@ -224,11 +224,11 @@ describe("numeric level domains", () => {
     const { completed, warnings } = extractSaveProgress(
       worldFacts({ adeline_heart_level: -1, farming_level: -0.5, renown: -3 }),
     );
-    expect(completed.villagerLevels?.[ADELINE]).toBeUndefined();
+    expect(completed.heartLevels?.[ADELINE]).toBeUndefined();
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
     expect(warnings).toEqual([
-      levelWarning("negative", "adeline_heart_level", "-1", MAX_VILLAGER_LEVEL),
+      levelWarning("negative", "adeline_heart_level", "-1", MAX_HEART_LEVEL),
       levelWarning("negative", "farming_level", "-0.5", MAX_SKILL_LEVEL),
     ]);
   });
@@ -244,21 +244,21 @@ describe("numeric level domains", () => {
         },
       },
     });
-    expect(completed.mines?.floor).toBe(0);
-    expect(completed.villagerLevels?.[ADELINE]).toBeUndefined();
+    expect(completed.mineFloor).toBe(0);
+    expect(completed.heartLevels?.[ADELINE]).toBeUndefined();
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
     expect(warnings).toEqual([
       levelWarning("not-a-number", "maximum_mines_level", "NaN", getMaxMineFloor()),
-      levelWarning("not-a-number", "adeline_heart_level", '"12"', MAX_VILLAGER_LEVEL),
+      levelWarning("not-a-number", "adeline_heart_level", '"12"', MAX_HEART_LEVEL),
       levelWarning("not-a-number", "farming_level", "Infinity", MAX_SKILL_LEVEL),
     ]);
   });
 
   it("treats missing and zero levels as unset without warnings", () => {
     const { completed, warnings } = extractSaveProgress(worldFacts({ adeline_heart_level: 0 }));
-    expect(completed.mines?.floor).toBe(0);
-    expect(completed.villagerLevels).toEqual({});
+    expect(completed.mineFloor).toBe(0);
+    expect(completed.heartLevels).toEqual({});
     expect(completed.renown).toBe(0);
     expect(warnings).toEqual([]);
   });

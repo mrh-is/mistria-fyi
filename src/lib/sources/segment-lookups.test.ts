@@ -46,18 +46,18 @@ describe("buildBaseSegmentLookups", () => {
     expect(lookups.perks).toEqual(Object.fromEntries(expected));
   });
 
-  it("reuses the static lookup tables across calls while keeping redacted stores contextual", () => {
-    const firstRedactedStoreIds = new Set<StoreId>();
-    const secondRedactedStoreIds = new Set<StoreId>(["bathhouse" as StoreId]);
+  it("reuses the static lookup tables across calls while keeping spoilered stores contextual", () => {
+    const firstSpoileredStoreIds = new Set<StoreId>();
+    const secondSpoileredStoreIds = new Set<StoreId>(["bathhouse" as StoreId]);
 
-    const first = buildBaseSegmentLookups(firstRedactedStoreIds, "en");
-    const second = buildBaseSegmentLookups(secondRedactedStoreIds, "en");
+    const first = buildBaseSegmentLookups(firstSpoileredStoreIds, "en");
+    const second = buildBaseSegmentLookups(secondSpoileredStoreIds, "en");
 
     expect(first.itemNames).toBe(second.itemNames);
     expect(first.perks).toBe(second.perks);
     expect(first.questNames).toBe(second.questNames);
-    expect(first.redactedStoreIds).toBe(firstRedactedStoreIds);
-    expect(second.redactedStoreIds).toBe(secondRedactedStoreIds);
+    expect(first.spoileredStoreIds).toBe(firstSpoileredStoreIds);
+    expect(second.spoileredStoreIds).toBe(secondSpoileredStoreIds);
   });
 
   // Name lookups throw on a missing entry rather than falling back to English, so a generated

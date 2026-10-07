@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
-import { getMaxMineFloor, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { getMaxMineFloor, MAX_HEART_LEVEL, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
@@ -105,10 +105,12 @@ function buildStoredState(
       childChoice: invalidDomains ? "maybe" : "undeclared",
       cosmetics: [known.cosmetic, UNKNOWN_ID],
       dates: [known.date, UNKNOWN_ID],
-      mines: {
-        floor: mineFloor,
-        spells: [known.spell, UNKNOWN_ID],
+      heartLevels: {
+        [known.villager]: invalidDomains ? MAX_HEART_LEVEL + 50 : 1,
+        ...(invalidDomains ? { [known.villagerWithInvalidData]: "twelve" } : {}),
+        [UNKNOWN_ID]: 10,
       },
+      mineFloor,
       museum: [known.museum, UNKNOWN_ID],
       petCosmetics: [known.petCosmetic, UNKNOWN_ID],
       petSkins: [known.petSkin, UNKNOWN_ID],
@@ -124,12 +126,8 @@ function buildStoredState(
         ...(invalidDomains ? { [known.skillWithInvalidLevel]: "sixty" } : {}),
         [UNKNOWN_ID]: 10,
       },
+      spells: [known.spell, UNKNOWN_ID],
       unlockedPerks: [known.perk, UNKNOWN_ID],
-      villagerLevels: {
-        [known.villager]: invalidDomains ? MAX_VILLAGER_LEVEL + 50 : 1,
-        ...(invalidDomains ? { [known.villagerWithInvalidData]: "twelve" } : {}),
-        [UNKNOWN_ID]: 10,
-      },
       villagerRelationships: {
         [known.villager]: "romantic",
         ...(invalidDomains ? { [known.villagerWithInvalidData]: "enemy" } : {}),
@@ -150,7 +148,7 @@ function expectUnknownIdsRemoved(completed: DeepReadonly<ProgressState>): void {
   expect(completed.almanacRecipes).not.toContain(UNKNOWN_ID);
   expect(completed.cosmetics).not.toContain(UNKNOWN_ID);
   expect(completed.dates).not.toContain(UNKNOWN_ID);
-  expect(completed.mines.spells).not.toContain(UNKNOWN_ID);
+  expect(completed.spells).not.toContain(UNKNOWN_ID);
   expect(completed.museum).not.toContain(UNKNOWN_ID);
   expect(completed.petCosmetics).not.toContain(UNKNOWN_ID);
   expect(completed.petSkins).not.toContain(UNKNOWN_ID);
@@ -165,7 +163,7 @@ function expectUnknownIdsRemoved(completed: DeepReadonly<ProgressState>): void {
   ).not.toContain(UNKNOWN_ID);
   expect(completed.questStates).not.toHaveProperty(UNKNOWN_ID);
   expect(completed.skillLevels).not.toHaveProperty(UNKNOWN_ID);
-  expect(completed.villagerLevels).not.toHaveProperty(UNKNOWN_ID);
+  expect(completed.heartLevels).not.toHaveProperty(UNKNOWN_ID);
   expect(completed.villagerRelationships).not.toHaveProperty(UNKNOWN_ID);
 }
 
@@ -191,14 +189,12 @@ describe("persisted-state normalization", () => {
     expect(userState.state.worldState).toEqual({ season: "spring", weather: "calm" });
     expect(userState.state.completed.childChoice).toBe("undeclared");
     expect(userState.state.completed.reachedSeason).toBe("spring");
-    expect(userState.state.completed.mines.floor).toBe(getMaxMineFloor());
+    expect(userState.state.completed.mineFloor).toBe(getMaxMineFloor());
     expect(userState.state.completed.skillLevels[known.skill]).toBe(MAX_SKILL_LEVEL);
-    expect(userState.state.completed.villagerLevels[known.villager]).toBe(MAX_VILLAGER_LEVEL);
+    expect(userState.state.completed.heartLevels[known.villager]).toBe(MAX_HEART_LEVEL);
     expect(userState.state.completed.questStates).not.toHaveProperty(known.questWithInvalidState);
     expect(userState.state.completed.skillLevels).not.toHaveProperty(known.skillWithInvalidLevel);
-    expect(userState.state.completed.villagerLevels).not.toHaveProperty(
-      known.villagerWithInvalidData,
-    );
+    expect(userState.state.completed.heartLevels).not.toHaveProperty(known.villagerWithInvalidData);
     expect(userState.state.completed.villagerRelationships).not.toHaveProperty(
       known.villagerWithInvalidData,
     );
@@ -224,7 +220,7 @@ describe("persisted-state normalization", () => {
     userState.loadFromStorage();
 
     expect(userState.persistenceFailed).toBe(false);
-    expect(userState.state.completed.mines.floor).toBe(0);
+    expect(userState.state.completed.mineFloor).toBe(0);
     expect(userState.state.completed.renown).toBe(0);
     expect(userState.state.completed.almanac).toContain(known.almanac);
     expect((userState.state.completed.questStates as Record<string, string>)[known.quest]).toBe(

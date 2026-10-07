@@ -2,7 +2,7 @@
   import { Icon } from "#lib/components/icon/index.js";
   import TrackerPaper from "#lib/components/tracker-paper.svelte";
   import { trackerData } from "#lib/data/index.js";
-  import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+  import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
@@ -12,7 +12,7 @@
   // Hearts aren't binary, so a villager result links to its record instead of offering a toggle.
   let { completed, id, name }: { completed: boolean; id: VillagerId; name: string } = $props();
 
-  let level = $derived(userState.state.completed.villagerLevels[id] ?? 0);
+  let level = $derived(userState.state.completed.heartLevels[id] ?? 0);
 </script>
 
 <div
@@ -24,7 +24,7 @@
     <a
       class="villager-search-result__link"
       href="{localizedHref('villagers')}#villager-{id}"
-      aria-label={m.villager_relationship_level_aria({ level, max: MAX_VILLAGER_LEVEL, name })}
+      aria-label={m.villager_relationship_level_aria({ level, max: MAX_HEART_LEVEL, name })}
     >
       <span class="villager-search-result__mark" aria-hidden="true">
         <Icon.ProgressMark
@@ -35,7 +35,7 @@
       </span>
       <span class="villager-search-result__name">{name}</span>
       <span class="villager-search-result__level" aria-hidden="true">
-        {level}/{MAX_VILLAGER_LEVEL}
+        {level}/{MAX_HEART_LEVEL}
       </span>
     </a>
   </TrackerPaper>

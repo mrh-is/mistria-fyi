@@ -259,13 +259,13 @@ function acquisitionSourceCondition(
     case "mine":
     case "mine_fish": {
       const floor = source.biomeId ? ctx.biomeFloor(source.biomeId) : undefined;
-      return floor === undefined ? ALWAYS_VISIBLE : { type: "minesLevel", floor };
+      return floor === undefined ? ALWAYS_VISIBLE : { type: "mineFloor", floor };
     }
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
-        floor === undefined ? ALWAYS_VISIBLE : { type: "minesLevel", floor };
+        floor === undefined ? ALWAYS_VISIBLE : { type: "mineFloor", floor };
       const perkCondition: VisibilityCondition = source.perkId
         ? { type: "perkUnlocked", perkId: source.perkId }
         : ALWAYS_VISIBLE;
@@ -457,7 +457,7 @@ function acquisitionSourceConditions(
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
-        floor === undefined ? ALWAYS_VISIBLE : { type: "minesLevel", floor };
+        floor === undefined ? ALWAYS_VISIBLE : { type: "mineFloor", floor };
       return {
         entity,
         source: minesCondition,

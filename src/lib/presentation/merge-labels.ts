@@ -26,6 +26,7 @@ export const MERGE_COUNT_LABELS = {
   cosmetics: { format: (count: number) => m.merge_label_cosmetics({ count }) },
   dates: { format: (count: number) => m.merge_label_dates({ count }) },
   hasUpperFloor: { boolean: true, format: () => m.merge_label_has_upper_floor() },
+  heartLevels: { format: (count: number) => m.merge_label_heart_levels({ count }) },
   mineFloor: { format: (count: number) => m.merge_label_mine_floor({ count }) },
   museum: { format: (count: number) => m.merge_label_museum({ count }) },
   perks: { format: (count: number) => m.merge_label_perks({ count }) },
@@ -36,7 +37,6 @@ export const MERGE_COUNT_LABELS = {
   renown: { format: (count: number) => m.merge_label_renown({ count }) },
   skillLevels: { format: (count: number) => m.merge_label_skill_levels({ count }) },
   spells: { format: (count: number) => m.merge_label_spells({ count }) },
-  villagerLevels: { format: (count: number) => m.merge_label_villager_levels({ count }) },
   villagerRelationships: {
     format: (count: number) => m.merge_label_villager_relationships({ count }),
   },

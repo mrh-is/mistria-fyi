@@ -5,26 +5,26 @@ import { isConditionVisible } from "#lib/engine/visibility.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordEntries } from "#lib/utils/record.js";
 
-import { computeRedactedStoreIds } from "./redacted-stores.js";
+import { computeSpoileredStoreIds } from "./spoilered-stores.js";
 
-describe("computeRedactedStoreIds", () => {
+describe("computeSpoileredStoreIds", () => {
   afterEach(() => {
     userState.resetAll();
   });
 
-  it("redacts exactly the stores with an unmet visibility condition", () => {
+  it("spoilers exactly the stores with an unmet visibility condition", () => {
     userState.resetAll();
     const state = userState.progressionState;
-    const redacted = computeRedactedStoreIds(state);
+    const spoilered = computeSpoileredStoreIds(state);
     const expected = recordEntries(trackerData.stores)
       .filter(([, { visibility }]) => visibility && !isConditionVisible(visibility, state))
       .map(([id]) => id);
 
     expect(expected.length).toBeGreaterThan(0);
-    expect([...redacted].toSorted()).toEqual(expected.toSorted());
+    expect([...spoilered].toSorted()).toEqual(expected.toSorted());
     const ungated = recordEntries(trackerData.stores)
       .filter(([, store]) => !store.visibility)
       .map(([id]) => id);
-    expect(ungated.filter((id) => redacted.has(id))).toEqual([]);
+    expect(ungated.filter((id) => spoilered.has(id))).toEqual([]);
   });
 });

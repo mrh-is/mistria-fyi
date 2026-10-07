@@ -19,8 +19,8 @@
   import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
+  import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -45,8 +45,8 @@
     return userState.state.completed.almanac.has(itemId);
   }
 
-  function itemNameVisible(item: { visibility?: VisibilityCondition }): boolean {
-    return isConditionVisible(item.visibility, userState.progressionState);
+  function isItemSpoilered(item: { visibility?: VisibilityCondition }): boolean {
+    return !isConditionVisible(item.visibility, userState.progressionState);
   }
 
   function rowDisplay(
@@ -64,13 +64,13 @@
         userState.state.availabilityWindows,
       ),
       leaving: recentlyCompleted.has(itemId),
-      nameVisible: itemNameVisible(item),
+      spoilered: isItemSpoilered(item),
     });
   }
 
-  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
+  let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
+  let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   const recentlyCompleted = createLeavingSet<ItemId>();
 
@@ -132,7 +132,7 @@
     almanacSections.map((section) => {
       const baseRows = section.rows.filter(({ canonicalId, entry, item, name }) => {
         if (!matchesFilter(name)) return false;
-        if (nameFilter && !itemNameVisible(item)) return false;
+        if (nameFilter && isItemSpoilered(item)) return false;
         return isInProgressScope(
           aggregateSources(entry),
           isItemCompleted(canonicalId),
@@ -277,7 +277,7 @@
             sprite={canonicalId}
             spriteClass="text-(--color-category-almanac)"
             onToggle={() => {
-              if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {
+              if (!isItemSpoilered({ visibility: itemVisibility }) || itemCompleted) {
                 toggleItem(canonicalId, name, canonicalIds);
               } else {
                 spoilerGuard.requestGuardedAction(itemVisibility, () => {

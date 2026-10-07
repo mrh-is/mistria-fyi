@@ -14,6 +14,7 @@ export type {
   SourceDetails,
   SourceTuple,
   StationId,
+  UpgradeId,
   WaterType,
 } from "./acquisition.js";
 
@@ -150,10 +151,13 @@ export type Spell = TrackerEntity;
 export type SpellId = string & { readonly __brand: "SpellId" };
 export interface Store {
   article?: "the";
-  upgradeAction?: string;
+  /** How the store's own upgrade quest is phrased; absent means upgrading. */
+  upgradeAction?: StoreUpgradeAction;
   visibility?: VisibilityCondition;
 }
 export type StoreId = string & { readonly __brand: "StoreId" };
+export const STORE_UPGRADE_ACTIONS = ["repair"] as const;
+export type StoreUpgradeAction = (typeof STORE_UPGRADE_ACTIONS)[number];
 export interface StoryQuest extends Quest {
   heartLevelChanges?: HeartLevelChange[];
 }
