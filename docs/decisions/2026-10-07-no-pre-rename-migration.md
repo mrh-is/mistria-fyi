@@ -14,7 +14,9 @@ app gains users with saved state) now holds.
 - **Accept a one-time break.** Progress saved before the rename is not migrated; it fails strict
   validation and is quarantined, as it is today.
 - **Recovery is a save re-import.** The affected players (the maintainer & one tester) re-import
-  their game save files, which rebuilds the tracked progress in a few seconds.
+  their game save files, which rebuilds the tracked progress in a few seconds. Like a reset or
+  backup restore, a save import unblocks persistence once the unreadable blob is safely in the
+  quarantine key, so the rebuilt progress survives a reload.
 - **Quarantine stays retrievable.** “Download unreadable data” on the Backup & Restore card exposes
   the quarantined blob, so any future format break or corruption leaves players a copy of their
   data.

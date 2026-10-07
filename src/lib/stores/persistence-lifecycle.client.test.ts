@@ -394,6 +394,50 @@ describe("persistence lifecycle", () => {
     expect(userState.persistenceFailed).toBe(false);
   });
 
+  it("persists a save re-import after quarantining invalid data across a fresh load", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", makeWindow());
+    const invalid = "{not json";
+    const storage = makeStorage({ "mistria-fyi-v1": invalid });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const first = await import("#lib/stores/user-state.svelte.js");
+    first.userState.loadFromStorage();
+    first.userState.mergeFromSave({ mineFloor: 10, renown: 25 });
+    vi.advanceTimersByTime(first.PERSIST_DEBOUNCE_MS);
+    await vi.runAllTimersAsync();
+
+    expect(storage.getItem("mistria-fyi-v1-quarantine")).toBe(invalid);
+    expect(first.userState.persistenceFailed).toBe(false);
+
+    vi.resetModules();
+    const second = await import("#lib/stores/user-state.svelte.js");
+    second.userState.loadFromStorage();
+
+    expect(second.userState.state.completed.renown).toBe(25);
+    expect(second.userState.state.completed.mineFloor).toBe(10);
+    expect(second.userState.persistenceFailed).toBe(false);
+  });
+
+  it("keeps a save re-import gated when quarantine fails", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", makeWindow());
+    const invalid = "{not json";
+    const storage = quarantineFailureStorage({ "mistria-fyi-v1": invalid });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.loadFromStorage();
+    userState.mergeFromSave({ renown: 25 });
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
+    await vi.runAllTimersAsync();
+
+    expect(storage.getItem("mistria-fyi-v1")).toBe(invalid);
+    expect(userState.persistenceFailed).toBe(true);
+  });
+
   it("persists an explicit reset after quarantining invalid data", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
