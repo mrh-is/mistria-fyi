@@ -123,8 +123,8 @@ describe("TransferCard scan from image", () => {
 
   it.each([
     ["an unrelated QR code", "https://example.com", "This QR code isn’t a Mistria Field Guide"],
-    // A marked, current (v11) version byte with no checksum.
-    ["a damaged transfer code", "MFGTCw", "This QR code’s data is damaged or incomplete."],
+    // A marked, current (v1) version byte with no checksum.
+    ["a damaged transfer code", "MFGTAQ", "This QR code’s data is damaged or incomplete."],
   ])("rejects %s without touching progress", async (_, payload, message) => {
     transferQr.decodeQrImage.mockResolvedValue(payload);
     const before = userState.exportBackup();

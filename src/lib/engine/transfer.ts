@@ -31,12 +31,12 @@ import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 11;
+export const TRANSFER_VERSION = 1;
 export const TRANSFER_ORDERING_HASH = "50dbf1b9";
-const MIN_SUPPORTED_TRANSFER_VERSION = 11;
+const MIN_SUPPORTED_TRANSFER_VERSION = 1;
 
 /**
- * Text every payload starts with, from v11. It marks a QR code as a Mistria Field Guide transfer
+ * Text every payload starts with. It marks a QR code as a Mistria Field Guide transfer
  * code, so an unrelated code is never mistaken for one from another version. Four base64url
  * characters encode whole bytes, so the rest of the payload stays independently decodable.
  */
@@ -183,41 +183,24 @@ export async function encodeTransferPayload(
   const perkOrder = getPerkOrder();
   parts.push(toBitfield(perkOrder, completed.unlockedPerks));
 
-  // 13. Married villager index (1 byte; also encoded in the relationship states)
-  const marriedVillager = Object.entries(completed.villagerRelationships).find(
-    ([, r]) => r === "married",
-  )?.[0] as undefined | VillagerId;
-  const marriedIndex = marriedVillager ? villagerOrder.indexOf(marriedVillager) : -1;
-  parts.push(new Uint8Array([marriedIndex === -1 ? 0xff : marriedIndex]));
-
-  // 14. Pet cosmetic sets bitfield
+  // 13. Pet cosmetic sets bitfield
   const petCosmeticOrder = getPetCosmeticOrder();
   parts.push(toBitfield(petCosmeticOrder, completed.petCosmetics));
 
-  // 15. Pet skins bitfield
+  // 14. Pet skins bitfield
   const petSkinOrder = getPetSkinOrder();
   parts.push(toBitfield(petSkinOrder, completed.petSkins));
 
-  // 16. Date bitfield
+  // 15. Date bitfield
   const dateOrder = getDateOrder();
   parts.push(toBitfield(dateOrder, completed.dates));
 
-  // 17. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor
+  // 16. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor
   const progressionByte =
     ((seasonOrdinal(completed.reachedSeason) & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
   parts.push(new Uint8Array([progressionByte]));
 
-  // 18. Romantic villager bitfield (also encoded in the relationship states)
-  const romanticOrder = getDateableVillagerOrder();
-  const romanticSet = new Set<string>();
-  for (const [id, rel] of Object.entries(completed.villagerRelationships)) {
-    if (rel === "romantic" || rel === "proposed" || rel === "married") {
-      romanticSet.add(id);
-    }
-  }
-  parts.push(toBitfield(romanticOrder, romanticSet));
-
-  // 19. Villager relationship states — 3 bits per dateable villager
+  // 17. Villager relationship states — 3 bits per dateable villager
   const RELATIONSHIP_ENCODE: Record<VillagerRelationship, number> = {
     married: 4,
     platonic: 1,
@@ -244,11 +227,11 @@ export async function encodeTransferPayload(
   }
   parts.push(relBytes);
 
-  // 20. Child choice — 1 byte
+  // 18. Child choice — 1 byte
   const childByte = encodeChildChoice(completed.childChoice);
   parts.push(new Uint8Array([childByte]));
 
-  // 21. Almanac recipes bitfield
+  // 19. Almanac recipes bitfield
   const recipeOrder = getRecipeOrder();
   parts.push(toBitfield(recipeOrder, completed.almanacRecipes));
 
@@ -466,17 +449,7 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
   const perkBytes = readBytes(Math.ceil(perkOrder.length / 8));
   const unlockedPerks = fromBitfield(perkOrder, perkBytes, "perk bitfield") as Set<PerkId>;
 
-  // 13. Married villager index — 1 byte: 0xFF = no spouse, else index into villagerOrder
-  let marriedVillager: null | VillagerId = null;
-  const marriedByte = readBytes(1)[0];
-  if (marriedByte !== 0xff) {
-    marriedVillager = villagerOrder[marriedByte] ?? null;
-    if (!marriedVillager) {
-      throw new Error(`Invalid spouse index: ${String(marriedByte)}`);
-    }
-  }
-
-  // 14. Pet cosmetic sets bitfield
+  // 13. Pet cosmetic sets bitfield
   const petCosmeticOrder = getPetCosmeticOrder();
   const petCosmeticBytes = readBytes(Math.ceil(petCosmeticOrder.length / 8));
   const petCosmetics = fromBitfield(
@@ -485,17 +458,17 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
     "pet cosmetic bitfield",
   ) as Set<PetCosmeticSetId>;
 
-  // 15. Pet skins bitfield
+  // 14. Pet skins bitfield
   const petSkinOrder = getPetSkinOrder();
   const petSkinBytes = readBytes(Math.ceil(petSkinOrder.length / 8));
   const petSkins = fromBitfield(petSkinOrder, petSkinBytes, "pet skin bitfield") as Set<PetSkinId>;
 
-  // 16. Date bitfield
+  // 15. Date bitfield
   const dateOrder = getDateOrder();
   const dateBytes = readBytes(Math.ceil(dateOrder.length / 8));
   const dates = fromBitfield(dateOrder, dateBytes, "date bitfield") as Set<DateId>;
 
-  // 17. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bits 4-0: reserved
+  // 16. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bits 4-0: reserved
   const progressionByte = readBytes(1)[0];
   if (progressionByte & 0x1f) {
     throw new Error("Invalid progression reserved bits: expected zero");
@@ -503,24 +476,9 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
   const reachedSeason: Season = seasonFromOrdinal((progressionByte >> 6) & 0x3);
   const hasUpperFloor = Boolean(progressionByte & 0x20);
 
-  // 18. Romantic villager bitfield; the relationship states below override it
   const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
-  const romanticOrder = getDateableVillagerOrder();
-  const romanticBytes = readBytes(Math.ceil(romanticOrder.length / 8));
-  const romanticVillagers = fromBitfield(
-    romanticOrder,
-    romanticBytes,
-    "romantic villager bitfield",
-  ) as Set<VillagerId>;
-  for (const villagerId of romanticVillagers) {
-    villagerRelationships[villagerId] = "romantic";
-  }
 
-  if (marriedVillager) {
-    villagerRelationships[marriedVillager] = "married";
-  }
-
-  // 19. Villager relationship states — 3 bits per dateable villager
+  // 17. Villager relationship states — 3 bits per dateable villager
   const dateableOrder = getDateableVillagerOrder();
   const relByteCount = Math.ceil((dateableOrder.length * 3) / 8);
   const relBytes = readBytes(relByteCount);
@@ -549,14 +507,14 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
     }
   }
 
-  // 20. Child choice — 1 byte
+  // 18. Child choice — 1 byte
   const childByte = readBytes(1)[0];
   if (childByte > 0x02) {
     throw new Error(`Invalid child choice code: ${String(childByte)}`);
   }
   const childChoice: ChildChoice = decodeChildChoice(childByte);
 
-  // 21. Almanac recipes bitfield
+  // 19. Almanac recipes bitfield
   const recipeOrder = getRecipeOrder();
   const recipeBytes = readBytes(Math.ceil(recipeOrder.length / 8));
   const almanacRecipes = fromBitfield(recipeOrder, recipeBytes, "recipe bitfield") as Set<RecipeId>;
@@ -718,12 +676,10 @@ function getTransferRawLength(): number {
     getSkillOrder().length +
     Math.ceil(getQuestOrder().length / 4) +
     Math.ceil(getPerkOrder().length / 8) +
-    1 +
     Math.ceil(getPetCosmeticOrder().length / 8) +
     Math.ceil(getPetSkinOrder().length / 8) +
     Math.ceil(getDateOrder().length / 8) +
     1 +
-    Math.ceil(getDateableVillagerOrder().length / 8) +
     Math.ceil((getDateableVillagerOrder().length * 3) / 8) +
     1 +
     Math.ceil(getRecipeOrder().length / 8)
