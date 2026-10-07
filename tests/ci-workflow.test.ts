@@ -36,6 +36,7 @@ interface WorkflowStep {
   if?: string;
   name?: string;
   run?: string;
+  "timeout-minutes"?: number;
   uses?: string;
   with?: Record<string, boolean | number | string>;
 }
@@ -286,12 +287,15 @@ describe("CI workflow browser suites", () => {
       expect(cache?.uses).toMatch(/^actions\/cache@[a-f0-9]{40}$/);
       expect(cache?.with?.path).toBe("~/.cache/ms-playwright");
       expect(cache?.with?.key).toBe("playwright-${{ hashFiles('pnpm-lock.yaml') }}");
-      expect(
-        steps.find((step) => step.run === "pnpm exec playwright install --with-deps chromium")?.if,
-      ).toBe("steps.playwright-cache.outputs.cache-hit != 'true'");
-      expect(
-        steps.find((step) => step.run === "pnpm exec playwright install-deps chromium")?.if,
-      ).toBe("steps.playwright-cache.outputs.cache-hit == 'true'");
+      const install = steps.find((step) => step.env?.PLAYWRIGHT_INSTALL !== undefined);
+      expect(install?.env?.PLAYWRIGHT_INSTALL).toBe(
+        "${{ steps.playwright-cache.outputs.cache-hit == 'true' && 'install-deps chromium' || 'install --with-deps chromium' }}",
+      );
+      expect(install?.["timeout-minutes"]).toBe(12);
+      expect(install?.run).toContain("for attempt in 1 2; do");
+      expect(install?.run).toContain(
+        "timeout --kill-after=30s 5m pnpm exec playwright $PLAYWRIGHT_INSTALL && exit 0",
+      );
       expect(runCommands(jobs[jobName])).not.toContain(
         'git config --global --add safe.directory "$GITHUB_WORKSPACE"',
       );
