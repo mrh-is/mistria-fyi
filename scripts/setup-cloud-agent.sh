@@ -79,3 +79,15 @@ fi
 
 cd "$repo_root"
 pnpm install --frozen-lockfile
+
+# `pnpm run lint` needs ShellCheck from the system. Install it when the image allows; otherwise
+# lint:shell reports it missing.
+if ! command -v shellcheck >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
+  if [ "$(id -u)" -eq 0 ]; then
+    apt-get install --yes --no-install-recommends shellcheck ||
+      echo "warning: could not install shellcheck" >&2
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo --non-interactive apt-get install --yes --no-install-recommends shellcheck ||
+      echo "warning: could not install shellcheck" >&2
+  fi
+fi
