@@ -55,7 +55,7 @@ describe("source filter labels", () => {
     );
     expect(sourceFilterMembersLabel(filter("offerings"), "ja")).toBe("ニワトリ像、願いの井戸");
     expect(sourceFilterMembersLabel(filter("chests"), "en")).toBe(
-      "Beach cave, Treasure boxes, and Lost & found",
+      "Hidden chests, Treasure boxes, and Lost & found",
     );
   });
 

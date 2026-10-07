@@ -1,4 +1,8 @@
-import { UPGRADE_IDS } from "#lib/types/acquisition.js";
+import {
+  CUTSCENE_SOURCE_IDS,
+  DATE_INSPIRATION_DROP_ACTIVITIES,
+  UPGRADE_IDS,
+} from "#lib/types/acquisition.js";
 import { SEASONS, WEATHERS } from "#lib/types/tracker-data.js";
 
 import { compareStrings } from "../ordering.js";
@@ -71,6 +75,7 @@ const AVAILABILITY_FIELDS = {
   all: ["conditions"],
   always: [],
   any: ["conditions"],
+  dateUnlocked: ["dateId"],
   gamePredicate: ["predicate", "value"],
   hasUpperFloor: [],
   heartLevel: ["level", "villagerId"],
@@ -129,13 +134,14 @@ const SOURCE_FIELDS = {
   artifact_dig: ["locationIds"],
   artifact_replicator: ["originalItemId"],
   bait_fish: ["baitItemIds"],
-  beach_cave_chest: [],
   breed: [],
   bug_catch: ["locationIds"],
   chicken_statue: [],
   crop: ["seedItemId"],
+  cutscene: ["cutsceneId"],
   date: ["dateId"],
   date_inspiration: ["itemId"],
+  date_inspiration_drop: ["activity", "dateId", "locationId"],
   default: [],
   dive: ["waterTypes"],
   donate_item: ["triggerItemId"],
@@ -164,6 +170,7 @@ const SOURCE_FIELDS = {
   renown: ["level"],
   ritual_chamber: ["perkId"],
   scroll_bundle: ["bundleItemId", "storeId"],
+  secret_chest: ["locationId"],
   ship_item: ["triggerItemId"],
   spouseGift: ["villagerId"],
   station: ["stationId"],
@@ -617,6 +624,22 @@ function validateAvailability(
         break;
       }
       case "always":
+        return;
+      case "dateUnlocked":
+        if (
+          "dateId" in value &&
+          requireString(value, "dateId", targetId, fieldPath, source, diagnostics)
+        ) {
+          reference(
+            diagnostics,
+            references,
+            "date",
+            value.dateId,
+            targetId,
+            `${fieldPath}.dateId`,
+            source,
+          );
+        }
         return;
       case "gamePredicate":
         requireString(value, "predicate", targetId, fieldPath, source, diagnostics);
@@ -1102,8 +1125,44 @@ function validateVariantFields(
     case "date":
       stringReferences.push(["dateId", "date"]);
       break;
+    case "cutscene":
+      stringReferences.push(["cutsceneId", "cutscene"]);
+      if (!(CUTSCENE_SOURCE_IDS as readonly unknown[]).includes(source.cutsceneId)) {
+        malformed(
+          diagnostics,
+          targetId,
+          `${fieldPath}.cutsceneId`,
+          "Expected a reviewed cutscene id",
+          source,
+        );
+      }
+      break;
     case "date_inspiration":
       stringReferences.push(["itemId", "item"]);
+      break;
+    case "date_inspiration_drop":
+      stringReferences.push(["dateId", "date"]);
+      if (!(DATE_INSPIRATION_DROP_ACTIVITIES as readonly unknown[]).includes(source.activity)) {
+        malformed(
+          diagnostics,
+          targetId,
+          `${fieldPath}.activity`,
+          "Expected a date inspiration drop activity",
+          source,
+        );
+      } else if (source.activity === "mines_chest") {
+        if ("locationId" in source) {
+          malformed(
+            diagnostics,
+            targetId,
+            `${fieldPath}.locationId`,
+            "A Mines chest drop has no location",
+            source,
+          );
+        }
+      } else {
+        stringReferences.push(["locationId", "location"]);
+      }
       break;
     case "dive":
     case "fish":
@@ -1268,6 +1327,9 @@ function validateVariantFields(
       break;
     case "station":
       stringReferences.push(["stationId", "station"]);
+      break;
+    case "secret_chest":
+      stringReferences.push(["locationId", "location"]);
       break;
     case "store":
       stringReferences.push(["storeId", "store"]);

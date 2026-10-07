@@ -1,28 +1,19 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { getNameTable, loadNames } from "#lib/data/names.js";
+import { loadNames } from "#lib/data/names.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import {
   buildAnimalNames,
   buildLocationNames,
   buildMonsterNames,
-  buildUnnamedSourceNames,
   buildWaterNames,
-  UNNAMED_SOURCE_IDS,
 } from "./source-names.js";
 
 beforeAll(async () => {
   await Promise.all(
     LOCALE_CODES.map((locale) =>
-      loadNames(locale, [
-        "items",
-        "locations",
-        "monsters",
-        "pets/skins",
-        "quests",
-        "treasure-chest-tiers",
-      ]),
+      loadNames(locale, ["items", "locations", "monsters", "pets/skins"]),
     ),
   );
 });
@@ -35,14 +26,6 @@ describe("game-data tables", () => {
       expect(Object.keys(monsters).length).toBeGreaterThan(0);
       for (const name of Object.values(monsters)) expect(name).not.toBe("");
     }
-  });
-
-  it("keeps unnamed quests & chest tiers out of the game's name tables", () => {
-    const quests = getNameTable("quests", "en");
-    const tiers = getNameTable("treasure-chest-tiers", "en");
-
-    for (const id of UNNAMED_SOURCE_IDS.quests) expect(quests).not.toHaveProperty(id);
-    for (const id of UNNAMED_SOURCE_IDS.treasureChestTiers) expect(tiers).not.toHaveProperty(id);
   });
 });
 
@@ -58,6 +41,13 @@ describe("buildLocationNames", () => {
 
   it("lowercases English articles, since names only appear mid-sentence", () => {
     for (const name of Object.values(buildLocationNames("en"))) expect(name).not.toMatch(/^The /);
+  });
+
+  it("names the Bell Tower's unnamed upper floor after the building", () => {
+    const names = buildLocationNames("fr");
+
+    expect(names.bell_tower_f2).toBe(names.bell_tower_f1);
+    expect(names.bell_tower_f2).not.toBe("");
   });
 
   it("localizes names per locale", () => {
@@ -106,18 +96,5 @@ describe("buildAnimalNames", () => {
     expect(keys).toContain("alpaca");
     expect(keys.every((key) => !key.includes("/"))).toBe(true);
     expect(names.alpaca).toBe("Alpaca");
-  });
-});
-
-describe("buildUnnamedSourceNames", () => {
-  it("title-cases snake_case ids", () => {
-    expect(buildUnnamedSourceNames(["break_fire_seal", "abyss"])).toEqual({
-      abyss: "Abyss",
-      break_fire_seal: "Break Fire Seal",
-    });
-  });
-
-  it("returns an empty record for no ids", () => {
-    expect(buildUnnamedSourceNames([])).toEqual({});
   });
 });

@@ -12,16 +12,4 @@ export const REVIEWED_NON_NATIVE_REFERENCES = {
   // A wildcard for drops from every monster, rendered as “any monster” by `monsterName` in
   // `src/lib/sources/source-segments.ts`.
   monsters: ["any"],
-  // Runtime-only story beats (items, songs, & flags) that are not quests or cutscenes. Each must
-  // also appear in `UNNAMED_SOURCE_IDS.quests` (`src/lib/sources/source-names.ts`) so it renders;
-  // #471 tracks giving them reviewed names.
-  quests: [
-    "another_tower",
-    "balors_crate",
-    "beach_date_unlock",
-    "elsies_dating_tutorial",
-    "gem_cutting_date_unlock",
-    "park_date_unlock",
-    "ryis_lumber",
-  ],
 } as const satisfies AcquisitionReferenceRegistries;

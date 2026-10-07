@@ -27,8 +27,7 @@ export function extractStoresMeta(
     const store = stores[storeId];
     if (typeof store !== "object" || store === null) continue;
 
-    const known = KNOWN_STORES[storeId];
-    if (!known) {
+    if (!KNOWN_STORES[storeId]) {
       throw new Error(`Unknown store "${storeId}" — add it to KNOWN_STORES in stores-meta.ts`);
     }
 
@@ -38,10 +37,7 @@ export function extractStoresMeta(
     }
 
     const upgradeAction = UPGRADE_ACTIONS[storeId];
-    result[storeId as StoreId] = {
-      ...(known.article ? { article: known.article } : {}),
-      ...(upgradeAction ? { upgradeAction } : {}),
-    };
+    result[storeId as StoreId] = upgradeAction ? { upgradeAction } : {};
     const { values } = localizer.localizeField({
       category: "stores",
       classification: "localizable",

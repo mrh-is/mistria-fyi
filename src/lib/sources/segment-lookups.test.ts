@@ -5,7 +5,6 @@ import { getName, loadNames, NAME_CHUNKS } from "#lib/data/names.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { buildBaseSegmentLookups } from "./segment-lookups.js";
-import { UNNAMED_SOURCE_IDS } from "./source-names.js";
 import { buildSourceSegments } from "./source-segments.js";
 
 import type { Source } from "#lib/types/acquisition.js";
@@ -70,25 +69,6 @@ describe("buildBaseSegmentLookups", () => {
     const lookups = buildBaseSegmentLookups(new Set(), locale);
     for (const source of sources) {
       expect(() => buildSourceSegments(source, lookups), JSON.stringify(source)).not.toThrow();
-    }
-  });
-
-  // Once #471 (or a pipeline change) names one of these, it must leave the allowlist.
-  it("allowlists only IDs that are still referenced & still unnamed", () => {
-    const sources = collectSources(trackerData);
-    const questIds = new Set(sources.flatMap((s) => (s.type === "quest" ? [s.questId] : [])));
-    const tiers = new Set(sources.flatMap((s) => (s.type === "treasure_chest" ? [s.tier] : [])));
-    const trackedQuestIds = new Set(
-      Object.values(trackerData.quests).flatMap((quests) => Object.keys(quests)),
-    );
-
-    for (const id of UNNAMED_SOURCE_IDS.quests) {
-      expect(questIds.has(id), id).toBe(true);
-      expect(trackedQuestIds.has(id), id).toBe(false);
-    }
-    for (const tier of UNNAMED_SOURCE_IDS.treasureChestTiers) {
-      expect(tiers.has(tier), tier).toBe(true);
-      expect(tier in trackerData.treasureChestTiers, tier).toBe(false);
     }
   });
 });

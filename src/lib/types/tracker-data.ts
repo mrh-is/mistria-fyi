@@ -150,7 +150,6 @@ export type SkillId = string & { readonly __brand: "SkillId" };
 export type Spell = TrackerEntity;
 export type SpellId = string & { readonly __brand: "SpellId" };
 export interface Store {
-  article?: "the";
   /** How the store's own upgrade quest is phrased; absent means upgrading. */
   upgradeAction?: StoreUpgradeAction;
   visibility?: VisibilityCondition;

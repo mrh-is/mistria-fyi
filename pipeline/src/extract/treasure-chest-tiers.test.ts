@@ -50,18 +50,37 @@ describe("extractTreasureChestTiers", () => {
     expect(localeNames.ja["gold" as never]).toBe("JA Golden Treasure Box");
   });
 
-  it("skips tiers without a matching treasure box item", () => {
+  it("names the abyss tier after the Abyssal Chest item", () => {
     const fiddle = makeFiddle({
-      fishing: {
-        chest_tables: {
-          abyss: { items: [] },
-        },
-      },
+      fishing: { chest_tables: { abyss: { items: [] } } },
+      items: { other: { misc: { abyssal_chest: { name: "Abyssal Chest" } } } },
+    });
+
+    const { localeNames, tiers } = extractTreasureChestTiers(fiddle, localizer);
+    expect(tiers).toEqual({ abyss: {} });
+    expect(localeNames.ja["abyss" as never]).toBe("JA Abyssal Chest");
+  });
+
+  it("throws for a tier without a matching item", () => {
+    const fiddle = makeFiddle({
+      fishing: { chest_tables: { platinum: { items: [] } } },
       items: {},
     });
 
-    const { tiers } = extractTreasureChestTiers(fiddle, localizer);
-    expect(Object.keys(tiers)).toEqual([]);
+    expect(() => extractTreasureChestTiers(fiddle, localizer)).toThrow(
+      'Chest tier "platinum" has no item "fish/misc/treasure_box_platinum"',
+    );
+  });
+
+  it("throws for a tier whose item name isn't a string", () => {
+    const fiddle = makeFiddle({
+      fishing: { chest_tables: { gold: { items: [] } } },
+      items: { fish: { misc: { treasure_box_gold: { name: { en: "Golden" } } } } },
+    });
+
+    expect(() => extractTreasureChestTiers(fiddle, localizer)).toThrow(
+      'Chest tier "gold" has no item "fish/misc/treasure_box_gold"',
+    );
   });
 
   it("returns empty when no fishing data", () => {

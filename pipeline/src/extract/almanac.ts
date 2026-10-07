@@ -1,5 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
+import { ITEM_EXCLUSIONS } from "../acquisition/exclusions.js";
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { PipelineDiagnostics } from "../diagnostics.js";
 import { forEachItem } from "../extractor-helpers.js";
@@ -93,6 +94,7 @@ export function extractAlmanac(
   forEachItem(fiddle, (itemId, item, topCategory, subCategory) => {
     if (topCategory === "other" && subCategory === "unreviewed_new_items") return;
     if (chestIds.has(itemId)) return;
+    if (ITEM_EXCLUSIONS.has(itemId as ItemId)) return;
 
     const rawName = item.name as string | undefined;
     if (!rawName) {
