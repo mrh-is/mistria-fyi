@@ -47,14 +47,14 @@ guarantee.
   orchestrator's `agent:*` identity plus the delegate's own `Co-Authored-By` trailer.
 - **Orchestrator verifies.** Read the delegate's diff & run the focused checks before committing.
 
-| Agent       | Command (non-interactive) | Limits                           | Notes                                                                                 |
-| ----------- | ------------------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
-| Claude Code | `claude -p "prompt"`      | Pro sub, 5-hour windows          | Sonnet by default. Opus on the maintainer's machine.                                  |
-| Codex       | `codex exec "prompt"`     | Free tier                        | Default Terra (this project, see `.codex/config.toml`). `-c model="..."` to override. |
-| Antigravity | `agy -p "prompt"`         | Free tier, weekly quotas         | Gemini 3.5 Flash default. Gemini and Claude/GPT quotas separate.                      |
-| Kilo        | `kilo run "prompt"`       | Free, rate-limited               | Always use the default auto-free model.                                               |
-| Copilot     | `copilot -p "prompt"`     | Pro sub, 1500 monthly AI credits | Multi-model. Cheaper models use fewer credits.                                        |
-| LM Studio   | `lms chat -p "prompt"`    | Unlimited (local)                | Qwen 3.5 27B. Slow, no tool use.                                                      |
+| Agent       | Command (non-interactive) | Limits                           | Notes                                                                                                                    |
+| ----------- | ------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Claude Code | `claude -p "prompt"`      | Pro sub, 5-hour windows          | Sonnet by default. Opus on the maintainer's machine.                                                                     |
+| Codex       | `codex exec "prompt"`     | Account-dependent                | Inherits the user's configured model & reasoning effort; this project does not pin either. `-c model="..."` to override. |
+| Antigravity | `agy -p "prompt"`         | Free tier, weekly quotas         | Gemini 3.5 Flash default. Gemini and Claude/GPT quotas separate.                                                         |
+| Kilo        | `kilo run "prompt"`       | Free, rate-limited               | Always use the default auto-free model.                                                                                  |
+| Copilot     | `copilot -p "prompt"`     | Pro sub, 1500 monthly AI credits | Multi-model. Cheaper models use fewer credits.                                                                           |
+| LM Studio   | `lms chat -p "prompt"`    | Unlimited (local)                | Qwen 3.5 27B. Slow, no tool use.                                                                                         |
 
 ## When to delegate vs. do it yourself
 
@@ -96,7 +96,8 @@ Use for well-defined tasks that don't need heavy reasoning:
 
 Use for substantial tasks that need strong reasoning:
 
-- **Codex** (`codex exec "prompt"`): Multi-file changes, refactoring, code review. Free tier.
+- **Codex** (`codex exec "prompt"`): Multi-file changes, refactoring, code review. Limits depend on
+  the signed-in account.
 - **Antigravity** (`agy -p "prompt"`): Similar capability. Has separate Gemini vs Claude/GPT weekly
   quotas.
 - **Copilot** (`copilot -p "prompt"`): Multi-model, GitHub-native tools.
