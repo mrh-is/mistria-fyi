@@ -112,3 +112,30 @@ describe("BackupCard restore", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });
+
+// Last in the file: the store singleton keeps unreadable data for the rest of the module's life.
+describe("BackupCard unreadable data", () => {
+  it("hides the download action when nothing was quarantined", () => {
+    render(BackupCard, { open: true });
+
+    expect(screen.queryByRole("button", { name: "Download unreadable data" })).toBeNull();
+  });
+
+  it("downloads stored progress that couldn't be read", async () => {
+    const invalid = "{not json";
+    localStorage.setItem("mistria-fyi-v1", invalid);
+    userState.loadFromStorage();
+    const createObjectURL = vi.fn((_blob: Blob) => "blob:mistria/unreadable");
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockReturnValue(undefined);
+    render(BackupCard, { open: true });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Download unreadable data" }));
+
+    expect(await createObjectURL.mock.calls[0][0].text()).toBe(invalid);
+    const anchor = click.mock.instances[0] as HTMLAnchorElement;
+    expect(anchor.download).toMatch(/^mistria-field-guide-unreadable-\d{4}-\d{2}-\d{2}\.json$/);
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+});

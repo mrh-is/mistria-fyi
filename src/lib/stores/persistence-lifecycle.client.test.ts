@@ -316,6 +316,61 @@ describe("persistence lifecycle", () => {
     expect(storage.getItem("mistria-fyi-v1")).toBe(invalid);
     expect(storage.getItem("mistria-fyi-v1-quarantine")).toBe(invalid);
     expect(userState.persistenceFailed).toBe(true);
+    expect(userState.persistenceFailureKind).toBe("unreadable");
+    expect(userState.unreadableData).toBe(invalid);
+  });
+
+  it("keeps unreadable data downloadable after a reset & a later visit", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", makeWindow());
+    const invalid = "{not json";
+    const storage = makeStorage({ "mistria-fyi-v1": invalid });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const first = await import("#lib/stores/user-state.svelte.js");
+    first.userState.loadFromStorage();
+    first.userState.resetAll();
+    vi.advanceTimersByTime(first.PERSIST_DEBOUNCE_MS);
+    await vi.runAllTimersAsync();
+    expect(first.userState.unreadableData).toBe(invalid);
+
+    vi.resetModules();
+    const second = await import("#lib/stores/user-state.svelte.js");
+    second.userState.loadFromStorage();
+
+    expect(second.userState.persistenceFailed).toBe(false);
+    expect(second.userState.unreadableData).toBe(invalid);
+  });
+
+  it("keeps unreadable data in memory when quarantine fails", async () => {
+    vi.stubGlobal("window", makeWindow());
+    const invalid = "{not json";
+    vi.stubGlobal("localStorage", quarantineFailureStorage({ "mistria-fyi-v1": invalid }));
+    vi.resetModules();
+
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.loadFromStorage();
+
+    expect(userState.persistenceFailureKind).toBe("unreadable");
+    expect(userState.unreadableData).toBe(invalid);
+  });
+
+  it("reports unavailable storage separately from unreadable data", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", makeWindow());
+    vi.stubGlobal("localStorage", failingStorage({}));
+    vi.resetModules();
+
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.loadFromStorage();
+    userState.setRenown(3);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
+    await vi.runAllTimersAsync();
+
+    expect(userState.persistenceFailed).toBe(true);
+    expect(userState.persistenceFailureKind).toBe("unavailable");
+    expect(userState.unreadableData).toBeNull();
   });
 
   it("persists an explicit backup restore after quarantining invalid data", async () => {
