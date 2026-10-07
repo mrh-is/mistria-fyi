@@ -61,32 +61,6 @@ const validate = <T>(
 };
 const ids = (values: Record<string, unknown>): Set<string> => new Set(Object.keys(values));
 
-function nativeCosmeticUnlocks(fiddle: ParsedGameData): Set<string> {
-  const unlocked = new Set<string>();
-  const visit = (node: unknown, field = ""): void => {
-    if (typeof node === "string" && (field === "cosmetic" || field === "cosmetics")) {
-      unlocked.add(node);
-    } else if (Array.isArray(node)) {
-      for (const child of node) visit(child, field);
-    } else {
-      for (const [key, child] of Object.entries(record(node))) visit(child, key);
-    }
-  };
-  for (const table of [
-    "stores",
-    "quests",
-    "renown",
-    "dungeons",
-    "festivals",
-    "museum",
-    "wishing_well",
-    "monsters",
-  ]) {
-    visit(fiddle[table]);
-  }
-  return unlocked;
-}
-
 /** Production preflight: validate the complete reviewed registry against unfiltered native tables. */
 export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
   const items: Record<string, Record<string, unknown>> = {};
@@ -104,7 +78,6 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
   const spells = records(fiddle.spells);
   const perks = records(fiddle.perks);
   const assets = records(fiddle.player_assets);
-  const nativeCosmetics = nativeCosmeticUnlocks(fiddle);
   const cutscenes = getCutsceneRecords(fiddle);
   const questIds = ids(quests);
   validate(
@@ -235,7 +208,6 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
     ids(assets),
     (entry) =>
       assets[entry.id]?.default_unlocked === true ||
-      nativeCosmetics.has(entry.id) ||
       (entry.id.startsWith("baby_back_") && assets[entry.id]?.name !== ""),
   );
   const misc = record(fiddle.misc);
@@ -243,7 +215,7 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
   if (typeof price !== "number" || !Number.isFinite(price)) {
     throw new TypeError("Missing native wishing well low price");
   }
-  validate("item source", reviewedSourceEntries(getItemOverrides(price)), ids(items));
-  validate("item replacement", reviewedSourceEntries(ITEM_SOURCE_REPLACEMENTS), ids(items));
-  validate("cosmetic source", reviewedSourceEntries(COSMETIC_OVERRIDES), ids(assets));
+  validate("items", reviewedSourceEntries(getItemOverrides(price)), ids(items));
+  validate("items", reviewedSourceEntries(ITEM_SOURCE_REPLACEMENTS), ids(items));
+  validate("cosmetics", reviewedSourceEntries(COSMETIC_OVERRIDES), ids(assets));
 }

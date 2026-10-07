@@ -1,5 +1,6 @@
 import type { CosmeticId } from "#lib/types/tracker-data.js";
 
+import type { CosmeticSourceAccumulator } from "../acquisition/source-accumulator.js";
 import type { ParsedGameData } from "../parse/parse-fiddle.js";
 import type { ReviewedEntry } from "./entry.js";
 
@@ -49,4 +50,18 @@ export function cosmeticExclusions(fiddle: ParsedGameData): ReviewedEntry<boolea
 }
 export function getExcludedCosmeticIds(fiddle: ParsedGameData): ReadonlySet<CosmeticId> {
   return new Set(cosmeticExclusions(fiddle).map(({ id }) => id as CosmeticId));
+}
+
+/** Native acquisition collectors define the encodings; validate before excluded drafts are skipped. */
+export function validateCosmeticExclusionSources(
+  fiddle: ParsedGameData,
+  nativeSources: CosmeticSourceAccumulator,
+): void {
+  for (const entry of cosmeticExclusions(fiddle)) {
+    if (nativeSources.get(entry.id as CosmeticId).length > 0) {
+      throw new Error(
+        `Obsolete reviewed cosmetic exclusion entry now encoded in native acquisition sources: ${entry.id}`,
+      );
+    }
+  }
 }
