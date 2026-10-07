@@ -194,12 +194,17 @@ export const FESTIVAL_SEASON_MAP_ENTRIES = entriesFromRecord<Season>(
 );
 export const FESTIVAL_SEASON_MAP = entriesToRecord(FESTIVAL_SEASON_MAP_ENTRIES);
 
-/** Preserved pending real-playthrough evidence; issue 638 (private beta). */
+/**
+ * Crown requests unlock at Iron Star (renown level 40); see
+ * issue 638 (private beta). Early Access gated them at level 50, which is
+ * why older community docs say Sapphire Star. The post-unlock cooldown is deliberately not modeled.
+ */
 export const CROWN_QUEST_GATE = {
-  evidence: "Existing Copper Star placeholder; confirmation tracked in #638",
+  evidence:
+    "gml Ari.gml starts crown_cooldown at renown_to_level >= 40; letters.toml crown_requests_unlocked names Iron Star",
   id: "crown_quests",
-  reason: "Do not invent a new gate before the playthrough review",
-  value: 20,
+  reason: "The level threshold lives in GML, not in any fiddle field",
+  value: 40,
 };
 export const HAYDENS_BARN_GATE = {
   evidence: "animals.toml unlock conditions and Hayden barn repair story quest",

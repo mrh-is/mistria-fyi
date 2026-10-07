@@ -30,12 +30,10 @@ import type { ParsedGameData } from "../parse/parse-fiddle.js";
 import type { RequirementExpression } from "../parse/requirements.js";
 
 /**
- * The exact renown level required for crown quests to appear in-game has not been confirmed
- * against real playthrough data (#638 tracks confirmation). 20 (Copper Star) is used as a
- * placeholder pending verification — crown quests are Town Rank milestones, and Copper Star is the
- * first rank past the tutorial ranks.
+ * Crown requests start once Town Rank reaches Iron Star (renown level 40). The game then waits a
+ * few days before the first request and offers one per week; visibility ignores that cooldown.
  */
-export const CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER = CROWN_QUEST_GATE.value;
+export const CROWN_QUEST_RENOWN_LEVEL = CROWN_QUEST_GATE.value;
 
 /**
  * Hardcoded store → unlock-quest gates (see pipeline/README.md, reviewed game facts). Stores not listed here (including
@@ -106,7 +104,7 @@ export function extractCategoryVisibility(
 
   return {
     cooking: { type: "villagerKnown", villagerId: "taliferro" as VillagerId },
-    crown: { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER },
+    crown: { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL },
     dates: datesVisibility,
     fetch: ALWAYS_VISIBLE,
     heart: ALWAYS_VISIBLE,
