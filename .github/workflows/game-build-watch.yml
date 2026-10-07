@@ -8,8 +8,7 @@ on:
     - cron: "17 */3 * * *"
   workflow_dispatch:
 
-permissions:
-  issues: write
+permissions: {}
 
 concurrency:
   group: game-build-watch
@@ -22,6 +21,10 @@ jobs:
   watch:
     name: Check for a new game build
     runs-on: ubuntu-latest
+    # Schedule & manual runs only; no pull request event reaches this workflow.
+    permissions:
+      issues: write
+      pull-requests: read
     steps:
       - name: Read the public build ID
         id: build
