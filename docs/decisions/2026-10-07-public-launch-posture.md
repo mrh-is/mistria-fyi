@@ -5,7 +5,9 @@
 Making the repository public (#218) included asking NPC Studio for permission to publish
 game-derived material: the sprites, the generated dataset, & the extraction pipeline. NPC Studio
 hasn’t replied. On 2026-10-07 the maintainer decided to launch anyway rather than block on the
-reply, on the condition that any part can be withdrawn quickly if NPC Studio objects.
+reply, on the condition that any part can be withdrawn quickly if NPC Studio objects. The same day,
+the maintainer sent NPC Studio a follow-up (#665) announcing the launch date & listing what the
+public repository will contain.
 
 Separately, the current repository’s history contains `static/sprites/` (added in `9390ae1`) and a
 personal filesystem path in the since-removed `measure-transfer-size.ts`. Neither should become
@@ -13,6 +15,8 @@ public.
 
 ## Decision
 
+- **Launch date: 2026-10-12.** This leaves NPC Studio five days to answer the follow-up before
+  launch, and it leaves time to finish the remaining launch work.
 - **Launch posture: everything, takedown-ready.** Publish the project source, the `pipeline/`
   extraction code, & the generated `tracker-data.json`. Keep serving sprites from
   `assets.mistria.fyi`. If NPC Studio objects to any part, comply promptly by following
