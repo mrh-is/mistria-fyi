@@ -40,14 +40,27 @@ export function formatBiomeName(
   return `the ${biome.name}`;
 }
 
+/**
+ * Stores whose English name reads as a common noun and takes “the” (“the General Store”);
+ * possessive & personal stalls (“Merri's Stall”) don't. The pipeline throws on a store it hasn't
+ * reviewed (`KNOWN_STORES` in `pipeline/src/extractors/stores-meta.ts`), so a new one lands here.
+ */
+const STORES_WITH_ARTICLE: ReadonlySet<string> = new Set([
+  "blacksmith",
+  "carpenter",
+  "general",
+  "inn",
+  "terithia",
+]);
+
 /** The store name with English's definite article where the store takes one; others as-is. */
 export function formatStoreName(
   storeId: StoreId,
-  stores: Partial<Record<StoreId, { article?: "the"; name: string }>>,
+  stores: Partial<Record<StoreId, { name: string }>>,
   locale: LocaleCode,
 ): string {
-  const store = requireEntry(stores, storeId, "stores");
-  return locale === "en" && store.article ? `${store.article} ${store.name}` : store.name;
+  const { name } = requireEntry(stores, storeId, "stores");
+  return locale === "en" && STORES_WITH_ARTICLE.has(storeId) ? `the ${name}` : name;
 }
 
 /** English prefixes "a"/"an"; other locales' messages handle articles themselves. */

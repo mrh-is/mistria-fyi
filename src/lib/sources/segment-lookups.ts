@@ -4,9 +4,7 @@ import {
   buildAnimalNames,
   buildLocationNames,
   buildMonsterNames,
-  buildUnnamedSourceNames,
   buildWaterNames,
-  UNNAMED_SOURCE_IDS,
 } from "#lib/sources/source-names.js";
 import { recordEntries, recordKeys, recordMap } from "#lib/utils/record.js";
 
@@ -50,6 +48,7 @@ const localizedBaseSegmentLookups = new Map<LocaleCode, Pick<SegmentLookups, Loc
 type LocalizedLookupKey =
   | "animalNames"
   | "biomes"
+  | "dateNames"
   | "festivals"
   | "itemNames"
   | "locationNames"
@@ -98,6 +97,7 @@ function buildStaticBaseSegmentLookups(): Omit<
  */
 export const SEGMENT_LOOKUP_NAME_CHUNKS = [
   "animals",
+  "dates",
   "festivals",
   "items",
   "locations",
@@ -127,6 +127,7 @@ function getLocalizedBaseSegmentLookups(
       ...biome,
       name: getName("mines", biome.id, locale),
     })),
+    dateNames: getNameTable("dates", locale),
     festivals: Object.fromEntries(
       recordEntries(trackerData.festivals).map(([id, festival]) => [
         id,
@@ -151,14 +152,11 @@ function getLocalizedBaseSegmentLookups(
         ),
       ),
     ),
-    questNames: {
-      ...buildUnnamedSourceNames(UNNAMED_SOURCE_IDS.quests),
-      ...Object.fromEntries(
-        Object.values(trackerData.quests).flatMap((group) =>
-          recordKeys(group).map((id) => [id, getName("quests", id, locale)]),
-        ),
+    questNames: Object.fromEntries(
+      Object.values(trackerData.quests).flatMap((group) =>
+        recordKeys(group).map((id) => [id, getName("quests", id, locale)]),
       ),
-    },
+    ),
     recipeNames: getNameTable("recipes", locale),
     // Processing stations are items.
     stationNames: itemNames,
@@ -168,17 +166,12 @@ function getLocalizedBaseSegmentLookups(
         { ...store, name: getName("stores", id, locale) },
       ]),
     ),
-    treasureChestTiers: {
-      ...recordMap(buildUnnamedSourceNames(UNNAMED_SOURCE_IDS.treasureChestTiers), (name) => ({
-        name,
-      })),
-      ...Object.fromEntries(
-        recordKeys(trackerData.treasureChestTiers).map((id) => [
-          id,
-          { name: getName("treasure-chest-tiers", id, locale) },
-        ]),
-      ),
-    },
+    treasureChestTiers: Object.fromEntries(
+      recordKeys(trackerData.treasureChestTiers).map((id) => [
+        id,
+        { name: getName("treasure-chest-tiers", id, locale) },
+      ]),
+    ),
     waterNames: buildWaterNames(locale),
   };
   localizedBaseSegmentLookups.set(locale, lookups);

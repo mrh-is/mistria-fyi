@@ -3,12 +3,7 @@ import * as m from "#lib/paraglide/messages.js";
 import { recordMap } from "#lib/utils/record.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
-import type {
-  LocationId,
-  PetSkinId,
-  QuestId,
-  TreasureChestTierId,
-} from "#lib/types/tracker-data.js";
+import type { LocationId, PetSkinId } from "#lib/types/tracker-data.js";
 
 type NameMessage = (inputs: Record<string, never>, options: { locale: LocaleCode }) => string;
 type VariantMessage = (inputs: { monster: string }, options: { locale: LocaleCode }) => string;
@@ -34,6 +29,8 @@ const WATER_MESSAGES = {
 /** Locations a source names through the game's own `locations` chunk. */
 const GAME_NAMED_LOCATIONS = [
   "beach",
+  "beach_secret",
+  "bell_tower_f1",
   "deep_woods",
   "eastern_road",
   "haydens_farm",
@@ -128,33 +125,10 @@ const MONSTER_FAMILIES = {
 /** The monster ids named by {@link MONSTER_FAMILIES}. */
 export type NamedMonsterId = keyof typeof MONSTER_FAMILIES;
 export type NamedLocationId =
+  | "bell_tower_f2"
   | (typeof GAME_NAMED_LOCATIONS)[number]
   | keyof typeof UNNAMED_LOCATION_MESSAGES;
 export type NamedWaterType = keyof typeof WATER_MESSAGES;
-
-/**
- * The only IDs a generated source may reference without a name. Neither the game nor the pipeline
- * names them: the quests are reviewed runtime-only story beats (cutscenes, items, & flags), and the
- * `abyss` chest tier has no `treasure_box_abyss` item. They render as their title-cased ID until
- * #471 gives them reviewed names; every other missing name throws.
- */
-export const UNNAMED_SOURCE_IDS = {
-  quests: [
-    "another_tower",
-    "balors_crate",
-    "beach_date_unlock",
-    "break_earth_seal",
-    "break_fire_seal",
-    "break_ruins_seal_pt_3",
-    "break_water_seal",
-    "elsies_dating_tutorial",
-    "gem_cutting_date_unlock",
-    "great_bird_0",
-    "park_date_unlock",
-    "ryis_lumber",
-  ] as QuestId[],
-  treasureChestTiers: ["abyss"] as TreasureChestTierId[],
-};
 
 /** Farm animal names, keyed by animal id (`animals` chunk). */
 export function buildAnimalNames(locale: LocaleCode): Partial<Record<string, string>> {
@@ -179,6 +153,8 @@ export function buildLocationNames(locale: LocaleCode): Record<NamedLocationId, 
   ) as Record<(typeof GAME_NAMED_LOCATIONS)[number], string>;
   return {
     ...gameNames,
+    // The Bell Tower's upper floor (its hidden chest) has no `name`; it shares the building's.
+    bell_tower_f2: gameNames.bell_tower_f1,
     ...recordMap(UNNAMED_LOCATION_MESSAGES, (message) => message({}, { locale })),
   };
 }
@@ -202,18 +178,6 @@ export function buildMonsterNames(locale: LocaleCode): Record<NamedMonsterId, st
   });
 }
 
-/** Placeholder names for {@link UNNAMED_SOURCE_IDS}, identical in every locale. */
-export function buildUnnamedSourceNames(ids: readonly string[]): Record<string, string> {
-  return Object.fromEntries(ids.map((id) => [id, titleCase(id)]));
-}
-
 export function buildWaterNames(locale: LocaleCode): Record<NamedWaterType, string> {
   return recordMap(WATER_MESSAGES, (message) => message({}, { locale }));
-}
-
-function titleCase(s: string): string {
-  return s
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 }

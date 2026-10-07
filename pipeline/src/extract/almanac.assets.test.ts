@@ -28,9 +28,11 @@ describe("extractAlmanac — v1.0.5 assets", () => {
       true,
     );
     expect(furniture.items.filter((entry) => entry.recipeId === "emerald_bed")).toHaveLength(2);
-    expect(Object.keys(localeNames.en)).toHaveLength(2709);
+    // 2,709 named items, less the two excluded cutscene props (`ITEM_EXCLUSIONS`).
+    expect(Object.keys(localeNames.en)).toHaveLength(2707);
+    expect(localeNames.en).not.toHaveProperty("balors_crate");
     expect(localeNames.ja["turnip" as ItemId]).not.toBe(localeNames.en["turnip" as ItemId]);
-    expect(log).toHaveBeenCalledWith(expect.stringContaining("ja: 305"));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("ja: 303"));
     expect(log).toHaveBeenCalledWith("  Nameless items skipped (6):");
     expect(log).toHaveBeenCalledWith("    - other/misc/animal_cosmetic (missing name)");
     expect(log).toHaveBeenCalledWith("    - other/misc/stinky_stamina_potion (missing name)");

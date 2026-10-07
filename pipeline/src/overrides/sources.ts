@@ -1,5 +1,6 @@
 import type {
   ActivityId,
+  AvailabilityCondition,
   LocationId,
   MonsterId,
   Source,
@@ -7,6 +8,7 @@ import type {
 } from "#lib/types/acquisition.js";
 import type {
   CosmeticId,
+  DateId,
   FestivalId,
   ItemId,
   MinesBiomeId,
@@ -17,6 +19,17 @@ import type {
 } from "#lib/types/tracker-data.js";
 
 import type { ReviewedEntry } from "./entry.js";
+
+/** The GML drops a date inspiration item once any date is unlocked, until its own date is. */
+function dateDropWindow(dateId: DateId): AvailabilityCondition {
+  return {
+    type: "all",
+    conditions: [
+      { type: "dateUnlocked" },
+      { type: "not", condition: { type: "dateUnlocked", dateId } },
+    ],
+  };
+}
 
 // Wiki: https://fieldsofmistria.wiki.gg/wiki/Void_Cake
 // Void Cake is a conditional dialogue reward in "The Dragonsworn Tablet" quest. The player
@@ -214,41 +227,39 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
       },
     ],
 
+    // --- Date inspiration items ---
+    // Wiki: https://fieldsofmistria.wiki.gg/wiki/Dates
+    // Each unlocks a date type. The game grants them at runtime, so no native table encodes them:
+    // `cutscenes.toml` gives the Inn Menu in Elsie's dating tutorial, and the GML drops the rest
+    // only once some date is unlocked & the item's own date isn't.
+    // `Digsite.gml`: a dig site on the Eastern Road drops it (`misc.dollhouse_bench_chance`).
     ["dollhouse_bench" as ItemId]: [
       {
-        type: "quest",
-        questId: "park_date_unlock" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
+        type: "date_inspiration_drop",
+        activity: "dig_site",
+        availability: dateDropWindow("park" as DateId),
+        dateId: "park" as DateId,
+        locationId: "eastern_road" as LocationId,
       },
     ],
-    // --- Date inspiration items: unlocked through heart events ---
-    // Wiki: https://fieldsofmistria.wiki.gg/wiki/Dates
-    // Date inspiration items unlock new date activities. inn_menu is given in Elsie's dating
-    // tutorial cutscene. Others are unlocked through heart level progression with Villagers.
-    // No native reward array encodes these; the dating system handles them at runtime.
-    ["inn_menu" as ItemId]: [
-      {
-        type: "quest",
-        questId: "elsies_dating_tutorial" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
-      },
-    ],
+    ["inn_menu" as ItemId]: [{ type: "cutscene", cutsceneId: "elsie_dating_tutorial" }],
+    // `AriFsm.gml`: catching a fish at the Beach drops it (`misc.lovely_seashell_chance`).
     ["lovely_seashell" as ItemId]: [
       {
-        type: "quest",
-        questId: "beach_date_unlock" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
+        type: "date_inspiration_drop",
+        activity: "fish",
+        availability: dateDropWindow("beach" as DateId),
+        dateId: "beach" as DateId,
+        locationId: "beach" as LocationId,
       },
     ],
+    // `Breakables.gml`: opening a Mines chest drops it (`misc.rough_gemstone_chance`).
     ["rough_gemstone" as ItemId]: [
       {
-        type: "quest",
-        questId: "gem_cutting_date_unlock" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
+        type: "date_inspiration_drop",
+        activity: "mines_chest",
+        availability: dateDropWindow("gem_cutting" as DateId),
+        dateId: "gem_cutting" as DateId,
       },
     ],
 
@@ -312,22 +323,12 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
     // --- Quest-specific items ---
     // These items are given during specific quests or cutscenes. The native data encodes the
     // quest/cutscene but not the item reward in the rewards array.
+    // `seals.toml` maps the `break_water_seal` cutscene, which grants it, to this quest.
     ["heart_crystal" as ItemId]: [
-      {
-        type: "quest",
-        questId: "break_water_seal" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
-      },
+      { type: "quest", questId: "the_water_tablet" as QuestId, trigger: "completion" as const },
     ],
-    ["mystical_feather" as ItemId]: [
-      {
-        type: "quest",
-        questId: "great_bird_0" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
-      },
-    ],
+    // `cutscenes.toml` `great_bird_0.given_items`; it plays overnight once you have a spouse.
+    ["mystical_feather" as ItemId]: [{ type: "cutscene", cutsceneId: "great_bird_0" }],
     ["sealing_scroll" as ItemId]: [
       {
         type: "quest",
@@ -335,13 +336,9 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
         trigger: "completion" as const,
       },
     ],
+    // `obj_narrows_cave_chest.gml` fills the hidden chest in `rm_bell_tower_f2` with it.
     ["song_crystal_another_tower" as ItemId]: [
-      {
-        type: "quest",
-        questId: "another_tower" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
-      },
+      { type: "secret_chest" as const, locationId: "bell_tower_f2" as LocationId },
     ],
 
     // magic_key: Grown from seed_magic_key
@@ -402,14 +399,6 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
     // These items exist in the items registry but are obtained through story progression,
     // cutscenes, or special interactions that aren't encoded in reward arrays.
     ["axe_worn" as ItemId]: [{ type: "default" as const }],
-    ["balors_crate" as ItemId]: [
-      {
-        type: "quest",
-        questId: "balors_crate" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
-      },
-    ],
     ["clay_key" as ItemId]: [
       {
         type: "quest",
@@ -442,13 +431,9 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
     ],
     ["dungeon_fountain_health" as ItemId]: [{ type: "default" as const }],
     ["dungeon_fountain_stamina" as ItemId]: [{ type: "default" as const }],
+    // `seals.toml` maps the `break_earth_seal` cutscene, which grants it, to this quest.
     ["earth_tablet_rubbing" as ItemId]: [
-      {
-        type: "quest",
-        questId: "break_earth_seal" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
-      },
+      { type: "quest", questId: "the_earth_tablet" as QuestId, trigger: "completion" as const },
     ],
     ["fake_essence" as ItemId]: [
       {
@@ -457,30 +442,22 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
         trigger: "completion" as const,
       },
     ],
+    // `seals.toml` maps the `break_fire_seal` cutscene, which grants it, to this quest.
     ["fire_tablet_rubbing" as ItemId]: [
       {
         type: "quest",
-        questId: "break_fire_seal" as QuestId,
-        questType: "story",
+        questId: "breaking_the_fire_seal" as QuestId,
         trigger: "completion" as const,
       },
     ],
     ["mist_held_item" as ItemId]: [{ type: "perk" as const, perkId: "mist_sight" as PerkId }],
     ["purse" as ItemId]: [{ type: "default" as const }],
     ["recipe_scroll" as ItemId]: [{ type: "default" as const }],
+    // `seals.toml` maps the `break_ruins_seal_pt_3` cutscene, which grants it, to this quest.
     ["ruins_tablet_rubbing" as ItemId]: [
       {
         type: "quest",
-        questId: "break_ruins_seal_pt_3" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
-      },
-    ],
-    ["ryis_lumber" as ItemId]: [
-      {
-        type: "quest",
-        questId: "ryis_lumber" as QuestId,
-        questType: "story",
+        questId: "breaking_the_ruins_seal" as QuestId,
         trigger: "completion" as const,
       },
     ],
@@ -492,13 +469,9 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
         trigger: "completion" as const,
       },
     ],
+    // `seals.toml` maps the `break_water_seal` cutscene, which grants it, to this quest.
     ["water_tablet_rubbing" as ItemId]: [
-      {
-        type: "quest",
-        questId: "break_water_seal" as QuestId,
-        questType: "story",
-        trigger: "completion" as const,
-      },
+      { type: "quest", questId: "the_water_tablet" as QuestId, trigger: "completion" as const },
     ],
     ["world_fountain" as ItemId]: [{ type: "default" as const }],
   };

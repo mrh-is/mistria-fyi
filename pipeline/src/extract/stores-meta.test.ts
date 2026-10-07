@@ -20,7 +20,7 @@ describe("extractStoresMeta", () => {
     vi.restoreAllMocks();
   });
 
-  it("extracts known stores with correct article classification", () => {
+  it("extracts known stores", () => {
     const fiddle = makeFiddle({
       stores: {
         default: {},
@@ -31,7 +31,7 @@ describe("extractStoresMeta", () => {
 
     const { localeNames, stores } = extractStoresMeta(fiddle, localizer);
     expect(stores).toEqual({
-      general: { article: "the", upgradeAction: "repair" },
+      general: { upgradeAction: "repair" },
       merri: {},
     });
     expect(localeNames.ja["general" as StoreId]).toBe("General Store");
@@ -45,42 +45,24 @@ describe("extractStoresMeta", () => {
     });
 
     expect(extractStoresMeta(fiddle, localizer).stores).toEqual({
-      general: { article: "the", upgradeAction: "repair" },
+      general: { upgradeAction: "repair" },
     });
   });
 
-  it("assigns article 'the' for establishment stores", () => {
+  it("emits no English grammar for any store", () => {
     const fiddle = makeFiddle({
       stores: {
         blacksmith: { name: "Blacksmith's Shop" },
-        carpenter: { name: "Carpenter's Shop" },
-        inn: { name: "Sleeping Dragon Inn" },
-        terithia: { name: "Tackle Shop" },
-      },
-    });
-
-    const { stores } = extractStoresMeta(fiddle, localizer);
-    expect(stores["carpenter" as StoreId]).toEqual({ article: "the" });
-    expect(stores["inn" as StoreId]).toEqual({ article: "the" });
-    expect(stores["blacksmith" as StoreId]).toEqual({
-      article: "the",
-    });
-    expect(stores["terithia" as StoreId]).toEqual({ article: "the" });
-  });
-
-  it("omits article for personal and bare-noun stalls", () => {
-    const fiddle = makeFiddle({
-      stores: {
         darcy: { name: "Darcy's Stall" },
-        hayden: { name: "Hayden's Shop" },
-        maple_spring_festival: { name: "Food Stall" },
+        inn: { name: "Sleeping Dragon Inn" },
       },
     });
 
-    const { stores } = extractStoresMeta(fiddle, localizer);
-    expect(stores["darcy" as StoreId]).toEqual({});
-    expect(stores["hayden" as StoreId]).toEqual({});
-    expect(stores["maple_spring_festival" as StoreId]).toEqual({});
+    expect(extractStoresMeta(fiddle, localizer).stores).toEqual({
+      blacksmith: {},
+      darcy: {},
+      inn: {},
+    });
   });
 
   it("adds upgradeAction for the general store and omits it for the inn", () => {
@@ -92,11 +74,8 @@ describe("extractStoresMeta", () => {
     });
 
     const { stores } = extractStoresMeta(fiddle, localizer);
-    expect(stores["general" as StoreId]).toEqual({
-      article: "the",
-      upgradeAction: "repair",
-    });
-    expect(stores["inn" as StoreId]).toEqual({ article: "the" });
+    expect(stores["general" as StoreId]).toEqual({ upgradeAction: "repair" });
+    expect(stores["inn" as StoreId]).toEqual({});
   });
 
   it("throws on unknown store ID", () => {

@@ -1,1 +1,5 @@
-export { cosmeticExclusions, getExcludedCosmeticIds } from "../overrides/exclusions.js";
+export {
+  cosmeticExclusions,
+  getExcludedCosmeticIds,
+  ITEM_EXCLUSIONS,
+} from "../overrides/exclusions.js";

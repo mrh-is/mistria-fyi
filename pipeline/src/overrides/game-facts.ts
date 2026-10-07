@@ -1,6 +1,6 @@
 import { entriesFromRecord, entriesToRecord } from "./entry.js";
 
-import type { Source } from "#lib/types/acquisition.js";
+import type { LocationId, Source } from "#lib/types/acquisition.js";
 import type {
   MinesBiomeId,
   QuestId,
@@ -75,28 +75,28 @@ export const STORY_PREREQUISITE_OVERRIDES_ENTRIES = entriesFromRecord<QuestId[]>
 );
 export const STORY_PREREQUISITE_OVERRIDES = entriesToRecord(STORY_PREREQUISITE_OVERRIDES_ENTRIES);
 
-export const KNOWN_STORES_ENTRIES = entriesFromRecord<{ article?: "the" }>(
+export const KNOWN_STORES_ENTRIES = entriesFromRecord<true>(
   {
-    balor: {},
-    blacksmith: { article: "the" },
-    carpenter: { article: "the" },
-    darcy: {},
-    elsie_spring_festival: {},
-    general: { article: "the" },
-    hayden: {},
-    inn: { article: "the" },
-    louis: {},
-    maple_spring_festival: {},
-    merri: {},
-    nora_souvenir_stall: {},
-    terithia: { article: "the" },
-    valens_clinic: {},
-    vera: {},
-    wheedle: {},
-    zorel: {},
+    balor: true,
+    blacksmith: true,
+    carpenter: true,
+    darcy: true,
+    elsie_spring_festival: true,
+    general: true,
+    hayden: true,
+    inn: true,
+    louis: true,
+    maple_spring_festival: true,
+    merri: true,
+    nora_souvenir_stall: true,
+    terithia: true,
+    valens_clinic: true,
+    vera: true,
+    wheedle: true,
+    zorel: true,
   },
-  "stores.toml store names; English definite articles for displayed source names",
-  "Display articles are project language metadata",
+  "stores.toml store names",
+  "A new store throws so its English article (`en-grammar.ts`) and upgrade action get reviewed",
 );
 export const KNOWN_STORES = entriesToRecord(KNOWN_STORES_ENTRIES);
 
@@ -174,7 +174,7 @@ export const EXCEPTIONS_ENTRIES = entriesFromRecord<Source>(
     },
     kitchen_salt_and_pepper_shakers: { type: "default" },
     stairs: { type: "upgrade", storeId: "carpenter" as StoreId, upgradeId: "stairs" },
-    water_sprite_statue_v1: { type: "beach_cave_chest" },
+    water_sprite_statue_v1: { type: "secret_chest", locationId: "beach_secret" as LocationId },
   },
   "items furniture recipes; engagement, carpenter upgrades, and Beach Cave chest runtime rewards",
   "Recipe acquisition path is not represented by a native reward array",

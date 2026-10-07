@@ -31,13 +31,14 @@ const SOURCE_TYPES: Record<Source["type"], true> = {
   artifact_dig: true,
   artifact_replicator: true,
   bait_fish: true,
-  beach_cave_chest: true,
   breed: true,
   bug_catch: true,
   chicken_statue: true,
   crop: true,
+  cutscene: true,
   date: true,
   date_inspiration: true,
+  date_inspiration_drop: true,
   default: true,
   dive: true,
   donate_item: true,
@@ -66,6 +67,7 @@ const SOURCE_TYPES: Record<Source["type"], true> = {
   renown: true,
   ritual_chamber: true,
   scroll_bundle: true,
+  secret_chest: true,
   ship_item: true,
   spouseGift: true,
   station: true,
@@ -86,6 +88,7 @@ function collectGamePredicates(
     case "any":
       return condition.conditions.flatMap(collectGamePredicates);
     case "always":
+    case "dateUnlocked":
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":

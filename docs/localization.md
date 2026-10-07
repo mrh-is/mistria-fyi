@@ -137,7 +137,8 @@ the result at the markers, so each locale's word order decides where a gated nam
 that drops a placeholder throws; the source-rendering invariants test renders every generated source
 in every locale to catch that.
 
-English grammar stays in English: the definite article on stores and biomes ("the General Store"),
+English grammar stays in English: the definite article on stores and biomes ("the General Store";
+`en-grammar.ts` lists the stores that take one, so the tracker contract carries no English),
 "a"/"an", and stripping a quest name's own "The" apply only when the locale is `en`. Other locales'
 messages handle articles themselves. Lists of alternatives ("Pond, River, or Ocean") use
 `Intl.ListFormat`'s disjunction for the active locale.
@@ -156,7 +157,11 @@ game leaves some source names untranslated or unnamed, so `source-names.ts` fill
   names, so other locales, and the three monsters with no pet variant, compose the `pets/skins`
   family name with a machine-translated `source_monster_variant_*` qualifier.
 - **Locations without a game name** (`farm`, `mines`, & `dungeon`) and **water types** use interim
-  machine-translated `source_location_*` & `source_water_*` messages.
+  machine-translated `source_location_*` & `source_water_*` messages. The Bell Tower's upper floor
+  (`bell_tower_f2`) borrows the building's `bell_tower_f1` name.
+- **Cutscenes:** the game names none, so each reviewed `CutsceneSourceId` has its own
+  machine-translated `source_cutscene_*` message; villager names inside them come from the
+  `villagers` chunk.
 
 Scroll bundle sources carry the bundle's `bundleItemId` and render through the `items` chunk.
 Upgrade sources carry a closed `UpgradeId`, and a store's `upgradeAction` is a `StoreUpgradeAction`

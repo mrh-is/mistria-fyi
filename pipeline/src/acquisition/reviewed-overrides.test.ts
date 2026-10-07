@@ -15,7 +15,7 @@ import {
 import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
 import type { Source } from "#lib/types/acquisition.js";
-import type { CosmeticId, ItemId, QuestId, QuestType, StoreId } from "#lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, StoreId } from "#lib/types/tracker-data.js";
 
 const ITEM_OVERRIDES = getItemOverrides(100);
 const REVIEWED_OVERRIDES = getReviewedOverrides(
@@ -34,39 +34,11 @@ describe("reviewed overrides", () => {
       expect(() => getReviewedOverrides(makeFiddle())).toThrow("Missing native");
     });
 
-    it("adds explicit story metadata only to runtime-only reviewed quest IDs", () => {
-      const runtimeOnlyQuestIds = new Set<QuestId>([
-        "another_tower" as QuestId,
-        "balors_crate" as QuestId,
-        "beach_date_unlock" as QuestId,
-        "break_earth_seal" as QuestId,
-        "break_fire_seal" as QuestId,
-        "break_ruins_seal_pt_3" as QuestId,
-        "break_water_seal" as QuestId,
-        "elsies_dating_tutorial" as QuestId,
-        "gem_cutting_date_unlock" as QuestId,
-        "great_bird_0" as QuestId,
-        "park_date_unlock" as QuestId,
-        "ryis_lumber" as QuestId,
-      ]);
-      const questTypes = new Set<QuestType>([
-        "cooking",
-        "crown",
-        "fetch",
-        "heart",
-        "mission",
-        "story",
-      ]);
-
-      for (const sources of Object.values(ITEM_OVERRIDES)) {
-        for (const source of sources ?? []) {
-          if (source.type !== "quest") continue;
-          expect(source.questType === undefined || questTypes.has(source.questType)).toBe(true);
-          expect(source.questType, source.questId).toBe(
-            runtimeOnlyQuestIds.has(source.questId) ? "story" : undefined,
-          );
-        }
-      }
+    it("points quest overrides at native quests, which carry their own type", () => {
+      const typed = Object.values(ITEM_OVERRIDES)
+        .flatMap((sources) => sources ?? [])
+        .filter((source) => source.type === "quest" && source.questType !== undefined);
+      expect(typed).toEqual([]);
     });
 
     it("every item override has a target ID and at least one source", () => {

@@ -36,11 +36,12 @@ describe("collectNativeReferenceRegistries", () => {
   it("reads every registry from parsed game tables", () => {
     expect(collectNativeReferenceRegistries(makeFiddle(validTables()))).toEqual({
       activities: ["pumpkin_patch"],
+      cutscenes: ["great_bird_0"],
       dates: ["beach", "wedding"],
       letters: ["birthday_gift"],
       locations: ["beach", "farm"],
       monsters: ["cat", "cat_void"],
-      quests: ["repair_the_bridge", "great_bird_0"],
+      quests: ["repair_the_bridge"],
       stations: ["apiary"],
       treasureChestTiers: ["gold"],
       waterTypes: ["pond", "river", "ocean"],
@@ -68,6 +69,16 @@ describe("collectNativeReferenceRegistries", () => {
   });
 });
 
+/** A Mines-chest date drop gated on `dateId` not yet being unlocked. */
+function dateDropFor(dateId: string) {
+  return {
+    type: "date_inspiration_drop",
+    activity: "mines_chest",
+    availability: { type: "not", condition: { type: "dateUnlocked", dateId } },
+    dateId: "beach",
+  };
+}
+
 describe("validation against native registries", () => {
   it("rejects a bogus override quest ID even though a source names it", () => {
     expect(() => {
@@ -85,6 +96,18 @@ describe("validation against native registries", () => {
     }).toThrow('Unknown monster ID "void_cat"');
   });
 
+  it("rejects a cutscene ID used as a quest", () => {
+    expect(() => {
+      validate([{ type: "quest", questId: "great_bird_0", trigger: "completion" }]);
+    }).toThrow('Unknown quest ID "great_bird_0"');
+  });
+
+  it("rejects a cutscene the game defines but no reviewed wording covers", () => {
+    expect(() => {
+      validate([{ type: "cutscene", cutsceneId: "great_bird_1" }]);
+    }).toThrow("items.reward.sources[0].cutsceneId: Expected a reviewed cutscene id");
+  });
+
   it("validates letter IDs against native letters instead of source payloads", () => {
     expect(() => {
       validate([{ type: "letter", letterId: "birthday_gift", trigger: "birthday" }]);
@@ -97,11 +120,19 @@ describe("validation against native registries", () => {
     }).toThrow("items.reward.sources[0].letterId");
   });
 
+  it("validates a date-unlock window's date against native dates", () => {
+    expect(() => {
+      validate([dateDropFor("beach")]);
+    }).not.toThrow();
+    expect(() => {
+      validate([dateDropFor("beech")]);
+    }).toThrow('Unknown date ID "beech"');
+  });
+
   it("accepts native and reviewed IDs", () => {
     expect(() => {
       validate([
-        { type: "quest", questId: "great_bird_0", trigger: "completion" },
-        { type: "quest", questId: "balors_crate", questType: "story", trigger: "completion" },
+        { type: "cutscene", cutsceneId: "great_bird_0" },
         { type: "monster", monsterId: "cat_void" },
         { type: "monster", monsterId: "any" },
         { type: "forage", locationIds: ["beach", "mines"] },

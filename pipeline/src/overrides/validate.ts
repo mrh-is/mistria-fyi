@@ -1,7 +1,7 @@
 import { forEachItem } from "../extractor-helpers.js";
 import { getCutsceneRecords } from "../parse/parse-fiddle.js";
 import { entriesFromRecord, validateReviewedEntries } from "./entry.js";
-import { cosmeticExclusions } from "./exclusions.js";
+import { cosmeticExclusions, ITEM_EXCLUSION_ENTRIES } from "./exclusions.js";
 import {
   CROWN_QUEST_GATE,
   CUTSCENE_QUEST_ENTRIES,
@@ -40,9 +40,6 @@ function records(value: unknown): Record<string, Record<string, unknown>> {
   return Object.fromEntries(
     Object.entries(record(value)).map(([id, entry]) => [id, record(entry)]),
   );
-}
-function same(value: unknown, expected: unknown): boolean {
-  return JSON.stringify(value) === JSON.stringify(expected);
 }
 function nativeGate(
   target: Record<string, unknown> | undefined,
@@ -114,14 +111,7 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
       native.some((source) => record(source.requirements).completed_quest === id),
     );
   });
-  validate(
-    "store language",
-    KNOWN_STORES_ENTRIES,
-    ids(stores),
-    (entry) =>
-      stores[entry.id]?.article !== undefined &&
-      same(stores[entry.id].article, entry.value.article),
-  );
+  validate("known store", KNOWN_STORES_ENTRIES, ids(stores));
   validate(
     "store action",
     UPGRADE_ACTIONS_ENTRIES,
@@ -217,5 +207,6 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
   }
   validate("items", reviewedSourceEntries(getItemOverrides(price)), ids(items));
   validate("items", reviewedSourceEntries(ITEM_SOURCE_REPLACEMENTS), ids(items));
+  validate("item exclusion", ITEM_EXCLUSION_ENTRIES, ids(items));
   validate("cosmetics", reviewedSourceEntries(COSMETIC_OVERRIDES), ids(assets));
 }
