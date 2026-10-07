@@ -38,7 +38,7 @@ remote_is_current() {
 }
 
 # Uploads one file (path relative to the current directory). Env: KEY_PREFIX, CONTENT_TYPE,
-# SKIP_MODE. Shows Wrangler's output only when the final attempt fails.
+# SKIP_MODE, CACHE_CONTROL. Shows Wrangler's output only when the final attempt fails.
 upload_one() {
   set -euo pipefail
   local file=$1
@@ -59,7 +59,7 @@ upload_one() {
     if output=$(pnpx --allow-build=esbuild --allow-build=workerd wrangler r2 object put \
       "$BUCKET/$key" --remote --file "$file" \
       --content-type "$CONTENT_TYPE" \
-      --cache-control "public, max-age=31536000, immutable" 2>&1); then
+      --cache-control "$CACHE_CONTROL" 2>&1); then
       echo "put  $key"
       return 0
     fi
@@ -72,10 +72,14 @@ upload_one() {
 export -f md5_of remote_etag remote_is_current upload_one
 
 # r2_upload_tree <dir> <find -name pattern> <key prefix> <content type> <skip mode: etag|exists>
-# Uploads every matching file under <dir>, keyed as <key prefix><path relative to dir>.
+#   [cache-control]
+# Uploads every matching file under <dir>, keyed as <key prefix><path relative to dir>. The
+# Cache-Control defaults to a one-year immutable policy, right for versioned keys (locale fonts);
+# callers whose keys are overwritten in place or must stay revocable pass a revalidating one.
 r2_upload_tree() {
   local dir=$1 pattern=$2
   export KEY_PREFIX=$3 CONTENT_TYPE=$4 SKIP_MODE=$5
+  export CACHE_CONTROL=${6:-"public, max-age=31536000, immutable"}
   export BUCKET ORIGIN FORCE DRY_RUN
   local count
   cd "$dir"
