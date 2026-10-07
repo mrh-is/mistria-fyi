@@ -1,6 +1,10 @@
 /* oxlint-disable no-template-curly-in-string -- these tests assert literal GitHub Actions `${{ }}` expression text */
-import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import playwrightPackage from "@playwright/test/package.json";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
 
 interface Workflow {
@@ -49,6 +53,26 @@ const browserJobs = ["accessibility", "pwa"] as const;
 const requiredJobs = ["changes", "lint", "check", "test", "build", "ci-passed"] as const;
 const installJobs = ["lint", "check", "test", "build", ...browserJobs, "issue-sync"] as const;
 
+describe("browser selection", () => {
+  it.each(["true", "false", undefined])("selects pinned Chromium when CI is %s", async (ci) => {
+    vi.stubEnv("CI", ci);
+    // Workers skip the preview-owner probe; loading a config must not contact a server here.
+    vi.stubEnv("TEST_WORKER_INDEX", "0");
+    vi.resetModules();
+    try {
+      const accessibility = await import("../playwright.config.js");
+      const pwa = await import("../playwright.pwa.config.js");
+      for (const config of [accessibility.default, pwa.default]) {
+        expect(config.use).toMatchObject({ defaultBrowserType: "chromium" });
+        expect(config.use).not.toHaveProperty("channel");
+      }
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+});
+
 function runCommands(job: undefined | WorkflowJob): string[] {
   return job?.steps?.flatMap((step) => (step.run === undefined ? [] : [step.run])) ?? [];
 }
@@ -77,9 +101,11 @@ describe("CI workflow jobs", () => {
     expect(Object.keys(jobs)).toEqual(expect.arrayContaining([...requiredJobs, ...browserJobs]));
     // Each job restores the pnpm cache and installs on its own, so a shared setup job would only
     // add a serial step to the critical path.
-    for (const jobName of ["changes", "lint", "check", "test", "build"] as const) {
+    for (const jobName of ["changes", "lint", "check", "build"] as const) {
       expect(jobs[jobName].needs).toBeUndefined();
     }
+
+    expect(jobs.test.needs).toBe("changes");
 
     for (const jobName of ["check", "test", "build"] as const) {
       expect(runCommands(jobs[jobName])).not.toContain("pnpm exec svelte-kit sync");
@@ -94,11 +120,11 @@ describe("CI workflow jobs", () => {
       lintCommands.indexOf("pnpm run lint"),
     );
     expect(runCommands(jobs.check)).toContain("pnpm run check");
-    // One pass runs the suite and measures coverage; the summary step only reads its report.
+    // One pass runs the complete suite; scheduled runs also collect coverage.
     const testCommands = runCommands(jobs.test);
-    expect(testCommands).toContain("pnpm run test:coverage");
+    expect(testCommands).toContain("node scripts/vitest-timings.ts");
     expect(testCommands).not.toContain("pnpm run test");
-    expect(testCommands.indexOf("pnpm run test:coverage")).toBeLessThan(
+    expect(testCommands.indexOf("node scripts/vitest-timings.ts")).toBeLessThan(
       testCommands.indexOf('node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"'),
     );
     // The build job also proves the Cloudflare route table keeps static assets off Functions.
@@ -113,11 +139,79 @@ describe("CI workflow jobs", () => {
       "pnpm run lint",
       "pnpm run check",
       "pnpm run check:i18n",
-      "pnpm run test:coverage",
+      "node scripts/vitest-timings.ts",
       "pnpm run build",
       "pnpm run check:routes",
     ]) {
       expect(commands.filter((entry) => entry === command)).toHaveLength(1);
+    }
+  });
+
+  it("collects coverage only nightly & publishes timing evidence after failures", () => {
+    const steps = jobs.test.steps ?? [];
+    const testStep = steps.find((step) => step.run === "node scripts/vitest-timings.ts");
+    expect(testStep?.env?.VITEST_COVERAGE).toBe("${{ github.event_name == 'schedule' }}");
+    expect(testStep?.["continue-on-error"]).toBeUndefined();
+    const coverageSummary = steps.find((step) => step.name === "Summarize coverage");
+    expect(coverageSummary?.if).toBe("github.event_name == 'schedule'");
+    const timings = steps.find((step) => step.name === "Publish Vitest timings");
+    expect(timings?.if).toBe("always()");
+    expect(timings?.with?.path).toBe(".vitest-artifacts/");
+    expect(timings?.with?.["if-no-files-found"]).toBe("error");
+  });
+
+  it("runs cleanup tests only when the corresponding script changes", () => {
+    expect(jobs.changes.outputs?.cleanup).toBe("${{ steps.filter.outputs.cleanup }}");
+    const filter = jobs.changes.steps?.find((step) => step.id === "filter")?.run ?? "";
+    expect(filter).toContain("cleanup=false");
+    expect(filter).toContain("scripts/cleanup-merged-worktrees.sh) cleanup=true");
+    expect(filter).toContain('git diff --no-renames --name-only "$BASE_SHA" HEAD');
+    const testStep = jobs.test.steps?.find((step) => step.run === "node scripts/vitest-timings.ts");
+    expect(testStep?.env?.VITEST_CLEANUP_CHANGED).toBe("${{ needs.changes.outputs.cleanup }}");
+  });
+
+  it.each([
+    ["pull_request", "scripts/cleanup-merged-worktrees.sh", true],
+    ["pull_request", "scripts/cleanup-merged-worktrees.test.ts", false],
+    ["push", "scripts/cleanup-merged-worktrees.sh", true],
+    ["push", "src/app.css", false],
+    ["schedule", "scripts/cleanup-merged-worktrees.sh", false],
+    ["workflow_dispatch", "scripts/cleanup-merged-worktrees.sh", false],
+  ] as const)("detects cleanup script changes for %s: %s", (event, files, expected) => {
+    const directory = mkdtempSync(join(tmpdir(), "ci-filter-"));
+    const output = join(directory, "output");
+    try {
+      const filter = jobs.changes.steps?.find((step) => step.id === "filter")?.run ?? "";
+      const result = spawnSync(
+        "bash",
+        [
+          "-eu",
+          "-o",
+          "pipefail",
+          "-c",
+          `
+        gh() { printf '%s\\n' "$CHANGED_FILES"; }
+        git() { if [[ $1 == diff ]]; then printf '%s\\n' "$CHANGED_FILES"; fi; }
+        ${filter}
+      `,
+        ],
+        {
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            BASE_SHA: "base",
+            CHANGED_FILES: files,
+            EVENT_NAME: event,
+            GITHUB_OUTPUT: output,
+            PR_NUMBER: "689",
+            REPOSITORY: "owner/repo",
+          },
+        },
+      );
+      expect(result.status, result.stderr).toBe(0);
+      expect(readFileSync(output, "utf8")).toContain(`cleanup=${String(expected)}`);
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
     }
   });
 
@@ -131,7 +225,7 @@ describe("CI workflow jobs", () => {
   it("restores Vitest's module cache before running the tests", () => {
     const steps = jobs.test.steps ?? [];
     const cacheIndex = steps.findIndex((step) => step.uses?.startsWith("actions/cache@"));
-    const testIndex = steps.findIndex((step) => step.run === "pnpm run test:coverage");
+    const testIndex = steps.findIndex((step) => step.run === "node scripts/vitest-timings.ts");
     expect(cacheIndex).toBeGreaterThan(-1);
     expect(cacheIndex).toBeLessThan(testIndex);
     expect(steps[cacheIndex].with?.path).toBe("node_modules/.vitest-cache");
@@ -151,10 +245,13 @@ describe("CI workflow jobs", () => {
     expect(allCommands).not.toMatch(/lint:fix|pipeline --|test:pipeline:assets/);
   });
 
-  it("installs dependencies from a frozen lockfile before running anything", () => {
+  it("installs dependencies from a frozen lockfile before running package commands", () => {
     for (const jobName of installJobs) {
       expect(jobs[jobName]["runs-on"]).toBe("ubuntu-latest");
-      expect(runCommands(jobs[jobName])[0]).toBe("pnpm install --frozen-lockfile");
+      const firstCommand = runCommands(jobs[jobName]).find(
+        (command) => command !== 'git config --global --add safe.directory "$GITHUB_WORKSPACE"',
+      );
+      expect(firstCommand).toBe("pnpm install --frozen-lockfile");
       const setup = jobs[jobName].steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
       expect(setup).toBeDefined();
     }
@@ -195,7 +292,7 @@ describe("CI workflow jobs", () => {
 describe("CI workflow permissions", () => {
   it("keeps every job read-only except scoped PR metadata and scheduled issue writes", () => {
     expect(workflow.permissions).toEqual({ contents: "read" });
-    expect(jobs.changes.permissions).toEqual({ "pull-requests": "read" });
+    expect(jobs.changes.permissions).toEqual({ contents: "read", "pull-requests": "read" });
     expect(jobs["issue-sync"].permissions).toEqual({ contents: "read", issues: "write" });
     expect(jobs["issue-sync"].if).toContain("github.event_name == 'schedule'");
     const unprivilegedJobs = Object.entries(jobs).filter(
@@ -241,7 +338,9 @@ describe("CI workflow browser suites", () => {
     // Tailwind 4 has no config file, so a tailwind.* pattern would be dead.
     expect(filter?.run).not.toContain("tailwind.*");
     // Only pull requests are filtered; every other event runs the suites.
-    expect(filter?.run).toMatch(/browser=true\n\s*if \[ "\$EVENT_NAME" = "pull_request" \]/);
+    expect(filter?.run).toMatch(
+      /browser=true[\s\S]*if \[ "\$EVENT_NAME" = "pull_request" \]; then\n\s*browser=false/,
+    );
 
     for (const jobName of browserJobs) {
       expect(jobs[jobName].needs).toEqual(["changes", "build"]);
@@ -280,25 +379,22 @@ describe("CI workflow browser suites", () => {
     expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
   });
 
-  it("runs browser suites on host runners with cached Chromium", () => {
+  it("runs browser suites in the matching pinned image without browser or apt installation", () => {
     for (const jobName of browserJobs) {
-      expect(jobs[jobName].container).toBeUndefined();
+      expect(jobs[jobName].container).toEqual({
+        image: `mcr.microsoft.com/playwright:v${playwrightPackage.version}-noble`,
+        options: "--ipc=host",
+      });
       const steps = jobs[jobName].steps ?? [];
-      const cache = steps.find((step) => step.id === "playwright-cache");
-      expect(cache?.uses).toMatch(/^actions\/cache@[a-f0-9]{40}$/);
-      expect(cache?.with?.path).toBe("~/.cache/ms-playwright");
-      expect(cache?.with?.key).toBe("playwright-${{ hashFiles('pnpm-lock.yaml') }}");
-      const install = steps.find((step) => step.env?.PLAYWRIGHT_INSTALL !== undefined);
-      expect(install?.env?.PLAYWRIGHT_INSTALL).toBe(
-        "${{ steps.playwright-cache.outputs.cache-hit == 'true' && 'install-deps chromium' || 'install --with-deps chromium' }}",
+      expect(steps.find((step) => step.id === "playwright-cache")).toBeUndefined();
+      expect(steps.find((step) => step.env?.PLAYWRIGHT_INSTALL !== undefined)).toBeUndefined();
+      expect(runCommands(jobs[jobName]).join("\n")).not.toMatch(
+        /playwright install|install-deps|--with-deps|apt-get/,
       );
-      expect(install?.["timeout-minutes"]).toBe(12);
-      expect(install?.run).toContain("for attempt in 1 2; do");
-      expect(install?.run).toContain(
-        "timeout --kill-after=30s 5m pnpm exec playwright $PLAYWRIGHT_INSTALL && exit 0",
-      );
-      expect(runCommands(jobs[jobName])).not.toContain(
-        'git config --global --add safe.directory "$GITHUB_WORKSPACE"',
+      const commands = runCommands(jobs[jobName]);
+      expect(commands).toContain('git config --global --add safe.directory "$GITHUB_WORKSPACE"');
+      expect(commands.indexOf('git config --global --add safe.directory "$GITHUB_WORKSPACE"')).toBe(
+        0,
       );
     }
   });
