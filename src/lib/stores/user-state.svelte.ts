@@ -70,6 +70,12 @@ import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 export type BackupRestoreResult = { error: BackupRestoreErrorKind; ok: false } | { ok: true };
 export type BackupRestoreErrorKind = "invalid-fields" | "malformed-json" | "unsupported-version";
 
+/**
+ * Why changes aren't being saved: browser storage refused a read or write, or the stored progress
+ * couldn't be read and was quarantined.
+ */
+export type PersistenceFailureKind = "unavailable" | "unreadable";
+
 /** The outcome of one `completeQuestWithRecipes` call, enough to undo exactly that call. */
 export interface QuestCompletion {
   newlyAdded: RecipeId[];
@@ -253,6 +259,8 @@ function createUserState() {
   let _persistenceReady = $state(false);
   let persistenceBlocked = false;
   let quarantineAvailable = false;
+  let _persistenceFailureKind = $state<PersistenceFailureKind>("unavailable");
+  let _unreadableData = $state<null | string>(null);
   let serializedSource: Record<string, unknown> | undefined;
   let lastKnownStoredValue: null | string = null;
   let pendingSave: undefined | { expectedStoredValue: null | string; json: string };
@@ -264,10 +272,25 @@ function createUserState() {
     pendingSave = undefined;
   }
 
+  function reportStorageUnavailable(): void {
+    _persistenceFailureKind = "unavailable";
+    _persistenceFailureGeneration++;
+  }
+
+  /** Blocks persistence and keeps the unreadable value, in storage & memory, for recovery. */
+  function quarantine(value: string): void {
+    _persistenceReady = false;
+    persistenceBlocked = true;
+    quarantineAvailable = trySetItem(QUARANTINE_KEY, value);
+    _unreadableData = value;
+    _persistenceFailureKind = "unreadable";
+    _persistenceFailureGeneration++;
+  }
+
   function persist(json: string, expectedStoredValue: null | string): void {
     const storedResult = tryGetItem(STORAGE_KEY);
     if (!storedResult.ok) {
-      _persistenceFailureGeneration++;
+      reportStorageUnavailable();
       return;
     }
 
@@ -282,7 +305,7 @@ function createUserState() {
     }
 
     if (!trySetItem(STORAGE_KEY, json)) {
-      _persistenceFailureGeneration++;
+      reportStorageUnavailable();
       return;
     }
 
@@ -318,10 +341,7 @@ function createUserState() {
       return;
     }
 
-    _persistenceReady = false;
-    persistenceBlocked = true;
-    quarantineAvailable = trySetItem(QUARANTINE_KEY, value);
-    _persistenceFailureGeneration++;
+    quarantine(value);
   }
 
   function resyncFromStorage(): void {
@@ -435,9 +455,13 @@ function createUserState() {
         _persistenceReady = false;
         persistenceBlocked = true;
         quarantineAvailable = false;
-        _persistenceFailureGeneration++;
+        reportStorageUnavailable();
         return;
       }
+
+      // A blob quarantined on an earlier visit stays retrievable after the tracker moves on.
+      const quarantined = tryGetItem(QUARANTINE_KEY);
+      if (quarantined.ok) _unreadableData = quarantined.value;
 
       const stored = storedResult.value;
       lastKnownStoredValue = stored;
@@ -457,10 +481,7 @@ function createUserState() {
         quarantineAvailable = false;
         _persistenceReady = true;
       } else {
-        _persistenceReady = false;
-        persistenceBlocked = true;
-        quarantineAvailable = trySetItem(QUARANTINE_KEY, stored);
-        _persistenceFailureGeneration++;
+        quarantine(stored);
       }
     },
     markDefaultUnlocksComplete() {
@@ -556,6 +577,10 @@ function createUserState() {
       // Backfill animal maps for any animals added since the imported state was created
       backfillAnimalMaps(completed);
 
+      // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
+      // persistence like a reset or restore (only once the unreadable blob is safely stored).
+      enablePersistenceAfterExplicitReplace();
+
       return { conflicts: household.conflicts, counts };
     },
     get persistenceFailed(): boolean {
@@ -563,6 +588,9 @@ function createUserState() {
     },
     get persistenceFailureGeneration(): number {
       return _persistenceFailureGeneration;
+    },
+    get persistenceFailureKind(): PersistenceFailureKind {
+      return _persistenceFailureKind;
     },
     get progressionState(): UserProgressionState {
       return progressionState;
@@ -705,6 +733,10 @@ function createUserState() {
       for (const recipeId of newlyAdded) {
         state.completed.almanacRecipes.delete(recipeId);
       }
+    },
+    /** Stored progress that couldn't be read, kept so the player can download it; null if none. */
+    get unreadableData(): null | string {
+      return _unreadableData;
     },
   };
 }
