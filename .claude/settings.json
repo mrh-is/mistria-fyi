@@ -63,6 +63,16 @@
             "timeout": 600
           }
         ]
+      },
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/refresh-default-branch.sh\"",
+            "timeout": 30
+          }
+        ]
       }
     ]
   },

@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/refresh-default-branch.sh\"",
+            "statusMessage": "Refreshing local main",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
