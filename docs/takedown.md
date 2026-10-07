@@ -20,9 +20,12 @@ Sprites live under the `sprites/` prefix of the `mistria-fyi-assets` R2 bucket, 
 custom domain**; remove only `sprites/`. Every sprite slot renders a placeholder when its image
 fails to load, so the site keeps working.
 
-1. **Block at the edge first.** In the Cloudflare dashboard for `mistria.fyi`, add a WAF custom
-   rule: hostname equals `assets.mistria.fyi` and URI path starts with `/sprites/`, action "Block".
-   This takes effect within seconds and bypasses the edge cache.
+1. **Block at the edge first (optional, stops new downloads only).** In the Cloudflare dashboard for
+   `mistria.fyi`, add a WAF custom rule: hostname equals `assets.mistria.fyi` and URI path starts
+   with `/sprites/`, action "Block". This takes effect within seconds and bypasses the edge cache. A
+   WAF block response carries no `Access-Control-Allow-Origin` header, so the service worker’s
+   cross-origin revalidation can’t read it (the fetch rejects, and the worker keeps its cached
+   copy). The block alone therefore doesn’t revoke installed clients; step 2 does.
 2. **Delete the objects.** In the R2 dashboard, open `mistria-fyi-assets`, filter by the `sprites/`
    prefix, select all, & delete. With the sprites staged locally, this loop works too:
 
@@ -30,21 +33,26 @@ fails to load, so the site keeps working.
    find pipeline/output/sprites -name '*.webp' | sed 's|^pipeline/output/||' | while read -r key; do pnpx --allow-build=esbuild --allow-build=workerd wrangler r2 object delete "mistria-fyi-assets/$key" --remote; done
    ```
 
-3. **Purge the cache.** Caching → Configuration → Custom purge, by prefix
-   `assets.mistria.fyi/sprites/`.
+3. **Purge the cache,** then **remove the WAF rule from step 1** so R2 answers. Caching →
+   Configuration → Custom purge, by prefix `assets.mistria.fyi/sprites/`. The supported withdrawal
+   path is a deleted object: R2 answers its 404 with the bucket’s CORS headers, which the service
+   worker can read & act on. Keep a block rule only if it adds `Access-Control-Allow-Origin: *` to
+   its response.
 4. **Stop future uploads.** Remove the `sprites:upload` script (or make it refuse to run), so a
    routine game update doesn’t restore them.
-5. **Verify.** `curl -I https://assets.mistria.fyi/sprites/items/<any-id>.webp` returns 403 or 404,
-   and a fresh browser profile shows placeholders.
+5. **Verify.**
+   `curl -si -H 'Origin: https://mistria.fyi' https://assets.mistria.fyi/sprites/items/<any-id>.webp`
+   returns 403 or 404 _with_ an `access-control-allow-origin` header (without it, installed clients
+   keep their copies), and a fresh browser profile shows placeholders.
 
 Note: returning visitors lose the sprites on their own within about a day. Sprites are uploaded with
-`Cache-Control: public, max-age=86400, stale-while-revalidate=86400`, & the service worker serves a
-cached sprite while revalidating it in the background, evicting the entry when the bucket answers
-403 or 404. An installed PWA drops a withdrawn sprite on its next load after the block is live; a
-browser tab may show a cached sprite once more after a day, then the placeholder. Objects uploaded
-before this policy existed carry the old one-year immutable header until re-uploaded
-(`FORCE=1 pnpm run sprites:upload`, a launch step); against those, only a fresh profile is
-guaranteed clean.
+`Cache-Control: public, max-age=86400, stale-while-revalidate=86400`. The service worker serves a
+cached sprite at once & revalidates it in the background when the cached copy is a day old, evicting
+the entry on a readable 403, 404, or 410. An installed PWA therefore drops a withdrawn sprite on the
+load after the copy turns a day old (so within two days at worst); a browser tab may show a cached
+sprite once more after a day, then the placeholder. Objects uploaded before this policy existed
+carry the old one-year immutable header until re-uploaded (`FORCE=1 pnpm run sprites:upload`, a
+launch step); against those, a plain browser tab is only guaranteed clean in a fresh profile.
 
 ## Dataset
 

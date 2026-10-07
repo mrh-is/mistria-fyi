@@ -62,10 +62,10 @@ Set it up in Cloudflare as follows:
 The application CSP permits images only from itself and `assets.mistria.fyi`. The service worker
 caches sprites in their own `sprites-v1` cache with a 400-entry LRU cap, separate from the general
 50-entry runtime cache, and never precaches them. It serves a cached sprite immediately, revalidates
-it in the background, & evicts it when the bucket answers 403, 404, or 410. Until an object exists
-at a given URL, `sprite-slot.svelte` and `villager-record.svelte` render their placeholder on image
-error — a fresh clone with no sprites uploaded (or an unreachable bucket) degrades gracefully rather
-than breaking.
+it in the background once it is a day old, & evicts it when the bucket answers 403, 404, or 410 with
+CORS headers (see [takedown.md](takedown.md)). Until an object exists at a given URL,
+`sprite-slot.svelte` and `villager-record.svelte` render their placeholder on image error — a fresh
+clone with no sprites uploaded (or an unreachable bucket) degrades gracefully rather than breaking.
 
 ## Generating and uploading sprites
 
