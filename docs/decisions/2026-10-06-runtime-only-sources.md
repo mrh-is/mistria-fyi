@@ -20,7 +20,8 @@ Model each grant as what the game does, not as a named pseudo-quest:
   overrides; deriving every `given_items` grant natively is a separate follow-up.
 - **Date inspiration items:** a new `date_inspiration_drop` source records the GML drop (Eastern
   Road dig sites, fishing at the Beach, Mines chests), gated on having any date and lacking the date
-  the item unlocks.
+  the item unlocks. A new `dateUnlocked` availability condition encodes that window; it evaluates to
+  unknown, since no world state tracks unlocked dates.
 - **Another Tower song crystal:** a `bell_tower_chest` source, matching `beach_cave_chest`
   (`obj_narrows_cave_chest.gml`, placed in `rm_bell_tower_f2`).
 - **Balor's Crate & Ryis' Lumber:** cutscene props the game labels “This shouldn't be in your

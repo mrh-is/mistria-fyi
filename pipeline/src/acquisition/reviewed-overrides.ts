@@ -4,6 +4,7 @@ import { canonicalSourceJson } from "./source-accumulator.js";
 
 import type {
   ActivityId,
+  AvailabilityCondition,
   LocationId,
   MonsterId,
   Source,
@@ -29,6 +30,17 @@ export interface OverrideDiagnostic {
   message: string;
   namespace: "cosmetics" | "items";
   targetId: string;
+}
+
+/** The GML drops a date inspiration item once any date is unlocked, until its own date is. */
+function dateDropWindow(dateId: DateId): AvailabilityCondition {
+  return {
+    type: "all",
+    conditions: [
+      { type: "dateUnlocked" },
+      { type: "not", condition: { type: "dateUnlocked", dateId } },
+    ],
+  };
 }
 
 // Wiki: https://fieldsofmistria.wiki.gg/wiki/Void_Cake
@@ -232,6 +244,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     {
       type: "date_inspiration_drop",
       activity: "dig_site",
+      availability: dateDropWindow("park" as DateId),
       dateId: "park" as DateId,
       locationId: "eastern_road" as LocationId,
     },
@@ -242,13 +255,19 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     {
       type: "date_inspiration_drop",
       activity: "fish",
+      availability: dateDropWindow("beach" as DateId),
       dateId: "beach" as DateId,
       locationId: "beach" as LocationId,
     },
   ],
   // `Breakables.gml`: opening a Mines chest drops it (`misc.rough_gemstone_chance`).
   ["rough_gemstone" as ItemId]: [
-    { type: "date_inspiration_drop", activity: "mines_chest", dateId: "gem_cutting" as DateId },
+    {
+      type: "date_inspiration_drop",
+      activity: "mines_chest",
+      availability: dateDropWindow("gem_cutting" as DateId),
+      dateId: "gem_cutting" as DateId,
+    },
   ],
 
   // --- Cooked dishes without recipe: inn-only or event-only foods ---

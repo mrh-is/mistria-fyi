@@ -72,6 +72,17 @@ describe("extractTreasureChestTiers", () => {
     );
   });
 
+  it("throws for a tier whose item name isn't a string", () => {
+    const fiddle = makeFiddle({
+      fishing: { chest_tables: { gold: { items: [] } } },
+      items: { fish: { misc: { treasure_box_gold: { name: { en: "Golden" } } } } },
+    });
+
+    expect(() => extractTreasureChestTiers(fiddle, localizer)).toThrow(
+      'Chest tier "gold" has no item "fish/misc/treasure_box_gold"',
+    );
+  });
+
   it("returns empty when no fishing data", () => {
     const fiddle = makeFiddle({ fishing: undefined });
     const { tiers } = extractTreasureChestTiers(fiddle, localizer);

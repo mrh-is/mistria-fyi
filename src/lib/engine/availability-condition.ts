@@ -40,6 +40,7 @@ export function evaluateAvailabilityCondition(
       return true;
     case "any":
       return evaluateAny(condition.conditions, context);
+    case "dateUnlocked":
     case "gamePredicate":
     case "hasUpperFloor":
     case "isDating":
@@ -106,6 +107,7 @@ export function simplifyAvailabilityCondition(
       return { type: "all", conditions: withoutAlways as NonEmptyArray<AvailabilityCondition> };
     }
     case "always":
+    case "dateUnlocked":
     case "gamePredicate":
     case "hasUpperFloor":
     case "heartLevel":
@@ -152,6 +154,7 @@ function collectBadges(condition: AvailabilityCondition, badges: DisplayBadges):
       }
       break;
     case "always":
+    case "dateUnlocked":
     case "gamePredicate":
     case "hasUpperFloor":
     case "heartLevel":
@@ -209,6 +212,7 @@ function hasSelectiveSeasonConditionInSimplified(condition?: AvailabilityConditi
     case "any":
       return condition.conditions.some(hasSelectiveSeasonConditionInSimplified);
     case "always":
+    case "dateUnlocked":
     case "gamePredicate":
     case "hasUpperFloor":
     case "heartLevel":

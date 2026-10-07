@@ -45,8 +45,8 @@ export function extractTreasureChestTiers(
       itemId: `treasure_box_${tier}`,
     };
     const [top, sub] = category.split("/");
-    const name = items?.[top]?.[sub]?.[itemKey]?.name as string | undefined;
-    if (!name) {
+    const name = items?.[top]?.[sub]?.[itemKey]?.name;
+    if (typeof name !== "string" || name === "") {
       throw new Error(
         `Chest tier "${tier}" has no item "${category}/${itemKey}" — add it to REVIEWED_TIER_ITEMS`,
       );

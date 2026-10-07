@@ -8,6 +8,7 @@ import {
 
 import type {
   AvailabilityCondition,
+  DateId,
   PerkId,
   QuestId,
   SkillId,
@@ -90,6 +91,17 @@ describe("evaluateAvailabilityCondition", () => {
         {},
       ),
     ).toBe("unknown");
+  });
+
+  it("leaves a date-unlock window unknown, since no world state tracks dates", () => {
+    const window: AvailabilityCondition = {
+      type: "all",
+      conditions: [
+        { type: "dateUnlocked" },
+        { type: "not", condition: { type: "dateUnlocked", dateId: "park" as DateId } },
+      ],
+    };
+    expect(evaluateAvailabilityCondition(window, {})).toBe("unknown");
   });
 
   it("returns unknown when a supplied quest-state map lacks the quest", () => {
