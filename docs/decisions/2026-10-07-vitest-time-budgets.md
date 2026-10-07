@@ -10,9 +10,15 @@ so its ubuntu-latest runners have two CPUs.
 
 Retain every cleanup safety scenario with deterministic command snapshots & one real-Git integration
 case. Publish test & hook durations for all files, gate whole-command wall time separately, &
-collect coverage only on scheduled runs. Bound the timed command to at most four workers (& no more
-than available CPUs), so large local hosts do not inflate file times through oversubscription. Use
-runner-class ceilings documented in the development workflow.
+collect coverage only on scheduled runs. At the maintainer’s request, CI runs the cleanup test only
+when its corresponding shell script changes; focused local runs remain available for test-only
+edits.
+
+Bound the timed command to half the available CPUs (at least one worker, capped at four), leaving
+headroom for files that launch CLI subprocesses. The first two-worker run on a two-CPU CI runner
+took 118.13 seconds overall, but pushed the allocation & lint-ownership files beyond their 10-second
+budgets. Reduce contention rather than widening the runner-class ceilings documented in the
+development workflow.
 
 ## Alternatives
 

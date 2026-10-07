@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { budgetFailures, timingBudgets, timingSummary } from "./vitest-timings.js";
+import { budgetFailures, timingBudgets, timingSummary, vitestArguments } from "./vitest-timings.js";
 
 const files = [{ durationMs: 5000, file: "scripts/example.test.ts", project: "node" }];
 const budgets = { fileMs: 5000, stepMs: 60_000 };
@@ -46,4 +46,12 @@ describe("Vitest timing budgets", () => {
       summary.indexOf("scripts/example.test.ts"),
     );
   });
+});
+
+it("leaves CPU headroom for CLI subprocesses without selecting zero workers", () => {
+  expect(vitestArguments(false, 1)).toContain("--maxWorkers=1");
+  expect(vitestArguments(false, 2)).toContain("--maxWorkers=1");
+  expect(vitestArguments(false, 4)).toContain("--maxWorkers=2");
+  expect(vitestArguments(true, 14)).toContain("--maxWorkers=4");
+  expect(vitestArguments(true, 14)).toContain("--coverage");
 });

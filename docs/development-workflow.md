@@ -280,11 +280,11 @@ only when `scripts/cleanup-merged-worktrees.sh` changes: PRs use their complete 
 main pushes compare the event’s before/after commits. Scheduled & manual runs omit it. Direct local
 runs still include it, so test-only edits can be verified with the focused command. It publishes all
 per-file test & hook durations, slowest first, in the job summary & the `vitest-timings` artifact.
-The timed command uses up to four workers, bounded by available CPUs, to avoid oversubscribing
-larger local hosts & to use both cores on private CI runners. The JSON also records CPU count,
-coverage mode, whole-command wall time, & the enforced ceilings. Imports, environment setup,
-transforms, startup, & report generation count toward the wall budget. Missing timing reports &
-unsuccessful tests fail the step independently of the budgets.
+The timed command uses half the available CPUs (at least one worker, capped at four), leaving
+headroom for files that spawn CLI subprocesses. The JSON also records CPU count, coverage mode,
+whole-command wall time, & the enforced ceilings. Imports, environment setup, transforms, startup, &
+report generation count toward the wall budget. Missing timing reports & unsuccessful tests fail the
+step independently of the budgets.
 
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
