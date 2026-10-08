@@ -13,17 +13,23 @@ export type { AxeAssessment, AxeException, AxeRunContext } from "./violations.js
 
 const failingImpacts = new Set(["critical", "serious"]);
 
+// Within our WCAG tags, color-contrast is the rule whose result changes with the theme.
+// Focus visibility still needs the real keyboard/style checks in keyboard & preferences specs;
+// axe has no WCAG-tagged focus-visible rule that can replace those checks.
+export const themeSensitiveRules = ["color-contrast"];
+
 export const axeExceptions: AxeException[] = [];
 
 export async function analyzeAccessibility(
   page: Page,
   context: AxeRunContext,
   testInfo?: TestInfo,
+  rules?: string[],
 ): Promise<AxeAssessment> {
   await waitForRendering(page);
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-    .analyze();
+  let builder = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]);
+  if (rules) builder = builder.withRules(rules);
+  const results = await builder.analyze();
   const assessment = assessAxeResults(results, context);
 
   if (testInfo) {
