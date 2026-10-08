@@ -1,5 +1,4 @@
-import { test } from "@playwright/test";
-
+import { test } from "../browser/test.js";
 import {
   createStoredState,
   gotoApplication,

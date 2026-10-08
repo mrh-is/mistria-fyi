@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "../browser/test.js";
 import { accessibilityRoutes } from "./routes.js";
 import { gotoApplication, HYDRATED_SELECTOR } from "./support/application-state.js";
 import { criticalWhen } from "./support/tags.js";
