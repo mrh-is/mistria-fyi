@@ -4,15 +4,15 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * The `app`, `pipeline`, & `node` projects share one module registry per worker (#707), so a module
- * mock or registry reset in one file leaks into whichever files that worker runs next. Those files
- * must opt into a fresh registry with the `*.isolated.test.ts` suffix, which the `isolated` project
- * runs. Spies, stubbed globals, & stubbed environment variables reset per test, so they're fine.
+ * The `app`, `client`, `pipeline`, & `node` projects share one module registry per worker (#707), so
+ * a module mock or registry reset in one file leaks into whichever files that worker runs next.
+ * Those files opt into a fresh registry with the `*.isolated.test.ts` suffix (`isolated` project)
+ * or `*.isolated.client.test.ts` (`client-isolated`). Spies, stubbed globals, & stubbed environment variables reset per test, so they're fine.
  */
 
 const root = join(import.meta.dirname, "..");
 
-/** Test files outside a per-file-isolated project (`isolated`, `cold`, `client`, & `assets`). */
+/** Test files outside a per-file-isolated project (`isolated`, `client-isolated`, `cold`, & `assets`). */
 function sharedRegistryFiles(): string[] {
   return execFileSync(
     "git",
@@ -28,7 +28,7 @@ function sharedRegistryFiles(): string[] {
   )
     .split("\n")
     .filter(Boolean)
-    .filter((file) => !/\.(?:isolated|cold|client|assets)\.test\.ts$/u.test(file));
+    .filter((file) => !/\.(?:isolated|isolated\.client|cold|assets)\.test\.ts$/u.test(file));
 }
 
 const registryCall = /\bvi\.(?:mock|doMock|unmock|doUnmock|resetModules)\(/u;
@@ -40,11 +40,16 @@ describe("shared module registries", () => {
     );
     expect(
       offenders,
-      "Rename these to *.isolated.test.ts (or, outside src/, add an isolated project)",
+      "Rename these to *.isolated.test.ts or *.isolated.client.test.ts (outside src/, add an isolated project)",
     ).toEqual([]);
   });
 
   it("finds the files it guards", () => {
-    expect(sharedRegistryFiles()).toContain("src/lib/engine/progress.test.ts");
+    expect(sharedRegistryFiles()).toEqual(
+      expect.arrayContaining([
+        "src/lib/engine/progress.test.ts",
+        "src/routes/data/backup-card.client.test.ts",
+      ]),
+    );
   });
 });

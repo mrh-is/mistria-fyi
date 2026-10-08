@@ -174,17 +174,17 @@ are `status: blocked|ready|needs decision|in progress`, `area: pipeline|ui`,
 All of these say `mrh-is/mistria-fyi`, which stays correct under the naming decision. Listed so the
 post-cutover check can confirm each resolves in the public repository.
 
-| File                                                                                           | Reference                                                                      |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `README.md`                                                                                    | CI badge & workflow link (`actions/workflows/ci.yml`).                         |
-| `CONTRIBUTING.md`                                                                              | Issues link.                                                                   |
-| `src/lib/components/ai-disclosure-dialog.svelte`                                               | Repository link.                                                               |
-| `src/lib/components/feedback-panel.svelte`                                                     | `issues/new` fallback link.                                                    |
-| `src/routes/api/feedback/+server.ts`                                                           | `REPO_OWNER` & `REPO_NAME`.                                                    |
-| `src/routes/api/feedback/feedback.test.ts`, `src/lib/components/feedback-panel.client.test.ts` | Test fixtures asserting the URLs.                                              |
-| `.github/CODEOWNERS`                                                                           | `@mrh-is` owner.                                                               |
-| `docs/font-assets.md`, `pipeline/README.md`, `pipeline/src/overrides/game-facts.ts`            | Links to archive issue numbers (#269, #638); rewritten by #667.                |
-| `docs/takedown.md`                                                                             | `mrh-is/<public-repo>` placeholders; fill in `mistria-fyi` (no change needed). |
+| File                                                                                                    | Reference                                                                      |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `README.md`                                                                                             | CI badge & workflow link (`actions/workflows/ci.yml`).                         |
+| `CONTRIBUTING.md`                                                                                       | Issues link.                                                                   |
+| `src/lib/components/ai-disclosure-dialog.svelte`                                                        | Repository link.                                                               |
+| `src/lib/components/feedback-panel.svelte`                                                              | `issues/new` fallback link.                                                    |
+| `src/routes/api/feedback/+server.ts`                                                                    | `REPO_OWNER` & `REPO_NAME`.                                                    |
+| `src/routes/api/feedback/feedback.test.ts`, `src/lib/components/feedback-panel.isolated.client.test.ts` | Test fixtures asserting the URLs.                                              |
+| `.github/CODEOWNERS`                                                                                    | `@mrh-is` owner.                                                               |
+| `docs/font-assets.md`, `pipeline/README.md`, `pipeline/src/overrides/game-facts.ts`                     | Links to archive issue numbers (#269, #638); rewritten by #667.                |
+| `docs/takedown.md`                                                                                      | `mrh-is/<public-repo>` placeholders; fill in `mistria-fyi` (no change needed). |
 
 Not present: `package.json` has no `repository`, `homepage`, or `bugs` field; there is no
 `functions/` directory; the PWA manifest & `src/app.html` contain no repo links.

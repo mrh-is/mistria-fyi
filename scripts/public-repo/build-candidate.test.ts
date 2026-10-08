@@ -337,7 +337,10 @@ describe("public candidate secret scanning", () => {
         ["src/lib/data/locales/fr/items.json", "mist_cushion_v1"],
         ["src/lib/data/locales/es/animals.json", "capybara/cosmetics/bow"],
         ["src/lib/data/locales/fr/animals.json", "rabbit/cosmetics/halo"],
-        ["src/lib/stores/persistence-lifecycle.client.test.ts", "mistria-fyi-v1-quarantine"],
+        [
+          "src/lib/stores/persistence-lifecycle.isolated.client.test.ts",
+          "mistria-fyi-v1-quarantine",
+        ],
       ];
       const write = (path: string, value: string): void => {
         mkdirSync(join(fixture, path, ".."), { recursive: true });

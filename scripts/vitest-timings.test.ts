@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { budgetFailures, timingBudgets, timingSummary, vitestArguments } from "./vitest-timings.js";
+import {
+  budgetFailures,
+  cliProbeFiles,
+  timingBudgets,
+  timingSummary,
+  vitestArguments,
+  vitestInvocations,
+} from "./vitest-timings.js";
 
 const files = [{ durationMs: 5000, file: "scripts/example.test.ts", project: "node" }];
 const budgets = { fileMs: 5000, stepMs: 60_000 };
@@ -50,13 +57,33 @@ describe("Vitest timing budgets", () => {
 
 it("leaves CPU headroom for CLI subprocesses without selecting zero workers", () => {
   expect(vitestArguments(false, 1)).toContain("--maxWorkers=1");
+  expect(vitestArguments(false, 2)).toContain("--maxWorkers=1");
   expect(vitestArguments(false, 4)).toContain("--maxWorkers=2");
-  expect(vitestArguments(true, 2)).toContain("--maxWorkers=1");
   expect(vitestArguments(true, 14)).toContain("--maxWorkers=4");
   expect(vitestArguments(true, 14)).toContain("--coverage");
 });
 
-it("uses both workers on two-CPU noncoverage runs", () => {
-  expect(vitestArguments(false, 2)).toContain("--maxWorkers=2");
-  expect(vitestArguments(false, 2)).not.toContain("--coverage");
+it("reserves headroom only for CLI probes on two-CPU noncoverage runs", () => {
+  const [ordinary, probes] = vitestInvocations(false, 2);
+  expect(ordinary.arguments).toContain("--maxWorkers=2");
+  expect(probes.arguments).toContain("--maxWorkers=1");
+  const probeFiles = probes.arguments.filter((argument) => argument.endsWith(".test.ts"));
+  expect(probeFiles).toHaveLength(3);
+  expect(probeFiles).toEqual(cliProbeFiles);
+  expect(ordinary.excludeCliProbes).toBe(true);
+  expect(probes.excludeCliProbes).toBe(false);
+  expect(ordinary.arguments).not.toContain("--coverage");
+  expect(probes.arguments).not.toContain("--coverage");
+});
+
+it("keeps nightly coverage in one invocation and preserves other runner classes", () => {
+  for (const [cpus, coverage] of [
+    [2, true],
+    [1, false],
+    [4, false],
+  ] as const) {
+    expect(vitestInvocations(coverage, cpus)).toEqual([
+      { arguments: vitestArguments(coverage, cpus), excludeCliProbes: false },
+    ]);
+  }
 });

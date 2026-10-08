@@ -10,6 +10,7 @@ import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
+import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
 import { headersFilePlugin } from "./src/lib/build/headers-file.js";
@@ -79,9 +80,21 @@ const plainNodeTestOptions = {
  * tracker data, names, & Svelte per file; that import & setup work was most of the app project's
  * time (#707). Spies, stubbed globals, & stubbed environment variables still reset per test, but a
  * module mock would leak into later files, so a file that mocks or resets modules must opt into
- * isolation with the `*.isolated.test.ts` suffix. `tests/vitest-isolation.test.ts` enforces that.
+ * isolation with the `*.isolated.test.ts` (or `*.isolated.client.test.ts`) suffix. `tests/vitest-isolation.test.ts` enforces that.
  */
 const sharedRegistry = { isolate: false };
+
+/** happy-dom & Testing Library, shared by the `client` & `client-isolated` projects. */
+const clientTestOptions = {
+  environment: "happy-dom" as const,
+  // Warm two-worker runs are faster with threads.
+  pool: "threads" as const,
+  setupFiles: [
+    "./src/vitest-setup.ts",
+    "./src/vitest-setup-app-state.ts",
+    "./src/vitest-setup-names.ts",
+  ],
+};
 
 /**
  * Cloudflare Pages caps `_routes.json` at 100 rules. The adapter's default `<files>` exclusion
@@ -221,6 +234,7 @@ export default defineConfig({
           exclude: [
             ...sharedTestExcludes,
             "**/*.assets.test.ts",
+            ...(process.env.VITEST_EXCLUDE_CLI_PROBES === "true" ? cliProbeFiles : []),
             ...(process.env.VITEST_CLEANUP_CHANGED === "false"
               ? ["scripts/cleanup-merged-worktrees.test.ts"]
               : []),
@@ -244,16 +258,21 @@ export default defineConfig({
         extends: true,
         plugins: [svelteTesting()],
         test: {
-          environment: "happy-dom",
+          ...clientTestOptions,
+          exclude: [...sharedTestExcludes, "**/*.isolated.client.test.ts"],
           include: ["src/**/*.client.test.ts"],
           name: "client",
-          // Warm two-worker runs are faster with threads; per-file isolation stays enabled.
-          pool: "threads",
-          setupFiles: [
-            "./src/vitest-setup.ts",
-            "./src/vitest-setup-app-state.ts",
-            "./src/vitest-setup-names.ts",
-          ],
+          ...sharedRegistry,
+        },
+      },
+      {
+        extends: true,
+        plugins: [svelteTesting()],
+        test: {
+          ...clientTestOptions,
+          exclude: sharedTestExcludes,
+          include: ["src/**/*.isolated.client.test.ts"],
+          name: "client-isolated",
         },
       },
       {
