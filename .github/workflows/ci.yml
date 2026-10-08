@@ -313,6 +313,7 @@ jobs:
           path: |
             .playwright-pwa-report/
             .playwright-pwa-results/
+            .playwright-artifacts/preview-*.log
           retention-days: 14
           if-no-files-found: ignore
       - name: Preserve test outcome
