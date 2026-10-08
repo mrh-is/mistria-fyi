@@ -43,6 +43,7 @@ describe("VillagerRecord", () => {
     expect(view.container.querySelector("img")).toHaveAttribute("alt", "");
     expect(view.container.querySelector("img")).toHaveAttribute("crossorigin", "anonymous");
     expect(view.container.querySelectorAll("[data-villager-mark]")).toHaveLength(12);
+    expect(view.container.querySelectorAll("[data-villager-mark] button")).toHaveLength(0);
     expect(view.container.querySelectorAll('[data-villager-mark-filled="true"]')).toHaveLength(8);
     expect(
       view.getByRole("group", { name: "Adeline relationship level, 8 of 12" }),

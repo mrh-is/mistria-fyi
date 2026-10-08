@@ -21,6 +21,10 @@ describe("RenownCurrentRecord", () => {
     expect(view.getByText(getName("town-ranks", "0", "en"))).toBeInTheDocument();
     expect(view.getByText("0 / 10 in rank")).toBeInTheDocument();
     expect(view.getByRole("progressbar", { name: "Renown progress" })).toHaveAttribute(
+      "aria-valuemin",
+      "0",
+    );
+    expect(view.getByRole("progressbar", { name: "Renown progress" })).toHaveAttribute(
       "aria-valuemax",
       String(maxLevel),
     );
