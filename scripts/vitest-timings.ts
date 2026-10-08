@@ -18,9 +18,10 @@ export interface Budgets {
 }
 
 // Private ubuntu-latest runners have two CPUs; public runners have four. The four-CPU
-// ceiling is deliberately tighter. Coverage has a separate nightly wall-time ceiling.
+// ceiling is deliberately tighter. Coverage has a separate nightly wall-time ceiling. The
+// two-CPU wall ceiling covers a cold transform cache (105 s) above warm runs (52-79 s, #707).
 export function timingBudgets(cpus: number, coverage: boolean): Budgets {
-  const stepMs = cpus < 4 ? 180_000 : 90_000;
+  const stepMs = cpus < 4 ? 120_000 : 90_000;
   return {
     fileMs: cpus < 4 ? 10_000 : 5e3,
     stepMs: coverage ? 300_000 : stepMs,
