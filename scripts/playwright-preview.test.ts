@@ -133,7 +133,7 @@ function cliFixture(source: string) {
 
 it("drains the complete subprocess crash tail before relaying its signal", () => {
   const fixture = cliFixture(
-    'require("node:fs").writeSync(2, "x".repeat(262144)); process.kill(process.pid, "SIGTERM")',
+    'const fs = require("node:fs"); const tail = Buffer.alloc(262144, 120); let offset = 0; while (offset < tail.length) offset += fs.writeSync(2, tail, offset, tail.length - offset); process.kill(process.pid, "SIGTERM")',
   );
   const result = spawnSync(process.execPath, fixture.args, {
     ...fixture.options,
@@ -141,7 +141,9 @@ it("drains the complete subprocess crash tail before relaying its signal", () =>
     timeout: 10_000,
   });
   expect(result.signal, result.stderr).toBe("SIGTERM");
-  expect(fixture.read()).toContain("x".repeat(262_144));
+  // Probe/exit records can interleave between pipe chunks; compare only the emitted payload.
+  const payload = fixture.read().replaceAll(/\{"elapsedMs":[^\n]*\}\n/gu, "");
+  expect(payload).toBe("x".repeat(262_144));
 });
 
 it("leaves diagnostics on disk after Playwright-style process-group force-kill", async () => {
