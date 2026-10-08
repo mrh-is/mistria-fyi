@@ -25,6 +25,13 @@ describe("proprietary font boundary", () => {
         cwd: repositoryRoot,
       }),
     ).not.toThrow();
+    expect(() =>
+      execFileSync(
+        "git",
+        ["check-ignore", "--quiet", "tests/browser/fixtures/local/satoshi-regular.woff2"],
+        { cwd: repositoryRoot },
+      ),
+    ).not.toThrow();
     expect(notices).toContain("is not distributed through this source repository");
   });
 });
