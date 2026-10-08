@@ -23,7 +23,10 @@ import { critical, criticalWhen } from "./support/tags.js";
 // (scripts/playwright-satoshi.ts); a local run without it measures fallback fonts.
 test("measures layout with the production annotation font", async ({ page }) => {
   if (!existsSync(SATOSHI_PATH) && process.env.CI !== "true") {
-    console.warn(`Satoshi is missing at ${SATOSHI_PATH}; geometry measures fallback fonts.`);
+    test.info().annotations.push({
+      type: "warning",
+      description: `Satoshi is missing at ${SATOSHI_PATH}; geometry measures fallback fonts.`,
+    });
     test.skip(true, "Satoshi is not available locally");
   }
   await initializeApplication(page, "light");
