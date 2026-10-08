@@ -4,15 +4,19 @@ import { accessibilityRoutes } from "./routes.js";
 import {
   expectResolvedTheme,
   gotoApplication,
+  HYDRATED_SELECTOR,
   initializeApplication,
 } from "./support/application-state.js";
-import { analyzeAccessibility } from "./support/axe.js";
+import { analyzeAccessibility, themeSensitiveRules } from "./support/axe.js";
 import { criticalWhen } from "./support/tags.js";
 
-import type { AccessibilityTheme } from "./support/violations.js";
-
-const coreRoutes = new Set<string>(["/", "/almanac"]);
-const themes = ["light", "dark"] as const satisfies readonly AccessibilityTheme[];
+const coreRoutes = new Set<string>(["/", "/almanac", "/villagers", "/everything"]);
+const headingOverrides: Record<string, string | undefined> = {
+  "/": "Mistria Field Guide",
+  "/everything": "Everything",
+  "/privacy": "Privacy Policy",
+  "/settings": "Data management",
+};
 
 const auditRegressionByRoute: Partial<Record<string, string>> = {
   "/": "c166673 unnamed progress bars, fixed by #155",
@@ -21,29 +25,45 @@ const auditRegressionByRoute: Partial<Record<string, string>> = {
   "/villagers": "c166673 unnamed buttons and contrast violations, fixed by #154 and #155",
 };
 
-test.describe("complete route and theme axe matrix", () => {
-  for (const theme of themes) {
-    for (const route of accessibilityRoutes) {
-      test(
-        `${route.name} passes serious and critical axe checks in ${theme} mode`,
-        criticalWhen(coreRoutes.has(route.path)),
-        async ({ page }, testInfo) => {
-          const provenance = auditRegressionByRoute[route.path];
-          if (provenance) testInfo.annotations.push({ type: "audit", description: provenance });
+test.describe("route accessibility journeys", () => {
+  for (const route of accessibilityRoutes) {
+    test(
+      `${route.name} hydrates, exposes landmarks, and passes axe in both themes`,
+      criticalWhen(coreRoutes.has(route.path)),
+      async ({ page }, testInfo) => {
+        const provenance = auditRegressionByRoute[route.path];
+        if (provenance) testInfo.annotations.push({ type: "audit", description: provenance });
 
-          await initializeApplication(page, theme);
-          const response = await gotoApplication(page, route.path);
+        await page.emulateMedia({ colorScheme: "light" });
+        await initializeApplication(page, "system");
+        const response = await gotoApplication(page, route.path);
 
-          expect(response?.ok()).toBe(true);
-          await expect(page.getByRole("main")).toBeVisible();
-          await expectResolvedTheme(page, theme);
-          await analyzeAccessibility(
-            page,
-            { route: route.path, state: "initial", theme },
-            testInfo,
-          );
-        },
-      );
-    }
+        expect(response?.ok()).toBe(true);
+        await expect(page.getByRole("main")).toBeVisible();
+        await expect(page.locator(HYDRATED_SELECTOR)).toHaveCount(1);
+        await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+        await expect(
+          page.getByRole("heading", {
+            exact: true,
+            level: 1,
+            name: headingOverrides[route.path] ?? route.name,
+          }),
+        ).toBeVisible();
+        await expectResolvedTheme(page, "light");
+        await analyzeAccessibility(
+          page,
+          { route: route.path, state: "initial", theme: "light" },
+          testInfo,
+        );
+        await page.emulateMedia({ colorScheme: "dark" });
+        await expectResolvedTheme(page, "dark");
+        await analyzeAccessibility(
+          page,
+          { route: route.path, state: "initial", theme: "dark" },
+          testInfo,
+          themeSensitiveRules,
+        );
+      },
+    );
   }
 });

@@ -200,6 +200,9 @@ describe("FeedbackPanel", () => {
     const message = screen.getByRole("textbox", { name: "Message" });
     expect(message).toHaveAttribute("aria-invalid", "true");
     expect(message).toHaveAttribute("aria-describedby", "feedback-message-error");
+    expect(document.getElementById(message.getAttribute("aria-describedby") ?? "")).toBe(
+      screen.getByRole("alert"),
+    );
     expect(message).toHaveFocus();
     expect(screen.getByRole("alert")).toHaveTextContent("Please enter a message.");
   });

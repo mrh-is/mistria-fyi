@@ -40,7 +40,7 @@ Two mechanisms keep a run deterministic and pinned to its own checkout (#330).
 fires once every child component has mounted. `gotoApplication` in
 `tests/accessibility/support/application-state.ts` waits for that attribute after network idle, so
 no test clicks a server-rendered control before its handler exists. Route the initial navigation of
-every interaction test through that helper; the smoke suite asserts the attribute on each route.
+every interaction test through that helper; the route journey asserts the attribute on each route.
 
 **Preview ownership.** Each checkout derives its preview port from its own path, and
 `scripts/playwright-preview.ts` stamps the checkout path into the build output as
@@ -107,6 +107,24 @@ nightly and manual triggers provide repeatability and scheduled issue synchroniz
 to defer coverage that is already inexpensive on the pull-request critical path.
 
 ## Violation policy
+
+### Route journeys
+
+`routes.spec.ts` navigates once per route, checks hydration, the main landmark, & the single named
+page heading, then runs full axe in light mode. With the system theme preference active, it switches
+the OS color scheme to dark in place & scans only `color-contrast`, the theme-sensitive rule within
+our WCAG tags. This preserves the rendered DOM & works on standalone pages without a tracker
+toolbar. The keyboard suite also exercises explicit dark/light choices through Quick settings. Real
+focus behavior remains covered by keyboard & forced-colors tests; axe does not provide a WCAG-tagged
+focus-visible rule.
+
+`populated-records.spec.ts` uses the same full-light/dark-contrast pattern. Its separate navigation
+is intentional: populated progress & revealed spoilers expose controls missing from the initial
+route DOM. `states.spec.ts` retains full scans for distinct dialogs, expanded controls, search
+results, completed/spoiler rows, & import/transfer/restore results. Result assertions there wait for
+the assembled DOM before axe; their value & error semantics also have colocated component tests. The
+former smoke & semantics route loops are folded into the journey. Progress values, decorative marks,
+input bounds, selected controls, & input-alert associations are asserted in component tests.
 
 Axe runs WCAG 2.2 A and AA rules. Serious and critical findings fail. Minor and moderate findings
 remain visible in reports and may receive targeted assertions. Failures report the route, theme,
