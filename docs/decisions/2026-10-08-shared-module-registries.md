@@ -1,0 +1,34 @@
+# Shared module registries for Vitest
+
+## Context
+
+The Vitest step was the CI critical path (#707): 113 s on two-CPU runners against #687’s 60 s
+target, while test bodies summed to 56 s. Per-file isolation re-imported tracker data, both name
+locales, & Svelte for each of the `app` project’s 102 files; import & setup were most of its time.
+Locally at two workers, `app` took 12.1 s isolated and 2.7 s without isolation.
+
+## Decision
+
+The `app`, `pipeline`, & `node` projects run with `isolate: false`, so each worker reuses one module
+registry. Spies, stubbed globals, & stubbed environment variables still reset per test. App tests
+that call `vi.mock()`, `vi.doMock()`, `vi.unmock()`, `vi.doUnmock()`, or `vi.resetModules()` use the
+`*.isolated.test.ts` suffix and run in a new `isolated` project with the app’s setup.
+`tests/vitest-isolation.test.ts` fails when a shared-registry file uses those calls.
+
+## Alternatives
+
+- **Keep isolation everywhere:** leaves the largest phase untouched.
+- **Share the `client` registry too:** shuffled runs failed across four or more files per seed,
+  because happy-dom tests share a DOM and mock widely. It stays isolated.
+- **Opt files into sharing instead of out of it:** would rename about 90 files rather than 10, and
+  forgetting the suffix would only cost speed, so nothing would enforce it.
+- **Select isolated files by scanning for mocks in `vite.config.ts`:** hides a file’s project behind
+  config-time logic; a suffix shows it in the path, like `.cold` & `.client`.
+
+## Revisit if
+
+- A shared-registry file fails only in some orders or worker assignments; shuffle it
+  (`--sequence.shuffle`) before moving it to `isolated`.
+- Vitest gains per-file isolation control, or module mocks stop leaking across files without it.
+- Isolated runs become cheap enough (for example, through a faster import path) that the speed
+  difference no longer matters.
