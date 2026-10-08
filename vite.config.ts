@@ -80,7 +80,8 @@ const plainNodeTestOptions = {
  * tracker data, names, & Svelte per file; that import & setup work was most of the app project's
  * time (#707). Spies, stubbed globals, & stubbed environment variables still reset per test, but a
  * module mock would leak into later files, so a file that mocks or resets modules must opt into
- * isolation with the `*.isolated.test.ts` (or `*.isolated.client.test.ts`) suffix. `tests/vitest-isolation.test.ts` enforces that.
+ * isolation with the `*.isolated.test.ts` (or `*.isolated.client.test.ts`) suffix; the pipeline
+ * has no isolated project yet. `tests/vitest-isolation.test.ts` enforces that.
  */
 const sharedRegistry = { isolate: false };
 
@@ -234,6 +235,7 @@ export default defineConfig({
           exclude: [
             ...sharedTestExcludes,
             "**/*.assets.test.ts",
+            "**/*.isolated.test.ts",
             ...(process.env.VITEST_EXCLUDE_CLI_PROBES === "true" ? cliProbeFiles : []),
             ...(process.env.VITEST_CLEANUP_CHANGED === "false"
               ? ["scripts/cleanup-merged-worktrees.test.ts"]
@@ -242,6 +244,21 @@ export default defineConfig({
           include: ["eslint-rules/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
           name: "node",
           ...sharedRegistry,
+        },
+      },
+      {
+        // The `node` project's environment, with a fresh module registry per file for tests that
+        // mock or reset modules.
+        resolve: { alias: libAlias },
+        test: {
+          ...plainNodeTestOptions,
+          exclude: sharedTestExcludes,
+          include: [
+            "eslint-rules/**/*.isolated.test.ts",
+            "scripts/**/*.isolated.test.ts",
+            "tests/**/*.isolated.test.ts",
+          ],
+          name: "node-isolated",
         },
       },
       {

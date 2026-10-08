@@ -6,29 +6,35 @@ import { describe, expect, it } from "vitest";
 /**
  * The `app`, `client`, `pipeline`, & `node` projects share one module registry per worker (#707), so
  * a module mock or registry reset in one file leaks into whichever files that worker runs next.
- * Those files opt into a fresh registry with the `*.isolated.test.ts` suffix (`isolated` project)
- * or `*.isolated.client.test.ts` (`client-isolated`). Spies, stubbed globals, & stubbed environment variables reset per test, so they're fine.
+ * Those files opt into a fresh registry with the `*.isolated.test.ts` suffix (the `isolated` &
+ * `node-isolated` projects) or `*.isolated.client.test.ts` (`client-isolated`). The pipeline has
+ * no isolated project, so its files can't opt out. Spies, stubbed globals, & stubbed environment
+ * variables reset per test, so they're fine.
  */
 
 const root = join(import.meta.dirname, "..");
 
-/** Test files outside a per-file-isolated project (`isolated`, `client-isolated`, `cold`, & `assets`). */
+/** Directories whose `*.isolated.test.ts` files run in a per-file-isolated project. */
+const isolatedRoots = ["eslint-rules/", "scripts/", "src/", "tests/"];
+
+/** Test files in a shared-registry project, including ones directly under each root. */
 function sharedRegistryFiles(): string[] {
-  return execFileSync(
-    "git",
-    [
-      "ls-files",
-      "src/**/*.test.ts",
-      "pipeline/**/*.test.ts",
-      "eslint-rules/**/*.test.ts",
-      "scripts/**/*.test.ts",
-      "tests/**/*.test.ts",
-    ],
-    { cwd: root, encoding: "utf8" },
-  )
+  // A `dir/**/*.test.ts` pathspec skips files directly in `dir/`, so list every test & filter.
+  return execFileSync("git", ["ls-files", "*.test.ts"], { cwd: root, encoding: "utf8" })
     .split("\n")
-    .filter(Boolean)
-    .filter((file) => !/\.(?:isolated|isolated\.client|cold|assets)\.test\.ts$/u.test(file));
+    .filter((file) =>
+      ["eslint-rules/", "pipeline/", "scripts/", "src/", "tests/"].some((dir) =>
+        file.startsWith(dir),
+      ),
+    )
+    .filter((file) => !/\.(?:cold|assets)\.test\.ts$/u.test(file))
+    .filter(
+      (file) =>
+        !(
+          /\.isolated(?:\.client)?\.test\.ts$/u.test(file) &&
+          isolatedRoots.some((dir) => file.startsWith(dir))
+        ),
+    );
 }
 
 const registryCall = /\bvi\.(?:mock|doMock|unmock|doUnmock|resetModules)\(/u;
@@ -40,7 +46,7 @@ describe("shared module registries", () => {
     );
     expect(
       offenders,
-      "Rename these to *.isolated.test.ts or *.isolated.client.test.ts (outside src/, add an isolated project)",
+      "Rename these to *.isolated.test.ts or *.isolated.client.test.ts (in pipeline/, add an isolated project)",
     ).toEqual([]);
   });
 
@@ -49,6 +55,8 @@ describe("shared module registries", () => {
       expect.arrayContaining([
         "src/lib/engine/progress.test.ts",
         "src/routes/data/backup-card.client.test.ts",
+        "src/hooks.server.test.ts",
+        "tests/vitest-projects.test.ts",
       ]),
     );
   });
