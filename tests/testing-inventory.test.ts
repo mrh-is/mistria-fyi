@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 /**
  * Keeps `docs/testing-inventory.md`'s coverage tables honest: every component appears in them, and
  * a row naming one component marks "Server" & "happy-dom" exactly when that component's
- * `*.test.ts` & `*.client.test.ts` files exist.
+ * `*.test.ts` & `*.client.test.ts` files (or their `.isolated` variants) exist.
  */
 
 const root = join(import.meta.dirname, "..");
@@ -58,8 +58,10 @@ describe("testing inventory", () => {
     const mismatches = inventoryRows()
       .filter((row) => row.names.length === 1 && components().includes(row.names[0] ?? ""))
       .flatMap(({ clientTest, names: [name = ""], serverTest }) => {
-        const hasServerTest = existsSync(join(componentsDirectory, `${name}.test.ts`));
-        const hasClientTest = existsSync(join(componentsDirectory, `${name}.client.test.ts`));
+        const exists = (...suffixes: string[]) =>
+          suffixes.some((suffix) => existsSync(join(componentsDirectory, `${name}${suffix}`)));
+        const hasServerTest = exists(".test.ts", ".isolated.test.ts");
+        const hasClientTest = exists(".client.test.ts", ".isolated.client.test.ts");
         return [
           ...(hasServerTest === serverTest ? [] : [`${name}: Server should be ${hasServerTest}`]),
           ...(hasClientTest === clientTest

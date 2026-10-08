@@ -9,18 +9,22 @@ Locally at two workers, `app` took 12.1 s isolated and 2.7 s without isolation.
 
 ## Decision
 
-The `app`, `pipeline`, & `node` projects run with `isolate: false`, so each worker reuses one module
-registry. Spies, stubbed globals, & stubbed environment variables still reset per test. App tests
-that call `vi.mock()`, `vi.doMock()`, `vi.unmock()`, `vi.doUnmock()`, or `vi.resetModules()` use the
-`*.isolated.test.ts` suffix and run in a new `isolated` project with the app’s setup.
-`tests/vitest-isolation.test.ts` fails when a shared-registry file uses those calls.
+The `app`, `client`, `pipeline`, & `node` projects run with `isolate: false`, so each worker reuses
+one module registry. Spies, stubbed globals, & stubbed environment variables still reset per test.
+App tests that call `vi.mock()`, `vi.doMock()`, `vi.unmock()`, `vi.doUnmock()`, or
+`vi.resetModules()` use the `*.isolated.test.ts` suffix and run in a new `isolated` project with the
+app’s setup. Happy-dom tests use `*.isolated.client.test.ts` and a `client-isolated` project;
+because `client` files also share a happy-dom document, the client setup empties `document.body`
+after each file. `tests/vitest-isolation.test.ts` fails when a shared-registry file uses those
+calls.
 
 ## Alternatives
 
 - **Keep isolation everywhere:** leaves the largest phase untouched.
-- **Share the `client` registry too:** shuffled runs failed across four or more files per seed,
-  because happy-dom tests share a DOM and mock widely. It stays isolated.
-- **Opt files into sharing instead of out of it:** would rename about 90 files rather than 10, and
+- **Keep `client` isolated:** sharing all 41 files failed on every shuffled seed, but every failure
+  came from the 12 files that mock or reset modules or from one test that left nodes in
+  `document.body`. Without those, sharing cut the other 29 files from 5.8 s to 1.3 s locally.
+- **Opt files into sharing instead of out of it:** would rename about 120 files rather than 22, and
   forgetting the suffix would only cost speed, so nothing would enforce it.
 - **Select isolated files by scanning for mocks in `vite.config.ts`:** hides a file’s project behind
   config-time logic; a suffix shows it in the path, like `.cold` & `.client`.

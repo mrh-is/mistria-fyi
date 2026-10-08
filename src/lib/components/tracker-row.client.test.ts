@@ -181,6 +181,8 @@ describe("TrackerRow reportable metadata", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Check First item" }));
 
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Check Second item" }));
+    // Testing Library's cleanup removes only its own containers, not this hand-built list.
+    list.remove();
     vi.unstubAllGlobals();
   });
 });

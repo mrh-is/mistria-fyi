@@ -1,6 +1,13 @@
 import "@testing-library/jest-dom/vitest";
 
-import { vi } from "vitest";
+import { afterAll, vi } from "vitest";
+
+// The `client` project shares one happy-dom document across the files a worker runs (#707).
+// Testing Library removes its own containers after each test; this clears anything else a file
+// attached, so the next file starts from an empty body.
+afterAll(() => {
+  document.body.replaceChildren();
+});
 
 Object.defineProperty(globalThis, "matchMedia", {
   value: vi.fn().mockImplementation((query: string) => ({

@@ -240,7 +240,7 @@ Tests sit next to the module they cover, so moving or deleting a module takes it
   directories or mirror the source tree elsewhere.
 - **Runtime or requirement variants** use a suffix, not a directory: `foo.client.test.ts` for
   browser-only tests, `foo.cold.test.ts` for tests that need an unloaded names cache,
-  `foo.isolated.test.ts` for server-side app tests that mock or reset modules, and
+  `foo.isolated.test.ts` & `foo.isolated.client.test.ts` for tests that mock or reset modules, and
   `foo.assets.test.ts` for tests that need game assets. `vite.config.ts` selects them by glob.
 - **Large test files** split by suffix so they sort beside their source: `progress.test.ts` &
   `progress.renown.test.ts`. Two suffixes name a kind of check rather than a slice:
@@ -291,11 +291,12 @@ colocated tests don’t double the length of directory listings.
   `pnpm run test` remains the authoritative local fallback and the suite CI runs. Pass another
   comparison ref when needed, for example `pnpm run test:changed -- main`.
 
-- **Run application tests only** (`src/`: the `app`, `isolated`, `cold`, & `client` projects):
+- **Run application tests only** (`src/`: the `app`, `isolated`, `cold`, `client`, &
+  `client-isolated` projects):
   ```sh
   pnpm run test:app
   ```
-  `pnpm run test:client` runs only the `client` project.
+  `pnpm run test:client` runs only the `client` & `client-isolated` projects.
 - **Run data pipeline tests only** (`pipeline/`):
   ```sh
   pnpm run test:pipeline
@@ -339,29 +340,32 @@ Coverage runs nightly because local measurements do not establish that it is fre
 to its project, so a file path alone selects the right environment. Select a whole project with
 `pnpm exec vitest run --project=<name>`.
 
-| Project    | Files                                                     | Environment & setup                                          |
-| ---------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| `app`      | `src/**/*.test.ts`                                        | Node, SvelteKit stand-ins & preloaded names, shared registry |
-| `isolated` | `src/**/*.isolated.test.ts`                               | As `app`, isolated per file                                  |
-| `cold`     | `src/**/*.cold.test.ts`                                   | Node, isolated per file, no names preload                    |
-| `client`   | `src/**/*.client.test.ts`                                 | happy-dom & Testing Library, isolated per file               |
-| `pipeline` | `pipeline/**/*.test.ts`                                   | Plain Node without the app's Vite plugins, shared registry   |
-| `node`     | `*.test.ts` under `eslint-rules/`, `scripts/`, & `tests/` | Plain Node without the app's Vite plugins, shared registry   |
-| `assets`   | `**/*.assets.test.ts`                                     | Installed game assets; local only, excluded from `test`      |
+| Project           | Files                                                     | Environment & setup                                          |
+| ----------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
+| `app`             | `src/**/*.test.ts`                                        | Node, SvelteKit stand-ins & preloaded names, shared registry |
+| `isolated`        | `src/**/*.isolated.test.ts`                               | As `app`, isolated per file                                  |
+| `cold`            | `src/**/*.cold.test.ts`                                   | Node, isolated per file, no names preload                    |
+| `client`          | `src/**/*.client.test.ts`                                 | happy-dom & Testing Library, shared registry                 |
+| `client-isolated` | `src/**/*.isolated.client.test.ts`                        | As `client`, isolated per file                               |
+| `pipeline`        | `pipeline/**/*.test.ts`                                   | Plain Node without the app's Vite plugins, shared registry   |
+| `node`            | `*.test.ts` under `eslint-rules/`, `scripts/`, & `tests/` | Plain Node without the app's Vite plugins, shared registry   |
+| `assets`          | `**/*.assets.test.ts`                                     | Installed game assets; local only, excluded from `test`      |
 
 Every project restores spies, stubbed globals, & stubbed environment variables before each test. Set
 up spies and `vi.stubGlobal()` in the test or `beforeEach`, rather than relying on suite-level
 stubs. A new tier gets its own project rather than another entry in an exclude list.
 
 Projects marked “shared registry” reuse one module graph per worker rather than re-importing tracker
-data, names, & Svelte for every file; that import & setup work was most of the `app` project’s time
-(#707). Module-level state therefore carries between files in a worker: reset it in `beforeEach`, as
-the store tests do. A module mock would leak the same way, so an app test that calls `vi.mock()`,
-`vi.doMock()`, or `vi.resetModules()` uses the `*.isolated.test.ts` suffix and runs in `isolated`;
-`tests/vitest-isolation.test.ts` enforces that. `client` stays isolated because its files share a
-DOM & mock widely. Tests that need an unloaded names cache use the `*.cold.test.ts` convention and
-run in `cold` without preloads. `tests/vitest-projects.test.ts` fails when a tracked test file
-belongs to no project or to more than one.
+data, names, & Svelte for every file; that import & setup work was most of the `app` & `client`
+projects’ time (#707). Module-level state therefore carries between files in a worker: reset it in
+`beforeEach`, as the store tests do. A module mock would leak the same way, so a test that calls
+`vi.mock()`, `vi.doMock()`, or `vi.resetModules()` uses the `*.isolated.test.ts` suffix
+(`*.isolated.client.test.ts` for happy-dom tests) and runs in `isolated` (or `client-isolated`);
+`tests/vitest-isolation.test.ts` enforces that. `client` files also share a happy-dom document: the
+client setup empties `document.body` after each file, and a test that attaches nodes outside Testing
+Library's containers removes them itself. Tests that need an unloaded names cache use the
+`*.cold.test.ts` convention and run in `cold` without preloads. `tests/vitest-projects.test.ts`
+fails when a tracked test file belongs to no project or to more than one.
 
 ### Local real-data verification
 

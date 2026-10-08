@@ -8,13 +8,14 @@ another.
 
 ## Test layers
 
-| Layer          | Files                       | Vitest project | Runner                        | Use for                                                             |
-| -------------- | --------------------------- | -------------- | ----------------------------- | ------------------------------------------------------------------- |
-| Server render  | `src/**/*.test.ts`          | `app`          | `pnpm run test:app`           | Static markup, invariants, SEO output, anything with no interaction |
-| Module mocks   | `src/**/*.isolated.test.ts` | `isolated`     | `pnpm run test:app`           | Server-render tests that `vi.mock()` or reset modules               |
-| Cold start     | `src/**/*.cold.test.ts`     | `cold`         | `pnpm run test:app`           | The names-cache loading boundary, with no names preloaded           |
-| happy-dom      | `src/**/*.client.test.ts`   | `client`       | `pnpm run test:client`        | Clicks, keyboard, focus, async state, store effects, dialogs        |
-| Browser (a11y) | `tests/accessibility/*.ts`  | Playwright     | `pnpm run test:accessibility` | Full-route axe scans, reflow, forced colors, reduced motion         |
+| Layer           | Files                              | Vitest project    | Runner                        | Use for                                                             |
+| --------------- | ---------------------------------- | ----------------- | ----------------------------- | ------------------------------------------------------------------- |
+| Server render   | `src/**/*.test.ts`                 | `app`             | `pnpm run test:app`           | Static markup, invariants, SEO output, anything with no interaction |
+| Module mocks    | `src/**/*.isolated.test.ts`        | `isolated`        | `pnpm run test:app`           | Server-render tests that `vi.mock()` or reset modules               |
+| Cold start      | `src/**/*.cold.test.ts`            | `cold`            | `pnpm run test:app`           | The names-cache loading boundary, with no names preloaded           |
+| happy-dom       | `src/**/*.client.test.ts`          | `client`          | `pnpm run test:client`        | Clicks, keyboard, focus, async state, store effects, dialogs        |
+| happy-dom mocks | `src/**/*.isolated.client.test.ts` | `client-isolated` | `pnpm run test:client`        | happy-dom tests that `vi.mock()` or reset modules                   |
+| Browser (a11y)  | `tests/accessibility/*.ts`         | Playwright        | `pnpm run test:accessibility` | Full-route axe scans, reflow, forced colors, reduced motion         |
 
 The a11y suite's own helpers have unit tests (`tests/accessibility/support/*.test.ts`), which run in
 Vitest's `node` project with `pnpm run test`. `docs/development-workflow.md` describes every Vitest
