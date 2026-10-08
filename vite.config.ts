@@ -10,7 +10,6 @@ import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
-import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
 import { headersFilePlugin } from "./src/lib/build/headers-file.js";
@@ -222,7 +221,6 @@ export default defineConfig({
           exclude: [
             ...sharedTestExcludes,
             "**/*.assets.test.ts",
-            ...(process.env.VITEST_EXCLUDE_CLI_PROBES === "true" ? cliProbeFiles : []),
             ...(process.env.VITEST_CLEANUP_CHANGED === "false"
               ? ["scripts/cleanup-merged-worktrees.test.ts"]
               : []),
