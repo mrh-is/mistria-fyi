@@ -1,5 +1,7 @@
 import { devices } from "@playwright/test";
+import { existsSync } from "node:fs";
 
+import { SATOSHI_PATH } from "../../scripts/playwright-satoshi.js";
 import { expect, test } from "../browser/test.js";
 import { accessibilityRoutes } from "./routes.js";
 import {
@@ -16,6 +18,28 @@ import {
 } from "./support/geometry.js";
 import { openSearch, openSettingsCard, openVisibilityPanel } from "./support/scenarios.js";
 import { critical, criticalWhen } from "./support/tags.js";
+
+// Geometry proves the production layout only with Satoshi's metrics. CI fetches the font
+// (scripts/playwright-satoshi.ts); a local run without it measures fallback fonts.
+test("measures layout with the production annotation font", async ({ page }) => {
+  if (!existsSync(SATOSHI_PATH) && process.env.CI !== "true") {
+    test.info().annotations.push({
+      type: "warning",
+      description: `Satoshi is missing at ${SATOSHI_PATH}; geometry measures fallback fonts.`,
+    });
+    test.skip(true, "Satoshi is not available locally");
+  }
+  await initializeApplication(page, "light");
+  await gotoApplication(page, "/");
+  const loaded = await page.evaluate(async () => {
+    // An aborted font request rejects `load`; `check` then reports the failure.
+    await document.fonts.load("1em Satoshi").catch(() => []);
+    return document.fonts.check("1em Satoshi");
+  });
+  expect(loaded, "Satoshi failed to load; run pnpm exec tsx scripts/playwright-satoshi.ts").toBe(
+    true,
+  );
+});
 
 test.describe("320-pixel reflow", () => {
   test.use({ viewport: { height: 720, width: 320 } });

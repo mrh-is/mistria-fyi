@@ -1,6 +1,7 @@
 import { test as base, expect } from "@playwright/test";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 
+import { SATOSHI_PATH, SATOSHI_URL } from "../../scripts/playwright-satoshi.js";
 import { PRODUCTION_ASSET_ORIGIN } from "../../src/lib/asset-origin.js";
 import dimensions from "./fixtures/sprite-dimensions.json" with { type: "json" };
 
@@ -9,8 +10,10 @@ import type { BrowserContext, Request } from "@playwright/test";
 const spriteDimensions: Readonly<Record<string, null | string>> = dimensions;
 const sprites = new Map<string, Buffer>();
 const fontDirectory = new URL("../../src/lib/fonts/", import.meta.url);
+/** Present in CI (`scripts/playwright-satoshi.ts`) & optional locally; never committed. */
+const satoshi = existsSync(SATOSHI_PATH) ? readFileSync(SATOSHI_PATH) : undefined;
 const fallbackFonts = new Set([
-  `${PRODUCTION_ASSET_ORIGIN}/fonts/satoshi-regular.woff2`,
+  SATOSHI_URL,
   ...readdirSync(fontDirectory)
     .filter((name) => name.endsWith(".css"))
     .flatMap((name) =>
@@ -68,7 +71,16 @@ export async function isolateNetwork(
         external.delete(request);
         return;
       }
-      // Satoshi cannot be redistributed; locale fonts are large. Exercise system-font fallback.
+      if (url.href === SATOSHI_URL && satoshi !== undefined) {
+        await route.fulfill({
+          body: satoshi,
+          contentType: "font/woff2",
+          headers: { "access-control-allow-origin": "*" },
+        });
+        external.delete(request);
+        return;
+      }
+      // Without a local Satoshi, and for the large locale fonts, exercise system-font fallback.
       if (fallbackFonts.has(url.href)) {
         await route.abort();
         external.delete(request);

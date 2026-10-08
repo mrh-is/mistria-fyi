@@ -2,6 +2,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 
+import { spriteKeys } from "../../scripts/sprites/sprite-manifest.js";
+import trackerData from "../../src/lib/data/tracker-data.json";
 import dimensions from "./fixtures/sprite-dimensions.json";
 
 describe("browser network fixtures", () => {
@@ -14,6 +16,13 @@ describe("browser network fixtures", () => {
       ).metadata();
       expect([metadata.width, metadata.height], size).toEqual([width, height]);
     }
+  });
+
+  it("has a manifest entry for every sprite the tracker data can request", () => {
+    expect(
+      Object.keys(dimensions),
+      "Sprite manifest is stale; stage sprites & run pnpm run sprites:manifest",
+    ).toEqual(spriteKeys(trackerData));
   });
 
   it("requires every browser spec to use the guarded test fixture", () => {

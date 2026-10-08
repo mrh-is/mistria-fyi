@@ -21,6 +21,13 @@ For exact typography without a network connection:
 Do not add the font binary to Git. The legacy path `static/fonts/satoshi-regular.woff2` remains
 ignored to prevent accidental recommits.
 
+### Browser tests
+
+CI copies the hosted font to the gitignored `tests/browser/fixtures/local/` and checks it against a
+pinned SHA-256, so the geometry suite measures Satoshi’s production metrics without the font
+entering the repository. See `tests/browser/fixtures/README.md` and
+`docs/decisions/2026-10-08-browser-font-fidelity.md`.
+
 ### Production hosting
 
 Production expects this public object:
