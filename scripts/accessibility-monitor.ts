@@ -8,6 +8,7 @@ const TITLE = "Automated accessibility regression detected";
 export type CommandRunner = (command: string, args: string[], input?: string) => Promise<string>;
 
 interface IssueSummary {
+  body: string;
   number: number;
 }
 
@@ -116,19 +117,23 @@ function collectErrors(value: unknown, errors: string[]): void {
   for (const nested of Object.values(record)) collectErrors(nested, errors);
 }
 
+// GitHub search drops the marker's comment punctuation and matches its words anywhere, so the
+// query only narrows candidates; the exact marker in the body is what identifies a monitor issue.
 async function findOpenIssue(run: CommandRunner): Promise<number | undefined> {
   const output = await run("gh", [
     "issue",
     "list",
     "--state",
     "open",
+    "--label",
+    "type: bug",
     "--search",
-    `${MARKER} in:body`,
+    `"${TITLE}" in:title`,
     "--json",
-    "number",
+    "number,body",
   ]);
   const issues = JSON.parse(output) as IssueSummary[];
-  return issues[0]?.number;
+  return issues.find((issue) => issue.body.includes(MARKER))?.number;
 }
 
 async function main(): Promise<void> {
