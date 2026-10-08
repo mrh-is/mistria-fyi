@@ -154,9 +154,14 @@ it("leaves diagnostics on disk after Playwright-style process-group force-kill",
     stdio: "ignore",
   });
   try {
-    await vi.waitFor(() => {
-      expect(fixture.read()).toContain("stalled preview");
-    });
+    await vi.waitFor(
+      () => {
+        const diagnostics = fixture.read();
+        expect(diagnostics).toContain("stalled preview");
+        expect(diagnostics).toContain('"event":"readiness-probe"');
+      },
+      { timeout: 10_000 },
+    );
   } finally {
     if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
     await once(child, "close");
