@@ -45,6 +45,7 @@
     "fonts:check": "pnpm --dir scripts/locale-fonts run check",
     "fonts:lint": "pnpm --dir scripts/locale-fonts run lint",
     "fonts:upload": "bash scripts/locale-fonts/upload-locale-fonts.sh",
+    "sprites:manifest": "tsx scripts/sprites/sprite-manifest.ts",
     "sprites:upload": "bash scripts/sprites/upload-sprites.sh",
     "sprites:villagers": "pnpm run pipeline -- --villager-sprites-only"
   },

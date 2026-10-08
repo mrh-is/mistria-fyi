@@ -20,6 +20,7 @@ prefix_rule(
             "pipeline:assets",
             "prepare",
             "preview",
+            "sprites:manifest",
             "test",
             "test:accessibility",
             "test:accessibility:critical",

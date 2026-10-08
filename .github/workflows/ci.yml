@@ -235,6 +235,14 @@ jobs:
         with:
           name: build-output
           path: .svelte-kit/output/
+      # Geometry measures Satoshi's production metrics (#708). The script pins the font's SHA-256,
+      # so its hash keys the cache; a warm cache never touches the network.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: tests/browser/fixtures/local/satoshi-regular.woff2
+          key: satoshi-${{ hashFiles('scripts/playwright-satoshi.ts') }}
+      - name: Fetch & verify Satoshi
+        run: pnpm exec tsx scripts/playwright-satoshi.ts
       - id: accessibility-tests
         continue-on-error: true
         run: |
