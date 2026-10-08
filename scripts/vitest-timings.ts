@@ -27,44 +27,20 @@ export function timingBudgets(cpus: number, coverage: boolean): Budgets {
   };
 }
 
+// Half the CPUs (one to four workers) leaves headroom for the CLI probes' subprocesses. Two-CPU
+// noncoverage runs use both: once the probes stopped paying `pnpm exec` startup & ran their
+// listings concurrently, one invocation beat a separate serial probe phase (#707).
 export function vitestArguments(coverage: boolean, cpus: number): string[] {
+  const workers = cpus === 2 && !coverage ? 2 : Math.max(1, Math.min(Math.floor(cpus / 2), 4));
   return [
     "exec",
     "vitest",
     "run",
     "--project=!assets",
-    `--maxWorkers=${Math.max(1, Math.min(Math.floor(cpus / 2), 4))}`,
+    `--maxWorkers=${workers}`,
     "--reporter=default",
     "--reporter=./scripts/vitest-timings.ts",
     ...(coverage ? ["--coverage"] : []),
-  ];
-}
-
-export const cliProbeFiles = [
-  "scripts/playwright-allocation.test.ts",
-  "tests/lint-ownership.test.ts",
-  "tests/vitest-projects.test.ts",
-];
-
-export interface VitestInvocation {
-  arguments: string[];
-  excludeCliProbes: boolean;
-}
-
-export function vitestInvocations(coverage: boolean, cpus: number): VitestInvocation[] {
-  const arguments_ = vitestArguments(coverage, cpus);
-  if (cpus !== 2 || coverage) return [{ arguments: arguments_, excludeCliProbes: false }];
-
-  // Only the expensive CLI probes need a spare CPU. Serializing every file on a two-CPU
-  // runner exceeded the unchanged wall budget on main & #699, twice on the latter.
-  return [
-    {
-      arguments: arguments_.map((argument) =>
-        argument === "--maxWorkers=1" ? "--maxWorkers=2" : argument,
-      ),
-      excludeCliProbes: true,
-    },
-    { arguments: [...arguments_, ...cliProbeFiles], excludeCliProbes: false },
   ];
 }
 
@@ -129,36 +105,22 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const cpus = availableParallelism();
   const budgets = timingBudgets(cpus, coverage);
   mkdirSync(artifactDirectory, { recursive: true });
+  rmSync(reportPath, { force: true });
   const started = performance.now();
-  const files: FileTiming[] = [];
-  let succeeded = true;
-  for (const invocation of vitestInvocations(coverage, cpus)) {
-    rmSync(reportPath, { force: true });
-    const remainingMs = budgets.stepMs + 5e3 - (performance.now() - started);
-    if (remainingMs <= 0) {
-      succeeded = false;
-      break;
-    }
-    const result = spawnSync("pnpm", invocation.arguments, {
-      env: { ...process.env, VITEST_EXCLUDE_CLI_PROBES: String(invocation.excludeCliProbes) },
-      killSignal: "SIGKILL",
-      stdio: "inherit",
-      timeout: Math.ceil(remainingMs),
-    });
-    try {
-      files.push(
-        ...(JSON.parse(readFileSync(reportPath, "utf8")) as { files: FileTiming[] }).files,
-      );
-    } catch (error) {
-      console.error("Missing or invalid Vitest timing report", error);
-      succeeded = false;
-    }
-    if (result.error) console.error(result.error);
-    if (result.status !== 0) {
-      succeeded = false;
-      break;
-    }
+  const result = spawnSync("pnpm", vitestArguments(coverage, cpus), {
+    killSignal: "SIGKILL",
+    stdio: "inherit",
+    timeout: budgets.stepMs + 5e3,
+  });
+  let files: FileTiming[] = [];
+  let succeeded = result.status === 0;
+  try {
+    ({ files } = JSON.parse(readFileSync(reportPath, "utf8")) as { files: FileTiming[] });
+  } catch (error) {
+    console.error("Missing or invalid Vitest timing report", error);
+    succeeded = false;
   }
+  if (result.error) console.error(result.error);
   const elapsedMs = performance.now() - started;
   writeFileSync(reportPath, JSON.stringify({ budgets, coverage, cpus, elapsedMs, files }, null, 2));
   const summary = timingSummary(files, elapsedMs, budgets);
