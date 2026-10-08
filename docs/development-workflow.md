@@ -344,16 +344,17 @@ Coverage runs nightly because local measurements do not establish that it is fre
 to its project, so a file path alone selects the right environment. Select a whole project with
 `pnpm exec vitest run --project=<name>`.
 
-| Project           | Files                                                     | Environment & setup                                          |
-| ----------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| `app`             | `src/**/*.test.ts`                                        | Node, SvelteKit stand-ins & preloaded names, shared registry |
-| `isolated`        | `src/**/*.isolated.test.ts`                               | As `app`, isolated per file                                  |
-| `cold`            | `src/**/*.cold.test.ts`                                   | Node, isolated per file, no names preload                    |
-| `client`          | `src/**/*.client.test.ts`                                 | happy-dom & Testing Library, shared registry                 |
-| `client-isolated` | `src/**/*.isolated.client.test.ts`                        | As `client`, isolated per file                               |
-| `pipeline`        | `pipeline/**/*.test.ts`                                   | Plain Node without the app's Vite plugins, shared registry   |
-| `node`            | `*.test.ts` under `eslint-rules/`, `scripts/`, & `tests/` | Plain Node without the app's Vite plugins, shared registry   |
-| `assets`          | `**/*.assets.test.ts`                                     | Installed game assets; local only, excluded from `test`      |
+| Project           | Files                                                              | Environment & setup                                          |
+| ----------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `app`             | `src/**/*.test.ts`                                                 | Node, SvelteKit stand-ins & preloaded names, shared registry |
+| `isolated`        | `src/**/*.isolated.test.ts`                                        | As `app`, isolated per file                                  |
+| `cold`            | `src/**/*.cold.test.ts`                                            | Node, isolated per file, no names preload                    |
+| `client`          | `src/**/*.client.test.ts`                                          | happy-dom & Testing Library, shared registry                 |
+| `client-isolated` | `src/**/*.isolated.client.test.ts`                                 | As `client`, isolated per file                               |
+| `pipeline`        | `pipeline/**/*.test.ts`                                            | Plain Node without the app's Vite plugins, shared registry   |
+| `node`            | `*.test.ts` under `eslint-rules/`, `scripts/`, & `tests/`          | Plain Node without the app's Vite plugins, shared registry   |
+| `node-isolated`   | `*.isolated.test.ts` under `eslint-rules/`, `scripts/`, & `tests/` | As `node`, isolated per file                                 |
+| `assets`          | `**/*.assets.test.ts`                                              | Installed game assets; local only, excluded from `test`      |
 
 Every project restores spies, stubbed globals, & stubbed environment variables before each test. Set
 up spies and `vi.stubGlobal()` in the test or `beforeEach`, rather than relying on suite-level
@@ -364,12 +365,13 @@ data, names, & Svelte for every file; that import & setup work was most of the `
 projects’ time (#707). Module-level state therefore carries between files in a worker: reset it in
 `beforeEach`, as the store tests do. A module mock would leak the same way, so a test that calls
 `vi.mock()`, `vi.doMock()`, or `vi.resetModules()` uses the `*.isolated.test.ts` suffix
-(`*.isolated.client.test.ts` for happy-dom tests) and runs in `isolated` (or `client-isolated`);
-`tests/vitest-isolation.test.ts` enforces that. `client` files also share a happy-dom document: the
-client setup empties `document.body` after each file, and a test that attaches nodes outside Testing
-Library's containers removes them itself. Tests that need an unloaded names cache use the
-`*.cold.test.ts` convention and run in `cold` without preloads. `tests/vitest-projects.test.ts`
-fails when a tracked test file belongs to no project or to more than one.
+(`*.isolated.client.test.ts` for happy-dom tests) and runs in `isolated`, `node-isolated`, or
+`client-isolated`; the pipeline has no isolated project yet. `tests/vitest-isolation.test.ts`
+enforces that. `client` files also share a happy-dom document: the client setup empties
+`document.body` after each file, and a test that attaches nodes outside Testing Library's containers
+removes them itself. Tests that need an unloaded names cache use the `*.cold.test.ts` convention and
+run in `cold` without preloads. `tests/vitest-projects.test.ts` fails when a tracked test file
+belongs to no project or to more than one.
 
 ### Local real-data verification
 
