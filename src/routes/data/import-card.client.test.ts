@@ -20,6 +20,42 @@ async function importFiles(files: File[]) {
 }
 
 describe("save import", () => {
+  it("announces no new data on a repeated import after a successful source-file summary", async () => {
+    render(ImportCard, { open: true });
+    const input = screen.getByLabelText("Choose save files to import");
+    const files = [new File([JSON.stringify({ items_acquired: [] })], "player.json")];
+
+    await fireEvent.change(input, { target: { files } });
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+    });
+    expect(screen.getByText(/Imported from player.json/)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    await fireEvent.change(input, { target: { files } });
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("No new data to import.");
+    });
+    expect(screen.getByText("No new data to import", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("shows a successful source-file summary and warning count", async () => {
+    await importFiles([
+      new File(
+        [JSON.stringify({ items_acquired: ["animated_waterfall_v2"], perks: ["unknown_perk"] })],
+        "player.json",
+      ),
+    ]);
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+    });
+    expect(screen.getByText(/Imported from player.json/)).toBeInTheDocument();
+    expect(screen.getByText("1 warnings", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("imports extracted JSON files and lists each warning", async () => {
     const cosmeticId = recordKeys(trackerData.cosmetics)[0];
     const player = new File(

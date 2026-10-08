@@ -1,32 +1,8 @@
-import { readFileSync } from "node:fs";
-import { gzipSync } from "node:zlib";
-
-import { LOCALE_CODES } from "../../src/lib/types/locale.js";
+import { builtLocaleChunks } from "../../scripts/built-locale-chunks.js";
 import { expect, test } from "../browser/test.js";
 import { waitForControl } from "./service-worker.js";
 
 import type { Page } from "@playwright/test";
-
-const CLIENT_OUTPUT = ".svelte-kit/output/client";
-/** Per-locale gzipped name data; see docs/pwa-verification.md#byte-budget. */
-const MAX_LOCALE_GZIP_BYTES = 100_000;
-
-/**
- * The per-locale name chunks inlined into the built service worker, so the spec checks the map the
- * worker actually received. Read inside each test, not at import: Playwright imports spec files to
- * list them before its web server has run the build. (The Vite manifest isn't an option: CI's
- * build artifact omits hidden directories like `.vite/`.)
- */
-function builtChunks(): Record<string, string[]> {
-  const worker = readFileSync(`${CLIENT_OUTPUT}/service-worker.js`, "utf8");
-  return Object.fromEntries(
-    LOCALE_CODES.map((locale) => {
-      const list =
-        new RegExp(`[{,]\\s*["']?${locale}["']?\\s*:\\s*\\[([^\\]]*)\\]`).exec(worker)?.[1] ?? "";
-      return [locale, [...list.matchAll(/["'`]([^"'`]+)["'`]/g)].map(([, path]) => path)];
-    }),
-  );
-}
 
 function cachedPaths(page: Page, paths: readonly string[]): Promise<string[]> {
   return page.evaluate(async (candidates) => {
@@ -37,37 +13,11 @@ function cachedPaths(page: Page, paths: readonly string[]): Promise<string[]> {
   }, paths);
 }
 
-// eslint-disable-next-line no-empty-pattern -- Playwright requires a destructured fixtures argument.
-test("keeps each locale's name data within the byte budget", ({}, testInfo) => {
-  const chunks = builtChunks();
-  for (const [locale, paths] of Object.entries(chunks)) {
-    expect(paths.length, `${locale} name chunks inlined into the service worker`).toBeGreaterThan(
-      0,
-    );
-  }
-  const sizes = Object.entries(chunks).map(([locale, paths]) => ({
-    gzip: paths.reduce(
-      (total, path) => total + gzipSync(readFileSync(`${CLIENT_OUTPUT}${path}`)).length,
-      0,
-    ),
-    locale,
-  }));
-  const total = sizes.reduce((sum, { gzip }) => sum + gzip, 0);
-  testInfo.annotations.push({
-    type: "locale name gzip bytes",
-    description: `${sizes.map(({ gzip, locale }) => `${locale} ${String(gzip)}`).join(", ")}; all ${String(total)} (none precached)`,
-  });
-
-  for (const { gzip, locale } of sizes) {
-    expect(gzip, locale).toBeLessThanOrEqual(MAX_LOCALE_GZIP_BYTES);
-  }
-});
-
 test("keeps the visited locale offline and leaves other locales to download on demand", async ({
   context,
   page,
 }) => {
-  const { en: enChunks = [], ja: jaChunks = [] } = builtChunks();
+  const { en: enChunks = [], ja: jaChunks = [] } = builtLocaleChunks();
   expect(enChunks.length).toBeGreaterThan(0);
   expect(jaChunks.length).toBeGreaterThan(0);
 

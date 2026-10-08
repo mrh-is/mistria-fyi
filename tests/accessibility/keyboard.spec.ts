@@ -3,6 +3,7 @@ import {
   createStoredState,
   gotoApplication,
   initializeApplication,
+  switchTheme,
   waitForRendering,
 } from "./support/application-state.js";
 import { requireBox } from "./support/boxes.js";
@@ -53,6 +54,8 @@ test.describe("keyboard and focus accessibility", () => {
     await trigger.focus();
     await page.keyboard.press("Space");
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await switchTheme(page, "dark");
+    await switchTheme(page, "light");
   });
 
   test("search supports keyboard entry, clearing, and closure", async ({ page }) => {
