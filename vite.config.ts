@@ -69,10 +69,32 @@ const loadTolerantTimeoutMs = 30_000;
  */
 const plainNodeTestOptions = {
   hookTimeout: loadTolerantTimeoutMs,
-  isolate: true,
   restoreMocks: true,
   testTimeout: loadTolerantTimeoutMs,
+  unstubEnvs: true,
   unstubGlobals: true,
+};
+
+/**
+ * Files in a shared-registry project reuse one module graph per worker instead of re-importing
+ * tracker data, names, & Svelte per file; that import & setup work was most of the app project's
+ * time (#707). Spies, stubbed globals, & stubbed environment variables still reset per test, but a
+ * module mock would leak into later files, so a file that mocks or resets modules must opt into
+ * isolation with the `*.isolated.test.ts` (or `*.isolated.client.test.ts`) suffix; the pipeline
+ * has no isolated project yet. `tests/vitest-isolation.test.ts` enforces that.
+ */
+const sharedRegistry = { isolate: false };
+
+/** happy-dom & Testing Library, shared by the `client` & `client-isolated` projects. */
+const clientTestOptions = {
+  environment: "happy-dom" as const,
+  // Warm two-worker runs are faster with threads.
+  pool: "threads" as const,
+  setupFiles: [
+    "./src/vitest-setup.ts",
+    "./src/vitest-setup-app-state.ts",
+    "./src/vitest-setup-names.ts",
+  ],
 };
 
 /**
@@ -173,9 +195,22 @@ export default defineConfig({
             "**/*.assets.test.ts",
             "**/*.client.test.ts",
             "**/*.cold.test.ts",
+            "**/*.isolated.test.ts",
           ],
           include: ["src/**/*.test.ts"],
           name: "app",
+          setupFiles: ["./src/vitest-setup-app-state.ts", "./src/vitest-setup-names.ts"],
+          ...sharedRegistry,
+        },
+      },
+      {
+        // The app project's environment, with a fresh module registry per file for tests that
+        // mock or reset modules.
+        extends: true,
+        test: {
+          exclude: sharedTestExcludes,
+          include: ["src/**/*.isolated.test.ts"],
+          name: "isolated",
           setupFiles: ["./src/vitest-setup-app-state.ts", "./src/vitest-setup-names.ts"],
         },
       },
@@ -188,6 +223,7 @@ export default defineConfig({
           exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
           include: ["pipeline/**/*.test.ts"],
           name: "pipeline",
+          ...sharedRegistry,
         },
       },
       {
@@ -199,6 +235,7 @@ export default defineConfig({
           exclude: [
             ...sharedTestExcludes,
             "**/*.assets.test.ts",
+            "**/*.isolated.test.ts",
             ...(process.env.VITEST_EXCLUDE_CLI_PROBES === "true" ? cliProbeFiles : []),
             ...(process.env.VITEST_CLEANUP_CHANGED === "false"
               ? ["scripts/cleanup-merged-worktrees.test.ts"]
@@ -206,6 +243,22 @@ export default defineConfig({
           ],
           include: ["eslint-rules/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
           name: "node",
+          ...sharedRegistry,
+        },
+      },
+      {
+        // The `node` project's environment, with a fresh module registry per file for tests that
+        // mock or reset modules.
+        resolve: { alias: libAlias },
+        test: {
+          ...plainNodeTestOptions,
+          exclude: sharedTestExcludes,
+          include: [
+            "eslint-rules/**/*.isolated.test.ts",
+            "scripts/**/*.isolated.test.ts",
+            "tests/**/*.isolated.test.ts",
+          ],
+          name: "node-isolated",
         },
       },
       {
@@ -222,16 +275,21 @@ export default defineConfig({
         extends: true,
         plugins: [svelteTesting()],
         test: {
-          environment: "happy-dom",
+          ...clientTestOptions,
+          exclude: [...sharedTestExcludes, "**/*.isolated.client.test.ts"],
           include: ["src/**/*.client.test.ts"],
           name: "client",
-          // Warm two-worker runs are faster with threads; per-file isolation stays enabled.
-          pool: "threads",
-          setupFiles: [
-            "./src/vitest-setup.ts",
-            "./src/vitest-setup-app-state.ts",
-            "./src/vitest-setup-names.ts",
-          ],
+          ...sharedRegistry,
+        },
+      },
+      {
+        extends: true,
+        plugins: [svelteTesting()],
+        test: {
+          ...clientTestOptions,
+          exclude: sharedTestExcludes,
+          include: ["src/**/*.isolated.client.test.ts"],
+          name: "client-isolated",
         },
       },
       {
@@ -248,6 +306,7 @@ export default defineConfig({
     ],
     restoreMocks: true,
     testTimeout: loadTolerantTimeoutMs,
+    unstubEnvs: true,
     unstubGlobals: true,
   },
 });

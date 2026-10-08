@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
@@ -22,41 +22,56 @@ beforeEach(() => {
 });
 
 describe("/everything page", () => {
-  it("renders a section for every category, including recipes", () => {
-    const { container } = renderToFragmentWithFeedback(AllPage, { props });
+  // A full render of every category is this file's main cost (#707); the default-state checks read
+  // one shared, unmodified render.
+  describe("in the default state", () => {
+    let view: ReturnType<typeof renderToFragmentWithFeedback>;
 
-    for (const key of CATEGORY_KEYS) {
-      expect(container.querySelector(`#category-${key}`)).not.toBeNull();
-    }
-  });
-
-  it("orders sections alphabetically by category name, matching the home page", () => {
-    const { container } = renderToFragmentWithFeedback(AllPage, { props });
-
-    const expectedOrder = sortCategoryKeysByName(CATEGORY_KEYS, "en");
-    const renderedOrder = [...container.querySelectorAll("[id^='category-']")].map((element) =>
-      element.id.replace("category-", ""),
-    );
-
-    expect(renderedOrder).toEqual(expectedOrder);
-  });
-
-  it("reconciles the header total with every rendered category, recipes included", () => {
-    const progress = getAllProgress({
-      availabilityWindows: userState.state.availabilityWindows,
-      progress: userState.state.progress,
-      worldState: userState.state.worldState,
+    beforeAll(() => {
+      userState.resetAll();
+      view = renderToFragmentWithFeedback(AllPage, { props });
     });
-    const overall = getOverallProgress(progress);
-    expect(progress.recipes.total).toBeGreaterThan(0);
 
-    const { queries } = renderToFragmentWithFeedback(AllPage, { props });
+    it("renders a section for every category, including recipes", () => {
+      for (const key of CATEGORY_KEYS) {
+        expect(view.container.querySelector(`#category-${key}`)).not.toBeNull();
+      }
+    });
 
-    expect(
-      queries.getByText(
-        `${formatNumber(overall.completed, "en")} of ${formatNumber(overall.total, "en")} completed`,
-      ),
-    ).toBeTruthy();
+    it("orders sections alphabetically by category name, matching the home page", () => {
+      const expectedOrder = sortCategoryKeysByName(CATEGORY_KEYS, "en");
+      const renderedOrder = [...view.container.querySelectorAll("[id^='category-']")].map(
+        (element) => element.id.replace("category-", ""),
+      );
+
+      expect(renderedOrder).toEqual(expectedOrder);
+    });
+
+    it("reconciles the header total with every rendered category, recipes included", () => {
+      const progress = getAllProgress({
+        availabilityWindows: userState.state.availabilityWindows,
+        progress: userState.state.progress,
+        worldState: userState.state.worldState,
+      });
+      const overall = getOverallProgress(progress);
+      expect(progress.recipes.total).toBeGreaterThan(0);
+
+      expect(
+        view.queries.getByText(
+          `${formatNumber(overall.completed, "en")} of ${formatNumber(overall.total, "en")} completed`,
+        ),
+      ).toBeTruthy();
+    });
+
+    it("labels each section by its header and tints it with the category color", () => {
+      for (const key of CATEGORY_KEYS) {
+        const section = view.container.querySelector(`section[aria-labelledby="category-${key}"]`);
+        expect(section, key).not.toBeNull();
+        expect(section?.getAttribute("style"), key).toContain(
+          `--primary: var(--color-category-${key})`,
+        );
+      }
+    });
   });
 
   it("hides a completed category unless completed content is shown", () => {
@@ -69,17 +84,5 @@ describe("/everything page", () => {
     userState.toggleShowCompleted();
     const shown = renderToFragmentWithFeedback(AllPage, { props });
     expect(shown.container.querySelector("#category-renown")).not.toBeNull();
-  });
-
-  it("labels each section by its header and tints it with the category color", () => {
-    const { container } = renderToFragmentWithFeedback(AllPage, { props });
-
-    for (const key of CATEGORY_KEYS) {
-      const section = container.querySelector(`section[aria-labelledby="category-${key}"]`);
-      expect(section, key).not.toBeNull();
-      expect(section?.getAttribute("style"), key).toContain(
-        `--primary: var(--color-category-${key})`,
-      );
-    }
   });
 });
