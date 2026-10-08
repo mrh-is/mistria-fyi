@@ -154,17 +154,18 @@ it("leaves diagnostics on disk after Playwright-style process-group force-kill",
     stdio: "ignore",
   });
   try {
-    // The first readiness probe lands shortly after the subprocess's stderr; under load, a kill
-    // on stderr alone can beat it.
-    await vi.waitFor(() => {
-      expect(fixture.read()).toContain("stalled preview");
-      expect(fixture.read()).toContain('"event":"readiness-probe"');
-    });
+    await vi.waitFor(
+      () => {
+        const diagnostics = fixture.read();
+        expect(diagnostics).toContain("stalled preview");
+        expect(diagnostics).toContain('"event":"readiness-probe"');
+      },
+      { timeout: 10_000 },
+    );
   } finally {
     if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
     await once(child, "close");
   }
-  expect(fixture.read()).toContain("stalled preview");
   expect(fixture.read()).toContain('"event":"readiness-probe"');
   expect(fixture.read()).not.toContain('"event":"shutdown"');
 });

@@ -18,6 +18,7 @@
   import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { messageParts } from "#lib/utils/message-parts.js";
 
   import DataCard from "./data-card.svelte";
   import {
@@ -315,13 +316,15 @@
             <!-- eslint-enable local/no-hardcoded-ui-text -->
             {m.import_fallback_after_vaultgo()}
           </p>
-          <!-- eslint-disable local/no-hardcoded-ui-text -- "and" connects filenames, not worth its own message key -->
           <p class="mt-2 text-sm">
-            {m.import_fallback_files_intro()} <code>player.json</code>, <code>gamedata.json</code>,
-            and <code>quests.json</code>
-            {m.import_fallback_files_suffix()}
+            {#each messageParts( (slot) => m.import_fallback_files( { player: slot("player"), gamedata: slot("gamedata"), quests: slot("quests") } ) ) as part, index (index)}
+              {#if typeof part === "string"}{part}{:else if part.slot === "player"}<code
+                  >player.json</code
+                >{:else if part.slot === "gamedata"}<code>gamedata.json</code>{:else}<code
+                  >quests.json</code
+                >{/if}
+            {/each}
           </p>
-          <!-- eslint-enable local/no-hardcoded-ui-text -->
         {/if}
       </StatusNote>
     {/if}
