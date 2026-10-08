@@ -69,11 +69,20 @@ const loadTolerantTimeoutMs = 30_000;
  */
 const plainNodeTestOptions = {
   hookTimeout: loadTolerantTimeoutMs,
-  isolate: true,
   restoreMocks: true,
   testTimeout: loadTolerantTimeoutMs,
+  unstubEnvs: true,
   unstubGlobals: true,
 };
+
+/**
+ * Files in a shared-registry project reuse one module graph per worker instead of re-importing
+ * tracker data, names, & Svelte per file; that import & setup work was most of the app project's
+ * time (#707). Spies, stubbed globals, & stubbed environment variables still reset per test, but a
+ * module mock would leak into later files, so a file that mocks or resets modules must opt into
+ * isolation with the `*.isolated.test.ts` suffix. `tests/vitest-isolation.test.ts` enforces that.
+ */
+const sharedRegistry = { isolate: false };
 
 /**
  * Cloudflare Pages caps `_routes.json` at 100 rules. The adapter's default `<files>` exclusion
@@ -173,9 +182,22 @@ export default defineConfig({
             "**/*.assets.test.ts",
             "**/*.client.test.ts",
             "**/*.cold.test.ts",
+            "**/*.isolated.test.ts",
           ],
           include: ["src/**/*.test.ts"],
           name: "app",
+          setupFiles: ["./src/vitest-setup-app-state.ts", "./src/vitest-setup-names.ts"],
+          ...sharedRegistry,
+        },
+      },
+      {
+        // The app project's environment, with a fresh module registry per file for tests that
+        // mock or reset modules.
+        extends: true,
+        test: {
+          exclude: sharedTestExcludes,
+          include: ["src/**/*.isolated.test.ts"],
+          name: "isolated",
           setupFiles: ["./src/vitest-setup-app-state.ts", "./src/vitest-setup-names.ts"],
         },
       },
@@ -188,6 +210,7 @@ export default defineConfig({
           exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
           include: ["pipeline/**/*.test.ts"],
           name: "pipeline",
+          ...sharedRegistry,
         },
       },
       {
@@ -206,6 +229,7 @@ export default defineConfig({
           ],
           include: ["eslint-rules/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
           name: "node",
+          ...sharedRegistry,
         },
       },
       {
@@ -248,6 +272,7 @@ export default defineConfig({
     ],
     restoreMocks: true,
     testTimeout: loadTolerantTimeoutMs,
+    unstubEnvs: true,
     unstubGlobals: true,
   },
 });

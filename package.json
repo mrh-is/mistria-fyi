@@ -35,7 +35,7 @@
     "generate:brand-assets": "tsx scripts/generate-brand-assets.ts",
     "test:accessibility": "playwright test",
     "test:accessibility:critical": "playwright test --grep @critical",
-    "test:app": "vitest run --project=app --project=cold --project=client",
+    "test:app": "vitest run --project=app --project=isolated --project=cold --project=client",
     "test:client": "vitest run --project=client",
     "test:pipeline": "vitest run --project=pipeline",
     "test:pwa": "playwright test --config playwright.pwa.config.ts",
