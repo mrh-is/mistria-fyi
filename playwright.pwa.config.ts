@@ -1,7 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const isCi = process.env.CI === "true";
-const skipBuild = process.env.PLAYWRIGHT_SKIP_BUILD === "true";
 const port = 4188;
 
 export default defineConfig({
@@ -29,9 +28,8 @@ export default defineConfig({
     trace: isCi ? "on-first-retry" : "retain-on-failure",
   },
   webServer: {
-    command: skipBuild
-      ? `pnpm run preview --host 127.0.0.1 --port ${String(port)}`
-      : `pnpm run build && pnpm run preview --host 127.0.0.1 --port ${String(port)}`,
+    command: "pnpm exec tsx scripts/playwright-preview.ts",
+    env: { PLAYWRIGHT_PREVIEW_PORT: String(port) },
     reuseExistingServer: false,
     timeout: 120_000,
     // A bare "/" 404s without an Accept-Language header (no unprefixed default locale), and

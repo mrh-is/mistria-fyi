@@ -444,6 +444,7 @@ describe("CI workflow browser suites", () => {
     expect(pwaUpload?.if).toContain("hashFiles('.playwright-pwa-results/**/trace.zip') != ''");
     expect(pwaUpload?.with?.path).toContain(".playwright-pwa-report/");
     expect(pwaUpload?.with?.path).toContain(".playwright-pwa-results/");
+    expect(pwaUpload?.with?.path).toContain(".playwright-artifacts/preview-*.log");
     expect(pwaUpload?.with?.["if-no-files-found"]).toBe("ignore");
     expect(pwaUpload?.with?.["include-hidden-files"]).toBe(true);
     expect(pwaSteps.at(-1)?.run).toBe("exit 1");
