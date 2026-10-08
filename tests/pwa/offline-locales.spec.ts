@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
 import { LOCALE_CODES } from "../../src/lib/types/locale.js";
+import { expect, test } from "../browser/test.js";
 import { waitForControl } from "./service-worker.js";
 
 import type { Page } from "@playwright/test";

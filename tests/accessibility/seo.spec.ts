@@ -1,7 +1,6 @@
-import { expect, test } from "@playwright/test";
-
 import { SITE_NAME, SITE_ORIGIN } from "../../src/lib/data/page-metadata.js";
 import { LOCALE_CODES } from "../../src/lib/types/locale.js";
+import { expect, test } from "../browser/test.js";
 
 import type { APIRequestContext } from "@playwright/test";
 
@@ -45,9 +44,10 @@ test.describe("server-rendered search metadata", () => {
       // The assertions read server-rendered markup only. Skipping fonts and images halves the
       // run, most of all for the CJK locales' large web fonts.
       await page.route("**/*", (route) =>
-        ["font", "image", "media"].includes(route.request().resourceType())
+        ["font", "image", "media"].includes(route.request().resourceType()) &&
+        new URL(route.request().url()).origin === new URL(page.url()).origin
           ? route.abort()
-          : route.continue(),
+          : route.fallback(),
       );
       const allPaths = await sitemapPaths(request);
       const paths = allPaths.filter((path) => sitemapLocale(path) === locale);
