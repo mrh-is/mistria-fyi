@@ -37,7 +37,7 @@ describe("Vitest timing budgets", () => {
   });
 
   it("scales budgets by runner class and allows coverage overhead only nightly", () => {
-    expect(timingBudgets(2, false)).toEqual({ fileMs: 10_000, stepMs: 180_000 });
+    expect(timingBudgets(2, false)).toEqual({ fileMs: 10_000, stepMs: 120_000 });
     expect(timingBudgets(4, false)).toEqual({ fileMs: 5000, stepMs: 90_000 });
     expect(timingBudgets(4, true)).toEqual({ fileMs: 5000, stepMs: 300_000 });
   });

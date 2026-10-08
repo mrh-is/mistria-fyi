@@ -324,12 +324,16 @@ Missing timing reports & unsuccessful tests fail the step independently of the b
 
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
-| Two CPUs (current private `ubuntu-latest`) | 10 s             | 180 s                 | 300 s                    |
+| Two CPUs (current private `ubuntu-latest`) | 10 s             | 120 s                 | 300 s                    |
 | Four or more CPUs (public `ubuntu-latest`) | 5 s              | 90 s                  | 300 s                    |
 
 The two-CPU ceilings account for the measured runner class, not local Mac timings: before #689, the
 cleanup file took 5.524 s, the allocation test 9.855 s, & the coverage step 216 s on run
-[37692535010](https://github.com/mrh-is/mistria-fyi/actions/runs/37692535010). The four-CPU wall
+[37692535010](https://github.com/mrh-is/mistria-fyi/actions/runs/37692535010). After #707 shared
+module registries, warm two-CPU runs took 52–79 s (the same files ran up to 1.7× slower on some
+runners) and a run with a cold transform cache, as after a `vite.config.ts` change, took 105 s; the
+120 s wall ceiling clears that cold run. The lint-ownership probe reached 8.3 s on a slow runner, so
+the 10 s file ceiling stays. The four-CPU ceilings haven’t been re-measured since. The four-CPU wall
 ceiling leaves startup headroom above #687’s 60 s target. Budget changes require measurements on the
 same runner class & an explanation in the PR; do not raise ceilings merely to silence a failure.
 Coverage runs nightly because local measurements do not establish that it is free in CI.
