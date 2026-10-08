@@ -280,11 +280,13 @@ only when `scripts/cleanup-merged-worktrees.sh` changes: PRs use their complete 
 main pushes compare the event’s before/after commits. Scheduled & manual runs omit it. Direct local
 runs still include it, so test-only edits can be verified with the focused command. It publishes all
 per-file test & hook durations, slowest first, in the job summary & the `vitest-timings` artifact.
-The timed command uses half the available CPUs (at least one worker, capped at four), leaving
-headroom for files that spawn CLI subprocesses. The JSON also records CPU count, coverage mode,
-whole-command wall time, & the enforced ceilings. Imports, environment setup, transforms, startup, &
-report generation count toward the wall budget. Missing timing reports & unsuccessful tests fail the
-step independently of the budgets.
+On two-CPU noncoverage runs, ordinary files use both workers; the allocation, lint-ownership, &
+project-configuration CLI probes run separately with one worker, reserving a CPU for their
+subprocesses. Both invocations share one wall-time budget & their file timings are combined.
+Coverage & other runner classes use half the available CPUs (at least one worker, capped at four).
+The JSON also records CPU count, coverage mode, whole-command wall time, & the enforced ceilings.
+Imports, environment setup, transforms, startup, & report generation count toward the wall budget.
+Missing timing reports & unsuccessful tests fail the step independently of the budgets.
 
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
@@ -381,6 +383,7 @@ other full-suite command during development.
 | `pnpm run check`                    | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`            | `src/` & `pipeline/` |
 | `node scripts/vitest-timings.ts`    | Executes the complete Vitest suite with file & wall-time budgets; coverage only nightly | Unit & logic tests   |
 | `pnpm run build`                    | Compiles SvelteKit app and verifies Cloudflare adapter                                  | Build validation     |
+| `pnpm run check:built`              | Checks sitemap/head SSR metadata & per-locale gzip budgets against the production build | Build validation     |
 | `pnpm run check:routes`             | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`        | Build validation     |
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
@@ -508,9 +511,9 @@ above the finding.
 ### Full local matrix
 
 `pnpm run verify` runs CI's non-browser matrix locally (`lint`, `check`, `check:i18n`, `test`,
-`build`, `check:routes`) with compact output, stopping on the first failure. It is read-only: it
-runs `lint`, not `lint:fix`, so run `pnpm run lint:fix` beforehand. Opt-in flags add the local-only
-steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`, `--browser` adds
+`build`, `check:routes`, `check:built`) with compact output, stopping on the first failure. It is
+read-only: it runs `lint`, not `lint:fix`, so run `pnpm run lint:fix` beforehand. Opt-in flags add
+the local-only steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`, `--browser` adds
 `test:accessibility` & `test:pwa`, and `--all` adds both. Run it once, when commit-ready, only for
 the exceptions in [AGENTS.md §7](../AGENTS.md#7-verification). If a step fails, fix the issue and
 rerun only that step, then rerun `pnpm run verify` once.

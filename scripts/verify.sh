@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs CI's non-browser matrix (ci.yml) locally, read-only, with compact output. Stops on first
-# failure. Steps: lint, check, check:i18n, test, build, check:routes. It never modifies the tree
+# failure. Steps: lint, check, check:i18n, test, build, check:routes, check:built. It never modifies the tree
 # (run `pnpm run lint:fix` yourself first).
 #
 # Opt-in steps CI cannot run or only runs conditionally:
@@ -47,6 +47,7 @@ run_step check:i18n pnpm run check:i18n
 run_step test       pnpm run test
 run_step build      pnpm run build
 run_step check:routes pnpm run check:routes
+run_step check:built pnpm run check:built
 
 if $with_assets; then run_step test:pipeline:assets pnpm run test:pipeline:assets; fi
 if $with_browser; then
