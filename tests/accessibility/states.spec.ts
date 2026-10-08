@@ -154,6 +154,8 @@ test.describe("stateful accessibility", () => {
     );
   });
 
+  // Result semantics live in colocated ImportCard/TransferCard/BackupCard client tests.
+  // These browser probes wait for each result before scanning its distinct assembled DOM.
   test("settings dialog and import results pass axe", async ({ page }, testInfo) => {
     await gotoApplication(page, "/data");
     await openSettingsCard(page, "Import from Save File");

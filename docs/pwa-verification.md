@@ -38,8 +38,9 @@ Other languages download the first time the player uses them, then stay availabl
 
 Name data is about 60 KB gzipped per locale; all eight measured 1.61 MB raw and 476 KB gzipped at
 #313’s baseline. Install now downloads none of it; a first visit then downloads one locale (about 60
-KB) for English readers or two (about 120 KB) for everyone else. The PWA suite reports each build’s
-per-locale sizes and fails if any locale exceeds 100 KB gzipped.
+KB) for English readers or two (about 120 KB) for everyone else. `pnpm run check:built`, after a
+production build, reports each build’s per-locale sizes and fails if any locale exceeds 100 KB
+gzipped.
 
 ## Update flow
 

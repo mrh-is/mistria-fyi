@@ -47,6 +47,8 @@ describe("MineFloorRecord", () => {
   it("clamps direct edits and ignores empty or invalid values", async () => {
     const view = render(MineFloorRecordHarness, { biomes, initialFloor: 10 });
     const input = view.getByRole("spinbutton", { name: "Mine floor" });
+    expect(input).toHaveAttribute("min", "0");
+    expect(input).toHaveAttribute("max", "60");
 
     await fireEvent.input(input, { target: { value: "100" } });
     await fireEvent.change(input);

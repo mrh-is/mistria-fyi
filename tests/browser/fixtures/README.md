@@ -13,8 +13,7 @@ the network.
 
 The shared fixture in `../test.ts` routes at the browser-context level so additional tabs &
 service-worker fetches remain isolated. It observes requests independently of routing, so a spec’s
-page-route override cannot silently bypass the guard. The existing SEO handler delegates external
-assets to this fixture.
+page-route override cannot silently bypass the guard.
 
 Satoshi is proprietary & cannot be committed. Its request, & the versioned locale fonts named in the
 checked-in CSS, are aborted locally to exercise the application’s existing system-font fallback.

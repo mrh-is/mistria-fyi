@@ -74,6 +74,19 @@ export async function expectResolvedTheme(page: Page, theme: AccessibilityTheme)
   await expect(page.locator("html")).toHaveClass(theme === "dark" ? /\bdark\b/ : /^(?!.*\bdark\b)/);
 }
 
+/** Switch through the hydrated UI without navigating or replacing the current state. */
+export async function switchTheme(page: Page, theme: AccessibilityTheme): Promise<void> {
+  const trigger = page.getByRole("button", { exact: true, name: "Quick settings" });
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "Quick settings" });
+  await dialog
+    .getByRole("radio", { exact: true, name: theme === "dark" ? "Dark" : "Light" })
+    .click();
+  await expectResolvedTheme(page, theme);
+  await trigger.click();
+  await expect(dialog).toBeHidden();
+}
+
 /** Selector for the marker the root layout stamps once the client has hydrated. */
 export const HYDRATED_SELECTOR = 'html[data-hydrated="true"]';
 
@@ -130,7 +143,7 @@ export async function waitForRendering(page: Page): Promise<void> {
 
 export async function initializeApplication(
   page: Page,
-  theme: AccessibilityTheme,
+  theme: "system" | AccessibilityTheme,
   state: null | StoredState = null,
 ): Promise<void> {
   await page.addInitScript(

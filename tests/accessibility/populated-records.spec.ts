@@ -1,13 +1,12 @@
 import { test } from "../browser/test.js";
 import {
   createStoredState,
+  expectResolvedTheme,
   gotoApplication,
   initializeApplication,
 } from "./support/application-state.js";
-import { analyzeAccessibility } from "./support/axe.js";
+import { analyzeAccessibility, themeSensitiveRules } from "./support/axe.js";
 import { criticalWhen } from "./support/tags.js";
-
-import type { AccessibilityTheme } from "./support/violations.js";
 
 const specializedState = createStoredState({
   availabilityWindows: ["now", "anytime", "later"],
@@ -23,22 +22,31 @@ const specializedState = createStoredState({
 });
 
 test.describe("populated records accessibility", () => {
-  for (const theme of ["light", "dark"] satisfies AccessibilityTheme[]) {
-    for (const path of ["/villagers", "/skills", "/mines", "/renown", "/everything"] as const) {
-      test(
-        `${path} populated specialized records pass axe in ${theme} theme`,
-        criticalWhen(path === "/villagers" && theme === "light"),
-        async ({ page }, testInfo) => {
-          await initializeApplication(page, theme, specializedState);
-          await gotoApplication(page, path);
+  // Populated values reveal controls absent from the initial DOM, so they need a separate full scan.
+  for (const path of ["/villagers", "/skills", "/mines", "/renown", "/everything"] as const) {
+    test(
+      `${path} populated specialized records pass axe in both themes`,
+      criticalWhen(path === "/villagers"),
+      async ({ page }, testInfo) => {
+        await page.emulateMedia({ colorScheme: "light" });
+        await initializeApplication(page, "system", specializedState);
+        await gotoApplication(page, path);
 
-          await analyzeAccessibility(
-            page,
-            { route: path, state: "populated-records", theme },
-            testInfo,
-          );
-        },
-      );
-    }
+        await expectResolvedTheme(page, "light");
+        await analyzeAccessibility(
+          page,
+          { route: path, state: "populated-records", theme: "light" },
+          testInfo,
+        );
+        await page.emulateMedia({ colorScheme: "dark" });
+        await expectResolvedTheme(page, "dark");
+        await analyzeAccessibility(
+          page,
+          { route: path, state: "populated-records", theme: "dark" },
+          testInfo,
+          themeSensitiveRules,
+        );
+      },
+    );
   }
 });
