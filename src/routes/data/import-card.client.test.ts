@@ -105,6 +105,15 @@ describe("save import", () => {
       );
     });
     expect(screen.getByRole("link", { name: "vaultc" })).toBeInTheDocument();
+    const fallback = screen.getByText(/Then import from the resulting/);
+    expect(fallback).toHaveTextContent(
+      "Then import from the resulting player.json, gamedata.json, and quests.json files.",
+    );
+    expect([...fallback.querySelectorAll("code")].map((code) => code.textContent)).toEqual([
+      "player.json",
+      "gamedata.json",
+      "quests.json",
+    ]);
     expect(userState.exportBackup()).toBe(before);
   });
 });
