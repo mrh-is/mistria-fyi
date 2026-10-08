@@ -6,6 +6,16 @@
 set -euo pipefail
 shopt -s nullglob
 
+# Local Codex retries may cross the sandbox boundary, where pnpm's default store changes.
+# Pin both install & prepare, preserving an explicit external-store override. Do not change
+# cloud/CI or other developers' pnpm settings.
+if [ "$(uname -s)" = Darwin ] && [ -n "${CODEX_THREAD_ID:-}" ]; then
+  export pnpm_config_store_dir=${pnpm_config_store_dir:-${npm_config_store_dir:-/private/tmp/codex-pnpm-store}}
+  export npm_config_store_dir=$pnpm_config_store_dir
+  # Only this isolated worktree can have its modules replaced after an earlier failed setup.
+  export pnpm_config_confirm_modules_purge=false
+fi
+
 worktree_dir=$(git rev-parse --show-toplevel)
 # `git worktree list` lists the main worktree first; strip the label rather than splitting on
 # whitespace so paths containing spaces survive.
@@ -35,4 +45,12 @@ while IFS= read -r pattern; do
   fi
 done <"$repo_root/.worktreeinclude"
 
-(cd "$worktree_dir" && pnpm install --frozen-lockfile && pnpm run prepare)
+(
+  cd "$worktree_dir"
+  if [ "$(uname -s)" = Darwin ] && [ -n "${CODEX_THREAD_ID:-}" ]; then
+    pnpm install --frozen-lockfile --store-dir "$pnpm_config_store_dir" --config.confirmModulesPurge=false
+  else
+    pnpm install --frozen-lockfile
+  fi
+  pnpm run prepare
+)

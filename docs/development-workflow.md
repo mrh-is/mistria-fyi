@@ -99,6 +99,38 @@ allowlists in `.codex/rules/default.rules` do not grant filesystem or network ac
 managed environment disallows escalation, report the limitation rather than weakening the sandbox or
 bypassing isolation.
 
+For local macOS Codex worktrees, setup pins pnpm to `/private/tmp/codex-pnpm-store` (or an explicit
+`pnpm_config_store_dir`, with `npm_config_store_dir` as a legacy fallback) and disables the
+module-purge prompt for that isolated checkout. Keep the same store in the parent shell for
+subsequent commands and approved setup retries:
+
+```sh
+export pnpm_config_store_dir=/private/tmp/codex-pnpm-store
+pnpm_config_confirm_modules_purge=false pnpm run worktree:setup
+```
+
+Preparation still needs permission to write shared Git hook metadata. Do not use this retry to
+replace another session’s dependency directory, or set `CI=true` merely to bypass a prompt.
+
+GitHub CLI downloads run logs into its cache even though `gh run view --log` is read-only against
+GitHub. Use a writable temporary cache in the sandbox instead of granting access to `~/.cache/gh`:
+
+```sh
+XDG_CACHE_HOME="$(mktemp -d /private/tmp/mistria-gh-cache.XXXXXX)" gh run view <run-id> --log-failed
+```
+
+The command-scoped override leaves the normal user cache unchanged. Remove that temporary directory
+after inspecting the logs, which may contain sensitive build output.
+
+Both browser suites use `scripts/playwright-preview.ts`. It records build/spawn/exit phases, elapsed
+time, subprocess stdout & stderr, and a `/en` readiness probe every five seconds to
+`.playwright-artifacts/preview-<port>.log`. A startup timeout leaves the probes & output already
+written to disk, distinguishing a refused connection, HTTP response, spawn failure, or early exit.
+Graceful SIGINT/SIGTERM shutdown also records the last probe; Playwright’s default force-kill cannot
+produce a final shutdown entry. CI preserves these logs in each suite’s failure report. The
+diagnostic probe does not decide readiness, extend Playwright’s timeout, or restart the subprocess;
+retain the original failure when assessing reliability.
+
 ### Shared vs. Isolated Worktree Resources (`.worktreeinclude`)
 
 The `.worktreeinclude` file lists ignored local entries required for development:
