@@ -518,6 +518,21 @@ the local-only steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`,
 the exceptions in [AGENTS.md §7](../AGENTS.md#7-verification). If a step fails, fix the issue and
 rerun only that step, then rerun `pnpm run verify` once.
 
+The browser steps reuse the production build from the matrix via `PLAYWRIGHT_SKIP_BUILD=true`, so
+`--browser` & `--all` build once. Standalone browser commands still build by default.
+
+For a component change, run the journey for its route instead of the whole browser matrix:
+
+```sh
+pnpm exec playwright test tests/accessibility/routes.spec.ts --grep 'Villagers hydrates'
+```
+
+Replace `Villagers` with the route name from `tests/accessibility/routes.ts`. This checks hydration,
+landmarks, light-mode axe, & dark-mode contrast on that route. Run the relevant interaction test
+from `tests/accessibility/states.spec.ts` too when changing stateful behavior. If this checkout
+already has a current production build, prefix the focused command with
+`PLAYWRIGHT_SKIP_BUILD=true`; rebuild after app changes to avoid testing stale output.
+
 Pipeline parser, evaluator, extractor, & shared data-contract changes must additionally pass
 `pnpm run test:pipeline:assets` (or `pnpm run verify -- --assets`) and the pipeline run described in
 §4. Those are local-only because CI has no game assets.
