@@ -9,7 +9,7 @@
 // oxfmt formats `.svelte` files only when `.oxfmtrc.json` enables its `svelte` option; without it,
 // `oxfmt --check` skips them silently. The last test catches that.
 import { ESLint } from "eslint";
-import { spawn } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -20,32 +20,8 @@ interface OxlintReport {
   diagnostics: { code: string; filename: string }[];
 }
 
-interface RunResult {
-  status: null | number;
-  stdout: string;
-}
-
-/**
- * Runs a linter without blocking the worker, so the CLI probes overlap each other & ESLint's
- * in-process work instead of queueing behind them (#707). Rejects only when the binary can't start.
- */
-function run(command: string, args: string[], input?: string): Promise<RunResult> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ["pipe", "pipe", "ignore"] });
-    let stdout = "";
-    child.stdout.setEncoding("utf8").on("data", (chunk: string) => {
-      stdout += chunk;
-    });
-    child.on("error", reject);
-    child.on("close", (status) => {
-      resolve({ status, stdout });
-    });
-    child.stdin.end(input);
-  });
-}
-
-async function oxlintRules(): Promise<Map<string, Set<string>>> {
-  const { stdout } = await run(
+function oxlintRules(): Map<string, Set<string>> {
+  const { stdout } = spawnSync(
     "node_modules/.bin/oxlint",
     [
       "--type-aware",
@@ -57,6 +33,7 @@ async function oxlintRules(): Promise<Map<string, Set<string>>> {
       probeDirectory,
     ],
     // oxlint exits nonzero because the probes have errors; the report is still on stdout.
+    { encoding: "utf8" },
   );
   const report = JSON.parse(stdout) as OxlintReport;
   const rules = new Map<string, Set<string>>();
@@ -83,15 +60,19 @@ async function eslintRules(file: string): Promise<string[]> {
 }
 
 describe("lint tool ownership", () => {
-  // Both start at collection and finish while the first ESLint test runs in-process.
-  const oxlintReport = oxlintRules();
-  const oxfmtResult = run(
-    "node_modules/.bin/oxfmt",
-    ["--stdin-filepath", "src/lib/components/probe.svelte"],
-    "<script lang=\"ts\">\n  import x from './x.js';\n</script>\n",
-  );
+  const oxlint = oxlintRules();
   const untyped = "eslint(no-debugger)";
   const typed = "typescript(no-floating-promises)";
+
+  it.each(["probe.ts", "probe.svelte.ts"])("oxlint runs untyped & typed rules on %s", (file) => {
+    expect(oxlint.get(file)).toContain(untyped);
+    expect(oxlint.get(file)).toContain(typed);
+  });
+
+  it("oxlint runs untyped rules, but not typed rules, in .svelte <script> blocks", () => {
+    expect(oxlint.get("probe.svelte")).toContain(untyped);
+    expect(oxlint.get("probe.svelte")).not.toContain(typed);
+  });
 
   it("ESLint owns Svelte template rules", async () => {
     await expect(eslintRules("probe.svelte")).resolves.toStrictEqual([
@@ -100,23 +81,12 @@ describe("lint tool ownership", () => {
     ]);
   });
 
-  it.each(["probe.ts", "probe.svelte.ts"])(
-    "oxlint runs untyped & typed rules on %s",
-    async (file) => {
-      const oxlint = await oxlintReport;
-      expect(oxlint.get(file)).toContain(untyped);
-      expect(oxlint.get(file)).toContain(typed);
-    },
-  );
-
-  it("oxlint runs untyped rules, but not typed rules, in .svelte <script> blocks", async () => {
-    const oxlint = await oxlintReport;
-    expect(oxlint.get("probe.svelte")).toContain(untyped);
-    expect(oxlint.get("probe.svelte")).not.toContain(typed);
-  });
-
-  it("oxfmt formats .svelte files", async () => {
-    const { stdout } = await oxfmtResult;
+  it("oxfmt formats .svelte files", () => {
+    const { stdout } = spawnSync(
+      "node_modules/.bin/oxfmt",
+      ["--stdin-filepath", "src/lib/components/probe.svelte"],
+      { encoding: "utf8", input: "<script lang=\"ts\">\n  import x from './x.js';\n</script>\n" },
+    );
     expect(stdout).toContain('import x from "./x.js";');
   });
 
@@ -151,99 +121,93 @@ describe("lint tool ownership", () => {
   });
 });
 
-// The boundary probes write distinct files, so their oxlint runs overlap.
-describe.concurrent("import boundaries", () => {
-  describe("engine import boundary", () => {
-    it("rejects store & component type imports through aliases and repeated parent segments", async () => {
-      // Use real engine paths so the production override, not a copied rule, selects the probes.
-      const nestedDirectory = await mkdtemp("src/lib/engine/lint-probe-");
-      const rootProbe = `src/lib/engine/${basename(nestedDirectory)}.ts`;
-      const nestedProbe = join(nestedDirectory, "probe.ts");
-      try {
-        await writeFile(
-          rootProbe,
-          [
-            'import type { AliasStore } from "#lib/stores/probe.js";',
-            'import type { AliasComponent } from "#lib/components/probe.js";',
-            'import type { RelativeStore } from "../stores/probe.js";',
-            'import type { RelativeComponent } from "../components/probe.js";',
-            'import type { Domain } from "../types/probe.js";',
-            "export type Probe = AliasStore | AliasComponent | RelativeStore | RelativeComponent | Domain;",
-          ].join("\n"),
-        );
-        await writeFile(
-          nestedProbe,
-          [
-            'import type { Store } from "../../stores/probe.js";',
-            'import type { Component } from "../../components/probe.js";',
-            'import type { Domain } from "../../types/probe.js";',
-            "export type Probe = Store | Component | Domain;",
-          ].join("\n"),
-        );
-        const result = await run("node_modules/.bin/oxlint", [
-          "--config",
-          ".oxlintrc.json",
-          "--format",
-          "json",
-          rootProbe,
-          nestedProbe,
-        ]);
-        const report = JSON.parse(result.stdout) as OxlintReport;
-        const restricted = report.diagnostics.filter(
-          ({ code }) => code === "eslint(no-restricted-imports)",
-        );
-        expect(restricted.filter(({ filename }) => filename === rootProbe)).toHaveLength(4);
-        expect(restricted.filter(({ filename }) => filename === nestedProbe)).toHaveLength(2);
-        expect(result.status).toBe(1);
-      } finally {
-        await rm(rootProbe, { force: true });
-        await rm(nestedDirectory, { force: true, recursive: true });
-      }
-    });
+describe("engine import boundary", () => {
+  it("rejects store & component type imports through aliases and repeated parent segments", async () => {
+    // Use real engine paths so the production override, not a copied rule, selects the probes.
+    const nestedDirectory = await mkdtemp("src/lib/engine/lint-probe-");
+    const rootProbe = `src/lib/engine/${basename(nestedDirectory)}.ts`;
+    const nestedProbe = join(nestedDirectory, "probe.ts");
+    try {
+      await writeFile(
+        rootProbe,
+        [
+          'import type { AliasStore } from "#lib/stores/probe.js";',
+          'import type { AliasComponent } from "#lib/components/probe.js";',
+          'import type { RelativeStore } from "../stores/probe.js";',
+          'import type { RelativeComponent } from "../components/probe.js";',
+          'import type { Domain } from "../types/probe.js";',
+          "export type Probe = AliasStore | AliasComponent | RelativeStore | RelativeComponent | Domain;",
+        ].join("\n"),
+      );
+      await writeFile(
+        nestedProbe,
+        [
+          'import type { Store } from "../../stores/probe.js";',
+          'import type { Component } from "../../components/probe.js";',
+          'import type { Domain } from "../../types/probe.js";',
+          "export type Probe = Store | Component | Domain;",
+        ].join("\n"),
+      );
+      const result = spawnSync(
+        "node_modules/.bin/oxlint",
+        ["--config", ".oxlintrc.json", "--format", "json", rootProbe, nestedProbe],
+        { encoding: "utf8" },
+      );
+      expect(result.error).toBeUndefined();
+      const report = JSON.parse(result.stdout) as OxlintReport;
+      const restricted = report.diagnostics.filter(
+        ({ code }) => code === "eslint(no-restricted-imports)",
+      );
+      expect(restricted.filter(({ filename }) => filename === rootProbe)).toHaveLength(4);
+      expect(restricted.filter(({ filename }) => filename === nestedProbe)).toHaveLength(2);
+      expect(result.status).toBe(1);
+    } finally {
+      await rm(rootProbe, { force: true });
+      await rm(nestedDirectory, { force: true, recursive: true });
+    }
   });
+});
 
-  describe("utils import boundary", () => {
-    it("rejects imports from the layers built on utils", async () => {
-      // Use a real utils path so the production override, not a copied rule, selects the probe.
-      const probe = `src/lib/utils/lint-probe-${process.pid}.ts`;
-      const layers = [
-        "components",
-        "stores",
-        "controllers",
-        "effects",
-        "sources",
-        "pwa",
-        "presentation",
-      ];
-      try {
-        await writeFile(
-          probe,
-          [
-            ...layers.map(
-              (layer, index) => `import type { T${index} } from "#lib/${layer}/probe.js";`,
-            ),
-            'import type { Relative } from "../stores/probe.js";',
-            'import type { Sibling } from "#lib/utils/probe.js";',
-            'import type { Data } from "#lib/data/probe.js";',
-            `export type Probe = ${layers.map((_, index) => `T${index}`).join(" | ")} | Relative | Sibling | Data;`,
-          ].join("\n"),
-        );
-        const result = await run("node_modules/.bin/oxlint", [
-          "--config",
-          ".oxlintrc.json",
-          "--format",
-          "json",
-          probe,
-        ]);
-        const report = JSON.parse(result.stdout) as OxlintReport;
-        const restricted = report.diagnostics.filter(
-          ({ code }) => code === "eslint(no-restricted-imports)",
-        );
-        expect(restricted).toHaveLength(layers.length + 1);
-        expect(result.status).toBe(1);
-      } finally {
-        await rm(probe, { force: true });
-      }
-    });
+describe("utils import boundary", () => {
+  it("rejects imports from the layers built on utils", async () => {
+    // Use a real utils path so the production override, not a copied rule, selects the probe.
+    const probe = `src/lib/utils/lint-probe-${process.pid}.ts`;
+    const layers = [
+      "components",
+      "stores",
+      "controllers",
+      "effects",
+      "sources",
+      "pwa",
+      "presentation",
+    ];
+    try {
+      await writeFile(
+        probe,
+        [
+          ...layers.map(
+            (layer, index) => `import type { T${index} } from "#lib/${layer}/probe.js";`,
+          ),
+          'import type { Relative } from "../stores/probe.js";',
+          'import type { Sibling } from "#lib/utils/probe.js";',
+          'import type { Data } from "#lib/data/probe.js";',
+          `export type Probe = ${layers.map((_, index) => `T${index}`).join(" | ")} | Relative | Sibling | Data;`,
+        ].join("\n"),
+      );
+      const result = spawnSync(
+        "node_modules/.bin/oxlint",
+        ["--config", ".oxlintrc.json", "--format", "json", probe],
+        { encoding: "utf8" },
+      );
+      expect(result.error).toBeUndefined();
+      const report = JSON.parse(result.stdout) as OxlintReport;
+      const restricted = report.diagnostics.filter(
+        ({ code }) => code === "eslint(no-restricted-imports)",
+      );
+      expect(restricted).toHaveLength(layers.length + 1);
+      expect(result.status).toBe(1);
+    } finally {
+      await rm(probe, { force: true });
+    }
   });
 });
