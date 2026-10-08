@@ -9,6 +9,13 @@ function report(message = "Accessibility violations:\nroute: /\nrule: color-cont
   return { suites: [{ specs: [{ tests: [{ results: [{ errors: [{ message }] }] }] }] }] };
 }
 
+const MARKED_ISSUE = JSON.stringify([
+  { body: "<!-- mistria-accessibility-monitor -->\nregression", number: 42 },
+]);
+const UNRELATED_ISSUE = JSON.stringify([
+  { body: "Track the accessibility monitor rollout.", number: 687 },
+]);
+
 function rejectMutations(_command: string, args: string[]): Promise<string> {
   return args[1] === "list"
     ? Promise.resolve("[]")
@@ -44,7 +51,7 @@ describe("accessibility issue monitor", () => {
     const calls: string[][] = [];
     const run = (_command: string, args: string[]): Promise<string> => {
       calls.push(args);
-      return Promise.resolve(args[1] === "list" ? '[{"number":42}]' : "");
+      return Promise.resolve(args[1] === "list" ? MARKED_ISSUE : "");
     };
     await synchronizeAccessibilityIssue({
       report: report(),
@@ -59,7 +66,7 @@ describe("accessibility issue monitor", () => {
     const calls: string[][] = [];
     const run = (_command: string, args: string[]): Promise<string> => {
       calls.push(args);
-      return Promise.resolve(args[1] === "list" ? '[{"number":42}]' : "");
+      return Promise.resolve(args[1] === "list" ? MARKED_ISSUE : "");
     };
     await synchronizeAccessibilityIssue({
       result: "success",
@@ -67,6 +74,36 @@ describe("accessibility issue monitor", () => {
       workflowUrl: "https://example.test/run/3",
     });
     expect(calls.map((args) => args[1])).toEqual(["list", "comment", "close"]);
+  });
+
+  it("ignores search matches without the exact marker after recovery", async () => {
+    const calls: string[][] = [];
+    const run = (_command: string, args: string[]): Promise<string> => {
+      calls.push(args);
+      return Promise.resolve(args[1] === "list" ? UNRELATED_ISSUE : "");
+    };
+    await synchronizeAccessibilityIssue({
+      result: "success",
+      run,
+      workflowUrl: "https://example.test/run/4",
+    });
+    expect(calls.map((args) => args[1])).toEqual(["list"]);
+  });
+
+  it("creates a new issue when only unmarked issues match the search", async () => {
+    const calls: string[][] = [];
+    const run = (_command: string, args: string[]): Promise<string> => {
+      calls.push(args);
+      return Promise.resolve(args[1] === "list" ? UNRELATED_ISSUE : "");
+    };
+    await synchronizeAccessibilityIssue({
+      report: report(),
+      result: "failure",
+      run,
+      workflowUrl: "https://example.test/run/5",
+    });
+    expect(calls.map((args) => args[1])).toEqual(["list", "create"]);
+    expect(calls[1]).not.toContain("687");
   });
 
   it("rejects setup failures without mutating GitHub", async () => {
