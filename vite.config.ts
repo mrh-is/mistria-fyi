@@ -1,10 +1,9 @@
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
-import adapter from "@sveltejs/adapter-cloudflare";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { svelteTesting } from "@testing-library/svelte/vite";
-import { readdirSync } from "node:fs";
+import { readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
@@ -12,12 +11,21 @@ import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
 import { cliProbeFiles } from "./scripts/vitest-timings.js";
+import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
 import { headersFilePlugin } from "./src/lib/build/headers-file.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
 import { PARAGLIDE_OPTIONS } from "./src/lib/i18n/paraglide-options.js";
 import { cspDirectives } from "./src/lib/security/csp-directives.js";
 import { renderHeadersFile } from "./src/lib/security/security-headers.js";
+
+const wranglerTestDirectory = configureVitestWranglerEnv();
+if (wranglerTestDirectory) {
+  process.once("exit", () => rmSync(wranglerTestDirectory, { force: true, recursive: true }));
+}
+// Wrangler resolves its log path at import time. A dynamic import also preserves this ordering
+// when Vite bundles the config; a static adapter import would run before the setup above.
+const { default: adapter } = await import("@sveltejs/adapter-cloudflare");
 
 /**
  * Where sprites load from: production, or a `PUBLIC_ASSET_ORIGIN` override (shell, `.env`, or
