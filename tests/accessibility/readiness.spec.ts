@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "../browser/test.js";
 import {
   createStoredState,
   expectResolvedTheme,
