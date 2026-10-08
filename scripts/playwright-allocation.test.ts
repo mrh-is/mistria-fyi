@@ -1,20 +1,24 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 
 import { allocateTests, enumerateTests, parseShard } from "./playwright-allocation.js";
 
 import type { AllocationWeights } from "./playwright-allocation.js";
 
-function listTests(args: string[] = []): string[] {
-  const report = JSON.parse(
-    execFileSync("pnpm", ["exec", "playwright", "test", "--list", "--reporter=json", ...args], {
-      encoding: "utf8",
-    }),
-  ) as Parameters<typeof enumerateTests>[0];
-  return enumerateTests(report);
+// Node runs Playwright's CLI directly: `pnpm exec` added ~0.5 s of startup to each listing (#707).
+const playwrightCli = join(import.meta.dirname, "../node_modules/@playwright/test/cli.js");
+
+async function listTests(args: string[] = []): Promise<string[]> {
+  const { stdout } = await promisify(execFile)(
+    process.execPath,
+    [playwrightCli, "test", "--list", "--reporter=json", ...args],
+    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+  );
+  return enumerateTests(JSON.parse(stdout) as Parameters<typeof enumerateTests>[0]);
 }
 
 const weights = { defaultDurationMs: 1, tests: { expensive: 10, medium: 5 } };
@@ -105,18 +109,23 @@ describe("accessibility duration allocation", () => {
 });
 
 describe("supported Playwright selection", () => {
-  it("enumerates every unsharded accessibility test exactly once across the actual test lists", () => {
+  it("enumerates every unsharded accessibility test exactly once across the actual test lists", async () => {
     const directory = mkdtempSync(join(tmpdir(), "mistria-allocation-"));
     try {
-      const unsharded = listTests();
+      const unsharded = await listTests();
       const measured = JSON.parse(
         readFileSync("tests/accessibility/duration-weights.json", "utf8"),
       ) as AllocationWeights;
       const shards = allocateTests(unsharded, measured, 4);
+      const listed = await Promise.all(
+        shards.map((testsInShard, index) => {
+          const file = join(directory, `shard-${index}.txt`);
+          writeFileSync(file, `${testsInShard.join("\n")}\n`);
+          return listTests([`--test-list=${file}`]);
+        }),
+      );
       const selected = shards.flatMap((testsInShard, index) => {
-        const file = join(directory, `shard-${index}.txt`);
-        writeFileSync(file, `${testsInShard.join("\n")}\n`);
-        const actual = listTests([`--test-list=${file}`]);
+        const actual = listed[index] ?? [];
         expect(actual.toSorted()).toEqual(testsInShard.toSorted());
         return actual;
       });

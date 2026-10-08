@@ -8,12 +8,14 @@ another.
 
 ## Test layers
 
-| Layer          | Files                      | Vitest project | Runner                        | Use for                                                             |
-| -------------- | -------------------------- | -------------- | ----------------------------- | ------------------------------------------------------------------- |
-| Server render  | `src/**/*.test.ts`         | `app`          | `pnpm run test:app`           | Static markup, invariants, SEO output, anything with no interaction |
-| Cold start     | `src/**/*.cold.test.ts`    | `cold`         | `pnpm run test:app`           | The names-cache loading boundary, with no names preloaded           |
-| happy-dom      | `src/**/*.client.test.ts`  | `client`       | `pnpm run test:client`        | Clicks, keyboard, focus, async state, store effects, dialogs        |
-| Browser (a11y) | `tests/accessibility/*.ts` | Playwright     | `pnpm run test:accessibility` | Full-route axe scans, reflow, forced colors, reduced motion         |
+| Layer           | Files                              | Vitest project    | Runner                        | Use for                                                             |
+| --------------- | ---------------------------------- | ----------------- | ----------------------------- | ------------------------------------------------------------------- |
+| Server render   | `src/**/*.test.ts`                 | `app`             | `pnpm run test:app`           | Static markup, invariants, SEO output, anything with no interaction |
+| Module mocks    | `src/**/*.isolated.test.ts`        | `isolated`        | `pnpm run test:app`           | Server-render tests that `vi.mock()` or reset modules               |
+| Cold start      | `src/**/*.cold.test.ts`            | `cold`            | `pnpm run test:app`           | The names-cache loading boundary, with no names preloaded           |
+| happy-dom       | `src/**/*.client.test.ts`          | `client`          | `pnpm run test:client`        | Clicks, keyboard, focus, async state, store effects, dialogs        |
+| happy-dom mocks | `src/**/*.isolated.client.test.ts` | `client-isolated` | `pnpm run test:client`        | happy-dom tests that `vi.mock()` or reset modules                   |
+| Browser (a11y)  | `tests/accessibility/*.ts`         | Playwright        | `pnpm run test:accessibility` | Full-route axe scans, reflow, forced colors, reduced motion         |
 
 The a11y suite's own helpers have unit tests (`tests/accessibility/support/*.test.ts`), which run in
 Vitest's `node` project with `pnpm run test`. `docs/development-workflow.md` describes every Vitest
@@ -22,8 +24,9 @@ project.
 happy-dom tests share three setup files (`src/vitest-setup.ts`, `src/vitest-setup-app-state.ts`,
 `src/vitest-setup-names.ts`). The first stubs `matchMedia` and `Element.animate()`; the `animate`
 stub fires `onfinish` on the next macrotask so `transition:` outros actually remove their nodes. The
-second mocks `$app/state` with a static `page`; a test that needs a different URL or status, or
-route changes, mocks `$app/state` with the reactive `pageStub` instead (see “Shared helpers”).
+second mocks `$app/state` with the reactive `pageStub` (see “Shared helpers”) and resets it after
+each file; a test that needs a different URL or status, or route changes, sets the stub and resets
+it in `beforeEach`.
 
 Components that read context (the feedback context, for example) get a sibling
 `*.test-harness.svelte` that sets the context and renders the component under test. For the feedback
@@ -145,9 +148,9 @@ Reuse these from `src/lib/test-utils/` rather than copying a local version into 
   fixture.
 - **`memoryStorage(entries)`** (`memory-storage.ts`): an in-memory `Storage` for
   `vi.stubGlobal("localStorage", …)`. Wrap it to inject a failure on one method.
-- **`pageStub`** (`page-stub.svelte.ts`): a reactive `$app/state` `page`. Mock the module with
-  `vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"))`, then set
-  `pageStub.status` or call `pageStub.navigate()`.
+- **`pageStub`** (`page-stub.svelte.ts`): a reactive `$app/state` `page`, which the app & client
+  setup already installs. Set `pageStub.status` or call `pageStub.navigate()`, and call
+  `pageStub.reset()` in `beforeEach`.
 - **`renderToFragment`** (`render-to-fragment.ts`): server-renders a component into a queryable
   fragment for `*.test.ts` files.
 

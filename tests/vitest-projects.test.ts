@@ -1,7 +1,8 @@
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
+import { promisify } from "node:util";
 import { beforeAll, describe, expect, it } from "vitest";
 
 /**
@@ -19,11 +20,11 @@ interface ListedFile {
 }
 
 /** Every test file Vitest's projects collect, as repo-relative paths with their project names. */
-function listProjectFiles(cleanupChanged?: boolean): ListedFile[] {
+async function listProjectFiles(cleanupChanged?: boolean): Promise<ListedFile[]> {
   const outputDirectory = mkdtempSync(join(tmpdir(), "vitest-projects-"));
   try {
     const outputFile = join(outputDirectory, "list.json");
-    execFileSync(
+    await promisify(execFile)(
       process.execPath,
       [join(root, "node_modules/vitest/vitest.mjs"), "list", "--filesOnly", `--json=${outputFile}`],
       {
@@ -34,7 +35,6 @@ function listProjectFiles(cleanupChanged?: boolean): ListedFile[] {
             ? {}
             : { VITEST_CLEANUP_CHANGED: String(cleanupChanged) }),
         },
-        stdio: "ignore",
       },
     );
     return (JSON.parse(readFileSync(outputFile, "utf8")) as ListedFile[]).map((entry) => ({
@@ -60,10 +60,17 @@ function trackedTestFiles(): string[] {
 const byFile = (a: ListedFile, b: ListedFile) => a.file.localeCompare(b.file);
 
 describe("Vitest projects", () => {
-  const listing: { files: ListedFile[] } = { files: [] };
+  const listing: { files: ListedFile[]; withoutCleanup: ListedFile[] } = {
+    files: [],
+    withoutCleanup: [],
+  };
 
-  beforeAll(() => {
-    listing.files = listProjectFiles();
+  // Both listings load the full Vite config; running them together halves the probe's wall time.
+  beforeAll(async () => {
+    [listing.files, listing.withoutCleanup] = await Promise.all([
+      listProjectFiles(),
+      listProjectFiles(false),
+    ]);
   }, 60_000);
 
   it("run every tracked test file", () => {
@@ -72,7 +79,7 @@ describe("Vitest projects", () => {
   });
 
   it("excludes only cleanup when its script is unchanged", () => {
-    const skipped = listProjectFiles(false);
+    const skipped = listing.withoutCleanup;
     expect(skipped.some(({ file }) => file === "scripts/cleanup-merged-worktrees.test.ts")).toBe(
       false,
     );
