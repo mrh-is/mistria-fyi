@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import FilterPanel from "#lib/components/filter-panel.svelte";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
@@ -9,8 +9,6 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
-
-vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
 function sourceFilter(id: SourceFilterId): SourceFilter {
   const filter = SOURCE_FILTERS.find((candidate) => candidate.id === id);

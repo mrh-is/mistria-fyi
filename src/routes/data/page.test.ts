@@ -1,11 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import DataPage from "./+page.svelte";
-
-vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
 function disclosureState(container: HTMLElement, title: string): null | string | undefined {
   const triggers = container.querySelectorAll("[data-slot='collapsible-trigger']");

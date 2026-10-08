@@ -1,5 +1,5 @@
 import { fireEvent, waitFor } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import VillagersContent from "#lib/components/villagers-content.svelte";
 import { trackerData } from "#lib/data/index.js";
@@ -9,8 +9,6 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordKeys } from "#lib/utils/record.js";
-
-vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
 describe("VillagersContent localization", () => {
   beforeEach(() => {

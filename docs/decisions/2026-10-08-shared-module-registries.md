@@ -24,7 +24,7 @@ calls.
 - **Keep `client` isolated:** sharing all 41 files failed on every shuffled seed, but every failure
   came from the 12 files that mock or reset modules or from one test that left nodes in
   `document.body`. Without those, sharing cut the other 29 files from 5.8 s to 1.3 s locally.
-- **Opt files into sharing instead of out of it:** would rename about 120 files rather than 22, and
+- **Opt files into sharing instead of out of it:** would rename about 120 files rather than 18, and
   forgetting the suffix would only cost speed, so nothing would enforce it.
 - **Select isolated files by scanning for mocks in `vite.config.ts`:** hides a file’s project behind
   config-time logic; a suffix shows it in the path, like `.cold` & `.client`.

@@ -6,8 +6,8 @@ import { SvelteURL } from "svelte/reactivity";
  * `$derived`, so the stub keeps its fields in `$state` and a test calls `navigate()` to simulate a
  * client-side navigation.
  *
- * Usage: `vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));` (this module
- * exports `page`), then set `pageStub.status` or call `pageStub.navigate()`.
+ * The app & client test setup mocks `$app/state` with this module (it exports `page`); a test sets
+ * `pageStub.status` or calls `pageStub.navigate()`, and resets the stub in `beforeEach`.
  */
 const ORIGIN = "https://mistria.fyi";
 
