@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../browser/test.js";
 
 test("registers, activates, and precaches the offline shell", async ({ page }) => {
   await page.goto("/");

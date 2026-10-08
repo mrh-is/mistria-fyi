@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { encodeQR } from "qr";
 
+import { expect, test } from "../browser/test.js";
 import {
   createStoredState,
   gotoApplication,

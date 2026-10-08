@@ -1,6 +1,5 @@
-import { expect, test } from "@playwright/test";
-
 import { builtLocaleChunks } from "../../scripts/built-locale-chunks.js";
+import { expect, test } from "../browser/test.js";
 import { waitForControl } from "./service-worker.js";
 
 import type { Page } from "@playwright/test";
