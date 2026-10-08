@@ -51,8 +51,9 @@ run_step check:built pnpm run check:built
 
 if $with_assets; then run_step test:pipeline:assets pnpm run test:pipeline:assets; fi
 if $with_browser; then
-  run_step test:accessibility pnpm run test:accessibility
-  run_step test:pwa pnpm run test:pwa
+  # Both suites use the production build already validated above.
+  run_step test:accessibility env PLAYWRIGHT_SKIP_BUILD=true pnpm run test:accessibility
+  run_step test:pwa env PLAYWRIGHT_SKIP_BUILD=true pnpm run test:pwa
 fi
 
 printf '\n=== All checks passed ===\n'
