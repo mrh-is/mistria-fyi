@@ -53,6 +53,7 @@ function dependencies(cache: MemoryCache, fetcher: (request: Request) => Promise
     cache,
     fetcher,
     matchCache: (request: RequestInfo | URL) => cache.match(request),
+    offlinePage: () => new Response("offline page"),
     settled: () => Promise.all(pending),
     waitUntil: (promise: Promise<unknown>) => {
       pending.push(promise);
@@ -128,7 +129,6 @@ describe("service-worker runtime request path", () => {
     const cache = new MemoryCache();
     const request = new Request(`${ORIGIN}/animals`);
     Object.defineProperty(request, "mode", { value: "navigate" });
-    await cache.put(`${ORIGIN}/offline.html`, new Response("offline page"));
     vi.spyOn(cache, "put").mockRejectedValue(new DOMException("Full", "QuotaExceededError"));
     const deps = dependencies(
       cache,
@@ -183,7 +183,6 @@ describe("service-worker runtime request path", () => {
 
   it("returns the offline page for an uncached navigation", async () => {
     const cache = new MemoryCache();
-    await cache.put(`${ORIGIN}/offline.html`, new Response("offline page"));
     const request = new Request(`${ORIGIN}/missing`);
     Object.defineProperty(request, "mode", { value: "navigate" });
 
