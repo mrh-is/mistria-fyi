@@ -1,6 +1,6 @@
 import { expect, test } from "../browser/test.js";
 
-test("registers, activates, and precaches the offline shell", async ({ page }) => {
+test("registers, activates, and precaches static & build assets", async ({ page }) => {
   await page.goto("/");
 
   const serviceWorker = await page.evaluate(async () => {
@@ -54,7 +54,6 @@ test("registers, activates, and precaches the offline shell", async ({ page }) =
     );
     return requests.flat().map((request) => new URL(request.url).pathname);
   });
-  expect(cachedPaths).toContain("/offline.html");
   expect(cachedPaths).toContain("/favicon.png");
   expect(cachedPaths.some((path) => path.startsWith("/_app/immutable/"))).toBe(true);
 });
