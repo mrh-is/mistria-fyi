@@ -1,13 +1,13 @@
 # PWA verification
 
 The production service worker precaches build and static assets, claims open clients after
-activation, runtime-caches successful same-origin non-API requests, and serves `/offline.html` for
-an uncached navigation when the network fails. Sprites from `assets.mistria.fyi/sprites/` are served
-stale-while-revalidate from their own `sprites-v1` cache: a cached sprite returns at once (so it
-works offline) while, once the copy is a day old, a background request, which bypasses the HTTP
-cache, refreshes it or, on a 403/404/410, evicts it. That cache holds at most 400 sprites, evicts
-the least recently used, and drops every sprite from an older `?g=` generation once a newer one is
-cached.
+activation, runtime-caches successful same-origin non-API requests, and serves a bundled offline
+page for an uncached navigation when the network fails. Sprites from `assets.mistria.fyi/sprites/`
+are served stale-while-revalidate from their own `sprites-v1` cache: a cached sprite returns at once
+(so it works offline) while, once the copy is a day old, a background request, which bypasses the
+HTTP cache, refreshes it or, on a 403/404/410, evicts it. That cache holds at most 400 sprites,
+evicts the least recently used, and drops every sprite from an older `?g=` generation once a newer
+one is cached.
 
 ## Offline contract
 
@@ -84,7 +84,7 @@ stale build or service worker cannot supply false results.
 The suite verifies:
 
 - registration at `/service-worker.js`, activation, client control, and the expected cache shell;
-- precached `/offline.html`, `/favicon.png`, and hashed application assets;
+- precached `/favicon.png` and hashed application assets;
 - successful online navigation through the controlling worker and runtime caching of `/animals`;
 - offline reload of the cached route and offline retrieval of a static asset;
 - the offline document for a previously uncached navigation;
@@ -118,13 +118,14 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
 1. Open the browser’s service-worker or application panel, clear site data, and reload.
 2. Confirm `/service-worker.js` is registered for the `/` scope, reaches “activated”, and controls
    the page without an installation error.
-3. Inspect Cache Storage. Confirm one current `cache-<version>` cache contains `/offline.html`,
-   `/favicon.png`, and hashed files under `/_app/immutable/`.
+3. Inspect Cache Storage. Confirm one current `cache-<version>` cache contains `/favicon.png` and
+   hashed files under `/_app/immutable/`.
 4. Visit `/animals` online. Confirm its document request succeeds and appears in the current cache.
 5. Enable the browser’s offline network mode and reload `/animals`. Confirm the application route
    remains usable and a cached static asset still loads.
 6. While offline, navigate to a same-origin path that has never been requested. Confirm the page
-   displays the “You’re offline” heading from `/offline.html`.
+   displays the “You’re offline” heading. The worker bundles that page rather than precaching it,
+   since Cloudflare Pages redirects `.html` paths (#226).
 7. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
    the online application renders normally.
 8. To check the update flow, keep a tab open on the deployment, deploy a new version, then switch

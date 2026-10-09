@@ -57,7 +57,7 @@ describe("checkRoutes", () => {
 
   it("passes when wildcard rules cover every asset", async () => {
     await writeRoutes(dir, ["/robots.txt", "/sprites/*", "/fonts/*"]);
-    expect(await checkRoutes(dir)).toEqual({ ruleCount: 4, unexcludedAssets: [] });
+    expect(await checkRoutes(dir)).toEqual({ htmlAssets: [], ruleCount: 4, unexcludedAssets: [] });
   });
 
   it("reports assets past a truncated per-file list", async () => {
@@ -71,6 +71,14 @@ describe("checkRoutes", () => {
     const report = await checkRoutes(dir);
     expect(report.unexcludedAssets).not.toContain("/_worker.js");
     expect(report.unexcludedAssets).not.toContain("/404.html");
+    expect(report.htmlAssets).toEqual([]);
+  });
+
+  it("reports .html assets, which Pages redirects away from their own path", async () => {
+    await writeFile(path.join(dir, "offline.html"), "");
+    await writeRoutes(dir, ["/robots.txt", "/offline.html", "/sprites/*", "/fonts/*"]);
+    const report = await checkRoutes(dir);
+    expect(report.htmlAssets).toEqual(["/offline.html"]);
   });
 });
 

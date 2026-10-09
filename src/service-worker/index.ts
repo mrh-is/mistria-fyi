@@ -14,6 +14,11 @@ import {
 import { version } from "$app/env";
 import { assets, immutable } from "$app/manifest";
 
+// Bundled rather than precached from `static/`: Cloudflare Pages redirects `/offline.html` to
+// `/offline`, which the locale middleware redirects again to a 404, & one failed precache request
+// aborts the whole install (#226).
+import OFFLINE_HTML from "./offline.html?raw";
+
 import type { CacheLocalesReply, LocaleNameChunks } from "#lib/pwa/service-worker-cache.js";
 
 /** Inlined by `localeNameChunksPlugin` (src/lib/build/locale-name-chunks.ts); absent in dev. */
@@ -135,6 +140,8 @@ sw.addEventListener("fetch", (event) => {
           cache,
           fetcher: (request) => fetch(request),
           matchCache: (request) => caches.match(request),
+          offlinePage: () =>
+            new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html; charset=utf-8" } }),
           waitUntil: (promise) => {
             event.waitUntil(promise);
           },

@@ -53,7 +53,8 @@ interface RuntimeRequestDependencies {
   fetcher: (request: Request) => Promise<Response>;
   matchCache: (request: RequestInfo | URL) => Promise<Response | undefined>;
   maxEntries?: number;
-  offlinePath?: string;
+  /** Builds the page an uncached navigation gets when the network fails. */
+  offlinePage: () => Response;
   /** Keeps the worker alive for cache writes that settle after the response is returned. */
   waitUntil: (promise: Promise<unknown>) => void;
 }
@@ -161,10 +162,7 @@ export async function fetchRuntimeRequest(
   } catch {
     const cached = await dependencies.matchCache(request);
     if (cached) return cached;
-    if (request.mode === "navigate") {
-      const offline = await dependencies.matchCache(dependencies.offlinePath ?? "/offline.html");
-      if (offline) return offline;
-    }
+    if (request.mode === "navigate") return dependencies.offlinePage();
     return Response.error();
   }
   if (response.ok) {
