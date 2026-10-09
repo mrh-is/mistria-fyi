@@ -22,7 +22,7 @@ const appHtml = readFileSync(path.resolve(import.meta.dirname, "../../app.html")
  */
 const PRODUCTION_CSP = [
   "base-uri 'self'",
-  "connect-src 'self' https://challenges.cloudflare.com",
+  "connect-src 'self' https://challenges.cloudflare.com https://assets.mistria.fyi",
   "default-src 'none'",
   "font-src 'self' https://assets.mistria.fyi",
   "form-action 'self'",
@@ -41,10 +41,28 @@ describe("Content-Security-Policy", () => {
     expect(serializeCsp(CSP_DIRECTIVES)).toBe(PRODUCTION_CSP);
   });
 
-  it("allows an overridden sprite origin for images only", () => {
+  it("allows an overridden sprite origin for images & the service worker's fetches", () => {
     const directives = cspDirectives("http://localhost:8080/assets");
     expect(directives["img-src"]).toEqual(["self", "data:", "blob:", "http://localhost:8080"]);
     expect(directives["font-src"]).toEqual(CSP_DIRECTIVES["font-src"]);
+    expect(directives["connect-src"]).toEqual([
+      "self",
+      "https://challenges.cloudflare.com",
+      "https://assets.mistria.fyi",
+      "http://localhost:8080",
+    ]);
+  });
+
+  // The service worker fetches fonts & sprites with `fetch()`, which `connect-src` governs, not
+  // `font-src` or `img-src`. A gap here breaks those assets on every controlled page (#226).
+  it("lets the service worker fetch every font & image origin", () => {
+    const connect = new Set(CSP_DIRECTIVES["connect-src"]);
+    const remote = [
+      ...(CSP_DIRECTIVES["font-src"] ?? []),
+      ...(CSP_DIRECTIVES["img-src"] ?? []),
+    ].filter((source) => source.startsWith("http"));
+    expect(remote.length).toBeGreaterThan(0);
+    for (const source of remote) expect(connect).toContain(source);
   });
 
   it("quotes nonces and hashes like SvelteKit does", () => {
