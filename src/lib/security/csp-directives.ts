@@ -19,18 +19,27 @@ function originSource(base: string): CspSource {
  * generated `_headers` file that covers static files.
  *
  * `spriteAssetBase` is the build's resolved sprite base URL (see `resolveSpriteAssetBase`); fonts
- * always come from the production bucket.
+ * always come from the production bucket. `connect-src` lists both origins because the service
+ * worker fetches fonts & sprites with `fetch()`, which `font-src` & `img-src` don't cover.
  */
 export function cspDirectives(spriteAssetBase: string = PRODUCTION_ASSET_ORIGIN): CspDirectives {
+  const spriteOrigin = originSource(spriteAssetBase);
   return {
     "base-uri": ["self"],
-    "connect-src": ["self", "https://challenges.cloudflare.com"],
+    "connect-src": [
+      ...new Set<CspSource>([
+        "self",
+        "https://challenges.cloudflare.com",
+        PRODUCTION_ASSET_ORIGIN,
+        spriteOrigin,
+      ]),
+    ],
     "default-src": ["none"],
     "font-src": ["self", PRODUCTION_ASSET_ORIGIN],
     "form-action": ["self"],
     "frame-ancestors": ["none"],
     "frame-src": ["https://challenges.cloudflare.com"],
-    "img-src": ["self", "data:", "blob:", originSource(spriteAssetBase)],
+    "img-src": ["self", "data:", "blob:", spriteOrigin],
     "manifest-src": ["self"],
     "object-src": ["none"],
     "script-src": ["self", "https://challenges.cloudflare.com"],
