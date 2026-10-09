@@ -23,6 +23,12 @@ const PAGES_INTERNAL_FILES = new Set([
 ]);
 
 export interface RoutesReport {
+  /**
+   * URL paths of `.html` static assets. Pages redirects `/x.html` to `/x`, which the Function then
+   * redirects to a locale, so the file is unreachable at its own path & the service worker's
+   * precache of it fails the whole install (#226).
+   */
+  htmlAssets: string[];
   ruleCount: number;
   /** URL paths of static assets that would invoke the Function. */
   unexcludedAssets: string[];
@@ -39,6 +45,7 @@ export async function checkRoutes(buildDir = BUILD_DIR): Promise<RoutesReport> {
   const routes = JSON.parse(raw) as RoutesJson;
   const assets = await listStaticAssets(buildDir);
   return {
+    htmlAssets: assets.filter((asset) => asset.endsWith(".html")),
     ruleCount: routes.include.length + routes.exclude.length,
     unexcludedAssets: assets.filter((asset) => isFunctionRoute(routes, asset)),
   };
@@ -80,8 +87,17 @@ async function listStaticAssets(buildDir: string): Promise<string[]> {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const { ruleCount, unexcludedAssets } = await checkRoutes();
+  const { htmlAssets, ruleCount, unexcludedAssets } = await checkRoutes();
   let failed = false;
+  if (htmlAssets.length > 0) {
+    console.error(
+      `Cloudflare Pages redirects .html assets away from their own path, so these can't be served:`,
+    );
+    for (const asset of htmlAssets) {
+      console.error(`  ${asset}`);
+    }
+    failed = true;
+  }
   if (ruleCount > ROUTE_RULE_LIMIT) {
     console.error(
       `_routes.json has ${ruleCount} rules; Cloudflare Pages caps it at ${ROUTE_RULE_LIMIT}.`,
@@ -103,6 +119,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (failed) {
     process.exitCode = 1;
   } else {
-    console.log(`_routes.json uses ${ruleCount} rules; every static asset bypasses Functions.`);
+    console.log(
+      `_routes.json uses ${ruleCount} rules; every static asset bypasses Functions & none is .html.`,
+    );
   }
 }
