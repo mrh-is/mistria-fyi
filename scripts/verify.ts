@@ -17,6 +17,8 @@
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
+import { pnpmCommand } from "#scripts/lib/pnpm-command";
+
 const USAGE = "Usage: pnpm run verify [-- --assets] [--browser] [--all]";
 
 export interface VerifyStep {
@@ -58,23 +60,6 @@ export function planSteps(args: string[]): undefined | VerifyStep[] {
     steps.push({ env, name: "test:accessibility" }, { env, name: "test:pwa" });
   }
   return steps;
-}
-
-/**
- * Resolves pnpm without depending on a shell shim: `pnpm run` exports its own executable as
- * `npm_execpath`, which avoids PowerShell's `pnpm.ps1` & Node's refusal to spawn `pnpm.cmd`
- * without a shell on Windows. The same helper lives in `playwright-preview.ts`,
- * `setup-worktree.ts`, & `test-changed.ts`; keep them in step.
- */
-function pnpmCommand(args: string[]): { args: string[]; command: string; shell: boolean } {
-  const execPath = process.env.npm_execpath;
-  if (!execPath) {
-    return { args, command: "pnpm", shell: process.platform === "win32" };
-  }
-  if (/\.[cm]?js$/.test(execPath)) {
-    return { args: [execPath, ...args], command: process.execPath, shell: false };
-  }
-  return { args, command: execPath, shell: false };
 }
 
 /** Runs `pnpm run <name>` with stdout & stderr merged in arrival order. */

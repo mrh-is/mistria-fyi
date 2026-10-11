@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { DEFAULT_ASSET_ORIGIN as uploaderOrigin } from "../../scripts/lib/r2-upload.js";
 import { ASSET_ORIGIN as fontManifestOrigin } from "../../scripts/locale-fonts/manifest.js";
 import { PRODUCTION_ASSET_ORIGIN, resolveSpriteAssetBase } from "./asset-origin.js";
 
@@ -69,15 +70,8 @@ describe("one asset origin", () => {
     }
   });
 
-  it("matches the locale font manifest and the upload scripts' defaults", () => {
+  it("matches the locale font manifest and the R2 uploader's default", () => {
     expect(fontManifestOrigin).toBe(PRODUCTION_ASSET_ORIGIN);
-    for (const script of [
-      "scripts/locale-fonts/upload-locale-fonts.sh",
-      "scripts/sprites/upload-sprites.sh",
-    ]) {
-      expect(read(script), script).toContain(
-        `ORIGIN="\${ASSET_ORIGIN:-${PRODUCTION_ASSET_ORIGIN}}"`,
-      );
-    }
+    expect(uploaderOrigin).toBe(PRODUCTION_ASSET_ORIGIN);
   });
 });

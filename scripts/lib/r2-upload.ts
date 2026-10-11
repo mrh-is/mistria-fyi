@@ -1,0 +1,226 @@
+// Shared uploader for the R2 bucket behind assets.mistria.fyi (sprites & locale fonts). A Node
+// module rather than Bash so the upload scripts run the same on Windows, where `bash` from
+// `cmd.exe` can resolve to WSL (#727).
+//
+// Env read by `r2UploadOptionsFromEnv`: R2_BUCKET, ASSET_ORIGIN, PARALLEL, FORCE=1 (re-upload
+// everything), & DRY_RUN=1 (print what would be uploaded without running Wrangler).
+import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
+
+import { pnpmCommand } from "#scripts/lib/pnpm-command";
+
+/** Production asset origin; `src/lib/asset-origin.test.ts` keeps it in step with the app's. */
+export const DEFAULT_ASSET_ORIGIN = "https://assets.mistria.fyi";
+export const DEFAULT_BUCKET = "mistria-fyi-assets";
+/** Right for versioned keys (locale fonts); keys overwritten in place pass a revalidating one. */
+export const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
+/** How an upload decides a remote object is already current. */
+export type SkipMode =
+  /** The public object's ETag equals the local file's MD5 (keys overwritten in place). */
+  | "etag"
+  /** The public object exists (keys that never change once uploaded). */
+  | "exists";
+
+export interface R2UploadOptions {
+  bucket: string;
+  dryRun: boolean;
+  force: boolean;
+  origin: string;
+  parallel: number;
+}
+
+export interface R2UploadTree {
+  cacheControl?: string;
+  contentType: string;
+  /** Directory whose files are uploaded, keyed by their path relative to it. */
+  dir: string;
+  /** File extension to upload, such as `.webp`. */
+  extension: string;
+  keyPrefix: string;
+  skipMode: SkipMode;
+}
+
+/** The result of one `wrangler r2 object put`. */
+export interface WranglerResult {
+  ok: boolean;
+  output: string;
+}
+
+/** Side effects, injectable for tests. */
+export interface R2UploadIo {
+  fetch: typeof fetch;
+  log: (line: string) => void;
+  logError: (line: string) => void;
+  putObject: (args: string[]) => Promise<WranglerResult>;
+  retryDelay: (attempt: number) => Promise<void>;
+}
+
+export function r2UploadOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): R2UploadOptions {
+  const parallel = Number(env.PARALLEL ?? "8");
+  return {
+    bucket: env.R2_BUCKET ?? DEFAULT_BUCKET,
+    dryRun: env.DRY_RUN === "1",
+    force: env.FORCE === "1",
+    origin: env.ASSET_ORIGIN ?? DEFAULT_ASSET_ORIGIN,
+    parallel: Number.isInteger(parallel) && parallel > 0 ? parallel : 8,
+  };
+}
+
+/** Lists every file under `dir`, as sorted `/`-separated paths relative to it. */
+export async function listFiles(dir: string): Promise<string[]> {
+  const entries = await readdir(dir, { recursive: true, withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile())
+    .map((entry) =>
+      path.relative(dir, path.join(entry.parentPath, entry.name)).replaceAll("\\", "/"),
+    )
+    .toSorted();
+}
+
+/** Runs `pnpx wrangler` through pnpm's own executable, so no shell shim is involved. */
+export function runWrangler(args: string[]): Promise<WranglerResult> {
+  // --allow-build lets Wrangler's native deps (esbuild, workerd) run their install scripts
+  // non-interactively; without it, a pnpm store that hasn't approved them fails every upload.
+  const pnpm = pnpmCommand([
+    "dlx",
+    "--allow-build=esbuild",
+    "--allow-build=workerd",
+    "wrangler",
+    ...args,
+  ]);
+  return new Promise((resolve) => {
+    const child = spawn(pnpm.command, pnpm.args, { shell: pnpm.shell, windowsHide: true });
+    let output = "";
+    child.stdout.on("data", (chunk: Buffer) => (output += chunk.toString()));
+    child.stderr.on("data", (chunk: Buffer) => (output += chunk.toString()));
+    child.on("error", (error) => {
+      resolve({ ok: false, output: `${output}${error.message}` });
+    });
+    child.on("close", (code) => {
+      resolve({ ok: code === 0, output });
+    });
+  });
+}
+
+const defaultIo: R2UploadIo = {
+  fetch: (input, init) => fetch(input, init),
+  log: (line) => {
+    console.log(line);
+  },
+  logError: (line) => {
+    console.error(line);
+  },
+  putObject: runWrangler,
+  retryDelay: (attempt) => sleep(attempt * 1000),
+};
+
+async function isCurrent(
+  url: string,
+  file: string,
+  skipMode: SkipMode,
+  io: R2UploadIo,
+): Promise<boolean> {
+  let response: Response;
+  try {
+    response = await io.fetch(url, { method: "HEAD" });
+  } catch {
+    return false;
+  }
+  if (skipMode === "exists") {
+    return response.status === 200;
+  }
+  const etag = response.ok ? response.headers.get("etag")?.replaceAll('"', "") : undefined;
+  if (!etag) {
+    return false;
+  }
+  const md5 = createHash("md5")
+    .update(await readFile(file))
+    .digest("hex");
+  return etag === md5;
+}
+
+async function uploadOne(
+  relativePath: string,
+  tree: R2UploadTree,
+  options: R2UploadOptions,
+  io: R2UploadIo,
+): Promise<boolean> {
+  const key = `${tree.keyPrefix}${relativePath}`;
+  const file = path.join(tree.dir, relativePath);
+  if (!options.force && (await isCurrent(`${options.origin}/${key}`, file, tree.skipMode, io))) {
+    io.log(`skip ${key}`);
+    return true;
+  }
+  if (options.dryRun) {
+    io.log(`would put ${key}`);
+    return true;
+  }
+  const args = [
+    "r2",
+    "object",
+    "put",
+    `${options.bucket}/${key}`,
+    "--remote",
+    "--file",
+    file,
+    "--content-type",
+    tree.contentType,
+    "--cache-control",
+    tree.cacheControl ?? IMMUTABLE_CACHE_CONTROL,
+  ];
+  // Wrangler occasionally fails with a transient "fetch failed"; retry before giving up.
+  let result: WranglerResult = { ok: false, output: "" };
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- each retry waits for the previous attempt
+    result = await io.putObject(args);
+    if (result.ok) {
+      io.log(`put  ${key}`);
+      return true;
+    }
+    if (attempt < 3) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- back off between sequential retries
+      await io.retryDelay(attempt);
+    }
+  }
+  io.logError(`FAILED ${key}`);
+  for (const line of result.output.trimEnd().split(/\r?\n/)) {
+    io.logError(`  wrangler: ${line}`);
+  }
+  return false;
+}
+
+/**
+ * Uploads every `tree.extension` file under `tree.dir`, keyed as `keyPrefix` + its relative path,
+ * up to `options.parallel` at a time. Resolves to whether every upload succeeded.
+ */
+export async function r2UploadTree(
+  tree: R2UploadTree,
+  options: R2UploadOptions,
+  io: R2UploadIo = defaultIo,
+): Promise<boolean> {
+  const allFiles = await listFiles(tree.dir);
+  const files = allFiles.filter((file) => file.endsWith(tree.extension));
+  let next = 0;
+  let failed = 0;
+  const worker = async (): Promise<void> => {
+    while (next < files.length) {
+      const file = files[next];
+      next += 1;
+      // oxlint-disable-next-line eslint/no-await-in-loop -- each worker uploads one file at a time; the pool bounds concurrency
+      if (!(await uploadOne(file, tree, options, io))) {
+        failed += 1;
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(options.parallel, files.length) }, worker));
+  if (failed > 0) {
+    io.logError("Some uploads failed; rerun to retry them.");
+    return false;
+  }
+  io.log(`Done: ${files.length} objects staged for ${options.bucket}`);
+  return true;
+}

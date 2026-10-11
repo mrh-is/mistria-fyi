@@ -1,6 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
+import { pnpmCommand } from "#scripts/lib/pnpm-command";
+
 const DEFAULT_BASE_REF = "origin/main";
 const FULL_SUITE_FILES = new Set([
   "package.json",
@@ -87,23 +89,6 @@ function runGitCommand(args: string[]): GitResult {
     stderr: result.stderr.length > 0 ? result.stderr : (result.error?.message ?? ""),
     stdout: result.stdout ?? "",
   };
-}
-
-/**
- * Resolves pnpm without depending on a shell shim: `pnpm run` exports its own executable as
- * `npm_execpath`, which avoids Node's refusal to spawn `pnpm.cmd` without a shell on Windows. The
- * same helper lives in `playwright-preview.ts`, `setup-worktree.ts`, & `verify.ts`; keep them in
- * step.
- */
-function pnpmCommand(args: string[]): { args: string[]; command: string; shell: boolean } {
-  const execPath = process.env.npm_execpath;
-  if (!execPath) {
-    return { args, command: "pnpm", shell: process.platform === "win32" };
-  }
-  if (/\.[cm]?js$/.test(execPath)) {
-    return { args: [execPath, ...args], command: process.execPath, shell: false };
-  }
-  return { args, command: execPath, shell: false };
 }
 
 function runPnpm(pnpmArgs: string[]): number {
