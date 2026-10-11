@@ -49,10 +49,12 @@ pnpm run worktree:new <issue-number>-<short-description> [starting-branch]
 The script validates the slug (`<issue-number>-<short-description>`, lowercase), fetches the
 starting branch (default `main`), creates `.worktrees/<slug>` on a matching branch from the
 refreshed `origin/<starting-branch>` under the main checkout, removes the worktree & branch again if
-a later step fails, refuses to run if `.worktrees/` is not gitignored, symlinks every
+a later step fails, refuses to run if `.worktrees/` is not gitignored, links every
 `.worktreeinclude` entry from the main checkout, and runs `pnpm install --frozen-lockfile` and
-`pnpm run prepare` (Husky hooks, Paraglide output, & `svelte-kit sync`). The symlink & install steps
-live in `scripts/setup-worktree.sh`, which skips entries already present.
+`pnpm run prepare` (Husky hooks, Paraglide output, & `svelte-kit sync`). The link & install steps
+live in `scripts/setup-worktree.ts`, which skips entries already present or missing from the main
+checkout. Both scripts run under Node so Windows behaves the same; see
+[Worktrees & Verification on Windows](#worktrees--verification-on-windows).
 
 Before creating the harness worktree, fetch the intended starting branch and use its refreshed
 remote tip as the base. Setup installs dependencies; it does not move an existing worktree or
@@ -812,23 +814,22 @@ offline fallback, registration, or activation behavior.
   ls .husky/_/pre-commit            # should exist
   ```
 
-### `worktree:new` Fails Partway Through on Windows
+### Worktrees & Verification on Windows
 
-- **Symptom**: `pnpm run worktree:new` prints
-  `ln: failed to create symbolic link '.../.worktrees/<slug>/.env': No such file or directory` and
-  exits before running `pnpm install`/`pnpm run prepare`, leaving the worktree without dependencies
-  installed.
-- **Cause**: `scripts/new-worktree.sh` symlinks every `.worktreeinclude` entry, including bare
-  filenames like `.env` and `.env.*` that only exist if the main checkout has them. On some Windows
-  Git Bash setups, `ln -s` for a _file_ symlink to a nonexistent target fails outright (directory
-  symlinks, like `pipeline/input/`, are unaffected), and the script's `set -euo pipefail` aborts the
-  whole run right there — before the install step. This is a false alarm when the main checkout
-  genuinely has no `.env`; there is nothing to symlink or fix.
-- **Recovery**: Finish the two steps the script didn't reach, from inside the worktree directory:
-  ```sh
-  cd .worktrees/<slug>
-  pnpm install --frozen-lockfile
-  pnpm run prepare
-  ```
-  Re-run `git worktree list` first if you're unsure whether the worktree itself was created — the
-  failure happens after `git worktree add` succeeds, so the branch and directory already exist.
+`worktree:new`, `worktree:setup`, & `verify` are Node scripts (`scripts/*.ts`), so Windows runs them
+without a shell. The earlier Bash versions failed there (#353): from `cmd.exe`, `bash` can resolve
+to WSL, whose Git records a `/mnt/c/...` gitdir that Git for Windows reports as prunable and whose
+launcher can outlive `verify`'s child without returning its exit status, while Git Bash's `ln -s`
+copies or fails instead of linking.
+
+- **Links**: setup links each `.worktreeinclude` entry that exists in the main checkout and skips
+  the rest. On Windows, directories become junctions, which need neither administrator rights nor
+  Developer Mode. Files become symlinks where Windows allows them and hard links otherwise; an
+  editor that saves by replacing the file breaks a hard link, so edit `.env` in the main checkout.
+- **Leftover junctions**: Git for Windows' `git worktree remove` unregisters a worktree but leaves
+  its junctions behind, and without `git config --global core.longpaths true` it stops with
+  `Filename too long` inside `node_modules`. Delete the leftover directory with
+  `node -e "require('fs').rmSync(process.argv[1], { recursive: true, force: true })" <path>`, which
+  unlinks a junction without following it, rather than a tool that might recurse into the target.
+- **Restricted PowerShell**: if the execution policy blocks `pnpm.ps1`, run `pnpm.cmd` instead (for
+  example `pnpm.cmd run verify`) or use Git Bash.

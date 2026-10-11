@@ -1,10 +1,10 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-const script = readFileSync(new URL("new-worktree.sh", import.meta.url), "utf8");
+const script = readFileSync(new URL("new-worktree.ts", import.meta.url), "utf8");
 const temporaryDirectories: string[] = [];
 
 afterEach(() => {
@@ -17,7 +17,7 @@ function git(cwd: string, ...args: string[]) {
   return execFileSync("git", ["-C", cwd, ...args], { encoding: "utf8" }).trim();
 }
 
-function fixture() {
+function fixture(setupExitCode = 0) {
   const directory = mkdtempSync(join(tmpdir(), "mistria-worktree-"));
   temporaryDirectories.push(directory);
   const upstream = join(directory, "upstream");
@@ -28,8 +28,11 @@ function fixture() {
   git(upstream, "config", "user.email", "worktree@example.invalid");
   git(upstream, "config", "commit.gpgsign", "false");
   mkdirSync(join(upstream, "scripts"));
-  writeFileSync(join(upstream, "scripts/new-worktree.sh"), script);
-  writeFileSync(join(upstream, "scripts/setup-worktree.sh"), "#!/bin/bash\nexit 0\n");
+  writeFileSync(join(upstream, "scripts/new-worktree.ts"), script);
+  writeFileSync(
+    join(upstream, "scripts/setup-worktree.ts"),
+    `process.exitCode = ${String(setupExitCode)};\n`,
+  );
   writeFileSync(join(upstream, ".gitignore"), ".worktrees/\n");
   git(upstream, "add", ".");
   git(upstream, "commit", "-m", "Initial fixture");
@@ -45,7 +48,7 @@ function advance(upstream: string) {
 }
 
 function create(checkout: string, ...args: string[]) {
-  return spawnSync("bash", ["scripts/new-worktree.sh", ...args], {
+  return spawnSync(process.execPath, ["scripts/new-worktree.ts", ...args], {
     cwd: checkout,
     encoding: "utf8",
   });
@@ -62,6 +65,8 @@ describe("new-worktree starting branch", () => {
     expect(git(join(checkout, ".worktrees/123-test"), "rev-parse", "HEAD")).toBe(latest);
     expect(git(checkout, "rev-parse", "HEAD")).toBe(oldHead);
     expect(readFileSync(join(checkout, ".gitignore"), "utf8")).toContain("local-edit");
+    // Git for Windows must be able to read the recorded gitdir (#353).
+    expect(git(checkout, "worktree", "list", "--porcelain")).not.toContain("prunable");
   });
 
   it("refreshes an explicit starting branch even with a main-only fetch configuration", () => {
@@ -79,5 +84,13 @@ describe("new-worktree starting branch", () => {
     expect(create(checkout, "125-test", "missing").status).not.toBe(0);
     expect(git(checkout, "branch", "--list", "125-test")).toBe("");
     expect(git(checkout, "worktree", "list", "--porcelain")).not.toContain("125-test");
+  });
+
+  it("removes the worktree & branch when setup fails", () => {
+    const { checkout } = fixture(3);
+    const result = create(checkout, "126-test");
+    expect(result.status).toBe(3);
+    expect(existsSync(join(checkout, ".worktrees/126-test"))).toBe(false);
+    expect(git(checkout, "branch", "--list", "126-test")).toBe("");
   });
 });
