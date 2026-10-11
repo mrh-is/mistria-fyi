@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { parseCliOptions, resolveCallerPath } from "./cli-options.js";
@@ -36,18 +37,18 @@ describe("resolveCallerPath", () => {
   it("resolves relative paths against pnpm's invoking directory", () => {
     expect(
       resolveCallerPath("pipeline/input/assets", { INIT_CWD: "/repo" }, "/repo/pipeline"),
-    ).toBe("/repo/pipeline/input/assets");
+    ).toBe(resolve("/repo/pipeline/input/assets"));
   });
 
   it("falls back to the process cwd outside pnpm", () => {
     expect(resolveCallerPath("input/assets", {}, "/repo/pipeline")).toBe(
-      "/repo/pipeline/input/assets",
+      resolve("/repo/pipeline/input/assets"),
     );
   });
 
   it("keeps absolute paths", () => {
     expect(resolveCallerPath("/game/assets", { INIT_CWD: "/repo" }, "/elsewhere")).toBe(
-      "/game/assets",
+      resolve("/game/assets"),
     );
   });
 });

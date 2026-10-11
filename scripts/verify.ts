@@ -63,7 +63,8 @@ export function planSteps(args: string[]): undefined | VerifyStep[] {
 /**
  * Resolves pnpm without depending on a shell shim: `pnpm run` exports its own executable as
  * `npm_execpath`, which avoids PowerShell's `pnpm.ps1` & Node's refusal to spawn `pnpm.cmd`
- * without a shell on Windows. Shared with `setup-worktree.ts`; keep the two in step.
+ * without a shell on Windows. The same helper lives in `playwright-preview.ts`,
+ * `setup-worktree.ts`, & `test-changed.ts`; keep them in step.
  */
 function pnpmCommand(args: string[]): { args: string[]; command: string; shell: boolean } {
   const execPath = process.env.npm_execpath;

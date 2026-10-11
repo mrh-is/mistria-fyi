@@ -11,18 +11,32 @@
 import { ESLint } from "eslint";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import type { SpawnSyncOptionsWithStringEncoding } from "node:child_process";
+
 const probeDirectory = "tests/lint-probes";
+
+/**
+ * Runs an oxc CLI through Node. `node_modules/.bin` holds shell shims (`.CMD` on Windows) that
+ * `spawnSync` can't execute without a shell there.
+ */
+function oxc(
+  tool: "oxfmt" | "oxlint",
+  args: string[],
+  options: SpawnSyncOptionsWithStringEncoding,
+) {
+  return spawnSync(process.execPath, [`node_modules/${tool}/bin/${tool}`, ...args], options);
+}
 
 interface OxlintReport {
   diagnostics: { code: string; filename: string }[];
 }
 
 function oxlintRules(): Map<string, Set<string>> {
-  const { stdout } = spawnSync(
-    "node_modules/.bin/oxlint",
+  const { stdout } = oxc(
+    "oxlint",
     [
       "--type-aware",
       "--disable-nested-config",
@@ -82,11 +96,10 @@ describe("lint tool ownership", () => {
   });
 
   it("oxfmt formats .svelte files", () => {
-    const { stdout } = spawnSync(
-      "node_modules/.bin/oxfmt",
-      ["--stdin-filepath", "src/lib/components/probe.svelte"],
-      { encoding: "utf8", input: "<script lang=\"ts\">\n  import x from './x.js';\n</script>\n" },
-    );
+    const { stdout } = oxc("oxfmt", ["--stdin-filepath", "src/lib/components/probe.svelte"], {
+      encoding: "utf8",
+      input: "<script lang=\"ts\">\n  import x from './x.js';\n</script>\n",
+    });
     expect(stdout).toContain('import x from "./x.js";');
   });
 
@@ -126,7 +139,8 @@ describe("engine import boundary", () => {
     // Use real engine paths so the production override, not a copied rule, selects the probes.
     const nestedDirectory = await mkdtemp("src/lib/engine/lint-probe-");
     const rootProbe = `src/lib/engine/${basename(nestedDirectory)}.ts`;
-    const nestedProbe = join(nestedDirectory, "probe.ts");
+    // `/` separators, matching how oxlint reports the paths it was given.
+    const nestedProbe = `${nestedDirectory}/probe.ts`;
     try {
       await writeFile(
         rootProbe,
@@ -148,8 +162,8 @@ describe("engine import boundary", () => {
           "export type Probe = Store | Component | Domain;",
         ].join("\n"),
       );
-      const result = spawnSync(
-        "node_modules/.bin/oxlint",
+      const result = oxc(
+        "oxlint",
         ["--config", ".oxlintrc.json", "--format", "json", rootProbe, nestedProbe],
         { encoding: "utf8" },
       );
@@ -194,11 +208,9 @@ describe("utils import boundary", () => {
           `export type Probe = ${layers.map((_, index) => `T${index}`).join(" | ")} | Relative | Sibling | Data;`,
         ].join("\n"),
       );
-      const result = spawnSync(
-        "node_modules/.bin/oxlint",
-        ["--config", ".oxlintrc.json", "--format", "json", probe],
-        { encoding: "utf8" },
-      );
+      const result = oxc("oxlint", ["--config", ".oxlintrc.json", "--format", "json", probe], {
+        encoding: "utf8",
+      });
       expect(result.error).toBeUndefined();
       const report = JSON.parse(result.stdout) as OxlintReport;
       const restricted = report.diagnostics.filter(

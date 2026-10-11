@@ -1,8 +1,9 @@
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { runPreview } from "./playwright-preview.js";
@@ -95,9 +96,9 @@ it("records spawn failures and clears the probe timer", async () => {
 it("records a failed build & does not start preview", () => {
   const checkout = mkdtempSync(join(tmpdir(), "mistria-preview-"));
   directories.push(checkout);
-  writeFileSync(join(checkout, "pnpm"), "#!/bin/sh\nexit 9\n");
-  chmodSync(join(checkout, "pnpm"), 0o755);
-  vi.stubEnv("PATH", `${checkout}:${process.env.PATH ?? ""}`);
+  // A Node fake runs on every platform; the script launches pnpm through `npm_execpath`.
+  writeFileSync(join(checkout, "pnpm.cjs"), "process.exitCode = 9;\n");
+  vi.stubEnv("npm_execpath", join(checkout, "pnpm.cjs"));
   expect(runPreview({ checkout, port: "4188", skipBuild: false })).toBeUndefined();
   const log = readFileSync(join(checkout, ".playwright-artifacts/preview-4188.log"), "utf8");
   expect(log).toContain('"event":"build-exit","code":9');
@@ -109,29 +110,35 @@ function cliFixture(source: string) {
   const checkout = mkdtempSync(join(tmpdir(), "mistria-preview-"));
   directories.push(checkout);
   writeFileSync(join(checkout, "child.cjs"), source);
-  writeFileSync(join(checkout, "pnpm"), '#!/bin/sh\nexec "$PREVIEW_TEST_NODE" child.cjs\n');
-  chmodSync(join(checkout, "pnpm"), 0o755);
+  // Windows environment keys are case-insensitive & pnpm may export `NPM_EXECPATH`, so drop every
+  // spelling before pointing the launcher at the fake.
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => key.toLowerCase() !== "npm_execpath"),
+  );
   return {
     args: [
       "--import",
       import.meta.resolve("tsx"),
-      new URL("playwright-preview.ts", import.meta.url).pathname,
+      fileURLToPath(new URL("playwright-preview.ts", import.meta.url)),
     ],
     options: {
       cwd: checkout,
       env: {
-        ...process.env,
-        PATH: `${checkout}:${process.env.PATH ?? ""}`,
+        ...env,
+        npm_execpath: join(checkout, "child.cjs"),
         PLAYWRIGHT_PREVIEW_PORT: "4188",
         PLAYWRIGHT_SKIP_BUILD: "true",
-        PREVIEW_TEST_NODE: process.execPath,
       },
     },
     read: () => readFileSync(join(checkout, ".playwright-artifacts/preview-4188.log"), "utf8"),
   };
 }
 
-it("drains the complete subprocess crash tail before relaying its signal", () => {
+// Windows has no POSIX signals or process groups: `process.kill` there terminates without a
+// signal to relay, and a negative PID names no group.
+const onWindows = process.platform === "win32";
+
+it.skipIf(onWindows)("drains the complete subprocess crash tail before relaying its signal", () => {
   const fixture = cliFixture(
     'const fs = require("node:fs"); const tail = Buffer.alloc(262144, 120); let offset = 0; while (offset < tail.length) offset += fs.writeSync(2, tail, offset, tail.length - offset); process.kill(process.pid, "SIGTERM")',
   );
@@ -146,26 +153,29 @@ it("drains the complete subprocess crash tail before relaying its signal", () =>
   expect(payload).toBe("x".repeat(262_144));
 });
 
-it("leaves diagnostics on disk after Playwright-style process-group force-kill", async () => {
-  const fixture = cliFixture('console.error("stalled preview"); setInterval(() => {}, 1000)');
-  const child = spawn(process.execPath, fixture.args, {
-    ...fixture.options,
-    detached: true,
-    stdio: "ignore",
-  });
-  try {
-    await vi.waitFor(
-      () => {
-        const diagnostics = fixture.read();
-        expect(diagnostics).toContain("stalled preview");
-        expect(diagnostics).toContain('"event":"readiness-probe"');
-      },
-      { timeout: 10_000 },
-    );
-  } finally {
-    if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
-    await once(child, "close");
-  }
-  expect(fixture.read()).toContain('"event":"readiness-probe"');
-  expect(fixture.read()).not.toContain('"event":"shutdown"');
-});
+it.skipIf(onWindows)(
+  "leaves diagnostics on disk after Playwright-style process-group force-kill",
+  async () => {
+    const fixture = cliFixture('console.error("stalled preview"); setInterval(() => {}, 1000)');
+    const child = spawn(process.execPath, fixture.args, {
+      ...fixture.options,
+      detached: true,
+      stdio: "ignore",
+    });
+    try {
+      await vi.waitFor(
+        () => {
+          const diagnostics = fixture.read();
+          expect(diagnostics).toContain("stalled preview");
+          expect(diagnostics).toContain('"event":"readiness-probe"');
+        },
+        { timeout: 10_000 },
+      );
+    } finally {
+      if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
+      await once(child, "close");
+    }
+    expect(fixture.read()).toContain('"event":"readiness-probe"');
+    expect(fixture.read()).not.toContain('"event":"shutdown"');
+  },
+);

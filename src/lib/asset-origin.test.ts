@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { relative, resolve } from "node:path";
+import { relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { ASSET_ORIGIN as fontManifestOrigin } from "../../scripts/locale-fonts/manifest.js";
@@ -43,7 +43,9 @@ describe("one asset origin", () => {
     const sourceRoot = resolve(repositoryRoot, "src");
     const offenders = readdirSync(sourceRoot, { recursive: true, withFileTypes: true })
       .filter((entry) => entry.isFile() && /\.(?:svelte|ts)$/.test(entry.name))
-      .map((entry) => relative(repositoryRoot, resolve(entry.parentPath, entry.name)))
+      .map((entry) =>
+        relative(repositoryRoot, resolve(entry.parentPath, entry.name)).split(sep).join("/"),
+      )
       .filter(
         (path) =>
           !path.endsWith(".test.ts") &&
