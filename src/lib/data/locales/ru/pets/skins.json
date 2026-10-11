@@ -1,16 +1,16 @@
 {
   "sapling": "Слизянка",
-  "mushroom": "Mushroom",
-  "rockclod": "Rockclod",
-  "oreclod": "Oreclod",
+  "mushroom": "Гриб",
+  "rockclod": "Камнеглыб",
+  "oreclod": "Рудоглыб",
   "stalagmite": "Сталагмит",
   "lava_cat": "Лавакошка",
-  "void_cat": "Void Cat",
+  "void_cat": "Пустокошка",
   "flame_spirit": "Дух огня",
   "rock_stack": "Камнекубик",
-  "griffin_statue": "Статуя грифона",
-  "flying_tome": "Летающий фолиант",
-  "essence_bat": "Крылан эссенции",
+  "griffin_statue": "Статуя",
+  "flying_tome": "Книга",
+  "essence_bat": "Крылан",
   "enchantern": "Фонарник",
   "mimic": "Мимик"
 }

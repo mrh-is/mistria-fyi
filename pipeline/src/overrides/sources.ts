@@ -267,13 +267,6 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
     // Wiki: https://fieldsofmistria.wiki.gg/wiki/Cooking
     // These cooked dishes have no recipe in the crafting system. They are either purchased at the
     // inn, given as quest rewards, or are festival-specific items.
-    ["harvest_day_pie" as ItemId]: [
-      {
-        type: "festival" as const,
-        availability: { type: "season" as const, seasons: ["fall"] },
-        festivalId: "harvest" as FestivalId,
-      },
-    ],
     // Inn-prepared dishes: made by Villagers at the inn, not player-craftable
     ...Object.fromEntries(
       [

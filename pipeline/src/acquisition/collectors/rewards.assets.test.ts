@@ -17,7 +17,7 @@ import { collectRewardSources } from "./rewards.js";
 
 import type { ItemId } from "#lib/types/tracker-data.js";
 
-describe("letter acquisition — v1.0.5 assets", () => {
+describe("letter acquisition — v1.0.6 assets", () => {
   it("keeps the birthday and heart gates on Temple Flower Seeds", () => {
     const { data: fiddle } = parseFiddle(requireGameAssetsDir());
     evaluateExpressions(fiddle);

@@ -8,7 +8,7 @@ import { extractAlmanac } from "./almanac.js";
 
 import type { AlmanacCategoryId, ItemId } from "#lib/types/tracker-data.js";
 
-describe("extractAlmanac — v1.0.5 assets", () => {
+describe("extractAlmanac — v1.0.6 assets", () => {
   it("matches the verified category totals while preserving distinct bed presentations", () => {
     const assetsDir = requireGameAssetsDir();
     const fiddle = parseFiddle(assetsDir).data;
@@ -28,11 +28,12 @@ describe("extractAlmanac — v1.0.5 assets", () => {
       true,
     );
     expect(furniture.items.filter((entry) => entry.recipeId === "emerald_bed")).toHaveLength(2);
-    // 2,709 named items, less the two excluded cutscene props (`ITEM_EXCLUSIONS`).
-    expect(Object.keys(localeNames.en)).toHaveLength(2707);
+    // 2,709 named items, less the three excluded cutscene props (`ITEM_EXCLUSIONS`).
+    expect(Object.keys(localeNames.en)).toHaveLength(2706);
     expect(localeNames.en).not.toHaveProperty("balors_crate");
+    expect(localeNames.en).not.toHaveProperty("harvest_day_pie");
     expect(localeNames.ja["turnip" as ItemId]).not.toBe(localeNames.en["turnip" as ItemId]);
-    expect(log).toHaveBeenCalledWith(expect.stringContaining("ja: 303"));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("ja: 302"));
     expect(log).toHaveBeenCalledWith("  Nameless items skipped (6):");
     expect(log).toHaveBeenCalledWith("    - other/misc/animal_cosmetic (missing name)");
     expect(log).toHaveBeenCalledWith("    - other/misc/stinky_stamina_potion (missing name)");
