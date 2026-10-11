@@ -96,11 +96,11 @@ Upload either result with:
 pnpm run sprites:upload
 ```
 
-modeled on `scripts/locale-fonts/upload-locale-fonts.sh`: it uploads via `pnpx wrangler`, marks
-objects `max-age=86400, stale-while-revalidate=86400`, skips keys whose remote ETag already matches
-the local file's MD5 (`FORCE=1` to re-upload everything regardless), and — since original game
-assets must never reach the public bucket by accident — refuses to run if `pipeline/output/sprites/`
-contains anything other than `.webp` files.
+modeled on `scripts/locale-fonts/upload-locale-fonts.sh`: it uploads via the workspace `wrangler`,
+marks objects `max-age=86400, stale-while-revalidate=86400`, skips keys whose remote ETag already
+matches the local file's MD5 (`FORCE=1` to re-upload everything regardless), and — since original
+game assets must never reach the public bucket by accident — refuses to run if
+`pipeline/output/sprites/` contains anything other than `.webp` files.
 
 ## Rollout order for an icon change
 

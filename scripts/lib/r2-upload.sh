@@ -4,6 +4,11 @@
 #
 # Set DRY_RUN=1 to print what would be uploaded without touching the network or Wrangler.
 
+# The workspace's own Wrangler (installed for @sveltejs/adapter-cloudflare), whose native deps
+# `allowBuilds` in pnpm-workspace.yaml already approves. `pnpx` would install a separate copy that
+# ignores that approval. Called by path so callers that `cd` elsewhere still reach it.
+WRANGLER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/node_modules/.bin/wrangler"
+
 # Portable MD5 (stock macOS has no md5sum; OpenSSL/LibreSSL is present on macOS & Linux).
 md5_of() {
   openssl dgst -md5 -r "$1" | cut -d' ' -f1
@@ -54,9 +59,7 @@ upload_one() {
   # Wrangler occasionally fails with a transient "fetch failed"; retry before giving up.
   local attempt output=
   for attempt in 1 2 3; do
-    # --allow-build lets wrangler's native deps (esbuild, workerd) run their install scripts
-    # non-interactively; without it, a pnpm store that hasn't approved them yet fails every upload.
-    if output=$(pnpx --allow-build=esbuild --allow-build=workerd wrangler r2 object put \
+    if output=$("$WRANGLER" r2 object put \
       "$BUCKET/$key" --remote --file "$file" \
       --content-type "$CONTENT_TYPE" \
       --cache-control "$CACHE_CONTROL" 2>&1); then
