@@ -1,14 +1,14 @@
 // AGENTS.md §6: files are `kebab-case`. SvelteKit's `+`-prefixed route files & `[param]`/`(group)`
 // directories are framework syntax, so only the part after those markers is checked.
 import { readdirSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const kebab = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** Repo-relative paths with `/` separators on every platform. */
 function walk(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) =>
-    entry.isDirectory() ? walk(join(directory, entry.name)) : [join(directory, entry.name)],
+    entry.isDirectory() ? walk(`${directory}/${entry.name}`) : [`${directory}/${entry.name}`],
   );
 }
 

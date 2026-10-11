@@ -1,7 +1,7 @@
 import { execFile, execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import { promisify } from "node:util";
 import { beforeAll, describe, expect, it } from "vitest";
 
@@ -38,7 +38,7 @@ async function listProjectFiles(cleanupChanged?: boolean): Promise<ListedFile[]>
       },
     );
     return (JSON.parse(readFileSync(outputFile, "utf8")) as ListedFile[]).map((entry) => ({
-      file: relative(root, entry.file),
+      file: relative(root, entry.file).split(sep).join("/"),
       projectName: entry.projectName,
     }));
   } finally {

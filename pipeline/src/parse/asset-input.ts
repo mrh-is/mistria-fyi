@@ -24,7 +24,12 @@ export interface GameAssetsInput {
 
 /** Resolves a directory or materializes only structured TOML from an installed assets.zip archive. */
 export async function prepareGameAssets(input?: string): Promise<GameAssetsInput> {
-  const selected = input ?? defaultInput();
+  const selected = input ?? defaultGameAssetsInput();
+  if (basename(selected) === "assets.zip" && !existsSync(selected)) {
+    throw new Error(
+      `Game archive not found at ${resolve(selected)}. Install the game or set MISTRIA_ASSETS.`,
+    );
+  }
   const archivePath = resolveArchivePath(selected);
   if (!archivePath) {
     const assetsDir = resolve(selected);
@@ -41,9 +46,13 @@ export async function prepareGameAssets(input?: string): Promise<GameAssetsInput
   return { archivePath, assetsDir: join(root, "assets") };
 }
 
-function defaultInput(): string {
-  if (existsSync(DEFAULT_WINDOWS_GAME_ARCHIVE)) return DEFAULT_WINDOWS_GAME_ARCHIVE;
-  return DEFAULT_ASSETS_DIR;
+/**
+ * Windows reads the installed Steam archive; other platforms read `pipeline/input/assets`. Neither
+ * falls back to the other, so a machine without its platform's source fails rather than silently
+ * testing something else. `MISTRIA_ASSETS` overrides both.
+ */
+export function defaultGameAssetsInput(platform: NodeJS.Platform = process.platform): string {
+  return platform === "win32" ? DEFAULT_WINDOWS_GAME_ARCHIVE : DEFAULT_ASSETS_DIR;
 }
 
 async function materializeStructuredAssets(archivePath: string): Promise<string> {
