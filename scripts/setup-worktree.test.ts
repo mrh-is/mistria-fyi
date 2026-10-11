@@ -1,10 +1,13 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, expect, it } from "vitest";
+import { fileURLToPath } from "node:url";
+import { afterEach, describe, expect, it } from "vitest";
 
-const script = new URL("setup-worktree.sh", import.meta.url);
+import { planInstall, planLinks } from "./setup-worktree.js";
+
+const script = fileURLToPath(new URL("setup-worktree.ts", import.meta.url));
 const directories: string[] = [];
 afterEach(() => {
   for (const directory of directories.splice(0)) {
@@ -12,16 +15,111 @@ afterEach(() => {
   }
 });
 
-function fixture(platform = "Darwin") {
+function temporaryDirectory() {
   const directory = mkdtempSync(join(tmpdir(), "mistria-setup-"));
   directories.push(directory);
-  const main = join(directory, "main");
-  const worktree = join(directory, "worktree");
-  const bin = join(directory, "bin");
+  return directory;
+}
+
+function git(cwd: string, ...args: string[]) {
+  return execFileSync("git", ["-C", cwd, ...args], { encoding: "utf8" }).trim();
+}
+
+/**
+ * Points the script's pnpm launcher at a fake. Windows environment keys are case-insensitive and
+ * pnpm may export `NPM_EXECPATH`, so drop every spelling before setting it.
+ */
+function withFakePnpm(pnpm: string): NodeJS.ProcessEnv {
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => key.toLowerCase() !== "npm_execpath"),
+  );
+  return { ...env, npm_execpath: pnpm };
+}
+
+describe("planInstall", () => {
+  const codex = { CODEX_THREAD_ID: "fixture" };
+
+  it("pins install & prepare to an external store for local Codex on macOS", () => {
+    expect(planInstall("darwin", codex)).toEqual({
+      env: {
+        npm_config_store_dir: "/private/tmp/codex-pnpm-store",
+        pnpm_config_confirm_modules_purge: "false",
+        pnpm_config_store_dir: "/private/tmp/codex-pnpm-store",
+      },
+      installArgs: [
+        "install",
+        "--frozen-lockfile",
+        "--store-dir",
+        "/private/tmp/codex-pnpm-store",
+        "--config.confirmModulesPurge=false",
+      ],
+    });
+  });
+
+  it("preserves an explicit store override", () => {
+    const plan = planInstall("darwin", {
+      ...codex,
+      npm_config_store_dir: "/private/tmp/legacy-pnpm-store",
+      pnpm_config_store_dir: "/private/tmp/custom-pnpm-store",
+    });
+    expect(plan.env.pnpm_config_store_dir).toBe("/private/tmp/custom-pnpm-store");
+    expect(plan.env.npm_config_store_dir).toBe("/private/tmp/custom-pnpm-store");
+  });
+
+  it.each(["linux", "win32"] as const)("leaves %s pnpm settings alone", (platform) => {
+    expect(planInstall(platform, codex)).toEqual({
+      env: {},
+      installArgs: ["install", "--frozen-lockfile"],
+    });
+  });
+});
+
+describe("planLinks", () => {
+  it("links existing entries & skips missing, tracked, or already-present ones", () => {
+    const root = temporaryDirectory();
+    const main = join(root, "main");
+    const worktree = join(root, "worktree");
+    mkdirSync(join(main, "pipeline/input"), { recursive: true });
+    mkdirSync(join(main, "tests/browser/fixtures/local"), { recursive: true });
+    mkdirSync(join(worktree, "tests/browser/fixtures/local"), { recursive: true });
+    writeFileSync(join(main, ".env.example"), "");
+    writeFileSync(join(main, ".env.local"), "");
+    writeFileSync(join(worktree, ".env.example"), "");
+
+    const plans = planLinks(main, worktree, [
+      "pipeline/input/",
+      "tests/browser/fixtures/local/",
+      ".env",
+      ".env.*",
+      ".dev.vars",
+      "",
+    ]);
+
+    expect(plans).toEqual([
+      {
+        destination: join(worktree, "pipeline/input"),
+        directory: true,
+        source: join(main, "pipeline/input"),
+      },
+      {
+        destination: join(worktree, ".env.local"),
+        directory: false,
+        source: join(main, ".env.local"),
+      },
+    ]);
+  });
+});
+
+/** A main checkout with shared inputs (CRLF `.worktreeinclude`), a linked worktree, & a fake pnpm. */
+function fixture() {
+  const root = temporaryDirectory();
+  const main = join(root, "main");
+  const worktree = join(root, "worktree");
   mkdirSync(main);
-  mkdirSync(bin);
-  execFileSync("git", ["init", main], { stdio: "pipe" });
-  writeFileSync(join(main, ".worktreeinclude"), "");
+  git(main, "init");
+  writeFileSync(join(main, ".gitignore"), "pipeline/input/\n.env\n");
+  writeFileSync(join(main, ".worktreeinclude"), "pipeline/input/\r\n.env\r\n.dev.vars\r\n");
+  git(main, "add", ".");
   execFileSync(
     "git",
     [
@@ -34,63 +132,72 @@ function fixture(platform = "Darwin") {
       "-c",
       "commit.gpgsign=false",
       "commit",
-      "--allow-empty",
       "-m",
       "Fixture",
     ],
     { stdio: "pipe" },
   );
-  execFileSync("git", ["-C", main, "worktree", "add", "--detach", worktree], { stdio: "pipe" });
-  const log = join(directory, "calls");
-  writeFileSync(join(bin, "uname"), `#!/bin/sh\necho ${platform}\n`);
+  mkdirSync(join(main, "pipeline/input/assets"), { recursive: true });
+  writeFileSync(join(main, "pipeline/input/assets/misc.toml"), "version = 1\n");
+  writeFileSync(join(main, ".env"), "SECRET=1\n");
+  git(main, "worktree", "add", "--detach", worktree);
+
+  const log = join(root, "pnpm-calls");
+  const pnpm = join(root, "fake-pnpm.mjs");
   writeFileSync(
-    join(bin, "pnpm"),
-    // Shell parameter expansion is intentional in this fixture.
-    // oxlint-disable-next-line no-template-curly-in-string
-    '#!/bin/sh\nprintf \'%s|%s|%s|%s\\n\' "$*" "${npm_config_store_dir-}" "${pnpm_config_store_dir-}" "${pnpm_config_confirm_modules_purge-}" >> "$SETUP_TEST_LOG"\n',
+    pnpm,
+    `import { appendFileSync } from "node:fs";
+appendFileSync(${JSON.stringify(log)}, process.argv.slice(2).join(" ") + "\\n");
+`,
   );
-  chmodSync(join(bin, "uname"), 0o755);
-  chmodSync(join(bin, "pnpm"), 0o755);
-  const env: NodeJS.ProcessEnv = {
-    ...process.env,
-    CODEX_THREAD_ID: "fixture",
-    PATH: `${bin}:${process.env.PATH ?? ""}`,
-    SETUP_TEST_LOG: log,
-  };
-  delete env.npm_config_store_dir;
-  delete env.pnpm_config_store_dir;
-  delete env.pnpm_config_confirm_modules_purge;
-  return {
-    env,
-    read: () => readFileSync(log, "utf8"),
-    run: () => spawnSync("bash", [script.pathname], { cwd: worktree, encoding: "utf8", env }),
-  };
+  const run = () =>
+    spawnSync(process.execPath, [script], {
+      cwd: worktree,
+      encoding: "utf8",
+      env: { ...withFakePnpm(pnpm), CODEX_THREAD_ID: "" },
+    });
+  return { log, main, run, worktree };
 }
 
-it("pins install & prepare to the same external store across retries without a TTY", () => {
-  const test = fixture();
-  expect(test.run().status).toBe(0);
-  expect(test.run().status).toBe(0);
-  expect(test.read().trim().split("\n")).toEqual([
-    "install --frozen-lockfile --store-dir /private/tmp/codex-pnpm-store --config.confirmModulesPurge=false|/private/tmp/codex-pnpm-store|/private/tmp/codex-pnpm-store|false",
-    "run prepare|/private/tmp/codex-pnpm-store|/private/tmp/codex-pnpm-store|false",
-    "install --frozen-lockfile --store-dir /private/tmp/codex-pnpm-store --config.confirmModulesPurge=false|/private/tmp/codex-pnpm-store|/private/tmp/codex-pnpm-store|false",
-    "run prepare|/private/tmp/codex-pnpm-store|/private/tmp/codex-pnpm-store|false",
-  ]);
-});
+describe("setup-worktree", () => {
+  it("links shared inputs readably, then installs & prepares", () => {
+    const { log, main, run, worktree } = fixture();
+    const result = run();
+    expect(result.status, result.stderr).toBe(0);
+    expect(readFileSync(join(worktree, "pipeline/input/assets/misc.toml"), "utf8")).toBe(
+      "version = 1\n",
+    );
+    expect(readFileSync(join(worktree, ".env"), "utf8")).toBe("SECRET=1\n");
+    expect(existsSync(join(worktree, ".dev.vars"))).toBe(false);
+    expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
+    expect(git(main, "worktree", "list", "--porcelain")).not.toContain("prunable");
+  });
 
-it("preserves an explicit store override", () => {
-  const test = fixture();
-  test.env.pnpm_config_store_dir = "/private/tmp/custom-pnpm-store";
-  test.env.npm_config_store_dir = "/private/tmp/legacy-pnpm-store";
-  expect(test.run().status).toBe(0);
-  expect(test.read()).toContain(
-    "|/private/tmp/custom-pnpm-store|/private/tmp/custom-pnpm-store|false",
-  );
-});
+  it("skips already-linked entries on a rerun", () => {
+    const { run } = fixture();
+    expect(run().status).toBe(0);
+    const rerun = run();
+    expect(rerun.status, rerun.stderr).toBe(0);
+  });
 
-it("leaves cloud pnpm settings alone", () => {
-  const test = fixture("Linux");
-  expect(test.run().status).toBe(0);
-  expect(test.read()).toBe("install --frozen-lockfile|||\nrun prepare|||\n");
+  it("leaves the main checkout's inputs intact when the worktree is force-removed", () => {
+    const { main, run, worktree } = fixture();
+    expect(run().status).toBe(0);
+    git(main, "worktree", "remove", "--force", worktree);
+    // Git for Windows unregisters the worktree but leaves junctions behind; Node removes the
+    // junction itself rather than following it.
+    rmSync(worktree, { force: true, recursive: true });
+    expect(existsSync(worktree)).toBe(false);
+    expect(readFileSync(join(main, "pipeline/input/assets/misc.toml"), "utf8")).toBe(
+      "version = 1\n",
+    );
+    expect(readFileSync(join(main, ".env"), "utf8")).toBe("SECRET=1\n");
+  });
+
+  it("refuses to run in the main checkout", () => {
+    const { main } = fixture();
+    const result = spawnSync(process.execPath, [script], { cwd: main, encoding: "utf8" });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("is the main checkout");
+  });
 });
