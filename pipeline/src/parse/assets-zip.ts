@@ -40,3 +40,17 @@ export function resolveAssetsZipPath(assetsDir: string): string | undefined {
   const candidates = [resolve(assetsDir, "assets.zip"), resolve(assetsDir, "..", "assets.zip")];
   return candidates.find((p) => existsSync(p));
 }
+
+/**
+ * The archive to read sprite PNGs from: one beside `assetsDir`, else the default Steam install's
+ * when it is the same game version, so an extracted copy (such as the shared Drive folder) can still
+ * emit sprites on the gaming PC. A different installed version is never mixed in.
+ */
+export function resolveSpriteArchivePath(assetsDir: string, version: string): string | undefined {
+  const beside = resolveAssetsZipPath(assetsDir);
+  if (beside) return beside;
+  const installed = resolve(DEFAULT_WINDOWS_STEAM_ASSETS_DIR, "assets.zip");
+  return existsSync(installed) && readInstalledGameVersion(installed) === version
+    ? installed
+    : undefined;
+}

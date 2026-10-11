@@ -30,7 +30,7 @@ fails to load, so the site keeps working.
    prefix, select all, & delete. With the sprites staged locally, this loop works too:
 
    ```bash
-   find pipeline/output/sprites -name '*.webp' | sed 's|^pipeline/output/||' | while read -r key; do pnpx --allow-build=esbuild --allow-build=workerd wrangler r2 object delete "mistria-fyi-assets/$key" --remote; done
+   find pipeline/output/sprites -name '*.webp' | sed 's|^pipeline/output/||' | while read -r key; do pnpm exec wrangler r2 object delete "mistria-fyi-assets/$key" --remote; done
    ```
 
 3. **Purge the cache,** then **remove the WAF rule from step 1** so R2 answers. Caching →
