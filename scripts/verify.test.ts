@@ -1,33 +1,45 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+
+const script = fileURLToPath(new URL("verify.ts", import.meta.url));
 
 function runVerify(args: string[], failStep = "") {
   const directory = mkdtempSync(join(tmpdir(), "mistria-verify-"));
   const log = join(directory, "calls");
-  const pnpm = join(directory, "pnpm");
+  const pnpm = join(directory, "fake-pnpm.mjs");
   writeFileSync(
     pnpm,
-    `#!/bin/bash
-printf '%s|%s\\n' "$*" "$PLAYWRIGHT_SKIP_BUILD" >> "$VERIFY_TEST_LOG"
-if [ "$*" = "$VERIFY_TEST_FAIL_STEP" ]; then exit 7; fi
+    `import { appendFileSync } from "node:fs";
+const call = process.argv.slice(2).join(" ");
+appendFileSync(process.env.VERIFY_TEST_LOG, call + "|" + process.env.PLAYWRIGHT_SKIP_BUILD + "\\n");
+if (call === process.env.VERIFY_TEST_FAIL_STEP) process.exitCode = 7;
 `,
   );
-  chmodSync(pnpm, 0o755);
+  // Windows environment keys are case-insensitive and pnpm may export `NPM_EXECPATH`, so drop
+  // every spelling before pointing the launcher at the fake.
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => key.toLowerCase() !== "npm_execpath"),
+  );
   try {
-    const result = spawnSync("bash", ["scripts/verify.sh", ...args], {
+    const result = spawnSync(process.execPath, [script, ...args], {
       encoding: "utf8",
       env: {
-        ...process.env,
-        PATH: `${directory}:${process.env.PATH ?? ""}`,
+        ...env,
+        npm_execpath: pnpm,
         PLAYWRIGHT_SKIP_BUILD: "false",
         VERIFY_TEST_FAIL_STEP: failStep,
         VERIFY_TEST_LOG: log,
       },
     });
-    return { calls: readFileSync(log, "utf8").trim().split("\n"), status: result.status };
+    return {
+      calls: readFileSync(log, "utf8").trim().split("\n"),
+      status: result.status,
+      stdout: result.stdout,
+    };
   } finally {
     rmSync(directory, { force: true, recursive: true });
   }
@@ -64,5 +76,17 @@ describe("verify browser build reuse", () => {
     const { calls, status } = runVerify(["--browser"], "run test:accessibility");
     expect(status).toBe(7);
     expect(calls.at(-1)).toBe("run test:accessibility|true");
+  });
+
+  it("prints the failing step's output tail & returns its exit status", () => {
+    const { stdout } = runVerify([], "run check");
+    expect(stdout).toContain("✗ check (exit 7)");
+    expect(stdout).not.toContain("--- check:i18n ---");
+  });
+
+  it("rejects an unknown flag", () => {
+    const result = spawnSync(process.execPath, [script, "--nope"], { encoding: "utf8" });
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Usage: pnpm run verify");
   });
 });
