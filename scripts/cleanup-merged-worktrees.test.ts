@@ -15,6 +15,10 @@ import { afterAll, describe, expect, it } from "vitest";
 const script = readFileSync(new URL("cleanup-merged-worktrees.sh", import.meta.url), "utf8");
 const directories: string[] = [];
 
+// The script under test is Bash, driven through `gh` & `lsof` shims written as shebang files on
+// PATH. Windows can't execute those shims, so these tests stay POSIX-only.
+const onWindows = process.platform === "win32";
+
 afterAll(() => {
   for (const directory of directories.splice(0)) {
     rmSync(directory, { force: true, recursive: true });
@@ -224,7 +228,7 @@ cd() { if [[ $1 == '/virtual/agent worktree' ]]; then [[ $TEST_INVOKING == true 
   return { checkout, git, run: (...args: string[]) => runAt(checkout, ...args), runAt, worktree };
 }
 
-it("integrates preview & apply with one real Git fixture", () => {
+it.skipIf(onWindows)("integrates preview & apply with one real Git fixture", () => {
   const { git, run, runAt, worktree } = gitFixture();
   expect(run().stdout).toContain(`Would remove worktree ${worktree}`);
   expect(git("branch", "--list", "worktree-agent-test")).toContain("worktree-agent-test");
@@ -237,7 +241,7 @@ it("integrates preview & apply with one real Git fixture", () => {
   expect(git("worktree", "list")).not.toContain("agent worktree");
 });
 
-describe("merged-worktree cleanup", () => {
+describe.skipIf(onWindows)("merged-worktree cleanup", () => {
   it("finds an agent tip in a merged parent PR without changing anything in preview", () => {
     const { git, run, worktree } = fixture();
     const result = run();
@@ -276,7 +280,7 @@ describe("merged-worktree cleanup", () => {
   });
 });
 
-describe("in-use worktree protection", () => {
+describe.skipIf(onWindows)("in-use worktree protection", () => {
   it("keeps a worktree that a running process uses", () => {
     const { git, run } = fixture({ ancestor: true, associated: false, inUse: true });
     const result = run("--apply");
@@ -298,7 +302,7 @@ describe("in-use worktree protection", () => {
   });
 });
 
-describe("cleanup of commits already in main", () => {
+describe.skipIf(onWindows)("cleanup of commits already in main", () => {
   it("previews and removes an ancestor branch without requiring a PR commit match", () => {
     const { git, run } = fixture({ ancestor: true, associated: false });
     expect(run().stdout).toContain("reachable from origin/main");
@@ -335,7 +339,7 @@ describe("cleanup of commits already in main", () => {
   });
 });
 
-describe("detached worktree cleanup", () => {
+describe.skipIf(onWindows)("detached worktree cleanup", () => {
   it.each([{ ancestor: true }, {}])(
     "previews and removes a confirmed detached tip: %j",
     (options) => {

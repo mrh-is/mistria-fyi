@@ -1,4 +1,5 @@
 import { readdirSync } from "node:fs";
+import { sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { accessibilityRoutes } from "./routes.js";
@@ -12,6 +13,8 @@ function applicationRoutes(): string[] {
   for (const entry of readdirSync("src/routes", { recursive: true, withFileTypes: true })) {
     if (!entry.isFile() || !/^\+page\.(svelte|ts)$/.test(entry.name)) continue;
     const segments = entry.parentPath
+      .split(sep)
+      .join("/")
       .replace(/^src\/routes\/?/, "")
       .split("/")
       .filter((segment) => segment !== "" && !/^\(.*\)$/.test(segment));
