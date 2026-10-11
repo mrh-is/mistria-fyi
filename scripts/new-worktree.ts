@@ -99,9 +99,11 @@ function main(args: string[]): number {
     // Remove the half-built worktree & branch.
     console.error(`error: setup failed; removing ${worktreeDir} and branch ${slug}.`);
     git(["-C", repoRoot, "worktree", "remove", "--force", worktreeDir]);
-    // Git for Windows leaves junctions (and their parent directories) behind. `rmSync` unlinks a
-    // junction without following it, so the main checkout's shared inputs survive.
+    // Git for Windows leaves junctions (and their parent directories) behind, and can stop on
+    // `node_modules` paths past MAX_PATH. `rmSync` unlinks a junction without following it, so the
+    // main checkout's shared inputs survive; prune then drops a registration Git couldn't remove.
     rmSync(worktreeDir, { force: true, recursive: true });
+    git(["-C", repoRoot, "worktree", "prune"]);
     git(["-C", repoRoot, "branch", "-D", slug]);
     return setup.status ?? 1;
   }
