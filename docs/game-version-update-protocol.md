@@ -118,7 +118,7 @@ The upload skips every sprite whose production ETag already matches. If the dry 
 existing sprite, its pixels changed: bump `spriteGeneration` in `src/lib/sprites/sprite-url.ts` in
 the same pull request (see [sprite assets](sprite-assets.md)). Wrangler needs a Cloudflare login on
 the uploading machine; an agent can’t complete the interactive login, so ask the maintainer to run
-`pnpx wrangler login` first.
+`pnpm exec wrangler login` first.
 
 ## Classify changes
 
