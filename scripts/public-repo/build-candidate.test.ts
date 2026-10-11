@@ -9,6 +9,10 @@ const helper = resolve("scripts/public-repo/rewrite-references.py");
 const script = resolve("scripts/public-repo/build-candidate.sh");
 const temporary: string[] = [];
 
+// The procedure & its rewrite helper need Python 3. On Windows `python3` is often the Microsoft
+// Store alias, which only prints an install hint, so skip where Python 3 cannot run.
+const pythonAvailable = spawnSync("python3", ["--version"]).status === 0;
+
 // Construct synthetic URLs at runtime so filtering a candidate does not rewrite test inputs.
 function privateUrl(kind: "issues" | "pull", number: number, suffix = ""): string {
   const repository = ["https://github.com", "mrh-is", "mistria-fyi"].join("/");
@@ -60,7 +64,7 @@ afterEach(() => {
   }
 });
 
-describe("public candidate reference rewriting", () => {
+describe.skipIf(!pythonAvailable)("public candidate reference rewriting", () => {
   it("classifies known references and leaves unknown numbers & other repositories alone", () => {
     expect(
       rewrite(
@@ -122,7 +126,7 @@ describe("public candidate reference rewriting", () => {
   });
 });
 
-describe("public candidate source validation", () => {
+describe.skipIf(!pythonAvailable)("public candidate source validation", () => {
   it("keeps the audited home prefix out of the procedure’s own Git history", () => {
     const prefix = ["", "Users", ""].join("/");
     const history = execFileSync(
@@ -176,7 +180,7 @@ describe("public candidate source validation", () => {
   );
 });
 
-describe("public candidate history filtering", () => {
+describe.skipIf(!pythonAvailable)("public candidate history filtering", () => {
   const filterAvailable = spawnSync("git", ["filter-repo", "--version"]).status === 0;
   const scannerAvailable = spawnSync("gitleaks", ["version"]).status === 0;
 
@@ -286,7 +290,7 @@ describe("public candidate history filtering", () => {
   );
 });
 
-describe("public candidate independent audits", () => {
+describe.skipIf(!pythonAvailable)("public candidate independent audits", () => {
   it("rejects excluded historical paths even when retained paths share their blobs & trees", () => {
     const source = directory();
     const git = (...args: string[]): string =>
@@ -325,7 +329,7 @@ describe("public candidate independent audits", () => {
   });
 });
 
-describe("public candidate secret scanning", () => {
+describe.skipIf(!pythonAvailable)("public candidate secret scanning", () => {
   const scannerAvailable = spawnSync("gitleaks", ["version"]).status === 0;
 
   it.skipIf(!scannerAvailable)(

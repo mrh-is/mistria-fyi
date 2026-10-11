@@ -22,6 +22,22 @@ export interface PreviewOptions {
   skipBuild: boolean;
 }
 
+/**
+ * Resolves pnpm without depending on a shell shim: `pnpm exec` exports its own executable as
+ * `npm_execpath`, which avoids Node's refusal to spawn `pnpm.cmd` without a shell on Windows. The
+ * same helper lives in `setup-worktree.ts`, `test-changed.ts`, & `verify.ts`; keep them in step.
+ */
+function pnpmCommand(args: string[]): { args: string[]; command: string; shell: boolean } {
+  const execPath = process.env.npm_execpath;
+  if (!execPath) {
+    return { args, command: "pnpm", shell: process.platform === "win32" };
+  }
+  if (/\.[cm]?js$/.test(execPath)) {
+    return { args: [execPath, ...args], command: process.execPath, shell: false };
+  }
+  return { args, command: execPath, shell: false };
+}
+
 export function runPreview(options: PreviewOptions): ChildProcess | undefined {
   const { checkout, port, skipBuild } = options;
   const started = Date.now();
@@ -38,7 +54,12 @@ export function runPreview(options: PreviewOptions): ChildProcess | undefined {
   log("start", { checkout, node: process.version, port, skipBuild });
   if (!skipBuild) {
     log("build-start");
-    const build = spawnSync("pnpm", ["run", "build"], { cwd: checkout, stdio: "inherit" });
+    const pnpm = pnpmCommand(["run", "build"]);
+    const build = spawnSync(pnpm.command, pnpm.args, {
+      cwd: checkout,
+      shell: pnpm.shell,
+      stdio: "inherit",
+    });
     log("build-exit", { code: build.status, error: build.error?.message, signal: build.signal });
     if (build.status !== 0) {
       process.exitCode = build.status ?? 1;
@@ -52,10 +73,11 @@ export function runPreview(options: PreviewOptions): ChildProcess | undefined {
   const owner: PreviewOwner = { checkout, startedAt: new Date().toISOString() };
   writeFileSync(path.join(clientDir, OWNER_FILE), JSON.stringify(owner));
 
-  const command = options.command ?? "pnpm";
-  const args = options.args ?? ["run", "preview", "--host", "127.0.0.1", "--port", port];
+  const { args, command, shell } = options.command
+    ? { args: options.args ?? [], command: options.command, shell: false }
+    : pnpmCommand(["run", "preview", "--host", "127.0.0.1", "--port", port]);
   log("spawn", { args, command });
-  const preview = spawn(command, args, { cwd: checkout, stdio: ["ignore", "pipe", "pipe"] });
+  const preview = spawn(command, args, { cwd: checkout, shell, stdio: ["ignore", "pipe", "pipe"] });
   for (const [stream, output] of [
     [preview.stdout, process.stdout],
     [preview.stderr, process.stderr],

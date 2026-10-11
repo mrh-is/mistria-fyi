@@ -33,7 +33,12 @@ it("fails a missing reviewed override target before publishing any output", () =
   });
   // Copy only the structured Fiddle subtree; shared game inputs remain read-only.
   cpSync(join(assets, "fiddle"), join(fixture, "fiddle"), { recursive: true });
-  symlinkSync(join(assets, "localization"), join(fixture, "localization"), "dir");
+  // Windows directory symlinks need Developer Mode or admin rights; junctions need neither.
+  symlinkSync(
+    resolve(assets, "localization"),
+    join(fixture, "localization"),
+    process.platform === "win32" ? "junction" : "dir",
+  );
   const itemFile = join(fixture, "fiddle/items/other/misc.toml");
   const contents = readFileSync(itemFile, "utf8");
   expect(contents).toMatch(/^\[big_egg\]/m);
