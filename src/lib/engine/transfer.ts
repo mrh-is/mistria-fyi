@@ -32,7 +32,7 @@ import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 // ─── Constants ──────────────────────────────────────────────────────
 
 export const TRANSFER_VERSION = 1;
-export const TRANSFER_ORDERING_HASH = "50dbf1b9";
+export const TRANSFER_ORDERING_HASH = "3684ddf8";
 const MIN_SUPPORTED_TRANSFER_VERSION = 1;
 
 /**

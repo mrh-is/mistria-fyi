@@ -42,7 +42,7 @@ it("fails a missing reviewed override target before publishing any output", () =
   const before = outputHashes(appData);
   const result = spawnSync(
     process.execPath,
-    ["--import", "tsx", resolve(import.meta.dirname, "main.ts"), fixture, "--version=1.0.5"],
+    ["--import", "tsx", resolve(import.meta.dirname, "main.ts"), fixture, "--version=1.0.6"],
     { cwd: resolve(import.meta.dirname, ".."), encoding: "utf8", timeout: 15_000 },
   );
   expect(result.status).toBe(1);

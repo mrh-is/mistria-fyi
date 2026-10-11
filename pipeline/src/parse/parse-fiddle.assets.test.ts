@@ -4,11 +4,11 @@ import { requireGameAssetsDir } from "../test-helpers.js";
 import { parseFiddle, sourceFileFor } from "./parse-fiddle.js";
 import { checkParseSmoke } from "./parse-smoke.js";
 
-describe("parseFiddle — v1.0.5 assets", () => {
+describe("parseFiddle — v1.0.6 assets", () => {
   it("parses all files with representative paths", () => {
     const parsed = parseFiddle(requireGameAssetsDir());
 
-    checkParseSmoke(parsed, "v1.0.5");
+    checkParseSmoke(parsed, "v1.0.6");
 
     expect(parsed.fileCount).toBe(297);
     expect(parsed.data).toHaveProperty("items.other.cooked_dishes");

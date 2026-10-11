@@ -31,7 +31,7 @@ describe("data management page", () => {
     ]) {
       expect(disclosureState(container, title)).toBeDefined();
     }
-    expect(text).toContain("Fields of Mistria v1.0.5");
+    expect(text).toContain("Fields of Mistria v1.0.6");
     expect(container.querySelector("a[href='/about']")).toBeNull();
     expect(container.querySelector("a[href='/privacy']")).toBeNull();
     expect(text).not.toContain("Send feedback");

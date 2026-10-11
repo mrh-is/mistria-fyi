@@ -68,17 +68,21 @@ export function validateCosmeticExclusionSources(
 
 /**
  * Cutscene props the game defines as items so a scene can hand them around. No table or script
- * gives one to the player, so the tracker leaves them out.
+ * gives one to the player, so the tracker leaves them out. Game 1.0.6 moved `harvest_day_pie` here
+ * from the cooked dishes ("Removed an unattainable food item that was accidentally appearing in the
+ * Almanac").
  */
-export const ITEM_EXCLUSION_ENTRIES: ReviewedEntry<boolean>[] = ["balors_crate", "ryis_lumber"].map(
-  (id) => ({
-    evidence:
-      "items/other/misc.toml: cutscene sprite and the description “This shouldn't be in your inventory...”",
-    id,
-    reason: "Cutscene prop with no player acquisition path",
-    value: true,
-  }),
-);
+export const ITEM_EXCLUSION_ENTRIES: ReviewedEntry<boolean>[] = [
+  "balors_crate",
+  "harvest_day_pie",
+  "ryis_lumber",
+].map((id) => ({
+  evidence:
+    "items/other/misc.toml: cutscene sprite and the description “This shouldn't be in your inventory...”",
+  id,
+  reason: "Cutscene prop with no player acquisition path",
+  value: true,
+}));
 export const ITEM_EXCLUSIONS: ReadonlySet<ItemId> = new Set(
   ITEM_EXCLUSION_ENTRIES.map(({ id }) => id as ItemId),
 );
