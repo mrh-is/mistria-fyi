@@ -45,7 +45,7 @@ const UNMARKED_FIXTURE =
 // A v1 payload encoded from makeGoldenCompleted(). Unlike round-trip tests, this fixture pins the
 // current wire meaning independently of the live encoder and decoder implementation.
 const V1_GOLDEN_FIXTURE =
-  "MFGTAVbAxqRjYBiuwAGF10COLhZy7WYCkxwiDIJYjWAn11yircYuoMDAIMCxQADEZITy6QMA";
+  "MFGTAdZ_fjRjYBiuoAEPDzdwQOawkGs3E5jkEGEQxGoEO7nmEm01dgEFBgYBjgUCICYjlE8fAAA";
 
 async function compressTransferRaw(version: number, raw: Uint8Array): Promise<string> {
   const compressed = await compressRawOnly(raw);
@@ -278,7 +278,7 @@ describe("transfer codec v1", () => {
   });
 
   it("pins the v1 wire ordering hash", () => {
-    expect(TRANSFER_ORDERING_HASH).toBe("50dbf1b9");
+    expect(TRANSFER_ORDERING_HASH).toBe("3684ddf8");
     expect(getTransferOrderingHash()).toBe(TRANSFER_ORDERING_HASH);
   });
 

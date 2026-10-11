@@ -14,7 +14,7 @@ describe("about and legal page", () => {
     expect(text).toMatch(/maintained by\s+Michael Helmbrecht\./u);
     expect(text).toMatch(/sponsored by\s+Villager Studio\s+\(though, call me!\)\./u);
     expect(text).toContain("all the content therein");
-    expect(text).toContain("game version 1.0.5");
+    expect(text).toContain("game version 1.0.6");
     expect(text).toContain("briefly be out of date");
     expect(container.querySelector("a[href='mailto:michael@mistria.fyi']")).not.toBeNull();
     expect(container.querySelector(".feedback-icon")).not.toBeNull();
