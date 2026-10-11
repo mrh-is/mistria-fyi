@@ -10,6 +10,7 @@ import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
+import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
@@ -159,6 +160,7 @@ export default defineConfig({
     localeNameChunksPlugin(),
     headersFilePlugin(renderHeadersFile(contentSecurityPolicy)),
     paraglideVitePlugin(PARAGLIDE_OPTIONS),
+    svelteCssCachePlugin(),
   ],
   resolve: { alias: libAlias },
   server: {
