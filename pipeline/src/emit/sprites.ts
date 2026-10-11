@@ -6,8 +6,6 @@ import { open } from "yauzl-promise";
 import { compareStrings } from "../ordering.js";
 import { resolveAssetsZipPath } from "../parse/assets-zip.js";
 
-import type { ZipFile } from "yauzl-promise";
-
 const ITEM_SPRITE_SEARCH_DIRS = [
   join("animations", "Item Icons"),
   join("animations", "Placeables"),
@@ -82,7 +80,6 @@ export async function extractSprites(
   iconSpritesByItemId: Record<string, string>,
   outputDir: string,
   zipPath?: string,
-  zipFile?: ZipFile,
 ): Promise<SpriteExtractionResult> {
   return extractSpritesForKind(
     ITEM_SPRITE_KIND,
@@ -91,7 +88,6 @@ export async function extractSprites(
     outputDir,
     true,
     zipPath,
-    zipFile,
   );
 }
 
@@ -105,7 +101,6 @@ export async function extractVillagerSprites(
   iconSpritesByVillagerId: Record<string, string>,
   outputDir: string,
   zipPath?: string,
-  zipFile?: ZipFile,
 ): Promise<SpriteExtractionResult> {
   return extractSpritesForKind(
     VILLAGER_SPRITE_KIND,
@@ -114,7 +109,6 @@ export async function extractVillagerSprites(
     outputDir,
     false,
     zipPath,
-    zipFile,
   );
 }
 
@@ -159,7 +153,6 @@ async function extractSpritesForKind(
   outputDir: string,
   applyOverrides: boolean,
   zipPathOverride?: string,
-  zipFileOverride?: ZipFile,
 ): Promise<SpriteExtractionResult> {
   const entityIdsBySprite = new Map<string, string[]>();
   const overriddenEntityIds: string[] = [];
@@ -186,9 +179,8 @@ async function extractSpritesForKind(
 
   const kindOutputDir = join(outputDir, kind.outputSubdir);
   const zipPath = zipPathOverride ?? resolveAssetsZipPath(assetsDir);
-  const zipSource = zipFileOverride ?? zipPath;
-  const result = zipSource
-    ? await extractSpritesFromZip(kind, zipSource, entityIdsBySprite, kindOutputDir)
+  const result = zipPath
+    ? await extractSpritesFromZip(kind, zipPath, entityIdsBySprite, kindOutputDir)
     : await extractSpritesFromFilesystem(kind, assetsDir, entityIdsBySprite, kindOutputDir);
   result.overridden = overriddenEntityIds.length;
   return result;
@@ -258,16 +250,14 @@ async function extractSpritesFromFilesystem(
 
 async function extractSpritesFromZip(
   kind: SpriteKind,
-  zipSource: string | ZipFile,
+  zipPath: string,
   entityIdsBySprite: Map<string, string[]>,
   entityOutputDir: string,
 ): Promise<SpriteExtractionResult> {
   const zipPrefixes = kind.searchDirs.map((d) => `assets/${d.replaceAll("\\", "/")}/`);
-  const ownsZip = typeof zipSource === "string";
-  const zipFile = ownsZip ? await open(zipSource) : zipSource;
-  if (ownsZip) {
-    console.log(`  Reading sprites from ${zipSource}`);
-  }
+  // Each kind opens its own handle: a fully iterated yauzl-promise ZipFile yields no entries again.
+  const zipFile = await open(zipPath);
+  console.log(`  Reading ${kind.outputSubdir} sprites from ${zipPath}`);
 
   const spriteData = new Map<string, Buffer>();
   const selectedPaths = new Map<string, { path: string; priority: number }>();
@@ -300,7 +290,7 @@ async function extractSpritesFromZip(
       }
     }
   } finally {
-    if (ownsZip) await zipFile.close();
+    await zipFile.close();
   }
 
   if (spriteData.size === 0) {
