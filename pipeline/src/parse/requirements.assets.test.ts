@@ -4,7 +4,7 @@ import { requireGameAssetsDir } from "../test-helpers.js";
 import { parseFiddle } from "./parse-fiddle.js";
 import { buildRequirementDefinitions, parseRequirements } from "./requirements.js";
 
-describe("requirements — v1.0.5 assets", () => {
+describe("requirements — v1.0.6 assets", () => {
   it("classifies and resolves the complete requirements registry", () => {
     const parsed = parseFiddle(requireGameAssetsDir());
     const requirementsData = parsed.data.requirements as Record<string, unknown>;

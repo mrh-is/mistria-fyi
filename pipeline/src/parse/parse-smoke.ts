@@ -1,9 +1,9 @@
 import type { ParsedGameDataResult } from "./parse-fiddle.js";
 
-const V105_PATHS = ["items.other.cooked_dishes", "npcs.holt", "dungeons.dungeons.biomes"];
+const V106_PATHS = ["items.other.cooked_dishes", "npcs.holt", "dungeons.dungeons.biomes"];
 
-/** Checks parser structure for any game version, with an optional canonical v1.0.5 fixture profile. */
-export function checkParseSmoke(parsed: ParsedGameDataResult, profile?: "v1.0.5"): void {
+/** Checks parser structure for any game version, with an optional canonical v1.0.6 fixture profile. */
+export function checkParseSmoke(parsed: ParsedGameDataResult, profile?: "v1.0.6"): void {
   if (parsed.fileCount === 0) throw new Error("No TOML files were parsed.");
   if (parsed.fileCount !== parsed.sourceFileByRootPath.size) {
     throw new Error("Parsed TOML count does not match source provenance.");
@@ -21,9 +21,9 @@ export function checkParseSmoke(parsed: ParsedGameDataResult, profile?: "v1.0.5"
       throw new Error(`Missing parsed root: ${path}`);
     }
   }
-  if (profile === "v1.0.5") {
+  if (profile === "v1.0.6") {
     if (parsed.fileCount !== 297) throw new Error(`Expected 297 files, got ${parsed.fileCount}`);
-    for (const path of V105_PATHS) {
+    for (const path of V106_PATHS) {
       let current: unknown = parsed.data;
       for (const part of path.split(".")) {
         current = (current as Record<string, unknown> | undefined)?.[part];
