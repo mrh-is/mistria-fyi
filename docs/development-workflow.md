@@ -827,7 +827,8 @@ copies or fails instead of linking.
   Developer Mode. Files become symlinks where Windows allows them and hard links otherwise; an
   editor that saves by replacing the file breaks a hard link, so edit `.env` in the main checkout.
 - **Leftover junctions**: Git for Windows' `git worktree remove` unregisters a worktree but leaves
-  its junctions behind. Delete the leftover directory with
+  its junctions behind, and without `git config --global core.longpaths true` it stops with
+  `Filename too long` inside `node_modules`. Delete the leftover directory with
   `node -e "require('fs').rmSync(process.argv[1], { recursive: true, force: true })" <path>`, which
   unlinks a junction without following it, rather than a tool that might recurse into the target.
 - **Restricted PowerShell**: if the execution policy blocks `pnpm.ps1`, run `pnpm.cmd` instead (for
