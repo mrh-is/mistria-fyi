@@ -24,6 +24,11 @@ pnpm run pipeline:assets -- --version=1.0.6
 directory. Pass pipeline flags after `--`; it avoids a shell environment assignment and is the
 preferred command for routine regeneration in a configured worktree.
 
+On the gaming PC, `pnpm run game-assets:share` extracts the installed release’s structured assets
+and copies the current autosaves to the shared Google Drive `Mistria/vX.Y.Z/` folders that other
+machines link as `pipeline/input/assets` (see
+[Share the extracted assets](../docs/game-version-update-protocol.md#share-the-extracted-assets)).
+
 A relative assets path (argument or `MISTRIA_ASSETS`) resolves against the directory you ran `pnpm`
 from, even though the script itself runs inside `pipeline/`.
 

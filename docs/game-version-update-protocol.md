@@ -45,8 +45,9 @@ Before changing pipeline code or generated data:
    Steam build changes; update the game in Steam and confirm the installed build matches the issue.
 2. Record the currently supported game version, application commit, serialized-state version, and
    transfer version.
-3. Obtain a clean copy of the new game assets. Keep the preceding supported assets available for
-   comparison until the update ships.
+3. Obtain a clean copy of the new game assets and share it, with the current saves, as described in
+   [Share the extracted assets](#share-the-extracted-assets). The preceding version’s Drive folder
+   stays available for comparison.
 4. Create the normal isolated worktree and establish a clean verification baseline.
 5. Review the new assets and upstream notes before relaxing parser, extractor, or test expectations.
    A changed fixture count is evidence to investigate, not a value to update mechanically.
@@ -54,28 +55,70 @@ Before changing pipeline code or generated data:
 The committed tracker data at the starting commit is the rollback baseline. Do not hand-edit
 `src/lib/data/tracker-data.json` or replace that baseline outside the version-update branch.
 
-## Generate the candidate
+## Share the extracted assets
 
-Run the pipeline against the new assets in the isolated worktree. Update version-specific parser or
-integration-test profiles deliberately when the new asset layout requires it.
+The game is installed only on the gaming PC. Once Steam has installed the new release there, run:
 
 ```sh
-MISTRIA_ASSETS=/path/to/new/assets pnpm run test:pipeline:assets
-pnpm run pipeline -- /path/to/new/assets
+pnpm run game-assets:share -- --dry-run   # review the plan
+pnpm run game-assets:share
 ```
+
+It reads the version from `FieldsOfMistria.exe` and extracts `fiddle/`, `localization/`,
+`data_files/`, `etc/`, `gml/`, and `tiled/` from the Steam install’s `assets.zip`. It never extracts
+or uploads the multi-gigabyte animation and audio trees. It also copies each autosave from
+`%LOCALAPPDATA%\FieldsOfMistria\saves`, filed by the game version that last wrote it (read from the
+save’s `info` entry), and keeps the newer copy when one already exists. Existing assets are left
+alone unless you pass `--force`. Google Drive for desktop syncs the result to this layout:
+
+```text
+G:\My Drive\Mistria\
+  vX.Y.Z\
+    assets\   extracted structured-assets root (contains fiddle\)
+    save\     autosaves last written by game X.Y.Z
+  archive\    older unversioned dumps & saves
+```
+
+A version folder can have `save\` without `assets\` when the only save from that release predates
+the update. Pass `--drive=<dir>` or set `MISTRIA_DRIVE_DIR` if the Drive folder lives elsewhere.
+
+Other machines point `pipeline/input/assets` at their synced `Mistria/vX.Y.Z/assets` folder.
+
+## Generate the candidate
+
+Run the pipeline against the shared copy in the isolated worktree. Update version-specific parser or
+integration-test profiles deliberately when the new asset layout requires it. On the gaming PC:
+
+```sh
+MISTRIA_ASSETS="G:\My Drive\Mistria\vX.Y.Z\assets" pnpm run test:pipeline:assets
+pnpm run pipeline -- "G:\My Drive\Mistria\vX.Y.Z\assets" --version=X.Y.Z --sprites
+pnpm run sprites:manifest
+```
+
+`--sprites` reads icons from the installed Steam `assets.zip` when it is the same version, so sprite
+staging only works on the gaming PC. `sprites:manifest` refreshes the browser suites’ sprite fixture
+from the staged files.
 
 Treat the regenerated data as a candidate until the semantic review is complete. Inspect the
 readable pipeline artifact or a purpose-built comparison rather than relying only on the minified
 JSON diff.
 
-## Share the extracted assets
+### Upload sprites
 
-The game is installed only on the gaming PC. After generating the candidate there, copy the
-extracted structured-assets root (the directory passed to `pnpm run pipeline`, with `fiddle/`,
-`data_files/`, `localization/`, and so on) to Google Drive at
-`Development/Mistria/Fields of Mistria vX.Y.Z/assets/`. Other machines point `pipeline/input/assets`
-at that folder for development work. Copy only the extracted subtrees the pipeline reads; never
-upload the full `assets.zip` archive.
+New items need their icons in the `assets.mistria.fyi` bucket before the release deploys, or they
+render as missing (1.0.5’s new items went without icons until the 1.0.6 update). After the candidate
+is reviewed:
+
+```sh
+DRY_RUN=1 pnpm run sprites:upload   # lists `would put` for each new or changed sprite
+pnpm run sprites:upload
+```
+
+The upload skips every sprite whose production ETag already matches. If the dry run would replace an
+existing sprite, its pixels changed: bump `spriteGeneration` in `src/lib/sprites/sprite-url.ts` in
+the same pull request (see [sprite assets](sprite-assets.md)). Wrangler needs a Cloudflare login on
+the uploading machine; an agent can’t complete the interactive login, so ask the maintainer to run
+`pnpx wrangler login` first.
 
 ## Classify changes
 
@@ -193,6 +236,8 @@ Before merging, verify that:
 
 - The generated `trackerData.version` matches the intended game release.
 - The committed generated-data diff contains only reviewed changes.
+- The new version’s assets and saves are on the shared Drive, and
+  `DRY_RUN=1 pnpm run sprites:upload` reports nothing left to upload.
 - A preceding-release local state and backup load with the decided behavior.
 - Save imports behave as documented for every supported game-save version.
 - Historical transfer fixtures either decode to their original progress or fail with the explicitly
