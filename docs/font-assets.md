@@ -92,8 +92,8 @@ The stylesheets and the woff2 chunks they reference are produced by `scripts/loc
   precache thousands of files and the Pages build stays small.
 - `pnpm run fonts:check` type-checks the isolated builder, and `pnpm run fonts:lint` applies the
   repository's script lint rules to it.
-- `pnpm run fonts:upload` pushes the staged chunks to the `mistria-fyi-assets` R2 bucket with
-  `pnpx wrangler`, marked `immutable`. Keys embed the family version, so a font upgrade means
+- `pnpm run fonts:upload` pushes the staged chunks to the `mistria-fyi-assets` R2 bucket with the
+  workspace `wrangler`, marked `immutable`. Keys embed the family version, so a font upgrade means
   bumping the version (or the Fontsource package), rebuilding, uploading, and committing the new
   stylesheets; old objects can stay.
 

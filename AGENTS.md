@@ -154,9 +154,14 @@ Follow this sequence for every task:
     references the issue (`Closes #N`) and fills in the template's "Preview" line with the branch
     preview URL, `https://<branch-slug>.mistria-fyi.pages.dev` (the branch name lowercased, each run
     of other characters replaced with `-`; Cloudflare posts no PR comment with it). Apply the
-    matching `agent:*` label to the PR. Keep the active-work labels through PR review. On handoff,
-    replace the active `agent:*` labels. When work closes, is abandoned, or stops pending a decision
-    or dependency, remove both active-work labels and set the appropriate remaining status.
+    matching `agent:*` label to the PR. **Draft vs. ready:** the maintainer merges PRs that pass CI,
+    so an open PR's state is the agent's merge recommendation. Open the PR as a draft
+    (`gh pr create --draft`) whenever anything still stands between it and merging: an unfinished
+    manual step (an upload, a login, a data regeneration), an unanswered question, a known gap, or a
+    pending review. Mark it ready (`gh pr ready`) only once you'd merge it yourself, and convert it
+    back (`gh pr ready --undo`) if that changes. Keep the active-work labels through PR review. On
+    handoff, replace the active `agent:*` labels. When work closes, is abandoned, or stops pending a
+    decision or dependency, remove both active-work labels and set the appropriate remaining status.
     Production builds derive their application version from deterministic Git commit metadata. Treat
     `package.json`'s version and Git version tags as intentional product-release metadata: do not
     change or create them unless the task explicitly cuts a release, and ask the user to approve the
@@ -181,15 +186,14 @@ Follow this sequence for every task:
 
 ## 4. Commands
 
-Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`. The one exception is
-Wrangler, which is only a transitive dependency: run one-off commands as `pnpx wrangler <command>`.
-On a pnpm store that hasn't approved Wrangler's native dependencies yet (`esbuild`, `workerd`), that
-fails non-interactively with `ERR_PNPM_IGNORED_BUILDS`; add
-`--allow-build=esbuild --allow-build=workerd` to the `pnpx` invocation rather than running the
-interactive `pnpm approve-builds` (unsupported in an agent shell).
-`scripts/sprites/upload-sprites.sh` and `scripts/locale-fonts/upload-locale-fonts.sh` already pass
-it. Wrangler may need access to Cloudflare's API and to its stored credentials (on macOS, under
-`~/Library/Preferences/.wrangler/`); never read or expose the stored OAuth token.
+Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, `bun`, or `pnpx`. Wrangler is
+installed in the workspace through `@sveltejs/adapter-cloudflare`, and `allowBuilds` in
+`pnpm-workspace.yaml` approves its native dependencies (`esbuild`, `workerd`), so run it as
+`pnpm exec wrangler <command>` (including `pnpm exec wrangler login`). `pnpx wrangler` installs a
+separate copy that ignores `allowBuilds` and fails with `ERR_PNPM_IGNORED_BUILDS`. The R2 upload
+scripts (`scripts/lib/r2-upload.sh`) call the workspace binary by path. Wrangler may need access to
+Cloudflare's API and to its stored credentials (on macOS, under `~/Library/Preferences/.wrangler/`);
+never read or expose the stored OAuth token.
 
 **Adding or bumping a dependency:** run `pnpm audit --audit-level=moderate` before committing, and
 check what the new package pulls in (`pnpm why <transitive>` for anything flagged). Don't add a
