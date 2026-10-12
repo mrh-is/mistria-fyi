@@ -16,10 +16,13 @@ import {
   isSkipWaitingRequest,
   lastLocaleStore,
   MAX_SPRITE_ENTRIES,
+  obsoleteCaches,
   parseCacheLocalesMessage,
   parseCurrentLocale,
   readOfflineLocales,
+  readRetainedCaches,
   rememberOfflineLocales,
+  rememberRetainedCaches,
   SKIP_WAITING_MESSAGE,
   SPRITE_CACHED_AT_HEADER,
 } from "./service-worker-cache.js";
@@ -482,6 +485,59 @@ describe("service-worker locale home pages", () => {
     ).toBe(false);
 
     expect(cache.entries.size).toBe(0);
+  });
+});
+
+/** Named caches holding the given paths, as `CacheStorage` opens them. */
+function storage(contents: Record<string, string[]>) {
+  const named = new Map<string, MemoryCache>();
+  for (const [name, paths] of Object.entries(contents)) {
+    const cache = new MemoryCache();
+    for (const path of paths) cache.entries.set(`${ORIGIN}${path}`, new Response(path));
+    named.set(name, cache);
+  }
+  return { open: (name: string) => Promise.resolve(named.get(name) ?? new MemoryCache()) };
+}
+
+describe("service-worker obsolete caches", () => {
+  const OLDER = ["cache-old", "cache-older"];
+
+  it("lists every older version once the current one holds the last-used home page", async () => {
+    const caches = storage({
+      "cache-new": ["/ja"],
+      "cache-old": ["/ja", "/en"],
+      "cache-older": ["/ja"],
+    });
+
+    expect(await obsoleteCaches(caches, "cache-new", OLDER, "ja", `${ORIGIN}/`)).toEqual(OLDER);
+  });
+
+  // The new version's own fetch of the home page failed, during install or offline (#18).
+  it("keeps an older version that holds the only copy of the last-used home page", async () => {
+    const caches = storage({ "cache-new": ["/en"], "cache-old": ["/ja"], "cache-older": ["/en"] });
+
+    expect(await obsoleteCaches(caches, "cache-new", OLDER, "ja", `${ORIGIN}/`)).toEqual([
+      "cache-older",
+    ]);
+  });
+
+  it("lists every older version when no locale has been used", async () => {
+    const caches = storage({ "cache-new": [], "cache-old": ["/en"] });
+
+    expect(await obsoleteCaches(caches, "cache-new", OLDER, undefined, `${ORIGIN}/`)).toEqual(
+      OLDER,
+    );
+  });
+
+  it("persists the caches an activation kept, reading a corrupt record as none", async () => {
+    const cache = new MemoryCache();
+    expect(await readRetainedCaches(cache)).toEqual([]);
+
+    await rememberRetainedCaches(cache, ["cache-old"]);
+    expect(await readRetainedCaches(cache)).toEqual(["cache-old"]);
+
+    await cache.put(`${ORIGIN}/__retained-caches`, new Response("{not json"));
+    expect(await readRetainedCaches(cache)).toEqual([]);
   });
 });
 
