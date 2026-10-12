@@ -321,6 +321,26 @@ export function isEligibleForRuntimeCaching(url: URL, origin: string): boolean {
   return (url.origin === origin && !url.pathname.startsWith("/api/")) || isExternalFontAsset(url);
 }
 
+export type FetchStrategy = "asset" | "runtime" | "sprite";
+
+/**
+ * Which cache answers a request, or `undefined` when the worker should leave it to the browser.
+ * Answering a request only to forward it gains nothing, and the worker would own every failure:
+ * Safari reports each as a `respondWith` error, even for analytics beacons & extension fetches (#740).
+ */
+export function fetchStrategy(
+  request: Pick<Request, "method" | "url">,
+  assetPaths: ReadonlySet<string>,
+  origin: string,
+): FetchStrategy | undefined {
+  if (request.method !== "GET") return undefined;
+  const url = new URL(request.url);
+  if (assetPaths.has(url.pathname)) return "asset";
+  if (isExternalSpriteAsset(url)) return "sprite";
+  if (isEligibleForRuntimeCaching(url, origin)) return "runtime";
+  return undefined;
+}
+
 /** Versioned, immutable font chunks: cached alongside build assets and exempt from LRU eviction. */
 export function isExternalFontAsset(url: URL): boolean {
   return url.href.startsWith(EXTERNAL_FONT_PREFIX);
