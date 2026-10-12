@@ -277,6 +277,17 @@ describe("CI workflow jobs", () => {
     }
   });
 
+  it("has pnpm download and run the .node-version release for every script", () => {
+    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
+      devEngines?: { runtime?: { name?: string; onFail?: string; version?: string } };
+    };
+    expect(packageJson.devEngines?.runtime).toEqual({
+      name: "node",
+      onFail: "download",
+      version: readFileSync(".node-version", "utf8").trim(),
+    });
+  });
+
   it("has Dependabot keep the pinned GitHub Actions current", () => {
     const dependabot = parse(readFileSync(".github/dependabot.yml", "utf8")) as {
       updates?: { directory?: string; "package-ecosystem"?: string }[];
