@@ -166,7 +166,7 @@ are `status: blocked|ready|needs decision|in progress`, `area: pipeline|ui`,
 - `.worktreeinclude` symlinks `pipeline/input/`, `.env`, `.env.*`, & `.dev.vars` from the main
   checkout; a fresh clone needs those carried over by hand (they are gitignored, so they are not in
   the new repository).
-- Repo-scoped scripts (`scripts/cleanup-merged-worktrees.sh`, the game-build-watch workflow) use
+- Repo-scoped scripts (`scripts/cleanup-merged-worktrees.ts`, the game-build-watch workflow) use
   `{owner}/{repo}` or `github.repository` and need no change.
 
 ### Identity references in the tree

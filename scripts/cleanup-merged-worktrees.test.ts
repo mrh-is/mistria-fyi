@@ -1,23 +1,23 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import {
-  chmodSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   realpathSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 
-const script = readFileSync(new URL("cleanup-merged-worktrees.sh", import.meta.url), "utf8");
-const directories: string[] = [];
+import { cleanup, parseArgs, systemIo } from "./cleanup-merged-worktrees.js";
 
-// The script under test is Bash, driven through `gh` & `lsof` shims written as shebang files on
-// PATH. Windows can't execute those shims, so these tests stay POSIX-only.
-const onWindows = process.platform === "win32";
+import type { CleanupIo, CleanupOptions, CommandResult } from "./cleanup-merged-worktrees.js";
+
+const directories: string[] = [];
 
 afterAll(() => {
   for (const directory of directories.splice(0)) {
@@ -25,30 +25,167 @@ afterAll(() => {
   }
 });
 
-function gitFixture(
-  options: {
-    ancestor?: boolean;
-    associated?: boolean;
-    detached?: boolean;
-    dirty?: boolean;
-    exact?: boolean;
-    failure?: boolean;
-    fetchFailure?: boolean;
-    localCommit?: boolean;
-    locked?: boolean;
-    open?: boolean;
-    openAssociation?: boolean;
-    openBranch?: boolean;
-    openFailure?: boolean;
-  } = {},
-) {
+interface FixtureOptions {
+  ancestor?: boolean;
+  associated?: boolean;
+  detached?: boolean;
+  dirty?: boolean;
+  exact?: boolean;
+  exactFailure?: boolean;
+  failure?: boolean;
+  fetchFailure?: boolean;
+  inUse?: boolean;
+  localCommit?: boolean;
+  locked?: boolean;
+  open?: boolean;
+  openAssociation?: boolean;
+  openBranch?: boolean;
+  openFailure?: boolean;
+}
+
+const ok = (stdout = ""): CommandResult => ({ ok: true, stderr: "", stdout });
+const failed: CommandResult = { ok: false, stderr: "failed", stdout: "" };
+
+/** Answers `gh` the way GitHub would for the fixture's merged parent PR #42. */
+function fakeGh(options: FixtureOptions, mergedTip: string) {
+  return (args: string[]): CommandResult => {
+    const call = args.join(" ");
+    if (call === "--version") {
+      return ok("gh version test");
+    }
+    if (call.startsWith("pr list --head worktree-agent-test --state merged")) {
+      if (options.exactFailure) {
+        return failed;
+      }
+      return ok(options.exact ? "42\n" : "");
+    }
+    if (call.startsWith("pr list --head worktree-agent-test --state open")) {
+      if (options.openFailure) {
+        return failed;
+      }
+      return ok(options.openBranch ? "43\n" : "");
+    }
+    if (call.startsWith("api repos/{owner}/{repo}/commits/")) {
+      if (options.failure) {
+        return failed;
+      }
+      return ok(
+        `42\tmerged\tparent-branch\n${options.openAssociation ? "43\topen\tother-branch\n" : ""}`,
+      );
+    }
+    if (call.startsWith("api repos/{owner}/{repo}/pulls/42/commits")) {
+      return ok(options.associated === false || options.localCommit ? "" : `${mergedTip}\n`);
+    }
+    if (call.startsWith("pr list --head parent-branch --state open")) {
+      return ok(options.open ? "43\n" : "");
+    }
+    throw new Error(`Unexpected gh call: ${call}`);
+  };
+}
+
+function capture(io: Omit<CleanupIo, "log" | "logError">) {
+  const output = { stderr: "", stdout: "" };
+  const run = (options: CleanupOptions) => {
+    output.stdout = "";
+    output.stderr = "";
+    const status = cleanup(options, {
+      ...io,
+      log: (line) => {
+        output.stdout += `${line}\n`;
+      },
+      logError: (line) => {
+        output.stderr += `${line}\n`;
+      },
+    });
+    return { status, ...output };
+  };
+  return run;
+}
+
+const preview: CleanupOptions = { apply: false, idleMinutes: 0 };
+const apply: CleanupOptions = { apply: true, idleMinutes: 0 };
+
+// Decision cases answer Git & GitHub from a snapshot. They run the real decision logic but create
+// no repositories, query no processes, and perform no destructive operations.
+function fixture(options: FixtureOptions = {}) {
+  const root = "/virtual/checkout";
+  const worktree = "/virtual/agent worktree";
+  const state = {
+    branchRemoved: false,
+    invokedFrom: root,
+    leftoversRemoved: "",
+    worktreeRemoved: false,
+  };
+  const git = (args: string[]): CommandResult => {
+    const call = args.join(" ");
+    switch (call) {
+      case "rev-parse --show-toplevel":
+        return ok(`${state.invokedFrom}\n`);
+      case "branch --show-current":
+        return ok(state.invokedFrom === worktree ? "" : "main\n");
+      case "symbolic-ref --quiet --short refs/remotes/origin/HEAD":
+        return ok("origin/main\n");
+      case "fetch --quiet origin refs/heads/main:refs/remotes/origin/main":
+        return options.fetchFailure ? failed : ok();
+      case "for-each-ref --format=%(refname:short) refs/heads":
+        return ok(options.detached ? "main\n" : "main\nworktree-agent-test\n");
+      case "worktree list --porcelain": {
+        let listing = `worktree ${root}\nHEAD base\nbranch refs/heads/main\n\n`;
+        if (!state.worktreeRemoved) {
+          listing += `worktree ${worktree}\nHEAD tip\n`;
+          listing += options.detached ? "detached\n" : "branch refs/heads/worktree-agent-test\n";
+          listing += options.locked ? "locked\n" : "";
+        }
+        return ok(listing);
+      }
+      case "rev-parse worktree-agent-test":
+        return ok("tip\n");
+      case "merge-base --is-ancestor tip refs/remotes/origin/main":
+        return options.ancestor ? ok() : failed;
+      case `-C ${worktree} status --porcelain`:
+        return ok(options.dirty ? " M file\n" : "");
+      case `-C ${worktree} rev-parse --absolute-git-dir`:
+        return ok("/virtual/git\n");
+      case `-c core.longpaths=true worktree remove ${worktree}`:
+        state.worktreeRemoved = true;
+        return ok();
+      case "branch -D worktree-agent-test":
+        state.branchRemoved = true;
+        return ok();
+      default:
+        throw new Error(`Unexpected git call: ${call}`);
+    }
+  };
+  const run = capture({
+    gh: fakeGh(options, "tip"),
+    git,
+    modifiedWithin: () => true,
+    processDirectories: () => (options.inUse ? [`${worktree}/src`] : []),
+    realpath: () => undefined,
+    removeLeftovers: (path) => {
+      state.leftoversRemoved = path;
+    },
+  });
+  return {
+    run: (runOptions: CleanupOptions = preview) => run(runOptions),
+    runAt: (cwd: string, runOptions: CleanupOptions) => {
+      state.invokedFrom = cwd;
+      return run(runOptions);
+    },
+    state,
+    worktree,
+  };
+}
+
+function gitFixture(options: FixtureOptions = {}) {
   const directory = realpathSync(mkdtempSync(join(tmpdir(), "mistria-cleanup-")));
   directories.push(directory);
   const checkout = join(directory, "checkout");
   const worktree = join(directory, "agent worktree");
-  const bin = join(directory, "bin");
+  const linkTarget = join(directory, "shared");
   mkdirSync(checkout);
-  mkdirSync(bin);
+  mkdirSync(linkTarget);
+  writeFileSync(join(linkTarget, "kept"), "shared\n");
   const git = (...args: string[]) =>
     execFileSync("git", ["-C", checkout, ...args], {
       encoding: "utf8",
@@ -59,9 +196,10 @@ function gitFixture(
   git("config", "user.email", "cleanup@example.invalid");
   git("config", "commit.gpgsign", "false");
   writeFileSync(join(checkout, "file"), "initial\n");
+  writeFileSync(join(checkout, ".gitignore"), "linked/\nnode_modules/\n");
   git("add", ".");
   git("commit", "-m", "Initial");
-  git("remote", "add", "origin", options.fetchFailure ? join(directory, "missing") : checkout);
+  git("remote", "add", "origin", checkout);
   git("update-ref", "refs/remotes/origin/main", "HEAD");
   git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main");
   git("switch", "-c", "worktree-agent-test");
@@ -69,198 +207,95 @@ function gitFixture(
   git("commit", "-am", "Candidate");
   const mergedTip = git("rev-parse", "HEAD");
   git("switch", "main");
-  if (options.ancestor) {
-    git("merge", "--ff-only", "worktree-agent-test");
-    git("update-ref", "refs/remotes/origin/main", "HEAD");
-  }
   git("worktree", "add", worktree, "worktree-agent-test");
-  if (options.detached) {
-    execFileSync("git", ["-C", worktree, "switch", "--detach"], { stdio: "pipe" });
-    git("branch", "-D", "worktree-agent-test");
-  }
-  if (options.localCommit) {
-    writeFileSync(join(worktree, "file"), "new unmerged commit\n");
-    execFileSync("git", ["-C", worktree, "commit", "-am", "After merge"], { stdio: "pipe" });
-  }
-  if (options.locked) {
-    git("worktree", "lock", worktree);
-  }
-  if (options.dirty) {
-    writeFileSync(join(worktree, "file"), "local edits\n");
-  }
-  let openBranchResponse = ":";
-  if (options.openFailure) {
-    openBranchResponse = "exit 1";
-  } else if (options.openBranch) {
-    openBranchResponse = "echo 43";
-  }
-  writeFileSync(
-    join(bin, "gh"),
-    `#!/usr/bin/env bash
-case "$*" in
-  'pr list --head worktree-agent-test --state merged'*) ${options.exact ? "echo 42" : ":"} ;;
-  'pr list --head worktree-agent-test --state open'*) ${openBranchResponse} ;;
-  'api repos/{owner}/{repo}/commits/'*) ${options.failure ? "exit 1" : String.raw`printf '42\tmerged\tparent-branch\n'`}${options.openAssociation ? String.raw`; printf '43\topen\tother-branch\n'` : ""} ;;
-  'api repos/{owner}/{repo}/pulls/42/commits'*) ${options.associated === false ? ":" : `echo ${mergedTip}`} ;;
-  'pr list --head parent-branch --state open'*) ${options.open ? "echo 43" : ":"} ;;
-  *) echo "Unexpected gh call: $*" >&2; exit 1 ;;
-esac
-`,
+  // Links like worktree setup's & pnpm's. Git for Windows deregisters the worktree but leaves
+  // directory junctions behind; cleanup must delete them without following them.
+  const linkType = process.platform === "win32" ? "junction" : "dir";
+  symlinkSync(linkTarget, join(worktree, "linked"), linkType);
+  mkdirSync(join(worktree, "node_modules", ".pnpm", "package"), { recursive: true });
+  symlinkSync(
+    join(worktree, "node_modules", ".pnpm", "package"),
+    join(worktree, "node_modules", "package"),
+    linkType,
   );
-  chmodSync(join(bin, "gh"), 0o755);
+  const ghIo = { ...systemIo(checkout), gh: fakeGh(options, mergedTip) };
   // Process-use decisions are covered by snapshots; this case integrates only real Git.
-  writeFileSync(join(bin, "lsof"), "#!/usr/bin/env bash\nexit 0\n");
-  chmodSync(join(bin, "lsof"), 0o755);
-  const runAt = (cwd: string, ...args: string[]) =>
-    spawnSync("bash", ["-c", script, "cleanup", ...args], {
-      cwd,
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${bin}:${process.env.PATH ?? ""}` },
-    });
-  const run = (...args: string[]) => runAt(checkout, ...args);
-  return { checkout, git, run, runAt, worktree };
+  const runAt = (cwd: string, runOptions: CleanupOptions) =>
+    capture({ ...ghIo, git: systemIo(cwd).git, processDirectories: () => [] })(runOptions);
+  return {
+    git,
+    linkTarget,
+    run: (runOptions: CleanupOptions) => runAt(checkout, runOptions),
+    runAt,
+    worktree,
+  };
 }
 
-// Decision cases supply Git/GitHub snapshots as shell functions. They execute the real script,
-// but create no repositories, query no processes, and perform no destructive operations.
-function fixture(options: Parameters<typeof gitFixture>[0] & { inUse?: boolean } = {}) {
-  const checkout = process.cwd();
-  const worktree = "/virtual/agent worktree";
-  let output = "";
-  const snapshot = `
-removed=false
-git() {
-  case "$*" in
-    'rev-parse --show-toplevel') printf '%s\\n' "$TEST_ROOT" ;;
-    'branch --show-current') [[ $TEST_INVOKING == true ]] || echo main ;;
-    'symbolic-ref --quiet --short refs/remotes/origin/HEAD') echo origin/main ;;
-    'fetch --quiet origin refs/heads/main:refs/remotes/origin/main') [[ $TEST_FETCH_FAILURE != true ]] || return 1 ;;
-    'for-each-ref --format=%(refname:short) refs/heads') echo main; [[ $TEST_DETACHED == true ]] || echo worktree-agent-test ;;
-    'worktree list --porcelain')
-      printf 'worktree %s\\nHEAD base\\nbranch refs/heads/main\\n\\n' "$TEST_ROOT"
-      if [[ $removed != true ]]; then
-        printf 'worktree /virtual/agent worktree\\nHEAD tip\\n'
-        if [[ $TEST_DETACHED == true ]]; then echo detached; else echo 'branch refs/heads/worktree-agent-test'; fi
-        [[ $TEST_LOCKED != true ]] || echo locked
-      fi
-      ;;
-    'rev-parse worktree-agent-test') echo tip ;;
-    'merge-base --is-ancestor tip refs/remotes/origin/main') [[ $TEST_ANCESTOR == true ]] || return 1 ;;
-    '-C /virtual/agent worktree status --porcelain') [[ $TEST_DIRTY != true ]] || echo ' M file' ;;
-    '-C /virtual/agent worktree rev-parse --absolute-git-dir') echo /virtual/git ;;
-    'worktree remove /virtual/agent worktree') removed=true; echo 'TEST removed-worktree' ;;
-    'branch -D worktree-agent-test') echo 'TEST removed-branch' ;;
-    *) echo "Unexpected git call: $*" >&2; return 1 ;;
-  esac
-  return 0
-}
-gh() {
-  case "$*" in
-    'pr list --head worktree-agent-test --state merged'*) [[ $TEST_EXACT != true ]] || echo 42 ;;
-    'pr list --head worktree-agent-test --state open'*)
-      [[ $TEST_OPEN_FAILURE != true ]] || return 1
-      [[ $TEST_OPEN_BRANCH != true ]] || echo 43 ;;
-    'api repos/{owner}/{repo}/commits/'*)
-      [[ $TEST_FAILURE != true ]] || return 1
-      printf '42\\tmerged\\tparent-branch\\n'
-      [[ $TEST_OPEN_ASSOCIATION != true ]] || printf '43\\topen\\tother-branch\\n' ;;
-    'api repos/{owner}/{repo}/pulls/42/commits'*)
-      [[ $TEST_ASSOCIATED == false || $TEST_LOCAL_COMMIT == true ]] || echo tip ;;
-    'pr list --head parent-branch --state open'*) [[ $TEST_OPEN != true ]] || echo 43 ;;
-    *) echo "Unexpected gh call: $*" >&2; return 1 ;;
-  esac
-  return 0
-}
-lsof() { [[ $TEST_IN_USE != true ]] || echo 'n/virtual/agent worktree'; return 0; }
-find() { echo /virtual/git/HEAD; }
-cd() { if [[ $1 == '/virtual/agent worktree' ]]; then [[ $TEST_INVOKING == true ]]; return; fi; builtin cd "$1"; }
-`;
-  const runAt = (cwd: string, ...args: string[]) => {
-    const env: NodeJS.ProcessEnv = {
-      ...process.env,
-      TEST_INVOKING: String(cwd === worktree),
-      TEST_ROOT: cwd,
-    };
-    for (const key of [
-      "ancestor",
-      "associated",
-      "detached",
-      "dirty",
-      "exact",
-      "failure",
-      "fetchFailure",
-      "localCommit",
-      "locked",
-      "open",
-      "openAssociation",
-      "openBranch",
-      "openFailure",
-      "inUse",
-    ]) {
-      env[`TEST_${key.replaceAll(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase()}`] = "false";
-    }
-    env.TEST_ASSOCIATED = "true";
-    for (const [key, value] of Object.entries(options)) {
-      env[`TEST_${key.replaceAll(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase()}`] =
-        String(value);
-    }
-    const result = spawnSync("bash", ["-c", snapshot + script, "cleanup", ...args], {
-      cwd: checkout,
-      encoding: "utf8",
-      env,
-    });
-    output += result.stdout;
-    return result;
-  };
-  const git = (...args: string[]) => {
-    switch (args[0]) {
-      case "branch":
-        return output.includes("TEST removed-branch") ? "" : "main worktree-agent-test";
-      case "worktree":
-        return output.includes("TEST removed-worktree") ? checkout : worktree;
-      case "merge":
-        options.ancestor = true;
-        return "";
-      default:
-        throw new Error(`Unexpected fixture inspection: ${args.join(" ")}`);
-    }
-  };
-  return { checkout, git, run: (...args: string[]) => runAt(checkout, ...args), runAt, worktree };
-}
+describe("argument parsing", () => {
+  it.each([
+    [[], { apply: false, idleMinutes: 0 }],
+    [["--apply"], { apply: true, idleMinutes: 0 }],
+    [["--apply", "--idle-minutes", "120"], { apply: true, idleMinutes: 120 }],
+    [["--help"], "help"],
+    [["--idle-minutes"], undefined],
+    [["--idle-minutes", "soon"], undefined],
+    [["--force"], undefined],
+  ] as const)("parses %j", (args, expected) => {
+    expect(parseArgs([...args])).toEqual(expected);
+  });
+});
 
-it.skipIf(onWindows)("integrates preview & apply with one real Git fixture", () => {
-  const { git, run, runAt, worktree } = gitFixture();
-  expect(run().stdout).toContain(`Would remove worktree ${worktree}`);
+it("integrates preview & apply with one real Git fixture, including linked directories", () => {
+  const { git, linkTarget, run, runAt, worktree } = gitFixture();
+  expect(run(preview).stdout).toContain(`Would remove worktree ${worktree.replaceAll("\\", "/")}`);
   expect(git("branch", "--list", "worktree-agent-test")).toContain("worktree-agent-test");
-  expect(runAt(worktree, "--apply").status).toBe(0);
+  expect(runAt(worktree, apply).status).toBe(0);
   expect(git("worktree", "list")).toContain("agent worktree");
-  const result = run("--apply");
+  const result = run(apply);
   expect(result.status, result.stderr).toBe(0);
   expect(result.stdout).toContain("Removed branch worktree-agent-test (merged PR #42)");
   expect(git("branch", "--list", "worktree-agent-test")).toBe("");
   expect(git("worktree", "list")).not.toContain("agent worktree");
+  expect(existsSync(worktree)).toBe(false);
+  expect(readFileSync(join(linkTarget, "kept"), "utf8")).toBe("shared\n");
 });
 
-describe.skipIf(onWindows)("merged-worktree cleanup", () => {
+describe("merged-worktree cleanup", () => {
   it("finds an agent tip in a merged parent PR without changing anything in preview", () => {
-    const { git, run, worktree } = fixture();
+    const { run, state, worktree } = fixture();
     const result = run();
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain(`Would remove worktree ${worktree}`);
-    expect(git("branch", "--list", "worktree-agent-test")).toContain("worktree-agent-test");
+    expect(state.branchRemoved).toBe(false);
   });
 
   it("removes a clean confirmed worktree and branch when applied", () => {
-    const { git, run } = fixture();
-    const result = run("--apply");
+    const { run, state, worktree } = fixture();
+    const result = run(apply);
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("Removed branch worktree-agent-test (merged PR #42)");
-    expect(git("branch", "--list", "worktree-agent-test")).toBe("");
-    expect(git("worktree", "list")).not.toContain("agent worktree");
+    expect(state).toMatchObject({
+      branchRemoved: true,
+      leftoversRemoved: worktree,
+      worktreeRemoved: true,
+    });
   });
 
   it("still accepts a branch whose exact tip matches its merged PR", () => {
     expect(fixture({ exact: true }).run().stdout).toContain("Would remove worktree");
+  });
+
+  it("requires gh", () => {
+    const result = capture({
+      gh: () => failed,
+      git: () => failed,
+      modifiedWithin: () => false,
+      processDirectories: () => [],
+      realpath: () => undefined,
+      removeLeftovers: () => undefined,
+    })(apply);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("gh is required");
   });
 
   it.each([
@@ -271,44 +306,41 @@ describe.skipIf(onWindows)("merged-worktree cleanup", () => {
     [{ open: true }, "open pull request"],
     [{ openAssociation: true }, "open pull request"],
     [{ failure: true }, "could not confirm"],
+    [{ exactFailure: true }, "could not confirm its merge status"],
   ] as const)("keeps an unconfirmed or protected branch: %j", (options, message) => {
-    const { git, run } = fixture(options);
-    const result = run("--apply");
+    const { run, state } = fixture(options);
+    const result = run(apply);
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout + result.stderr).toContain(message);
-    expect(git("branch", "--list", "worktree-agent-test")).toContain("worktree-agent-test");
+    expect(state.branchRemoved).toBe(false);
   });
 });
 
-describe.skipIf(onWindows)("in-use worktree protection", () => {
+describe("in-use worktree protection", () => {
   it("keeps a worktree that a running process uses", () => {
-    const { git, run } = fixture({ ancestor: true, associated: false, inUse: true });
-    const result = run("--apply");
+    const { run, state } = fixture({ ancestor: true, associated: false, inUse: true });
+    const result = run(apply);
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("a running process is using it");
-    expect(git("worktree", "list")).toContain("agent worktree");
+    expect(state.worktreeRemoved).toBe(false);
   });
 
   it("keeps a worktree whose HEAD changed within the idle window", () => {
-    const { git, run } = fixture({ ancestor: true, associated: false });
-    const result = run("--apply", "--idle-minutes", "60");
+    const { run, state } = fixture({ ancestor: true, associated: false });
+    const result = run({ apply: true, idleMinutes: 60 });
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("HEAD changed in the last 60 minutes");
-    expect(git("branch", "--list", "worktree-agent-test")).toContain("worktree-agent-test");
-  });
-
-  it("rejects a missing idle window", () => {
-    expect(fixture().run("--idle-minutes").status).toBe(2);
+    expect(state.branchRemoved).toBe(false);
   });
 });
 
-describe.skipIf(onWindows)("cleanup of commits already in main", () => {
+describe("cleanup of commits already in main", () => {
   it("previews and removes an ancestor branch without requiring a PR commit match", () => {
-    const { git, run } = fixture({ ancestor: true, associated: false });
+    const { run, state } = fixture({ ancestor: true, associated: false });
     expect(run().stdout).toContain("reachable from origin/main");
-    const result = run("--apply");
+    const result = run(apply);
     expect(result.status, result.stderr).toBe(0);
-    expect(git("branch", "--list", "worktree-agent-test")).toBe("");
+    expect(state.branchRemoved).toBe(true);
   });
 
   it.each([
@@ -320,59 +352,52 @@ describe.skipIf(onWindows)("cleanup of commits already in main", () => {
     { open: true },
     { failure: true },
   ])("protects an ancestor: %j", (options) => {
-    const { git, run } = fixture({ ...options, ancestor: true, associated: false });
-    expect(run("--apply").status).toBe(0);
-    expect(git("branch", "--list", "worktree-agent-test")).toContain("worktree-agent-test");
+    const { run, state } = fixture({ ...options, ancestor: true, associated: false });
+    expect(run(apply).status).toBe(0);
+    expect(state.branchRemoved).toBe(false);
   });
 
   it("does not trust a stale main ref after a failed fetch", () => {
-    const { git, run } = fixture({ ancestor: true, associated: false, fetchFailure: true });
-    const result = run("--apply");
+    const { run, state } = fixture({ ancestor: true, associated: false, fetchFailure: true });
+    const result = run(apply);
     expect(result.stdout + result.stderr).toContain("could not refresh");
-    expect(git("branch", "--list", "worktree-agent-test")).toContain("worktree-agent-test");
-  });
-
-  it("fetches new main history before checking ancestry", () => {
-    const { git, run } = fixture({ associated: false });
-    git("merge", "--ff-only", "worktree-agent-test");
-    expect(run().stdout).toContain("reachable from origin/main");
+    expect(state.branchRemoved).toBe(false);
   });
 });
 
-describe.skipIf(onWindows)("detached worktree cleanup", () => {
+describe("detached worktree cleanup", () => {
   it.each([{ ancestor: true }, {}])(
     "previews and removes a confirmed detached tip: %j",
     (options) => {
-      const { git, run } = fixture({ ...options, detached: true });
+      const { run, state } = fixture({ ...options, detached: true });
       expect(run().stdout).toContain("Would remove detached worktree");
-      const result = run("--apply");
+      const result = run(apply);
       expect(result.status, result.stderr).toBe(0);
-      expect(git("worktree", "list")).not.toContain("agent worktree");
+      expect(state.worktreeRemoved).toBe(true);
     },
   );
 
   it.each([{ dirty: true }, { locked: true }, { localCommit: true }, { associated: false }])(
     "protects a detached worktree: %j",
     (options) => {
-      const { git, run } = fixture({ ...options, detached: true });
-      expect(run("--apply").status).toBe(0);
-      expect(git("worktree", "list")).toContain("agent worktree");
+      const { run, state } = fixture({ ...options, detached: true });
+      expect(run(apply).status).toBe(0);
+      expect(state.worktreeRemoved).toBe(false);
     },
   );
 
   it("preserves the invoking detached worktree", () => {
-    const { git, runAt, worktree } = fixture({ ancestor: true, detached: true });
-    expect(runAt(worktree, "--apply").status).toBe(0);
-    expect(git("worktree", "list")).toContain("agent worktree");
-    expect(git("branch", "--list", "main")).toContain("main");
+    const { runAt, state, worktree } = fixture({ ancestor: true, detached: true });
+    expect(runAt(worktree, apply).status).toBe(0);
+    expect(state.worktreeRemoved).toBe(false);
   });
 
   it.each([{ openAssociation: true }, { open: true }, { failure: true }])(
     "protects an ancestor detached worktree: %j",
     (options) => {
-      const { git, run } = fixture({ ...options, ancestor: true, detached: true });
-      expect(run("--apply").status).toBe(0);
-      expect(git("worktree", "list")).toContain("agent worktree");
+      const { run, state } = fixture({ ...options, ancestor: true, detached: true });
+      expect(run(apply).status).toBe(0);
+      expect(state.worktreeRemoved).toBe(false);
     },
   );
 });
