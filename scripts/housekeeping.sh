@@ -30,4 +30,8 @@ echo $$ >"$lock/pid"
 trap 'rm -rf "$lock"' EXIT
 
 bash scripts/refresh-default-branch.sh
-bash scripts/cleanup-merged-worktrees.sh --apply --idle-minutes "$idle_minutes"
+if ! command -v node >/dev/null; then
+  echo "node isn't on this job's PATH; rerun pnpm run housekeeping:install to add it."
+  exit 1
+fi
+node scripts/cleanup-merged-worktrees.ts --apply --idle-minutes "$idle_minutes"

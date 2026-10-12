@@ -312,7 +312,7 @@ colocated tests don’t double the length of directory listings.
 ### Vitest time budgets
 
 CI runs `node scripts/vitest-timings.ts` over every asset-independent project. The cleanup test runs
-only when `scripts/cleanup-merged-worktrees.sh` changes: PRs use their complete changed-file list, &
+only when `scripts/cleanup-merged-worktrees.ts` changes: PRs use their complete changed-file list, &
 main pushes compare the event’s before/after commits. Scheduled & manual runs omit it. Direct local
 runs still include it, so test-only edits can be verified with the focused command. It publishes all
 per-file test & hook durations, slowest first, in the job summary & the `vitest-timings` artifact.
@@ -731,6 +731,12 @@ It also keeps any worktree in use: one that a running process (an agent session 
 its working directory, or, with `--idle-minutes <n>`, one whose `HEAD` changed in the last `n`
 minutes. A fresh agent worktree's tip is already in `origin/main`, so unattended runs rely on this.
 
+On Windows the helper can't list other processes' working directories (it uses `lsof` elsewhere), so
+pass `--idle-minutes` there to spare worktrees that live sessions are using. Git for Windows
+deregisters a removed worktree but leaves its junctions & pnpm's `node_modules` links behind; the
+helper then deletes what's left without following those links. It also enables `core.longpaths` for
+the removal, so deep `node_modules` paths don't stop it.
+
 ### Automatic housekeeping
 
 Two mechanisms keep the primary checkout current without manual cleanup:
@@ -741,9 +747,10 @@ Two mechanisms keep the primary checkout current without manual cleanup:
   a new or changed project hook until you trust it in its hook review.
 - **Hourly on macOS:** `pnpm run housekeeping:install`, run from the primary checkout, installs a
   launchd agent that runs `scripts/housekeeping.sh` hourly: refresh `main`, then
-  `cleanup-merged-worktrees.sh --apply --idle-minutes 120`. It logs to
-  `~/Library/Logs/mistria-housekeeping.log` and holds a lock so overlapping runs skip. Remove it
-  with `pnpm run housekeeping:install -- --uninstall`.
+  `cleanup-merged-worktrees.ts --apply --idle-minutes 120`. It logs to
+  `~/Library/Logs/mistria-housekeeping.log` and holds a lock so overlapping runs skip. The agent's
+  `PATH` records the directory of the `node` that installed it; rerun the install after removing
+  that Node version. Remove it with `pnpm run housekeeping:install -- --uninstall`.
 
 ---
 
