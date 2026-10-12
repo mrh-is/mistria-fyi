@@ -8,6 +8,8 @@
  *
  * Stage a complete sprite tree first with `pnpm run pipeline -- <path> --sprites`.
  */
+import "#scripts/lib/require-pinned-node";
+
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";

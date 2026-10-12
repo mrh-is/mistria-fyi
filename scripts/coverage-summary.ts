@@ -4,6 +4,8 @@
  * files. Run with `node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"` after
  * `pnpm run test:coverage`.
  */
+import "#scripts/lib/require-pinned-node";
+
 import { readFileSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";

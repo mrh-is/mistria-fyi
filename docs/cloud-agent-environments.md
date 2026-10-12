@@ -15,8 +15,9 @@ Node. The environments differ only in the shell’s bare `node`:
 - **Codex cloud** ships Node 24 (24.19 as of October 2026). Its agent phase can write only under
   `/workspace` and temporary directories, and its home directory doesn’t persist from setup, so
   nothing can replace the shell’s `node`. The pnpm-managed runtime lives in the `/workspace` store
-  and `node_modules`, so it survives into the agent phase; bare `node` stays on the image’s release,
-  which `package.json`’s `engines` range accepts.
+  and `node_modules`, so it survives into the agent phase. Bare `node` stays on the image’s release,
+  so a repository script started with it (`node scripts/verify.ts`) exits with a message to use
+  `pnpm run` or `pnpm exec node` instead.
 
 Revisit `.node-version` when both images ship a newer LTS line; Node 24 reaches end of life in
 April 2028.

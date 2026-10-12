@@ -4,6 +4,8 @@
 // A Node script rather than Bash so it behaves the same on Windows (#727), where `bash` from
 // `cmd.exe` can resolve to WSL, and where `git worktree remove` deregisters a worktree but leaves
 // its junctions & pnpm's `node_modules` links behind.
+import "#scripts/lib/require-pinned-node";
+
 import { spawnSync } from "node:child_process";
 import { existsSync, realpathSync, rmSync, statSync } from "node:fs";
 import { sep } from "node:path";

@@ -9,6 +9,8 @@
 // old one-year immutable policy keep it until re-uploaded, so run once with FORCE=1 to migrate them.
 //
 //   pnpm run sprites:upload [sprites-dir]   (DRY_RUN=1 previews without uploading)
+import "#scripts/lib/require-pinned-node";
+
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";

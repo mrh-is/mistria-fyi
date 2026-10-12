@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { defineConfig, devices } from "@playwright/test";
 
 import { assessPreviewProbe, probePreviewOwner } from "./scripts/playwright-preview-owner.js";

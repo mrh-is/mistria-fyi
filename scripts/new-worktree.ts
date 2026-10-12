@@ -3,6 +3,8 @@
 //
 // A Node script so Git for Windows records a Windows-readable gitdir: from `cmd.exe`, `bash` can
 // resolve to WSL, whose Git writes `/mnt/c/...` paths that Git for Windows reports as prunable.
+import "#scripts/lib/require-pinned-node";
+
 import { spawnSync } from "node:child_process";
 import { existsSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
