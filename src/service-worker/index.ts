@@ -7,6 +7,7 @@ import {
   isLazyAsset,
   isSkipWaitingRequest,
   lastLocaleStore,
+  mayDeleteRetainedCaches,
   obsoleteCaches,
   OFFLINE_LOCALES_CACHE,
   parseCacheLocalesMessage,
@@ -81,13 +82,13 @@ async function deleteObsoleteCaches(older: readonly string[]): Promise<void> {
 
 /**
  * Deletes the caches this version's activation kept, once it has the home page they were kept for.
- * Only the active worker does: a new version hears page messages while installing or waiting, when
- * the active one may still need them. Only recorded caches go, never a newer version's. Browsers
- * without `self.serviceWorker` leave them to the next activation.
+ * Only the active worker does, and only with no other version installing or waiting: that version
+ * hears the same page messages, and a rollback's may reuse a kept cache's name. Browsers without
+ * `self.serviceWorker` leave kept caches to the next activation.
  */
 async function deleteRetainedCaches(): Promise<void> {
   const self: ServiceWorker | undefined = (sw as Partial<ServiceWorkerGlobalScope>).serviceWorker;
-  if (self?.state !== "activated") return;
+  if (!mayDeleteRetainedCaches(self?.state, sw.registration)) return;
   const retained = await readRetainedCaches(await caches.open(OFFLINE_LOCALES_CACHE));
   const existing = new Set(await caches.keys());
   const older = retained.filter((name) => name !== CACHE && existing.has(name));

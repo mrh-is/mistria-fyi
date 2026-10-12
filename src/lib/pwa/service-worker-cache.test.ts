@@ -16,6 +16,7 @@ import {
   isSkipWaitingRequest,
   lastLocaleStore,
   MAX_SPRITE_ENTRIES,
+  mayDeleteRetainedCaches,
   obsoleteCaches,
   parseCacheLocalesMessage,
   parseCurrentLocale,
@@ -521,6 +522,15 @@ describe("service-worker obsolete caches", () => {
     ]);
   });
 
+  // `caches.keys()` lists caches in creation order, so the last one listed is the newest.
+  it("keeps only the newest older version holding the last-used home page", async () => {
+    const caches = storage({ "cache-new": [], "cache-v1": ["/ja"], "cache-v2": ["/ja"] });
+
+    expect(
+      await obsoleteCaches(caches, "cache-new", ["cache-v1", "cache-v2"], "ja", `${ORIGIN}/`),
+    ).toEqual(["cache-v1"]);
+  });
+
   it("lists every older version when no locale has been used", async () => {
     const caches = storage({ "cache-new": [], "cache-old": ["/en"] });
 
@@ -538,6 +548,18 @@ describe("service-worker obsolete caches", () => {
 
     await cache.put(`${ORIGIN}/__retained-caches`, new Response("{not json"));
     expect(await readRetainedCaches(cache)).toEqual([]);
+  });
+
+  // Cache names are deterministic per commit, so a rollback's new version can reuse a kept name.
+  it.each<[string, ServiceWorkerState | undefined, object, boolean]>([
+    ["active with no other version", "activated", {}, true],
+    ["still activating", "activating", {}, false],
+    ["without self.serviceWorker", undefined, {}, false],
+    ["with a version installing", "activated", { installing: {} }, false],
+    ["with a version waiting", "activated", { waiting: {} }, false],
+  ])("deletes kept caches only when %s", (_, state, others, expected) => {
+    const registration = { installing: null, waiting: null, ...others };
+    expect(mayDeleteRetainedCaches(state, registration)).toBe(expected);
   });
 });
 
