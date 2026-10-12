@@ -11,7 +11,10 @@ runbook).
 
 Inventory taken 2026-10-07 with read-only `gh api` calls and a repo search. Only names are recorded;
 no secret values were read. Items marked **Maintainer** need the Cloudflare or GitHub dashboard (or
-admin rights the inventory couldn’t exercise) and must be confirmed by a human.
+admin rights the inventory couldn’t exercise) and must be confirmed by a human. App, token, & Pages
+updates below are maintainer-reported answers from the 2026-10-12 planning interview, not
+independent dashboard verification. See
+[the final decisions](decisions/2026-10-12-public-cutover-planning.md).
 
 ## Naming decision
 
@@ -53,12 +56,12 @@ admin rights the inventory couldn’t exercise) and must be confirmed by a human
 
 ### Webhooks, apps, & keys
 
-| Item                     | State                                                                                                                                                                                                                                                                                             |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Repository webhooks      | None.                                                                                                                                                                                                                                                                                             |
-| Deploy keys              | None.                                                                                                                                                                                                                                                                                             |
-| GitHub App installations | Not visible to the repo-scoped token (the installation endpoint returns 401). **Maintainer:** review `github.com/settings/installations`. Expect the Cloudflare Pages app, Claude, Codex, and (given the `copilot` environment) GitHub Copilot. Note which are scoped to “selected repositories”. |
-| Autolinks, Pages         | None. GitHub Pages is not enabled.                                                                                                                                                                                                                                                                |
+| Item                     | State                                                                                                                                                                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository webhooks      | None.                                                                                                                                                                                                                                                                                       |
+| Deploy keys              | None.                                                                                                                                                                                                                                                                                       |
+| GitHub App installations | Maintainer-confirmed 2026-10-12: Codex, Claude, Cloudflare Workers, Fly.io, ImgBot, Kilo Code, & Vercel, all scoped to “All repositories”. Cloudflare is the confirmed cutover dependency; use of the other apps is unconfirmed. Account-wide app auditing is outside this cutover’s scope. |
+| Autolinks, Pages         | None. GitHub Pages is not enabled.                                                                                                                                                                                                                                                          |
 
 ### Rulesets & protection
 
@@ -69,7 +72,8 @@ admin rights the inventory couldn’t exercise) and must be confirmed by a human
 - **CODEOWNERS** (`.github/CODEOWNERS`) routes `src/lib/components/ui/` and
   `src/lib/data/tracker-data.json` to `@mrh-is`. The ruleset has no pull-request rule, so code-owner
   review is not enforced today; CODEOWNERS only requests review. Recreating the ruleset as-is keeps
-  that behavior. Whether to enforce it is a separate decision for #671.
+  that behavior. **Decision, 2026-10-12:** keep code-owner review advisory, without adding a
+  required approval rule, to keep the maintainer’s workflow simple.
 - Export for recreation: `gh api repos/mrh-is/mistria-fyi/rulesets/13236726` (use the pre-rename
   name only before step 3; afterward use `mistria-fyi-private`).
 
@@ -102,8 +106,9 @@ are `status: blocked|ready|needs decision|in progress`, `area: pipeline|ui`,
   endpoint’s issue creation can fail.
 - `shadcn-update` & `generated-data` are required by the “Guarded paths” workflow.
 - `agent: *` labels are required by the “Attribution” workflow. AGENTS.md also lists
-  `agent: antigravity`, `agent: kilo`, `agent: copilot`, & `agent: lm studio`, which don’t exist
-  today; decide whether to create them.
+  `agent: antigravity`, `agent: kilo`, `agent: copilot`, & `agent: lm studio`, which don’t exist in
+  the original inventory. **Decision, 2026-10-12:** create all four in the new repository to match
+  AGENTS.md; they may remain unused.
 - `pre-launch` becomes obsolete after launch; skip it or delete it afterward.
 - The labels must exist in the new repository **before** the issue transfer, or transferred issues
   arrive without them.
@@ -118,19 +123,17 @@ are `status: blocked|ready|needs decision|in progress`, `area: pipeline|ui`,
   `GITHUB_FEEDBACK_TOKEN`, `TURNSTILE_SECRET_KEY`. Binding: KV namespace `FEEDBACK_EMAIL_STORE`,
   declared in `wrangler.toml` (the namespace ID is not secret and travels with the file).
   `.env.example` documents the first two for local development.
-- Current token: `.env.example` says classic PAT with `public_repo`. That scope is account-wide for
-  every public repository the owner can write to, so revoke it at cutover rather than reuse it. It
-  also can’t write to the new repository while it is still private, which is why a fine-grained
-  token is needed for the pre-launch verification.
-- **Maintainer: confirm the live token.** A classic `public_repo` PAT can’t create issues in a
-  private repository, and the current repository is private. So either the live token has broader
-  scope (for example `repo`) than `.env.example` documents, or the endpoint can’t file into this
-  repository today. Check the token’s scopes on GitHub and the endpoint’s behavior, and correct
-  `.env.example` if it’s stale.
+- **Live token, maintainer-confirmed 2026-10-12:** fine-grained, restricted to the current
+  repository, with Metadata: read & Issues: Read and write; expires 2026-10-29. It successfully
+  created private-beta issue #351. Its repository selection can be changed, but the cutover will use
+  a new token rather than extending or regenerating this one.
+- `.env.example` describes a classic PAT with `public_repo`; that description is stale, not evidence
+  of the live token’s type or scope.
 - Required replacement: a **fine-grained** personal access token, resource owner `mrh-is`, “Only
   select repositories” limited to the new `mrh-is/mistria-fyi`, repository permission **Issues: Read
-  and write** and nothing else (Metadata: read is implied). Give it a short expiry and a calendar
-  reminder.
+  and write** and nothing else (Metadata: read is implied). **Decision, 2026-10-12:** give the new
+  token a 90-day expiry from creation & set a rotation reminder. Revoke the old fine-grained token
+  only after the replacement is verified.
 - `.env.example` should then say “fine-grained token, Issues: write on this repository only”; that
   doc edit rides with the cutover PR (or a follow-up), not this inventory.
 
@@ -141,12 +144,12 @@ are `status: blocked|ready|needs decision|in progress`, `area: pipeline|ui`,
   (inferred). **Maintainer:** confirm in Workers & Pages → `mistria-fyi` → Settings: Git repository,
   production branch, build command & output, environment variables (Production & Preview),
   preview-branch policy, and the custom domains.
-- **Open question for the maintainer:** Cloudflare Pages doesn’t offer a “change repository” action
-  for an existing Git-connected project. Confirm whether this project can be re-pointed (some
-  accounts expose Disconnect then reconnect via the dashboard). If not, the fallback is a new Pages
-  project with the same settings, then moving the `mistria.fyi` custom domain and updating
-  `CLOUDFLARE_PAGES_PROJECT` in agent environments. Decide before the cutover day, since the
-  fallback changes the `*.pages.dev` URL & preview deployments.
+- **Deferred to cutover, 2026-10-12:** the maintainer confirms the dashboard exposes “Disconnect”.
+  Try reconnecting the existing project to the new repository; the disconnect option alone does not
+  confirm that a different repository can be selected. If reconnecting fails, decide with the
+  maintainer at that point whether to create a replacement project with the same settings, move the
+  `mistria.fyi` custom domain, & update `CLOUDFLARE_PAGES_PROJECT` in agent environments. No
+  replacement project name is preselected; a replacement changes the `*.pages.dev` URL & previews.
 - **R2 bucket** `mistria-fyi-assets`, served at `assets.mistria.fyi` (sprites & fonts). Not bound to
   the repository; `scripts/sprites/upload-sprites.ts` uploads with the maintainer’s Wrangler login.
   Unaffected by the cutover. The takedown procedure depends on it.
@@ -198,16 +201,16 @@ Each item slots into the runbook step named in brackets. Run items in order. Eve
 
 ### Before the freeze
 
-- [ ] **Confirm dashboard-only items. Maintainer.** Review the GitHub App installations, self-hosted
-      runners, secret scanning & push protection state, and the Cloudflare Pages Git settings listed
-      above. Record the answers on #671. _Check:_ every **Maintainer** row in the inventory has a
-      recorded answer.
-- [ ] **Resolve the Pages re-pointing question. Maintainer.** Decide between reconnecting the
-      existing project and creating a new one. _Check:_ the choice is recorded on #671, with the new
-      project’s name if applicable.
-- [ ] **Confirm the live feedback token’s scope. Maintainer.** See the note under
-      [Feedback endpoint](#feedback-endpoint). _Check:_ the answer (broader token, or endpoint
-      currently failing) is recorded on #671.
+- [ ] **Confirm remaining dashboard-only items. Maintainer.** Confirm self-hosted runners, secret
+      scanning & push protection state, and the Cloudflare Pages Git settings listed above. App
+      inventory & live token scope were answered in the 2026-10-12 interview. _Check:_ every
+      **Maintainer** row in the inventory has a recorded answer.
+- [ ] **Prepare the Pages reconnection check. Maintainer.** Defer the actual repository-selection
+      check & any replacement-project decision to step 7. _Check:_ reconnection is the first path; a
+      failed reconnection requires the maintainer’s decision before creating a replacement.
+- [x] **Confirm the live feedback token’s scope. Maintainer.** Answered 2026-10-12. _Check:_ the
+      token’s type, repository scope, permissions, expiry, & successful issue creation are recorded
+      under [Feedback endpoint](#feedback-endpoint).
 
 ### During the cutover
 
@@ -221,12 +224,13 @@ Each item slots into the runbook step named in brackets. Run items in order. Eve
 - [ ] **[Step 4] Create the fine-grained feedback token. Maintainer.** It can’t be scoped to the
       repository until it exists. Scope as described under [Feedback endpoint](#feedback-endpoint).
       _Check:_ the token’s settings page shows one repository (`mistria-fyi`), one permission
-      (Issues: Read and write), & an expiry date.
+      (Issues: Read and write, plus implied Metadata: read), & an expiry 90 days from creation; a
+      rotation reminder is set.
 - [ ] **[Step 4] Recreate labels first.**
       `gh label clone mrh-is/mistria-fyi-private --repo mrh-is/mistria-fyi`, then trim the labels
-      you don’t want (`pre-launch`). _Check:_ `gh label list --repo mrh-is/mistria-fyi` includes
-      `user feedback`, `shadcn-update`, `generated-data`, & both `agent:` labels. Do this before the
-      issue transfer.
+      you don’t want (`pre-launch`) & create the four missing `agent:` labels listed above. _Check:_
+      `gh label list --repo mrh-is/mistria-fyi` includes `user feedback`, `shadcn-update`,
+      `generated-data`, & all six `agent:` labels. Do this before the issue transfer.
 - [ ] **[Step 6] Verify the filtered candidate before pushing.** Follow the
       [candidate verification procedure](public-repo.md#regression-checks), including the full
       read-only matrix & a clean tracked tip. _Check:_ verification exits zero & its output is saved
@@ -237,8 +241,9 @@ Each item slots into the runbook step named in brackets. Run items in order. Eve
 - [ ] **[Step 7] Recreate the ruleset.** `POST` the exported “Protect main” definition (drop
       server-set fields such as `id`, `source`, `created_at`) to
       `repos/mrh-is/mistria-fyi/rulesets`. Keep `enforcement: active`, no bypass actors, & the three
-      `integration_id` 15368 checks. _Check:_ `gh api repos/mrh-is/mistria-fyi/rulesets` lists
-      “Protect main” as active; a test push of a throwaway branch commit to `main` is rejected.
+      `integration_id` 15368 checks; do not add required code-owner approval. _Check:_
+      `gh api repos/mrh-is/mistria-fyi/rulesets` lists “Protect main” as active; a test push of a
+      throwaway branch commit to `main` is rejected.
 - [ ] **[Step 7] Apply repository settings.** Description & homepage, merge commit only with
       PR-title body, delete branch on merge, update branch, web commit sign-off, Projects/Wiki/
       Discussions off, topics if wanted. _Check:_
@@ -252,16 +257,20 @@ Each item slots into the runbook step named in brackets. Run items in order. Eve
       `gh api -X PUT repos/mrh-is/mistria-fyi/vulnerability-alerts` and
       `gh api -X PUT repos/mrh-is/mistria-fyi/automated-security-fixes`. _Check:_
       `gh api repos/mrh-is/mistria-fyi/automated-security-fixes` returns `"enabled": true`.
-- [ ] **[Step 7] Install GitHub Apps on the new repository. Maintainer.** Add only the apps kept
-      from the review (Cloudflare Pages if reconnecting, Claude, Codex, Copilot), each scoped to
-      selected repositories. _Check:_ `github.com/settings/installations` shows each kept app
-      listing `mrh-is/mistria-fyi`; none left on “All repositories” unintentionally.
-- [ ] **[Step 7] Reconnect Cloudflare Pages. Maintainer.** Re-point or recreate the project per the
-      earlier decision; re-enter production & preview environment variables (`GITHUB_FEEDBACK_TOKEN`
-      with the new token, `TURNSTILE_SECRET_KEY`); confirm the `FEEDBACK_EMAIL_STORE` binding comes
-      from `wrangler.toml`. While the repository is private, deploy previews work only for the
-      connected app. _Check:_ a push to a branch produces a Pages preview deployment from the new
-      repository, and `pnpm run cloudflare:logs` (or the dashboard) shows the build’s Git source as
+- [ ] **[Step 7] Verify inherited GitHub App access. Maintainer.** The seven confirmed apps use “All
+      repositories”; expect them to inherit access to the new repository. Verify Cloudflare access
+      for deployment. Account-wide app audits & access changes are outside this cutover’s scope;
+      investigate another app only if evidence shows project use. _Check:_ Cloudflare can select the
+      new `mrh-is/mistria-fyi`; any other demonstrated project dependency still works.
+- [ ] **[Step 7] Reconnect Cloudflare Pages. Maintainer.** Try disconnecting & reconnecting the
+      existing project to the new repository. If that fails, decide with the maintainer whether to
+      create a replacement; record the chosen path & any new project name. If replacing, carry over
+      settings, move the custom domain, & update agent project configuration. Re-enter production &
+      preview environment variables (`GITHUB_FEEDBACK_TOKEN` with the new token,
+      `TURNSTILE_SECRET_KEY`); confirm the `FEEDBACK_EMAIL_STORE` binding comes from
+      `wrangler.toml`. While the repository is private, deploy previews work only for the connected
+      app. _Check:_ a push to a branch produces a Pages preview deployment from the new repository,
+      and `pnpm run cloudflare:logs` (or the dashboard) shows the build’s Git source as
       `mrh-is/mistria-fyi`.
 - [ ] **[Step 8] Verify CI.** Open a throwaway PR on the new repository. _Check:_ `CI passed`,
       `Attribution`, & `Guarded paths` all report success and are required (`gh pr checks`);
@@ -270,9 +279,9 @@ Each item slots into the runbook step named in brackets. Run items in order. Eve
 - [ ] **[Step 8] Verify the feedback endpoint.** Submit a report from the preview or production site
       with the new token. _Check:_ an issue appears in `mrh-is/mistria-fyi` with the `user feedback`
       label, and **no** issue appears in the archive.
-- [ ] **[Step 8] Revoke the old feedback token. Maintainer.** Delete the classic `public_repo` PAT
-      once the new one is verified. _Check:_ the old token no longer appears at
-      `github.com/settings/tokens`, and the endpoint still files issues.
+- [ ] **[Step 8] Revoke the old feedback token. Maintainer.** Delete the old fine-grained PAT once
+      the new one is verified. _Check:_ the old token no longer appears at
+      `github.com/settings/personal-access-tokens`, and the endpoint still files issues.
 
 ### After going public
 
@@ -317,11 +326,13 @@ Each item slots into the runbook step named in brackets. Run items in order. Eve
       _Check:_ `rg -n 'mistria-fyi-private|private archive' docs AGENTS.md README.md` shows only
       intentional mentions.
 
-## Open questions
+## Planning outcome
 
-- Does the existing Pages project support re-pointing (see [Cloudflare](#cloudflare))?
-- Which GitHub Apps are installed, and on which repositories?
-- What scope does the live `GITHUB_FEEDBACK_TOKEN` have, given a classic `public_repo` token can’t
-  file issues in a private repository?
-- Is code-owner review meant to be enforced once outside contributors can open PRs?
-- Should the missing `agent:` labels from AGENTS.md be created in the new repository?
+- **Pages:** attempt reconnection; repository switching remains unverified. Decide on a replacement
+  with the maintainer during cutover only if reconnection fails.
+- **Apps:** the seven named installations use “All repositories”. Verify demonstrated project
+  dependencies; personal-account app auditing is outside this cutover’s scope.
+- **Feedback:** create a new token restricted to the new repository, with a 90-day expiry; verify
+  it, then revoke the old fine-grained token.
+- **Code-owner review:** keep it advisory; do not add an approval requirement.
+- **Agent labels:** create the four missing labels, completing the six listed in AGENTS.md.
