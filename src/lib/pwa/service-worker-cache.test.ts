@@ -7,6 +7,7 @@ import {
   cacheSpriteResponse,
   fetchRuntimeRequest,
   fetchSpriteRequest,
+  fetchStrategy,
   isEligibleForRuntimeCaching,
   isExternalFontAsset,
   isExternalSpriteAsset,
@@ -104,6 +105,26 @@ describe("service-worker runtime cache eligibility", () => {
         ORIGIN,
       ),
     ).toBe(true);
+  });
+});
+
+describe("service-worker fetch strategy", () => {
+  const assetPaths = new Set(["/_app/immutable/entry/start.js"]);
+  const strategyFor = (url: string, method = "GET") =>
+    fetchStrategy({ method, url }, assetPaths, ORIGIN);
+
+  it("routes cached requests to their cache", () => {
+    expect(strategyFor(`${ORIGIN}/_app/immutable/entry/start.js`)).toBe("asset");
+    expect(strategyFor("https://assets.mistria.fyi/sprites/items/apple.webp")).toBe("sprite");
+    expect(strategyFor(`${ORIGIN}/en/villagers`)).toBe("runtime");
+    expect(strategyFor("https://assets.mistria.fyi/fonts/satoshi-regular.woff2")).toBe("runtime");
+  });
+
+  it("leaves requests it doesn't cache to the browser", () => {
+    expect(strategyFor("https://static.cloudflareinsights.com/beacon.min.js")).toBeUndefined();
+    expect(strategyFor("https://api.cardpointers.com/v1/offers")).toBeUndefined();
+    expect(strategyFor(`${ORIGIN}/api/feedback`)).toBeUndefined();
+    expect(strategyFor(`${ORIGIN}/en/villagers`, "POST")).toBeUndefined();
   });
 });
 
