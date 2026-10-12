@@ -11,6 +11,19 @@ Install Git, Python 3, GitHub CLI, `git-filter-repo`, & `gitleaks` on `PATH`. On
 brew install git-filter-repo gitleaks
 ```
 
+On Windows, run the script from Git Bash. It finds Python 3 as `python3`, `python`, or `py -3`,
+skipping the Microsoft Store `python3` alias that only prints an install hint. Install the tools,
+then open a new shell so `PATH` picks them up:
+
+```bash
+winget install Python.Python.3.13 Gitleaks.Gitleaks
+python -m pip install --user git-filter-repo
+```
+
+pip prints a warning when its user `Scripts` directory isn't on `PATH`; add that directory so
+`git filter-repo` resolves. Run the script as `bash scripts/public-repo/…` from Git Bash itself:
+from `cmd.exe` or PowerShell, `bash` can resolve to WSL instead.
+
 From an up-to-date source checkout, run:
 
 ```bash
