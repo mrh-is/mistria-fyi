@@ -26,8 +26,9 @@ Other languages download the first time the player uses them, then stay availabl
 - **Updates keep what the player had.** The worker records requested locales in the
   version-independent `offline-locales-v1` cache, and each new version’s install re-caches those
   locales’ chunks. This step is best-effort and never blocks the install. The page also sends its
-  request to a version waiting to take over (see [Update flow](#update-flow)), which installed
-  before a later language switch and would otherwise miss it.
+  request to a version installing or waiting to take over (see [Update flow](#update-flow)), which
+  read the remembered locales partway through its install and would otherwise miss a later language
+  switch (#18).
 - **An undownloaded language says so.** Before switching, the picker asks the controlling worker to
   cache every chunk for the new language and waits for its answer. The worker’s cache is the
   authority: a download the network cut off leaves a locale partly cached, and modules the page
@@ -40,11 +41,16 @@ Other languages download the first time the player uses them, then stay availabl
   message names its current locale (on every load and every picker switch), and the worker records
   it as the last-used locale in `offline-locales-v1` and fetches that locale’s home page into its
   cache. Each new version’s install fetches the last-used home page again, since activating deletes
-  the old cache. A full page load through the worker records its locale too. When a bare-path
-  navigation fails offline, the worker redirects to the same path under the last-used locale, or
-  under any locale whose page is cached, before falling back to the offline page. Locale home pages
-  (`/en`, `/ja`, …) are exempt from runtime-cache eviction, and a navigation that comes back as a
-  followed redirect is answered with the redirect itself and never cached.
+  the old cache; a switch during that install reaches it through the message above. If the new
+  version still lacks that page when it activates (its fetch failed, or the switch happened
+  offline), activation keeps the old version’s cache, which holds the only working copy, and records
+  it in `offline-locales-v1`. The active worker deletes it once a page message has cached the home
+  page in the new version. The record is never cached in memory, because during an update two
+  workers write it (#18). A full page load through the worker records its locale too. When a
+  bare-path navigation fails offline, the worker redirects to the same path under the last-used
+  locale, or under any locale whose page is cached, before falling back to the offline page. Locale
+  home pages (`/en`, `/ja`, …) are exempt from runtime-cache eviction, and a navigation that comes
+  back as a followed redirect is answered with the redirect itself and never cached.
 
 ### Byte budget
 
@@ -102,7 +108,10 @@ The suite verifies:
 - the offline document for a previously uncached navigation;
 - an offline launch from `start_url` (`/`) into the home page, after one online launch with only
   client-side browsing, and into the language last chosen in the picker;
-- a new version’s install caching the last-used locale’s home page;
+- a new version’s install caching the last-used locale’s home page, and an offline relaunch into a
+  language chosen while that install was underway (#18);
+- an offline relaunch after a new version failed to fetch the last-used home page, served from the
+  old version’s kept cache, which goes once the home page is cached online;
 - no name chunks at install, then every chunk for the visited locale and none for another;
 - offline navigation to an unopened category, offline search, and the offline language-switch
   message;
@@ -144,7 +153,8 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
 7. Still offline, open `/`. Confirm it lands on the language you last used online (for example
    `/en`), not the offline page. On an installed app, launch it from its icon instead. If it
    doesn’t, check Cache Storage for `/__last-locale` in `offline-locales-v1` and the home page in
-   `cache-<version>`.
+   `cache-<version>`. Then switch languages online, force-quit, and repeat offline: it should open
+   the new language.
 8. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
    the online application renders normally.
 9. To check the update flow, keep a tab open on the deployment, deploy a new version, then switch

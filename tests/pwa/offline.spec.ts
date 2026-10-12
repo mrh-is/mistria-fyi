@@ -1,5 +1,5 @@
 import { expect, test } from "../browser/test.js";
-import { waitForControl } from "./service-worker.js";
+import { goOffline, waitForControl } from "./service-worker.js";
 
 import type { BrowserContext, Page } from "@playwright/test";
 
@@ -134,7 +134,7 @@ function readyOffline(page: Page, path: string, locale: string): Promise<boolean
 }
 
 async function launchOffline(context: BrowserContext, page: Page, url: string): Promise<void> {
-  await context.setOffline(true);
+  await goOffline(context);
   await page.goto(url);
   await expect(page.getByRole("main")).toBeVisible();
   await expect(page.getByRole("heading", { name: /offline/i })).toBeHidden();
