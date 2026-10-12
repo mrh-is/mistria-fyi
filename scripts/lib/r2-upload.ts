@@ -81,19 +81,22 @@ export async function listFiles(dir: string): Promise<string[]> {
     .toSorted();
 }
 
-/** Runs `pnpx wrangler` through pnpm's own executable, so no shell shim is involved. */
+/** The repository root, so `pnpm exec` finds the workspace's Wrangler from any working directory. */
+const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
+
+/**
+ * Runs the workspace's own Wrangler (installed for `@sveltejs/adapter-cloudflare`, whose native
+ * deps `allowBuilds` in pnpm-workspace.yaml already approves) through pnpm's own executable, so no
+ * shell shim is involved. `pnpx` would install a separate copy that ignores that approval.
+ */
 export function runWrangler(args: string[]): Promise<WranglerResult> {
-  // --allow-build lets Wrangler's native deps (esbuild, workerd) run their install scripts
-  // non-interactively; without it, a pnpm store that hasn't approved them fails every upload.
-  const pnpm = pnpmCommand([
-    "dlx",
-    "--allow-build=esbuild",
-    "--allow-build=workerd",
-    "wrangler",
-    ...args,
-  ]);
+  const pnpm = pnpmCommand(["exec", "wrangler", ...args]);
   return new Promise((resolve) => {
-    const child = spawn(pnpm.command, pnpm.args, { shell: pnpm.shell, windowsHide: true });
+    const child = spawn(pnpm.command, pnpm.args, {
+      cwd: REPO_ROOT,
+      shell: pnpm.shell,
+      windowsHide: true,
+    });
     let output = "";
     child.stdout.on("data", (chunk: Buffer) => (output += chunk.toString()));
     child.stderr.on("data", (chunk: Buffer) => (output += chunk.toString()));
