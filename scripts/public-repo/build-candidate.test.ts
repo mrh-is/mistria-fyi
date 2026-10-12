@@ -9,9 +9,16 @@ const helper = resolve("scripts/public-repo/rewrite-references.py");
 const script = resolve("scripts/public-repo/build-candidate.sh");
 const temporary: string[] = [];
 
-// The procedure & its rewrite helper need Python 3. On Windows `python3` is often the Microsoft
-// Store alias, which only prints an install hint, so skip where Python 3 cannot run.
-const pythonAvailable = spawnSync("python3", ["--version"]).status === 0;
+// The procedure & its rewrite helper need Python 3. Mirror build-candidate.sh's search: on Windows
+// `python3` is often the Microsoft Store alias, which only prints an install hint, while `python`
+// or the `py` launcher runs. Skip where none of them runs Python 3.
+const pythonCommand = [["python3"], ["python"], ["py", "-3"]].find(
+  ([command = "", ...args]) =>
+    spawnSync(command, [...args, "-c", "import sys; sys.exit(sys.version_info < (3, 8))"])
+      .status === 0,
+);
+const pythonAvailable = pythonCommand !== undefined;
+const [python = "python3", ...pythonArgs] = pythonCommand ?? [];
 
 // Construct synthetic URLs at runtime so filtering a candidate does not rewrite test inputs.
 function privateUrl(kind: "issues" | "pull", number: number, suffix = ""): string {
@@ -27,14 +34,19 @@ function directory(): string {
 
 function rewrite(text: string, message: boolean, mapping = ""): string {
   const path = directory();
+  // A non-ASCII title catches reading the export in Windows' legacy default encoding.
   writeFileSync(
     join(path, "issues.json"),
-    JSON.stringify([{ number: 1 }, { number: 2, pull_request: {} }]),
+    JSON.stringify([
+      { number: 1, title: "Bee 🐝 gifts" },
+      { number: 2, pull_request: {} },
+    ]),
   );
   writeFileSync(join(path, "mapping.txt"), mapping);
   return execFileSync(
-    "python3",
+    python,
     [
+      ...pythonArgs,
       "-B",
       "-c",
       `
@@ -223,7 +235,8 @@ describe.skipIf(!pythonAvailable)("public candidate history filtering", () => {
       writeFileSync(join(source, "asset.bin"), binary);
       commit("Fix #1");
       const first = git("rev-parse", "HEAD").trim();
-      git("tag", "old-tag");
+      // A global `tag.gpgsign` would turn this lightweight tag into a signed one that needs a message.
+      git("-c", "tag.gpgsign=false", "tag", "old-tag");
       git("branch", "other-branch");
       git("update-ref", "refs/pull/2/head", first);
       rmSync(join(source, "static"), { recursive: true });
@@ -248,10 +261,13 @@ describe.skipIf(!pythonAvailable)("public candidate history filtering", () => {
         }).trim(),
       ).toBe("refs/heads/main");
       expect(execFileSync("git", ["-C", output, "remote"], { encoding: "utf8" }).trim()).toBe("");
-      expect(readFileSync(join(output, "README.md"), "utf8")).toBe(
+      // Read committed blobs: Windows' `core.autocrlf` can rewrite line endings in the checkout.
+      const blob = (path: string): Buffer =>
+        execFileSync("git", ["-C", output, "cat-file", "blob", `main:${path}`]);
+      expect(blob("README.md").toString("utf8")).toBe(
         "issue 1 (private beta)\nissue #1 (private beta)\n",
       );
-      expect(readFileSync(join(output, "asset.bin"))).toEqual(binary);
+      expect(blob("asset.bin")).toEqual(binary);
       const report = readFileSync(join(output, ".git/candidate-audit/rewrites.jsonl"), "utf8");
       expect(report).toContain('"path": "README.md"');
       expect(report).toContain(first);
@@ -280,10 +296,14 @@ describe.skipIf(!pythonAvailable)("public candidate history filtering", () => {
         ],
         { stdio: "pipe" },
       );
-      const audit = spawnSync("python3", ["-B", helper, "audit", source, second, output], {
-        encoding: "utf8",
-        env: { ...process.env, CANDIDATE_AUDIT_DIR: join(output, ".git/candidate-audit") },
-      });
+      const audit = spawnSync(
+        python,
+        [...pythonArgs, "-B", helper, "audit", source, second, output],
+        {
+          encoding: "utf8",
+          env: { ...process.env, CANDIDATE_AUDIT_DIR: join(output, ".git/candidate-audit") },
+        },
+      );
       expect(audit.status).not.toBe(0);
       expect(audit.stderr).toContain("tip tree equals source");
     },
@@ -320,10 +340,14 @@ describe.skipIf(!pythonAvailable)("public candidate independent audits", () => {
     const auditDirectory = directory();
     writeFileSync(join(auditDirectory, "issues.json"), JSON.stringify([{ number: 1 }]));
     writeFileSync(join(auditDirectory, "mapping.txt"), "");
-    const result = spawnSync("python3", ["-B", helper, "audit", source, "HEAD", source], {
-      encoding: "utf8",
-      env: { ...process.env, CANDIDATE_AUDIT_DIR: auditDirectory },
-    });
+    const result = spawnSync(
+      python,
+      [...pythonArgs, "-B", helper, "audit", source, "HEAD", source],
+      {
+        encoding: "utf8",
+        env: { ...process.env, CANDIDATE_AUDIT_DIR: auditDirectory },
+      },
+    );
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("excluded paths are unreachable");
   });
