@@ -196,7 +196,8 @@ function gitFixture(options: FixtureOptions = {}) {
   git("config", "user.email", "cleanup@example.invalid");
   git("config", "commit.gpgsign", "false");
   writeFileSync(join(checkout, "file"), "initial\n");
-  writeFileSync(join(checkout, ".gitignore"), "linked/\nnode_modules/\n");
+  // No trailing slash: Git sees a POSIX symlink as a file, so `linked/` wouldn't ignore it.
+  writeFileSync(join(checkout, ".gitignore"), "linked\nnode_modules/\n");
   git("add", ".");
   git("commit", "-m", "Initial");
   git("remote", "add", "origin", checkout);
