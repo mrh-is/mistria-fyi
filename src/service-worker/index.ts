@@ -2,8 +2,7 @@ import {
   cacheLocaleChunks,
   fetchRuntimeRequest,
   fetchSpriteRequest,
-  isEligibleForRuntimeCaching,
-  isExternalSpriteAsset,
+  fetchStrategy,
   isLazyAsset,
   isSkipWaitingRequest,
   OFFLINE_LOCALES_CACHE,
@@ -96,13 +95,12 @@ sw.addEventListener("activate", (event) => {
 });
 
 sw.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-
+  const strategy = fetchStrategy(event.request, ASSET_PATHS, sw.location.origin);
+  // Without `respondWith`, the browser fetches the request itself.
+  if (!strategy) return;
   const url = new URL(event.request.url);
 
-  const isAsset = ASSET_PATHS.has(url.pathname);
-
-  if (isAsset) {
+  if (strategy === "asset") {
     event.respondWith(
       // Build assets are content-addressed, so a `Vary` header can't make a cached copy wrong. Vite's
       // CORS middleware adds `Vary: Origin`, which would otherwise miss for module imports: they
@@ -118,7 +116,7 @@ sw.addEventListener("fetch", (event) => {
         return response;
       })(),
     );
-  } else if (isExternalSpriteAsset(url)) {
+  } else if (strategy === "sprite") {
     event.respondWith(
       (async () => {
         const cache = await caches.open(SPRITES_CACHE);
@@ -131,7 +129,7 @@ sw.addEventListener("fetch", (event) => {
         });
       })(),
     );
-  } else if (isEligibleForRuntimeCaching(url, sw.location.origin)) {
+  } else {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE);
@@ -148,7 +146,5 @@ sw.addEventListener("fetch", (event) => {
         });
       })(),
     );
-  } else {
-    event.respondWith(fetch(event.request));
   }
 });
