@@ -299,13 +299,14 @@ function isUnlocalizedPath(pathname: string): boolean {
 }
 
 /**
- * Persists the last-used locale in `openCache`'s cache, writing only when it changes. Writes run
- * one at a time in call order, so the stored value is always the latest one remembered. Writes are
- * best-effort and never reject; a failed one is retried by the next call. Reads drop a corrupt or
- * unknown record.
+ * Persists the last-used locale in `openCache`'s cache. Writes run one at a time in call order, so
+ * the stored value is always the latest one remembered. Writes are best-effort and never reject; a
+ * failed one is retried by the next call. Reads drop a corrupt or unknown record.
+ *
+ * Nothing is kept in memory: during an update, the active and the new version's worker each hold a
+ * store over the same record, and either may write it (#18). Every read & write goes to the cache.
  */
 export function lastLocaleStore(openCache: () => Promise<OfflineLocalesCache>): LastLocaleStore {
-  let known: LocaleCode | undefined;
   let writes: Promise<void> = Promise.resolve();
   async function write(locale: LocaleCode, previous: Promise<void>): Promise<void> {
     await previous;
@@ -313,26 +314,24 @@ export function lastLocaleStore(openCache: () => Promise<OfflineLocalesCache>): 
       const cache = await openCache();
       await cache.put(LAST_LOCALE_KEY, Response.json(locale));
     } catch {
-      // Forget it, so the next call for this locale writes again.
-      if (known === locale) known = undefined;
+      // Best-effort: the next call writes again.
     }
   }
   return {
     async read() {
-      if (known) return known;
+      // After the writes this store started, so a read never misses its own latest locale.
+      await writes;
       try {
         const cache = await openCache();
         const response = await cache.match(LAST_LOCALE_KEY);
         const stored: unknown = await response?.json();
-        known = LOCALE_CODES.find((locale) => locale === stored);
+        return LOCALE_CODES.find((locale) => locale === stored);
       } catch {
         // An unreadable or corrupt record reads as no record.
+        return undefined;
       }
-      return known;
     },
     remember(locale) {
-      if (locale === known) return writes;
-      known = locale;
       writes = write(locale, writes);
       return writes;
     },
