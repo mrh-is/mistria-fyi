@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
 
+  import { imageError } from "#lib/attachments/image-error.js";
   import { Icon } from "#lib/components/icon/index.js";
   import Spoiler from "#lib/components/spoiler.svelte";
   import Stepper from "#lib/components/stepper.svelte";
@@ -154,7 +155,7 @@
           width="44"
           height="44"
           crossorigin="anonymous"
-          onerror={() => (imageFailed = true)}
+          {@attach imageError(() => (imageFailed = true))}
         />
       {:else}
         <span data-testid="villager-icon-fallback">{isSpoilered ? "?" : name.charAt(0)}</span>
