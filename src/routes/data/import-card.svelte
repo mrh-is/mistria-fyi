@@ -45,11 +45,12 @@
 
   // iOS has no registered type for .sav, so any `accept` filter greys those files out in the Files
   // sheet. Drop the filter there; the importer validates the contents either way.
-  let acceptSaveTypes = $state<string | undefined>(".sav,.json");
+  // Narrowing it again isn't possible: iOS maps `accept` to UTIs, and an unregistered extension
+  // only conforms to public.data, which every file does. So iOS gets a hint instead.
+  let onIos = $state(false);
+  let acceptSaveTypes = $derived(onIos ? undefined : ".sav,.json");
   onMount(() => {
-    if (isIosDevice()) {
-      acceptSaveTypes = undefined;
-    }
+    onIos = isIosDevice();
   });
 
   // ── Import state ──
@@ -241,6 +242,12 @@
         </button>
       {/if}
     </div>
+
+    {#if onIos}
+      <p class="mt-1.5 text-center text-xs text-muted-foreground" data-testid="ios-picker-hint">
+        {m.import_ios_picker_hint()}
+      </p>
+    {/if}
 
     <p class="mt-1.5 text-center text-xs text-muted-foreground">
       <Dialog.Root>
