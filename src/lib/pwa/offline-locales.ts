@@ -13,9 +13,9 @@ import type { LocaleCode } from "#lib/types/locale.js";
  * The worker does the fetching, not the page. Chunks the page loaded before the worker took
  * control never passed through it, and `loadNames` won't import them twice.
  *
- * A new version waiting to take over hears it too. It read the remembered locales when it
- * installed, and activating deletes the active worker's cache, so a locale added since then would
- * otherwise be missing offline after the update.
+ * A new version installing or waiting to take over hears it too. It reads the remembered locales
+ * partway through its install, and activating deletes the active worker's cache, so a locale added
+ * or switched to since then would otherwise be missing offline after the update (#18).
  */
 export function keepLocaleOffline(
   locale: LocaleCode,
@@ -32,6 +32,7 @@ export function keepLocaleOffline(
   void (async () => {
     const registration = await target.ready;
     registration.active?.postMessage(message);
+    registration.installing?.postMessage(message);
     registration.waiting?.postMessage(message);
   })();
 }

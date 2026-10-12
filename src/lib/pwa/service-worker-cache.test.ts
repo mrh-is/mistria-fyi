@@ -16,10 +16,14 @@ import {
   isSkipWaitingRequest,
   lastLocaleStore,
   MAX_SPRITE_ENTRIES,
+  mayDeleteRetainedCaches,
+  obsoleteCaches,
   parseCacheLocalesMessage,
   parseCurrentLocale,
   readOfflineLocales,
+  readRetainedCaches,
   rememberOfflineLocales,
+  rememberRetainedCaches,
   SKIP_WAITING_MESSAGE,
   SPRITE_CACHED_AT_HEADER,
 } from "./service-worker-cache.js";
@@ -404,6 +408,23 @@ describe("service-worker last-used locale", () => {
     expect(await lastLocaleStore(() => Promise.resolve(cache)).read()).toBe("fr");
   });
 
+  // An update's installing worker and the active one each hold a store over the same cache (#18).
+  it("reads and rewrites what another worker's store remembered since", async () => {
+    const cache = new MemoryCache();
+    const installing = lastLocaleStore(() => Promise.resolve(cache));
+    const active = lastLocaleStore(() => Promise.resolve(cache));
+
+    await installing.remember("en");
+    await active.remember("ja");
+    expect(await installing.read()).toBe("ja");
+
+    await active.remember("en");
+    await installing.remember("ja");
+    expect(await active.read()).toBe("ja");
+    await active.remember("en");
+    expect(await installing.read()).toBe("en");
+  });
+
   it("retries a locale whose write failed", async () => {
     const cache = new MemoryCache();
     vi.spyOn(cache, "put").mockRejectedValueOnce(new DOMException("Full", "QuotaExceededError"));
@@ -465,6 +486,80 @@ describe("service-worker locale home pages", () => {
     ).toBe(false);
 
     expect(cache.entries.size).toBe(0);
+  });
+});
+
+/** Named caches holding the given paths, as `CacheStorage` opens them. */
+function storage(contents: Record<string, string[]>) {
+  const named = new Map<string, MemoryCache>();
+  for (const [name, paths] of Object.entries(contents)) {
+    const cache = new MemoryCache();
+    for (const path of paths) cache.entries.set(`${ORIGIN}${path}`, new Response(path));
+    named.set(name, cache);
+  }
+  return { open: (name: string) => Promise.resolve(named.get(name) ?? new MemoryCache()) };
+}
+
+describe("service-worker obsolete caches", () => {
+  const OLDER = ["cache-old", "cache-older"];
+
+  it("lists every older version once the current one holds the last-used home page", async () => {
+    const caches = storage({
+      "cache-new": ["/ja"],
+      "cache-old": ["/ja", "/en"],
+      "cache-older": ["/ja"],
+    });
+
+    expect(await obsoleteCaches(caches, "cache-new", OLDER, "ja", `${ORIGIN}/`)).toEqual(OLDER);
+  });
+
+  // The new version's own fetch of the home page failed, during install or offline (#18).
+  it("keeps an older version that holds the only copy of the last-used home page", async () => {
+    const caches = storage({ "cache-new": ["/en"], "cache-old": ["/ja"], "cache-older": ["/en"] });
+
+    expect(await obsoleteCaches(caches, "cache-new", OLDER, "ja", `${ORIGIN}/`)).toEqual([
+      "cache-older",
+    ]);
+  });
+
+  // `caches.keys()` lists caches in creation order, so the last one listed is the newest.
+  it("keeps only the newest older version holding the last-used home page", async () => {
+    const caches = storage({ "cache-new": [], "cache-v1": ["/ja"], "cache-v2": ["/ja"] });
+
+    expect(
+      await obsoleteCaches(caches, "cache-new", ["cache-v1", "cache-v2"], "ja", `${ORIGIN}/`),
+    ).toEqual(["cache-v1"]);
+  });
+
+  it("lists every older version when no locale has been used", async () => {
+    const caches = storage({ "cache-new": [], "cache-old": ["/en"] });
+
+    expect(await obsoleteCaches(caches, "cache-new", OLDER, undefined, `${ORIGIN}/`)).toEqual(
+      OLDER,
+    );
+  });
+
+  it("persists the caches an activation kept, reading a corrupt record as none", async () => {
+    const cache = new MemoryCache();
+    expect(await readRetainedCaches(cache)).toEqual([]);
+
+    await rememberRetainedCaches(cache, ["cache-old"]);
+    expect(await readRetainedCaches(cache)).toEqual(["cache-old"]);
+
+    await cache.put(`${ORIGIN}/__retained-caches`, new Response("{not json"));
+    expect(await readRetainedCaches(cache)).toEqual([]);
+  });
+
+  // Cache names are deterministic per commit, so a rollback's new version can reuse a kept name.
+  it.each<[string, ServiceWorkerState | undefined, object, boolean]>([
+    ["active with no other version", "activated", {}, true],
+    ["still activating", "activating", {}, false],
+    ["without self.serviceWorker", undefined, {}, false],
+    ["with a version installing", "activated", { installing: {} }, false],
+    ["with a version waiting", "activated", { waiting: {} }, false],
+  ])("deletes kept caches only when %s", (_, state, others, expected) => {
+    const registration = { installing: null, waiting: null, ...others };
+    expect(mayDeleteRetainedCaches(state, registration)).toBe(expected);
   });
 });
 
