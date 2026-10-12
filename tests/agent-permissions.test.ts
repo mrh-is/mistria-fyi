@@ -14,6 +14,7 @@ const NOT_ALLOWED: Record<string, string> = {
   "fonts:build": "regenerates committed font subsets",
   "fonts:install": "installs a separate dependency tree",
   "fonts:upload": "publishes to production storage",
+  "game-assets:share": "copies licensed game files & saves to the maintainer’s Google Drive",
   "generate:brand-assets": "rewrites committed brand assets",
   "housekeeping:install": "installs a persistent launchd agent that deletes merged worktrees",
   "optimize-icons": "rewrites committed icon files",

@@ -5,7 +5,6 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { open } from "yauzl-promise";
 
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
@@ -21,12 +20,11 @@ import {
   DEFAULT_WINDOWS_STEAM_ASSETS_DIR,
   readInstalledGameVersion,
   resolveAssetsZipPath,
+  resolveSpriteArchivePath,
 } from "./parse/assets-zip.js";
 import { evaluateExpressions } from "./parse/evaluate.js";
 import { parseFiddle, parseFiddleFromZip } from "./parse/parse-fiddle.js";
 import { checkParseSmoke } from "./parse/parse-smoke.js";
-
-import type { ZipFile } from "yauzl-promise";
 
 import type { LocaleChunk } from "./assemble.js";
 import type { StagedFile } from "./emit/publish.js";
@@ -205,34 +203,26 @@ async function main(): Promise<void> {
 
   let stagedSprites: StagedSprite[] = [];
   const extractSpritesFlag = options.sprites;
-  const zipPath = resolveAssetsZipPath(resolve(assetsDir));
+  const zipPath = resolveSpriteArchivePath(resolve(assetsDir), version);
   if (extractSpritesFlag) {
     console.log("\nStep 6: Extracting item and villager sprites...");
-    const zipFile: undefined | ZipFile = zipPath ? await open(zipPath) : undefined;
-    if (zipPath) console.log(`  Reading sprites from ${zipPath}`);
-    try {
-      const itemSpriteResult = await extractSprites(
-        resolve(assetsDir),
-        iconSpritesByItemId,
-        SPRITES_OUTPUT_ROOT,
-        zipPath,
-        zipFile,
-      );
-      const villagerSpriteResult = await extractVillagerSprites(
-        resolve(assetsDir),
-        iconSpritesByVillagerId,
-        SPRITES_OUTPUT_ROOT,
-        zipPath,
-        zipFile,
-      );
-      logSpriteExtraction("Items", itemSpriteResult);
-      logSpriteExtraction("Villagers", villagerSpriteResult);
-      const missing = [...itemSpriteResult.missing, ...villagerSpriteResult.missing];
-      if (reportMissingSprites(missing)) return;
-      stagedSprites = [...itemSpriteResult.staged, ...villagerSpriteResult.staged];
-    } finally {
-      if (zipFile) await zipFile.close();
-    }
+    const itemSpriteResult = await extractSprites(
+      resolve(assetsDir),
+      iconSpritesByItemId,
+      SPRITES_OUTPUT_ROOT,
+      zipPath,
+    );
+    const villagerSpriteResult = await extractVillagerSprites(
+      resolve(assetsDir),
+      iconSpritesByVillagerId,
+      SPRITES_OUTPUT_ROOT,
+      zipPath,
+    );
+    logSpriteExtraction("Items", itemSpriteResult);
+    logSpriteExtraction("Villagers", villagerSpriteResult);
+    const missing = [...itemSpriteResult.missing, ...villagerSpriteResult.missing];
+    if (reportMissingSprites(missing)) return;
+    stagedSprites = [...itemSpriteResult.staged, ...villagerSpriteResult.staged];
   }
 
   console.log(`\nStep ${extractSpritesFlag ? "7" : "6"}: Publishing outputs...`);

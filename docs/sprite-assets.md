@@ -97,7 +97,7 @@ pnpm run sprites:upload
 ```
 
 `scripts/sprites/upload-sprites.ts` (on the uploader it shares with locale fonts,
-`scripts/lib/r2-upload.ts`) uploads via `pnpx wrangler`, marks objects
+`scripts/lib/r2-upload.ts`) uploads via the workspace `wrangler`, marks objects
 `max-age=86400, stale-while-revalidate=86400`, skips keys whose remote ETag already matches the
 local file's MD5 (`FORCE=1` to re-upload everything regardless), and — since original game assets
 must never reach the public bucket by accident — refuses to run if `pipeline/output/sprites/`

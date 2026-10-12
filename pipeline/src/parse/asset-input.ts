@@ -55,26 +55,43 @@ export function defaultGameAssetsInput(platform: NodeJS.Platform = process.platf
   return platform === "win32" ? DEFAULT_WINDOWS_GAME_ARCHIVE : DEFAULT_ASSETS_DIR;
 }
 
-async function materializeStructuredAssets(archivePath: string): Promise<string> {
-  const root = mkdtempSync(join(tmpdir(), "mistria-fyi-assets-"));
+/**
+ * Writes every archive file whose path starts with one of `prefixes` to the same path under `root`,
+ * and returns how many it wrote. Never expands the rest of the multi-gigabyte archive.
+ */
+export async function extractArchiveSubtrees(
+  archivePath: string,
+  root: string,
+  prefixes: readonly string[],
+): Promise<number> {
+  let count = 0;
   const zip = await open(archivePath);
   try {
     for await (const entry of zip) {
       if (
         entry.filename.endsWith("/") ||
-        !REQUIRED_PREFIXES.some((prefix) => entry.filename.startsWith(prefix))
+        !prefixes.some((prefix) => entry.filename.startsWith(prefix))
       ) {
         continue;
       }
       const outputPath = join(root, entry.filename);
       mkdirSync(dirname(outputPath), { recursive: true });
       await pipeline(await entry.openReadStream(), createWriteStream(outputPath));
+      count++;
     }
+  } finally {
+    await zip.close();
+  }
+  return count;
+}
+
+async function materializeStructuredAssets(archivePath: string): Promise<string> {
+  const root = mkdtempSync(join(tmpdir(), "mistria-fyi-assets-"));
+  try {
+    await extractArchiveSubtrees(archivePath, root, REQUIRED_PREFIXES);
   } catch (error) {
     rmSync(root, { force: true, recursive: true });
     throw error;
-  } finally {
-    await zip.close();
   }
   return root;
 }
