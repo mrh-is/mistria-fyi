@@ -38,10 +38,10 @@ network connection, download Satoshi directly from Fontshare and install it loca
 
 The app is powered by `tracker-data.json`, generated from locally supplied Fields of Mistria TOML
 assets. The pipeline lives in `pipeline/` and runs via `tsx`. Original game data files and local
-pipeline inputs are not checked in. This private repository currently includes the generated tracker
-dataset and selected extracted icons used by the deployed app; those materials are excluded from the
-project license. See the [pipeline guide](pipeline/README.md) for setup, contracts, & extractor
-details.
+pipeline inputs are not checked in. The repository includes the generated tracker dataset; extracted
+icons are hosted separately at `assets.mistria.fyi`. These game-derived materials are excluded from
+the project license. Building and testing the app does not require local game assets. See the
+[pipeline guide](pipeline/README.md) for setup, contracts, & extractor details.
 
 ```bash
 pnpm run pipeline -- /path/to/assets

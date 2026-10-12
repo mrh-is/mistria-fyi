@@ -35,5 +35,8 @@ regexes = ['''^rabbit/cosmetics/(halo|horn)$''']
 description = "Literal localStorage quarantine key in persistence tests"
 condition = "AND"
 regexTarget = "secret"
-paths = ['''^src/lib/stores/persistence-lifecycle\.isolated\.client\.test\.ts$''']
+paths = [
+  '''^src/lib/stores/persistence-lifecycle\.isolated\.client\.test\.ts$''',
+  '''^src/lib/stores/persistence-lifecycle\.client\.test\.ts$''',
+]
 regexes = ['''^mistria-fyi-v1-quarantine$''']
