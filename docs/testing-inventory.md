@@ -87,7 +87,7 @@ single-component row's marks disagree with its test files.
 | `restriction-badges`         |        |            | Gap: static; server test would suffice                    |
 | `mine-floor-record`          |        |     ✓      |                                                           |
 | `renown-current-record`      |        |     ✓      |                                                           |
-| `villager-record`            |        |     ✓      |                                                           |
+| `villager-record`            |   ✓    |     ✓      | Server: sprite has no inline handler (CSP)                |
 | `villagers-content`          |        |     ✓      |                                                           |
 | `villager-alphabet-index`    |        |     ✓      |                                                           |
 | `rank-record`                |        |     ✓      |                                                           |
