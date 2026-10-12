@@ -1,6 +1,7 @@
 <script lang="ts">
   import IconNotebook from "@tabler/icons-svelte-runes/icons/notebook";
 
+  import { trackVisualViewport } from "#lib/attachments/visual-viewport.js";
   import CategoryGrid from "#lib/components/category-grid.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import OverallProgress from "#lib/components/overall-progress.svelte";
@@ -31,7 +32,13 @@
   let grandTotal = $derived(formatNumber(overall.total, data.locale));
 </script>
 
-<div class="home-page">
+<!-- While searching, the page pins itself to the visible viewport so the header stays on screen
+     above the on-screen keyboard and only the results scroll. -->
+<div
+  class="home-page"
+  class:home-page--searching={toolbarState.searchOpen}
+  {@attach toolbarState.searchOpen ? trackVisualViewport : undefined}
+>
   <header class="home-header" style="--overall-progress-percent: {overallPct}%">
     <h1 class="flex min-w-0 items-center gap-2 font-brand text-2xl leading-none">
       <IconNotebook class="size-5 shrink-0 text-(--color-brand-mark)" />
@@ -41,7 +48,7 @@
     <span class="overall-progress-rule" aria-hidden="true"><i></i></span>
   </header>
 
-  <div class="flex flex-col gap-3 px-4 pb-4">
+  <div class="home-content flex flex-col gap-3 px-4 pb-4">
     {#if toolbarState.searchQuery}
       <SearchResults locale={data.locale} query={toolbarState.searchQuery} />
     {:else}
@@ -73,6 +80,30 @@
     min-width: 0;
     flex-direction: column;
     gap: 15px;
+  }
+
+  .home-page--searching {
+    position: fixed;
+    top: var(--visual-viewport-top, 0px);
+    right: 0;
+    left: 0;
+    max-width: var(--container-lg, 32rem);
+    height: var(--visual-viewport-height, 100dvh);
+    margin-inline: auto;
+    background: var(--color-paper);
+  }
+
+  .home-page--searching .home-header {
+    flex-shrink: 0;
+  }
+
+  .home-page--searching .home-content {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Clears the floating search bar, which sits at the bottom of the visible viewport. */
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 
   .home-header {

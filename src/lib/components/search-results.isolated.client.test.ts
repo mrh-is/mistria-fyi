@@ -22,6 +22,21 @@ afterEach(() => {
   showQuestToast.mockReset();
 });
 
+describe("SearchResults category tags", () => {
+  it("pairs each tag's category name with a decorative icon for narrow screens", () => {
+    const { name } = overlappingFixture();
+
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
+
+    for (const category of ["Almanac", "Museum"]) {
+      const [tag] = screen.getAllByText(category, { selector: ".search-result__category-name" });
+      const icon = tag.parentElement?.querySelector("svg");
+      expect(icon).toHaveAttribute("aria-hidden", "true");
+      expect(icon).toHaveClass("search-result__category-icon");
+    }
+  });
+});
+
 describe("SearchResults completion dispatch", () => {
   it("links a villager result to its record instead of toggling hearts", () => {
     const id = "adeline" as VillagerId;
@@ -206,7 +221,9 @@ function overlappingFixture(): { id: ItemId; name: string } {
 /** The toggle button in the search row whose category badge reads `category`. */
 function rowToggle(category: string, name: string): HTMLElement {
   const toggleName = `Check ${name}`;
-  for (const badge of screen.getAllByText(category, { selector: ".search-result__category" })) {
+  for (const badge of screen.getAllByText(category, {
+    selector: ".search-result__category-name",
+  })) {
     const row = badge.closest<HTMLElement>(".search-result");
     const toggle = row && within(row).queryByRole("button", { name: toggleName });
     if (toggle) return toggle;
