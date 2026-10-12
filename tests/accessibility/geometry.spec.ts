@@ -404,3 +404,43 @@ test.describe("tracker paper touch geometry", () => {
     }
   });
 });
+
+test.describe("landscape phone width", () => {
+  const landscape = devices["iPhone 13 landscape"];
+  test.use({
+    deviceScaleFactor: landscape.deviceScaleFactor,
+    hasTouch: landscape.hasTouch,
+    isMobile: landscape.isMobile,
+    userAgent: landscape.userAgent,
+    viewport: { height: 390, width: 844 },
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await initializeApplication(page, "light");
+  });
+
+  for (const path of ["/", "/villagers"]) {
+    test(`${path} spans the full width without overflow`, async ({ page }) => {
+      await gotoApplication(page, path);
+      const main = await requireBox(page.locator("#main-content"));
+      expect(main.x).toBe(0);
+      expect(main.width).toBe(844);
+      expect(findOverflow(await collectVisibleElementBoxes(page), 844)).toEqual([]);
+    });
+  }
+
+  test("the villager index stays in the full-width roster's margin", async ({ page }) => {
+    await gotoApplication(page, "/villagers");
+    const index = await requireBox(page.getByRole("navigation", { name: "Villager alphabet" }));
+    const roster = await requireBox(page.getByTestId("villager-roster"));
+    const whitespaceCenter = (roster.x + roster.width + 844) / 2;
+    expect(Math.abs(index.x + index.width / 2 - whitespaceCenter)).toBeLessThanOrEqual(0.5);
+  });
+
+  test("a desktop window keeps the narrow column", async ({ page }) => {
+    await page.setViewportSize({ height: 800, width: 1280 });
+    await gotoApplication(page, "/");
+    const main = await requireBox(page.locator("#main-content"));
+    expect(main.width).toBe(512);
+  });
+});
