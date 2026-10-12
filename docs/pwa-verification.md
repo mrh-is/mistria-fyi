@@ -33,6 +33,14 @@ Other languages download the first time the player uses them, then stay availabl
   authority: a download the network cut off leaves a locale partly cached, and modules the page
   already imported may come from a cache an update has replaced. If any chunk is still missing, the
   page stays in place and shows “Go online to download the Japanese text, then try again.”
+- **An offline launch opens the last-used language (#728).** The manifest’s `start_url` is `/`,
+  which has no page of its own: online, the server redirects it to a locale. The worker records the
+  locale of each successful full page load in `offline-locales-v1` (an online launch lands on the
+  cookie’s language, so this tracks a switch by the next launch), and when a bare-path navigation
+  fails offline it redirects to the same path under that locale, or under any locale whose page is
+  cached, before falling back to the offline page. Locale home pages (`/en`, `/ja`, …) are exempt
+  from runtime-cache eviction, and the worker never caches a redirected navigation: a browser that
+  hands back a followed redirect gets it stored, rebuilt, under the page it landed on.
 
 ### Byte budget
 
@@ -88,6 +96,8 @@ The suite verifies:
 - successful online navigation through the controlling worker and runtime caching of `/animals`;
 - offline reload of the cached route and offline retrieval of a static asset;
 - the offline document for a previously uncached navigation;
+- an offline launch from `start_url` (`/`) into the last-used locale’s cached home page, with no
+  redirected response in any cache;
 - no name chunks at install, then every chunk for the visited locale and none for another;
 - offline navigation to an unopened category, offline search, and the offline language-switch
   message;
@@ -126,14 +136,16 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
 6. While offline, navigate to a same-origin path that has never been requested. Confirm the page
    displays the “You’re offline” heading. The worker bundles that page rather than precaching it,
    since Cloudflare Pages redirects `.html` paths (#226).
-7. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
+7. Still offline, open `/`. Confirm it lands on the last locale you browsed online (for example
+   `/en`), not the offline page. On an installed app, launch it from its icon instead.
+8. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
    the online application renders normally.
-8. To check the update flow, keep a tab open on the deployment, deploy a new version, then switch
+9. To check the update flow, keep a tab open on the deployment, deploy a new version, then switch
    away from the tab and back after five minutes (or click “Update” in the service-worker panel).
    Confirm the new worker shows as waiting, the tab shows the update toast, and “Refresh” reloads
    onto the new version with only the new `cache-<version>` left.
-9. Record the browser name and exact version, OS, whether the app was installed or in a tab, commit
-   or release, date, and result. File each verified failure as a separate issue.
+10. Record the browser name and exact version, OS, whether the app was installed or in a tab, commit
+    or release, date, and result. File each verified failure as a separate issue.
 
 Note: Browser developer tools may bypass the worker when “Update on reload” or an equivalent option
 is enabled. Disable that option during the offline checks.

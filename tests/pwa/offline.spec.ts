@@ -1,4 +1,5 @@
 import { expect, test } from "../browser/test.js";
+import { waitForControl } from "./service-worker.js";
 
 test("registers, activates, and precaches static & build assets", async ({ page }) => {
   await page.goto("/");
@@ -109,6 +110,49 @@ test("serves cached routes and assets offline, then falls back for an uncached n
   await context.setOffline(false);
   await retry.click();
   await expect(page.getByRole("heading", { name: /offline/i })).toBeHidden();
+});
+
+test("launches offline from start_url into the last-used locale's home page", async ({
+  context,
+  page,
+}) => {
+  const manifestResponse = await page.request.get("/manifest.json");
+  const manifest: unknown = await manifestResponse.json();
+  expect(manifest).toMatchObject({ start_url: "/" });
+  const startUrl = "/";
+
+  await page.goto(startUrl);
+  await waitForControl(page);
+  // The worker controls the page now, so this full load goes through it and caches the home page.
+  await page.goto("/fr");
+  await expect
+    .poll(() => page.evaluate(async () => (await caches.match("/fr")) !== undefined))
+    .toBe(true);
+
+  await context.setOffline(true);
+  await page.goto(startUrl);
+  await expect(page).toHaveURL(/\/fr$/);
+  await expect(page.getByRole("main")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /offline/i })).toBeHidden();
+
+  const redirectedEntries = await page.evaluate(async () => {
+    const cacheNames = await caches.keys();
+    const perCache = await Promise.all(
+      cacheNames.map(async (cacheName) => {
+        const cache = await caches.open(cacheName);
+        const requests = await cache.keys();
+        const entries = await Promise.all(
+          requests.map(async (request) => {
+            const response = await cache.match(request);
+            return response?.redirected ? request.url : undefined;
+          }),
+        );
+        return entries.filter((url) => url !== undefined);
+      }),
+    );
+    return perCache.flat();
+  });
+  expect(redirectedEntries).toEqual([]);
 });
 
 test.describe("without service workers", () => {
