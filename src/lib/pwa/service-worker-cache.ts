@@ -1,4 +1,8 @@
 import { PRODUCTION_ASSET_ORIGIN } from "#lib/asset-origin.js";
+import { UNLOCALIZED_PATH_PREFIXES } from "#lib/i18n/paraglide-options.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
+
+import type { LocaleCode } from "#lib/types/locale.js";
 
 export const MAX_RUNTIME_ENTRIES = 50;
 export const MAX_SPRITE_ENTRIES = 400;
@@ -15,6 +19,14 @@ const LAZY_ASSET_PATTERN = /\/locale-fonts-[^/]+\.css$/;
 /** Persists across versions: which locales the player has asked to keep available offline. */
 export const OFFLINE_LOCALES_CACHE = "offline-locales-v1";
 const OFFLINE_LOCALES_KEY = "/__offline-locales";
+/** In {@link OFFLINE_LOCALES_CACHE} too: the locale of the player's most recent page. */
+const LAST_LOCALE_KEY = "/__last-locale";
+
+/** The locale the player last browsed in, which an offline launch at a bare path opens. */
+export interface LastLocaleStore {
+  read: () => Promise<LocaleCode | undefined>;
+  remember: (locale: LocaleCode) => Promise<void>;
+}
 
 /**
  * Page → service worker: cache every name chunk for these locales, now and after each update. A
@@ -51,6 +63,7 @@ interface RuntimeRequestDependencies {
   assetPaths: ReadonlySet<string>;
   cache: RuntimeCache;
   fetcher: (request: Request) => Promise<Response>;
+  lastLocale: LastLocaleStore;
   matchCache: (request: RequestInfo | URL) => Promise<Response | undefined>;
   maxEntries?: number;
   /** Builds the page an uncached navigation gets when the network fails. */
@@ -112,9 +125,11 @@ export async function cacheRuntimeResponse(
 ): Promise<void> {
   await cache.put(request, response.clone());
   const keys = await cache.keys();
+  // Locale home pages are where an offline launch lands, so browsing can't push them out; there is
+  // at most one per locale.
   const runtimeKeys = keys.filter((key) => {
     const url = new URL(key.url);
-    return !assetPaths.has(url.pathname) && !isExternalFontAsset(url);
+    return !assetPaths.has(url.pathname) && !isExternalFontAsset(url) && !isLocaleHome(url);
   });
   const excess = runtimeKeys.length - maxEntries;
   await Promise.all(runtimeKeys.slice(0, Math.max(0, excess)).map((key) => cache.delete(key)));
@@ -151,6 +166,10 @@ export async function cacheSpriteResponse(
  * Serves a request network-first, falling back to the cache and then the offline page. Only the
  * fetch decides between the two paths: the cache write is best-effort and happens off the response
  * path, so a failed write (a full quota) never discards a good network response.
+ *
+ * A bare path (the manifest's `start_url` is `/`) has no page of its own: the server redirects it
+ * to a locale. Offline, the worker does the same, redirecting to the last-used locale's cached
+ * page (#728). It never caches a redirected navigation, which WebKit refuses to render.
  */
 export async function fetchRuntimeRequest(
   request: Request,
@@ -162,27 +181,119 @@ export async function fetchRuntimeRequest(
   } catch {
     const cached = await dependencies.matchCache(request);
     if (cached) return cached;
-    if (request.mode === "navigate") return dependencies.offlinePage();
-    return Response.error();
+    if (request.mode !== "navigate") return Response.error();
+    return (await offlineLocaleRedirect(request, dependencies)) ?? dependencies.offlinePage();
   }
-  if (response.ok) {
-    dependencies.waitUntil(
-      (async () => {
-        try {
-          await cacheRuntimeResponse(
-            dependencies.cache,
-            request,
-            response,
-            dependencies.assetPaths,
-            dependencies.maxEntries,
-          );
-        } catch {
-          // Best-effort cache write: a failed write never affects the response.
-        }
-      })(),
-    );
-  }
+  if (!response.ok) return response;
+  const isNavigation = request.mode === "navigate";
+  // A navigation that followed a redirect (from a browser that doesn't hand it back as an opaque
+  // redirect) is stored under the page it landed on, rebuilt so the copy isn't marked redirected.
+  const landed =
+    isNavigation && response.redirected && response.url !== "" ? response.url : request.url;
+  if (new URL(landed).origin !== new URL(request.url).origin) return response;
+  const key = landed === request.url ? request : new Request(landed);
+  // Copied now: the caller consumes the body once this function returns.
+  const copy = key === request ? response.clone() : unredirected(response.clone());
+  // Only a full page load counts as the player's language, not a preload of another locale's data.
+  const locale = isNavigation ? localeOfPath(new URL(landed).pathname) : undefined;
+  dependencies.waitUntil(
+    (async () => {
+      try {
+        await cacheRuntimeResponse(
+          dependencies.cache,
+          key,
+          copy,
+          dependencies.assetPaths,
+          dependencies.maxEntries,
+        );
+      } catch {
+        // Best-effort cache write: a failed write never affects the response.
+      }
+      try {
+        if (locale) await dependencies.lastLocale.remember(locale);
+      } catch {
+        // Best-effort too: an offline launch falls back to any cached locale.
+      }
+    })(),
+  );
   return response;
+}
+
+/** A copy of `response` without its redirect history; its body moves to the copy. */
+function unredirected(response: Response): Response {
+  return new Response(response.body, {
+    headers: response.headers,
+    status: response.status,
+    statusText: response.statusText,
+  });
+}
+
+/**
+ * A redirect from an uncached bare-path navigation to the same path under a locale whose page is
+ * cached, trying the last-used locale first; `undefined` when there's nothing to redirect to.
+ */
+async function offlineLocaleRedirect(
+  request: Request,
+  dependencies: RuntimeRequestDependencies,
+): Promise<Response | undefined> {
+  const url = new URL(request.url);
+  if (localeOfPath(url.pathname) || isUnlocalizedPath(url.pathname)) return undefined;
+  const lastLocale = await dependencies.lastLocale.read();
+  const candidates = new Set([...(lastLocale ? [lastLocale] : []), ...LOCALE_CODES]);
+  for (const locale of candidates) {
+    const target = new URL(
+      `/${locale}${url.pathname === "/" ? "" : url.pathname}${url.search}`,
+      url,
+    );
+    // oxlint-disable-next-line no-await-in-loop -- Candidates are tried in preference order.
+    if (await dependencies.matchCache(target.href)) return Response.redirect(target.href, 302);
+  }
+  return undefined;
+}
+
+/** The locale a path is prefixed with, if any. */
+function localeOfPath(pathname: string): LocaleCode | undefined {
+  const segment = pathname.split("/")[1];
+  return LOCALE_CODES.find((locale) => locale === segment);
+}
+
+/** A locale's home page (`/en`), without a query. */
+function isLocaleHome(url: URL): boolean {
+  return url.search === "" && LOCALE_CODES.some((locale) => url.pathname === `/${locale}`);
+}
+
+function isUnlocalizedPath(pathname: string): boolean {
+  return UNLOCALIZED_PATH_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+/**
+ * Persists the last-used locale in `openCache`'s cache, writing only when it changes. Reads drop
+ * a corrupt or unknown record.
+ */
+export function lastLocaleStore(openCache: () => Promise<OfflineLocalesCache>): LastLocaleStore {
+  let known: LocaleCode | undefined;
+  return {
+    async read() {
+      if (known) return known;
+      try {
+        const cache = await openCache();
+        const response = await cache.match(LAST_LOCALE_KEY);
+        const stored: unknown = await response?.json();
+        known = LOCALE_CODES.find((locale) => locale === stored);
+      } catch {
+        // An unreadable or corrupt record reads as no record.
+      }
+      return known;
+    },
+    async remember(locale) {
+      if (locale === known) return;
+      known = locale;
+      const cache = await openCache();
+      await cache.put(LAST_LOCALE_KEY, Response.json(locale));
+    },
+  };
 }
 
 /** Statuses that mean a sprite was withdrawn on purpose (a takedown), not that the network hiccuped. */

@@ -12,6 +12,7 @@ import {
   isExternalSpriteAsset,
   isLazyAsset,
   isSkipWaitingRequest,
+  lastLocaleStore,
   MAX_SPRITE_ENTRIES,
   parseCacheLocalesMessage,
   readOfflineLocales,
@@ -48,10 +49,13 @@ class MemoryCache {
 /** Runtime dependencies whose deferred cache writes a test can await with `settled()`. */
 function dependencies(cache: MemoryCache, fetcher: (request: Request) => Promise<Response>) {
   const pending: Promise<unknown>[] = [];
+  const lastLocaleCache = new MemoryCache();
   return {
     assetPaths: new Set(["/favicon.png"]),
     cache,
     fetcher,
+    lastLocale: lastLocaleStore(() => Promise.resolve(lastLocaleCache)),
+    lastLocaleCache,
     matchCache: (request: RequestInfo | URL) => cache.match(request),
     offlinePage: () => new Response("offline page"),
     settled: () => Promise.all(pending),
@@ -59,6 +63,20 @@ function dependencies(cache: MemoryCache, fetcher: (request: Request) => Promise
       pending.push(promise);
     },
   };
+}
+
+function navigation(path: string): Request {
+  const request = new Request(`${ORIGIN}${path}`);
+  Object.defineProperty(request, "mode", { value: "navigate" });
+  return request;
+}
+
+/** A response that followed a redirect to `location` (a path or URL), as `fetch` reports it. */
+function redirectedResponse(body: string, location: string): Response {
+  const response = new Response(body, { status: 200 });
+  Object.defineProperty(response, "redirected", { value: true });
+  Object.defineProperty(response, "url", { value: new URL(location, ORIGIN).href });
+  return response;
 }
 
 function requestUrl(request: RequestInfo | URL): string {
@@ -123,6 +141,21 @@ describe("service-worker runtime request path", () => {
     expect(await response.text()).toBe("fresh");
     const stored = await cache.match(request);
     expect(await stored?.text()).toBe("fresh");
+  });
+
+  it("caches the response even after the page has consumed its body", async () => {
+    const cache = new MemoryCache();
+    const request = navigation("/en/animals");
+    const deps = dependencies(
+      cache,
+      vi.fn().mockResolvedValue(new Response("fresh", { status: 200 })),
+    );
+
+    const response = await fetchRuntimeRequest(request, deps);
+    expect(await response.text()).toBe("fresh");
+    await deps.settled();
+
+    expect(await cachedText(cache, request)).toBe("fresh");
   });
 
   it("returns the network response when the cache write fails", async () => {
@@ -195,6 +228,143 @@ describe("service-worker runtime request path", () => {
   });
 });
 
+/** A fetcher that fails as `fetch` does without a network. */
+function offline() {
+  return vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+}
+
+describe("service-worker offline launch from start_url", () => {
+  it("redirects an offline launch at / to the last-used locale's cached home", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/en`, new Response("en home"));
+    await cache.put(`${ORIGIN}/ja`, new Response("ja home"));
+    const deps = dependencies(cache, offline());
+    await deps.lastLocale.remember("ja");
+
+    const response = await fetchRuntimeRequest(navigation("/"), deps);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/ja`);
+    expect(response.redirected).toBe(false);
+  });
+
+  it("keeps the rest of a bare path and its query in the redirect", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/en/animals?q=cow`, new Response("animals"));
+
+    const response = await fetchRuntimeRequest(
+      navigation("/animals?q=cow"),
+      dependencies(cache, offline()),
+    );
+
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/en/animals?q=cow`);
+  });
+
+  it("falls back to another cached locale when the last-used one isn't cached", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/fr`, new Response("fr home"));
+    const deps = dependencies(cache, offline());
+    await deps.lastLocale.remember("ja");
+
+    const response = await fetchRuntimeRequest(navigation("/"), deps);
+
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/fr`);
+  });
+
+  it("serves the offline page when no locale's page is cached", async () => {
+    const response = await fetchRuntimeRequest(
+      navigation("/"),
+      dependencies(new MemoryCache(), offline()),
+    );
+
+    expect(await response.text()).toBe("offline page");
+  });
+
+  it.each(["/en/missing", "/sitemap.xml"])(
+    "doesn't redirect the locale-prefixed or unlocalized navigation %s",
+    async (path) => {
+      const cache = new MemoryCache();
+      await cache.put(`${ORIGIN}/en/sitemap.xml`, new Response("wrong"));
+      await cache.put(`${ORIGIN}/en/en/missing`, new Response("wrong"));
+
+      const response = await fetchRuntimeRequest(navigation(path), dependencies(cache, offline()));
+
+      expect(await response.text()).toBe("offline page");
+    },
+  );
+
+  it("remembers the locale of the latest page load, not of preloaded data", async () => {
+    const deps = dependencies(new MemoryCache(), vi.fn().mockResolvedValue(new Response("ok")));
+
+    await fetchRuntimeRequest(navigation("/ja"), deps);
+    await fetchRuntimeRequest(navigation("/zh-Hans/animals"), deps);
+    await fetchRuntimeRequest(new Request(`${ORIGIN}/fr/animals/__data.json`), deps);
+    await fetchRuntimeRequest(navigation("/sitemap.xml"), deps);
+    await deps.settled();
+
+    // A fresh store reads what was persisted, as a restarted worker would.
+    expect(await lastLocaleStore(() => Promise.resolve(deps.lastLocaleCache)).read()).toBe(
+      "zh-Hans",
+    );
+  });
+
+  it("keeps caching a redirected non-navigation response under its request", async () => {
+    const cache = new MemoryCache();
+    const request = new Request(`${ORIGIN}/en/animals/__data.json`);
+    const deps = dependencies(
+      cache,
+      vi.fn().mockResolvedValue(redirectedResponse("data", "/en/other/__data.json")),
+    );
+
+    await fetchRuntimeRequest(request, deps);
+    await deps.settled();
+
+    expect(await cachedText(cache, request)).toBe("data");
+  });
+
+  it("doesn't cache a navigation that was redirected to another origin", async () => {
+    const cache = new MemoryCache();
+    const deps = dependencies(
+      cache,
+      vi.fn().mockResolvedValue(redirectedResponse("elsewhere", "https://example.com/x")),
+    );
+
+    const response = await fetchRuntimeRequest(navigation("/"), deps);
+    await deps.settled();
+
+    expect(await response.text()).toBe("elsewhere");
+
+    expect(cache.entries.size).toBe(0);
+  });
+
+  it("caches a redirected navigation under its final URL, never as a redirected response", async () => {
+    const cache = new MemoryCache();
+    const deps = dependencies(
+      cache,
+      vi.fn().mockResolvedValue(redirectedResponse("ja home", "/ja")),
+    );
+
+    const response = await fetchRuntimeRequest(navigation("/"), deps);
+    await deps.settled();
+
+    expect(await response.text()).toBe("ja home");
+    expect(await cache.match(`${ORIGIN}/`)).toBeUndefined();
+    const stored = await cache.match(`${ORIGIN}/ja`);
+    expect(stored?.redirected).toBe(false);
+    expect(await stored?.text()).toBe("ja home");
+    expect(await deps.lastLocale.read()).toBe("ja");
+  });
+
+  it("ignores a corrupt or unknown remembered locale", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/__last-locale`, new Response("{not json"));
+    expect(await lastLocaleStore(() => Promise.resolve(cache)).read()).toBeUndefined();
+
+    await cache.put(`${ORIGIN}/__last-locale`, Response.json("xx"));
+    expect(await lastLocaleStore(() => Promise.resolve(cache)).read()).toBeUndefined();
+  });
+});
+
 describe("service-worker eviction path", () => {
   it("evicts the oldest runtime entries through the cache update helper", async () => {
     const cache = new MemoryCache();
@@ -218,6 +388,27 @@ describe("service-worker eviction path", () => {
     const stored = await cache.match(`${ORIGIN}/newest`);
     expect(await stored?.text()).toBe("new");
     expect(cache.entries.size).toBe(51);
+  });
+
+  it("exempts locale home pages, the offline launch targets, from eviction", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/en`, new Response("en home"));
+    await cache.put(`${ORIGIN}/en?q=1`, new Response("query"));
+    await cache.put(`${ORIGIN}/page-0`, new Response("0"));
+    await cache.put(`${ORIGIN}/page-1`, new Response("1"));
+
+    await cacheRuntimeResponse(
+      cache,
+      new Request(`${ORIGIN}/newest`),
+      new Response("new"),
+      new Set(),
+      2,
+    );
+
+    expect(await cache.match(`${ORIGIN}/en`)).toBeDefined();
+    expect(await cache.match(`${ORIGIN}/en?q=1`)).toBeUndefined();
+    expect(await cache.match(`${ORIGIN}/page-0`)).toBeUndefined();
+    expect(await cache.match(`${ORIGIN}/page-1`)).toBeDefined();
   });
 });
 

@@ -6,6 +6,7 @@ import {
   isExternalSpriteAsset,
   isLazyAsset,
   isSkipWaitingRequest,
+  lastLocaleStore,
   OFFLINE_LOCALES_CACHE,
   parseCacheLocalesMessage,
   readOfflineLocales,
@@ -40,6 +41,7 @@ const LOCALE_NAME_CHUNK_PATHS: ReadonlySet<string> = new Set(
   Object.values(LOCALE_NAME_CHUNKS).flat(),
 );
 const PRECACHED_ASSETS = ASSETS.filter((path) => !isLazyAsset(path, LOCALE_NAME_CHUNK_PATHS));
+const LAST_LOCALE = lastLocaleStore(() => caches.open(OFFLINE_LOCALES_CACHE));
 
 sw.addEventListener("install", (event) => {
   event.waitUntil(
@@ -139,6 +141,7 @@ sw.addEventListener("fetch", (event) => {
           assetPaths: ASSET_PATHS,
           cache,
           fetcher: (request) => fetch(request),
+          lastLocale: LAST_LOCALE,
           matchCache: (request) => caches.match(request),
           offlinePage: () =>
             new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html; charset=utf-8" } }),
