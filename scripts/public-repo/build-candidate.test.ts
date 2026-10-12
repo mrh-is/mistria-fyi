@@ -139,8 +139,9 @@ describe.skipIf(!pythonAvailable)("public candidate reference rewriting", () => 
 });
 
 describe.skipIf(!pythonAvailable)("public candidate source validation", () => {
-  it("keeps the audited home prefix out of the procedure’s own Git history", () => {
-    const prefix = ["", "Users", ""].join("/");
+  it("keeps the audited home prefixes out of the procedure’s own Git history", () => {
+    // The audit's `HOME_PREFIX` pattern, built from parts like it.
+    const prefix = `${["", "Users", ""].join("/")}|[\\\\][Uu][Ss][Ee][Rr][Ss][\\\\]`;
     const history = execFileSync(
       "git",
       [
@@ -148,6 +149,7 @@ describe.skipIf(!pythonAvailable)("public candidate source validation", () => {
         "--format=",
         "--patch",
         "--full-history",
+        "--pickaxe-regex",
         `-S${prefix}`,
         "HEAD",
         "--",
@@ -350,6 +352,45 @@ describe.skipIf(!pythonAvailable)("public candidate independent audits", () => {
     );
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("excluded paths are unreachable");
+  });
+
+  // Built from parts so the audited prefixes never appear in this file’s own history.
+  it.each([
+    ["macOS", ["", "Users", "fixture", ""].join("/")],
+    ["Windows", ["C:", "Users", "fixture", ""].join("\\")],
+    ["lowercase Windows", ["c:", "users", "fixture", ""].join("\\")],
+    ["JSON-escaped Windows", ["C:", "Users", "fixture", ""].join(String.raw`\\`)],
+  ])("rejects a %s home prefix in any commit", (_platform, prefix) => {
+    const source = directory();
+    const git = (...args: string[]): string =>
+      execFileSync("git", ["-C", source, ...args], { encoding: "utf8", stdio: "pipe" });
+    git("init", "--initial-branch=main");
+    writeFileSync(join(source, "notes.txt"), `${prefix}private\n`);
+    git("add", "-A");
+    git(
+      "-c",
+      "user.name=Fixture",
+      "-c",
+      "user.email=fixture@example.com",
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "-m",
+      "Fixture",
+    );
+    const auditDirectory = directory();
+    writeFileSync(join(auditDirectory, "issues.json"), JSON.stringify([{ number: 1 }]));
+    writeFileSync(join(auditDirectory, "mapping.txt"), "");
+    const result = spawnSync(
+      python,
+      [...pythonArgs, "-B", helper, "audit", source, "HEAD", source],
+      {
+        encoding: "utf8",
+        env: { ...process.env, CANDIDATE_AUDIT_DIR: auditDirectory },
+      },
+    );
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("home prefix");
   });
 });
 

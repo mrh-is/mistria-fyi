@@ -106,7 +106,7 @@ The script fails unless all of these checks pass:
 1. No reachable path is under `static/sprites/` or has the basename `measure-transfer-size.ts`. Both
    `rev-list --objects --all` & every distinct historical tree are checked, so shared blobs cannot
    hide an excluded path behind a retained path.
-2. The macOS home-directory prefix is absent from text across every candidate commit.
+2. No macOS or Windows home-directory prefix appears in text across any candidate commit.
 3. The candidate tip’s tree hash equals a separately computed source tree after applying only the
    URL reference rewrites, preserving file names, modes, symlinks, & gitlinks.
 4. Only `refs/heads/main` exists, & no remote remains.

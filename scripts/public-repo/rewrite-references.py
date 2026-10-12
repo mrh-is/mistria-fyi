@@ -25,6 +25,12 @@ MARKDOWN_LINK = (
     + rb"""(?(angle)>)(?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'|\([^\)\n]*\)))?[ \t]*\)"""
 )
 URL_ONLY = re.compile(MARKDOWN_LINK + b"|" + URL)
+# A home-directory prefix: the macOS form between forward slashes (which also covers Windows
+# forward-slash & Git Bash paths), or the Windows form between backslashes in any case. Built from
+# parts so this file never contains a literal prefix the audit rejects. Bracketed backslashes stay
+# literal in POSIX ERE, and the pattern doesn't end in a backslash: Windows argument quoting can
+# drop one there, turning the regex invalid or into one that silently matches nothing.
+HOME_PREFIX = "/" + "Users/|" + r"[\\][Uu][Ss][Ee][Rr][Ss][\\]"
 
 
 def git(repo, *args, data=None):
@@ -213,19 +219,19 @@ def audit(source, commit, candidate, directory):
     passed(True, "excluded paths are unreachable")
     for oid, message in source_messages(candidate, "--all"):
         scan = subprocess.run(
-            ["git", "-C", candidate, "grep", "-I", "-l", "/" + "Users/", oid],
+            ["git", "-C", candidate, "grep", "-I", "-l", "-E", "-e", HOME_PREFIX, oid],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         if scan.returncode not in (0, 1):
             raise ValueError("git grep failed: " + scan.stderr.decode("utf-8", "replace"))
         passed_scan = scan.returncode == 1
         if not passed_scan:
-            raise ValueError("FAIL: macOS home prefix in " + scan.stdout.decode("utf-8", "replace"))
+            raise ValueError("FAIL: home prefix in " + scan.stdout.decode("utf-8", "replace"))
         for match in REFERENCE.finditer(message):
             number = int(match.group("url_number") or match.group("bare_number"))
             if number in rewriter.kinds and number not in rewriter.mapping.values():
                 raise ValueError(f"FAIL: unmapped private reference in commit {oid}")
-    passed(True, "all commits contain no macOS home-prefix text or unmapped private message references")
+    passed(True, "all commits contain no home-prefix text or unmapped private message references")
     source_tree = git(source, "rev-parse", commit + "^{tree}").strip().decode()
     expected = expected_tree(source, source_tree, rewriter, {})
     actual = git(candidate, "rev-parse", "main^{tree}").strip().decode()
