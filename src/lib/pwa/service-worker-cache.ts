@@ -175,7 +175,21 @@ export async function obsoleteCaches(
   }
   if (await holdsHome(current)) return [...older];
   const held = await Promise.all(older.map(async (name) => holdsHome(name)));
-  return older.filter((_, index) => !held[index]);
+  // `older` is in creation order, so one cache at most stays: the newest that holds the page.
+  const kept = held.lastIndexOf(true);
+  return older.filter((_, index) => index !== kept);
+}
+
+/**
+ * Whether a worker may delete the caches its activation kept: only once activated, and only with no
+ * other version installing or waiting. Cache names are deterministic per commit, so a rollback's
+ * new version can reuse a kept name; the next activation sweeps whatever this skips.
+ */
+export function mayDeleteRetainedCaches(
+  state: ServiceWorkerState | undefined,
+  registration: { installing: unknown; waiting: unknown },
+): boolean {
+  return state === "activated" && registration.installing === null && registration.waiting === null;
 }
 
 /**
