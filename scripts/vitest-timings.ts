@@ -14,6 +14,8 @@ export interface FileTiming {
 
 export interface Budgets {
   fileMs: number;
+  // Ceiling for `cliProbeFiles`; falls back to `fileMs` when absent.
+  probeFileMs?: number;
   stepMs: number;
 }
 
@@ -24,6 +26,11 @@ export function timingBudgets(cpus: number, coverage: boolean): Budgets {
   const stepMs = cpus < 4 ? 120_000 : 90_000;
   return {
     fileMs: cpus < 4 ? 10_000 : 5e3,
+    // The CLI probes spawn pnpm, oxlint, & vitest subprocesses, so their time is dominated by
+    // process startup rather than the code under test. On four-CPU runners they share workers
+    // with the suite & measured 9.1-9.4 s (lint-ownership) & 5.2-5.6 s (vitest-projects) in
+    // #13. Two-CPU runners isolate them and keep the ordinary ceiling.
+    probeFileMs: cpus < 4 ? 10_000 : 15_000,
     stepMs: coverage ? 300_000 : stepMs,
   };
 }
@@ -69,15 +76,19 @@ export function vitestInvocations(coverage: boolean, cpus: number): VitestInvoca
   ];
 }
 
+function fileBudget(file: string, budgets: Budgets): number {
+  return cliProbeFiles.includes(file) ? (budgets.probeFileMs ?? budgets.fileMs) : budgets.fileMs;
+}
+
 export function budgetFailures(files: FileTiming[], elapsedMs: number, budgets: Budgets): string[] {
   const failures = files
     .filter(
-      ({ durationMs }) =>
-        !Number.isFinite(durationMs) || durationMs < 0 || durationMs > budgets.fileMs,
+      ({ durationMs, file }) =>
+        !Number.isFinite(durationMs) || durationMs < 0 || durationMs > fileBudget(file, budgets),
     )
     .map(
       ({ durationMs, file }) =>
-        `${file}: ${durationMs.toFixed(0)} ms exceeds the ${budgets.fileMs} ms file budget`,
+        `${file}: ${durationMs.toFixed(0)} ms exceeds the ${fileBudget(file, budgets)} ms file budget`,
     );
   if (!Number.isFinite(elapsedMs) || elapsedMs < 0 || elapsedMs > budgets.stepMs) {
     failures.push(
@@ -94,7 +105,7 @@ export function timingSummary(files: FileTiming[], elapsedMs: number, budgets: B
   return [
     "## Vitest timings",
     "",
-    `Wall time: ${(elapsedMs / 1000).toFixed(2)} s; budget: ${budgets.stepMs / 1000} s. File budget: ${budgets.fileMs / 1000} s (tests & hooks). Wall time includes startup, imports, setup, & report generation.`,
+    `Wall time: ${(elapsedMs / 1000).toFixed(2)} s; budget: ${budgets.stepMs / 1000} s. File budget: ${budgets.fileMs / 1000} s (${(budgets.probeFileMs ?? budgets.fileMs) / 1000} s for CLI probes; tests & hooks). Wall time includes startup, imports, setup, & report generation.`,
     "",
     "| Project | File | Tests & hooks (s) |",
     "| --- | --- | ---: |",
