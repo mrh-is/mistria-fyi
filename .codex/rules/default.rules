@@ -32,6 +32,7 @@ prefix_rule(
             "test:pipeline:assets",
             "test:pwa",
             "verify",
+            "machine:doctor",
             "worktree:new",
             "worktree:setup",
         ],
