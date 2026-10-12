@@ -170,6 +170,20 @@ describe("save import file picker", () => {
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
     });
     await importFiles([new File(["not a save"], "photo.png")]);
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(".sav");
+  });
+
+  it("shows the picker hint on iOS only", async () => {
+    const { unmount } = render(ImportCard, { open: true });
+    expect(screen.queryByTestId("ios-picker-hint")).toBeNull();
+    unmount();
+
+    vi.stubGlobal("navigator", {
+      maxTouchPoints: 5,
+      platform: "iPhone",
+      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
+    });
+    render(ImportCard, { open: true });
+    expect(await screen.findByTestId("ios-picker-hint")).toHaveTextContent(".sav");
   });
 });
