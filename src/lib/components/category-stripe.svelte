@@ -260,7 +260,8 @@
     transform: rotate(-4deg);
   }
 
-  @media (min-width: 701px) {
+  /* Ribbons hang in the gutter beside the column; landscape phones have no gutter (app.css). */
+  @media (min-width: 701px) and (min-height: 501px) {
     .category-stripe {
       min-height: 60px;
       padding-right: 20px;

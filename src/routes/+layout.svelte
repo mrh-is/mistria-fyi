@@ -74,7 +74,7 @@
 <!-- Paraglide message calls aren't reactive to the locale, so all chrome re-mounts when a client-side locale switch lands. -->
 {#key page.data.locale}
   <div
-    class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background {hasToolbar
+    class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe landscape-phone:max-w-none {hasToolbar
       ? 'pb-safe-offset-18'
       : ''}"
     inert={overlayActive ? true : undefined}

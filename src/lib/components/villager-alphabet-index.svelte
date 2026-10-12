@@ -139,6 +139,13 @@
     transform: translateY(-50%);
   }
 
+  /* The column spans the full width on landscape phones (app.css's `landscape-phone`). */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .villager-index {
+      right: calc(10px + env(safe-area-inset-right));
+    }
+  }
+
   .villager-index button {
     display: grid;
     min-width: 24px;
