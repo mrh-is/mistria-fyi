@@ -13,7 +13,7 @@ function container() {
 }
 
 describe("keepLocaleOffline", () => {
-  it("asks the active worker to cache the locale plus English for search", async () => {
+  it("asks the active worker to cache the locale plus English for search, naming the current one", async () => {
     const { postMessage, ready } = container();
 
     keepLocaleOffline("ja", { ready });
@@ -21,6 +21,7 @@ describe("keepLocaleOffline", () => {
 
     expect(postMessage).toHaveBeenCalledWith({
       type: CACHE_LOCALES_MESSAGE,
+      current: "ja",
       locales: ["en", "ja"],
     });
   });
@@ -31,7 +32,11 @@ describe("keepLocaleOffline", () => {
     keepLocaleOffline("en", { ready });
     await ready;
 
-    expect(postMessage).toHaveBeenCalledWith({ type: CACHE_LOCALES_MESSAGE, locales: ["en"] });
+    expect(postMessage).toHaveBeenCalledWith({
+      type: CACHE_LOCALES_MESSAGE,
+      current: "en",
+      locales: ["en"],
+    });
   });
 
   it("also asks a new version waiting to take over", async () => {
@@ -45,7 +50,7 @@ describe("keepLocaleOffline", () => {
     keepLocaleOffline("ja", { ready });
     await ready;
 
-    const message = { type: CACHE_LOCALES_MESSAGE, locales: ["en", "ja"] };
+    const message = { type: CACHE_LOCALES_MESSAGE, current: "ja", locales: ["en", "ja"] };
     expect(active).toHaveBeenCalledWith(message);
     expect(waiting).toHaveBeenCalledWith(message);
   });

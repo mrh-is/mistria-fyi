@@ -7,7 +7,8 @@ import type { LocaleCode } from "#lib/types/locale.js";
 /**
  * Asks the service worker to keep `locale` available offline: every name chunk for it, plus
  * English, which sitewide search always matches against. The worker remembers the request and
- * re-caches the same locales for each new version it installs.
+ * re-caches the same locales for each new version it installs. The message also names `locale` as
+ * the one in use, which the worker opens on an offline launch at `start_url` (#728).
  *
  * The worker does the fetching, not the page. Chunks the page loaded before the worker took
  * control never passed through it, and `loadNames` won't import them twice.
@@ -25,6 +26,7 @@ export function keepLocaleOffline(
   if (!target) return;
   const message: CacheLocalesMessage = {
     type: CACHE_LOCALES_MESSAGE,
+    current: locale,
     locales: [...new Set([baseLocale, locale])],
   };
   void (async () => {
