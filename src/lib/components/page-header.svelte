@@ -227,7 +227,8 @@
     transition: width 300ms ease-out;
   }
 
-  @media (min-width: 701px) {
+  /* Ribbons hang in the gutter beside the column; landscape phones have no gutter (app.css). */
+  @media (min-width: 701px) and (min-height: 501px) {
     .page-header--category {
       padding-right: 16px;
     }
