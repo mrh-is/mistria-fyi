@@ -3,6 +3,7 @@
   import IconCopy from "@tabler/icons-svelte-runes/icons/copy";
   import IconDeviceDesktop from "@tabler/icons-svelte-runes/icons/device-desktop";
   import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
+  import { onMount } from "svelte";
 
   import DialogCloseButton from "#lib/components/dialog-close-button.svelte";
   import StatusNote from "#lib/components/status-note.svelte";
@@ -18,6 +19,7 @@
   import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { isIosDevice } from "#lib/utils/ios-device.js";
   import { messageParts } from "#lib/utils/message-parts.js";
 
   import DataCard from "./data-card.svelte";
@@ -40,6 +42,16 @@
     typeof globalThis.matchMedia === "function" &&
       globalThis.matchMedia("(min-width: 768px)").matches,
   );
+
+  // iOS has no registered type for .sav, so any `accept` filter greys those files out in the Files
+  // sheet. Drop the filter there; the importer validates the contents either way.
+  // Narrowing it again isn't possible: iOS maps `accept` to UTIs, and an unregistered extension
+  // only conforms to public.data, which every file does. So iOS gets a hint instead.
+  let onIos = $state(false);
+  let acceptSaveTypes = $derived(onIos ? undefined : ".sav,.json");
+  onMount(() => {
+    onIos = isIosDevice();
+  });
 
   // ── Import state ──
   let importResult = $state<null | SaveImportReport>(null);
@@ -198,7 +210,7 @@
       bind:this={fileInput}
       type="file"
       aria-label={m.import_file_input_aria()}
-      accept=".sav,.json"
+      accept={acceptSaveTypes}
       multiple
       class="hidden"
       onchange={handleInputChange}
@@ -230,6 +242,12 @@
         </button>
       {/if}
     </div>
+
+    {#if onIos}
+      <p class="mt-1.5 text-center text-xs text-muted-foreground" data-testid="ios-picker-hint">
+        {m.import_ios_picker_hint()}
+      </p>
+    {/if}
 
     <p class="mt-1.5 text-center text-xs text-muted-foreground">
       <Dialog.Root>

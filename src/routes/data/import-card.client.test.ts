@@ -137,3 +137,53 @@ describe("save import atomicity", () => {
     expect(userState.exportBackup()).toBe(before);
   });
 });
+
+describe("save import file picker", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("filters the picker to save files on desktop", () => {
+    render(ImportCard, { open: true });
+    expect(screen.getByLabelText("Choose save files to import")).toHaveAttribute(
+      "accept",
+      ".sav,.json",
+    );
+  });
+
+  it("drops the accept filter on iPadOS, which reports a desktop Mac user agent", async () => {
+    vi.stubGlobal("navigator", {
+      maxTouchPoints: 5,
+      platform: "MacIntel",
+      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+    });
+    render(ImportCard, { open: true });
+    await waitFor(() => {
+      expect(screen.getByLabelText("Choose save files to import")).not.toHaveAttribute("accept");
+    });
+  });
+
+  it("still shows the import error for a file that is not a save", async () => {
+    vi.stubGlobal("navigator", {
+      maxTouchPoints: 5,
+      platform: "iPhone",
+      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
+    });
+    await importFiles([new File(["not a save"], "photo.png")]);
+    expect(await screen.findByRole("alert")).toHaveTextContent(".sav");
+  });
+
+  it("shows the picker hint on iOS only", async () => {
+    const { unmount } = render(ImportCard, { open: true });
+    expect(screen.queryByTestId("ios-picker-hint")).toBeNull();
+    unmount();
+
+    vi.stubGlobal("navigator", {
+      maxTouchPoints: 5,
+      platform: "iPhone",
+      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
+    });
+    render(ImportCard, { open: true });
+    expect(await screen.findByTestId("ios-picker-hint")).toHaveTextContent(".sav");
+  });
+});
