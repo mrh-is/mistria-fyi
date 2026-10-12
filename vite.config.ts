@@ -141,6 +141,12 @@ export default defineConfig({
     tailwindcss(),
     sveltekit({
       adapter: adapter({
+        // Concurrent preview servers (the Playwright suites, #19) must not share Miniflare's
+        // default `.wrangler/state` SQLite files, so scripts/playwright-preview.ts hands each one
+        // its own directory.
+        platformProxy: process.env.MISTRIA_PREVIEW_PERSIST_DIR
+          ? { persist: { path: process.env.MISTRIA_PREVIEW_PERSIST_DIR } }
+          : {},
         routes: {
           exclude: [
             "<build>",
