@@ -152,8 +152,11 @@ Follow this sequence for every task:
 9. **Verify** — run `pnpm run lint:fix` before committing; CI runs the full matrix (see §7).
 10. **Deliver** — commit with the required co-author trailer, push, and open an attributed PR that
     references the issue (`Closes #N`) and fills in the template's "Preview" line with the branch
-    preview URL, `https://<branch-slug>.mistria-fyi.pages.dev` (the branch name lowercased, each run
-    of other characters replaced with `-`; Cloudflare posts no PR comment with it). Apply the
+    preview URL, `https://<branch-slug>.mistria-fyi.pages.dev`. Cloudflare's PR comment with it
+    isn't reliable, so derive the slug from the branch name: lowercase it, replace each
+    non-alphanumeric character with `-` (runs aren't collapsed, so `a/_b` becomes `a--b`), keep the
+    first 28 characters, then drop a trailing `-` (`worktree-agent-ac94622f1a9ec4708` becomes
+    `worktree-agent-ac94622f1a9ec`). Cloudflare documents only the first two steps. Apply the
     matching `agent:*` label to the PR. **Draft vs. ready:** the maintainer merges PRs that pass CI,
     so an open PR's state is the agent's merge recommendation. Open the PR as a draft
     (`gh pr create --draft`) whenever anything still stands between it and merging: an unfinished
