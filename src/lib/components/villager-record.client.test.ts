@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import VillagerRecordHarness from "#lib/components/villager-record.test-harness.svelte";
 import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
@@ -20,6 +20,9 @@ const balor: Villager = {
 describe("VillagerRecord", () => {
   beforeEach(() => {
     userState.resetAll();
+    // happy-dom never loads images, so it reports every one as finished; a browser's image is
+    // still loading when the record mounts.
+    vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -72,6 +75,13 @@ describe("VillagerRecord", () => {
     expect(
       failed.container.querySelector('[data-testid="villager-icon-fallback"]'),
     ).toHaveTextContent("A");
+  });
+
+  it("falls back for a sprite that failed before hydration", () => {
+    vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(true);
+    vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(0);
+    const view = render(VillagerRecordHarness, { id: balorId, name: "Balor", villager: balor });
+    expect(view.getByTestId("villager-icon-fallback")).toHaveTextContent("B");
   });
 
   it("keeps an unmet Villager in place without exposing identity or stored progress", async () => {
