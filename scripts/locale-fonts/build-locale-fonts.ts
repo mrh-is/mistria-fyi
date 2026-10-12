@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 // `unicode-range` chunks. The Simplified Chinese faces are sliced here with the same unicode-range
 // table Google Fonts uses for Noto Sans SC (`simplified-chinese-unicode-ranges.json`).
 //
-// Nothing is uploaded by this script; see `upload-locale-fonts.sh`.
+// Nothing is uploaded by this script; see `scripts/upload-locale-fonts.ts`.
 import { parseArgs } from "node:util";
 import subsetFont from "subset-font";
 
