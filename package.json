@@ -113,5 +113,12 @@
     "#lib": "./src/lib/index.js",
     "#lib/*": "./src/lib/*",
     "#scripts/*": "./scripts/*.ts"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "24.21.0",
+      "onFail": "download"
+    }
   }
 }
