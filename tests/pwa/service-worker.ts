@@ -1,4 +1,4 @@
-import type { BrowserContext, Page } from "@playwright/test";
+import type { BrowserContext, Page, Route } from "@playwright/test";
 
 /**
  * Takes the context offline, service workers included. `setOffline` alone doesn't reach a worker
@@ -7,7 +7,17 @@ import type { BrowserContext, Page } from "@playwright/test";
  */
 export async function goOffline(context: BrowserContext): Promise<void> {
   await context.setOffline(true);
-  await context.route("**/*", (route) => route.abort("internetdisconnected"));
+  await context.route("**/*", disconnect);
+}
+
+/** Reverses {@link goOffline}, leaving the context's other routes in place. */
+export async function goOnline(context: BrowserContext): Promise<void> {
+  await context.unroute("**/*", disconnect);
+  await context.setOffline(false);
+}
+
+async function disconnect(route: Route): Promise<void> {
+  await route.abort("internetdisconnected");
 }
 
 /** Waits for hydration and for a service worker to control the page. */

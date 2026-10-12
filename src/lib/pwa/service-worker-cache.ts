@@ -153,6 +153,56 @@ export async function cacheLocaleHome(
   return true;
 }
 
+/**
+ * Which of the `older` versions' caches `current` can delete: all of them, except one holding the
+ * only copy of `lastLocale`'s home page. That page is where an offline launch lands, and the new
+ * version's own fetch of it may have failed (a dropped connection during install, or a switch made
+ * offline). Copying it across isn't an option, since it imports its own version's chunks, so the
+ * older cache stays, chunks and all, until `current` has the page (#18).
+ */
+export async function obsoleteCaches(
+  storage: { open: (name: string) => Promise<Pick<Cache, "match">> },
+  current: string,
+  older: readonly string[],
+  lastLocale: LocaleCode | undefined,
+  base: string,
+): Promise<string[]> {
+  if (!lastLocale) return [...older];
+  const home = new URL(`/${lastLocale}`, base).href;
+  async function holdsHome(name: string): Promise<boolean> {
+    const cache = await storage.open(name);
+    return (await cache.match(home)) !== undefined;
+  }
+  if (await holdsHome(current)) return [...older];
+  const held = await Promise.all(older.map(async (name) => holdsHome(name)));
+  return older.filter((_, index) => !held[index]);
+}
+
+/**
+ * In {@link OFFLINE_LOCALES_CACHE}: older versions' caches an activation kept for their home page.
+ * Only these may be deleted later, outside an activation, since any other cache might belong to a
+ * newer version that's installing.
+ */
+const RETAINED_CACHES_KEY = "/__retained-caches";
+
+/** The older versions' caches the last activation kept; a corrupt record reads as none. */
+export async function readRetainedCaches(cache: OfflineLocalesCache): Promise<string[]> {
+  try {
+    const response = await cache.match(RETAINED_CACHES_KEY);
+    const names: unknown = await response?.json();
+    return Array.isArray(names) ? names.filter((name) => typeof name === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function rememberRetainedCaches(
+  cache: OfflineLocalesCache,
+  names: readonly string[],
+): Promise<void> {
+  await cache.put(RETAINED_CACHES_KEY, Response.json(names));
+}
+
 export async function cacheRuntimeResponse(
   cache: RuntimeCache,
   request: Request,
