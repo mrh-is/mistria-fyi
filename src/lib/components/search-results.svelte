@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
 
+  import { Icon } from "#lib/components/icon/index.js";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import VillagerSearchResult from "#lib/components/villager-search-result.svelte";
   import { categoryNameForKey } from "#lib/data/categories.js";
@@ -225,7 +226,15 @@
           class="search-result__category"
           style="--result-category-color: var(--color-category-{result.category}, var(--color-ink-muted))"
         >
-          {categoryNameForKey(result.category, locale)}
+          <Icon.Category
+            category={result.category}
+            class="search-result__category-icon"
+            aria-hidden="true"
+            size={16}
+          />
+          <span class="search-result__category-name">
+            {categoryNameForKey(result.category, locale)}
+          </span>
         </span>
       </div>
     {/each}
@@ -306,12 +315,34 @@
     background: color-mix(in srgb, var(--color-ink) 6%, transparent);
   }
 
-  @media (max-width: 380px) {
+  .search-result__category :global(.search-result__category-icon) {
+    display: none;
+  }
+
+  /* Phones get the category's icon in place of its name, which crowds the row; the name stays
+     in the accessibility tree as the tag's text. */
+  @media (max-width: 480px) {
     .search-result__category {
-      min-width: 62px;
-      max-width: 72px;
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 11px 6px 7px;
+    }
+
+    .search-result__category :global(.search-result__category-icon) {
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .search-result__category-name {
+      position: absolute;
       overflow: hidden;
-      text-overflow: ellipsis;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      clip-path: inset(50%);
       white-space: nowrap;
     }
   }
