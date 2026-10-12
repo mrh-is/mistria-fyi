@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { expect, test } from "../browser/test.js";
-import { waitForControl } from "./service-worker.js";
+import { goOffline, waitForControl } from "./service-worker.js";
 
 import type { Page } from "@playwright/test";
 
@@ -106,6 +106,95 @@ test("keeps open tabs on their version until one accepts the update, then reload
     const finalCacheNames = await cacheNames(page);
     expect(finalCacheNames).toContain(newCache);
     expect(finalCacheNames).not.toContain(oldCache);
+  } finally {
+    restore();
+  }
+});
+
+function isEnglishHome(url: URL): boolean {
+  return url.pathname === "/en";
+}
+
+function lastLocale(page: Page): Promise<unknown> {
+  return page.evaluate(async () => {
+    const record = await caches.match("/__last-locale");
+    return record?.json() as Promise<unknown>;
+  });
+}
+
+// A new version reads the last-used locale partway through its install. A language switch after
+// that read, but before the install finishes, must still reach it: activating deletes the old
+// version's cache, and the next launch may be offline (#18).
+test("relaunches offline in a language chosen while a new version was installing", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/");
+  await waitForControl(page);
+  await expect.poll(() => lastLocale(page)).toBe("en");
+
+  const initialNames = await cacheNames(page);
+  const oldCache = initialNames.find((name) => name.startsWith("cache-"));
+  if (!oldCache) throw new Error("The service worker has no versioned cache");
+  const { restore } = deployNewVersion(oldCache.slice("cache-".length));
+
+  // The new version fetches the English home page right after reading the last-used locale. Hold
+  // that fetch until the switch below has happened.
+  const { promise: homeHeld, resolve: releaseHome } = Promise.withResolvers<boolean>();
+  const { promise: localeRead, resolve: homeRequested } = Promise.withResolvers<boolean>();
+  await context.route(isEnglishHome, async (route) => {
+    homeRequested(true);
+    await homeHeld;
+    await route.continue();
+  });
+
+  try {
+    await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready;
+      void registration.update();
+    });
+    await localeRead;
+
+    await page.getByRole("button", { name: "Quick settings" }).click();
+    await page.getByRole("button", { name: "Choose language" }).click();
+    await page.getByRole("button", { name: /^日本語/ }).click();
+    await expect(page).toHaveURL(/\/ja$/);
+    await expect.poll(() => lastLocale(page)).toBe("ja");
+
+    releaseHome(true);
+    await expect
+      .poll(() =>
+        page.evaluate(async () => {
+          const registration = await navigator.serviceWorker.ready;
+          return registration.waiting !== null;
+        }),
+      )
+      .toBe(true);
+    await context.unroute(isEnglishHome);
+
+    // Force-quit and go offline: the new version takes over with nothing open, and it can't fetch
+    // what it's missing.
+    await goOffline(context);
+    await page.close();
+    // Chromium activates the new version only once the closed tab has gone, so wait for that, as
+    // iOS's launch after a force-quit would. A worker restarting mid-check just reads again.
+    await expect
+      .poll(async () => {
+        try {
+          const names = await context
+            .serviceWorkers()
+            .at(-1)
+            ?.evaluate(() => caches.keys());
+          return names !== undefined && !names.includes(oldCache);
+        } catch {
+          return false;
+        }
+      })
+      .toBe(true);
+    const relaunched = await context.newPage();
+    await relaunched.goto("/");
+    await expect(relaunched).toHaveURL(/\/ja$/);
+    await expect(relaunched.getByRole("main")).toBeVisible();
   } finally {
     restore();
   }

@@ -404,6 +404,23 @@ describe("service-worker last-used locale", () => {
     expect(await lastLocaleStore(() => Promise.resolve(cache)).read()).toBe("fr");
   });
 
+  // An update's installing worker and the active one each hold a store over the same cache (#18).
+  it("reads and rewrites what another worker's store remembered since", async () => {
+    const cache = new MemoryCache();
+    const installing = lastLocaleStore(() => Promise.resolve(cache));
+    const active = lastLocaleStore(() => Promise.resolve(cache));
+
+    await installing.remember("en");
+    await active.remember("ja");
+    expect(await installing.read()).toBe("ja");
+
+    await active.remember("en");
+    await installing.remember("ja");
+    expect(await active.read()).toBe("ja");
+    await active.remember("en");
+    expect(await installing.read()).toBe("en");
+  });
+
   it("retries a locale whose write failed", async () => {
     const cache = new MemoryCache();
     vi.spyOn(cache, "put").mockRejectedValueOnce(new DOMException("Full", "QuotaExceededError"));
