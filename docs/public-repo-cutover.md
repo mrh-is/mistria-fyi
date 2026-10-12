@@ -50,7 +50,7 @@ independent dashboard verification. See
 | Dependabot secrets      | None.                                                                                                                                                 |
 | Environments            | `copilot` only, with no protection rules, secrets, or variables.                                                                                      |
 | Workflows               | `ci.yml` (PR, push, nightly cron), `attribution.yml`, `guarded-paths.yml`, `game-build-watch.yml` (3-hourly cron; opens issues using `github.token`). |
-| Workflow permissions    | Default `read`; Actions can’t approve pull requests; all actions allowed; no SHA pinning.                                                             |
+| Workflow permissions    | Default `read`; Actions can’t approve pull requests; all actions allowed; SHA pinning required (`sha_pinning_required: true`).                        |
 | Fork-PR approval policy | Not settable while private (the API refuses). Set it right after going public.                                                                        |
 | Self-hosted runners     | None referenced (`ubuntu-latest` only). **Maintainer:** confirm none are registered.                                                                  |
 
