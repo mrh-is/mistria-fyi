@@ -42,6 +42,16 @@ test("keeps open tabs on their version until one accepts the update, then reload
   await otherTab.goto("/en/animals");
   await waitForControl(otherTab);
 
+  // The page reports its language, which the next version's install reads.
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const record = await caches.match("/__last-locale");
+        return record?.json() as Promise<unknown>;
+      }),
+    )
+    .toBe("en");
+
   const initialCacheNames = await cacheNames(page);
   const oldCache = initialCacheNames.find((name) => name.startsWith("cache-"));
   if (!oldCache) throw new Error("The service worker has no versioned cache");
@@ -58,6 +68,14 @@ test("keeps open tabs on their version until one accepts the update, then reload
     await expect(page.getByText(UPDATE_MESSAGE)).toBeVisible();
     await expect(otherTab.getByText(UPDATE_MESSAGE)).toBeVisible();
     expect(await cacheNames(page)).toEqual(expect.arrayContaining([oldCache, newCache]));
+    // Activating deletes the old cache, so the install fetched the last-used home page itself, for
+    // an offline launch right after the update (#728).
+    const homeInNewCache: boolean = await page.evaluate(async (name) => {
+      const cache = await caches.open(name);
+      const home = await cache.match("/en");
+      return home !== undefined;
+    }, newCache);
+    expect(homeInNewCache).toBe(true);
 
     // Until a tab accepts, the old version keeps working, cache and all.
     await page
@@ -85,9 +103,9 @@ test("keeps open tabs on their version until one accepts the update, then reload
       return registration.waiting === null;
     });
     expect(noWaitingWorker).toBe(true);
-    const caches = await cacheNames(page);
-    expect(caches).toContain(newCache);
-    expect(caches).not.toContain(oldCache);
+    const finalCacheNames = await cacheNames(page);
+    expect(finalCacheNames).toContain(newCache);
+    expect(finalCacheNames).not.toContain(oldCache);
   } finally {
     restore();
   }

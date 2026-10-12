@@ -1,5 +1,6 @@
 import {
   cacheLocaleChunks,
+  cacheLocaleHome,
   fetchRuntimeRequest,
   fetchSpriteRequest,
   isEligibleForRuntimeCaching,
@@ -9,6 +10,7 @@ import {
   lastLocaleStore,
   OFFLINE_LOCALES_CACHE,
   parseCacheLocalesMessage,
+  parseCurrentLocale,
   readOfflineLocales,
   rememberOfflineLocales,
 } from "#lib/pwa/service-worker-cache.js";
@@ -21,6 +23,7 @@ import { assets, immutable } from "$app/manifest";
 import OFFLINE_HTML from "./offline.html?raw";
 
 import type { CacheLocalesReply, LocaleNameChunks } from "#lib/pwa/service-worker-cache.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 
 /** Inlined by `localeNameChunksPlugin` (src/lib/build/locale-name-chunks.ts); absent in dev. */
 declare const __LOCALE_NAME_CHUNKS__: LocaleNameChunks | undefined;
@@ -43,6 +46,20 @@ const LOCALE_NAME_CHUNK_PATHS: ReadonlySet<string> = new Set(
 const PRECACHED_ASSETS = ASSETS.filter((path) => !isLazyAsset(path, LOCALE_NAME_CHUNK_PATHS));
 const LAST_LOCALE = lastLocaleStore(() => caches.open(OFFLINE_LOCALES_CACHE));
 
+/**
+ * Best-effort: caches `locale`'s home page in this version's cache, where an offline launch at
+ * `start_url` lands (#728). A failure only costs that launch, and the page's next message retries.
+ */
+async function keepLocaleHome(locale: LocaleCode): Promise<void> {
+  try {
+    await cacheLocaleHome(await caches.open(CACHE), locale, sw.registration.scope, (request) =>
+      fetch(request),
+    );
+  } catch {
+    // Offline or out of quota: the launch falls back to another cached locale or the offline page.
+  }
+}
+
 sw.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
@@ -52,6 +69,10 @@ sw.addEventListener("install", (event) => {
       // block the install, and the page's next request retries it.
       const offlineLocales = await readOfflineLocales(await caches.open(OFFLINE_LOCALES_CACHE));
       await cacheLocaleChunks(cache, offlineLocales, LOCALE_NAME_CHUNKS);
+      // Activating deletes the old cache, home pages included, and the next launch may be offline.
+      // Fetched fresh: the old version's page imports chunks that go with its cache.
+      const lastLocale = await LAST_LOCALE.read();
+      if (lastLocale) await keepLocaleHome(lastLocale);
       // No `skipWaiting()`. A first install activates at once; an update waits until a tab accepts
       // the update prompt, since taking over would delete the cache open tabs still import from.
     })(),
@@ -65,6 +86,13 @@ sw.addEventListener("message", (event) => {
   }
   const locales = parseCacheLocalesMessage(event.data, LOCALE_NAME_CHUNKS);
   if (!locales) return;
+  // The page's language is the last-used one, including after a client-side switch from the
+  // picker, which never loads a page through the worker. Its home page is cached for an offline
+  // launch, since the page itself may have loaded before this worker took control.
+  const current = parseCurrentLocale(event.data);
+  if (current) {
+    event.waitUntil(Promise.all([LAST_LOCALE.remember(current), keepLocaleHome(current)]));
+  }
   // A reply is this version's cache speaking for itself, which a page can't infer: the modules it
   // already imported may come from a cache an update has since deleted.
   const [reply] = event.ports;

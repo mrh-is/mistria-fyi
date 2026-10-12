@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CACHE_LOCALES_MESSAGE,
   cacheLocaleChunks,
+  cacheLocaleHome,
   cacheRuntimeResponse,
   cacheSpriteResponse,
   fetchRuntimeRequest,
@@ -15,6 +16,7 @@ import {
   lastLocaleStore,
   MAX_SPRITE_ENTRIES,
   parseCacheLocalesMessage,
+  parseCurrentLocale,
   readOfflineLocales,
   rememberOfflineLocales,
   SKIP_WAITING_MESSAGE,
@@ -322,39 +324,39 @@ describe("service-worker offline launch from start_url", () => {
     expect(await cachedText(cache, request)).toBe("data");
   });
 
-  it("doesn't cache a navigation that was redirected to another origin", async () => {
+  it.each(["/ja", "https://example.com/x"])(
+    "answers a navigation that followed a redirect to %s with the redirect, caching nothing",
+    async (location) => {
+      const cache = new MemoryCache();
+      const deps = dependencies(
+        cache,
+        vi.fn().mockResolvedValue(redirectedResponse("landed", location)),
+      );
+
+      const response = await fetchRuntimeRequest(navigation("/"), deps);
+      await deps.settled();
+
+      expect(response.status).toBe(302);
+      expect(response.redirected).toBe(false);
+      expect(response.headers.get("location")).toBe(new URL(location, ORIGIN).href);
+      expect(cache.entries.size).toBe(0);
+      expect(await deps.lastLocale.read()).toBeUndefined();
+    },
+  );
+
+  it("drops the query from the redirect when only the page without it is cached", async () => {
     const cache = new MemoryCache();
-    const deps = dependencies(
-      cache,
-      vi.fn().mockResolvedValue(redirectedResponse("elsewhere", "https://example.com/x")),
-    );
+    await cache.put(`${ORIGIN}/ja`, new Response("ja home"));
+    const deps = dependencies(cache, offline());
+    await deps.lastLocale.remember("ja");
 
-    const response = await fetchRuntimeRequest(navigation("/"), deps);
-    await deps.settled();
+    const response = await fetchRuntimeRequest(navigation("/?source=pwa"), deps);
 
-    expect(await response.text()).toBe("elsewhere");
-
-    expect(cache.entries.size).toBe(0);
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/ja`);
   });
+});
 
-  it("caches a redirected navigation under its final URL, never as a redirected response", async () => {
-    const cache = new MemoryCache();
-    const deps = dependencies(
-      cache,
-      vi.fn().mockResolvedValue(redirectedResponse("ja home", "/ja")),
-    );
-
-    const response = await fetchRuntimeRequest(navigation("/"), deps);
-    await deps.settled();
-
-    expect(await response.text()).toBe("ja home");
-    expect(await cache.match(`${ORIGIN}/`)).toBeUndefined();
-    const stored = await cache.match(`${ORIGIN}/ja`);
-    expect(stored?.redirected).toBe(false);
-    expect(await stored?.text()).toBe("ja home");
-    expect(await deps.lastLocale.read()).toBe("ja");
-  });
-
+describe("service-worker last-used locale", () => {
   it("ignores a corrupt or unknown remembered locale", async () => {
     const cache = new MemoryCache();
     await cache.put(`${ORIGIN}/__last-locale`, new Response("{not json"));
@@ -362,6 +364,86 @@ describe("service-worker offline launch from start_url", () => {
 
     await cache.put(`${ORIGIN}/__last-locale`, Response.json("xx"));
     expect(await lastLocaleStore(() => Promise.resolve(cache)).read()).toBeUndefined();
+  });
+
+  it("stores the latest locale even when an earlier write settles last", async () => {
+    const cache = new MemoryCache();
+    const put = vi.spyOn(cache, "put");
+    // The first write is slow; without ordering it would land after the second.
+    put.mockImplementationOnce(async (request, response) => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20);
+      });
+      await MemoryCache.prototype.put.call(cache, request, response);
+    });
+    const store = lastLocaleStore(() => Promise.resolve(cache));
+
+    await Promise.all([store.remember("ja"), store.remember("fr")]);
+
+    expect(await lastLocaleStore(() => Promise.resolve(cache)).read()).toBe("fr");
+  });
+
+  it("retries a locale whose write failed", async () => {
+    const cache = new MemoryCache();
+    vi.spyOn(cache, "put").mockRejectedValueOnce(new DOMException("Full", "QuotaExceededError"));
+    const store = lastLocaleStore(() => Promise.resolve(cache));
+
+    await store.remember("ja");
+    expect(await lastLocaleStore(() => Promise.resolve(cache)).read()).toBeUndefined();
+    await store.remember("ja");
+
+    expect(await lastLocaleStore(() => Promise.resolve(cache)).read()).toBe("ja");
+  });
+
+  it("reads the page's current locale from a cache-locales message", () => {
+    expect(
+      parseCurrentLocale({ type: CACHE_LOCALES_MESSAGE, current: "ja", locales: ["en", "ja"] }),
+    ).toBe("ja");
+    expect(parseCurrentLocale({ type: CACHE_LOCALES_MESSAGE, locales: ["ja"] })).toBeUndefined();
+    expect(
+      parseCurrentLocale({ type: CACHE_LOCALES_MESSAGE, current: "xx", locales: [] }),
+    ).toBeUndefined();
+    expect(parseCurrentLocale({ type: SKIP_WAITING_MESSAGE, current: "ja" })).toBeUndefined();
+    expect(parseCurrentLocale(null)).toBeUndefined();
+  });
+});
+
+describe("service-worker locale home pages", () => {
+  it("fetches and caches a locale's home page", async () => {
+    const cache = new MemoryCache();
+    const fetched: string[] = [];
+    const fetcher = (request: Request) => {
+      fetched.push(new URL(request.url).pathname);
+      return Promise.resolve(new Response("ja home"));
+    };
+
+    expect(await cacheLocaleHome(cache, "ja", `${ORIGIN}/`, fetcher)).toBe(true);
+
+    expect(fetched).toEqual(["/ja"]);
+    expect(await cachedText(cache, new Request(`${ORIGIN}/ja`))).toBe("ja home");
+  });
+
+  it("doesn't refetch a home page that's already cached", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/ja`, new Response("cached"));
+    const fetcher = vi.fn();
+
+    expect(await cacheLocaleHome(cache, "ja", `${ORIGIN}/`, fetcher)).toBe(true);
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a failed", () => new Response("bad", { status: 500 })],
+    ["a redirected", () => redirectedResponse("elsewhere", "/en")],
+  ])("doesn't store %s response", async (_, response) => {
+    const cache = new MemoryCache();
+
+    expect(
+      await cacheLocaleHome(cache, "ja", `${ORIGIN}/`, vi.fn().mockResolvedValue(response())),
+    ).toBe(false);
+
+    expect(cache.entries.size).toBe(0);
   });
 });
 
