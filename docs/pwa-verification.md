@@ -33,6 +33,18 @@ Other languages download the first time the player uses them, then stay availabl
   authority: a download the network cut off leaves a locale partly cached, and modules the page
   already imported may come from a cache an update has replaced. If any chunk is still missing, the
   page stays in place and shows “Go online to download the Japanese text, then try again.”
+- **An offline launch opens the last-used language (#728).** The manifest’s `start_url` is `/`,
+  which has no page of its own: online, the server redirects it to a locale. An installed app’s
+  first launch loads that page before the worker exists, and browsing after that is client-side, so
+  no page load ever passes through the worker to cache it. Instead, the page’s `mfg:cache-locales`
+  message names its current locale (on every load and every picker switch), and the worker records
+  it as the last-used locale in `offline-locales-v1` and fetches that locale’s home page into its
+  cache. Each new version’s install fetches the last-used home page again, since activating deletes
+  the old cache. A full page load through the worker records its locale too. When a bare-path
+  navigation fails offline, the worker redirects to the same path under the last-used locale, or
+  under any locale whose page is cached, before falling back to the offline page. Locale home pages
+  (`/en`, `/ja`, …) are exempt from runtime-cache eviction, and a navigation that comes back as a
+  followed redirect is answered with the redirect itself and never cached.
 
 ### Byte budget
 
@@ -88,6 +100,9 @@ The suite verifies:
 - successful online navigation through the controlling worker and runtime caching of `/animals`;
 - offline reload of the cached route and offline retrieval of a static asset;
 - the offline document for a previously uncached navigation;
+- an offline launch from `start_url` (`/`) into the home page, after one online launch with only
+  client-side browsing, and into the language last chosen in the picker;
+- a new version’s install caching the last-used locale’s home page;
 - no name chunks at install, then every chunk for the visited locale and none for another;
 - offline navigation to an unopened category, offline search, and the offline language-switch
   message;
@@ -126,14 +141,18 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
 6. While offline, navigate to a same-origin path that has never been requested. Confirm the page
    displays the “You’re offline” heading. The worker bundles that page rather than precaching it,
    since Cloudflare Pages redirects `.html` paths (#226).
-7. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
+7. Still offline, open `/`. Confirm it lands on the language you last used online (for example
+   `/en`), not the offline page. On an installed app, launch it from its icon instead. If it
+   doesn’t, check Cache Storage for `/__last-locale` in `offline-locales-v1` and the home page in
+   `cache-<version>`.
+8. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
    the online application renders normally.
-8. To check the update flow, keep a tab open on the deployment, deploy a new version, then switch
+9. To check the update flow, keep a tab open on the deployment, deploy a new version, then switch
    away from the tab and back after five minutes (or click “Update” in the service-worker panel).
    Confirm the new worker shows as waiting, the tab shows the update toast, and “Refresh” reloads
    onto the new version with only the new `cache-<version>` left.
-9. Record the browser name and exact version, OS, whether the app was installed or in a tab, commit
-   or release, date, and result. File each verified failure as a separate issue.
+10. Record the browser name and exact version, OS, whether the app was installed or in a tab, commit
+    or release, date, and result. File each verified failure as a separate issue.
 
 Note: Browser developer tools may bypass the worker when “Update on reload” or an equivalent option
 is enabled. Disable that option during the offline checks.

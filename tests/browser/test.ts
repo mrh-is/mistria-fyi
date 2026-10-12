@@ -51,6 +51,11 @@ export async function isolateNetwork(
   context.on("response", (response) => {
     if (response.fromServiceWorker()) external.delete(response.request());
   });
+  // A fallback font is aborted on purpose. A controlled page's request for one fails without ever
+  // reaching routing, once the worker's own fetch is aborted (or never sent, offline).
+  context.on("requestfailed", (request) => {
+    if (fallbackFonts.has(request.url())) external.delete(request);
+  });
   await context.route("**/*", async (route) => {
     const request = route.request();
     const url = new URL(request.url());

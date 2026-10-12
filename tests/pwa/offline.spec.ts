@@ -1,4 +1,7 @@
 import { expect, test } from "../browser/test.js";
+import { waitForControl } from "./service-worker.js";
+
+import type { BrowserContext, Page } from "@playwright/test";
 
 test("registers, activates, and precaches static & build assets", async ({ page }) => {
   await page.goto("/");
@@ -109,6 +112,69 @@ test("serves cached routes and assets offline, then falls back for an uncached n
   await context.setOffline(false);
   await retry.click();
   await expect(page.getByRole("heading", { name: /offline/i })).toBeHidden();
+});
+
+async function startUrl(page: Page): Promise<string> {
+  const response = await page.request.get("/manifest.json");
+  const manifest = (await response.json()) as { start_url: string };
+  return manifest.start_url;
+}
+
+/** Whether `path` is cached and the worker has recorded `locale` as the last one used. */
+function readyOffline(page: Page, path: string, locale: string): Promise<boolean> {
+  return page.evaluate(
+    async ([home, expected]) => {
+      const record = await caches.match("/__last-locale");
+      const stored: unknown = await record?.json();
+      const cached = await caches.match(home);
+      return cached !== undefined && stored === expected;
+    },
+    [path, locale],
+  );
+}
+
+async function launchOffline(context: BrowserContext, page: Page, url: string): Promise<void> {
+  await context.setOffline(true);
+  await page.goto(url);
+  await expect(page.getByRole("main")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /offline/i })).toBeHidden();
+}
+
+test.describe("offline launch from start_url", () => {
+  // The installed app's first online launch loads its page before the worker exists, and browsing
+  // after that is client-side, so no page load ever passes through the worker (#728).
+  test("opens the home page after one online launch and client-side browsing", async ({
+    context,
+    page,
+  }) => {
+    const url = await startUrl(page);
+    expect(url).toBe("/");
+    await page.goto(url);
+    await waitForControl(page);
+    await page
+      .getByRole("link", { name: /^Animals/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/en\/animals$/);
+    await expect.poll(() => readyOffline(page, "/en", "en")).toBe(true);
+
+    await launchOffline(context, page, url);
+    await expect(page).toHaveURL(/\/en$/);
+  });
+
+  test("opens the language last chosen in the picker", async ({ context, page }) => {
+    const url = await startUrl(page);
+    await page.goto(url);
+    await waitForControl(page);
+    await page.getByRole("button", { name: "Quick settings" }).click();
+    await page.getByRole("button", { name: "Choose language" }).click();
+    await page.getByRole("button", { name: /^Français/ }).click();
+    await expect(page).toHaveURL(/\/fr$/);
+    await expect.poll(() => readyOffline(page, "/fr", "fr")).toBe(true);
+
+    await launchOffline(context, page, url);
+    await expect(page).toHaveURL(/\/fr$/);
+  });
 });
 
 test.describe("without service workers", () => {
