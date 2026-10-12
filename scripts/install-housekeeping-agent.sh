@@ -26,8 +26,10 @@ if [ ! -f "$script" ]; then
   echo "$script doesn't exist; update the primary checkout first." >&2
   exit 1
 fi
-# launchd starts jobs with a minimal PATH, so carry over where git & gh live.
-path=$(dirname "$(command -v gh)"):$(dirname "$(command -v git)"):/usr/bin:/bin:/usr/sbin:/sbin
+# launchd starts jobs with a minimal PATH, so carry over where git, gh, & node live. Version
+# managers like fnm put a per-shell symlink on PATH, so record Node's resolved directory instead.
+node_directory=$(node -p "require('node:path').dirname(process.execPath)")
+path=$(dirname "$(command -v gh)"):$(dirname "$(command -v git)"):$node_directory:/usr/bin:/bin:/usr/sbin:/sbin
 
 mkdir -p "$(dirname "$plist")"
 cat >"$plist" <<EOF
