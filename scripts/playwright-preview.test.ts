@@ -179,3 +179,14 @@ it.skipIf(onWindows)(
     expect(fixture.read()).not.toContain('"event":"shutdown"');
   },
 );
+
+it("gives each port its own Miniflare persistence directory (#19)", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("ready", { status: 200 })));
+  const preview = launch("console.log('persist=' + process.env.MISTRIA_PREVIEW_PERSIST_DIR)");
+  await once(preview.child, "close");
+  const checkout = /"checkout":"([^"]+)"/u.exec(preview.read())?.[1];
+  expect(checkout).toBeDefined();
+  expect(preview.read()).toContain(
+    `persist=${join(checkout ?? "", ".wrangler", "preview-state", "4188")}`,
+  );
+});
