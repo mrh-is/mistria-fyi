@@ -164,19 +164,19 @@ describe("CI workflow jobs", () => {
     expect(jobs.changes.outputs?.cleanup).toBe("${{ steps.filter.outputs.cleanup }}");
     const filter = jobs.changes.steps?.find((step) => step.id === "filter")?.run ?? "";
     expect(filter).toContain("cleanup=false");
-    expect(filter).toContain("scripts/cleanup-merged-worktrees.sh) cleanup=true");
+    expect(filter).toContain("scripts/cleanup-merged-worktrees.ts) cleanup=true");
     expect(filter).toContain('git diff --no-renames --name-only "$BASE_SHA" HEAD');
     const testStep = jobs.test.steps?.find((step) => step.run === "node scripts/vitest-timings.ts");
     expect(testStep?.env?.VITEST_CLEANUP_CHANGED).toBe("${{ needs.changes.outputs.cleanup }}");
   });
 
   it.each([
-    ["pull_request", "scripts/cleanup-merged-worktrees.sh", true],
+    ["pull_request", "scripts/cleanup-merged-worktrees.ts", true],
     ["pull_request", "scripts/cleanup-merged-worktrees.test.ts", false],
-    ["push", "scripts/cleanup-merged-worktrees.sh", true],
+    ["push", "scripts/cleanup-merged-worktrees.ts", true],
     ["push", "src/app.css", false],
-    ["schedule", "scripts/cleanup-merged-worktrees.sh", false],
-    ["workflow_dispatch", "scripts/cleanup-merged-worktrees.sh", false],
+    ["schedule", "scripts/cleanup-merged-worktrees.ts", false],
+    ["workflow_dispatch", "scripts/cleanup-merged-worktrees.ts", false],
   ] as const)("detects cleanup script changes for %s: %s", (event, files, expected) => {
     const directory = mkdtempSync(join(tmpdir(), "ci-filter-"));
     const output = join(directory, "output");

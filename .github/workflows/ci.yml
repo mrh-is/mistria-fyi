@@ -63,7 +63,7 @@ jobs:
           fi
           while IFS= read -r file; do
             case "$file" in
-              scripts/cleanup-merged-worktrees.sh) cleanup=true ;;
+              scripts/cleanup-merged-worktrees.ts) cleanup=true ;;
             esac
             case "$file" in
               src/* | static/* | tests/* | messages/* | project.inlang/* | _headers | \
