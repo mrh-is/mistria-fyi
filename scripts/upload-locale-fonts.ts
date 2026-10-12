@@ -5,6 +5,8 @@
 // which hides the root `#scripts/*` import.
 //
 //   pnpm run fonts:upload [dist-dir]   (DRY_RUN=1 previews without uploading)
+import "#scripts/lib/require-pinned-node";
+
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";

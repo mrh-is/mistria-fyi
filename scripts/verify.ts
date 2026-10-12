@@ -14,6 +14,8 @@
 //
 // A Node script so Windows runs it directly: from `cmd.exe`, `bash` can resolve to the WSL
 // launcher, which can outlive its child and withhold the exit status (#353).
+import "#scripts/lib/require-pinned-node";
+
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 

@@ -18,10 +18,20 @@ local version managers; `tests/ci-workflow.isolated.test.ts` fails when `devEngi
 it. CI and the Claude cloud setup keep installing the pinned Node on `PATH`, because bare `node`
 calls (workflow steps, Claude hooks) don’t go through pnpm.
 
+A bare `node` outside pnpm would still run the shell’s release silently, so every repository entry
+point imports `scripts/lib/require-pinned-node.ts` first; it exits with a pointer to `pnpm run` or
+`pnpm exec node` on any other release. `scripts/lib/pinned-node.test.ts` derives the entry points
+from `package.json`, the workflows, the Git hooks, the shell scripts, and the agent hook configs,
+and fails when one lacks the guard. The commit-msg hook runs through `pnpm exec node`. The Claude
+PreToolUse edit guard is exempt: it runs on every edit, possibly before dependencies exist, and a
+failure there would disable the guard rather than surface a version problem.
+
 ## Alternatives
 
 - **Per-manager config** (`mise.toml`, fnm guidance): fixes one maintainer’s machines, still depends
   on shell activation, and does nothing for Codex cloud.
+- **Agent command rules** (a Claude Bash hook or Codex `prefix_rule` rejecting bare `node`): cover
+  only agents, miss humans and scripts, and can’t see through compound commands reliably.
 - **Tighter `engines` with `engine-strict`:** pnpm checks `engines` against the `devEngines`
   runtime, so it adds nothing once pnpm supplies Node, and alone it only turns the mismatch into a
   failure.
@@ -33,4 +43,5 @@ calls (workflow steps, Claude hooks) don’t go through pnpm.
 - `setup-node` or the version managers read `devEngines.runtime`, making `.node-version` redundant.
 - pnpm drops or changes `devEngines.runtime` downloads, or Dependabot can’t update the lockfile
   entry.
-- A bare-`node` entry point becomes common enough that agents bypass the pinned runtime in practice.
+- Node reads a project-level config file at startup without a flag, which could enforce the pin
+  without per-entry imports.

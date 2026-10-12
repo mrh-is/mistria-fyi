@@ -12,10 +12,14 @@
   release (checksummed in `pnpm-lock.yaml` for every platform) into the pnpm store and links it as
   `node_modules/.bin/node`. Every `pnpm run`, `pnpm exec`, and package binary then runs the pinned
   Node, whatever the shell’s own `node` is. No version manager or shell activation is needed, which
-  matters for agent shells that never run mise or fnm hooks. A bare `node …` outside pnpm still uses
-  the shell’s Node, so run repository scripts through `pnpm run`. To move the pin, edit both files
-  and run `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails when they disagree. Check with
-  `pnpm exec node -v`.
+  matters for agent shells that never run mise or fnm hooks. Every repository entry point (each
+  `node`/`tsx` target in `package.json`, the workflows, the Git hooks, & the shell scripts, plus
+  `vite.config.ts` and the Playwright configs) imports `#scripts/lib/require-pinned-node` first, so
+  a bare `node scripts/….ts` on another release exits with a message pointing at `pnpm run` or
+  `pnpm exec node` instead of running silently. `scripts/lib/pinned-node.test.ts` finds those entry
+  points and fails when one lacks the guard; the Claude edit-guard hook is the one exemption. To
+  move the pin, edit both files and run `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails
+  when they disagree. Check with `pnpm exec node -v`.
 - **ShellCheck**: `pnpm run lint` runs the system `shellcheck` (`brew install shellcheck`). CI uses
   the runner image's copy, and `scripts/setup-cloud-agent.sh` installs it with apt.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.

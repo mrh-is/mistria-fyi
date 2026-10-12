@@ -1,6 +1,8 @@
 // Verifies every messages/<locale>.json file has the same key shape as messages/en.json.
 // Content is intentionally not compared: some translations are still machine-translated,
 // works-in-progress, or (for short strings) legitimately identical across locales.
+import "#scripts/lib/require-pinned-node";
+
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";

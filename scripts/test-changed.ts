@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 

@@ -3,6 +3,8 @@
  * serializes output. Writes begin only after every transformation succeeds.
  * --parse-only checks parser structure without requiring a particular game version.
  */
+import "../../scripts/lib/require-pinned-node.js";
+
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
