@@ -29,13 +29,27 @@ while [[ $# -gt 0 ]]; do
 done
 [[ $# -eq 1 ]] || usage
 
-for tool in git python3; do
-  command -v "$tool" >/dev/null 2>&1 || die "$tool is missing; install tools with: brew install git-filter-repo gitleaks (plus Python 3 & Git)."
+command -v git >/dev/null 2>&1 || die "git is missing; install Git."
+# Windows often has only `python` or the `py` launcher; its `python3` is usually the Microsoft Store
+# alias, which prints an install hint instead of running.
+python=()
+for candidate in python3 python "py -3"; do
+  read -ra command <<<"$candidate"
+  if "${command[@]}" -c 'import sys; sys.exit(sys.version_info < (3, 8))' >/dev/null 2>&1; then
+    python=("${command[@]}")
+    break
+  fi
 done
+[[ -n ${python[0]:-} ]] || die "Python 3 is missing; install it (Windows: winget install Python.Python.3.13)."
+# Resolve through Python so paths it later reads from the environment are native on Windows, where
+# Git Bash's `/c/…` paths mean nothing to Python. Forward slashes keep `dirname` & prefix checks
+# working, & writing without a newline avoids a trailing `\r` from Windows text-mode stdout.
+native_path() {
+  "${python[@]}" -c 'import os, sys; sys.stdout.write(os.path.realpath(sys.argv[1]).replace(os.sep, "/"))' "$1"
+}
 
-script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-source_repo=$(git rev-parse --show-toplevel)
-source_repo=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$source_repo")
+script_dir=$(native_path "$(dirname -- "${BASH_SOURCE[0]}")")
+source_repo=$(native_path "$(git rev-parse --show-toplevel)")
 source_commit=$(git rev-parse --verify "${source_ref}^{commit}")
 main_ref=main
 if git rev-parse --verify origin/main >/dev/null 2>&1; then
@@ -50,24 +64,24 @@ for excluded in static/sprites/ scripts/measure-transfer-size.ts; do
   fi
 done
 
-output_dir=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$1")
+output_dir=$(native_path "$1")
 [[ ! -e "$1" && ! -L "$1" && ! -e "$output_dir" ]] || die "output directory already exists: $1"
 case "$output_dir/" in
   "$source_repo/"*) die "output directory must be outside this checkout: $output_dir" ;;
 esac
 [[ -d $(dirname -- "$output_dir") ]] || die "output parent directory does not exist."
 for tool in git-filter-repo gitleaks; do
-  command -v "$tool" >/dev/null 2>&1 || die "$tool is missing; install with brew install git-filter-repo gitleaks."
+  command -v "$tool" >/dev/null 2>&1 || die "$tool is missing; see docs/public-repo.md#build--inspect to install it."
 done
 if [[ -n "$mapping_file" ]]; then
-  mapping_file=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$mapping_file")
+  mapping_file=$(native_path "$mapping_file")
   [[ -f "$mapping_file" ]] || die "mapping file not found: $mapping_file"
 fi
 if [[ -n "$issues_file" ]]; then
-  issues_file=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$issues_file")
+  issues_file=$(native_path "$issues_file")
   [[ -f "$issues_file" ]] || die "issue export not found: $issues_file"
 else
-  command -v gh >/dev/null 2>&1 || die "gh is required without --issues; install with brew install gh."
+  command -v gh >/dev/null 2>&1 || die "gh is required without --issues; install GitHub CLI."
 fi
 
 git clone --no-local --single-branch --branch main --no-tags -- "$source_repo" "$output_dir"
@@ -96,7 +110,7 @@ fi
 export CANDIDATE_AUDIT_DIR="$audit_dir"
 export CANDIDATE_REWRITER="$script_dir/rewrite-references.py"
 export PYTHONDONTWRITEBYTECODE=1
-python3 "$CANDIDATE_REWRITER" prepare "$source_repo" "$source_commit"
+"${python[@]}" "$CANDIDATE_REWRITER" prepare "$source_repo" "$source_commit"
 # Initialize once per callback namespace; both append to the same rewrite report.
 bootstrap='global candidate_rewriter
 if "candidate_rewriter" not in globals():
@@ -116,7 +130,7 @@ git -C "$output_dir" filter-repo --force \
 git -C "$output_dir" reflog expire --expire=now --all
 git -C "$output_dir" gc --prune=now --aggressive
 
-python3 "$CANDIDATE_REWRITER" audit "$source_repo" "$source_commit" "$output_dir"
+"${python[@]}" "$CANDIDATE_REWRITER" audit "$source_repo" "$source_commit" "$output_dir"
 cp -- "$script_dir/gitleaks.toml" "$audit_dir/gitleaks.toml"
 gitleaks git "$output_dir" --config "$audit_dir/gitleaks.toml" --log-opts=--all \
   --redact --report-format json --report-path "$audit_dir/gitleaks.json"

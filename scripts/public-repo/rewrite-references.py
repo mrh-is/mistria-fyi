@@ -33,7 +33,8 @@ def git(repo, *args, data=None):
 
 class Rewriter:
     def __init__(self, issues_file, mapping_file):
-        pages = json.loads(Path(issues_file).read_text())
+        # Read bytes or name UTF-8 throughout: Windows' default text encoding is a legacy code page.
+        pages = json.loads(Path(issues_file).read_bytes())
         if not isinstance(pages, list) or not pages:
             raise ValueError("issue export must be a nonempty JSON array")
         issues = (
@@ -48,7 +49,7 @@ class Rewriter:
                 raise ValueError("invalid or duplicate issue number in export")
             self.kinds[number] = "PR" if "pull_request" in issue else "issue"
         self.mapping = {}
-        for line in Path(mapping_file).read_text().splitlines():
+        for line in Path(mapping_file).read_text(encoding="utf-8").splitlines():
             if not line.strip() or line.lstrip().startswith("#"):
                 continue
             if not re.fullmatch(r"[1-9]\d*\s+[1-9]\d*", line.strip()):
@@ -125,11 +126,11 @@ class Rewriter:
 def callback_rewriter():
     directory = Path(os.environ["CANDIDATE_AUDIT_DIR"])
     rewriter = Rewriter(directory / "issues.json", directory / "mapping.txt")
-    inventory = json.loads((directory / "inventory.json").read_text())
+    inventory = json.loads((directory / "inventory.json").read_bytes())
     rewriter.messages = inventory["messages"]
     rewriter.paths = inventory["paths"]
     # filter-repo can compile different callbacks with separate global namespaces.
-    rewriter.report = (directory / "rewrites.jsonl").open("a")
+    rewriter.report = (directory / "rewrites.jsonl").open("a", encoding="utf-8")
     return rewriter
 
 
@@ -232,7 +233,8 @@ def audit(source, commit, candidate, directory):
     refs = git(candidate, "for-each-ref", "--format=%(refname)").decode().splitlines()
     passed(refs == ["refs/heads/main"], "only refs/heads/main exists")
     passed(not git(candidate, "remote").strip(), "candidate has no remotes")
-    (directory / "summary.txt").write_text("\n".join(results) + "\n")
+    # Bytes keep LF line endings on Windows, matching the lines the shell script appends.
+    (directory / "summary.txt").write_bytes(("\n".join(results) + "\n").encode())
 
 
 if __name__ == "__main__":
