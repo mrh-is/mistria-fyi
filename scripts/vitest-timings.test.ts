@@ -37,9 +37,25 @@ describe("Vitest timing budgets", () => {
   });
 
   it("scales budgets by runner class and allows coverage overhead only nightly", () => {
-    expect(timingBudgets(2, false)).toEqual({ fileMs: 10_000, stepMs: 120_000 });
-    expect(timingBudgets(4, false)).toEqual({ fileMs: 5000, stepMs: 90_000 });
-    expect(timingBudgets(4, true)).toEqual({ fileMs: 5000, stepMs: 300_000 });
+    expect(timingBudgets(2, false)).toEqual({
+      fileMs: 10_000,
+      probeFileMs: 10_000,
+      stepMs: 120_000,
+    });
+    expect(timingBudgets(4, false)).toEqual({ fileMs: 5000, probeFileMs: 15_000, stepMs: 90_000 });
+    expect(timingBudgets(4, true)).toEqual({ fileMs: 5000, probeFileMs: 15_000, stepMs: 300_000 });
+  });
+
+  it("gives only the CLI probe files their own file ceiling", () => {
+    const probeBudgets = { ...budgets, probeFileMs: 15_000 };
+    const probe = { durationMs: 9500, file: cliProbeFiles[1], project: "node" };
+    expect(budgetFailures([probe], 10_000, probeBudgets)).toEqual([]);
+    expect(budgetFailures([{ ...probe, durationMs: 15_001 }], 10_000, probeBudgets)).toEqual([
+      `${cliProbeFiles[1]}: 15001 ms exceeds the 15000 ms file budget`,
+    ]);
+    expect(
+      budgetFailures([{ ...probe, file: "scripts/example.test.ts" }], 10_000, probeBudgets),
+    ).toEqual(["scripts/example.test.ts: 9500 ms exceeds the 5000 ms file budget"]);
   });
 
   it("publishes every file, slowest first, with the wall-time budget", () => {
