@@ -45,7 +45,7 @@
       "unknown"
     ],
     "ignoreCase": true,
-    "internalPattern": ["#lib", "$app"],
+    "internalPattern": ["#lib", "#scripts", "$app"],
     "order": "asc"
   },
   "overrides": [

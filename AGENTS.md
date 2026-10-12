@@ -190,9 +190,10 @@ Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, `bun`, or `pnpx`.
 installed in the workspace through `@sveltejs/adapter-cloudflare`, and `allowBuilds` in
 `pnpm-workspace.yaml` approves its native dependencies (`esbuild`, `workerd`), so run it as
 `pnpm exec wrangler <command>` (including `pnpm exec wrangler login`). `pnpx wrangler` installs a
-separate copy that ignores `allowBuilds` and fails with `ERR_PNPM_IGNORED_BUILDS`. The R2 upload
-scripts (`scripts/lib/r2-upload.sh`) call the workspace binary by path. Wrangler may need access to
-Cloudflare's API and to its stored credentials (on macOS, under `~/Library/Preferences/.wrangler/`);
+separate copy that ignores `allowBuilds` and fails with `ERR_PNPM_IGNORED_BUILDS`. The R2 uploader
+(`scripts/lib/r2-upload.ts`, behind `sprites:upload` & `fonts:upload`) runs the workspace binary the
+same way. Wrangler may need access to Cloudflare's API and to its stored credentials (on macOS,
+under `~/Library/Preferences/.wrangler/`; on Windows, under `%APPDATA%\xdg.config\.wrangler\`);
 never read or expose the stored OAuth token.
 
 **Adding or bumping a dependency:** run `pnpm audit --audit-level=moderate` before committing, and
@@ -262,14 +263,17 @@ These rules prevent accidental damage to generated or vendored code:
 - **Linting**: oxlint for every script, ESLint only for Svelte templates. See
   [docs/development-workflow.md](docs/development-workflow.md#linting--formatting) for which tool
   owns which rule and how to suppress each.
-- **Imports**: Auto-sorted by oxfmt — externals first, then `#lib`/`$app` internals, then relative.
-  Import `src/lib` through the `#lib` subpath import (declared in `package.json`'s `imports`);
-  SvelteKit 3 removed the `$lib` alias. Always write the file extension: `#lib` subpath imports
-  don't resolve without one, and relative imports follow the same rule for consistency. Name a
-  TypeScript module by its `.js` output (`./availability.js`, `#lib/utils.js`, `./store.svelte.js`)
-  and every other file by its real extension (`.svelte`, `.json`, `.css`). SvelteKit's virtual
-  `./$types` modules are the one exception. `vi.mock(...)` specifiers must match the import path
-  exactly, so update them alongside the imports they mock.
+- **Imports**: Auto-sorted by oxfmt — externals first, then `#lib`/`#scripts`/`$app` internals, then
+  relative. Import `src/lib` through the `#lib` subpath import (declared in `package.json`'s
+  `imports`); SvelteKit 3 removed the `$lib` alias. Always write the file extension: `#lib` subpath
+  imports don't resolve without one, and relative imports follow the same rule for consistency. Name
+  a TypeScript module by its `.js` output (`./availability.js`, `#lib/utils.js`,
+  `./store.svelte.js`) and every other file by its real extension (`.svelte`, `.json`, `.css`).
+  SvelteKit's virtual `./$types` modules are the one exception. `vi.mock(...)` specifiers must match
+  the import path exactly, so update them alongside the imports they mock. Scripts run under plain
+  `node` can't resolve a `.js` specifier to a `.ts` sibling, so they share modules through
+  `#scripts/*`, which maps an extensionless specifier to the `.ts` source
+  (`#scripts/lib/pnpm-command`).
 - **Styling**: Tailwind utilities & scoped `<style>` blocks, both on the design tokens in
   `src/app.css`; Stylelint rejects color, type-size, shadow, & radius literals in scoped CSS. See
   [docs/styling.md](docs/styling.md).

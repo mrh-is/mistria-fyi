@@ -148,7 +148,7 @@ are `status: blocked|ready|needs decision|in progress`, `area: pipeline|ui`,
   `CLOUDFLARE_PAGES_PROJECT` in agent environments. Decide before the cutover day, since the
   fallback changes the `*.pages.dev` URL & preview deployments.
 - **R2 bucket** `mistria-fyi-assets`, served at `assets.mistria.fyi` (sprites & fonts). Not bound to
-  the repository; `scripts/sprites/upload-sprites.sh` uploads with the maintainer’s Wrangler login.
+  the repository; `scripts/sprites/upload-sprites.ts` uploads with the maintainer’s Wrangler login.
   Unaffected by the cutover. The takedown procedure depends on it.
 - **Turnstile** site for the feedback form: not bound to the repo. Unaffected.
 - **Cloud-agent Pages read token** (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`):

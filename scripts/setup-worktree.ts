@@ -18,6 +18,8 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { pnpmCommand } from "#scripts/lib/pnpm-command";
+
 import type { SpawnSyncOptions } from "node:child_process";
 
 const CODEX_STORE_DIR = "/private/tmp/codex-pnpm-store";
@@ -140,23 +142,6 @@ export function planInstall(platform: NodeJS.Platform, env: NodeJS.ProcessEnv): 
       "--config.confirmModulesPurge=false",
     ],
   };
-}
-
-/**
- * Resolves pnpm without depending on a shell shim: `pnpm run` exports its own executable as
- * `npm_execpath`, which avoids PowerShell's `pnpm.ps1` & Node's refusal to spawn `pnpm.cmd`
- * without a shell on Windows. The same helper lives in `playwright-preview.ts`,
- * `test-changed.ts`, & `verify.ts`; keep them in step.
- */
-function pnpmCommand(args: string[]): { args: string[]; command: string; shell: boolean } {
-  const execPath = process.env.npm_execpath;
-  if (!execPath) {
-    return { args, command: "pnpm", shell: process.platform === "win32" };
-  }
-  if (/\.[cm]?js$/.test(execPath)) {
-    return { args: [execPath, ...args], command: process.execPath, shell: false };
-  }
-  return { args, command: execPath, shell: false };
 }
 
 function runPnpm(pnpmArgs: string[], options: SpawnSyncOptions): number {
