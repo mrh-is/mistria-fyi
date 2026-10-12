@@ -410,6 +410,7 @@ describe.skipIf(!pythonAvailable)("public candidate secret scanning", () => {
           "src/lib/stores/persistence-lifecycle.isolated.client.test.ts",
           "mistria-fyi-v1-quarantine",
         ],
+        ["src/lib/stores/persistence-lifecycle.client.test.ts", "mistria-fyi-v1-quarantine"],
       ];
       const write = (path: string, value: string): void => {
         mkdirSync(join(fixture, path, ".."), { recursive: true });
