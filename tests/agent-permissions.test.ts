@@ -91,6 +91,27 @@ describe("the two allowlists", () => {
   });
 });
 
+describe("package-manager deny lists", () => {
+  it("denies every alternative package manager in both clients", () => {
+    const { permissions } = JSON.parse(readFileSync(".claude/settings.json", "utf8")) as {
+      permissions: { deny: string[] };
+    };
+    const claudeDenied = permissions.deny.flatMap((entry) => {
+      const match = /^Bash\((\S+) \*\)$/.exec(entry);
+      return match ? [match[1]] : [];
+    });
+    const rules = readFileSync(".codex/rules/default.rules", "utf8");
+    const forbidden = /pattern\s*=\s*\[\[([^\]]*)\]\],\s*decision\s*=\s*"forbidden"/.exec(rules);
+    const codexDenied = [...(forbidden?.[1] ?? "").matchAll(/"([^"]+)"/g)].map(
+      (quoted) => quoted[1],
+    );
+    const required = ["bun", "npm", "npx", "pnpx", "yarn"];
+
+    expect(claudeDenied.toSorted()).toEqual(required);
+    expect(codexDenied.toSorted()).toEqual(required);
+  });
+});
+
 describe("Claude Code path guard", () => {
   it("registers the PreToolUse hook for every file-writing tool", () => {
     const { hooks } = JSON.parse(readFileSync(".claude/settings.json", "utf8")) as {

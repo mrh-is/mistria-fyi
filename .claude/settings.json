@@ -43,7 +43,7 @@
       "Bash(pnpm run worktree:new *)",
       "Bash(pnpm run worktree:setup *)"
     ],
-    "deny": ["Bash(npm *)", "Bash(npx *)", "Bash(yarn *)", "Bash(bun *)"]
+    "deny": ["Bash(npm *)", "Bash(npx *)", "Bash(pnpx *)", "Bash(yarn *)", "Bash(bun *)"]
   },
   "hooks": {
     "PreToolUse": [
