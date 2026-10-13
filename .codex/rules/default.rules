@@ -32,13 +32,18 @@ prefix_rule(
             "test:pipeline:assets",
             "test:pwa",
             "verify",
-            "machine:doctor",
             "worktree:new",
-            "worktree:setup",
         ],
     ],
     decision = "allow",
     justification = "These are the repository's documented pnpm scripts.",
+)
+
+# Permit the setup scripts that run with plain Node, before dependencies exist.
+prefix_rule(
+    pattern = ["node", ["scripts/machine-doctor.ts", "scripts/setup-worktree.ts"]],
+    decision = "allow",
+    justification = "The read-only machine doctor & worktree setup run before pnpm install.",
 )
 
 # Permit the package-local tools used for focused development and verification.

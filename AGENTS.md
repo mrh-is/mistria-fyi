@@ -50,19 +50,19 @@ not here.
 ## Worktrees
 
 - Worktrees are optional. To use one, run
-  `pnpm run worktree:new <issue-number>-<short-description>`, or `pnpm run worktree:setup` inside a
-  harness-created worktree. Setup links `.worktreeinclude` entries (game assets, env files),
-  installs with the frozen lockfile, & runs `prepare`. Read
+  `pnpm run worktree:new <issue-number>-<short-description>`, or `node scripts/setup-worktree.ts`
+  inside a harness-created worktree. Setup links `.worktreeinclude` entries (game assets, env
+  files), installs with the frozen lockfile, & runs `prepare`. Read
   [agent-reference.md](docs/agent-reference.md#worktree-mechanics) first.
 - A fresh, platform-managed ephemeral container with a session-isolated assigned branch works
   directly in its checkout. Do not create a nested worktree or replace that branch.
 - Start from the refreshed remote tip of the intended branch. Never reset existing work, switch a
   shared checkout, or discard changes to refresh.
 - Each editing subagent needs a worktree its harness permits it to edit. Claude Code uses Agent
-  `isolation: "worktree"` & `pnpm run worktree:setup`; a named preview serves the orchestrator’s
-  checkout, so preview the subagent’s own server by URL. Supply each delegation with file ownership,
-  harness boundaries, & its focused test command; built-in Explore & Plan subagents may not receive
-  project memory.
+  `isolation: "worktree"` & `node scripts/setup-worktree.ts`; a named preview serves the
+  orchestrator’s checkout, so preview the subagent’s own server by URL. Supply each delegation with
+  file ownership, harness boundaries, & its focused test command; built-in Explore & Plan subagents
+  may not receive project memory.
 - Never copy or share dependencies, caches, builds, or writable generated directories between
   worktrees.
 
@@ -156,8 +156,9 @@ substitute another upload path.
 
 - **Report immediately,** before any other action: the failing command or operation, the relevant
   error (redact tokens & other credentials), & the work it blocks.
-- **Diagnose read-only.** `pnpm run machine:doctor` reports each prerequisite as ok, missing, or
-  wrong without changing anything; include its output. The setup procedure is
+- **Diagnose read-only.** `node scripts/machine-doctor.ts` reports each prerequisite as ok, missing,
+  or wrong without changing anything; run it with `node`, not through pnpm, which would check the
+  wrong runtime; include its output. The setup procedure is
   [machine-setup.md](docs/machine-setup.md).
 - **Then wait for the user’s explicit direction.** Do not install, configure, authenticate,
   substitute a tool, skip or bypass a check, or retry with a workaround unless the user directs it.

@@ -8,10 +8,10 @@
 ## 1. Local Setup Requirements
 
 > **New machine?** Follow [machine-setup.md](machine-setup.md); it holds the per-platform install &
-> login steps. Run `pnpm run machine:doctor` (or `node scripts/machine-doctor.ts` before pnpm
-> exists) to see which prerequisites are present, missing, or the wrong version. It changes nothing.
-> If a tool is missing or broken mid-task, agents stop & report instead of repairing it (AGENTS.md,
-> "Local tooling failures").
+> login steps. Run `node scripts/machine-doctor.ts` (with `node`, not through pnpm) to see which
+> prerequisites are present, missing, or the wrong version. It changes nothing. If a tool is missing
+> or broken mid-task, agents stop & report instead of repairing it (AGENTS.md, "Local tooling
+> failures").
 
 - **Node.js**: `.node-version` is the single source of truth (Node 24 LTS). `package.json`’s
   `devEngines.runtime` repeats it with `onFail: "download"`, so `pnpm install` downloads that exact
@@ -81,7 +81,7 @@ Agents with their own managed worktree directory (for example `.claude/worktrees
 instead; run the setup steps from inside it:
 
 ```sh
-pnpm run worktree:setup
+node scripts/setup-worktree.ts
 ```
 
 It refuses to run in the main checkout. Claude Code orchestrators should give editing subagents
@@ -124,7 +124,7 @@ subsequent commands and approved setup retries:
 
 ```sh
 export pnpm_config_store_dir=/private/tmp/codex-pnpm-store
-pnpm_config_confirm_modules_purge=false pnpm run worktree:setup
+pnpm_config_confirm_modules_purge=false node scripts/setup-worktree.ts
 ```
 
 Preparation still needs permission to write shared Git hook metadata. Do not use this retry to
@@ -834,11 +834,11 @@ offline fallback, registration, or activation behavior.
 
 ### Worktrees & Verification on Windows
 
-`worktree:new`, `worktree:setup`, & `verify` are Node scripts (`scripts/*.ts`), so Windows runs them
-without a shell. The earlier Bash versions failed there (#353): from `cmd.exe`, `bash` can resolve
-to WSL, whose Git records a `/mnt/c/...` gitdir that Git for Windows reports as prunable and whose
-launcher can outlive `verify`'s child without returning its exit status, while Git Bash's `ln -s`
-copies or fails instead of linking.
+`worktree:new`, `scripts/setup-worktree.ts`, & `verify` are Node scripts (`scripts/*.ts`), so
+Windows runs them without a shell. The earlier Bash versions failed there (#353): from `cmd.exe`,
+`bash` can resolve to WSL, whose Git records a `/mnt/c/...` gitdir that Git for Windows reports as
+prunable and whose launcher can outlive `verify`'s child without returning its exit status, while
+Git Bash's `ln -s` copies or fails instead of linking.
 
 - **Links**: setup links each `.worktreeinclude` entry that exists in the main checkout and skips
   the rest. On Windows, directories become junctions, which need neither administrator rights nor
