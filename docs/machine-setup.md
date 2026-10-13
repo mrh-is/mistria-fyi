@@ -7,8 +7,9 @@ passing `pnpm run verify`. Linux works with the same steps; use your package man
 The doctor is the diagnostic for this document. It reports each prerequisite as present, missing, or
 the wrong version, prints the exact fix, & changes nothing. It never installs, configures, or
 authenticates, and it never reads credentials; the logins below are yours to run. Re-run it any time
-a machine misbehaves (`pnpm run machine:doctor` once pnpm works; before that,
-`node scripts/machine-doctor.ts`, which needs only Node).
+a machine misbehaves. Always run it with `node`, never through pnpm: `pnpm run` installs or verifies
+dependencies first and runs scripts on the `devEngines` runtime from `package.json`, which hides the
+Node version agent shells actually use.
 
 Agents that hit a local tooling failure stop & report it instead of repairing it; see "Local tooling
 failures" in [AGENTS.md](../AGENTS.md). A human or the user fixes the machine with this procedure,
@@ -19,8 +20,9 @@ then the agent resumes.
 1. **Git** (`brew install git`, `winget install Git.Git`). On Windows, also run
    `git config --global core.longpaths true`, or worktrees with deep `node_modules` paths fail.
 2. **Node** at the version in `.node-version`, activated so agent shells see it, not only your
-   interactive shell (fnm, nvm, or Volta; confirm with `node --version` in a fresh shell). A newer
-   major, such as Node 26, fails the doctor.
+   interactive shell (fnm, nvm, Volta, or mise; confirm with `node --version` in a fresh shell). A
+   newer major, such as Node 26, fails the doctor. mise ignores `.node-version` unless
+   `mise settings add idiomatic_version_file_enable_tools node` enables it.
 3. **pnpm**, at a major version matching `packageManager` in `package.json`. Its launcher then
    downloads the pinned release. On Windows PowerShell, use `pnpm.cmd` if the execution policy
    blocks `pnpm.ps1`. See the pnpm launcher note in
@@ -29,8 +31,10 @@ then the agent resumes.
    `winget install koalaman.shellcheck`).
 5. **GitHub CLI** (`brew install gh`, `winget install GitHub.cli`), then run `gh auth login` and
    choose HTTPS. The remote stays HTTPS; do not switch it to SSH.
-6. **Dependencies**: `pnpm install --frozen-lockfile`, or `pnpm run worktree:setup` inside a
-   worktree.
+6. **Dependencies**: `pnpm install --frozen-lockfile`, or `node scripts/setup-worktree.ts` inside a
+   worktree. Every other `pnpm run` or `pnpm exec` command fails with
+   `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN` until dependencies match the lockfile, rather than installing
+   them implicitly.
 7. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
    `gpg.ssh.program = ssh-keygen`, per [git identity](agent-workflow.md#git-identity). The doctor
    lists this as a todo, never a failure, because cloud sandboxes legitimately skip it.
@@ -51,11 +55,13 @@ then the agent resumes.
 
 ## Codex shells
 
-Codex sandboxes keep package-manager caches outside the repository. Set
-`npm_config_store_dir=/private/tmp/codex-pnpm-store` for every pnpm command in the session, because
-pnpm's version manager can otherwise use a repo-local `.pnpm-store` for its own executable. The
-doctor flags a Codex shell where it is unset. Hook installation during `prepare` writes shared Git
-metadata, which the sandbox may need the user to approve.
+Codex sandboxes keep package-manager caches outside the repository. Export
+`pnpm_config_store_dir=/private/tmp/codex-pnpm-store` for every pnpm command in the session, because
+pnpm's version manager can otherwise use a repo-local `.pnpm-store` for its own executable. pnpm 11
+ignores the legacy `npm_config_store_dir` spelling. In a Codex shell, the doctor fails when the
+variable is unset, legacy-only, inside the repository, or different from the store pnpm reports.
+Hook installation during `prepare` writes shared Git metadata, which the sandbox may need the user
+to approve.
 
 ## Verify the result
 

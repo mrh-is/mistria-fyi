@@ -1,5 +1,11 @@
 engineStrict: true
 
+# Fail `pnpm run` & `pnpm exec` on absent or stale dependencies instead of installing them silently
+# (pnpm 11 defaults to `install`). Install explicitly with `pnpm install --frozen-lockfile` or
+# `node scripts/setup-worktree.ts`; commands that run before dependencies exist are invoked with
+# `node` directly.
+verifyDepsBeforeRun: error
+
 packages:
   - pipeline
 
