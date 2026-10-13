@@ -46,7 +46,7 @@ Area labels scope the change to a subsystem:
 
 `<issue-number>-<short-description>`, e.g. `23-npc-hearts-center`; `pnpm run worktree:new` creates
 this form. Agent harness branches such as `claude/issue-23-a1b2c3` or `codex/…` are also accepted.
-See [AGENTS.md §1](AGENTS.md#1-worktree-isolation).
+See the [worktree policy](AGENTS.md#worktree-isolation).
 
 ## Project Overview
 
@@ -74,7 +74,7 @@ contracts, and state management rules, see [docs/app-architecture.md](docs/app-a
 
 ## Commands
 
-See the command table in [AGENTS.md §4](AGENTS.md#4-commands).
+See the command table in the [agent command reference](docs/agent-reference.md#package-commands).
 
 ## Security
 
@@ -82,14 +82,16 @@ Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
 ## Code Conventions
 
-[AGENTS.md §5–6](AGENTS.md#5-architecture-boundaries) is the single source for architecture
-boundaries & code style, including when to extract a component. Styling rules live in
-[docs/styling.md](docs/styling.md).
+[AGENTS.md](AGENTS.md#architecture-boundaries) defines architecture boundaries & component
+extraction rules; [agent-reference.md](docs/agent-reference.md#code-conventions) defines code style.
+Styling rules live in [docs/styling.md](docs/styling.md).
 
 ## Pipeline
 
 The app is powered by `tracker-data.json`, generated from locally supplied game TOML assets. See the
 [pipeline guide](pipeline/README.md) for the current pipeline contracts. Extractor work requires
-locally supplied assets for integration regeneration. When relevant assets are available, run
-`pnpm exec vitest run pipeline/`, `pnpm run pipeline -- /path/to/assets`, `pnpm run check`, and
-`pnpm run lint`, then commit the updated `src/lib/data/tracker-data.json`.
+locally supplied assets for integration regeneration. During development, run the affected colocated
+test with `pnpm exec vitest run pipeline/src/path/to/module.test.ts`. At commit-ready, follow
+[agent-verification.md](docs/agent-verification.md#full-verification) for the full-matrix exception,
+real-asset tests, & pipeline regeneration. Commit reviewed generated changes, preserving
+[the game version protocol](docs/game-version-update-protocol.md).

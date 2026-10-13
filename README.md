@@ -49,7 +49,7 @@ pnpm run pipeline -- /path/to/assets
 
 ## Scripts
 
-See the command table in [AGENTS.md §4](AGENTS.md#4-commands).
+See the command table in the [agent command reference](docs/agent-reference.md#package-commands).
 
 ## Tech stack
 

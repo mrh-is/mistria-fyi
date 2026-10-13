@@ -231,7 +231,7 @@ compatibility change is required”. Support that conclusion with the reviewed c
 ## Verify and release
 
 A game version update regenerates `tracker-data.json`, so it is one of the explicit exceptions in
-[AGENTS.md §7](../AGENTS.md#7-verification): run the full local
+[verification policy](agent-verification.md#full-verification): run the full local
 [verification matrix](development-workflow.md#5-verification-matrix) with `pnpm run verify`, plus
 both real-data checks against the new assets. When practical, run the preceding version’s historical
 integration fixtures as well.

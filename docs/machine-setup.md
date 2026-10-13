@@ -32,7 +32,7 @@ then the agent resumes.
 6. **Dependencies**: `pnpm install --frozen-lockfile`, or `pnpm run worktree:setup` inside a
    worktree.
 7. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
-   `gpg.ssh.program = ssh-keygen`, per [AGENTS.md §2](../AGENTS.md#2-git-configuration). The doctor
+   `gpg.ssh.program = ssh-keygen`, per [git identity](agent-workflow.md#git-identity). The doctor
    lists this as a todo, never a failure, because cloud sandboxes legitimately skip it.
 
 ## Needed for specific work

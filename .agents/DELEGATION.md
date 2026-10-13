@@ -9,7 +9,9 @@ identity and capabilities, and to route work efficiently.
 ## Routing at session start
 
 Evaluate the task before starting work. **The default is the cheapest capable model, not the most
-powerful one.** Escalate only when the task demands it.
+powerful one.** Escalate only when the task demands it. The table is a project-specific suggestion,
+not proof that an ID is available in every harness. Use configured preferences & actual model
+availability.
 
 | Task type                                                 | Tier      | Claude          | Codex         |
 | --------------------------------------------------------- | --------- | --------------- | ------------- |
@@ -42,9 +44,11 @@ guarantee.
 - **No permission bypasses.** Never pass `--allow-all-tools`, `--auto`, `--yolo`, or similar flags
   that skip approval prompts unless the user explicitly asks for that flag. The commands in the
   table below show the base invocation; run them in each CLI's default approval mode.
-- **Same worktree, same attribution.** A delegate works in the orchestrator's worktree on its branch
-  (never the main checkout), follows [AGENTS.md](../AGENTS.md), & its commits carry the
-  orchestrator's `agent:*` identity plus the delegate's own `Co-Authored-By` trailer.
+- **Isolated edits, shared ownership.** Give each editing subagent a harness-writable isolated
+  worktree & branch, following [AGENTS.md](../AGENTS.md#worktree-isolation). Read-only delegates may
+  inspect the orchestrator's checkout. The orchestrator retains the issue's `agent:*` label; commits
+  keep the repository owner as author & add each material author's product-level `Co-Authored-By`
+  trailer. A commit does not receive an `agent:*` label.
 - **Orchestrator verifies.** Read the delegate's diff & run the focused checks before committing.
 
 | Agent       | Command (non-interactive) | Limits                           | Notes                                                                                                                    |
@@ -117,7 +121,7 @@ Use for substantial tasks that need strong reasoning:
 ## Session lifecycle
 
 Session budgets, handoff notes, and the stop rule live in
-[AGENTS.md §10](../AGENTS.md#10-session-lifecycle). When a usage window is about to close, write the
+[session policy](../AGENTS.md#session-economy). When a usage window is about to close, write the
 handoff note, then stop. If the harness can schedule a follow-up (for example, Claude Code's
 `ScheduleWakeup`), use it to start a fresh session in the next window; otherwise leave the handoff
 for the user. Do not continue the current session after the cache has gone cold.
@@ -125,5 +129,6 @@ for the user. Do not continue the current session after the cache has gone cold.
 ## Parallel dispatch
 
 When you have 2+ independent tasks to delegate, dispatch them simultaneously. Don't serialize work
-that can run in parallel. Each agent runs in its own process with no shared state, so independence
-is the only requirement.
+that can run in parallel. Processes can share Git refs, stashes, local files, & tools. Assign
+disjoint ownership, isolate editing worktrees, and tell each delegate not to revert another agent's
+edits.

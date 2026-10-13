@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 /**
- * Enforces AGENTS.md §2 agent attribution.
+ * Enforces the agent attribution rules in docs/agent-workflow.md.
  *
  * Rules, applied to the PR's own commits only (history is never checked):
  *

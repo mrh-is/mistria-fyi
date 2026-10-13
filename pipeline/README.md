@@ -83,6 +83,12 @@ before changing version-specific fixtures or committing generated data from diff
 
 ### Test tiers
 
+During development, run the colocated test covering the change:
+`pnpm exec vitest run pipeline/src/path/to/module.test.ts`. Use broader suites only for the
+commit-ready exceptions in [agent-verification.md](../docs/agent-verification.md#full-verification),
+including asset checks & regeneration for parser, evaluator, extractor, or shared-contract changes.
+The commands below describe available tiers, not a default session baseline.
+
 The default pipeline suite uses synthetic fixtures and passes in a fresh clone without game assets.
 CI runs it as part of `pnpm run test` on every pull request:
 

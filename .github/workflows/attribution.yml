@@ -1,6 +1,6 @@
 name: Attribution
 
-# Agent attribution rules from AGENTS.md §2; scripts/check-attribution.ts documents them. Only the
+# Agent attribution rules from docs/agent-workflow.md; scripts/check-attribution.ts documents them. Only the
 # PR's own commits are checked, so existing history never fails.
 
 on:

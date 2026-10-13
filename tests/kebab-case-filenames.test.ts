@@ -1,5 +1,6 @@
-// AGENTS.md §6: files are `kebab-case`. SvelteKit's `+`-prefixed route files & `[param]`/`(group)`
-// directories are framework syntax, so only the part after those markers is checked.
+// docs/agent-reference.md, code conventions: files are `kebab-case`. SvelteKit's `+`-prefixed
+// route files & `[param]`/`(group)` directories are framework syntax, so only the part after those
+// markers is checked.
 import { readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
