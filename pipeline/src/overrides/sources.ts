@@ -399,6 +399,8 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
         trigger: "completion" as const,
       },
     ],
+    // Game 1.0.7: rings the gold coop & barn construction sites (`blueprints.toml`).
+    ["construction_fence_gold" as ItemId]: [{ type: "default" as const }],
     ["construction_fence" as ItemId]: [{ type: "default" as const }],
     ["crafting_scroll" as ItemId]: [{ type: "default" as const }],
     ["dragonsworn_chest_and_pants" as ItemId]: [

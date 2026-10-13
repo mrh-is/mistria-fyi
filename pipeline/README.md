@@ -12,17 +12,19 @@ real-asset integration suite and the narrow villager-sprite command also accept 
 directly (see below). Game assets are ignored by Git and are not present in a fresh clone.
 
 ```sh
-pnpm run pipeline -- pipeline/input --version=1.0.6
-pnpm run pipeline -- /path/to/assets
+pnpm run pipeline -- pipeline/input --version=X.Y.Z
+pnpm run pipeline -- /path/to/assets --version=X.Y.Z
 MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
-pnpm run pipeline -- /path/to/assets --parse-only --parse-profile=v1.0.6
-pnpm run pipeline:assets -- --version=1.0.6
+pnpm run pipeline -- /path/to/assets --parse-only --parse-profile=canonical
+pnpm run pipeline:assets
 ```
 
 `pnpm run pipeline:assets` is the local-development shortcut for the ignored `pipeline/input`
-game-files root. Pass pipeline flags after `--`; it avoids a shell environment assignment and is the
-preferred command for routine regeneration in a configured worktree.
+game-files root, at the canonical game version (`--version=current`, which reads
+`CURRENT_GAME_VERSION` in `src/game-version.ts` and picks `pipeline/input/vX.Y.Z/assets`). Pass
+other pipeline flags after `--`; it avoids a shell environment assignment and is the preferred
+command for routine regeneration in a configured worktree.
 
 `pipeline/input` holds one `vX.Y.Z/assets` folder per release. Given a directory with version
 folders and no `fiddle/` of its own, the pipeline reads `vX.Y.Z/assets` for the `--version` you pass
@@ -71,8 +73,8 @@ extraction; pass an extracted structured-assets root together with `--sprites`.
 
 `--parse-only` checks that at least one non-metadata TOML file parses and that every parsed root has
 matching provenance. It accepts an extracted `fiddle/` directory or an `assets.zip` archive, and
-does not require version or localization metadata. Add `--parse-profile=v1.0.6` to check the
-canonical fixture’s 297 files and three representative paths. Unknown or duplicate CLI flags fail
+does not require version or localization metadata. Add `--parse-profile=canonical` to check the
+canonical fixture’s 298 files and three representative paths. Unknown or duplicate CLI flags fail
 before assets are read.
 
 Supporting a new Fields of Mistria version is a reviewed application release, not a routine
@@ -88,11 +90,10 @@ CI runs it as part of `pnpm run test` on every pull request:
 pnpm run test:pipeline
 ```
 
-The canonical v1.0.6 integration suite is an explicit local check that CI cannot run, because
-licensed game assets are not distributed with the repository. It uses
-`pipeline/input/vX.Y.Z/assets`, for the committed tracker data's version, by default or
-`MISTRIA_ASSETS` when set, and fails with the resolved missing path instead of silently skipping
-when assets are unavailable:
+The canonical integration suite is an explicit local check that CI cannot run, because licensed game
+assets are not distributed with the repository. It uses `pipeline/input/vX.Y.Z/assets`, for the
+committed tracker data's version, by default or `MISTRIA_ASSETS` when set, and fails with the
+resolved missing path instead of silently skipping when assets are unavailable:
 
 ```sh
 pnpm run test:pipeline:assets
@@ -222,7 +223,7 @@ Paths are relative to `pipeline/src/`. Colocated `*.test.ts` files cover most mo
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `main.ts`                  | CLI, asset-root resolution, stage order, staging, and publishing. `--parse-only` stops after parsing; `--villager-sprites-only` runs villager sprites alone.            |
 | `cli-options.ts`           | Validates CLI arguments and rejects unknown or conflicting flags before asset reads.                                                                                    |
-| `parse/parse-smoke.ts`     | Checks generic parsed structure, with an explicit strict v1.0.6 fixture profile.                                                                                        |
+| `parse/parse-smoke.ts`     | Checks generic parsed structure, with an explicit strict canonical fixture profile.                                                                                     |
 | `assemble.ts`              | `assembleTrackerData`: extraction, source attachment, visibility, & validation with an injected `Localizer`. Reviewed overrides & diagnostics are injectable for tests. |
 | `parse/parse-fiddle.ts`    | Parses `fiddle/` from disk or straight out of `assets.zip` into one namespace tree. Excludes `.meta.toml`; rejects duplicate and colliding destinations.                |
 | `parse/evaluate.ts`        | Resolves `value.bin` and `value.store` expressions in place (grammar below).                                                                                            |

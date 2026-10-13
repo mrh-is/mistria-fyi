@@ -2,15 +2,16 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { parseCliOptions, resolveCallerPath } from "./cli-options.js";
+import { CURRENT_GAME_VERSION } from "./game-version.js";
 
 describe("parseCliOptions", () => {
   it("accepts the documented flags and one assets directory", () => {
-    expect(parseCliOptions(["--", "input/assets", "--version=1.0.6", "--sprites"])).toEqual({
+    expect(parseCliOptions(["--", "input/assets", "--version=2.3.4", "--sprites"])).toEqual({
       assetsDir: "input/assets",
       parseOnly: false,
       parseProfile: undefined,
       sprites: true,
-      version: "1.0.6",
+      version: "2.3.4",
       villagerSpritesOnly: false,
     });
   });
@@ -27,9 +28,15 @@ describe("parseCliOptions", () => {
     expect(() => parseCliOptions(["--sprites", "--sprites"])).toThrow(/Duplicate/);
   });
 
-  it("requires parse-only for the explicit v1.0.6 profile", () => {
-    expect(() => parseCliOptions(["--parse-profile=v1.0.6"])).toThrow(/--parse-only/);
-    expect(parseCliOptions(["--parse-only", "--parse-profile=v1.0.6"]).parseProfile).toBe("v1.0.6");
+  it("resolves --version=current to the canonical game version", () => {
+    expect(parseCliOptions(["--version=current"]).version).toBe(CURRENT_GAME_VERSION);
+  });
+
+  it("requires parse-only for the canonical profile", () => {
+    expect(() => parseCliOptions(["--parse-profile=canonical"])).toThrow(/--parse-only/);
+    expect(parseCliOptions(["--parse-only", "--parse-profile=canonical"]).parseProfile).toBe(
+      "canonical",
+    );
   });
 });
 

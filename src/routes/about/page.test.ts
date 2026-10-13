@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { trackerData } from "#lib/data/index.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import AboutPage from "./+page.svelte";
@@ -14,7 +15,7 @@ describe("about and legal page", () => {
     expect(text).toMatch(/maintained by\s+Michael Helmbrecht\./u);
     expect(text).toMatch(/sponsored by\s+Villager Studio\s+\(though, call me!\)\./u);
     expect(text).toContain("all the content therein");
-    expect(text).toContain("game version 1.0.6");
+    expect(text).toContain(`game version ${trackerData.version}`);
     expect(text).toContain("briefly be out of date");
     expect(container.querySelector("a[href='mailto:michael@mistria.fyi']")).not.toBeNull();
     expect(container.querySelector(".feedback-icon")).not.toBeNull();

@@ -10,7 +10,7 @@ declare const __SPRITE_ASSET_BASE__: string;
  * overwritten in place at a stable, entity-ID-keyed path, so this query parameter is what busts
  * the edge cache and the service worker's cache on a pixel change.
  */
-const spriteGeneration = 1;
+const spriteGeneration = 2;
 
 export function itemSpriteUrl(itemId: string): string {
   return `${__SPRITE_ASSET_BASE__}/sprites/items/${itemId}.webp?g=${String(spriteGeneration)}`;
