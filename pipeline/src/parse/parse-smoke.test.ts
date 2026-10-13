@@ -11,7 +11,7 @@ describe("checkParseSmoke", () => {
       checkParseSmoke(parsed);
     }).not.toThrow();
     expect(() => {
-      checkParseSmoke(parsed, "v1.0.7");
+      checkParseSmoke(parsed, "canonical");
     }).toThrow(/Expected 298/);
   });
 

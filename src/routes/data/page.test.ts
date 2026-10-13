@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { trackerData } from "#lib/data/index.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
@@ -31,7 +32,7 @@ describe("data management page", () => {
     ]) {
       expect(disclosureState(container, title)).toBeDefined();
     }
-    expect(text).toContain("Fields of Mistria v1.0.7");
+    expect(text).toContain(`Fields of Mistria v${trackerData.version}`);
     expect(container.querySelector("a[href='/about']")).toBeNull();
     expect(container.querySelector("a[href='/privacy']")).toBeNull();
     expect(text).not.toContain("Send feedback");

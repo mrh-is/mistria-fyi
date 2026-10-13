@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { assembleTrackerData } from "../assemble.js";
 import { forEachItem } from "../extractor-helpers.js";
+import { CURRENT_GAME_VERSION } from "../game-version.js";
 import { createAssetsLocalizer } from "../localize/localize.js";
 import { evaluateExpressions } from "../parse/evaluate.js";
 import { parseFiddle } from "../parse/parse-fiddle.js";
@@ -64,7 +65,7 @@ describe("reviewed game facts against installed assets", () => {
       }
       expect(() => {
         assembleTrackerData(data, createAssetsLocalizer(requireGameAssetsDir()), {
-          version: "1.0.7",
+          version: CURRENT_GAME_VERSION,
         });
       }).toThrow("Obsolete reviewed cosmetic exclusion entry");
     },
@@ -76,7 +77,7 @@ describe("reviewed game facts against installed assets", () => {
     legendary.large_roll.push({ item: "gold_chest" });
     expect(() => {
       assembleTrackerData(data, createAssetsLocalizer(requireGameAssetsDir()), {
-        version: "1.0.7",
+        version: CURRENT_GAME_VERSION,
       });
     }).toThrow(
       "Obsolete reviewed item exclusion entry now encoded in native acquisition sources: gold_chest",

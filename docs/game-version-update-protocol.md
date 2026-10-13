@@ -86,8 +86,11 @@ Other machines point `pipeline/input/assets` at their synced `Mistria/vX.Y.Z/ass
 
 ## Generate the candidate
 
-Run the pipeline against the shared copy in the isolated worktree. Update version-specific parser or
-integration-test profiles deliberately when the new asset layout requires it. On the gaming PC:
+Run the pipeline against the shared copy in the isolated worktree. Set `CURRENT_GAME_VERSION`
+(`pipeline/src/game-version.ts`) to the new version first; it is the one place the supported version
+lives, and the canonical parse profile, real-asset suite, & `pipeline:assets` all read it. Update
+the canonical parser profile and real-asset expectations deliberately when the new asset layout
+requires it. On the gaming PC:
 
 ```sh
 MISTRIA_ASSETS="G:\My Drive\Mistria\vX.Y.Z\assets" pnpm run test:pipeline:assets
