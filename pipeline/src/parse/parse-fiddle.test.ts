@@ -57,6 +57,16 @@ describe("parseFiddle", () => {
 });
 
 describe("parseFiddleFromZip", () => {
+  it("terminates ancestor traversal for a repeated separator after the fiddle prefix", async () => {
+    const parsed = await parseFiddleFromZip(
+      writeStoredZipFixture({
+        "assets/fiddle//items/crops.toml": "value = 1",
+      }),
+    );
+    expect(parsed.data).toHaveProperty("items.crops.value", 1);
+    expect(parsed.sourceFileByRootPath.get("items.crops")).toBe("/items/crops.toml");
+  });
+
   it("registers disk and shuffled zip inputs in the same stable order", async () => {
     const files = Object.fromEntries([
       ["zebra.toml", "value = 1"],

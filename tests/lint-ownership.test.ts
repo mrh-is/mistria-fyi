@@ -11,7 +11,7 @@
 import { ESLint } from "eslint";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { basename } from "node:path";
+import { basename, join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import type { SpawnSyncOptionsWithStringEncoding } from "node:child_process";
@@ -41,7 +41,7 @@ function oxlintRules(): Map<string, Set<string>> {
       "--type-aware",
       "--disable-nested-config",
       "--config",
-      `${probeDirectory}/oxlintrc.probe.json`,
+      join(probeDirectory, "oxlintrc.probe.json"),
       "--format",
       "json",
       probeDirectory,
@@ -52,7 +52,7 @@ function oxlintRules(): Map<string, Set<string>> {
   const report = JSON.parse(stdout) as OxlintReport;
   const rules = new Map<string, Set<string>>();
   for (const { code, filename } of report.diagnostics) {
-    const file = filename.slice(probeDirectory.length + 1);
+    const file = basename(filename);
     rules.set(file, (rules.get(file) ?? new Set()).add(code));
   }
   return rules;
@@ -62,11 +62,11 @@ async function eslintRules(file: string): Promise<string[]> {
   const eslint = new ESLint({
     ignore: false,
     overrideConfig: {
-      files: [`${probeDirectory}/**`],
+      files: [posix.join(probeDirectory, "**")],
       rules: { "local/no-hardcoded-ui-text": "error" },
     },
   });
-  const results = await eslint.lintFiles([`${probeDirectory}/${file}`]);
+  const results = await eslint.lintFiles([join(probeDirectory, file)]);
   return results
     .flatMap((result) => result.messages)
     .map((message) => message.ruleId ?? "")

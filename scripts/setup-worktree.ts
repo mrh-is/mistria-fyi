@@ -17,7 +17,7 @@ import {
   readFileSync,
   symlinkSync,
 } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, posix, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
@@ -50,7 +50,9 @@ export function planLinks(repoRoot: string, worktreeDir: string, patterns: strin
       continue;
     }
     const directory = pattern.endsWith("/");
-    const relativePaths = directory ? [pattern.slice(0, -1)] : expandFilePattern(repoRoot, pattern);
+    const relativePaths = directory
+      ? [posix.join(pattern, ".")]
+      : expandFilePattern(repoRoot, pattern);
     for (const relativePath of relativePaths) {
       const source = join(repoRoot, relativePath);
       const destination = join(worktreeDir, relativePath);
@@ -65,9 +67,8 @@ export function planLinks(repoRoot: string, worktreeDir: string, patterns: strin
 }
 
 function expandFilePattern(repoRoot: string, pattern: string): string[] {
-  const slash = pattern.lastIndexOf("/");
-  const parent = pattern.slice(0, slash + 1);
-  const name = pattern.slice(slash + 1);
+  const parent = posix.dirname(pattern);
+  const name = posix.basename(pattern);
   if (!/[*?]/.test(name)) {
     return [pattern];
   }
@@ -81,7 +82,7 @@ function expandFilePattern(repoRoot: string, pattern: string): string[] {
     return readdirSync(join(repoRoot, parent))
       .filter((entry) => matcher.test(entry))
       .toSorted()
-      .map((entry) => `${parent}${entry}`);
+      .map((entry) => posix.join(parent, entry));
   } catch {
     return [];
   }
