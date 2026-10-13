@@ -25,6 +25,7 @@
       "Bash(pnpm run sprites:manifest *)",
       "Bash(pnpm run preview *)",
       "Bash(pnpm run verify *)",
+      "Bash(pnpm run machine:doctor *)",
       "Bash(pnpm run dev *)",
       "Bash(pnpm run pipeline *)",
       "Bash(pnpm run pipeline:assets *)",
