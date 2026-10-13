@@ -43,13 +43,28 @@ const allowedMissing = new Set([
   "scripts/measure-transfer-size.ts", // public-repo.md: deleted historical path to filter
 ]);
 
-function isIgnored(path: string): boolean {
+function gitIgnores(path: string): boolean {
   try {
     execFileSync("git", ["check-ignore", "-q", path], { cwd: root, stdio: "ignore" });
     return true;
   } catch {
     return false;
   }
+}
+
+function isIgnored(path: string): boolean {
+  // Git refuses paths beyond a symlink (exit 128), so a path under a symlinked, ignored directory
+  // like `pipeline/input` only resolves through its ancestors. Each ancestor is checked with a
+  // trailing slash, so directory-only patterns match one missing from disk, and without one,
+  // since git refuses a symlink spelled with a trailing slash.
+  const segments = path.replace(/\/$/u, "").split("/");
+  return (
+    gitIgnores(path) ||
+    segments.slice(0, -1).some((_, index) => {
+      const ancestor = segments.slice(0, index + 1).join("/");
+      return gitIgnores(ancestor) || gitIgnores(`${ancestor}/`);
+    })
+  );
 }
 
 function stripCode(markdown: string): string {
