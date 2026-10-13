@@ -70,6 +70,19 @@ describe("reviewed game facts against installed assets", () => {
     },
   );
 
+  it("fails when an excluded item gains a native chicken statue reward", () => {
+    const data = installedFacts();
+    const legendary = (data.chicken_statue as Record<string, Record<string, unknown[]>>).legendary;
+    legendary.large_roll.push({ item: "gold_chest" });
+    expect(() => {
+      assembleTrackerData(data, createAssetsLocalizer(requireGameAssetsDir()), {
+        version: "1.0.7",
+      });
+    }).toThrow(
+      "Obsolete reviewed item exclusion entry now encoded in native acquisition sources: gold_chest",
+    );
+  });
+
   it("fails when a native golden product gains its reviewed animal owner", () => {
     const data = installedFacts();
     const items = data.items as Record<

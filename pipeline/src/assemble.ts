@@ -60,7 +60,10 @@ import { extractTreasureChestTiers } from "./extract/treasure-chest-tiers.js";
 import { extractVillagers } from "./extract/villagers.js";
 import { forEachItem } from "./extractor-helpers.js";
 import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./localize/ui-strings.js";
-import { validateCosmeticExclusionSources } from "./overrides/exclusions.js";
+import {
+  validateCosmeticExclusionSources,
+  validateItemExclusionSources,
+} from "./overrides/exclusions.js";
 import { isPregnancyQuest } from "./overrides/game-facts.js";
 import { createRequirementContext } from "./parse/requirements.js";
 import { REVIEWED_PIPELINE_DIAGNOSTICS } from "./reviewed-diagnostics.js";
@@ -234,6 +237,7 @@ export function assembleTrackerData(
   collectDefaultCosmeticSources(cosmeticDrafts, cosmeticSources);
 
   validateCosmeticExclusionSources(fiddle, cosmeticSources);
+  validateItemExclusionSources(itemSources);
 
   const overrideDiagnostics = applyReviewedOverrides(
     itemMetadata,
