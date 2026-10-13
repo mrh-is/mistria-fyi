@@ -6,8 +6,11 @@
 // its junctions & pnpm's `node_modules` links behind.
 import { spawnSync } from "node:child_process";
 import { existsSync, realpathSync, rmSync, statSync } from "node:fs";
-import { sep } from "node:path";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+
+import { isInside } from "#scripts/lib/paths";
+import { windowsProcessPaths } from "#scripts/lib/windows-process-paths";
 
 export const usage = `Usage: pnpm run worktree:cleanup [-- --apply] [--idle-minutes <minutes>]
 
@@ -20,8 +23,9 @@ open pull request, branches with local commits after the merged pull request, di
 worktrees that Git refuses to remove. The invoking and primary worktrees are always preserved.
 If refreshing the default branch fails, only GitHub PR evidence is used.
 
-A worktree is in use when a running process's working directory is inside it (where lsof can
-list them, so not on Windows), or, with --idle-minutes, when its HEAD changed within that many
+A worktree is in use when a running process's working directory is inside it (via lsof), or
+on Windows when an executable or command-line path references it, or, with --idle-minutes,
+when its HEAD changed within that many
 minutes. A fresh agent worktree's tip is already in the default branch, so unattended runs need
 this guard to spare live sessions.`;
 
@@ -44,7 +48,7 @@ export interface CleanupIo {
   logError: (line: string) => void;
   /** Whether any of these files changed within the last `minutes`. */
   modifiedWithin: (paths: string[], minutes: number) => boolean;
-  /** Working directories of this user's processes, or `undefined` where they can't be listed. */
+  /** Process working directories or Windows absolute argument paths; undefined if unavailable. */
   processDirectories: () => string[] | undefined;
   realpath: (path: string) => string | undefined;
   /** Deletes what's left of a deregistered worktree directory, without following links. */
@@ -129,12 +133,6 @@ function parseAssociatedPrs(output: string): AssociatedPr[] {
     });
 }
 
-function isInside(directory: string, target: string): boolean {
-  return (
-    directory === target || directory.startsWith(`${target}/`) || directory.startsWith(target + sep)
-  );
-}
-
 export function cleanup(options: CleanupOptions, io: CleanupIo): number {
   const text = (args: string[]) => io.git(args).stdout.trim();
 
@@ -190,7 +188,10 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
       if (gitDirectory.ok) {
         const directory = gitDirectory.stdout.trim();
         if (
-          io.modifiedWithin([`${directory}/HEAD`, `${directory}/logs/HEAD`], options.idleMinutes)
+          io.modifiedWithin(
+            [join(directory, "HEAD"), join(directory, "logs", "HEAD")],
+            options.idleMinutes,
+          )
         ) {
           io.log(
             `Keeping worktree ${target}: its HEAD changed in the last ${String(options.idleMinutes)} minutes.`,
@@ -520,7 +521,16 @@ export function systemIo(cwd = process.cwd()): CleanupIo {
         }
       }),
     processDirectories: () => {
-      if (process.platform === "win32" || !process.getuid) {
+      if (process.platform === "win32") {
+        const result = run("powershell.exe", [
+          "-NoProfile",
+          "-NonInteractive",
+          "-Command",
+          "$ErrorActionPreference = 'Stop'; ConvertTo-Json -Compress -InputObject @(Get-CimInstance Win32_Process | Select-Object ExecutablePath, CommandLine)",
+        ]);
+        return result.ok ? windowsProcessPaths(result.stdout) : undefined;
+      }
+      if (!process.getuid) {
         return undefined;
       }
       // lsof exits nonzero when some processes can't be inspected; their peers still count.
