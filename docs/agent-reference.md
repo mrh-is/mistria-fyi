@@ -95,11 +95,32 @@ enforces the same threshold. Ignore an advisory only when it’s disputed or has
 
 ## Enforcement boundaries
 
-- `src/lib/data/tracker-data.json` & `src/lib/components/ui/` are guarded: a Claude Code
-  `PreToolUse` hook (`scripts/guard-generated-paths.ts`) refuses agent edits, CODEOWNERS routes them
-  to the owner, and the “Guarded paths” workflow fails a PR that changes them without the
-  `shadcn-update` or `generated-data` label. Codex has no equivalent hook; its rules only gate shell
-  commands.
+- Claude Code & Codex share `PreToolUse`, `PostToolUse`, `Stop`, & `SubagentStart` command hooks in
+  `.claude/settings.json` & `.codex/hooks.json`. Codex skips new or changed hooks until they are
+  re-trusted in its hook review (`/hooks`); review & trust them before relying on enforcement.
+- `guard-generated-paths.ts` denies file-tool edits, patch headers (including deletions & moves),
+  and direct shell writes referring to generated tracker data or vendored UI. Recover by running the
+  pipeline or vendor CLI. CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership and
+  the `shadcn-update` or `generated-data` label.
+- `guard-generated-reads.ts` denies file-tool & direct shell reads of generated tracker data; read
+  `src/lib/types/tracker-data.ts` or pipeline source instead. Existing symlinks are resolved.
+- Shell guards recognize direct path arguments & common read/write commands, not arbitrary shell
+  programs, dynamically constructed paths, or every MCP tool. They supplement repository rules; they
+  are not a filesystem sandbox. Pipeline commands remain permitted.
+- `format-agent-edit.ts` formats surviving edit or patch targets with oxfmt. For Bash, a pre-tool
+  snapshot identifies files changed by that invocation, including changes committed during it; shell
+  reads leave existing edits untouched. Deleted files, outside-worktree symlink targets, & guarded
+  paths are excluded; report formatter failures before continuing.
+- `lint-agent-stop.ts` runs `lint:fix --files <paths...>` then `lint --files <paths...>` for
+  existing staged, unstaged, untracked, & committed branch changes relative to `origin/main`. Lint
+  errors block the first stop & return diagnostics; `stop_hook_active` permits the next stop with a
+  visible failure report instead of another continuation. Fix errors or report the blocker.
+- Git enumeration & lint execution use the repository root, even when clients start below it.
+- `agent-subagent-start.ts` injects the focused-test command & file-ownership reminder in both
+  clients; if the hook is unavailable, supply them explicitly in the delegation prompt.
+- Hooks are conveniences, not verification evidence; run the required checks directly before
+  committing. `pnpm run lint` & `pnpm run lint:fix` retain their full-repository behavior without
+  `--files`; changed-file mode uses the same lint tools, scopes, & zero-warning checks.
 - `.claude/settings.json` and `.codex/rules/default.rules` allow the same `pnpm` scripts;
   `tests/agent-permissions.test.ts` fails when a `package.json` script is in neither the allowlists
   nor its explicit exclusion list.
