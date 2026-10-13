@@ -35,7 +35,7 @@ describe("transfer QR codes", () => {
         for (const item of items) userState.toggleMuseumItem(item);
       }
     }
-    const payload = await encodeTransferPayload(userState.state.progress);
+    const payload = await encodeTransferPayload(userState.state.progress, "2026.10.04 (abcdef12)");
     const matrix = encodeQR(payload, "raw", TRANSFER_QR_OPTIONS);
 
     expect(decodeQR(rasterize(matrix, 3))).toBe(payload);

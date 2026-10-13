@@ -27,11 +27,10 @@ Keep the existing versions conceptually separate:
 - `PROGRESS_STORAGE_KEY` (`"mistria-fyi:progress"` in `src/lib/stores/storage-keys.ts`) identifies
   the localStorage slot itself. Changing the key abandons existing browser state entirely rather
   than migrating it, which is a different decision from bumping the serialized `version` field.
-- `TRANSFER_VERSION` identifies the progress-transfer codec. Change it only when the encoded fields,
-  their interpretation, or their positional layout changes incompatibly.
 - The Mistria Field Guide application version identifies the exact deployed commit. Production
-  builds derive it deterministically from the commit date and abbreviated SHA. `package.json`'s
-  version and Git version tags identify intentional product releases rather than routine deploys.
+  builds derive it deterministically from the commit date and abbreviated SHA. Transfer codes carry
+  a fingerprint of it, so a code only decodes on the build that created it. `package.json`'s version
+  and Git version tags identify intentional product releases rather than routine deploys.
 
 Do not add another version axis speculatively. Introduce one when a concrete release demonstrates
 that the existing versions cannot distinguish states the application must handle.
@@ -43,8 +42,7 @@ Before changing pipeline code or generated data:
 1. Open an issue for the new game version and link the upstream release notes or other authoritative
    source material. The game build watch workflow files this issue automatically when the public
    Steam build changes; update the game in Steam and confirm the installed build matches the issue.
-2. Record the currently supported game version, application commit, serialized-state version, and
-   transfer version.
+2. Record the currently supported game version, application commit, and serialized-state version.
 3. Obtain a clean copy of the new game assets and share it, with the current saves, as described in
    [Share the extracted assets](#share-the-extracted-assets). The preceding version’s Drive folder
    stays available for comparison.
@@ -135,11 +133,11 @@ Classify every compatibility-relevant difference:
 
 | Change            | Required review                                                                                                                                                                                                                                                                                                                                                   |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Addition          | Confirm whether the entry should start unchecked, be default-completed, or be inferred from an imported save. Verify that totals and transfer ordering remain correct.                                                                                                                                                                                            |
+| Addition          | Confirm whether the entry should start unchecked, be default-completed, or be inferred from an imported save. Verify that totals remain correct.                                                                                                                                                                                                                  |
 | Removal           | Determine whether the ID was deleted, renamed, regrouped, made unobtainable, or intentionally no longer tracked. Decide explicitly whether prior completion is retained, migrated, reported, or discarded.                                                                                                                                                        |
 | Rename            | Establish evidence that the old and new IDs represent the same progress. Add the narrowest explicit mapping required at every affected persistence boundary.                                                                                                                                                                                                      |
 | Regrouping        | Check whether an almanac canonical ID, recipe identity, museum membership, or another many-to-one representation changed while the underlying game objects remained. Note that canonical IDs are derived (alphabetically-first member of a recipe group), so adding a new member that sorts earlier silently changes the canonical ID without an explicit rename. |
-| Schema change     | Update the shared tracker-data contract, pipeline assembly, every application consumer, and relevant tests together. Decide whether the change affects persisted state or transfers independently.                                                                                                                                                                |
+| Schema change     | Update the shared tracker-data contract, pipeline assembly, every application consumer, and relevant tests together. Decide whether the change affects persisted state.                                                                                                                                                                                           |
 | Value-only change | Review user-visible labels, sources, restrictions, visibility, and progress semantics even when IDs are stable.                                                                                                                                                                                                                                                   |
 
 Do not infer a rename merely because one ID disappeared while another appeared. Preserve ambiguity
@@ -177,31 +175,9 @@ State explicitly when support for importing an older game save is dropped.
 
 ### Progress transfer
 
-Transfer payloads use positional orderings derived from tracker data. Adding, removing, renaming, or
-reordering an encoded ID can reinterpret bits in a payload created by an earlier application
-release, even when a current-data round-trip test passes.
-
-For every candidate dataset, materialize each transfer ordering from the preceding and candidate
-application revisions, then diff the resulting ID arrays. The runtime helpers in `transfer.ts`, such
-as `getAlmanacOrder()`, define these orderings. Existing historical payload fixtures are a separate
-decoder regression check; they do not prove that the complete layout is unchanged. Run them against
-the candidate decoder, and add fixtures that exercise affected positions when an ordering changes.
-If any ordering or encoded field changes, choose and document one of these responses:
-
-- Preserve the historical ordering in the decoder and add a historical payload fixture.
-- Bump the transfer codec and provide a backward-compatible decoding path.
-- Declare older payloads unsupported, reject them rather than misinterpreting them, and communicate
-  the limitation.
-
-When rejecting older payloads, bump the transfer version and test every supported historical fixture
-for the explicit rejection. The receiving device cannot repair a stale QR code: tell the player to
-reload Mistria Field Guide on the device that created it, generate a replacement QR code under
-**Data → Transfer**, then scan the replacement. Offer a copyable version of those steps when the
-transfer UI can help relay them to the other device.
-
-Never allow an old transfer payload to decode successfully into different progress. If this review
-becomes repetitive or error-prone, add a committed layout fingerprint or immutable layout manifest
-as part of the concrete version-update work.
+Transfer codes need no review. Each code carries a fingerprint of the app build that created it, and
+only the same build decodes it, so a game update can’t reinterpret an outstanding code. See
+[the progress transfer format](transfer-format.md#build-binding).
 
 ### User communication
 
@@ -216,17 +192,17 @@ The version-update issue or pull request must include a compatibility report wit
 - The old and new game versions.
 - Added, removed, renamed, and regrouped IDs by domain.
 - Tracker schema changes.
-- Local-state, backup, save-import, and transfer consequences.
+- Local-state, backup, and save-import consequences.
 - The migration policy and historical fixtures added, or an explanation of why none are needed.
 - Any user-facing notice.
 - The rollback constraint for the release.
 
-Post the mechanical ID inventory (additions, removals, renames, and transfer-position changes by
-domain, compared from the baseline commit) as its own PR comment, as #354 did. It is the durable
-diff later updates compare against.
+Post the mechanical ID inventory (additions, removals, and renames by domain, compared from the
+baseline commit) as its own PR comment, as #354 did. It is the durable diff later updates compare
+against.
 
-Use this conclusion when the review finds no incompatibility: “No persisted-state or transfer
-compatibility change is required”. Support that conclusion with the reviewed comparisons and tests.
+Use this conclusion when the review finds no incompatibility: “No persisted-state compatibility
+change is required”. Support that conclusion with the reviewed comparisons and tests.
 
 ## Verify and release
 
@@ -244,8 +220,6 @@ Before merging, verify that:
   `DRY_RUN=1 pnpm run sprites:upload` reports nothing left to upload.
 - A preceding-release local state and backup load with the decided behavior.
 - Save imports behave as documented for every supported game-save version.
-- Historical transfer fixtures either decode to their original progress or fail with the explicitly
-  documented compatibility error.
 - Release notes describe any migration, dropped compatibility, or required player action.
 
 Ship application code and generated tracker data in the same deployment. Do not publish candidate
@@ -278,7 +252,6 @@ lasting compatibility precedent:
 - Schema changes:
 - Persisted-state decision:
 - Save-import decision:
-- Transfer decision:
 - User communication:
 - Rollback constraint:
 - Tests and fixtures:

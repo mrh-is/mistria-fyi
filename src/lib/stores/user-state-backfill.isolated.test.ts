@@ -213,7 +213,7 @@ describe("downstream consumers after backfill", () => {
 
   it("encodeTransferPayload does not throw on backfilled state", async () => {
     const completed = await getBackfilledState();
-    const payload = await encodeTransferPayload(completed);
+    const payload = await encodeTransferPayload(completed, "2026.10.04 (abcdef12)");
     expect(payload).toMatch(/^[\w-]+$/);
     expect(payload.length).toBeGreaterThan(0);
   });
