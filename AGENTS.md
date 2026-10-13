@@ -97,8 +97,8 @@ not here.
 - `src/lib/engine/` is pure domain logic; side effects belong at store or component boundaries.
   `src/lib/stores/user-state.svelte.ts` owns mutable progress & localStorage persistence.
 - Save import merges progress additively; backup restore replaces serialized state. Do not
-  substitute one flow for the other. Transfer schema or deterministic generated-data ordering
-  changes require compatibility tests & deliberate versioning.
+  substitute one flow for the other. Storage & backup schema changes require compatibility tests &
+  deliberate versioning. Transfer codes bind to the exact app build, so they need neither.
 - The app has no users yet, so transfer, storage, & backup formats may break compatibility. When
   correctness & compatibility conflict, choose the correct design & bump the version rather than
   adding a compatibility shim.
