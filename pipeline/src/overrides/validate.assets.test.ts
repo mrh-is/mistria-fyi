@@ -64,7 +64,7 @@ describe("reviewed game facts against installed assets", () => {
       }
       expect(() => {
         assembleTrackerData(data, createAssetsLocalizer(requireGameAssetsDir()), {
-          version: "1.0.6",
+          version: "1.0.7",
         });
       }).toThrow("Obsolete reviewed cosmetic exclusion entry");
     },

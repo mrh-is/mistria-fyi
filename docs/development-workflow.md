@@ -382,10 +382,10 @@ additional local checks against the installed game assets:
 
 ```sh
 pnpm run test:pipeline:assets
-pnpm run pipeline:assets -- --version=1.0.6
+pnpm run pipeline:assets -- --version=1.0.7
 ```
 
-`test:pipeline:assets` validates the canonical v1.0.6 fixture against one source per platform. On
+`test:pipeline:assets` validates the canonical v1.0.7 fixture against one source per platform. On
 Windows it reads Steam's installed `Fields of Mistria/assets.zip`, materializing only structured
 TOML; never unpack the full archive without explicit approval. On macOS & Linux it reads
 `pipeline/input/assets`. Neither platform falls back to the other's source, so a machine without its
@@ -780,7 +780,7 @@ offline fallback, registration, or activation behavior.
 - **Symptom**: App UI displays stale item fields after pipeline extractor logic updates.
 - **Recovery**: Run the pipeline with local game assets to regenerate the target dataset:
   ```sh
-  pnpm run pipeline:assets -- --version=1.0.6
+  pnpm run pipeline:assets -- --version=1.0.7
   ```
   Review `git diff src/lib/data/tracker-data.json` to verify schema and data accuracy.
 

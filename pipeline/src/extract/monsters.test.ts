@@ -12,10 +12,11 @@ describe("extractMonsterNames", () => {
     vi.restoreAllMocks();
   });
 
-  it("names each monster after its reviewed pet variant, in every locale", () => {
+  it("names each monster from the reviewed table, in every locale", () => {
     const fiddle = makeFiddle({
       monsters: { cat: { cat: {}, cat_void: {}, default: {} }, clod: { mistrilclod: {} } },
-      pets: { variants: { lava_cat: { name: "Lava Cat" }, void_cat: { name: "Void Cat" } } },
+      // Game 1.0.7's bare pet variant names don't leak into monster names.
+      pets: { variants: { lava_cat: { name: "Default" }, void_cat: { name: "Default" } } },
     });
 
     const names = extractMonsterNames(fiddle);
@@ -23,18 +24,12 @@ describe("extractMonsterNames", () => {
     expect(names.fr).toEqual(names.en);
   });
 
-  it("throws for a monster with no reviewed pet variant", () => {
-    const fiddle = makeFiddle({ monsters: { slime: { slime: {} } }, pets: { variants: {} } });
-    expect(() => extractMonsterNames(fiddle)).toThrow(/"slime" has no reviewed pet variant/);
+  it("throws for a monster with no reviewed name", () => {
+    const fiddle = makeFiddle({ monsters: { slime: { slime: {} } } });
+    expect(() => extractMonsterNames(fiddle)).toThrow(/"slime" has no reviewed name/);
   });
 
-  it("throws when a source table is missing", () => {
-    expect(() => extractMonsterNames(makeFiddle({ monsters: {} }))).toThrow(/pets\.variants/);
-    expect(() => extractMonsterNames(makeFiddle({ pets: { variants: {} } }))).toThrow(/monsters/);
-  });
-
-  it("throws when the reviewed pet variant is missing", () => {
-    const fiddle = makeFiddle({ monsters: { cat: { cat: {} } }, pets: { variants: {} } });
-    expect(() => extractMonsterNames(fiddle)).toThrow(/"lava_cat", which is unnamed/);
+  it("throws when the monsters table is missing", () => {
+    expect(() => extractMonsterNames(makeFiddle({}))).toThrow(/monsters/);
   });
 });

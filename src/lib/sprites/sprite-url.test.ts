@@ -6,14 +6,14 @@ import { itemSpriteUrl, villagerSpriteUrl } from "./sprite-url.js";
 // these run against the build-time default.
 describe("sprite URL resolver", () => {
   it("defaults to the production R2 origin", () => {
-    expect(itemSpriteUrl("apple")).toBe("https://assets.mistria.fyi/sprites/items/apple.webp?g=1");
+    expect(itemSpriteUrl("apple")).toBe("https://assets.mistria.fyi/sprites/items/apple.webp?g=2");
     expect(villagerSpriteUrl("adeline")).toBe(
-      "https://assets.mistria.fyi/sprites/villagers/adeline.webp?g=1",
+      "https://assets.mistria.fyi/sprites/villagers/adeline.webp?g=2",
     );
   });
 
   it("keys the path on the entity ID, not the game version", () => {
-    expect(itemSpriteUrl("axe")).toBe("https://assets.mistria.fyi/sprites/items/axe.webp?g=1");
+    expect(itemSpriteUrl("axe")).toBe("https://assets.mistria.fyi/sprites/items/axe.webp?g=2");
   });
 
   it("appends the generation as a query parameter, leaving the path stable", () => {
