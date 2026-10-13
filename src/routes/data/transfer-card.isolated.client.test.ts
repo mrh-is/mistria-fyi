@@ -6,6 +6,7 @@ import { trackerData } from "#lib/data/index.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordValues } from "#lib/utils/record.js";
+import { version } from "$app/env";
 
 import TransferCard from "./transfer-card.svelte";
 
@@ -43,8 +44,10 @@ afterEach(async () => {
   await tick();
 });
 
-// A marked v0 version byte: recognized as a transfer code, but older than the minimum.
-const OLDER_VERSION_PAYLOAD = "MFGTAA";
+/** A transfer code for the current progress from a build other than the running one. */
+async function otherBuildPayload(): Promise<string> {
+  return encodeTransferPayload(userState.state.progress, `${version} (other)`);
+}
 
 describe("TransferCard generate", () => {
   it("renders the QR code for the current progress and announces the in-flight state", async () => {
@@ -77,7 +80,7 @@ describe("TransferCard generate", () => {
     expect(screen.getByRole("button", { name: "Generate QR Code" })).toBeEnabled();
     expect(screen.getByRole("status")).toHaveTextContent("");
     expect(transferQr.generateTransferQr).toHaveBeenCalledWith(
-      await encodeTransferPayload(userState.state.progress),
+      await encodeTransferPayload(userState.state.progress, version),
     );
   });
 
@@ -98,7 +101,7 @@ describe("TransferCard generate", () => {
 describe("TransferCard scan from image", () => {
   it("merges a scanned payload and summarizes what was added", async () => {
     userState.toggleMuseumItem(museumItemId);
-    const payload = await encodeTransferPayload(userState.state.progress);
+    const payload = await encodeTransferPayload(userState.state.progress, version);
     userState.resetAll();
     transferQr.decodeQrImage.mockResolvedValue(payload);
     render(TransferCard, { open: true });
@@ -123,7 +126,7 @@ describe("TransferCard scan from image", () => {
 
   it.each([
     ["an unrelated QR code", "https://example.com", "This QR code isn’t a Mistria Field Guide"],
-    // A marked, current (v1) version byte with no checksum.
+    // A marked code too short to hold a build fingerprint.
     ["a damaged transfer code", "MFGTAQ", "This QR code’s data is damaged or incomplete."],
   ])("rejects %s without touching progress", async (_, payload, message) => {
     transferQr.decodeQrImage.mockResolvedValue(payload);
@@ -136,21 +139,21 @@ describe("TransferCard scan from image", () => {
     expect(userState.exportBackup()).toBe(before);
   });
 
-  it("explains how to replace a QR code from an older tracker-data version", async () => {
-    transferQr.decodeQrImage.mockResolvedValue(OLDER_VERSION_PAYLOAD);
+  it("explains how to replace a QR code from a different app version", async () => {
+    transferQr.decodeQrImage.mockResolvedValue(await otherBuildPayload());
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "old-qr.png", { type: "image/png" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "This QR code was created by an older version of Mistria Field Guide.",
+      "This QR code was created by a different version of Mistria Field Guide.",
     );
     expect(screen.getByRole("button", { name: "Copy recovery steps" })).toBeInTheDocument();
   });
 
   it("resets recovery-copy state before another scan", async () => {
     vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
-    transferQr.decodeQrImage.mockResolvedValue(OLDER_VERSION_PAYLOAD);
+    transferQr.decodeQrImage.mockResolvedValue(await otherBuildPayload());
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "old-qr.png", { type: "image/png" }));
@@ -184,7 +187,7 @@ function fakeScanner() {
 describe("TransferCard scan from camera", () => {
   it("merges the first decoded frame and releases the camera", async () => {
     userState.toggleMuseumItem(museumItemId);
-    const payload = await encodeTransferPayload(userState.state.progress);
+    const payload = await encodeTransferPayload(userState.state.progress, version);
     userState.resetAll();
     const scanner = fakeScanner();
     let emit: ((data: string) => void) | undefined;

@@ -63,7 +63,6 @@ describe("data error messages", () => {
 
   it("formats transfer decode errors", () => {
     expect(formatTransferDecodeError("corrupt")).toMatch(/damaged or incomplete/);
-    expect(formatTransferDecodeError("newer-version")).toMatch(/newer version/);
     expect(formatTransferDecodeError("not-transfer-code")).toMatch(/isn’t a Mistria Field Guide/);
   });
 });

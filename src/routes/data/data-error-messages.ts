@@ -61,15 +61,13 @@ export function formatSaveImportWarning(warning: SaveImportWarning): string {
   }
 }
 
-/** The message for a rejected transfer payload. `outdated` has its own recovery panel. */
+/** The message for a rejected transfer payload. `version-mismatch` has its own recovery panel. */
 export function formatTransferDecodeError(
-  code: Exclude<TransferDecodeErrorCode, "outdated">,
+  code: Exclude<TransferDecodeErrorCode, "version-mismatch">,
 ): string {
   switch (code) {
     case "corrupt":
       return m.transfer_error_corrupt();
-    case "newer-version":
-      return m.transfer_error_newer_version();
     case "not-transfer-code":
       return m.transfer_error_not_transfer_code();
   }

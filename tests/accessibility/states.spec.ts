@@ -244,7 +244,7 @@ test.describe("stateful accessibility", () => {
       testInfo,
     );
 
-    // A marked, current (v1) version byte with no checksum: recognized, but damaged.
+    // A marked code too short to hold a build fingerprint: recognized, but damaged.
     const invalidBuffer = Buffer.from(encodeQR("MFGTAQ", "gif", { scale: 4 }));
     const errorChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
@@ -263,23 +263,23 @@ test.describe("stateful accessibility", () => {
       testInfo,
     );
 
-    // A marked v0 version byte: recognized as a transfer code, but older than the minimum.
-    const outdatedBuffer = Buffer.from(encodeQR("MFGTAA", "gif", { scale: 4 }));
-    const outdatedChooser = page.waitForEvent("filechooser");
+    // A marked code with an all-zero build fingerprint: recognized, but from another build.
+    const mismatchBuffer = Buffer.from(encodeQR("MFGTAAAAAA", "gif", { scale: 4 }));
+    const mismatchChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
-    const outdatedChooserDialog = await outdatedChooser;
-    await outdatedChooserDialog.setFiles({
-      buffer: outdatedBuffer,
+    const mismatchChooserDialog = await mismatchChooser;
+    await mismatchChooserDialog.setFiles({
+      buffer: mismatchBuffer,
       mimeType: "image/gif",
-      name: "outdated-transfer.gif",
+      name: "other-build-transfer.gif",
     });
     await expect(page.getByRole("alert")).toContainText(
-      "This QR code was created by an older version of Mistria Field Guide.",
+      "This QR code was created by a different version of Mistria Field Guide.",
     );
     await expect(page.getByRole("button", { name: "Copy recovery steps" })).toBeVisible();
     await analyzeAccessibility(
       page,
-      { route: "/data", state: "transfer-outdated", theme: "light" },
+      { route: "/data", state: "transfer-version-mismatch", theme: "light" },
       testInfo,
     );
   });

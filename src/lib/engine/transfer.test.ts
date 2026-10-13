@@ -6,12 +6,9 @@ import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import {
-  decodeTransferPayload,
-  encodeTransferPayload,
-  getTransferOrderingHash,
+  decodeTransferPayload as decodeForBuild,
+  encodeTransferPayload as encodeForBuild,
   TRANSFER_MAGIC,
-  TRANSFER_ORDERING_HASH,
-  TRANSFER_VERSION,
   TransferDecodeError,
 } from "./transfer.js";
 
@@ -35,21 +32,40 @@ import type { ProgressState } from "#lib/types/user-progress.js";
 
 import type { TransferDecodeErrorCode } from "./transfer.js";
 
+const BUILD_FINGERPRINT_BYTE_LENGTH = 4;
 const CHECKSUM_BYTE_LENGTH = 4;
+const HEADER_BYTE_LENGTH = BUILD_FINGERPRINT_BYTE_LENGTH + CHECKSUM_BYTE_LENGTH;
+
+const TEST_BUILD = "2026.10.04 (abcdef12)";
+const OTHER_BUILD = "2026.10.05 (12345678)";
 
 // A payload from the pre-launch codec's last unmarked layout. It pins that a payload without the
 // marker is rejected as foreign rather than decoded.
 const UNMARKED_FIXTURE =
   "CjegUCBjYBiuwAGF10COLhZy7WYCkxwiDIJYjWAn11yircYuwKjAwCDAscCBQQDMAxEKNHQKCgAA";
 
-// A v1 payload encoded from makeGoldenCompleted(). Unlike round-trip tests, this fixture pins the
-// current wire meaning independently of the live encoder and decoder implementation.
-const V1_GOLDEN_FIXTURE =
+// A payload from the build-versioned launch codec, whose first envelope byte was the integer
+// version 1. It pins that a code from before build fingerprints is rejected, never decoded.
+const VERSION_BYTE_FIXTURE =
   "MFGTAZjBKkNjYBi2wAGF10COLhZy7WYCkxwiDIJYjWAn11yircYuoMDAIMCxQADEZITy6QQA";
 
-async function compressTransferRaw(version: number, raw: Uint8Array): Promise<string> {
+function buildFingerprintBytes(build = TEST_BUILD): number[] {
+  return crc32ToBytes(crc32(new TextEncoder().encode(build)));
+}
+
+async function compressTransferRaw(raw: Uint8Array): Promise<string> {
   const compressed = await compressRawOnly(raw);
-  return marked(new Uint8Array([version, ...crc32ToBytes(crc32(raw)), ...compressed]));
+  return marked(
+    new Uint8Array([...buildFingerprintBytes(), ...crc32ToBytes(crc32(raw)), ...compressed]),
+  );
+}
+
+async function decodeTransferPayload(payload: string): Promise<Partial<ProgressState>> {
+  return decodeForBuild(payload, TEST_BUILD);
+}
+
+async function encodeTransferPayload(completed: ProgressState): Promise<string> {
+  return encodeForBuild(completed, TEST_BUILD);
 }
 
 async function expectDecodeError(
@@ -112,13 +128,12 @@ function crc32ToBytes(checksum: number): number[] {
   ];
 }
 
-/** Decompresses a marked transfer payload, skipping the version byte and the checksum. */
+/** Decompresses a marked transfer payload, skipping the build fingerprint and the checksum. */
 async function decompressTransferRaw(payload: string): Promise<Uint8Array> {
   const bytes = unmarked(payload);
-  const bodyStart = 1 + CHECKSUM_BYTE_LENGTH;
   const stream = new DecompressionStream("deflate-raw");
   const writer = stream.writable.getWriter();
-  await writer.write(bytes.slice(bodyStart));
+  await writer.write(bytes.slice(HEADER_BYTE_LENGTH));
   await writer.close();
   return new Uint8Array(await new Response(stream.readable).arrayBuffer());
 }
@@ -262,7 +277,7 @@ async function mutateEncodedRaw(
 ): Promise<string> {
   const raw = await decompressTransferRaw(await encodeTransferPayload(makeCompletedState()));
   mutate(raw, getTransferFieldOffsets());
-  return compressTransferRaw(TRANSFER_VERSION, raw);
+  return compressTransferRaw(raw);
 }
 
 function toBase64url(bytes: Uint8Array): string {
@@ -272,18 +287,23 @@ function toBase64url(bytes: Uint8Array): string {
     .replace(/=+$/, "");
 }
 
-describe("transfer codec v1", () => {
-  it("has version 1", () => {
-    expect(TRANSFER_VERSION).toBe(1);
+describe("transfer codec", () => {
+  it("starts the envelope with the build fingerprint", async () => {
+    const payload = await encodeTransferPayload(makeGoldenCompleted());
+
+    expect(unmarked(payload).slice(0, BUILD_FINGERPRINT_BYTE_LENGTH)).toEqual(
+      new Uint8Array(buildFingerprintBytes()),
+    );
   });
 
-  it("pins the v1 wire ordering hash", () => {
-    expect(TRANSFER_ORDERING_HASH).toBe("d3c85eb5");
-    expect(getTransferOrderingHash()).toBe(TRANSFER_ORDERING_HASH);
+  it("rejects a payload from another build as a version mismatch", async () => {
+    const payload = await encodeForBuild(makeGoldenCompleted(), OTHER_BUILD);
+
+    await expectDecodeError(payload, "version-mismatch", /another build/i);
   });
 
-  it("reproduces the immutable v1 golden payload", async () => {
-    expect(await encodeTransferPayload(makeGoldenCompleted())).toBe(V1_GOLDEN_FIXTURE);
+  it("rejects a payload from the version-byte codec as a version mismatch", async () => {
+    await expectDecodeError(VERSION_BYTE_FIXTURE, "version-mismatch", /another build/i);
   });
 
   it("encodes a state whose animal maps lack backfilled entries as no progress for them", async () => {
@@ -302,6 +322,7 @@ describe("transfer codec v1", () => {
   });
 
   it("fails loudly on both sides when a ninth spell would overflow the one-byte bitmask", async () => {
+    const goldenPayload = await encodeTransferPayload(makeGoldenCompleted());
     const spells = trackerData.mines.spells as Record<string, unknown>;
     const [firstId] = Object.keys(spells);
     spells.zz_ninth_spell = spells[firstId];
@@ -312,7 +333,7 @@ describe("transfer codec v1", () => {
         spells[`zz_filler_${String(filler++)}`] = spells[firstId];
       }
       await expect(encodeTransferPayload(makeGoldenCompleted())).rejects.toThrow(/8 spells/);
-      await expectDecodeError(V1_GOLDEN_FIXTURE, "corrupt", /8 spells/);
+      await expectDecodeError(goldenPayload, "corrupt", /8 spells/);
     } finally {
       for (const id of Object.keys(spells)) {
         if (id.startsWith("zz_")) Reflect.deleteProperty(spells, id);
@@ -320,8 +341,8 @@ describe("transfer codec v1", () => {
     }
   });
 
-  it("decodes the immutable v1 golden payload without changing its meaning", async () => {
-    const decoded = await decodeTransferPayload(V1_GOLDEN_FIXTURE);
+  it("round-trips the golden state without changing its meaning", async () => {
+    const decoded = await decodeTransferPayload(await encodeTransferPayload(makeGoldenCompleted()));
 
     expect(decoded).toEqual(makeGoldenDecodedExpectation());
   });
@@ -341,9 +362,12 @@ describe("transfer codec v1", () => {
     ]);
   });
 
+  // Two devices on the same build may run under different locales, so the orderings must not
+  // depend on collation.
   it.each(["en", "lt", "sv"])(
     "encodes the golden state identically under %s collation",
     async (locale) => {
+      const expected = await encodeTransferPayload(makeGoldenCompleted());
       const collator = new Intl.Collator(locale);
       const localeCompare = vi
         .spyOn(String.prototype, "localeCompare")
@@ -352,7 +376,7 @@ describe("transfer codec v1", () => {
         });
 
       try {
-        expect(await encodeTransferPayload(makeGoldenCompleted())).toBe(V1_GOLDEN_FIXTURE);
+        expect(await encodeTransferPayload(makeGoldenCompleted())).toBe(expected);
       } finally {
         localeCompare.mockRestore();
       }
@@ -674,25 +698,22 @@ describe("transfer codec v1", () => {
     },
   );
 
-  it("rejects version zero as outdated", async () => {
-    await expectDecodeError(marked(new Uint8Array([0])), "outdated", /older version/i);
-  });
-
-  it.each([
-    ["future version", marked(new Uint8Array([TRANSFER_VERSION + 1])), "newer-version"],
-    ["far-future version", marked(new Uint8Array([0xff])), "newer-version"],
-  ] as const)("rejects unsupported %s", async (_, payload, code) => {
-    await expectDecodeError(payload, code, /unsupported transfer version/i);
+  it("rejects a truncated build fingerprint", async () => {
+    await expectDecodeError(
+      marked(new Uint8Array(buildFingerprintBytes().slice(0, 3))),
+      "corrupt",
+      /build fingerprint/i,
+    );
   });
 
   it("rejects a missing integrity checksum", async () => {
     await expectDecodeError(
-      marked(new Uint8Array([TRANSFER_VERSION])),
+      marked(new Uint8Array(buildFingerprintBytes())),
       "corrupt",
       /integrity checksum/i,
     );
     await expectDecodeError(
-      marked(new Uint8Array([TRANSFER_VERSION, 0, 1, 2])),
+      marked(new Uint8Array([...buildFingerprintBytes(), 0, 1, 2])),
       "corrupt",
       /integrity checksum/i,
     );
@@ -705,7 +726,9 @@ describe("transfer codec v1", () => {
   });
 
   it("rejects malformed compressed data", async () => {
-    const payload = marked(new Uint8Array([TRANSFER_VERSION, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7]));
+    const payload = marked(
+      new Uint8Array([...buildFingerprintBytes(), 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7]),
+    );
     await expectDecodeError(payload, "corrupt", /compressed transfer payload/i);
   });
 
@@ -713,7 +736,7 @@ describe("transfer codec v1", () => {
     const payload = await encodeTransferPayload(makeCompletedState());
     const raw = await decompressTransferRaw(payload);
     const malformed = kind === "truncated" ? raw.slice(0, -1) : new Uint8Array([...raw, 0]);
-    const malformedPayload = await compressTransferRaw(TRANSFER_VERSION, malformed);
+    const malformedPayload = await compressTransferRaw(malformed);
 
     await expectDecodeError(malformedPayload, "corrupt", /length/i);
   });
@@ -729,10 +752,17 @@ describe("transfer codec v1", () => {
 
     // Keep the checksum bytes from the ORIGINAL (uncorrupted) payload, simulating a bit-flip that
     // landed in the compressed body after the checksum was computed and stored.
-    const originalChecksumBytes = unmarked(payload).slice(1, 1 + CHECKSUM_BYTE_LENGTH);
+    const originalChecksumBytes = unmarked(payload).slice(
+      BUILD_FINGERPRINT_BYTE_LENGTH,
+      HEADER_BYTE_LENGTH,
+    );
     const corruptedCompressed = await compressRawOnly(corruptedRaw);
     const tamperedPayload = marked(
-      new Uint8Array([TRANSFER_VERSION, ...originalChecksumBytes, ...corruptedCompressed]),
+      new Uint8Array([
+        ...buildFingerprintBytes(),
+        ...originalChecksumBytes,
+        ...corruptedCompressed,
+      ]),
     );
 
     await expectDecodeError(tamperedPayload, "corrupt", /integrity check/i);
@@ -741,7 +771,7 @@ describe("transfer codec v1", () => {
   it("rejects a payload whose stored checksum does not match its content", async () => {
     const payload = await encodeTransferPayload(makeCompletedState());
     const tampered = new Uint8Array(unmarked(payload));
-    tampered[1] ^= 0xff;
+    tampered[BUILD_FINGERPRINT_BYTE_LENGTH] ^= 0xff;
 
     await expectDecodeError(marked(tampered), "corrupt", /integrity check/i);
   });

@@ -14,6 +14,7 @@
   } from "#lib/engine/transfer.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { version } from "$app/env";
 
   import DataCard from "./data-card.svelte";
   import { closeScanner } from "./data-effects.js";
@@ -39,7 +40,7 @@
 
   let transferResult = $state<MergeResult | null>(null);
   let transferError = $state<null | string>(null);
-  let outdatedTransfer = $state(false);
+  let versionMismatch = $state(false);
   let copiedRecoverySteps = $state(false);
 
   // ── Generate QR Code ──
@@ -48,11 +49,11 @@
     qrDataUrl = null;
     transferResult = null;
     transferError = null;
-    outdatedTransfer = false;
+    versionMismatch = false;
     copiedRecoverySteps = false;
 
     try {
-      const payload = await encodeTransferPayload(userState.state.progress);
+      const payload = await encodeTransferPayload(userState.state.progress, version);
       qrDataUrl = await generateTransferQr(payload);
     } catch (error) {
       transferError = `${m.transfer_error_generate_prefix()} ${error instanceof Error ? error.message : m.transfer_unknown_error()}`;
@@ -66,7 +67,7 @@
     const attempt = ++scanAttempt;
     transferResult = null;
     transferError = null;
-    outdatedTransfer = false;
+    versionMismatch = false;
     copiedRecoverySteps = false;
     qrDataUrl = null;
     scanning = true;
@@ -128,7 +129,7 @@
 
   async function copyRecoverySteps(): Promise<void> {
     try {
-      await navigator.clipboard.writeText(m.transfer_error_outdated_recovery());
+      await navigator.clipboard.writeText(m.transfer_error_version_mismatch_recovery());
       copiedRecoverySteps = true;
     } catch {
       // Clipboard access can be denied or unavailable; the steps stay visible either way.
@@ -139,7 +140,7 @@
   function handleImageUpload() {
     transferResult = null;
     transferError = null;
-    outdatedTransfer = false;
+    versionMismatch = false;
     copiedRecoverySteps = false;
     qrDataUrl = null;
 
@@ -171,13 +172,13 @@
   async function handleScanResult(data: string) {
     stopScanning();
     try {
-      const decoded = await decodeTransferPayload(data);
+      const decoded = await decodeTransferPayload(data, version);
       transferResult = userState.mergeFromSave(decoded);
     } catch (error) {
       if (!(error instanceof TransferDecodeError)) {
         transferError = `${m.transfer_error_invalid_qr_prefix()} ${m.transfer_error_could_not_decode()}`;
-      } else if (error.code === "outdated") {
-        outdatedTransfer = true;
+      } else if (error.code === "version-mismatch") {
+        versionMismatch = true;
       } else {
         transferError = formatTransferDecodeError(error.code);
       }
@@ -280,14 +281,14 @@
     {/if}
 
     <!-- Error -->
-    {#if outdatedTransfer}
+    {#if versionMismatch}
       <StatusNote class="flex flex-col gap-3 text-base" tone="warning">
-        <p class="font-medium">{m.transfer_error_outdated_title()}</p>
-        <p>{m.transfer_error_outdated_recovery()}</p>
+        <p class="font-medium">{m.transfer_error_version_mismatch_title()}</p>
+        <p>{m.transfer_error_version_mismatch_recovery()}</p>
         <Button class="self-start" size="sm" variant="outline" onclick={copyRecoverySteps}>
           {copiedRecoverySteps
-            ? m.transfer_error_outdated_copied()
-            : m.transfer_error_outdated_copy_steps()}
+            ? m.transfer_error_version_mismatch_copied()
+            : m.transfer_error_version_mismatch_copy_steps()}
         </Button>
       </StatusNote>
     {:else if transferError}

@@ -31,34 +31,30 @@ import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 1;
-export const TRANSFER_ORDERING_HASH = "d3c85eb5";
-const MIN_SUPPORTED_TRANSFER_VERSION = 1;
-
 /**
  * Text every payload starts with. It marks a QR code as a Mistria Field Guide transfer
- * code, so an unrelated code is never mistaken for one from another version. Four base64url
- * characters encode whole bytes, so the rest of the payload stays independently decodable.
+ * code, so an unrelated code is never mistaken for one. Four base64url characters encode whole
+ * bytes, so the rest of the payload stays independently decodable.
  */
 export const TRANSFER_MAGIC = "MFGT";
 
-/** Every supported version prepends a CRC-32 integrity checksum of the raw payload. */
+/** The envelope starts with a CRC-32 fingerprint of the app build that created it. */
+const BUILD_FINGERPRINT_BYTE_LENGTH = 4;
+
+/** Then a CRC-32 integrity checksum of the raw payload. */
 const CHECKSUM_BYTE_LENGTH = 4;
+
+const HEADER_BYTE_LENGTH = BUILD_FINGERPRINT_BYTE_LENGTH + CHECKSUM_BYTE_LENGTH;
 
 /**
  * Why a transfer payload could not be decoded. The UI localizes the code; the English message is
  * for debugging only.
  *
  * - `not-transfer-code`: the payload lacks {@link TRANSFER_MAGIC}, so it isn't a transfer code.
- * - `outdated`: an older app version created the payload, and its orderings no longer apply.
- * - `newer-version`: a newer app version created the payload.
+ * - `version-mismatch`: a different app build created the payload, so its layout may differ.
  * - `corrupt`: the payload is malformed, truncated, or fails its integrity check.
  */
-export type TransferDecodeErrorCode =
-  | "corrupt"
-  | "newer-version"
-  | "not-transfer-code"
-  | "outdated";
+export type TransferDecodeErrorCode = "corrupt" | "not-transfer-code" | "version-mismatch";
 
 export class TransferDecodeError extends Error {
   readonly code: TransferDecodeErrorCode;
@@ -71,12 +67,16 @@ export class TransferDecodeError extends Error {
 }
 
 /**
- * Decode base64url string → Partial<ProgressState> for merging. Every rejection is a
+ * Decode base64url string → Partial<ProgressState> for merging. `build` identifies the running app
+ * build; a payload from any other build is rejected, never interpreted. Every rejection is a
  * {@link TransferDecodeError}; a failure deeper in the layout is reported as `corrupt`.
  */
-export async function decodeTransferPayload(payload: string): Promise<Partial<ProgressState>> {
+export async function decodeTransferPayload(
+  payload: string,
+  build: string,
+): Promise<Partial<ProgressState>> {
   try {
-    return await decodeTransferPayloadUnchecked(payload);
+    return await decodeTransferPayloadUnchecked(payload, build);
   } catch (error) {
     if (error instanceof TransferDecodeError) throw error;
     const message = error instanceof Error ? error.message : String(error);
@@ -84,9 +84,13 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Pr
   }
 }
 
-/** Encode ProgressState → base64url string for QR code */
+/**
+ * Encode ProgressState → base64url string for QR code. `build` identifies the running app build;
+ * only a device on the same build can decode the result.
+ */
 export async function encodeTransferPayload(
   completed: DeepReadonly<ProgressState>,
+  build: string,
 ): Promise<string> {
   const parts: Uint8Array[] = [];
 
@@ -244,17 +248,13 @@ export async function encodeTransferPayload(
     offset += part.length;
   }
 
-  // Compress, then prepend the version byte and an integrity checksum of the raw payload, and mark
-  // the encoded result as a transfer code
+  // Compress, then prepend the build fingerprint and an integrity checksum of the raw payload, and
+  // mark the encoded result as a transfer code
   const compressed = await compressBytes(raw);
-  const checksum = crc32(raw);
-  const payload = new Uint8Array(1 + CHECKSUM_BYTE_LENGTH + compressed.length);
-  payload[0] = TRANSFER_VERSION;
-  payload[1] = (checksum >>> 24) & 0xff;
-  payload[2] = (checksum >>> 16) & 0xff;
-  payload[3] = (checksum >>> 8) & 0xff;
-  payload[4] = checksum & 0xff;
-  payload.set(compressed, 1 + CHECKSUM_BYTE_LENGTH);
+  const payload = new Uint8Array(HEADER_BYTE_LENGTH + compressed.length);
+  writeUint32(payload, 0, getBuildFingerprint(build));
+  writeUint32(payload, BUILD_FINGERPRINT_BYTE_LENGTH, crc32(raw));
+  payload.set(compressed, HEADER_BYTE_LENGTH);
 
   return TRANSFER_MAGIC + toBase64url(payload);
 }
@@ -266,41 +266,32 @@ async function compressBytes(data: Uint8Array): Promise<Uint8Array> {
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<ProgressState>> {
+async function decodeTransferPayloadUnchecked(
+  payload: string,
+  build: string,
+): Promise<Partial<ProgressState>> {
   if (!payload.startsWith(TRANSFER_MAGIC)) {
     throw new TransferDecodeError("not-transfer-code", "Not a transfer payload: missing marker");
   }
   const payloadBytes = fromBase64url(payload.slice(TRANSFER_MAGIC.length));
-  if (payloadBytes.length === 0) {
-    throw new Error("Malformed transfer payload: missing version byte");
+  if (payloadBytes.length < BUILD_FINGERPRINT_BYTE_LENGTH) {
+    throw new Error("Malformed transfer payload: missing build fingerprint");
   }
-  const version = payloadBytes[0];
-  if (version > TRANSFER_VERSION) {
+  // Orderings and layout derive from the running build, so only the same build can read a payload.
+  const fingerprint = readUint32(payloadBytes, 0);
+  if (fingerprint !== getBuildFingerprint(build)) {
     throw new TransferDecodeError(
-      "newer-version",
-      `Unsupported transfer version: ${String(version)}`,
-    );
-  }
-  // Version 0 was never issued; it reads as outdated so the stale-code path stays testable until v2.
-  if (version < MIN_SUPPORTED_TRANSFER_VERSION) {
-    throw new TransferDecodeError(
-      "outdated",
-      "This QR code was created by an older version of Mistria Field Guide.",
+      "version-mismatch",
+      `Transfer payload from another build: ${formatFingerprint(fingerprint)}`,
     );
   }
 
-  if (payloadBytes.length < 1 + CHECKSUM_BYTE_LENGTH) {
+  if (payloadBytes.length < HEADER_BYTE_LENGTH) {
     throw new Error("Malformed transfer payload: missing integrity checksum");
   }
-  const expectedChecksum =
-    ((payloadBytes[1] << 24) |
-      (payloadBytes[2] << 16) |
-      (payloadBytes[3] << 8) |
-      payloadBytes[4]) >>>
-    0;
-  const bodyStart = 1 + CHECKSUM_BYTE_LENGTH;
+  const expectedChecksum = readUint32(payloadBytes, BUILD_FINGERPRINT_BYTE_LENGTH);
 
-  const compressed = payloadBytes.slice(bodyStart);
+  const compressed = payloadBytes.slice(HEADER_BYTE_LENGTH);
   if (compressed.length === 0) {
     throw new Error("Invalid compressed transfer payload: missing compressed data");
   }
@@ -583,29 +574,6 @@ function fromBase64url(str: string): Uint8Array {
 
 let crc32Table: null | Uint32Array = null;
 
-export function getTransferOrderingHash(): string {
-  const orderings = [
-    getAlmanacOrder(),
-    getCosmeticOrder(),
-    getAnimalVariantOrder().map(({ animalId, variantId }) => `${animalId}:${variantId}`),
-    getAnimalCosmeticOrder().map(({ animalId, cosmeticId }) => `${animalId}:${cosmeticId}`),
-    getMuseumOrder(),
-    getSpellOrder(),
-    getVillagerOrder(),
-    getSkillOrder(),
-    getQuestOrder().map(({ type, questId }) => `${type}:${questId}`),
-    getPerkOrder(),
-    getPetCosmeticOrder(),
-    getPetSkinOrder(),
-    getDateOrder(),
-    getDateableVillagerOrder(),
-    getRecipeOrder(),
-  ];
-  return crc32(new TextEncoder().encode(JSON.stringify(orderings)))
-    .toString(16)
-    .padStart(8, "0");
-}
-
 /** The spell bitmask is one byte; a ninth spell would shift by a negative amount and corrupt it. */
 function assertSpellBitmaskFits(spellCount: number): void {
   if (spellCount > 8) {
@@ -620,6 +588,32 @@ function assertZeroPadding(usedBitCount: number, bytes: Uint8Array, label: strin
   if ((bytes.at(-1) ?? 0) & reservedMask) {
     throw new Error(`Invalid ${label}: expected zero`);
   }
+}
+
+function formatFingerprint(fingerprint: number): string {
+  return fingerprint.toString(16).padStart(8, "0");
+}
+
+/** A CRC-32 of the app build's identifier, which includes its commit. */
+function getBuildFingerprint(build: string): number {
+  return crc32(new TextEncoder().encode(build));
+}
+
+function readUint32(bytes: Uint8Array, offset: number): number {
+  return (
+    ((bytes[offset] << 24) |
+      (bytes[offset + 1] << 16) |
+      (bytes[offset + 2] << 8) |
+      bytes[offset + 3]) >>>
+    0
+  );
+}
+
+function writeUint32(bytes: Uint8Array, offset: number, value: number): void {
+  bytes[offset] = (value >>> 24) & 0xff;
+  bytes[offset + 1] = (value >>> 16) & 0xff;
+  bytes[offset + 2] = (value >>> 8) & 0xff;
+  bytes[offset + 3] = value & 0xff;
 }
 
 function crc32(bytes: Uint8Array): number {
