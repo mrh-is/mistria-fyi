@@ -17,6 +17,10 @@ A code decodes only on the exact app build that created it. The fingerprint cove
 development builds all report `dev`). The transfer card passes it to `encodeTransferPayload` and
 `decodeTransferPayload`; the engine never reads it itself.
 
+Note: the fingerprint is 32 bits, so two builds can share one (about one chance in 2^32 per pair).
+Only builds live at the same time matter, and a collision still has to pass the length, field, and
+checksum validation below, so the codec accepts that risk rather than carrying the full commit.
+
 The packed layout derives from live tracker-data orderings and the codec as built, so there is no
 transfer version, compatibility window, or historical fixture. Changing an ordering or an encoded
 field needs no version bump or compatibility review: every outstanding code from the previous build

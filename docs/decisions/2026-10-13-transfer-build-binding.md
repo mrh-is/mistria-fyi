@@ -31,5 +31,6 @@ artifacts, unlike a QR code.
 ## Revisit if
 
 Transfer becomes asynchronous (a code shared to be scanned later, or offline-first use where a
-device can’t update), or deploys become frequent enough that mid-transfer mismatches are a real
-complaint.
+device can’t update), deploys become frequent enough that mid-transfer mismatches are a real
+complaint, or a fingerprint collision between live builds becomes a practical concern (then carry
+the full commit SHA instead of a 32-bit CRC, as the adversarial review on #62 proposed).
