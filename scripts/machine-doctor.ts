@@ -4,6 +4,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import type { SpawnSyncOptionsWithStringEncoding } from "node:child_process";
+
 /**
  * Machine doctor: reports whether this machine meets the prerequisites in docs/machine-setup.md.
  * It is read-only. It never installs, configures, or authenticates, and it never reads credentials;
@@ -362,13 +364,19 @@ export function realEnvironment(root: string): Environment {
     },
     root,
     run: (command, args) => {
-      // Windows shims (pnpm.cmd, gh.cmd) need a shell; every argument here is a fixed literal.
-      const result = spawnSync(command, args, {
+      const options: SpawnSyncOptionsWithStringEncoding = {
         encoding: "utf8",
-        shell: process.platform === "win32",
         stdio: ["ignore", "pipe", "pipe"],
         timeout: 20_000,
-      });
+      };
+      // Node spawns Windows .cmd shims such as pnpm.cmd only through a shell. Every other probe is
+      // a real executable, so it runs without one and keeps paths with spaces (machine.root)
+      // intact. The shell gets one string, since Node deprecates (DEP0190) shell with an args
+      // array; pnpm's arguments are fixed literals, so joining them is safe.
+      const result =
+        process.platform === "win32" && command === "pnpm"
+          ? spawnSync([command, ...args].join(" "), { ...options, shell: true })
+          : spawnSync(command, args, options);
       return { ok: result.status === 0, stdout: `${result.stdout ?? ""}${result.stderr ?? ""}` };
     },
   };
