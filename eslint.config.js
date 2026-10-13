@@ -85,11 +85,12 @@ export default defineConfig(
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
-      // AGENTS.md §6: destructure `$props()` with `let` so the bindings stay reassignable.
+      // docs/agent-reference.md, code conventions: destructure `$props()` with `let` so the bindings
+      // stay reassignable.
       "no-restricted-syntax": [
         "error",
         {
-          message: "Destructure `$props()` with `let`, not `const` (AGENTS.md §6).",
+          message: "Destructure `$props()` with `let`, not `const` (docs/agent-reference.md).",
           selector:
             'VariableDeclaration[kind="const"] > VariableDeclarator[init.callee.name="$props"]',
         },

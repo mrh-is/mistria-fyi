@@ -89,7 +89,19 @@ chunk its version never cached, such as another language’s names, since the se
 
 ## Automated verification
 
-Run the production-preview suite with:
+During development, select the file covering the changed contract; for update behavior, use:
+
+```sh
+pnpm exec playwright test --config playwright.pwa.config.ts tests/pwa/update.spec.ts
+```
+
+Use `offline.spec.ts` or `offline-locales.spec.ts` for those contracts; `--grep` can select a
+specific scenario. These checks still use a production build & service worker. Reuse a build with
+`PLAYWRIGHT_SKIP_BUILD=true` only when it includes the current app changes. Full local verification
+uses [the scoped exceptions](agent-verification.md#full-verification); the complete PWA suite
+remains available for cross-contract verification and runs in CI.
+
+Run the complete production-preview suite with:
 
 ```sh
 pnpm run test:pwa

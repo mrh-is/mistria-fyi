@@ -169,4 +169,4 @@ box-shadow: inset 0 0 0 1px currentColor;
   an unknown rule, and one that no longer suppresses anything.
 - If you reach for the same disable twice, add a token instead.
 
-This matches the ESLint policy in [AGENTS.md §7](../AGENTS.md#7-verification).
+This matches the ESLint policy in [verification policy](agent-verification.md).

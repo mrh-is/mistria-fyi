@@ -54,7 +54,7 @@
 Agents that modify tracked files work in an isolated Git worktree to prevent edit collisions,
 dirty-state confusion, and branch switching interference across concurrent sessions. Read-only work
 and platform-isolated cloud sessions are exempt; see
-[AGENTS.md §1](../AGENTS.md#1-worktree-isolation).
+[worktree policy](../AGENTS.md#worktree-isolation).
 
 ### Worktree creation
 
@@ -221,7 +221,7 @@ gates and begins the claim protocol above.
 
 Attribution records authorship separately from active ownership, particularly when multiple agents
 participate in one issue or PR. Follow the canonical commit, footer, label, comment, & handoff rules
-in [AGENTS.md](../AGENTS.md#agent-attribution).
+in [agent attribution](agent-workflow.md#agent-attribution).
 
 ### Explicit approval & planning gates
 
@@ -278,6 +278,18 @@ colocated tests don’t double the length of directory listings.
 
 ### Executing Tests
 
+Start with the test file that covers the change, for every agent and every Vitest project:
+
+- **Default: run one file** from any project:
+  ```sh
+  pnpm exec vitest run path/to/file.test.ts
+  ```
+
+Broaden only when the changed contracts require it. `test:changed` is a related-test helper, not a
+guarantee of a focused run: its documented fallbacks below can run the complete suite. Full-suite
+commands are references for CI or the explicit full-local-matrix exceptions in
+[agent-verification.md](agent-verification.md); do not run them as a session baseline.
+
 - **Run All Unit Tests** (asset-independent):
   ```sh
   pnpm run test
@@ -322,10 +334,6 @@ colocated tests don’t double the length of directory listings.
   pnpm run test:pipeline
   ```
   This command is also asset-independent.
-- **Run one file** from any project:
-  ```sh
-  pnpm exec vitest run path/to/file.test.ts
-  ```
 
 ### Vitest time budgets
 
@@ -423,22 +431,26 @@ diff and separate compatibility decisions for persisted state, backups, save imp
 
 ## 5. Verification matrix
 
-The contract is stated in [AGENTS.md §7](../AGENTS.md#7-verification): focused checks locally, the
+The contract is stated in [verification policy](agent-verification.md): focused checks locally, the
 complete matrix in CI on every pull request, and the full local matrix only for the listed
 exceptions. This section is the command reference.
 
 ### During development
 
+Confirm each command’s own exit status. A pipeline such as `command | tail` reports `tail`’s status,
+so capture verbose output to a temporary log & inspect its tail separately, or use `set -o pipefail`
+when filtering inline (see [agent-verification.md](agent-verification.md#exit-status)).
+
 Run only the specific test covering your change:
 
 ```sh
-pnpm exec vitest run path/to/file.test.ts 2>&1 | tail -30
+pnpm exec vitest run path/to/file.test.ts
 ```
 
 After a TypeScript or Svelte contract edit that could cause type errors elsewhere, also run:
 
 ```sh
-pnpm run check 2>&1 | tail -10
+pnpm run check
 ```
 
 Run `pnpm run lint:fix` before committing. Do not run `pnpm run test`, `pnpm run build`, or any
@@ -588,7 +600,7 @@ above the finding.
 read-only: it runs `lint`, not `lint:fix`, so run `pnpm run lint:fix` beforehand. Opt-in flags add
 the local-only steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`, `--browser` adds
 `test:accessibility` & `test:pwa`, and `--all` adds both. Run it once, when commit-ready, only for
-the exceptions in [AGENTS.md §7](../AGENTS.md#7-verification). If a step fails, fix the issue and
+the exceptions in [verification policy](agent-verification.md). If a step fails, fix the issue and
 rerun only that step, then rerun `pnpm run verify` once.
 
 The browser steps reuse the production build from the matrix via `PLAYWRIGHT_SKIP_BUILD=true`, so
@@ -808,8 +820,11 @@ offline fallback, registration, or activation behavior.
 ### Git Hook Permission or Execution Failures in Worktrees
 
 - **Symptom**: Pre-commit hooks fail or block commits inside isolated worktree environments.
-- **Recovery**: Bypass hooks if necessary (`git commit --no-verify`), provided you have directly run
-  `pnpm run lint:fix` and the focused checks from §5; CI still runs the full matrix on the PR.
+- **Recovery**: Prefer fixing hook execution. If a Git hook must be bypassed
+  (`git commit --no-verify`), first run `pnpm run lint:fix`, the focused checks from §5, and
+  `node scripts/check-attribution.ts --commit-msg <message-file>` directly, and confirm clean exit
+  status. Keep the required attribution trailer; CI still runs the full matrix on the PR. This does
+  not authorize bypassing a refused harness edit or weakening an approval policy.
 
 ### CI Doesn't Start on a New PR
 
