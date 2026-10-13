@@ -51,10 +51,8 @@
 
 ## 2. Git Worktree Mechanics & Workspace Isolation
 
-Agents that modify tracked files work in an isolated Git worktree to prevent edit collisions,
-dirty-state confusion, and branch switching interference across concurrent sessions. Read-only work
-and platform-isolated cloud sessions are exempt; see
-[worktree policy](../AGENTS.md#worktree-isolation).
+Worktrees are optional. They prevent edit collisions, dirty-state confusion, and branch-switching
+interference when several sessions work at once; see [Worktrees](../AGENTS.md#worktrees).
 
 ### Worktree creation
 
@@ -113,11 +111,11 @@ including the resolved Git directory for linked worktrees. That protects normal 
 `pnpm install`, `gh`, & remote Git commands need network access, while `git worktree add`, staging,
 commits, & ref updates require an approved sandbox escalation. This project's `.codex/config.toml`
 enables command-network access with `[sandbox_workspace_write]` and `network_access = true`, while
-keeping `sandbox_mode = "workspace-write"`, `approval_policy = "on-request"`, and
-`approvals_reviewer = "user"`. Git-metadata operations can request a narrow escalation; command
-allowlists in `.codex/rules/default.rules` do not grant filesystem or network access. If the active
-managed environment disallows escalation, report the limitation rather than weakening the sandbox or
-bypassing isolation.
+keeping `sandbox_mode = "workspace-write"` and `approval_policy = "on-request"`. It leaves
+`approvals_reviewer` to each contributor’s own config. Git-metadata operations can request a narrow
+escalation; command allowlists in `.codex/rules/default.rules` do not grant filesystem or network
+access. If the active managed environment disallows escalation, report the limitation rather than
+weakening the sandbox or bypassing isolation.
 
 For local macOS Codex worktrees, setup pins pnpm to `/private/tmp/codex-pnpm-store` (or an explicit
 `pnpm_config_store_dir`, with `npm_config_store_dir` as a legacy fallback) and disables the
@@ -184,38 +182,13 @@ Mistria Field Guide uses explicit planning and approval gates for changes that n
 - Use the smallest process that fits the change. Small, well-specified maintenance work does not
   require a separate specification or implementation plan.
 
-### Claim & release issue ownership
+### Issue status
 
-Issue ownership uses two labels because every agent operates through the repository owner's GitHub
-account:
-
-- `status: in progress` identifies all active work.
-- Exactly one `agent:*` label identifies the top-level agent responsible for it: `agent: claude`,
-  `agent: codex`, `agent: antigravity`, `agent: kilo`, `agent: copilot`, or `agent: lm studio`.
-
-Follow this protocol for every issue-backed task:
-
-1. Refresh the issue immediately before claiming it. Do not start issues marked `status: blocked` or
-   `status: needs decision`. If `status: in progress` or an `agent:*` label is already present,
-   coordinate with the current owner instead of starting duplicate work.
-2. Complete the applicable scope, specification, & plan approval gates.
-3. Immediately before setup or implementation, remove the issue's current `status:*` label, add
-   `status: in progress`, & add exactly one `agent:*` label for the top-level orchestrator.
-   Subagents inherit that identity rather than claiming the issue separately.
-4. Keep both active-work labels while implementation, verification, & PR review remain active.
-5. On handoff, replace the existing `agent:*` label with the receiving agent's label. Do not leave
-   multiple agent labels on an issue.
-6. When the issue closes, remove `status: in progress` & the `agent:*` label. If work stops without
-   closing the issue, remove both active-work labels & set exactly one accurate status:
-   `status: ready`, `status: blocked`, or `status: needs decision`.
-
-An active-work label is a coordination claim, not proof of progress. Do not claim issues merely to
-reserve them, & do not leave stale claims after an agent stops working.
-
-Filing an issue does not claim it. The filer adds the required `Agent:` authorship line, leaves the
-issue without an `agent:*` label, and applies a non-active status such as `status: ready` when the
-issue is already triaged. Add the ownership label only when an agent later completes the approval
-gates and begins the claim protocol above.
+Status labels show where an issue stands: `status: ready`, `status: blocked`,
+`status: needs decision`, or `status: in progress`. Do not start a blocked or needs-decision issue.
+An issue with `status: in progress` or an `agent:*` label already has an owner; coordinate on the
+issue instead of starting duplicate work. Applying these labels requires triage access, so outside
+contributors say on the issue that they are taking it.
 
 ### Attribute agent-authored content
 

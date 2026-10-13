@@ -247,6 +247,12 @@ Each extractor projects one claimed domain into a registry plus per-locale names
 only in locale chunks (`src/lib/data/locales/<locale>/<category>.json`), never in
 `tracker-data.json`.
 
+Extractors throw on unexpected or missing source data: unrecognized keys, missing names, or values
+outside a known set. Never fabricate fallback display text (such as a title-cased internal key) to
+cover a gap; missing data usually means the pipeline is assembling something wrong, and a fallback
+would leak that into the app. For known-set lookups, list every known value and throw on anything
+else, so a new game version surfaces immediately.
+
 | Module                    | Input                                 | Output & notable rules                                                                                                                                      |
 | ------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `almanac.ts`              | Items, almanac UI, fish, translations | Almanac rows and the item registry. Collapses colorways by recipe key and English name; the canonical ID is the alphabetically first member.                |
