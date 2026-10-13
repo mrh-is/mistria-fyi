@@ -1,4 +1,4 @@
-// Creates and sets up an isolated agent worktree per AGENTS.md §1.
+// Creates and sets up an isolated agent worktree per AGENTS.md, worktree isolation.
 // Usage: pnpm run worktree:new <issue-number>-<short-description> [starting-branch]
 //
 // A Node script so Git for Windows records a Windows-readable gitdir: from `cmd.exe`, `bash` can

@@ -1,4 +1,4 @@
-// Sets up an existing linked worktree per AGENTS.md §1: links the `.worktreeinclude` entries from
+// Sets up an existing linked worktree per AGENTS.md, worktree isolation: links the `.worktreeinclude` entries from
 // the main checkout, then installs dependencies. `worktree:new` runs it after creating a worktree;
 // run it directly inside a harness-created worktree (e.g. under `.claude/worktrees/`).
 // Usage: pnpm run worktree:setup

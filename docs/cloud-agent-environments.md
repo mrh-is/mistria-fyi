@@ -195,8 +195,10 @@ are the security boundary; never replace it with a broader Cloudflare token.
 ## Validation
 
 In one new session for each environment, run the following commands from the repository checkout.
-For Codex, first use `cd /workspace/mistria-fyi` if the shell starts in `/workspace`; the parent
-directory has no package manifest and does not load the repository's pnpm workspace settings.
+This is environment acceptance, not an every-task baseline. Subsequent tasks start with the focused
+checks in [agent-verification.md](agent-verification.md). For Codex, first use
+`cd /workspace/mistria-fyi` if the shell starts in `/workspace`; the parent directory has no package
+manifest and does not load the repository's pnpm workspace settings.
 
 ```sh
 node --version

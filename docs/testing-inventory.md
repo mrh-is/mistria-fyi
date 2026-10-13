@@ -6,6 +6,14 @@ keyboard, focus, and axe checks live in Playwright. This page lists which layer 
 component and what remains uncovered, so new work lands in the right layer instead of duplicating
 another.
 
+## Focused checks
+
+For a changed module or component, run `pnpm exec vitest run path/to/file.test.ts`, including
+`*.client.test.ts` files. The table below identifies test layers & broader runners; it does not make
+a whole project suite the development default. For browser work, select the changed route or
+interaction as described in [the workflow](development-workflow.md#full-local-matrix). Full local
+verification uses only the exceptions in [agent-verification.md](agent-verification.md).
+
 ## Test layers
 
 | Layer           | Files                              | Vitest project    | Runner                        | Use for                                                             |
