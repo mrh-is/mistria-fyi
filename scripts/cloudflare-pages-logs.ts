@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { pathToFileURL } from "node:url";
 
 interface BuildLogEntry {

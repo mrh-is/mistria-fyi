@@ -3,6 +3,8 @@
 // any excess, so a per-file exclusion list overflows once `static/sprites/` is counted. This
 // check walks the build output and proves every asset (including the ones alphabetically past
 // where a truncated list would stop) matches an exclude rule. See #312.
+import "#scripts/lib/require-pinned-node";
+
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";

@@ -1,5 +1,13 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -27,8 +35,20 @@ function fixture(setupExitCode = 0) {
   git(upstream, "config", "user.name", "Worktree test");
   git(upstream, "config", "user.email", "worktree@example.invalid");
   git(upstream, "config", "commit.gpgsign", "false");
-  mkdirSync(join(upstream, "scripts"));
+  mkdirSync(join(upstream, "scripts/lib"), { recursive: true });
   writeFileSync(join(upstream, "scripts/new-worktree.ts"), script);
+  // new-worktree.ts imports the pinned-Node guard first, so the fixture carries it.
+  for (const file of [
+    ".node-version",
+    "scripts/lib/pinned-node.ts",
+    "scripts/lib/require-pinned-node.ts",
+  ]) {
+    copyFileSync(file, join(upstream, file));
+  }
+  writeFileSync(
+    join(upstream, "package.json"),
+    JSON.stringify({ type: "module", imports: { "#scripts/*": "./scripts/*.ts" } }),
+  );
   writeFileSync(
     join(upstream, "scripts/setup-worktree.ts"),
     `process.exitCode = ${String(setupExitCode)};\n`,

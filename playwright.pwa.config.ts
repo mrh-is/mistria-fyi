@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { defineConfig, devices } from "@playwright/test";
 
 const isCi = process.env.CI === "true";

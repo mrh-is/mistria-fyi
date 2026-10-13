@@ -2,6 +2,8 @@
 // `.git/config` lock. Husky returns the lock error instead of throwing and then skips generating
 // `.husky/_`, so a parallel `worktree:setup` would otherwise leave this worktree without hooks
 // (#567).
+import "#scripts/lib/require-pinned-node";
+
 import { pathToFileURL } from "node:url";
 
 const LOCK_FAILURE = "could not lock config file";

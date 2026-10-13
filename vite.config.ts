@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";

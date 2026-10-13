@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { chromium } from "@playwright/test";
 import { spawn } from "node:child_process";
 import { join } from "node:path";

@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";

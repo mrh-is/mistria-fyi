@@ -5,6 +5,8 @@
 //
 // This is a Node script rather than a shell script so it behaves the same under Windows, where
 // `bash` from `cmd.exe` can resolve to WSL and Git Bash's `ln -s` copies instead of linking (#353).
+import "#scripts/lib/require-pinned-node";
+
 import { spawnSync } from "node:child_process";
 import {
   existsSync,

@@ -1,1 +1,1 @@
-node scripts/check-attribution.ts --commit-msg "$1"
+pnpm exec node scripts/check-attribution.ts --commit-msg "$1"

@@ -9,6 +9,8 @@
  *
  * See docs/game-version-update-protocol.md#share-the-extracted-assets.
  */
+import "../../scripts/lib/require-pinned-node.js";
+
 import {
   copyFileSync,
   existsSync,

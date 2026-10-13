@@ -5,6 +5,8 @@
  *
  *   pnpm exec tsx scripts/playwright-satoshi.ts
  */
+import "#scripts/lib/require-pinned-node";
+
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";

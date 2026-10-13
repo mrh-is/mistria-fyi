@@ -2,6 +2,8 @@
 // locally, the runner image in CI, and apt in cloud checkouts (scripts/setup-cloud-agent.sh).
 // A Node script rather than a shell one so `pnpm run lint` also works on Windows, where `cmd.exe`
 // can't execute a `.sh` path (#723).
+import "#scripts/lib/require-pinned-node";
+
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
