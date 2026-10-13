@@ -7,11 +7,17 @@
 
 ## 1. Local Setup Requirements
 
-- **Node.js**: Use the version in `.node-version` (Node 24 LTS). Every environment, including CI and
-  both cloud agents, runs Node 24 so tests match what agents run. `package.json` accepts 24.15 or
-  later so Codex cloud can use its preinstalled patch release.
-- **ShellCheck**: `pnpm run lint` runs the system `shellcheck` (`brew install shellcheck`). CI uses
-  the runner image's copy, and `scripts/setup-cloud-agent.sh` installs it with apt.
+> **New machine?** Follow [machine-setup.md](machine-setup.md); it holds the per-platform install &
+> login steps. Run `pnpm run machine:doctor` (or `node scripts/machine-doctor.ts` before pnpm
+> exists) to see which prerequisites are present, missing, or the wrong version. It changes nothing.
+> If a tool is missing or broken mid-task, agents stop & report instead of repairing it (AGENTS.md,
+> "Local tooling failures").
+
+- **Node.js**: Use the version in `.node-version` (Node 24 LTS), activated so agent shells see it.
+  Every environment, including CI and both cloud agents, runs Node 24 so tests match what agents
+  run. `package.json` accepts 24.15 or later so Codex cloud can use its preinstalled patch release.
+- **ShellCheck**: `pnpm run lint` runs the system `shellcheck`. CI uses the runner image's copy, and
+  `scripts/setup-cloud-agent.sh` installs it with apt. Local install: see machine-setup.md.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.
 - **Dependency Installation**:
   ```sh
