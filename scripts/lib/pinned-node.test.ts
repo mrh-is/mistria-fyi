@@ -10,6 +10,10 @@ import { pinnedNodeMismatch, readPinnedNodeVersion } from "#scripts/lib/pinned-n
 // machine doctor runs on whatever Node is installed, before pnpm exists, so it can report it.
 const unguarded = new Map([
   ["scripts/guard-generated-paths.ts", "Claude edit-guard hook"],
+  ["scripts/guard-generated-reads.ts", "Dependency-free read guard on the shell runtime"],
+  ["scripts/format-agent-edit.ts", "Hook delegates formatter execution to pnpm’s pinned runtime"],
+  ["scripts/lint-agent-stop.ts", "Hook delegates lint execution to pnpm’s pinned runtime"],
+  ["scripts/agent-subagent-start.ts", "Dependency-free subagent context hook"],
   ["scripts/machine-doctor.ts", "Reports a missing or wrong Node"],
 ]);
 
