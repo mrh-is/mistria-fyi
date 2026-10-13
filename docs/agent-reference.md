@@ -6,8 +6,9 @@ their own canonical guides.
 
 ## Worktree mechanics
 
-Harness-created worktrees and branches (such as Claude Code’s `.claude/worktrees/` with
-`claude/issue-<number>-<suffix>` branches, or Codex’s `codex/…` branches) are equally acceptable.
+Worktrees are optional; use them when several sessions work at once. Harness-created worktrees and
+branches (such as Claude Code’s `.claude/worktrees/` with `claude/issue-<number>-<suffix>` branches,
+or Codex’s `codex/…` branches) are equally acceptable.
 
 Create and set up a worktree with one command:
 
@@ -123,6 +124,10 @@ enforces the same threshold. Ignore an advisory only when it’s disputed or has
   `node` can’t resolve a `.js` specifier to a `.ts` sibling, so they share modules through
   `#scripts/*`, which maps an extensionless specifier to the `.ts` source
   (`#scripts/lib/pnpm-command`).
+- **Paths**: manipulate paths with `node:path`, never by splitting, joining, or slicing strings, and
+  keep them working on Windows. Use the default functions for filesystem paths and `path.posix` for
+  paths that are `/`-separated everywhere (repo-relative doc paths, git pathspecs, URLs, zip
+  entries). See [the decision record](decisions/2026-10-13-path-apis.md).
 - **Styling**: Tailwind utilities & scoped `<style>` blocks, both on the design tokens in
   `src/app.css`; Stylelint rejects color, type-size, shadow, & radius literals in scoped CSS. See
   [docs/styling.md](styling.md).
