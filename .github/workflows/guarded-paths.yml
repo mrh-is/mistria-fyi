@@ -1,7 +1,7 @@
 name: Guarded paths
 
 # Vendored & generated files change only in PRs that say so: `shadcn-update` for
-# src/lib/components/ui/, `generated-data` for src/lib/data/tracker-data.json (AGENTS.md §5).
+# src/lib/components/ui/, `generated-data` for src/lib/data/tracker-data.json (AGENTS.md, architecture boundaries).
 # scripts/check-guarded-paths.ts holds the rules, including renames out of a guarded path.
 
 on:

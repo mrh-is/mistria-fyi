@@ -8,9 +8,10 @@
 //   --all      both of the above
 //
 // CI runs the default matrix on every pull request; run this locally only for the exceptions in
-// AGENTS.md §7 (pipeline/generated-data changes, high-risk surfaces, CI-only failures).
+// docs/agent-verification.md (pipeline/generated-data changes, high-risk surfaces, CI-only
+// failures).
 // During development, run only the specific test:
-//   pnpm exec vitest run path/to/file.test.ts 2>&1 | tail -30
+//   pnpm exec vitest run path/to/file.test.ts
 //
 // A Node script so Windows runs it directly: from `cmd.exe`, `bash` can resolve to the WSL
 // launcher, which can outlive its child and withhold the exit status (#353).

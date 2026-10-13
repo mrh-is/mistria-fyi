@@ -149,7 +149,7 @@ export function checkGit(machine: Environment): CheckResult[] {
             "git-remote",
             "HTTPS remote",
             "wrong",
-            "origin does not use HTTPS (AGENTS.md §2)",
+            "origin does not use HTTPS (docs/agent-workflow.md, git identity)",
             "git remote set-url origin https://github.com/mrh-is/mistria-fyi.git",
           ),
     );
@@ -164,7 +164,7 @@ export function checkGit(machine: Environment): CheckResult[] {
           "Commit signing",
           "manual",
           "not configured; unsigned commits are acceptable only in cloud sandboxes",
-          "Configure a local SSH signing key per AGENTS.md §2 (gpg.format = ssh, gpg.ssh.program = ssh-keygen)",
+          "Configure a local SSH signing key per docs/agent-workflow.md, git identity (gpg.format = ssh, gpg.ssh.program = ssh-keygen)",
         ),
   );
   return results;
