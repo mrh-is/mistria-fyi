@@ -77,12 +77,6 @@ prefix_rule(
 )
 
 prefix_rule(
-    pattern = ["git", "switch"],
-    decision = "allow",
-    justification = "Switching branches in a worktree is the documented workflow.",
-)
-
-prefix_rule(
     pattern = ["git", "merge", "--ff-only"],
     decision = "allow",
     justification = "A fast-forward cannot create a merge commit or conflict.",
@@ -121,9 +115,9 @@ prefix_rule(
 )
 
 prefix_rule(
-    pattern = ["gh", "run", ["view", "list", "watch", "download"]],
+    pattern = ["gh", "run", ["view", "list", "watch"]],
     decision = "allow",
-    justification = "These only read CI runs & their artifacts.",
+    justification = "These only read CI runs.",
 )
 
 prefix_rule(
