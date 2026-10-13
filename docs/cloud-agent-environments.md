@@ -151,11 +151,13 @@ These steps follow OpenAI’s
    pnpm_config_cache_dir=/workspace/.pnpm-store/cache
    ```
 
-   pnpm 11 reads these `pnpm_config_*` variables for both installs and automatic dependency
-   refreshes during `pnpm run`. Set them in the environment settings, not only in the install
-   script, so they remain available during the agent phase. Do not put store or cache overrides back
-   in `pnpm-workspace.yaml`: local checkouts and worktrees should use the machine’s shared external
-   store. The cloud paths are covered by the existing `.pnpm-store` ignore rule.
+   pnpm 11 reads these `pnpm_config_*` variables for every install, including a rerun of
+   `pnpm install --frozen-lockfile` after a lockfile change; `pnpm run` refuses stale dependencies
+   rather than refreshing them (`verifyDepsBeforeRun: error`). Set them in the environment settings,
+   not only in the install script, so they remain available during the agent phase. Do not put store
+   or cache overrides back in `pnpm-workspace.yaml`: local checkouts and worktrees should use the
+   machine’s shared external store. The cloud paths are covered by the existing `.pnpm-store` ignore
+   rule.
 
    Also add these non-secret **Environment variables**:
 

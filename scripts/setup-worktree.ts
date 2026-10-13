@@ -2,12 +2,12 @@
 // the main checkout, then installs dependencies. `worktree:new` runs it after creating a worktree;
 // run it directly inside a harness-created worktree (e.g. under `.claude/worktrees/`).
 // Usage: node scripts/setup-worktree.ts (not a pnpm script: `pnpm run` refuses to start without the
-// dependencies this installs)
+// dependencies this installs). It runs on the shell's Node, which may differ from the pin, so it
+// skips the require-pinned-node guard: the install it runs downloads the pinned runtime, and every
+// later step goes through pnpm, which uses that runtime.
 //
 // This is a Node script rather than a shell script so it behaves the same under Windows, where
 // `bash` from `cmd.exe` can resolve to WSL and Git Bash's `ln -s` copies instead of linking (#353).
-import "#scripts/lib/require-pinned-node";
-
 import { spawnSync } from "node:child_process";
 import {
   existsSync,
