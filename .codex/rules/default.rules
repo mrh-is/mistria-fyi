@@ -138,7 +138,7 @@ prefix_rule(
 
 # Enforce the repository's pnpm-only package-manager policy.
 prefix_rule(
-    pattern = [["bun", "npm", "npx", "yarn"]],
+    pattern = [["bun", "npm", "npx", "pnpx", "yarn"]],
     decision = "forbidden",
-    justification = "Use the equivalent pnpm command required by AGENTS.md.",
+    justification = "Use the equivalent pnpm command required by AGENTS.md; run package-local tools with pnpm exec.",
 )
