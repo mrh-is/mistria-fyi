@@ -24,6 +24,7 @@ interface Workflow {
 interface WorkflowJob {
   concurrency?: Workflow["concurrency"];
   container?: string | { image?: string; options?: string };
+  env?: Record<string, string>;
   if?: string;
   needs?: string | string[];
   outputs?: Record<string, string>;
@@ -259,14 +260,15 @@ describe("CI workflow jobs", () => {
 
   it("saves the pnpm store cache from one job only", () => {
     // pnpm/setup saves a new cache entry in its post step on every run (about 30 s), with no input
-    // to skip it. ACTIONS_CACHE_MODE=read on the step keeps the restore and drops the save.
+    // to skip it. ACTIONS_CACHE_MODE=read on the job keeps the restore and drops the save; the actions/cache steps
+    // set it back to write.
     const savers: string[] = [];
     for (const [jobName, job] of Object.entries(jobs)) {
       const setup = job.steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
       if (setup?.with?.cache !== true) {
         continue;
       }
-      if (setup.env?.ACTIONS_CACHE_MODE !== "read") {
+      if (job.env?.ACTIONS_CACHE_MODE !== "read") {
         savers.push(jobName);
       }
     }

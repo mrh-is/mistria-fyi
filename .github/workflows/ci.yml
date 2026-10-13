@@ -119,6 +119,8 @@ jobs:
   check:
     name: Check types
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_CACHE_MODE: read
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -128,8 +130,6 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
-        env:
-          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -141,6 +141,8 @@ jobs:
     name: Test
     needs: changes
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_CACHE_MODE: read
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -150,8 +152,6 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
-        env:
-          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -159,6 +159,8 @@ jobs:
       # Vitest's fsModuleCache is content-addressed, so a stale restore only costs cache misses.
       # Keying on the commit saves a fresh copy each run; the restore keys pick up the newest one.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        env:
+          ACTIONS_CACHE_MODE: write
         with:
           path: node_modules/.vitest-cache
           key: vitest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
@@ -187,6 +189,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_CACHE_MODE: read
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -196,8 +200,6 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
-        env:
-          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -218,6 +220,8 @@ jobs:
     needs: [changes, build]
     if: needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_CACHE_MODE: read
     container:
       image: mcr.microsoft.com/playwright:v1.63.0-noble
       options: --ipc=host
@@ -236,8 +240,6 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
-        env:
-          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -249,6 +251,8 @@ jobs:
       # Geometry measures Satoshi's production metrics (#708). The script pins the font's SHA-256,
       # so its hash keys the cache; a warm cache never touches the network.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        env:
+          ACTIONS_CACHE_MODE: write
         with:
           path: tests/browser/fixtures/local/satoshi-regular.woff2
           key: satoshi-${{ hashFiles('scripts/playwright-satoshi.ts') }}
@@ -295,6 +299,8 @@ jobs:
     needs: [changes, build]
     if: needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_CACHE_MODE: read
     container:
       image: mcr.microsoft.com/playwright:v1.63.0-noble
       options: --ipc=host
@@ -309,8 +315,6 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
-        env:
-          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -349,6 +353,8 @@ jobs:
       contents: read
       issues: write
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_CACHE_MODE: read
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -358,8 +364,6 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
-        env:
-          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
