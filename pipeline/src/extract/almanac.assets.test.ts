@@ -8,7 +8,7 @@ import { extractAlmanac } from "./almanac.js";
 
 import type { AlmanacCategoryId, ItemId } from "#lib/types/tracker-data.js";
 
-describe("extractAlmanac — v1.0.7 assets", () => {
+describe("extractAlmanac — real assets", () => {
   it("matches the verified category totals while preserving distinct bed presentations", () => {
     const assetsDir = requireGameAssetsDir();
     const fiddle = parseFiddle(assetsDir).data;
