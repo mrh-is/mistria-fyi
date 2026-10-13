@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { spawnSync } from "node:child_process";
 import { appendFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { availableParallelism } from "node:os";

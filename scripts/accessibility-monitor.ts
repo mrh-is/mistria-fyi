@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { spawn } from "node:child_process";
 import { glob, readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";

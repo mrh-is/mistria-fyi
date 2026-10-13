@@ -4,14 +4,20 @@ Claude Code cloud and Codex cloud use fresh Linux checkouts that do not inherit 
 credentials. Configure both environments to install dependencies on a supported Node version, and
 grant only read access to Cloudflare Pages build logs.
 
-Both environments run Node 24, the repository’s version, but get it differently:
+Both environments run `.node-version`’s exact release for everything started through pnpm.
+`package.json`’s `devEngines.runtime` makes `pnpm install` download that release into the pnpm store
+and link it into `node_modules`, so `pnpm run` and `pnpm exec` use it regardless of the image’s
+Node. The environments differ only in the shell’s bare `node`:
 
 - **Claude Code cloud** ships Node 22.22.0, below the dependency floor of 24.15. Its setup script
-  installs Node from `.node-version`.
-- **Codex cloud** ships Node 24 (24.19 as of October 2026), which `package.json`’s `engines` range
-  accepts. Its agent phase can write only under `/workspace` and temporary directories, and its home
-  directory doesn’t persist from setup, so a downloaded runtime couldn’t reach the agent’s `PATH`
-  anyway. Codex uses its preinstalled Node, which may trail `.node-version` by a few patch releases.
+  also installs `.node-version`’s release on `PATH`, so bare `node` (including Claude’s hooks)
+  matches.
+- **Codex cloud** ships Node 24 (24.19 as of October 2026). Its agent phase can write only under
+  `/workspace` and temporary directories, and its home directory doesn’t persist from setup, so
+  nothing can replace the shell’s `node`. The pnpm-managed runtime lives in the `/workspace` store
+  and `node_modules`, so it survives into the agent phase. Bare `node` stays on the image’s release,
+  so a repository script started with it (`node scripts/verify.ts`) exits with a message to use
+  `pnpm run` or `pnpm exec node` instead.
 
 Revisit `.node-version` when both images ship a newer LTS line; Node 24 reaches end of life in
 April 2028.
@@ -116,8 +122,10 @@ These steps follow OpenAI’s
 1. Open [Codex environment settings](https://chatgpt.com/codex/settings/environments), then create
    or edit the environment attached to this repository.
 2. Name the environment `Mistria Field Guide`.
-3. Leave Node at the preinstalled version (24.19 as of October 2026). Don’t download another
-   runtime; see the explanation at the top of this page.
+3. Leave the image’s Node preinstalled (24.19 as of October 2026). Don’t install another runtime
+   yourself: the install script’s `pnpm install` downloads `.node-version`’s release into the
+   `/workspace` store during setup, while setup still has internet access. See the explanation at
+   the top of this page.
 4. Add these environment variables, replacing both placeholders:
 
    ```dotenv
@@ -171,8 +179,8 @@ These steps follow OpenAI’s
    Vitest from starting. The explicit Wrangler overrides keep both paths writable, and the XDG
    settings cover other configuration and cache writes without changing `HOME`.
 
-6. Keep the start skill free of Node or `PATH` activation steps. The preinstalled runtime needs
-   none.
+6. Keep the start skill free of Node or `PATH` activation steps. pnpm selects the pinned runtime
+   itself.
 7. Set agent internet access to the restricted or allowlist mode, and allow `api.cloudflare.com`.
    Setup scripts have internet access separately; the agent needs this host during its working phase
    to fetch Pages logs.
@@ -192,6 +200,7 @@ directory has no package manifest and does not load the repository's pnpm worksp
 
 ```sh
 node --version
+pnpm exec node --version
 pnpm --version
 pnpm install --frozen-lockfile
 pnpm run check
@@ -200,11 +209,12 @@ pnpm run paraglide:compile
 pnpm run cloudflare:logs -- <deployment-id>
 ```
 
-The Node command must match `.node-version` for Claude and print a 24.x release of at least 24.15
-for Codex; Paraglide must compile without requesting jsDelivr; the log command must print
-timestamped build-log lines. Use a real deployment ID from the Pages project; the command
-intentionally rejects the `<deployment-id>` placeholder. For Claude with a protected API credential,
-`CLOUDFLARE_API_TOKEN` should be unset even though the log request succeeds.
+`pnpm exec node --version` must match `.node-version` in both environments. Bare `node --version`
+must also match it for Claude, and print a 24.x release of at least 24.15 for Codex; Paraglide must
+compile without requesting jsDelivr; the log command must print timestamped build-log lines. Use a
+real deployment ID from the Pages project; the command intentionally rejects the `<deployment-id>`
+placeholder. For Claude with a protected API credential, `CLOUDFLARE_API_TOKEN` should be unset even
+though the log request succeeds.
 
 Install, check, and tests must exit successfully. When filtering their output with `tail`, enable
 `set -o pipefail` first so the pipeline preserves failures from pnpm instead of reporting `tail`’s
