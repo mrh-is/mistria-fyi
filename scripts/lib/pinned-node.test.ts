@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join, normalize } from "node:path";
+import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { pinnedNodeMismatch, readPinnedNodeVersion } from "#scripts/lib/pinned-node";
@@ -16,7 +16,7 @@ const guardImport =
   /^import "(?:#scripts\/lib\/require-pinned-node|(?:\.\.\/)+scripts\/lib\/require-pinned-node\.js)";$/mu;
 
 function listFiles(directory: string): string[] {
-  return readdirSync(directory).map((name) => join(directory, name));
+  return readdirSync(directory).map((name) => posix.join(directory, name));
 }
 
 /** Collects `node <file>` & `tsx <file>` targets from a command string, relative to the root. */
@@ -32,7 +32,8 @@ function commandTargets(command: string): string[] {
     for (const match of part.matchAll(
       /\b(?:node|tsx)\s+\\?"?(?:\$CLAUDE_PROJECT_DIR\/)?([\w./-]+\.ts)\b/gu,
     )) {
-      targets.push(normalize(join(cwd, match[1])));
+      // POSIX separators on every platform, so targets match the forward-slash paths above.
+      targets.push(posix.normalize(posix.join(cwd, match[1])));
     }
   }
   return targets;
