@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 export interface CliOptions {
   assetsDir?: string;
   parseOnly: boolean;
-  parseProfile?: "v1.0.6";
+  parseProfile?: "v1.0.7";
   sprites: boolean;
   version?: string;
   villagerSpritesOnly: boolean;
@@ -35,7 +35,7 @@ export function parseCliOptions(args: readonly string[]): CliOptions {
         options.parseOnly = true;
         break;
       case "--parse-profile":
-        if (value !== "v1.0.6") throw new Error(`Unknown parse profile: ${value ?? "(missing)"}`);
+        if (value !== "v1.0.7") throw new Error(`Unknown parse profile: ${value ?? "(missing)"}`);
         options.parseProfile = value;
         break;
       case "--sprites":

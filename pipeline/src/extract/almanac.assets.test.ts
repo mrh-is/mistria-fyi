@@ -8,7 +8,7 @@ import { extractAlmanac } from "./almanac.js";
 
 import type { AlmanacCategoryId, ItemId } from "#lib/types/tracker-data.js";
 
-describe("extractAlmanac — v1.0.6 assets", () => {
+describe("extractAlmanac — v1.0.7 assets", () => {
   it("matches the verified category totals while preserving distinct bed presentations", () => {
     const assetsDir = requireGameAssetsDir();
     const fiddle = parseFiddle(assetsDir).data;
@@ -21,19 +21,23 @@ describe("extractAlmanac — v1.0.6 assets", () => {
 
     expect(fish.items).toHaveLength(148);
     expect(materials.items).toHaveLength(77);
-    expect(furniture.items).toHaveLength(1011);
+    // 1.0.7's chicken statue rewards add the Golden Fence & eight gold animal statues.
+    expect(furniture.items).toHaveLength(1020);
 
     expect(fish.items.some((entry) => entry.itemIds.includes("basic_wood" as ItemId))).toBe(true);
     expect(materials.items.some((entry) => entry.itemIds.includes("perfect_ruby" as ItemId))).toBe(
       true,
     );
     expect(furniture.items.filter((entry) => entry.recipeId === "emerald_bed")).toHaveLength(2);
-    // 2,709 named items, less the three excluded cutscene props (`ITEM_EXCLUSIONS`).
-    expect(Object.keys(localeNames.en)).toHaveLength(2706);
+    // 2,722 named items, less the four `ITEM_EXCLUSIONS`: three cutscene props & the unfinished
+    // `gold_chest`.
+    expect(Object.keys(localeNames.en)).toHaveLength(2718);
     expect(localeNames.en).not.toHaveProperty("balors_crate");
+    expect(localeNames.en).not.toHaveProperty("gold_chest");
     expect(localeNames.en).not.toHaveProperty("harvest_day_pie");
     expect(localeNames.ja["turnip" as ItemId]).not.toBe(localeNames.en["turnip" as ItemId]);
-    expect(log).toHaveBeenCalledWith(expect.stringContaining("ja: 302"));
+    // 1.0.7's twelve new named items ship untranslated.
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("ja: 314"));
     expect(log).toHaveBeenCalledWith("  Nameless items skipped (6):");
     expect(log).toHaveBeenCalledWith("    - other/misc/animal_cosmetic (missing name)");
     expect(log).toHaveBeenCalledWith("    - other/misc/stinky_stamina_potion (missing name)");

@@ -4,7 +4,7 @@ import { requireGameAssetsDir } from "../test-helpers.js";
 import { evaluateExpressions } from "./evaluate.js";
 import { parseFiddle } from "./parse-fiddle.js";
 
-describe("evaluateExpressions — v1.0.6 assets", () => {
+describe("evaluateExpressions — v1.0.7 assets", () => {
   it("resolves every supported item value expression", () => {
     const parsed = parseFiddle(requireGameAssetsDir());
 

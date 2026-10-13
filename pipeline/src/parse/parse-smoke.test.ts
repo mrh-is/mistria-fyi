@@ -11,8 +11,8 @@ describe("checkParseSmoke", () => {
       checkParseSmoke(parsed);
     }).not.toThrow();
     expect(() => {
-      checkParseSmoke(parsed, "v1.0.6");
-    }).toThrow(/Expected 297/);
+      checkParseSmoke(parsed, "v1.0.7");
+    }).toThrow(/Expected 298/);
   });
 
   it("rejects an empty parsed tree", () => {

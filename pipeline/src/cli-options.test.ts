@@ -5,12 +5,12 @@ import { parseCliOptions, resolveCallerPath } from "./cli-options.js";
 
 describe("parseCliOptions", () => {
   it("accepts the documented flags and one assets directory", () => {
-    expect(parseCliOptions(["--", "input/assets", "--version=1.0.6", "--sprites"])).toEqual({
+    expect(parseCliOptions(["--", "input/assets", "--version=1.0.7", "--sprites"])).toEqual({
       assetsDir: "input/assets",
       parseOnly: false,
       parseProfile: undefined,
       sprites: true,
-      version: "1.0.6",
+      version: "1.0.7",
       villagerSpritesOnly: false,
     });
   });
@@ -27,9 +27,9 @@ describe("parseCliOptions", () => {
     expect(() => parseCliOptions(["--sprites", "--sprites"])).toThrow(/Duplicate/);
   });
 
-  it("requires parse-only for the explicit v1.0.6 profile", () => {
-    expect(() => parseCliOptions(["--parse-profile=v1.0.6"])).toThrow(/--parse-only/);
-    expect(parseCliOptions(["--parse-only", "--parse-profile=v1.0.6"]).parseProfile).toBe("v1.0.6");
+  it("requires parse-only for the explicit v1.0.7 profile", () => {
+    expect(() => parseCliOptions(["--parse-profile=v1.0.7"])).toThrow(/--parse-only/);
+    expect(parseCliOptions(["--parse-only", "--parse-profile=v1.0.7"]).parseProfile).toBe("v1.0.7");
   });
 });
 
