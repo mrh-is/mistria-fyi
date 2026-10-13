@@ -68,6 +68,77 @@ prefix_rule(
     justification = "The frozen lockfile keeps dependency installation reproducible.",
 )
 
+# Permit Git commands that only move refs or read repository metadata. Each writes under .git,
+# which the sandbox protects, so without a rule every call escalates to an approval review.
+prefix_rule(
+    pattern = ["git", "fetch"],
+    decision = "allow",
+    justification = "Fetching updates remote-tracking refs only.",
+)
+
+prefix_rule(
+    pattern = ["git", "switch"],
+    decision = "allow",
+    justification = "Switching branches in a worktree is the documented workflow.",
+)
+
+prefix_rule(
+    pattern = ["git", "merge", "--ff-only"],
+    decision = "allow",
+    justification = "A fast-forward cannot create a merge commit or conflict.",
+)
+
+prefix_rule(
+    pattern = ["git", "pull", "--ff-only"],
+    decision = "allow",
+    justification = "A fast-forward cannot create a merge commit or conflict.",
+)
+
+prefix_rule(
+    pattern = ["git", "rev-parse"],
+    decision = "allow",
+    justification = "This only reads repository metadata.",
+)
+
+prefix_rule(
+    pattern = ["git", "remote", ["-v", "get-url", "show"]],
+    decision = "allow",
+    justification = "These forms only read remote configuration.",
+)
+
+# Permit read-only GitHub CLI commands. Writes (create, edit, comment, ready, merge) and `gh api`
+# stay out on purpose.
+prefix_rule(
+    pattern = ["gh", "pr", ["view", "list", "diff", "checks", "status"]],
+    decision = "allow",
+    justification = "These only read pull request state.",
+)
+
+prefix_rule(
+    pattern = ["gh", "issue", ["view", "list"]],
+    decision = "allow",
+    justification = "These only read issue state.",
+)
+
+prefix_rule(
+    pattern = ["gh", "run", ["view", "list", "watch", "download"]],
+    decision = "allow",
+    justification = "These only read CI runs & their artifacts.",
+)
+
+prefix_rule(
+    pattern = ["gh", "label", "list"],
+    decision = "allow",
+    justification = "This only reads labels.",
+)
+
+# Permit read-only process inspection.
+prefix_rule(
+    pattern = [["pgrep", "lsof"]],
+    decision = "allow",
+    justification = "These only read process and port state.",
+)
+
 # Enforce the repository's pnpm-only package-manager policy.
 prefix_rule(
     pattern = [["bun", "npm", "npx", "yarn"]],
