@@ -1,13 +1,16 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
-  DEFAULT_ASSETS_DIR,
   DEFAULT_WINDOWS_GAME_ARCHIVE,
+  defaultAssetsDir,
   defaultGameAssetsInput,
+  INPUT_ROOT,
   prepareGameAssets,
+  readCommittedGameVersion,
+  resolveVersionedAssetsDir,
 } from "./asset-input.js";
 
 const directories: string[] = [];
@@ -17,10 +20,15 @@ afterEach(() => {
   }
 });
 
-describe("DEFAULT_ASSETS_DIR", () => {
-  it("points at pipeline/input/assets regardless of the working directory", () => {
-    expect(DEFAULT_ASSETS_DIR).toBe(resolve(import.meta.dirname, "../../input/assets"));
-    expect(DEFAULT_ASSETS_DIR.endsWith(`${sep}${join("pipeline", "input", "assets")}`)).toBe(true);
+describe("defaultAssetsDir", () => {
+  it("points at pipeline/input/vX.Y.Z/assets regardless of the working directory", () => {
+    expect(INPUT_ROOT).toBe(resolve(import.meta.dirname, "../../input"));
+    expect(defaultAssetsDir("1.0.6")).toBe(join(INPUT_ROOT, "v1.0.6", "assets"));
+    expect(INPUT_ROOT.endsWith(`${sep}${join("pipeline", "input")}`)).toBe(true);
+  });
+
+  it("defaults to the committed tracker data's version", () => {
+    expect(defaultAssetsDir()).toBe(join(INPUT_ROOT, `v${readCommittedGameVersion()}`, "assets"));
   });
 });
 
@@ -29,8 +37,39 @@ describe("defaultGameAssetsInput", () => {
     expect(defaultGameAssetsInput("win32")).toBe(DEFAULT_WINDOWS_GAME_ARCHIVE);
   });
 
-  it.each(["darwin", "linux"] as const)("reads pipeline/input/assets on %s", (platform) => {
-    expect(defaultGameAssetsInput(platform)).toBe(DEFAULT_ASSETS_DIR);
+  it.each(["darwin", "linux"] as const)("reads pipeline/input/vX.Y.Z/assets on %s", (platform) => {
+    expect(defaultGameAssetsInput(platform)).toBe(defaultAssetsDir());
+  });
+});
+
+function gameFilesRoot(): string {
+  const root = mkdtempSync(join(tmpdir(), "mistria-game-files-"));
+  directories.push(root);
+  mkdirSync(join(root, "v1.0.6", "assets", "fiddle"), { recursive: true });
+  mkdirSync(join(root, "archive"));
+  return root;
+}
+
+describe("resolveVersionedAssetsDir", () => {
+  it("picks the requested version's assets folder", () => {
+    const root = gameFilesRoot();
+    expect(resolveVersionedAssetsDir(root, "1.0.6")).toBe(join(root, "v1.0.6", "assets"));
+  });
+
+  it("names the expected path for a missing version", () => {
+    const root = gameFilesRoot();
+    expect(() => resolveVersionedAssetsDir(root, "9.9.9")).toThrow(
+      join(root, "v9.9.9", "assets", "fiddle"),
+    );
+  });
+
+  it("requires a version for a versioned root", () => {
+    expect(() => resolveVersionedAssetsDir(gameFilesRoot(), undefined)).toThrow("--version");
+  });
+
+  it("passes an assets directory through unchanged", () => {
+    const assets = join(gameFilesRoot(), "v1.0.6", "assets");
+    expect(resolveVersionedAssetsDir(assets, "1.0.7")).toBe(assets);
   });
 });
 
