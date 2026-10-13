@@ -1,9 +1,11 @@
 import { resolve } from "node:path";
 
+import { CURRENT_GAME_VERSION } from "./game-version.js";
+
 export interface CliOptions {
   assetsDir?: string;
   parseOnly: boolean;
-  parseProfile?: "v1.0.7";
+  parseProfile?: "canonical";
   sprites: boolean;
   version?: string;
   villagerSpritesOnly: boolean;
@@ -35,7 +37,9 @@ export function parseCliOptions(args: readonly string[]): CliOptions {
         options.parseOnly = true;
         break;
       case "--parse-profile":
-        if (value !== "v1.0.7") throw new Error(`Unknown parse profile: ${value ?? "(missing)"}`);
+        if (value !== "canonical") {
+          throw new Error(`Unknown parse profile: ${value ?? "(missing)"}`);
+        }
         options.parseProfile = value;
         break;
       case "--sprites":
@@ -43,8 +47,8 @@ export function parseCliOptions(args: readonly string[]): CliOptions {
         options.sprites = true;
         break;
       case "--version":
-        if (!value) throw new Error("Pass --version=X.Y.Z.");
-        options.version = value;
+        if (!value) throw new Error("Pass --version=X.Y.Z or --version=current.");
+        options.version = value === "current" ? CURRENT_GAME_VERSION : value;
         break;
       case "--villager-sprites-only":
         if (value !== undefined) throw new Error(`Unknown option: ${arg}`);

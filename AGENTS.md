@@ -74,9 +74,9 @@ from the main checkout (`.worktreeinclude`), so `ls pipeline/input` settles the 
 `needs game installation` label is not, by itself, a blocker. When present, it holds `assets/`
 (`fiddle/` TOML, `localization/` translation tables, `gml/`, `tiled/`), `__fiddle__.json`,
 `localization.json` (every English string by key), and `save/`. Regenerate data from it with
-`pnpm run pipeline:assets -- --version=1.0.7`. Relative paths passed to the plain `pipeline` script
-resolve from where you run `pnpm`; `--version` is required for these assets (see
-[pipeline/README.md](pipeline/README.md#setup--commands)).
+`pnpm run pipeline:assets`, which stamps `CURRENT_GAME_VERSION` (`pipeline/src/game-version.ts`).
+Relative paths passed to the plain `pipeline` script resolve from where you run `pnpm`; `--version`
+is required there (see [pipeline/README.md](pipeline/README.md#setup--commands)).
 
 ## 2. Git configuration
 
