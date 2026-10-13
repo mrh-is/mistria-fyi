@@ -12,6 +12,7 @@ real-asset integration suite and the narrow villager-sprite command also accept 
 directly (see below). Game assets are ignored by Git and are not present in a fresh clone.
 
 ```sh
+pnpm run pipeline -- pipeline/input --version=X.Y.Z
 pnpm run pipeline -- /path/to/assets --version=X.Y.Z
 MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
@@ -19,24 +20,29 @@ pnpm run pipeline -- /path/to/assets --parse-only --parse-profile=canonical
 pnpm run pipeline:assets
 ```
 
-`pnpm run pipeline:assets` is the local-development shortcut for the ignored `pipeline/input/assets`
-directory, stamped with the canonical game version (`--version=current`, which reads
-`CURRENT_GAME_VERSION` in `src/game-version.ts`). Pass other pipeline flags after `--`; it avoids a
-shell environment assignment and is the preferred command for routine regeneration in a configured
-worktree.
+`pnpm run pipeline:assets` is the local-development shortcut for the ignored `pipeline/input`
+game-files root, at the canonical game version (`--version=current`, which reads
+`CURRENT_GAME_VERSION` in `src/game-version.ts` and picks `pipeline/input/vX.Y.Z/assets`). Pass
+other pipeline flags after `--`; it avoids a shell environment assignment and is the preferred
+command for routine regeneration in a configured worktree.
+
+`pipeline/input` holds one `vX.Y.Z/assets` folder per release. Given a directory with version
+folders and no `fiddle/` of its own, the pipeline reads `vX.Y.Z/assets` for the `--version` you pass
+and fails naming the expected path when that folder is missing. A directory that already holds
+`fiddle/` or `assets.zip` is used as is.
 
 On the gaming PC, `pnpm run game-assets:share` extracts the installed release’s structured assets
-and copies the current autosaves to the shared Google Drive `Mistria/vX.Y.Z/` folders that other
-machines link as `pipeline/input/assets` (see
+and copies the current autosaves to the shared Google Drive `Mistria/vX.Y.Z/` folders. Other
+machines symlink `pipeline/input` to that synced Drive folder (see
 [Share the extracted assets](../docs/game-version-update-protocol.md#share-the-extracted-assets)).
 
 A relative assets path (argument or `MISTRIA_ASSETS`) resolves against the directory you ran `pnpm`
 from, even though the script itself runs inside `pipeline/`.
 
 The game version comes from `--version`, the fiddle's `misc.version`, or (on Windows) the installed
-executable. The extracted assets in `pipeline/input/assets` carry none of these, so pass
-`--version`; use the `version` of the committed `src/lib/data/tracker-data.json` unless you're
-importing a new game release. The pipeline names the committed version when it can't find one.
+executable. The extracted assets in `pipeline/input` carry none of these, so pass `--version`; use
+the `version` of the committed `src/lib/data/tracker-data.json` unless you're importing a new game
+release. The pipeline names the committed version when it can't find one.
 
 With no path argument and no `MISTRIA_ASSETS`, the pipeline falls back to Fields of Mistria's
 default Steam install location (Steam is the only platform the game ships on):
@@ -85,9 +91,9 @@ pnpm run test:pipeline
 ```
 
 The canonical integration suite is an explicit local check that CI cannot run, because licensed game
-assets are not distributed with the repository. It uses `pipeline/input/assets` by default or
-`MISTRIA_ASSETS` when set, and fails with the resolved missing path instead of silently skipping
-when assets are unavailable:
+assets are not distributed with the repository. It uses `pipeline/input/vX.Y.Z/assets`, for the
+committed tracker data's version, by default or `MISTRIA_ASSETS` when set, and fails with the
+resolved missing path instead of silently skipping when assets are unavailable:
 
 ```sh
 pnpm run test:pipeline:assets

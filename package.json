@@ -21,7 +21,7 @@
     "lint:shell": "node scripts/lint-shell.ts",
     "optimize-icons": "svgo --config svgo.config.js -f src/lib/components/icon/custom/raw -o src/lib/components/icon/custom/optimized",
     "pipeline": "cd pipeline && tsx src/main.ts",
-    "pipeline:assets": "pnpm run pipeline -- pipeline/input/assets --version=current",
+    "pipeline:assets": "pnpm run pipeline -- pipeline/input --version=current",
     "test": "vitest run --project=!assets",
     "test:changed": "node scripts/test-changed.ts",
     "test:coverage": "vitest run --project=!assets --coverage",

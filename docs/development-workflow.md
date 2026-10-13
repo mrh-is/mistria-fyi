@@ -385,14 +385,14 @@ pnpm run test:pipeline:assets
 pnpm run pipeline:assets
 ```
 
-`test:pipeline:assets` validates the canonical fixture (`CURRENT_GAME_VERSION`) against one source
-per platform. On Windows it reads Steam's installed `Fields of Mistria/assets.zip`, materializing
-only structured TOML; never unpack the full archive without explicit approval. On macOS & Linux it
-reads `pipeline/input/assets`. Neither platform falls back to the other's source, so a machine
-without its own fails the run rather than testing something else. Set
-`MISTRIA_ASSETS=/path/to/assets` or `MISTRIA_ASSETS=/path/to/assets.zip` to use another test input.
-The full pipeline currently requires an extracted assets root via its positional argument or
-`MISTRIA_ASSETS`; when `misc.version` is absent, pass `--version=X.Y.Z`. It regenerates
+`test:pipeline:assets` validates the canonical fixture against one source per platform. On Windows
+it reads Steam's installed `Fields of Mistria/assets.zip`, materializing only structured TOML; never
+unpack the full archive without explicit approval. On macOS & Linux it reads
+`pipeline/input/vX.Y.Z/assets` for the committed tracker data's version. Neither platform falls back
+to the other's source, so a machine without its own fails the run rather than testing something
+else. Set `MISTRIA_ASSETS=/path/to/assets` or `MISTRIA_ASSETS=/path/to/assets.zip` to use another
+test input. The full pipeline currently requires an extracted assets root via its positional
+argument or `MISTRIA_ASSETS`; when `misc.version` is absent, pass `--version=X.Y.Z`. It regenerates
 `src/lib/data/tracker-data.json`; review that diff before committing. CI cannot run either command
 because licensed game assets are not distributed with the repository.
 
