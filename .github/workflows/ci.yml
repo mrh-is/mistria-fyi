@@ -87,6 +87,9 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .node-version
+      # pnpm/setup saves a new store cache in its post step on every run (about 30 s) and has no
+      # input to skip it. This job is the only saver; every other install job sets
+      # ACTIONS_CACHE_MODE=read on the step, which restores the store but skips the save.
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
           cache: true
@@ -125,6 +128,8 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        env:
+          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -145,6 +150,8 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        env:
+          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -189,6 +196,8 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        env:
+          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -227,6 +236,8 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        env:
+          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -298,6 +309,8 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        env:
+          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false
@@ -345,6 +358,8 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        env:
+          ACTIONS_CACHE_MODE: read
         with:
           cache: true
           install: false

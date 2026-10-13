@@ -257,6 +257,22 @@ describe("CI workflow jobs", () => {
     }
   });
 
+  it("saves the pnpm store cache from one job only", () => {
+    // pnpm/setup saves a new cache entry in its post step on every run (about 30 s), with no input
+    // to skip it. ACTIONS_CACHE_MODE=read on the step keeps the restore and drops the save.
+    const savers: string[] = [];
+    for (const [jobName, job] of Object.entries(jobs)) {
+      const setup = job.steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
+      if (setup?.with?.cache !== true) {
+        continue;
+      }
+      if (setup.env?.ACTIONS_CACHE_MODE !== "read") {
+        savers.push(jobName);
+      }
+    }
+    expect(savers).toEqual(["lint"]);
+  });
+
   it("takes the pnpm and Node versions from the repository, not the workflow", () => {
     const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
       packageManager?: string;
