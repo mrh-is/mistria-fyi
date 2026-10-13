@@ -14,8 +14,9 @@ not here.
 - Add or update tests for behavioral changes, preferably before implementation. Run focused tests
   during development; CI runs the complete matrix on each PR. Do not default to `pnpm run test`,
   coverage, builds, browser matrices, or `pnpm run verify`.
-- Run `pnpm run check` after a TypeScript or Svelte contract edit. Run `pnpm run lint:fix` before
-  committing; lint must have zero errors & warnings. Use the narrowest justified lint suppression.
+- Hooks format edits & fix/check changed files at stop; on failure, fix or report it, and run
+  `pnpm run lint:fix` directly before committing (zero errors & warnings).
+- Run `pnpm run check` after a TypeScript or Svelte contract edit.
 - Documentation-only changes require `pnpm run lint:fix && pnpm run lint` only, with no tests or
   build. Hooks are conveniences, not verification evidence; run commands directly & confirm zero
   exit status. Preserve command status when trimming output; never trust a bare `command | tail`.
@@ -88,8 +89,9 @@ not here.
 
 ## Architecture boundaries
 
-- Never hand-edit generated `src/lib/data/tracker-data.json` or vendored `src/lib/components/ui/`.
-  The shared pipeline/app contract is `src/lib/types/tracker-data.ts`.
+- Hooks deny edits of generated `src/lib/data/tracker-data.json` & vendored
+  `src/lib/components/ui/`; regenerate or use the vendor CLI, and read
+  `src/lib/types/tracker-data.ts` for the shared contract.
 - Pipeline extractors throw on unexpected source data. Never invent fallback display text to paper
   over a missing or unrecognized value.
 - `src/lib/engine/` is pure domain logic; side effects belong at store or component boundaries.
@@ -167,8 +169,8 @@ substitute another upload path.
 
 ## Context economy
 
-- Use Read `offset` & `limit` for needed sections. Never read `src/lib/data/tracker-data.json`; read
-  the types or pipeline source. Do not reread context already present; after compression, reread
-  only the needed section.
+- Use Read `offset` & `limit` for needed sections; hooks deny generated tracker-data reads, so read
+  the types or pipeline source instead.
+- Do not reread context already present; after compression, reread only the needed section.
 - Do not pin a model or reasoning effort in repository harness settings; each contributor’s own
   preferences apply.

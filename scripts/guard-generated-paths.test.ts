@@ -31,6 +31,57 @@ describe("guardMessage", () => {
     expect(guardMessage(edit("pipeline/src/main.ts"))).toBeUndefined();
     expect(guardMessage({ cwd, tool_input: {} })).toBeUndefined();
   });
+
+  it("checks every patch target, including move destinations & deletions", () => {
+    for (const header of ["Add File", "Update File", "Delete File", "Move to"]) {
+      expect(
+        guardMessage({
+          cwd,
+          tool_input: {
+            command: `*** Begin Patch\n*** Update File: README.md\n*** ${header}: src/lib/data/tracker-data.json\n*** End Patch`,
+          },
+          tool_name: "apply_patch",
+        }),
+      ).toContain("Blocked edit");
+    }
+    expect(
+      guardMessage({
+        cwd,
+        tool_input:
+          "*** Begin Patch\n*** Update File: README.md\n+src/lib/data/tracker-data.json\n*** End Patch",
+        tool_name: "apply_patch",
+      }),
+    ).toBeUndefined();
+  });
+
+  it("denies direct shell writes without denying reads or pipeline execution", () => {
+    for (const command of [
+      'echo "{}" > src/lib/data/tracker-data.json',
+      "tee src/lib/components/ui/button.ts",
+      "sed -i 's/a/b/' src/lib/data/tracker-data.json",
+      "rm src/lib/data/tracker-data.json",
+      "rm -rf src/lib/components/ui",
+      "mv src/lib/components/ui /tmp/ui",
+    ]) {
+      expect(guardMessage({ cwd, tool_input: { command }, tool_name: "Bash" })).toContain(
+        "Blocked edit",
+      );
+    }
+    expect(
+      guardMessage({
+        cwd,
+        tool_input: { command: "cat src/lib/components/ui/button.ts" },
+        tool_name: "Bash",
+      }),
+    ).toBeUndefined();
+    expect(
+      guardMessage({
+        cwd,
+        tool_input: { command: "pnpm run pipeline -- pipeline/input" },
+        tool_name: "Bash",
+      }),
+    ).toBeUndefined();
+  });
 });
 
 function run(input: unknown) {

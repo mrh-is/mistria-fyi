@@ -121,10 +121,39 @@ describe("Claude Code path guard", () => {
       entry.hooks.some((hook) => hook.command.includes("guard-generated-paths.ts")),
     );
     expect(guard?.matcher.split("|").toSorted()).toEqual([
+      "Bash",
       "Edit",
       "MultiEdit",
       "NotebookEdit",
       "Write",
+      "apply_patch",
     ]);
+  });
+});
+
+describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", (file) => {
+  const { hooks } = JSON.parse(readFileSync(file, "utf8")) as {
+    hooks: Record<string, { hooks: { command: string }[]; matcher?: string }[]>;
+  };
+  const find = (event: string, script: string) =>
+    hooks[event]?.find((entry) => entry.hooks.some((hook) => hook.command.includes(script)));
+
+  it("registers edit guards & formatting for patches, file tools, and shell commands", () => {
+    for (const [event, script] of [
+      ["PreToolUse", "guard-generated-paths.ts"],
+      ["PostToolUse", "format-agent-edit.ts"],
+    ]) {
+      const matcher = new RegExp(`^(?:${find(event, script)?.matcher ?? ""})$`);
+      for (const tool of ["apply_patch", "Edit", "Write", "Bash"]) {
+        expect(matcher.test(tool), `${event}: ${tool}`).toBe(true);
+      }
+    }
+  });
+
+  it("registers read guards, stop lint, and subagent guidance", () => {
+    expect(find("PreToolUse", "guard-generated-reads.ts")?.matcher).toBe("Read|Bash");
+    expect(find("Stop", "lint-agent-stop.ts")).toBeDefined();
+    expect(find("SubagentStart", "agent-subagent-start.ts")).toBeDefined();
+    expect(find("PreToolUse", "format-agent-edit.ts")?.matcher).toBe("Bash");
   });
 });
