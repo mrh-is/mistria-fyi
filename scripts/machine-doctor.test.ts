@@ -1,3 +1,4 @@
+import { basename } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -31,7 +32,7 @@ function machine(overrides: Partial<Environment> & { commands?: Record<string, s
     list: () => [],
     nodeVersion: "24.21.0",
     platform: "darwin",
-    read: (path) => files[path.split("/").pop() ?? ""],
+    read: (path) => files[basename(path)],
     root: "/repo",
     run: (command, args) => {
       const out = commands[[command, ...args].join(" ")];
