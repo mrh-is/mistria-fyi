@@ -64,20 +64,10 @@ function skin(id: string): PetSkinId {
 
 /**
  * Each monster's family, named by the pet skin the game translates for it, plus the color or
- * material variant that tells family members apart. The game's own monster names (the `monsters`
- * chunk) are English-only, so other locales compose a name from these instead, as does English
- * for the three monsters that have no pet variant to name them.
+ * material variant that tells family members apart. The game has no full monster name: since 1.0.7
+ * a `pets.toml` variant carries only a bare qualifier (“Copper”, “Default”) shown under its pet
+ * kind, and three monsters have no variant at all. Every locale composes the name instead.
  */
-/**
- * Monsters with no `pets.toml` variant, so no game name: English composes theirs too. Mirrors
- * `MONSTERS_WITHOUT_PET_VARIANT` in `pipeline/src/extract/monsters.ts`.
- */
-const MONSTERS_WITHOUT_GAME_NAME = new Set<string>([
-  "mistrilclod",
-  "rockclod_purple",
-  "sapling_orange_mini",
-]);
-
 interface MonsterFamily {
   family: PetSkinId;
   variant?: keyof typeof VARIANT_MESSAGES;
@@ -159,20 +149,10 @@ export function buildLocationNames(locale: LocaleCode): Record<NamedLocationId, 
   };
 }
 
-/**
- * English reads the game's monster names; other locales compose family & variant, since the game
- * never translates its monster names (see {@link MonsterFamily}).
- */
+/** Monster names, composed from family & variant in every locale (see {@link MonsterFamily}). */
 export function buildMonsterNames(locale: LocaleCode): Record<NamedMonsterId, string> {
-  const gameNames: Partial<Record<string, string>> =
-    locale === "en" ? getNameTable("monsters", locale) : {};
   const families: Record<NamedMonsterId, MonsterFamily> = MONSTER_FAMILIES;
-  return recordMap(families, ({ family, variant }, id) => {
-    const gameName = gameNames[id];
-    if (gameName) return gameName;
-    if (locale === "en" && !MONSTERS_WITHOUT_GAME_NAME.has(id)) {
-      throw new Error(`No "monsters" name for id "${id}" in locale "en"`);
-    }
+  return recordMap(families, ({ family, variant }) => {
     const monster = getName("pets/skins", family, locale);
     return variant ? VARIANT_MESSAGES[variant]({ monster }, { locale }) : monster;
   });

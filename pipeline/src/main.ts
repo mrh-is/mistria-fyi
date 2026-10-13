@@ -62,7 +62,9 @@ async function main(): Promise<void> {
     (callerAssetsDir === undefined ? undefined : resolveCallerPath(callerAssetsDir)) ??
     (existsSync(DEFAULT_WINDOWS_STEAM_ASSETS_DIR) ? DEFAULT_WINDOWS_STEAM_ASSETS_DIR : undefined);
   if (!inputDir) {
-    console.error("Usage: tsx src/main.ts <assets-dir | game-files-root> [--version=X.Y.Z]");
+    console.error(
+      "Usage: tsx src/main.ts <assets-dir | game-files-root> [--version=X.Y.Z|current]",
+    );
     console.error("  Or set MISTRIA_ASSETS environment variable");
     console.error(`  Or install the game at its default Steam location on Windows:`);
     console.error(`    ${DEFAULT_WINDOWS_STEAM_ASSETS_DIR}`);
@@ -149,7 +151,9 @@ async function main(): Promise<void> {
     (misc?.version as string | undefined) ??
     readInstalledGameVersion(resolveAssetsZipPath(assetsDir));
   if (!version) {
-    console.error("❌ No game version found. Pass --version=X.Y.Z or ensure misc.version exists.");
+    console.error(
+      "❌ No game version found. Pass --version=X.Y.Z (or --version=current) or ensure misc.version exists.",
+    );
     const committedVersion = readCommittedGameVersion();
     if (committedVersion) {
       console.error(`  The committed ${OUTPUT_FILE} was generated from ${committedVersion}.`);

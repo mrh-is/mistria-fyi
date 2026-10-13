@@ -87,8 +87,11 @@ the pipeline picks `vX.Y.Z/assets` from `--version`.
 
 ## Generate the candidate
 
-Run the pipeline against the shared copy in the isolated worktree. Update version-specific parser or
-integration-test profiles deliberately when the new asset layout requires it. On the gaming PC:
+Run the pipeline against the shared copy in the isolated worktree. Set `CURRENT_GAME_VERSION`
+(`pipeline/src/game-version.ts`) to the new version first; it is the one place the supported version
+lives. `pipeline:assets` & the canonical parse profile read it, and the real-asset suite follows the
+regenerated tracker data's version. Update the canonical parser profile and real-asset expectations
+deliberately when the new asset layout requires it. On the gaming PC:
 
 ```sh
 MISTRIA_ASSETS="G:\My Drive\Mistria\vX.Y.Z\assets" pnpm run test:pipeline:assets

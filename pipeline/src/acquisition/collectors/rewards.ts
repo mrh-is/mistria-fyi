@@ -83,6 +83,7 @@ export function collectRewardSources(
   collectWeddingCosmeticSources(fiddle, cosmeticAccumulator);
   collectChickenStatueLootSources(
     fiddle,
+    accumulator,
     animalCosmeticAccumulator,
     petCosmeticAccumulator,
     recipes,
@@ -272,6 +273,7 @@ function collectAnimalFestivalRewardSources(
 
 function collectChickenStatueLootSources(
   fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
   animalCosmeticAccumulator: AnimalCosmeticSourceAccumulator,
   petCosmeticAccumulator: PetCosmeticSourceAccumulator,
   recipes: RecipeAcquisitionContext,
@@ -315,6 +317,9 @@ function collectChickenStatueLootSources(
             "chicken_statue",
           );
         }
+
+        const itemId = obj.item as ItemId | undefined;
+        if (itemId) accumulator.add(itemId, { type: "chicken_statue", cost });
 
         const animalCosmeticId = obj.animal_cosmetic as CosmeticId | undefined;
         const animalId = obj.animal as AnimalId | undefined;
