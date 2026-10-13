@@ -94,9 +94,10 @@ they affect rendered output.
 For most PRs, review your own diff in a fresh context before requesting human review. A subagent
 reading the diff cold catches mistakes the implementing context has normalized.
 
-### Cross-agent adversarial review
+### High-risk surfaces
 
-Reserve independent cross-agent review for PRs that touch **high-risk surfaces**:
+PRs that touch these surfaces need full local verification and an especially careful review. Who or
+what reviews (another agent, another model, a human) is the contributor’s choice:
 
 - Engine logic, state machines, or transfer encoding
 - Data pipeline extractors or schema changes
@@ -112,9 +113,6 @@ that require substantial changes, one re-review is justified; otherwise, fix and
 
 Keep review prompts compact: the base commit, the changed files, the relevant invariants, and the
 requested severity threshold. Do not restate the full plan or spec in the review prompt.
-
-For durable review findings, resolutions, attribution, & guidance updates, read
-[agent-workflow.md](agent-workflow.md#review-records).
 
 For browser commands, current-build reuse, pipeline real-data checks, and timing budgets, read
 [development-workflow.md](development-workflow.md#5-verification-matrix). Service-worker changes

@@ -46,7 +46,21 @@ Area labels scope the change to a subsystem:
 
 `<issue-number>-<short-description>`, e.g. `23-npc-hearts-center`; `pnpm run worktree:new` creates
 this form. Agent harness branches such as `claude/issue-23-a1b2c3` or `codex/…` are also accepted.
-See the [worktree policy](AGENTS.md#worktree-isolation).
+Worktrees are optional; see [Worktrees](AGENTS.md#worktrees).
+
+## Using AI agents
+
+Agents are welcome. Claude Code and Codex both read [AGENTS.md](AGENTS.md) (Claude through
+`CLAUDE.md`), which links the on-demand guides in `docs/agent-*.md`. The repo also ships shared
+agent config: `.claude/settings.json` and `.codex/rules/` allow the project’s `pnpm` scripts and
+deny other package managers, and a Claude Code hook guards generated & vendored files.
+
+CI enforces a few things for agent-authored work. The “Attribution” check rejects non-canonical
+agent `Co-Authored-By` trailers and requires a final `Agent:` line & exactly one matching `agent:*`
+label on agent-authored PRs. The “Guarded paths” check requires a label for changes to generated or
+vendored files. Everything else about how you run agents (models, delegation, review habits, session
+limits) belongs in your own user config, not in this repo. Keep personal per-repo settings in
+`.claude/settings.local.json` or `CLAUDE.local.md`, both gitignored.
 
 ## Project Overview
 
