@@ -7,11 +7,15 @@ import {
   isLazyAsset,
   isSkipWaitingRequest,
   lastLocaleStore,
+  mayDeleteRetainedCaches,
+  obsoleteCaches,
   OFFLINE_LOCALES_CACHE,
   parseCacheLocalesMessage,
   parseCurrentLocale,
   readOfflineLocales,
+  readRetainedCaches,
   rememberOfflineLocales,
+  rememberRetainedCaches,
 } from "#lib/pwa/service-worker-cache.js";
 import { version } from "$app/env";
 import { assets, immutable } from "$app/manifest";
@@ -59,6 +63,38 @@ async function keepLocaleHome(locale: LocaleCode): Promise<void> {
   }
 }
 
+/**
+ * Deletes the `older` versions' caches, except one holding the only copy of the last-used locale's
+ * home page, which stays until this version has cached it (#18). Records what it kept, so a later
+ * message can finish the job.
+ */
+async function deleteObsoleteCaches(older: readonly string[]): Promise<void> {
+  const lastLocale = await LAST_LOCALE.read();
+  const obsolete = await obsoleteCaches(caches, CACHE, older, lastLocale, sw.registration.scope);
+  await Promise.all(obsolete.map((name) => caches.delete(name)));
+  const kept = older.filter((name) => !obsolete.includes(name));
+  try {
+    await rememberRetainedCaches(await caches.open(OFFLINE_LOCALES_CACHE), kept);
+  } catch {
+    // Out of quota: a kept cache then waits for the next version's activation to go.
+  }
+}
+
+/**
+ * Deletes the caches this version's activation kept, once it has the home page they were kept for.
+ * Only the active worker does, and only with no other version installing or waiting: that version
+ * hears the same page messages, and a rollback's may reuse a kept cache's name. Browsers without
+ * `self.serviceWorker` leave kept caches to the next activation.
+ */
+async function deleteRetainedCaches(): Promise<void> {
+  const self: ServiceWorker | undefined = (sw as Partial<ServiceWorkerGlobalScope>).serviceWorker;
+  if (!mayDeleteRetainedCaches(self?.state, sw.registration)) return;
+  const retained = await readRetainedCaches(await caches.open(OFFLINE_LOCALES_CACHE));
+  const existing = new Set(await caches.keys());
+  const older = retained.filter((name) => name !== CACHE && existing.has(name));
+  if (older.length > 0) await deleteObsoleteCaches(older);
+}
+
 sw.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
@@ -90,7 +126,13 @@ sw.addEventListener("message", (event) => {
   // launch, since the page itself may have loaded before this worker took control.
   const current = parseCurrentLocale(event.data);
   if (current) {
-    event.waitUntil(Promise.all([LAST_LOCALE.remember(current), keepLocaleHome(current)]));
+    event.waitUntil(
+      (async () => {
+        await Promise.all([LAST_LOCALE.remember(current), keepLocaleHome(current)]);
+        // An older version's cache kept for its copy of a home page can go once this one has it.
+        await deleteRetainedCaches();
+      })(),
+    );
   }
   // A reply is this version's cache speaking for itself, which a page can't infer: the modules it
   // already imported may come from a cache an update has since deleted.
@@ -113,11 +155,13 @@ sw.addEventListener("message", (event) => {
 sw.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
+      // No fetch here: until activation finishes, every fetch event waits, and the launch with it.
+      // A home page this version couldn't fetch keeps the old cache instead.
       const keys = await caches.keys();
-      await Promise.all(
-        keys
-          .filter((key) => key !== CACHE && key !== SPRITES_CACHE && key !== OFFLINE_LOCALES_CACHE)
-          .map((key) => caches.delete(key)),
+      await deleteObsoleteCaches(
+        keys.filter(
+          (key) => key !== CACHE && key !== SPRITES_CACHE && key !== OFFLINE_LOCALES_CACHE,
+        ),
       );
       await sw.clients.claim();
     })(),

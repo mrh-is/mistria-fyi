@@ -152,10 +152,10 @@ Most names come from game-translated chunks: farm animals use `animals` `<id>/co
 items, museum wings use `museum_wings`, and locations use `locations` (`locations/<id>/name`). The
 game leaves some source names untranslated or unnamed, so `source-names.ts` fills the gaps:
 
-- **Monsters:** English reads the `monsters` chunk, named after each monster's `pets.toml` variant
-  (`pipeline/src/extract/monsters.ts` holds the reviewed mapping). The game never translates those
-  names, so other locales, and the three monsters with no pet variant, compose the `pets/skins`
-  family name with a machine-translated `source_monster_variant_*` qualifier.
+- **Monsters:** the game has no full monster name. Since 1.0.7 a `pets.toml` variant carries only a
+  bare qualifier (“Copper”, “Default”) shown under its pet kind, and three monsters have no variant.
+  Every locale, English included, composes the `pets/skins` family name with a machine-translated
+  `source_monster_variant_*` qualifier.
 - **Locations without a game name** (`farm`, `mines`, & `dungeon`) and **water types** use interim
   machine-translated `source_location_*` & `source_water_*` messages. The Bell Tower's upper floor
   (`bell_tower_f2`) borrows the building's `bell_tower_f1` name.

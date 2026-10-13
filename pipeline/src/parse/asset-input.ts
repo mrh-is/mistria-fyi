@@ -1,4 +1,13 @@
-import { createWriteStream, existsSync, mkdirSync, mkdtempSync, rmSync, statSync } from "node:fs";
+import {
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve, win32 } from "node:path";
 import { pipeline } from "node:stream/promises";
@@ -12,8 +21,55 @@ export const DEFAULT_WINDOWS_GAME_ARCHIVE = win32.join(
   "assets.zip",
 );
 
-/** The ignored local assets directory, `pipeline/input/assets`, independent of the working directory. */
-export const DEFAULT_ASSETS_DIR = fileURLToPath(new URL("../../input/assets", import.meta.url));
+/** The ignored local game-files root, `pipeline/input`, independent of the working directory. */
+export const INPUT_ROOT = fileURLToPath(new URL("../../input", import.meta.url));
+
+const COMMITTED_TRACKER_DATA = fileURLToPath(
+  new URL("../../../src/lib/data/tracker-data.json", import.meta.url),
+);
+
+const VERSION_FOLDER = /^v\d+\.\d+\.\d+$/;
+
+/** A game-files root holds one `vX.Y.Z/assets` folder per release. */
+export function versionedAssetsDir(root: string, version: string): string {
+  return join(root, `v${version}`, "assets");
+}
+
+/** Reads the game version the committed tracker data was generated from. */
+export function readCommittedGameVersion(): string | undefined {
+  try {
+    const data = JSON.parse(readFileSync(COMMITTED_TRACKER_DATA, "utf8")) as { version?: unknown };
+    return typeof data.version === "string" ? data.version : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The local assets for the committed tracker data's release, `pipeline/input/vX.Y.Z/assets`. */
+export function defaultAssetsDir(version = readCommittedGameVersion()): string {
+  if (!version) {
+    throw new Error(`No game version in ${COMMITTED_TRACKER_DATA}. Set MISTRIA_ASSETS.`);
+  }
+  return versionedAssetsDir(INPUT_ROOT, version);
+}
+
+/**
+ * Resolves a game-files root to its `vX.Y.Z/assets` folder. A directory that holds `fiddle/` or
+ * `assets.zip`, or holds no version folders, passes through unchanged.
+ */
+export function resolveVersionedAssetsDir(dir: string, version: string | undefined): string {
+  if (existsSync(join(dir, "fiddle")) || existsSync(join(dir, "assets.zip"))) return dir;
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return dir;
+  if (!readdirSync(dir).some((name) => VERSION_FOLDER.test(name))) return dir;
+  if (!version) {
+    throw new Error(`${dir} holds versioned game files. Pass --version=X.Y.Z to pick one.`);
+  }
+  const versioned = versionedAssetsDir(dir, version);
+  if (!existsSync(join(versioned, "fiddle"))) {
+    throw new Error(`Game assets for ${version} not found at ${join(versioned, "fiddle")}.`);
+  }
+  return versioned;
+}
 
 const REQUIRED_PREFIXES = ["assets/fiddle/", "assets/localization/"];
 
@@ -47,12 +103,12 @@ export async function prepareGameAssets(input?: string): Promise<GameAssetsInput
 }
 
 /**
- * Windows reads the installed Steam archive; other platforms read `pipeline/input/assets`. Neither
+ * Windows reads the installed Steam archive; other platforms read `pipeline/input/vX.Y.Z/assets` for the committed tracker data's version. Neither
  * falls back to the other, so a machine without its platform's source fails rather than silently
  * testing something else. `MISTRIA_ASSETS` overrides both.
  */
 export function defaultGameAssetsInput(platform: NodeJS.Platform = process.platform): string {
-  return platform === "win32" ? DEFAULT_WINDOWS_GAME_ARCHIVE : DEFAULT_ASSETS_DIR;
+  return platform === "win32" ? DEFAULT_WINDOWS_GAME_ARCHIVE : defaultAssetsDir();
 }
 
 /**

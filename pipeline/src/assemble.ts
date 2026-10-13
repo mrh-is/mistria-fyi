@@ -47,7 +47,6 @@ import { extractDates } from "./extract/dates.js";
 import { extractFestivals } from "./extract/festivals.js";
 import { extractLocationNames } from "./extract/locations.js";
 import { extractMines } from "./extract/mines.js";
-import { extractMonsterNames } from "./extract/monsters.js";
 import { extractMuseum } from "./extract/museum.js";
 import { extractPetCosmetics, extractPetSkins } from "./extract/pets.js";
 import { extractQuestChains } from "./extract/quest-chains.js";
@@ -60,7 +59,10 @@ import { extractTreasureChestTiers } from "./extract/treasure-chest-tiers.js";
 import { extractVillagers } from "./extract/villagers.js";
 import { forEachItem } from "./extractor-helpers.js";
 import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./localize/ui-strings.js";
-import { validateCosmeticExclusionSources } from "./overrides/exclusions.js";
+import {
+  validateCosmeticExclusionSources,
+  validateItemExclusionSources,
+} from "./overrides/exclusions.js";
 import { isPregnancyQuest } from "./overrides/game-facts.js";
 import { createRequirementContext } from "./parse/requirements.js";
 import { REVIEWED_PIPELINE_DIAGNOSTICS } from "./reviewed-diagnostics.js";
@@ -234,6 +236,7 @@ export function assembleTrackerData(
   collectDefaultCosmeticSources(cosmeticDrafts, cosmeticSources);
 
   validateCosmeticExclusionSources(fiddle, cosmeticSources);
+  validateItemExclusionSources(itemSources);
 
   const overrideDiagnostics = applyReviewedOverrides(
     itemMetadata,
@@ -403,7 +406,6 @@ export function assembleTrackerData(
       { byLocale: petSkinLocaleNames, category: "pets/skins" },
       { byLocale: treasureChestTierLocaleNames, category: "treasure-chest-tiers" },
       { byLocale: extractLocationNames(fiddle, localizer), category: "locations" },
-      { byLocale: extractMonsterNames(fiddle), category: "monsters" },
     ],
     trackerData,
   };

@@ -7,7 +7,7 @@ import { extractRecipes } from "./recipes.js";
 
 import type { RecipeId } from "#lib/types/tracker-data.js";
 
-describe("extractRecipes — v1.0.6 assets", () => {
+describe("extractRecipes — real assets", () => {
   it("produces recipes with expected source type counts", () => {
     const { data: fiddle } = parseFiddle(requireGameAssetsDir());
     evaluateExpressions(fiddle);

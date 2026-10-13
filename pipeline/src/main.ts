@@ -5,7 +5,7 @@
  */
 import "../../scripts/lib/require-pinned-node.js";
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { LOCALE_CODES } from "#lib/types/locale.js";
@@ -18,6 +18,7 @@ import { extractVillagerIconSprites } from "./extract/villagers.js";
 import { assertGameLanguageMapExhaustive } from "./localize/locale-codes.js";
 import { createAssetsLocalizer, generateLocaleManifest } from "./localize/localize.js";
 import { validateReviewedGameFacts } from "./overrides/validate.js";
+import { readCommittedGameVersion, resolveVersionedAssetsDir } from "./parse/asset-input.js";
 import {
   DEFAULT_WINDOWS_STEAM_ASSETS_DIR,
   readInstalledGameVersion,
@@ -40,18 +41,6 @@ const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
 const OUTPUT_FILE = "tracker-data.json";
 const SPRITES_OUTPUT_ROOT = resolve(OUTPUT_DIR, "sprites");
 
-/** Reads the game version of the committed tracker data, as a hint when the assets lack one. */
-function readCommittedVersion(): string | undefined {
-  try {
-    const data = JSON.parse(readFileSync(resolve(APP_DATA_DIR, OUTPUT_FILE), "utf8")) as {
-      version?: unknown;
-    };
-    return typeof data.version === "string" ? data.version : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 /** Logs sprite extraction results for a given entity kind. */
 function logSpriteExtraction(label: string, result: SpriteExtractionResult): void {
   console.log(
@@ -71,14 +60,24 @@ async function main(): Promise<void> {
     return;
   }
   const callerAssetsDir = options.assetsDir ?? process.env.MISTRIA_ASSETS;
-  const assetsDir =
+  const inputDir =
     (callerAssetsDir === undefined ? undefined : resolveCallerPath(callerAssetsDir)) ??
     (existsSync(DEFAULT_WINDOWS_STEAM_ASSETS_DIR) ? DEFAULT_WINDOWS_STEAM_ASSETS_DIR : undefined);
-  if (!assetsDir) {
-    console.error("Usage: tsx src/main.ts <path-to-assets-dir> [--version=X.Y.Z]");
+  if (!inputDir) {
+    console.error(
+      "Usage: tsx src/main.ts <assets-dir | game-files-root> [--version=X.Y.Z|current]",
+    );
     console.error("  Or set MISTRIA_ASSETS environment variable");
     console.error(`  Or install the game at its default Steam location on Windows:`);
     console.error(`    ${DEFAULT_WINDOWS_STEAM_ASSETS_DIR}`);
+    process.exitCode = 1;
+    return;
+  }
+  let assetsDir: string;
+  try {
+    assetsDir = resolveVersionedAssetsDir(inputDir, options.version);
+  } catch (error) {
+    console.error(`❌ ${(error as Error).message}`);
     process.exitCode = 1;
     return;
   }
@@ -154,8 +153,10 @@ async function main(): Promise<void> {
     (misc?.version as string | undefined) ??
     readInstalledGameVersion(resolveAssetsZipPath(assetsDir));
   if (!version) {
-    console.error("❌ No game version found. Pass --version=X.Y.Z or ensure misc.version exists.");
-    const committedVersion = readCommittedVersion();
+    console.error(
+      "❌ No game version found. Pass --version=X.Y.Z (or --version=current) or ensure misc.version exists.",
+    );
+    const committedVersion = readCommittedGameVersion();
     if (committedVersion) {
       console.error(`  The committed ${OUTPUT_FILE} was generated from ${committedVersion}.`);
     }

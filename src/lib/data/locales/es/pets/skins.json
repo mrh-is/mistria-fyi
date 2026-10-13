@@ -1,16 +1,16 @@
 {
   "sapling": "Retoño",
-  "mushroom": "Mushroom",
-  "rockclod": "Rockclod",
-  "oreclod": "Oreclod",
+  "mushroom": "Seta",
+  "rockclod": "Tormo pétreo",
+  "oreclod": "Tormo",
   "stalagmite": "Estalagmita",
   "lava_cat": "Gato de lava",
-  "void_cat": "Void Cat",
+  "void_cat": "Gato del vacío",
   "flame_spirit": "Espíritu del fuego",
   "rock_stack": "Montón de piedras",
   "griffin_statue": "Estatua de grifo",
   "flying_tome": "Tomo volador",
   "essence_bat": "Esenciélago",
-  "enchantern": "Lectrolámpara",
+  "enchantern": "Candil encantado",
   "mimic": "Mímico"
 }
