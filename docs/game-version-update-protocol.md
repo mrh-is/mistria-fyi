@@ -82,7 +82,8 @@ G:\My Drive\Mistria\
 A version folder can have `save\` without `assets\` when the only save from that release predates
 the update. Pass `--drive=<dir>` or set `MISTRIA_DRIVE_DIR` if the Drive folder lives elsewhere.
 
-Other machines point `pipeline/input/assets` at their synced `Mistria/vX.Y.Z/assets` folder.
+Other machines symlink `pipeline/input` to the synced Drive folder that holds the `vX.Y.Z/` folders;
+the pipeline picks `vX.Y.Z/assets` from `--version`.
 
 ## Generate the candidate
 
