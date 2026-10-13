@@ -7,7 +7,7 @@ import { onTestFinished, vi } from "vitest";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { createLocalizer } from "./localize/localize.js";
-import { DEFAULT_ASSETS_DIR } from "./parse/asset-input.js";
+import { defaultAssetsDir } from "./parse/asset-input.js";
 import { attachProvenance } from "./parse/parse-fiddle.js";
 
 import type { Mock } from "vitest";
@@ -155,7 +155,7 @@ export function removeAssetsFixtures(): void {
 }
 
 export function requireGameAssetsDir(): string {
-  const assetsDir = process.env.MISTRIA_ASSETS ?? DEFAULT_ASSETS_DIR;
+  const assetsDir = process.env.MISTRIA_ASSETS ?? defaultAssetsDir();
   const fiddleDir = join(assetsDir, "fiddle");
   if (!existsSync(fiddleDir) || !statSync(fiddleDir).isDirectory()) {
     throw new Error(

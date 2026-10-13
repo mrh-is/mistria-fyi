@@ -3,7 +3,7 @@
 // fingerprint lets another run's config refuse this server instead of silently testing the wrong
 // checkout (see `playwright-preview-owner.ts` and #330).
 import { spawn, spawnSync } from "node:child_process";
-import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -62,8 +62,20 @@ export function runPreview(options: PreviewOptions): ChildProcess | undefined {
   const { args, command, shell } = options.command
     ? { args: options.args ?? [], command: options.command, shell: false }
     : pnpmCommand(["run", "preview", "--host", "127.0.0.1", "--port", port]);
-  log("spawn", { args, command });
-  const preview = spawn(command, args, { cwd: checkout, shell, stdio: ["ignore", "pipe", "pipe"] });
+  // Miniflare keeps KV & cache state in SQLite files under `.wrangler/state` by default. Two
+  // previews in one checkout (accessibility & PWA, on different ports) then race to create the
+  // same `metadata.sqlite` files and one dies with SQLITE_BUSY (#19). Give each port a fresh
+  // directory of its own; `.wrangler` is gitignored and outside the build output.
+  const persistDir = path.join(checkout, ".wrangler", "preview-state", port);
+  rmSync(persistDir, { force: true, recursive: true });
+  mkdirSync(persistDir, { recursive: true });
+  log("spawn", { args, command, persistDir });
+  const preview = spawn(command, args, {
+    cwd: checkout,
+    env: { ...process.env, MISTRIA_PREVIEW_PERSIST_DIR: persistDir },
+    shell,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   for (const [stream, output] of [
     [preview.stdout, process.stdout],
     [preview.stderr, process.stderr],

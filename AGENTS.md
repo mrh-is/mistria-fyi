@@ -2,6 +2,7 @@
 
 > Universal operating rules for agents. For detailed workflow, architecture, and verification
 > guidance, see [docs/development-workflow.md](docs/development-workflow.md),
+> [docs/machine-setup.md](docs/machine-setup.md),
 > [docs/app-architecture.md](docs/app-architecture.md), [pipeline/README.md](pipeline/README.md),
 > [docs/save-file-format.md](docs/save-file-format.md),
 > [docs/mistria-wiki-api.md](docs/mistria-wiki-api.md),
@@ -71,11 +72,11 @@ small required subtrees.
 
 **Check `pipeline/input/` before assuming a machine has no game files.** Worktree setup symlinks it
 from the main checkout (`.worktreeinclude`), so `ls pipeline/input` settles the question; a
-`needs game installation` label is not, by itself, a blocker. When present, it holds `assets/`
-(`fiddle/` TOML, `localization/` translation tables, `gml/`, `tiled/`), `__fiddle__.json`,
-`localization.json` (every English string by key), and `save/`. Regenerate data from it with
-`pnpm run pipeline:assets -- --version=1.0.6`. Relative paths passed to the plain `pipeline` script
-resolve from where you run `pnpm`; `--version` is required for these assets (see
+`needs game installation` label is not, by itself, a blocker. When present, it holds one `vX.Y.Z/`
+folder per release, each with `assets/` (`fiddle/` TOML, `localization/` translation tables, `gml/`,
+`tiled/`) and/or `save/`. Regenerate data from it with `pnpm run pipeline:assets`, which stamps
+`CURRENT_GAME_VERSION` (`pipeline/src/game-version.ts`). Relative paths passed to the plain
+`pipeline` script resolve from where you run `pnpm`; `--version` is required there (see
 [pipeline/README.md](pipeline/README.md#setup--commands)).
 
 ## 2. Git configuration
@@ -152,8 +153,11 @@ Follow this sequence for every task:
 9. **Verify** — run `pnpm run lint:fix` before committing; CI runs the full matrix (see §7).
 10. **Deliver** — commit with the required co-author trailer, push, and open an attributed PR that
     references the issue (`Closes #N`) and fills in the template's "Preview" line with the branch
-    preview URL, `https://<branch-slug>.mistria-fyi.pages.dev` (the branch name lowercased, each run
-    of other characters replaced with `-`; Cloudflare posts no PR comment with it). Apply the
+    preview URL, `https://<branch-slug>.mistria-fyi.pages.dev`. Cloudflare's PR comment with it
+    isn't reliable, so derive the slug from the branch name: lowercase it, replace each
+    non-alphanumeric character with `-` (runs aren't collapsed, so `a/_b` becomes `a--b`), keep the
+    first 28 characters, then drop a trailing `-` (`worktree-agent-ac94622f1a9ec4708` becomes
+    `worktree-agent-ac94622f1a9ec`). Cloudflare documents only the first two steps. Apply the
     matching `agent:*` label to the PR. **Draft vs. ready:** the maintainer merges PRs that pass CI,
     so an open PR's state is the agent's merge recommendation. Open the PR as a draft
     (`gh pr create --draft`) whenever anything still stands between it and merging: an unfinished
@@ -220,6 +224,7 @@ enforces the same threshold. Ignore an advisory only when it's disputed or has n
 | `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                   |
 | `pnpm run test:accessibility` | Browser accessibility matrix (Playwright)      |
 | `pnpm run verify`             | Full CI matrix locally (see §7 exceptions)     |
+| `pnpm run machine:doctor`     | Read-only check of machine prerequisites       |
 | `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets     |
 
 ## 5. Architecture boundaries
@@ -420,12 +425,26 @@ aggregate findings across pull requests.
 - When approaching limits, write a handoff note to the worktree or issue, then stop. A fresh session
   reading the issue and branch is 50–100x cheaper than re-tokenizing a cold conversation.
 
-### Recurring friction
+### Local tooling failures
 
-When you work around a tooling, environment, or repository bug (a failing command, a flaky setup
-step, stale docs), search open issues for it first. Add your evidence to an existing issue, or file
-one with the symptom, the workaround, and a root-cause guess. Name the workaround in your final
-report either way. Workarounds that each agent rediscovers cost more than one fix.
+When a local tooling or environment issue blocks the task, **stop on the first occurrence and report
+it**. This covers a missing tool, a wrong runtime version, a broken or unconfigured install, an
+authentication failure, & any other local setup problem. Wrangler is the standard example: if
+`pnpm exec wrangler` is missing, unconfigured, or not logged in, report that; do not install it, run
+`wrangler login`, or substitute another upload path.
+
+- **Report immediately,** before any other action: the failing command or operation, the relevant
+  error (redact tokens & other credentials), & the work it blocks.
+- **Diagnose read-only.** `pnpm run machine:doctor` reports each prerequisite as ok, missing, or
+  wrong without changing anything; include its output in the report. The setup procedure is
+  [docs/machine-setup.md](docs/machine-setup.md).
+- **Then wait for the user's explicit direction.** Do not install, configure, authenticate,
+  substitute a tool, skip or bypass a check, or retry with a workaround unless the user directs it.
+  Retrying the same command is not a fix. Requesting a sandbox escalation for the operation the task
+  already requires is not a workaround.
+- **Repository bugs are included.** A failing documented command or stale doc blocks you the same
+  way. Search open issues for it while you report; add evidence to an existing issue, or offer to
+  file one with the symptom & a root-cause guess. The user decides whether to proceed around it.
 
 ### Handoffs
 

@@ -625,4 +625,25 @@ describe("collectRewardSources", () => {
       expect(acc.entries()).toHaveLength(0);
     });
   });
+
+  describe("chicken statue loot", () => {
+    it("records item rewards at each roll's price", () => {
+      const fiddle = makeFiddle({
+        chicken_statue: {
+          common: { large_roll: [{ count: 10, item: "golden_fence" }], small_roll: [] },
+          legendary: { large_roll: [{ item: "large_barn_gold_blueprint" }], small_roll: [] },
+          rare: { large_roll: [], small_roll: [{ count: 3, item: "egg" }] },
+        },
+        misc: { chicken_statue: { high_price: 50, low_price: 10 } },
+      });
+      const acc = new ItemSourceAccumulator();
+      collectRewardSources(fiddle, acc);
+
+      expect(acc.get("golden_fence" as ItemId)).toEqual([{ type: "chicken_statue", cost: 50 }]);
+      expect(acc.get("large_barn_gold_blueprint" as ItemId)).toEqual([
+        { type: "chicken_statue", cost: 50 },
+      ]);
+      expect(acc.get("egg" as ItemId)).toEqual([{ type: "chicken_statue", cost: 10 }]);
+    });
+  });
 });

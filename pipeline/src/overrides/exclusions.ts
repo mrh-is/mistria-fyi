@@ -1,6 +1,9 @@
 import type { CosmeticId, ItemId } from "#lib/types/tracker-data.js";
 
-import type { CosmeticSourceAccumulator } from "../acquisition/source-accumulator.js";
+import type {
+  CosmeticSourceAccumulator,
+  ItemSourceAccumulator,
+} from "../acquisition/source-accumulator.js";
 import type { ParsedGameData } from "../parse/parse-fiddle.js";
 import type { ReviewedEntry } from "./entry.js";
 
@@ -67,22 +70,42 @@ export function validateCosmeticExclusionSources(
 }
 
 /**
- * Cutscene props the game defines as items so a scene can hand them around. No table or script
- * gives one to the player, so the tracker leaves them out. Game 1.0.6 moved `harvest_day_pie` here
- * from the cooked dishes ("Removed an unattainable food item that was accidentally appearing in the
- * Almanac").
+ * Items no table or script gives the player, so the tracker leaves them out. Most are cutscene
+ * props the game defines as items so a scene can hand them around; game 1.0.6 moved
+ * `harvest_day_pie` among them from the cooked dishes ("Removed an unattainable food item that was
+ * accidentally appearing in the Almanac"). Game 1.0.7 added `gold_chest` with the chicken statue
+ * rewards but left its recipe and value commented out.
  */
 export const ITEM_EXCLUSION_ENTRIES: ReviewedEntry<boolean>[] = [
-  "balors_crate",
-  "harvest_day_pie",
-  "ryis_lumber",
-].map((id) => ({
-  evidence:
-    "items/other/misc.toml: cutscene sprite and the description “This shouldn't be in your inventory...”",
-  id,
-  reason: "Cutscene prop with no player acquisition path",
-  value: true,
-}));
+  ...["balors_crate", "harvest_day_pie", "ryis_lumber"].map((id) => ({
+    evidence:
+      "items/other/misc.toml: cutscene sprite and the description “This shouldn't be in your inventory...”",
+    id,
+    reason: "Cutscene prop with no player acquisition path",
+    value: true,
+  })),
+  {
+    evidence:
+      "items/furniture/chicken_statue_rewards.toml: recipe & value commented out; no store, crafting scroll, or reward table lists it",
+    id: "gold_chest",
+    reason: "Unfinished furniture with no player acquisition path",
+    value: true,
+  },
+];
 export const ITEM_EXCLUSIONS: ReadonlySet<ItemId> = new Set(
   ITEM_EXCLUSION_ENTRIES.map(({ id }) => id as ItemId),
 );
+
+/**
+ * Assembly keeps sources only for extracted items, so a source collected for an excluded item would
+ * vanish silently. Fail instead, so the exclusion is re-reviewed once the game gives it a path.
+ */
+export function validateItemExclusionSources(nativeSources: ItemSourceAccumulator): void {
+  for (const { id } of ITEM_EXCLUSION_ENTRIES) {
+    if (nativeSources.get(id as ItemId).length > 0) {
+      throw new Error(
+        `Obsolete reviewed item exclusion entry now encoded in native acquisition sources: ${id}`,
+      );
+    }
+  }
+}

@@ -6,8 +6,12 @@ import { pinnedNodeMismatch, readPinnedNodeVersion } from "#scripts/lib/pinned-n
 
 // Entry points that skip the guard, with the reason. The Claude PreToolUse hook runs on every edit
 // with the shell's Node, before dependencies exist in a fresh worktree; failing there would turn
-// a version mismatch into a broken edit guard, and the hook doesn't depend on Node's version.
-const unguarded = new Map([["scripts/guard-generated-paths.ts", "Claude edit-guard hook"]]);
+// a version mismatch into a broken edit guard, and the hook doesn't depend on Node's version. The
+// machine doctor runs on whatever Node is installed, before pnpm exists, so it can report it.
+const unguarded = new Map([
+  ["scripts/guard-generated-paths.ts", "Claude edit-guard hook"],
+  ["scripts/machine-doctor.ts", "Reports a missing or wrong Node"],
+]);
 
 // Config files that package binaries load directly, so `node_modules/.bin/<tool>` is guarded too.
 const configEntries = ["vite.config.ts", "playwright.config.ts", "playwright.pwa.config.ts"];

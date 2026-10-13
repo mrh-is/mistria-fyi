@@ -39,11 +39,13 @@ describe("keepLocaleOffline", () => {
     });
   });
 
-  it("also asks a new version waiting to take over", async () => {
+  it("also asks a new version installing or waiting to take over", async () => {
     const active = vi.fn();
+    const installing = vi.fn();
     const waiting = vi.fn();
     const ready = Promise.resolve({
       active: { postMessage: active },
+      installing: { postMessage: installing },
       waiting: { postMessage: waiting },
     } as unknown as ServiceWorkerRegistration);
 
@@ -52,6 +54,8 @@ describe("keepLocaleOffline", () => {
 
     const message = { type: CACHE_LOCALES_MESSAGE, current: "ja", locales: ["en", "ja"] };
     expect(active).toHaveBeenCalledWith(message);
+    // An installing version may already have read the previous locale (#18).
+    expect(installing).toHaveBeenCalledWith(message);
     expect(waiting).toHaveBeenCalledWith(message);
   });
 

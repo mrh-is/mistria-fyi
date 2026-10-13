@@ -7,6 +7,12 @@
 
 ## 1. Local Setup Requirements
 
+> **New machine?** Follow [machine-setup.md](machine-setup.md); it holds the per-platform install &
+> login steps. Run `pnpm run machine:doctor` (or `node scripts/machine-doctor.ts` before pnpm
+> exists) to see which prerequisites are present, missing, or the wrong version. It changes nothing.
+> If a tool is missing or broken mid-task, agents stop & report instead of repairing it (AGENTS.md,
+> "Local tooling failures").
+
 - **Node.js**: `.node-version` is the single source of truth (Node 24 LTS). `package.json`’s
   `devEngines.runtime` repeats it with `onFail: "download"`, so `pnpm install` downloads that exact
   release (checksummed in `pnpm-lock.yaml` for every platform) into the pnpm store and links it as
@@ -17,11 +23,13 @@
   `vite.config.ts` and the Playwright configs) imports `#scripts/lib/require-pinned-node` first, so
   a bare `node scripts/….ts` on another release exits with a message pointing at `pnpm run` or
   `pnpm exec node` instead of running silently. `scripts/lib/pinned-node.test.ts` finds those entry
-  points and fails when one lacks the guard; the Claude edit-guard hook is the one exemption. To
-  move the pin, edit both files and run `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails
-  when they disagree. Check with `pnpm exec node -v`.
-- **ShellCheck**: `pnpm run lint` runs the system `shellcheck` (`brew install shellcheck`). CI uses
-  the runner image's copy, and `scripts/setup-cloud-agent.sh` installs it with apt.
+  points and fails when one lacks the guard; the Claude edit-guard hook and the machine doctor
+  (which must run on any Node to report a wrong one) are the exemptions. To move the pin, edit both
+  files and run `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails when they disagree. Check
+  with `pnpm exec node -v`. `package.json`'s `engines` accepts 24.15 or later so Codex cloud can use
+  its preinstalled patch release.
+- **ShellCheck**: `pnpm run lint` runs the system `shellcheck`. CI uses the runner image's copy, and
+  `scripts/setup-cloud-agent.sh` installs it with apt. Local install: see machine-setup.md.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.
 - **Dependency Installation**:
   ```sh
@@ -392,19 +400,19 @@ additional local checks against the installed game assets:
 
 ```sh
 pnpm run test:pipeline:assets
-pnpm run pipeline:assets -- --version=1.0.6
+pnpm run pipeline:assets
 ```
 
-`test:pipeline:assets` validates the canonical v1.0.6 fixture against one source per platform. On
-Windows it reads Steam's installed `Fields of Mistria/assets.zip`, materializing only structured
-TOML; never unpack the full archive without explicit approval. On macOS & Linux it reads
-`pipeline/input/assets`. Neither platform falls back to the other's source, so a machine without its
-own fails the run rather than testing something else. Set `MISTRIA_ASSETS=/path/to/assets` or
-`MISTRIA_ASSETS=/path/to/assets.zip` to use another test input. The full pipeline currently requires
-an extracted assets root via its positional argument or `MISTRIA_ASSETS`; when `misc.version` is
-absent, pass `--version=X.Y.Z`. It regenerates `src/lib/data/tracker-data.json`; review that diff
-before committing. CI cannot run either command because licensed game assets are not distributed
-with the repository.
+`test:pipeline:assets` validates the canonical fixture against one source per platform. On Windows
+it reads Steam's installed `Fields of Mistria/assets.zip`, materializing only structured TOML; never
+unpack the full archive without explicit approval. On macOS & Linux it reads
+`pipeline/input/vX.Y.Z/assets` for the committed tracker data's version. Neither platform falls back
+to the other's source, so a machine without its own fails the run rather than testing something
+else. Set `MISTRIA_ASSETS=/path/to/assets` or `MISTRIA_ASSETS=/path/to/assets.zip` to use another
+test input. The full pipeline currently requires an extracted assets root via its positional
+argument or `MISTRIA_ASSETS`; when `misc.version` is absent, pass `--version=X.Y.Z`. It regenerates
+`src/lib/data/tracker-data.json`; review that diff before committing. CI cannot run either command
+because licensed game assets are not distributed with the repository.
 
 The commands above cover routine regeneration from the same game version. When moving pipeline input
 to a new Fields of Mistria version, follow the
@@ -790,7 +798,7 @@ offline fallback, registration, or activation behavior.
 - **Symptom**: App UI displays stale item fields after pipeline extractor logic updates.
 - **Recovery**: Run the pipeline with local game assets to regenerate the target dataset:
   ```sh
-  pnpm run pipeline:assets -- --version=1.0.6
+  pnpm run pipeline:assets
   ```
   Review `git diff src/lib/data/tracker-data.json` to verify schema and data accuracy.
 
