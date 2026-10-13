@@ -1,6 +1,6 @@
 // Runs Husky's hook install, retrying while another worktree's setup holds the shared
 // `.git/config` lock. Husky returns the lock error instead of throwing and then skips generating
-// `.husky/_`, so a parallel `worktree:setup` would otherwise leave this worktree without hooks
+// `.husky/_`, so a parallel worktree setup would otherwise leave this worktree without hooks
 // (#567).
 import "#scripts/lib/require-pinned-node";
 

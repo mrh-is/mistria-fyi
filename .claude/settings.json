@@ -25,7 +25,7 @@
       "Bash(pnpm run sprites:manifest *)",
       "Bash(pnpm run preview *)",
       "Bash(pnpm run verify *)",
-      "Bash(pnpm run machine:doctor *)",
+      "Bash(node scripts/machine-doctor.ts)",
       "Bash(pnpm run dev *)",
       "Bash(pnpm run pipeline *)",
       "Bash(pnpm run pipeline:assets *)",
@@ -41,7 +41,7 @@
       "Bash(pnpm install --frozen-lockfile *)",
       "Bash(pnpm run prepare *)",
       "Bash(pnpm run worktree:new *)",
-      "Bash(pnpm run worktree:setup *)"
+      "Bash(node scripts/setup-worktree.ts)"
     ],
     "deny": ["Bash(npm *)", "Bash(npx *)", "Bash(pnpx *)", "Bash(yarn *)", "Bash(bun *)"]
   },

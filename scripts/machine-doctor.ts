@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { SpawnSyncOptionsWithStringEncoding } from "node:child_process";
@@ -10,7 +10,9 @@ import type { SpawnSyncOptionsWithStringEncoding } from "node:child_process";
  * Machine doctor: reports whether this machine meets the prerequisites in docs/machine-setup.md.
  * It is read-only. It never installs, configures, or authenticates, and it never reads credentials;
  * the login probes inspect an exit code only. Plain Node with no dependencies, so it runs before
- * `pnpm install` (and before pnpm exists): `node scripts/machine-doctor.ts`.
+ * `pnpm install` (and before pnpm exists): `node scripts/machine-doctor.ts`. There is deliberately no
+ * pnpm script for it: `pnpm run` would verify (or install) dependencies first and substitute the
+ * devEngines runtime for the shell's own Node, which is the version this script must check.
  */
 
 export type CheckStatus = "manual" | "missing" | "ok" | "wrong";
@@ -40,6 +42,14 @@ export interface Environment {
   read: (path: string) => string | undefined;
   root: string;
   run: (command: string, args: string[]) => CommandOutput;
+}
+
+/** The store setup-worktree.ts assigns Codex shells, which keeps pnpm's cache out of the repo. */
+const CODEX_STORE_DIR = "/private/tmp/codex-pnpm-store";
+
+function isInside(root: string, path: string): boolean {
+  const offset = relative(resolve(root), resolve(path));
+  return offset === "" || (!offset.startsWith("..") && !isAbsolute(offset));
 }
 
 export function parseVersion(text: string): [number, number, number] | undefined {
@@ -72,7 +82,7 @@ function installHint(brew: string, winget: string, platform: NodeJS.Platform): s
 
 export function checkNode(machine: Environment): CheckResult {
   const wanted = machine.read(join(machine.root, ".node-version"))?.trim();
-  const fix = `Install Node ${wanted ?? "per .node-version"} and activate it for agent shells (fnm, nvm, or Volta)`;
+  const fix = `Install Node ${wanted ?? "per .node-version"} and activate it for agent shells (fnm, nvm, Volta, or mise with idiomatic_version_file_enable_tools including node)`;
   const have = parseVersion(machine.nodeVersion);
   const want = wanted ? parseVersion(wanted) : undefined;
   if (!have || !want) {
@@ -274,15 +284,34 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
   if (!machine.env.CODEX_THREAD_ID && !machine.env.CODEX_SANDBOX) {
     return undefined;
   }
-  return machine.env.npm_config_store_dir
-    ? check("pnpm-store", "pnpm store outside the repo", "ok", "npm_config_store_dir is set")
-    : check(
-        "pnpm-store",
-        "pnpm store outside the repo",
-        "wrong",
-        "Codex shell without npm_config_store_dir; pnpm may create a repo-local .pnpm-store",
-        "Set npm_config_store_dir=/private/tmp/codex-pnpm-store (see AGENTS.md, Package manager stores)",
-      );
+  const label = "pnpm store outside the repo";
+  const fix = `export pnpm_config_store_dir=${CODEX_STORE_DIR} (see docs/machine-setup.md, Codex shells)`;
+  const configured = machine.env.pnpm_config_store_dir;
+  if (!configured) {
+    // pnpm 11 reads only pnpm_config_* variables, so the npm_config_* spelling is silently ignored.
+    const detail = machine.env.npm_config_store_dir
+      ? "only the legacy npm_config_store_dir is set, which pnpm 11 ignores"
+      : "pnpm_config_store_dir is unset; pnpm may create a repo-local .pnpm-store";
+    return check("pnpm-store", label, "wrong", detail, fix);
+  }
+  if (!isAbsolute(configured) || isInside(machine.root, configured)) {
+    return check("pnpm-store", label, "wrong", `${configured} is not outside the repo`, fix);
+  }
+  const effective = machine.run("pnpm", ["--dir", machine.root, "config", "get", "store-dir"]);
+  if (!effective.ok) {
+    const reason = effective.stdout.trim().split("\n")[0];
+    return check(
+      "pnpm-store",
+      label,
+      "wrong",
+      `pnpm could not report its store${reason ? `: ${reason}` : ""}`,
+      fix,
+    );
+  }
+  const resolved = effective.stdout.trim();
+  return resolve(resolved) === resolve(configured)
+    ? check("pnpm-store", label, "ok", resolved)
+    : check("pnpm-store", label, "wrong", `pnpm uses ${resolved}, not ${configured}`, fix);
 }
 
 /** Logins no script can perform for the user. */

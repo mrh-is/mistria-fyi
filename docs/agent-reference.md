@@ -29,13 +29,15 @@ symlinks the `.worktreeinclude` entries in from the main checkout, and runs
 artifacts, or other writable generated directories. See
 [docs/development-workflow.md §2](development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
 for the manual steps and troubleshooting. Inside a harness-created worktree, run
-`pnpm run worktree:setup` for the same symlink & install steps.
+`node scripts/setup-worktree.ts` for the same symlink & install steps. It is deliberately not a pnpm
+script: `verifyDepsBeforeRun: error` in `pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse
+to start on absent or stale dependencies rather than installing them implicitly.
 
 **Subagent worktrees:** an orchestrator gives each editing subagent a worktree its harness lets that
 subagent edit. In Claude Code, the session’s edit guard refuses Write/Edit outside the session’s own
 worktree, including `.worktrees/`, so spawn editing subagents with the Agent tool’s
-`isolation: "worktree"` and have each run `pnpm run worktree:setup` first. `preview_start` by `name`
-serves the orchestrator’s checkout, so a subagent previews its own dev server by URL; see
+`isolation: "worktree"` and have each run `node scripts/setup-worktree.ts` first. `preview_start` by
+`name` serves the orchestrator’s checkout, so a subagent previews its own dev server by URL; see
 [docs/development-workflow.md](development-workflow.md#preview-from-a-subagent-worktree).
 
 **Stashes are shared:** `refs/stash` is one stack for every linked worktree, so a bare
@@ -90,7 +92,6 @@ enforces the same threshold. Ignore an advisory only when it’s disputed or has
 | `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                                       |
 | `pnpm run test:accessibility` | Browser accessibility matrix (Playwright)                          |
 | `pnpm run verify`             | Full CI matrix locally (exception-only; see agent-verification.md) |
-| `pnpm run machine:doctor`     | Read-only check of machine prerequisites                           |
 | `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets                         |
 
 ## Enforcement boundaries
