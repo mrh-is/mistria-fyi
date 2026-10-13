@@ -292,7 +292,7 @@ describe("transfer codec", () => {
     const payload = await encodeTransferPayload(makeGoldenCompleted());
 
     expect(unmarked(payload).slice(0, BUILD_FINGERPRINT_BYTE_LENGTH)).toEqual(
-      buildFingerprintBytes(),
+      new Uint8Array(buildFingerprintBytes()),
     );
   });
 
