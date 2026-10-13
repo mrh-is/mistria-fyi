@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { relative, resolve, sep } from "node:path";
+import { relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+
+import { toPosixPath } from "#scripts/lib/paths";
 
 import { DEFAULT_ASSET_ORIGIN as uploaderOrigin } from "../../scripts/lib/r2-upload.js";
 import { ASSET_ORIGIN as fontManifestOrigin } from "../../scripts/locale-fonts/manifest.js";
@@ -44,9 +46,7 @@ describe("one asset origin", () => {
     const sourceRoot = resolve(repositoryRoot, "src");
     const offenders = readdirSync(sourceRoot, { recursive: true, withFileTypes: true })
       .filter((entry) => entry.isFile() && /\.(?:svelte|ts)$/.test(entry.name))
-      .map((entry) =>
-        relative(repositoryRoot, resolve(entry.parentPath, entry.name)).split(sep).join("/"),
-      )
+      .map((entry) => toPosixPath(relative(repositoryRoot, resolve(entry.parentPath, entry.name))))
       .filter(
         (path) =>
           !path.endsWith(".test.ts") &&

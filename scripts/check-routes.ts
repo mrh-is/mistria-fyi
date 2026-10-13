@@ -9,6 +9,8 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { toPosixPath } from "#scripts/lib/paths";
+
 const BUILD_DIR = path.join(import.meta.dirname, "..", "build");
 
 /** Cloudflare Pages' documented `_routes.json` rule limit (include + exclude). */
@@ -84,7 +86,7 @@ async function listStaticAssets(buildDir: string): Promise<string[]> {
     .filter((entry) => entry.isFile())
     .map((entry) => path.relative(buildDir, path.join(entry.parentPath, entry.name)))
     .filter((relative) => !PAGES_INTERNAL_FILES.has(relative))
-    .map((relative) => `/${relative.split(path.sep).join("/")}`)
+    .map((relative) => `/${toPosixPath(relative)}`)
     .toSorted();
 }
 

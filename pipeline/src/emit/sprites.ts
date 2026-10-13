@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, posix, resolve } from "node:path";
 import sharp from "sharp";
 import { open } from "yauzl-promise";
 
@@ -269,7 +269,7 @@ async function extractSpritesFromZip(
       const priority = zipPrefixes.findIndex((prefix) => entry.filename.startsWith(prefix));
       if (priority === -1) continue;
 
-      const basename = entry.filename.split("/").at(-1) ?? "";
+      const basename = posix.basename(entry.filename);
       if (!kind.matchesFilename(basename)) continue;
 
       const spriteName = basename.slice(0, -4);
