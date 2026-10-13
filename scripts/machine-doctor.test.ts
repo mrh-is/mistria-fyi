@@ -1,4 +1,6 @@
-import { basename } from "node:path";
+import { readFileSync } from "node:fs";
+import { basename, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -141,12 +143,40 @@ describe("checkPlaywright", () => {
 });
 
 describe("checkPnpmStore", () => {
+  const store = "/private/tmp/codex-pnpm-store";
+  const getStore = "pnpm --dir /repo config get store-dir";
+
   it("applies only inside Codex shells", () => {
     expect(checkPnpmStore(machine())).toBeUndefined();
-    const codex = machine({ env: { CODEX_THREAD_ID: "x" } });
-    expect(checkPnpmStore(codex)?.status).toBe("wrong");
-    const set = machine({ env: { CODEX_THREAD_ID: "x", npm_config_store_dir: "/tmp/s" } });
-    expect(checkPnpmStore(set)?.status).toBe("ok");
+    expect(checkPnpmStore(machine({ env: { CODEX_THREAD_ID: "x" } }))?.status).toBe("wrong");
+  });
+
+  it("rejects the legacy npm_config_store_dir, which pnpm 11 ignores", () => {
+    const legacy = machine({
+      commands: { [getStore]: "/Users/test/Library/pnpm/store\n" },
+      env: { CODEX_THREAD_ID: "x", npm_config_store_dir: store },
+    });
+    expect(checkPnpmStore(legacy)).toMatchObject({
+      detail: expect.stringContaining("legacy") as string,
+      status: "wrong",
+    });
+  });
+
+  it("rejects a store inside the repository", () => {
+    const local = machine({
+      commands: { [getStore]: "/repo/.pnpm-store\n" },
+      env: { CODEX_THREAD_ID: "x", pnpm_config_store_dir: "/repo/.pnpm-store" },
+    });
+    expect(checkPnpmStore(local)?.status).toBe("wrong");
+  });
+
+  it("requires pnpm's effective store to match the configured one", () => {
+    const env = { CODEX_THREAD_ID: "x", pnpm_config_store_dir: store };
+    const drifted = machine({ commands: { [getStore]: "/elsewhere\n" }, env });
+    expect(checkPnpmStore(drifted)?.status).toBe("wrong");
+    const matched = machine({ commands: { [getStore]: `${store}\n` }, env });
+    expect(checkPnpmStore(matched)).toMatchObject({ detail: store, status: "ok" });
+    expect(checkPnpmStore(machine({ env }))?.status).toBe("wrong");
   });
 });
 
@@ -161,5 +191,22 @@ describe("report", () => {
     expect(report).toContain("[missing] pnpm");
     expect(report).toContain("fix: pnpm exec wrangler login");
     expect(report).toContain("[ok]      Node.js");
+  });
+});
+
+describe("repository configuration", () => {
+  const root = fileURLToPath(new URL("..", import.meta.url));
+
+  it("refuses to install dependencies implicitly before pnpm run or exec", () => {
+    const workspace = readFileSync(join(root, "pnpm-workspace.yaml"), "utf8");
+    expect(workspace).toMatch(/^verifyDepsBeforeRun: error$/m);
+  });
+
+  it("offers no pnpm script for commands that must run before dependencies exist", () => {
+    const { scripts } = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
+      scripts: Record<string, string>;
+    };
+    expect(scripts).not.toHaveProperty("machine:doctor");
+    expect(scripts).not.toHaveProperty("worktree:setup");
   });
 });

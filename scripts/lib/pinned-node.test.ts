@@ -15,6 +15,7 @@ const unguarded = new Map([
   ["scripts/lint-agent-stop.ts", "Hook delegates lint execution to pnpm’s pinned runtime"],
   ["scripts/agent-subagent-start.ts", "Dependency-free subagent context hook"],
   ["scripts/machine-doctor.ts", "Reports a missing or wrong Node"],
+  ["scripts/setup-worktree.ts", "Installs the pinned runtime; delegates all work to pnpm"],
 ]);
 
 // Config files that package binaries load directly, so `node_modules/.bin/<tool>` is guarded too.

@@ -10,8 +10,9 @@ across docs & issue comments (#17).
 ## Decision
 
 Agents stop on the first local tooling failure, report the command, the redacted error, & the
-blocked work, & wait for the user's direction. `pnpm run machine:doctor` is the read-only diagnostic
-& `docs/machine-setup.md` is the repair procedure; the user or a human runs it. The doctor never
+blocked work, & wait for the user's direction. `node scripts/machine-doctor.ts` is the read-only
+diagnostic (invoked directly since [2026-10-13](2026-10-13-no-implicit-dependency-installs.md)) &
+`docs/machine-setup.md` is the repair procedure; the user or a human runs it. The doctor never
 installs, configures, or authenticates.
 
 ## Alternatives
