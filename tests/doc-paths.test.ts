@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, posix, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -56,15 +56,17 @@ function isIgnored(path: string): boolean {
   // Git refuses paths beyond a symlink (exit 128), so a path under a symlinked, ignored directory
   // like `pipeline/input` only resolves through its ancestors. Each ancestor is checked with a
   // trailing slash, so directory-only patterns match one missing from disk, and without one,
-  // since git refuses a symlink spelled with a trailing slash.
-  const segments = path.replace(/\/$/u, "").split("/");
-  return (
-    gitIgnores(path) ||
-    segments.slice(0, -1).some((_, index) => {
-      const ancestor = segments.slice(0, index + 1).join("/");
-      return gitIgnores(ancestor) || gitIgnores(`${ancestor}/`);
-    })
-  );
+  // since git refuses a symlink spelled with a trailing slash. Doc paths & git pathspecs are
+  // `/`-separated on every platform, hence `posix`.
+  if (gitIgnores(path)) {
+    return true;
+  }
+  for (let ancestor = posix.dirname(path); ancestor !== "."; ancestor = posix.dirname(ancestor)) {
+    if (gitIgnores(ancestor) || gitIgnores(`${ancestor}/`)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function stripCode(markdown: string): string {
