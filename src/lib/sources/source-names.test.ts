@@ -12,9 +12,7 @@ import {
 
 beforeAll(async () => {
   await Promise.all(
-    LOCALE_CODES.map((locale) =>
-      loadNames(locale, ["items", "locations", "monsters", "pets/skins"]),
-    ),
+    LOCALE_CODES.map((locale) => loadNames(locale, ["items", "locations", "pets/skins"])),
   );
 });
 
@@ -63,20 +61,20 @@ describe("buildWaterNames", () => {
 });
 
 describe("buildMonsterNames", () => {
-  it("names monsters after their pet variants in English", () => {
+  it("names a base monster after its pet skin family", () => {
     const names = buildMonsterNames("en");
 
     expect(names.mushroom).toBe("Mushroom");
-    expect(names.mushroom_blue).toBe("Blue Mushroom");
     expect(names.cat).toBe("Lava Cat");
     expect(names.cat_void).toBe("Void Cat");
   });
 
-  it("composes family & variant for monsters with no pet variant", () => {
+  it("composes family & variant in English", () => {
     const names = buildMonsterNames("en");
 
+    expect(names.mushroom_blue).toBe("Mushroom (blue)");
+    expect(names.copperclod).toBe("Oreclod (copper)");
     expect(names.mistrilclod).toBe("Oreclod (mistril)");
-    expect(names.rockclod_purple).toBe("Rockclod (purple)");
   });
 
   it("composes family & variant outside English", () => {

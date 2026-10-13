@@ -102,7 +102,6 @@ export const SEGMENT_LOOKUP_NAME_CHUNKS = [
   "items",
   "locations",
   "mines",
-  "monsters",
   "museum_wings",
   "villagers",
   "perks",

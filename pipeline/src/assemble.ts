@@ -47,7 +47,6 @@ import { extractDates } from "./extract/dates.js";
 import { extractFestivals } from "./extract/festivals.js";
 import { extractLocationNames } from "./extract/locations.js";
 import { extractMines } from "./extract/mines.js";
-import { extractMonsterNames } from "./extract/monsters.js";
 import { extractMuseum } from "./extract/museum.js";
 import { extractPetCosmetics, extractPetSkins } from "./extract/pets.js";
 import { extractQuestChains } from "./extract/quest-chains.js";
@@ -407,7 +406,6 @@ export function assembleTrackerData(
       { byLocale: petSkinLocaleNames, category: "pets/skins" },
       { byLocale: treasureChestTierLocaleNames, category: "treasure-chest-tiers" },
       { byLocale: extractLocationNames(fiddle, localizer), category: "locations" },
-      { byLocale: extractMonsterNames(fiddle), category: "monsters" },
     ],
     trackerData,
   };
