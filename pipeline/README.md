@@ -67,7 +67,7 @@ extraction; pass an extracted structured-assets root together with `--sprites`.
 `--parse-only` checks that at least one non-metadata TOML file parses and that every parsed root has
 matching provenance. It accepts an extracted `fiddle/` directory or an `assets.zip` archive, and
 does not require version or localization metadata. Add `--parse-profile=v1.0.7` to check the
-canonical fixture’s 297 files and three representative paths. Unknown or duplicate CLI flags fail
+canonical fixture’s 298 files and three representative paths. Unknown or duplicate CLI flags fail
 before assets are read.
 
 Supporting a new Fields of Mistria version is a reviewed application release, not a routine

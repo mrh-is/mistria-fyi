@@ -1,6 +1,9 @@
 import type { CosmeticId, ItemId } from "#lib/types/tracker-data.js";
 
-import type { CosmeticSourceAccumulator } from "../acquisition/source-accumulator.js";
+import type {
+  CosmeticSourceAccumulator,
+  ItemSourceAccumulator,
+} from "../acquisition/source-accumulator.js";
 import type { ParsedGameData } from "../parse/parse-fiddle.js";
 import type { ReviewedEntry } from "./entry.js";
 
@@ -92,3 +95,17 @@ export const ITEM_EXCLUSION_ENTRIES: ReviewedEntry<boolean>[] = [
 export const ITEM_EXCLUSIONS: ReadonlySet<ItemId> = new Set(
   ITEM_EXCLUSION_ENTRIES.map(({ id }) => id as ItemId),
 );
+
+/**
+ * Assembly keeps sources only for extracted items, so a source collected for an excluded item would
+ * vanish silently. Fail instead, so the exclusion is re-reviewed once the game gives it a path.
+ */
+export function validateItemExclusionSources(nativeSources: ItemSourceAccumulator): void {
+  for (const { id } of ITEM_EXCLUSION_ENTRIES) {
+    if (nativeSources.get(id as ItemId).length > 0) {
+      throw new Error(
+        `Obsolete reviewed item exclusion entry now encoded in native acquisition sources: ${id}`,
+      );
+    }
+  }
+}
