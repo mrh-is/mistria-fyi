@@ -101,18 +101,20 @@ prefix_rule(
     justification = "These forms only read remote configuration.",
 )
 
-# Permit read-only GitHub CLI commands. Writes (create, edit, comment, ready, merge) and `gh api`
-# stay out on purpose.
+# Permit read-only GitHub CLI commands plus routine lifecycle writes (issue comments & edits, PR
+# comments); AGENTS.md §2 attributes each with an `Agent:` line, and each is easy to reverse.
+# Creating issues & PRs, `gh pr edit`, `gh pr ready`, `gh pr merge`, and `gh api` stay out on
+# purpose.
 prefix_rule(
-    pattern = ["gh", "pr", ["view", "list", "diff", "checks", "status"]],
+    pattern = ["gh", "pr", ["view", "list", "diff", "checks", "status", "comment"]],
     decision = "allow",
-    justification = "These only read pull request state.",
+    justification = "These read pull request state or add an attributed, reversible comment.",
 )
 
 prefix_rule(
-    pattern = ["gh", "issue", ["view", "list"]],
+    pattern = ["gh", "issue", ["view", "list", "comment", "edit"]],
     decision = "allow",
-    justification = "These only read issue state.",
+    justification = "These read issue state or make attributed, reversible comment & label edits.",
 )
 
 prefix_rule(
