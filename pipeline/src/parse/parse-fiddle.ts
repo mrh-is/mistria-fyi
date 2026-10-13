@@ -1,8 +1,9 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative, sep } from "node:path";
+import { join, posix, relative } from "node:path";
 import { parse } from "smol-toml";
 import { open } from "yauzl-promise";
 
+import { toPosixPath } from "../../../scripts/lib/paths.js";
 import { expectRecord } from "../data-shapes.js";
 import { compareStrings } from "../ordering.js";
 
@@ -195,6 +196,18 @@ function setNestedValue(
   current[lastKey] = value;
 }
 
+/** Fiddle's file stem & ancestor directories become domain-key segments. */
+function fiddleKeyPath(relPath: string): string[] {
+  const { dir, name, root } = posix.parse(relPath);
+  const keys = [name];
+  let parent = dir;
+  while (parent !== root && parent !== ".") {
+    keys.unshift(posix.basename(parent));
+    parent = posix.dirname(parent);
+  }
+  return keys;
+}
+
 function walkDirectory(dir: string, rootDir: string, onEntry: (entry: TomlEntry) => void): void {
   const entries = readdirSync(dir).toSorted(compareStrings);
 
@@ -211,8 +224,8 @@ function walkDirectory(dir: string, rootDir: string, onEntry: (entry: TomlEntry)
       continue;
     }
 
-    const relPath = relative(rootDir, fullPath).split(sep).join("/");
-    const keyPath = relPath.replace(/\.toml$/, "").split("/");
+    const relPath = toPosixPath(relative(rootDir, fullPath));
+    const keyPath = fiddleKeyPath(relPath);
     const sourceKey = keyPath.join(".");
     const text = readFileSync(fullPath, "utf8");
 
@@ -233,7 +246,7 @@ async function zipEntryToTomlEntry(
   if (!entry.filename.endsWith(".toml") || entry.filename.endsWith(".meta.toml")) return null;
 
   const relPath = entry.filename.slice(FIDDLE_ZIP_PREFIX.length);
-  const keyPath = relPath.replace(/\.toml$/, "").split("/");
+  const keyPath = fiddleKeyPath(relPath);
   const sourceKey = keyPath.join(".");
   if (paths !== undefined && !paths.some((p) => sourceKey === p || sourceKey.startsWith(`${p}.`))) {
     return null;

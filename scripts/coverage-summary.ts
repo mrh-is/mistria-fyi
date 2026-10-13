@@ -5,8 +5,10 @@
  * `pnpm run test:coverage`.
  */
 import { readFileSync } from "node:fs";
-import { relative, resolve, sep } from "node:path";
+import { relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+
+import { toPosixPath } from "#scripts/lib/paths";
 
 interface Metric {
   covered: number;
@@ -58,7 +60,7 @@ export function formatCoverageSummary(summary: CoverageSummary, root: string): s
   const files = Object.entries(summary)
     .filter(([path]) => path !== "total")
     // Areas are written with `/`, so normalize Windows separators before grouping.
-    .map(([path, coverage]) => ({ coverage, path: relative(root, path).split(sep).join("/") }));
+    .map(([path, coverage]) => ({ coverage, path: toPosixPath(relative(root, path)) }));
 
   const areaRows = AREAS.map((area) =>
     row(

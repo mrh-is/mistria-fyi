@@ -737,11 +737,14 @@ It also keeps any worktree in use: one that a running process (an agent session 
 its working directory, or, with `--idle-minutes <n>`, one whose `HEAD` changed in the last `n`
 minutes. A fresh agent worktree's tip is already in `origin/main`, so unattended runs rely on this.
 
-On Windows the helper can't list other processes' working directories (it uses `lsof` elsewhere), so
-pass `--idle-minutes` there to spare worktrees that live sessions are using. Git for Windows
-deregisters a removed worktree but leaves its junctions & pnpm's `node_modules` links behind; the
-helper then deletes what's left without following those links. It also enables `core.longpaths` for
-the removal, so deep `node_modules` paths don't stop it.
+On Windows the helper queries `Win32_Process` through noninteractive PowerShell & keeps worktrees
+referenced by absolute executable or command-line argument paths, including dev servers & workerd.
+This cannot discover a process whose only connection is its working directory, or whose paths are
+inaccessible, so also pass `--idle-minutes` to spare recent live sessions. If process enumeration
+fails, the helper reports that only the invoking worktree & idle window protect live sessions. Git
+for Windows deregisters a removed worktree but leaves its junctions & pnpm's `node_modules` links
+behind; the helper then deletes what's left without following those links. It also enables
+`core.longpaths` for the removal, so deep `node_modules` paths don't stop it.
 
 ### Automatic housekeeping
 
