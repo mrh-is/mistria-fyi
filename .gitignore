@@ -62,3 +62,7 @@ pipeline/output
 
 # Per-file Vitest timings & CI summaries
 /.vitest-artifacts/
+
+# Personal agent settings (see CONTRIBUTING.md, Using AI agents)
+/.claude/settings.local.json
+CLAUDE.local.md

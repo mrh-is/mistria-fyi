@@ -4,6 +4,24 @@ The app mixes Tailwind utilities & scoped `<style>` blocks on purpose. Both draw
 design tokens in `src/app.css`. Stylelint keeps scoped CSS on those tokens, and an ESLint rule does
 the same for class strings in markup.
 
+## Visual direction
+
+The app’s visual identity is “the Field Guide”: a naturalist’s journal applied to a tracker. It
+isn’t a literal notebook; it’s a working tool that borrows the journal’s warmth. Aim for warm,
+slightly irregular, & culturally rooted (a naturalist’s journal, not a SaaS dashboard). The current
+type, palette, & dark mode live as tokens in `src/app.css`; hand-drawn icons get their organic edge
+from the pencil filter in `src/lib/components/pencil-filter.svelte`.
+
+Many of the app’s users distrust AI-generated design, so every visual choice must pass one test:
+could an LLM have generated this? If it could, choose something else. Avoid in particular:
+
+- Purple-to-indigo gradients, glassmorphism, & blob or mesh backgrounds
+- Inter, Geist, system sans, or sans-serif everywhere; thin-weight headings
+- A centered hero with a call to action, three evenly spaced cards, & bento grids
+- Excessive border radius, & Lucide or Heroicons as the primary visual
+- Monochromatic schemes, perfectly symmetrical layouts, & fade-up-on-scroll animations
+- Everything “too smooth”, rigid grids, Swiss minimalism, & maximalism
+
 ## Utilities vs. scoped CSS
 
 - **Tailwind utilities** handle layout, spacing, the utilitarian screens (data transfer, feedback,

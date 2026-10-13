@@ -3,3 +3,4 @@ tests/browser/fixtures/local/
 .env
 .env.*
 .dev.vars
+.claude/settings.local.json
