@@ -47,15 +47,19 @@ interface FakeIo extends R2UploadIo {
   puts: string[][];
 }
 
-/** Remote objects by URL, as HEAD responses; Wrangler results are consumed in order. */
+/**
+ * Remote objects by bare URL (any query string ignored), as HEAD responses; Wrangler results are
+ * consumed in order.
+ */
 function fakeIo(remote: Record<string, Response> = {}, results: WranglerResult[] = []): FakeIo {
   const io: FakeIo = {
     errors: [],
-    fetch: (input) =>
-      Promise.resolve(
-        remote[input instanceof Request ? input.url : input.toString()]?.clone() ??
-          new Response(null, { status: 404 }),
-      ),
+    fetch: (input) => {
+      const url = new URL(input instanceof Request ? input.url : input.toString());
+      return Promise.resolve(
+        remote[`${url.origin}${url.pathname}`]?.clone() ?? new Response(null, { status: 404 }),
+      );
+    },
     lines: [],
     log: (line) => io.lines.push(line),
     logError: (line) => io.errors.push(line),
@@ -167,6 +171,25 @@ describe("r2UploadTree", () => {
     });
     await r2UploadTree(sprites(dir), options, io);
     expect(io.puts).toHaveLength(1);
+  });
+
+  it("checks ETags past a stale edge copy of the bare URL", async () => {
+    const dir = tree({ "a.webp": "current" });
+    const io = fakeIo();
+    const fetched: string[] = [];
+    io.fetch = (input) => {
+      const url = input instanceof Request ? input.url : input.toString();
+      fetched.push(url);
+      const etag = md5(url.includes("?") ? "current" : "old");
+      return Promise.resolve(new Response(null, { headers: { etag: `"${etag}"` } }));
+    };
+
+    await r2UploadTree(sprites(dir), options, io);
+    await r2UploadTree(sprites(dir), options, io);
+
+    expect(io.puts).toEqual([]);
+    // Each check gets its own cache key, so a check can't hit an edge copy cached by an earlier one.
+    expect(new Set(fetched).size).toBe(2);
   });
 
   it("skips an existing object in exists mode, with the immutable policy by default", async () => {
