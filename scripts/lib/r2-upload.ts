@@ -5,7 +5,7 @@
 // Env read by `r2UploadOptionsFromEnv`: R2_BUCKET, ASSET_ORIGIN, PARALLEL, FORCE=1 (re-upload
 // everything), & DRY_RUN=1 (print what would be uploaded without running Wrangler).
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -129,7 +129,9 @@ async function isCurrent(
 ): Promise<boolean> {
   let response: Response;
   try {
-    response = await io.fetch(url, { method: "HEAD" });
+    // A unique query string misses the edge cache, which can hold a superseded copy of the bare URL
+    // (one uploaded with the year-long immutable policy stays stale there long after a re-upload).
+    response = await io.fetch(`${url}?check=${randomUUID()}`, { method: "HEAD" });
   } catch {
     return false;
   }
