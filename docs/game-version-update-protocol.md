@@ -230,6 +230,9 @@ Before merging, verify that:
 - Save imports behave as documented for every supported game-save version.
 - Release notes describe any migration, dropped compatibility, or required player action.
 
+Label the pull request `generated-data` when opening it (alongside `type: maintenance` and
+`area: pipeline`); the “Guarded paths” check fails on regenerated tracker data without it.
+
 Ship application code and generated tracker data in the same deployment. Do not publish candidate
 tracker data independently of the code and tests reviewed with it.
 
