@@ -851,3 +851,10 @@ Git Bash's `ln -s` copies or fails instead of linking.
   unlinks a junction without following it, rather than a tool that might recurse into the target.
 - **Restricted PowerShell**: if the execution policy blocks `pnpm.ps1`, run `pnpm.cmd` instead (for
   example `pnpm.cmd run verify`) or use Git Bash.
+- **Inline scripts**: pnpm's Windows shim rejects quoted inline code, so `pnpm exec node -e "…"`
+  fails with `batch file arguments are invalid`. Write the script to a file and run
+  `pnpm exec node <file>` instead.
+- **Phantom modifications**: a checkout whose index predates `* text=auto eol=lf` caches CRLF file
+  sizes, so after a formatter touches a file `git status` can show it modified while `git diff` is
+  empty & `git update-index --refresh` cannot clear it. Run `git add --renormalize .` once (it
+  changes no blobs), or clone fresh.
