@@ -79,6 +79,21 @@ describe("format after agent edit", () => {
     );
   });
 
+  it("formats the snapshotted repository when the Bash command changes the reported cwd", () => {
+    const cwd = fixture();
+    const elsewhere = realpathSync(mkdtempSync(join(tmpdir(), "agent-format-elsewhere-")));
+    roots.push(elsewhere);
+    const id = `cd-${cwd}`;
+    snapshotShellEdit({ cwd, tool_name: "Bash", tool_use_id: id });
+    writeFileSync(join(cwd, "a file.ts"), "const a=4");
+    const run = vi.fn(() => ({ output: "", status: 0 }));
+    expect(formatEdit({ cwd: elsewhere, tool_name: "Bash", tool_use_id: id }, run)).toBeUndefined();
+    expect(run).toHaveBeenCalledWith(
+      ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "a file.ts"],
+      cwd,
+    );
+  });
+
   it("uses the repository root when a file tool starts in a subdirectory", () => {
     const cwd = fixture();
     mkdirSync(join(cwd, "nested"));
