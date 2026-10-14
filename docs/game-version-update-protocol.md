@@ -51,8 +51,9 @@ Before changing pipeline code or generated data:
    A changed fixture count is evidence to investigate, not a value to update mechanically. Start by
    diffing the new asset tree against the preceding version’s (`diff -rq vA/assets vB/assets`,
    ignoring Drive’s `desktop.ini` files) to scope the update. When `fiddle/`, `data_files/`, and the
-   English localization are unchanged, as in 1.0.8, expect the candidate to change only translations
-   and `trackerData.version`.
+   English localization are unchanged, as in 1.0.8, expect the tracker data and locale chunks to
+   change only in translations and `trackerData.version`. Icons come from the full `assets.zip`,
+   which the shared tree omits, so still run the sprite upload dry run.
 
 The committed tracker data at the starting commit is the rollback baseline. Do not hand-edit
 `src/lib/data/tracker-data.json` or replace that baseline outside the version-update branch.
