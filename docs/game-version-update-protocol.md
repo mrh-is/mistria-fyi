@@ -48,7 +48,11 @@ Before changing pipeline code or generated data:
    stays available for comparison.
 4. Create the normal isolated worktree and establish a clean verification baseline.
 5. Review the new assets and upstream notes before relaxing parser, extractor, or test expectations.
-   A changed fixture count is evidence to investigate, not a value to update mechanically.
+   A changed fixture count is evidence to investigate, not a value to update mechanically. Start by
+   diffing the new asset tree against the preceding version’s (`diff -rq vA/assets vB/assets`,
+   ignoring Drive’s `desktop.ini` files) to scope the update. When `fiddle/`, `data_files/`, and the
+   English localization are unchanged, as in 1.0.8, expect the candidate to change only translations
+   and `trackerData.version`.
 
 The committed tracker data at the starting commit is the rollback baseline. Do not hand-edit
 `src/lib/data/tracker-data.json` or replace that baseline outside the version-update branch.
@@ -103,7 +107,10 @@ from the staged files.
 
 Treat the regenerated data as a candidate until the semantic review is complete. Inspect the
 readable pipeline artifact or a purpose-built comparison rather than relying only on the minified
-JSON diff.
+JSON diff. Agent hooks deny direct reads of the generated tracker data, so an agent compares it with
+a script that loads the baseline (`git show HEAD:…`) and the candidate and prints only the
+structural differences. The locale chunks are pretty-printed, so their Git diff is reviewable; check
+that no keys were added or removed and that changed values are new translations.
 
 ### Upload sprites
 
@@ -116,11 +123,12 @@ DRY_RUN=1 pnpm run sprites:upload   # lists `would put` for each new or changed 
 pnpm run sprites:upload
 ```
 
-The upload skips every sprite whose production ETag already matches. If the dry run would replace an
-existing sprite, its pixels changed: bump `spriteGeneration` in `src/lib/sprites/sprite-url.ts` in
-the same pull request (see [sprite assets](sprite-assets.md)). Wrangler needs a Cloudflare login on
-the uploading machine; an agent can’t complete the interactive login, so ask the maintainer to run
-`pnpm exec wrangler login` first.
+The upload skips every sprite whose production ETag already matches. The check adds a unique query
+string so it reads the bucket’s current object rather than a stale edge-cached copy. If the dry run
+would replace an existing sprite, its pixels changed: bump `spriteGeneration` in
+`src/lib/sprites/sprite-url.ts` in the same pull request (see [sprite assets](sprite-assets.md)).
+Wrangler needs a Cloudflare login on the uploading machine; an agent can’t complete the interactive
+login, so ask the maintainer to run `pnpm exec wrangler login` first.
 
 ## Classify changes
 
@@ -198,7 +206,7 @@ The version-update issue or pull request must include a compatibility report wit
 - The rollback constraint for the release.
 
 Post the mechanical ID inventory (additions, removals, and renames by domain, compared from the
-baseline commit) as its own PR comment, as #354 did. It is the durable diff later updates compare
+baseline commit) as its own PR comment, as #41 did. It is the durable diff later updates compare
 against.
 
 Use this conclusion when the review finds no incompatibility: “No persisted-state compatibility
