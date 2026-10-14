@@ -81,7 +81,7 @@ describe("buildMonsterNames", () => {
     const names = buildMonsterNames("fr");
 
     expect(names.cat).toBe("Magmatou");
-    expect(names.cat_void).toBe("Void Cat");
+    expect(names.cat_void).toBe("Matou du néant");
     expect(names.sapling_blue).toBe(`${names.sapling} (bleu)`);
   });
 });
