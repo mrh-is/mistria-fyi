@@ -35,17 +35,18 @@ function formatFiles(cwd: string, targets: string[]): string[] {
 }
 
 interface Snapshot {
+  cwd: string;
   hashes: Record<string, string>;
   head: string;
 }
 
+// Keyed on the tool use alone: a command that changes directory gets a different cwd in its
+// PostToolUse payload than in its PreToolUse payload. The snapshot records its own repository.
 function snapshotFile(input: HookInput): string {
   if (!input.tool_use_id) {
     throw new Error("Bash formatting requires tool_use_id; report the missing hook payload.");
   }
-  const key = createHash("sha256")
-    .update(`${input.cwd ?? process.cwd()}\0${input.tool_use_id}`)
-    .digest("hex");
+  const key = createHash("sha256").update(input.tool_use_id).digest("hex");
   return join(tmpdir(), `mistria-agent-format-${key}.json`);
 }
 
@@ -61,17 +62,15 @@ export function snapshotShellEdit(input: HookInput): void {
   const hashes = Object.fromEntries(
     formatFiles(cwd, changedFiles(cwd)).map((file) => [file, fingerprint(cwd, file)]),
   );
-  writeFileSync(snapshotFile(input), JSON.stringify({ hashes, head: repositoryHead(cwd) }), {
-    flag: "wx",
-    mode: 0o600,
-  });
+  const snapshot: Snapshot = { cwd, hashes, head: repositoryHead(cwd) };
+  writeFileSync(snapshotFile(input), JSON.stringify(snapshot), { flag: "wx", mode: 0o600 });
 }
 
 function shellEditFiles(input: HookInput): { cwd: string; files: string[] } {
-  const cwd = repositoryRoot(input.cwd ?? process.cwd());
   const file = snapshotFile(input);
   const before = JSON.parse(readFileSync(file, "utf8")) as Snapshot;
   rmSync(file);
+  const { cwd } = before;
   const files = formatFiles(cwd, [
     ...changedFiles(cwd, before.head),
     ...Object.keys(before.hashes),
