@@ -199,9 +199,10 @@ function commandTargets(command: string): string[] {
     return paths;
   }
   const args = paths.slice(1);
-  const option = args.findIndex((arg) => /^(?:-t|--target-directory=?)/.test(arg));
+  const targetOption = /^(?:-(?!-)[A-Za-z]*t|--target-directory=?)/;
+  const option = args.findIndex((arg) => targetOption.test(arg));
   if (option !== -1) {
-    const inline = args[option].replace(/^(?:-t|--target-directory=?)/, "");
+    const inline = args[option].replace(targetOption, "");
     return [inline === "" ? (args[option + 1] ?? "") : inline];
   }
   return args.filter((arg) => !arg.startsWith("-")).slice(1);
@@ -226,7 +227,8 @@ export function shellWriteTargets(command: string): string[] {
       writes.push(...commandTargets(rest));
       dynamic ||= /\bxargs\b/.test(rest);
     }
-    if (new RegExp(`${COMMAND_PREFIX}(?:ba|da|k|z)?sh\\b`).test(rest)) {
+    // Any shell word, so `/bin/bash`, `sudo sh`, & `env bash` feeding a heredoc count too.
+    if (/(?:^|[\s/(])(?:ba|da|k|z)?sh(?=\s|$)/.test(rest)) {
       writes.push(...shellWriteTargets(heredoc));
     } else if (API_WRITE.test(heredoc)) {
       writes.push(
@@ -241,7 +243,13 @@ export function shellWriteTargets(command: string): string[] {
     targets.length > 0 &&
     (dynamic || segments.some(({ command: segment }) => /^\s*[({]?\s*(?:cd|pushd)\b/.test(segment)))
   ) {
-    return [...targets, ...segments.flatMap(({ command: segment }) => shellPaths(segment))];
+    // Include assignment values, which an expanded target such as `> $f` may name.
+    return [
+      ...targets,
+      ...segments.flatMap(({ command: segment }) =>
+        shellPaths(segment).flatMap((path) => [path, path.replace(/^\w+=/, "")]),
+      ),
+    ];
   }
   return targets;
 }
