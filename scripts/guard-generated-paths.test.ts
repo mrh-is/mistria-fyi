@@ -9,6 +9,10 @@ function edit(file_path: string) {
   return { cwd, tool_input: { file_path } };
 }
 
+function bash(command: string) {
+  return guardMessage({ cwd, tool_input: { command }, tool_name: "Bash" });
+}
+
 describe("guardMessage", () => {
   it("blocks vendored shadcn files, absolute or relative", () => {
     expect(
@@ -80,6 +84,50 @@ describe("guardMessage", () => {
         tool_input: { command: "pnpm run pipeline -- pipeline/input" },
         tool_name: "Bash",
       }),
+    ).toBeUndefined();
+  });
+
+  it("ignores guarded reads in a compound command with an unrelated write", () => {
+    for (const command of [
+      "echo done > /tmp/log.txt; ls src/lib/components/ui",
+      "ls src/lib/components/ui && touch /tmp/marker",
+      "git log --oneline -- src/lib/data/tracker-data.json | tee /tmp/log.txt",
+      "cat src/lib/data/tracker-data.json > /tmp/copy.json",
+      "ls src/lib/components/ui 2>&1 >/dev/null",
+      "ls src/lib/components/ui &>/tmp/out.txt",
+      "grep x <<< src/lib/data/tracker-data.json; touch /tmp/y",
+      "cp src/lib/data/tracker-data.json /tmp/copy.json",
+      "sed -n '1,5p' src/lib/data/tracker-data.json; rm /tmp/x",
+    ]) {
+      expect(bash(command), command).toBeUndefined();
+    }
+  });
+
+  it("blocks a guarded write anywhere in a compound command", () => {
+    for (const command of [
+      "ls src/lib/components/ui; echo '{}' > src/lib/data/tracker-data.json",
+      "cd /tmp && rm -rf /work/mistria/src/lib/components/ui",
+      "git status || cp /tmp/x.json src/lib/data/tracker-data.json",
+      "echo x | tee -a src/lib/components/ui/button.ts",
+      "true\nsed -i 's/a;b/c/' src/lib/data/tracker-data.json",
+      "echo {} >>src/lib/data/tracker-data.json && ls",
+      "echo {} &> src/lib/data/tracker-data.json",
+      String.raw`ls; find /tmp -exec rm {} \; src/lib/components/ui/a.ts`,
+      "cat > src/lib/components/ui/a.ts <<'EOF'\nexport {};\nEOF",
+      "python3 - <<'EOF'\nPath('src/lib/data/tracker-data.json').write_text('{}')\nEOF",
+    ]) {
+      expect(bash(command), command).toContain("Blocked edit");
+    }
+  });
+
+  it("allows heredoc redirects to an outside file", () => {
+    expect(
+      bash(
+        "cat >> ~/notes/outside.md <<'EOF'\nTouched src/lib/components/ui; rm nothing > here.\nEOF\nls src/lib/components/ui; git log --oneline -- src/lib/components/ui",
+      ),
+    ).toBeUndefined();
+    expect(
+      bash("cat <<-EOF > /tmp/out.md\n\tsrc/lib/data/tracker-data.json\n\tEOF\nls src/lib/data"),
     ).toBeUndefined();
   });
 });
