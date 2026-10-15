@@ -69,10 +69,127 @@ export function shellPaths(command: string): string[] {
   });
 }
 
+const API_WRITE = /\b(?:writeFile\w*|write_text|write_bytes)\s*\(/;
+
 export function isShellWrite(command: string): boolean {
-  return /(?:^|[;&|]\s*|\s)(?:tee|cp|mv|rm|touch|install|truncate|apply_patch)\b|(?:^|\s)(?:sed|perl)\s+[^;\n]*-[^\s]*i|(?:^|[^<])>{1,2}[^>]|\b(?:writeFile\w*|write_text|write_bytes)\s*\(/.test(
-    command,
+  return (
+    /(?:^|[;&|]\s*|\s)(?:tee|cp|mv|rm|touch|install|truncate|apply_patch)\b|(?:^|\s)(?:sed|perl)\s+[^;\n]*-[^\s]*i|(?:^|[^<])>{1,2}[^>]/.test(
+      command,
+    ) || API_WRITE.test(command)
   );
+}
+
+interface ShellSegment {
+  command: string;
+  heredoc: string;
+}
+
+/**
+ * Split a shell command at unquoted `;`, `&`, `&&`, `|`, `||`, & newlines. Heredoc bodies stay
+ * with the segment that opened them, apart from its command text, so their content is never parsed
+ * as commands.
+ */
+function shellSegments(command: string): ShellSegment[] {
+  const segments: ShellSegment[] = [];
+  let current: ShellSegment = { command: "", heredoc: "" };
+  let pending: { delimiter: string; tabs: boolean }[] = [];
+  let quote: string | undefined;
+  const flush = () => {
+    if (current.command.trim() !== "" || current.heredoc !== "") {
+      segments.push(current);
+    }
+    current = { command: "", heredoc: "" };
+  };
+  for (let index = 0; index < command.length; index++) {
+    const char = command[index];
+    if (quote !== undefined) {
+      current.command += char;
+      if (char === "\\" && quote === '"') {
+        current.command += command[++index] ?? "";
+      } else if (char === quote) {
+        quote = undefined;
+      }
+      continue;
+    }
+    if (char === "\\") {
+      current.command += char + (command[++index] ?? "");
+      continue;
+    }
+    if (char === "'" || char === '"') {
+      quote = char;
+      current.command += char;
+      continue;
+    }
+    const heredoc =
+      command[index - 1] === "<"
+        ? null
+        : /^<<(?!<)(-?)\s*(['"]?)([\w.-]+)\2/.exec(command.slice(index));
+    if (heredoc) {
+      pending.push({ delimiter: heredoc[3], tabs: heredoc[1] === "-" });
+      current.command += heredoc[0];
+      index += heredoc[0].length - 1;
+      continue;
+    }
+    if (char === "\n" && pending.length > 0) {
+      let lineStart = index + 1;
+      for (const { delimiter, tabs } of pending) {
+        while (lineStart <= command.length) {
+          const lineEnd = command.indexOf("\n", lineStart);
+          const end = lineEnd === -1 ? command.length : lineEnd;
+          const line = command.slice(lineStart, end);
+          lineStart = end + 1;
+          if ((tabs ? line.replace(/^\t+/, "") : line) === delimiter) {
+            break;
+          }
+          current.heredoc += `${line}\n`;
+        }
+      }
+      pending = [];
+      index = lineStart - 2;
+      flush();
+      continue;
+    }
+    if (char === ";" || char === "&" || char === "|" || char === "\n") {
+      const previous = command[index - 1];
+      const redirect =
+        (char === "&" && (previous === ">" || previous === "<" || command[index + 1] === ">")) ||
+        (char === "|" && previous === ">");
+      if (redirect) {
+        current.command += char;
+        continue;
+      }
+      flush();
+      continue;
+    }
+    current.command += char;
+  }
+  flush();
+  return segments;
+}
+
+const REDIRECT = /(?<![<>])\d*&?>{1,2}\|?\s*("[^"\n]+"|'[^'\n]+'|[^\s;|&<>]+)/g;
+
+/**
+ * The paths each segment of a shell command may write: redirect targets, the arguments of writing
+ * commands (only the destination for `cp` & `install`), & every path in a heredoc that calls a
+ * file-writing API. Reads in other segments, or on the read side of a redirect, are ignored.
+ */
+export function shellWriteTargets(command: string): string[] {
+  return shellSegments(command).flatMap(({ command: segment, heredoc }) => {
+    const targets = [...segment.matchAll(REDIRECT)].flatMap((match) => shellPaths(match[1]));
+    const rest = segment.replaceAll(/\d*[<>]&\d*-?/g, " ").replaceAll(REDIRECT, " ");
+    if (isShellWrite(rest)) {
+      const paths = shellPaths(rest);
+      targets.push(...(/^\s*(?:\w+=\S*\s+)*(?:cp|install)\b/.test(rest) ? paths.slice(-1) : paths));
+    }
+    if (API_WRITE.test(heredoc)) {
+      targets.push(
+        ...shellPaths(heredoc),
+        ...[...heredoc.matchAll(/"([^"\n]+)"|'([^'\n]+)'/g)].map((match) => match[1] ?? match[2]),
+      );
+    }
+    return targets;
+  });
 }
 
 export function isShellRead(command: string): boolean {
