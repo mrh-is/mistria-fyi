@@ -73,7 +73,7 @@ const API_WRITE = /\b(?:writeFile\w*|write_text|write_bytes)\s*\(/;
 
 export function isShellWrite(command: string): boolean {
   return (
-    /(?:^|[;&|]\s*|\s)(?:tee|cp|mv|rm|touch|install|truncate|apply_patch)\b|(?:^|\s)(?:sed|perl)\s+[^;\n]*-[^\s]*i|(?:^|[^<])>{1,2}[^>]/.test(
+    /(?:^|[;&|(`{]\s*|\s)(?:tee|cp|mv|rm|touch|install|truncate|apply_patch)\b|(?:^|\s)(?:sed|perl)\s+[^;\n]*-[^\s]*i|(?:^|[^<])>{1,2}[^>]/.test(
       command,
     ) || API_WRITE.test(command)
   );
@@ -85,9 +85,9 @@ interface ShellSegment {
 }
 
 /**
- * Split a shell command at unquoted `;`, `&`, `&&`, `|`, `||`, & newlines. Heredoc bodies stay
- * with the segment that opened them, apart from its command text, so their content is never parsed
- * as commands.
+ * Split a shell command at unquoted `;`, `&`, `&&`, `|`, `||`, & newlines, dropping comments and
+ * keeping arithmetic expansions whole. Heredoc bodies stay with the segment that opened them, apart
+ * from its command text, so their content is never parsed as commands.
  */
 function shellSegments(command: string): ShellSegment[] {
   const segments: ShellSegment[] = [];
@@ -118,6 +118,27 @@ function shellSegments(command: string): ShellSegment[] {
     if (char === "'" || char === '"') {
       quote = char;
       current.command += char;
+      continue;
+    }
+    if (char === "#" && (index === 0 || /\s/.test(command[index - 1]))) {
+      while (index + 1 < command.length && command[index + 1] !== "\n") {
+        index++;
+      }
+      continue;
+    }
+    const arithmetic = /^\$?\(\(/.exec(command.slice(index));
+    if (arithmetic) {
+      let depth = 0;
+      let end = index;
+      for (; end < command.length; end++) {
+        if (command[end] === "(") {
+          depth++;
+        } else if (command[end] === ")" && --depth === 0) {
+          break;
+        }
+      }
+      current.command += command.slice(index, end + 1);
+      index = end;
       continue;
     }
     const heredoc =
@@ -167,29 +188,62 @@ function shellSegments(command: string): ShellSegment[] {
   return segments;
 }
 
-const REDIRECT = /(?<![<>])\d*&?>{1,2}\|?\s*("[^"\n]+"|'[^'\n]+'|[^\s;|&<>]+)/g;
+const FD_DUPLICATE = /\d*[<>]&(?:\d+|-)(?![^\s;|&<>])/g;
+const REDIRECT = /(?<![<>])\d*(?:&>|>&|>{1,2})\|?\s*("[^"\n]+"|'[^'\n]+'|[^\s;|&<>]+)/g;
+const COMMAND_PREFIX = String.raw`^\s*[({]?\s*(?:\w+=\S*\s+)*`;
+
+/** Writing-command arguments; `cp` & `install` sources are reads, so only their destination counts. */
+function commandTargets(command: string): string[] {
+  const paths = shellPaths(command);
+  if (!new RegExp(`${COMMAND_PREFIX}(?:cp|install)\\b`).test(command)) {
+    return paths;
+  }
+  const args = paths.slice(1);
+  const option = args.findIndex((arg) => /^(?:-t|--target-directory=?)/.test(arg));
+  if (option !== -1) {
+    const inline = args[option].replace(/^(?:-t|--target-directory=?)/, "");
+    return [inline === "" ? (args[option + 1] ?? "") : inline];
+  }
+  return args.filter((arg) => !arg.startsWith("-")).slice(1);
+}
 
 /**
- * The paths each segment of a shell command may write: redirect targets, the arguments of writing
- * commands (only the destination for `cp` & `install`), & every path in a heredoc that calls a
- * file-writing API. Reads in other segments, or on the read side of a redirect, are ignored.
+ * The paths a shell command may write: per segment, its redirect targets, the arguments of writing
+ * commands, the targets of a shell script fed by heredoc, & every path in another heredoc that calls
+ * a file-writing API. Reads in other segments, or on the read side of a redirect, are ignored. When
+ * a write's target can't be read statically (a `cd`, `xargs`, or expansion), every path in the
+ * command counts.
  */
 export function shellWriteTargets(command: string): string[] {
-  return shellSegments(command).flatMap(({ command: segment, heredoc }) => {
-    const targets = [...segment.matchAll(REDIRECT)].flatMap((match) => shellPaths(match[1]));
-    const rest = segment.replaceAll(/\d*[<>]&\d*-?/g, " ").replaceAll(REDIRECT, " ");
+  const segments = shellSegments(command);
+  const targets: string[] = [];
+  let dynamic = false;
+  for (const { command: segment, heredoc } of segments) {
+    const plain = segment.replaceAll(FD_DUPLICATE, " ");
+    const writes = [...plain.matchAll(REDIRECT)].flatMap((match) => shellPaths(match[1]));
+    const rest = plain.replaceAll(REDIRECT, " ");
     if (isShellWrite(rest)) {
-      const paths = shellPaths(rest);
-      targets.push(...(/^\s*(?:\w+=\S*\s+)*(?:cp|install)\b/.test(rest) ? paths.slice(-1) : paths));
+      writes.push(...commandTargets(rest));
+      dynamic ||= /\bxargs\b/.test(rest);
     }
-    if (API_WRITE.test(heredoc)) {
-      targets.push(
+    if (new RegExp(`${COMMAND_PREFIX}(?:ba|da|k|z)?sh\\b`).test(rest)) {
+      writes.push(...shellWriteTargets(heredoc));
+    } else if (API_WRITE.test(heredoc)) {
+      writes.push(
         ...shellPaths(heredoc),
         ...[...heredoc.matchAll(/"([^"\n]+)"|'([^'\n]+)'/g)].map((match) => match[1] ?? match[2]),
       );
     }
-    return targets;
-  });
+    targets.push(...writes.filter((target) => !target.startsWith("/dev/")));
+  }
+  dynamic ||= targets.some((target) => /[$`]/.test(target));
+  if (
+    targets.length > 0 &&
+    (dynamic || segments.some(({ command: segment }) => /^\s*[({]?\s*(?:cd|pushd)\b/.test(segment)))
+  ) {
+    return [...targets, ...segments.flatMap(({ command: segment }) => shellPaths(segment))];
+  }
+  return targets;
 }
 
 export function isShellRead(command: string): boolean {
