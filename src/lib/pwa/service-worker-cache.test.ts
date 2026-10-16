@@ -145,14 +145,41 @@ describe("service-worker fetch strategy", () => {
   });
 
   it("leaves requests it doesn't cache to the browser", () => {
+    expect(strategyFor(`${ORIGIN}/_app/version.json`)).toBeUndefined();
     expect(strategyFor("https://static.cloudflareinsights.com/beacon.min.js")).toBeUndefined();
     expect(strategyFor("https://api.cardpointers.com/v1/offers")).toBeUndefined();
     expect(strategyFor(`${ORIGIN}/api/feedback`)).toBeUndefined();
     expect(strategyFor(`${ORIGIN}/en/villagers`, "POST")).toBeUndefined();
   });
+
+  it("bypasses version metadata under the registration scope, even if listed as an asset", () => {
+    const versionPath = "/guide/_app/version.json";
+    expect(
+      fetchStrategy(
+        { method: "GET", url: `${ORIGIN}${versionPath}?v=1` },
+        new Set([versionPath]),
+        ORIGIN,
+        versionPath,
+      ),
+    ).toBeUndefined();
+    expect(strategyFor(`${ORIGIN}/_app/version.json.backup`)).toBe("runtime");
+  });
 });
 
 describe("service-worker runtime request path", () => {
+  it("returns the current network HTML even when the active worker has an older cached navigation", async () => {
+    const cache = new MemoryCache();
+    const request = navigation("/en");
+    await cache.put(request, new Response("old build"));
+    const deps = dependencies(cache, vi.fn().mockResolvedValue(new Response("new build")));
+
+    const response = await fetchRuntimeRequest(request, deps);
+
+    expect(await response.text()).toBe("new build");
+    await deps.settled();
+    expect(await cachedText(cache, request)).toBe("new build");
+  });
+
   it("caches a successful network response", async () => {
     const cache = new MemoryCache();
     const request = new Request(`${ORIGIN}/animals`);

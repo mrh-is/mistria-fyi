@@ -1,8 +1,19 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SKIP_WAITING_MESSAGE } from "#lib/pwa/service-worker-cache.js";
 
-import { UPDATE_CHECK_INTERVAL_MS, watchForAppUpdate } from "./app-update.js";
+import {
+  UPDATE_CHECK_INTERVAL_MS,
+  UPDATE_RETRY_INTERVAL_MS,
+  watchForAppUpdate,
+} from "./app-update.js";
+
+const stops: (() => void)[] = [];
+beforeEach(() => vi.useFakeTimers());
+afterEach(() => {
+  for (const stop of stops.splice(0)) stop();
+  vi.useRealTimers();
+});
 
 class FakeRegistration extends EventTarget {
   installing: FakeWorker | null = null;
@@ -51,15 +62,28 @@ async function watch({ controlled = true, waiting = null as FakeWorker | null } 
   const clock = { now: 0 };
   const onUpdateReady = vi.fn<(activate: () => void) => void>();
   const reload = vi.fn();
-  const stop = watchForAppUpdate({
+  const events = new EventTarget();
+  const { newVersionDetected, stop } = watchForAppUpdate({
     container,
+    events,
     now: () => clock.now,
     onUpdateReady,
     reload,
     visibility,
   });
+  stops.push(stop);
   await container.ready;
-  return { clock, container, onUpdateReady, registration, reload, stop, visibility };
+  return {
+    clock,
+    container,
+    events,
+    newVersionDetected,
+    onUpdateReady,
+    registration,
+    reload,
+    stop,
+    visibility,
+  };
 }
 
 describe("watchForAppUpdate", () => {
@@ -122,7 +146,7 @@ describe("watchForAppUpdate", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it("checks for a new version when the tab is refocused, at most once per interval", async () => {
+  it("leaves detection to SvelteKit, even after the old visibility interval", async () => {
     const { clock, registration, visibility } = await watch();
 
     refocus(visibility);
@@ -131,7 +155,70 @@ describe("watchForAppUpdate", () => {
     clock.now = UPDATE_CHECK_INTERVAL_MS;
     refocus(visibility);
     refocus(visibility);
+    expect(registration.update).not.toHaveBeenCalled();
+  });
+
+  it("installs immediately once a new version is detected, with no browser event", async () => {
+    const { newVersionDetected, registration } = await watch();
+    newVersionDetected();
+    newVersionDetected();
     expect(registration.update).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["rejection", "no-op", "redundant"] as const)(
+    "retries a %s on browser events, throttles attempts, and stops when waiting",
+    async (failure) => {
+      const { clock, events, newVersionDetected, registration, visibility } = await watch();
+      if (failure === "rejection") registration.update.mockRejectedValueOnce(new Error("offline"));
+      const worker = new FakeWorker();
+      if (failure === "redundant") {
+        registration.update.mockImplementationOnce(() => {
+          registration.installing = worker;
+          registration.dispatchEvent(new Event("updatefound"));
+          return Promise.resolve();
+        });
+      }
+      newVersionDetected();
+      await vi.advanceTimersByTimeAsync(0);
+      if (failure === "redundant") {
+        registration.installing = null;
+        worker.become("redundant");
+      }
+      events.dispatchEvent(new Event("online"));
+      expect(registration.update).toHaveBeenCalledTimes(1);
+      for (const event of ["online", "focus", "visibilitychange"]) {
+        clock.now += UPDATE_CHECK_INTERVAL_MS;
+        if (event === "visibilitychange") refocus(visibility);
+        else events.dispatchEvent(new Event(event));
+        // oxlint-disable-next-line no-await-in-loop -- Each event follows the previous completed attempt to test the throttle.
+        await vi.advanceTimersByTimeAsync(0);
+      }
+      expect(registration.update).toHaveBeenCalledTimes(4);
+      registration.install(new FakeWorker());
+      clock.now += UPDATE_RETRY_INTERVAL_MS;
+      events.dispatchEvent(new Event("focus"));
+      await vi.advanceTimersByTimeAsync(UPDATE_RETRY_INTERVAL_MS);
+      expect(registration.update).toHaveBeenCalledTimes(4);
+    },
+  );
+
+  it("retries hourly without browser events", async () => {
+    const { clock, newVersionDetected, registration } = await watch();
+    newVersionDetected();
+    await vi.advanceTimersByTimeAsync(0);
+    clock.now = UPDATE_RETRY_INTERVAL_MS;
+    await vi.advanceTimersByTimeAsync(UPDATE_RETRY_INTERVAL_MS);
+    expect(registration.update).toHaveBeenCalledTimes(2);
+  });
+
+  it("offers a reload on a detected deploy without a controlling worker", async () => {
+    const { newVersionDetected, onUpdateReady, registration, reload } = await watch({
+      controlled: false,
+    });
+    newVersionDetected();
+    onUpdateReady.mock.calls[0]?.[0]();
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(registration.update).not.toHaveBeenCalled();
   });
 
   it("stops watching once stopped", async () => {

@@ -1,5 +1,6 @@
 import { PRODUCTION_ASSET_ORIGIN } from "#lib/asset-origin.js";
 import { UNLOCALIZED_PATH_PREFIXES } from "#lib/i18n/paraglide-options.js";
+import { VERSION_METADATA_PATH } from "#lib/pwa/config.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -549,9 +550,12 @@ export function fetchStrategy(
   request: Pick<Request, "method" | "url">,
   assetPaths: ReadonlySet<string>,
   origin: string,
+  versionPath = `/${VERSION_METADATA_PATH}`,
 ): FetchStrategy | undefined {
   if (request.method !== "GET") return undefined;
   const url = new URL(request.url);
+  // Version checks must reach the network, including when an older cache holds this path.
+  if (url.origin === origin && url.pathname === versionPath) return undefined;
   if (assetPaths.has(url.pathname)) return "asset";
   if (isExternalSpriteAsset(url)) return "sprite";
   if (isEligibleForRuntimeCaching(url, origin)) return "runtime";
