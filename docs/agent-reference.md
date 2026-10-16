@@ -54,7 +54,9 @@ folder per release, each with `assets/` (`fiddle/` TOML, `localization/` transla
 `tiled/`) and/or `save/`. Regenerate data from it with `pnpm run pipeline:assets`, which stamps
 `CURRENT_GAME_VERSION` (`pipeline/src/game-version.ts`). Relative paths passed to the plain
 `pipeline` script resolve from where you run `pnpm`; `--version` is required there (see
-[pipeline/README.md](../pipeline/README.md#setup--commands)).
+[pipeline/README.md](../pipeline/README.md#setup--commands)). Read
+[game-asset-format.md](game-asset-format.md) before exploring the files themselves, and run
+`pnpm run pipeline:atlas` for per-file keys instead of opening each file.
 
 ## Package commands
 

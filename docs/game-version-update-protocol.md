@@ -133,6 +133,13 @@ login, so ask the maintainer to run `pnpm exec wrangler login` first.
 
 ## Classify changes
 
+Start from the structural diff of the game files:
+`pnpm run pipeline:atlas -- --version=<candidate> --compare=<previous>` writes
+`pipeline/output/asset-atlas/diff-v<previous>-v<candidate>.md`, listing files, fiddle roots, & keys
+added, removed, or reshaped, and which pipeline modules claim each root (see
+[game-asset-format.md](game-asset-format.md#checking-a-version)). Use it to find new or changed
+native domains, including unclaimed ones a new feature may need.
+
 Compare the previous and candidate datasets by domain. At minimum, inspect almanac entries and their
 canonical members, recipes, museum items, cosmetics, animal variants and cosmetics, pets, villagers,
 relationships and dates, skills and perks, quests, spells, progression ranges, visibility
