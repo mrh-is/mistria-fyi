@@ -1,3 +1,4 @@
+import { CURRENT_GAME_VERSION } from "#game-version";
 import { spawnSync } from "node:child_process";
 import { accessSync, constants, existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -285,19 +286,22 @@ export function checkGameAssets(machine: Environment): CheckResult {
       (entry) =>
         /^v\d+\.\d+\.\d+$/.test(entry) && machine.exists(join(input, entry, "assets", "fiddle")),
     )
-    .toSorted();
-  return versions.length > 0
+    .toSorted((left, right) => left.localeCompare(right, "en", { numeric: true }));
+  const wanted = `v${CURRENT_GAME_VERSION}`;
+  const location = `pipeline/input/${wanted}/assets/fiddle`;
+  const available = versions.length > 0 ? versions.join(", ") : "none";
+  return versions.includes(wanted)
     ? check(
         "game-assets",
         "Game assets",
         "ok",
-        `pipeline/input contains assets for ${versions.join(", ")}`,
+        `${location} present; available releases: ${available}`,
       )
     : check(
         "game-assets",
         "Game assets (pipeline work only)",
         "missing",
-        "no pipeline/input/vX.Y.Z/assets/fiddle directory found",
+        `${location} is absent; available releases: ${available}`,
         "Point pipeline/input at the synced Mistria folder containing vX.Y.Z/assets; see docs/game-version-update-protocol.md",
       );
 }

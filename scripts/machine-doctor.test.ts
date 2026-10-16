@@ -1,3 +1,4 @@
+import { CURRENT_GAME_VERSION } from "#game-version";
 import { readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -227,15 +228,29 @@ describe("checkPlaywright", () => {
 
 describe("checkGameAssets", () => {
   it("finds structured assets in versioned release folders", () => {
+    const current = `v${CURRENT_GAME_VERSION}`;
     const result = checkGameAssets(
       machine({
-        exists: (path) => path === "/repo/pipeline/input/v1.0.8/assets/fiddle",
-        list: (path) => (path === "/repo/pipeline/input" ? ["v1.0.8", "v1.0.7"] : []),
+        exists: (path) => path === join("/repo", "pipeline", "input", current, "assets", "fiddle"),
+        list: (path) => (path === join("/repo", "pipeline", "input") ? [current, "v0.0.1"] : []),
       }),
     );
     expect(result).toMatchObject({
-      detail: "pipeline/input contains assets for v1.0.8",
+      detail: `pipeline/input/${current}/assets/fiddle present; available releases: ${current}`,
       status: "ok",
+    });
+  });
+
+  it("requires the current release & lists other releases in numeric order", () => {
+    const result = checkGameAssets(
+      machine({
+        exists: () => true,
+        list: () => ["v0.0.10", "v0.0.9"],
+      }),
+    );
+    expect(result).toMatchObject({
+      detail: `pipeline/input/v${CURRENT_GAME_VERSION}/assets/fiddle is absent; available releases: v0.0.9, v0.0.10`,
+      status: "missing",
     });
   });
 

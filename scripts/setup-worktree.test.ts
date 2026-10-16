@@ -160,16 +160,30 @@ function fixture() {
 appendFileSync(${JSON.stringify(log)}, process.argv.slice(2).join(" ") + "\\n");
 `,
   );
-  const run = () =>
+  const run = (env: NodeJS.ProcessEnv = {}) =>
     spawnSync(process.execPath, [script], {
       cwd: worktree,
       encoding: "utf8",
-      env: { ...withFakePnpm(pnpm), CODEX_THREAD_ID: "" },
+      env: { ...withFakePnpm(pnpm), CODEX_THREAD_ID: "", ...env },
     });
   return { log, main, run, worktree };
 }
 
 describe("setup-worktree", () => {
+  it.skipIf(process.platform !== "darwin")(
+    "reports an unset Codex store without a stack trace or side effects",
+    () => {
+      const { log, run, worktree } = fixture();
+      const result = run({ CODEX_THREAD_ID: "fixture", pnpm_config_store_dir: "" });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toMatch(/^error: pnpm_config_store_dir is unset\./);
+      expect(result.stderr.trim().split("\n")).toHaveLength(1);
+      expect(result.stderr).toContain("docs/machine-setup.md");
+      expect(existsSync(log)).toBe(false);
+      expect(existsSync(join(worktree, "pipeline/input"))).toBe(false);
+    },
+  );
+
   it("links shared inputs readably, then installs & prepares", () => {
     const { log, main, run, worktree } = fixture();
     const result = run();
