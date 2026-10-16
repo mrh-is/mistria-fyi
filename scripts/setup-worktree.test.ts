@@ -38,19 +38,19 @@ function withFakePnpm(pnpm: string): NodeJS.ProcessEnv {
 
 describe("planInstall", () => {
   const codex = { CODEX_THREAD_ID: "fixture" };
+  const store = "/Users/test/Library/pnpm/store";
 
   it("pins install & prepare to an external store for local Codex on macOS", () => {
-    expect(planInstall("darwin", codex)).toEqual({
+    expect(planInstall("darwin", { ...codex, pnpm_config_store_dir: store })).toEqual({
       env: {
-        npm_config_store_dir: "/private/tmp/codex-pnpm-store",
         pnpm_config_confirm_modules_purge: "false",
-        pnpm_config_store_dir: "/private/tmp/codex-pnpm-store",
+        pnpm_config_store_dir: store,
       },
       installArgs: [
         "install",
         "--frozen-lockfile",
         "--store-dir",
-        "/private/tmp/codex-pnpm-store",
+        store,
         "--config.confirmModulesPurge=false",
       ],
     });
@@ -63,7 +63,17 @@ describe("planInstall", () => {
       pnpm_config_store_dir: "/private/tmp/custom-pnpm-store",
     });
     expect(plan.env.pnpm_config_store_dir).toBe("/private/tmp/custom-pnpm-store");
-    expect(plan.env.npm_config_store_dir).toBe("/private/tmp/custom-pnpm-store");
+    expect(plan.env).not.toHaveProperty("npm_config_store_dir");
+  });
+
+  it.each([undefined, ""])("refuses an unset or empty store (%s)", (value) => {
+    expect(() =>
+      planInstall("darwin", {
+        ...codex,
+        npm_config_store_dir: store,
+        pnpm_config_store_dir: value,
+      }),
+    ).toThrow("docs/machine-setup.md");
   });
 
   it.each(["linux", "win32"] as const)("leaves %s pnpm settings alone", (platform) => {

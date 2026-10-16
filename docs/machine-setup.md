@@ -55,13 +55,31 @@ then the agent resumes.
 
 ## Codex shells
 
-Codex sandboxes keep package-manager caches outside the repository. Export
-`pnpm_config_store_dir=/private/tmp/codex-pnpm-store` for every pnpm command in the session, because
-pnpm's version manager can otherwise use a repo-local `.pnpm-store` for its own executable. pnpm 11
-ignores the legacy `npm_config_store_dir` spelling. In a Codex shell, the doctor fails when the
-variable is unset, legacy-only, inside the repository, or different from the store pnpm reports.
-Hook installation during `prepare` writes shared Git metadata, which the sandbox may need the user
-to approve.
+Codex shells use the machine’s shared global pnpm store, with pnpm’s home writable in the sandbox.
+Run `pnpm store path` outside the sandbox to find the store; if it ends in a version directory such
+as `v11`, use its parent for `pnpm_config_store_dir`. Use `PNPM_HOME` for the writable root
+(`~/Library/pnpm` on macOS), covering both `store/` & `package-manager-store/`. Add these settings
+to the user-level `~/.codex/config.toml`, replacing `<user>` with your username:
+
+```toml
+[shell_environment_policy.set]
+pnpm_config_store_dir = "/Users/<user>/Library/pnpm/store"
+
+[sandbox_workspace_write]
+writable_roots = ["/Users/<user>/Library/pnpm"]
+```
+
+These paths belong in the user config because they differ per machine; Codex merges them with the
+project’s `[sandbox_workspace_write] network_access = true`. pnpm’s version manager opens the
+store’s `v11/index.db` on every command, including `pnpm --version`, so read access alone fails with
+“unable to open database file”. Keep one shared store across agents, shells, & worktrees; request
+sandbox access when needed instead of selecting a separate store.
+
+pnpm 11 ignores the legacy `npm_config_store_dir` spelling. In a Codex shell, the doctor fails when
+the variable is unset, legacy-only, relative, inside the repository, different from the store pnpm
+reports, or the store directory or existing `v11/index.db` is unwritable from that shell. Hook
+installation during `prepare` writes shared Git metadata, which the sandbox may need the user to
+approve.
 
 ## Verify the result
 
