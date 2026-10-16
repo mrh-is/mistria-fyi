@@ -14,7 +14,7 @@
 
   // A fixed ID makes a repeat announcement (a newer deploy, a remount) replace the toast in place.
   const TOAST_ID = "app-update";
-  let watcher = $state<ReturnType<typeof watchForAppUpdate>>();
+  let watcher = $state.raw<ReturnType<typeof watchForAppUpdate>>();
 
   $effect(() => {
     if (updated.current) watcher?.newVersionDetected();

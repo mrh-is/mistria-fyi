@@ -167,6 +167,19 @@ describe("service-worker fetch strategy", () => {
 });
 
 describe("service-worker runtime request path", () => {
+  it("returns the current network HTML even when the active worker has an older cached navigation", async () => {
+    const cache = new MemoryCache();
+    const request = navigation("/en");
+    await cache.put(request, new Response("old build"));
+    const deps = dependencies(cache, vi.fn().mockResolvedValue(new Response("new build")));
+
+    const response = await fetchRuntimeRequest(request, deps);
+
+    expect(await response.text()).toBe("new build");
+    await deps.settled();
+    expect(await cachedText(cache, request)).toBe("new build");
+  });
+
   it("caches a successful network response", async () => {
     const cache = new MemoryCache();
     const request = new Request(`${ORIGIN}/animals`);
