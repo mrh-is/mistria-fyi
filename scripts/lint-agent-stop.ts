@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
 
-import { changedFiles, readHookInput, repositoryRoot, runPnpm } from "#scripts/lib/agent-hook";
+import { changedFiles, hookRepositoryRoot, readHookInput, runPnpm } from "#scripts/lib/agent-hook";
 
 import type { HookInput, RunCommand } from "#scripts/lib/agent-hook";
 
@@ -28,8 +28,9 @@ export function stopLint(
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const input = readHookInput();
   try {
-    input.cwd = repositoryRoot(input.cwd ?? process.cwd());
-    const output = stopLint(input, changedFiles(input.cwd ?? process.cwd(), true));
+    input.cwd = hookRepositoryRoot(input.cwd ?? process.cwd());
+    const output =
+      input.cwd === undefined ? undefined : stopLint(input, changedFiles(input.cwd, true));
     if (output) {
       console.log(JSON.stringify(output));
     }
