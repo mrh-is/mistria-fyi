@@ -9,7 +9,10 @@ documented below.
 
 The full pipeline takes an extracted assets root containing `fiddle/` and `localization/`. The
 real-asset integration suite and the narrow villager-sprite command also accept `assets.zip`
-directly (see below). Game assets are ignored by Git and are not present in a fresh clone.
+directly (see below). Game assets are ignored by Git and are not present in a fresh clone. For their
+structure (folders, the dotted namespace, ID conventions, & quirks) see
+[docs/game-asset-format.md](../docs/game-asset-format.md); `pnpm run pipeline:atlas` inventories or
+diffs a version’s assets.
 
 ```sh
 pnpm run pipeline -- pipeline/input --version=X.Y.Z
@@ -360,6 +363,7 @@ translation directly, so English suffix rules never alter translated strings.
 | `pipeline/output/tracker-data.json`          | Pretty diagnostic copy of the tracker data                            |
 | `pipeline/output/fiddle-readable.json`       | Parsed and evaluated namespace tree for inspection                    |
 | `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--villager-sprites-only` |
+| `pipeline/output/asset-atlas/`               | Per-version asset inventories & diffs, from `pnpm run pipeline:atlas` |
 
 Evaluation mutates the parsed tree, and source attachment & visibility mutate the extracted
 registries. Outputs contain no generation timestamp. String ordering uses one UTF-16 code-unit

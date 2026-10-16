@@ -197,7 +197,7 @@ function setNestedValue(
 }
 
 /** Fiddle's file stem & ancestor directories become domain-key segments. */
-function fiddleKeyPath(relPath: string): string[] {
+export function fiddleKeyPath(relPath: string): string[] {
   const { dir, name, root } = posix.parse(relPath);
   const keys = [name];
   let parent = dir;

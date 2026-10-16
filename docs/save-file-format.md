@@ -3,8 +3,10 @@
 Reference for the `.sav` file format used by Fields of Mistria. Documented from a v1.0.2 save file;
 earlier versions use the same binary container but may differ in JSON schemas.
 
-A reference save file, its unpacked JSON representation, and a field-level schema breakdown live at
-`pipeline/input/save/`.
+A reference save file, its unpacked JSON representation, and a field-level schema breakdown live in
+the private `mistria-fyi-private` repository at `pipeline/input/save/`, not in this repository’s
+`pipeline/input`. For the game’s extracted data files, see
+[game-asset-format.md](game-asset-format.md).
 
 ## Binary container
 
