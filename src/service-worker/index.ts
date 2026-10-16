@@ -1,3 +1,4 @@
+import { VERSION_METADATA_PATH } from "#lib/pwa/config.js";
 import {
   cacheLocaleChunks,
   cacheLocaleHome,
@@ -40,7 +41,7 @@ const ASSETS = [...immutable, ...assets].map(
   ({ path }) => new URL(path, sw.registration.scope).pathname,
 );
 const ASSET_PATHS = new Set(ASSETS);
-const VERSION_PATH = new URL("_app/version.json", sw.registration.scope).pathname;
+const VERSION_PATH = new URL(VERSION_METADATA_PATH, sw.registration.scope).pathname;
 const LOCALE_NAME_CHUNKS: LocaleNameChunks =
   // oxlint-disable-next-line unicorn/no-typeof-undefined -- Only builds define this identifier; reading it bare throws a ReferenceError in dev.
   typeof __LOCALE_NAME_CHUNKS__ === "undefined" ? {} : __LOCALE_NAME_CHUNKS__;

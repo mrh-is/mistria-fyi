@@ -118,6 +118,65 @@ function isEnglishHome(url: URL): boolean {
   return url.pathname === "/en";
 }
 
+test("refreshes an uncontrolled page from the network even with an old active worker", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/en");
+  await waitForControl(page);
+  const names = await cacheNames(page);
+  const oldCache = names.find((name) => name.startsWith("cache-"));
+  if (!oldCache) throw new Error("The service worker has no versioned cache");
+
+  // Model a hard reload that bypassed the worker, while its registration remains active.
+  const session = await context.newCDPSession(page);
+  await Promise.all([
+    page.waitForEvent("load"),
+    session.send("Page.reload", { ignoreCache: true }),
+  ]);
+  expect(await page.evaluate(() => navigator.serviceWorker.controller)).toBeNull();
+  expect(
+    await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.getRegistration();
+      return registration?.active?.state;
+    }),
+  ).toBe("activated");
+
+  await page.evaluate(async (name) => {
+    const cache = await caches.open(name);
+    await cache.put(
+      "/en",
+      new Response("Cached old build", { headers: { "content-type": "text/html" } }),
+    );
+  }, oldCache);
+  await context.route(isEnglishHome, async (route) => {
+    const response = await route.fetch();
+    const html = await response.text();
+    await route.fulfill({
+      body: html.replace("</head>", '<meta name="pwa-build-source" content="network"></head>'),
+      response,
+    });
+  });
+  const { restore } = deployNewVersion(oldCache.slice("cache-".length));
+  try {
+    await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
+    await expect(page.getByText(UPDATE_MESSAGE)).toBeVisible();
+    await Promise.all([
+      page.waitForEvent("load"),
+      page.getByRole("button", { exact: true, name: "Refresh" }).click(),
+    ]);
+    expect(
+      await page.evaluate(() =>
+        document.head.querySelector('meta[name="pwa-build-source"]')?.getAttribute("content"),
+      ),
+    ).toBe("network");
+    await expect(page.getByRole("main")).toBeVisible();
+  } finally {
+    restore();
+    await session.detach();
+  }
+});
+
 function cacheHolds(page: Page, cacheName: string, path: string): Promise<boolean> {
   return page.evaluate(
     async ([name, key]) => {

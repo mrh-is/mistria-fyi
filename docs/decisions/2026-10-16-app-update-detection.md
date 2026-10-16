@@ -15,6 +15,10 @@ consent flow recorded in the PWA verification guide; the toast appears after ins
 accepting activates the worker & reloads controlled tabs. Pages without a controlling worker offer a
 network reload instead.
 
+An existing active registration doesn’t change the uncontrolled-page fallback: navigation requests
+are network-first, so even an old worker fetches current HTML before consulting its cache.
+Installing another worker without activating it would not change that reload behavior.
+
 Failed or no-op installs retry on online, focus, & visible events, throttled to five minutes, with
 an hourly fallback for unattended tabs. Stop retries once a worker waits. This bounds repeated
 precache downloads when installation fails.
