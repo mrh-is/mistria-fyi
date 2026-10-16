@@ -1,9 +1,11 @@
+import { CURRENT_GAME_VERSION } from "#game-version";
 import { readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
+  checkGameAssets,
   checkGh,
   checkGit,
   checkNode,
@@ -14,12 +16,13 @@ import {
   exitCode,
   formatReport,
   parseVersion,
+  realEnvironment,
   runChecks,
 } from "./machine-doctor.js";
 
-import type { CommandOutput, Environment } from "./machine-doctor.js";
+import type { CommandOutput, Environment, ProcessRunner } from "./machine-doctor.js";
 
-const none: CommandOutput = { ok: false, stdout: "" };
+const none: CommandOutput = { errorCode: "ENOENT", ok: false, stdout: "" };
 const files: Record<string, string> = {
   ".node-version": "24.21.0\n",
   "package.json": '{"packageManager": "pnpm@11.28.2"}',
@@ -40,6 +43,7 @@ function machine(overrides: Partial<Environment> & { commands?: Record<string, s
       const out = commands[[command, ...args].join(" ")];
       return out === undefined ? none : { ok: true, stdout: out };
     },
+    writable: () => true,
     ...rest,
   };
   return environment;
@@ -67,7 +71,37 @@ describe("checkNode", () => {
 
 describe("checkPnpm", () => {
   it("reports a missing pnpm with a fix", () => {
-    expect(checkPnpm(machine())).toMatchObject({ status: "missing" });
+    expect(checkPnpm(machine())).toMatchObject({
+      detail: "not found on PATH",
+      fix: expect.stringContaining("Install pnpm") as string,
+      status: "missing",
+    });
+  });
+
+  it("reports pnpm's first error line without an install suggestion", () => {
+    const result = checkPnpm(
+      machine({
+        run: () => ({ ok: false, stdout: "[ERROR] unable to open database file\nmore details" }),
+      }),
+    );
+    expect(result).toMatchObject({
+      detail: "[ERROR] unable to open database file",
+      status: "wrong",
+    });
+    expect(result.fix).toBeUndefined();
+  });
+
+  it("reports a timeout even when pnpm has no output", () => {
+    const result = checkPnpm(
+      machine({
+        run: () => ({ errorCode: "ETIMEDOUT", ok: false, stdout: "" }),
+      }),
+    );
+    expect(result).toMatchObject({
+      detail: expect.stringContaining("timed out") as string,
+      status: "wrong",
+    });
+    expect(result.fix).toBeUndefined();
   });
 
   it("flags a launcher whose major differs from the pin", () => {
@@ -77,6 +111,56 @@ describe("checkPnpm", () => {
 
   it("passes a matching major", () => {
     expect(checkPnpm(machine({ commands: { "pnpm --version": "11.28.2\n" } })).status).toBe("ok");
+  });
+});
+
+describe("Windows pnpm probe", () => {
+  it("detects a missing pnpm before cmd.exe can hide the missing executable", () => {
+    const spawn = vi.fn<ProcessRunner>();
+    spawn.mockReturnValueOnce({
+      output: [null, "", "not found"],
+      pid: 1,
+      signal: null,
+      status: 1,
+      stderr: "not found",
+      stdout: "",
+    });
+    const result = checkPnpm(realEnvironment("/repo", "win32", spawn));
+    expect(result).toMatchObject({
+      detail: "not found on PATH",
+      fix: expect.stringContaining("Install pnpm") as string,
+      status: "missing",
+    });
+    expect(spawn).toHaveBeenCalledExactlyOnceWith("where.exe", ["pnpm"], expect.any(Object));
+  });
+
+  it("preserves pnpm's error when its shim exists but exits unsuccessfully", () => {
+    const spawn = vi.fn<ProcessRunner>();
+    spawn
+      .mockReturnValueOnce({
+        output: [null, String.raw`C:\pnpm.cmd`, ""],
+        pid: 1,
+        signal: null,
+        status: 0,
+        stderr: "",
+        stdout: "C:\\pnpm.cmd",
+      })
+      .mockReturnValueOnce({
+        output: [null, "", "database unavailable"],
+        pid: 2,
+        signal: null,
+        status: 1,
+        stderr: "database unavailable",
+        stdout: "",
+      });
+    const result = checkPnpm(realEnvironment("/repo", "win32", spawn));
+    expect(result).toMatchObject({ detail: "database unavailable", status: "wrong" });
+    expect(result.fix).toBeUndefined();
+    expect(spawn).toHaveBeenLastCalledWith(
+      "pnpm --version",
+      undefined,
+      expect.objectContaining({ shell: true }),
+    );
   });
 });
 
@@ -142,8 +226,52 @@ describe("checkPlaywright", () => {
   });
 });
 
+describe("checkGameAssets", () => {
+  it("finds structured assets in versioned release folders", () => {
+    const current = `v${CURRENT_GAME_VERSION}`;
+    const result = checkGameAssets(
+      machine({
+        exists: (path) => path === join("/repo", "pipeline", "input", current, "assets", "fiddle"),
+        list: (path) => (path === join("/repo", "pipeline", "input") ? [current, "v0.0.1"] : []),
+      }),
+    );
+    expect(result).toMatchObject({
+      detail: `pipeline/input/${current}/assets/fiddle present; available releases: ${current}`,
+      status: "ok",
+    });
+  });
+
+  it("requires the current release & lists other releases in numeric order", () => {
+    const result = checkGameAssets(
+      machine({
+        exists: () => true,
+        list: () => ["v0.0.10", "v0.0.9"],
+      }),
+    );
+    expect(result).toMatchObject({
+      detail: `pipeline/input/v${CURRENT_GAME_VERSION}/assets/fiddle is absent; available releases: v0.0.9, v0.0.10`,
+      status: "missing",
+    });
+  });
+
+  it("does not count save-only releases, archives, or unversioned dumps", () => {
+    const result = checkGameAssets(
+      machine({
+        exists: (path) => !path.includes("v1.0.8"),
+        list: () => ["v1.0.8", "archive", "assets", "vlatest"],
+      }),
+    );
+    expect(result.status).toBe("missing");
+    expect(result.fix).toContain("vX.Y.Z/assets");
+  });
+
+  it("reports absent inputs without failing to read the directory", () => {
+    expect(checkGameAssets(machine()).status).toBe("missing");
+  });
+});
+
 describe("checkPnpmStore", () => {
-  const store = "/private/tmp/codex-pnpm-store";
+  const store = "/Users/test/Library/pnpm/store";
   const getStore = "pnpm --dir /repo config get store-dir";
 
   it("applies only inside Codex shells", () => {
@@ -168,6 +296,32 @@ describe("checkPnpmStore", () => {
       env: { CODEX_THREAD_ID: "x", pnpm_config_store_dir: "/repo/.pnpm-store" },
     });
     expect(checkPnpmStore(local)?.status).toBe("wrong");
+  });
+
+  it("rejects relative stores", () => {
+    expect(
+      checkPnpmStore(
+        machine({
+          env: { CODEX_THREAD_ID: "x", pnpm_config_store_dir: "../store" },
+        }),
+      )?.status,
+    ).toBe("wrong");
+  });
+
+  it.each([store, join(store, "v11", "index.db")])("rejects an unwritable %s", (blocked) => {
+    const result = checkPnpmStore(
+      machine({
+        env: { CODEX_THREAD_ID: "x", pnpm_config_store_dir: store },
+        exists: () => true,
+        writable: (path) => path !== blocked,
+      }),
+    );
+    expect(result).toMatchObject({
+      detail: `${blocked} is not writable from this shell`,
+      status: "wrong",
+    });
+    expect(result?.fix).toContain("writable_roots");
+    expect(result?.fix).toContain("docs/machine-setup.md");
   });
 
   it("requires pnpm's effective store to match the configured one", () => {

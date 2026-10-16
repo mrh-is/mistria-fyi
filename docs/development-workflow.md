@@ -117,13 +117,15 @@ escalation; command allowlists in `.codex/rules/default.rules` do not grant file
 access. If the active managed environment disallows escalation, report the limitation rather than
 weakening the sandbox or bypassing isolation.
 
-For local macOS Codex worktrees, setup pins pnpm to `/private/tmp/codex-pnpm-store` (or an explicit
-`pnpm_config_store_dir`, with `npm_config_store_dir` as a legacy fallback) and disables the
-module-purge prompt for that isolated checkout. Keep the same store in the parent shell for
-subsequent commands and approved setup retries:
+For local macOS Codex worktrees, setup requires `pnpm_config_store_dir` to name the shared global
+store configured in the user-level Codex config, and passes it explicitly to install & prepare. Make
+pnpm’s home writable through `sandbox_workspace_write.writable_roots` as described in
+[machine setup](machine-setup.md#codex-shells). Setup stops with that docs pointer when the variable
+is unset; it also disables the module-purge prompt for that isolated checkout. Keep the configured
+store in the parent shell for subsequent commands & approved setup retries:
 
 ```sh
-export pnpm_config_store_dir=/private/tmp/codex-pnpm-store
+: "${pnpm_config_store_dir:?Configure the shared store per docs/machine-setup.md}"
 pnpm_config_confirm_modules_purge=false node scripts/setup-worktree.ts
 ```
 
