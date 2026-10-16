@@ -1,4 +1,4 @@
-// Runs CI's non-browser matrix (ci.yml) locally, read-only, with compact output. Stops on first
+// Runs CI's non-browser matrix (ci.yml) locally, read-only, with live output. Stops on first
 // failure. Steps: lint, check, check:i18n, test, build, check:routes, check:built. It never modifies
 // the tree (run `pnpm run lint:fix` yourself first).
 //
@@ -65,25 +65,23 @@ export function planSteps(args: string[]): undefined | VerifyStep[] {
   return steps;
 }
 
-/** Runs `pnpm run <name>` with stdout & stderr merged in arrival order. */
-function runStep(step: VerifyStep): Promise<{ output: string; status: number }> {
+/** Streams each step’s output immediately, including startup & timeout diagnostics. */
+function runStep(step: VerifyStep): Promise<number> {
   const { args, command, shell } = pnpmCommand(["run", step.name]);
-  const child = spawn(command, args, { env: { ...process.env, ...step.env }, shell });
-  const chunks: Buffer[] = [];
-  child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
-  child.stderr.on("data", (chunk: Buffer) => chunks.push(chunk));
+  const child = spawn(command, args, {
+    env: { ...process.env, ...step.env },
+    shell,
+    stdio: "inherit",
+  });
   return new Promise((resolve) => {
     child.on("error", (error) => {
-      resolve({ output: `Could not start pnpm: ${error.message}`, status: 1 });
+      console.error(`Could not start pnpm: ${error.message}`);
+      resolve(1);
     });
     child.on("close", (code) => {
-      resolve({ output: Buffer.concat(chunks).toString("utf8"), status: code ?? 1 });
+      resolve(code ?? 1);
     });
   });
-}
-
-function tail(output: string, lines: number): string {
-  return output.trimEnd().split(/\r?\n/).slice(-lines).join("\n");
 }
 
 async function main(args: string[]): Promise<number> {
@@ -96,13 +94,11 @@ async function main(args: string[]): Promise<number> {
     console.log(`\n--- ${step.name} ---`);
     // Steps run in order & stop at the first failure; later steps reuse earlier output (the build).
     // oxlint-disable-next-line no-await-in-loop
-    const { output, status } = await runStep(step);
+    const status = await runStep(step);
     if (status !== 0) {
-      console.log(tail(output, 30));
       console.log(`✗ ${step.name} (exit ${String(status)})`);
       return status;
     }
-    console.log(tail(output, 3));
     console.log(`✓ ${step.name}`);
   }
   console.log("\n=== All checks passed ===");
