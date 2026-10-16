@@ -79,9 +79,13 @@ JavaScript can’t load any chunk it hasn’t imported yet.
 - **Accepting updates every tab.** “Refresh” posts `mfg:skip-waiting` to the waiting worker, which
   activates, deletes the old cache, and claims every tab. Each tab that was already controlled
   reloads on `controllerchange`, including tabs that dismissed the prompt.
-- **Long-lived tabs still find updates.** Browsers check for a new worker only on full navigations,
-  and client-side routing never makes one, so a tab that becomes visible again calls
-  `registration.update()`, at most once every five minutes.
+- **Long-lived tabs still find updates.** SvelteKit’s `updated` state checks `/_app/version.json`
+  every 10 minutes, and on focus & visibility changes. The worker leaves that file to the browser,
+  so an offline check can’t mistake cached metadata for a deploy. Detection calls
+  `registration.update()` immediately; the toast waits for the installed worker. Failed or no-op
+  installs retry on online, focus, & visible events, at most once every five minutes, plus an hourly
+  fallback for unattended tabs. Retries stop when a worker is waiting. Without a controlling worker,
+  detection offers the same toast, and “Refresh” reloads from the network.
 
 Note: A player who ignores the prompt stays on the old version until they accept it or close every
 tab. Progress data doesn’t depend on the app version, so that’s safe. An old tab still can’t load a
@@ -169,10 +173,11 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
    the new language.
 8. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
    the online application renders normally.
-9. To check the update flow, keep a tab open on the deployment, deploy a new version, then switch
-   away from the tab and back after five minutes (or click “Update” in the service-worker panel).
-   Confirm the new worker shows as waiting, the tab shows the update toast, and “Refresh” reloads
-   onto the new version with only the new `cache-<version>` left.
+9. To check the update flow, keep a tab open on the deployment, deploy a new version, and leave the
+   tab untouched for 10 minutes. Also check detection after focusing the tab or returning online
+   after a failed install; don’t click “Update” in the service-worker panel. Confirm the new worker
+   shows as waiting, the tab shows the update toast, and “Refresh” reloads onto the new version with
+   only the new `cache-<version>` left.
 10. Record the browser name and exact version, OS, whether the app was installed or in a tab, commit
     or release, date, and result. File each verified failure as a separate issue.
 

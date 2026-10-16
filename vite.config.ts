@@ -19,6 +19,7 @@ import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
 import { headersFilePlugin } from "./src/lib/build/headers-file.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
 import { PARAGLIDE_OPTIONS } from "./src/lib/i18n/paraglide-options.js";
+import { APP_DIRECTORY } from "./src/lib/pwa/config.js";
 import { cspDirectives } from "./src/lib/security/csp-directives.js";
 import { renderHeadersFile } from "./src/lib/security/security-headers.js";
 
@@ -162,8 +163,9 @@ export default defineConfig({
       }),
       preprocess: vitePreprocess(),
 
+      appDir: APP_DIRECTORY,
       csp: { directives: contentSecurityPolicy },
-      version: { name: getAppVersion() },
+      version: { name: getAppVersion(), pollInterval: 600_000 },
     }),
     localeNameChunksPlugin(),
     headersFilePlugin(renderHeadersFile(contentSecurityPolicy)),

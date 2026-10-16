@@ -10,16 +10,22 @@
 
   import * as m from "#lib/paraglide/messages.js";
   import { watchForAppUpdate } from "#lib/pwa/app-update.js";
+  import { updated } from "$app/state";
 
   // A fixed ID makes a repeat announcement (a newer deploy, a remount) replace the toast in place.
   const TOAST_ID = "app-update";
+  let watcher = $state.raw<ReturnType<typeof watchForAppUpdate>>();
+
+  $effect(() => {
+    if (updated.current) watcher?.newVersionDetected();
+  });
 
   function dismiss(): void {
     dismissed = true;
   }
 
-  onMount(() =>
-    watchForAppUpdate({
+  onMount(() => {
+    watcher = watchForAppUpdate({
       onUpdateReady: (activate) => {
         if (dismissed) return;
         toast(m.app_update_available(), {
@@ -36,6 +42,7 @@
           onDismiss: dismiss,
         });
       },
-    }),
-  );
+    });
+    return watcher.stop;
+  });
 </script>
