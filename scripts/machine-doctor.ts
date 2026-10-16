@@ -1,10 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { accessSync, constants, existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { SpawnSyncOptionsWithStringEncoding } from "node:child_process";
+import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from "node:child_process";
 
 /**
  * Machine doctor: reports whether this machine meets the prerequisites in docs/machine-setup.md.
@@ -27,6 +27,7 @@ export interface CheckResult {
 }
 
 export interface CommandOutput {
+  errorCode?: string;
   ok: boolean;
   stdout: string;
 }
@@ -42,10 +43,8 @@ export interface Environment {
   read: (path: string) => string | undefined;
   root: string;
   run: (command: string, args: string[]) => CommandOutput;
+  writable: (path: string) => boolean;
 }
-
-/** The store setup-worktree.ts assigns Codex shells, which keeps pnpm's cache out of the repo. */
-const CODEX_STORE_DIR = "/private/tmp/codex-pnpm-store";
 
 function isInside(root: string, path: string): boolean {
   const offset = relative(resolve(root), resolve(path));
@@ -98,6 +97,16 @@ export function checkNode(machine: Environment): CheckResult {
 export function checkPnpm(machine: Environment): CheckResult {
   const result = machine.run("pnpm", ["--version"]);
   if (!result.ok) {
+    if (result.errorCode !== "ENOENT") {
+      return check(
+        "pnpm",
+        "pnpm",
+        "wrong",
+        result.errorCode === "ETIMEDOUT"
+          ? "pnpm --version timed out after 20 seconds"
+          : result.stdout.trim().split(/\r?\n/)[0] || "pnpm --version failed",
+      );
+    }
     return missingTool(
       "pnpm",
       "pnpm",
@@ -269,14 +278,27 @@ export function checkPlaywright(machine: Environment): CheckResult {
 }
 
 export function checkGameAssets(machine: Environment): CheckResult {
-  return machine.exists(join(machine.root, "pipeline", "input", "assets"))
-    ? check("game-assets", "Game assets", "ok", "pipeline/input/assets present")
+  const input = join(machine.root, "pipeline", "input");
+  const versions = machine
+    .list(input)
+    .filter(
+      (entry) =>
+        /^v\d+\.\d+\.\d+$/.test(entry) && machine.exists(join(input, entry, "assets", "fiddle")),
+    )
+    .toSorted();
+  return versions.length > 0
+    ? check(
+        "game-assets",
+        "Game assets",
+        "ok",
+        `pipeline/input contains assets for ${versions.join(", ")}`,
+      )
     : check(
         "game-assets",
         "Game assets (pipeline work only)",
         "missing",
-        "pipeline/input/assets is absent",
-        "Point it at a synced Mistria/vX.Y.Z/assets folder; see docs/game-version-update-protocol.md",
+        "no pipeline/input/vX.Y.Z/assets/fiddle directory found",
+        "Point pipeline/input at the synced Mistria folder containing vX.Y.Z/assets; see docs/game-version-update-protocol.md",
       );
 }
 
@@ -285,7 +307,8 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
     return undefined;
   }
   const label = "pnpm store outside the repo";
-  const fix = `export pnpm_config_store_dir=${CODEX_STORE_DIR} (see docs/machine-setup.md, Codex shells)`;
+  const fix =
+    "Set shell_environment_policy.set.pnpm_config_store_dir and sandbox_workspace_write.writable_roots in user-level ~/.codex/config.toml; see docs/machine-setup.md, Codex shells";
   const configured = machine.env.pnpm_config_store_dir;
   if (!configured) {
     // pnpm 11 reads only pnpm_config_* variables, so the npm_config_* spelling is silently ignored.
@@ -296,6 +319,19 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
   }
   if (!isAbsolute(configured) || isInside(machine.root, configured)) {
     return check("pnpm-store", label, "wrong", `${configured} is not outside the repo`, fix);
+  }
+  const database = join(configured, "v11", "index.db");
+  const unwritable = [configured, ...(machine.exists(database) ? [database] : [])].find(
+    (path) => !machine.writable(path),
+  );
+  if (unwritable) {
+    return check(
+      "pnpm-store",
+      label,
+      "wrong",
+      `${unwritable} is not writable from this shell`,
+      fix,
+    );
   }
   const effective = machine.run("pnpm", ["--dir", machine.root, "config", "get", "store-dir"]);
   if (!effective.ok) {
@@ -370,7 +406,18 @@ export function formatReport(results: CheckResult[]): string {
   return lines.join("\n");
 }
 
-export function realEnvironment(root: string): Environment {
+export type ProcessRunner = (
+  command: string,
+  args: string[] | undefined,
+  options: SpawnSyncOptionsWithStringEncoding,
+) => SpawnSyncReturns<string>;
+
+export function realEnvironment(
+  root: string,
+  platform: NodeJS.Platform = process.platform,
+  runProcess: ProcessRunner = (command, args, options) =>
+    args ? spawnSync(command, args, options) : spawnSync(command, options),
+): Environment {
   return {
     env: process.env,
     exists: existsSync,
@@ -383,7 +430,7 @@ export function realEnvironment(root: string): Environment {
       }
     },
     nodeVersion: process.versions.node,
-    platform: process.platform,
+    platform,
     read: (path) => {
       try {
         return readFileSync(path, "utf8");
@@ -398,15 +445,38 @@ export function realEnvironment(root: string): Environment {
         stdio: ["ignore", "pipe", "pipe"],
         timeout: 20_000,
       };
+      const windowsPnpm = platform === "win32" && command === "pnpm";
+      if (windowsPnpm) {
+        // cmd.exe starts successfully even when pnpm is absent. Check PATH before invoking the
+        // shim so a shell-level failure cannot disguise a missing pnpm installation.
+        const located = runProcess("where.exe", ["pnpm"], options);
+        if (located.status === 1) {
+          return { errorCode: "ENOENT", ok: false, stdout: "" };
+        }
+      }
       // Node spawns Windows .cmd shims such as pnpm.cmd only through a shell. Every other probe is
       // a real executable, so it runs without one and keeps paths with spaces (machine.root)
       // intact. The shell gets one string, since Node deprecates (DEP0190) shell with an args
       // array; pnpm's arguments are fixed literals, so joining them is safe.
-      const result =
-        process.platform === "win32" && command === "pnpm"
-          ? spawnSync([command, ...args].join(" "), { ...options, shell: true })
-          : spawnSync(command, args, options);
-      return { ok: result.status === 0, stdout: `${result.stdout ?? ""}${result.stderr ?? ""}` };
+      const result = windowsPnpm
+        ? runProcess([command, ...args].join(" "), undefined, { ...options, shell: true })
+        : runProcess(command, args, options);
+      return {
+        errorCode:
+          result.error && "code" in result.error && typeof result.error.code === "string"
+            ? result.error.code
+            : undefined,
+        ok: result.status === 0,
+        stdout: `${result.stdout ?? ""}${result.stderr ?? ""}`,
+      };
+    },
+    writable: (path) => {
+      try {
+        accessSync(path, constants.W_OK);
+        return true;
+      } catch {
+        return false;
+      }
     },
   };
 }
