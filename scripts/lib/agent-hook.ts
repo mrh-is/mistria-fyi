@@ -291,6 +291,44 @@ export function repositoryRoot(cwd: string): string {
   return canonicalPath(cwd, result.stdout.trim());
 }
 
+/** Hooks apply only to the event checkout & linked worktrees of the configured project. */
+export function hookRepositoryRoot(cwd: string): string | undefined {
+  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, LC_ALL: "C" },
+  });
+  if (result.status === 128 && /^fatal: not a git repository/m.test(result.stderr)) {
+    return undefined;
+  }
+  if (result.status !== 0) {
+    throw new Error(
+      result.error?.message ?? (result.stderr.trim() || "Could not find repository root"),
+    );
+  }
+  const root = canonicalPath(cwd, result.stdout.trim());
+  const project = process.env.CLAUDE_PROJECT_DIR;
+  if (project) {
+    const commonDirectory = (directory: string): string => {
+      const common = spawnSync("git", ["rev-parse", "--git-common-dir"], {
+        cwd: directory,
+        encoding: "utf8",
+      });
+      if (common.status !== 0) {
+        throw new Error(
+          common.error?.message ??
+            (common.stderr.trim() || "Could not resolve Git common directory"),
+        );
+      }
+      return canonicalPath(directory, common.stdout.trim());
+    };
+    if (commonDirectory(root) !== commonDirectory(project)) {
+      return undefined;
+    }
+  }
+  return root;
+}
+
 export function repositoryHead(cwd: string): string {
   const result = spawnSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf8" });
   if (result.status !== 0) {

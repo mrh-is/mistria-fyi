@@ -2,12 +2,14 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { formatEdit, snapshotShellEdit } from "./format-agent-edit.js";
 
 const roots: string[] = [];
 afterEach(() => {
+  vi.unstubAllEnvs();
   for (const root of roots.splice(0)) {
     rmSync(root, { force: true, recursive: true });
   }
@@ -31,6 +33,79 @@ function fixture() {
 }
 
 describe("format after agent edit", () => {
+  it.each(["PostToolUse", "PostToolUseFailure"])(
+    "skips %s when Bash returns from outside to the project",
+    (hook_event_name) => {
+      const cwd = fixture();
+      const outside = realpathSync(mkdtempSync(join(tmpdir(), "agent-format-return-")));
+      roots.push(outside);
+      const tool_use_id = `return-${hook_event_name}-${cwd}`;
+      snapshotShellEdit({ cwd: outside, tool_name: "Bash", tool_use_id });
+      writeFileSync(join(cwd, "a file.ts"), "const a=9");
+      const run = vi.fn();
+      expect(
+        formatEdit({ cwd, hook_event_name, tool_name: "Bash", tool_use_id }, run),
+      ).toBeUndefined();
+      expect(run).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["PreToolUse", "PostToolUse", "PostToolUseFailure"])(
+    "silently skips %s outside a repository without a snapshot",
+    (hook_event_name) => {
+      const cwd = realpathSync(mkdtempSync(join(tmpdir(), "agent-format-outside-")));
+      roots.push(cwd);
+      const result = spawnSync(
+        process.execPath,
+        [fileURLToPath(new URL("format-agent-edit.ts", import.meta.url))],
+        {
+          cwd,
+          encoding: "utf8",
+          input: JSON.stringify({
+            cwd,
+            hook_event_name,
+            tool_name: "Bash",
+            tool_use_id: `outside-${cwd}`,
+          }),
+        },
+      );
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe("");
+    },
+  );
+
+  it("skips unrelated repositories for shell & file edits", () => {
+    vi.stubEnv("CLAUDE_PROJECT_DIR", fixture());
+    const cwd = fixture();
+    const input = { cwd, tool_name: "Bash", tool_use_id: `unrelated-${cwd}` };
+    expect(() => {
+      snapshotShellEdit(input);
+    }).not.toThrow();
+    const run = vi.fn();
+    expect(formatEdit(input, run)).toBeUndefined();
+    expect(formatEdit({ cwd, tool_input: { file_path: "a file.ts" } }, run)).toBeUndefined();
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("accepts linked worktrees of the project", () => {
+    const project = fixture();
+    vi.stubEnv("CLAUDE_PROJECT_DIR", project);
+    const cwd = join(project, "linked");
+    const result = spawnSync("git", ["worktree", "add", "--detach", cwd], {
+      cwd: project,
+      encoding: "utf8",
+    });
+    expect(result.status, result.stderr).toBe(0);
+    writeFileSync(join(cwd, "new.md"), "new");
+    const run = vi.fn(() => ({ output: "", status: 0 }));
+    formatEdit({ cwd, tool_input: { file_path: "new.md" } }, run);
+    expect(run).toHaveBeenCalledWith(
+      ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "new.md"],
+      cwd,
+    );
+  });
+
   it("includes edits committed by the Bash invocation, without reformatting unchanged files", () => {
     const cwd = fixture();
     const input = { cwd, tool_name: "Bash", tool_use_id: `commit-${cwd}` };
