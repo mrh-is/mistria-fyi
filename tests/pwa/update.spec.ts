@@ -6,6 +6,7 @@ import { goOffline, goOnline, waitForControl } from "./service-worker.js";
 import type { BrowserContext, Page } from "@playwright/test";
 
 const WORKER_PATH = ".svelte-kit/output/client/service-worker.js";
+const VERSION_PATH = ".svelte-kit/output/client/_app/version.json";
 const UPDATE_MESSAGE =
   "The Mistria Field Guide has been updated! Refresh to get the newest version.";
 
@@ -20,14 +21,17 @@ function cacheNames(page: Page): Promise<string[]> {
  */
 function deployNewVersion(version: string): { newVersion: string; restore: () => void } {
   const original = readFileSync(WORKER_PATH, "utf8");
+  const originalMetadata = readFileSync(VERSION_PATH, "utf8");
   const newVersion = version.replace(/\w(?=\W*$)/, (last) => (last === "x" ? "y" : "x"));
   const updated = original.replaceAll(version, newVersion);
   if (updated === original) throw new Error(`The built worker doesn't contain "${version}"`);
   writeFileSync(WORKER_PATH, updated);
+  writeFileSync(VERSION_PATH, originalMetadata.replaceAll(version, newVersion));
   return {
     newVersion,
     restore: () => {
       writeFileSync(WORKER_PATH, original);
+      writeFileSync(VERSION_PATH, originalMetadata);
     },
   };
 }
@@ -36,6 +40,7 @@ test("keeps open tabs on their version until one accepts the update, then reload
   context,
   page,
 }) => {
+  await page.clock.install();
   await page.goto("/en");
   await waitForControl(page);
   const otherTab = await context.newPage();
@@ -59,10 +64,8 @@ test("keeps open tabs on their version until one accepts the update, then reload
   const newCache = `cache-${newVersion}`;
 
   try {
-    await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.ready;
-      await registration.update();
-    });
+    // No focus or visibility event: the app’s production poll alone detects this deploy.
+    await page.clock.runFor(600_001);
 
     // The new version installs and waits; both tabs offer it.
     await expect(page.getByText(UPDATE_MESSAGE)).toBeVisible();
@@ -201,10 +204,7 @@ test("relaunches offline in a language chosen while a new version was installing
   });
 
   try {
-    await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.ready;
-      void registration.update();
-    });
+    await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
     await localeRead;
 
     await page.getByRole("button", { name: "Quick settings" }).click();
@@ -256,10 +256,7 @@ test("relaunches offline after a new version failed to fetch the last-used home 
   );
 
   try {
-    await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.ready;
-      void registration.update();
-    });
+    await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
     await waitForWaiting(page);
     expect(await cacheHolds(page, newCache, "/en")).toBe(false);
 

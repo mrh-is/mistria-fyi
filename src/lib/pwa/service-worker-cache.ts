@@ -549,9 +549,12 @@ export function fetchStrategy(
   request: Pick<Request, "method" | "url">,
   assetPaths: ReadonlySet<string>,
   origin: string,
+  versionPath = "/_app/version.json",
 ): FetchStrategy | undefined {
   if (request.method !== "GET") return undefined;
   const url = new URL(request.url);
+  // Version checks must reach the network, including when an older cache holds this path.
+  if (url.origin === origin && url.pathname === versionPath) return undefined;
   if (assetPaths.has(url.pathname)) return "asset";
   if (isExternalSpriteAsset(url)) return "sprite";
   if (isEligibleForRuntimeCaching(url, origin)) return "runtime";

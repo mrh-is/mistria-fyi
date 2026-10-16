@@ -21,6 +21,7 @@ export class PageStub {
   }
 
   reset(): void {
+    updated.current = false;
     this.data = { locale: "en" };
     this.status = 200;
     this.url.href = `${ORIGIN}/en`;
@@ -31,3 +32,14 @@ export const pageStub = new PageStub();
 
 /** `$app/state`'s export name, so this module can stand in for it whole. */
 export const page = pageStub;
+
+/** Reactive deploy detection, matching SvelteKit’s public state contract. */
+class UpdatedStub {
+  current = $state(false);
+
+  check(): Promise<boolean> {
+    return Promise.resolve(this.current);
+  }
+}
+
+export const updated = new UpdatedStub();

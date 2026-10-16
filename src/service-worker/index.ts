@@ -40,6 +40,7 @@ const ASSETS = [...immutable, ...assets].map(
   ({ path }) => new URL(path, sw.registration.scope).pathname,
 );
 const ASSET_PATHS = new Set(ASSETS);
+const VERSION_PATH = new URL("_app/version.json", sw.registration.scope).pathname;
 const LOCALE_NAME_CHUNKS: LocaleNameChunks =
   // oxlint-disable-next-line unicorn/no-typeof-undefined -- Only builds define this identifier; reading it bare throws a ReferenceError in dev.
   typeof __LOCALE_NAME_CHUNKS__ === "undefined" ? {} : __LOCALE_NAME_CHUNKS__;
@@ -169,7 +170,7 @@ sw.addEventListener("activate", (event) => {
 });
 
 sw.addEventListener("fetch", (event) => {
-  const strategy = fetchStrategy(event.request, ASSET_PATHS, sw.location.origin);
+  const strategy = fetchStrategy(event.request, ASSET_PATHS, sw.location.origin, VERSION_PATH);
   // Without `respondWith`, the browser fetches the request itself.
   if (!strategy) return;
   const url = new URL(event.request.url);

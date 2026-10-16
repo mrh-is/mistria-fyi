@@ -1,0 +1,33 @@
+# App update detection
+
+## Context
+
+A tracker tab behind a fullscreen game can remain visible to Chrome for days, with neither a
+visibility event nor a full navigation. The visibility-only worker check leaves that tab on its
+original build indefinitely.
+
+## Decision
+
+Use SvelteKit’s `updated` state for detection, polling every 10 minutes, and call
+`registration.update()` once detection reports a new deploy. Leave the version metadata request to
+the browser to avoid offline false positives from cached versions. Preserve the waiting-worker
+consent flow recorded in the PWA verification guide; the toast appears after installation, and
+accepting activates the worker & reloads controlled tabs. Pages without a controlling worker offer a
+network reload instead.
+
+Failed or no-op installs retry on online, focus, & visible events, throttled to five minutes, with
+an hourly fallback for unattended tabs. Stop retries once a worker waits. This bounds repeated
+precache downloads when installation fails.
+
+## Alternatives
+
+Replacing worker activation with a reload loses the atomic offline-cache swap. Another detection
+timer duplicates SvelteKit’s tiny metadata checks with worker-script fetches. The default hourly
+poll leaves data releases stale too long. Automatic activation when idle or navigating would reload
+other tabs without consent, reversing the existing decision, and remains outside this issue.
+
+## Revisit if
+
+SvelteKit starts activating workers itself, sync becomes build-bound, or Cloudflare Pages stops
+serving these static polls without Worker charges. Reconsider navigation consent separately if
+reloading every other tab becomes acceptable.

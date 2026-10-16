@@ -145,10 +145,24 @@ describe("service-worker fetch strategy", () => {
   });
 
   it("leaves requests it doesn't cache to the browser", () => {
+    expect(strategyFor(`${ORIGIN}/_app/version.json`)).toBeUndefined();
     expect(strategyFor("https://static.cloudflareinsights.com/beacon.min.js")).toBeUndefined();
     expect(strategyFor("https://api.cardpointers.com/v1/offers")).toBeUndefined();
     expect(strategyFor(`${ORIGIN}/api/feedback`)).toBeUndefined();
     expect(strategyFor(`${ORIGIN}/en/villagers`, "POST")).toBeUndefined();
+  });
+
+  it("bypasses version metadata under the registration scope, even if listed as an asset", () => {
+    const versionPath = "/guide/_app/version.json";
+    expect(
+      fetchStrategy(
+        { method: "GET", url: `${ORIGIN}${versionPath}?v=1` },
+        new Set([versionPath]),
+        ORIGIN,
+        versionPath,
+      ),
+    ).toBeUndefined();
+    expect(strategyFor(`${ORIGIN}/_app/version.json.backup`)).toBe("runtime");
   });
 });
 
