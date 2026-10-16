@@ -25,8 +25,6 @@ import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 import type { SpawnSyncOptions } from "node:child_process";
 
-const CODEX_STORE_DIR = "/private/tmp/codex-pnpm-store";
-
 export interface LinkPlan {
   destination: string;
   directory: boolean;
@@ -128,12 +126,14 @@ export function planInstall(platform: NodeJS.Platform, env: NodeJS.ProcessEnv): 
   if (platform !== "darwin" || !env.CODEX_THREAD_ID) {
     return { env: {}, installArgs: ["install", "--frozen-lockfile"] };
   }
-  // An empty override counts as unset, as `${var:-default}` did in the earlier shell script.
-  const storeDir =
-    [env.pnpm_config_store_dir, env.npm_config_store_dir].find(Boolean) ?? CODEX_STORE_DIR;
+  const storeDir = env.pnpm_config_store_dir;
+  if (!storeDir) {
+    throw new Error(
+      "pnpm_config_store_dir is unset. Set shell_environment_policy.set.pnpm_config_store_dir and sandbox_workspace_write.writable_roots in user-level ~/.codex/config.toml; see docs/machine-setup.md, Codex shells",
+    );
+  }
   return {
     env: {
-      npm_config_store_dir: storeDir,
       // Only this isolated worktree can have its modules replaced after an earlier failed setup.
       pnpm_config_confirm_modules_purge: "false",
       pnpm_config_store_dir: storeDir,
@@ -167,6 +167,7 @@ function git(...args: string[]): string {
 }
 
 function main(): number {
+  const install = planInstall(process.platform, process.env);
   const worktreeDir = resolve(git("rev-parse", "--show-toplevel"));
   // `git worktree list` lists the main worktree first.
   const repoRoot = resolve(
@@ -182,7 +183,6 @@ function main(): number {
     linkEntry(plan);
   }
 
-  const install = planInstall(process.platform, process.env);
   const options: SpawnSyncOptions = {
     cwd: worktreeDir,
     env: { ...process.env, ...install.env },
@@ -193,5 +193,10 @@ function main(): number {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  process.exitCode = main();
+  try {
+    process.exitCode = main();
+  } catch (error) {
+    console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  }
 }
