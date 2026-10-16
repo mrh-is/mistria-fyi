@@ -8,9 +8,9 @@ import {
   canonicalPath,
   changedFiles,
   editPaths,
+  hookRepositoryRoot,
   readHookInput,
   repositoryHead,
-  repositoryRoot,
   runPnpm,
 } from "#scripts/lib/agent-hook";
 
@@ -58,7 +58,14 @@ function fingerprint(cwd: string, file: string): string {
 
 /** Snapshot only existing dirty files; newly dirtied files are identified after the command. */
 export function snapshotShellEdit(input: HookInput): void {
-  const cwd = repositoryRoot(input.cwd ?? process.cwd());
+  const cwd = hookRepositoryRoot(input.cwd ?? process.cwd());
+  if (cwd === undefined) {
+    // Remember the skip if Bash later reports a cwd back inside the project.
+    if (input.tool_use_id) {
+      writeFileSync(snapshotFile(input), "null", { flag: "wx", mode: 0o600 });
+    }
+    return;
+  }
   const hashes = Object.fromEntries(
     formatFiles(cwd, changedFiles(cwd)).map((file) => [file, fingerprint(cwd, file)]),
   );
@@ -68,8 +75,11 @@ export function snapshotShellEdit(input: HookInput): void {
 
 function shellEditFiles(input: HookInput): { cwd: string; files: string[] } {
   const file = snapshotFile(input);
-  const before = JSON.parse(readFileSync(file, "utf8")) as Snapshot;
+  const before = JSON.parse(readFileSync(file, "utf8")) as null | Snapshot;
   rmSync(file);
+  if (before === null) {
+    return { cwd: input.cwd ?? process.cwd(), files: [] };
+  }
   const { cwd } = before;
   const files = formatFiles(cwd, [
     ...changedFiles(cwd, before.head),
@@ -82,11 +92,22 @@ export function formatEdit(input: HookInput, run: RunCommand = runPnpm): string 
   let cwd = input.cwd ?? process.cwd();
   let files: string[];
   if (input.tool_name === "Bash") {
+    // An in-project command may change cwd; its existing snapshot still owns the edit.
+    if (
+      hookRepositoryRoot(cwd) === undefined &&
+      (!input.tool_use_id || !existsSync(snapshotFile(input)))
+    ) {
+      return undefined;
+    }
     ({ cwd, files } = shellEditFiles(input));
   } else {
     // Tool paths are relative to the event cwd; formatter arguments are relative to the repo root.
     const targets = editPaths(input).map((file) => canonicalPath(cwd, file));
-    cwd = repositoryRoot(cwd);
+    const root = hookRepositoryRoot(cwd);
+    if (root === undefined) {
+      return undefined;
+    }
+    cwd = root;
     files = formatFiles(cwd, targets).map((file) => relative(cwd, file));
   }
   if (files.length === 0) {
