@@ -163,7 +163,7 @@ export default defineConfig({
       preprocess: vitePreprocess(),
 
       csp: { directives: contentSecurityPolicy },
-      version: { name: getAppVersion() },
+      version: { name: getAppVersion(), pollInterval: 600_000 },
     }),
     localeNameChunksPlugin(),
     headersFilePlugin(renderHeadersFile(contentSecurityPolicy)),
