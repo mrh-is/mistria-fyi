@@ -1,4 +1,5 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -78,10 +79,64 @@ describe("verify browser build reuse", () => {
     expect(calls.at(-1)).toBe("run test:accessibility|true");
   });
 
-  it("prints the failing step's output tail & returns its exit status", () => {
+  it("returns the failing step’s exit status", () => {
     const { stdout } = runVerify([], "run check");
     expect(stdout).toContain("✗ check (exit 7)");
     expect(stdout).not.toContain("--- check:i18n ---");
+  });
+
+  it("streams both output channels before the step exits, without repeating them", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "mistria-verify-stream-"));
+    const pnpm = join(directory, "fake-pnpm.mjs");
+    const release = join(directory, "release");
+    writeFileSync(
+      pnpm,
+      `import { existsSync } from "node:fs";
+if (process.argv.at(-1) === "lint") {
+  console.log("stdout progress");
+  console.error("stderr progress");
+  const deadline = setTimeout(() => process.exit(7), 1500);
+  const timer = setInterval(() => {
+    if (existsSync(process.env.VERIFY_TEST_RELEASE)) {
+      clearTimeout(deadline);
+      clearInterval(timer);
+    }
+  }, 10);
+}
+`,
+    );
+    const env = Object.fromEntries(
+      Object.entries(process.env).filter(([key]) => key.toLowerCase() !== "npm_execpath"),
+    );
+    try {
+      const child = spawn(process.execPath, [script], {
+        env: { ...env, npm_execpath: pnpm, VERIFY_TEST_RELEASE: release },
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 5000,
+      });
+      let output = "";
+      let errors = "";
+      const unlock = (): void => {
+        if (output.includes("stdout progress") && errors.includes("stderr progress")) {
+          writeFileSync(release, "");
+        }
+      };
+      child.stdout.on("data", (chunk: Buffer) => {
+        output += chunk.toString();
+        unlock();
+      });
+      child.stderr.on("data", (chunk: Buffer) => {
+        errors += chunk.toString();
+        unlock();
+      });
+      const [status] = await once(child, "close");
+      expect(status).toBe(0);
+      expect(output.match(/stdout progress/gu)).toHaveLength(1);
+      expect(errors.match(/stderr progress/gu)).toHaveLength(1);
+      expect(output).toContain("=== All checks passed ===");
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
+    }
   });
 
   it("rejects an unknown flag", () => {
