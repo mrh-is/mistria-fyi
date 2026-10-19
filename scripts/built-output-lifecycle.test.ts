@@ -19,39 +19,49 @@ describe("built-output runner lifecycle", () => {
     expect(milliseconds).toBeLessThanOrEqual(120_000);
   });
 
-  it.each(["before", "after"])("exits unsuccessfully when %s stalls with open handles", (hook) => {
-    const directory = mkdtempSync(join(tmpdir(), "mistria-built-lifecycle-"));
-    const fixture = join(directory, "stalled.mjs");
-    try {
-      writeFileSync(
-        fixture,
-        `import { describe, test, ${hook} } from "node:test";
+  it.each([
+    { hook: "before", hookTimeout: undefined },
+    { hook: "after", hookTimeout: undefined },
+    { hook: "before", hookTimeout: 50 },
+    { hook: "after", hookTimeout: 50 },
+  ])(
+    "exits unsuccessfully with a stalled $hook & hook deadline $hookTimeout",
+    ({ hook, hookTimeout }) => {
+      const directory = mkdtempSync(join(tmpdir(), "mistria-built-lifecycle-"));
+      const fixture = join(directory, "stalled.mjs");
+      try {
+        writeFileSync(
+          fixture,
+          `import { describe, test, ${hook} } from "node:test";
 // A finite sentinel keeps a regressed runner from leaving a live worker behind.
 setTimeout(() => { console.error("lifecycle sentinel expired"); process.exit(99); }, 1500);
-describe("stalled ${hook}", { timeout: 50 }, () => {
-  ${hook}(async () => { await new Promise(() => {}); });
+describe("stalled ${hook}", () => {
+  ${hook}(async () => { await new Promise(() => {}); }, ${JSON.stringify(hookTimeout === undefined ? {} : { timeout: hookTimeout })});
   test("assertions pass", () => {});
 });
 `,
-      );
-      const result = spawnSync(
-        process.execPath,
-        [
-          "--import",
-          "tsx",
-          ...flags.map((flag) =>
-            flag.startsWith("--test-timeout=") ? "--test-timeout=100" : flag,
-          ),
-          fixture,
-        ],
-        { encoding: "utf8", killSignal: "SIGKILL", timeout: 5000 },
-      );
-      expect(result.error).toBeUndefined();
-      expect(result.status).toBe(1);
-      expect(result.stdout + result.stderr).toContain("timed out");
-      expect(result.stdout + result.stderr).not.toContain("lifecycle sentinel expired");
-    } finally {
-      rmSync(directory, { force: true, recursive: true });
-    }
-  });
+        );
+        const result = spawnSync(
+          process.execPath,
+          [
+            "--import",
+            "tsx",
+            ...flags.map((flag) =>
+              flag.startsWith("--test-timeout=") ? "--test-timeout=100" : flag,
+            ),
+            fixture,
+          ],
+          { encoding: "utf8", killSignal: "SIGKILL", timeout: 5000 },
+        );
+        expect(result.error).toBeUndefined();
+        expect(result.status).toBe(1);
+        expect(result.stdout + result.stderr).toContain(
+          `test timed out after ${String(hookTimeout ?? 100)}ms`,
+        );
+        expect(result.stdout + result.stderr).not.toContain("lifecycle sentinel expired");
+      } finally {
+        rmSync(directory, { force: true, recursive: true });
+      }
+    },
+  );
 });
