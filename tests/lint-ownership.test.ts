@@ -10,9 +10,12 @@
 // `oxfmt --check` skips them silently. The last test catches that.
 import { ESLint } from "eslint";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { basename, join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
+
+import { sourceFilenameOffenders } from "./source-filenames.js";
 
 import type { SpawnSyncOptionsWithStringEncoding } from "node:child_process";
 
@@ -137,10 +140,12 @@ describe("lint tool ownership", () => {
 describe("engine import boundary", () => {
   it("rejects store & component type imports through aliases and repeated parent segments", async () => {
     // Use real engine paths so the production override, not a copied rule, selects the probes.
-    const nestedDirectory = await mkdtemp("src/lib/engine/lint-probe-");
-    const rootProbe = `src/lib/engine/${basename(nestedDirectory)}.ts`;
+    const probeStem = `lint-probe-${randomUUID()}`;
+    const nestedDirectory = posix.join("src/lib/engine", probeStem);
+    const rootProbe = posix.join("src/lib/engine", `${probeStem}.ts`);
     // `/` separators, matching how oxlint reports the paths it was given.
-    const nestedProbe = `${nestedDirectory}/probe.ts`;
+    const nestedProbe = posix.join(nestedDirectory, "probe.ts");
+    await mkdir(nestedDirectory);
     try {
       await writeFile(
         rootProbe,
@@ -162,6 +167,8 @@ describe("engine import boundary", () => {
           "export type Probe = Store | Component | Domain;",
         ].join("\n"),
       );
+      // Run the filename scan before cleanup, forcing the overlap from concurrent test runs.
+      expect(sourceFilenameOffenders("src/lib/engine")).toStrictEqual([]);
       const result = oxc(
         "oxlint",
         ["--config", ".oxlintrc.json", "--format", "json", rootProbe, nestedProbe],
