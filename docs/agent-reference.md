@@ -36,9 +36,13 @@ to start on absent or stale dependencies rather than installing them implicitly.
 **Subagent worktrees:** an orchestrator gives each editing subagent a worktree its harness lets that
 subagent edit. In Claude Code, the session’s edit guard refuses Write/Edit outside the session’s own
 worktree, including `.worktrees/`, so spawn editing subagents with the Agent tool’s
-`isolation: "worktree"` and have each run `node scripts/setup-worktree.ts` first. `preview_start` by
-`name` serves the orchestrator’s checkout, so a subagent previews its own dev server by URL; see
-[docs/development-workflow.md](development-workflow.md#preview-from-a-subagent-worktree).
+`isolation: "worktree"` and have each run `node scripts/setup-worktree.ts` first.
+
+**Previews:** `preview_start` by `name` serves the session’s original folder, not the worktree. That
+is the orchestrator’s checkout for a subagent, and the main checkout for a session that moved into
+`.worktrees/`. Any agent working in a worktree previews its own dev server by URL & confirms it
+serves the branch’s code; see
+[docs/development-workflow.md](development-workflow.md#preview-from-a-worktree).
 
 **Stashes are shared:** `refs/stash` is one stack for every linked worktree, so a bare
 `git stash pop` or `apply` can restore another session’s edits. Prefer a temporary WIP commit; if

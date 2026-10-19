@@ -665,14 +665,21 @@ git stash apply <sha>
 Never use bare `pop`, `apply`, or `drop`. To drop the entry afterward, re-find its current
 `stash@{n}` by tag first, since other sessions shift the indexes.
 
-### Preview from a subagent worktree
+### Preview from a worktree
 
-The Claude Code desktop app resolves `.claude/launch.json` against the session's primary working
-directory, which subagents share. A subagent spawned with `isolation: "worktree"` that calls
-`preview_start` with `name: "dev"` therefore serves the orchestrator's checkout, not its own (#581).
-Subagents start their own dev server instead:
+The Claude Code desktop app resolves `.claude/launch.json` & the named server's working directory
+against the session's original folder, not the checkout the agent is working in (#82). Calling
+`preview_start` with `name: "dev"` therefore serves the wrong code in two cases:
 
-1. From the subagent's worktree, start Vite in the background on a port no other session uses
+- A subagent spawned with `isolation: "worktree"` gets the orchestrator's checkout, since subagents
+  share the session's folder.
+- A session that started in the main checkout and moved into a `.worktrees/<branch>` worktree
+  (created by `pnpm run worktree:new`) gets the main checkout.
+
+The preview loads & looks healthy either way, so a visual check passes against code the branch never
+changed. Any agent previewing from a worktree starts its own dev server instead:
+
+1. From the worktree, start Vite in the background on a port no other session uses
    (`pnpm exec vite dev --port 5180 --strictPort`; pick another port if it's taken).
 2. Open it with `preview_start` and a `url` (`http://localhost:5180`), never a `name`.
 3. Before checking anything, unregister stale service workers. A worker another dev or preview
@@ -683,7 +690,19 @@ Subagents start their own dev server instead:
    for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
    ```
 
-4. Stop the server when the check is done.
+4. Confirm the server serves the worktree's code. Vite dev serves source modules by path, so pick a
+   file the branch changed (`git diff --name-only $(git merge-base origin/main HEAD)` lists tracked
+   changes, including uncommitted ones; `git ls-files --others --exclude-standard` lists new files)
+   & a fragment only the branch has. The `?raw` suffix returns the file as written rather than
+   compiled, as a JS string, so choose a fragment without quotes or backslashes:
+
+   ```js
+   (await (await fetch("/src/<changed-file>?raw")).text()).includes("<branch-only fragment>");
+   ```
+
+   If it returns `false`, the preview is serving another checkout; stop it & recheck step 1.
+
+5. Stop the server when the check is done.
 
 ### Attach visual evidence & prototype code
 
