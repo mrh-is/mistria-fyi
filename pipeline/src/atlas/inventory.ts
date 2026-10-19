@@ -35,8 +35,8 @@ export const ROOT_FOLDER = ".";
 
 // Operating-system & sync clutter, not game files.
 const SYSTEM_FILES = new Set([".DS_Store", "Thumbs.db", "desktop.ini"]);
-// A table with at least this many keys, all of them tables, is summarized as an ID-keyed map.
-const ID_MAP_MIN_KEYS = 8;
+/** A table with at least this many keys, all of them tables, is summarized as an ID-keyed map. */
+export const ID_MAP_MIN_KEYS = 8;
 // Nesting levels below a top-level key that a shape summary spells out.
 const SHAPE_DEPTH = 2;
 
@@ -46,8 +46,13 @@ export function buildAtlas(
   version: string,
   references: readonly PipelineReference[],
 ): AssetAtlas {
+  if (!existsSync(join(assetsDir, "fiddle"))) {
+    throw new Error(
+      `No fiddle/ in ${assetsDir}. Pass a game-files root holding vX.Y.Z/assets folders, or an extracted assets folder.`,
+    );
+  }
   return {
-    fiddle: existsSync(join(assetsDir, "fiddle")) ? inventoryFiddle(assetsDir, references) : [],
+    fiddle: inventoryFiddle(assetsDir, references),
     folders: inventoryFolders(assetsDir),
     version,
   };

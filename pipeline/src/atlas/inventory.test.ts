@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { createAssetsFixture } from "../test-helpers.js";
-import { buildAtlas, extensionOf, shapeOf, topFolder } from "./inventory.js";
+import { buildAtlas, extensionOf, ID_MAP_MIN_KEYS, shapeOf, topFolder } from "./inventory.js";
 
 function writeAssetFiles(assetsDir: string, files: Record<string, string>): void {
   for (const [relativePath, contents] of Object.entries(files)) {
@@ -39,6 +39,14 @@ describe("shapeOf", () => {
 
     expect(shapeOf(entries)).toBe("map<{value: number}>");
     expect(shapeOf({ a: { value: 1 } })).toBe("{a: {value: number}}");
+  });
+
+  it("spells out a table of tables below the map threshold, key by key", () => {
+    const entries = Object.fromEntries(
+      Array.from({ length: ID_MAP_MIN_KEYS - 1 }, (_, index) => [`id_${index}`, { value: 1 }]),
+    );
+
+    expect(shapeOf(entries)).toMatch(/^\{id_0: \{value: number\}, id_1: /u);
   });
 
   it("stops spelling out tables at the depth limit", () => {
@@ -112,11 +120,17 @@ describe("buildAtlas", () => {
         sourceFile: "items/other/dishes.toml",
       },
       {
-        claims: [{ module: "extract/villagers.ts", reference: "npcs" }],
+        claims: [{ module: "extract/villagers.ts", reference: "npcs", via: "ancestor" }],
         keys: { birthday: "{day: number, season: string}", name: "string" },
         rootPath: "npcs.holt",
         sourceFile: "npcs/holt.toml",
       },
     ]);
+  });
+
+  it("rejects a directory without fiddle/ instead of writing an empty atlas", () => {
+    const assetsDir = createAssetsFixture({});
+
+    expect(() => buildAtlas(assetsDir, "9.9.9", [])).toThrow("No fiddle/ in");
   });
 });

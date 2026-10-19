@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
+import ts from "typescript";
 
 import { toPosixPath } from "../../../scripts/lib/paths.js";
 import { compareStrings } from "../ordering.js";
@@ -10,38 +11,109 @@ export interface PipelineReference {
   reference: string;
 }
 
-/** A pipeline module whose source names a fiddle root, an ancestor of it, or a path inside it. */
+/** How a module reaches a fiddle root: by naming it or a path inside it, or through an ancestor. */
+export type ClaimVia = "ancestor" | "path";
+
+/** A pipeline module whose source names a fiddle root, a path inside it, or an ancestor of it. */
 export interface PipelineClaim {
   module: string;
   reference: string;
+  via: ClaimVia;
 }
 
-// Comments cite files (`` `cutscenes.toml` ``) as provenance without reading them. The line
-// pattern spares `://` in URLs; a `//` inside some other string only truncates that line.
-const BLOCK_COMMENT = /\/\*[\s\S]*?\*\//g;
-const LINE_COMMENT = /(^|[^:])\/\/.*$/gm;
-// `fiddle.items.tools` & `context.fiddle.items`, but not import specifiers like `./parse-fiddle.js`.
-const MEMBER_CHAIN = /(?<![\w/-])fiddle((?:\.[A-Za-z_]\w*)+)/g;
-// `nestedTableKeys(fiddle, "object_prototypes")`: a root named right after a fiddle argument.
-const FIDDLE_ARGUMENT = /(?<![\w/-])fiddle\s*,\s*["'`]([a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)*)["'`]/g;
-// `"ui.skill_menu.defaults"`: dotted string literals, which name nested roots directly.
-const DOTTED_LITERAL = /["'`]([a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)+)["'`]/g;
-// `` `quests.${type}` ``: the literal prefix of a template that builds a dotted path.
-const TEMPLATE_PREFIX = /`([a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)*)\.\$\{/g;
+const DOTTED_PATH = /^[a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)+$/;
+const PATH_SEGMENTS = /^[a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)*$/;
+const TEMPLATE_HEAD = /^([a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)*)\.$/;
+// A dotted literal ending in one of these names a file (`"player_assets.toml"`), not a fiddle path.
+const FILE_EXTENSIONS = new Set([
+  "cjs",
+  "csv",
+  "exe",
+  "gml",
+  "html",
+  "js",
+  "json",
+  "md",
+  "mjs",
+  "png",
+  "sav",
+  "svg",
+  "tmx",
+  "toml",
+  "ts",
+  "tsx",
+  "tx",
+  "txt",
+  "webp",
+  "yaml",
+  "yml",
+  "zip",
+]);
 
-/** Extracts candidate dotted fiddle paths from one module's source text. */
+/**
+ * Extracts candidate dotted fiddle paths from one module's syntax tree, so comments & the text of
+ * messages never count. It finds access chains on a `fiddle` value (`fiddle.dungeons?.misc`), a
+ * string passed right after a `fiddle` argument (`nestedTableKeys(fiddle, "object_prototypes")`),
+ * whole dotted string literals (`"ui.skill_menu.defaults"`), & template prefixes
+ * (`` `quests.${type}` ``).
+ */
 export function referencesInSource(source: string): string[] {
-  const code = source.replace(BLOCK_COMMENT, "").replace(LINE_COMMENT, "$1");
+  const file = ts.createSourceFile("module.ts", source, ts.ScriptTarget.Latest, true);
   const references = new Set<string>();
-  for (const match of code.matchAll(MEMBER_CHAIN)) {
-    references.add(match[1].slice(1));
-  }
-  for (const pattern of [FIDDLE_ARGUMENT, DOTTED_LITERAL, TEMPLATE_PREFIX]) {
-    for (const match of code.matchAll(pattern)) {
-      references.add(match[1]);
+  const visit = (node: ts.Node): void => {
+    if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) return;
+    const path = fiddlePath(node);
+    // Only the outermost access of a chain: `fiddle.dungeons.misc`, not also `fiddle.dungeons`.
+    if (path !== undefined && fiddlePath(node.parent) === undefined) references.add(path);
+    if (ts.isCallExpression(node)) {
+      for (const [index, argument] of node.arguments.entries()) {
+        const next = node.arguments.at(index + 1);
+        if (!isFiddle(argument) || next === undefined) continue;
+        const named = literalPath(next, PATH_SEGMENTS);
+        if (named !== undefined) references.add(named);
+      }
     }
-  }
+    const literal = literalPath(node, DOTTED_PATH);
+    if (literal !== undefined) references.add(literal);
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
   return [...references].toSorted(compareStrings);
+}
+
+/** The dotted path an access chain on a `fiddle` value reaches, or undefined. */
+function fiddlePath(node: ts.Node | undefined): string | undefined {
+  if (node === undefined) return undefined;
+  let name: string | undefined;
+  if (ts.isPropertyAccessExpression(node)) {
+    name = node.name.text;
+  } else if (ts.isElementAccessExpression(node) && ts.isStringLiteral(node.argumentExpression)) {
+    name = node.argumentExpression.text;
+  } else {
+    return undefined;
+  }
+  if (isFiddle(node.expression)) return name;
+  const base = fiddlePath(node.expression);
+  return base === undefined ? undefined : `${base}.${name}`;
+}
+
+/** `fiddle` itself, or a property named `fiddle` (`context.fiddle`). */
+function isFiddle(node: ts.Node): boolean {
+  return (
+    (ts.isIdentifier(node) && node.text === "fiddle") ||
+    (ts.isPropertyAccessExpression(node) && node.name.text === "fiddle")
+  );
+}
+
+/** A string literal's dotted path, or a template's literal prefix, when it looks like one. */
+function literalPath(node: ts.Node, pattern: RegExp): string | undefined {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    const extension = node.text.slice(node.text.lastIndexOf(".") + 1);
+    if (!pattern.test(node.text) || FILE_EXTENSIONS.has(extension)) return undefined;
+    return node.text;
+  }
+  if (ts.isTemplateExpression(node)) return TEMPLATE_HEAD.exec(node.head.text)?.[1];
+  return undefined;
 }
 
 /**
@@ -75,10 +147,10 @@ function isScannedModule(name: string): boolean {
 }
 
 /**
- * Lists the modules that claim a fiddle root: a reference equal to the root or inside it, or an
- * ancestor of it. A module's ancestor reference is ignored when the same module also names a more
- * specific path under that ancestor, since it then only walks down to that path (as with
- * `fiddle.ui` followed by `"ui.skill_menu.defaults"`).
+ * Lists the modules that claim a fiddle root, with how each reaches it: `path` when the reference
+ * is the root or a path inside it, `ancestor` when it names an ancestor (`fiddle.items` for
+ * `items.fish.river`). An ancestor claim means the module holds the parent table; it may read every
+ * child or only some.
  */
 export function claimsFor(
   rootPath: string,
@@ -86,34 +158,21 @@ export function claimsFor(
 ): PipelineClaim[] {
   const claims = new Map<string, PipelineClaim>();
   for (const { module, reference } of references) {
-    if (!relates(rootPath, reference)) continue;
-    if (isAncestor(reference, rootPath) && hasNarrowerReference(module, reference, references)) {
+    let via: ClaimVia;
+    if (reference === rootPath || isAncestor(rootPath, reference)) {
+      via = "path";
+    } else if (isAncestor(reference, rootPath)) {
+      via = "ancestor";
+    } else {
       continue;
     }
-    const key = `${module}\n${reference}`;
-    claims.set(key, { module, reference });
+    claims.set(`${module}\n${reference}`, { module, reference, via });
   }
   return [...claims.values()].toSorted(
     (a, b) => compareStrings(a.module, b.module) || compareStrings(a.reference, b.reference),
   );
 }
 
-function relates(rootPath: string, reference: string): boolean {
-  return (
-    reference === rootPath || isAncestor(rootPath, reference) || isAncestor(reference, rootPath)
-  );
-}
-
 function isAncestor(ancestor: string, descendant: string): boolean {
   return descendant.startsWith(`${ancestor}.`);
-}
-
-function hasNarrowerReference(
-  module: string,
-  ancestor: string,
-  references: readonly PipelineReference[],
-): boolean {
-  return references.some(
-    (other) => other.module === module && isAncestor(ancestor, other.reference),
-  );
 }

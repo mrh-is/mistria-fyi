@@ -37,19 +37,33 @@ describe("referencesInSource", () => {
     ]);
   });
 
-  it("ignores paths cited only in comments", () => {
+  it("ignores comments, message text, & file names", () => {
     const source = [
-      "// `cutscenes.toml` gives this item",
-      "/** Reads `letters.toml` entries. */",
+      "// Reads every items/*.toml file",
+      "/** `cutscenes.toml` gives this item. */",
+      'const message = "Expected fiddle.items to be a table";',
+      'const file = "player_assets.toml";',
       'const url = "https://example.com/a.b";',
+      "const tools = fiddle.items.tools;",
+      "/** Trailing doc comment. */",
+      "const npcs = fiddle.npcs;",
     ].join("\n");
 
-    expect(referencesInSource(source)).toEqual([]);
+    expect(referencesInSource(source)).toEqual(["items.tools", "npcs"]);
+  });
+
+  it("follows optional & bracketed access to the outermost known path", () => {
+    const source = [
+      'const max = fiddle.dungeons?.misc["max_floors"];',
+      "const entry = fiddle.quests[id];",
+    ].join("\n");
+
+    expect(referencesInSource(source)).toEqual(["dungeons.misc.max_floors", "quests"]);
   });
 });
 
 describe("claimsFor", () => {
-  it("matches a root by an exact, ancestor, or descendant reference", () => {
+  it("marks paths at or inside a root, and ancestors of it", () => {
     const references = [
       { module: "extract/items.ts", reference: "items" },
       { module: "extract/npcs.ts", reference: "npcs.holt" },
@@ -58,23 +72,32 @@ describe("claimsFor", () => {
     ];
 
     expect(claimsFor("items.other.cooked_dishes", references)).toEqual([
-      { module: "extract/items.ts", reference: "items" },
-      { module: "extract/recipes.ts", reference: "items.other.cooked_dishes.soup.recipe" },
+      { module: "extract/items.ts", reference: "items", via: "ancestor" },
+      {
+        module: "extract/recipes.ts",
+        reference: "items.other.cooked_dishes.soup.recipe",
+        via: "path",
+      },
     ]);
     expect(claimsFor("npcs.holt", references)).toEqual([
-      { module: "extract/npcs.ts", reference: "npcs.holt" },
+      { module: "extract/npcs.ts", reference: "npcs.holt", via: "path" },
     ]);
   });
 
-  it("drops a module's ancestor reference when it also names a narrower path", () => {
+  it("keeps an ancestor claim beside a module's narrower paths", () => {
+    // Like extract/mines.ts: it holds `fiddle.dungeons`, names the biomes, and reads `misc`
+    // through a local variable the scan can't follow.
     const references = [
-      { module: "extract/skills.ts", reference: "ui" },
-      { module: "extract/skills.ts", reference: "ui.skill_menu.defaults" },
+      { module: "extract/mines.ts", reference: "dungeons" },
+      { module: "extract/mines.ts", reference: "dungeons.dungeons.biomes" },
     ];
 
-    expect(claimsFor("ui.credits", references)).toEqual([]);
-    expect(claimsFor("ui.skill_menu.defaults", references)).toEqual([
-      { module: "extract/skills.ts", reference: "ui.skill_menu.defaults" },
+    expect(claimsFor("dungeons.misc", references)).toEqual([
+      { module: "extract/mines.ts", reference: "dungeons", via: "ancestor" },
+    ]);
+    expect(claimsFor("dungeons.dungeons", references)).toEqual([
+      { module: "extract/mines.ts", reference: "dungeons", via: "ancestor" },
+      { module: "extract/mines.ts", reference: "dungeons.dungeons.biomes", via: "path" },
     ]);
   });
 });
@@ -101,6 +124,7 @@ describe("scanPipelineReferences", () => {
     expect(claimsFor("renown", references)).toContainEqual({
       module: "extract/renown.ts",
       reference: "renown",
+      via: "path",
     });
   });
 });
