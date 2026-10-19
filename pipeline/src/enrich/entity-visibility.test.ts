@@ -16,6 +16,7 @@ import type {
   AnimalId,
   CosmeticId,
   ItemId,
+  MountAppearanceId,
   PerkId,
   QuestId,
   RecipeId,
@@ -1161,5 +1162,28 @@ describe("assignEntityVisibility — quests", () => {
       type: "questCompleted",
       questId: "prior_quest",
     });
+  });
+});
+
+describe("assignEntityVisibility — mount appearances", () => {
+  it("hides every other appearance until the Mistmare itself is revealed", () => {
+    const trackerData = makeTrackerData({
+      mount: {
+        appearances: {
+          giant_chicken_gold: {
+            sources: [{ type: "chicken_statue", unlockCondition: "breed_all_chicken_tiers" }],
+          },
+          mistmare: {
+            sources: [{ type: "horse_statue", cost: 100, questId: "find_the_weathervane" }],
+          },
+        },
+      },
+    });
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+    const gate = { type: "questAvailable", questId: "find_the_weathervane" };
+    expect(trackerData.mount.appearances["mistmare" as MountAppearanceId].visibility).toEqual(gate);
+    expect(
+      trackerData.mount.appearances["giant_chicken_gold" as MountAppearanceId].visibility,
+    ).toEqual(gate);
   });
 });

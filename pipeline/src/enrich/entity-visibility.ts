@@ -307,9 +307,28 @@ function assignItemVisibility(trackerData: TrackerData, ctx: SourceVisibilityCon
   }
 }
 
+/** The appearance that is the mount itself, as opposed to a skin for it. */
+function isMount(appearance: SourcedEntity): boolean {
+  return appearance.sources.some((source) => source.type === "horse_statue");
+}
+
+/**
+ * Every other appearance is a skin for the Mistmare, so it stays hidden until the Mistmare itself
+ * (the appearance the Horse Statue grants) is revealed, whatever its own source says.
+ */
 function assignMountVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
-  for (const appearance of Object.values(trackerData.mount.appearances)) {
+  const appearances = Object.values(trackerData.mount.appearances);
+  for (const appearance of appearances) {
     assignSourcedEntityVisibility(appearance, ctx);
+  }
+  const mountGate = orSimplify(
+    appearances
+      .filter((appearance) => isMount(appearance))
+      .map((appearance) => appearance.visibility ?? ALWAYS_VISIBLE),
+  );
+  for (const appearance of appearances) {
+    if (isMount(appearance)) continue;
+    appearance.visibility = andSimplify([appearance.visibility ?? ALWAYS_VISIBLE, mountGate]);
   }
 }
 
