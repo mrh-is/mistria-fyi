@@ -1,3 +1,4 @@
+import { extractSealCutsceneQuests } from "../extract/cutscene-quest-map.js";
 import { forEachItem } from "../extractor-helpers.js";
 import { getCutsceneRecords } from "../parse/parse-fiddle.js";
 import { entriesFromRecord, validateReviewedEntries } from "./entry.js";
@@ -77,11 +78,14 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
   const assets = records(fiddle.player_assets);
   const cutscenes = getCutsceneRecords(fiddle);
   const questIds = ids(quests);
+  const sealCutscenes = extractSealCutsceneQuests(fiddle, questIds);
   validate(
     "cutscene quest",
     CUTSCENE_QUEST_ENTRIES,
     ids(cutscenes),
-    (entry) => cutscenes[entry.id]?.quest_to_progress === entry.value.questId,
+    (entry) =>
+      cutscenes[entry.id]?.quest_to_progress === entry.value.questId ||
+      sealCutscenes[entry.id]?.questId === entry.value.questId,
   );
   validate("store gate", STORE_UNLOCK_QUESTS_ENTRIES, ids(stores), (entry) =>
     nativeGate(stores[entry.id], entry.value),

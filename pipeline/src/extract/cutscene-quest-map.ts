@@ -1,5 +1,6 @@
+import { expectRecord, expectString, expectStringArray } from "../data-shapes.js";
 import { CUTSCENE_QUESTS } from "../overrides/game-facts.js";
-import { getCutsceneRecords } from "../parse/parse-fiddle.js";
+import { getCutsceneRecords, sourceFileFor } from "../parse/parse-fiddle.js";
 
 import type { QuestId } from "#lib/types/tracker-data.js";
 
@@ -37,16 +38,18 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
     for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {
       if (cutsceneId === "default" || typeof cutscene !== "object" || cutscene === null) continue;
 
-      if (typeof cutscene.quest_to_start === "string") {
-        map[cutsceneId] = {
-          phase: "available",
-          questId: cutscene.quest_to_start as QuestId,
-        };
+      const questToStart = questToStartId(fiddle, cutsceneId, cutscene.quest_to_start);
+      if (questToStart !== undefined) {
+        map[cutsceneId] = { phase: "available", questId: questToStart };
       }
-      if (typeof cutscene.quest_to_progress === "string") {
+      if (cutscene.quest_to_progress !== undefined) {
         map[cutsceneId] = {
           phase: "completed",
-          questId: cutscene.quest_to_progress as QuestId,
+          questId: expectString(cutscene.quest_to_progress, {
+            entityId: cutsceneId,
+            fieldPath: "quest_to_progress",
+            sourcePath: sourceFileFor(fiddle, "cutscenes"),
+          }) as QuestId,
         };
       }
     }
@@ -79,7 +82,14 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
     }
   }
 
-  // Source 3: Naming convention — strip _pt_N suffix, match against quest IDs
+  // Source 3: seals.toml pairs each seal-breaking cutscene with the quest it completes
+  for (const [cutsceneId, entry] of Object.entries(
+    extractSealCutsceneQuests(fiddle, allQuestIds),
+  )) {
+    if (!(cutsceneId in map)) map[cutsceneId] = entry;
+  }
+
+  // Source 4: Naming convention — strip _pt_N suffix, match against quest IDs
   if (cutscenes) {
     for (const cutsceneId of Object.keys(cutscenes)) {
       if (cutsceneId === "default" || cutsceneId in map) continue;
@@ -102,5 +112,60 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
   }
 
   console.log(`  Cutscene-quest map: ${Object.keys(map).length} cutscenes mapped`);
+  return map;
+}
+
+/**
+ * A cutscene that starts several quests starts them together, so seeing it is equivalent to the
+ * first one becoming available.
+ */
+function questToStartId(
+  fiddle: ParsedGameData,
+  cutsceneId: string,
+  value: unknown,
+): QuestId | undefined {
+  if (value === undefined) return undefined;
+  const context = {
+    entityId: cutsceneId,
+    fieldPath: "quest_to_start",
+    sourcePath: sourceFileFor(fiddle, "cutscenes"),
+  };
+  if (!Array.isArray(value)) return expectString(value, context) as QuestId;
+  const [first] = expectStringArray(value, context);
+  if (first === undefined) {
+    throw new Error(`Expected at least one quest for ${cutsceneId}.quest_to_start`);
+  }
+  return first as QuestId;
+}
+
+/**
+ * Maps each `seals.toml` cutscene to its seal's quest. The scene plays when the seal breaks, which
+ * completes that quest. Seals without a cutscene (the priestess quarters) are skipped.
+ */
+export function extractSealCutsceneQuests(
+  fiddle: ParsedGameData,
+  questIds: ReadonlySet<string>,
+): CutsceneQuestMap {
+  if (fiddle.seals === undefined) return {};
+  const sourcePath = sourceFileFor(fiddle, "seals");
+  const map: CutsceneQuestMap = {};
+  for (const [sealId, raw] of Object.entries(
+    expectRecord(fiddle.seals, { fieldPath: "seals", sourcePath }),
+  )) {
+    const seal = expectRecord(raw, { fieldPath: `seals.${sealId}`, sourcePath });
+    if (seal.cutscene === undefined) continue;
+    const cutsceneId = expectString(seal.cutscene, {
+      fieldPath: `seals.${sealId}.cutscene`,
+      sourcePath,
+    });
+    const questId = expectString(seal.quest, { fieldPath: `seals.${sealId}.quest`, sourcePath });
+    if (!questIds.has(questId)) {
+      throw new Error(`Unknown quest ${questId} for seals.${sealId} in ${sourcePath}`);
+    }
+    if (cutsceneId in map) {
+      throw new Error(`Duplicate seal cutscene ${cutsceneId} in ${sourcePath}`);
+    }
+    map[cutsceneId] = { phase: "completed", questId: questId as QuestId };
+  }
   return map;
 }
