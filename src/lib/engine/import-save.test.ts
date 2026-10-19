@@ -292,6 +292,24 @@ describe("colorway normalization", () => {
   });
 });
 
+describe("almanac discovery", () => {
+  // The game's almanac counts only items_acquired. It allocates items_sold with a zero for every
+  // item, and crafting can record recipes_created without marking the item acquired.
+  it("ignores items_sold, including the zero-filled entries every save carries", () => {
+    const { completed } = extractSaveProgress({
+      player: { items_acquired: [], items_sold: { adeline_chair: 0, apple: 3, worn_pendant: 0 } },
+    });
+    expect(completed.almanac).toEqual(new Set());
+  });
+
+  it("ignores recipes_created without a matching acquisition", () => {
+    const { completed } = extractSaveProgress({
+      player: { items_acquired: [], recipes_created: ["haunted_attic_bed_dark"] },
+    });
+    expect(completed.almanac).toEqual(new Set());
+  });
+});
+
 describe("isPlayerSaveSection", () => {
   it("accepts a save containing recipe unlocks", () => {
     expect(isPlayerSaveSection({ recipe_unlocks: ["ocarina_sprite_statue"] })).toBe(true);
@@ -347,19 +365,19 @@ describe("malformed save fields", () => {
   it("drops null and array records with a warning", () => {
     const animalId = recordKeys(trackerData.animals)[0];
     const { completed, warnings } = extractSaveProgress({
+      gamedata: { t2_world_facts: null },
       player: {
         animal_cosmetic_unlocks: { [animalId]: "not-a-list" },
         animal_variant_unlocks: ["not", "a", "record"],
         cosmetic_unlocks: [],
-        items_sold: null,
       },
     });
 
     expect(completed.animals?.[animalId]?.size).toBe(0);
     expect(warnings).toEqual([
-      { code: "not-an-object", path: "player.items_sold" },
       { code: "not-an-object", path: "player.animal_variant_unlocks" },
       { code: "not-a-list", path: `player.animal_cosmetic_unlocks.${animalId}` },
+      { code: "not-an-object", path: "gamedata.t2_world_facts" },
     ]);
   });
 

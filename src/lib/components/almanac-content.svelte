@@ -12,7 +12,7 @@
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
-  import { getName, nameCollator } from "#lib/data/names.js";
+  import { getAlmanacEntryNames, getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isInProgressScope, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
@@ -101,6 +101,8 @@
     canonicalId: ItemId;
     entry: AlmanacEntry;
     item: Item;
+    /** Every member's name, so the filter finds a merged row by any of them. */
+    memberNames: string[];
     name: string;
   }
 
@@ -112,11 +114,13 @@
       rows: cat.items
         .map((entry): AlmanacRow => {
           const canonicalId = entry.itemIds[0];
+          const memberNames = getAlmanacEntryNames(entry, locale);
           return {
             canonicalId,
             entry,
             item: trackerData.items[canonicalId],
-            name: getName("items", canonicalId, locale),
+            memberNames,
+            name: memberNames[0],
           };
         })
         .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
@@ -130,8 +134,8 @@
    */
   let sectionViews = $derived(
     almanacSections.map((section) => {
-      const baseRows = section.rows.filter(({ canonicalId, entry, item, name }) => {
-        if (!matchesFilter(name)) return false;
+      const baseRows = section.rows.filter(({ canonicalId, entry, item, memberNames }) => {
+        if (!memberNames.some((name) => matchesFilter(name))) return false;
         if (nameFilter && isItemSpoilered(item)) return false;
         return isInProgressScope(
           aggregateSources(entry),

@@ -8,7 +8,7 @@ import { recordEntries } from "#lib/utils/record.js";
 
 import { searchAllCategories } from "./search.js";
 
-import type { QuestId, RecipeId, Season, Weather } from "#lib/types/tracker-data.js";
+import type { ItemId, QuestId, RecipeId, Season, Weather } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 
 import type { UserProgressionState } from "./visibility.js";
@@ -175,6 +175,31 @@ describe("basic matching", () => {
     expect(categories.has("almanac")).toBe(true);
     expect(categories.has("recipes")).toBe(true);
     expect(results.every((result) => result.name === "ベジタブルスープ")).toBe(true);
+  });
+
+  it("finds a merged almanac row by a noncanonical member's name", () => {
+    // Single & double beds share one recipe, so the game shows one row, named for the single bed.
+    const results = search("Emerald Double Bed");
+
+    expect(results).toContainEqual(
+      expect.objectContaining({
+        category: "almanac",
+        id: "emerald_bed_v1",
+        name: "Emerald Single Bed",
+      }),
+    );
+  });
+
+  it("finds a merged almanac row by a noncanonical member's localized name", () => {
+    const results = searchAllCategories(
+      getName("items", "emerald_double_bed_v1" as ItemId, "ja"),
+      makeCompletedState(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+      "ja",
+    );
+
+    expect(results.some((r) => r.category === "almanac" && r.id === "emerald_bed_v1")).toBe(true);
   });
 
   it("matches the English fallback term while reporting the localized name", () => {

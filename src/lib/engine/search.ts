@@ -1,5 +1,5 @@
 import { trackerData, trackerIndex } from "#lib/data/index.js";
-import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
+import { animalNameId, getAlmanacEntryNames, getName, nameCollator } from "#lib/data/names.js";
 import { isAlmanacEntryObtainable, isItemObtainable } from "#lib/engine/applicability.js";
 import { isItemAvailable } from "#lib/engine/availability.js";
 import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
@@ -44,6 +44,9 @@ interface SearchContext {
 interface SearchCandidate {
   englishName: string;
   localizedName: string;
+  /** Further names matched the same way, such as the other members of a merged almanac row. */
+  otherEnglishNames?: readonly string[];
+  otherLocalizedNames?: readonly string[];
   result: () => SearchResult;
 }
 
@@ -66,10 +69,13 @@ const SEARCH_PROVIDERS: readonly SearchProvider[] = [
       const item = trackerData.items[canonicalId];
       if (item.visibility && !isConditionVisible(item.visibility, progressionState)) continue;
       if (!isAlmanacEntryObtainable(entry.itemIds, completed)) continue;
-      const name = getName("items", canonicalId, locale);
+      const [name, ...otherLocalizedNames] = getAlmanacEntryNames(entry, locale);
+      const [englishName, ...otherEnglishNames] = getAlmanacEntryNames(entry, "en");
       yield {
-        englishName: getName("items", canonicalId, "en"),
+        englishName,
         localizedName: name,
+        otherEnglishNames,
+        otherLocalizedNames,
         result: () => ({
           available: isItemAvailable(
             trackerIndex.getAggregatedAlmanacSources(canonicalId),
@@ -298,9 +304,11 @@ export function searchAllCategories(
   const results: SearchResult[] = [];
   for (const source of SEARCH_PROVIDERS) {
     for (const candidate of source(context)) {
+      const localizedNames = [candidate.localizedName, ...(candidate.otherLocalizedNames ?? [])];
+      const englishNames = [candidate.englishName, ...(candidate.otherEnglishNames ?? [])];
       if (
-        foldName(candidate.localizedName, locale).includes(q) ||
-        foldName(candidate.englishName, "en").includes(englishQ)
+        localizedNames.some((name) => foldName(name, locale).includes(q)) ||
+        englishNames.some((name) => foldName(name, "en").includes(englishQ))
       ) {
         results.push(candidate.result());
       }
