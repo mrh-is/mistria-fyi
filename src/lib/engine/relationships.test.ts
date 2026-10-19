@@ -128,14 +128,14 @@ describe("relationshipPresentation", () => {
     {
       actions: ["platonic", "romantic"],
       childChoice: "undeclared",
-      level: 12,
+      level: 10,
       relationship: "undecided",
       status: "path_not_chosen",
     },
     {
       actions: [],
       childChoice: "undeclared",
-      level: 12,
+      level: 10,
       relationship: "platonic",
       status: "best_friends",
     },
@@ -163,21 +163,21 @@ describe("relationshipPresentation", () => {
     {
       actions: ["yes", "no"],
       childChoice: "undeclared",
-      level: 12,
+      level: 10,
       relationship: "married",
       status: "married",
     },
     {
       actions: [],
       childChoice: "yes",
-      level: 12,
+      level: 10,
       relationship: "married",
       status: "married_kids",
     },
     {
       actions: [],
       childChoice: "no",
-      level: 12,
+      level: 10,
       relationship: "married",
       status: "married_child_free",
     },
@@ -214,7 +214,7 @@ describe("relationshipPresentation", () => {
     expect(
       relationshipPresentation({
         childChoice: "undeclared",
-        level: 12,
+        level: 10,
         marriedVillager: "celine" as VillagerId,
         relationship: "romantic",
         villagerId,

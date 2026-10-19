@@ -11,7 +11,7 @@ import type { ItemId, Season, VillagerId, Weather } from "#lib/types/tracker-dat
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
-export const MAX_HEART_LEVEL = 12;
+export const MAX_HEART_LEVEL = 10;
 export const MAX_SKILL_LEVEL = 60;
 
 export type AllProgress = Record<CategoryKey, CategoryProgress>;
