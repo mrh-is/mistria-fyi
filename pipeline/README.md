@@ -258,7 +258,7 @@ else, so a new game version surfaces immediately.
 
 | Module                    | Input                                 | Output & notable rules                                                                                                                                      |
 | ------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `almanac.ts`              | Items, almanac UI, fish, translations | Almanac rows and the item registry. Collapses colorways by recipe key and English name; the canonical ID is the alphabetically first member.                |
+| `almanac.ts`              | Items, almanac UI, fish, translations | Almanac rows and the item registry. Collapses items into one row per recipe key, as the game does; the canonical ID is the alphabetically first member.     |
 | `animals.ts`              | `ranching.animals`                    | Animal species with variant tiers. Skips templates and unacquirable variants; default-unlocked variants land in tier one.                                   |
 | `cosmetics.ts`            | `player_assets`, customization UI     | Cosmetic registry and slot order. Throws unless `ui_slot` and `ui_sub_category` name an entry of `ui/character_customization.toml`.                         |
 | `dates.ts`                | `dates`                               | Date registry.                                                                                                                                              |
