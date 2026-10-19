@@ -1,6 +1,6 @@
 import { encodeQR } from "qr";
 import { decodeQR } from "qr/decode.js";
-import { frameLoop, QRCanvas, rearCamera, svgToPng } from "qr/dom.js";
+import { frameLoop, QRCamera, QRCanvas, svgToPng } from "qr/dom.js";
 
 import type { QrOpts } from "qr";
 
@@ -17,6 +17,16 @@ const MIN_QR_CSS_PIXELS = 192;
  * card width caps the displayed size, so the densest codes still render smaller.
  */
 const TARGET_CSS_PIXELS_PER_MODULE = 5;
+
+/**
+ * Camera resolution to request. The library's default asks for the screen's CSS size, which leaves
+ * a dense transfer code about one camera pixel per module.
+ */
+const CAMERA_CONSTRAINTS = {
+  facingMode: "environment",
+  height: { ideal: 1080 },
+  width: { ideal: 1920 },
+} as const satisfies MediaTrackConstraints;
 
 /** PNG pixels per CSS pixel, so the code stays sharp on high-density displays. */
 const PNG_PIXEL_DENSITY = 2;
@@ -74,7 +84,8 @@ export async function startQrCamera(
   overlay: HTMLCanvasElement,
   onResult: (data: string) => void,
 ): Promise<ClosableScanner> {
-  const camera = await rearCamera(video);
+  const stream = await navigator.mediaDevices.getUserMedia({ video: CAMERA_CONSTRAINTS });
+  const camera = new QRCamera(video, stream);
   const accent = getComputedStyle(overlay).getPropertyValue("--primary").trim() || "green";
   const canvas = new QRCanvas(
     { overlay },
@@ -85,7 +96,8 @@ export async function startQrCamera(
   let found = false;
   async function readFrame(): Promise<void> {
     try {
-      const result = await camera.readFrame(canvas);
+      // Decode the camera's own pixels, not the frame resampled to the on-screen video size.
+      const result = await camera.readFrame(canvas, true);
       if (typeof result !== "string" || found) return;
       found = true;
       onResult(result);
