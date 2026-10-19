@@ -571,7 +571,7 @@ above the finding.
 ### Full local matrix
 
 `pnpm run verify` runs CI's non-browser matrix locally (`lint`, `check`, `check:i18n`, `test`,
-`build`, `check:routes`, `check:built`) with compact output, stopping on the first failure. It is
+`build`, `check:routes`, `check:built`) with live output, stopping on the first failure. It is
 read-only: it runs `lint`, not `lint:fix`, so run `pnpm run lint:fix` beforehand. Opt-in flags add
 the local-only steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`, `--browser` adds
 `test:accessibility` & `test:pwa`, and `--all` adds both. Run it once, when commit-ready, only for
