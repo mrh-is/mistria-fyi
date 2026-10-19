@@ -10,6 +10,8 @@ import { version } from "$app/env";
 
 import TransferCard from "./transfer-card.svelte";
 
+import type { TransferQr } from "./transfer-qr.js";
+
 const transferQr = vi.hoisted(() => ({
   decodeQrImage: vi.fn(),
   generateTransferQr: vi.fn(),
@@ -51,11 +53,11 @@ async function otherBuildPayload(): Promise<string> {
 
 describe("TransferCard generate", () => {
   it("renders the QR code for the current progress and announces the in-flight state", async () => {
-    let resolveDataUrl: ((value: string) => void) | undefined;
+    let resolveQr: ((value: TransferQr) => void) | undefined;
     transferQr.generateTransferQr.mockImplementation(
       () =>
-        new Promise<string>((resolve) => {
-          resolveDataUrl = resolve;
+        new Promise<TransferQr>((resolve) => {
+          resolveQr = resolve;
         }),
     );
     userState.toggleMuseumItem(museumItemId);
@@ -71,12 +73,12 @@ describe("TransferCard generate", () => {
     await waitFor(() => {
       expect(transferQr.generateTransferQr).toHaveBeenCalledTimes(1);
     });
-    resolveDataUrl?.("data:image/png;base64,QUJD");
+    resolveQr?.({ dataUrl: "data:image/png;base64,QUJD", displayPixels: 505 });
 
-    expect(await screen.findByRole("img", { name: "Transfer QR Code" })).toHaveAttribute(
-      "src",
-      "data:image/png;base64,QUJD",
-    );
+    const image = await screen.findByRole("img", { name: "Transfer QR Code" });
+    expect(image).toHaveAttribute("src", "data:image/png;base64,QUJD");
+    expect(image).toHaveAttribute("width", "505");
+    expect(image).toHaveAttribute("height", "505");
     expect(screen.getByRole("button", { name: "Generate QR Code" })).toBeEnabled();
     expect(screen.getByRole("status")).toHaveTextContent("");
     expect(transferQr.generateTransferQr).toHaveBeenCalledWith(

@@ -9,8 +9,28 @@ import type { ClosableScanner } from "./data-effects.js";
 /** Transfer payloads are long, so low error correction keeps the code at the smallest version. */
 export const TRANSFER_QR_OPTIONS = { border: 2, ecc: "low" } as const satisfies QrOpts;
 
-/** Smallest rendered edge, in pixels, for the generated PNG. */
-const MIN_QR_PIXELS = 300;
+/** Smallest displayed edge, in CSS pixels, so a short payload doesn't render as a speck. */
+const MIN_QR_CSS_PIXELS = 192;
+
+/** Fewest CSS pixels per module; below this, phone cameras struggle to resolve a dense code. */
+const MIN_CSS_PIXELS_PER_MODULE = 5;
+
+/** PNG pixels per CSS pixel, so the code stays sharp on high-density displays. */
+const PNG_PIXEL_DENSITY = 2;
+
+/** A rendered transfer code and the edge length, in CSS pixels, to display it at. */
+export interface TransferQr {
+  dataUrl: string;
+  displayPixels: number;
+}
+
+/**
+ * Display edge, in CSS pixels, for a code `modules` wide: a whole number of pixels per module, at
+ * least `MIN_CSS_PIXELS_PER_MODULE`, and never smaller than `MIN_QR_CSS_PIXELS`.
+ */
+export function transferQrDisplayPixels(modules: number): number {
+  return modules * Math.max(MIN_CSS_PIXELS_PER_MODULE, Math.ceil(MIN_QR_CSS_PIXELS / modules));
+}
 
 /** Decodes the QR code in an image file. Throws when the image has none. */
 export async function decodeQrImage(file: Blob): Promise<string> {
@@ -32,11 +52,13 @@ export async function decodeQrImage(file: Blob): Promise<string> {
   }
 }
 
-/** Renders the payload as a PNG data URL, scaled by a whole number of pixels per module. */
-export async function generateTransferQr(payload: string): Promise<string> {
+/** Renders the payload as a PNG data URL, sized so each module spans whole pixels. */
+export async function generateTransferQr(payload: string): Promise<TransferQr> {
   const modules = encodeQR(payload, "raw", TRANSFER_QR_OPTIONS).length;
-  const pixels = modules * Math.ceil(MIN_QR_PIXELS / modules);
-  return svgToPng(encodeQR(payload, "svg", TRANSFER_QR_OPTIONS), pixels, pixels);
+  const displayPixels = transferQrDisplayPixels(modules);
+  const pngPixels = displayPixels * PNG_PIXEL_DENSITY;
+  const svg = encodeQR(payload, "svg", TRANSFER_QR_OPTIONS);
+  return { dataUrl: await svgToPng(svg, pngPixels, pngPixels), displayPixels };
 }
 
 /**

@@ -25,12 +25,13 @@
   import type { MergeResult } from "#lib/types/user-progress.js";
 
   import type { ClosableScanner } from "./data-effects.js";
+  import type { TransferQr } from "./transfer-qr.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 
   // ── State ──
   let generating = $state(false);
-  let qrDataUrl = $state<null | string>(null);
+  let qr = $state<null | TransferQr>(null);
 
   let scanning = $state(false);
   let videoEl = $state<HTMLVideoElement | null>(null);
@@ -46,7 +47,7 @@
   // ── Generate QR Code ──
   async function handleGenerate() {
     generating = true;
-    qrDataUrl = null;
+    qr = null;
     transferResult = null;
     transferError = null;
     versionMismatch = false;
@@ -54,7 +55,7 @@
 
     try {
       const payload = await encodeTransferPayload(userState.state.progress, version);
-      qrDataUrl = await generateTransferQr(payload);
+      qr = await generateTransferQr(payload);
     } catch (error) {
       transferError = `${m.transfer_error_generate_prefix()} ${error instanceof Error ? error.message : m.transfer_unknown_error()}`;
     } finally {
@@ -69,7 +70,7 @@
     transferError = null;
     versionMismatch = false;
     copiedRecoverySteps = false;
-    qrDataUrl = null;
+    qr = null;
     scanning = true;
 
     // Wait for video element to bind
@@ -142,7 +143,7 @@
     transferError = null;
     versionMismatch = false;
     copiedRecoverySteps = false;
-    qrDataUrl = null;
+    qr = null;
 
     const input = document.createElement("input");
     input.type = "file";
@@ -216,9 +217,15 @@
     </Button>
 
     <!-- QR Code display -->
-    {#if qrDataUrl}
+    {#if qr}
       <div class="flex flex-col items-center gap-2 rounded-md border p-4">
-        <img alt={m.transfer_qr_alt()} class="size-48" src={qrDataUrl} />
+        <img
+          alt={m.transfer_qr_alt()}
+          class="aspect-square h-auto max-w-full [image-rendering:pixelated]"
+          src={qr.dataUrl}
+          width={qr.displayPixels}
+          height={qr.displayPixels}
+        />
         <p class="text-center text-sm text-muted-foreground">
           {m.transfer_scan_instruction()}
         </p>
