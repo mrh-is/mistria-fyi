@@ -59,10 +59,10 @@ not here.
 - Start from the refreshed remote tip of the intended branch. Never reset existing work, switch a
   shared checkout, or discard changes to refresh.
 - Each editing subagent needs a worktree its harness permits it to edit. Claude Code uses Agent
-  `isolation: "worktree"` & `node scripts/setup-worktree.ts`; a named preview serves the
-  orchestrator’s checkout, so preview the subagent’s own server by URL. Supply each delegation with
-  file ownership, harness boundaries, & its focused test command; built-in Explore & Plan subagents
-  may not receive project memory.
+  `isolation: "worktree"` & `node scripts/setup-worktree.ts`. A named preview serves the session’s
+  original folder, so any agent in a worktree previews its own server by URL. Supply each delegation
+  with file ownership, harness boundaries, & its focused test command; built-in Explore & Plan
+  subagents may not receive project memory.
 - Never copy or share dependencies, caches, builds, or writable generated directories between
   worktrees.
 
