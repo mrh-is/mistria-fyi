@@ -41,6 +41,36 @@ describe("buildCutsceneQuestMap", () => {
     });
   });
 
+  it("maps a setup cutscene to the quest its follow-up scene starts", () => {
+    const fiddle = makeCutsceneFiddle({
+      cutscenes: {
+        find_the_weathervane: {
+          quest_to_start: "find_the_weathervane",
+          requirements: { seen_cutscene: "find_the_weathervane_setup" },
+        },
+        find_the_weathervane_setup: {},
+      },
+    });
+    const map = buildCutsceneQuestMap(fiddle);
+    expect(map.find_the_weathervane_setup).toEqual({
+      phase: "available",
+      questId: "find_the_weathervane",
+    });
+  });
+
+  it("keeps a setup cutscene's own quest link over its follow-up's", () => {
+    const fiddle = makeCutsceneFiddle({
+      cutscenes: {
+        follow_up: { quest_to_start: "later_quest", requirements: { seen_cutscene: "setup" } },
+        setup: { quest_to_progress: "earlier_quest" },
+      },
+    });
+    expect(buildCutsceneQuestMap(fiddle).setup).toEqual({
+      phase: "completed",
+      questId: "earlier_quest",
+    });
+  });
+
   it("maps explicit quest_to_progress on cutscene", () => {
     const fiddle = makeCutsceneFiddle({
       cutscenes: {

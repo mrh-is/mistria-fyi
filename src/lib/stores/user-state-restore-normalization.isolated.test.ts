@@ -63,6 +63,7 @@ const known = {
   almanacRecipe: recordKeys(trackerData.recipes)[0],
   cosmetic: recordKeys(trackerData.cosmetics)[0],
   date: recordKeys(trackerData.dates)[0],
+  mountAppearance: recordKeys(trackerData.mount.appearances)[0],
   museum: firstMuseumItemId(),
   perk: firstPerkId(),
   petCosmetic: recordKeys(trackerData.pets.cosmetics)[0],
@@ -110,6 +111,7 @@ function buildStoredState(
         [UNKNOWN_ID]: 10,
       },
       mineFloor,
+      mountAppearances: [known.mountAppearance, UNKNOWN_ID],
       museum: [known.museum, UNKNOWN_ID],
       petCosmetics: [known.petCosmetic, UNKNOWN_ID],
       petSkins: [known.petSkin, UNKNOWN_ID],
@@ -150,6 +152,7 @@ function expectUnknownIdsRemoved(completed: DeepReadonly<ProgressState>): void {
   expect(completed.museum).not.toContain(UNKNOWN_ID);
   expect(completed.petCosmetics).not.toContain(UNKNOWN_ID);
   expect(completed.petSkins).not.toContain(UNKNOWN_ID);
+  expect(completed.mountAppearances).not.toContain(UNKNOWN_ID);
   expect(completed.unlockedPerks).not.toContain(UNKNOWN_ID);
   expect(completed.animals).not.toHaveProperty(UNKNOWN_ID);
   expect(completed.animalCosmetics).not.toHaveProperty(UNKNOWN_ID);

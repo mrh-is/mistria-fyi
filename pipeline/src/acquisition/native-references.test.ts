@@ -158,6 +158,7 @@ function validate(itemSources: unknown[]): void {
     cosmetics: {},
     items: { reward: { sources: itemSources } },
     mines: { biomes: [], spells: {} },
+    mount: { appearances: {} },
     museum: {},
     pets: { cosmetics: {}, skins: {} },
     quests: {},

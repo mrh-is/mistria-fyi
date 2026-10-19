@@ -25,6 +25,7 @@
     AnimalVariantId,
     CosmeticId,
     ItemId,
+    MountAppearanceId,
     PetCosmeticSetId,
     PetSkinId,
     QuestId,
@@ -127,6 +128,9 @@
         if (result.id.startsWith("pet-cosmetic:")) {
           const petCosmeticId = result.id.slice("pet-cosmetic:".length);
           userState.togglePetCosmetic(petCosmeticId as PetCosmeticSetId);
+        } else if (result.id.startsWith("mount-appearance:")) {
+          const appearanceId = result.id.slice("mount-appearance:".length);
+          userState.toggleMountAppearance(appearanceId as MountAppearanceId);
         } else if (result.id.startsWith("pet-skin:")) {
           const petSkinId = result.id.slice("pet-skin:".length);
           userState.togglePetSkin(petSkinId as PetSkinId);

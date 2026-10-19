@@ -2,6 +2,7 @@
   import AllCompleted from "#lib/components/all-completed.svelte";
   import AnimalCosmeticsSection from "#lib/components/animal-cosmetics-section.svelte";
   import AnimalVariantsSection from "#lib/components/animal-variants-section.svelte";
+  import MountAppearancesSection from "#lib/components/mount-appearances-section.svelte";
   import PetCollectiblesSection from "#lib/components/pet-collectibles-section.svelte";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
@@ -64,6 +65,8 @@
 <AnimalVariantsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} {locale} />
 
 <AnimalCosmeticsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} {locale} />
+
+<MountAppearancesSection {areAllAnimalsComplete} {locale} />
 
 <PetCollectiblesSection {areAllAnimalsComplete} {locale} />
 

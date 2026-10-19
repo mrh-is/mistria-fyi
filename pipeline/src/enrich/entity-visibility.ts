@@ -76,6 +76,7 @@ export function assignEntityVisibility(
   assignItemVisibility(trackerData, ctx);
   assignRecipeVisibility(trackerData, ctx);
   assignCosmeticVisibility(trackerData, ctx);
+  assignMountVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
   assignSpellVisibility(trackerData);
   assignQuestVisibility(trackerData, cutsceneMap, questChains);
@@ -234,6 +235,8 @@ function acquisitionSourceCondition(
       return ALWAYS_VISIBLE;
     case "bait_fish":
       return { type: "questCompleted", questId: "apiaries_and_terrariums" as QuestId };
+    case "horse_statue":
+      return { type: "questAvailable", questId: source.questId };
     case "festival":
       return source.storeId
         ? storeGateCondition(source.storeId, ctx.storeVisibility)
@@ -301,6 +304,12 @@ function assignCosmeticVisibility(trackerData: TrackerData, ctx: SourceVisibilit
 function assignItemVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const [, item] of Object.entries(trackerData.items)) {
     assignSourcedEntityVisibility(item, ctx);
+  }
+}
+
+function assignMountVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
+  for (const appearance of Object.values(trackerData.mount.appearances)) {
+    assignSourcedEntityVisibility(appearance, ctx);
   }
 }
 
@@ -452,6 +461,7 @@ function acquisitionSourceConditions(
             : ALWAYS_VISIBLE,
       };
     }
+    case "horse_statue":
     case "quest":
       return {
         entity,
