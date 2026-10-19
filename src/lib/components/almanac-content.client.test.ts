@@ -78,6 +78,15 @@ describe("AlmanacContent", () => {
 
     expect(await view.findByText(japaneseName)).toBeInTheDocument();
   });
+
+  it("filters a merged row by a noncanonical member's name", async () => {
+    // Single & double beds share one recipe, so the row is named for the single bed.
+    toolbarState.setSearchQuery("Emerald Double Bed");
+
+    const view = renderWithFeedback(AlmanacContent, { locale: "en" });
+
+    expect(await view.findByText("Emerald Single Bed")).toBeInTheDocument();
+  });
 });
 
 function escapeRegExp(value: string): string {
