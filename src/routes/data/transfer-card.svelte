@@ -3,6 +3,7 @@
   import IconLoader2 from "@tabler/icons-svelte-runes/icons/loader-2";
   import IconPhotoPlus from "@tabler/icons-svelte-runes/icons/photo-plus";
   import IconQrcode from "@tabler/icons-svelte-runes/icons/qrcode";
+  import { tick } from "svelte";
 
   import { Icon } from "#lib/components/icon/index.js";
   import StatusNote from "#lib/components/status-note.svelte";
@@ -25,17 +26,20 @@
   import type { MergeResult } from "#lib/types/user-progress.js";
 
   import type { ClosableScanner } from "./data-effects.js";
+  import type { TransferQr } from "./transfer-qr.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 
   // ── State ──
   let generating = $state(false);
-  let qrDataUrl = $state<null | string>(null);
+  let qr = $state<null | TransferQr>(null);
 
   let scanning = $state(false);
   let videoEl = $state<HTMLVideoElement | null>(null);
   let overlayEl = $state<HTMLCanvasElement | null>(null);
   let scanner: ClosableScanner | null = null;
+  let scanButton = $state<HTMLButtonElement | null>(null);
+  let closeCameraButton = $state<HTMLButtonElement | null>(null);
   let scanAttempt = 0;
 
   let transferResult = $state<MergeResult | null>(null);
@@ -46,7 +50,7 @@
   // ── Generate QR Code ──
   async function handleGenerate() {
     generating = true;
-    qrDataUrl = null;
+    qr = null;
     transferResult = null;
     transferError = null;
     versionMismatch = false;
@@ -54,7 +58,7 @@
 
     try {
       const payload = await encodeTransferPayload(userState.state.progress, version);
-      qrDataUrl = await generateTransferQr(payload);
+      qr = await generateTransferQr(payload);
     } catch (error) {
       transferError = `${m.transfer_error_generate_prefix()} ${error instanceof Error ? error.message : m.transfer_unknown_error()}`;
     } finally {
@@ -69,7 +73,7 @@
     transferError = null;
     versionMismatch = false;
     copiedRecoverySteps = false;
-    qrDataUrl = null;
+    qr = null;
     scanning = true;
 
     // Wait for video element to bind
@@ -95,6 +99,7 @@
         return;
       }
       scanner = started;
+      closeCameraButton?.focus();
     } catch (error) {
       if (attempt !== scanAttempt) return;
       scanning = false;
@@ -116,9 +121,21 @@
   }
 
   function stopScanning() {
+    const wasScanning = scanning;
     scanAttempt += 1;
     scanner = closeScanner(scanner);
     scanning = false;
+    if (wasScanning) void restoreScanFocus();
+  }
+
+  // The scan button re-renders once the scanner closes; return focus to it.
+  async function restoreScanFocus() {
+    await tick();
+    scanButton?.focus();
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (scanning && event.key === "Escape") stopScanning();
   }
 
   $effect(() => {
@@ -142,7 +159,7 @@
     transferError = null;
     versionMismatch = false;
     copiedRecoverySteps = false;
-    qrDataUrl = null;
+    qr = null;
 
     const input = document.createElement("input");
     input.type = "file";
@@ -186,6 +203,8 @@
   }
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 <DataCard bind:open title={m.transfer_card_title()} summary={m.transfer_card_summary()}>
   <div class="flex flex-col gap-3">
     <div class="sr-only" role="status" aria-live="polite">
@@ -216,10 +235,17 @@
     </Button>
 
     <!-- QR Code display -->
-    {#if qrDataUrl}
-      <div class="flex flex-col items-center gap-2 rounded-md border p-4">
-        <img alt={m.transfer_qr_alt()} class="size-48" src={qrDataUrl} />
-        <p class="text-center text-sm text-muted-foreground">
+    {#if qr}
+      <!-- Full-bleed, so a dense code gets the card's whole width. -->
+      <div class="transfer-qr flex flex-col items-center gap-2 border-y py-4">
+        <img
+          alt={m.transfer_qr_alt()}
+          class="h-auto max-w-full"
+          src={qr.dataUrl}
+          width={qr.displayPixels}
+          height={qr.displayPixels}
+        />
+        <p class="px-4 text-center text-sm text-muted-foreground">
           {m.transfer_scan_instruction()}
         </p>
       </div>
@@ -227,34 +253,43 @@
 
     <!-- Scan QR Code -->
     {#if !scanning}
-      <Button class="w-full" variant="outline" onclick={handleScan}>
+      <Button bind:ref={scanButton} class="w-full" variant="outline" onclick={handleScan}>
         <IconCamera />
         {m.transfer_scan_action()}
       </Button>
     {/if}
 
-    <!-- Camera scanner -->
+    <!-- Camera scanner: full-screen, so a dense code can fill the camera's square scan region. -->
     {#if scanning}
-      <div class="relative overflow-hidden rounded-md border" aria-busy="true">
-        <!-- The video keeps its natural aspect ratio so the overlay's coordinates match the frame
-             the decoder reads. -->
-        <video
-          bind:this={videoEl}
-          class="block w-full"
-          aria-label={m.transfer_camera_feed_aria()}
-          autoplay
-          muted
-          playsinline
-        ></video>
-        <canvas
-          bind:this={overlayEl}
-          class="pointer-events-none absolute inset-0 size-full opacity-50"
-          aria-hidden="true"
-        ></canvas>
+      <div
+        class="fixed inset-0 z-50 grid place-items-center bg-black"
+        role="dialog"
+        aria-modal="true"
+        aria-label={m.transfer_scan_action()}
+        aria-busy="true"
+      >
+        <div class="relative">
+          <!-- The video keeps its natural aspect ratio so the overlay's coordinates match the frame
+               the decoder reads. -->
+          <video
+            bind:this={videoEl}
+            class="block max-h-dvh max-w-full"
+            aria-label={m.transfer_camera_feed_aria()}
+            autoplay
+            muted
+            playsinline
+          ></video>
+          <canvas
+            bind:this={overlayEl}
+            class="pointer-events-none absolute inset-0 size-full opacity-50"
+            aria-hidden="true"
+          ></canvas>
+        </div>
         <Button
-          class="absolute top-2 right-2"
+          bind:ref={closeCameraButton}
+          class="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3"
           size="icon"
-          variant="ghost"
+          variant="secondary"
           onclick={stopScanning}
           aria-label={m.transfer_close_camera_aria()}
         >
@@ -298,3 +333,9 @@
     {/if}
   </div>
 </DataCard>
+
+<style>
+  .transfer-qr {
+    margin-inline: calc(var(--data-card-inset) * -1);
+  }
+</style>

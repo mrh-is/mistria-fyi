@@ -1,6 +1,6 @@
 import { encodeQR } from "qr";
 import { decodeQR } from "qr/decode.js";
-import { frameLoop, QRCanvas, rearCamera, svgToPng } from "qr/dom.js";
+import { frameLoop, QRCamera, QRCanvas, svgToPng } from "qr/dom.js";
 
 import type { QrOpts } from "qr";
 
@@ -9,8 +9,41 @@ import type { ClosableScanner } from "./data-effects.js";
 /** Transfer payloads are long, so low error correction keeps the code at the smallest version. */
 export const TRANSFER_QR_OPTIONS = { border: 2, ecc: "low" } as const satisfies QrOpts;
 
-/** Smallest rendered edge, in pixels, for the generated PNG. */
-const MIN_QR_PIXELS = 300;
+/** Smallest displayed edge, in CSS pixels, so a short payload doesn't render as a speck. */
+const MIN_QR_CSS_PIXELS = 192;
+
+/**
+ * Target CSS pixels per module; below this, phone cameras struggle to resolve a dense code. The
+ * card width caps the displayed size, so the densest codes still render smaller.
+ */
+const TARGET_CSS_PIXELS_PER_MODULE = 5;
+
+/**
+ * Camera resolution to request. The library's default asks for the screen's CSS size, which leaves
+ * a dense transfer code about one camera pixel per module.
+ */
+const CAMERA_CONSTRAINTS = {
+  facingMode: "environment",
+  height: { ideal: 1080 },
+  width: { ideal: 1920 },
+} as const satisfies MediaTrackConstraints;
+
+/** PNG pixels per CSS pixel, so the code stays sharp on high-density displays. */
+const PNG_PIXEL_DENSITY = 2;
+
+/** A rendered transfer code and the edge length, in CSS pixels, to display it at. */
+export interface TransferQr {
+  dataUrl: string;
+  displayPixels: number;
+}
+
+/**
+ * Preferred display edge, in CSS pixels, for a code `modules` wide: a whole number of pixels per
+ * module, at least `TARGET_CSS_PIXELS_PER_MODULE`, and never smaller than `MIN_QR_CSS_PIXELS`.
+ */
+export function transferQrDisplayPixels(modules: number): number {
+  return modules * Math.max(TARGET_CSS_PIXELS_PER_MODULE, Math.ceil(MIN_QR_CSS_PIXELS / modules));
+}
 
 /** Decodes the QR code in an image file. Throws when the image has none. */
 export async function decodeQrImage(file: Blob): Promise<string> {
@@ -32,11 +65,13 @@ export async function decodeQrImage(file: Blob): Promise<string> {
   }
 }
 
-/** Renders the payload as a PNG data URL, scaled by a whole number of pixels per module. */
-export async function generateTransferQr(payload: string): Promise<string> {
+/** Renders the payload as a PNG data URL, sized so each module spans whole pixels. */
+export async function generateTransferQr(payload: string): Promise<TransferQr> {
   const modules = encodeQR(payload, "raw", TRANSFER_QR_OPTIONS).length;
-  const pixels = modules * Math.ceil(MIN_QR_PIXELS / modules);
-  return svgToPng(encodeQR(payload, "svg", TRANSFER_QR_OPTIONS), pixels, pixels);
+  const displayPixels = transferQrDisplayPixels(modules);
+  const pngPixels = displayPixels * PNG_PIXEL_DENSITY;
+  const svg = encodeQR(payload, "svg", TRANSFER_QR_OPTIONS);
+  return { dataUrl: await svgToPng(svg, pngPixels, pngPixels), displayPixels };
 }
 
 /**
@@ -49,7 +84,8 @@ export async function startQrCamera(
   overlay: HTMLCanvasElement,
   onResult: (data: string) => void,
 ): Promise<ClosableScanner> {
-  const camera = await rearCamera(video);
+  const stream = await navigator.mediaDevices.getUserMedia({ video: CAMERA_CONSTRAINTS });
+  const camera = new QRCamera(video, stream);
   const accent = getComputedStyle(overlay).getPropertyValue("--primary").trim() || "green";
   const canvas = new QRCanvas(
     { overlay },
@@ -60,7 +96,8 @@ export async function startQrCamera(
   let found = false;
   async function readFrame(): Promise<void> {
     try {
-      const result = await camera.readFrame(canvas);
+      // Decode the camera's own pixels, not the frame resampled to the on-screen video size.
+      const result = await camera.readFrame(canvas, true);
       if (typeof result !== "string" || found) return;
       found = true;
       onResult(result);
