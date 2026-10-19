@@ -215,6 +215,27 @@ describe("TransferCard scan from camera", () => {
     expect(userState.state.progress.museum.has(museumItemId)).toBe(true);
   });
 
+  it("opens the scanner full-screen and closes it with Escape", async () => {
+    const scanner = fakeScanner();
+    transferQr.startQrCamera.mockResolvedValue(scanner);
+    render(TransferCard, { open: true });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Scan QR Code" }));
+    const dialog = await screen.findByRole("dialog", { name: "Scan QR Code" });
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Close camera" })).toHaveFocus();
+    });
+
+    await fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(scanner.stop).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Scan QR Code" })).toHaveFocus();
+    });
+  });
+
   it("explains a denied camera permission", async () => {
     transferQr.startQrCamera.mockRejectedValue(
       new DOMException("The request is not allowed by the user agent", "NotAllowedError"),
