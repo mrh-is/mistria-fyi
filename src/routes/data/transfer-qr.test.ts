@@ -7,7 +7,7 @@ import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordValues } from "#lib/utils/record.js";
 
-import { TRANSFER_QR_OPTIONS } from "./transfer-qr.js";
+import { TRANSFER_QR_OPTIONS, transferQrDisplayPixels } from "./transfer-qr.js";
 
 /** Paints a module matrix as black-on-white RGBA pixels, `scale` pixels per module. */
 function rasterize(matrix: boolean[][], scale: number) {
@@ -39,5 +39,16 @@ describe("transfer QR codes", () => {
     const matrix = encodeQR(payload, "raw", TRANSFER_QR_OPTIONS);
 
     expect(decodeQR(rasterize(matrix, 3))).toBe(payload);
+  });
+});
+
+describe("transfer QR display size", () => {
+  it("targets five CSS pixels per module for a dense code", () => {
+    expect(transferQrDisplayPixels(101)).toBe(505);
+    expect(transferQrDisplayPixels(181)).toBe(905);
+  });
+
+  it("keeps a sparse code at a readable minimum with whole pixels per module", () => {
+    expect(transferQrDisplayPixels(25)).toBe(200);
   });
 });
