@@ -96,17 +96,36 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
     }
   }
 
-  // Source 4: Setup cutscenes. A scene whose only purpose is to gate a quest-starting scene (its
-  // `requirements.seen_cutscene`) marks that quest as about to become available, e.g.
+  // Source 4: Setup cutscenes. When a quest-starting scene's only requirement is having seen
+  // another scene, that setup scene marks the quest as about to become available, e.g.
   // find_the_weathervane_setup repairs the Horse Statue just before "Find the Weathervane" starts.
+  // A follow-up with other gates (a day, a season) is skipped: seeing the setup scene wouldn't
+  // imply the quest. Native links from sources 1–3 win; a reviewed entry or two quests claiming
+  // one setup scene throw, so a game update can't silently remap either.
   if (cutscenes) {
+    const setupQuests = new Map<string, QuestId>();
     for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {
       if (cutsceneId === "default" || typeof cutscene !== "object" || cutscene === null) continue;
       if (typeof cutscene.quest_to_start !== "string") continue;
       const requirements = cutscene.requirements as Record<string, unknown> | undefined;
       const setupId = requirements?.seen_cutscene;
-      if (typeof setupId !== "string" || setupId in map) continue;
-      map[setupId] = { phase: "available", questId: cutscene.quest_to_start as QuestId };
+      if (typeof setupId !== "string" || Object.keys(requirements ?? {}).length !== 1) continue;
+      if (setupId in map && !setupQuests.has(setupId)) continue;
+
+      const questId = cutscene.quest_to_start as QuestId;
+      if (Object.hasOwn(CUTSCENE_QUESTS, setupId)) {
+        throw new Error(
+          `Setup cutscene "${setupId}" starts "${questId}" but has a reviewed CUTSCENE_QUEST_ENTRIES mapping; reconcile them`,
+        );
+      }
+      const claimed = setupQuests.get(setupId);
+      if (claimed !== undefined && claimed !== questId) {
+        throw new Error(
+          `Setup cutscene "${setupId}" gates both "${claimed}" and "${questId}"; add a reviewed CUTSCENE_QUEST_ENTRIES mapping`,
+        );
+      }
+      setupQuests.set(setupId, questId);
+      map[setupId] = { phase: "available", questId };
     }
   }
 
