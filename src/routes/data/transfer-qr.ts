@@ -12,8 +12,11 @@ export const TRANSFER_QR_OPTIONS = { border: 2, ecc: "low" } as const satisfies 
 /** Smallest displayed edge, in CSS pixels, so a short payload doesn't render as a speck. */
 const MIN_QR_CSS_PIXELS = 192;
 
-/** Fewest CSS pixels per module; below this, phone cameras struggle to resolve a dense code. */
-const MIN_CSS_PIXELS_PER_MODULE = 5;
+/**
+ * Target CSS pixels per module; below this, phone cameras struggle to resolve a dense code. The
+ * card width caps the displayed size, so the densest codes still render smaller.
+ */
+const TARGET_CSS_PIXELS_PER_MODULE = 5;
 
 /** PNG pixels per CSS pixel, so the code stays sharp on high-density displays. */
 const PNG_PIXEL_DENSITY = 2;
@@ -25,11 +28,11 @@ export interface TransferQr {
 }
 
 /**
- * Display edge, in CSS pixels, for a code `modules` wide: a whole number of pixels per module, at
- * least `MIN_CSS_PIXELS_PER_MODULE`, and never smaller than `MIN_QR_CSS_PIXELS`.
+ * Preferred display edge, in CSS pixels, for a code `modules` wide: a whole number of pixels per
+ * module, at least `TARGET_CSS_PIXELS_PER_MODULE`, and never smaller than `MIN_QR_CSS_PIXELS`.
  */
 export function transferQrDisplayPixels(modules: number): number {
-  return modules * Math.max(MIN_CSS_PIXELS_PER_MODULE, Math.ceil(MIN_QR_CSS_PIXELS / modules));
+  return modules * Math.max(TARGET_CSS_PIXELS_PER_MODULE, Math.ceil(MIN_QR_CSS_PIXELS / modules));
 }
 
 /** Decodes the QR code in an image file. Throws when the image has none. */

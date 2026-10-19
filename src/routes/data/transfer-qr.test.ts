@@ -1,13 +1,21 @@
 import { encodeQR } from "qr";
 import { decodeQR } from "qr/decode.js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordValues } from "#lib/utils/record.js";
 
-import { TRANSFER_QR_OPTIONS, transferQrDisplayPixels } from "./transfer-qr.js";
+import { generateTransferQr, TRANSFER_QR_OPTIONS, transferQrDisplayPixels } from "./transfer-qr.js";
+
+const svgToPng = vi.hoisted(() => vi.fn(() => Promise.resolve("data:image/png;base64,QUJD")));
+vi.mock("qr/dom.js", () => ({
+  frameLoop: vi.fn(),
+  QRCanvas: vi.fn(),
+  rearCamera: vi.fn(),
+  svgToPng,
+}));
 
 /** Paints a module matrix as black-on-white RGBA pixels, `scale` pixels per module. */
 function rasterize(matrix: boolean[][], scale: number) {
@@ -43,12 +51,30 @@ describe("transfer QR codes", () => {
 });
 
 describe("transfer QR display size", () => {
-  it("gives a dense code at least five CSS pixels per module", () => {
+  it("targets five CSS pixels per module for a dense code", () => {
     expect(transferQrDisplayPixels(101)).toBe(505);
     expect(transferQrDisplayPixels(181)).toBe(905);
   });
 
   it("keeps a sparse code at a readable minimum with whole pixels per module", () => {
     expect(transferQrDisplayPixels(25)).toBe(200);
+  });
+});
+
+describe("generateTransferQr", () => {
+  it("renders the PNG at twice the display size", async () => {
+    const payload = "x".repeat(400);
+    const modules = encodeQR(payload, "raw", TRANSFER_QR_OPTIONS).length;
+    const displayPixels = transferQrDisplayPixels(modules);
+
+    await expect(generateTransferQr(payload)).resolves.toEqual({
+      dataUrl: "data:image/png;base64,QUJD",
+      displayPixels,
+    });
+    expect(svgToPng).toHaveBeenCalledWith(
+      encodeQR(payload, "svg", TRANSFER_QR_OPTIONS),
+      displayPixels * 2,
+      displayPixels * 2,
+    );
   });
 });
