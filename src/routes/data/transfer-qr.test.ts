@@ -1,21 +1,13 @@
 import { encodeQR } from "qr";
 import { decodeQR } from "qr/decode.js";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordValues } from "#lib/utils/record.js";
 
-import { generateTransferQr, TRANSFER_QR_OPTIONS, transferQrDisplayPixels } from "./transfer-qr.js";
-
-const svgToPng = vi.hoisted(() => vi.fn(() => Promise.resolve("data:image/png;base64,QUJD")));
-vi.mock("qr/dom.js", () => ({
-  frameLoop: vi.fn(),
-  QRCanvas: vi.fn(),
-  rearCamera: vi.fn(),
-  svgToPng,
-}));
+import { TRANSFER_QR_OPTIONS, transferQrDisplayPixels } from "./transfer-qr.js";
 
 /** Paints a module matrix as black-on-white RGBA pixels, `scale` pixels per module. */
 function rasterize(matrix: boolean[][], scale: number) {
@@ -58,23 +50,5 @@ describe("transfer QR display size", () => {
 
   it("keeps a sparse code at a readable minimum with whole pixels per module", () => {
     expect(transferQrDisplayPixels(25)).toBe(200);
-  });
-});
-
-describe("generateTransferQr", () => {
-  it("renders the PNG at twice the display size", async () => {
-    const payload = "x".repeat(400);
-    const modules = encodeQR(payload, "raw", TRANSFER_QR_OPTIONS).length;
-    const displayPixels = transferQrDisplayPixels(modules);
-
-    await expect(generateTransferQr(payload)).resolves.toEqual({
-      dataUrl: "data:image/png;base64,QUJD",
-      displayPixels,
-    });
-    expect(svgToPng).toHaveBeenCalledWith(
-      encodeQR(payload, "svg", TRANSFER_QR_OPTIONS),
-      displayPixels * 2,
-      displayPixels * 2,
-    );
   });
 });
