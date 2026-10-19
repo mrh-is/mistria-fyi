@@ -218,15 +218,16 @@
 
     <!-- QR Code display -->
     {#if qr}
-      <div class="flex flex-col items-center gap-2 rounded-md border p-4">
+      <!-- Full-bleed, so a dense code gets the card's whole width. -->
+      <div class="transfer-qr flex flex-col items-center gap-2 border-y py-4">
         <img
           alt={m.transfer_qr_alt()}
-          class="aspect-square h-auto max-w-full [image-rendering:pixelated]"
+          class="h-auto max-w-full"
           src={qr.dataUrl}
           width={qr.displayPixels}
           height={qr.displayPixels}
         />
-        <p class="text-center text-sm text-muted-foreground">
+        <p class="px-4 text-center text-sm text-muted-foreground">
           {m.transfer_scan_instruction()}
         </p>
       </div>
@@ -305,3 +306,9 @@
     {/if}
   </div>
 </DataCard>
+
+<style>
+  .transfer-qr {
+    margin-inline: calc(var(--data-card-inset) * -1);
+  }
+</style>

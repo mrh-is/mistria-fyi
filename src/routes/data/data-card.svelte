@@ -63,6 +63,9 @@
 
 <style>
   .data-card {
+    /* Horizontal content padding; full-bleed children (like the transfer QR) cancel it. */
+    --data-card-inset: 14px;
+
     border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
     border-left: 3px solid var(--color-home-accent);
     background: var(--color-paper-raised);
@@ -94,7 +97,7 @@
   }
 
   .data-card__content {
-    padding: 8px 14px 16px;
+    padding: 8px var(--data-card-inset) 16px;
     border-top: 1px dashed color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
   }
 </style>
