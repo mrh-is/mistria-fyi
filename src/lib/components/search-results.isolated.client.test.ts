@@ -40,15 +40,15 @@ describe("SearchResults category tags", () => {
 describe("SearchResults completion dispatch", () => {
   it("links a villager result to its record instead of toggling hearts", () => {
     const id = "adeline" as VillagerId;
-    userState.setHeartLevel(id, 11);
+    userState.setHeartLevel(id, 9);
 
     renderWithFeedback(SearchResults, { locale: "en", query: "Adeline" });
-    const link = screen.getByRole("link", { name: "Adeline relationship level, 11 of 12" });
+    const link = screen.getByRole("link", { name: "Adeline relationship level, 9 of 10" });
 
     expect(link).toHaveAttribute("href", expect.stringMatching(/\/villagers#villager-adeline$/));
     expect(screen.queryByRole("button", { name: "Check Adeline" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Uncheck Adeline" })).toBeNull();
-    expect(userState.state.progress.heartLevels[id]).toBe(11);
+    expect(userState.state.progress.heartLevels[id]).toBe(9);
   });
 
   it("reports a result under a stable category key, not its localized name", () => {

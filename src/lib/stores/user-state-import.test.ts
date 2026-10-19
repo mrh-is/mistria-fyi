@@ -164,9 +164,9 @@ describe("restoreBackup validation", () => {
       {
         mutate: (data) =>
           ((data.progress as Record<string, unknown>).heartLevels = {
-            adeline: MAX_HEART_LEVEL + 1,
+            adeline: 13,
           }),
-        name: "progress.heartLevels (above maximum)",
+        name: "progress.heartLevels (above the legacy maximum)",
       },
       {
         mutate: (data) =>
@@ -210,6 +210,14 @@ describe("restoreBackup validation", () => {
     expect(userState.state.progress.renown).toBe(15);
   });
 
+  it("clamps legacy heart levels above the game's maximum", () => {
+    const data = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
+    (data.progress as Record<string, unknown>).heartLevels = { adeline: 12 };
+
+    expect(userState.restoreBackup(JSON.stringify(data)).ok).toBe(true);
+    expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(MAX_HEART_LEVEL);
+  });
+
   it("restores boundary values for every numeric domain", () => {
     const json = userState.exportBackup();
     const data = JSON.parse(json) as Record<string, unknown>;
@@ -249,7 +257,7 @@ describe("mergeFromSave numeric domains", () => {
 
   it("clamps levels handed directly to the merge", () => {
     userState.mergeFromSave({
-      heartLevels: { adeline: 12.7 } as never,
+      heartLevels: { adeline: 10.7 } as never,
       mineFloor: 9999,
       renown: Number.POSITIVE_INFINITY,
       skillLevels: { farming: -5 } as never,
@@ -258,7 +266,7 @@ describe("mergeFromSave numeric domains", () => {
     expect(userState.state.progress.mineFloor).toBe(MAX_MINE_FLOOR);
     expect(userState.state.progress.renown).toBe(0);
     expect(userState.state.progress.skillLevels["farming" as SkillId]).toBeUndefined();
-    expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(12);
+    expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(10);
   });
 
   it("preserves higher existing progress across an additive import", () => {

@@ -378,7 +378,7 @@
     display: grid;
     min-width: 0;
     flex: 1;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: center;
     justify-items: center;
     gap: 2px 0;
@@ -460,7 +460,7 @@
 
   @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
     .villager-marks {
-      grid-template-columns: repeat(12, minmax(0, 1fr));
+      grid-template-columns: repeat(10, minmax(0, 1fr));
     }
 
     .relationship-actions button {
