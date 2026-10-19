@@ -179,6 +179,13 @@ export default defineConfig({
     // and bind strictly so the server never drifts from the tab Claude opened.
     port: Number(process.env.PORT) || 5173,
     strictPort: Boolean(process.env.PORT),
+    watch: {
+      // Miniflare (the adapter's platform proxy) writes its SQLite state under `.wrangler/` as the
+      // dev server starts. Paraglide's plugin recompiles on any watch event that arrives before its
+      // first build finishes, so those writes made it rewrite `src/lib/paraglide` mid-request; the
+      // SSR reload that followed swapped Svelte instances under the first render and failed it (#91).
+      ignored: ["**/.wrangler/**"],
+    },
   },
   test: {
     // Opt-in with `--coverage` (`pnpm run test:coverage`), so ordinary runs pay nothing. Scoped to
