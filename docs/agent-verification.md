@@ -70,7 +70,9 @@ Screenshot accumulation is expensive; use a bounded checklist, not exploratory b
 
 ### Visual checklist
 
-1. Start the dev server and navigate to every changed route.
+1. Start the dev server and navigate to every changed route. From a worktree, start it by URL &
+   confirm it serves the branch’s code
+   ([Preview from a worktree](development-workflow.md#preview-from-a-worktree)).
 2. Screenshot at desktop width (~1280) and mobile width (~390).
 3. Exercise every changed interaction and one reversal or undo path.
 4. Check light mode and dark mode.
