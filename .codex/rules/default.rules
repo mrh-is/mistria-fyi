@@ -18,6 +18,7 @@ prefix_rule(
             "paraglide:compile",
             "pipeline",
             "pipeline:assets",
+            "pipeline:atlas",
             "prepare",
             "preview",
             "sprites:manifest",
