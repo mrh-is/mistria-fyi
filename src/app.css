@@ -158,19 +158,19 @@
   --color-category-mines: #7a5a3a;
 
   /* Heart level marks (villager-record.svelte), the town rank ladder (renown), & confetti
-   * (celebrate.ts). One palette for both themes: each sits on paper or a canvas overlay. */
-  --color-relationship-level-1: #7c3aed;
-  --color-relationship-level-2: #4338ca;
-  --color-relationship-level-3: #2563eb;
-  --color-relationship-level-4: #38bdf8;
-  --color-relationship-level-5: #22c55e;
-  --color-relationship-level-6: #a3e635;
-  --color-relationship-level-7: #fbbf24;
-  --color-relationship-level-8: #fde047;
-  --color-relationship-level-9: #f97316;
-  --color-relationship-level-10: #ea580c;
-  --color-relationship-level-11: #ef4444;
-  --color-relationship-level-12: #be123c;
+   * (celebrate.ts). One palette for both themes: each sits on paper or a canvas overlay. Heart
+   * levels follow the game's gem ladder (purple, then blue, green, gold, & orange pairs, then red)
+   * in the category jewel tones. */
+  --color-relationship-level-1: #8838a8;
+  --color-relationship-level-2: #1878b8;
+  --color-relationship-level-3: #1878b8;
+  --color-relationship-level-4: #48982c;
+  --color-relationship-level-5: #48982c;
+  --color-relationship-level-6: #d4a72c;
+  --color-relationship-level-7: #d4a72c;
+  --color-relationship-level-8: #d06c24;
+  --color-relationship-level-9: #d06c24;
+  --color-relationship-level-10: #c83050;
   --color-town-rank-1: #92400e;
   --color-town-rank-2: #a8a29e;
   --color-town-rank-3: #f97316;

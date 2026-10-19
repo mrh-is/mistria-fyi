@@ -5,7 +5,7 @@
  * checks that each exists.
  */
 
-export const RELATIONSHIP_LEVEL_COLOR_COUNT = 12;
+export const RELATIONSHIP_LEVEL_COLOR_COUNT = 10;
 export const TOWN_RANK_COLOR_COUNT = 11;
 export const CONFETTI_COLOR_COUNT = 7;
 

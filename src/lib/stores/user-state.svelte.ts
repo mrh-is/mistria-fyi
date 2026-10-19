@@ -139,6 +139,11 @@ const VALID_RELATIONSHIPS = new Set<string>(VILLAGER_RELATIONSHIPS);
 const VALID_QUEST_STATES = new Set<string>(QUEST_STATES);
 const VALID_SEASONS = new Set<string>(SEASONS);
 const VALID_WEATHER = new Set<string>(WEATHERS);
+/**
+ * Version 1 backups once allowed 12 hearts, above the game's real maximum of 10. Strict restore
+ * still accepts those levels, and normalization clamps them to `MAX_HEART_LEVEL`.
+ */
+const LEGACY_MAX_HEART_LEVEL = 12;
 
 type DeserializeResult =
   | { error: BackupRestoreErrorKind; ok: false }
@@ -978,7 +983,7 @@ function isSerializedState(value: unknown, mode: ValidationMode): value is Seria
       typeof progress.hasUpperFloor === "boolean") &&
     (mode === "local"
       ? isOptionalRecord(progress.heartLevels)
-      : isOptionalIntegerRecord(progress.heartLevels, MAX_HEART_LEVEL)) &&
+      : isOptionalIntegerRecord(progress.heartLevels, LEGACY_MAX_HEART_LEVEL)) &&
     (mode === "local"
       ? isOptionalRecord(progress.villagerRelationships)
       : isOptionalEnumRecord(progress.villagerRelationships, VALID_RELATIONSHIPS)) &&
