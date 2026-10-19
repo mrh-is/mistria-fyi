@@ -72,7 +72,7 @@ Every token is defined in `src/app.css`, and nowhere else.
 | Type size     | `--text-3xs` (10px) & `--text-2xs` (11px), plus Tailwind's `--text-xs` (12px) and up                                                                    | `@theme`                           |
 | Radius        | `--radius` (2px), `--radius-lg` (4px), `--radius-xl` (6px)                                                                                              | `:root` & `@theme inline`          |
 | Sizes         | `--size-ribbon-width`                                                                                                                                   | `:root`                            |
-| Level & rank  | `--color-relationship-level-1`…`--color-relationship-level-12` (villager marks), `--color-town-rank-1`…`--color-town-rank-11`, `--color-confetti-1`…`7` | `:root` (one palette, both themes) |
+| Level & rank  | `--color-relationship-level-1`…`--color-relationship-level-10` (villager marks), `--color-town-rank-1`…`--color-town-rank-11`, `--color-confetti-1`…`7` | `:root` (one palette, both themes) |
 | Z-index       | `--z-section-header`, `--z-page-header`, `--z-home-header`, `--z-toolbar`, `--z-panel`, `--z-picker`, `--z-dialog`                                      | `@theme`                           |
 | Font roles    | `--font-display`, `--font-body`, `--font-controls`, `--font-annotation`, `--font-data`                                                                  | `:root`, overridden per locale     |
 

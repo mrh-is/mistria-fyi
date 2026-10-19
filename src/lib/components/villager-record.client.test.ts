@@ -45,11 +45,11 @@ describe("VillagerRecord", () => {
     );
     expect(view.container.querySelector("img")).toHaveAttribute("alt", "");
     expect(view.container.querySelector("img")).toHaveAttribute("crossorigin", "anonymous");
-    expect(view.container.querySelectorAll("[data-villager-mark]")).toHaveLength(12);
+    expect(view.container.querySelectorAll("[data-villager-mark]")).toHaveLength(10);
     expect(view.container.querySelectorAll("[data-villager-mark] button")).toHaveLength(0);
     expect(view.container.querySelectorAll('[data-villager-mark-filled="true"]')).toHaveLength(8);
     expect(
-      view.getByRole("group", { name: "Adeline relationship level, 8 of 12" }),
+      view.getByRole("group", { name: "Adeline relationship level, 8 of 10" }),
     ).toBeInTheDocument();
     expect(view.getByRole("button", { name: "Decrease Adeline hearts" })).toBeEnabled();
     expect(view.getByRole("button", { name: "Increase Adeline hearts" })).toBeEnabled();
@@ -97,14 +97,14 @@ describe("VillagerRecord", () => {
     expect(view.getByText("Birthday hidden")).toBeInTheDocument();
     expect(view.container.querySelectorAll('[data-villager-mark-filled="true"]')).toHaveLength(0);
     expect(
-      view.getByRole("group", { name: "Hidden villager relationship level, 0 of 12" }),
+      view.getByRole("group", { name: "Hidden villager relationship level, 0 of 10" }),
     ).toBeInTheDocument();
     expect(view.getByRole("button", { name: "Decrease hidden villager hearts" })).toBeDisabled();
     expect(view.queryByRole("button", { name: /Adeline hearts/ })).not.toBeInTheDocument();
 
     await fireEvent.click(view.getByRole("button", { name: "Reveal spoiler" }));
     expect(
-      view.getByRole("group", { name: "Adeline relationship level, 6 of 12" }),
+      view.getByRole("group", { name: "Adeline relationship level, 6 of 10" }),
     ).toBeInTheDocument();
   });
 
@@ -117,7 +117,7 @@ describe("VillagerRecord", () => {
     });
 
     expect(view.container.querySelectorAll('[data-villager-mark-kind="platonic"]')).toHaveLength(
-      12,
+      10,
     );
     expect(view.container.querySelector("[data-villager-record]")).toHaveAttribute(
       "data-compact",
@@ -165,10 +165,10 @@ describe("VillagerRecord", () => {
     expect(decrement).toBeDisabled();
     await fireEvent.click(increment);
     expect(
-      view.getByRole("group", { name: "Adeline relationship level, 1 of 12" }),
+      view.getByRole("group", { name: "Adeline relationship level, 1 of 10" }),
     ).toBeInTheDocument();
 
-    userState.setHeartLevel(adelineId, 12);
+    userState.setHeartLevel(adelineId, 10);
     await waitFor(() => {
       expect(increment).toBeDisabled();
     });
@@ -184,6 +184,6 @@ describe("VillagerRecord", () => {
     expect(group).not.toHaveAttribute("aria-live");
 
     await fireEvent.click(view.getByRole("button", { name: "Increase Adeline hearts" }));
-    expect(view.getByRole("status")).toHaveTextContent("Adeline relationship level, 1 of 12");
+    expect(view.getByRole("status")).toHaveTextContent("Adeline relationship level, 1 of 10");
   });
 });
