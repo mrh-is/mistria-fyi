@@ -282,48 +282,33 @@ function buildChestIdSet(fiddle: ParsedGameData): Set<string> {
 }
 
 /**
- * Collapses colorway variants into single almanac entries. Items sharing the same
- * `recipe_key + name` are grouped. The canonical ID is the alphabetically-first
- * item ID, matching the game's own almanac icon selection.
- *
- * Grouping stays anchored to the English source name so locale-specific translations never change
- * structural IDs or completion behavior.
+ * Collapses items that share a recipe into single almanac entries, as the game's `AlmanacMenu`
+ * does: one entry per `recipe_key`, which defaults to the item's own ID. Members may have different
+ * names (a single & double bed share one recipe). The canonical ID is the alphabetically-first
+ * member, and the entry sorts by that member's English name.
  */
 function collapseColorways(
   bucket: Map<string, { id: string; name: string; recipeKey?: string }>,
 ): (AlmanacEntry & { sortName: string })[] {
-  const result: (AlmanacEntry & { sortName: string })[] = [];
-  const seenRecipeGroups = new Map<string, number>();
+  const groups = new Map<string, { id: string; name: string }[]>();
+  const recipeKeys = new Set<string>();
 
   for (const [id, entry] of bucket) {
-    if (entry.recipeKey) {
-      const groupKey = `${entry.recipeKey}::${entry.name}`;
-      const existingIdx = seenRecipeGroups.get(groupKey);
-      if (existingIdx !== undefined) {
-        const existing = result[existingIdx];
-        existing.itemIds.push(id as ItemId);
-        continue;
-      }
-      seenRecipeGroups.set(groupKey, result.length);
-      result.push({
-        itemIds: [id as ItemId],
-        recipeId: entry.recipeKey as RecipeId,
-        sortName: entry.name,
-      });
-    } else {
-      result.push({
-        itemIds: [id as ItemId],
-        sortName: entry.name,
-      });
-    }
+    if (entry.recipeKey) recipeKeys.add(entry.recipeKey);
+    const groupKey = entry.recipeKey ?? id;
+    const members = groups.get(groupKey) ?? [];
+    members.push({ id, name: entry.name });
+    groups.set(groupKey, members);
   }
 
-  // Sort member IDs alphabetically; canonical ID = first element
-  for (const entry of result) {
-    entry.itemIds.sort((a, b) => compareStrings(a, b));
-  }
-
-  return result;
+  return [...groups].map(([groupKey, members]) => {
+    members.sort((a, b) => compareStrings(a.id, b.id));
+    return {
+      itemIds: members.map(({ id }) => id as ItemId),
+      ...(recipeKeys.has(groupKey) ? { recipeId: groupKey as RecipeId } : {}),
+      sortName: members[0].name,
+    };
+  });
 }
 
 /** `local_key` is a full l10n key (`misc_local/<key>`); only the `misc_local` namespace is expected. */

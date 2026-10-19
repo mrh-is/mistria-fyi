@@ -95,16 +95,11 @@ export function extractSaveProgress(bundle: SaveBundle): {
   const gamedata = createSectionReader("gamedata", bundle.gamedata, warnings);
   const quests = createSectionReader("quests", bundle.quests, warnings);
 
-  // ── Almanac: union of items_acquired + items_sold keys + recipes_created ──
+  // ── Almanac: items_acquired only, as the game's almanac counts it ──
+  // items_sold holds a zero for every item, and recipes_created can name items never acquired.
   const almanacIds = new Set<ItemId>();
 
-  const allPlayerItems = new Set<string>([
-    ...player.stringList("items_acquired"),
-    ...Object.keys(player.record("items_sold") ?? {}),
-    ...player.stringList("recipes_created"),
-  ]);
-
-  for (const id of allPlayerItems) {
+  for (const id of player.stringList("items_acquired")) {
     const canonical = trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId);
     if (canonical) {
       almanacIds.add(canonical);

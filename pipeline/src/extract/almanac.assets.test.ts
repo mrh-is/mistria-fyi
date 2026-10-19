@@ -21,14 +21,25 @@ describe("extractAlmanac — real assets", () => {
 
     expect(fish.items).toHaveLength(148);
     expect(materials.items).toHaveLength(77);
-    // 1.0.7's chicken statue rewards add the Golden Fence & eight gold animal statues.
-    expect(furniture.items).toHaveLength(1020);
+    // 1.0.7's chicken statue rewards add the Golden Fence & eight gold animal statues. The game's
+    // own almanac reads 1,017 in 1.0.8; single & double beds share one recipe row.
+    expect(furniture.items).toHaveLength(1017);
 
     expect(fish.items.some((entry) => entry.itemIds.includes("basic_wood" as ItemId))).toBe(true);
     expect(materials.items.some((entry) => entry.itemIds.includes("perfect_ruby" as ItemId))).toBe(
       true,
     );
-    expect(furniture.items.filter((entry) => entry.recipeId === "emerald_bed")).toHaveLength(2);
+    expect(furniture.items.filter((entry) => entry.recipeId === "emerald_bed")).toEqual([
+      {
+        itemIds: [
+          "emerald_bed_v1",
+          "emerald_bed_v2",
+          "emerald_double_bed_v1",
+          "emerald_double_bed_v2",
+        ],
+        recipeId: "emerald_bed",
+      },
+    ]);
     // 2,722 named items, less the four `ITEM_EXCLUSIONS`: three cutscene props & the unfinished
     // `gold_chest`.
     expect(Object.keys(localeNames.en)).toHaveLength(2718);

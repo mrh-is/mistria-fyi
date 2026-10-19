@@ -79,14 +79,20 @@ The player entry contains all per-player progression data. Key fields for the tr
 
 ### Items & almanac
 
-| Field             | Type                  | Description                                             |
-| ----------------- | --------------------- | ------------------------------------------------------- |
-| `items_acquired`  | `string[]`            | Item IDs the player has picked up at least once         |
-| `items_sold`      | `Record<string, ...>` | Items sold; keys are item IDs, values are sale metadata |
-| `recipes_created` | `string[]`            | Item IDs the player has crafted at least once           |
+| Field             | Type                     | Description                                                  |
+| ----------------- | ------------------------ | ------------------------------------------------------------ |
+| `items_acquired`  | `string[]`               | Item IDs the player has picked up at least once              |
+| `items_sold`      | `Record<string, number>` | Sale count per item ID; the game stores a `0` for every item |
+| `recipes_created` | `string[]`               | Item IDs the player has crafted at least once                |
 
-All three use **item IDs** (e.g. `"apple_pie"`, `"axe_copper"`). The union of these three arrays
-represents the player's full almanac of discovered items.
+All three use **item IDs** (e.g. `"apple_pie"`, `"axe_copper"`). Only `items_acquired` represents
+the almanac: the game's almanac counts nothing else. `items_sold` starts as a zero-filled array over
+every item, so its keys say nothing about discovery. `recipes_created` can name an item that was
+never marked acquired, which the game's almanac still shows as locked.
+
+Acquiring an item marks every item with the same `recipe_key` acquired (`mark_item_as_acquired` in
+`Ari.gml`), and the almanac shows one entry per `recipe_key` (`AlmanacMenu.gml`). An item without a
+`recipe_key` uses its own ID.
 
 ### Recipe unlocks
 
@@ -237,6 +243,6 @@ versions, though new items, recipes, and quests are added in content updates.
 1. Use `recipe_unlocks` (not `morning_recipe_unlocks`) as the source for recipe tracking.
 2. Recipe unlock IDs need resolution: some are recipe IDs, some are item IDs. Look up items by their
    `recipeId` field to normalize.
-3. The union of `items_acquired`, `items_sold` keys, and `recipes_created` forms the almanac.
+3. `items_acquired` alone forms the almanac; ignore `items_sold` and `recipes_created` for it.
 4. `t2_world_facts` villager heart levels are floats in practice; floor them for display.
 5. Skill levels come from `t2_world_facts`, not `skill_xp` (which stores raw XP).
