@@ -49,6 +49,7 @@ const SOURCE_TYPES: Record<Source["type"], true> = {
   fish: true,
   fish_trap: true,
   forage: true,
+  horse_statue: true,
   letter: true,
   lost_and_found: true,
   mine: true,
@@ -200,6 +201,7 @@ describe("generated source rendering contract", () => {
     "trackerData.recipes.",
     "trackerData.cosmetics.",
     "trackerData.mines.spells.",
+    "trackerData.mount.appearances.",
     "trackerData.pets.cosmetics.",
     "trackerData.pets.skins.",
   ])("discovers source-bearing entities under %s", (prefix) => {

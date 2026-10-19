@@ -28,6 +28,7 @@ export const MERGE_COUNT_LABELS = {
   hasUpperFloor: { boolean: true, format: () => m.merge_label_has_upper_floor() },
   heartLevels: { format: (count: number) => m.merge_label_heart_levels({ count }) },
   mineFloor: { format: (count: number) => m.merge_label_mine_floor({ count }) },
+  mountAppearances: { format: (count: number) => m.merge_label_mount_appearances({ count }) },
   museum: { format: (count: number) => m.merge_label_museum({ count }) },
   perks: { format: (count: number) => m.merge_label_perks({ count }) },
   petCosmetics: { format: (count: number) => m.merge_label_pet_cosmetics({ count }) },

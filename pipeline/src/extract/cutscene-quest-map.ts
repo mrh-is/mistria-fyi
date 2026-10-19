@@ -96,6 +96,20 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
     }
   }
 
+  // Source 4: Setup cutscenes. A scene whose only purpose is to gate a quest-starting scene (its
+  // `requirements.seen_cutscene`) marks that quest as about to become available, e.g.
+  // find_the_weathervane_setup repairs the Horse Statue just before "Find the Weathervane" starts.
+  if (cutscenes) {
+    for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {
+      if (cutsceneId === "default" || typeof cutscene !== "object" || cutscene === null) continue;
+      if (typeof cutscene.quest_to_start !== "string") continue;
+      const requirements = cutscene.requirements as Record<string, unknown> | undefined;
+      const setupId = requirements?.seen_cutscene;
+      if (typeof setupId !== "string" || setupId in map) continue;
+      map[setupId] = { phase: "available", questId: cutscene.quest_to_start as QuestId };
+    }
+  }
+
   // Explicit overrides for cutscenes that cannot be derived from quest data
   if (!("destroy_vines_eastern_road" in map)) {
     map.destroy_vines_eastern_road = CUTSCENE_QUESTS.destroy_vines_eastern_road;

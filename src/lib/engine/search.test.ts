@@ -8,7 +8,14 @@ import { recordEntries } from "#lib/utils/record.js";
 
 import { searchAllCategories } from "./search.js";
 
-import type { ItemId, QuestId, RecipeId, Season, Weather } from "#lib/types/tracker-data.js";
+import type {
+  ItemId,
+  MountAppearanceId,
+  QuestId,
+  RecipeId,
+  Season,
+  Weather,
+} from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 
 import type { UserProgressionState } from "./visibility.js";
@@ -650,5 +657,12 @@ describe("pet cosmetic and skin result IDs", () => {
     });
     const match = results.find((r) => r.category === "animals" && r.id === `pet-skin:${firstId}`);
     expect(match?.completed).toBe(true);
+  });
+
+  it("finds mount appearances under 'mount-appearance:' and marks them completed", () => {
+    const id = "giant_chicken_gold" as MountAppearanceId;
+    const results = search(getName("mount", id, "en"), { mountAppearances: new Set([id]) });
+    const match = results.find((r) => r.id === `mount-appearance:${id}`);
+    expect(match).toMatchObject({ category: "animals", completed: true });
   });
 });

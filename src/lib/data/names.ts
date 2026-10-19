@@ -9,6 +9,7 @@ import type {
   ItemId,
   LocationId,
   MinesBiomeId,
+  MountAppearanceId,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -36,6 +37,7 @@ export const NAME_CHUNKS = [
   "items",
   "locations",
   "mines",
+  "mount",
   "museum_wings",
   "perks",
   "pets/cosmetic_sets",
@@ -61,6 +63,7 @@ interface LocalizedCategoryId {
   items: ItemId;
   locations: LocationId;
   mines: MinesBiomeId;
+  mount: MountAppearanceId;
   museum_wings: string;
   perks: PerkId;
   "pets/cosmetic_sets": PetCosmeticSetId;

@@ -234,6 +234,16 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
     }
   }
 
+  const mountAppearanceIds = recordKeys(trackerData.mount.appearances);
+  total += mountAppearanceIds.length;
+  for (const id of mountAppearanceIds) {
+    if (ctx.progress.mountAppearances.has(id)) {
+      completed++;
+    } else {
+      remainingInScope++;
+    }
+  }
+
   const petSkinIds = recordKeys(trackerData.pets.skins);
   total += petSkinIds.length;
   for (const id of petSkinIds) {

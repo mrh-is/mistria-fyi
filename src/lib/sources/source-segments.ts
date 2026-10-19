@@ -327,6 +327,8 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       const perkLabel = buildPerkLabel(source.perkId, lookups);
       return fillMessage((slot) => m.source_perk({ perk: slot(perkLabel) }, opts));
     }
+    case "horse_statue":
+      return buildHorseStatueSegments(source, lookups);
     case "perk_drop": {
       const perkLabel = buildPerkLabel(source.perkId, lookups);
       return fillMessage((slot) => m.source_perk_drop({ perk: slot(perkLabel) }, opts));
@@ -592,6 +594,28 @@ function buildCutsceneLabel(cutsceneId: CutsceneSourceId, lookups: SegmentLookup
     case "great_bird_0":
       return m.source_cutscene_great_bird_0({}, opts);
   }
+}
+
+function buildHorseStatueSegments(
+  source: Source & { type: "horse_statue" },
+  lookups: SegmentLookups,
+): Segments {
+  const questName = requireEntry(lookups.questNames, source.questId, "questNames");
+  const questVis = source.visibility;
+
+  // The English message supplies "the", as for story quests.
+  const displayName = withoutDefiniteArticle(questName, lookups.locale);
+  const nameSegment: SourceSegment =
+    questVis && questVis.type !== "always"
+      ? { condition: questVis, unspoilered: [displayName] }
+      : displayName;
+
+  return fillMessage((slot) =>
+    m.source_horse_statue(
+      { cost: String(source.cost), quest: slot(nameSegment) },
+      { locale: lookups.locale },
+    ),
+  );
 }
 
 function buildLocationList(locationIds: LocationId[] | undefined, lookups: SegmentLookups): string {

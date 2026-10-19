@@ -15,6 +15,7 @@ import type {
   CosmeticId,
   DateId,
   ItemId,
+  MountAppearanceId,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -235,9 +236,12 @@ export async function encodeTransferPayload(
   const childByte = encodeChildChoice(completed.childChoice);
   parts.push(new Uint8Array([childByte]));
 
-  // 19. Almanac recipes bitfield
+  // 19. Almanac recipes bitfield, then 20. mount appearances bitfield
   const recipeOrder = getRecipeOrder();
-  parts.push(toBitfield(recipeOrder, completed.almanacRecipes));
+  parts.push(
+    toBitfield(recipeOrder, completed.almanacRecipes),
+    toBitfield(getMountAppearanceOrder(), completed.mountAppearances),
+  );
 
   // Concatenate all parts
   const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
@@ -508,6 +512,15 @@ async function decodeTransferPayloadUnchecked(
   const recipeBytes = readBytes(Math.ceil(recipeOrder.length / 8));
   const almanacRecipes = fromBitfield(recipeOrder, recipeBytes, "recipe bitfield") as Set<RecipeId>;
 
+  // 20. Mount appearances bitfield
+  const mountAppearanceOrder = getMountAppearanceOrder();
+  const mountAppearanceBytes = readBytes(Math.ceil(mountAppearanceOrder.length / 8));
+  const mountAppearances = fromBitfield(
+    mountAppearanceOrder,
+    mountAppearanceBytes,
+    "mount appearance bitfield",
+  ) as Set<MountAppearanceId>;
+
   applyMarriageCascade(villagerRelationships);
 
   for (const id of recordKeys(skillLevels)) {
@@ -528,6 +541,7 @@ async function decodeTransferPayloadUnchecked(
     hasUpperFloor,
     heartLevels,
     mineFloor: clampMineFloor(mineFloor),
+    mountAppearances,
     museum,
     petCosmetics,
     petSkins,
@@ -674,7 +688,8 @@ function getTransferRawLength(): number {
     1 +
     Math.ceil((getDateableVillagerOrder().length * 3) / 8) +
     1 +
-    Math.ceil(getRecipeOrder().length / 8)
+    Math.ceil(getRecipeOrder().length / 8) +
+    Math.ceil(getMountAppearanceOrder().length / 8)
   );
 }
 
@@ -748,6 +763,10 @@ function getMuseumOrder(): ItemId[] {
   return recordValues(trackerData.museum)
     .flatMap(({ sets }) => recordValues(sets).flatMap(({ items }) => items))
     .toSorted();
+}
+
+function getMountAppearanceOrder(): MountAppearanceId[] {
+  return recordKeys(trackerData.mount.appearances).toSorted();
 }
 
 function getPerkOrder(): PerkId[] {

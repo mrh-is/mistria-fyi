@@ -27,6 +27,7 @@ export function makeCompletedState(overrides: Partial<ProgressState> = {}): Prog
     hasUpperFloor: false,
     heartLevels: {},
     mineFloor: 0,
+    mountAppearances: new Set(),
     museum: new Set(),
     petCosmetics: new Set(),
     petSkins: new Set(),

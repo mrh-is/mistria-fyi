@@ -241,3 +241,24 @@ export const CUTSCENE_QUEST_ENTRIES = entriesFromRecord(
   "Runtime post-seal cutscenes omit direct quest_to_progress links",
 );
 export const CUTSCENE_QUESTS = entriesToRecord(CUTSCENE_QUEST_ENTRIES);
+
+/** How the game grants a mount appearance: the Horse Statue purchase, or cracking the Big Egg. */
+export type MountAppearanceUnlock = "big_egg" | "horse_statue";
+
+// Wiki: https://fieldsofmistria.wiki.gg/wiki/Horse_Statue & https://fieldsofmistria.wiki.gg/wiki/Big_Egg
+// ranching/animals/horse.toml marks these variants `acquirable = false`; nothing in data says how
+// the player gets them. `obj_horse_statue.gml` grants the Mistmare itself, and `AriFsm.gml`'s
+// `ItemUse.CrackEgg` unlocks both chicken appearances when the player opens the Big Egg.
+export const MOUNT_APPEARANCE_UNLOCK_ENTRIES = entriesFromRecord<MountAppearanceUnlock>(
+  {
+    giant_chicken_gold: "big_egg",
+    giant_chicken_white: "big_egg",
+    mistmare: "horse_statue",
+  },
+  'gml obj_horse_statue.gml create_default_mount("mistmare"); AriFsm.gml ItemUse.CrackEgg',
+  "Mount appearance unlocks are runtime-only",
+);
+export const MOUNT_APPEARANCE_UNLOCKS = entriesToRecord(MOUNT_APPEARANCE_UNLOCK_ENTRIES);
+
+/** `obj_horse_statue.gml` charges this much essence (`ARI.modify_essence(-100)`) for the Mistmare. */
+export const HORSE_STATUE_ESSENCE_COST = 100;

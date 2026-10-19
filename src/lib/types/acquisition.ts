@@ -96,6 +96,7 @@ export type Source =
         | { type: "fish"; waterTypes?: NonEmptyArray<WaterType> }
         | { type: "fish_trap"; baitItemIds: NonEmptyArray<ItemId> }
         | { type: "forage"; locationIds?: NonEmptyArray<LocationId> }
+        | { type: "horse_statue"; cost: number; questId: QuestId }
         | { type: "letter"; letterId: string; trigger: "birthday" | "condition" }
         | { type: "lost_and_found" }
         | { type: "mine"; biomeId: MinesBiomeId }

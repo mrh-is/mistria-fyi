@@ -190,6 +190,27 @@ const SEARCH_PROVIDERS: readonly SearchProvider[] = [
     }
   },
 
+  function* mountAppearances({ completed, locale, progressionState }) {
+    for (const [id, appearance] of recordEntries(trackerData.mount.appearances)) {
+      if (appearance.visibility && !isConditionVisible(appearance.visibility, progressionState)) {
+        continue;
+      }
+      const name = getName("mount", id, locale);
+      yield {
+        englishName: getName("mount", id, "en"),
+        localizedName: name,
+        result: () => ({
+          available: true,
+          category: "animals",
+          completed: completed.mountAppearances.has(id),
+          fullName: name,
+          id: `mount-appearance:${id}`,
+          name,
+        }),
+      };
+    }
+  },
+
   function* petCosmetics({ completed, locale }) {
     for (const [id] of recordEntries(trackerData.pets.cosmetics)) {
       const name = getName("pets/cosmetic_sets", id, locale);

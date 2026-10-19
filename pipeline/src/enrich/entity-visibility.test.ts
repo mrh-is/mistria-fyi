@@ -80,6 +80,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     festivals: {},
     items: {},
     mines: { biomes: [], spells: {} },
+    mount: { appearances: {} },
     museum: {},
     perkTierLevels: [1, 10, 20, 45, 60],
     pets: { cosmetics: {}, skins: {} },
