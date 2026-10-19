@@ -69,8 +69,8 @@ removing the dataset means taking the site down.
 
 ## Pipeline
 
-1. **Delete `pipeline/` on `main`,** along with its scripts in `package.json` and its CI steps.
-   Commit with a neutral message (“Remove extraction pipeline”).
+1. **Delete `pipeline/` on `main`,** along with its scripts in `package.json`, its CI steps, and
+   `docs/game-asset-format.md`. Commit with a neutral message (“Remove extraction pipeline”).
 2. **Decide on history.** Past commits still contain the pipeline. If the request covers history,
    continue with [Whole repository](#whole-repository); otherwise this is complete.
 
