@@ -7,6 +7,7 @@ import { buildCutsceneQuestMap } from "./cutscene-quest-map.js";
 function makeCutsceneFiddle(overrides: {
   cutscenes?: Record<string, Record<string, unknown>>;
   quests?: Record<string, Record<string, unknown>>;
+  seals?: Record<string, Record<string, unknown>>;
 }) {
   return makeFiddle({
     cutscenes: overrides.cutscenes ?? {},
@@ -131,5 +132,73 @@ describe("buildCutsceneQuestMap", () => {
       phase: "completed",
       questId: "the_dragonsworn_tablet",
     });
+  });
+
+  it("maps the first quest of an array quest_to_start", () => {
+    const fiddle = makeCutsceneFiddle({
+      cutscenes: {
+        translating_the_fire_tablet: {
+          quest_to_start: ["procuring_the_sealing_scroll", "breaking_the_fire_seal"],
+        },
+      },
+    });
+    expect(buildCutsceneQuestMap(fiddle).translating_the_fire_tablet).toEqual({
+      phase: "available",
+      questId: "procuring_the_sealing_scroll",
+    });
+  });
+
+  it.each([
+    ["an empty array quest_to_start", { quest_to_start: [] }, "at least one quest"],
+    ["a non-string quest_to_start entry", { quest_to_start: [1] }, "Expected string"],
+    ["a non-string quest_to_progress", { quest_to_progress: ["a"] }, "Expected string"],
+  ])("rejects %s", (_label, cutscene, message) => {
+    const fiddle = makeCutsceneFiddle({ cutscenes: { bad_scene: cutscene } });
+    expect(() => buildCutsceneQuestMap(fiddle)).toThrow(message);
+  });
+
+  it("maps seals.toml cutscenes to their completed quest", () => {
+    const fiddle = makeCutsceneFiddle({
+      quests: {
+        story_quests: {
+          find_the_magic_key: { stages: [] },
+          the_water_tablet: { stages: [] },
+        },
+      },
+      seals: {
+        priestess: { quest: "find_the_magic_key", stage: 3 },
+        water: { cutscene: "break_water_seal", quest: "the_water_tablet", stage: 1 },
+      },
+    });
+    const map = buildCutsceneQuestMap(fiddle);
+    expect(map.break_water_seal).toEqual({ phase: "completed", questId: "the_water_tablet" });
+    expect(Object.values(map).map(({ questId }) => questId)).not.toContain("find_the_magic_key");
+  });
+
+  it("keeps cutscene-table and quest-stage links ahead of seals.toml", () => {
+    const fiddle = makeCutsceneFiddle({
+      quests: {
+        story_quests: {
+          breaking_the_ruins_seal: {
+            stages: [{ queries: [{ cutscene: "break_ruins_seal_pt_2" }] }],
+          },
+          creating_the_void_mass: { stages: [] },
+        },
+      },
+      seals: {
+        void: { cutscene: "break_ruins_seal_pt_2", quest: "creating_the_void_mass", stage: 0 },
+      },
+    });
+    expect(buildCutsceneQuestMap(fiddle).break_ruins_seal_pt_2).toEqual({
+      phase: "available",
+      questId: "breaking_the_ruins_seal",
+    });
+  });
+
+  it("rejects a seal whose quest is unknown", () => {
+    const fiddle = makeCutsceneFiddle({
+      seals: { water: { cutscene: "break_water_seal", quest: "missing_quest", stage: 1 } },
+    });
+    expect(() => buildCutsceneQuestMap(fiddle)).toThrow("Unknown quest missing_quest");
   });
 });

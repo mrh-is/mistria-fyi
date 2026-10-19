@@ -19,7 +19,7 @@ describe("native projection policies", () => {
       ["is_dating_someone", true, "isDating"],
       ["unlocked_animal", "cow", "quest"],
       ["seen_cutscene", "elsie_dating_tutorial", "isDating"],
-      ["seen_cutscene", "break_fire_seal", "quest"],
+      ["seen_cutscene", "destroy_vines_eastern_road", "quest"],
     ] as const) {
       const projected = project({ predicate, value });
       expect(projected.availability.type).toBe(type);

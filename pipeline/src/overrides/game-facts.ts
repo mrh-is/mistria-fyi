@@ -227,17 +227,12 @@ export function isPregnancyQuest(id: string): boolean {
 
 export const CUTSCENE_QUEST_ENTRIES = entriesFromRecord(
   {
-    break_fire_seal: { phase: "completed" as const, questId: "breaking_the_fire_seal" as QuestId },
     destroy_vines_eastern_road: {
       phase: "completed" as const,
       questId: "breaking_the_fire_seal" as QuestId,
     },
-    dragon_tablet_pt_4: {
-      phase: "completed" as const,
-      questId: "breaking_the_final_seal" as QuestId,
-    },
   },
   "cutscenes.toml post-seal scenes and story quest seal progression",
-  "Runtime post-seal cutscenes omit direct quest_to_progress links",
+  "Runtime post-seal cutscenes omit direct quest_to_progress links and seals.toml entries",
 );
 export const CUTSCENE_QUESTS = entriesToRecord(CUTSCENE_QUEST_ENTRIES);
