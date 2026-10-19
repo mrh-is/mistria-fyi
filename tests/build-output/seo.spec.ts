@@ -19,23 +19,42 @@ void describe("built search metadata", { concurrency: 4, timeout: 120_000 }, () 
   let origin: string;
   let paths: string[];
 
-  before(async () => {
-    // An ephemeral port & a new preview keep this check tied to this checkout’s built output.
-    server = await preview({ preview: { host: "127.0.0.1", open: false, port: 0 } });
-    const address = server.httpServer.address();
-    assert.ok(address !== null && typeof address !== "string");
-    origin = `http://127.0.0.1:${String(address.port)}`;
-    const response = await fetch(`${origin}/sitemap.xml`, { signal: AbortSignal.timeout(10_000) });
-    assert.ok(response.ok);
-    const sitemap = await response.text();
-    paths = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(
-      ([, location]) => new URL(location).pathname,
-    );
-  });
+  // Node’s suite timeout does not bound hooks. Limit startup & teardown separately, and let
+  // check:built’s --test-force-exit release handles left by a timed-out adapter operation.
+  before(
+    async () => {
+      process.stderr.write("[check:built] Starting Vite preview & Cloudflare platform proxy\n");
+      // An ephemeral port & a new preview keep this check tied to this checkout’s built output.
+      server = await preview({ preview: { host: "127.0.0.1", open: false, port: 0 } });
+      const address = server.httpServer.address();
+      assert.ok(address !== null && typeof address !== "string");
+      origin = `http://127.0.0.1:${String(address.port)}`;
+      process.stderr.write(`[check:built] Preview listening at ${origin}; reading sitemap\n`);
+      const response = await fetch(`${origin}/sitemap.xml`, {
+        signal: AbortSignal.timeout(10_000),
+      });
+      assert.ok(response.ok);
+      const sitemap = await response.text();
+      paths = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(
+        ([, location]) => new URL(location).pathname,
+      );
+      process.stderr.write(
+        `[check:built] Checking metadata for ${String(paths.length)} sitemap pages\n`,
+      );
+    },
+    { timeout: 30_000 },
+  );
 
-  after(async () => {
-    await server?.close();
-  });
+  after(
+    async () => {
+      if (server) {
+        process.stderr.write("[check:built] Closing preview & Cloudflare platform proxy\n");
+        await server.close();
+        process.stderr.write("[check:built] Preview closed\n");
+      }
+    },
+    { timeout: 10_000 },
+  );
 
   async function readPage(path: string): Promise<Window> {
     const response = await fetch(`${origin}${path}`, {
