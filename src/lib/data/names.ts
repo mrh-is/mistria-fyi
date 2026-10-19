@@ -1,5 +1,6 @@
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
+  AlmanacEntry,
   AnimalId,
   AnimalVariantId,
   CosmeticId,
@@ -124,6 +125,15 @@ export function getName<Category extends NameChunk>(
   if (name !== undefined) return name;
 
   throw new Error(`No "${category}" name for id "${id}" in locale "${locale}"`);
+}
+
+/**
+ * The distinct names of an almanac entry's members in `locale`, the canonical member's first. One
+ * entry can hold differently named items (a single & double bed share a recipe), and each name
+ * should find the entry.
+ */
+export function getAlmanacEntryNames(entry: AlmanacEntry, locale: LocaleCode): string[] {
+  return [...new Set(entry.itemIds.map((id) => getName("items", id, locale)))];
 }
 
 /** The whole `category` chunk for `locale`. Use for bulk lookups (sorting, search). */

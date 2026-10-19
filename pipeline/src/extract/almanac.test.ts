@@ -7,7 +7,7 @@ import { parseFiddle } from "../parse/parse-fiddle.js";
 import { makeFiddle } from "../test-helpers.js";
 import { extractAlmanac, readAlmanacCategories } from "./almanac.js";
 
-import type { AlmanacCategoryId, AlmanacEntry } from "#lib/types/tracker-data.js";
+import type { AlmanacCategoryId } from "#lib/types/tracker-data.js";
 
 import type { Localizer } from "../localize/localize.js";
 
@@ -151,7 +151,7 @@ tags = ["furniture"]
     expect(cat.items).toHaveLength(1);
   });
 
-  it("keeps different names under the same recipe_key as separate entries", () => {
+  it("groups different names under the same recipe_key into one entry, as the game does", () => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = createAssetsFixture({
       "items/other/furniture.toml": `
@@ -179,9 +179,45 @@ tags = ["furniture"]
 
     const result = extractAlmanac(fiddle, localizer);
     const cat = result.almanac["furniture" as AlmanacCategoryId];
-    expect(cat.items).toHaveLength(2);
-    const canonicalIds = cat.items.map((e: AlmanacEntry) => e.itemIds[0]).toSorted();
-    expect(canonicalIds).toEqual(["bed_double_v1", "bed_single_v1"]);
+    expect(cat.items).toEqual([{ itemIds: ["bed_double_v1", "bed_single_v1"], recipeId: "bed" }]);
+  });
+
+  it("groups an item without recipe_key with items whose recipe_key is its ID", () => {
+    vi.spyOn(console, "log").mockReturnValue(undefined);
+    const assetsDir = createAssetsFixture({
+      "items/other/furniture.toml": `
+[default]
+
+[lamp]
+name = "Lamp"
+icon_sprite = "spr_ui_item_lamp"
+tags = ["furniture"]
+
+[lamp_blue]
+name = "Lamp"
+icon_sprite = "spr_ui_item_lamp_blue"
+tags = ["furniture"]
+recipe_key = "lamp"
+
+[stool]
+name = "Stool"
+icon_sprite = "spr_ui_item_stool"
+tags = ["furniture"]
+`,
+      "ui/menus/sub_menus/almanac.toml": `
+[[categories]]
+key = "furniture"
+tags = ["furniture"]
+`,
+    });
+    const fiddle = parseFiddle(assetsDir).data;
+
+    const result = extractAlmanac(fiddle, localizer);
+    const cat = result.almanac["furniture" as AlmanacCategoryId];
+    expect(cat.items).toEqual([
+      { itemIds: ["lamp", "lamp_blue"], recipeId: "lamp" },
+      { itemIds: ["stool"] },
+    ]);
   });
 
   it("includes items in every almanac category matched by their tags", () => {
