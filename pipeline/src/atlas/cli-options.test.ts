@@ -1,7 +1,8 @@
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { CURRENT_GAME_VERSION } from "../game-version.js";
-import { parseAtlasCliOptions } from "./cli-options.js";
+import { assertInsideOutputRoot, parseAtlasCliOptions } from "./cli-options.js";
 
 describe("parseAtlasCliOptions", () => {
   it("parses a root, versions, & an output directory", () => {
@@ -23,5 +24,25 @@ describe("parseAtlasCliOptions", () => {
     [["--version=1.0.8", "a", "b"], "Pass at most one game-files directory."],
   ])("rejects %j", (args, message) => {
     expect(() => parseAtlasCliOptions(args)).toThrow(message);
+  });
+});
+
+describe("assertInsideOutputRoot", () => {
+  const outputRoot = resolve("/repo/pipeline/output");
+
+  it("accepts the output root & folders inside it", () => {
+    expect(assertInsideOutputRoot(join(outputRoot, "atlas"), outputRoot)).toBe(
+      join(outputRoot, "atlas"),
+    );
+    expect(assertInsideOutputRoot(outputRoot, outputRoot)).toBe(outputRoot);
+  });
+
+  it("rejects folders outside it", () => {
+    expect(() => assertInsideOutputRoot(resolve("/repo/src"), outputRoot)).toThrow(
+      "--out must be inside",
+    );
+    expect(() => assertInsideOutputRoot(resolve("/tmp/atlas"), outputRoot)).toThrow(
+      "--out must be inside",
+    );
   });
 });

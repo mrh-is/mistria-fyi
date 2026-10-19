@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { resolveCallerPath } from "../cli-options.js";
 import { INPUT_ROOT, resolveVersionedAssetsDir } from "../parse/asset-input.js";
 import { scanPipelineReferences } from "./claims.js";
-import { parseAtlasCliOptions } from "./cli-options.js";
+import { assertInsideOutputRoot, parseAtlasCliOptions } from "./cli-options.js";
 import { diffAtlases } from "./diff.js";
 import { buildAtlas } from "./inventory.js";
 import { renderAtlas, renderDiff } from "./render.js";
@@ -20,11 +20,15 @@ import type { AtlasCliOptions } from "./cli-options.js";
 import type { AssetAtlas } from "./inventory.js";
 
 const PIPELINE_SRC = fileURLToPath(new URL("..", import.meta.url));
-const DEFAULT_OUT_DIR = fileURLToPath(new URL("../../output/asset-atlas", import.meta.url));
+const OUTPUT_ROOT = fileURLToPath(new URL("../../output", import.meta.url));
+const DEFAULT_OUT_DIR = join(OUTPUT_ROOT, "asset-atlas");
 
 function main(options: AtlasCliOptions): void {
   const root = options.assetsDir === undefined ? INPUT_ROOT : resolveCallerPath(options.assetsDir);
-  const outDir = options.outDir === undefined ? DEFAULT_OUT_DIR : resolveCallerPath(options.outDir);
+  const outDir =
+    options.outDir === undefined
+      ? DEFAULT_OUT_DIR
+      : assertInsideOutputRoot(resolveCallerPath(options.outDir), OUTPUT_ROOT);
   const references = scanPipelineReferences(PIPELINE_SRC);
   mkdirSync(outDir, { recursive: true });
 

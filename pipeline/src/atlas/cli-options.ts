@@ -1,3 +1,5 @@
+import { isAbsolute, relative, sep } from "node:path";
+
 import { CURRENT_GAME_VERSION } from "../game-version.js";
 
 export interface AtlasCliOptions {
@@ -34,6 +36,18 @@ export function parseAtlasCliOptions(args: readonly string[]): AtlasCliOptions {
   const compare = parseVersion(values.get("--compare"), "--compare");
   if (compare === version) throw new Error("--compare must name a different version.");
   return { assetsDir, compare, outDir: values.get("--out"), version };
+}
+
+/**
+ * Confines a resolved output directory to the ignored output root, so the atlas never overwrites
+ * files elsewhere.
+ */
+export function assertInsideOutputRoot(outDir: string, outputRoot: string): string {
+  const path = relative(outputRoot, outDir);
+  if (path === ".." || path.startsWith(`..${sep}`) || isAbsolute(path)) {
+    throw new Error(`--out must be inside ${outputRoot}, not ${outDir}.`);
+  }
+  return outDir;
 }
 
 function parseVersion(value: string | undefined, name: string): string | undefined {
