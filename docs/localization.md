@@ -280,7 +280,7 @@ These rules apply to every locale:
 
 ## Tooling
 
-Two checks exist. Neither is a full localization safety net — see
+Three checks exist. None is a full localization safety net; see
 [Limits of the tooling](#limits-of-the-tooling).
 
 ### Key-shape check (`pnpm run check:i18n`)
@@ -291,6 +291,33 @@ content** — a translation can legitimately equal its English source (a short s
 or still be a stale machine translation; this check only prevents a PR from adding an English string
 without adding the corresponding key everywhere else. CI runs it on every pull request, and it's
 part of `pnpm run verify`.
+
+### Stale-translation check (`pnpm run check:locale-sync`)
+
+`scripts/check-locale-sync.ts` catches what the key-shape check cannot: an English value that
+changed while a locale's value for the same key did not. It compares the merge base of `--base`
+(default `origin/main`) with the working tree, flattening every `messages/<locale>.json`, & lists
+each `(locale, key)` where English changed and that locale's value is identical to the one it had at
+the base. A locale that changed the key (even to the same text as English) passes. Added & removed
+keys are not its concern; the key-shape check owns them.
+
+CI runs it as the “Locale sync” job on pull requests that touch `messages/` (or the check itself),
+using `--base HEAD^1`, the base branch tip of the PR's merge checkout. When the English change needs
+no new translation (a punctuation fix, a proper noun that is the same in every script), add an entry
+to `scripts/locale-sync-allowlist.json`:
+
+```json
+[
+  {
+    "key": "about_title",
+    "locale": "ja",
+    "reason": "The title is a proper noun; no change in script."
+  }
+]
+```
+
+Each entry names one key & one locale, & needs a non-empty reason; the check fails on a malformed
+file. Entries are reviewed like any other change, so delete one when its key is retranslated.
 
 ### ESLint rule (`local/no-hardcoded-ui-text`)
 
@@ -320,7 +347,9 @@ Be honest with yourself (and reviewers) about what this catches:
   `tracker-data.json` carries no display names, so the remaining risk is app-authored text. A future
   field added to the contract as English-only would render fine and pass lint.
 - The key-shape check cannot verify translation quality or that a value has actually been translated
-  (as opposed to copy-pasted from English).
+  (as opposed to copy-pasted from English). The stale-translation check only sees that a locale's
+  value changed in the same PR as English; it cannot tell whether the new text is a correct
+  translation, & it ignores a changed key whose locale value was edited for another reason.
 - The ESLint rule covers app templates by default, but it does not inspect user-facing strings
   assembled in scripts or data. Review those strings when adding new features.
 

@@ -87,6 +87,7 @@ enforces the same threshold. Ignore an advisory only when it’s disputed or has
 | `pnpm run build`              | Production build (Cloudflare Pages)                                |
 | `pnpm run check`              | SvelteKit type checking                                            |
 | `pnpm run check:i18n`         | Verify locale files match `en.json`’s keys                         |
+| `pnpm run check:locale-sync`  | Verify a changed English message changed in each locale too        |
 | `pnpm run check:routes`       | Verify built static assets bypass Functions                        |
 | `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, & ShellCheck                     |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                                         |
