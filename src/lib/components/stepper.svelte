@@ -90,11 +90,20 @@
     height: 16px;
   }
 
-  .stepper > button:is(:hover, :focus-visible):not(:disabled) {
+  .stepper > button:is(:active, :focus-visible):not(:disabled) {
     border-color: var(--stepper-accent-color);
     color: var(--stepper-accent-color);
     outline: 2px solid var(--stepper-accent-color);
     outline-offset: -2px;
+  }
+
+  @media (hover: hover) {
+    .stepper > button:hover:not(:disabled) {
+      border-color: var(--stepper-accent-color);
+      color: var(--stepper-accent-color);
+      outline: 2px solid var(--stepper-accent-color);
+      outline-offset: -2px;
+    }
   }
 
   .stepper > button:disabled {

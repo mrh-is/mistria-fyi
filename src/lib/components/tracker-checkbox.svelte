@@ -62,9 +62,16 @@
     border-radius: var(--radius);
   }
 
-  .tracker-checkbox:is(:hover, :focus-visible) {
+  .tracker-checkbox:is(:active, :focus-visible) {
     background: color-mix(in srgb, currentColor 7%, transparent);
     outline: none;
+  }
+
+  @media (hover: hover) {
+    .tracker-checkbox:hover {
+      background: color-mix(in srgb, currentColor 7%, transparent);
+      outline: none;
+    }
   }
 
   .tracker-checkbox:focus-visible {

@@ -244,10 +244,18 @@
     white-space: nowrap;
   }
 
-  .skill-count:is(:hover, :focus-visible) {
+  .skill-count:is(:active, :focus-visible) {
     color: var(--color-category-skills);
     outline: 2px solid var(--color-category-skills);
     outline-offset: -2px;
+  }
+
+  @media (hover: hover) {
+    .skill-count:hover {
+      color: var(--color-category-skills);
+      outline: 2px solid var(--color-category-skills);
+      outline-offset: -2px;
+    }
   }
 
   .skill-record[data-compact="true"] {
