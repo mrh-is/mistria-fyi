@@ -98,7 +98,8 @@ Outcomes by stored version:
 - **Newer than this build's:** the “newer data” state. The store blocks every write, quarantines
   nothing, and asks the player to update (“Your progress was saved by a newer version. Update to
   continue.”). An explicit replace doesn't lift it; another tab clearing or rewriting the stored
-  value does. A newer backup is refused the same way, leaving progress untouched.
+  value does. Exporting a backup meanwhile hands over the stored blob verbatim, never the defaults
+  in memory. A newer backup is refused the same way, leaving progress untouched.
 - **Unreadable** (not JSON, no valid `version`, or a malformed structure): copied to
   `mistria-fyi:progress-quarantine`, and persistence is blocked until an explicit replace (reset,
   restore, or save import). The player can download the copy from the Backup & Restore card.

@@ -388,6 +388,36 @@ describe("persistence lifecycle", () => {
     expect(userState.persistenceFailureKind).toBe("newer-data");
   });
 
+  it("exports a newer build's stored progress verbatim, never the defaults in memory", async () => {
+    const testWindow = makeWindow();
+    vi.stubGlobal("window", testWindow);
+    const future = buildMinimalState(7, 2);
+    const storage = makeStorage({ "mistria-fyi:progress": future });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.loadFromStorage();
+    userState.setRenown(3);
+
+    expect(userState.exportBackup()).toBe(future);
+
+    // Another tab on the newer build saves again; the export follows what's stored.
+    const later = buildMinimalState(9, 2);
+    storage.setItem("mistria-fyi:progress", later);
+    testWindow.dispatch("storage", {
+      key: "mistria-fyi:progress",
+      newValue: later,
+      storageArea: storage,
+    });
+    expect(userState.exportBackup()).toBe(later);
+    // The newer build reads it back; this build refuses it rather than restoring defaults.
+    expect(userState.restoreBackup(userState.exportBackup())).toEqual({
+      error: "newer-version",
+      ok: false,
+    });
+  });
+
   it("resumes saving once another tab clears or rewrites the newer progress", async () => {
     vi.useFakeTimers();
     const testWindow = makeWindow();

@@ -175,4 +175,47 @@ describe("readProgressBlob", () => {
     expect(repaired.progress.childChoice).toBe("undeclared");
     expect(repaired.progress.renown).toBe(0);
   });
+
+  it("writes hydrated progress back as a backup that restores", () => {
+    const document = fixture(CURRENT_SERIALIZATION_VERSION);
+    const progress = document.progress as Record<string, unknown>;
+    const json = JSON.stringify({
+      ...document,
+      progress: {
+        ...progress,
+        // Known IDs out of this build's domain, which hydration clamps…
+        heartLevels: { balor: 40.7, villager_from_a_later_update: 4.5 },
+        mineFloor: 1e9,
+        // …and unknown IDs, which it retains as stored.
+        skillLevels: { farming: 3.2, skill_from_a_later_update: 150 },
+      },
+    });
+    expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
+
+    const hydrated = readOk(json, "repair");
+    const written = serializeProgress(hydrated, hydrated.retained);
+    const restored = readOk(written, "strict");
+
+    expect(JSON.parse(serializeProgress(restored, restored.retained))).toEqual(JSON.parse(written));
+    expect(JSON.parse(written)).toMatchObject({
+      progress: {
+        heartLevels: { balor: 10, villager_from_a_later_update: 4.5 },
+        skillLevels: { farming: 3, skill_from_a_later_update: 150 },
+      },
+    });
+  });
+
+  it("keeps known IDs to this build's level domain in a backup", () => {
+    const document = fixture(CURRENT_SERIALIZATION_VERSION);
+    for (const levels of [{ heartLevels: { balor: 4.5 } }, { skillLevels: { farming: 1000 } }]) {
+      const json = JSON.stringify({
+        ...document,
+        progress: { ...(document.progress as object), ...levels },
+      });
+      expect(readProgressBlob(json, "strict"), JSON.stringify(levels)).toEqual({
+        error: "invalid-fields",
+        kind: "unreadable",
+      });
+    }
+  });
 });

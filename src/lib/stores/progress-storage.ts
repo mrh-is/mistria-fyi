@@ -104,6 +104,23 @@ function domainInteger(max: number) {
   return v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(max));
 }
 
+/**
+ * Strict levels keyed by ID. A known ID's level must be an integer in this build's domain; an
+ * unknown ID's is a retained entry, kept as its own build stored it, so any finite non-negative
+ * level is accepted. Hydration retains exactly that shape, so whatever it writes restores.
+ */
+function strictLevels(knownIds: object, max: number) {
+  const knownLevel = domainInteger(max);
+  return v.pipe(
+    v.record(v.string(), v.pipe(FiniteNumberSchema, v.minValue(0))),
+    v.check((levels) =>
+      Object.entries(levels).every(
+        ([id, level]) => !Object.hasOwn(knownIds, id) || v.is(knownLevel, level),
+      ),
+    ),
+  );
+}
+
 /** A record whose entries failing `schema` are dropped rather than failing the whole record. */
 function validEntries<TOutput>(schema: v.GenericSchema<unknown, TOutput>) {
   return v.pipe(
@@ -138,12 +155,12 @@ const StrictBlobSchema = v.object({
     animals: v.record(v.string(), StringListSchema),
     childChoice: v.optional(v.picklist(CHILD_CHOICES)),
     hasUpperFloor: v.optional(v.boolean()),
-    heartLevels: v.optional(v.record(v.string(), domainInteger(LEGACY_MAX_HEART_LEVEL))),
+    heartLevels: v.optional(strictLevels(trackerData.villagers, LEGACY_MAX_HEART_LEVEL)),
     mineFloor: domainInteger(getMaxMineFloor()),
     questStates: v.optional(v.record(v.string(), v.picklist(QUEST_STATES))),
     reachedSeason: v.optional(v.picklist(SEASONS)),
     renown: FiniteNumberSchema,
-    skillLevels: v.optional(v.record(v.string(), domainInteger(MAX_SKILL_LEVEL))),
+    skillLevels: v.optional(strictLevels(trackerData.skills, MAX_SKILL_LEVEL)),
     villagerRelationships: v.optional(v.record(v.string(), v.picklist(VILLAGER_RELATIONSHIPS))),
   }),
   version: VersionSchema,

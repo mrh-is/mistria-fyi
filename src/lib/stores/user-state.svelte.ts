@@ -452,7 +452,17 @@ function createUserState() {
         _persistenceFailureGeneration = 0;
       }
     },
+    /**
+     * The backup of this device's progress. While a newer build's data blocks writes, that is the
+     * stored blob itself, verbatim: memory holds only defaults or stale progress then, and a backup
+     * of those would overwrite the real progress wherever it was restored.
+     */
     exportBackup(): string {
+      if (newerDataBlocked) {
+        const stored = tryGetItem(PROGRESS_STORAGE_KEY);
+        const value = stored.ok ? stored.value : lastKnownStoredValue;
+        if (value !== null) return value;
+      }
       return serialize();
     },
     get hasAnyProgress(): boolean {

@@ -18,13 +18,17 @@ Players exist, so stored progress & backups must keep loading across every later
   requires the table, the fixtures, & `CURRENT_SERIALIZATION_VERSION` to agree.
 - **A “newer data” state.** A version above this build's blocks writes, quarantines nothing, and
   asks the player to update. An explicit replace doesn't lift it, since nothing holds a copy of the
-  newer data; another tab clearing or rewriting the stored value does. A newer backup is refused
-  with `newer-version`. Quarantine is only for unreadable data.
+  newer data; another tab clearing or rewriting the stored value does. Exporting a backup in this
+  state returns the stored blob verbatim, so the export can't carry defaults that would overwrite
+  real progress on restore. A newer backup is refused with `newer-version`. Quarantine is only for
+  unreadable data.
 - **Valibot validates the blob.** A strict schema (backup restore) and a repair schema (hydration,
   with per-field fallbacks & per-entry filtering) share their list fields. Save import & transfer
   keep their own layers, since neither reads this blob.
 - **Unknown IDs are retained, never dropped.** They stay out of `ProgressState`, so counts ignore
-  them, and the serializer writes them back. Reset clears them; restore replaces them.
+  them, and the serializer writes them back. Reset clears them; restore replaces them. An unknown
+  ID's level is kept as stored, and strict restore accepts any finite non-negative level for one
+  (known IDs keep their integer domain), so everything hydration writes restores.
 - **ID brands are Valibot's.** `ItemId` & its siblings are `string & v.Brand<"ItemId">`, so a
   schema's `v.brand("ItemId")` output is the same type the rest of the app uses.
 
