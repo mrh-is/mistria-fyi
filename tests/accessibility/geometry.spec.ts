@@ -135,6 +135,24 @@ test.describe("interactive target geometry", () => {
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
   });
 
+  test("compact mine floor controls keep the readout between their buttons", async ({ page }) => {
+    await gotoApplication(page, "/everything");
+    const record = page.locator("[data-mine-floor-record][data-compact='true']");
+    for (const width of [360, 390, 450, 1280]) {
+      await page.setViewportSize({ height: 800, width });
+      await record.scrollIntoViewIfNeeded();
+      const decrement = await requireBox(record.getByRole("button").first());
+      const increment = await requireBox(record.getByRole("button").last());
+      for (const part of await record.locator(".floor-readout > *").all()) {
+        const box = await requireBox(part);
+        expect(box.x, `readout start at ${width}px`).toBeGreaterThanOrEqual(
+          decrement.x + decrement.width,
+        );
+        expect(box.x + box.width, `readout end at ${width}px`).toBeLessThanOrEqual(increment.x);
+      }
+    }
+  });
+
   test("fine-pointer tracker controls retain compact accessible targets", async ({ page }) => {
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
