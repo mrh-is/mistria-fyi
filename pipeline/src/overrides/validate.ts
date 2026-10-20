@@ -78,7 +78,7 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
   const assets = records(fiddle.player_assets);
   const cutscenes = getCutsceneRecords(fiddle);
   const questIds = ids(quests);
-  const sealCutscenes = extractSealCutsceneQuests(fiddle, questIds);
+  const sealCutscenes = extractSealCutsceneQuests(fiddle);
   validate(
     "cutscene quest",
     CUTSCENE_QUEST_ENTRIES,

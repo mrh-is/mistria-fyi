@@ -1,4 +1,4 @@
-import { expectRecord, expectString, expectStringArray } from "../data-shapes.js";
+import { expectNumber, expectRecord, expectString, expectStringArray } from "../data-shapes.js";
 import { CUTSCENE_QUESTS } from "../overrides/game-facts.js";
 import { getCutsceneRecords, sourceFileFor } from "../parse/parse-fiddle.js";
 
@@ -83,9 +83,7 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
   }
 
   // Source 3: seals.toml pairs each seal-breaking cutscene with the quest it completes
-  for (const [cutsceneId, entry] of Object.entries(
-    extractSealCutsceneQuests(fiddle, allQuestIds),
-  )) {
+  for (const [cutsceneId, entry] of Object.entries(extractSealCutsceneQuests(fiddle))) {
     if (!(cutsceneId in map)) map[cutsceneId] = entry;
   }
 
@@ -139,15 +137,14 @@ function questToStartId(
 }
 
 /**
- * Maps each `seals.toml` cutscene to its seal's quest. The scene plays when the seal breaks, which
- * completes that quest. Seals without a cutscene (the priestess quarters) are skipped.
+ * Maps each `seals.toml` cutscene to its seal's quest. The seal tablet advances its quest once after
+ * the scene, so the scene completes the quest only when the seal names its final stage; anything
+ * else throws. Seals without a cutscene (the priestess quarters) are skipped.
  */
-export function extractSealCutsceneQuests(
-  fiddle: ParsedGameData,
-  questIds: ReadonlySet<string>,
-): CutsceneQuestMap {
+export function extractSealCutsceneQuests(fiddle: ParsedGameData): CutsceneQuestMap {
   if (fiddle.seals === undefined) return {};
   const sourcePath = sourceFileFor(fiddle, "seals");
+  const stageCounts = questStageCounts(fiddle);
   const map: CutsceneQuestMap = {};
   for (const [sealId, raw] of Object.entries(
     expectRecord(fiddle.seals, { fieldPath: "seals", sourcePath }),
@@ -159,8 +156,15 @@ export function extractSealCutsceneQuests(
       sourcePath,
     });
     const questId = expectString(seal.quest, { fieldPath: `seals.${sealId}.quest`, sourcePath });
-    if (!questIds.has(questId)) {
+    const stage = expectNumber(seal.stage, { fieldPath: `seals.${sealId}.stage`, sourcePath });
+    const stageCount = stageCounts.get(questId);
+    if (stageCount === undefined) {
       throw new Error(`Unknown quest ${questId} for seals.${sealId} in ${sourcePath}`);
+    }
+    if (stage !== stageCount - 1) {
+      throw new Error(
+        `Expected seals.${sealId}.stage in ${sourcePath} to be ${questId}'s final stage ${stageCount - 1}, got ${stage}`,
+      );
     }
     if (cutsceneId in map) {
       throw new Error(`Duplicate seal cutscene ${cutsceneId} in ${sourcePath}`);
@@ -168,4 +172,19 @@ export function extractSealCutsceneQuests(
     map[cutsceneId] = { phase: "completed", questId: questId as QuestId };
   }
   return map;
+}
+
+/** Counts each quest's stages, keyed by quest ID; quests without a stage list are omitted. */
+function questStageCounts(fiddle: ParsedGameData): Map<string, number> {
+  const counts = new Map<string, number>();
+  const groups = fiddle.quests as Record<string, Record<string, unknown>> | undefined;
+  for (const group of Object.values(groups ?? {})) {
+    if (typeof group !== "object" || group === null) continue;
+    for (const [questId, quest] of Object.entries(group)) {
+      if (questId === "default" || typeof quest !== "object" || quest === null) continue;
+      const stages = (quest as Record<string, unknown>).stages;
+      if (Array.isArray(stages)) counts.set(questId, stages.length);
+    }
+  }
+  return counts;
 }

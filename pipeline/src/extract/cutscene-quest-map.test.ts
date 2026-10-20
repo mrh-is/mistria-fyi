@@ -162,7 +162,7 @@ describe("buildCutsceneQuestMap", () => {
       quests: {
         story_quests: {
           find_the_magic_key: { stages: [] },
-          the_water_tablet: { stages: [] },
+          the_water_tablet: { stages: [{}, {}] },
         },
       },
       seals: {
@@ -182,7 +182,7 @@ describe("buildCutsceneQuestMap", () => {
           breaking_the_ruins_seal: {
             stages: [{ queries: [{ cutscene: "break_ruins_seal_pt_2" }] }],
           },
-          creating_the_void_mass: { stages: [] },
+          creating_the_void_mass: { stages: [{}] },
         },
       },
       seals: {
@@ -195,10 +195,17 @@ describe("buildCutsceneQuestMap", () => {
     });
   });
 
-  it("rejects a seal whose quest is unknown", () => {
+  it.each([
+    ["an unknown quest", { quest: "missing_quest", stage: 1 }, "Unknown quest missing_quest"],
+    ["an intermediate stage", { quest: "the_water_tablet", stage: 0 }, "final stage 1, got 0"],
+    ["an out-of-range stage", { quest: "the_water_tablet", stage: 2 }, "final stage 1, got 2"],
+    ["a missing stage", { quest: "the_water_tablet" }, "Expected finite number"],
+    ["a non-numeric stage", { quest: "the_water_tablet", stage: "1" }, "Expected finite number"],
+  ])("rejects a seal with %s", (_label, seal, message) => {
     const fiddle = makeCutsceneFiddle({
-      seals: { water: { cutscene: "break_water_seal", quest: "missing_quest", stage: 1 } },
+      quests: { story_quests: { the_water_tablet: { stages: [{}, {}] } } },
+      seals: { water: { cutscene: "break_water_seal", ...seal } },
     });
-    expect(() => buildCutsceneQuestMap(fiddle)).toThrow("Unknown quest missing_quest");
+    expect(() => buildCutsceneQuestMap(fiddle)).toThrow(message);
   });
 });
