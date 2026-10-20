@@ -363,10 +363,9 @@ translation directly, so English suffix rules never alter translated strings.
 
 | Output                                       | Contents                                                              |
 | -------------------------------------------- | --------------------------------------------------------------------- |
-| `src/lib/data/tracker-data.json`             | Minified committed app data                                           |
+| `src/lib/data/tracker-data.json`             | Committed app data, pretty-printed so regenerations diff readably     |
 | `src/lib/data/locales.json`                  | Locale manifest generated from `l10n.meta.toml`                       |
 | `src/lib/data/locales/<locale>/*.json`       | Per-locale name chunks, one file per category                         |
-| `pipeline/output/tracker-data.json`          | Pretty diagnostic copy of the tracker data                            |
 | `pipeline/output/fiddle-readable.json`       | Parsed and evaluated namespace tree for inspection                    |
 | `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--villager-sprites-only` |
 | `pipeline/output/asset-atlas/`               | Per-version asset inventories & diffs, from `pnpm run pipeline:atlas` |

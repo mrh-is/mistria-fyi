@@ -175,19 +175,13 @@ async function main(): Promise<void> {
       version,
     });
 
-  const json = JSON.stringify(trackerData);
-  const prettyJson = JSON.stringify(trackerData, null, 2);
+  // Pretty-printed so a regeneration's Git diff is reviewable; Vite re-emits imported JSON, so the
+  // whitespace never reaches the bundle.
+  const json = `${JSON.stringify(trackerData, null, 2)}\n`;
 
   console.log("Step 5: Staging outputs...");
-  const staged: StagedFile[] = [{ content: prettyJson, path: resolve(OUTPUT_DIR, OUTPUT_FILE) }];
-  console.log(
-    `  Staged: pipeline/output/${OUTPUT_FILE} (${(prettyJson.length / 1024).toFixed(1)} KB pretty)`,
-  );
-
-  staged.push({ content: json, path: resolve(APP_DATA_DIR, OUTPUT_FILE) });
-  console.log(
-    `  Staged: src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB minified)`,
-  );
+  const staged: StagedFile[] = [{ content: json, path: resolve(APP_DATA_DIR, OUTPUT_FILE) }];
+  console.log(`  Staged: src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB)`);
 
   const localeManifest = generateLocaleManifest(assetsDir);
   const localeManifestJson = `${JSON.stringify(localeManifest, null, 2)}\n`;
