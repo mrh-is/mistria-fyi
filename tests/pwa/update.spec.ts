@@ -219,11 +219,6 @@ test("keeps serving an old page's lazy chunks from its version's cache after the
   }
 });
 
-// TEMPORARY diagnostics for #172's CI failure.
-function diag(text: string): void {
-  process.stdout.write(`[diag] ${text}\n`);
-}
-
 function isEnglishHome(url: URL): boolean {
   return url.pathname === "/en";
 }
@@ -294,7 +289,10 @@ function cacheHolds(page: Page, cacheName: string, path: string): Promise<boolea
 }
 
 /**
- * Waits for the new version to be the active one. A worker restarting mid-check just reads again.
+ * Waits for the new version to be the active one: the newest worker itself has activated, with no
+ * other installing. Its cache exists from the start of its install, so that alone proves nothing;
+ * going offline mid-install would fail it and leave the old version active. A worker restarting
+ * mid-check just reads again.
  */
 async function waitForTakeover(context: BrowserContext, newCache: string): Promise<void> {
   await expect
@@ -304,12 +302,15 @@ async function waitForTakeover(context: BrowserContext, newCache: string): Promi
           .serviceWorkers()
           .at(-1)
           ?.evaluate(async (name) => {
-            const { registration } = globalThis as unknown as {
+            const { registration, serviceWorker } = globalThis as unknown as {
               registration: ServiceWorkerRegistration;
+              serviceWorker: ServiceWorker;
             };
             const names = await caches.keys();
             return (
-              registration.active?.state === "activated" &&
+              serviceWorker.state === "activated" &&
+              registration.active === serviceWorker &&
+              registration.installing === null &&
               registration.waiting === null &&
               names.includes(name)
             );
@@ -363,8 +364,12 @@ test("relaunches offline in a language chosen while a new version was installing
     await expect(page).toHaveURL(/\/ja$/);
     await expect.poll(() => lastLocale(page)).toBe("ja");
 
+    // The idle page reloads onto the new version once it takes over.
+    const reloaded = page.waitForEvent("load");
     releaseHome(true);
     await waitForTakeover(context, newCache);
+    await reloaded;
+    await waitForControl(page);
     await context.unroute(isEnglishHome);
     // The switch reached the installing version itself, not only the active one. Waited for before
     // going offline: the new version's own fetch may still be in flight.
@@ -394,6 +399,7 @@ test("relaunches offline after a new version failed to fetch the last-used home 
   await expect.poll(() => lastLocale(page)).toBe("en");
   const oldCache = versionCacheOf(await cacheNames(page));
   await expect.poll(() => cacheHolds(page, oldCache, "/en")).toBe(true);
+  await markDocument(page);
 
   const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
   const newCache = `cache-${newVersion}`;
@@ -402,29 +408,23 @@ test("relaunches offline after a new version failed to fetch the last-used home 
   );
 
   try {
+    // Before reloading onto the new version, the idle page probes its own URL.
+    const probed = page.waitForResponse(
+      (response) =>
+        isEnglishHome(new URL(response.url())) && response.request().resourceType() === "fetch",
+    );
     await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
     await waitForTakeover(context, newCache);
+    // It answers 503, so the page stays: an unprompted reload never swaps a working page for an
+    // error.
+    const probe = await probed;
+    expect(probe.status()).toBe(503);
+    expect(await stillSameDocument(page)).toBe(true);
     expect(await cacheHolds(page, newCache, "/en")).toBe(false);
 
     await goOffline(context);
     await page.close();
     const relaunched = await context.newPage();
-    // TEMPORARY diagnostics for #172's CI failure: what navigates this page after it reloads.
-    relaunched.on("framenavigated", (frame) => {
-      if (frame === relaunched.mainFrame()) diag(`navigated ${frame.url()}`);
-    });
-    await relaunched.exposeFunction("mfgDiag", diag);
-    await relaunched.addInitScript(() => {
-      const report = (globalThis as unknown as { mfgDiag: (text: string) => void }).mfgDiag;
-      const startedControlled = Boolean(navigator.serviceWorker.controller);
-      report(`load ${location.pathname} controlled=${String(startedControlled)}`);
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        report(`controllerchange (started controlled=${String(startedControlled)})`);
-      });
-      addEventListener("beforeunload", () => {
-        report(`beforeunload ${location.pathname}`);
-      });
-    });
     await relaunched.goto("/");
     await expect(relaunched).toHaveURL(/\/en$/);
     await expect(relaunched.getByRole("main")).toBeVisible();
