@@ -8,6 +8,7 @@
   import * as m from "#lib/paraglide/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";
+  import { resolve } from "$app/paths";
 
   let aiDisclosureOpen = $state(false);
 </script>
@@ -63,6 +64,10 @@
 
   <footer class="about-page__footer">
     <a href={localizedHref("privacy")}>{m.about_privacy_link()}</a>
+    <span>·</span>
+    <!-- A build-generated static file (see src/lib/build/licenses.ts), not a SvelteKit route. -->
+    <a href="{resolve('/')}licenses.txt" target="_blank" rel="noopener">{m.about_licenses_link()}</a
+    >
     <span>·</span>
     <button type="button" onclick={() => (aiDisclosureOpen = true)}>
       <IconRobot class="size-3.5" />{m.about_ai_disclosure_link()}

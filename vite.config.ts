@@ -17,6 +17,7 @@ import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
 import { headersFilePlugin } from "./src/lib/build/headers-file.js";
+import { LICENSES_FILE_NAME, licensesPlugin } from "./src/lib/build/licenses.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
 import { PARAGLIDE_OPTIONS } from "./src/lib/i18n/paraglide-options.js";
 import { APP_DIRECTORY } from "./src/lib/pwa/config.js";
@@ -156,6 +157,7 @@ export default defineConfig({
             "<prerendered>",
             "<redirects>",
             "/service-worker.js",
+            `/${LICENSES_FILE_NAME}`,
             ...staticExcludes,
           ],
           include: ["/*"],
@@ -168,6 +170,7 @@ export default defineConfig({
       version: { name: getAppVersion(), pollInterval: 600_000 },
     }),
     localeNameChunksPlugin(),
+    licensesPlugin({ stylesheets: ["src/app.css"] }),
     headersFilePlugin(renderHeadersFile(contentSecurityPolicy)),
     paraglideVitePlugin(PARAGLIDE_OPTIONS),
     svelteCssCachePlugin(),
