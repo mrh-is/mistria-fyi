@@ -207,7 +207,7 @@ describe("numeric level domains", () => {
   it("accepts in-domain levels without warnings", () => {
     const { completed, warnings } = extractSaveProgress({
       gamedata: {
-        maximum_mines_level: getMaxMineFloor(),
+        maximum_mines_level: getMaxMineFloor() - 1,
         t2_world_facts: {
           adeline_heart_level: MAX_HEART_LEVEL,
           farming_level: MAX_SKILL_LEVEL,
@@ -234,7 +234,7 @@ describe("numeric level domains", () => {
     expect(completed.skillLevels?.[FARMING]).toBe(MAX_SKILL_LEVEL);
     expect(completed.renown).toBe(getMaxRenownLevel());
     expect(warnings).toEqual([
-      levelWarning("above-max", "maximum_mines_level", "9999", getMaxMineFloor()),
+      levelWarning("above-max", "maximum_mines_level", "9999", getMaxMineFloor() - 1),
       levelWarning("above-max", "adeline_heart_level", "99", MAX_HEART_LEVEL),
       levelWarning("above-max", "farming_level", "999", MAX_SKILL_LEVEL),
     ]);
@@ -279,7 +279,7 @@ describe("numeric level domains", () => {
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
     expect(warnings).toEqual([
-      levelWarning("not-a-number", "maximum_mines_level", "NaN", getMaxMineFloor()),
+      levelWarning("not-a-number", "maximum_mines_level", "NaN", getMaxMineFloor() - 1),
       levelWarning("not-a-number", "adeline_heart_level", '"12"', MAX_HEART_LEVEL),
       levelWarning("not-a-number", "farming_level", "Infinity", MAX_SKILL_LEVEL),
     ]);
@@ -292,6 +292,42 @@ describe("numeric level domains", () => {
     expect(completed.renown).toBe(0);
     expect(warnings).toEqual([]);
   });
+});
+
+describe("zero-indexed mine floors", () => {
+  it.each([0, 1, 98, 99, 2.9])("imports stored floor %s using the elevator offset", (stored) => {
+    const { completed, warnings } = extractSaveProgress({
+      gamedata: { maximum_mines_level: stored },
+    });
+    expect(completed.mineFloor).toBe(Math.floor(stored) + 1);
+    expect(warnings).toEqual([]);
+  });
+
+  it("completes floor progress when the save records index 99", () => {
+    const { completed } = extractSaveProgress({ gamedata: { maximum_mines_level: 99 } });
+    expect(completed.mineFloor).toBe(getMaxMineFloor());
+  });
+
+  it("clamps the ALL_UNLOCKS debug value at the tracker floor cap", () => {
+    const { completed, warnings } = extractSaveProgress({
+      gamedata: { maximum_mines_level: 100 },
+    });
+    expect(completed.mineFloor).toBe(getMaxMineFloor());
+    expect(warnings).toEqual([
+      levelWarning("above-max", "maximum_mines_level", "100", getMaxMineFloor() - 1),
+    ]);
+  });
+
+  it.each([-1, -0.5, "0", null, Number.NaN, Number.POSITIVE_INFINITY])(
+    "does not credit floor one from invalid stored value %s",
+    (stored) => {
+      const { completed, warnings } = extractSaveProgress({
+        gamedata: { maximum_mines_level: stored },
+      });
+      expect(completed.mineFloor).toBe(0);
+      expect(warnings).toHaveLength(1);
+    },
+  );
 });
 
 describe("colorway normalization", () => {

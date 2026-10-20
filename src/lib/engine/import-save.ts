@@ -288,12 +288,15 @@ export function extractSaveProgress(bundle: SaveBundle): {
     return value;
   };
 
-  // Mine floor (from gamedata.json → maximum_mines_level)
-  const mineFloor = extractLevel(
-    "maximum_mines_level",
-    gamedata.value("maximum_mines_level"),
-    getMaxMineFloor(),
-  );
+  // The elevator adds one to this zero-based index, including an untouched new game's zero.
+  // DungeonRunner only takes max(previous, current_floor), so first entry still stores zero.
+  // Normalize the stored domain before adding the offset; missing/invalid facts stay unset.
+  const storedMineIndex = gamedata.value("maximum_mines_level");
+  const mineIndex = extractLevel("maximum_mines_level", storedMineIndex, getMaxMineFloor() - 1);
+  const mineFloor =
+    typeof storedMineIndex === "number" && Number.isFinite(storedMineIndex) && storedMineIndex >= 0
+      ? mineIndex + 1
+      : 0;
 
   // Heart levels, skill levels, renown (from gamedata.json → t2_world_facts)
   const heartLevels: Record<string, number> = {};

@@ -164,10 +164,18 @@ World-level state shared across all save slots.
 
 | Field                 | Type                      | Description                                                |
 | --------------------- | ------------------------- | ---------------------------------------------------------- |
-| `maximum_mines_level` | `number`                  | Deepest mines floor reached                                |
+| `maximum_mines_level` | `number`                  | Zero-based deepest mines floor index (add one for display) |
 | `museum_progress`     | `string[]`                | Item IDs donated to the museum                             |
 | `scene_history`       | `string[]`                | Cutscene IDs played; `reveal_mistmare` grants the Mistmare |
 | `t2_world_facts`      | `Record<string, unknown>` | Large key-value store for world state (below)              |
+
+`maximum_mines_level` stores `MAXIMUM_REACHED_DUNGEON_LEVEL` directly. The elevator menu and the
+game’s `ReachedMinesLevel` requirement both add one, so stored `99` imports as floor 100. Ordinary
+new-game initialization sets zero; `DungeonRunner` updates it with the maximum of its previous value
+and the current zero-based floor, so entering floor one leaves zero unchanged. The importer follows
+the elevator’s semantics and maps an explicitly present valid zero to floor one, even when the mines
+have never been entered. A missing or invalid field remains unset. The `ALL_UNLOCKS` debug branch
+initializes 100; import clamps it, and any larger index, to the tracker’s maximum floor.
 
 ### `t2_world_facts`
 
