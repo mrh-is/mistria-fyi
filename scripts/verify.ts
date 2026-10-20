@@ -1,6 +1,6 @@
 // Runs CI's non-browser matrix (ci.yml) locally, read-only, with live output. Stops on first
-// failure. Steps: lint, check, check:i18n, knip, test, build, check:routes, check:built. It never modifies
-// the tree (run `pnpm run lint:fix` yourself first).
+// failure. Steps: lint, check, check:i18n, knip, test, build, check:routes, check:built. It never
+// modifies the tree (run `pnpm run lint:fix` yourself first).
 //
 // Opt-in steps CI cannot run or only runs conditionally:
 //   --assets   also run test:pipeline:assets (needs the game assets; CI has none)

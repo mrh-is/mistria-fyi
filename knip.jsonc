@@ -1,21 +1,23 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  // A stale ignore or an unresolvable entry should fail CI, not print a hint nobody reads.
+  "treatConfigHintsAsErrors": true,
   // Knip reads the SvelteKit & Vitest setup from vite.config.ts. Entries here are files that nothing
   // imports because a runner, a hook, or a package script starts them.
   "workspaces": {
     ".": {
       "entry": [
-        // `node scripts/<name>.ts` (package scripts, hooks, CI, & docs).
-        "scripts/*.ts",
         // SvelteKit's universal hooks module (`reroute`), loaded by the framework.
         "src/hooks.ts",
-        // Fixtures the lint-ownership test feeds to ESLint & oxlint; nothing imports them.
-        "tests/lint-probes/*",
       ],
       "ignore": [
         // `scripts/locale-fonts/` is its own pnpm package with its own scripts & dependencies.
         "scripts/locale-fonts/**",
-        // Components with no importers, awaiting deletion (#112; an edit hook refused the delete).
+        // Fixtures the lint-ownership test feeds to ESLint & oxlint as text; nothing imports them.
+        "tests/lint-probes/**",
+        // Components with no importers. Their deletion is pending in #112 once #157 merges: the
+        // session that made that change ran an edit hook from before the guard was removed (#159).
+        // Delete these three lines with the components.
         "src/lib/components/ui/badge/**",
         "src/lib/components/ui/card/**",
         "src/lib/components/ui/progress/**",
@@ -23,7 +25,8 @@
       "ignoreDependencies": [
         // Registered by name in project.inlang/settings.json, never imported.
         "@inlang/plugin-message-format",
-        // A Workers runtime module (`cloudflare:workers`), not an npm package.
+        // `cloudflare:workers` is a Workers runtime module, but Knip reads the `cloudflare` prefix as
+        // the npm SDK of the same name & reports it unlisted. We do not use that package.
         "cloudflare",
       ],
     },
@@ -33,12 +36,10 @@
     },
   },
   "ignoreIssues": {
-    // The ui/ barrels follow shadcn-svelte's namespace pattern (`Root`, `DialogContent` aliases),
-    // so some exported names are intentionally unused.
-    "src/lib/components/ui/**": ["exports", "types"],
-    // The shared data-contract barrel (`docs/app-architecture.md`, Generated Data Contracts)
-    // re-exports every contract type for the app & the pipeline, used or not yet.
-    "src/lib/types/tracker-data.ts": ["types"],
+    // The ui/ barrels follow shadcn-svelte's namespace pattern: `Root`, `DialogContent`, & other
+    // aliases, plus the prop & variant types (`ButtonProps`, `ToggleVariant`), so some exported names
+    // are intentionally unused. Only the barrels are covered; the components themselves are not.
+    "src/lib/components/ui/*/index.ts": ["exports", "types"],
     // `page` is `$app/state`'s export name, so the stub exports one object under two names.
     "src/lib/test-utils/page-stub.svelte.ts": ["duplicates"],
   },
@@ -47,5 +48,8 @@
     "shellcheck",
     "gitleaks",
   ],
+  // Exports only used inside their own file stay allowed. That is a style question, not dead code,
+  // & enforcing it would have meant unexporting dozens of symbols in this PR; narrowing it is a
+  // follow-up (#113).
   "ignoreExportsUsedInFile": true,
 }
