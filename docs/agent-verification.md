@@ -16,8 +16,9 @@ require an exception.
 
 ## CI coverage
 
-`ci.yml` runs `lint`, `pnpm audit`, `check`, `check:i18n`, the complete asset-independent test suite
-with per-file & wall-time budgets (the cleanup test runs only when its script changes), `build`, &
+`ci.yml` runs `lint`, `pnpm audit`, `check`, `check:i18n`, `check:locale-sync` (pull requests that
+touch `messages/` only; not part of `verify`), the complete asset-independent test suite with
+per-file & wall-time budgets (the cleanup test runs only when its script changes), `build`, &
 `check:routes`, then the accessibility and PWA suites against that build when `src/`, `static/`,
 `tests/`, or their tooling change. Its “CI passed” job aggregates every result. Coverage runs
 nightly & remains reported, not gated. Timing ceilings are documented in
