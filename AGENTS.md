@@ -98,11 +98,13 @@ not here.
 - `src/lib/engine/` is pure domain logic; side effects belong at store or component boundaries.
   `src/lib/stores/user-state.svelte.ts` owns mutable progress & localStorage persistence.
 - Save import merges progress additively; backup restore replaces serialized state. Do not
-  substitute one flow for the other. Storage & backup schema changes require compatibility tests &
-  deliberate versioning. Transfer codes bind to the exact app build, so they need neither.
-- The app has no users yet, so transfer, storage, & backup formats may break compatibility. When
-  correctness & compatibility conflict, choose the correct design & bump the version rather than
-  adding a compatibility shim.
+  substitute one flow for the other. Assume real players hold saved progress: a storage or backup
+  schema change needs a version bump, a migration, & compatibility tests, and never ships as a
+  compatibility break. Transfer codes bind to the exact app build, so they need none of these.
+- Data written by a newer build than the running one shows a “newer data” state with writes blocked
+  & nothing quarantined; quarantine is only for data that is unreadable or invalid (fails
+  validation). The progress-transfer QR stays build-bound until sync deprecates it, and sync uses a
+  strict protocol version.
 - Category pages compose layouts. Put shared or stateful concerns in focused components; divide
   complex components by logical concern even with one call site, for reasoning clarity.
 - `docs/superpowers/` contains historical plans, specs, & notes. It is hidden from ripgrep by
