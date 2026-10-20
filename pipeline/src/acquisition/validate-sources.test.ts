@@ -92,6 +92,36 @@ describe("validateAcquisitionSources", () => {
     }).toThrow(AcquisitionSourceValidationError);
   });
 
+  it("accepts a Horse Statue source on a mount appearance", () => {
+    const source = { type: "horse_statue", cost: 100, questId: "known_quest" };
+    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } } } };
+    const references = AcquisitionReferenceIndex.from({
+      native: { quests: ["known_quest"] },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(assembly(trackerData), references);
+    }).not.toThrow();
+  });
+
+  it.each([
+    { name: "missing questId", source: { type: "horse_statue", cost: 100 } },
+    { name: "missing cost", source: { type: "horse_statue", questId: "known_quest" } },
+    {
+      name: "unknown quest",
+      source: { type: "horse_statue", cost: 100, questId: "unknown_quest" },
+    },
+  ])("rejects a Horse Statue source with $name", ({ source }) => {
+    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } } } };
+    const references = AcquisitionReferenceIndex.from({
+      native: { quests: ["known_quest"] },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(assembly(trackerData), references);
+    }).toThrow(AcquisitionSourceValidationError);
+  });
+
   it.each([
     { type: "scroll_bundle", bundleItemId: "bundle", storeId: "general" },
     { type: "upgrade", storeId: "general", upgradeId: "stairs" },
@@ -788,6 +818,7 @@ function assembly(partial: Record<string, unknown>): AcquisitionSourceAssembly {
     cosmetics: {},
     items: {},
     mines: { biomes: [], spells: {} },
+    mount: { appearances: {} },
     museum: {},
     pets: { cosmetics: {}, skins: {} },
     quests: {},
@@ -1116,6 +1147,13 @@ function realShapes(): Record<string, unknown> {
             },
           ],
           visibility: { type: "questCompleted", questId: "the_water_tablet" },
+        },
+      },
+    },
+    mount: {
+      appearances: {
+        mistmare: {
+          sources: [{ type: "horse_statue", cost: 100, questId: "repair_the_bridge" }],
         },
       },
     },

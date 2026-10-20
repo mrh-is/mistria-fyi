@@ -15,6 +15,8 @@ export const REPORT_CATEGORIES = [
   "date",
   "dates",
   "mines",
+  "mount-appearance",
+  "mount-appearances",
   "museum-item",
   "museum-set",
   "museum-wing",

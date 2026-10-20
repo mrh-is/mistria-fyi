@@ -19,12 +19,18 @@ const miscLocal = Object.fromEntries(
 
 /**
  * The smallest fiddle that passes every extractor & validation: tables the reference index
- * requires, the villagers & quests that hard-coded visibility rules name, one almanac item, and
- * every app UI string.
+ * requires, the villagers & quests that hard-coded visibility rules name, one almanac item, the
+ * Mistmare & its Horse Statue quest, and every app UI string.
  */
 function syntheticFiddle() {
   return makeFiddle({
-    cutscenes: {},
+    cutscenes: {
+      find_the_weathervane: {
+        quest_to_start: "find_the_weathervane",
+        requirements: { seen_cutscene: "find_the_weathervane_setup" },
+      },
+      find_the_weathervane_setup: {},
+    },
     dates: {},
     dungeons: { dungeons: { biomes: [] }, misc: { max_floors: 10 } },
     fish: {},
@@ -42,7 +48,7 @@ function syntheticFiddle() {
       chicken_statue: { high_price: 2, low_price: 1 },
       wishing_well: { high_price: 2, low_price: 1 },
     },
-    misc_local: { ...miscLocal, crops: "Crops" },
+    misc_local: { ...miscLocal, crops: "Crops", mistmare: "Mistmare" },
     monsters: {},
     npcs: {
       adeline: {
@@ -73,10 +79,20 @@ function syntheticFiddle() {
       },
       // Villager visibility hard-codes the market upgrades that bring these villagers to town.
       story_quests: {
+        find_the_weathervane: { name: "Find the Weathervane" },
         upgrade_the_saturday_market: { name: "Upgrade the Saturday Market" },
         upgrade_the_saturday_market_plaza: { name: "Upgrade the Saturday Market Plaza" },
       },
     },
+    ranching: {
+      animals: {
+        horse: {
+          core: { name: "Horse" },
+          variants: { mistmare: { acquirable: false, name: "Mistmare" } },
+        },
+      },
+    },
+    requirements: { repaired_horse_statue: { seen_cutscene: "find_the_weathervane_setup" } },
     ui: {
       character_customization: {},
       menus: { sub_menus: { almanac: { categories: [{ key: "crops", tags: ["crop"] }] } } },
@@ -152,6 +168,7 @@ describe("assembleTrackerData", () => {
       "cosmetics/subcategories",
       "ui",
       "mines",
+      "mount",
       "town-ranks",
       "items",
       "recipes",

@@ -47,6 +47,7 @@ import { extractDates } from "./extract/dates.js";
 import { extractFestivals } from "./extract/festivals.js";
 import { extractLocationNames } from "./extract/locations.js";
 import { extractMines } from "./extract/mines.js";
+import { extractMount } from "./extract/mount.js";
 import { extractMuseum } from "./extract/museum.js";
 import { extractPetCosmetics, extractPetSkins } from "./extract/pets.js";
 import { extractQuestChains } from "./extract/quest-chains.js";
@@ -196,6 +197,11 @@ export function assembleTrackerData(
   const requirementContext = createRequirementContext(
     fiddle.requirements as Record<string, unknown> | undefined,
     cutsceneQuestMap,
+  );
+  const { localeNames: mountLocaleNames, mount } = extractMount(
+    fiddle,
+    localizer,
+    requirementContext,
   );
 
   const itemSources = new ItemSourceAccumulator();
@@ -351,6 +357,7 @@ export function assembleTrackerData(
     festivals,
     items,
     mines,
+    mount,
     museum,
     perkTierLevels,
     pets: { cosmetics: petCosmetics, skins: petSkins },
@@ -400,6 +407,7 @@ export function assembleTrackerData(
       { byLocale: cosmeticSubCategoryLocaleNames, category: "cosmetics/subcategories" },
       { byLocale: uiLocaleNames, category: "ui" },
       { byLocale: mineLocaleNames, category: "mines" },
+      { byLocale: mountLocaleNames, category: "mount" },
       { byLocale: townRankLocaleNames, category: "town-ranks" },
       { byLocale: itemLocaleNames, category: "items" },
       { byLocale: recipeLocaleNames, category: "recipes" },

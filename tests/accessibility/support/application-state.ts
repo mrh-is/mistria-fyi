@@ -43,6 +43,7 @@ export function createStoredState(
     hasUpperFloor: false,
     heartLevels: {},
     mineFloor: 0,
+    mountAppearances: [],
     museum: [],
     petCosmetics: [],
     petSkins: [],

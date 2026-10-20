@@ -51,9 +51,11 @@ describe("source filter labels", () => {
 
   it("joins members with the locale's list format", () => {
     expect(sourceFilterMembersLabel(filter("offerings"), "en")).toBe(
-      "Chicken statue and Wishing well",
+      "Chicken statue, Horse statue, and Wishing well",
     );
-    expect(sourceFilterMembersLabel(filter("offerings"), "ja")).toBe("ニワトリ像、願いの井戸");
+    expect(sourceFilterMembersLabel(filter("offerings"), "ja")).toBe(
+      "ニワトリ像、馬の像、願いの井戸",
+    );
     expect(sourceFilterMembersLabel(filter("chests"), "en")).toBe(
       "Hidden chests, Treasure boxes, and Lost & found",
     );

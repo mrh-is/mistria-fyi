@@ -96,6 +96,7 @@ export const SOURCE_ICON: Record<Source["type"], Icon> = {
   fish: IconFish,
   fish_trap: IconFishHook,
   forage: IconSalad,
+  horse_statue: IconCoins,
   letter: IconMail,
   lost_and_found: IconArchive,
   mine: IconPick,

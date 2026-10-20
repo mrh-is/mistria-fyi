@@ -12,6 +12,7 @@ import {
   HAYDENS_BARN_GATE,
   KNOWN_STORES_ENTRIES,
   MINE_SUBCAT_TO_BIOME_ENTRIES,
+  MOUNT_APPEARANCE_UNLOCK_ENTRIES,
   PERK_BY_ITEM_ID_ENTRIES,
   PERK_BY_SUBCATEGORY_ENTRIES,
   SPELL_SOURCES_ENTRIES,
@@ -149,6 +150,12 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
     () => record(record(fiddle.quests).crown_quests).renown_level !== undefined,
   );
   validate("barn gate", [HAYDENS_BARN_GATE], questIds);
+  const horseVariants = records(record(record(record(fiddle.ranching).animals).horse).variants);
+  validate(
+    "mount appearance",
+    MOUNT_APPEARANCE_UNLOCK_ENTRIES,
+    new Set(Object.keys(horseVariants).filter((id) => horseVariants[id].acquirable === false)),
+  );
   validate(
     "dragon forge classification",
     [DRAGON_FORGE_RULE],
