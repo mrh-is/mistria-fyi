@@ -213,13 +213,10 @@ describe("projectRequirementExpressionToAvailability", () => {
     });
   });
 
-  it.each([
-    ["break_fire_seal", "breaking_the_fire_seal"],
-    ["dragon_tablet_pt_4", "breaking_the_final_seal"],
-  ])("maps story cutscene %s to completed quest %s", (cutsceneId, questId) => {
-    expect(project({ predicate: "seen_cutscene", value: cutsceneId })).toEqual({
+  it("falls back to reviewed cutscene overrides absent from the extracted map", () => {
+    expect(project({ predicate: "seen_cutscene", value: "destroy_vines_eastern_road" })).toEqual({
       type: "quest",
-      questId,
+      questId: "breaking_the_fire_seal",
       state: "completed",
     });
   });

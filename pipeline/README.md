@@ -411,6 +411,7 @@ or the Big Egg) & the Horse Statue’s 100-essence cost come from `obj_horse_sta
 Early Access used 50. See #638 (private beta).
 
 The #414 migration produces byte-identical game 1.0.5 tracker output & identical locale chunks
-compared with its pre-change pipeline run. There are no intentional generated-data changes. The two
-post-seal cutscene mappings remain reviewed runtime facts because native quest links do not derive
-them; the availability projector & cutscene mapper share their central entries.
+compared with its pre-change pipeline run. There are no intentional generated-data changes.
+`seals.toml` now derives the fire- & final-seal cutscene mappings. The remaining post-seal mapping,
+`destroy_vines_eastern_road`, stays a reviewed runtime fact because no native quest link derives it;
+the availability projector & cutscene mapper share its central entry.
