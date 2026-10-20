@@ -113,7 +113,9 @@ reason it was reviewed, rather than weakening the check.
 - `guard-generated-paths.ts` denies file-tool edits, patch headers (including deletions & moves),
   and direct shell writes referring to generated tracker data. Recover by running the pipeline.
   CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership and the `generated-data`
-  label. `src/lib/components/ui/` is project-owned & not guarded.
+  label. `src/lib/components/ui/` is project-owned & not guarded. The hook matches the exact
+  tracker-data file, so a directory-level or `cd`-relative write that reaches it is not caught
+  there; the “Guarded paths” CI check catches it.
 - `guard-generated-reads.ts` denies file-tool & direct shell reads of generated tracker data; read
   `src/lib/types/tracker-data.ts` or pipeline source instead. Existing symlinks are resolved.
 - Shell guards check each command segment (split at `;`, `&&`, `||`, `|`, & newlines) on its own, so

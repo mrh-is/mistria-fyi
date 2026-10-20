@@ -5,7 +5,7 @@ const config = {
   ignoreFiles: [
     // Where the tokens are defined, so it's the one place literals belong.
     "src/app.css",
-    // Vendored shadcn-svelte code.
+    // The ui/ components, forked from shadcn-svelte (see docs/decisions/2026-10-20-own-ui-components.md).
     "src/lib/components/ui/**",
     // Generated.
     "src/lib/fonts/**",
