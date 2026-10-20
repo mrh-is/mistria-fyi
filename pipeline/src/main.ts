@@ -30,16 +30,23 @@ import { parseFiddle, parseFiddleFromZip } from "./parse/parse-fiddle.js";
 import { checkParseSmoke } from "./parse/parse-smoke.js";
 
 import type { LocaleChunk } from "./assemble.js";
+import type { CliOptions } from "./cli-options.js";
 import type { StagedFile } from "./emit/publish.js";
 import type { SpriteExtractionResult, StagedSprite } from "./emit/sprites.js";
 import type { ParsedGameData } from "./parse/parse-fiddle.js";
 
-const __dirname = import.meta.dirname;
-const PIPELINE_ROOT = resolve(__dirname, "..");
-const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
+const PIPELINE_ROOT = resolve(import.meta.dirname, "..");
 const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
 const OUTPUT_FILE = "tracker-data.json";
-const SPRITES_OUTPUT_ROOT = resolve(OUTPUT_DIR, "sprites");
+const SPRITES_OUTPUT_ROOT = resolve(PIPELINE_ROOT, "output", "sprites");
+
+/** Prints each line as an error and flags the run as failed; callers return right after. */
+function fail(...lines: string[]): void {
+  for (const line of lines) {
+    console.error(line);
+  }
+  process.exitCode = 1;
+}
 
 /** Logs sprite extraction results for a given entity kind. */
 function logSpriteExtraction(label: string, result: SpriteExtractionResult): void {
@@ -49,14 +56,13 @@ function logSpriteExtraction(label: string, result: SpriteExtractionResult): voi
 }
 
 async function main(): Promise<void> {
-  console.log("📚 Mistria Field Guide — Data Pipeline\n");
+  console.log("📚 Mistria Field Guide data pipeline\n");
 
-  let options;
+  let options: CliOptions;
   try {
     options = parseCliOptions(process.argv.slice(2));
   } catch (error) {
-    console.error(`❌ ${(error as Error).message}`);
-    process.exitCode = 1;
+    fail(`❌ ${(error as Error).message}`);
     return;
   }
   const callerAssetsDir = options.assetsDir ?? process.env.MISTRIA_ASSETS;
@@ -64,21 +70,19 @@ async function main(): Promise<void> {
     (callerAssetsDir === undefined ? undefined : resolveCallerPath(callerAssetsDir)) ??
     (existsSync(DEFAULT_WINDOWS_STEAM_ASSETS_DIR) ? DEFAULT_WINDOWS_STEAM_ASSETS_DIR : undefined);
   if (!inputDir) {
-    console.error(
-      "Usage: tsx src/main.ts <assets-dir | game-files-root> [--version=X.Y.Z|current]",
+    fail(
+      "Usage: pnpm run pipeline -- <assets-dir | game-files-root> [--version=X.Y.Z|current]",
+      "  Or set the MISTRIA_ASSETS environment variable",
+      "  Or install the game at its default Steam location on Windows:",
+      `    ${DEFAULT_WINDOWS_STEAM_ASSETS_DIR}`,
     );
-    console.error("  Or set MISTRIA_ASSETS environment variable");
-    console.error(`  Or install the game at its default Steam location on Windows:`);
-    console.error(`    ${DEFAULT_WINDOWS_STEAM_ASSETS_DIR}`);
-    process.exitCode = 1;
     return;
   }
   let assetsDir: string;
   try {
     assetsDir = resolveVersionedAssetsDir(inputDir, options.version);
   } catch (error) {
-    console.error(`❌ ${(error as Error).message}`);
-    process.exitCode = 1;
+    fail(`❌ ${(error as Error).message}`);
     return;
   }
 
@@ -92,29 +96,26 @@ async function main(): Promise<void> {
   } else {
     const zipPath = resolveAssetsZipPath(assetsDir);
     if (!zipPath) {
-      console.error(
+      fail(
         `❌ Missing input: no fiddle/ directory and no assets.zip found under ${assetsDir}`,
-      );
-      console.error(
         "   Pass the path to the assets directory containing fiddle/, or to a directory",
+        "   containing assets.zip (e.g. the Steam install directory).",
       );
-      console.error("   containing assets.zip (e.g. the Steam install directory).");
-      process.exitCode = 1;
       return;
     }
     fiddleSource = { kind: "zip", zipPath };
   }
 
-  if (fiddleSource.kind === "zip" && !options.parseOnly && !options.villagerSpritesOnly) {
-    console.error("❌ Full pipeline extraction requires an on-disk fiddle/ directory.");
-    console.error(
+  const fullRun = !options.parseOnly && !options.villagerSpritesOnly;
+  if (fiddleSource.kind === "zip" && fullRun) {
+    fail(
+      "❌ Full pipeline extraction requires an on-disk fiddle/ directory.",
       "   Extract your game assets first, or use --parse-only or --villager-sprites-only with assets.zip.",
     );
-    process.exitCode = 1;
     return;
   }
 
-  if (!options.parseOnly && !options.villagerSpritesOnly) {
+  if (fullRun) {
     assertGameLanguageMapExhaustive(assetsDir);
   }
 
@@ -132,8 +133,7 @@ async function main(): Promise<void> {
     try {
       checkParseSmoke(parsed, options.parseProfile);
     } catch (error) {
-      console.error(`  ❌ ${(error as Error).message}`);
-      process.exitCode = 1;
+      fail(`  ❌ ${(error as Error).message}`);
       return;
     }
     console.log(
@@ -153,14 +153,13 @@ async function main(): Promise<void> {
     (misc?.version as string | undefined) ??
     readInstalledGameVersion(resolveAssetsZipPath(assetsDir));
   if (!version) {
-    console.error(
-      "❌ No game version found. Pass --version=X.Y.Z (or --version=current) or ensure misc.version exists.",
-    );
     const committedVersion = readCommittedGameVersion();
-    if (committedVersion) {
-      console.error(`  The committed ${OUTPUT_FILE} was generated from ${committedVersion}.`);
-    }
-    process.exitCode = 1;
+    fail(
+      "❌ No game version found. Pass --version=X.Y.Z (or --version=current) or ensure misc.version exists.",
+      ...(committedVersion
+        ? [`  The committed ${OUTPUT_FILE} was generated from ${committedVersion}.`]
+        : []),
+    );
     return;
   }
   console.log(`  Game version: ${version}\n`);
@@ -171,9 +170,7 @@ async function main(): Promise<void> {
   console.log();
 
   const { iconSpritesByItemId, iconSpritesByVillagerId, localeChunks, trackerData } =
-    assembleTrackerData(fiddle, createAssetsLocalizer(assetsDir), {
-      version,
-    });
+    assembleTrackerData(fiddle, createAssetsLocalizer(assetsDir), { version });
 
   // Pretty-printed so a regeneration's Git diff is reviewable; Vite re-emits imported JSON, so the
   // whitespace never reaches the bundle.
@@ -192,25 +189,18 @@ async function main(): Promise<void> {
     stageLocaleChunks(staged, chunk);
   }
 
-  const fiddlePretty = JSON.stringify(fiddle, null, 2);
-  staged.push({ content: fiddlePretty, path: resolve(OUTPUT_DIR, "fiddle-readable.json") });
-  console.log(
-    `  Staged: pipeline/output/fiddle-readable.json (${(fiddlePretty.length / 1024 / 1024).toFixed(1)} MB)`,
-  );
-
   let stagedSprites: StagedSprite[] = [];
-  const extractSpritesFlag = options.sprites;
-  const zipPath = resolveSpriteArchivePath(resolve(assetsDir), version);
-  if (extractSpritesFlag) {
+  if (options.sprites) {
     console.log("\nStep 6: Extracting item and villager sprites...");
+    const zipPath = resolveSpriteArchivePath(assetsDir, version);
     const itemSpriteResult = await extractSprites(
-      resolve(assetsDir),
+      assetsDir,
       iconSpritesByItemId,
       SPRITES_OUTPUT_ROOT,
       zipPath,
     );
     const villagerSpriteResult = await extractVillagerSprites(
-      resolve(assetsDir),
+      assetsDir,
       iconSpritesByVillagerId,
       SPRITES_OUTPUT_ROOT,
       zipPath,
@@ -222,7 +212,7 @@ async function main(): Promise<void> {
     stagedSprites = [...itemSpriteResult.staged, ...villagerSpriteResult.staged];
   }
 
-  console.log(`\nStep ${extractSpritesFlag ? "7" : "6"}: Publishing outputs...`);
+  console.log(`\nStep ${options.sprites ? "7" : "6"}: Publishing outputs...`);
   publishFiles(staged);
   publishSprites(stagedSprites);
   console.log(
@@ -240,28 +230,27 @@ async function main(): Promise<void> {
  */
 function reportMissingSprites(missing: readonly string[]): boolean {
   if (missing.length === 0) return false;
-  console.error(`  ❌ ${missing.length} sprites not found:`);
-  for (const name of missing) {
-    console.error(`    - ${name}`);
-  }
-  console.error("  Aborting before publish: no tracked output file was written.");
-  process.exitCode = 1;
+  fail(
+    `  ❌ ${missing.length} sprites not found:`,
+    ...missing.map((name) => `    - ${name}`),
+    "  Aborting before publish: no tracked output file was written.",
+  );
   return true;
 }
 
 /**
  * A lightweight pipeline mode for regenerating only villager sprites: `fiddle.npcs` plus
  * `assets.zip`'s NPC icon PNGs are enough, so this never touches `tracker-data.json`, locale
- * chunks, or any other output, and never requires an on-disk `fiddle/` extraction — it works
+ * chunks, or any other output, and never requires an on-disk `fiddle/` extraction. It works
  * directly off `assets.zip` (see {@link parseFiddleFromZip}), including at the default Steam
- * install location with zero configuration. Invoke with `pnpm run pipeline -- --villager-sprites-only` or
- * `pnpm run sprites:villagers`.
+ * install location with zero configuration. Invoke with
+ * `pnpm run pipeline -- --villager-sprites-only` or `pnpm run sprites:villagers`.
  */
 async function runVillagerSpritesOnly(fiddle: ParsedGameData, assetsDir: string): Promise<void> {
   console.log("Step 2: Extracting villager sprites...");
   const iconSpritesByVillagerId = extractVillagerIconSprites(fiddle);
   const result = await extractVillagerSprites(
-    resolve(assetsDir),
+    assetsDir,
     iconSpritesByVillagerId,
     SPRITES_OUTPUT_ROOT,
   );
