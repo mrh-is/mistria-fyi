@@ -19,7 +19,7 @@ describe("guardMessage", () => {
       guardMessage(edit("/work/mistria/src/lib/components/ui/button/button.svelte")),
     ).toBeUndefined();
     expect(guardMessage(edit("src/lib/components/ui/dialog/index.ts"))).toBeUndefined();
-    expect(bash("rm -rf src/lib/components/ui/badge")).toBeUndefined();
+    expect(bash("rm -rf src/lib/components/ui/toggle")).toBeUndefined();
     expect(bash("cd src/lib/components/ui && touch button.svelte")).toBeUndefined();
   });
 
