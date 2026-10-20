@@ -1,4 +1,9 @@
-import { isSaveSection } from "./save-bundle.js";
+import {
+  hasProgressSection,
+  isIdentitySection,
+  isProgressSection,
+  isSaveSection,
+} from "./save-bundle.js";
 
 import type { SaveBundle } from "./save-bundle.js";
 
@@ -53,8 +58,9 @@ export class SavArchiveError extends Error {
  *   repeated entry_count times:
  *     [u64 LE name_len][name bytes (UTF-8)][u64 LE data_len][data bytes (UTF-8 JSON)]
  *
- * We extract the "player", "gamedata", and "quests" entries and parse them as JSON. Every
- * rejection is a {@link SavArchiveError}.
+ * We extract the "player", "gamedata", and "quests" entries, which record progress, and the
+ * "header" & "info" entries, which identify the save, and parse them as JSON. Every rejection is a
+ * {@link SavArchiveError}.
  */
 export async function parseSavArchive(
   file: File,
@@ -169,7 +175,12 @@ function extractBundle(data: Uint8Array): SaveBundle {
       throw corrupt("Unexpected end of .sav file: entry data extends past end");
     }
 
-    if (name === "player" || name === "gamedata" || name === "quests") {
+    if (isIdentitySection(name)) {
+      // Identity sections only label the save, so an unreadable one never blocks the import:
+      // it's left out, and extraction reports its fields absent.
+      const parsed = tryParseJson(decoder.decode(data.subarray(offset, offset + dataLen)));
+      if (isSaveSection(parsed)) bundle[name] = parsed;
+    } else if (isProgressSection(name)) {
       const jsonStr = decoder.decode(data.subarray(offset, offset + dataLen));
       let parsed: unknown;
       try {
@@ -193,7 +204,7 @@ function extractBundle(data: Uint8Array): SaveBundle {
     offset += dataLen;
   }
 
-  if (!bundle.player && !bundle.gamedata && !bundle.quests) {
+  if (!hasProgressSection(bundle)) {
     throw new SavArchiveError(
       { code: "no-save-data" },
       "No recognized save data found in this .sav file. Expected player, gamedata, or quests entries.",
@@ -201,6 +212,14 @@ function extractBundle(data: Uint8Array): SaveBundle {
   }
 
   return bundle;
+}
+
+function tryParseJson(text: string): unknown {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Format a byte count for the English debugging message; the UI formats sizes per locale. */

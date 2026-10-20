@@ -273,3 +273,13 @@ versions, though new items, recipes, and quests are added in content updates.
 3. `items_acquired` alone forms the almanac; ignore `items_sold` and `recipes_created` for it.
 4. `t2_world_facts` villager heart levels are floats in practice; floor them for display.
 5. Skill levels come from `t2_world_facts`, not `skill_xp` (which stores raw XP).
+6. Every heart & skill level key is present in v1.0.8 saves, early & late, so a missing one means
+   the save is incomplete for that field, not that the level is zero.
+7. Saves list game IDs the tracker deliberately doesn't track: items outside the almanac, the
+   cosmetic token items (`cosmetic`, `animal_cosmetic`, `pet_cosmetic`), treasure chests
+   (`treasure_box_<tier>`, tracked as chest tiers), and the Mistmare's perks (`horsepower`,
+   `harvest_horse`, `nice_ride`). The importer counts these as known-but-untracked; anything else it
+   doesn't recognize marks its field incomplete.
+8. `info.creation_version` & `header.playtime` identify a save across imports: the first never
+   changes, and the second only grows as the save is played. The importer reads nothing else from
+   either entry.
