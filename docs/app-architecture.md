@@ -168,6 +168,8 @@ These flows are not interchangeable:
 - **Save import / device transfer** (`mergeFromSave`) unions imported progress into the current
   state. It is additive and never removes existing entries. The versioned binary contract and
   failure behavior are documented in [the progress transfer format](transfer-format.md).
+- **Save-driven sync** (planned, #123) will apply a save from the game as a policy-driven diff
+  through one serialized write path, rather than through either flow above. See [sync.md](sync.md).
 
 ## 4. Route Composition
 
