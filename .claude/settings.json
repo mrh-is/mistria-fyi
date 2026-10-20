@@ -8,6 +8,7 @@
       "Bash(pnpm run check:i18n *)",
       "Bash(pnpm run check:routes *)",
       "Bash(pnpm run check:built *)",
+      "Bash(pnpm run data:diff *)",
       "Bash(pnpm run test *)",
       "Bash(pnpm run test:accessibility *)",
       "Bash(pnpm run test:accessibility:critical *)",
