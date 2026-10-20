@@ -106,11 +106,11 @@ pnpm run sprites:manifest
 staging only works on the gaming PC. `sprites:manifest` refreshes the browser suites’ sprite fixture
 from the staged files.
 
-Treat the regenerated data as a candidate until the semantic review is complete. Inspect the
-readable pipeline artifact or a purpose-built comparison rather than relying only on the minified
-JSON diff. Agent hooks deny direct reads of the generated tracker data, so an agent compares it with
-a script that loads the baseline (`git show HEAD:…`) and the candidate and prints only the
-structural differences. The locale chunks are pretty-printed, so their Git diff is reviewable; check
+Treat the regenerated data as a candidate until the semantic review is complete. Run
+`pnpm run data:diff HEAD` for a path-level listing of what changed; the committed file is
+pretty-printed, so its Git diff is readable too, though GitHub collapses it as generated. Agent
+hooks deny direct reads of the generated tracker data, but `data:diff` reads it through Git, so
+agents use it instead. The locale chunks are pretty-printed, so their Git diff is reviewable; check
 that no keys were added or removed and that changed values are new translations.
 
 ### Upload sprites

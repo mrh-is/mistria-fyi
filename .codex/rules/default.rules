@@ -9,6 +9,7 @@ prefix_rule(
             "check:i18n",
             "check:routes",
             "check:built",
+            "data:diff",
             "dev",
             "fonts:check",
             "fonts:lint",
