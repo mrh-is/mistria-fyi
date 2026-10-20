@@ -87,6 +87,12 @@ describe("inlineScriptHashes", () => {
     ]);
   });
 
+  it("ends a script at an end tag carrying whitespace or attributes", () => {
+    expect(
+      inlineScriptHashes("<script>alert(1)</script\t\n bar><script>alert(1)</SCRIPT >"),
+    ).toEqual(["sha256-bhHHL3z2vDgxUt0W3dWQOrprscmda2Y5pLsLg4GF+pI="]);
+  });
+
   it("skips external scripts, inert data blocks, & duplicates", () => {
     const html = [
       '<script src="/_app/start.js"></script>',

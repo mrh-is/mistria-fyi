@@ -16,7 +16,8 @@ const EXECUTABLE_SCRIPT_TYPES = new Set([
   "application/javascript",
 ]);
 
-const SCRIPT_ELEMENT = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
+// An end tag may carry whitespace & junk attributes (`</script foo>`), which still close the element.
+const SCRIPT_ELEMENT = /<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi;
 const TYPE_ATTRIBUTE = /\btype\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i;
 const SRC_ATTRIBUTE = /\bsrc\s*=/i;
 
