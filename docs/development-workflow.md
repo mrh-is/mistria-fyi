@@ -269,8 +269,9 @@ commands are references for CI or the explicit full-local-matrix exceptions in
   ```sh
   pnpm run test
   ```
-  This command passes in a fresh clone without `pipeline/input/`. CI runs the same suite through
-  `node scripts/vitest-timings.ts`, which reports per-file timings & enforces budgets.
+  This command passes in a fresh clone without `pipeline/input/`. CI runs the same suite through its
+  `test:budgets` step (`node scripts/vitest-timings.ts`), which reports per-file timings & enforces
+  budgets.
 - **Measure coverage** (opt-in; the same suite plus v8 coverage):
   ```sh
   pnpm run test:coverage
@@ -312,18 +313,19 @@ commands are references for CI or the explicit full-local-matrix exceptions in
 
 ### Vitest time budgets
 
-CI runs `node scripts/vitest-timings.ts` over every asset-independent project. The cleanup test runs
-only when `scripts/cleanup-merged-worktrees.ts` changes: PRs use their complete changed-file list, &
-main pushes compare the event’s before/after commits. Scheduled & manual runs omit it. Direct local
-runs still include it, so test-only edits can be verified with the focused command. It publishes all
-per-file test & hook durations, slowest first, in the job summary & the `vitest-timings` artifact.
-On two-CPU noncoverage runs, ordinary files use both workers; the allocation, lint-ownership, &
-project-configuration CLI probes run separately with one worker, reserving a CPU for their
-subprocesses. Both invocations share one wall-time budget & their file timings are combined.
-Coverage & other runner classes use half the available CPUs (at least one worker, capped at four).
-The JSON also records CPU count, coverage mode, whole-command wall time, & the enforced ceilings.
-Imports, environment setup, transforms, startup, & report generation count toward the wall budget.
-Missing timing reports & unsuccessful tests fail the step independently of the budgets.
+CI runs the `test:budgets` step (`node scripts/vitest-timings.ts`) over every asset-independent
+project. The cleanup test runs only when `scripts/cleanup-merged-worktrees.ts` changes: PRs use
+their complete changed-file list, & main pushes compare the event’s before/after commits. Scheduled
+& manual runs omit it. Direct local runs still include it, so test-only edits can be verified with
+the focused command. It publishes all per-file test & hook durations, slowest first, in the job
+summary & the `vitest-timings` artifact. On two-CPU noncoverage runs, ordinary files use both
+workers; the allocation, lint-ownership, & project-configuration CLI probes run separately with one
+worker, reserving a CPU for their subprocesses. Both invocations share one wall-time budget & their
+file timings are combined. Coverage & other runner classes use half the available CPUs (at least one
+worker, capped at four). The JSON also records CPU count, coverage mode, whole-command wall time, &
+the enforced ceilings. Imports, environment setup, transforms, startup, & report generation count
+toward the wall budget. Missing timing reports & unsuccessful tests fail the step independently of
+the budgets.
 
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
@@ -436,7 +438,8 @@ other full-suite command during development.
 `.github/workflows/ci.yml` runs on every pull request and main push. The steps it runs are the ones
 `STEPS` lists in [scripts/verify.ts](../scripts/verify.ts), each naming its CI job; a job runs a
 step with `pnpm run verify -- --step=<name>`. Add or change a step there, not by copying a command
-into the workflow. The local-only differences are that the audit, the budgeted Vitest run (file &
+into the workflow, & give a new step both a `STEPS` entry & its `--step` line in `ci.yml` (the CI
+test fails until both exist). Some steps run only in CI: the audit, the budgeted Vitest run (file &
 wall-time budgets, coverage only nightly), & the pull-request-only stale-translation check are
 outside the default `verify` matrix.
 

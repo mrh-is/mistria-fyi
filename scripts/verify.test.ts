@@ -1,12 +1,12 @@
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { planSteps, STEPS } from "./verify.js";
+import { planSteps, stepProcess, STEPS } from "./verify.js";
 
 const script = fileURLToPath(new URL("verify.ts", import.meta.url));
 
@@ -175,6 +175,38 @@ if (process.argv.at(-1) === "lint") {
   });
 });
 
+describe("stepProcess", () => {
+  const lint = STEPS.find(({ name }) => name === "lint");
+  const budgets = STEPS.find(({ name }) => name === "test:budgets");
+  if (!lint || !budgets) throw new Error("Expected the lint & test:budgets steps.");
+
+  it("refuses forwarded arguments when the launch goes through a shell", () => {
+    expect(() => stepProcess(lint, ["--base", "HEAD^1"], {}, "win32")).toThrow(
+      /Cannot pass arguments to lint through a shell/,
+    );
+  });
+
+  it("passes forwarded arguments when pnpm launches directly, or on a platform with no shell", () => {
+    const direct = stepProcess(lint, ["--base", "HEAD^1"], { npm_execpath: "/pnpm.cjs" }, "win32");
+    expect(direct.shell).toBe(false);
+    expect(direct.args).toEqual(["/pnpm.cjs", "run", "lint", "--base", "HEAD^1"]);
+    expect(stepProcess(lint, ["--x"], {}, "linux").shell).toBe(false);
+  });
+
+  it("starts a Node step under the running Node, even where pnpm would need a shell", () => {
+    const spec = stepProcess(budgets, ["--x"], {}, "win32");
+    expect(spec).toEqual({
+      args: ["scripts/vitest-timings.ts", "--x"],
+      command: process.execPath,
+      shell: false,
+    });
+  });
+
+  it("allows no arguments through a shell, as before", () => {
+    expect(stepProcess(lint, [], {}, "win32").shell).toBe(true);
+  });
+});
+
 describe("the step catalog", () => {
   const packageScripts = (
     JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> }
@@ -189,6 +221,13 @@ describe("the step catalog", () => {
     for (const { command, name } of STEPS) {
       if (command.kind !== "pnpm" || command.args[0] !== "run") continue;
       expect(packageScripts, name).toHaveProperty([command.args[1] ?? ""]);
+    }
+  });
+
+  it("runs only Node scripts that exist", () => {
+    for (const { command, name } of STEPS) {
+      if (command.kind !== "node") continue;
+      expect(existsSync(command.args[0] ?? ""), name).toBe(true);
     }
   });
 

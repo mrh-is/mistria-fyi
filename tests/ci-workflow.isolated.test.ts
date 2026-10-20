@@ -163,16 +163,29 @@ describe("CI workflow jobs", () => {
   });
 
   it("runs verification only through verify, not by calling scripts directly", () => {
-    const direct = Object.entries(jobs).flatMap(([jobName, job]) =>
-      runCommands(job)
-        .filter((command) =>
-          /^(?:pnpm run (?:lint|check|check:[\w-]+|build|test[\w:-]*)\b|pnpm audit|node scripts\/vitest-timings)/u.test(
-            command,
-          ),
-        )
-        .map((command) => `${jobName}: ${command}`),
+    // Every line of every `run:` block, so a direct call after the first line is caught too. The
+    // scripts are the ones a step runs (`pnpm run <script>` or `pnpm <script>`), plus the audit & the
+    // tools a script wraps.
+    const scripts = STEPS.flatMap(({ command }) =>
+      command.kind === "pnpm" && command.args[0] === "run" ? [command.args[1] ?? ""] : [],
     );
-    expect(direct).toEqual([]);
+    const direct = new RegExp(
+      // Script names are plain words, colons, & hyphens, so they need no regex escaping.
+      `^(?:pnpm (?:run )?(?:${scripts.join("|")}|audit)(?:\\s|$)${String.raw`|pnpm exec (?:vitest|playwright|svelte-check)\b`}|node scripts/vitest-timings)`,
+      "u",
+    );
+    const offenders = Object.entries(jobs).flatMap(([jobName, job]) =>
+      runCommands(job)
+        .flatMap((command) => command.split("\n").map((line) => line.trim()))
+        .filter((line) => direct.test(line))
+        .map((line) => `${jobName}: ${line}`),
+    );
+    expect(offenders).toEqual([]);
+    // The guard catches what it claims to: a direct call on a later line of a block.
+    expect(direct.test("pnpm test")).toBe(true);
+    expect(direct.test("pnpm run check:i18n")).toBe(true);
+    expect(direct.test("pnpm exec vitest run")).toBe(true);
+    expect(direct.test("pnpm run verify -- --step=lint")).toBe(false);
   });
 
   it("collects coverage only nightly & publishes timing evidence after failures", () => {

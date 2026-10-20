@@ -18,12 +18,13 @@ require an exception.
 
 The steps CI runs are listed in one place, `STEPS` in [scripts/verify.ts](../scripts/verify.ts):
 each step names the `ci.yml` job that runs it, & each job runs its steps with
-`pnpm run verify -- --step=<name>`. Some steps are not in the local matrix: the audit, the budgeted
-test run (the complete asset-independent suite with per-file & wall-time budgets; the cleanup test
-runs only when its script changes), & the stale-translation check (pull requests that touch
-`messages/` only). The accessibility and PWA suites run against the build job’s output when `src/`,
-`static/`, `tests/`, or their tooling change. Its “CI passed” job aggregates every result. Coverage
-runs nightly & remains reported, not gated. Timing ceilings are documented in
+`pnpm run verify -- --step=<name>` (the audit job, which installs nothing, uses
+`node scripts/verify.ts --step=audit`). Some steps are not in the local matrix: the audit, the
+budgeted test run (the complete asset-independent suite with per-file & wall-time budgets; the
+cleanup test runs only when its script changes), & the stale-translation check (pull requests that
+touch `messages/` only). The accessibility and PWA suites run against the build job’s output when
+`src/`, `static/`, `tests/`, or their tooling change. The “CI passed” job aggregates every result.
+Coverage runs nightly & remains reported, not gated. Timing ceilings are documented in
 [the development workflow](development-workflow.md#vitest-time-budgets). A PR merges only when it
 passes; fix CI failures on the branch rather than merging around them (see agent-workflow.md’s CI
 monitoring rule).

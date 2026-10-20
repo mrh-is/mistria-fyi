@@ -11,7 +11,9 @@
 //   --browser  also run the Playwright suites (test:accessibility & test:pwa) against a build
 //   --all      both of the above
 //
-// CI runs its steps on every pull request; run this locally only for the exceptions in
+// CI runs the default matrix on every pull request, plus the audit, the budgeted test run, the
+// stale-translation check (pull requests that touch messages only), & the browser suites (when
+// their trigger paths change). Run the matrix locally only for the exceptions in
 // docs/agent-verification.md (pipeline/generated-data changes, high-risk surfaces, CI-only
 // failures).
 // During development, run only the specific test:
@@ -137,18 +139,43 @@ export function planSteps(args: string[]): undefined | VerifyStep[] {
   return STEPS.filter(({ matrix }) => included.has(matrix)).map((definition) => toStep(definition));
 }
 
+/**
+ * The process a step starts. Forwarded arguments are refused when the launch goes through a shell
+ * (Windows with no `npm_execpath`, so `cmd.exe` would reinterpret `^`, `&`, & friends in them);
+ * run through `pnpm run verify`, which supplies `npm_execpath`, instead.
+ */
+export function stepProcess(
+  definition: StepDefinition,
+  forwarded: readonly string[] = [],
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+): { args: string[]; command: string; shell: boolean } {
+  const args = [...definition.command.args, ...forwarded];
+  if (definition.command.kind === "node") {
+    return { args, command: process.execPath, shell: false };
+  }
+  const launch = pnpmCommand(args, env, platform);
+  if (launch.shell && forwarded.length > 0) {
+    throw new Error(
+      `Cannot pass arguments to ${definition.name} through a shell (${forwarded.join(" ")}); ` +
+        "start verify with `pnpm run verify -- --step=<name> …` so pnpm launches it directly.",
+    );
+  }
+  return launch;
+}
+
 /** Streams each step’s output immediately, including startup & timeout diagnostics. */
 function runStep(step: VerifyStep): Promise<number> {
   const definition = STEPS.find(({ name }) => name === step.name);
   if (definition === undefined) return Promise.resolve(2);
-  const args = [...definition.command.args, ...(step.args ?? [])];
-  const {
-    args: spawnArgs,
-    command,
-    shell,
-  } = definition.command.kind === "node"
-    ? { args, command: process.execPath, shell: false }
-    : pnpmCommand(args);
+  let spec: ReturnType<typeof stepProcess>;
+  try {
+    spec = stepProcess(definition, step.args);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    return Promise.resolve(2);
+  }
+  const { args: spawnArgs, command, shell } = spec;
   const child = spawn(command, spawnArgs, {
     env: { ...process.env, ...step.env },
     shell,
