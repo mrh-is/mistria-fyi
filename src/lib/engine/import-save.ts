@@ -139,7 +139,11 @@ export function extractSaveProgress(bundle: SaveBundle): {
   }
 
   // ── Cosmetics ──
-  const cosmeticIds = new Set<CosmeticId>();
+  const cosmeticIds = new Set<CosmeticId>(
+    recordKeys(trackerData.cosmetics).filter((id) =>
+      trackerData.cosmetics[id].sources.some((source) => source.type === "default"),
+    ),
+  );
   const validCosmetics = new Set(Object.keys(trackerData.cosmetics));
 
   for (const id of player.stringList("cosmetic_unlocks")) {
@@ -165,7 +169,12 @@ export function extractSaveProgress(bundle: SaveBundle): {
     const playerVariants = Object.hasOwn(playerVariantsByAnimal, animalId)
       ? playerVariantsByAnimal[animalId]
       : [];
-    const matched = new Set<AnimalVariantId>();
+    // NewGame seeds these unlocks even before the player owns an animal of this breed.
+    const matched = new Set<AnimalVariantId>(
+      animal.variantTiers.flatMap((tier) =>
+        recordKeys(tier).filter((id) => tier[id].source.type === "default"),
+      ),
+    );
 
     for (const v of playerVariants) {
       if (validVariants.has(v)) {
