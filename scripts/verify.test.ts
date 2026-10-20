@@ -6,6 +6,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { planSteps, STEPS } from "./verify.js";
+
 const script = fileURLToPath(new URL("verify.ts", import.meta.url));
 
 function runVerify(args: string[], failStep = "") {
@@ -139,9 +141,84 @@ if (process.argv.at(-1) === "lint") {
     }
   });
 
+  it("runs exactly one step with --step, passing the rest to the script", () => {
+    const { calls, status } = runVerify(["--step=check:i18n"]);
+    expect(status).toBe(0);
+    expect(calls).toEqual(["run check:i18n|false"]);
+
+    const forwarded = runVerify(["--step=test:accessibility", "--test-list=x.txt"]);
+    expect(forwarded.status).toBe(0);
+    expect(forwarded.calls).toEqual(["run test:accessibility --test-list=x.txt|true"]);
+
+    const audit = runVerify(["--step=audit"]);
+    expect(audit.calls).toEqual(["audit --audit-level=moderate|false"]);
+  });
+
+  it("returns the failing step's status when a single step fails", () => {
+    const { status, stdout } = runVerify(["--step=check"], "run check");
+    expect(status).toBe(7);
+    expect(stdout).toContain("✗ check (exit 7)");
+  });
+
+  it("rejects an unknown step, & matrix flags combined with --step", () => {
+    for (const args of [["--step=nope"], ["--assets", "--step=lint"]]) {
+      const result = spawnSync(process.execPath, [script, ...args], { encoding: "utf8" });
+      expect(result.status, args.join(" ")).toBe(2);
+      expect(result.stderr).toContain("--step=<name>");
+    }
+  });
+
   it("rejects an unknown flag", () => {
     const result = spawnSync(process.execPath, [script, "--nope"], { encoding: "utf8" });
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("Usage: pnpm run verify");
+  });
+});
+
+describe("the step catalog", () => {
+  const packageScripts = (
+    JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> }
+  ).scripts;
+
+  it("has unique step names", () => {
+    const names = STEPS.map(({ name }) => name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("runs only package scripts that exist", () => {
+    for (const { command, name } of STEPS) {
+      if (command.kind !== "pnpm" || command.args[0] !== "run") continue;
+      expect(packageScripts, name).toHaveProperty([command.args[1] ?? ""]);
+    }
+  });
+
+  it("keeps the default matrix order, with the browser & asset steps opt-in", () => {
+    expect(planSteps([])?.map(({ name }) => name)).toEqual([
+      "lint",
+      "check",
+      "check:i18n",
+      "test",
+      "build",
+      "check:routes",
+      "check:built",
+    ]);
+    expect(planSteps(["--all"])?.map(({ name }) => name)).toEqual([
+      "lint",
+      "check",
+      "check:i18n",
+      "test",
+      "build",
+      "check:routes",
+      "check:built",
+      "test:pipeline:assets",
+      "test:accessibility",
+      "test:pwa",
+    ]);
+  });
+
+  it("selects CI-only steps by name, outside the matrix", () => {
+    expect(planSteps(["--step=test:budgets"])).toEqual([{ args: [], name: "test:budgets" }]);
+    expect(planSteps(["--", "--step=audit"])).toEqual([{ args: [], name: "audit" }]);
+    expect(planSteps([])?.map(({ name }) => name)).not.toContain("audit");
   });
 });

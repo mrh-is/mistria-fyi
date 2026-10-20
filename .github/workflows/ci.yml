@@ -126,7 +126,7 @@ jobs:
           save-cache: false
           install: false
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run check:locale-sync -- --base HEAD^1
+      - run: pnpm run verify -- --step=check:locale-sync --base HEAD^1
 
   # Fails on moderate or worse advisories in the lockfile. Nightly runs catch advisories published
   # after a merge. Accepted exceptions live in pnpm-workspace.yaml's auditConfig.
