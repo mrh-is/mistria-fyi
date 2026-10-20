@@ -435,16 +435,17 @@ other full-suite command during development.
 
 `.github/workflows/ci.yml` runs on every pull request and main push:
 
-| Command                             | Description & Purpose                                                                   | Scope                |
-| ----------------------------------- | --------------------------------------------------------------------------------------- | -------------------- |
-| `pnpm run lint`                     | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), Stylelint, ShellCheck       | All files            |
-| `pnpm audit --audit-level=moderate` | Fails on moderate or worse advisories in the lockfile, minus `auditConfig` exceptions   | Dependencies         |
-| `pnpm run check:i18n`               | Verifies every locale file matches `en.json`'s key shape                                | `messages/`          |
-| `pnpm run check`                    | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`            | `src/` & `pipeline/` |
-| `node scripts/vitest-timings.ts`    | Executes the complete Vitest suite with file & wall-time budgets; coverage only nightly | Unit & logic tests   |
-| `pnpm run build`                    | Compiles SvelteKit app and verifies Cloudflare adapter                                  | Build validation     |
-| `pnpm run check:built`              | Checks sitemap/head SSR metadata & per-locale gzip budgets against the production build | Build validation     |
-| `pnpm run check:routes`             | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`        | Build validation     |
+| Command                             | Description & Purpose                                                                            | Scope                |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------- |
+| `pnpm run lint`                     | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), Stylelint, ShellCheck                | All files            |
+| `pnpm audit --audit-level=moderate` | Fails on moderate or worse advisories in the lockfile, minus `auditConfig` exceptions            | Dependencies         |
+| `pnpm run check:i18n`               | Verifies every locale file matches `en.json`'s key shape                                         | `messages/`          |
+| `pnpm run check:locale-sync`        | Pull requests only (not in `verify`): fails when an English message changed but a locale did not | `messages/`          |
+| `pnpm run check`                    | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`                     | `src/` & `pipeline/` |
+| `node scripts/vitest-timings.ts`    | Executes the complete Vitest suite with file & wall-time budgets; coverage only nightly          | Unit & logic tests   |
+| `pnpm run build`                    | Compiles SvelteKit app and verifies Cloudflare adapter                                           | Build validation     |
+| `pnpm run check:built`              | Checks sitemap/head SSR metadata & per-locale gzip budgets against the production build          | Build validation     |
+| `pnpm run check:routes`             | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`                 | Build validation     |
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see

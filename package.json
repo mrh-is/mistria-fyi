@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p src/service-worker/tsconfig.json && tsc --noEmit -p pipeline/tsconfig.json",
     "check:i18n": "tsx scripts/check-translation-keys.ts",
+    "check:locale-sync": "node scripts/check-locale-sync.ts",
     "check:built": "tsx --test --test-timeout=120000 --test-force-exit tests/build-output/*.spec.ts",
     "check:routes": "tsx scripts/check-routes.ts",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
