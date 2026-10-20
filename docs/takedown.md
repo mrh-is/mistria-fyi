@@ -81,20 +81,23 @@ The farm planner (public #4) is planned, not built. When it ships, its geometry 
 pack, loaded only when the planner opens, so it can be withdrawn without touching the dataset or the
 sprites. [The decision record](decisions/2026-10-20-farm-planner-geometry.md) states what the pack
 may contain: a coarse functional grid only, never full-resolution tile shapes, game sprites in
-place, or anything that renders back into a recognizable layout. Check any request against that line
-first; material beyond it is a map & comes out regardless.
+place, or anything that renders back into a recognizable layout. Check a request against that line
+first; material beyond it is a map, the kind of material the launch posture says would change it.
 
 This section is a template for the steps. Fill in the concrete paths when the pack is designed, &
 keep these properties true so the steps stay short:
 
 1. **Remove the pack from the build.** Delete the pack’s generated files, its generation step, & the
-   lazy import that loads it, then redeploy. The pack is outside `tracker-data.json` & the service
-   worker’s install-time precache, so nothing else changes.
+   lazy import that loads it, then redeploy. The pack must be outside `tracker-data.json`, the main
+   bundle, & the service worker’s precache (see the decision record: the worker precaches every
+   build asset except those `isLazyAsset` matches, so the planner needs that worker change), so
+   nothing else changes.
 2. **Make the planner cope without it.** The planner must degrade to a plain message or be removed
    with the pack; confirm that in a fresh browser profile.
-3. **Purge installed copies.** Bump the app version so installed clients drop the cached pack (the
-   worker evicts runtime-cached entries it can no longer fetch), & purge the cache for the pack’s
-   URL prefix in Cloudflare.
+3. **Purge installed copies.** Build assets are cached first, so an installed client keeps the pack
+   until the new version’s activation deletes the old version’s cache; open tabs run the old version
+   until they update (#111 changes when that happens). Also purge the pack’s URL prefix in
+   Cloudflare’s cache.
 4. **Check history.** If a pack was ever committed, past commits still contain it; continue with
    [Whole repository](#whole-repository) if the request covers history.
 5. **Verify** that a fresh profile & an installed app both load the rest of the site, & that the

@@ -14,19 +14,22 @@ recording before any planner work starts.
 
 - **The planner uses derived geometry only.** What it ships is data computed from the game files for
   the planner’s own logic (what can be built where), not the game’s own art or layouts.
-- **The line.** A coarse functional grid (cell types such as buildable, water, & blocked at a
-  resolution coarser than the game’s tiles) is factual data, in the same class as the dataset. These
-  are maps, & stay out:
+- **The line.** A coarse functional grid is factual data, in the same class as the dataset. Its cell
+  types & resolution are for the pack’s design to settle (for example buildable, water, & blocked
+  cells; the approved line names “coarse”, not a number). These are maps, & stay out:
   - full-resolution tile shapes;
   - game sprites placed in position;
   - a pack that, rendered back, reproduces a recognizable layout of the game’s farm.
 - **The pack is lazy & independently removable.** The geometry lives in its own pack that loads only
-  when the planner opens. It is not in `tracker-data.json`, the main bundle, or the service worker’s
-  install-time precache, & removing it leaves the rest of the site working (the planner shows
-  nothing it cannot draw, or is withdrawn with it).
-  [The takedown procedure](../takedown.md#farm-planner-pack) has the steps.
-- **A new asset class needs its own review.** If a planner feature needs more than the line allows,
-  record that decision before building it; this record is not a general license for map data.
+  when the planner opens. It is not in `tracker-data.json` or the main bundle, & removing it leaves
+  the rest of the site working. [The takedown procedure](../takedown.md#farm-planner-pack) has the
+  steps.
+- **The pack stays out of the service worker’s precache (a requirement for #4).** Today the worker
+  precaches every build asset except those `isLazyAsset` matches (in
+  `src/lib/pwa/service-worker-cache.ts`: the per-locale font stylesheets & locale name chunks). A
+  pack emitted as a build asset would be precached unless that function is extended, so building the
+  planner needs that worker change; without it the pack is not lazy in the sense this record depends
+  on.
 
 ## Alternatives
 
