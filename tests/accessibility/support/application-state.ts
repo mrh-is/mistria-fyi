@@ -10,10 +10,8 @@ import { CURRENT_SERIALIZATION_VERSION } from "../../../src/lib/types/user-progr
 
 import type { Page, Response } from "@playwright/test";
 
-import type {
-  SerializedPreferences,
-  SerializedState,
-} from "../../../src/lib/stores/user-state.svelte.js";
+import type { SerializedState } from "../../../src/lib/stores/progress-storage.js";
+import type { SerializedPreferences } from "../../../src/lib/stores/user-state.svelte.js";
 import type { AccessibilityTheme } from "./violations.js";
 
 /** Every progress field the store writes. */

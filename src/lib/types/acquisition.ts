@@ -1,3 +1,5 @@
+import type * as v from "valibot";
+
 import type { NonEmptyArray } from "#lib/utils/record.js";
 
 import type {
@@ -21,7 +23,7 @@ import type {
 } from "./tracker-data.js";
 import type { QuestVisibility, VisibilityCondition } from "./visibility.js";
 
-export type ActivityId = string & { readonly __brand: "ActivityId" };
+export type ActivityId = string & v.Brand<"ActivityId">;
 export type AvailabilityCondition =
   | { type: "all"; conditions: NonEmptyArray<AvailabilityCondition> }
   | { type: "always" }
@@ -53,8 +55,8 @@ export type CutsceneSourceId = (typeof CUTSCENE_SOURCE_IDS)[number];
  */
 export const DATE_INSPIRATION_DROP_ACTIVITIES = ["dig_site", "fish", "mines_chest"] as const;
 export type DateInspirationDropActivity = (typeof DATE_INSPIRATION_DROP_ACTIVITIES)[number];
-export type DialogueChoiceId = string & { readonly __brand: "DialogueChoiceId" };
-export type DungeonLootGroup = string & { readonly __brand: "DungeonLootGroup" };
+export type DialogueChoiceId = string & v.Brand<"DialogueChoiceId">;
+export type DungeonLootGroup = string & v.Brand<"DungeonLootGroup">;
 export type JsonValue =
   | boolean
   | JsonValue[]
@@ -62,8 +64,8 @@ export type JsonValue =
   | number
   | string
   | { [key: string]: JsonValue };
-export type LocationId = string & { readonly __brand: "LocationId" };
-export type MonsterId = string & { readonly __brand: "MonsterId" };
+export type LocationId = string & v.Brand<"LocationId">;
+export type MonsterId = string & v.Brand<"MonsterId">;
 export type ProductionMethod = "cook" | "craft" | "dragon_forge" | "mill" | "smith";
 export type Source =
   | (SourceDetails &
@@ -145,8 +147,8 @@ export interface SourceDetails {
   visibility?: VisibilityCondition;
 }
 export type SourceTuple = NonEmptyArray<Source>;
-export type StationId = string & { readonly __brand: "StationId" };
+export type StationId = string & v.Brand<"StationId">;
 /** Purchasable home & farm upgrades; each id is also the upgraded item's id. */
 export const UPGRADE_IDS = ["adept_kitchen", "cozy_kitchen", "farm_bridge", "stairs"] as const;
 export type UpgradeId = (typeof UPGRADE_IDS)[number];
-export type WaterType = string & { readonly __brand: "WaterType" };
+export type WaterType = string & v.Brand<"WaterType">;

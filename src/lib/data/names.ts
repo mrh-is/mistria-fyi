@@ -1,3 +1,5 @@
+import type * as v from "valibot";
+
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   AlmanacEntry,
@@ -22,7 +24,7 @@ import type {
   VillagerId,
 } from "#lib/types/tracker-data.js";
 
-export type AnimalNameId = string & { readonly __brand: "AnimalNameId" };
+export type AnimalNameId = string & v.Brand<"AnimalNameId">;
 
 /**
  * Categories whose player-facing names live in per-locale chunks, not in `tracker-data.json`.

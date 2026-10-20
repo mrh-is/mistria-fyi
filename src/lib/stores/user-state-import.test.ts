@@ -28,7 +28,7 @@ describe("restoreBackup validation", () => {
     delete data.progress;
 
     expect(userState.restoreBackup(JSON.stringify(data))).toEqual({
-      error: "unsupported-version",
+      error: "invalid-fields",
       ok: false,
     });
   });
@@ -53,12 +53,25 @@ describe("restoreBackup validation", () => {
     expect(result).toEqual({ error: "invalid-fields", ok: false });
   });
 
-  it("rejects an unsupported version", () => {
+  it("refuses a newer build's backup without changing progress", () => {
+    userState.setRenown(4);
     const json = userState.exportBackup();
     const data = JSON.parse(json) as Record<string, unknown>;
     data.version = 99;
+    (data.progress as Record<string, unknown>).renown = 9;
+
     const result = userState.restoreBackup(JSON.stringify(data));
-    expect(result).toEqual({ error: "unsupported-version", ok: false });
+    expect(result).toEqual({ error: "newer-version", ok: false });
+    expect(userState.exportBackup()).toBe(json);
+  });
+
+  it.each([0, -1, 1.5, "1"])("rejects the unreadable version %j", (version) => {
+    const data = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
+    data.version = version;
+    expect(userState.restoreBackup(JSON.stringify(data))).toEqual({
+      error: "invalid-fields",
+      ok: false,
+    });
   });
 
   it("rejects a backup missing the progress object", () => {

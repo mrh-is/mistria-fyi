@@ -6,6 +6,13 @@
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { goto } from "$app/navigation";
 
+  import type { PersistenceFailureKind } from "#lib/stores/user-state.svelte.js";
+
+  const MESSAGES: Record<PersistenceFailureKind, () => string> = {
+    "newer-data": m.persistence_warning_newer_data,
+    unavailable: m.persistence_warning,
+    unreadable: m.persistence_warning_unreadable,
+  };
   const SUPPRESS_MS = 60_000;
   let suppressedUntil = 0;
   let activeToastId: number | string | undefined;
@@ -16,17 +23,19 @@
       toast.dismiss(activeToastId);
     }
 
-    const message =
-      userState.persistenceFailureKind === "unreadable"
-        ? m.persistence_warning_unreadable()
-        : m.persistence_warning();
+    const kind = userState.persistenceFailureKind;
+    const message = MESSAGES[kind]();
     activeToastId = toast.error(message, {
-      action: {
-        label: m.data_title(),
-        onClick: () => {
-          void goto(localizedHref("data"));
-        },
-      },
+      // Newer data can't be recovered from Data management; only updating the app helps.
+      action:
+        kind === "newer-data"
+          ? undefined
+          : {
+              label: m.data_title(),
+              onClick: () => {
+                void goto(localizedHref("data"));
+              },
+            },
       duration: Infinity,
       onDismiss: () => {
         suppressedUntil = Date.now() + SUPPRESS_MS;

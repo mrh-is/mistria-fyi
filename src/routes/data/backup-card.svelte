@@ -14,7 +14,7 @@
   const ERROR_MESSAGES: Record<BackupRestoreErrorKind, string> = {
     "invalid-fields": m.backup_error_invalid_fields(),
     "malformed-json": m.backup_error_malformed_json(),
-    "unsupported-version": m.backup_error_unsupported_version(),
+    "newer-version": m.backup_error_newer_version(),
   };
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
