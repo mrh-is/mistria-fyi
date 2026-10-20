@@ -9,6 +9,7 @@ import type {
   CosmeticId,
   DateId,
   ItemId,
+  MountAppearanceId,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -37,6 +38,7 @@ export interface ProgressState {
   hasUpperFloor: boolean;
   heartLevels: Partial<Record<VillagerId, number>>;
   mineFloor: number;
+  mountAppearances: Set<MountAppearanceId>;
   museum: Set<ItemId>;
   petCosmetics: Set<PetCosmeticSetId>;
   petSkins: Set<PetSkinId>;
@@ -85,6 +87,7 @@ export interface MergeCounts {
   hasUpperFloor: number;
   heartLevels: number;
   mineFloor: number;
+  mountAppearances: number;
   museum: number;
   perks: number;
   petCosmetics: number;

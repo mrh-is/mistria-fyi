@@ -125,6 +125,11 @@ negative, calendar, perk, animal-unlock, & dating gates; spoiler visibility igno
 Villager discovery conceals spoilers without claiming an evaluable acquisition restriction. Reviewed
 cutscene fallbacks apply to acquisition only; native spoiler gates require a cutscene-map entry.
 Empty disjunctions remain impossible acquisition conditions & revealable spoiler conditions.
+
+Sources name quests, not cutscenes. A player can act on “start the Find the Weathervane quest”, but
+not on “see the reveal_mistmare cutscene”, so map a cutscene back to the quest that triggers it
+(through `extract/cutscene-quest-map.ts`, or a reviewed `CUTSCENE_QUEST_ENTRIES` entry) and render
+that. A `cutscene` source is the fallback for scenes no quest leads to.
 `enrich/availability-projection.ts` converts already-projected availability, not native
 requirements.
 
@@ -264,6 +269,7 @@ else, so a new game version surfaces immediately.
 | `dates.ts`                | `dates`                               | Date registry.                                                                                                                                              |
 | `festivals.ts`            | `festivals`                           | Festival registry.                                                                                                                                          |
 | `mines.ts`                | `dungeons`, `spells`                  | Floors, biomes, and spells. Throws without a numeric `dungeons.misc.max_floors`.                                                                            |
+| `mount.ts`                | Horse variants, `misc_local`          | Mistmare appearances: the horse variants marked `acquirable = false`, named by `misc_local/<id>`. Throws on an appearance without a reviewed unlock.        |
 | `museum.ts`               | Museum wings and UI ordering          | Wings and sets in UI order, falling back to object order.                                                                                                   |
 | `pets.ts`                 | `pets`, items                         | Pet cosmetic sets and pet skins.                                                                                                                            |
 | `quests.ts`               | The six tracked quest groups          | Quests by app quest type. Throws when a cooking or fetch quest has no `has_item` requirement.                                                               |
@@ -319,7 +325,7 @@ The `enrich/` modules compute spoiler gating from facts extracted in `extract/`.
 
 | Module                                 | Responsibility                                                                                                                                |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `extract/cutscene-quest-map.ts`        | Maps cutscenes to the quests that trigger them.                                                                                               |
+| `extract/cutscene-quest-map.ts`        | Maps cutscenes to the quests that trigger them, including setup scenes that gate a quest-starting scene.                                      |
 | `extract/quest-chains.ts`              | Story prerequisites, heart-level chains, crown, Stillwell, & Tali order, and raw fetch-quest requirements; includes reviewed story overrides. |
 | `acquisition/requirement-projector.ts` | Projects native requirements into both acquisition & spoiler conditions; see the acquisition section.                                         |
 | `enrich/availability-projection.ts`    | Converts availability conditions into visibility conditions.                                                                                  |
@@ -391,7 +397,9 @@ quest naming conventions, & accumulator mechanics remain implementation rules.
 Baby presentation cosmetics are discovered from their native ID pattern, & Seridia’s equipment comes
 from `misc.seridia_armor`. Runtime wishing-well rewards use `misc.wishing_well.low_price`; neither
 prices nor outfit inventories are duplicated in reviewed tables. The crown visibility gate is Iron
-Star (renown level 40), from `Ari.gml`’s crown cooldown.
+Star (renown level 40), from `Ari.gml`’s crown cooldown. Mount appearance unlocks (the Horse Statue
+or the Big Egg) & the Horse Statue’s 100-essence cost come from `obj_horse_statue.gml` &
+`AriFsm.gml`; an assets test asserts the cost against the GML.
 
 Early Access used 50. See #638 (private beta).
 

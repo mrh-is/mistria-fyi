@@ -19,6 +19,7 @@ const cosmeticId = recordKeys(trackerData.cosmetics)[0];
 const dateId = recordKeys(trackerData.dates)[0];
 const petCosmeticId = recordKeys(trackerData.pets.cosmetics)[0];
 const petSkinId = recordKeys(trackerData.pets.skins)[0];
+const mountAppearanceId = recordKeys(trackerData.mount.appearances)[0];
 
 /** A tracked collection: how to toggle one entry, & how to read the collection back. */
 const COLLECTIONS = [
@@ -61,6 +62,14 @@ const COLLECTIONS = [
       userState.togglePetCosmetic(petCosmeticId);
     },
     value: petCosmeticId,
+  },
+  {
+    name: "mount appearances",
+    read: () => [...userState.state.progress.mountAppearances],
+    toggle: () => {
+      userState.toggleMountAppearance(mountAppearanceId);
+    },
+    value: mountAppearanceId,
   },
   {
     name: "pet skins",

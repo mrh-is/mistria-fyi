@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { assembleTrackerData } from "../assemble.js";
@@ -7,6 +9,7 @@ import { createAssetsLocalizer } from "../localize/localize.js";
 import { evaluateExpressions } from "../parse/evaluate.js";
 import { parseFiddle } from "../parse/parse-fiddle.js";
 import { requireGameAssetsDir } from "../test-helpers.js";
+import { HORSE_STATUE_ESSENCE_COST } from "./game-facts.js";
 import { validateReviewedGameFacts } from "./validate.js";
 
 import type { ParsedGameData } from "../parse/parse-fiddle.js";
@@ -22,6 +25,25 @@ describe("reviewed game facts against installed assets", () => {
     expect(() => {
       validateReviewedGameFacts(installedFacts());
     }).not.toThrow();
+  });
+
+  it("charges the reviewed essence cost at the Horse Statue", () => {
+    const gml = readFileSync(
+      join(requireGameAssetsDir(), "gml", "objects", "obj_horse_statue.gml"),
+      "utf8",
+    );
+    expect(gml).toContain(`ARI.modify_essence(-${String(HORSE_STATUE_ESSENCE_COST)})`);
+    expect(gml).toContain('create_default_mount("mistmare")');
+  });
+
+  it("fails when a reviewed mount appearance becomes acquirable", () => {
+    const data = installedFacts();
+    const horse = (data.ranching as Record<string, Record<string, Record<string, unknown>>>).animals
+      .horse;
+    (horse.variants as Record<string, Record<string, unknown>>).mistmare.acquirable = true;
+    expect(() => {
+      validateReviewedGameFacts(data);
+    }).toThrow("mount appearance");
   });
 
   it("fails when a reviewed target disappears", () => {

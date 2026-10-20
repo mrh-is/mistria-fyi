@@ -101,6 +101,14 @@ export interface MinesBiome {
   id: MinesBiomeId;
 }
 export type MinesBiomeId = string & { readonly __brand: "MinesBiomeId" };
+/** The Mistmare's ride-able skins; names live in the `mount` locale chunk, keyed by ID. */
+export interface Mount {
+  appearances: Record<MountAppearanceId, MountAppearance>;
+}
+/** An appearance the player unlocks for the Mistmare, separate from any horse they breed. */
+export type MountAppearance = SourcedEntity;
+/** A `ranching/animals/horse` variant ID the game reserves for the mount. */
+export type MountAppearanceId = string & { readonly __brand: "MountAppearanceId" };
 export interface MuseumWing {
   sets: Record<MuseumWingSetId, MuseumWingSet>;
 }
@@ -177,6 +185,7 @@ export interface TrackerData {
     biomes: MinesBiome[];
     spells: Record<SpellId, Spell>;
   };
+  mount: Mount;
   museum: Record<MuseumWingId, MuseumWing>;
   perkTierLevels: [number, number, number, number, number];
   pets: {

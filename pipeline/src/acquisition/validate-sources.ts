@@ -26,6 +26,7 @@ export type AcquisitionSourceAssembly = Pick<
   | "cosmetics"
   | "items"
   | "mines"
+  | "mount"
   | "museum"
   | "pets"
   | "quests"
@@ -152,6 +153,7 @@ const SOURCE_FIELDS = {
   fish: ["waterTypes"],
   fish_trap: ["baitItemIds"],
   forage: ["locationIds"],
+  horse_statue: ["cost", "questId"],
   letter: ["letterId", "trigger"],
   lost_and_found: [],
   mine: ["biomeId"],
@@ -227,6 +229,7 @@ export function validateAcquisitionSources(
   });
   validateAnimals(data.animals, references, diagnostics);
   validatePets(data.pets, references, diagnostics);
+  validateMount(data.mount, references, diagnostics);
   validateSpells(data.mines, references, diagnostics);
   validateQuests(data.quests, references, diagnostics);
   validateVisibilityOnly("stores", data.stores, references, diagnostics);
@@ -1352,6 +1355,10 @@ function validateVariantFields(
         );
       }
       break;
+    case "horse_statue":
+      requiredNumbers.push("cost");
+      stringReferences.push(["questId", "quest"]);
+      break;
     case "wishing_well":
       break;
   }
@@ -1546,6 +1553,16 @@ function validateMuseum(
       });
     }
   }
+}
+
+function validateMount(
+  mount: unknown,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  const record = requireRecord(mount, "mount", "mount", diagnostics);
+  if (!record) return;
+  validateEntities("mount.appearances", record.appearances, references, diagnostics);
 }
 
 function validatePets(
