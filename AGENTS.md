@@ -99,9 +99,11 @@ not here.
 - Save import merges progress additively; backup restore replaces serialized state. Do not
   substitute one flow for the other. Storage & backup schema changes require compatibility tests &
   deliberate versioning. Transfer codes bind to the exact app build, so they need neither.
-- The app has no users yet, so transfer, storage, & backup formats may break compatibility. When
-  correctness & compatibility conflict, choose the correct design & bump the version rather than
-  adding a compatibility shim.
+- Assume real players hold saved progress. A change to the storage or backup format bumps the
+  version & adds a migration; never ship a compatibility break or quarantine data to make a change
+  easier. Data written by a newer build than the running one shows a “newer data” state with writes
+  blocked & nothing quarantined; quarantine is only for unreadable data. The progress-transfer QR
+  binds to the exact app build until sync deprecates it, and sync uses a strict protocol version.
 - Category pages compose layouts. Put shared or stateful concerns in focused components; divide
   complex components by logical concern even with one call site, for reasoning clarity.
 - `docs/superpowers/` contains historical plans, specs, & notes. It is hidden from ripgrep by
