@@ -34,27 +34,44 @@ record keeps the forks that shaped it so a later agent does not reopen them with
 
 ## Alternatives
 
-- **Sync bound to the exact app build** (as the transfer QR is): rejected, since the PC tab & the
-  phone update independently & a build mismatch would stop sync for a reason players cannot act on.
-  The strict protocol version fails only when the wire format changes.
-- **Several devices per PC, or ticks that travel between devices:** rejected as outside what the
-  courier solves; it would need conflict rules between manual edits on more than two parties.
-- **Negotiable cipher suites, or X25519:** rejected for version 1; a pinned suite leaves nothing to
-  downgrade, & P-256 is available everywhere the feature runs.
-- **A lock that serializes app updates across tabs:** rejected, since a stuck or hidden tab could
-  hold every other tab on an old build. The cache-retention rule removes the need for the lock.
-- **A runtime budget check on the relay:** rejected; the caps already bound the worst case below the
-  free-tier limit, & a check would add state & failure modes to the security boundary.
-- **Polling the save, or a folder picker:** rejected by the probe. Chromium refuses everything under
-  `%LOCALAPPDATA%`, & `FileSystemObserver` makes polling unnecessary.
-- **Accounts or a server that can read progress:** rejected by the design constraint, which is why
-  the relay holds only ciphertext.
+Rationale is marked where it is stated in #123 or its sub-issues & where it is inferred, so a later
+reader can tell a recorded reason from this record’s reading of the design.
+
+- **Sync bound to the exact app build** (as the transfer QR is): rejected. Inferred, not stated in
+  #123: the PC tab & the phone update independently, so a build mismatch would stop sync for a
+  reason players cannot act on. Stated: “App builds don’t matter”; the strict protocol version is
+  the only gate.
+- **Several devices per PC, or ticks that travel between devices:** rejected. Stated: pairing
+  replaces the old device; manual ticks never travel between devices. Inferred, not stated in #123:
+  more than two parties would need conflict rules between manual edits.
+- **Negotiable cipher suites, or X25519:** rejected for version 1. Stated: the suite is pinned to
+  P-256. Inferred, not stated in #123: a pinned suite leaves nothing to downgrade, & P-256 is
+  available everywhere the feature runs (unverified; check WebCrypto support in the target browsers
+  when building #133).
+- **A global lock that serializes app updates across tabs:** rejected. Stated in #111: tabs from
+  older builds do not know the lock, & a dialog left open overnight would block updates forever. The
+  cache-retention rule (the worker keeps the previous cache until no page runs that version) is what
+  makes a lock unnecessary.
+- **A runtime budget check on the relay:** rejected. Stated: smaller caps are sized so the worst
+  case fits Workers Free with room to spare, so no separate budget check is needed. Inferred, not
+  stated in #123: a check would add state & failure modes to the security boundary.
+- **Polling the save, or a folder picker:** rejected by the probe, as stated: Chromium refuses
+  everything under `%LOCALAPPDATA%`, & `FileSystemObserver` exists, so no polling is needed.
+- **Accounts or a server that can read progress:** rejected by the design constraint (no logins & no
+  readable user data on a server), which is why the relay holds only ciphertext.
 
 ## Revisit if
 
+Stated in #123 or #130:
+
 - A hardware check in #130 fails an assumption (the “every visit” grant does not survive a restart,
   or `FileSystemObserver` misses a replaced file).
-- Real usage approaches the Workers Free limits, or the caps block legitimate play.
-- A second device per PC, or farm-switching across profiles, becomes a requirement.
+- Real usage approaches Workers Free’s limits; the epic says to raise the caps if usage warrants it.
+
+Inferred, not stated in #123:
+
+- The caps block legitimate play.
+- A second device per PC, or farm-switching across profiles, becomes a requirement (the epic defers
+  multi-farm profiles & says nothing enforces one device per profile).
 - WebCrypto support or a security finding calls for another suite (bump the protocol version).
 - Cross-tab update reloads cause a real problem that the cache-retention rule does not cover.

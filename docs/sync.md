@@ -51,13 +51,17 @@ assumption on #123.
 
 ## The courier
 
-Built in #134, as a courier module in the app’s sync code (planned).
+Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 
 - **Watching.** A dropped `.sav` stores its file handle. `FileSystemObserver` bursts are coalesced,
   an “unknown” event triggers a recheck, & a swapped file re-resolves the handle.
 - **Pruning.** The courier drops the three sections the importer never needs (`game_stats`,
-  `date_photos`, `farm`: 161 KB compressed for a late-game farm, 79 KB for a new one) & keeps the
-  save’s own container format, so the phone reuses its parser.
+  `date_photos`, `farm`) & keeps the save’s own container format, so the phone reuses its parser.
+  The epic gives the compressed size of the pruned save: about 161 KB for a late-game farm & 79 KB
+  for a new one (the full late-game save is about 290 KB compressed, per
+  [save-file-format.md](save-file-format.md#size-profile-v102-late-game-save)). Confirm the figures
+  on the pruned container, before encryption, when building the courier; the relay’s 256 KB bundle
+  cap sits above them.
 - **Envelope.** The file name, modification time, & `playtime` travel inside the ciphertext, never
   beside it.
 - **One courier per profile.** Web Locks allow a single courier per browser profile; a second window
@@ -65,14 +69,15 @@ Built in #134, as a courier module in the app’s sync code (planned).
 - **Errors.** A parse failure after a game update shows an error on the PC.
 - **App updates.** A waiting update reloads the courier at its own safe moment, for example right
   after a send (see [App updates](#app-updates)).
-- **Firefox** has no usable file handle, so it re-drops or re-picks the save per sync, through the
-  same relay & rules.
+- **Firefox** is expected to need the save re-dropped or re-picked per sync, through the same relay
+  & rules; its current behavior is still to be confirmed (#130).
 
 ## The relay
 
 Built in #132, a separate Worker with Durable Objects (they cannot live in a Pages project) with its
-own `wrangler.toml`, on Workers Free until usage says otherwise. It is reachable under the site’s
-origin or listed in `connect-src` (with `wss:`).
+own `wrangler.toml`, in a directory that is not yet decided (relay/ or workers/relay/, #132), on
+Workers Free until usage says otherwise. It is reachable under the site’s origin or listed in
+`connect-src` (with `wss:`).
 
 ### Slots & sequences
 
@@ -111,12 +116,13 @@ origin or listed in `connect-src` (with `wss:`).
 - **Tests** run the Durable Object in Miniflare. Deploying needs the maintainer’s Cloudflare login.
 - **CSP.** The relay’s `wss:` origin must be allowed by the delivered CSP
   (`src/lib/security/csp-directives.ts`). Checking this on a branch preview is a sync acceptance
-  criterion, independent of the prerendering work (D1).
+  criterion, independent of the prerendering spike (#108) & its rollout (#109).
 
 ## Pairing
 
-Built in #133, as a pairing module in the app’s sync code (planned), with the UI from #131. Exactly
-one device pairs per PC; pairing a new device replaces the old one & names the device it replaces.
+Built in #133. Planned location (not yet created): src/lib/sync/pairing.ts. The UI is from #131.
+Exactly one device pairs per PC; pairing a new device replaces the old one & names the device it
+replaces.
 
 ### The offer
 
@@ -159,13 +165,14 @@ Tests cover a substituted relay key, a replayed offer, & a reply lost across a r
 
 ## The phone
 
-Built in #135, as a receiver module in the app’s sync code (planned), on top of the apply rules
-(#129) & the single write path (#127).
+Built in #135. Planned location (not yet created): src/lib/sync/receiver.ts. It sits on top of the
+apply rules (#129) & the single write path (#127).
 
 - **One tab leads** (Web Locks).
 - **It never applies or confirms** while its store is quarantined or in the “newer data” state, &
   never uses manual import’s unlock path. In the newer-data state, “Export backup” returns the
-  stored blob verbatim (the choice made in #106), so a blocked phone still gives the player a copy.
+  stored blob verbatim (the choice in PR #158 for #106, provisional until it merges), so a blocked
+  phone still gives the player a copy.
 - **One write path.** Progress, provenance, resolved diffs, the farm-switch backup, & a “last
   applied” receipt share one storage key. Every writer (auto-save, sync, restore, reset, migration)
   goes through one function (#127), serialized by a Web Lock that re-reads & validates before
@@ -189,10 +196,10 @@ as best effort until real sessions prove it.
 
 ## Applying a bundle
 
-The pure core is a sync-apply module in `src/lib/engine/` (#129, planned): given stored progress &
-an extracted save, it computes each difference’s policy & the resulting state. Each difference falls
-into one policy: apply silently, apply & tell, ask first, or keep local & tell, chosen by a table
-keyed by provenance (including `unknown`) & fact kind.
+The pure core is built in #129. Planned location (not yet created): src/lib/engine/sync-apply.ts.
+Given stored progress & an extracted save, it computes each difference’s policy & the resulting
+state. Each difference falls into one policy: apply silently, apply & tell, ask first, or keep local
+& tell, chosen by a table keyed by provenance (including `unknown`) & fact kind.
 
 ### Provenance
 
@@ -200,7 +207,7 @@ Stored progress gains per-fact provenance (`manual`, `inferred`, `save`) with a 
 through a storage migration (see
 [app-architecture.md](app-architecture.md#3-persistence--serialization)).
 
-- This also covers the B4 amendment: “record prerequisites” writes become `inferred`.
+- “Record prerequisites” writes become `inferred` (#126).
 - Facts stored before provenance existed get `unknown`, treated like manual ones. A save may add
   them, or agree & promote them to `save`. A disagreeing save asks once per category, not per fact.
 - Unticks are stamped manual facts too.
@@ -266,8 +273,14 @@ Updates never reload a page mid-task. The service worker keeps the previous vers
 page runs that version, so a new version can activate whenever it is ready, & each page reloads at
 its own safe moment: when it is not busy (no sync apply, open form, or dialog), or on its next
 navigation. Tabs already open at the first release that ships this reload once under the old
-behavior, which is acceptable. This amends the update flow recorded in
-[the app update detection decision](decisions/2026-10-16-app-update-detection.md) (public #71).
+behavior, which is acceptable.
+
+This reverses today’s consent-based update flow, in which a “Refresh” toast waits for the player to
+accept the waiting worker (public #71, recorded in
+[the app update detection decision](decisions/2026-10-16-app-update-detection.md)). The change is
+built in #111, & #111’s PR is the one that supersedes that decision record & updates
+pwa-verification.md & the Public contract section of
+[app-architecture.md](app-architecture.md#7-public-contract). This document does not edit them.
 
 ## Diagnostics
 
@@ -287,7 +300,8 @@ Limits stay per pairing, not per IP. The rewrite ships before or with sync, in a
 
 ## Fallbacks
 
-- Firefox re-drops or re-picks the save per sync, through the same relay & rules.
+- Firefox is expected to need the save re-dropped or re-picked per sync, through the same relay &
+  rules (to be confirmed in #130).
 - No sync at all means manual check-offs.
 - QR transfer is deprecated once sync ships (#138); backup export & restore moves progress to a new
   device. Remove the codec, its tests, & the transfer promise in
