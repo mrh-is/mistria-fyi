@@ -28,10 +28,13 @@ import {
   emptyRetainedProgress,
   readProgressBlob,
   serializeProgress,
+  serializeStoredProgress,
+  withoutDeviceLocal,
 } from "./progress-storage.js";
 import {
   PREFERENCES_STORAGE_KEY,
   PROGRESS_STORAGE_KEY,
+  PROGRESS_WRITE_LOCK,
   QUARANTINE_STORAGE_KEY,
 } from "./storage-keys.js";
 
@@ -65,7 +68,20 @@ import type {
 } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
-import type { LoadedProgress, RetainedProgress } from "./progress-storage.js";
+import type { DeviceLocalState, LoadedProgress, RetainedProgress } from "./progress-storage.js";
+
+/** How a write treats a value another tab stored since this one last read it. */
+type WriteIntent =
+  /** Auto-save (every edit & a migrated or repaired hydration) & the pagehide flush: adopt it. */
+  | "auto-save"
+  /** Restore, reset, & save import, which the player chose: replace it. */
+  | "replace";
+
+/** The browser's Web Locks, where it has them; absent in old browsers & insecure contexts. */
+function progressLockManager(): LockManager | undefined {
+  const { navigator } = globalThis as { navigator?: { locks?: LockManager } };
+  return navigator?.locks;
+}
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -198,15 +214,15 @@ function createUserState() {
   /** True while stored progress came from a newer build, which this one must leave untouched. */
   let newerDataBlocked = false;
   let retained = $state.raw<RetainedProgress>(emptyRetainedProgress());
+  /** This device's own section of the stored blob; never exported, kept across a restore. */
+  let local = $state.raw<DeviceLocalState>({});
   let lastKnownPreferencesValue: null | string = null;
   let lastKnownStoredValue: null | string = null;
-  let pendingSave: undefined | { expectedStoredValue: null | string; json: string };
   let saveTimeout: ReturnType<typeof setTimeout> | undefined;
 
   function clearPendingSave(): void {
     if (saveTimeout !== undefined) clearTimeout(saveTimeout);
     saveTimeout = undefined;
-    pendingSave = undefined;
   }
 
   function reportStorageUnavailable(): void {
@@ -214,8 +230,9 @@ function createUserState() {
     _persistenceFailureGeneration++;
   }
 
+  /** The stored form of the current state, `local` section included. */
   function serialize(): string {
-    return serializeProgress(state, retained);
+    return serializeStoredProgress(state, retained, local);
   }
 
   /** Blocks persistence and keeps the unreadable value, in storage & memory, for recovery. */
@@ -229,42 +246,92 @@ function createUserState() {
     _persistenceFailureGeneration++;
   }
 
-  function persist(json: string, expectedStoredValue: null | string): void {
+  /**
+   * The one function that writes progress. It re-reads the stored value & validates it first,
+   * since another tab may have written since this one last read:
+   *
+   * - A newer build's data blocks the write; nothing is overwritten.
+   * - An `auto-save` adopts the other tab's value rather than writing a stale state over it. Its
+   *   storage event may never arrive (e.g. while this page sat in the back/forward cache), and
+   *   waiting would leave every later save comparing against a value no longer stored.
+   * - A `replace` is the player's explicit choice, so it overwrites, once an unreadable value is
+   *   safely copied to quarantine.
+   *
+   * Cleared storage has nothing to conflict with, so it's written normally. Callers hold the
+   * progress Web Lock (see {@link requestProgressWrite}); only the pagehide flush calls it bare.
+   */
+  function writeProgress(intent: WriteIntent): void {
+    if (!_persistenceReady) return;
     const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
     if (!storedResult.ok) {
       reportStorageUnavailable();
       return;
     }
 
-    // A different tab wrote after this save was scheduled. Adopt its value rather than writing the
-    // stale snapshot back; its storage event may never arrive (e.g. while this page sat in the
-    // back/forward cache), and waiting for it would leave every later save comparing against a
-    // value that is no longer stored. Cleared storage has nothing to conflict with, so it's
-    // written normally.
-    if (storedResult.value !== expectedStoredValue && storedResult.value !== null) {
-      applyStorageValue(storedResult.value);
-      return;
+    const stored = storedResult.value;
+    if (stored !== null && stored !== lastKnownStoredValue) {
+      const read = readProgressBlob(stored, "repair");
+      if (read.kind === "newer" || intent === "auto-save") {
+        applyStorageValue(stored);
+        return;
+      }
+      if (read.kind === "unreadable") {
+        if (!trySetItem(QUARANTINE_STORAGE_KEY, stored)) {
+          quarantine(stored);
+          return;
+        }
+        _unreadableData = stored;
+      }
     }
 
-    if (!trySetItem(PROGRESS_STORAGE_KEY, json)) {
+    const json = serialize();
+    if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
       reportStorageUnavailable();
       return;
     }
-
     lastKnownStoredValue = json;
     _persistenceFailureGeneration = 0;
   }
 
-  function flushPendingSave(): void {
-    const pending = pendingSave;
-    clearPendingSave();
-    if (pending) persist(pending.json, pending.expectedStoredValue);
+  /**
+   * Runs {@link writeProgress} under the progress Web Lock, so no other tab writes between its
+   * re-read & its write. Without Web Locks it runs at once: the read & write are synchronous, so
+   * only another tab running in parallel in that same instant could slip between them.
+   */
+  function requestProgressWrite(intent: WriteIntent): void {
+    const locks = progressLockManager();
+    if (!locks) {
+      writeProgress(intent);
+      return;
+    }
+    void writeUnderLock(locks, intent);
   }
 
+  async function writeUnderLock(locks: LockManager, intent: WriteIntent): Promise<void> {
+    try {
+      await locks.request(PROGRESS_WRITE_LOCK, () => {
+        writeProgress(intent);
+      });
+    } catch {
+      // The lock couldn't be taken (e.g. a sandboxed frame); write as a browser without locks does.
+      writeProgress(intent);
+    }
+  }
+
+  /** Persists an explicit replace now, rather than after the auto-save debounce. */
+  function writeExplicitReplace(): void {
+    clearPendingSave();
+    requestProgressWrite("replace");
+  }
+
+  /**
+   * The pagehide flush. A page being hidden can't wait for a lock, so this keeps the synchronous
+   * compare-before-write: it adopts another tab's value rather than overwriting it.
+   */
   function flushCurrentState(): void {
     if (!_persistenceReady) return;
     clearPendingSave();
-    persist(serialize(), lastKnownStoredValue);
+    writeProgress("auto-save");
   }
 
   /**
@@ -293,6 +360,7 @@ function createUserState() {
     const result = readProgressBlob(value, "repair");
     if (result.kind === "ok") {
       replaceProgress(result.loaded);
+      local = result.loaded.local;
       resumePersistence();
     } else if (result.kind === "newer") {
       blockForNewerData();
@@ -325,9 +393,9 @@ function createUserState() {
 
   /**
    * Swaps in loaded progress, world state, & retained unknown entries, leaving this device's
-   * preferences untouched.
+   * preferences & `local` section untouched.
    */
-  function replaceProgress(loaded: LoadedProgress): void {
+  function replaceProgress(loaded: Omit<LoadedProgress, "local">): void {
     state.progress = loaded.progress;
     state.worldState = loaded.worldState;
     retained = loaded.retained;
@@ -362,12 +430,16 @@ function createUserState() {
       $effect(() => {
         if (!_persistenceReady) return;
 
+        // Every change, including a hydrated blob that migration or repair rewrote, is saved by an
+        // auto-save write once the quiet period passes.
         const json = serialize();
         clearPendingSave();
         if (json === lastKnownStoredValue) return;
 
-        pendingSave = { expectedStoredValue: lastKnownStoredValue, json };
-        saveTimeout = setTimeout(flushPendingSave, PERSIST_DEBOUNCE_MS);
+        saveTimeout = setTimeout(() => {
+          saveTimeout = undefined;
+          requestProgressWrite("auto-save");
+        }, PERSIST_DEBOUNCE_MS);
       });
 
       // Preferences are tiny & rarely change, so they're written immediately; a failed write only
@@ -453,17 +525,18 @@ function createUserState() {
       }
     },
     /**
-     * The backup of this device's progress. While a newer build's data blocks writes, that is the
-     * stored blob itself, verbatim: memory holds only defaults or stale progress then, and a backup
-     * of those would overwrite the real progress wherever it was restored.
+     * The backup of this device's progress, never its `local` section. While a newer build's data
+     * blocks writes, that is the stored blob itself, otherwise verbatim: memory holds only defaults
+     * or stale progress then, and a backup of those would overwrite the real progress wherever it
+     * was restored.
      */
     exportBackup(): string {
       if (newerDataBlocked) {
         const stored = tryGetItem(PROGRESS_STORAGE_KEY);
         const value = stored.ok ? stored.value : lastKnownStoredValue;
-        if (value !== null) return value;
+        if (value !== null) return withoutDeviceLocal(value);
       }
-      return serialize();
+      return serializeProgress(state, retained);
     },
     get hasAnyProgress(): boolean {
       return hasAnyProgress;
@@ -588,6 +661,7 @@ function createUserState() {
       // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
       // persistence like a reset or restore (only once the unreadable blob is safely stored).
       enablePersistenceAfterExplicitReplace();
+      writeExplicitReplace();
 
       return { conflicts: household.conflicts, counts };
     },
@@ -603,13 +677,15 @@ function createUserState() {
     get progressionState(): UserProgressionState {
       return progressionState;
     },
-    /** Restores every field to its default, this device's preferences included. */
+    /** Restores every field to its default, this device's preferences & `local` section included. */
     resetAll() {
       state = createDefaultState();
       retained = emptyRetainedProgress();
+      local = {};
       enablePersistenceAfterExplicitReplace();
+      writeExplicitReplace();
     },
-    /** Clears progress & world state; this device's preferences are kept. */
+    /** Clears progress & world state; this device's preferences & `local` section are kept. */
     resetProgress() {
       replaceProgress({
         progress: createDefaultProgress(),
@@ -617,10 +693,12 @@ function createUserState() {
         worldState: createDefaultWorldState(),
       });
       enablePersistenceAfterExplicitReplace();
+      writeExplicitReplace();
     },
     /**
      * Replaces progress & world state from a backup under the strict policy; this device's
-     * preferences are kept. A backup from a newer build is refused, never partly read.
+     * preferences & `local` section are kept, and a backup never brings one in. A backup from a
+     * newer build is refused, never partly read.
      */
     restoreBackup(json: string): BackupRestoreResult {
       const result = readProgressBlob(json, "strict");
@@ -628,6 +706,7 @@ function createUserState() {
       if (result.kind === "unreadable") return { error: result.error, ok: false };
       replaceProgress(result.loaded);
       enablePersistenceAfterExplicitReplace();
+      writeExplicitReplace();
       return { ok: true };
     },
     setAvailabilityWindows(windows: readonly AvailabilityWindow[]) {
