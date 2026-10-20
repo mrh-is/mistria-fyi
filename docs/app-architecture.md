@@ -71,7 +71,7 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version: 1`, an integer. Any other value is rejected as `unsupported-version`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `1`.
   - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
     filtered to non-default entries.
   - `worldState`: the in-game season & weather the availability filters read.
@@ -80,14 +80,40 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
   exported, so restoring a backup or resetting progress keeps them, and a missing or invalid field
   falls back to its default rather than blocking anything.
 
-A progress blob that fails validation is copied to `mistria-fyi:progress-quarantine` and blocks
-persistence until an explicit replace (reset, restore, or save import); the player can download it
-from the Backup & Restore card. The ephemeral UI-only `showCompleted` field is not persisted.
+`src/lib/stores/progress-storage.ts` owns the blob. Storage hydration & backup restore both read it
+the same way: parse it, dispatch on `version`, run the numbered `MIGRATIONS` that bring it up to
+this build's version, validate it with Valibot, then normalize it against tracker data. Each path
+keeps its own policy above that validation:
 
-The serializer writes exactly the fields `SerializedState` declares; unrecognized fields in a loaded
-blob are dropped. There are no legacy readers: the launch format starts at version `1`, and a later
-shape change needs a versioned migration. Fields added after launch must be optional so older blobs
-keep loading. `user-state-golden.test.ts` pins the launch shape & the storage keys.
+| Ingress           | Policy         | A malformed value                                        |
+| ----------------- | -------------- | -------------------------------------------------------- |
+| Storage hydration | Repairs        | Falls back to its default, or its entry is dropped       |
+| Backup restore    | Strict         | Rejects the whole document, which changes nothing        |
+| Save import       | Warns          | Is skipped with a warning (see below)                    |
+| Device transfer   | All-or-nothing | Rejects the whole payload ([format](transfer-format.md)) |
+
+Outcomes by stored version:
+
+- **This build's version or older:** migrated & loaded. Backups from every earlier build restore.
+- **Newer than this build's:** the “newer data” state. The store blocks every write, quarantines
+  nothing, and asks the player to update (“Your progress was saved by a newer version. Update to
+  continue.”). An explicit replace doesn't lift it; another tab clearing or rewriting the stored
+  value does. A newer backup is refused the same way, leaving progress untouched.
+- **Unreadable** (not JSON, no valid `version`, or a malformed structure): copied to
+  `mistria-fyi:progress-quarantine`, and persistence is blocked until an explicit replace (reset,
+  restore, or save import). The player can download the copy from the Backup & Restore card.
+
+An ID this build's tracker data doesn't know is never dropped: the store keeps it out of
+`ProgressState`, so counts ignore it, and writes it back with the rest of the blob. A game update
+that renames an ID therefore loses nothing; a migration can map the old ID once it's known.
+
+The serializer writes exactly the fields `SerializedState` declares, plus those retained entries;
+unrecognized fields in a loaded blob are dropped. The ephemeral UI-only `showCompleted` field is not
+persisted. A shape change adds a migration: bump `CURRENT_SERIALIZATION_VERSION`, add the
+`MIGRATIONS` step that produces the new version from the previous one, and add that version's
+fixture under `src/lib/stores/progress-storage-fixtures/`. `progress-storage.test.ts` fails until
+all three exist. `user-state-golden.test.ts` pins the current shape & the storage keys. See the
+[decision record](decisions/2026-10-20-storage-migrations-valibot.md).
 
 ### Save File Import
 
@@ -254,7 +280,9 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   `/villagers#villager-<id>` (search results, keyed by game villager IDs).
 - **Unlocalized paths:** `/api/feedback` & `/sitemap.xml`.
 - **Storage keys:** `mistria-fyi:progress`, `mistria-fyi:progress-quarantine`,
-  `mistria-fyi:preferences`, & `mistria-fyi:theme`, plus the progress blob's shape & version (see
+  `mistria-fyi:preferences`, & `mistria-fyi:theme`.
+- **Stored progress & backups:** whatever any earlier build stored or exported keeps loading in
+  every later build, and a build never overwrites or quarantines data a newer build wrote (see
   [localStorage](#localstorage)).
 - **Locale cookie:** `mistria-fyi-locale`, set explicitly in `src/lib/i18n/paraglide-options.ts` so
   a library change can't silently reset every player's language.

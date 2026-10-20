@@ -143,7 +143,53 @@ function buildStoredState(
   });
 }
 
-function expectUnknownIdsRemoved(completed: DeepReadonly<ProgressState>): void {
+/**
+ * Unknown IDs stay out of progress, so counts ignore them, but are written back so a renamed or
+ * newer ID survives until a migration or a newer build claims it.
+ */
+function expectUnknownIdsRetained(store: {
+  exportBackup: () => string;
+  state: { progress: DeepReadonly<ProgressState> };
+}): void {
+  expectUnknownIdsOutOfProgress(store.state.progress);
+  const written = JSON.parse(store.exportBackup()) as {
+    progress: Record<string, Record<string, unknown> | unknown[]>;
+  };
+  for (const field of [
+    "almanac",
+    "almanacRecipes",
+    "cosmetics",
+    "dates",
+    "mountAppearances",
+    "museum",
+    "petCosmetics",
+    "petSkins",
+    "spells",
+    "unlockedPerks",
+  ]) {
+    expect(written.progress[field], field).toContain(UNKNOWN_ID);
+  }
+  for (const field of [
+    "animalCosmetics",
+    "animals",
+    "heartLevels",
+    "questStates",
+    "skillLevels",
+    "villagerRelationships",
+  ]) {
+    expect(written.progress[field], field).toHaveProperty(UNKNOWN_ID);
+  }
+  expect(written.progress.animals).toHaveProperty(
+    [knownAnimal.animalId],
+    expect.arrayContaining([UNKNOWN_ID]),
+  );
+  expect(written.progress.animalCosmetics).toHaveProperty(
+    [knownAnimal.animalId],
+    expect.arrayContaining([UNKNOWN_ID]),
+  );
+}
+
+function expectUnknownIdsOutOfProgress(completed: DeepReadonly<ProgressState>): void {
   expect(completed.almanac).not.toContain(UNKNOWN_ID);
   expect(completed.almanacRecipes).not.toContain(UNKNOWN_ID);
   expect(completed.cosmetics).not.toContain(UNKNOWN_ID);
@@ -230,14 +276,14 @@ describe("persisted-state normalization", () => {
     expect(userState.state.progress.villagerRelationships).not.toHaveProperty(
       known.villagerWithInvalidData,
     );
-    expectUnknownIdsRemoved(userState.state.progress);
+    expectUnknownIdsRetained(userState);
   });
 
-  it("filters IDs removed from tracker data when importing a manual backup", async () => {
+  it("keeps IDs removed from tracker data out of progress but in a restored backup", async () => {
     const { userState } = await import("#lib/stores/user-state.svelte.js");
 
     expect(userState.restoreBackup(buildStoredState())).toEqual({ ok: true });
-    expectUnknownIdsRemoved(userState.state.progress);
+    expectUnknownIdsRetained(userState);
     expect(userState.state.progress.almanac).toContain(known.almanac);
     expect((userState.state.progress.questStates as Record<string, string>)[known.quest]).toBe(
       "completed",

@@ -10,7 +10,7 @@ interface TestWindow {
   ) => void;
 }
 
-function buildMinimalState(renown = 0): string {
+function buildMinimalState(renown = 0, version = 1): string {
   return JSON.stringify({
     progress: {
       almanac: [],
@@ -30,7 +30,7 @@ function buildMinimalState(renown = 0): string {
       spells: [],
       unlockedPerks: [],
     },
-    version: 1,
+    version,
     worldState: { season: "spring", weather: "calm" },
   });
 }
@@ -355,7 +355,78 @@ describe("persistence lifecycle", () => {
     await vi.runAllTimersAsync();
 
     expect(storage.getItem("mistria-fyi:progress")).toBe(future);
+    expect(storage.getItem("mistria-fyi:progress-quarantine")).toBeNull();
     expect(userState.persistenceFailed).toBe(true);
+    expect(userState.persistenceFailureKind).toBe("newer-data");
+    expect(userState.unreadableData).toBeNull();
+  });
+
+  it("leaves a newer build's progress untouched, even after an explicit replace", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", makeWindow());
+    const future = buildMinimalState(7, 2);
+    const storage = makeStorage({ "mistria-fyi:progress": future });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.loadFromStorage();
+
+    expect(userState.persistenceFailed).toBe(true);
+    expect(userState.persistenceFailureKind).toBe("newer-data");
+    expect(userState.unreadableData).toBeNull();
+    expect(userState.state.progress.renown).toBe(0);
+
+    userState.setRenown(3);
+    userState.resetAll();
+    expect(userState.restoreBackup(buildMinimalState(25))).toEqual({ ok: true });
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
+    await vi.runAllTimersAsync();
+
+    expect(storage.getItem("mistria-fyi:progress")).toBe(future);
+    expect(storage.getItem("mistria-fyi:progress-quarantine")).toBeNull();
+    expect(userState.persistenceFailureKind).toBe("newer-data");
+  });
+
+  it("resumes saving once another tab clears or rewrites the newer progress", async () => {
+    vi.useFakeTimers();
+    const testWindow = makeWindow();
+    vi.stubGlobal("window", testWindow);
+    const storage = makeStorage({ "mistria-fyi:progress": buildMinimalState(7, 2) });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.loadFromStorage();
+    storage.clear();
+    testWindow.dispatch("storage", { key: null, newValue: null, storageArea: storage });
+
+    expect(userState.persistenceFailed).toBe(false);
+    userState.setRenown(3);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
+    await vi.runAllTimersAsync();
+    expect(JSON.parse(storage.getItem("mistria-fyi:progress") ?? "null")).toMatchObject({
+      progress: { renown: 3 },
+    });
+
+    const future = buildMinimalState(7, 2);
+    storage.setItem("mistria-fyi:progress", future);
+    testWindow.dispatch("storage", {
+      key: "mistria-fyi:progress",
+      newValue: future,
+      storageArea: storage,
+    });
+    expect(userState.persistenceFailureKind).toBe("newer-data");
+
+    const current = buildMinimalState(11);
+    storage.setItem("mistria-fyi:progress", current);
+    testWindow.dispatch("storage", {
+      key: "mistria-fyi:progress",
+      newValue: current,
+      storageArea: storage,
+    });
+    expect(userState.persistenceFailed).toBe(false);
+    expect(userState.state.progress.renown).toBe(11);
   });
 
   it("flushes a pending save when the page is hidden", async () => {
