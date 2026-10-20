@@ -108,7 +108,6 @@
       }
     }
   ],
-  "dates_section_name": "Dates",
   "animals_cosmetics_section_name": "Cosmetics",
   "animals_pet_cosmetics_section_name": "Pet cosmetics",
   "animals_pet_skins_section_name": "Pet skins",
@@ -475,7 +474,6 @@
   "merge_label_animal_cosmetics": "Animal cosmetics: +{count}",
   "merge_label_animals": "Animal variants: +{count}",
   "merge_label_cosmetics": "Cosmetics: +{count}",
-  "merge_label_dates": "Dates: +{count}",
   "merge_label_museum": "Museum donations: +{count}",
   "merge_label_villager_relationships": "Villager relationships: +{count}",
   "merge_label_perks": "Perks: +{count}",

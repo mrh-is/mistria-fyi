@@ -71,7 +71,7 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `1`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `2`.
   - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
     filtered to non-default entries.
   - `worldState`: the in-game season & weather the availability filters read.
@@ -115,6 +115,12 @@ persisted. A shape change adds a migration: bump `CURRENT_SERIALIZATION_VERSION`
 fixture under `src/lib/stores/progress-storage-fixtures/`. `progress-storage.test.ts` fails until
 all three exist. `user-state-golden.test.ts` pins the current shape & the storage keys. See the
 [decision record](decisions/2026-10-20-storage-migrations-valibot.md).
+
+Version two removes the duplicate Dates checklist. Its numbered migration unions each known
+version-one `progress.dates` entry’s Date Inspiration item into Almanac progress; canonical
+normalization deduplicates entries. Unmapped date IDs remain in `progress.legacyDates`, outside
+counts, until a later migration can identify them. Hydration & strict backup restore use the same
+migration; malformed legacy lists still reject rather than silently dropping progress.
 
 ### Save File Import
 

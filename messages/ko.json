@@ -105,7 +105,6 @@
       }
     }
   ],
-  "dates_section_name": "데이트",
   "animals_cosmetics_section_name": "코스메틱",
   "animals_pet_cosmetics_section_name": "펫 코스메틱",
   "animals_pet_skins_section_name": "펫 스킨",
@@ -472,7 +471,6 @@
   "merge_label_animal_cosmetics": "동물 코스메틱: +{count}",
   "merge_label_animals": "동물 변형: +{count}",
   "merge_label_cosmetics": "코스메틱: +{count}",
-  "merge_label_dates": "날짜: +{count}",
   "merge_label_museum": "박물관 기증: +{count}",
   "merge_label_villager_relationships": "마을 주민 관계: +{count}",
   "merge_label_perks": "스킬 특성: +{count}",

@@ -111,7 +111,6 @@
       }
     }
   ],
-  "dates_section_name": "Citas",
   "animals_cosmetics_section_name": "Cosméticos",
   "animals_pet_cosmetics_section_name": "Cosméticos de mascota",
   "animals_pet_skins_section_name": "Aspectos de mascota",
@@ -478,7 +477,6 @@
   "merge_label_animal_cosmetics": "Cosméticos de animales: +{count}",
   "merge_label_animals": "Variantes de animales: +{count}",
   "merge_label_cosmetics": "Cosméticos: +{count}",
-  "merge_label_dates": "Fechas: +{count}",
   "merge_label_museum": "Donaciones al museo: +{count}",
   "merge_label_villager_relationships": "Relaciones con aldeanos: +{count}",
   "merge_label_perks": "Dones de habilidad: +{count}",

@@ -40,7 +40,7 @@ describe("quest states", () => {
 describe("emptyMergeCounts", () => {
   it("zeroes every counter and returns a fresh object", () => {
     const counts: MergeCounts = emptyMergeCounts();
-    expect(Object.keys(counts)).toHaveLength(21);
+    expect(Object.keys(counts)).toHaveLength(20);
     expect(Object.values(counts).every((n) => n === 0)).toBe(true);
     expect(emptyMergeCounts()).not.toBe(counts);
   });

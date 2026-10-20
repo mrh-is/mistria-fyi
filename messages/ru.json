@@ -114,7 +114,6 @@
       }
     }
   ],
-  "dates_section_name": "Свидания",
   "animals_cosmetics_section_name": "Косметика",
   "animals_pet_cosmetics_section_name": "Косметика питомца",
   "animals_pet_skins_section_name": "Скины питомца",
@@ -481,7 +480,6 @@
   "merge_label_animal_cosmetics": "Косметика животных: +{count}",
   "merge_label_animals": "Варианты животных: +{count}",
   "merge_label_cosmetics": "Косметика: +{count}",
-  "merge_label_dates": "Даты: +{count}",
   "merge_label_museum": "Пожертвования музею: +{count}",
   "merge_label_villager_relationships": "Отношения с жителями: +{count}",
   "merge_label_perks": "Навыки: +{count}",

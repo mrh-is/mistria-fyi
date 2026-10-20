@@ -105,7 +105,6 @@
       }
     }
   ],
-  "dates_section_name": "约会",
   "animals_cosmetics_section_name": "装饰",
   "animals_pet_cosmetics_section_name": "宠物装饰",
   "animals_pet_skins_section_name": "宠物皮肤",
@@ -472,7 +471,6 @@
   "merge_label_animal_cosmetics": "动物装饰：+{count}",
   "merge_label_animals": "动物变体：+{count}",
   "merge_label_cosmetics": "装饰：+{count}",
-  "merge_label_dates": "日期：+{count}",
   "merge_label_museum": "博物馆捐赠：+{count}",
   "merge_label_villager_relationships": "村民关系：+{count}",
   "merge_label_perks": "技能特长：+{count}",

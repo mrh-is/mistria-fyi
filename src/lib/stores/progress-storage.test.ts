@@ -134,7 +134,9 @@ describe("readProgressBlob", () => {
   it.each(POLICIES)("retains unknown IDs & writes them back under the %s policy", (policy) => {
     const loaded = readOk(JSON.stringify(fixture(1)), policy);
 
-    expect(loaded.progress.almanac).toEqual(new Set(["turnip", "animated_waterfall_v1"]));
+    expect(loaded.progress.almanac).toEqual(
+      new Set(["turnip", "animated_waterfall_v1", "inn_menu"]),
+    );
     expect(loaded.progress.heartLevels).toEqual({ balor: 4 });
     expect(loaded.progress.animals).not.toHaveProperty("animal_from_a_later_update");
     expect(loaded.progress.animals).toHaveProperty("chicken", new Set(["red"]));
@@ -143,7 +145,7 @@ describe("readProgressBlob", () => {
       progress: Record<string, unknown>;
     };
     expect(written.progress).toMatchObject({
-      almanac: ["animated_waterfall_v1", "item_from_a_later_update", "turnip"],
+      almanac: ["animated_waterfall_v1", "inn_menu", "item_from_a_later_update", "turnip"],
       animalCosmetics: {
         animal_from_a_later_update: ["ribbon_red"],
         chicken: ["ribbon_red"],
@@ -158,6 +160,24 @@ describe("readProgressBlob", () => {
     expect(JSON.parse(serializeProgress(loaded, loaded.retained))).not.toHaveProperty(
       "showCompleted",
     );
+  });
+
+  it.each(POLICIES)("retains unmapped legacy dates under the %s policy", (policy) => {
+    const launch = fixture(1);
+    const document = {
+      ...launch,
+      progress: { ...(launch.progress as StoredDocument), dates: ["inn_meal", "unmapped_date"] },
+    };
+    const loaded = readOk(JSON.stringify(document), policy);
+    const written = serializeProgress(loaded, loaded.retained);
+    expect(JSON.parse(written)).toMatchObject({
+      progress: { legacyDates: ["unmapped_date"] },
+      version: 2,
+    });
+    expect(loaded.progress).not.toHaveProperty("dates");
+    expect(loaded.progress.almanac).toContain("inn_menu");
+    const reread = readOk(written, policy);
+    expect(serializeProgress(reread, reread.retained)).toBe(written);
   });
 
   it("repairs malformed values on hydration but rejects them in a backup", () => {

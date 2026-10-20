@@ -176,7 +176,7 @@ export interface TownRank {
 export interface TrackerData {
   almanac: Record<AlmanacCategoryId, AlmanacCategory>;
   animals: Record<AnimalId, Animal>;
-  categoryVisibility: Partial<Record<"dates" | QuestType, VisibilityCondition>>;
+  categoryVisibility: Partial<Record<QuestType, VisibilityCondition>>;
   cosmetics: Record<CosmeticId, Cosmetic>;
   /** Wardrobe slots in the game's menu order (object key order), including slots with no cosmetics. */
   cosmeticSlots: Record<CosmeticSlot, CosmeticSlotMeta>;

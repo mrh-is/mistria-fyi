@@ -54,20 +54,22 @@ describe("persisted format contract", () => {
     expect(THEME_STORAGE_KEY).toBe("mistria-fyi:theme");
   });
 
-  it("restores the launch backup and writes it back unchanged", () => {
+  it("restores the launch backup and migrates its Dates progress", () => {
     expect(userState.restoreBackup(JSON.stringify(GOLDEN_BACKUP))).toEqual({ ok: true });
 
     // Every animal gets an entry on load; animals added by later game data appear as empty lists.
     // Fields added after launch are optional on read and written empty.
-    const { animalCosmetics, animals, ...progress } = GOLDEN_BACKUP.progress;
+    const { animalCosmetics, animals, dates: _dates, ...progress } = GOLDEN_BACKUP.progress;
     expect(JSON.parse(userState.exportBackup())).toEqual({
       ...GOLDEN_BACKUP,
       progress: {
         ...progress,
         ...POST_LAUNCH_FIELDS,
+        almanac: ["inn_menu", "turnip"],
         animalCosmetics: expect.objectContaining(animalCosmetics) as unknown,
         animals: expect.objectContaining(animals) as unknown,
       },
+      version: 2,
     });
   });
 

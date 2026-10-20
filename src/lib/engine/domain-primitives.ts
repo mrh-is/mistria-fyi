@@ -15,7 +15,6 @@ export function emptyMergeCounts(): MergeCounts {
     animals: 0,
     childChoice: 0,
     cosmetics: 0,
-    dates: 0,
     hasUpperFloor: 0,
     heartLevels: 0,
     mineFloor: 0,

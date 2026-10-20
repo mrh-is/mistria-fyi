@@ -190,13 +190,7 @@ function almanacEntryProgress(
 }
 
 function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
-  const entries = almanacEntryProgress(trackerIndex.almanacCanonicalIds, ctx.progress.almanac, ctx);
-  return {
-    completed: entries.completed + ctx.progress.dates.size,
-    remainingInScope:
-      entries.remainingInScope + trackerIndex.almanacDateCount - ctx.progress.dates.size,
-    total: entries.total + trackerIndex.almanacDateCount,
-  };
+  return almanacEntryProgress(trackerIndex.almanacCanonicalIds, ctx.progress.almanac, ctx);
 }
 
 function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {

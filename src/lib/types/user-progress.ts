@@ -7,7 +7,6 @@ import type {
   AnimalId,
   AnimalVariantId,
   CosmeticId,
-  DateId,
   ItemId,
   MountAppearanceId,
   PerkId,
@@ -23,7 +22,7 @@ import type {
 } from "./tracker-data.js";
 
 /** Version stamped on every persisted progress blob; the browser suites build fixtures from it. */
-export const CURRENT_SERIALIZATION_VERSION = 1;
+export const CURRENT_SERIALIZATION_VERSION = 2;
 export const CHILD_CHOICES = ["no", "undeclared", "yes"] as const;
 export const QUEST_STATES = ["completed", "none", "obtained"] as const;
 export type ChildChoice = (typeof CHILD_CHOICES)[number];
@@ -34,7 +33,6 @@ export interface ProgressState {
   animals: Partial<Record<AnimalId, Set<AnimalVariantId>>>;
   childChoice: ChildChoice;
   cosmetics: Set<CosmeticId>;
-  dates: Set<DateId>;
   hasUpperFloor: boolean;
   heartLevels: Partial<Record<VillagerId, number>>;
   mineFloor: number;
@@ -83,7 +81,6 @@ export interface MergeCounts {
   animals: number;
   childChoice: number;
   cosmetics: number;
-  dates: number;
   hasUpperFloor: number;
   heartLevels: number;
   mineFloor: number;

@@ -42,6 +42,7 @@ import type {
   AnimalId,
   AnimalVariantId,
   CosmeticId,
+  DateId,
   ItemId,
   Season,
   VillagerId,
@@ -65,7 +66,37 @@ export type Migration = (document: StoredDocument) => StoredDocument;
  */
 export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   1: (document) => document,
+  2: migrateDatesToAlmanac,
 };
+
+/** Retire the Dates checklist while preserving every known or unmapped date ID. */
+function migrateDatesToAlmanac(document: StoredDocument): StoredDocument {
+  const stored = document.progress;
+  if (typeof stored !== "object" || stored === null || Array.isArray(stored)) return document;
+  const { dates, ...progress } = stored as Record<string, unknown>;
+  const legacyDates = dates === undefined ? [] : dates;
+  if (!v.is(StringListSchema, legacyDates) || !v.is(StringListSchema, progress.almanac)) {
+    // Leave malformed lists for the shared schema to reject, under both ingress policies.
+    return { ...document, progress: { ...progress, legacyDates } };
+  }
+  const inspirationItems: string[] = [];
+  const unmappedDates: string[] = [];
+  for (const id of legacyDates) {
+    const source = Object.hasOwn(trackerData.dates, id)
+      ? trackerData.dates[id as DateId].sources.find((entry) => entry.type === "date_inspiration")
+      : undefined;
+    if (source) inspirationItems.push(source.itemId);
+    else unmappedDates.push(id);
+  }
+  return {
+    ...document,
+    progress: {
+      ...progress,
+      almanac: [...progress.almanac, ...inspirationItems],
+      ...(unmappedDates.length > 0 ? { legacyDates: unmappedDates } : {}),
+    },
+  };
+}
 
 /**
  * Runs every step after `from` up to `to`, stamping each result with the version it produced. Throws
@@ -139,7 +170,7 @@ const LIST_ENTRIES = {
   almanac: StringListSchema,
   almanacRecipes: v.optional(StringListSchema),
   cosmetics: StringListSchema,
-  dates: v.optional(StringListSchema),
+  legacyDates: v.optional(StringListSchema),
   mountAppearances: v.optional(StringListSchema),
   museum: StringListSchema,
   petCosmetics: v.optional(StringListSchema),
@@ -216,7 +247,6 @@ const LIST_FIELDS = [
   "almanac",
   "almanacRecipes",
   "cosmetics",
-  "dates",
   "mountAppearances",
   "museum",
   "petCosmetics",
@@ -234,6 +264,7 @@ export interface RetainedProgress {
   animalCosmetics: Record<string, string[]>;
   animals: Record<string, string[]>;
   heartLevels: Record<string, number>;
+  legacyDates: string[];
   lists: Partial<Record<ListField, string[]>>;
   questStates: Record<string, QuestState>;
   skillLevels: Record<string, number>;
@@ -259,6 +290,7 @@ export function emptyRetainedProgress(): RetainedProgress {
     animalCosmetics: {},
     animals: {},
     heartLevels: {},
+    legacyDates: [],
     lists: {},
     questStates: {},
     skillLevels: {},
@@ -312,7 +344,6 @@ type KnownIds = object | ReadonlySet<string>;
 const LIST_KNOWN_IDS: Record<Exclude<ListField, "almanac">, KnownIds> = {
   almanacRecipes: trackerData.recipes,
   cosmetics: trackerData.cosmetics,
-  dates: trackerData.dates,
   mountAppearances: trackerData.mount.appearances,
   museum: MUSEUM_ITEM_IDS,
   petCosmetics: trackerData.pets.cosmetics,
@@ -396,6 +427,7 @@ function splitAnimalIds<T extends string>(
 
 function normalizeBlob({ progress: stored, worldState }: ValidatedBlob): LoadedProgress {
   const retained = emptyRetainedProgress();
+  retained.legacyDates = stored.legacyDates ?? [];
 
   const lists = {} as Record<ListField, Set<string>>;
   for (const field of LIST_FIELDS) {
@@ -449,7 +481,6 @@ function normalizeBlob({ progress: stored, worldState }: ValidatedBlob): LoadedP
     animals: animals.known,
     childChoice: stored.childChoice ?? "undeclared",
     cosmetics: lists.cosmetics as ProgressState["cosmetics"],
-    dates: lists.dates as ProgressState["dates"],
     hasUpperFloor: stored.hasUpperFloor ?? false,
     heartLevels: heartLevels.known,
     mineFloor: clampMineFloor(stored.mineFloor),
@@ -534,7 +565,9 @@ export function serializeProgress(
       animals: mergeAnimalIds(progress.animals, retained.animals),
       childChoice: progress.childChoice,
       cosmetics: list("cosmetics"),
-      dates: list("dates"),
+      ...(retained.legacyDates.length > 0
+        ? { legacyDates: [...new Set(retained.legacyDates)].toSorted() }
+        : {}),
       hasUpperFloor: progress.hasUpperFloor,
       heartLevels: mergeRecord(progress.heartLevels, retained.heartLevels, (level) => level > 0),
       mineFloor: progress.mineFloor,

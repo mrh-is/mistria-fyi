@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage as makeStorage } from "#lib/test-utils/memory-storage.js";
+import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 
 interface TestWindow {
   addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => void;
@@ -221,7 +222,7 @@ describe("persistence lifecycle", () => {
       string,
       unknown
     >;
-    expect(saved.version).toBe(1);
+    expect(saved.version).toBe(CURRENT_SERIALIZATION_VERSION);
     expect(saved).not.toHaveProperty("retiredSetting");
     expect(saved.progress).not.toHaveProperty("retiredProgress");
     expect(saved.worldState).not.toHaveProperty("retiredDetail");
@@ -342,7 +343,7 @@ describe("persistence lifecycle", () => {
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
     const futureState = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
-    futureState.version = 2;
+    futureState.version = CURRENT_SERIALIZATION_VERSION + 1;
     const future = JSON.stringify(futureState);
     userState.setRenown(10);
     storage.setItem("mistria-fyi:progress", future);
@@ -364,7 +365,7 @@ describe("persistence lifecycle", () => {
   it("leaves a newer build's progress untouched, even after an explicit replace", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
-    const future = buildMinimalState(7, 2);
+    const future = buildMinimalState(7, CURRENT_SERIALIZATION_VERSION + 1);
     const storage = makeStorage({ "mistria-fyi:progress": future });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
@@ -391,7 +392,7 @@ describe("persistence lifecycle", () => {
   it("exports a newer build's stored progress verbatim, never the defaults in memory", async () => {
     const testWindow = makeWindow();
     vi.stubGlobal("window", testWindow);
-    const future = buildMinimalState(7, 2);
+    const future = buildMinimalState(7, CURRENT_SERIALIZATION_VERSION + 1);
     const storage = makeStorage({ "mistria-fyi:progress": future });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
@@ -403,7 +404,7 @@ describe("persistence lifecycle", () => {
     expect(userState.exportBackup()).toBe(future);
 
     // Another tab on the newer build saves again; the export follows what's stored.
-    const later = buildMinimalState(9, 2);
+    const later = buildMinimalState(9, CURRENT_SERIALIZATION_VERSION + 1);
     storage.setItem("mistria-fyi:progress", later);
     testWindow.dispatch("storage", {
       key: "mistria-fyi:progress",
@@ -422,7 +423,9 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     const testWindow = makeWindow();
     vi.stubGlobal("window", testWindow);
-    const storage = makeStorage({ "mistria-fyi:progress": buildMinimalState(7, 2) });
+    const storage = makeStorage({
+      "mistria-fyi:progress": buildMinimalState(7, CURRENT_SERIALIZATION_VERSION + 1),
+    });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -439,7 +442,7 @@ describe("persistence lifecycle", () => {
       progress: { renown: 3 },
     });
 
-    const future = buildMinimalState(7, 2);
+    const future = buildMinimalState(7, CURRENT_SERIALIZATION_VERSION + 1);
     storage.setItem("mistria-fyi:progress", future);
     testWindow.dispatch("storage", {
       key: "mistria-fyi:progress",

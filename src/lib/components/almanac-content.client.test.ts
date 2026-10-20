@@ -24,6 +24,15 @@ describe("AlmanacContent", () => {
     vi.unstubAllGlobals();
   });
 
+  it("shows Date Inspiration without a duplicate Dates checklist", async () => {
+    userState.toggleShowSpoilers();
+    const view = renderWithFeedback(AlmanacContent, { locale: "en" });
+    await tick();
+
+    expect(view.getByRole("button", { name: /^Date Inspiration,/ })).toBeInTheDocument();
+    expect(view.queryByRole("button", { name: /^Dates,/ })).toBeNull();
+  });
+
   it("renders section rows in animation-frame batches after opening a large section", async () => {
     const queuedFrames: FrameRequestCallback[] = [];
     vi.stubGlobal("requestAnimationFrame", (onFrame: FrameRequestCallback) => {
