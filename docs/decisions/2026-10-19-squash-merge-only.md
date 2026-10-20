@@ -10,10 +10,17 @@ already the meaningful unit of change.
 
 ## Decision
 
-Pull requests merge by squash only. Merge commits & rebase merging are disabled in the repository
-settings, so tooling enforces this rather than prose. The squash commit takes the PR title (GitHub
-appends the PR number) and the concatenated branch commit messages as its body, which keeps each
-commit’s `Co-Authored-By` trailer on `main`.
+Pull requests merge by squash only. Tooling enforces this rather than prose, at two layers:
+
+- **Repository settings** disable merge commits & rebase merging, so the merge button offers only
+  squash.
+- **The “Protect main” ruleset** requires a pull request whose only allowed merge method is squash,
+  plus linear history. This blocks direct pushes & non-squash merges even if the settings change.
+  The pull request rule requires no approvals, so the solo maintainer can still merge.
+
+The squash commit takes the PR title (GitHub appends the PR number) and the concatenated branch
+commit messages as its body, which keeps each commit’s `Co-Authored-By` trailer on `main`. A
+single-commit PR uses that commit’s own message instead, trailer included.
 
 The “Attribution” check is unaffected: it validates a PR’s own commits before merge, never `main`.
 
