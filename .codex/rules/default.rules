@@ -13,6 +13,7 @@ prefix_rule(
             "dev",
             "fonts:check",
             "fonts:lint",
+            "knip",
             "lint",
             "lint:fix",
             "lint:shell",

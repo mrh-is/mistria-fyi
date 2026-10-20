@@ -14,6 +14,7 @@
     "check:i18n": "tsx scripts/check-translation-keys.ts",
     "check:built": "tsx --test --test-timeout=120000 --test-force-exit tests/build-output/*.spec.ts",
     "check:routes": "tsx scripts/check-routes.ts",
+    "knip": "knip",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "data:diff": "node scripts/data-diff.ts",
     "cloudflare:logs": "tsx scripts/cloudflare-pages-logs.ts",

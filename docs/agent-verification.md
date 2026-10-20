@@ -16,11 +16,12 @@ require an exception.
 
 ## CI coverage
 
-`ci.yml` runs `lint`, `pnpm audit`, `check`, `check:i18n`, the complete asset-independent test suite
-with per-file & wall-time budgets (the cleanup test runs only when its script changes), `build`, &
-`check:routes`, then the accessibility and PWA suites against that build when `src/`, `static/`,
-`tests/`, or their tooling change. Its “CI passed” job aggregates every result. Coverage runs
-nightly & remains reported, not gated. Timing ceilings are documented in
+`ci.yml` runs `lint`, `pnpm audit`, `check`, `check:i18n`, `knip` (unused files, exports, &
+dependencies; config in `knip.jsonc`), the complete asset-independent test suite with per-file &
+wall-time budgets (the cleanup test runs only when its script changes), `build`, & `check:routes`,
+then the accessibility and PWA suites against that build when `src/`, `static/`, `tests/`, or their
+tooling change. Its “CI passed” job aggregates every result. Coverage runs nightly & remains
+reported, not gated. Timing ceilings are documented in
 [the development workflow](development-workflow.md#vitest-time-budgets). A PR merges only when it
 passes; fix CI failures on the branch rather than merging around them (see agent-workflow.md’s CI
 monitoring rule).
@@ -28,9 +29,9 @@ monitoring rule).
 ## Full verification
 
 `pnpm run verify` is read-only & runs CI’s non-browser matrix (`lint`, `check`, `check:i18n`,
-`test`, `build`, `check:routes`, `check:built`); run `pnpm run lint:fix` first. Add `-- --assets`
-for `test:pipeline:assets`, `--browser` for the Playwright suites, or `--all` for both. Run it once,
-when commit-ready, only when:
+`knip`, `test`, `build`, `check:routes`, `check:built`); run `pnpm run lint:fix` first. Add
+`-- --assets` for `test:pipeline:assets`, `--browser` for the Playwright suites, or `--all` for
+both. Run it once, when commit-ready, only when:
 
 - The change regenerates `tracker-data.json` or touches the pipeline parser, evaluator, extractors,
   or shared tracker contract. CI has no game assets, so `pnpm run test:pipeline:assets` and the

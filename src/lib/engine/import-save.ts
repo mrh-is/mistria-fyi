@@ -464,11 +464,7 @@ function readActiveQuestNames(raw: unknown, warnings: SaveImportWarning[]): stri
 
 // ─── .sav file unpacking (client-side) ──────────────────────────────
 
-export {
-  SavArchiveError,
-  type SavArchiveErrorDetail,
-  parseSavArchive as unpackSavFile,
-} from "./parse-sav.js";
+export { SavArchiveError, parseSavArchive as unpackSavFile } from "./parse-sav.js";
 export type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 // ─── Season derivation ─────────────────────────────────────────────

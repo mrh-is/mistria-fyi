@@ -133,6 +133,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
       - run: pnpm run check:i18n
+      - run: pnpm run knip
 
   test:
     name: Test
