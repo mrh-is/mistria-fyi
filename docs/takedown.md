@@ -7,8 +7,9 @@ is recorded in [the launch posture decision](decisions/2026-10-07-public-launch-
 ## Before any takedown
 
 1. **Acknowledge** from `michael@mistria.fyi` within a day, naming what will be removed & when.
-2. **Scope the request.** Map it to one or more components: sprites, dataset, pipeline, or the whole
-   repository. When the scope is unclear, ask, but take down the named material first.
+2. **Scope the request.** Map it to one or more components: sprites, dataset, pipeline, the farm
+   planner pack (once it exists), or the whole repository. When the scope is unclear, ask, but take
+   down the named material first.
 3. **Record it.** Open a private-archive issue (or a local note when the request is confidential)
    with the request date, the scope, & the steps taken. Don’t quote the request publicly without
    permission.
@@ -73,6 +74,31 @@ removing the dataset means taking the site down.
    `docs/game-asset-format.md`. Commit with a neutral message (“Remove extraction pipeline”).
 2. **Decide on history.** Past commits still contain the pipeline. If the request covers history,
    continue with [Whole repository](#whole-repository); otherwise this is complete.
+
+## Farm planner pack
+
+The farm planner (public #4) is planned, not built. When it ships, its geometry lives in one lazy
+pack, loaded only when the planner opens, so it can be withdrawn without touching the dataset or the
+sprites. [The decision record](decisions/2026-10-20-farm-planner-geometry.md) states what the pack
+may contain: a coarse functional grid only, never full-resolution tile shapes, game sprites in
+place, or anything that renders back into a recognizable layout. Check any request against that line
+first; material beyond it is a map & comes out regardless.
+
+This section is a template for the steps. Fill in the concrete paths when the pack is designed, &
+keep these properties true so the steps stay short:
+
+1. **Remove the pack from the build.** Delete the pack’s generated files, its generation step, & the
+   lazy import that loads it, then redeploy. The pack is outside `tracker-data.json` & the service
+   worker’s install-time precache, so nothing else changes.
+2. **Make the planner cope without it.** The planner must degrade to a plain message or be removed
+   with the pack; confirm that in a fresh browser profile.
+3. **Purge installed copies.** Bump the app version so installed clients drop the cached pack (the
+   worker evicts runtime-cached entries it can no longer fetch), & purge the cache for the pack’s
+   URL prefix in Cloudflare.
+4. **Check history.** If a pack was ever committed, past commits still contain it; continue with
+   [Whole repository](#whole-repository) if the request covers history.
+5. **Verify** that a fresh profile & an installed app both load the rest of the site, & that the
+   pack’s URL returns 404.
 
 ## Whole repository
 
