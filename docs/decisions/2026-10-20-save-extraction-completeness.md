@@ -17,6 +17,9 @@ tell “the save says none” from “the save didn't say”.
   combines several save keys (mount appearances, quest states) is complete only when all of them
   are. A level clamped from above its maximum stays complete, since the save still proves at least
   the maximum.
+- **Defaults never make a field complete.** Default recipes, starting cosmetics, & default animal
+  variants are credited whether or not the save lists them, but a field is `complete` only when its
+  save source was read in full.
 - **Relationships are never complete.** The importer reads only the dating flags, so it can't speak
   to marriage or any other relationship.
 - **Mount appearances are never complete.** The Mistmare is inferred from `reveal_mistmare` in

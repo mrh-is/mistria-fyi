@@ -78,16 +78,27 @@ describe("fields mutated from a real save", () => {
   it("leaves an absent field unknown with no value, keeping the rest complete", () => {
     const { fields } = extractSave(
       mutated(bundle, (copy) => {
+        delete copy.player?.perks;
+      }),
+    );
+
+    expect(fields.unlockedPerks).toMatchObject({
+      completeness: "unknown",
+      diagnostics: [{ code: "absent", path: "player.perks" }],
+      value: undefined,
+    });
+    expect(fields.almanac.completeness).toBe("complete");
+  });
+
+  it("credits default cosmetics for an absent list without marking it complete", () => {
+    const { fields } = extractSave(
+      mutated(bundle, (copy) => {
         delete copy.player?.cosmetic_unlocks;
       }),
     );
 
-    expect(fields.cosmetics).toMatchObject({
-      completeness: "unknown",
-      diagnostics: [{ code: "absent", path: "player.cosmetic_unlocks" }],
-      value: undefined,
-    });
-    expect(fields.almanac.completeness).toBe("complete");
+    expect(fields.cosmetics.completeness).toBe("unknown");
+    expect(fields.cosmetics.value?.size).toBeGreaterThan(0);
   });
 
   it("leaves a malformed field unknown with no value", () => {
@@ -105,24 +116,24 @@ describe("fields mutated from a real save", () => {
   });
 
   it("marks a field with a renamed ID unknown but keeps its other values", () => {
-    const original = extractSave(bundle).fields.cosmetics.value ?? new Set();
+    const original = extractSave(bundle).fields.unlockedPerks.value ?? new Set();
     const [renamedId] = original;
     const renamed = mutated(bundle, (copy) => {
-      const list = copy.player?.cosmetic_unlocks as string[];
+      const list = copy.player?.perks as string[];
       list[list.indexOf(renamedId)] = `${renamedId}_renamed`;
     });
     const { fields } = extractSave(renamed);
 
-    expect(fields.cosmetics.completeness).toBe("unknown");
-    expect(fields.cosmetics.diagnostics).toEqual([
-      { code: "unknown-id", id: `${renamedId}_renamed`, path: "player.cosmetic_unlocks" },
+    expect(fields.unlockedPerks.completeness).toBe("unknown");
+    expect(fields.unlockedPerks.diagnostics).toEqual([
+      { code: "unknown-id", id: `${renamedId}_renamed`, path: "player.perks" },
     ]);
-    expect(fields.cosmetics.value?.size).toBe(original.size - 1);
+    expect(fields.unlockedPerks.value?.size).toBe(original.size - 1);
 
     // The additive import still merges every recognized value & warns about the renamed one.
     const { completed, warnings } = extractSaveProgress(renamed);
-    expect(completed.cosmetics).toEqual(fields.cosmetics.value);
-    expect(warnings).toContainEqual(fields.cosmetics.diagnostics[0]);
+    expect(completed.unlockedPerks).toEqual(fields.unlockedPerks.value);
+    expect(warnings).toContainEqual(fields.unlockedPerks.diagnostics[0]);
   });
 
   it.each([

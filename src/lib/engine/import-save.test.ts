@@ -7,7 +7,7 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
-import { recordKeys, recordValues } from "#lib/utils/record.js";
+import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import {
   extractSave,
@@ -18,7 +18,13 @@ import {
 } from "./import-save.js";
 
 import type { LevelIssue } from "#lib/engine/progress.js";
-import type { AnimalId, RecipeId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
+import type {
+  AnimalId,
+  AnimalVariantId,
+  RecipeId,
+  SkillId,
+  VillagerId,
+} from "#lib/types/tracker-data.js";
 
 import type { SaveBundle } from "./import-save.js";
 
@@ -31,6 +37,84 @@ function getDefaultRecipeIds(): Set<RecipeId> {
   }
   return ids;
 }
+
+function getDefaultAnimalVariants(animalId: AnimalId): Set<AnimalVariantId> {
+  return new Set(
+    trackerData.animals[animalId].variantTiers.flatMap((tier) =>
+      recordEntries(tier)
+        .filter(([, variant]) => variant.source.type === "default")
+        .map(([id]) => id),
+    ),
+  );
+}
+
+describe("starting unlocks", () => {
+  it("credits every default cosmetic even when the save omits its unlock list", () => {
+    const defaults = new Set(
+      recordEntries(trackerData.cosmetics)
+        .filter(([, cosmetic]) => cosmetic.sources.some((source) => source.type === "default"))
+        .map(([id]) => id),
+    );
+    expect(defaults.size).toBeGreaterThan(0);
+    const { completed, warnings } = extractSaveProgress({ player: { items_acquired: [] } });
+    expect(completed.cosmetics).toEqual(defaults);
+    expect(warnings).toEqual([]);
+  });
+
+  it("unions saved cosmetics with starting unlocks without crediting other cosmetics", () => {
+    const locked = recordEntries(trackerData.cosmetics)
+      .filter(([, cosmetic]) => !cosmetic.sources.some((source) => source.type === "default"))
+      .map(([id]) => id);
+    const [unlocked, notUnlocked] = locked;
+    const { completed } = extractSaveProgress({ player: { cosmetic_unlocks: [unlocked] } });
+    expect(completed.cosmetics).toContain(unlocked);
+    expect(completed.cosmetics).not.toContain(notUnlocked);
+    expect(completed.cosmetics?.size).toBe(
+      Object.values(trackerData.cosmetics).filter((cosmetic) =>
+        cosmetic.sources.some((source) => source.type === "default"),
+      ).length + 1,
+    );
+  });
+
+  it("credits default animal variants, while other breeds still need save evidence", () => {
+    const { completed } = extractSaveProgress({ player: { animal_variant_unlocks: {} } });
+    for (const animalId of recordKeys(trackerData.animals)) {
+      expect(completed.animals?.[animalId]).toEqual(getDefaultAnimalVariants(animalId));
+    }
+    expect(
+      Object.values(completed.animals ?? {}).some(
+        (variants) => variants !== undefined && variants.size > 0,
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps acquisition-only progress unset and preserves existing default recipe credit", () => {
+    const { completed } = extractSaveProgress({ player: { items_acquired: [] } });
+    // Item default sources also describe world/story objects, not evidence of almanac acquisition.
+    expect(completed.almanac).toEqual(new Set());
+    expect(completed.almanacRecipes).toEqual(getDefaultRecipeIds());
+    // Fields with no default source & no save field stay unknown (#125): nothing is credited.
+    expect(completed.mountAppearances).toBeUndefined();
+    expect(completed.petCosmetics).toBeUndefined();
+    expect(completed.petSkins).toBeUndefined();
+    expect(completed.spells).toBeUndefined();
+  });
+
+  it("credits defaults without ever making a field complete on their own", () => {
+    const { fields } = extractSave({ player: { items_acquired: [] } });
+
+    for (const field of [fields.animals, fields.cosmetics, fields.almanacRecipes]) {
+      expect(field.value).toBeDefined();
+      expect(field.completeness).toBe("unknown");
+    }
+    expect(fields.cosmetics.diagnostics).toEqual([
+      { code: "absent", path: "player.cosmetic_unlocks" },
+    ]);
+    expect(fields.animals.diagnostics).toEqual([
+      { code: "absent", path: "player.animal_variant_unlocks" },
+    ]);
+  });
+});
 
 describe("extractSaveProgress", () => {
   it("imports tracked progress from a preceding 1.0.2 save shape", () => {
@@ -68,7 +152,9 @@ describe("extractSaveProgress", () => {
     expect(completed.mountAppearances).toEqual(
       new Set(["giant_chicken_gold", "giant_chicken_white"]),
     );
-    expect(completed.animals?.["horse" as AnimalId]?.size).toBe(0);
+    expect(completed.animals?.["horse" as AnimalId]).toEqual(
+      getDefaultAnimalVariants("horse" as AnimalId),
+    );
     expect(warnings).toEqual([]);
   });
 
@@ -444,7 +530,7 @@ describe("malformed save fields", () => {
       },
     });
 
-    expect(completed.animals).toBeUndefined();
+    expect(completed.animals?.[animalId]).toEqual(getDefaultAnimalVariants(animalId));
     expect(warnings).toEqual([
       { code: "not-an-object", path: "player.animal_variant_unlocks" },
       { code: "not-a-list", path: `player.animal_cosmetic_unlocks.${animalId}` },
@@ -610,6 +696,7 @@ describe("parseExtractedSaveFiles", () => {
 
 describe("extractSave", () => {
   const cosmeticId = recordKeys(trackerData.cosmetics)[0];
+  const spellId = recordKeys(trackerData.mines.spells)[0];
   const villagerIds = recordKeys(trackerData.villagers);
   const skillIds = recordKeys(trackerData.skills);
   const factKeys = [
@@ -622,13 +709,13 @@ describe("extractSave", () => {
   );
 
   it("marks a fully read field complete", () => {
-    const { fields } = extractSave({ player: { cosmetic_unlocks: [cosmeticId] } });
+    const { fields } = extractSave({ player: { spells_learned: [spellId] } });
 
-    expect(fields.cosmetics).toEqual({
+    expect(fields.spells).toEqual({
       completeness: "complete",
       diagnostics: [],
       untracked: [],
-      value: new Set([cosmeticId]),
+      value: new Set([spellId]),
     });
   });
 
@@ -645,21 +732,30 @@ describe("extractSave", () => {
   });
 
   it("leaves a malformed field unknown with no value", () => {
-    const { fields } = extractSave({ player: { cosmetic_unlocks: cosmeticId, perks: [] } });
+    const { fields } = extractSave({ player: { perks: [], spells_learned: spellId } });
 
-    expect(fields.cosmetics).toMatchObject({
+    expect(fields.spells).toMatchObject({
       completeness: "unknown",
-      diagnostics: [{ code: "not-a-list", path: "player.cosmetic_unlocks" }],
+      diagnostics: [{ code: "not-a-list", path: "player.spells_learned" }],
       value: undefined,
     });
   });
 
-  it("keeps readable entries but marks the field unknown when some aren't", () => {
-    const { fields } = extractSave({ player: { cosmetic_unlocks: [cosmeticId, 4] } });
+  it("keeps a malformed field's defaults but never marks it complete", () => {
+    const { fields } = extractSave({ player: { cosmetic_unlocks: cosmeticId, perks: [] } });
 
-    expect(fields.cosmetics).toMatchObject({
+    expect(fields.cosmetics.completeness).toBe("unknown");
+    expect(fields.cosmetics.diagnostics).toEqual([
+      { code: "not-a-list", path: "player.cosmetic_unlocks" },
+    ]);
+  });
+
+  it("keeps readable entries but marks the field unknown when some aren't", () => {
+    const { fields } = extractSave({ player: { spells_learned: [spellId, 4] } });
+
+    expect(fields.spells).toMatchObject({
       completeness: "unknown",
-      value: new Set([cosmeticId]),
+      value: new Set([spellId]),
     });
   });
 
@@ -854,9 +950,9 @@ describe("extractSave", () => {
   });
 
   it("feeds the additive import only the values it could read", () => {
-    const { completed } = extractSaveProgress({ player: { cosmetic_unlocks: [cosmeticId] } });
+    const { completed } = extractSaveProgress({ player: { spells_learned: [spellId] } });
 
-    expect(completed).toHaveProperty("cosmetics", new Set([cosmeticId]));
+    expect(completed).toHaveProperty("spells", new Set([spellId]));
     expect(completed).not.toHaveProperty("unlockedPerks");
     expect(completed).not.toHaveProperty("mineFloor");
   });

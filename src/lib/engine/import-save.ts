@@ -301,13 +301,21 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   }
 
   // ── Cosmetics ──
-  const cosmetics = knownIdSet<CosmeticId>(
-    player.stringList("cosmetic_unlocks", ["cosmetics"]),
-    "player.cosmetic_unlocks",
-    "cosmetics",
-    (id) => Object.hasOwn(trackerData.cosmetics, id),
-    collector,
-  );
+  // Starting cosmetics can be missing from cosmetic_unlocks, so every cosmetic with a default
+  // source is credited, like default recipes. Defaults alone never make the field complete: an
+  // absent or malformed list still leaves it `unknown`.
+  const cosmetics = new Set<CosmeticId>([
+    ...recordKeys(trackerData.cosmetics).filter((id) =>
+      trackerData.cosmetics[id].sources.some((source) => source.type === "default"),
+    ),
+    ...(knownIdSet<CosmeticId>(
+      player.stringList("cosmetic_unlocks", ["cosmetics"]),
+      "player.cosmetic_unlocks",
+      "cosmetics",
+      (id) => Object.hasOwn(trackerData.cosmetics, id),
+      collector,
+    ) ?? []),
+  ]);
 
   // ── Mount appearances ──
   // The game files the mount's appearances under the horse's variant unlocks, beside the breeds.
@@ -320,29 +328,35 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   // ── Animal variants ──
   // Mount appearances share these lists (the horse's, in practice), so anything that leaves a list
   // unread (an absent list, an unrecognized animal key, or an unrecognized ID) concerns both fields.
+  // NewGame seeds each animal's default variants even before the player owns one of that breed, so
+  // they're credited whether or not the save's lists are readable. They never make the field
+  // complete on their own: an unread list still leaves it `unknown`.
   const variantFields = ["animals", "mountAppearances"] as const;
   const playerVariantsByAnimal = player.stringListRecord("animal_variant_unlocks", variantFields);
-  let animals: ProgressState["animals"] | undefined;
-  if (playerVariantsByAnimal) {
-    animals = {};
-    for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-      const path = `player.animal_variant_unlocks.${animalId}`;
-      const validVariants = new Set(animal.variantTiers.flatMap((tier) => Object.keys(tier)));
-      const matched = new Set<AnimalVariantId>();
-      if (!Object.hasOwn(playerVariantsByAnimal, animalId)) {
-        collector.report({ code: "absent", path }, variantFields);
-      }
-      for (const variant of playerVariantsByAnimal[animalId] ?? []) {
-        if (validVariants.has(variant)) {
-          matched.add(variant as AnimalVariantId);
-        } else if (isMountAppearance(variant)) {
-          mountAppearances.add(variant);
-        } else {
-          collector.report({ code: "unknown-id", id: variant, path }, variantFields);
-        }
-      }
-      animals[animalId as AnimalId] = matched;
+  const animals: ProgressState["animals"] = {};
+  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
+    const path = `player.animal_variant_unlocks.${animalId}`;
+    const validVariants = new Set(animal.variantTiers.flatMap((tier) => Object.keys(tier)));
+    const matched = new Set<AnimalVariantId>(
+      animal.variantTiers.flatMap((tier) =>
+        recordKeys(tier).filter((id) => tier[id].source.type === "default"),
+      ),
+    );
+    if (playerVariantsByAnimal && !Object.hasOwn(playerVariantsByAnimal, animalId)) {
+      collector.report({ code: "absent", path }, variantFields);
     }
+    for (const variant of playerVariantsByAnimal?.[animalId] ?? []) {
+      if (validVariants.has(variant)) {
+        matched.add(variant as AnimalVariantId);
+      } else if (isMountAppearance(variant)) {
+        mountAppearances.add(variant);
+      } else {
+        collector.report({ code: "unknown-id", id: variant, path }, variantFields);
+      }
+    }
+    animals[animalId as AnimalId] = matched;
+  }
+  if (playerVariantsByAnimal) {
     reportUnknownAnimals(
       playerVariantsByAnimal,
       "player.animal_variant_unlocks",
