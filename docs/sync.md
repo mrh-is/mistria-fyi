@@ -51,7 +51,7 @@ assumption on #123.
 
 ## The courier
 
-Built in #134, in `src/lib/sync/courier.ts`.
+Built in #134, as a courier module in the app’s sync code (planned).
 
 - **Watching.** A dropped `.sav` stores its file handle. `FileSystemObserver` bursts are coalesced,
   an “unknown” event triggers a recheck, & a swapped file re-resolves the handle.
@@ -115,8 +115,8 @@ origin or listed in `connect-src` (with `wss:`).
 
 ## Pairing
 
-Built in #133, in `src/lib/sync/pairing.ts`, with the UI from #131. Exactly one device pairs per PC;
-pairing a new device replaces the old one & names the device it replaces.
+Built in #133, as a pairing module in the app’s sync code (planned), with the UI from #131. Exactly
+one device pairs per PC; pairing a new device replaces the old one & names the device it replaces.
 
 ### The offer
 
@@ -159,8 +159,8 @@ Tests cover a substituted relay key, a replayed offer, & a reply lost across a r
 
 ## The phone
 
-Built in #135, in `src/lib/sync/receiver.ts`, on top of the apply rules (#129) & the single write
-path (#127).
+Built in #135, as a receiver module in the app’s sync code (planned), on top of the apply rules
+(#129) & the single write path (#127).
 
 - **One tab leads** (Web Locks).
 - **It never applies or confirms** while its store is quarantined or in the “newer data” state, &
@@ -189,10 +189,10 @@ as best effort until real sessions prove it.
 
 ## Applying a bundle
 
-The pure core lives in `src/lib/engine/sync-apply.ts` (#129): given stored progress & an extracted
-save, it computes each difference’s policy & the resulting state. Each difference falls into one
-policy: apply silently, apply & tell, ask first, or keep local & tell, chosen by a table keyed by
-provenance (including `unknown`) & fact kind.
+The pure core is a sync-apply module in `src/lib/engine/` (#129, planned): given stored progress &
+an extracted save, it computes each difference’s policy & the resulting state. Each difference falls
+into one policy: apply silently, apply & tell, ask first, or keep local & tell, chosen by a table
+keyed by provenance (including `unknown`) & fact kind.
 
 ### Provenance
 
