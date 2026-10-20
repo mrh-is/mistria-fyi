@@ -2,10 +2,11 @@
 
 ## Context
 
-The final planning interview on launch day, 2026-10-12, addressed the five open questions in
-[the cutover plan](../public-repo-cutover.md). The maintainer confirmed a Pages “Disconnect” option,
-seven GitHub Apps scoped to “All repositories”, & a working fine-grained feedback token restricted
-to the current repository. These are maintainer-reported facts, not independent dashboard checks.
+The final planning interview on launch day, 2026-10-12, addressed the five open questions in the
+cutover plan (`docs/public-repo-cutover.md`, deleted after the cutover; last present at commit
+`4edfb14f`). The maintainer confirmed a Pages “Disconnect” option, seven GitHub Apps scoped to “All
+repositories”, & a working fine-grained feedback token restricted to the current repository. These
+are maintainer-reported facts, not independent dashboard checks.
 
 ## Decision
 

@@ -31,10 +31,12 @@ public.
   issues retain links through an explicit old-to-new mapping; other references become non-linking
   text, preventing GitHub from linking old numbers to unrelated public issues. Reject source tips
   containing either excluded path; the tip tree changes only through URL reference rewrites. The
-  [candidate procedure](../public-repo.md) retains a per-reference report for review & requires the
-  filtered tip to pass the full read-only verification matrix before publication. Rewrites include
-  text in source & test fixtures, so checking only the private source is insufficient; tracked
-  candidate files must remain unchanged after verification.
+  candidate procedure (deleted after the cutover; the
+  [takedown doc](../takedown.md#whole-repository) names the last commit that has it) retains a
+  per-reference report for review & requires the filtered tip to pass the full read-only
+  verification matrix before publication. Rewrites include text in source & test fixtures, so
+  checking only the private source is insufficient; tracked candidate files must remain unchanged
+  after verification.
 - **One removal contact:** `michael@mistria.fyi`, in both `DISCLAIMER.md` & the About page.
 
 ## Alternatives

@@ -77,16 +77,20 @@ removing the dataset means taking the site down.
 ## Whole repository
 
 1. **Make it private:**
-   `gh repo edit mrh-is/<public-repo> --visibility private --accept-visibility-change-consequences`.
+   `gh repo edit mrh-is/<repository> --visibility private --accept-visibility-change-consequences`.
    This removes public access to the code, history, issues, & pull requests at once. Public forks
    detach and stay public; GitHub doesn’t remove them.
 2. **List forks** before step 1 with
-   `gh api repos/mrh-is/<public-repo>/forks --paginate --jq '.[].full_name'`, so you can tell the
+   `gh api repos/mrh-is/<repository>/forks --paginate --jq '.[].full_name'`, so you can tell the
    requester which copies exist. Takedowns of third-party forks go through GitHub’s DMCA process and
    are the rights holder’s to file.
-3. **If a public repository should remain**, build a new clean one with `git filter-repo`, removing
-   the requested paths, the same way the public repository was created. Never rewrite the public
-   repository in place; its `refs/pull/*` keep the old blobs reachable.
+3. **If a public repository should remain**, build a new clean one from a fresh clone: run
+   `git filter-repo --invert-paths --path <requested-path>` for each path to remove, then verify the
+   result (`git log --all -- <requested-path>` prints nothing) before publishing it as a new
+   repository. Never rewrite the public repository in place; its `refs/pull/*` keep the old blobs
+   reachable. The candidate builder that created the original public repository, with its reference
+   rewriting & secret scan, was deleted after the cutover; commit `4edfb14f` is the last one that
+   still has it (`git show 4edfb14f:scripts/public-repo/build-candidate.sh`).
 
 ## Afterward
 
