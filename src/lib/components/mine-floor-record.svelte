@@ -239,7 +239,7 @@
   }
 
   .mine-floor-record[data-compact="true"] {
-    grid-template-columns: minmax(0, 1fr) minmax(180px, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 1fr);
     align-items: center;
     padding-block: 6px;
   }
