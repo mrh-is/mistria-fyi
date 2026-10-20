@@ -89,9 +89,10 @@ not here.
 
 ## Architecture boundaries
 
-- Hooks deny edits of generated `src/lib/data/tracker-data.json` & vendored
-  `src/lib/components/ui/`; regenerate or use the vendor CLI, and read
-  `src/lib/types/tracker-data.ts` for the shared contract.
+- Hooks deny edits of generated `src/lib/data/tracker-data.json`; regenerate it, & read
+  `src/lib/types/tracker-data.ts` for the shared contract. `src/lib/components/ui/` began as
+  shadcn-svelte code but is project-owned: edit it directly, & keep its MIT notice in
+  `THIRD-PARTY-NOTICES.md`.
 - Pipeline extractors throw on unexpected source data. Never invent fallback display text to paper
   over a missing or unrecognized value.
 - `src/lib/engine/` is pure domain logic; side effects belong at store or component boundaries.

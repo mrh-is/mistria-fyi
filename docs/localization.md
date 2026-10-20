@@ -305,9 +305,9 @@ of Mistria", a person's name) from ordinary prose — those need a
 `<!-- eslint-disable local/no-hardcoded-ui-text -- reason -->` /
 `<!-- eslint-enable local/no-hardcoded-ui-text -->` pair around the element, with a reason.
 
-The rule applies to every `src/**/*.svelte` file except vendored `src/lib/components/ui/**`,
-development routes under `src/routes/dev/**`, and `*.test-harness.svelte` fixtures. Keep these
-exceptions narrow so new app templates receive the rule automatically.
+The rule applies to every `src/**/*.svelte` file except `src/lib/components/ui/**`, development
+routes under `src/routes/dev/**`, and `*.test-harness.svelte` fixtures. Keep these exceptions narrow
+so new app templates receive the rule automatically.
 
 ## Limits of the tooling
 
