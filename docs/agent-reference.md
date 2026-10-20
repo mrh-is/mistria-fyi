@@ -80,6 +80,10 @@ package whose tree carries an unpatched advisory; find an alternative. CI’s �
 enforces the same threshold. Ignore an advisory only when it’s disputed or has no fix, through
 `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with a comment linking the reason.
 
+The build publishes `/licenses.txt` for every package bundled into the client & fails when one ships
+no license text. List such a package in `LICENSE_ALLOWLIST` (`src/lib/build/licenses.ts`) with the
+reason it was reviewed, rather than weakening the check.
+
 | Command                       | Purpose                                                            |
 | ----------------------------- | ------------------------------------------------------------------ |
 | `pnpm run dev`                | Dev server                                                         |

@@ -332,6 +332,7 @@
   "about_questions_intro": "いつでもフィードバックツール（下部ツールバーの{icon}アイコン）から問題を報告できます！より深刻な内容の場合は、{contact}することもできます。",
   "about_contact_privately_link": "個別に連絡",
   "about_privacy_link": "プライバシー",
+  "about_licenses_link": "オープンソースライセンス",
   "about_ai_disclosure_link": "AIに関する開示",
   "privacy_title": "プライバシーポリシー",
   "privacy_back_to_about": "Aboutに戻る",

@@ -32,5 +32,7 @@ respective licenses:
   licensed under GPL-3.0-only or licensed for redistribution by this project. See
   [DISCLAIMER.md](DISCLAIMER.md).
 - **Vendored UI components** in `src/lib/components/ui/` originate from
-  [shadcn-svelte](https://www.shadcn-svelte.com/) and are licensed under the MIT License.
-- **Third-party npm dependencies** in `node_modules/` are governed by their own licenses.
+  [shadcn-svelte](https://www.shadcn-svelte.com/) and are licensed under the MIT License. The notice
+  is in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+- **Third-party npm dependencies** in `node_modules/` are governed by their own licenses. The build
+  publishes the notices for every package bundled into the app at `/licenses.txt`.

@@ -332,6 +332,7 @@
   "about_questions_intro": "隨時可以透過回饋工具（底部工具列中的 {icon} 圖示）回報問題！如需回報更嚴重的問題，你也可以{contact}。",
   "about_contact_privately_link": "私下聯絡我",
   "about_privacy_link": "隱私",
+  "about_licenses_link": "開源授權",
   "about_ai_disclosure_link": "AI 使用說明",
   "privacy_title": "隱私政策",
   "privacy_back_to_about": "返回關於頁面",
