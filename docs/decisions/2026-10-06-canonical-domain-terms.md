@@ -1,5 +1,8 @@
 # Canonical domain terms
 
+Superseded in part by
+[2026-10-07-no-pre-rename-migration.md](2026-10-07-no-pre-rename-migration.md).
+
 ## Context
 
 Issue #633 (part of #373) found three concepts with several names each. Spoiler state read as

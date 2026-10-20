@@ -85,9 +85,11 @@ persistence until an explicit replace (reset, restore, or save import); the play
 from the Backup & Restore card. The ephemeral UI-only `showCompleted` field is not persisted.
 
 The serializer writes exactly the fields `SerializedState` declares; unrecognized fields in a loaded
-blob are dropped. There are no legacy readers: the launch format starts at version `1`, and a later
-shape change needs a versioned migration. Fields added after launch must be optional so older blobs
-keep loading. `user-state-golden.test.ts` pins the launch shape & the storage keys.
+blob are dropped. Data written by a newer version than the build is never quarantined; #106
+implements the “newer data” state (writes blocked, nothing quarantined). There are no legacy
+readers: the launch format starts at version `1`, and a later shape change needs a versioned
+migration. Fields added after launch must be optional so older blobs keep loading.
+`user-state-golden.test.ts` pins the launch shape & the storage keys.
 
 ### Save File Import
 
