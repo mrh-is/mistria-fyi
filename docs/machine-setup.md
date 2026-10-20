@@ -49,9 +49,6 @@ then the agent resumes.
 3. **Wrangler login** for R2 uploads: `pnpm exec wrangler login`, then `pnpm exec wrangler whoami`.
    The doctor does not probe this because the login is interactive & stored credentials stay out of
    its reach. Never run `pnpx wrangler`.
-4. **Python 3** for the public-repo candidate procedure ([public-repo.md](public-repo.md)). On
-   Windows the Microsoft Store `python3` alias does not count; use
-   `winget install Python.Python.3.13`.
 
 ## Codex shells
 

@@ -12,7 +12,6 @@ import {
   checkPlaywright,
   checkPnpm,
   checkPnpmStore,
-  checkPython,
   exitCode,
   formatReport,
   parseVersion,
@@ -201,19 +200,6 @@ describe("checkGh", () => {
       machine({ commands: { "gh --version": "gh", "gh auth status": "Token: gho_secret" } }),
     );
     expect(JSON.stringify(results)).not.toContain("gho_secret");
-  });
-});
-
-describe("checkPython", () => {
-  it("ignores the Windows Store alias", () => {
-    const commands = { "python3 --version": "Python was not found; run without arguments" };
-    expect(checkPython(machine({ commands })).status).toBe("missing");
-  });
-
-  it("accepts the py launcher", () => {
-    expect(checkPython(machine({ commands: { "py -3 --version": "Python 3.13.1" } })).status).toBe(
-      "ok",
-    );
   });
 });
 
