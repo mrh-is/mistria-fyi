@@ -332,6 +332,7 @@
   "about_questions_intro": "언제든지 피드백 도구(하단 툴바의 {icon} 아이콘)를 통해 문제를 신고할 수 있습니다! 더 심각한 사안이라면 {contact}할 수도 있습니다.",
   "about_contact_privately_link": "개인적으로 연락",
   "about_privacy_link": "개인정보",
+  "about_licenses_link": "오픈 소스 라이선스",
   "about_ai_disclosure_link": "AI 사용 안내",
   "privacy_title": "개인정보 처리방침",
   "privacy_back_to_about": "소개로 돌아가기",

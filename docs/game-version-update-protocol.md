@@ -14,7 +14,7 @@ compatibility-sensitive ordering.
 
 This document is a decision framework, not a promise that arbitrary future data will migrate
 automatically. Add compatibility code, migrations, fixtures, or notices only after the candidate
-data shows what is required.
+data shows what is required. Never discard saved player state to avoid writing a migration.
 
 ## Version meanings
 
@@ -27,6 +27,8 @@ Keep the existing versions conceptually separate:
 - `PROGRESS_STORAGE_KEY` (`"mistria-fyi:progress"` in `src/lib/stores/storage-keys.ts`) identifies
   the localStorage slot itself. Changing the key abandons existing browser state entirely rather
   than migrating it, which is a different decision from bumping the serialized `version` field.
+  Changing the key (or otherwise abandoning state) needs an explicit decision record in
+  `docs/decisions/`.
 - The Mistria Field Guide application version identifies the exact deployed commit. Production
   builds derive it deterministically from the commit date and abbreviated SHA. Transfer codes carry
   a fingerprint of it, so a code only decodes on the build that created it. `package.json`'s version

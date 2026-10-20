@@ -8,6 +8,7 @@
   import * as m from "#lib/paraglide/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";
+  import { resolve } from "$app/paths";
 
   let aiDisclosureOpen = $state(false);
 </script>
@@ -61,12 +62,21 @@
     </p>
   </section>
 
-  <footer class="about-page__footer">
-    <a href={localizedHref("privacy")}>{m.about_privacy_link()}</a>
-    <span>·</span>
-    <button type="button" onclick={() => (aiDisclosureOpen = true)}>
-      <IconRobot class="size-3.5" />{m.about_ai_disclosure_link()}
-    </button>
+  <footer>
+    <ul class="about-page__footer">
+      <li><a href={localizedHref("privacy")}>{m.about_privacy_link()}</a></li>
+      <li>
+        <!-- A build-generated static file (see src/lib/build/licenses.ts), not a SvelteKit route. -->
+        <a href="{resolve('/')}licenses.txt" target="_blank" rel="noopener"
+          >{m.about_licenses_link()}</a
+        >
+      </li>
+      <li>
+        <button type="button" onclick={() => (aiDisclosureOpen = true)}>
+          <IconRobot class="size-3.5" />{m.about_ai_disclosure_link()}
+        </button>
+      </li>
+    </ul>
   </footer>
 </div>
 
@@ -124,15 +134,26 @@
 
   .about-page__footer {
     display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 0 8px;
+    gap: 0 20px;
     padding-top: 8px;
     color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
   }
+
+  .about-page__footer li {
+    display: flex;
+    align-items: center;
+  }
+
+  /* No separator dots: the longer locales wrap, & a dot would dangle at a line's end or start. The
+     gap & each link's underline keep the items distinct. */
 
   .about-page__footer :is(button, a) {
     display: inline-flex;

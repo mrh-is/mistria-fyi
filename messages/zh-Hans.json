@@ -332,6 +332,7 @@
   "about_questions_intro": "随时可以通过反馈工具（底部工具栏中的 {icon} 图标）报告问题！如需反馈更严重的问题，你也可以{contact}。",
   "about_contact_privately_link": "私下联系我",
   "about_privacy_link": "隐私",
+  "about_licenses_link": "开源许可证",
   "about_ai_disclosure_link": "AI 使用说明",
   "privacy_title": "隐私政策",
   "privacy_back_to_about": "返回关于页面",

@@ -5,7 +5,7 @@ import { sveltekit } from "@sveltejs/kit/vite";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { svelteTesting } from "@testing-library/svelte/vite";
-import { readdirSync, rmSync } from "node:fs";
+import { readdirSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
@@ -17,6 +17,7 @@ import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
 import { headersFilePlugin } from "./src/lib/build/headers-file.js";
+import { LICENSES_FILE_NAME, licensesPlugin, noticeBlock } from "./src/lib/build/licenses.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
 import { PARAGLIDE_OPTIONS } from "./src/lib/i18n/paraglide-options.js";
 import { APP_DIRECTORY } from "./src/lib/pwa/config.js";
@@ -156,6 +157,7 @@ export default defineConfig({
             "<prerendered>",
             "<redirects>",
             "/service-worker.js",
+            `/${LICENSES_FILE_NAME}`,
             ...staticExcludes,
           ],
           include: ["/*"],
@@ -168,6 +170,23 @@ export default defineConfig({
       version: { name: getAppVersion(), pollInterval: 600_000 },
     }),
     localeNameChunksPlugin(),
+    licensesPlugin({
+      // Paraglide compiles its runtime into src/lib/paraglide/ from this package.
+      generatedFrom: { "src/lib/paraglide/": "@inlang/paraglide-js" },
+      stylesheets: ["src/app.css"],
+      vendored: [
+        {
+          declared: "MIT",
+          licenseText: () =>
+            noticeBlock(
+              readFileSync(path.join(import.meta.dirname, "THIRD-PARTY-NOTICES.md"), "utf8"),
+              "## Vendored UI components",
+            ),
+          name: "shadcn-svelte (src/lib/components/ui)",
+          prefix: "src/lib/components/ui/",
+        },
+      ],
+    }),
     headersFilePlugin(renderHeadersFile(contentSecurityPolicy)),
     paraglideVitePlugin(PARAGLIDE_OPTIONS),
     svelteCssCachePlugin(),

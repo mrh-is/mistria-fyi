@@ -80,6 +80,10 @@ package whose tree carries an unpatched advisory; find an alternative. CI’s �
 enforces the same threshold. Ignore an advisory only when it’s disputed or has no fix, through
 `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with a comment linking the reason.
 
+The build publishes `/licenses.txt` for every package bundled into the client & fails when one ships
+no license text. List such a package in `LICENSE_ALLOWLIST` (`src/lib/build/licenses.ts`) with the
+reason it was reviewed, rather than weakening the check.
+
 | Command                       | Purpose                                                            |
 | ----------------------------- | ------------------------------------------------------------------ |
 | `pnpm run dev`                | Dev server                                                         |
@@ -112,6 +116,13 @@ enforces the same threshold. Ignore an advisory only when it’s disputed or has
   the `shadcn-update` or `generated-data` label.
 - `guard-generated-reads.ts` denies file-tool & direct shell reads of generated tracker data; read
   `src/lib/types/tracker-data.ts` or pipeline source instead. Existing symlinks are resolved.
+- Shell guards check each command segment (split at `;`, `&&`, `||`, `|`, & newlines) on its own, so
+  a path counts only in a segment that reads or writes it. Heredoc bodies & here-strings are text
+  unless fed, directly or through a pipe, to a shell or to an interpreter (Python, Node, & similar)
+  whose code calls a file-reading or file-writing API; an unquoted heredoc's `$(…)` & backtick
+  substitutions are always checked as commands. When a target is dynamic (an expansion, `xargs`, or
+  a non-literal API target), every path in the command counts; a `cd` or `pushd` widens writes the
+  same way only when a write target is relative.
 - Shell guards recognize direct path arguments & common read/write commands, not arbitrary shell
   programs, dynamically constructed paths, or every MCP tool. They supplement repository rules; they
   are not a filesystem sandbox. Pipeline commands remain permitted.

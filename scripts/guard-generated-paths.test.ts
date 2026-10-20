@@ -102,6 +102,9 @@ describe("guardMessage", () => {
       "cp -t /tmp src/lib/data/tracker-data.json",
       "cp src/lib/data/tracker-data.json /tmp/copy.json",
       "sed -n '1,5p' src/lib/data/tracker-data.json; rm /tmp/x",
+      `cd /work/mistria && node -e 'require("node:fs").writeFileSync("/tmp/scratch/oxfmt.json", "{}")' && pnpm exec oxfmt --check -c /tmp/scratch/oxfmt.json src/lib/data/tracker-data.json`,
+      "cd /work/mistria && echo x > /tmp/log.txt; ls src/lib/components/ui",
+      "cd /work/mistria && rm -f ~/scratch/a.txt; ls src/lib/components/ui",
     ]) {
       expect(bash(command), command).toBeUndefined();
     }
@@ -138,6 +141,18 @@ describe("guardMessage", () => {
       "echo $((1<<2))\ncp a src/lib/data/tracker-data.json",
       "cat > src/lib/components/ui/a.ts <<'EOF'\nexport {};\nEOF",
       "python3 - <<'EOF'\nPath('src/lib/data/tracker-data.json').write_text('{}')\nEOF",
+      `node -e 'require("node:fs").writeFileSync("src/lib/data/tracker-data.json", "{}")'`,
+      `python3 -c "Path('src/lib/data/tracker-data.json').write_text('{}')"`,
+      'cd src/lib/components/ui && node -e \'writeFileSync("a.svelte", "")\'',
+      "cd src/lib/components/ui && node -e 'writeFileSync(name, \"\")'",
+      "cd src/lib/components/ui && echo x > /tmp/a; touch b.svelte",
+      "bash <<'EOF' | tail\necho x > src/lib/data/tracker-data.json\nEOF",
+      "bash <<'EOF' && echo done\nrm src/lib/data/tracker-data.json\nEOF",
+      `node -e 'require("fs").writeFileSync("./" + process.argv[1], "x")' src/lib/data/tracker-data.json`,
+      "exec 3<>src/lib/data/tracker-data.json; echo x >&3",
+      "cat <<'EOF' | sh\nrm src/lib/data/tracker-data.json\nEOF",
+      String.raw`cd src/lib/components/ui && touch \a.svelte`,
+      "cat > /tmp/out.md <<EOF\n$(rm src/lib/data/tracker-data.json)\nEOF",
     ]) {
       expect(bash(command), command).toContain("Blocked edit");
     }
@@ -151,6 +166,12 @@ describe("guardMessage", () => {
     ).toBeUndefined();
     expect(
       bash("cat <<-EOF > /tmp/out.md\n\tsrc/lib/data/tracker-data.json\n\tEOF\nls src/lib/data"),
+    ).toBeUndefined();
+    // Prose that only mentions an API, fed to a program that isn't an interpreter.
+    expect(
+      bash(
+        "gh pr review 1 --body-file - <<'EOF' | tail -1\nwriteFileSync(\"src/lib/data/tracker-data.json\")\nEOF",
+      ),
     ).toBeUndefined();
   });
 });
