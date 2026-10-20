@@ -78,6 +78,8 @@ jobs:
                 ;;
             esac
           done <<< "$files"
+          # The stale-translation check compares a pull request with its base; other events skip it.
+          [ "$EVENT_NAME" = "pull_request" ] || messages=false
           echo "browser=$browser" >> "$GITHUB_OUTPUT"
           echo "cleanup=$cleanup" >> "$GITHUB_OUTPUT"
           echo "messages=$messages" >> "$GITHUB_OUTPUT"

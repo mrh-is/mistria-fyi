@@ -295,29 +295,39 @@ part of `pnpm run verify`.
 ### Stale-translation check (`pnpm run check:locale-sync`)
 
 `scripts/check-locale-sync.ts` catches what the key-shape check cannot: an English value that
-changed while a locale's value for the same key did not. It compares the merge base of `--base`
+changed while a locale’s value for the same key did not. It compares the merge base of `--base`
 (default `origin/main`) with the working tree, flattening every `messages/<locale>.json`, & lists
-each `(locale, key)` where English changed and that locale's value is identical to the one it had at
+each `(locale, key)` where English changed and that locale’s value is identical to the one it had at
 the base. A locale that changed the key (even to the same text as English) passes. Added & removed
 keys are not its concern; the key-shape check owns them.
 
-CI runs it as the “Locale sync” job on pull requests that touch `messages/` (or the check itself),
-using `--base HEAD^1`, the base branch tip of the PR's merge checkout. When the English change needs
-no new translation (a punctuation fix, a proper noun that is the same in every script), add an entry
-to `scripts/locale-sync-allowlist.json`:
+When an English value changes, each locale’s value must be retranslated in the same PR, or the key
+must go on the allowlist.
+
+CI runs it as the “Locale sync” job on pull requests that touch `messages/`, the check, or the
+allowlist, using `--base HEAD^1`, the base branch tip of the PR’s merge checkout. It does not run on
+pushes or in `pnpm run verify`, which have no PR base to compare against; run it locally with
+`pnpm run check:locale-sync` (after `git fetch origin main`, or pass `-- --base <ref>`).
+
+When the English change needs no new translation (a punctuation fix, a proper noun that is the same
+in every script), add an entry to `scripts/locale-sync-allowlist.json`:
 
 ```json
 [
   {
-    "key": "about_title",
+    "english": "Mistria Field Guide!",
+    "key": "app_name",
     "locale": "ja",
-    "reason": "The title is a proper noun; no change in script."
+    "reason": "Only the trailing punctuation changed; the Japanese title is unaffected."
   }
 ]
 ```
 
-Each entry names one key & one locale, & needs a non-empty reason; the check fails on a malformed
-file. Entries are reviewed like any other change, so delete one when its key is retranslated.
+Each entry names one key, one locale, the English text it was reviewed against, & a non-empty
+reason. It applies only while English still equals that text, so a later edit to the English value
+is checked again; an entry for a key or locale that does not exist fails the check, as does a
+malformed file. Entries are reviewed like any other change, so delete one when its key is
+retranslated.
 
 ### ESLint rule (`local/no-hardcoded-ui-text`)
 
@@ -347,9 +357,12 @@ Be honest with yourself (and reviewers) about what this catches:
   `tracker-data.json` carries no display names, so the remaining risk is app-authored text. A future
   field added to the contract as English-only would render fine and pass lint.
 - The key-shape check cannot verify translation quality or that a value has actually been translated
-  (as opposed to copy-pasted from English). The stale-translation check only sees that a locale's
+  (as opposed to copy-pasted from English). The stale-translation check only sees that a locale’s
   value changed in the same PR as English; it cannot tell whether the new text is a correct
-  translation, & it ignores a changed key whose locale value was edited for another reason.
+  translation, & it accepts any edit to the locale value, whatever the reason.
+- The stale-translation check matches keys by name, so renaming a key & editing its English in the
+  same PR looks like an added key & a removed one, & passes without any retranslation. Treat a
+  rename that also rewords the English as a changed value yourself.
 - The ESLint rule covers app templates by default, but it does not inspect user-facing strings
   assembled in scripts or data. Review those strings when adding new features.
 
