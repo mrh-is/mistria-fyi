@@ -1,4 +1,6 @@
-import { SKIP_WAITING_MESSAGE } from "#lib/pwa/service-worker-cache.js";
+import { CLIENT_VERSION_MESSAGE } from "#lib/pwa/client-versions.js";
+
+import type { ClientVersionMessage } from "#lib/pwa/client-versions.js";
 
 /** Failed installs retry on user/browser events at most this often. */
 export const UPDATE_CHECK_INTERVAL_MS = 5 * 60_000;
@@ -8,9 +10,12 @@ interface AppUpdateOptions {
   container?: UpdateContainer;
   events?: Pick<Window, "addEventListener">;
   now?: () => number;
-  /** Called when a new version is waiting. `activate` hands it control; every tab then reloads. */
-  onUpdateReady: (activate: () => void) => void;
-  reload?: () => void;
+  /**
+   * Called once, when this page runs an older version than the newest one: a new worker has taken
+   * control, or a deploy was detected with no worker to install it. Reloading then loads the new
+   * version; the caller picks the moment.
+   */
+  onUpdateReady: () => void;
   visibility?: Pick<Document, "addEventListener" | "removeEventListener" | "visibilityState">;
 }
 
@@ -20,38 +25,22 @@ type UpdateContainer = Pick<
 >;
 
 /**
- * Installs a detected deploy, then offers the waiting worker for consent before switching builds.
- * Detection belongs to SvelteKit; browser events only retry an unsuccessful install.
+ * Installs a detected deploy and reports when this page falls behind it. A new worker activates
+ * on its own once installed (it calls `skipWaiting()`), keeping older versions' caches for the
+ * pages still running them, so no tab has to consent. Detection belongs to SvelteKit; browser
+ * events only retry an unsuccessful install.
  */
 export function watchForAppUpdate({
   container = "serviceWorker" in navigator ? navigator.serviceWorker : undefined,
   events = globalThis,
   now = Date.now,
   onUpdateReady,
-  reload = () => {
-    location.reload();
-  },
   visibility = document,
 }: AppUpdateOptions): { newVersionDetected: () => void; stop: () => void } {
   const controller = new AbortController();
   const { signal } = controller;
 
-  // Only a replaced controller means a new version. The first install claiming a page that loaded
-  // without one isn't an update: that page is already on the newest version.
-  let controlled = Boolean(container?.controller);
-  let reloading = false;
-  container?.addEventListener(
-    "controllerchange",
-    () => {
-      const wasControlled = controlled;
-      controlled = true;
-      if (!wasControlled || reloading) return;
-      reloading = true;
-      reload();
-    },
-    { signal },
-  );
-
+  let announced = false;
   let detected = false;
   let registration: ServiceWorkerRegistration | undefined;
   let lastCheck = -Infinity;
@@ -65,18 +54,38 @@ export function watchForAppUpdate({
     retryTimer = undefined;
   }
 
-  function announce(): boolean {
-    if (!registration?.waiting || !container?.controller) return false;
+  function announce(): void {
+    if (signal.aborted || announced) return;
+    announced = true;
     stopRetries();
-    onUpdateReady(() => {
-      // A newer deploy may have replaced the worker originally announced.
-      registration?.waiting?.postMessage({ type: SKIP_WAITING_MESSAGE });
-    });
-    return true;
+    onUpdateReady();
+  }
+
+  // Only a replaced controller means a new version. The first install claiming a page that loaded
+  // without one isn't an update: that page is already on the newest version.
+  let controlled = Boolean(container?.controller);
+  container?.addEventListener(
+    "controllerchange",
+    () => {
+      const wasControlled = controlled;
+      controlled = true;
+      if (wasControlled) announce();
+    },
+    { signal },
+  );
+
+  /** Whether a new version is on its way in, so no retry is needed. */
+  function installing(): boolean {
+    return Boolean(registration?.installing ?? registration?.waiting);
   }
 
   async function install(): Promise<void> {
-    if (signal.aborted || !registration || checking || announce()) return;
+    if (signal.aborted || !registration || checking || announced) return;
+    // Already on its way in; a failed install marks a retry through `statechange`.
+    if (installing()) {
+      retryNeeded = false;
+      return;
+    }
     checking = true;
     retryNeeded = false;
     lastCheck = now();
@@ -87,7 +96,7 @@ export function watchForAppUpdate({
     } finally {
       checking = false;
       // oxlint-disable-next-line typescript/no-unnecessary-condition -- stop() can abort while update() is awaiting the browser.
-      if (!signal.aborted && !announce()) retryNeeded = !registration.installing;
+      if (!signal.aborted && !announced) retryNeeded = !installing();
     }
   }
 
@@ -99,8 +108,9 @@ export function watchForAppUpdate({
   function newVersionDetected(): void {
     if (signal.aborted || detected) return;
     detected = true;
+    // No worker to install it: a reload from the network loads the new version.
     if (!container?.controller) {
-      onUpdateReady(reload);
+      announce();
       return;
     }
     retryTimer = setInterval(retry, UPDATE_RETRY_INTERVAL_MS);
@@ -115,14 +125,12 @@ export function watchForAppUpdate({
       worker?.addEventListener(
         "statechange",
         () => {
-          if (worker.state === "installed") announce();
-          if (worker.state === "redundant" && detected && !announce()) retryNeeded = true;
+          if (worker.state === "redundant" && detected && !announced) retryNeeded = true;
         },
         { signal },
       );
     }
 
-    announce();
     track(registration.installing);
     registration.addEventListener(
       "updatefound",
@@ -152,4 +160,23 @@ export function watchForAppUpdate({
       stopRetries();
     },
   };
+}
+
+/**
+ * Tells the active service worker which version this page runs. The worker keeps that version's
+ * cache until no open page reports it, so the page can keep importing its own chunks after a newer
+ * version takes over.
+ */
+export function reportClientVersion(
+  version: string,
+  container?: Pick<ServiceWorkerContainer, "ready">,
+): void {
+  // The DOM types promise a container, but browsers omit it outside secure contexts.
+  const target = container ?? ("serviceWorker" in navigator ? navigator.serviceWorker : undefined);
+  if (!target) return;
+  const message: ClientVersionMessage = { type: CLIENT_VERSION_MESSAGE, version };
+  void (async () => {
+    const registration = await target.ready;
+    registration.active?.postMessage(message);
+  })();
 }
