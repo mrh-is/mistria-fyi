@@ -3,10 +3,9 @@ import { pathToFileURL } from "node:url";
 import {
   canonicalPath,
   editPaths,
-  isShellRead,
   readHookInput,
   shellCommand,
-  shellPaths,
+  shellReadTargets,
 } from "#scripts/lib/agent-hook";
 
 import type { HookInput } from "#scripts/lib/agent-hook";
@@ -15,7 +14,7 @@ export function readGuardMessage(input: HookInput): string | undefined {
   const command = shellCommand(input);
   let targets = editPaths(input);
   if (command !== undefined) {
-    targets = isShellRead(command) ? shellPaths(command) : [];
+    targets = shellReadTargets(command);
   }
   return targets.some((target) =>
     /(?:^|\/)src\/lib\/data\/tracker-data\.json$/.test(

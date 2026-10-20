@@ -149,6 +149,10 @@ fact produces a warning rather than aborting the import:
 | Negative                       | Ignored, warns                |
 | Wrong type, `NaN`, or infinite | Ignored, warns                |
 
+The save’s mine-floor field is a zero-based index, so a valid zero imports as floor one and index 99
+imports as floor 100; missing or invalid values remain unset. It is normalized against the maximum
+index before adding one (see [the save format](save-file-format.md)).
+
 Renown is the exception: it clamps silently at every boundary, since nothing in ordinary play
 produces an out-of-domain value. Backup restore (`restoreBackup`) uses the same domain maximums but
 rejects the whole document when a mine floor, heart level, or skill level is out of domain; renown
@@ -279,7 +283,8 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   needs a redirect from the old slug.
 - **Query & fragment links:** `/data?section=import|transfer` (the welcome card) and
   `/villagers#villager-<id>` (search results, keyed by game villager IDs).
-- **Unlocalized paths:** `/api/feedback` & `/sitemap.xml`.
+- **Unlocalized paths:** `/api/feedback`, `/sitemap.xml`, & `/licenses.txt` (the build-generated
+  open-source notices, linked from the About page; see `src/lib/build/licenses.ts`).
 - **Storage keys:** `mistria-fyi:progress`, `mistria-fyi:progress-quarantine`,
   `mistria-fyi:preferences`, & `mistria-fyi:theme`.
 - **Stored progress & backups:** whatever any earlier build stored or exported keeps loading in
