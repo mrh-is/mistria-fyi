@@ -73,9 +73,12 @@ Agent attribution is mandatory for agent-authored Git and GitHub content:
    reliable, so derive the slug from the branch name: lowercase it, replace each non-alphanumeric
    character with `-` (runs aren’t collapsed, so `a/_b` becomes `a--b`), keep the first 28
    characters, then drop a trailing `-` (`worktree-agent-ac94622f1a9ec4708` becomes
-   `worktree-agent-ac94622f1a9ec`). Cloudflare documents only the first two steps. Apply the
-   matching `agent:*` label to the PR. **Draft vs. ready:** the maintainer merges PRs that pass CI,
-   so an open PR’s state is the agent’s merge recommendation. Open the PR as a draft
+   `worktree-agent-ac94622f1a9ec`). Cloudflare documents only the first two steps. A PR that
+   regenerates `tracker-data.json` includes `pnpm run data:diff` output in its description: the full
+   listing in a collapsed `<details>` block, or its summary line plus the representative changes
+   when the listing is long. The script reads the file through Git, so the read guard doesn’t block
+   it. Apply the matching `agent:*` label to the PR. **Draft vs. ready:** the maintainer merges PRs
+   that pass CI, so an open PR’s state is the agent’s merge recommendation. Open the PR as a draft
    (`gh pr create --draft`) whenever anything still stands between it and merging: an unfinished
    manual step (an upload, a login, a data regeneration), an unanswered question, a known gap, or a
    pending review. Mark it ready (`gh pr ready`) only once you’d merge it yourself, and convert it
