@@ -146,6 +146,11 @@ describe("guardMessage", () => {
       'cd src/lib/components/ui && node -e \'writeFileSync("a.svelte", "")\'',
       "cd src/lib/components/ui && node -e 'writeFileSync(name, \"\")'",
       "cd src/lib/components/ui && echo x > /tmp/a; touch b.svelte",
+      "bash <<'EOF' | tail\necho x > src/lib/data/tracker-data.json\nEOF",
+      "bash <<'EOF' && echo done\nrm src/lib/data/tracker-data.json\nEOF",
+      `node -e 'require("fs").writeFileSync("./" + process.argv[1], "x")' src/lib/data/tracker-data.json`,
+      "exec 3<>src/lib/data/tracker-data.json; echo x >&3",
+      "cat <<'EOF' | sh\nrm src/lib/data/tracker-data.json\nEOF",
     ]) {
       expect(bash(command), command).toContain("Blocked edit");
     }
@@ -159,6 +164,12 @@ describe("guardMessage", () => {
     ).toBeUndefined();
     expect(
       bash("cat <<-EOF > /tmp/out.md\n\tsrc/lib/data/tracker-data.json\n\tEOF\nls src/lib/data"),
+    ).toBeUndefined();
+    // Prose that only mentions an API, fed to a program that isn't an interpreter.
+    expect(
+      bash(
+        "gh pr review 1 --body-file - <<'EOF' | tail -1\nwriteFileSync(\"src/lib/data/tracker-data.json\")\nEOF",
+      ),
     ).toBeUndefined();
   });
 });

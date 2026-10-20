@@ -72,9 +72,13 @@ export function shellPaths(command: string): string[] {
 const API_WRITE = /\b(?:writeFile\w*|write_text|write_bytes)\s*\(/;
 const SHELL_WRITE =
   /(?:^|[;&|(`{]\s*|\s)(?:tee|cp|mv|rm|touch|install|truncate|apply_patch)\b|(?:^|\s)(?:sed|perl)\s+[^;\n]*-[^\s]*i|(?:^|[^<])>{1,2}[^>]/;
-// A file-writing API call whose target is a string literal: `writeFile*("x"` or `Path("x").write_*(`.
+// A file-writing API call whose whole target is a string literal: `writeFile*("x",` or
+// `Path("x").write_*(`. A literal followed by `+` or `&&` is only part of a dynamic target.
 const API_WRITE_TARGET =
-  /\bwriteFile\w*\s*\(\s*(["'`])([^"'`\n]+)\1|\bPath\s*\(\s*(["'])([^"'\n]+)\3\s*\)\s*\.\s*write_(?:text|bytes)\s*\(/g;
+  /\bwriteFile\w*\s*\(\s*(["'`])([^"'`\n]+)\1\s*[,)]|\bPath\s*\(\s*(["'])([^"'\n]+)\3\s*\)\s*\.\s*write_(?:text|bytes)\s*\(/g;
+// Code interpreters, whose heredoc or inline program may call a file API.
+const INTERPRETER =
+  /(?:^|[\s/(])(?:python\d*(?:\.\d+)?|node|ruby|perl|php|deno|bun|tsx|ts-node)(?=\s|$)/;
 
 /** Literal targets of inline file-writing API calls, or undefined when any target isn't literal. */
 function apiWriteTargets(code: string): string[] | undefined {
@@ -86,6 +90,8 @@ function apiWriteTargets(code: string): string[] | undefined {
 interface ShellSegment {
   command: string;
   heredoc: string;
+  /** Whether this segment's output is piped into the next one. */
+  pipe: boolean;
 }
 
 /**
@@ -95,14 +101,14 @@ interface ShellSegment {
  */
 function shellSegments(command: string): ShellSegment[] {
   const segments: ShellSegment[] = [];
-  let current: ShellSegment = { command: "", heredoc: "" };
-  let pending: { delimiter: string; tabs: boolean }[] = [];
+  let current: ShellSegment = { command: "", heredoc: "", pipe: false };
+  let pending: { delimiter: string; segment: ShellSegment; tabs: boolean }[] = [];
   let quote: string | undefined;
   const flush = () => {
     if (current.command.trim() !== "" || current.heredoc !== "") {
       segments.push(current);
     }
-    current = { command: "", heredoc: "" };
+    current = { command: "", heredoc: "", pipe: false };
   };
   for (let index = 0; index < command.length; index++) {
     const char = command[index];
@@ -150,14 +156,15 @@ function shellSegments(command: string): ShellSegment[] {
         ? null
         : /^<<(?!<)(-?)\s*(['"]?)([\w.-]+)\2/.exec(command.slice(index));
     if (heredoc) {
-      pending.push({ delimiter: heredoc[3], tabs: heredoc[1] === "-" });
+      pending.push({ delimiter: heredoc[3], segment: current, tabs: heredoc[1] === "-" });
       current.command += heredoc[0];
       index += heredoc[0].length - 1;
       continue;
     }
     if (char === "\n" && pending.length > 0) {
       let lineStart = index + 1;
-      for (const { delimiter, tabs } of pending) {
+      // Each body belongs to the segment that opened it, even when `| tail` follows on that line.
+      for (const { delimiter, segment, tabs } of pending) {
         while (lineStart <= command.length) {
           const lineEnd = command.indexOf("\n", lineStart);
           const end = lineEnd === -1 ? command.length : lineEnd;
@@ -166,7 +173,7 @@ function shellSegments(command: string): ShellSegment[] {
           if ((tabs ? line.replace(/^\t+/, "") : line) === delimiter) {
             break;
           }
-          current.heredoc += `${line}\n`;
+          segment.heredoc += `${line}\n`;
         }
       }
       pending = [];
@@ -183,6 +190,7 @@ function shellSegments(command: string): ShellSegment[] {
         current.command += char;
         continue;
       }
+      current.pipe = char === "|" && previous !== "|" && command[index + 1] !== "|";
       flush();
       continue;
     }
@@ -193,7 +201,7 @@ function shellSegments(command: string): ShellSegment[] {
 }
 
 const FD_DUPLICATE = /\d*[<>]&(?:\d+|-)(?![^\s;|&<>])/g;
-const REDIRECT = /(?<![<>])\d*(?:&>|>&|>{1,2})\|?\s*("[^"\n]+"|'[^'\n]+'|[^\s;|&<>]+)/g;
+const REDIRECT = /(?<![<>])\d*(?:&>|>&|<>|>{1,2})\|?\s*("[^"\n]+"|'[^'\n]+'|[^\s;|&<>]+)/g;
 const COMMAND_PREFIX = String.raw`^\s*[({]?\s*(?:\w+=\S*\s+)*`;
 
 /** Writing-command arguments; `cp` & `install` sources are reads, so only their destination counts. */
@@ -228,6 +236,15 @@ function allShellPaths(segments: ShellSegment[], heredocs: boolean): string[] {
   );
 }
 
+/** The commands a segment pipes into, which also consume its heredoc (`cat <<EOF | bash`). */
+function pipedCommands(segments: ShellSegment[], index: number): string {
+  let commands = "";
+  for (let next = index; segments[next].pipe && next + 1 < segments.length; next++) {
+    commands += ` | ${segments[next + 1].command}`;
+  }
+  return commands;
+}
+
 function heredocLiterals(heredoc: string): string[] {
   return [
     ...shellPaths(heredoc),
@@ -238,7 +255,7 @@ function heredocLiterals(heredoc: string): string[] {
 /**
  * The paths a shell command may write: per segment, its redirect targets, the arguments of writing
  * commands, the literal targets of inline file-writing API calls, the targets of a shell script fed
- * by heredoc, & every path in another heredoc that calls a file-writing API. Reads in other
+ * by heredoc, & every path in an interpreter's heredoc that calls a file-writing API. Reads in other
  * segments, or on the read side of a redirect, are ignored. When a write's target can't be read
  * statically (`xargs`, an expansion, or a non-literal API target), or a `cd` precedes a relative
  * target, every path in the command counts.
@@ -248,7 +265,7 @@ export function shellWriteTargets(command: string): string[] {
   const targets: string[] = [];
   let dynamic = false;
   let relativeTarget = false;
-  for (const { command: segment, heredoc } of segments) {
+  for (const [index, { command: segment, heredoc }] of segments.entries()) {
     const plain = segment.replaceAll(FD_DUPLICATE, " ");
     const writes = [...plain.matchAll(REDIRECT)].flatMap((match) => shellPaths(match[1]));
     const rest = plain.replaceAll(REDIRECT, " ");
@@ -261,9 +278,10 @@ export function shellWriteTargets(command: string): string[] {
       writes.push(...(apiTargets ?? []));
       dynamic ||= apiTargets === undefined;
     }
-    if (SHELL_PROGRAM.test(rest)) {
+    const consumer = heredoc === "" ? "" : rest + pipedCommands(segments, index);
+    if (SHELL_PROGRAM.test(consumer)) {
       writes.push(...shellWriteTargets(heredoc));
-    } else if (API_WRITE.test(heredoc)) {
+    } else if (INTERPRETER.test(consumer) && API_WRITE.test(heredoc)) {
       writes.push(...heredocLiterals(heredoc));
       // Heredoc code names its target in ways a literal scan can't tell apart from data.
       relativeTarget = true;
@@ -286,16 +304,17 @@ export function shellWriteTargets(command: string): string[] {
 }
 
 const SHELL_READ =
-  /(?:^|[;&|(`{]\s*|\s)(?:cat|head|tail|less|more|bat|jq|sed|awk|rg|grep|cut|wc|sort|diff|cmp)\b/;
+  /(?:^|[;&|(`{]\s*|\s)(?:cat|tac|head|tail|less|more|bat|nl|jq|sed|awk|rg|grep|cut|wc|sort|diff|cmp|xxd|od|hexdump|strings|base64)\b|\bjson\.tool\b/;
 const API_READ = /\b(?:readFile\w*|read_text|read_bytes|open)\s*\(/;
 const HERE_STRING = /<<<\s*(?:"[^"\n]+"|'[^'\n]+'|[^\s;|&<>()]+)/g;
-// `<file` & `0< file`, but not heredocs, here-strings, process substitution, or fd duplication.
-const INPUT_REDIRECT = /(?<![<\d])\d*<(?![<&(>])\s*("[^"\n]+"|'[^'\n]+'|[^\s;|&<>()]+)/g;
+// `<file`, `0< file`, & `3<>file`, but not heredocs, here-strings, process substitution, or fd
+// duplication.
+const INPUT_REDIRECT = /(?<![<\d])\d*<>?(?![<&(>])\s*("[^"\n]+"|'[^'\n]+'|[^\s;|&<>()]+)/g;
 
 /**
  * The paths a shell command may read: per segment, its `<` redirect sources, every path in a
  * segment that runs a reading command or file-reading API, the targets of a shell script fed by
- * heredoc, & every path in another heredoc that calls a file-reading API. Other heredoc bodies are
+ * heredoc, & every path in an interpreter's heredoc that calls a file-reading API. Other bodies are
  * text, not reads. When a read's target can't be read statically (`xargs` or an expansion), every
  * path in the command counts.
  */
@@ -303,7 +322,7 @@ export function shellReadTargets(command: string): string[] {
   const segments = shellSegments(command);
   const targets: string[] = [];
   let dynamic = false;
-  for (const { command: segment, heredoc } of segments) {
+  for (const [index, { command: segment, heredoc }] of segments.entries()) {
     const sources = [...segment.matchAll(INPUT_REDIRECT)].flatMap((match) => shellPaths(match[1]));
     const reads = SHELL_READ.test(segment) || API_READ.test(segment);
     // Single-quoted text never expands, so a pattern such as `rg 'end$'` stays static.
@@ -322,9 +341,10 @@ export function shellReadTargets(command: string): string[] {
       );
       dynamic ||= /\bxargs\b/.test(segment);
     }
-    if (SHELL_PROGRAM.test(segment)) {
+    const consumer = heredoc === "" ? "" : segment + pipedCommands(segments, index);
+    if (SHELL_PROGRAM.test(consumer)) {
       targets.push(...shellReadTargets(heredoc));
-    } else if (API_READ.test(heredoc)) {
+    } else if (INTERPRETER.test(consumer) && API_READ.test(heredoc)) {
       targets.push(...heredocLiterals(heredoc));
     }
   }

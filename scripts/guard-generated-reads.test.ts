@@ -51,6 +51,13 @@ describe("generated-data read guard", () => {
       "f=src/lib/data/tracker-data.json; head $f",
       "echo src/lib/data/tracker-data.json | xargs cat",
       "xargs cat <<EOF\nsrc/lib/data/tracker-data.json\nEOF",
+      "bash <<'EOF' 2>&1 | tail -20\ncat src/lib/data/tracker-data.json\nEOF",
+      "bash <<'EOF' && echo done\nhead -c 100 src/lib/data/tracker-data.json\nEOF",
+      "python3 -m json.tool src/lib/data/tracker-data.json | head -50",
+      "xxd src/lib/data/tracker-data.json",
+      "exec 3<>src/lib/data/tracker-data.json; cat <&3",
+      "cat <<'EOF' | bash\ncat src/lib/data/tracker-data.json\nEOF",
+      "cat <<'EOF' | python3 -\nopen('src/lib/data/tracker-data.json')\nEOF",
     ]) {
       expect(
         readGuardMessage({ cwd: "/work/mistria", tool_input: { command }, tool_name: "Bash" }),
@@ -65,6 +72,7 @@ describe("generated-data read guard", () => {
       "cat >> .gitattributes <<'EOF'\nsrc/lib/data/tracker-data.json linguist-generated=true\nEOF",
       "cat <<EOF\nsrc/lib/data/tracker-data.json\nEOF",
       "git check-attr -a src/lib/data/tracker-data.json; rg -n 'end$' docs",
+      "gh pr comment 1 --body-file - <<'EOF'\nopen('src/lib/data/tracker-data.json') failed\nEOF",
       "git log --oneline -- src/lib/data/tracker-data.json | head -5",
       "grep x <<< src/lib/data/tracker-data.json",
       "pnpm exec oxfmt --check src/lib/data/tracker-data.json && cat README.md",
