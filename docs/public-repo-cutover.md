@@ -85,7 +85,7 @@ independent dashboard verification. See
 | Homepage                         | `https://mistria.fyi`                                                                                                                                                                                      |
 | Topics                           | None.                                                                                                                                                                                                      |
 | Features                         | Issues on; Projects, Wiki, Discussions, Pages off.                                                                                                                                                         |
-| Merge methods                    | Merge commits only (title: merge message; body: PR title). Squash & rebase off; auto-merge off.                                                                                                            |
+| Merge methods                    | Squash only (title: PR title; body: commit messages). Merge commits & rebase off; auto-merge off. Changed from merge commits only on 2026-10-19 ([decision](decisions/2026-10-19-squash-merge-only.md)).   |
 | Other                            | Delete branch on merge on; “update branch” button on; web commit sign-off required.                                                                                                                        |
 | Default branch                   | `main` (7 branches, 0 open PRs, 28 open issues at inventory time).                                                                                                                                         |
 | Dependabot                       | Alerts on; security updates on. `dependabot.yml` zeroes version-update PRs, so it relies on security updates being enabled (see [dependency maintenance](decisions/2026-10-05-dependency-maintenance.md)). |
@@ -244,9 +244,9 @@ Each item slots into the runbook step named in brackets. Run items in order. Eve
       `integration_id` 15368 checks; do not add required code-owner approval. _Check:_
       `gh api repos/mrh-is/mistria-fyi/rulesets` lists “Protect main” as active; a test push of a
       throwaway branch commit to `main` is rejected.
-- [ ] **[Step 7] Apply repository settings.** Description & homepage, merge commit only with
-      PR-title body, delete branch on merge, update branch, web commit sign-off, Projects/Wiki/
-      Discussions off, topics if wanted. _Check:_
+- [ ] **[Step 7] Apply repository settings.** Description & homepage, squash merge only with
+      PR-title title & commit-messages body, delete branch on merge, update branch, web commit
+      sign-off, Projects/Wiki/ Discussions off, topics if wanted. _Check:_
       `gh api repos/mrh-is/mistria-fyi --jq '{description,homepage,allow_merge_commit,allow_squash_merge,allow_rebase_merge,delete_branch_on_merge,web_commit_signoff_required}'`
       matches the settings table above.
 - [ ] **[Step 7] Actions settings.** Default workflow permissions `read`, Actions can’t approve pull
