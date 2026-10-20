@@ -149,7 +149,7 @@
 
   .category-count {
     display: grid;
-    grid-template-columns: 4ch auto 4ch;
+    grid-template-columns: minmax(4ch, max-content) auto minmax(4ch, max-content);
     column-gap: 0.45ch;
     align-items: baseline;
     font-family: var(--font-data);
@@ -227,14 +227,14 @@
     width: 9px;
     background:
       linear-gradient(
-          to bottom right,
+          to top right,
           transparent 46%,
           var(--color-ribbon-fill) 48% 57%,
           transparent 59%
         )
         top / 9px 50% no-repeat,
       linear-gradient(
-          to top right,
+          to bottom right,
           transparent 46%,
           var(--color-ribbon-fill) 48% 57%,
           transparent 59%
@@ -292,14 +292,14 @@
       left: auto;
       background:
         linear-gradient(
-            to bottom left,
+            to top left,
             transparent 46%,
             var(--color-ribbon-fill) 48% 57%,
             transparent 59%
           )
           top / 9px 50% no-repeat,
         linear-gradient(
-            to top left,
+            to bottom left,
             transparent 46%,
             var(--color-ribbon-fill) 48% 57%,
             transparent 59%

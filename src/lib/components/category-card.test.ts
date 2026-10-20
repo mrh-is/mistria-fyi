@@ -42,6 +42,19 @@ describe("CategoryCard", () => {
     expect(stripe.getAttribute("style")).toContain("--category-progress-percent: 40%");
   });
 
+  it("retains grouped four-digit counts", () => {
+    const { container } = renderToFragment(CategoryCard, {
+      props: {
+        key: "almanac",
+        progress: { completed: 1686, remainingInScope: 114, total: 1800 },
+      },
+    });
+
+    expect(container.querySelector(".category-count")?.textContent.replaceAll(/\s+/g, " ")).toBe(
+      "1,686 / 1,800",
+    );
+  });
+
   it("keeps the category identity when adding the completed gold-leaf edge", () => {
     const { container } = renderToFragment(CategoryCard, {
       props: {
