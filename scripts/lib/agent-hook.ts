@@ -89,6 +89,8 @@ function apiWriteTargets(code: string): string[] | undefined {
 
 interface ShellSegment {
   command: string;
+  /** Bodies of unquoted heredocs, whose `$(…)` & backtick substitutions run as commands. */
+  expanding: string;
   heredoc: string;
   /** Whether this segment's output is piped into the next one. */
   pipe: boolean;
@@ -101,14 +103,14 @@ interface ShellSegment {
  */
 function shellSegments(command: string): ShellSegment[] {
   const segments: ShellSegment[] = [];
-  let current: ShellSegment = { command: "", heredoc: "", pipe: false };
-  let pending: { delimiter: string; segment: ShellSegment; tabs: boolean }[] = [];
+  let current: ShellSegment = { command: "", expanding: "", heredoc: "", pipe: false };
+  let pending: { delimiter: string; expands: boolean; segment: ShellSegment; tabs: boolean }[] = [];
   let quote: string | undefined;
   const flush = () => {
     if (current.command.trim() !== "" || current.heredoc !== "") {
       segments.push(current);
     }
-    current = { command: "", heredoc: "", pipe: false };
+    current = { command: "", expanding: "", heredoc: "", pipe: false };
   };
   for (let index = 0; index < command.length; index++) {
     const char = command[index];
@@ -156,7 +158,12 @@ function shellSegments(command: string): ShellSegment[] {
         ? null
         : /^<<(?!<)(-?)\s*(['"]?)([\w.-]+)\2/.exec(command.slice(index));
     if (heredoc) {
-      pending.push({ delimiter: heredoc[3], segment: current, tabs: heredoc[1] === "-" });
+      pending.push({
+        delimiter: heredoc[3],
+        expands: heredoc[2] === "",
+        segment: current,
+        tabs: heredoc[1] === "-",
+      });
       current.command += heredoc[0];
       index += heredoc[0].length - 1;
       continue;
@@ -164,7 +171,7 @@ function shellSegments(command: string): ShellSegment[] {
     if (char === "\n" && pending.length > 0) {
       let lineStart = index + 1;
       // Each body belongs to the segment that opened it, even when `| tail` follows on that line.
-      for (const { delimiter, segment, tabs } of pending) {
+      for (const { delimiter, expands, segment, tabs } of pending) {
         while (lineStart <= command.length) {
           const lineEnd = command.indexOf("\n", lineStart);
           const end = lineEnd === -1 ? command.length : lineEnd;
@@ -174,6 +181,9 @@ function shellSegments(command: string): ShellSegment[] {
             break;
           }
           segment.heredoc += `${line}\n`;
+          if (expands) {
+            segment.expanding += `${line}\n`;
+          }
         }
       }
       pending = [];
@@ -236,6 +246,31 @@ function allShellPaths(segments: ShellSegment[], heredocs: boolean): string[] {
   );
 }
 
+/** The commands inside `$(…)` & backtick substitutions, which an unquoted heredoc runs. */
+function substitutions(text: string): string[] {
+  const commands: string[] = [];
+  for (let index = 0; index < text.length; index++) {
+    if (text[index] === "`") {
+      const end = text.indexOf("`", index + 1);
+      commands.push(text.slice(index + 1, end === -1 ? text.length : end));
+      index = end === -1 ? text.length : end;
+    } else if (text.startsWith("$(", index) && text[index + 2] !== "(") {
+      let depth = 0;
+      let end = index + 1;
+      for (; end < text.length; end++) {
+        if (text[end] === "(") {
+          depth++;
+        } else if (text[end] === ")" && --depth === 0) {
+          break;
+        }
+      }
+      commands.push(text.slice(index + 2, end));
+      index = end;
+    }
+  }
+  return commands;
+}
+
 /** The commands a segment pipes into, which also consume its heredoc (`cat <<EOF | bash`). */
 function pipedCommands(segments: ShellSegment[], index: number): string {
   let commands = "";
@@ -265,7 +300,7 @@ export function shellWriteTargets(command: string): string[] {
   const targets: string[] = [];
   let dynamic = false;
   let relativeTarget = false;
-  for (const [index, { command: segment, heredoc }] of segments.entries()) {
+  for (const [index, { command: segment, expanding, heredoc }] of segments.entries()) {
     const plain = segment.replaceAll(FD_DUPLICATE, " ");
     const writes = [...plain.matchAll(REDIRECT)].flatMap((match) => shellPaths(match[1]));
     const rest = plain.replaceAll(REDIRECT, " ");
@@ -286,9 +321,13 @@ export function shellWriteTargets(command: string): string[] {
       // Heredoc code names its target in ways a literal scan can't tell apart from data.
       relativeTarget = true;
     }
+    if (!SHELL_PROGRAM.test(consumer)) {
+      writes.push(...substitutions(expanding).flatMap((sub) => shellWriteTargets(sub)));
+    }
     const kept = writes.filter((target) => !target.startsWith("/dev/"));
+    // A leading backslash is a shell escape, not a root: `\a.svelte` is relative.
     relativeTarget ||= kept.some(
-      (target) => !WRITE_WORD.test(target) && !/^(?:[/\\~]|[A-Za-z]:[/\\])/.test(target),
+      (target) => !WRITE_WORD.test(target) && !/^(?:[/~]|[A-Za-z]:[/\\])/.test(target),
     );
     targets.push(...kept);
   }
@@ -322,7 +361,7 @@ export function shellReadTargets(command: string): string[] {
   const segments = shellSegments(command);
   const targets: string[] = [];
   let dynamic = false;
-  for (const [index, { command: segment, heredoc }] of segments.entries()) {
+  for (const [index, { command: segment, expanding, heredoc }] of segments.entries()) {
     const sources = [...segment.matchAll(INPUT_REDIRECT)].flatMap((match) => shellPaths(match[1]));
     const reads = SHELL_READ.test(segment) || API_READ.test(segment);
     // Single-quoted text never expands, so a pattern such as `rg 'end$'` stays static.
@@ -346,6 +385,9 @@ export function shellReadTargets(command: string): string[] {
       targets.push(...shellReadTargets(heredoc));
     } else if (INTERPRETER.test(consumer) && API_READ.test(heredoc)) {
       targets.push(...heredocLiterals(heredoc));
+    }
+    if (!SHELL_PROGRAM.test(consumer)) {
+      targets.push(...substitutions(expanding).flatMap((sub) => shellReadTargets(sub)));
     }
   }
   return dynamic ? [...targets, ...allShellPaths(segments, true)] : targets;

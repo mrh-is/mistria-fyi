@@ -151,6 +151,8 @@ describe("guardMessage", () => {
       `node -e 'require("fs").writeFileSync("./" + process.argv[1], "x")' src/lib/data/tracker-data.json`,
       "exec 3<>src/lib/data/tracker-data.json; echo x >&3",
       "cat <<'EOF' | sh\nrm src/lib/data/tracker-data.json\nEOF",
+      String.raw`cd src/lib/components/ui && touch \a.svelte`,
+      "cat > /tmp/out.md <<EOF\n$(rm src/lib/data/tracker-data.json)\nEOF",
     ]) {
       expect(bash(command), command).toContain("Blocked edit");
     }

@@ -58,6 +58,8 @@ describe("generated-data read guard", () => {
       "exec 3<>src/lib/data/tracker-data.json; cat <&3",
       "cat <<'EOF' | bash\ncat src/lib/data/tracker-data.json\nEOF",
       "cat <<'EOF' | python3 -\nopen('src/lib/data/tracker-data.json')\nEOF",
+      "cat <<EOF\n$(cat src/lib/data/tracker-data.json )\nEOF",
+      "gh pr comment 1 --body-file - <<EOF\nsize: `wc -c < src/lib/data/tracker-data.json`\nEOF",
     ]) {
       expect(
         readGuardMessage({ cwd: "/work/mistria", tool_input: { command }, tool_name: "Bash" }),
@@ -71,6 +73,7 @@ describe("generated-data read guard", () => {
       "git check-attr linguist-generated src/lib/data/tracker-data.json; python3 - <<'EOF'\nprint(1)\nEOF\nrg -n \"pipeline/output/tracker|minified\" docs",
       "cat >> .gitattributes <<'EOF'\nsrc/lib/data/tracker-data.json linguist-generated=true\nEOF",
       "cat <<EOF\nsrc/lib/data/tracker-data.json\nEOF",
+      "cat <<'EOF'\n$(cat src/lib/data/tracker-data.json)\nEOF",
       "git check-attr -a src/lib/data/tracker-data.json; rg -n 'end$' docs",
       "gh pr comment 1 --body-file - <<'EOF'\nopen('src/lib/data/tracker-data.json') failed\nEOF",
       "git log --oneline -- src/lib/data/tracker-data.json | head -5",
