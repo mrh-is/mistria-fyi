@@ -94,7 +94,7 @@ jobs:
           install: false
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec svelte-kit sync
-      - run: pnpm run lint
+      - run: pnpm run verify -- --step=lint
 
   # Fails on moderate or worse advisories in the lockfile. Nightly runs catch advisories published
   # after a merge. Accepted exceptions live in pnpm-workspace.yaml's auditConfig.
@@ -112,7 +112,9 @@ jobs:
       - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
           install: false
-      - run: pnpm audit --audit-level=moderate
+      # This job installs nothing, so it starts the step runner with `node` instead of `pnpm run`,
+      # which refuses to run until dependencies are installed.
+      - run: node scripts/verify.ts --step=audit
 
   check:
     name: Check types
@@ -131,8 +133,8 @@ jobs:
           save-cache: false
           install: false
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run check
-      - run: pnpm run check:i18n
+      - run: pnpm run verify -- --step=check
+      - run: pnpm run verify -- --step=check:i18n
 
   test:
     name: Test
@@ -166,7 +168,7 @@ jobs:
         env:
           VITEST_COVERAGE: ${{ github.event_name == 'schedule' }}
           VITEST_CLEANUP_CHANGED: ${{ needs.changes.outputs.cleanup }}
-        run: node scripts/vitest-timings.ts
+        run: pnpm run verify -- --step=test:budgets
       - name: Publish Vitest timings
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -198,10 +200,10 @@ jobs:
           save-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           install: false
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
-      - run: pnpm run check:routes
+      - run: pnpm run verify -- --step=build
+      - run: pnpm run verify -- --step=check:routes
       - name: Check built SEO & locale byte budgets
-        run: pnpm run check:built
+        run: pnpm run verify -- --step=check:built
       # The browser suites serve this output instead of rebuilding it.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -253,7 +255,7 @@ jobs:
         continue-on-error: true
         run: |
           pnpm exec tsx scripts/playwright-allocation.ts ${{ matrix.shard }}
-          pnpm run test:accessibility --test-list=.playwright-artifacts/test-list.txt
+          pnpm run verify -- --step=test:accessibility --test-list=.playwright-artifacts/test-list.txt
         env:
           PLAYWRIGHT_SKIP_BUILD: "true"
       - if: >-
@@ -315,7 +317,7 @@ jobs:
           path: .svelte-kit/output/
       - id: pwa-tests
         continue-on-error: true
-        run: pnpm run test:pwa
+        run: pnpm run verify -- --step=test:pwa
         env:
           PLAYWRIGHT_SKIP_BUILD: "true"
       - if: >-
