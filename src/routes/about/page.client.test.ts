@@ -22,6 +22,15 @@ describe("About page navigation and disclosures", () => {
     expect(back).toHaveBeenCalledTimes(1);
   });
 
+  it("links the generated open-source license notices from the About footer", () => {
+    render(AboutPage);
+
+    expect(screen.getByRole("link", { name: "Open-source licenses" })).toHaveAttribute(
+      "href",
+      "/licenses.txt",
+    );
+  });
+
   it("opens the AI disclosure from the About footer", async () => {
     render(AboutPage);
 

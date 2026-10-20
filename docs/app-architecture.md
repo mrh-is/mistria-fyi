@@ -254,7 +254,8 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   needs a redirect from the old slug.
 - **Query & fragment links:** `/data?section=import|transfer` (the welcome card) and
   `/villagers#villager-<id>` (search results, keyed by game villager IDs).
-- **Unlocalized paths:** `/api/feedback` & `/sitemap.xml`.
+- **Unlocalized paths:** `/api/feedback`, `/sitemap.xml`, & `/licenses.txt` (the build-generated
+  open-source notices, linked from the About page; see `src/lib/build/licenses.ts`).
 - **Storage keys:** `mistria-fyi:progress`, `mistria-fyi:progress-quarantine`,
   `mistria-fyi:preferences`, & `mistria-fyi:theme`, plus the progress blob's shape & version (see
   [localStorage](#localstorage)).
