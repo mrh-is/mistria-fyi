@@ -1,5 +1,7 @@
 # Public launch posture & takedown readiness
 
+Amended by [the farm planner geometry decision](2026-10-20-farm-planner-geometry.md).
+
 ## Context
 
 Making the repository public (#218) included asking NPC Studio for permission to publish
