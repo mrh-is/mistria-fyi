@@ -210,28 +210,6 @@ export function checkGh(machine: Environment): CheckResult[] {
   ];
 }
 
-export function checkPython(machine: Environment): CheckResult {
-  const candidates: [string, string[]][] = [
-    ["python3", ["--version"]],
-    ["python", ["--version"]],
-    ["py", ["-3", "--version"]],
-  ];
-  for (const [command, args] of candidates) {
-    const result = machine.run(command, args);
-    // The Microsoft Store alias exits nonzero or prints an install hint instead of a version.
-    if (result.ok && /Python 3\.\d+/.test(result.stdout)) {
-      return check("python", "Python 3", "ok", result.stdout.trim());
-    }
-  }
-  return check(
-    "python",
-    "Python 3 (public-repo procedure only)",
-    "missing",
-    "no real Python 3 found (the Windows Store alias does not count)",
-    installHint("python", "Python.Python.3.13", machine.platform),
-  );
-}
-
 export function checkDependencies(machine: Environment): CheckResult {
   return machine.exists(join(machine.root, "node_modules"))
     ? check("dependencies", "Installed dependencies", "ok", "node_modules present")
@@ -378,7 +356,6 @@ export function runChecks(machine: Environment): CheckResult[] {
     checkShellcheck(machine),
     checkPlaywright(machine),
     checkGameAssets(machine),
-    checkPython(machine),
     ...(store ? [store] : []),
     ...manualSteps(),
   ];

@@ -77,16 +77,31 @@ removing the dataset means taking the site down.
 ## Whole repository
 
 1. **Make it private:**
-   `gh repo edit mrh-is/<public-repo> --visibility private --accept-visibility-change-consequences`.
+   `gh repo edit mrh-is/<repository> --visibility private --accept-visibility-change-consequences`.
    This removes public access to the code, history, issues, & pull requests at once. Public forks
    detach and stay public; GitHub doesn’t remove them.
 2. **List forks** before step 1 with
-   `gh api repos/mrh-is/<public-repo>/forks --paginate --jq '.[].full_name'`, so you can tell the
+   `gh api repos/mrh-is/<repository>/forks --paginate --jq '.[].full_name'`, so you can tell the
    requester which copies exist. Takedowns of third-party forks go through GitHub’s DMCA process and
    are the rights holder’s to file.
-3. **If a public repository should remain**, build a new clean one with `git filter-repo`, removing
-   the requested paths, the same way the public repository was created. Never rewrite the public
+3. **If a public repository should remain**, build a new clean one. Never rewrite the public
    repository in place; its `refs/pull/*` keep the old blobs reachable.
+   1. Install `git-filter-repo` (`brew install git-filter-repo`, or see its README), and make a
+      fresh clone of the repository to filter.
+   2. Run it once, with one `--path` per requested path (a directory ends in `/`); a second run
+      refuses to proceed without `--force`:
+      `git filter-repo --invert-paths --path static/sprites/ --path src/lib/data/tracker-data.json`.
+   3. Verify the removal: `git log --all -- <requested-path>` prints nothing for each path. Then
+      search the kept files for references to the removed material (imports, docs, build config,
+      notices) & fix them by hand; filter-repo rewrites history, not the surviving text.
+   4. `git filter-repo` drops the `origin` remote. Create the new repository, add it
+      (`git remote add origin <new-repository-url>`), & push (`git push --all origin`, then
+      `git push --tags origin`).
+   5. The reference rewriting & secret scan that built the original public repository were deleted
+      after the cutover. Commit `e4dd053a` still has them. List the whole directory with
+      `git ls-tree -r e4dd053a scripts/public-repo` (`build-candidate.sh` depends on `gitleaks.toml`
+      & `rewrite-references.py`), & extract it with
+      `git archive e4dd053a scripts/public-repo | tar -x -C <empty-directory>`.
 
 ## Afterward
 
