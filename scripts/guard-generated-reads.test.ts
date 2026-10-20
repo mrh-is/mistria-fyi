@@ -40,6 +40,42 @@ describe("generated-data read guard", () => {
     ).toBeUndefined();
   });
 
+  it("denies reads in any segment, fed heredocs, & dynamic targets", () => {
+    for (const command of [
+      "ls src; cat src/lib/data/tracker-data.json",
+      "git status && wc -c < src/lib/data/tracker-data.json",
+      "echo <(cat src/lib/data/tracker-data.json)",
+      "bash <<'EOF'\njq . src/lib/data/tracker-data.json\nEOF",
+      "python3 - <<'EOF'\nprint(open('src/lib/data/tracker-data.json').read())\nEOF",
+      "node -e 'readFileSync(\"src/lib/data/tracker-data.json\")'",
+      "f=src/lib/data/tracker-data.json; head $f",
+      "echo src/lib/data/tracker-data.json | xargs cat",
+      "xargs cat <<EOF\nsrc/lib/data/tracker-data.json\nEOF",
+    ]) {
+      expect(
+        readGuardMessage({ cwd: "/work/mistria", tool_input: { command }, tool_name: "Bash" }),
+        command,
+      ).toContain("Read src/lib/types");
+    }
+  });
+
+  it("allows commands whose reads are in segments that never name the data", () => {
+    for (const command of [
+      "git check-attr linguist-generated src/lib/data/tracker-data.json; python3 - <<'EOF'\nprint(1)\nEOF\nrg -n \"pipeline/output/tracker|minified\" docs",
+      "cat >> .gitattributes <<'EOF'\nsrc/lib/data/tracker-data.json linguist-generated=true\nEOF",
+      "cat <<EOF\nsrc/lib/data/tracker-data.json\nEOF",
+      "git check-attr -a src/lib/data/tracker-data.json; rg -n 'end$' docs",
+      "git log --oneline -- src/lib/data/tracker-data.json | head -5",
+      "grep x <<< src/lib/data/tracker-data.json",
+      "pnpm exec oxfmt --check src/lib/data/tracker-data.json && cat README.md",
+    ]) {
+      expect(
+        readGuardMessage({ cwd: "/work/mistria", tool_input: { command }, tool_name: "Bash" }),
+        command,
+      ).toBeUndefined();
+    }
+  });
+
   it("resolves file-tool & shell symlinks", () => {
     const root = mkdtempSync(join(tmpdir(), "agent-read-"));
     roots.push(root);

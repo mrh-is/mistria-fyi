@@ -112,6 +112,11 @@ enforces the same threshold. Ignore an advisory only when it’s disputed or has
   the `shadcn-update` or `generated-data` label.
 - `guard-generated-reads.ts` denies file-tool & direct shell reads of generated tracker data; read
   `src/lib/types/tracker-data.ts` or pipeline source instead. Existing symlinks are resolved.
+- Shell guards check each command segment (split at `;`, `&&`, `||`, `|`, & newlines) on its own, so
+  a path counts only in a segment that reads or writes it. Heredoc bodies & here-strings are text
+  unless fed to a shell or code that calls a file-reading or file-writing API. When a target is
+  dynamic (an expansion, `xargs`, or a non-literal API target), every path in the command counts; a
+  `cd` or `pushd` widens writes the same way only when a write target is relative.
 - Shell guards recognize direct path arguments & common read/write commands, not arbitrary shell
   programs, dynamically constructed paths, or every MCP tool. They supplement repository rules; they
   are not a filesystem sandbox. Pipeline commands remain permitted.

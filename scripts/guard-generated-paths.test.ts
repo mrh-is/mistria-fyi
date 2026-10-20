@@ -102,6 +102,9 @@ describe("guardMessage", () => {
       "cp -t /tmp src/lib/data/tracker-data.json",
       "cp src/lib/data/tracker-data.json /tmp/copy.json",
       "sed -n '1,5p' src/lib/data/tracker-data.json; rm /tmp/x",
+      `cd /work/mistria && node -e 'require("node:fs").writeFileSync("/tmp/scratch/oxfmt.json", "{}")' && pnpm exec oxfmt --check -c /tmp/scratch/oxfmt.json src/lib/data/tracker-data.json`,
+      "cd /work/mistria && echo x > /tmp/log.txt; ls src/lib/components/ui",
+      "cd /work/mistria && rm -f ~/scratch/a.txt; ls src/lib/components/ui",
     ]) {
       expect(bash(command), command).toBeUndefined();
     }
@@ -138,6 +141,11 @@ describe("guardMessage", () => {
       "echo $((1<<2))\ncp a src/lib/data/tracker-data.json",
       "cat > src/lib/components/ui/a.ts <<'EOF'\nexport {};\nEOF",
       "python3 - <<'EOF'\nPath('src/lib/data/tracker-data.json').write_text('{}')\nEOF",
+      `node -e 'require("node:fs").writeFileSync("src/lib/data/tracker-data.json", "{}")'`,
+      `python3 -c "Path('src/lib/data/tracker-data.json').write_text('{}')"`,
+      'cd src/lib/components/ui && node -e \'writeFileSync("a.svelte", "")\'',
+      "cd src/lib/components/ui && node -e 'writeFileSync(name, \"\")'",
+      "cd src/lib/components/ui && echo x > /tmp/a; touch b.svelte",
     ]) {
       expect(bash(command), command).toContain("Blocked edit");
     }

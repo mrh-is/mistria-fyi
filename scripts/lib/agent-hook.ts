@@ -63,20 +63,24 @@ export function shellCommand(input: HookInput): string | undefined {
 
 /** Direct shell path arguments. This is deliberately not an interpreter for arbitrary programs. */
 export function shellPaths(command: string): string[] {
-  return [...command.matchAll(/"([^"\n]+)"|'([^'\n]+)'|([^\s;|&<>]+)/g)].flatMap((match) => {
+  return [...command.matchAll(/"([^"\n]+)"|'([^'\n]+)'|([^\s;|&<>()]+)/g)].flatMap((match) => {
     const value = match[1] ?? match[2] ?? match[3];
     return [value];
   });
 }
 
 const API_WRITE = /\b(?:writeFile\w*|write_text|write_bytes)\s*\(/;
+const SHELL_WRITE =
+  /(?:^|[;&|(`{]\s*|\s)(?:tee|cp|mv|rm|touch|install|truncate|apply_patch)\b|(?:^|\s)(?:sed|perl)\s+[^;\n]*-[^\s]*i|(?:^|[^<])>{1,2}[^>]/;
+// A file-writing API call whose target is a string literal: `writeFile*("x"` or `Path("x").write_*(`.
+const API_WRITE_TARGET =
+  /\bwriteFile\w*\s*\(\s*(["'`])([^"'`\n]+)\1|\bPath\s*\(\s*(["'])([^"'\n]+)\3\s*\)\s*\.\s*write_(?:text|bytes)\s*\(/g;
 
-export function isShellWrite(command: string): boolean {
-  return (
-    /(?:^|[;&|(`{]\s*|\s)(?:tee|cp|mv|rm|touch|install|truncate|apply_patch)\b|(?:^|\s)(?:sed|perl)\s+[^;\n]*-[^\s]*i|(?:^|[^<])>{1,2}[^>]/.test(
-      command,
-    ) || API_WRITE.test(command)
-  );
+/** Literal targets of inline file-writing API calls, or undefined when any target isn't literal. */
+function apiWriteTargets(code: string): string[] | undefined {
+  const calls = [...code.matchAll(new RegExp(API_WRITE.source, "g"))].length;
+  const targets = [...code.matchAll(API_WRITE_TARGET)].map((match) => match[2] ?? match[4]);
+  return targets.length === calls ? targets : undefined;
 }
 
 interface ShellSegment {
@@ -208,56 +212,123 @@ function commandTargets(command: string): string[] {
   return args.filter((arg) => !arg.startsWith("-")).slice(1);
 }
 
+// Any shell word, so `/bin/bash`, `sudo sh`, & `env bash` feeding a heredoc count too.
+const SHELL_PROGRAM = /(?:^|[\s/(])(?:ba|da|k|z)?sh(?=\s|$)/;
+const QUOTED_LITERAL = /"([^"\n]+)"|'([^'\n]+)'/g;
+// Command words & options in writing-command arguments, which never name a target relative to `cd`.
+const WRITE_WORD = /^(?:-.*|tee|cp|mv|rm|touch|install|truncate|apply_patch|sed|perl)$/;
+
+/** Every path a command names, including assignment values such as `f=x`, & optionally heredocs. */
+function allShellPaths(segments: ShellSegment[], heredocs: boolean): string[] {
+  return segments.flatMap(({ command: segment, heredoc }) =>
+    [...shellPaths(segment), ...(heredocs ? shellPaths(heredoc) : [])].flatMap((path) => [
+      path,
+      path.replace(/^\w+=/, ""),
+    ]),
+  );
+}
+
+function heredocLiterals(heredoc: string): string[] {
+  return [
+    ...shellPaths(heredoc),
+    ...[...heredoc.matchAll(QUOTED_LITERAL)].map((match) => match[1] ?? match[2]),
+  ];
+}
+
 /**
  * The paths a shell command may write: per segment, its redirect targets, the arguments of writing
- * commands, the targets of a shell script fed by heredoc, & every path in another heredoc that calls
- * a file-writing API. Reads in other segments, or on the read side of a redirect, are ignored. When
- * a write's target can't be read statically (a `cd`, `xargs`, or expansion), every path in the
- * command counts.
+ * commands, the literal targets of inline file-writing API calls, the targets of a shell script fed
+ * by heredoc, & every path in another heredoc that calls a file-writing API. Reads in other
+ * segments, or on the read side of a redirect, are ignored. When a write's target can't be read
+ * statically (`xargs`, an expansion, or a non-literal API target), or a `cd` precedes a relative
+ * target, every path in the command counts.
  */
 export function shellWriteTargets(command: string): string[] {
   const segments = shellSegments(command);
   const targets: string[] = [];
   let dynamic = false;
+  let relativeTarget = false;
   for (const { command: segment, heredoc } of segments) {
     const plain = segment.replaceAll(FD_DUPLICATE, " ");
     const writes = [...plain.matchAll(REDIRECT)].flatMap((match) => shellPaths(match[1]));
     const rest = plain.replaceAll(REDIRECT, " ");
-    if (isShellWrite(rest)) {
+    if (SHELL_WRITE.test(rest)) {
       writes.push(...commandTargets(rest));
       dynamic ||= /\bxargs\b/.test(rest);
     }
-    // Any shell word, so `/bin/bash`, `sudo sh`, & `env bash` feeding a heredoc count too.
-    if (/(?:^|[\s/(])(?:ba|da|k|z)?sh(?=\s|$)/.test(rest)) {
+    if (API_WRITE.test(rest)) {
+      const apiTargets = apiWriteTargets(rest);
+      writes.push(...(apiTargets ?? []));
+      dynamic ||= apiTargets === undefined;
+    }
+    if (SHELL_PROGRAM.test(rest)) {
       writes.push(...shellWriteTargets(heredoc));
     } else if (API_WRITE.test(heredoc)) {
-      writes.push(
-        ...shellPaths(heredoc),
-        ...[...heredoc.matchAll(/"([^"\n]+)"|'([^'\n]+)'/g)].map((match) => match[1] ?? match[2]),
-      );
+      writes.push(...heredocLiterals(heredoc));
+      // Heredoc code names its target in ways a literal scan can't tell apart from data.
+      relativeTarget = true;
     }
-    targets.push(...writes.filter((target) => !target.startsWith("/dev/")));
+    const kept = writes.filter((target) => !target.startsWith("/dev/"));
+    relativeTarget ||= kept.some(
+      (target) => !WRITE_WORD.test(target) && !/^(?:[/\\~]|[A-Za-z]:[/\\])/.test(target),
+    );
+    targets.push(...kept);
   }
   dynamic ||= targets.some((target) => /[$`]/.test(target));
-  if (
-    targets.length > 0 &&
-    (dynamic || segments.some(({ command: segment }) => /^\s*[({]?\s*(?:cd|pushd)\b/.test(segment)))
-  ) {
+  const changesDirectory = segments.some(({ command: segment }) =>
+    /^\s*[({]?\s*(?:cd|pushd)\b/.test(segment),
+  );
+  if (dynamic || (targets.length > 0 && relativeTarget && changesDirectory)) {
     // Include assignment values, which an expanded target such as `> $f` may name.
-    return [
-      ...targets,
-      ...segments.flatMap(({ command: segment }) =>
-        shellPaths(segment).flatMap((path) => [path, path.replace(/^\w+=/, "")]),
-      ),
-    ];
+    return [...targets, ...allShellPaths(segments, false)];
   }
   return targets;
 }
 
-export function isShellRead(command: string): boolean {
-  return /(?:^|[;&|]\s*|\s)(?:cat|head|tail|less|more|bat|jq|sed|awk|rg|grep|cut|wc|sort|diff|cmp)\b|\breadFile\w*\s*\(|\bread_text\s*\(|\bread_bytes\s*\(|(?:^|[^<])<[^<]|\bopen\s*\(/.test(
-    command,
-  );
+const SHELL_READ =
+  /(?:^|[;&|(`{]\s*|\s)(?:cat|head|tail|less|more|bat|jq|sed|awk|rg|grep|cut|wc|sort|diff|cmp)\b/;
+const API_READ = /\b(?:readFile\w*|read_text|read_bytes|open)\s*\(/;
+const HERE_STRING = /<<<\s*(?:"[^"\n]+"|'[^'\n]+'|[^\s;|&<>()]+)/g;
+// `<file` & `0< file`, but not heredocs, here-strings, process substitution, or fd duplication.
+const INPUT_REDIRECT = /(?<![<\d])\d*<(?![<&(>])\s*("[^"\n]+"|'[^'\n]+'|[^\s;|&<>()]+)/g;
+
+/**
+ * The paths a shell command may read: per segment, its `<` redirect sources, every path in a
+ * segment that runs a reading command or file-reading API, the targets of a shell script fed by
+ * heredoc, & every path in another heredoc that calls a file-reading API. Other heredoc bodies are
+ * text, not reads. When a read's target can't be read statically (`xargs` or an expansion), every
+ * path in the command counts.
+ */
+export function shellReadTargets(command: string): string[] {
+  const segments = shellSegments(command);
+  const targets: string[] = [];
+  let dynamic = false;
+  for (const { command: segment, heredoc } of segments) {
+    const sources = [...segment.matchAll(INPUT_REDIRECT)].flatMap((match) => shellPaths(match[1]));
+    const reads = SHELL_READ.test(segment) || API_READ.test(segment);
+    // Single-quoted text never expands, so a pattern such as `rg 'end$'` stays static.
+    dynamic ||=
+      (reads || sources.length > 0) && /\$[\w{(]|`/.test(segment.replaceAll(/'[^'\n]*'/g, ""));
+    targets.push(...sources);
+    if (reads) {
+      // A here-string is text, like a heredoc body.
+      const paths = shellPaths(segment.replaceAll(HERE_STRING, " "));
+      // Inline code such as `node -e '…readFileSync("x")…'` names its paths as inner literals.
+      targets.push(
+        ...paths,
+        ...paths.flatMap((path) =>
+          [...path.matchAll(QUOTED_LITERAL)].map((match) => match[1] ?? match[2]),
+        ),
+      );
+      dynamic ||= /\bxargs\b/.test(segment);
+    }
+    if (SHELL_PROGRAM.test(segment)) {
+      targets.push(...shellReadTargets(heredoc));
+    } else if (API_READ.test(heredoc)) {
+      targets.push(...heredocLiterals(heredoc));
+    }
+  }
+  return dynamic ? [...targets, ...allShellPaths(segments, true)] : targets;
 }
 
 export interface CommandResult {
