@@ -39,6 +39,9 @@ const GOLDEN_BACKUP = {
   worldState: { season: "summer", weather: "inclement" },
 };
 
+/** Optional fields added after launch, as an empty launch-era blob writes them back. */
+const POST_LAUNCH_FIELDS = { mountAppearances: [] };
+
 afterEach(() => {
   userState.resetAll();
 });
@@ -55,14 +58,29 @@ describe("persisted format contract", () => {
     expect(userState.restoreBackup(JSON.stringify(GOLDEN_BACKUP))).toEqual({ ok: true });
 
     // Every animal gets an entry on load; animals added by later game data appear as empty lists.
+    // Fields added after launch are optional on read and written empty.
     const { animalCosmetics, animals, ...progress } = GOLDEN_BACKUP.progress;
     expect(JSON.parse(userState.exportBackup())).toEqual({
       ...GOLDEN_BACKUP,
       progress: {
         ...progress,
+        ...POST_LAUNCH_FIELDS,
         animalCosmetics: expect.objectContaining(animalCosmetics) as unknown,
         animals: expect.objectContaining(animals) as unknown,
       },
+    });
+  });
+
+  it("round-trips the fields added after launch", () => {
+    const backup = {
+      ...GOLDEN_BACKUP,
+      progress: { ...GOLDEN_BACKUP.progress, mountAppearances: ["mistmare"] },
+    };
+    expect(userState.restoreBackup(JSON.stringify(backup))).toEqual({ ok: true });
+
+    expect(userState.state.progress.mountAppearances).toEqual(new Set(["mistmare"]));
+    expect(JSON.parse(userState.exportBackup())).toMatchObject({
+      progress: { mountAppearances: ["mistmare"] },
     });
   });
 });

@@ -20,6 +20,7 @@ function zeroCounts(): MergeCounts {
     hasUpperFloor: 0,
     heartLevels: 0,
     mineFloor: 0,
+    mountAppearances: 0,
     museum: 0,
     perks: 0,
     petCosmetics: 0,

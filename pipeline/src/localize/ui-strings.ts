@@ -46,6 +46,7 @@ export const APP_UI_STRINGS: readonly UiStringRequest[] = [
   "engaged",
   "married",
   "magic_spells",
+  "mount",
   "language",
   "cancel",
   "color_variant",

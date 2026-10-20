@@ -16,7 +16,7 @@ import {
 } from "./import-save.js";
 
 import type { LevelIssue } from "#lib/engine/progress.js";
-import type { RecipeId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
+import type { AnimalId, RecipeId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
 import type { SaveBundle } from "./import-save.js";
 
@@ -53,6 +53,36 @@ describe("extractSaveProgress", () => {
     expect(completed.cosmetics).toContain("facial_hair_friendly_mutton_chops");
     expect(completed.almanacRecipes).toContain("cottage_sofa");
     expect(warnings).toEqual([]);
+  });
+
+  it("imports the Big Egg's chicken appearances as mount appearances, not horse breeds", () => {
+    const { completed, warnings } = extractSaveProgress({
+      player: {
+        animal_variant_unlocks: { horse: ["giant_chicken_gold", "giant_chicken_white"] },
+        cosmetic_unlocks: [],
+      },
+    });
+
+    expect(completed.mountAppearances).toEqual(
+      new Set(["giant_chicken_gold", "giant_chicken_white"]),
+    );
+    expect(completed.animals?.["horse" as AnimalId]?.size).toBe(0);
+    expect(warnings).toEqual([]);
+  });
+
+  it("imports the Mistmare once its reveal cutscene has played", () => {
+    const before = extractSaveProgress({
+      gamedata: { scene_history: ["find_the_weathervane_setup"] },
+      player: { cosmetic_unlocks: [] },
+    });
+    const after = extractSaveProgress({
+      gamedata: { scene_history: ["find_the_weathervane_setup", "reveal_mistmare"] },
+      player: { cosmetic_unlocks: [] },
+    });
+
+    expect(before.completed.mountAppearances).toEqual(new Set());
+    expect(after.completed.mountAppearances).toEqual(new Set(["mistmare"]));
+    expect(after.warnings).toEqual([]);
   });
 
   it("imports direct and item-derived recipe unlocks alongside default recipes", () => {

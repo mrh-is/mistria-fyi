@@ -41,6 +41,7 @@ type SourceFilterMemberId =
   | "fish"
   | "fish_traps"
   | "foraging"
+  | "horse_statue"
   | "letters"
   | "lost_and_found"
   | "mine_fishing"
@@ -123,8 +124,8 @@ export const SOURCE_FILTERS: readonly SourceFilter[] = [
   },
   {
     id: "offerings",
-    members: ["chicken_statue", "wishing_well"],
-    types: ["chicken_statue", "wishing_well"],
+    members: ["chicken_statue", "horse_statue", "wishing_well"],
+    types: ["chicken_statue", "horse_statue", "wishing_well"],
   },
   {
     id: "perks",
@@ -187,6 +188,7 @@ const MEMBER_LABELS: Record<SourceFilterMemberId, LabelResolver> = {
   fish: (locale) => m.source_filter_member_fish({}, { locale }),
   fish_traps: (locale) => m.source_filter_member_fish_traps({}, { locale }),
   foraging: (locale) => m.source_filter_member_foraging({}, { locale }),
+  horse_statue: (locale) => m.source_filter_member_horse_statue({}, { locale }),
   letters: (locale) => m.source_filter_member_letters({}, { locale }),
   lost_and_found: (locale) => m.source_filter_member_lost_and_found({}, { locale }),
   mine_fishing: (locale) => m.source_filter_member_mine_fishing({}, { locale }),
