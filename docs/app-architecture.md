@@ -57,8 +57,9 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 
 - Holds the canonical `UserState` shape (`availabilityWindows`, `progress`, `showCompleted`,
   `showSpoilers`, `worldState`).
-- Persists progress & world state to `localStorage` with a 300 ms debounce, and this device's
-  preferences under a separate key (see [localStorage](#localstorage)).
+- Persists progress & world state to `localStorage` through one locked write function (see
+  [One write path](#one-write-path)), and this device's preferences under a separate key (see
+  [localStorage](#localstorage)).
 - Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
   resetting.
 - Enforces domain constraints at the mutation boundary (e.g., heart level caps, mine floor bounds,
@@ -75,6 +76,10 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
   - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
     filtered to non-default entries.
   - `worldState`: the in-game season & weather the availability filters read.
+  - `local` (storage only, left out while empty): this device's own section, with slots reserved for
+    sync's receipt & farm-switch backup. Exports never include it; a restore keeps this device's and
+    never brings one in; a progress reset keeps it and a full reset clears it. Provenance & resolved
+    diffs will live in `progress`, so they travel with backups.
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
   `now`, `anytime`, & `later`, and `showSpoilers`). These are per-device conveniences: they're never
   exported, so restoring a backup or resetting progress keeps them, and a missing or invalid field
@@ -115,6 +120,24 @@ persisted. A shape change adds a migration: bump `CURRENT_SERIALIZATION_VERSION`
 fixture under `src/lib/stores/progress-storage-fixtures/`. `progress-storage.test.ts` fails until
 all three exist. `user-state-golden.test.ts` pins the current shape & the storage keys. See the
 [decision record](decisions/2026-10-20-storage-migrations-valibot.md).
+
+### One write path
+
+Every progress write goes through the store's `writeProgress`, run under the
+`mistria-fyi:progress-write` Web Lock so tabs write one at a time. Inside the lock it re-reads the
+stored value & validates it before writing:
+
+| Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset, save import) |
+| ---------------------------------------- | ---------------------------- | ---------------------------------------------- |
+| Unchanged, or cleared                    | Writes                       | Writes                                         |
+| Another tab's readable write             | Adopts it, writes nothing    | Writes over it                                 |
+| Unreadable                               | Quarantines it               | Copies it to quarantine, then writes           |
+| A newer build's                          | Blocks writes                | Blocks writes                                  |
+
+Auto-saves wait for a 300 ms quiet period; explicit replaces skip it but still take the lock. The
+pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
+compare-before-write. A browser without Web Locks runs every write synchronously; see the
+[decision record](decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Save File Import
 
