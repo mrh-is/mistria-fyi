@@ -374,9 +374,9 @@ translation directly, so English suffix rules never alter translated strings.
 Review a regeneration with `pnpm run data:diff [base-ref]`, which compares the committed tracker
 data at a Git ref (default `origin/main`) with the working copy and prints each added (`+`), removed
 (`-`), or changed (`~`) JSON path, then a count summary. Objects compare by key; arrays of objects
-with unique `id`s compare by id, arrays of unique scalars compare as sets plus one order line, and
-other arrays compare by index. It exits 0 when the data is identical, 1 when it differs, and 2 on an
-error, and needs no game assets.
+with unique string `id`s compare by id and arrays of unique scalars compare as sets, each with one
+order line for a reorder; other arrays compare by index. It exits 0 whenever the comparison runs,
+changes or not, and 1 on an error, and needs no game assets.
 
 Evaluation mutates the parsed tree, and source attachment & visibility mutate the extracted
 registries. Outputs contain no generation timestamp. String ordering uses one UTF-16 code-unit

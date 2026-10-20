@@ -10,8 +10,8 @@ import { pathToFileURL } from "node:url";
  *
  * Compares `src/lib/data/tracker-data.json` at a Git ref (default `origin/main`) with the working
  * copy and prints one line per added, removed, or changed JSON path, so a regeneration can be
- * reviewed by entity instead of as a reformatted blob. Exits 0 when the data is identical, 1 when
- * it differs, and 2 on an error, like diff(1).
+ * reviewed by entity instead of as a reformatted blob. Exits 0 whenever the comparison runs, so
+ * pnpm prints no failure banner over the listing, and 1 on an error.
  */
 
 export const TRACKER_DATA_PATH = "src/lib/data/tracker-data.json";
@@ -34,6 +34,17 @@ function keyPath(parent: string, key: string): string {
     return parent === "" ? key : `${parent}.${key}`;
   }
   return `${parent}[${JSON.stringify(key)}]`;
+}
+
+function idPath(parent: string, id: string): string {
+  return `${parent}[id=${IDENTIFIER.test(id) ? id : JSON.stringify(id)}]`;
+}
+
+/** Records an order change between the elements both sides share, keyed or valued alike. */
+function diffOrder(path: string, kept: Json[], keptAfter: Json[], out: Change[]) {
+  if (kept.some((element, index) => element !== keptAfter[index])) {
+    out.push({ from: kept, kind: "changed", path: `${path || "(root)"} (order)`, to: keptAfter });
+  }
 }
 
 /** The array's elements keyed by their unique string `id`, or undefined if they don't all have one. */
@@ -79,17 +90,23 @@ function diffArrays(path: string, from: Json[], to: Json[], out: Change[]) {
   if (fromIds && toIds) {
     for (const [id, value] of fromIds) {
       if (!toIds.has(id)) {
-        out.push({ kind: "removed", path: `${path}[id=${id}]`, value });
+        out.push({ kind: "removed", path: idPath(path, id), value });
       }
     }
     for (const [id, value] of toIds) {
       const before = fromIds.get(id);
       if (before === undefined) {
-        out.push({ kind: "added", path: `${path}[id=${id}]`, value });
+        out.push({ kind: "added", path: idPath(path, id), value });
       } else {
-        diffValue(`${path}[id=${id}]`, before, value, out);
+        diffValue(idPath(path, id), before, value, out);
       }
     }
+    diffOrder(
+      path,
+      [...fromIds.keys()].filter((id) => toIds.has(id)),
+      [...toIds.keys()].filter((id) => fromIds.has(id)),
+      out,
+    );
     return;
   }
 
@@ -104,11 +121,12 @@ function diffArrays(path: string, from: Json[], to: Json[], out: Change[]) {
     for (const value of added) {
       out.push({ kind: "added", path: `${path}[]`, value });
     }
-    const kept = from.filter((element) => after.has(element));
-    const keptAfter = to.filter((element) => before.has(element));
-    if (kept.some((element, index) => element !== keptAfter[index])) {
-      out.push({ from: kept, kind: "changed", path: `${path} (order)`, to: keptAfter });
-    }
+    diffOrder(
+      path,
+      from.filter((element) => after.has(element)),
+      to.filter((element) => before.has(element)),
+      out,
+    );
     return;
   }
 
@@ -136,8 +154,8 @@ function diffValue(path: string, from: Json, to: Json, out: Change[]) {
 
 /**
  * Every path-level difference from `from` to `to`. Objects compare by key; arrays of objects with
- * unique string `id`s compare by id, arrays of unique scalars compare as ordered sets (with one
- * order change line), and other arrays compare by index.
+ * unique string `id`s compare by id and arrays of unique scalars compare as sets, each with one
+ * order line for a reorder,, and other arrays compare by index.
  */
 export function diffJson(from: unknown, to: unknown): Change[] {
   const out: Change[] = [];
@@ -174,39 +192,35 @@ export function readAtRef(root: string, ref: string): unknown {
   return JSON.parse(text) as unknown;
 }
 
-export function runDataDiff(root: string, baseRef: string): { exitCode: number; lines: string[] } {
+/** The report lines for the working copy's tracker data against `baseRef`. */
+export function runDataDiff(root: string, baseRef: string): string[] {
   const base = readAtRef(root, baseRef);
   const working = JSON.parse(readFileSync(join(root, TRACKER_DATA_PATH), "utf8")) as unknown;
   const changes = diffJson(base, working);
   if (changes.length === 0) {
-    return { exitCode: 0, lines: [`No tracker data changes from ${baseRef}.`] };
+    return [`No tracker data changes from ${baseRef}.`];
   }
-  return {
-    exitCode: 1,
-    lines: [
-      `Tracker data changes from ${baseRef} to the working copy:`,
-      ...changes.map((change) => formatChange(change)),
-      formatSummary(changes),
-    ],
-  };
+  return [
+    `Tracker data changes from ${baseRef} to the working copy:`,
+    ...changes.map((change) => formatChange(change)),
+    formatSummary(changes),
+  ];
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2).filter((arg) => arg !== "--");
   if (args.length > 1 || args[0]?.startsWith("-")) {
     console.error("Usage: pnpm run data:diff [base-ref]");
-    process.exitCode = 2;
+    process.exitCode = 1;
   } else {
     try {
       const root = execFileSync("git", ["rev-parse", "--show-toplevel"], {
         encoding: "utf8",
       }).trim();
-      const { exitCode, lines } = runDataDiff(root, args[0] ?? "origin/main");
-      console.log(lines.join("\n"));
-      process.exitCode = exitCode;
+      console.log(runDataDiff(root, args[0] ?? "origin/main").join("\n"));
     } catch (error) {
       console.error(error instanceof Error ? error.message : error);
-      process.exitCode = 2;
+      process.exitCode = 1;
     }
   }
 }

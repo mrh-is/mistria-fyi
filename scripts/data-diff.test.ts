@@ -56,6 +56,24 @@ describe("diffJson", () => {
     ]);
   });
 
+  it("reports an id-keyed reorder as one order line", () => {
+    expect(diffJson({ s: [{ id: "a" }, { id: "b" }] }, { s: [{ id: "b" }, { id: "a" }] })).toEqual([
+      { from: ["a", "b"], kind: "changed", path: "s (order)", to: ["b", "a"] },
+    ]);
+  });
+
+  it("quotes ids that are not identifiers", () => {
+    expect(diffJson({ s: [{ id: "x].y", n: 1 }] }, { s: [{ id: "x].y", n: 2 }] })).toEqual([
+      { from: 1, kind: "changed", path: 's[id="x].y"].n', to: 2 },
+    ]);
+  });
+
+  it("labels a root reorder", () => {
+    expect(diffJson([1, 2], [2, 1])).toEqual([
+      { from: [1, 2], kind: "changed", path: "(root) (order)", to: [2, 1] },
+    ]);
+  });
+
   it("treats unique scalar arrays as ordered sets", () => {
     expect(diffJson({ order: ["a", "b", "c"] }, { order: ["x", "a", "c"] })).toEqual([
       { kind: "removed", path: "order[]", value: "b" },
@@ -109,26 +127,20 @@ describe("runDataDiff", () => {
     }
   });
 
-  it("exits 0 when the working copy matches the ref, even if reformatted", () => {
+  it("reports no changes when the working copy matches the ref, even if reformatted", () => {
     root = repoWith({ a: { b: 1 } });
     writeFileSync(join(root, TRACKER_DATA_PATH), `${JSON.stringify({ a: { b: 1 } }, null, 2)}\n`);
-    expect(runDataDiff(root, "HEAD")).toEqual({
-      exitCode: 0,
-      lines: ["No tracker data changes from HEAD."],
-    });
+    expect(runDataDiff(root, "HEAD")).toEqual(["No tracker data changes from HEAD."]);
   });
 
-  it("exits 1 & lists path-level changes when the working copy differs", () => {
+  it("lists path-level changes when the working copy differs", () => {
     root = repoWith({ a: { b: 1 } });
     writeFileSync(join(root, TRACKER_DATA_PATH), JSON.stringify({ a: { b: 2 } }));
-    expect(runDataDiff(root, "HEAD")).toEqual({
-      exitCode: 1,
-      lines: [
-        "Tracker data changes from HEAD to the working copy:",
-        "~ a.b: 1 → 2",
-        "0 added, 0 removed, 1 changed",
-      ],
-    });
+    expect(runDataDiff(root, "HEAD")).toEqual([
+      "Tracker data changes from HEAD to the working copy:",
+      "~ a.b: 1 → 2",
+      "0 added, 0 removed, 1 changed",
+    ]);
   });
 
   it("throws when the ref doesn't exist", () => {
