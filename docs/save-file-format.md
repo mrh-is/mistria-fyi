@@ -129,6 +129,19 @@ mount appearances (`giant_chicken_white` & `giant_chicken_gold`, from the Big Eg
 the import routes an ID to mount appearances when it isn’t a horse breed. The default `mistmare`
 appearance never appears there; the import infers it from `gamedata.scene_history` (below).
 
+Starting player cosmetics can be absent from `cosmetic_unlocks`; import unions every cosmetic with a
+native `default` source into the saved unlocks. It also seeds animal variants with a `default`
+source, matching the normal `NewGame` branch’s `default_unlocked` initialization, even if the saved
+variant list is absent. These defaults represent unlocked appearances, not owned animals. Default
+recipes were already credited independently of `recipe_unlocks`.
+
+The default-source audit covers the other tracked domains too. Animal cosmetics, pet cosmetic sets,
+pet skins, mount appearances, dates, spells, and perks have no starting-default grants in their
+current extractors. Almanac items still require `items_acquired`: an item’s `default` source can
+describe a story/world object or acquisition path, rather than an item the player has acquired, so
+it must not automatically mark an almanac entry discovered. Museum donations likewise require save
+evidence.
+
 ### Skills & spells
 
 | Field            | Type                     | Description                                              |
