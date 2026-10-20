@@ -10,8 +10,10 @@ import {
 import { recordKeys, recordValues } from "#lib/utils/record.js";
 
 import {
+  extractSave,
   extractSaveProgress,
   isPlayerSaveSection,
+  isSaveImportWarning,
   parseExtractedSaveFiles,
 } from "./import-save.js";
 
@@ -97,7 +99,9 @@ describe("extractSaveProgress", () => {
     expect(completed.almanacRecipes).toEqual(
       new Set([...defaultRecipeIds, "animated_waterfall", "ocarina_sprite_statue"]),
     );
-    expect(warnings).toEqual([]);
+    expect(warnings).toEqual([
+      { code: "unknown-id", id: "unknown_recipe_unlock", path: "player.recipe_unlocks" },
+    ]);
   });
 
   it("imports perks from player.perks", () => {
@@ -130,12 +134,12 @@ describe("extractSaveProgress", () => {
       expect(completed.hasUpperFloor).toBe(true);
     });
 
-    it("defaults hasUpperFloor to false when missing", () => {
+    it("leaves hasUpperFloor unknown when missing, never false", () => {
       const bundle: SaveBundle = {
         player: { items_acquired: [] },
       };
       const { completed } = extractSaveProgress(bundle);
-      expect(completed.hasUpperFloor).toBe(false);
+      expect(completed.hasUpperFloor).toBeUndefined();
     });
 
     it("extracts villagerRelationships from t2_world_facts dating keys", () => {
@@ -173,10 +177,10 @@ describe("extractSaveProgress", () => {
       expect(completed.reachedSeason).toBe("winter");
     });
 
-    it("defaults reachedSeason to spring when date is missing", () => {
+    it("leaves reachedSeason unknown when date is missing, never spring", () => {
       const bundle: SaveBundle = { gamedata: {} };
       const { completed } = extractSaveProgress(bundle);
-      expect(completed.reachedSeason).toBe("spring");
+      expect(completed.reachedSeason).toBeUndefined();
     });
   });
 });
@@ -256,7 +260,7 @@ describe("numeric level domains", () => {
     );
     expect(completed.heartLevels?.[ADELINE]).toBeUndefined();
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
-    expect(completed.renown).toBe(0);
+    expect(completed.renown).toBeUndefined();
     expect(warnings).toEqual([
       levelWarning("negative", "adeline_heart_level", "-1", MAX_HEART_LEVEL),
       levelWarning("negative", "farming_level", "-0.5", MAX_SKILL_LEVEL),
@@ -274,10 +278,10 @@ describe("numeric level domains", () => {
         },
       },
     });
-    expect(completed.mineFloor).toBe(0);
+    expect(completed.mineFloor).toBeUndefined();
     expect(completed.heartLevels?.[ADELINE]).toBeUndefined();
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
-    expect(completed.renown).toBe(0);
+    expect(completed.renown).toBeUndefined();
     expect(warnings).toEqual([
       levelWarning("not-a-number", "maximum_mines_level", "NaN", getMaxMineFloor()),
       levelWarning("not-a-number", "adeline_heart_level", '"12"', MAX_HEART_LEVEL),
@@ -285,11 +289,11 @@ describe("numeric level domains", () => {
     ]);
   });
 
-  it("treats missing and zero levels as unset without warnings", () => {
+  it("leaves missing levels unknown & zero levels unset, without warnings", () => {
     const { completed, warnings } = extractSaveProgress(worldFacts({ adeline_heart_level: 0 }));
-    expect(completed.mineFloor).toBe(0);
+    expect(completed.mineFloor).toBeUndefined();
     expect(completed.heartLevels).toEqual({});
-    expect(completed.renown).toBe(0);
+    expect(completed.renown).toBeUndefined();
     expect(warnings).toEqual([]);
   });
 });
@@ -366,7 +370,7 @@ describe("malformed save fields", () => {
       player: { cosmetic_unlocks: [], perks: perkId },
     });
 
-    expect(completed.unlockedPerks?.size).toBe(0);
+    expect(completed.unlockedPerks).toBeUndefined();
     expect(warnings).toEqual([{ code: "not-a-list", path: "player.perks" }]);
   });
 
@@ -384,8 +388,8 @@ describe("malformed save fields", () => {
       gamedata: { museum_progress: { 0: "anything" }, t2_world_facts: [1, 2] },
     });
 
-    expect(completed.museum?.size).toBe(0);
-    expect(completed.renown).toBe(0);
+    expect(completed.museum).toBeUndefined();
+    expect(completed.renown).toBeUndefined();
     expect(warnings).toEqual([
       { code: "not-a-list", path: "gamedata.museum_progress" },
       { code: "not-an-object", path: "gamedata.t2_world_facts" },
@@ -403,7 +407,7 @@ describe("malformed save fields", () => {
       },
     });
 
-    expect(completed.animals?.[animalId]?.size).toBe(0);
+    expect(completed.animals).toBeUndefined();
     expect(warnings).toEqual([
       { code: "not-an-object", path: "player.animal_variant_unlocks" },
       { code: "not-a-list", path: `player.animal_cosmetic_unlocks.${animalId}` },
@@ -417,7 +421,13 @@ describe("malformed save fields", () => {
     });
 
     expect(completed.almanacRecipes).toEqual(getDefaultRecipeIds());
-    expect(warnings).toEqual([]);
+    expect(warnings).toEqual(
+      ["constructor", "__proto__", "toString"].map((id) => ({
+        code: "unknown-id",
+        id,
+        path: "player.recipe_unlocks",
+      })),
+    );
   });
 
   it("ignores an unrecognizable player section with a warning", () => {
@@ -425,7 +435,7 @@ describe("malformed save fields", () => {
       player: { perks: "cook_perk" },
     });
 
-    expect(completed.unlockedPerks?.size).toBe(0);
+    expect(completed.unlockedPerks).toBeUndefined();
     expect(warnings).toEqual([{ code: "unrecognized-player", file: "player" }]);
   });
 });
@@ -487,9 +497,30 @@ describe("parseExtractedSaveFiles", () => {
   const player = jsonFile("player.json", { perks: [] });
 
   it("ignores files with other names", async () => {
-    const result = await parseExtractedSaveFiles([player, jsonFile("info.json", { perks: [] })]);
+    const result = await parseExtractedSaveFiles([
+      player,
+      jsonFile("villagers.json", { perks: [] }),
+    ]);
 
     expect(result).toEqual({ bundle: { player: { perks: [] } }, warnings: [] });
+  });
+
+  it("keeps header.json & info.json, which identify the save", async () => {
+    const header = { playtime: 12.5 };
+    const info = { creation_version: { major: 1, minor: 0, patch: 8, pre: null } };
+    const result = await parseExtractedSaveFiles([
+      player,
+      jsonFile("header.json", header),
+      jsonFile("info.json", info),
+    ]);
+
+    expect(result).toEqual({ bundle: { header, info, player: { perks: [] } }, warnings: [] });
+  });
+
+  it("needs a progress file beside header.json & info.json", async () => {
+    const result = await parseExtractedSaveFiles([jsonFile("info.json", {})]);
+
+    expect(result).toEqual({ error: { code: "no-save-files" } });
   });
 
   it("reports that no save files were recognized", async () => {
@@ -537,5 +568,190 @@ describe("parseExtractedSaveFiles", () => {
         { code: "unrecognized-player", file: "player.json" },
       ],
     });
+  });
+});
+
+describe("extractSave", () => {
+  const cosmeticId = recordKeys(trackerData.cosmetics)[0];
+  const villagerIds = recordKeys(trackerData.villagers);
+  const skillIds = recordKeys(trackerData.skills);
+  const factKeys = [
+    ...villagerIds.map((id) => `${id}_heart_level`),
+    ...skillIds.map((id) => `${id}_level`),
+    "renown",
+  ];
+  const allFacts: Record<string, unknown> = Object.fromEntries(
+    factKeys.map((key): [string, number] => [key, 0]),
+  );
+
+  it("marks a fully read field complete", () => {
+    const { fields } = extractSave({ player: { cosmetic_unlocks: [cosmeticId] } });
+
+    expect(fields.cosmetics).toEqual({
+      completeness: "complete",
+      diagnostics: [],
+      untracked: [],
+      value: new Set([cosmeticId]),
+    });
+  });
+
+  it("leaves an absent field unknown with no value, never empty", () => {
+    const { fields } = extractSave({ player: { cosmetic_unlocks: [] } });
+
+    expect(fields.unlockedPerks).toEqual({
+      completeness: "unknown",
+      diagnostics: [{ code: "absent", path: "player.perks" }],
+      untracked: [],
+      value: undefined,
+    });
+    expect(fields.mineFloor).toMatchObject({ completeness: "unknown", value: undefined });
+  });
+
+  it("leaves a malformed field unknown with no value", () => {
+    const { fields } = extractSave({ player: { cosmetic_unlocks: cosmeticId, perks: [] } });
+
+    expect(fields.cosmetics).toMatchObject({
+      completeness: "unknown",
+      diagnostics: [{ code: "not-a-list", path: "player.cosmetic_unlocks" }],
+      value: undefined,
+    });
+  });
+
+  it("keeps readable entries but marks the field unknown when some aren't", () => {
+    const { fields } = extractSave({ player: { cosmetic_unlocks: [cosmeticId, 4] } });
+
+    expect(fields.cosmetics).toMatchObject({
+      completeness: "unknown",
+      value: new Set([cosmeticId]),
+    });
+  });
+
+  it("tells known-but-untracked IDs from unrecognized ones", () => {
+    const tier = recordKeys(trackerData.treasureChestTiers).find((id) => id !== "abyss");
+    const { fields } = extractSave({
+      player: {
+        items_acquired: ["cosmetic", `treasure_box_${tier}`],
+        perks: ["horsepower"],
+      },
+    });
+
+    expect(fields.almanac).toMatchObject({
+      completeness: "complete",
+      untracked: ["cosmetic", `treasure_box_${tier}`],
+    });
+    expect(fields.unlockedPerks).toMatchObject({
+      completeness: "complete",
+      untracked: ["horsepower"],
+    });
+
+    const renamed = extractSave({ player: { items_acquired: ["renamed_in_a_game_update"] } });
+    expect(renamed.fields.almanac).toEqual({
+      completeness: "unknown",
+      diagnostics: [
+        { code: "unknown-id", id: "renamed_in_a_game_update", path: "player.items_acquired" },
+      ],
+      untracked: [],
+      value: new Set(),
+    });
+  });
+
+  it("marks animals unknown when an animal's list is missing or unrecognized", () => {
+    const [first, ...rest] = recordKeys(trackerData.animals);
+    const lists = Object.fromEntries(rest.map((id) => [id, []]));
+    const missing = extractSave({ player: { animal_variant_unlocks: lists } });
+    expect(missing.fields.animals.completeness).toBe("unknown");
+    expect(missing.fields.animals.diagnostics).toEqual([
+      { code: "absent", path: `player.animal_variant_unlocks.${first}` },
+    ]);
+
+    const extra = extractSave({
+      player: { animal_variant_unlocks: { ...lists, dragon: [], [first]: [] } },
+    });
+    expect(extra.fields.animals.diagnostics).toEqual([
+      { code: "unknown-id", id: "dragon", path: "player.animal_variant_unlocks" },
+    ]);
+  });
+
+  it("keeps a level clamped from above complete, but not a negative one", () => {
+    const clamped = extractSave({ gamedata: { maximum_mines_level: 9999 } });
+    expect(clamped.fields.mineFloor).toMatchObject({
+      completeness: "complete",
+      value: getMaxMineFloor(),
+    });
+
+    const negative = extractSave({ gamedata: { maximum_mines_level: -1 } });
+    expect(negative.fields.mineFloor).toMatchObject({ completeness: "unknown", value: undefined });
+  });
+
+  it("reads levels as complete only when every tracked key is present", () => {
+    const full = extractSave({ gamedata: { t2_world_facts: allFacts } });
+    expect(full.fields.heartLevels).toMatchObject({ completeness: "complete", value: {} });
+    expect(full.fields.renown).toMatchObject({ completeness: "complete", value: 0 });
+
+    const partial = { ...allFacts };
+    delete partial[`${villagerIds[0]}_heart_level`];
+    const missing = extractSave({ gamedata: { t2_world_facts: partial } });
+    expect(missing.fields.heartLevels.completeness).toBe("unknown");
+    expect(missing.fields.skillLevels.completeness).toBe("complete");
+  });
+
+  it("never treats relationships as complete, since only dating flags are read", () => {
+    const { fields } = extractSave({ gamedata: { t2_world_facts: allFacts } });
+    expect(fields.villagerRelationships).toMatchObject({ completeness: "unknown", value: {} });
+  });
+
+  it("records malformed scalars as diagnostics without warning the player", () => {
+    const extraction = extractSave({
+      gamedata: { date: "spring", t2_world_facts: { ...allFacts, renown: "max" } },
+      player: { cosmetic_unlocks: [], upper_floor: "yes" },
+    });
+
+    expect(extraction.fields.reachedSeason.diagnostics).toEqual([
+      { code: "invalid-value", path: "gamedata.date" },
+    ]);
+    expect(extraction.fields.hasUpperFloor.value).toBeUndefined();
+    expect(extraction.fields.renown.value).toBeUndefined();
+    expect(extraction.diagnostics.filter((d) => isSaveImportWarning(d))).toEqual([]);
+  });
+
+  it("retains the creation version & playtime that identify a save", () => {
+    const creationVersion = { major: 0, minor: 11, patch: 7, pre: null };
+    const { identity } = extractSave({
+      header: { name: "Not retained", playtime: 3600.25 },
+      info: { creation_version: creationVersion, version: { major: 1, minor: 0, patch: 8 } },
+      player: { cosmetic_unlocks: [] },
+    });
+
+    expect(identity.creationVersion).toMatchObject({
+      completeness: "complete",
+      value: creationVersion,
+    });
+    expect(identity.playtime).toMatchObject({ completeness: "complete", value: 3600.25 });
+  });
+
+  it.each([
+    ["absent", {}, "absent"],
+    [
+      "malformed",
+      { header: { playtime: -1 }, info: { creation_version: "1.0.8" } },
+      "invalid-value",
+    ],
+  ] as const)("leaves %s identity facts unknown", (_label, sections, code) => {
+    const { identity } = extractSave({ ...sections, player: { cosmetic_unlocks: [] } });
+
+    expect(identity.creationVersion).toMatchObject({ completeness: "unknown", value: undefined });
+    expect(identity.playtime).toMatchObject({
+      completeness: "unknown",
+      diagnostics: [{ code, path: "header.playtime" }],
+      value: undefined,
+    });
+  });
+
+  it("feeds the additive import only the values it could read", () => {
+    const { completed } = extractSaveProgress({ player: { cosmetic_unlocks: [cosmeticId] } });
+
+    expect(completed).toHaveProperty("cosmetics", new Set([cosmeticId]));
+    expect(completed).not.toHaveProperty("unlockedPerks");
+    expect(completed).not.toHaveProperty("mineFloor");
   });
 });
