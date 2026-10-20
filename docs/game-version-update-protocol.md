@@ -142,10 +142,24 @@ added, removed, or reshaped, and which pipeline modules claim each root (see
 [game-asset-format.md](game-asset-format.md#checking-a-version)). Use it to find new or changed
 native domains, including unclaimed ones a new feature may need.
 
-Compare the previous and candidate datasets by domain. At minimum, inspect almanac entries and their
-canonical members, recipes, museum items, cosmetics, animal variants and cosmetics, pets, villagers,
-relationships and dates, skills and perks, quests, spells, progression ranges, visibility
-conditions, and acquisition sources.
+Generate the mechanical comparison with the report script, naming the baseline commit (the last
+release’s data commit, or `origin/main` before the candidate is committed):
+
+```sh
+pnpm run game-update:report -- <baseline-ref> > update-report.md
+```
+
+It prints, as markdown, the ID inventory by domain (additions & removals, with the almanac entries
+by canonical ID & by member so regroupings show), the contract-key changes (top-level keys & each
+domain’s entry fields), & the sprite deltas from the upload dry run. It exits 1 while that dry run
+still lists pending objects, so upload the sprites first; `--skip-sprites` omits the check when no
+sprites are staged, & the report then says production was not checked. It does not infer renames.
+`DOMAINS` in `scripts/game-update-report.ts` is the domain list, & its `COVERAGE` map is typed
+against the tracker-data contract, so a new top-level key must be classified there.
+
+Then inspect what the report cannot: value-only changes, relationships and dates, perks, progression
+ranges, visibility conditions, & acquisition sources, along with the review of each addition,
+removal, & regrouping it lists.
 
 Classify every compatibility-relevant difference:
 
@@ -215,9 +229,10 @@ The version-update issue or pull request must include a compatibility report wit
 - Any user-facing notice.
 - The rollback constraint for the release.
 
-Post the mechanical ID inventory (additions, removals, and renames by domain, compared from the
-baseline commit) as its own PR comment, as #41 did. It is the durable diff later updates compare
-against.
+Post the output of `pnpm run game-update:report -- <baseline-ref>` (the ID inventory by domain,
+compared from the baseline commit, with the contract-key changes & sprite deltas) as its own PR
+comment, as #41 did. It is the durable diff later updates compare against. Renames are the one part
+it cannot produce: add them by hand, each with its evidence.
 
 Use this conclusion when the review finds no incompatibility: “No persisted-state compatibility
 change is required”. Support that conclusion with the reviewed comparisons and tests.

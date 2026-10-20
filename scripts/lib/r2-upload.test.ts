@@ -5,6 +5,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  findPendingUploads,
   IMMUTABLE_CACHE_CONTROL,
   listFiles,
   r2UploadOptionsFromEnv,
@@ -126,6 +127,52 @@ describe("listFiles", () => {
   it("lists nested files as sorted, `/`-separated relative paths", async () => {
     const dir = tree({ "b.webp": "", "items/a.webp": "", "items/deep/c.webp": "" });
     await expect(listFiles(dir)).resolves.toEqual(["b.webp", "items/a.webp", "items/deep/c.webp"]);
+  });
+});
+
+describe("findPendingUploads", () => {
+  it("lists new, changed, & unreachable files, never current ones, without uploading", async () => {
+    const dir = tree({
+      "items/changed.webp": "changed",
+      "items/new.webp": "new",
+      "items/same.webp": "same",
+      "notes.txt": "x",
+    });
+    const io = fakeIo({
+      "https://assets.example/sprites/items/changed.webp": new Response(null, {
+        headers: { etag: `"${md5("old")}"` },
+      }),
+      "https://assets.example/sprites/items/same.webp": new Response(null, {
+        headers: { etag: `"${md5("same")}"` },
+      }),
+    });
+
+    await expect(findPendingUploads(sprites(dir), options, io)).resolves.toEqual([
+      { key: "sprites/items/changed.webp", status: "changed" },
+      { key: "sprites/items/new.webp", status: "missing" },
+    ]);
+    expect(io.puts).toEqual([]);
+  });
+
+  it("reports an unreachable origin as unknown instead of as a file to upload", async () => {
+    const dir = tree({ "a.webp": "" });
+    const io = fakeIo();
+    io.fetch = () => Promise.reject(new TypeError("fetch failed"));
+
+    await expect(findPendingUploads(sprites(dir), options, io)).resolves.toEqual([
+      { key: "sprites/a.webp", status: "unreachable" },
+    ]);
+  });
+
+  it("is empty when every object is current, & in exists mode when each exists", async () => {
+    const dir = tree({ "a.webp": "a" });
+    const io = fakeIo({
+      "https://assets.example/sprites/a.webp": new Response(null, { status: 200 }),
+    });
+
+    await expect(
+      findPendingUploads({ ...sprites(dir), skipMode: "exists" }, options, io),
+    ).resolves.toEqual([]);
   });
 });
 

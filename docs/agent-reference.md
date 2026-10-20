@@ -105,6 +105,7 @@ reason it was reviewed, rather than weakening the check.
 | `pnpm run verify`             | Full CI matrix locally (exception-only; see agent-verification.md) |
 | `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets                         |
 | `pnpm run data:diff [ref]`    | Path-level `tracker-data.json` changes from a ref (`origin/main`)  |
+| `pnpm run game-update:report` | Game-update review report (ID inventory, keys, sprite deltas)      |
 
 ## Enforcement boundaries
 

@@ -121,31 +121,90 @@ const defaultIo: R2UploadIo = {
   retryDelay: (attempt) => sleep(attempt * 1000),
 };
 
-async function isCurrent(
+/**
+ * How a local file compares with the public object: `current` (nothing to upload), `changed` (the
+ * object exists but its ETag differs), `missing` (no such object), or `unreachable` (the check
+ * itself failed, so the answer is unknown).
+ */
+export type RemoteStatus = "changed" | "current" | "missing" | "unreachable";
+
+async function remoteStatus(
   url: string,
   file: string,
   skipMode: SkipMode,
   io: R2UploadIo,
-): Promise<boolean> {
+): Promise<RemoteStatus> {
   let response: Response;
   try {
     // A unique query string misses the edge cache, which can hold a superseded copy of the bare URL
     // (one uploaded with the year-long immutable policy stays stale there long after a re-upload).
     response = await io.fetch(`${url}?check=${randomUUID()}`, { method: "HEAD" });
   } catch {
-    return false;
+    return "unreachable";
   }
   if (skipMode === "exists") {
-    return response.status === 200;
+    return response.status === 200 ? "current" : "missing";
   }
   const etag = response.ok ? response.headers.get("etag")?.replaceAll('"', "") : undefined;
   if (!etag) {
-    return false;
+    return "missing";
   }
   const md5 = createHash("md5")
     .update(await readFile(file))
     .digest("hex");
-  return etag === md5;
+  return etag === md5 ? "current" : "changed";
+}
+
+/** An unreachable check counts as not current, so an upload still happens. */
+async function isCurrent(
+  url: string,
+  file: string,
+  skipMode: SkipMode,
+  io: R2UploadIo,
+): Promise<boolean> {
+  return (await remoteStatus(url, file, skipMode, io)) === "current";
+}
+
+/** A file whose public object is absent, differs, or could not be checked. */
+export interface PendingUpload {
+  key: string;
+  status: Exclude<RemoteStatus, "current">;
+}
+
+/**
+ * What an upload of `tree` would send, without sending it: every file whose public object is not
+ * current, in sorted key order. The same check `r2UploadTree` makes before each put, so a dry run &
+ * this agree.
+ */
+export async function findPendingUploads(
+  tree: R2UploadTree,
+  options: R2UploadOptions,
+  io: R2UploadIo = defaultIo,
+): Promise<PendingUpload[]> {
+  const allFiles = await listFiles(tree.dir);
+  const files = allFiles.filter((file) => file.endsWith(tree.extension));
+  const pending: PendingUpload[] = [];
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    while (next < files.length) {
+      const file = files[next];
+      next += 1;
+      const key = `${tree.keyPrefix}${file}`;
+      // oxlint-disable-next-line eslint/no-await-in-loop -- each worker checks one file at a time; the pool bounds concurrency
+      const status = await remoteStatus(
+        `${options.origin}/${key}`,
+        path.join(tree.dir, file),
+        tree.skipMode,
+        io,
+      );
+      if (status !== "current") pending.push({ key, status });
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(options.parallel, files.length) }, worker));
+  return pending.toSorted((a, b) => {
+    if (a.key < b.key) return -1;
+    return a.key > b.key ? 1 : 0;
+  });
 }
 
 async function uploadOne(

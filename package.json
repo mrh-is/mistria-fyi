@@ -17,6 +17,7 @@
     "check:routes": "tsx scripts/check-routes.ts",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "data:diff": "node scripts/data-diff.ts",
+    "game-update:report": "node scripts/game-update-report.ts",
     "cloudflare:logs": "tsx scripts/cloudflare-pages-logs.ts",
     "lint": "node scripts/lint-files.ts",
     "lint:fix": "node scripts/lint-files.ts --fix",
