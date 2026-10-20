@@ -12,6 +12,7 @@ import {
   findMissingLicenses,
   LICENSES_FILE_NAME,
   licensesPlugin,
+  noticeBlock,
   packageRootOf,
   readLicenseEntry,
   renderLicenses,
@@ -63,6 +64,12 @@ describe("packageRootOf", () => {
     );
   });
 
+  it("resolves a nested node_modules to the inner package", () => {
+    expect(packageRootOf("/repo/node_modules/outer/node_modules/inner/index.js")).toBe(
+      "/repo/node_modules/outer/node_modules/inner",
+    );
+  });
+
   it("ignores query strings, virtual-module markers, & modules outside node_modules", () => {
     expect(packageRootOf("\0/repo/node_modules/svelte/src/index.js?commonjs-proxy")).toBe(
       "/repo/node_modules/svelte",
@@ -98,6 +105,18 @@ describe("readLicenseEntry", () => {
     expect(readLicenseEntry(root)).toMatchObject({ declared: "MIT OR Apache-2.0", texts: ["Text"] });
   });
 
+  it("recognizes suffixed & prose-extension notices but not source files named license", () => {
+    const root = installPackage("naming", {
+      "LICENSE-APACHE-2.0": "Apache text",
+      "LICENSE-MIT": "MIT text",
+      "license.js": "export const license = 'MIT';",
+      "license.txt": "Plain text",
+      "licenses.json": "{}",
+    });
+
+    expect(readLicenseEntry(root).texts).toEqual(["Apache text", "MIT text", "Plain text"]);
+  });
+
   it("reports no texts for a package that ships none, or only blank ones", () => {
     const root = installPackage("bare", { LICENSE: "  \n" });
 
@@ -110,6 +129,12 @@ describe("findMissingLicenses", () => {
     const bare = entry({ name: "bare", texts: [] });
 
     expect(findMissingLicenses([entry(), bare], {})).toEqual([bare]);
+  });
+
+  it("does not treat an inherited object key as an allowlist entry", () => {
+    const bare = entry({ name: "constructor", texts: [] });
+
+    expect(findMissingLicenses([bare], {})).toEqual([bare]);
   });
 
   it("skips packages on the reviewed allowlist", () => {
@@ -166,6 +191,31 @@ describe("cssImportedPackages", () => {
     ].join("\n");
 
     expect(cssImportedPackages(css)).toEqual(["@scope/pkg", "tailwindcss", "tw-animate-css"]);
+  });
+
+  it("skips comments & URL imports", () => {
+    const css = [
+      '/* @import "commented-out"; */',
+      '@import "https://fonts.example.com/css";',
+      '@import "//cdn.example.com/a.css";',
+      '@import url("https://example.com/b.css");',
+      '@import "real-package";',
+    ].join("\n");
+
+    expect(cssImportedPackages(css)).toEqual(["real-package"]);
+  });
+});
+
+describe("noticeBlock", () => {
+  const markdown = "# Notices\n\n## One\n\n```\nfirst text\n```\n\n## Two\n\n```\nsecond\ntext\n```\n";
+
+  it("returns the first fenced block under the heading", () => {
+    expect(noticeBlock(markdown, "## Two")).toBe("second\ntext");
+  });
+
+  it("throws when the heading or its block is missing", () => {
+    expect(() => noticeBlock(markdown, "## Three")).toThrow(/No fenced license text/);
+    expect(() => noticeBlock("## Empty\n\nprose only\n", "## Empty")).toThrow(/No fenced/);
   });
 });
 
@@ -244,9 +294,74 @@ describe("licensesPlugin", () => {
     expect(file?.source).toContain("css-lib 1.2.3");
   });
 
+  it("includes a scoped package a listed stylesheet imports", () => {
+    installPackage("@scope/theme", { LICENSE: "Scoped license" });
+    mkdirSync(path.join(project, "src"));
+    writeFileSync(path.join(project, "src/app.css"), '@import "@scope/theme/base.css";\n');
+
+    const [file] = run(configured({ allowlist: {}, stylesheets: ["src/app.css"] }), "client", []);
+
+    expect(file?.source).toContain("@scope/theme 1.2.3");
+    expect(file?.source).toContain("Scoped license");
+  });
+
+  it("attributes a nested package to itself, not its parent", () => {
+    const outer = installPackage("outer", { LICENSE: "Outer license" });
+    const inner = path.join(outer, "node_modules/inner");
+    mkdirSync(inner, { recursive: true });
+    writeFileSync(path.join(inner, "package.json"), '{"name":"inner","version":"9.0.0"}');
+    writeFileSync(path.join(inner, "LICENSE"), "Inner license");
+
+    const [file] = run(configured({ allowlist: {} }), "client", [
+      toPosixPath(path.join(inner, "index.js")),
+    ]);
+
+    expect(file?.source).toContain("inner 9.0.0");
+    expect(file?.source).not.toContain("outer 1.2.3");
+  });
+
+  it("lists copied code, with its license text, once a module of it rendered", () => {
+    const plugin = configured({
+      allowlist: {},
+      vendored: [
+        {
+          declared: "MIT",
+          licenseText: () => "Vendored MIT text",
+          name: "vendored-lib",
+          prefix: "src/lib/ui/",
+        },
+      ],
+    });
+
+    const [rendered] = run(plugin, "client", [
+      toPosixPath(path.join(project, "src/lib/ui/button.svelte")),
+    ]);
+    const [unused] = run(plugin, "client", [toPosixPath(path.join(project, "src/lib/other.ts"))]);
+
+    expect(rendered?.source).toContain("vendored-lib");
+    expect(rendered?.source).toContain("Vendored MIT text");
+    expect(unused?.source).not.toContain("vendored-lib");
+  });
+
+  it("lists the package behind generated project code", () => {
+    installPackage("generator", { LICENSE: "Generator license" });
+
+    const [file] = run(
+      configured({ allowlist: {}, generatedFrom: { "src/lib/generated/": "generator" } }),
+      "client",
+      [toPosixPath(path.join(project, "src/lib/generated/runtime.js"))],
+    );
+
+    expect(file?.source).toContain("generator 1.2.3");
+    expect(file?.source).toContain("Generator license");
+  });
+
   it("leaves the server & service worker builds alone", () => {
     const root = installPackage("bare", {});
+    const plugin = configured({ allowlist: {} });
+    const ids = [toPosixPath(path.join(root, "i.js"))];
 
-    expect(run(configured({ allowlist: {} }), "ssr", [toPosixPath(path.join(root, "i.js"))])).toEqual([]);
+    expect(run(plugin, "ssr", ids)).toEqual([]);
+    expect(run(plugin, "serviceWorker", ids)).toEqual([]);
   });
 });
