@@ -46,23 +46,6 @@ export function serializeCsp(directives: CspDirectives): string {
 }
 
 /**
- * Renders the Cloudflare Pages `_headers` file. The adapter appends its own `/_app/*` cache rules
- * to whatever this produces.
- */
-export function renderHeadersFile(directives: CspDirectives): string {
-  const headers: [string, string][] = [
-    ["Content-Security-Policy", serializeCsp(directives)],
-    ...Object.entries(SECURITY_HEADERS),
-  ];
-  return [
-    "# Generated at build time from src/lib/security/. Do not edit; it is not committed.",
-    "/*",
-    ...headers.map(([name, value]) => `  ${name}: ${value}`),
-    "",
-  ].join("\n");
-}
-
-/**
  * Adds any security header the response doesn't already set. Some responses (`Response.redirect`,
  * a proxied `fetch`) have immutable headers; those are copied into a mutable response first.
  */

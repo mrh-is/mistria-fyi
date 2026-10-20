@@ -1,24 +1,17 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { headersFilePlugin } from "../build/headers-file.js";
 import { CSP_DIRECTIVES, cspDirectives } from "./csp-directives.js";
-import {
-  renderHeadersFile,
-  SECURITY_HEADERS,
-  serializeCsp,
-  withSecurityHeaders,
-} from "./security-headers.js";
-
-import type { Plugin } from "vite";
+import { APP_HTML_SCRIPT_HASHES, inlineScriptHashes } from "./inline-scripts.js";
+import { SECURITY_HEADERS, serializeCsp, withSecurityHeaders } from "./security-headers.js";
 
 const appHtml = readFileSync(path.resolve(import.meta.dirname, "../../app.html"), "utf8");
 
 /**
  * The full production policy, pinned so any change to it is deliberate and visible in review.
- * Directive order is irrelevant to browsers; it follows `cspDirectives()`.
+ * Directive order is irrelevant to browsers; it follows `cspDirectives()`. The two hashes are
+ * `app.html`'s inline scripts; editing either script changes its hash here.
  */
 const PRODUCTION_CSP = [
   "base-uri 'self'",
@@ -31,7 +24,7 @@ const PRODUCTION_CSP = [
   "img-src 'self' data: blob: https://assets.mistria.fyi",
   "manifest-src 'self'",
   "object-src 'none'",
-  "script-src 'self' https://challenges.cloudflare.com",
+  "script-src 'self' 'sha256-XIQPz/EHVHtaNDpPlKdP9QmbA8sA6JI+HC1FdpuSf5U=' 'sha256-skEiY6WdeTf4zpIoOxmWHD8LMMXXVPqpMaKmtDlLHHI=' https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline'",
   "worker-src 'self' blob:",
 ].join("; ");
@@ -71,49 +64,37 @@ describe("Content-Security-Policy", () => {
     );
   });
 
-  it("gives inline scripts in app.html the SvelteKit nonce placeholder", () => {
-    const scripts = [...appHtml.matchAll(/<script([^>]*)>/g)].map(([, attrs]) => attrs);
-    const inlineScripts = scripts.filter((attrs) => !attrs.includes("src="));
-
-    expect(inlineScripts.length).toBeGreaterThanOrEqual(2);
-    for (const attrs of inlineScripts) {
-      expect(attrs).toContain('nonce="%sveltekit.nonce%"');
+  // SvelteKit refuses to prerender a template containing `%sveltekit.nonce%`, and a nonce baked
+  // into static HTML would be no secret anyway, so app.html's scripts are allowed by hash.
+  it("allows every inline script in app.html by hash, not by nonce", () => {
+    expect(appHtml).not.toContain("%sveltekit.nonce%");
+    expect(APP_HTML_SCRIPT_HASHES).toHaveLength(2);
+    expect(inlineScriptHashes(appHtml)).toEqual(APP_HTML_SCRIPT_HASHES);
+    for (const hash of APP_HTML_SCRIPT_HASHES) {
+      expect(CSP_DIRECTIVES["script-src"]).toContain(hash);
     }
   });
 });
 
-describe("_headers", () => {
-  it("applies the CSP and every security header to all routes", () => {
-    expect(renderHeadersFile(CSP_DIRECTIVES).split("\n")).toEqual([
-      "# Generated at build time from src/lib/security/. Do not edit; it is not committed.",
-      "/*",
-      `  Content-Security-Policy: ${PRODUCTION_CSP}`,
-      "  Permissions-Policy: camera=(self), geolocation=(), microphone=(), payment=(), usb=()",
-      "  Referrer-Policy: strict-origin-when-cross-origin",
-      "  Strict-Transport-Security: max-age=31536000; includeSubDomains",
-      "  X-Content-Type-Options: nosniff",
-      "",
+describe("inlineScriptHashes", () => {
+  it("hashes the exact text of each executable inline script", () => {
+    // `echo -n 'alert(1)' | openssl dgst -sha256 -binary | base64`
+    expect(inlineScriptHashes("<script>alert(1)</script>")).toEqual([
+      "sha256-bhHHL3z2vDgxUt0W3dWQOrprscmda2Y5pLsLg4GF+pI=",
+    ]);
+    expect(inlineScriptHashes('<script type="module">alert(1)</script>')).toEqual([
+      "sha256-bhHHL3z2vDgxUt0W3dWQOrprscmda2Y5pLsLg4GF+pI=",
     ]);
   });
 
-  describe("headersFilePlugin", () => {
-    let directory: string | undefined;
-
-    afterEach(() => {
-      if (directory !== undefined) rmSync(directory, { force: true, recursive: true });
-    });
-
-    it("writes the file for production builds only", () => {
-      directory = mkdtempSync(path.join(tmpdir(), "headers-file-"));
-      const plugin: Plugin = headersFilePlugin("contents", directory);
-      expect(plugin.apply).toBe("build");
-
-      const { buildStart } = plugin;
-      if (typeof buildStart !== "function") throw new Error("buildStart is not a function");
-      Reflect.apply(buildStart, {}, [{}]);
-
-      expect(readFileSync(path.join(directory, "_headers"), "utf8")).toBe("contents");
-    });
+  it("skips external scripts, inert data blocks, & duplicates", () => {
+    const html = [
+      '<script src="/_app/start.js"></script>',
+      '<script type="application/json" data-sveltekit-fetched>{"a":1}</script>',
+      "<script>x()</script>",
+      "<script>x()</script>",
+    ].join("");
+    expect(inlineScriptHashes(html)).toHaveLength(1);
   });
 });
 

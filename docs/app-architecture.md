@@ -227,9 +227,25 @@ usable anywhere, though unlocked through mine progression.
   responses emitted before `handle`, such as trailing-slash normalization redirects
   (`HEAD /en/everything/` returns `308`), do not receive these headers. Pages never applies
   `_headers` to Function responses.
-- **Static files** — the build writes `_headers` (gitignored) from the same directives, and
-  `@sveltejs/adapter-cloudflare` copies it into `build/` with its own cache rules. Never commit or
-  hand-edit it.
+- **Static files** — `withHeadersFile` (`src/lib/build/headers-file.ts`) wraps the adapter and
+  writes `_headers` (gitignored) from the same directives just before `@sveltejs/adapter-cloudflare`
+  copies it into `build/` with its own cache rules. Never commit or hand-edit it.
+
+`app.html`'s two inline scripts are allowed by SHA-256 hash in every policy, not by nonce: SvelteKit
+refuses to prerender a template containing `%sveltekit.nonce%`. Editing either script changes its
+hash, which the build recomputes and `security-headers.test.ts` pins.
+
+### Prerendered pages
+
+A prerendered page (`/data` & `/settings` in every locale, listed in
+`src/lib/i18n/prerender-entries.ts`) is a static file, so its CSP comes from `_headers`, not
+SvelteKit. SvelteKit also writes a `<meta http-equiv>` policy into the page, hashing its inline
+start script; a browser enforces both policies, so the `/*` header (with no hash for that script)
+would block hydration. Each prerendered route therefore gets its own `_headers` rule
+(`/:locale/data`) that detaches the inherited CSP (`! Content-Security-Policy`) and sets the same
+directives plus that route's start-script hashes. The header keeps `frame-ancestors`, which a
+`<meta>` policy can't carry. A prerendered page can't read its query on the server, so `?section=`
+is handled in the browser. See [the decision record](decisions/2026-10-20-prerender-csp.md).
 
 `security-headers.test.ts` pins the full production policy, so any change to it shows up in review.
 The asset origin lives in `src/lib/asset-origin.ts`; `asset-origin.test.ts` holds the copies that
