@@ -27,6 +27,7 @@ jobs:
     outputs:
       browser: ${{ steps.filter.outputs.browser }}
       cleanup: ${{ steps.filter.outputs.cleanup }}
+      messages: ${{ steps.filter.outputs.messages }}
     steps:
       - if: github.event_name == 'push'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -45,6 +46,7 @@ jobs:
         run: |
           browser=true
           cleanup=false
+          messages=false
           files=
           if [ "$EVENT_NAME" = "pull_request" ]; then
             browser=false
@@ -66,6 +68,9 @@ jobs:
               scripts/cleanup-merged-worktrees.ts) cleanup=true ;;
             esac
             case "$file" in
+              messages/* | scripts/check-locale-sync.* | scripts/locale-sync-allowlist.json) messages=true ;;
+            esac
+            case "$file" in
               src/* | static/* | tests/* | messages/* | project.inlang/* | _headers | \
                 scripts/playwright-* | playwright*.config.ts | svelte.config.* | vite.config.* | \
                 package.json | pnpm-lock.yaml | .node-version | .github/workflows/ci.yml)
@@ -73,8 +78,11 @@ jobs:
                 ;;
             esac
           done <<< "$files"
+          # The stale-translation check compares a pull request with its base; other events skip it.
+          [ "$EVENT_NAME" = "pull_request" ] || messages=false
           echo "browser=$browser" >> "$GITHUB_OUTPUT"
           echo "cleanup=$cleanup" >> "$GITHUB_OUTPUT"
+          echo "messages=$messages" >> "$GITHUB_OUTPUT"
 
   lint:
     name: Lint
@@ -95,6 +103,30 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec svelte-kit sync
       - run: pnpm run verify -- --step=lint
+
+  # A pull request that changes an English message must change each locale's value too (or allowlist
+  # the key). The checkout is the PR's merge commit, so HEAD^1 is the base branch tip it merges into.
+  locale-sync:
+    name: Locale sync
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.messages == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
+        with:
+          cache: true
+          save-cache: false
+          install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check:locale-sync -- --base HEAD^1
 
   # Fails on moderate or worse advisories in the lockfile. Nightly runs catch advisories published
   # after a merge. Accepted exceptions live in pnpm-workspace.yaml's auditConfig.
@@ -376,7 +408,7 @@ jobs:
   ci-passed:
     name: CI passed
     if: always()
-    needs: [changes, lint, audit, check, test, build, accessibility, pwa]
+    needs: [changes, lint, locale-sync, audit, check, test, build, accessibility, pwa]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -472,6 +472,71 @@ describe("CI workflow browser suites", () => {
   });
 });
 
+describe("CI workflow locale sync", () => {
+  it("exposes the change detector's messages output", () => {
+    expect(jobs.changes.outputs?.messages).toBe("${{ steps.filter.outputs.messages }}");
+  });
+
+  it.each([
+    ["pull_request", "messages/fr.json", true],
+    ["pull_request", "scripts/locale-sync-allowlist.json", true],
+    ["pull_request", "scripts/check-locale-sync.ts", true],
+    ["pull_request", "src/app.css", false],
+    ["push", "messages/fr.json", false],
+    ["schedule", "messages/fr.json", false],
+    ["workflow_dispatch", "messages/fr.json", false],
+  ] as const)("detects message changes for %s: %s", (event, files, expected) => {
+    const directory = mkdtempSync(join(tmpdir(), "ci-filter-"));
+    const output = join(directory, "output");
+    try {
+      const filter = jobs.changes.steps?.find((step) => step.id === "filter")?.run ?? "";
+      const result = spawnSync(
+        "bash",
+        [
+          "-eu",
+          "-o",
+          "pipefail",
+          "-c",
+          `
+        gh() { printf '%s\\n' "$CHANGED_FILES"; }
+        git() { if [[ $1 == diff ]]; then printf '%s\\n' "$CHANGED_FILES"; fi; }
+        ${filter}
+      `,
+        ],
+        {
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            BASE_SHA: "base",
+            CHANGED_FILES: files,
+            EVENT_NAME: event,
+            GITHUB_OUTPUT: output,
+            PR_NUMBER: "689",
+            REPOSITORY: "owner/repo",
+          },
+        },
+      );
+      expect(result.status, result.stderr).toBe(0);
+      expect(readFileSync(output, "utf8")).toContain(`messages=${String(expected)}`);
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
+    }
+  });
+
+  it("runs the check on pull requests that change messages, against the merge checkout's base", () => {
+    const job = jobs["locale-sync"];
+    expect(job.needs).toBe("changes");
+    expect(job.if).toBe(
+      "github.event_name == 'pull_request' && needs.changes.outputs.messages == 'true'",
+    );
+    const checkout = job.steps?.find((step) => step.uses?.startsWith("actions/checkout@"));
+    // HEAD^1 of the PR's merge commit is the base branch tip, so two commits of history suffice.
+    expect(checkout?.with?.["fetch-depth"]).toBe(2);
+    expect(runCommands(job)).toContain("pnpm run check:locale-sync -- --base HEAD^1");
+    expect(jobs["ci-passed"].needs).toContain("locale-sync");
+  });
+});
+
 describe("CI workflow gate", () => {
   it("aggregates every merge-relevant job into one always-reported check", () => {
     expect(jobs["ci-passed"].if).toBe("always()");
