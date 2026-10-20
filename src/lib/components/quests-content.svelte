@@ -118,15 +118,17 @@
 
 {#each sectionViews as { categorySpoilered, completedCount, scopedRows, section, visibleRows } (section.questType)}
   <SpoilerSection name={typeLabel(section.questType)} spoilered={categorySpoilered}>
-    {#if visibleRows.length > 0}
-      <ExpandableSection
-        {locale}
-        count={completedCount}
-        name={typeLabel(section.questType)}
-        reportCategory="quest-section"
-        reportEntityId={section.questType}
-        total={scopedRows.length}
-      >
+    <ExpandableSection
+      {locale}
+      count={completedCount}
+      name={typeLabel(section.questType)}
+      reportCategory="quest-section"
+      reportEntityId={section.questType}
+      total={scopedRows.length}
+    >
+      {#if visibleRows.length === 0 && scopedRows.length > 0}
+        <TrackerEmptyState message={m.all_completed_message()} />
+      {:else}
         <TrackerRowList getKey={(row) => row.id} items={visibleRows}>
           {#snippet row(row)}
             {#if row.kind === "craving"}
@@ -166,10 +168,8 @@
             {/if}
           {/snippet}
         </TrackerRowList>
-      </ExpandableSection>
-    {:else}
-      <TrackerEmptyState />
-    {/if}
+      {/if}
+    </ExpandableSection>
   </SpoilerSection>
 {/each}
 
