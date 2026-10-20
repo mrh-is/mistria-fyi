@@ -129,6 +129,19 @@ mount appearances (`giant_chicken_white` & `giant_chicken_gold`, from the Big Eg
 the import routes an ID to mount appearances when it isn’t a horse breed. The default `mistmare`
 appearance never appears there; the import infers it from `gamedata.scene_history` (below).
 
+Starting player cosmetics can be absent from `cosmetic_unlocks`; import unions every cosmetic with a
+native `default` source into the saved unlocks. It also seeds animal variants with a `default`
+source, matching the normal `NewGame` branch’s `default_unlocked` initialization, even if the saved
+variant list is absent. These defaults represent unlocked appearances, not owned animals. Default
+recipes were already credited independently of `recipe_unlocks`.
+
+The default-source audit covers the other tracked domains too. Animal cosmetics, pet cosmetic sets,
+pet skins, mount appearances, dates, spells, and perks have no starting-default grants in their
+current extractors. Almanac items still require `items_acquired`: an item’s `default` source can
+describe a story/world object or acquisition path, rather than an item the player has acquired, so
+it must not automatically mark an almanac entry discovered. Museum donations likewise require save
+evidence.
+
 ### Skills & spells
 
 | Field            | Type                     | Description                                              |
@@ -260,3 +273,13 @@ versions, though new items, recipes, and quests are added in content updates.
 3. `items_acquired` alone forms the almanac; ignore `items_sold` and `recipes_created` for it.
 4. `t2_world_facts` villager heart levels are floats in practice; floor them for display.
 5. Skill levels come from `t2_world_facts`, not `skill_xp` (which stores raw XP).
+6. Every heart & skill level key is present in v1.0.8 saves, early & late, so a missing one means
+   the save is incomplete for that field, not that the level is zero.
+7. Saves list game IDs the tracker deliberately doesn't track: items outside the almanac, the
+   cosmetic token items (`cosmetic`, `animal_cosmetic`, `pet_cosmetic`), treasure chests
+   (`treasure_box_<tier>`, tracked as chest tiers), and the Mistmare's perks (`horsepower`,
+   `harvest_horse`, `nice_ride`). The importer counts these as known-but-untracked; anything else it
+   doesn't recognize marks its field incomplete.
+8. `info.creation_version` & `header.playtime` identify a save across imports: the first never
+   changes, and the second only grows as the save is played. The importer reads nothing else from
+   either entry.

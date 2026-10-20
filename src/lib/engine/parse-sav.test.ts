@@ -136,6 +136,31 @@ describe("parseSavArchive", () => {
     expect(bundle.gamedata).toEqual({ day: 1 });
   });
 
+  it("keeps the header & info entries that identify the save", async () => {
+    const header = { name: "TestPlayer", playtime: 3600.5 };
+    const info = { creation_version: { major: 1, minor: 0, patch: 8, pre: null } };
+    const raw = buildRawSav({ header, info, player: { name: "Solo" } });
+    const bundle = await parseSavArchive(await compressToFile(raw));
+
+    expect(bundle.header).toEqual(header);
+    expect(bundle.info).toEqual(info);
+  });
+
+  it("leaves out an unreadable identity entry rather than rejecting the save", async () => {
+    const raw = buildRawSav({ header: "{not json", info: "[1, 2]", player: { name: "Solo" } });
+    const bundle = await parseSavArchive(await compressToFile(raw));
+
+    expect(bundle).toEqual({ player: { name: "Solo" } });
+  });
+
+  it("needs a progress entry beside the identity entries", async () => {
+    const raw = buildRawSav({ header: { playtime: 1 }, info: {} });
+
+    await expectSavArchiveError(parseSavArchive(await compressToFile(raw)), {
+      code: "no-save-data",
+    });
+  });
+
   it("throws on file with no recognized entries", async () => {
     const raw = buildRawSav({ settings: { volume: 0.5 } });
     const file = await compressToFile(raw);
