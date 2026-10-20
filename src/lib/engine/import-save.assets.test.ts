@@ -123,6 +123,23 @@ describe("fields mutated from a real save", () => {
     expect(warnings).toContainEqual(fields.cosmetics.diagnostics[0]);
   });
 
+  it.each([
+    ["missing", undefined],
+    ["renamed", "mount_horse"],
+  ])("marks mount appearances unknown when the horse's list is %s", (_label, renamedKey) => {
+    const { fields } = extractSave(
+      mutated(bundle, (copy) => {
+        const lists = copy.player?.animal_variant_unlocks as Record<string, unknown>;
+        if (renamedKey) lists[renamedKey] = lists.horse;
+        delete lists.horse;
+      }),
+    );
+
+    expect(fields.mountAppearances.completeness).toBe("unknown");
+    expect(fields.mountAppearances.value).toContain("mistmare");
+    expect(fields.animals.completeness).toBe("unknown");
+  });
+
   it("marks levels unknown when a villager's heart level is missing", () => {
     const villagerId = Object.keys(trackerData.villagers)[0];
     const { fields } = extractSave(

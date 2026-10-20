@@ -310,7 +310,8 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   }
 
   // ── Animal variants ──
-  // An unrecognized ID in any animal's list may be a mount appearance, so it concerns both fields.
+  // Mount appearances share these lists (the horse's, in practice), so anything that leaves a list
+  // unread (an absent list, an unrecognized animal key, or an unrecognized ID) concerns both fields.
   const variantFields = ["animals", "mountAppearances"] as const;
   const playerVariantsByAnimal = player.stringListRecord("animal_variant_unlocks", variantFields);
   let animals: ProgressState["animals"] | undefined;
@@ -321,7 +322,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
       const validVariants = new Set(animal.variantTiers.flatMap((tier) => Object.keys(tier)));
       const matched = new Set<AnimalVariantId>();
       if (!Object.hasOwn(playerVariantsByAnimal, animalId)) {
-        collector.report({ code: "absent", path }, ["animals"]);
+        collector.report({ code: "absent", path }, variantFields);
       }
       for (const variant of playerVariantsByAnimal[animalId] ?? []) {
         if (validVariants.has(variant)) {
@@ -334,9 +335,12 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
       }
       animals[animalId as AnimalId] = matched;
     }
-    reportUnknownAnimals(playerVariantsByAnimal, "player.animal_variant_unlocks", collector, [
-      "animals",
-    ]);
+    reportUnknownAnimals(
+      playerVariantsByAnimal,
+      "player.animal_variant_unlocks",
+      collector,
+      variantFields,
+    );
   }
 
   // ── Animal cosmetics ──

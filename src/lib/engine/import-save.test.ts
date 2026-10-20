@@ -672,6 +672,63 @@ describe("extractSave", () => {
     ]);
   });
 
+  describe("mount appearances, which share the animals' variant lists", () => {
+    const animalIds = recordKeys(trackerData.animals);
+    const allLists = Object.fromEntries(animalIds.map((id) => [id, []]));
+    const { horse: _horse, ...withoutHorse } = allLists as Record<string, never[]>;
+
+    it("are complete when the scene history & every animal's list are read", () => {
+      const { fields } = extractSave({
+        gamedata: { scene_history: [] },
+        player: { animal_variant_unlocks: allLists },
+      });
+
+      expect(fields.mountAppearances).toMatchObject({ completeness: "complete", value: new Set() });
+    });
+
+    it("are unknown when every animal's list is missing, despite a readable scene history", () => {
+      const { fields } = extractSave({
+        gamedata: { scene_history: [] },
+        player: { animal_variant_unlocks: {} },
+      });
+
+      expect(fields.mountAppearances.completeness).toBe("unknown");
+      expect(fields.mountAppearances.diagnostics).toContainEqual({
+        code: "absent",
+        path: "player.animal_variant_unlocks.horse",
+      });
+    });
+
+    it("are unknown when the horse's list is missing", () => {
+      const { fields } = extractSave({
+        gamedata: { scene_history: ["reveal_mistmare"] },
+        player: { animal_variant_unlocks: withoutHorse },
+      });
+
+      expect(fields.mountAppearances).toMatchObject({
+        completeness: "unknown",
+        diagnostics: [{ code: "absent", path: "player.animal_variant_unlocks.horse" }],
+        value: new Set(["mistmare"]),
+      });
+    });
+
+    it("are unknown when the horse's list sits under a renamed key", () => {
+      const { fields } = extractSave({
+        gamedata: { scene_history: [] },
+        player: {
+          animal_variant_unlocks: { ...withoutHorse, mount_horse: ["giant_chicken_gold"] },
+        },
+      });
+
+      expect(fields.mountAppearances.completeness).toBe("unknown");
+      expect(fields.mountAppearances.diagnostics).toContainEqual({
+        code: "unknown-id",
+        id: "mount_horse",
+        path: "player.animal_variant_unlocks",
+      });
+    });
+  });
+
   it("keeps a level clamped from above complete, but not a negative one", () => {
     const clamped = extractSave({ gamedata: { maximum_mines_level: 9999 } });
     expect(clamped.fields.mineFloor).toMatchObject({
