@@ -16,6 +16,7 @@ import type {
   AnimalVariantId,
   CosmeticId,
   ItemId,
+  MountAppearanceId,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -28,6 +29,14 @@ import type {
 import type { MergeResult, ProgressState, QuestState } from "#lib/types/user-progress.js";
 
 import type { SaveBundle, SaveSection } from "./save-bundle.js";
+
+/** `obj_horse_statue.gml` plays this scene as it grants the Mistmare, its default appearance. */
+const MISTMARE_REVEAL_CUTSCENE = "reveal_mistmare";
+const MISTMARE_APPEARANCE = "mistmare" as MountAppearanceId;
+
+function isMountAppearance(id: string): id is MountAppearanceId {
+  return Object.hasOwn(trackerData.mount.appearances, id);
+}
 
 // ─── Import result ──────────────────────────────────────────────────
 
@@ -141,6 +150,13 @@ export function extractSaveProgress(bundle: SaveBundle): {
     }
   }
 
+  // ── Mount appearances ──
+  // The game files the mount's appearances under the horse's variant unlocks, beside the breeds.
+  const mountAppearances = new Set<MountAppearanceId>();
+  if (gamedata.stringList("scene_history").includes(MISTMARE_REVEAL_CUTSCENE)) {
+    mountAppearances.add(MISTMARE_APPEARANCE);
+  }
+
   // ── Animal variants ──
   const animalVariants: Record<string, Set<AnimalVariantId>> = {};
   const playerVariantsByAnimal = player.stringListRecord("animal_variant_unlocks");
@@ -154,6 +170,8 @@ export function extractSaveProgress(bundle: SaveBundle): {
     for (const v of playerVariants) {
       if (validVariants.has(v)) {
         matched.add(v as AnimalVariantId);
+      } else if (isMountAppearance(v)) {
+        mountAppearances.add(v);
       } else {
         warnings.push({
           code: "unknown-id",
@@ -362,6 +380,7 @@ export function extractSaveProgress(bundle: SaveBundle): {
       hasUpperFloor,
       heartLevels,
       mineFloor,
+      mountAppearances,
       museum: museumIds,
       petCosmetics,
       petSkins,

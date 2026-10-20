@@ -124,6 +124,11 @@ Use `recipe_unlocks` as the authoritative source.
 | `pet_cosmetic_sets_unlocked` | `string[]`                 | Pet cosmetic set IDs                      |
 | `seen_cosmetics`             | `string[]`                 | Cosmetics the player has viewed in the UI |
 
+The Mistmare’s appearances share the horse’s list: `animal_variant_unlocks.horse` holds breeds and
+mount appearances (`giant_chicken_white` & `giant_chicken_gold`, from the Big Egg) side by side, so
+the import routes an ID to mount appearances when it isn’t a horse breed. The default `mistmare`
+appearance never appears there; the import infers it from `gamedata.scene_history` (below).
+
 ### Skills & spells
 
 | Field            | Type                     | Description                                              |
@@ -157,11 +162,12 @@ World-level state shared across all save slots.
 
 ### Fields used by the tracker
 
-| Field                 | Type                      | Description                                   |
-| --------------------- | ------------------------- | --------------------------------------------- |
-| `maximum_mines_level` | `number`                  | Deepest mines floor reached                   |
-| `museum_progress`     | `string[]`                | Item IDs donated to the museum                |
-| `t2_world_facts`      | `Record<string, unknown>` | Large key-value store for world state (below) |
+| Field                 | Type                      | Description                                                |
+| --------------------- | ------------------------- | ---------------------------------------------------------- |
+| `maximum_mines_level` | `number`                  | Deepest mines floor reached                                |
+| `museum_progress`     | `string[]`                | Item IDs donated to the museum                             |
+| `scene_history`       | `string[]`                | Cutscene IDs played; `reveal_mistmare` grants the Mistmare |
+| `t2_world_facts`      | `Record<string, unknown>` | Large key-value store for world state (below)              |
 
 ### `t2_world_facts`
 

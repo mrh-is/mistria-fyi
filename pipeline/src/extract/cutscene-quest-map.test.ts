@@ -41,6 +41,77 @@ describe("buildCutsceneQuestMap", () => {
     });
   });
 
+  it("maps a setup cutscene to the quest its follow-up scene starts", () => {
+    const fiddle = makeCutsceneFiddle({
+      cutscenes: {
+        find_the_weathervane: {
+          quest_to_start: "find_the_weathervane",
+          requirements: { seen_cutscene: "find_the_weathervane_setup" },
+        },
+        find_the_weathervane_setup: {},
+      },
+    });
+    const map = buildCutsceneQuestMap(fiddle);
+    expect(map.find_the_weathervane_setup).toEqual({
+      phase: "available",
+      questId: "find_the_weathervane",
+    });
+  });
+
+  it("keeps a setup cutscene's own quest link over its follow-up's", () => {
+    const fiddle = makeCutsceneFiddle({
+      cutscenes: {
+        follow_up: { quest_to_start: "later_quest", requirements: { seen_cutscene: "setup" } },
+        setup: { quest_to_progress: "earlier_quest" },
+      },
+    });
+    expect(buildCutsceneQuestMap(fiddle).setup).toEqual({
+      phase: "completed",
+      questId: "earlier_quest",
+    });
+  });
+
+  it("skips a setup cutscene whose follow-up carries other gates", () => {
+    const fiddle = makeCutsceneFiddle({
+      cutscenes: {
+        follow_up: {
+          quest_to_start: "later_quest",
+          requirements: { is_season: "fall", seen_cutscene: "setup" },
+        },
+        setup: {},
+      },
+    });
+    expect(buildCutsceneQuestMap(fiddle).setup).toBeUndefined();
+  });
+
+  it("throws when two quests claim one setup cutscene", () => {
+    const fiddle = makeCutsceneFiddle({
+      cutscenes: {
+        first: { quest_to_start: "first_quest", requirements: { seen_cutscene: "setup" } },
+        second: { quest_to_start: "second_quest", requirements: { seen_cutscene: "setup" } },
+        setup: {},
+      },
+    });
+    expect(() => buildCutsceneQuestMap(fiddle)).toThrow(
+      'Setup cutscene "setup" gates both "first_quest" and "second_quest"',
+    );
+  });
+
+  it("throws when a setup cutscene has a reviewed mapping", () => {
+    const fiddle = makeCutsceneFiddle({
+      cutscenes: {
+        break_fire_seal: {},
+        follow_up: {
+          quest_to_start: "later_quest",
+          requirements: { seen_cutscene: "break_fire_seal" },
+        },
+      },
+    });
+    expect(() => buildCutsceneQuestMap(fiddle)).toThrow(
+      'Setup cutscene "break_fire_seal" starts "later_quest" but has a reviewed',
+    );
+  });
+
   it("maps explicit quest_to_progress on cutscene", () => {
     const fiddle = makeCutsceneFiddle({
       cutscenes: {

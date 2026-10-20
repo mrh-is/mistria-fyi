@@ -18,6 +18,7 @@ import type {
   CosmeticId,
   DateId,
   ItemId,
+  MountAppearanceId,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -226,6 +227,7 @@ function makeGoldenCompleted(): ProgressState {
     hasUpperFloor: true,
     heartLevels: { ["balor" as VillagerId]: 4 },
     mineFloor: 20,
+    mountAppearances: new Set(["mistmare" as MountAppearanceId]),
     museum: new Set(["turnip" as ItemId]),
     petCosmetics: new Set(["flower_crown" as PetCosmeticSetId]),
     petSkins: new Set(["sapling" as PetSkinId]),
@@ -463,6 +465,7 @@ describe("transfer codec", () => {
         recordKeys(trackerData.villagers).map((id) => [id, MAX_HEART_LEVEL]),
       ),
       mineFloor: trackerData.mines.biomes.at(-1)?.floors.end ?? 0,
+      mountAppearances: new Set(recordKeys(trackerData.mount.appearances)),
       museum: new Set(
         recordValues(trackerData.museum).flatMap(({ sets }) =>
           recordValues(sets).flatMap(({ items }) => items),
@@ -570,6 +573,14 @@ describe("transfer codec", () => {
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.petSkins).toEqual(new Set(petSkinIds));
+  });
+
+  it("round-trips mountAppearances", async () => {
+    const appearanceIds = recordKeys(trackerData.mount.appearances).slice(0, 2);
+    const completed = makeCompletedState({ mountAppearances: new Set(appearanceIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.mountAppearances).toEqual(new Set(appearanceIds));
   });
 
   it("round-trips dates", async () => {

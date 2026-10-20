@@ -7,7 +7,7 @@ import { SEGMENT_LOOKUP_NAME_CHUNKS } from "#lib/sources/segment-lookups.js";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = localizedPageLoad(
-  ["animals", "pets/cosmetic_sets", "pets/skins", ...SEGMENT_LOOKUP_NAME_CHUNKS],
+  ["animals", "mount", "pets/cosmetic_sets", "pets/skins", ...SEGMENT_LOOKUP_NAME_CHUNKS],
   (locale) => ({
     accent: categoryColor("animals"),
     description: m.animals_page_description({}, { locale }),

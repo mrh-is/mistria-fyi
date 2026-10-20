@@ -44,6 +44,7 @@ import type {
   CosmeticId,
   DateId,
   ItemId,
+  MountAppearanceId,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -110,6 +111,7 @@ export interface SerializedState {
     hasUpperFloor?: boolean;
     heartLevels?: Record<string, number>;
     mineFloor: number;
+    mountAppearances?: string[];
     museum: string[];
     petCosmetics?: string[];
     petSkins?: string[];
@@ -225,6 +227,7 @@ function createDefaultProgress(): ProgressState {
     hasUpperFloor: false,
     heartLevels: {},
     mineFloor: 0,
+    mountAppearances: new SvelteSet<MountAppearanceId>(),
     museum: new SvelteSet<ItemId>(),
     petCosmetics: new SvelteSet<PetCosmeticSetId>(),
     petSkins: new SvelteSet<PetSkinId>(),
@@ -448,6 +451,7 @@ function createUserState() {
       state.progress.mineFloor > 0 ||
       state.progress.spells.size > 0 ||
       state.progress.renown > 0 ||
+      state.progress.mountAppearances.size > 0 ||
       state.progress.petCosmetics.size > 0 ||
       state.progress.petSkins.size > 0 ||
       state.progress.unlockedPerks.size > 0 ||
@@ -543,6 +547,10 @@ function createUserState() {
       counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
       counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
       counts.dates = unionInto(progress.dates, imported.dates ?? []);
+      counts.mountAppearances = unionInto(
+        progress.mountAppearances,
+        imported.mountAppearances ?? [],
+      );
       counts.museum = unionInto(progress.museum, imported.museum ?? []);
       counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);
       counts.petCosmetics = unionInto(progress.petCosmetics, imported.petCosmetics ?? []);
@@ -746,6 +754,9 @@ function createUserState() {
     toggleDate(id: DateId) {
       toggleInSet(state.progress.dates, id);
     },
+    toggleMountAppearance(id: MountAppearanceId) {
+      toggleInSet(state.progress.mountAppearances, id);
+    },
     toggleMuseumItem(id: ItemId) {
       toggleInSet(state.progress.museum, id);
     },
@@ -858,6 +869,10 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
         typeof s.progress.hasUpperFloor === "boolean" ? s.progress.hasUpperFloor : false,
       heartLevels,
       mineFloor: isFiniteNumber(s.progress.mineFloor) ? clampMineFloor(s.progress.mineFloor) : 0,
+      mountAppearances: knownBrandedSet<MountAppearanceId>(
+        s.progress.mountAppearances ?? [],
+        trackerData.mount.appearances,
+      ),
       museum: knownBrandedSet<ItemId>(s.progress.museum, MUSEUM_ITEM_IDS),
       petCosmetics: knownBrandedSet<PetCosmeticSetId>(
         s.progress.petCosmetics ?? [],
@@ -987,6 +1002,7 @@ function isSerializedState(value: unknown, mode: ValidationMode): value is Seria
     (mode === "local"
       ? isOptionalRecord(progress.villagerRelationships)
       : isOptionalEnumRecord(progress.villagerRelationships, VALID_RELATIONSHIPS)) &&
+    isOptionalStringArray(progress.mountAppearances) &&
     isOptionalStringArray(progress.petCosmetics) &&
     isOptionalStringArray(progress.petSkins) &&
     (mode === "local"
@@ -1149,6 +1165,7 @@ function serialize(state: UserState): string {
       hasUpperFloor: state.progress.hasUpperFloor,
       heartLevels: filterRecord(state.progress.heartLevels, (v) => v > 0),
       mineFloor: state.progress.mineFloor,
+      mountAppearances: [...state.progress.mountAppearances].toSorted(),
       museum: [...state.progress.museum].toSorted(),
       petCosmetics: [...state.progress.petCosmetics].toSorted(),
       petSkins: [...state.progress.petSkins].toSorted(),

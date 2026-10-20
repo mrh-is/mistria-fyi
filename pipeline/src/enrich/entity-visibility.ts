@@ -76,6 +76,7 @@ export function assignEntityVisibility(
   assignItemVisibility(trackerData, ctx);
   assignRecipeVisibility(trackerData, ctx);
   assignCosmeticVisibility(trackerData, ctx);
+  assignMountVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
   assignSpellVisibility(trackerData);
   assignQuestVisibility(trackerData, cutsceneMap, questChains);
@@ -234,6 +235,8 @@ function acquisitionSourceCondition(
       return ALWAYS_VISIBLE;
     case "bait_fish":
       return { type: "questCompleted", questId: "apiaries_and_terrariums" as QuestId };
+    case "horse_statue":
+      return { type: "questAvailable", questId: source.questId };
     case "festival":
       return source.storeId
         ? storeGateCondition(source.storeId, ctx.storeVisibility)
@@ -301,6 +304,31 @@ function assignCosmeticVisibility(trackerData: TrackerData, ctx: SourceVisibilit
 function assignItemVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const [, item] of Object.entries(trackerData.items)) {
     assignSourcedEntityVisibility(item, ctx);
+  }
+}
+
+/** The appearance that is the mount itself, as opposed to a skin for it. */
+function isMount(appearance: SourcedEntity): boolean {
+  return appearance.sources.some((source) => source.type === "horse_statue");
+}
+
+/**
+ * Every other appearance is a skin for the Mistmare, so it stays hidden until the Mistmare itself
+ * (the appearance the Horse Statue grants) is revealed, whatever its own source says.
+ */
+function assignMountVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
+  const appearances = Object.values(trackerData.mount.appearances);
+  for (const appearance of appearances) {
+    assignSourcedEntityVisibility(appearance, ctx);
+  }
+  const mountGate = orSimplify(
+    appearances
+      .filter((appearance) => isMount(appearance))
+      .map((appearance) => appearance.visibility ?? ALWAYS_VISIBLE),
+  );
+  for (const appearance of appearances) {
+    if (isMount(appearance)) continue;
+    appearance.visibility = andSimplify([appearance.visibility ?? ALWAYS_VISIBLE, mountGate]);
   }
 }
 
@@ -452,6 +480,7 @@ function acquisitionSourceConditions(
             : ALWAYS_VISIBLE,
       };
     }
+    case "horse_statue":
     case "quest":
       return {
         entity,

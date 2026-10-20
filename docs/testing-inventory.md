@@ -105,7 +105,7 @@ single-component row's marks disagree with its test files.
 | Component                                                                                                                                        | Server | happy-dom | Notes                                                           |
 | ------------------------------------------------------------------------------------------------------------------------------------------------ | :----: | :-------: | --------------------------------------------------------------- |
 | `almanac-content`                                                                                                                                |        |     ✓     |                                                                 |
-| `animals-content`, `animal-subcategory`, `animal-*-section`, `pet-collectibles-section`                                                          |        |           | Gap: variant/cosmetic toggles; store is tested                  |
+| `animals-content`, `animal-subcategory`, `animal-*-section`, `mount-appearances-section`, `pet-collectibles-section`                             |        |           | Gap: variant/cosmetic toggles; store is tested                  |
 | `cosmetics-content`, `mines-content`, `museum-content`, `quests-content`, `recipes-content`, `renown-content`, `dates-section`, `skills-content` |        |           | Gap: page compositors; rows and dialogs are tested individually |
 
 ### Data page
