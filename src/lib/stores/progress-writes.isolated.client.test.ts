@@ -1,11 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
+import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 
 import type { userState } from "#lib/stores/user-state.svelte.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const WRITE_LOCK = "mistria-fyi:progress-write";
+/** A version only a later build than this one writes. */
+const NEWER_VERSION = CURRENT_SERIALIZATION_VERSION + 1;
 
 interface TestWindow {
   addEventListener: (type: string, listener: EventListener) => void;
@@ -190,7 +193,7 @@ describe("serialized progress writes", () => {
     vi.stubGlobal("navigator", { locks });
 
     const tab = await openTab();
-    const newer = buildState(30, {}, 2);
+    const newer = buildState(30, {}, NEWER_VERSION);
     storage.setItem(PROGRESS_KEY, newer);
     expect(tab.userState.restoreBackup(buildState(20))).toEqual({ ok: true });
     await settle(0);
@@ -256,7 +259,7 @@ describe("this device's local section", () => {
   });
 
   it("is left out of a newer build's verbatim export", async () => {
-    const newer = buildState(8, { local }, 2);
+    const newer = buildState(8, { local }, NEWER_VERSION);
     const { storage } = recordingStorage({ [PROGRESS_KEY]: newer });
     vi.stubGlobal("localStorage", storage);
 

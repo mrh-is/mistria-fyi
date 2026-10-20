@@ -29,6 +29,7 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
+import { factKey, PROVENANCE_SOURCES } from "#lib/engine/provenance.js";
 import { applyMarriageCascade } from "#lib/engine/relationships.js";
 import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
 import {
@@ -38,6 +39,7 @@ import {
 } from "#lib/types/user-progress.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
+import type { ProvenanceRecord, ResolutionRecord } from "#lib/engine/provenance.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -65,7 +67,69 @@ export type Migration = (document: StoredDocument) => StoredDocument;
  */
 export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   1: (document) => document,
+  // Version 2 adds provenance & resolutions. Every fact a version 1 blob holds predates provenance,
+  // so it's marked `unknown`; nothing has been resolved yet.
+  2: (document) => {
+    const { progress } = document;
+    if (!isPlainObject(progress)) return document;
+    const provenance = Object.fromEntries(
+      existingFactKeys(progress).map((key) => [key, { source: "unknown" }]),
+    );
+    return { ...document, progress: { ...progress, provenance, resolutions: {} } };
+  },
 };
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * The fact key of every non-default fact in an unvalidated version 1 `progress` object. A
+ * malformed part contributes nothing; validation after migration decides what to do with it.
+ */
+function strings(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : [];
+}
+
+function existingFactKeys(progress: Record<string, unknown>): string[] {
+  const keys: string[] = [];
+  for (const field of LIST_FIELDS) {
+    for (const id of strings(progress[field])) keys.push(factKey(field, id));
+  }
+  for (const field of ["animalCosmetics", "animals"] as const) {
+    const byAnimal = progress[field];
+    if (!isPlainObject(byAnimal)) continue;
+    for (const [animalId, ids] of Object.entries(byAnimal)) {
+      for (const id of strings(ids)) keys.push(factKey(field, animalId, id));
+    }
+  }
+  const recordFacts = {
+    heartLevels: (value: unknown) => typeof value === "number" && value > 0,
+    questStates: (value: unknown) => typeof value === "string" && value !== "none",
+    skillLevels: (value: unknown) => typeof value === "number" && value > 0,
+    villagerRelationships: (value: unknown) => typeof value === "string" && value !== "undecided",
+  };
+  for (const [field, isSet] of Object.entries(recordFacts)) {
+    const record = progress[field];
+    if (!isPlainObject(record)) continue;
+    for (const [id, value] of Object.entries(record)) {
+      if (isSet(value)) keys.push(factKey(field, id));
+    }
+  }
+  const scalarFacts = {
+    childChoice: (value: unknown) => typeof value === "string" && value !== "undeclared",
+    hasUpperFloor: (value: unknown) => value === true,
+    mineFloor: (value: unknown) => typeof value === "number" && value > 0,
+    reachedSeason: (value: unknown) => typeof value === "string" && value !== "spring",
+    renown: (value: unknown) => typeof value === "number" && value > 0,
+  };
+  for (const [field, isSet] of Object.entries(scalarFacts)) {
+    if (isSet(progress[field])) keys.push(factKey(field));
+  }
+  return keys;
+}
 
 /**
  * Runs every step after `from` up to `to`, stamping each result with the version it produced. Throws
@@ -148,6 +212,15 @@ const LIST_ENTRIES = {
   unlockedPerks: v.optional(StringListSchema),
 };
 
+const PlaytimeSchema = v.pipe(FiniteNumberSchema, v.minValue(0));
+const FactProvenanceSchema = v.object({
+  playtime: v.optional(PlaytimeSchema),
+  source: v.picklist(PROVENANCE_SOURCES),
+});
+const ResolutionSchema = v.object({
+  saveValue: v.custom<unknown>((value) => value !== undefined),
+});
+
 const StrictBlobSchema = v.object({
   progress: v.object({
     ...LIST_ENTRIES,
@@ -156,10 +229,13 @@ const StrictBlobSchema = v.object({
     childChoice: v.optional(v.picklist(CHILD_CHOICES)),
     hasUpperFloor: v.optional(v.boolean()),
     heartLevels: v.optional(strictLevels(trackerData.villagers, LEGACY_MAX_HEART_LEVEL)),
+    lastSavePlaytime: v.optional(PlaytimeSchema),
     mineFloor: domainInteger(getMaxMineFloor()),
+    provenance: v.optional(v.record(v.string(), FactProvenanceSchema)),
     questStates: v.optional(v.record(v.string(), v.picklist(QUEST_STATES))),
     reachedSeason: v.optional(v.picklist(SEASONS)),
     renown: FiniteNumberSchema,
+    resolutions: v.optional(v.record(v.string(), ResolutionSchema)),
     skillLevels: v.optional(strictLevels(trackerData.skills, MAX_SKILL_LEVEL)),
     villagerRelationships: v.optional(v.record(v.string(), v.picklist(VILLAGER_RELATIONSHIPS))),
   }),
@@ -189,10 +265,13 @@ const RepairBlobSchema = v.object({
     childChoice: v.fallback(v.optional(v.picklist(CHILD_CHOICES)), undefined),
     hasUpperFloor: v.fallback(v.optional(v.boolean()), undefined),
     heartLevels: v.optional(validEntries(FiniteNumberSchema)),
+    lastSavePlaytime: v.fallback(v.optional(PlaytimeSchema), undefined),
     mineFloor: v.fallback(FiniteNumberSchema, 0),
+    provenance: v.optional(validEntries(FactProvenanceSchema)),
     questStates: v.optional(validEntries(v.picklist(QUEST_STATES))),
     reachedSeason: v.fallback(v.optional(v.picklist(SEASONS)), undefined),
     renown: v.fallback(FiniteNumberSchema, 0),
+    resolutions: v.optional(validEntries(ResolutionSchema)),
     skillLevels: v.optional(validEntries(FiniteNumberSchema)),
     villagerRelationships: v.optional(validEntries(v.picklist(VILLAGER_RELATIONSHIPS))),
   }),
@@ -254,7 +333,23 @@ export interface RetainedProgress {
   villagerRelationships: Record<string, VillagerRelationship>;
 }
 
+/**
+ * Where each fact came from & which save diffs the player resolved; carried by backups. Keyed by
+ * `factKey`, including facts whose IDs this build doesn't know, so nothing here is dropped.
+ */
+export interface ProgressHistory {
+  /** The `playtime` of the last applied save, if any. */
+  lastSavePlaytime?: number;
+  provenance: ProvenanceRecord;
+  resolutions: ResolutionRecord;
+}
+
+export function emptyProgressHistory(): ProgressHistory {
+  return { provenance: {}, resolutions: {} };
+}
+
 export interface LoadedProgress {
+  history: ProgressHistory;
   /** This device's own section; always empty from a backup. */
   local: DeviceLocalState;
   progress: ProgressState;
@@ -483,7 +578,14 @@ function normalizeBlob({ local, progress: stored, worldState }: ValidatedBlob): 
   };
   backfillAnimalMaps(progress);
 
-  return { local: local ?? {}, progress, retained, worldState: { ...worldState } };
+  const history: ProgressHistory = {
+    provenance: stored.provenance ?? {},
+    // Parsed from JSON, so every saveValue is a JsonValue.
+    resolutions: (stored.resolutions ?? {}) as ResolutionRecord,
+  };
+  if (stored.lastSavePlaytime !== undefined) history.lastSavePlaytime = stored.lastSavePlaytime;
+
+  return { history, local: local ?? {}, progress, retained, worldState: { ...worldState } };
 }
 
 /**
@@ -537,11 +639,17 @@ function mergeAnimalIds(
  * couldn't place. Unrecognized fields in a loaded blob are dropped rather than carried forward, so
  * renamed keys don't linger.
  */
-export function serializeProgress(
-  { progress, worldState }: DeepReadonly<Pick<LoadedProgress, "progress" | "worldState">>,
-  retained: DeepReadonly<RetainedProgress>,
-): string {
-  return JSON.stringify(serializedState({ progress, worldState }, retained));
+export function serializeProgress(snapshot: ProgressSnapshot): string {
+  return JSON.stringify(serializedState(snapshot));
+}
+
+/** Everything a backup holds, as the store keeps it. */
+export interface ProgressSnapshot {
+  // Not DeepReadonly: its JsonValue resolutions are too deep for the compiler to map.
+  history: Readonly<ProgressHistory>;
+  progress: DeepReadonly<ProgressState>;
+  retained: DeepReadonly<RetainedProgress>;
+  worldState: Readonly<WorldState>;
 }
 
 /**
@@ -549,11 +657,10 @@ export function serializeProgress(
  * empty section is left out, so storage stays byte-identical to a backup until sync fills it.
  */
 export function serializeStoredProgress(
-  loaded: DeepReadonly<Pick<LoadedProgress, "progress" | "worldState">>,
-  retained: DeepReadonly<RetainedProgress>,
+  snapshot: ProgressSnapshot,
   local: DeepReadonly<DeviceLocalState>,
 ): string {
-  const backup = serializedState(loaded, retained);
+  const backup = serializedState(snapshot);
   return JSON.stringify(Object.keys(local).length === 0 ? backup : { local, ...backup });
 }
 
@@ -573,13 +680,24 @@ export function withoutDeviceLocal(json: string): string {
   return JSON.stringify(backup);
 }
 
-function serializedState(
-  { progress, worldState }: DeepReadonly<Pick<LoadedProgress, "progress" | "worldState">>,
-  retained: DeepReadonly<RetainedProgress>,
-): SerializedState {
+function sortedRecord<V>(record: Readonly<Record<string, V>>): Record<string, V> {
+  return Object.fromEntries(
+    Object.entries(record).toSorted(([a], [b]) => a.localeCompare(b, "en")),
+  );
+}
+
+function serializedState({
+  history,
+  progress,
+  retained,
+  worldState,
+}: ProgressSnapshot): SerializedState {
   const list = (field: ListField) => sortedUnion(progress[field], retained.lists[field]);
   const s: SerializedState = {
     progress: {
+      ...(history.lastSavePlaytime === undefined
+        ? {}
+        : { lastSavePlaytime: history.lastSavePlaytime }),
       almanac: list("almanac"),
       almanacRecipes: list("almanacRecipes"),
       animalCosmetics: mergeAnimalIds(progress.animalCosmetics, retained.animalCosmetics),
@@ -594,6 +712,7 @@ function serializedState(
       museum: list("museum"),
       petCosmetics: list("petCosmetics"),
       petSkins: list("petSkins"),
+      provenance: sortedRecord(history.provenance),
       questStates: mergeRecord(
         progress.questStates,
         retained.questStates,
@@ -601,6 +720,7 @@ function serializedState(
       ),
       reachedSeason: progress.reachedSeason,
       renown: progress.renown,
+      resolutions: sortedRecord(history.resolutions),
       skillLevels: mergeRecord(progress.skillLevels, retained.skillLevels, (level) => level > 0),
       spells: list("spells"),
       unlockedPerks: list("unlockedPerks"),

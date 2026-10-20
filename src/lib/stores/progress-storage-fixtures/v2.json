@@ -1,0 +1,39 @@
+{
+  "progress": {
+    "almanac": ["turnip", "item_from_a_later_update"],
+    "almanacRecipes": ["basic_wood_chest"],
+    "animalCosmetics": { "chicken": ["ribbon_red"] },
+    "animals": { "chicken": ["red"] },
+    "childChoice": "no",
+    "cosmetics": ["back_gear_ancient_witch_broom"],
+    "dates": ["inn_meal"],
+    "hasUpperFloor": true,
+    "heartLevels": { "balor": 4 },
+    "lastSavePlaytime": 7200.5,
+    "mineFloor": 20,
+    "mountAppearances": ["mistmare"],
+    "museum": ["turnip"],
+    "petCosmetics": ["flower_crown"],
+    "petSkins": ["sapling"],
+    "provenance": {
+      "almanac/item_from_a_later_update": { "playtime": 7200.5, "source": "save" },
+      "almanac/turnip": { "playtime": 7200.5, "source": "save" },
+      "cosmetics/back_gear_ancient_witch_broom": { "source": "unknown" },
+      "heartLevels/balor": { "playtime": 7200.5, "source": "manual" },
+      "museum/fossil_unticked_by_hand": { "playtime": 7200.5, "source": "manual" },
+      "questStates/repair_the_general_store": { "source": "inferred" }
+    },
+    "questStates": { "repair_the_general_store": "completed" },
+    "reachedSeason": "fall",
+    "renown": 17,
+    "resolutions": {
+      "heartLevels/balor": { "saveValue": 6 }
+    },
+    "skillLevels": { "farming": 7 },
+    "spells": ["summon_rain"],
+    "unlockedPerks": ["museum_quality_one"],
+    "villagerRelationships": { "balor": "romantic" }
+  },
+  "version": 2,
+  "worldState": { "season": "summer", "weather": "inclement" }
+}

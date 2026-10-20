@@ -4,6 +4,7 @@ import { trackerData } from "#lib/data/index.js";
 import { extractSaveProgress } from "#lib/engine/import-save.js";
 import { getMaxRenownLevel, MAX_HEART_LEVEL, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 
 import type { SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
@@ -16,7 +17,7 @@ describe("restoreBackup validation", () => {
 
   it("succeeds with a valid backup", () => {
     const json = userState.exportBackup();
-    expect(JSON.parse(json)).toMatchObject({ version: 1 });
+    expect(JSON.parse(json)).toMatchObject({ version: CURRENT_SERIALIZATION_VERSION });
     const result = userState.restoreBackup(json);
     expect(result.ok).toBe(true);
   });

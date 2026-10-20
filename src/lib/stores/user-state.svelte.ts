@@ -14,6 +14,7 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
+import { changedFacts, factKey, progressFacts } from "#lib/engine/provenance.js";
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
 import { applyMarriageCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
@@ -25,6 +26,7 @@ import { unionInto } from "#lib/utils/set.js";
 
 import {
   backfillAnimalMaps,
+  emptyProgressHistory,
   emptyRetainedProgress,
   readProgressBlob,
   serializeProgress,
@@ -38,6 +40,7 @@ import {
   QUARANTINE_STORAGE_KEY,
 } from "./storage-keys.js";
 
+import type { FactProvenance, ProvenanceSource, Resolution } from "#lib/engine/provenance.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type {
@@ -46,6 +49,7 @@ import type {
   CosmeticId,
   DateId,
   ItemId,
+  JsonValue,
   MountAppearanceId,
   PerkId,
   PetCosmeticSetId,
@@ -68,7 +72,13 @@ import type {
 } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
-import type { DeviceLocalState, LoadedProgress, RetainedProgress } from "./progress-storage.js";
+import type {
+  DeviceLocalState,
+  LoadedProgress,
+  ProgressHistory,
+  ProgressSnapshot,
+  RetainedProgress,
+} from "./progress-storage.js";
 
 /** How a write treats a value another tab stored since this one last read it. */
 type WriteIntent =
@@ -216,6 +226,10 @@ function createUserState() {
   let retained = $state.raw<RetainedProgress>(emptyRetainedProgress());
   /** This device's own section of the stored blob; never exported, kept across a restore. */
   let local = $state.raw<DeviceLocalState>({});
+  /** Provenance & resolutions for every fact, which backups carry. */
+  let history = $state<ProgressHistory>(emptyProgressHistory());
+  /** The source the outermost {@link track} call is recording, while one runs. */
+  let trackingSource: ProvenanceSource | undefined;
   let lastKnownPreferencesValue: null | string = null;
   let lastKnownStoredValue: null | string = null;
   let saveTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -230,9 +244,49 @@ function createUserState() {
     _persistenceFailureGeneration++;
   }
 
+  function snapshot(): ProgressSnapshot {
+    return { history, progress: state.progress, retained, worldState: state.worldState };
+  }
+
   /** The stored form of the current state, `local` section included. */
   function serialize(): string {
-    return serializeStoredProgress(state, retained, local);
+    return serializeStoredProgress(snapshot(), local);
+  }
+
+  /**
+   * Records `source` & the last applied save's playtime for one fact. A manual edit also clears
+   * the fact's “keep mine”, since the player has now decided it themselves.
+   */
+  function recordFact(key: string, source: ProvenanceSource): void {
+    const { lastSavePlaytime } = history;
+    history.provenance[key] =
+      lastSavePlaytime === undefined ? { source } : { playtime: lastSavePlaytime, source };
+    if (source === "manual" && Object.hasOwn(history.resolutions, key)) {
+      const { [key]: _cleared, ...kept } = history.resolutions;
+      history.resolutions = kept;
+    }
+  }
+
+  /**
+   * Runs `mutate` & records provenance for every fact it changed, ticks & unticks alike. A manual
+   * change that names its `primary` facts records the rest (a marriage cascade, a quest's recipe
+   * rewards) as `inferred`. Nested calls record nothing themselves; the outermost call does.
+   */
+  function track<T>(source: ProvenanceSource, mutate: () => T, primary: readonly string[] = []): T {
+    if (trackingSource !== undefined) return mutate();
+    const before = progressFacts(state.progress);
+    trackingSource = source;
+    let result: T;
+    try {
+      result = mutate();
+    } finally {
+      trackingSource = undefined;
+    }
+    for (const key of changedFacts(before, progressFacts(state.progress))) {
+      const consequence = source === "manual" && primary.length > 0 && !primary.includes(key);
+      recordFact(key, consequence ? "inferred" : source);
+    }
+    return result;
   }
 
   /** Blocks persistence and keeps the unreadable value, in storage & memory, for recovery. */
@@ -392,13 +446,14 @@ function createUserState() {
   }
 
   /**
-   * Swaps in loaded progress, world state, & retained unknown entries, leaving this device's
-   * preferences & `local` section untouched.
+   * Swaps in loaded progress, world state, retained unknown entries, & history, leaving this
+   * device's preferences & `local` section untouched.
    */
   function replaceProgress(loaded: Omit<LoadedProgress, "local">): void {
     state.progress = loaded.progress;
     state.worldState = loaded.worldState;
     retained = loaded.retained;
+    history = loaded.history;
   }
 
   /**
@@ -499,23 +554,124 @@ function createUserState() {
       recordValues(state.progress.animalCosmetics).some((s) => s.size > 0),
   );
 
+  /** The body of `mergeFromSave`: unions `imported` into progress & counts what changed. */
+  function mergeInto(imported: Partial<ProgressState>): MergeResult {
+    const progress = state.progress;
+    const counts: MergeCounts = emptyMergeCounts();
+
+    counts.almanac = unionInto(progress.almanac, imported.almanac ?? []);
+    counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
+    counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
+    counts.dates = unionInto(progress.dates, imported.dates ?? []);
+    counts.mountAppearances = unionInto(progress.mountAppearances, imported.mountAppearances ?? []);
+    counts.museum = unionInto(progress.museum, imported.museum ?? []);
+    counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);
+    counts.petCosmetics = unionInto(progress.petCosmetics, imported.petCosmetics ?? []);
+    counts.petSkins = unionInto(progress.petSkins, imported.petSkins ?? []);
+    counts.spells = unionInto(progress.spells, imported.spells ?? []);
+    for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
+      const existing = getOrCreate(
+        progress.animals,
+        animalId,
+        () => new SvelteSet<AnimalVariantId>(),
+      );
+      counts.animals += unionInto(existing, variants);
+    }
+    for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics ?? {})) {
+      const existing = getOrCreate(
+        progress.animalCosmetics,
+        animalId,
+        () => new SvelteSet<CosmeticId>(),
+      );
+      counts.animalCosmetics += unionInto(existing, cosmetics);
+    }
+
+    // Levels are clamped again here so the canonical state stays inside its domains even if a
+    // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
+    if (imported.mineFloor !== undefined) {
+      const mineFloor = clampMineFloor(imported.mineFloor);
+      if (mineFloor > progress.mineFloor) {
+        counts.mineFloor = mineFloor - progress.mineFloor;
+        progress.mineFloor = mineFloor;
+      }
+    }
+    if (imported.renown !== undefined) {
+      const renown = clampRenownLevel(imported.renown);
+      if (renown > progress.renown) {
+        counts.renown = renown - progress.renown;
+        progress.renown = renown;
+      }
+    }
+    counts.heartLevels = raiseLevels(progress.heartLevels, imported.heartLevels, MAX_HEART_LEVEL);
+    counts.skillLevels = raiseLevels(progress.skillLevels, imported.skillLevels, MAX_SKILL_LEVEL);
+
+    // Quest states take the more advanced state: none < obtained < completed.
+    for (const [id, importedState] of recordEntries(imported.questStates ?? {})) {
+      if (questStateRank(importedState) > questStateRank(progress.questStates[id] ?? "none")) {
+        progress.questStates[id] = importedState;
+        counts.quests++;
+      }
+    }
+
+    if (
+      imported.reachedSeason !== undefined &&
+      seasonOrdinal(imported.reachedSeason) > seasonOrdinal(progress.reachedSeason)
+    ) {
+      progress.reachedSeason = imported.reachedSeason;
+      counts.reachedSeason = 1;
+    }
+    if (imported.hasUpperFloor && !progress.hasUpperFloor) {
+      progress.hasUpperFloor = true;
+      counts.hasUpperFloor = 1;
+    }
+
+    const household = mergeHousehold(progress, imported);
+    progress.villagerRelationships = household.villagerRelationships;
+    progress.childChoice = household.childChoice;
+    counts.villagerRelationships = household.counts.villagerRelationships;
+    counts.childChoice = household.counts.childChoice;
+
+    // Backfill animal maps for any animals added since the imported state was created
+    backfillAnimalMaps(progress);
+
+    return { conflicts: household.conflicts, counts };
+  }
+
+  /** Runs a player's edit of one fact, recording it as `manual`; see {@link track}. */
+  function manual(key: string, edit: () => void): void {
+    track("manual", edit, [key]);
+  }
+
+  /** Ticks or unticks one listed fact by hand. */
+  function toggleFact<T extends string>(field: string, set: Set<T>, id: T): void {
+    manual(factKey(field, id), () => {
+      toggleInSet(set, id);
+    });
+  }
+
   return {
     /** Cycles the quest's state, completing its recipe rewards on the obtained-to-completed step. */
     completeQuestWithRecipes(id: QuestId): QuestCompletion {
-      const previousState = state.progress.questStates[id] ?? "none";
-      state.progress.questStates[id] = nextQuestState(previousState);
+      return track(
+        "manual",
+        () => {
+          const previousState = state.progress.questStates[id] ?? "none";
+          state.progress.questStates[id] = nextQuestState(previousState);
 
-      if (previousState !== "obtained") return { newlyAdded: [], previousState };
+          if (previousState !== "obtained") return { newlyAdded: [], previousState };
 
-      const candidates = findRecipesForQuest(id);
-      const newlyAdded: RecipeId[] = [];
-      for (const recipeId of candidates) {
-        if (!state.progress.almanacRecipes.has(recipeId)) {
-          state.progress.almanacRecipes.add(recipeId);
-          newlyAdded.push(recipeId);
-        }
-      }
-      return { newlyAdded, previousState };
+          const candidates = findRecipesForQuest(id);
+          const newlyAdded: RecipeId[] = [];
+          for (const recipeId of candidates) {
+            if (!state.progress.almanacRecipes.has(recipeId)) {
+              state.progress.almanacRecipes.add(recipeId);
+              newlyAdded.push(recipeId);
+            }
+          }
+          return { newlyAdded, previousState };
+        },
+        [factKey("questStates", id)],
+      );
     },
     dismissPersistenceWarning() {
       if (persistenceBlocked) {
@@ -536,10 +692,18 @@ function createUserState() {
         const value = stored.ok ? stored.value : lastKnownStoredValue;
         if (value !== null) return withoutDeviceLocal(value);
       }
-      return serializeProgress(state, retained);
+      return serializeProgress(snapshot());
     },
     get hasAnyProgress(): boolean {
       return hasAnyProgress;
+    },
+    /** Remembers “keep mine” for a fact against the save value the player declined. */
+    keepMine(key: string, saveValue: JsonValue) {
+      history.resolutions[key] = { saveValue };
+    },
+    /** The playtime of the last applied save, if any. */
+    get lastSavePlaytime(): number | undefined {
+      return history.lastSavePlaytime;
     },
     loadFromStorage() {
       const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
@@ -570,100 +734,28 @@ function createUserState() {
       }
     },
     markDefaultUnlocksComplete() {
-      addDefaultUnlocks(state.progress);
+      track("inferred", () => {
+        addDefaultUnlocks(state.progress);
+      });
     },
     /**
      * Merges a native save into current progress: sets union, levels take the max, and the
-     * household follows {@link mergeHousehold}'s conflict policy. Never removes progress.
+     * household follows {@link mergeHousehold}'s conflict policy. Never removes progress. Every
+     * fact it changes records `source` (a save, or `unknown` for a device transfer, whose payload
+     * carries no provenance); a save's `playtime` becomes the last applied save's.
      */
-    mergeFromSave(imported: Partial<ProgressState>): MergeResult {
-      const progress = state.progress;
-      const counts: MergeCounts = emptyMergeCounts();
-
-      counts.almanac = unionInto(progress.almanac, imported.almanac ?? []);
-      counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
-      counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
-      counts.dates = unionInto(progress.dates, imported.dates ?? []);
-      counts.mountAppearances = unionInto(
-        progress.mountAppearances,
-        imported.mountAppearances ?? [],
-      );
-      counts.museum = unionInto(progress.museum, imported.museum ?? []);
-      counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);
-      counts.petCosmetics = unionInto(progress.petCosmetics, imported.petCosmetics ?? []);
-      counts.petSkins = unionInto(progress.petSkins, imported.petSkins ?? []);
-      counts.spells = unionInto(progress.spells, imported.spells ?? []);
-      for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
-        const existing = getOrCreate(
-          progress.animals,
-          animalId,
-          () => new SvelteSet<AnimalVariantId>(),
-        );
-        counts.animals += unionInto(existing, variants);
-      }
-      for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics ?? {})) {
-        const existing = getOrCreate(
-          progress.animalCosmetics,
-          animalId,
-          () => new SvelteSet<CosmeticId>(),
-        );
-        counts.animalCosmetics += unionInto(existing, cosmetics);
-      }
-
-      // Levels are clamped again here so the canonical state stays inside its domains even if a
-      // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
-      if (imported.mineFloor !== undefined) {
-        const mineFloor = clampMineFloor(imported.mineFloor);
-        if (mineFloor > progress.mineFloor) {
-          counts.mineFloor = mineFloor - progress.mineFloor;
-          progress.mineFloor = mineFloor;
-        }
-      }
-      if (imported.renown !== undefined) {
-        const renown = clampRenownLevel(imported.renown);
-        if (renown > progress.renown) {
-          counts.renown = renown - progress.renown;
-          progress.renown = renown;
-        }
-      }
-      counts.heartLevels = raiseLevels(progress.heartLevels, imported.heartLevels, MAX_HEART_LEVEL);
-      counts.skillLevels = raiseLevels(progress.skillLevels, imported.skillLevels, MAX_SKILL_LEVEL);
-
-      // Quest states take the more advanced state: none < obtained < completed.
-      for (const [id, importedState] of recordEntries(imported.questStates ?? {})) {
-        if (questStateRank(importedState) > questStateRank(progress.questStates[id] ?? "none")) {
-          progress.questStates[id] = importedState;
-          counts.quests++;
-        }
-      }
-
-      if (
-        imported.reachedSeason !== undefined &&
-        seasonOrdinal(imported.reachedSeason) > seasonOrdinal(progress.reachedSeason)
-      ) {
-        progress.reachedSeason = imported.reachedSeason;
-        counts.reachedSeason = 1;
-      }
-      if (imported.hasUpperFloor && !progress.hasUpperFloor) {
-        progress.hasUpperFloor = true;
-        counts.hasUpperFloor = 1;
-      }
-
-      const household = mergeHousehold(progress, imported);
-      progress.villagerRelationships = household.villagerRelationships;
-      progress.childChoice = household.childChoice;
-      counts.villagerRelationships = household.counts.villagerRelationships;
-      counts.childChoice = household.counts.childChoice;
-
-      // Backfill animal maps for any animals added since the imported state was created
-      backfillAnimalMaps(progress);
+    mergeFromSave(
+      imported: Partial<ProgressState>,
+      { playtime, source = "save" }: { playtime?: number; source?: "save" | "unknown" } = {},
+    ): MergeResult {
+      if (source === "save" && playtime !== undefined) history.lastSavePlaytime = playtime;
+      const result = track(source, () => mergeInto(imported));
 
       // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
       // persistence like a reset or restore (only once the unreadable blob is safely stored).
       enablePersistenceAfterExplicitReplace();
       writeExplicitReplace();
-
-      return { conflicts: household.conflicts, counts };
+      return result;
     },
     get persistenceFailed(): boolean {
       return _persistenceFailureGeneration > 0;
@@ -677,10 +769,22 @@ function createUserState() {
     get progressionState(): UserProgressionState {
       return progressionState;
     },
+    /** Where a fact came from, if it has been recorded; see `factKey`. */
+    provenanceOf(key: string): DeepReadonly<FactProvenance> | undefined {
+      return history.provenance[key];
+    },
+    /**
+     * Runs `mutations` recording every fact they change as `inferred`, as “Record prerequisites”
+     * does for the conditions it satisfies.
+     */
+    recordInferred(mutations: () => void) {
+      track("inferred", mutations);
+    },
     /** Restores every field to its default, this device's preferences & `local` section included. */
     resetAll() {
       state = createDefaultState();
       retained = emptyRetainedProgress();
+      history = emptyProgressHistory();
       local = {};
       enablePersistenceAfterExplicitReplace();
       writeExplicitReplace();
@@ -688,12 +792,17 @@ function createUserState() {
     /** Clears progress & world state; this device's preferences & `local` section are kept. */
     resetProgress() {
       replaceProgress({
+        history: emptyProgressHistory(),
         progress: createDefaultProgress(),
         retained: emptyRetainedProgress(),
         worldState: createDefaultWorldState(),
       });
       enablePersistenceAfterExplicitReplace();
       writeExplicitReplace();
+    },
+    /** The player's “keep mine” for a fact, if any; see `resolutionHolds`. */
+    resolutionOf(key: string): Readonly<Resolution> | undefined {
+      return history.resolutions[key];
     },
     /**
      * Replaces progress & world state from a backup under the strict policy; this device's
@@ -713,27 +822,41 @@ function createUserState() {
       state.availabilityWindows = AVAILABILITY_WINDOWS.filter((window) => windows.includes(window));
     },
     setChildChoice(choice: ChildChoice) {
-      state.progress.childChoice = choice;
+      manual("childChoice", () => {
+        state.progress.childChoice = choice;
+      });
     },
     setHasUpperFloor(value: boolean) {
-      state.progress.hasUpperFloor = value;
+      manual("hasUpperFloor", () => {
+        state.progress.hasUpperFloor = value;
+      });
     },
     setHeartLevel(id: VillagerId, level: number) {
-      state.progress.heartLevels[id] = clampLevel(level, MAX_HEART_LEVEL);
+      manual(factKey("heartLevels", id), () => {
+        state.progress.heartLevels[id] = clampLevel(level, MAX_HEART_LEVEL);
+      });
     },
     setMineFloor(floor: number) {
-      state.progress.mineFloor = clampMineFloor(floor);
+      manual("mineFloor", () => {
+        state.progress.mineFloor = clampMineFloor(floor);
+      });
     },
     setQuestState(id: QuestId, questState: QuestState) {
-      state.progress.questStates[id] = questState;
+      manual(factKey("questStates", id), () => {
+        state.progress.questStates[id] = questState;
+      });
     },
     setReachedSeason(season: Season) {
-      if (seasonOrdinal(season) > seasonOrdinal(state.progress.reachedSeason)) {
-        state.progress.reachedSeason = season;
-      }
+      manual("reachedSeason", () => {
+        if (seasonOrdinal(season) > seasonOrdinal(state.progress.reachedSeason)) {
+          state.progress.reachedSeason = season;
+        }
+      });
     },
     setRenown(level: number) {
-      state.progress.renown = clampRenownLevel(level);
+      manual("renown", () => {
+        state.progress.renown = clampRenownLevel(level);
+      });
     },
     setSeason(season: Season) {
       state.worldState.season = season;
@@ -742,21 +865,26 @@ function createUserState() {
       }
     },
     setSkillLevel(id: SkillId, level: number) {
-      state.progress.skillLevels[id] = clampLevel(level, MAX_SKILL_LEVEL);
+      manual(factKey("skillLevels", id), () => {
+        state.progress.skillLevels[id] = clampLevel(level, MAX_SKILL_LEVEL);
+      });
     },
+    /** Sets one relationship; the marriage cascade & child-choice reset it causes are `inferred`. */
     setVillagerRelationship(villagerId: VillagerId, relationship: VillagerRelationship) {
-      const oldMarried = getSpouseId(state.progress.villagerRelationships);
-      if (relationship === "undecided") {
-        const { [villagerId]: _, ...rest } = state.progress.villagerRelationships;
-        state.progress.villagerRelationships = rest;
-      } else {
-        state.progress.villagerRelationships[villagerId] = relationship;
-      }
-      applyMarriageCascade(state.progress.villagerRelationships);
-      const newMarried = getSpouseId(state.progress.villagerRelationships);
-      if (oldMarried !== newMarried) {
-        state.progress.childChoice = "undeclared";
-      }
+      manual(factKey("villagerRelationships", villagerId), () => {
+        const oldMarried = getSpouseId(state.progress.villagerRelationships);
+        if (relationship === "undecided") {
+          const { [villagerId]: _, ...rest } = state.progress.villagerRelationships;
+          state.progress.villagerRelationships = rest;
+        } else {
+          state.progress.villagerRelationships[villagerId] = relationship;
+        }
+        applyMarriageCascade(state.progress.villagerRelationships);
+        const newMarried = getSpouseId(state.progress.villagerRelationships);
+        if (oldMarried !== newMarried) {
+          state.progress.childChoice = "undeclared";
+        }
+      });
     },
     setWeather(weather: Weather) {
       if (!isWeatherInSeason(weather, state.worldState.season)) return;
@@ -766,26 +894,30 @@ function createUserState() {
       return state;
     },
     toggleAlmanacItem(id: ItemId) {
-      toggleInSet(state.progress.almanac, id);
+      toggleFact("almanac", state.progress.almanac, id);
     },
     toggleAlmanacRecipe(id: RecipeId) {
-      toggleInSet(state.progress.almanacRecipes, id);
+      toggleFact("almanacRecipes", state.progress.almanacRecipes, id);
     },
     toggleAnimalCosmetic(animalId: AnimalId, cosmeticId: CosmeticId) {
-      const set = getOrCreate(
-        state.progress.animalCosmetics,
-        animalId,
-        () => new SvelteSet<CosmeticId>(),
-      );
-      toggleInSet(set, cosmeticId);
+      manual(factKey("animalCosmetics", animalId, cosmeticId), () => {
+        const set = getOrCreate(
+          state.progress.animalCosmetics,
+          animalId,
+          () => new SvelteSet<CosmeticId>(),
+        );
+        toggleInSet(set, cosmeticId);
+      });
     },
     toggleAnimalVariant(animalId: AnimalId, variantId: AnimalVariantId) {
-      const set = getOrCreate(
-        state.progress.animals,
-        animalId,
-        () => new SvelteSet<AnimalVariantId>(),
-      );
-      toggleInSet(set, variantId);
+      manual(factKey("animals", animalId, variantId), () => {
+        const set = getOrCreate(
+          state.progress.animals,
+          animalId,
+          () => new SvelteSet<AnimalVariantId>(),
+        );
+        toggleInSet(set, variantId);
+      });
     },
     toggleAvailabilityWindow(window: AvailabilityWindow) {
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- A scratch copy; only the filtered array is stored.
@@ -801,25 +933,25 @@ function createUserState() {
       );
     },
     toggleCosmetic(id: CosmeticId) {
-      toggleInSet(state.progress.cosmetics, id);
+      toggleFact("cosmetics", state.progress.cosmetics, id);
     },
     toggleDate(id: DateId) {
-      toggleInSet(state.progress.dates, id);
+      toggleFact("dates", state.progress.dates, id);
     },
     toggleMountAppearance(id: MountAppearanceId) {
-      toggleInSet(state.progress.mountAppearances, id);
+      toggleFact("mountAppearances", state.progress.mountAppearances, id);
     },
     toggleMuseumItem(id: ItemId) {
-      toggleInSet(state.progress.museum, id);
+      toggleFact("museum", state.progress.museum, id);
     },
     togglePerk(id: PerkId) {
-      toggleInSet(state.progress.unlockedPerks, id);
+      toggleFact("unlockedPerks", state.progress.unlockedPerks, id);
     },
     togglePetCosmetic(id: PetCosmeticSetId) {
-      toggleInSet(state.progress.petCosmetics, id);
+      toggleFact("petCosmetics", state.progress.petCosmetics, id);
     },
     togglePetSkin(id: PetSkinId) {
-      toggleInSet(state.progress.petSkins, id);
+      toggleFact("petSkins", state.progress.petSkins, id);
     },
     toggleShowCompleted() {
       state.showCompleted = !state.showCompleted;
@@ -828,14 +960,23 @@ function createUserState() {
       state.showSpoilers = !state.showSpoilers;
     },
     toggleSpell(id: SpellId) {
-      toggleInSet(state.progress.spells, id);
+      toggleFact("spells", state.progress.spells, id);
     },
-    /** Restores the quest's prior state and removes only recipes added by that transition. */
+    /**
+     * Restores the quest's prior state and removes only recipes added by that transition. The quest
+     * records `manual`; the recipes it takes back record `inferred`, as their completion did.
+     */
     undoQuestWithRecipes(id: QuestId, { newlyAdded, previousState }: QuestCompletion) {
-      state.progress.questStates[id] = previousState;
-      for (const recipeId of newlyAdded) {
-        state.progress.almanacRecipes.delete(recipeId);
-      }
+      track(
+        "manual",
+        () => {
+          state.progress.questStates[id] = previousState;
+          for (const recipeId of newlyAdded) {
+            state.progress.almanacRecipes.delete(recipeId);
+          }
+        },
+        [factKey("questStates", id)],
+      );
     },
     /** Stored progress that couldn't be read, kept so the player can download it; null if none. */
     get unreadableData(): null | string {

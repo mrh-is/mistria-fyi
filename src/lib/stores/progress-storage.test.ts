@@ -91,7 +91,7 @@ describe("readProgressBlob", () => {
   it.each(POLICIES)("reads every version's fixture under the %s policy", (policy) => {
     for (const version of Object.keys(MIGRATIONS).map(Number)) {
       const loaded = readOk(JSON.stringify(fixture(version)), policy);
-      const written = JSON.parse(serializeProgress(loaded, loaded.retained)) as StoredDocument;
+      const written = JSON.parse(serializeProgress(loaded)) as StoredDocument;
       expect(written.version, `v${version}`).toBe(CURRENT_SERIALIZATION_VERSION);
     }
   });
@@ -139,7 +139,7 @@ describe("readProgressBlob", () => {
     expect(loaded.progress.animals).not.toHaveProperty("animal_from_a_later_update");
     expect(loaded.progress.animals).toHaveProperty("chicken", new Set(["red"]));
 
-    const written = JSON.parse(serializeProgress(loaded, loaded.retained)) as {
+    const written = JSON.parse(serializeProgress(loaded)) as {
       progress: Record<string, unknown>;
     };
     expect(written.progress).toMatchObject({
@@ -155,9 +155,7 @@ describe("readProgressBlob", () => {
 
   it("drops fields the format doesn't declare", () => {
     const loaded = readOk(JSON.stringify(fixture(1)), "strict");
-    expect(JSON.parse(serializeProgress(loaded, loaded.retained))).not.toHaveProperty(
-      "showCompleted",
-    );
+    expect(JSON.parse(serializeProgress(loaded))).not.toHaveProperty("showCompleted");
   });
 
   it("repairs malformed values on hydration but rejects them in a backup", () => {
@@ -193,10 +191,10 @@ describe("readProgressBlob", () => {
     expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
 
     const hydrated = readOk(json, "repair");
-    const written = serializeProgress(hydrated, hydrated.retained);
+    const written = serializeProgress(hydrated);
     const restored = readOk(written, "strict");
 
-    expect(JSON.parse(serializeProgress(restored, restored.retained))).toEqual(JSON.parse(written));
+    expect(JSON.parse(serializeProgress(restored))).toEqual(JSON.parse(written));
     expect(JSON.parse(written)).toMatchObject({
       progress: {
         heartLevels: { balor: 10, villager_from_a_later_update: 4.5 },
