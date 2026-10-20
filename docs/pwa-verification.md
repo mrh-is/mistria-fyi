@@ -85,9 +85,11 @@ chunk only from that version’s cache.
   otherwise waits (`src/lib/pwa/safe-reload.ts`). Busy means a task holds updates off
   (`holdUpdatesWhile`, used by save import, backup restore, & transfer), a dialog or panel is open,
   or a text field has focus. A waiting page re-checks when a hold is released, focus leaves a field,
-  visibility changes, & every second. Its next client-side navigation loads the destination in full
-  instead (a link) or reloads where it landed (back, forward, `goto`), unless a task holds updates
-  off.
+  visibility changes, the browser comes online, & every second. Before reloading, it probes its own
+  URL through the worker, as the reload would: offline, a 5xx, or a page no cache holds keeps it as
+  it is, with the next probe 30 s later or on `online`. Its next client-side navigation loads the
+  destination in full instead (a link) or reloads where it landed (back, forward, `goto`), unless a
+  task holds updates off.
 - **Long-lived tabs still find updates.** SvelteKit’s `updated` state checks `/_app/version.json`
   every 10 minutes, and on focus & visibility changes. The worker leaves that file to the browser,
   so an offline check can’t mistake cached metadata for a deploy. Detection calls

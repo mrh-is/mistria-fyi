@@ -28,8 +28,11 @@ builds don't know the lock and a dialog left open overnight would block updates 
   detected with no worker), a page reloads as soon as it isn't busy: no task holds updates off
   (`holdUpdatesWhile`: a save import or backup restore applying, a transfer code or result on
   screen, later a sync apply), no dialog or panel is open, and no text field has focus. A busy page
-  re-checks on hold release, focus leaving a field, visibility changes, & every second. Its next
-  client-side navigation loads the destination in full instead, unless a task holds updates off.
+  re-checks on hold release, focus leaving a field, visibility changes, coming online, & every
+  second. Before reloading, it probes its own URL through the worker, as the reload would; offline,
+  a 5xx, or a page no cache holds keeps it as it is, and it probes again 30 s later or on `online`.
+  Its next client-side navigation loads the destination in full instead, unless a task holds updates
+  off.
 - **The prompt is gone.** Its three messages are deleted. The worker still honors
   `mfg:skip-waiting`, which tabs from earlier releases send, and those tabs reload once under their
   old behavior when the first version with this change takes over.
