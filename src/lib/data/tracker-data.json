@@ -63458,31 +63458,40 @@
         }
       },
       "reach_copper_star_town_rank": {
-        "sources": []
+        "sources": [],
+        "townRankLevel": 20
       },
       "reach_ruby_star_town_rank": {
-        "sources": []
+        "sources": [],
+        "townRankLevel": 30
       },
       "reach_iron_star_town_rank": {
-        "sources": []
+        "sources": [],
+        "townRankLevel": 40
       },
       "reach_sapphire_star_town_rank": {
-        "sources": []
+        "sources": [],
+        "townRankLevel": 50
       },
       "reach_silver_star_town_rank": {
-        "sources": []
+        "sources": [],
+        "townRankLevel": 60
       },
       "reach_emerald_star_town_rank": {
-        "sources": []
+        "sources": [],
+        "townRankLevel": 70
       },
       "reach_gold_star_town_rank": {
-        "sources": []
+        "sources": [],
+        "townRankLevel": 80
       },
       "reach_diamond_star_town_rank": {
-        "sources": []
+        "sources": [],
+        "townRankLevel": 90
       },
       "reach_mistril_star_town_rank": {
-        "sources": []
+        "sources": [],
+        "townRankLevel": 100
       },
       "upgrade_the_saturday_market_plaza": {
         "sources": [],

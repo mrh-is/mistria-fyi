@@ -56,6 +56,7 @@ import { deriveRecipeLocaleNames, extractRecipes } from "./extract/recipes.js";
 import { extractTownRanks } from "./extract/renown.js";
 import { extractSkills } from "./extract/skills.js";
 import { extractStoresMeta } from "./extract/stores-meta.js";
+import { extractTownRankQuestLevels } from "./extract/town-rank-quests.js";
 import { extractTreasureChestTiers } from "./extract/treasure-chest-tiers.js";
 import { extractVillagers } from "./extract/villagers.js";
 import { forEachItem } from "./extractor-helpers.js";
@@ -168,6 +169,11 @@ export function assembleTrackerData(
     localizer,
     recipeIdByItemId,
   );
+  for (const [questId, level] of extractTownRankQuestLevels(fiddle, townRanks)) {
+    const quest = quests.story[questId];
+    if (!quest) throw new Error(`Town rank quest "${questId}" is absent from the story registry`);
+    quest.townRankLevel = level;
+  }
   const {
     biomeLocaleNames: mineLocaleNames,
     mines,

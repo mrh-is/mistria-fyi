@@ -169,6 +169,8 @@ export const STORE_UPGRADE_ACTIONS = ["repair"] as const;
 export type StoreUpgradeAction = (typeof STORE_UPGRADE_ACTIONS)[number];
 export interface StoryQuest extends Quest {
   heartLevelChanges?: HeartLevelChange[];
+  /** Completion threshold for native Reach Town Rank quests, validated against townRanks. */
+  townRankLevel?: number;
 }
 export interface TownRank {
   levels: LevelRange;
