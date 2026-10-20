@@ -87,10 +87,28 @@ describe("inlineScriptHashes", () => {
     ]);
   });
 
-  it("ends a script at an end tag carrying whitespace or attributes", () => {
-    expect(
-      inlineScriptHashes("<script>alert(1)</script\t\n bar><script>alert(1)</SCRIPT >"),
-    ).toEqual(["sha256-bhHHL3z2vDgxUt0W3dWQOrprscmda2Y5pLsLg4GF+pI="]);
+  // `printf 'alert(1)' | openssl dgst -sha256 -binary | base64`
+  const ALERT_HASH = "sha256-bhHHL3z2vDgxUt0W3dWQOrprscmda2Y5pLsLg4GF+pI=";
+
+  it.each([
+    ["whitespace & attributes", "<script>alert(1)</script\t\n bar>"],
+    ["a space", "<script>alert(1)</script >"],
+    ["a solidus", "<script>alert(1)</script/>"],
+    ["upper case", "<script>alert(1)</SCRIPT>"],
+    ["mixed case & attributes", "<script>alert(1)</ScRiPt\fx=y>"],
+  ])("ends a script at an end tag with %s, as the HTML tokenizer does", (_, html) => {
+    expect(inlineScriptHashes(html)).toEqual([ALERT_HASH]);
+  });
+
+  it("doesn't end a script at a longer tag name", () => {
+    // The script's text runs on to the real end tag, so its hash covers more than `alert(1)`.
+    for (const html of [
+      "<script>alert(1)</scripts>x</script>",
+      "<script>alert(1)</script-x>x</script>",
+    ]) {
+      expect(inlineScriptHashes(html)).not.toEqual([ALERT_HASH]);
+      expect(inlineScriptHashes(html)).toHaveLength(1);
+    }
   });
 
   it("skips external scripts, inert data blocks, & duplicates", () => {

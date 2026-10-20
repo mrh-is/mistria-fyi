@@ -16,8 +16,9 @@ const EXECUTABLE_SCRIPT_TYPES = new Set([
   "application/javascript",
 ]);
 
-// An end tag may carry whitespace & junk attributes (`</script foo>`), which still close the element.
-const SCRIPT_ELEMENT = /<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi;
+// As the HTML tokenizer does, `</script` ends the element when whitespace, `/`, or `>` follows it,
+// whatever else the tag holds (`</script foo>`); `</scripts>` & `</script-x>` don't.
+const SCRIPT_ELEMENT = /<script\b([^>]*)>([\s\S]*?)<\/script(?=[\s/>])[^>]*>/gi;
 const TYPE_ATTRIBUTE = /\btype\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i;
 const SRC_ATTRIBUTE = /\bsrc\s*=/i;
 
