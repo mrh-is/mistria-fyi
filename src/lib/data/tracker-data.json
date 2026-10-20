@@ -23565,6 +23565,15 @@
     },
     "chess_scroll_bundle": {
       "category": "furniture",
+      "recipeUnlocks": [
+        "chess_bishop",
+        "chess_king",
+        "chess_knight",
+        "chess_pawn",
+        "chess_queen",
+        "chess_rook",
+        "chess_table"
+      ],
       "sources": [
         {
           "type": "store",
@@ -24989,6 +24998,23 @@
     },
     "spring_crop_sign_scroll_bundle": {
       "category": "furniture",
+      "recipeUnlocks": [
+        "crop_sign_cabbage",
+        "crop_sign_carrot",
+        "crop_sign_cherry",
+        "crop_sign_chickpea",
+        "crop_sign_daffodil",
+        "crop_sign_lemon",
+        "crop_sign_lilac",
+        "crop_sign_mystery_bag",
+        "crop_sign_peas",
+        "crop_sign_potato",
+        "crop_sign_snowdrop_anemone",
+        "crop_sign_strawberry",
+        "crop_sign_temple_flower",
+        "crop_sign_tulip",
+        "crop_sign_turnip"
+      ],
       "sources": [
         {
           "availability": {
@@ -25011,6 +25037,30 @@
     },
     "summer_crop_sign_scroll_bundle": {
       "category": "furniture",
+      "recipeUnlocks": [
+        "crop_sign_basil",
+        "crop_sign_catmint",
+        "crop_sign_chili_pepper",
+        "crop_sign_coconut",
+        "crop_sign_corn",
+        "crop_sign_cosmos",
+        "crop_sign_cucumber",
+        "crop_sign_daisy",
+        "crop_sign_dill",
+        "crop_sign_iris",
+        "crop_sign_marigold",
+        "crop_sign_night_queen",
+        "crop_sign_oregano",
+        "crop_sign_peach",
+        "crop_sign_pear",
+        "crop_sign_sage",
+        "crop_sign_sugar_cane",
+        "crop_sign_sunflower",
+        "crop_sign_tea",
+        "crop_sign_thyme",
+        "crop_sign_tomato",
+        "crop_sign_watermelon"
+      ],
       "sources": [
         {
           "availability": {
@@ -25033,6 +25083,24 @@
     },
     "fall_crop_sign_scroll_bundle": {
       "category": "furniture",
+      "recipeUnlocks": [
+        "crop_sign_apple",
+        "crop_sign_broccoli",
+        "crop_sign_celosia",
+        "crop_sign_chrysanthemum",
+        "crop_sign_cranberry",
+        "crop_sign_garlic",
+        "crop_sign_heather",
+        "crop_sign_moon_fruit",
+        "crop_sign_onion",
+        "crop_sign_orange",
+        "crop_sign_pumpkin",
+        "crop_sign_rice",
+        "crop_sign_rosemary",
+        "crop_sign_sweet_potato",
+        "crop_sign_viola",
+        "crop_sign_wheat"
+      ],
       "sources": [
         {
           "availability": {
@@ -25055,6 +25123,18 @@
     },
     "winter_crop_sign_scroll_bundle": {
       "category": "furniture",
+      "recipeUnlocks": [
+        "crop_sign_beet",
+        "crop_sign_burdock_root",
+        "crop_sign_cauliflower",
+        "crop_sign_daikon_radish",
+        "crop_sign_frost_lily",
+        "crop_sign_jasmine",
+        "crop_sign_poinsettia",
+        "crop_sign_pomegranate",
+        "crop_sign_snapdragon",
+        "crop_sign_snow_peas"
+      ],
       "sources": [
         {
           "availability": {
@@ -31488,6 +31568,24 @@
     },
     "lovely_cottage_scroll_bundle": {
       "category": "furniture",
+      "recipeUnlocks": [
+        "cottage_bed",
+        "cottage_bed_double",
+        "cottage_chair",
+        "cottage_dresser",
+        "cottage_flooring",
+        "cottage_fridge",
+        "cottage_nightstand",
+        "cottage_plant_shelf",
+        "cottage_potted_fig",
+        "cottage_potted_flowers",
+        "cottage_rug",
+        "cottage_sofa",
+        "cottage_table",
+        "cottage_wall_flowers",
+        "cottage_wall_window",
+        "cottage_wallpaper"
+      ],
       "sources": [
         {
           "type": "store",
@@ -35007,6 +35105,22 @@
     },
     "rustic_cabin_scroll_bundle": {
       "category": "furniture",
+      "recipeUnlocks": [
+        "cabin_bed",
+        "cabin_bed_double",
+        "cabin_bookshelf",
+        "cabin_chair",
+        "cabin_dresser",
+        "cabin_firewood",
+        "cabin_flooring",
+        "cabin_lamp",
+        "cabin_nightstand",
+        "cabin_stove",
+        "cabin_table",
+        "cabin_wall_shelf",
+        "cabin_wall_window",
+        "cabin_wallpaper"
+      ],
       "sources": [
         {
           "type": "store",
@@ -56898,6 +57012,18 @@
     },
     "void_set_scroll_bundle": {
       "category": "other",
+      "recipeUnlocks": [
+        "void_fireplace",
+        "void_flagstone_large",
+        "void_flagstone_small",
+        "void_flooring",
+        "void_lamp",
+        "void_storage_chest",
+        "void_throne_1",
+        "void_throne_2",
+        "void_wallpaper",
+        "void_window"
+      ],
       "sources": [
         {
           "type": "monster",
@@ -56974,6 +57100,9 @@
     },
     "engagement_ring_recipe_scroll": {
       "category": "other",
+      "recipeUnlocks": [
+        "engagement_ring"
+      ],
       "sources": [
         {
           "type": "engagement"

@@ -113,6 +113,19 @@ item and use its `recipeId` field.
 (e.g. `"void_set_scroll_bundle"`, the scroll bundle item itself rather than any recipe it unlocks).
 Use `recipe_unlocks` as the authoritative source.
 
+Fixed recipe-scroll grants have an additional gap: the Engagement Ring can be absent from
+`recipe_unlocks` after its scroll was acquired & used. Native `LearnRecipe` handles `set_unlock`
+scrolls by matching product tags, then calls `Ari.unlock_recipe`. Proposing intentionally clears
+`ARI.recipe_unlocks[ItemId.EngagementRing]` in `AriUtils.gml`, so later saves no longer list it as
+currently available. The pipeline derives each fixed scroll’s deduplicated recipe IDs as
+`Item.recipeUnlocks` and throws if its native set has no matching recipe. Import unions those grants
+from `items_acquired`, covering every fixed scroll & bundle without inferring learning from an
+output item. Generic recipe scrolls have a runtime inner-item target; acquiring the generic scroll
+ID alone cannot identify that recipe, so their saved recipe unlocks remain authoritative. Both
+`items_acquired` and `recipe_unlocks` must be readable for learned-recipe extraction to be complete;
+missing, malformed, or unknown acquisition evidence still adds readable grants but leaves the
+field’s completeness unknown.
+
 ### Cosmetics & variants
 
 | Field                        | Type                       | Description                               |
