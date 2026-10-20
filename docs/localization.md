@@ -216,7 +216,7 @@ glued around it, since fragments force English word order. Render it with `messa
 `src/lib/utils/message-parts.ts` (`about/+page.svelte` is the model) and place each slot in a
 snippet or `{#each}`; a message that drops a placeholder throws.
 
-The vendored `Dialog.Content` hardcodes an English "Close" label, so dialogs pass
+The `ui/` `Dialog.Content` hardcodes an English "Close" label, so dialogs pass
 `showCloseButton={false}` & render `dialog-close-button.svelte`, which uses `common_close`.
 
 ### Page metadata & manifest
