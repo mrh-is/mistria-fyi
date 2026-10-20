@@ -371,6 +371,13 @@ translation directly, so English suffix rules never alter translated strings.
 | `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--villager-sprites-only` |
 | `pipeline/output/asset-atlas/`               | Per-version asset inventories & diffs, from `pnpm run pipeline:atlas` |
 
+Review a regeneration with `pnpm run data:diff [base-ref]`, which compares the committed tracker
+data at a Git ref (default `origin/main`) with the working copy and prints each added (`+`), removed
+(`-`), or changed (`~`) JSON path, then a count summary. Objects compare by key; arrays of objects
+with unique `id`s compare by id, arrays of unique scalars compare as sets plus one order line, and
+other arrays compare by index. It exits 0 when the data is identical, 1 when it differs, and 2 on an
+error, and needs no game assets.
+
 Evaluation mutates the parsed tree, and source attachment & visibility mutate the extracted
 registries. Outputs contain no generation timestamp. String ordering uses one UTF-16 code-unit
 comparator, independent of host locale or ICU; disk and zip TOML inputs register in sorted relative

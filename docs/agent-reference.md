@@ -99,6 +99,7 @@ enforces the same threshold. Ignore an advisory only when it’s disputed or has
 | `pnpm run test:accessibility` | Browser accessibility matrix (Playwright)                          |
 | `pnpm run verify`             | Full CI matrix locally (exception-only; see agent-verification.md) |
 | `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets                         |
+| `pnpm run data:diff [ref]`    | Path-level `tracker-data.json` changes from a ref (`origin/main`)  |
 
 ## Enforcement boundaries
 
