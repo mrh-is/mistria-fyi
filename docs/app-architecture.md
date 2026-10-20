@@ -124,6 +124,10 @@ fact produces a warning rather than aborting the import:
 | Negative                       | Ignored, warns                |
 | Wrong type, `NaN`, or infinite | Ignored, warns                |
 
+The save’s mine-floor field is a zero-based index, so a valid zero imports as floor one and index 99
+imports as floor 100; missing or invalid values remain unset. It is normalized against the maximum
+index before adding one (see [the save format](save-file-format.md)).
+
 Renown is the exception: it clamps silently at every boundary, since nothing in ordinary play
 produces an out-of-domain value. Backup restore (`restoreBackup`) uses the same domain maximums but
 rejects the whole document when a mine floor, heart level, or skill level is out of domain; renown
