@@ -46,7 +46,6 @@
   "ignoreBinaries": [
     // System tools the scripts probe for; contributors install them (docs/machine-setup.md).
     "shellcheck",
-    "gitleaks",
   ],
   // Exports only used inside their own file stay allowed. That is a style question, not dead code,
   // & enforcing it would have meant unexporting dozens of symbols in this PR; narrowing it is a
