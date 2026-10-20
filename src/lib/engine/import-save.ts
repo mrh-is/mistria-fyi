@@ -139,10 +139,18 @@ export interface SaveExtraction {
 type FieldKey = ExtractedProgressKey | keyof SaveIdentity;
 
 /**
- * Fields the save can't fully determine. Its dating flags say who is romantic, but no other
- * relationship (married, platonic) is read, so relationships never support a removal.
+ * Fields the save can't fully determine, so they never support a removal:
+ *
+ * - **Relationships:** the dating flags say who is romantic, but no other relationship (married,
+ *   platonic) is read.
+ * - **Mount appearances:** the Mistmare is inferred from one cutscene in `scene_history`, a list of
+ *   ~150 scene IDs in a late-game save with no catalog to check them against, so a renamed reveal
+ *   scene would look exactly like a Mistmare not yet revealed.
  */
-const PARTIAL_FIELDS: ReadonlySet<FieldKey> = new Set<FieldKey>(["villagerRelationships"]);
+const PARTIAL_FIELDS: ReadonlySet<FieldKey> = new Set<FieldKey>([
+  "mountAppearances",
+  "villagerRelationships",
+]);
 
 function makesUnknown(diagnostic: SaveDiagnostic): boolean {
   return !(diagnostic.code === "level" && diagnostic.issue === "above-max");

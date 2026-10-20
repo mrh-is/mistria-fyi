@@ -677,13 +677,25 @@ describe("extractSave", () => {
     const allLists = Object.fromEntries(animalIds.map((id) => [id, []]));
     const { horse: _horse, ...withoutHorse } = allLists as Record<string, never[]>;
 
-    it("are complete when the scene history & every animal's list are read", () => {
-      const { fields } = extractSave({
+    it("are never complete, since a renamed reveal scene looks like an unrevealed Mistmare", () => {
+      const read = extractSave({
         gamedata: { scene_history: [] },
         player: { animal_variant_unlocks: allLists },
       });
+      expect(read.fields.mountAppearances).toMatchObject({
+        completeness: "unknown",
+        diagnostics: [],
+        value: new Set(),
+      });
 
-      expect(fields.mountAppearances).toMatchObject({ completeness: "complete", value: new Set() });
+      const renamed = extractSave({
+        gamedata: { scene_history: ["reveal_mistmare_v2"] },
+        player: { animal_variant_unlocks: allLists },
+      });
+      expect(renamed.fields.mountAppearances).toMatchObject({
+        completeness: "unknown",
+        value: new Set(),
+      });
     });
 
     it("are unknown when every animal's list is missing, despite a readable scene history", () => {

@@ -19,6 +19,9 @@ tell “the save says none” from “the save didn't say”.
   the maximum.
 - **Relationships are never complete.** The importer reads only the dating flags, so it can't speak
   to marriage or any other relationship.
+- **Mount appearances are never complete.** The Mistmare is inferred from `reveal_mistmare` in
+  `scene_history`, ~150 scene IDs in a late-game save. Without a catalog to check them against, a
+  renamed reveal scene would read as a Mistmare not yet revealed, so the field only ever adds.
 - **Three classes of ID.** Tracked IDs map to tracker data. Known-but-untracked IDs are game IDs the
   tracker deliberately leaves out: any item in tracker data outside the almanac, plus a reviewed
   list in `src/lib/engine/untracked-save-ids.ts` (cosmetic token items, treasure chests, the
@@ -36,6 +39,10 @@ tell “the save says none” from “the save didn't say”.
   contract, a regenerated `tracker-data.json`, & thousands of IDs to the client for the ten IDs real
   v1.0.8 saves need. The reviewed list is guarded instead: `import-save.assets.test.ts` fails when a
   real save holds an unrecognized ID.
+- **Check scene IDs against a catalog, so mount appearances can be complete.** Rejected for now: a
+  reviewed list would need every scene a real save can hold (~150 in one late-game save, and more
+  with each content update), and a pipeline catalog from `fiddle/cutscenes.toml` is a
+  shared-contract change & data regeneration of its own.
 - **Keep empty defaults for absent fields.** Rejected: an empty set is indistinguishable from a save
   that recorded nothing, which is exactly the false removal sync must avoid.
 - **Reject a save with an unreadable identity entry.** Rejected: identity only labels a save, and
@@ -47,5 +54,7 @@ tell “the save says none” from “the save didn't say”.
   should emit the catalog.
 - The importer starts reading other relationship facts (marriage), which could make relationships
   complete.
+- The pipeline emits the game's scene catalog for another reason, which would let mount appearances
+  be complete.
 - Sync needs per-entry rather than per-field completeness, for example to remove one quest while
   another quest's ID is unrecognized.

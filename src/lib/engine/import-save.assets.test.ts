@@ -17,6 +17,8 @@ const SAVE_DIR = path.join(
   "save",
 );
 const SAVE_FILES = readdirSync(SAVE_DIR).filter((name) => name.endsWith(".sav"));
+/** Fields a save never fully determines (see `PARTIAL_FIELDS` in `import-save.ts`). */
+const PARTIAL_KEYS = new Set(["mountAppearances", "villagerRelationships"]);
 
 async function readSave(name: string): Promise<SaveBundle> {
   return parseSavArchive(new File([readFileSync(path.join(SAVE_DIR, name))], name));
@@ -44,7 +46,7 @@ describe.each(SAVE_FILES)("real save %s", (name) => {
 
     expect(unrecognized(extraction)).toEqual([]);
     for (const [key, field] of Object.entries(extraction.fields)) {
-      const expected = key === "villagerRelationships" ? "unknown" : "complete";
+      const expected = PARTIAL_KEYS.has(key) ? "unknown" : "complete";
       expect(field.completeness, `${key}: ${JSON.stringify(field.diagnostics)}`).toBe(expected);
     }
   });
@@ -138,6 +140,19 @@ describe("fields mutated from a real save", () => {
     expect(fields.mountAppearances.completeness).toBe("unknown");
     expect(fields.mountAppearances.value).toContain("mistmare");
     expect(fields.animals.completeness).toBe("unknown");
+  });
+
+  it("keeps mount appearances unknown when the Mistmare's reveal scene is renamed", () => {
+    const { fields } = extractSave(
+      mutated(bundle, (copy) => {
+        const scenes = copy.gamedata?.scene_history as string[];
+        scenes[scenes.indexOf("reveal_mistmare")] = "reveal_mistmare_renamed";
+      }),
+    );
+
+    expect(fields.animals.completeness).toBe("complete");
+    expect(fields.mountAppearances.completeness).toBe("unknown");
+    expect(fields.mountAppearances.value).not.toContain("mistmare");
   });
 
   it("marks levels unknown when a villager's heart level is missing", () => {
