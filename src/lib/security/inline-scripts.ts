@@ -16,14 +16,30 @@ const EXECUTABLE_SCRIPT_TYPES = new Set([
   "application/javascript",
 ]);
 
-// As the HTML tokenizer does, `</script` ends the element when whitespace, `/`, or `>` follows it,
-// whatever else the tag holds (`</script foo>`); `</scripts>` & `</script-x>` don't.
-const SCRIPT_ELEMENT = /<script\b([^>]*)>([\s\S]*?)<\/script(?=[\s/>])[^>]*>/gi;
-const TYPE_ATTRIBUTE = /\btype\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i;
-const SRC_ATTRIBUTE = /\bsrc\s*=/i;
+// Follows the HTML tokenizer: a start tag's quoted attribute values may contain `>`, and in the
+// script's text, `</script` (any case) ends the element only when whitespace, `/`, or `>` follows
+// it, whatever else that end tag holds (`</script foo>`); `</scripts>` & `</script-x>` don't.
+const SCRIPT_ELEMENT =
+  /<script(?=[\s/>])((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script(?=[\s/>])[^>]*>/gi;
+// One attribute: a name, then an optional double-quoted, single-quoted, or bare value.
+const ATTRIBUTE = /([^\s"'>/=]+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?/g;
 
 function sha256Source(content: string): CspScriptHash {
   return `sha256-${createHash("sha256").update(content, "utf8").digest("base64")}`;
+}
+
+/**
+ * A start tag's attributes by lowercase name. The first of duplicate names wins, as in the HTML
+ * tokenizer, and text inside a quoted value (`data-x="src=y"`) is never read as a name.
+ */
+function parseAttributes(source: string): Map<string, string> {
+  const attributes = new Map<string, string>();
+  for (const [, name = "", rawValue = ""] of source.matchAll(ATTRIBUTE)) {
+    const key = name.toLowerCase();
+    const quoted = rawValue.startsWith('"') || rawValue.startsWith("'");
+    if (!attributes.has(key)) attributes.set(key, quoted ? rawValue.slice(1, -1) : rawValue);
+  }
+  return attributes;
 }
 
 /**
@@ -33,10 +49,10 @@ function sha256Source(content: string): CspScriptHash {
  */
 export function inlineScriptHashes(html: string): CspScriptHash[] {
   const hashes = new Set<CspScriptHash>();
-  for (const [, attributes = "", content = ""] of html.matchAll(SCRIPT_ELEMENT)) {
-    if (SRC_ATTRIBUTE.test(attributes)) continue;
-    const typeMatch = TYPE_ATTRIBUTE.exec(attributes);
-    const type = (typeMatch?.[1] ?? typeMatch?.[2] ?? typeMatch?.[3] ?? "").trim().toLowerCase();
+  for (const [, attributeSource = "", content = ""] of html.matchAll(SCRIPT_ELEMENT)) {
+    const attributes = parseAttributes(attributeSource);
+    if (attributes.has("src")) continue;
+    const type = (attributes.get("type") ?? "").trim().toLowerCase();
     if (!EXECUTABLE_SCRIPT_TYPES.has(type)) continue;
     hashes.add(sha256Source(content));
   }

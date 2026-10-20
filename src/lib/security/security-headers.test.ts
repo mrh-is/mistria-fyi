@@ -100,15 +100,33 @@ describe("inlineScriptHashes", () => {
     expect(inlineScriptHashes(html)).toEqual([ALERT_HASH]);
   });
 
-  it("doesn't end a script at a longer tag name", () => {
-    // The script's text runs on to the real end tag, so its hash covers more than `alert(1)`.
-    for (const html of [
-      "<script>alert(1)</scripts>x</script>",
-      "<script>alert(1)</script-x>x</script>",
-    ]) {
-      expect(inlineScriptHashes(html)).not.toEqual([ALERT_HASH]);
-      expect(inlineScriptHashes(html)).toHaveLength(1);
-    }
+  // The script's text runs on to the real end tag, so the hash covers all of it:
+  // `printf '<text>' | openssl dgst -sha256 -binary | base64`.
+  it.each([
+    [
+      '<script>console.log("</script-not>")</script>',
+      "sha256-U0t4ekmO8ncEzU0qcwDaJRX48PqoT/AumXMk2YKnyDg=",
+    ],
+    ["<script>alert(1)</scripts>x</script>", "sha256-Y3Ok4pGzPQXsXfZr+5cxkBF7/BnDL8KI7idwyorjrQA="],
+  ])("doesn't end a script at a longer tag name: %s", (html, hash) => {
+    expect(inlineScriptHashes(html)).toEqual([hash]);
+  });
+
+  it("reads a start tag whose quoted attribute values contain `>`", () => {
+    expect(inlineScriptHashes('<script data-x="a>b">alert(1)</script>')).toEqual([ALERT_HASH]);
+    expect(inlineScriptHashes("<script data-x='a>b'>alert(1)</script>")).toEqual([ALERT_HASH]);
+    // The `type` after a `>`-bearing value is still read, so the data block stays unhashed.
+    expect(inlineScriptHashes('<script data-x="a>b" type="application/json">{}</script>')).toEqual(
+      [],
+    );
+  });
+
+  it("reads attributes only outside quoted values", () => {
+    expect(inlineScriptHashes('<script data-note="src=x">alert(1)</script>')).toEqual([ALERT_HASH]);
+    expect(
+      inlineScriptHashes('<script data-note="type=application/json">alert(1)</script>'),
+    ).toEqual([ALERT_HASH]);
+    expect(inlineScriptHashes('<script SRC="/a.js"></script>')).toEqual([]);
   });
 
   it("skips external scripts, inert data blocks, & duplicates", () => {
