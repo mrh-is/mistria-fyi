@@ -219,6 +219,11 @@ test("keeps serving an old page's lazy chunks from its version's cache after the
   }
 });
 
+// TEMPORARY diagnostics for #172's CI failure.
+function diag(text: string): void {
+  process.stdout.write(`[diag] ${text}\n`);
+}
+
 function isEnglishHome(url: URL): boolean {
   return url.pathname === "/en";
 }
@@ -404,6 +409,22 @@ test("relaunches offline after a new version failed to fetch the last-used home 
     await goOffline(context);
     await page.close();
     const relaunched = await context.newPage();
+    // TEMPORARY diagnostics for #172's CI failure: what navigates this page after it reloads.
+    relaunched.on("framenavigated", (frame) => {
+      if (frame === relaunched.mainFrame()) diag(`navigated ${frame.url()}`);
+    });
+    await relaunched.exposeFunction("mfgDiag", diag);
+    await relaunched.addInitScript(() => {
+      const report = (globalThis as unknown as { mfgDiag: (text: string) => void }).mfgDiag;
+      const startedControlled = Boolean(navigator.serviceWorker.controller);
+      report(`load ${location.pathname} controlled=${String(startedControlled)}`);
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        report(`controllerchange (started controlled=${String(startedControlled)})`);
+      });
+      addEventListener("beforeunload", () => {
+        report(`beforeunload ${location.pathname}`);
+      });
+    });
     await relaunched.goto("/");
     await expect(relaunched).toHaveURL(/\/en$/);
     await expect(relaunched.getByRole("main")).toBeVisible();

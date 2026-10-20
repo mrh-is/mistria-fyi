@@ -52,9 +52,32 @@ export function isPageBusy(doc: Document, holds: Pick<UpdateHolds, "held"> = upd
   return holds.held || hasOpenDialog(doc) || isEditing(doc.activeElement);
 }
 
+/** How long a page waits to probe again after finding its own URL unreachable. */
+export const UNREACHABLE_RETRY_MS = 30_000;
+
+/**
+ * Whether reloading would load this page again: online, and its URL answers successfully. The
+ * probe goes through the service worker, as the reload would, so a page only a cache holds still
+ * counts while one no cache holds doesn't. A deploy mid-way (a 5xx) or a dropped connection keeps
+ * the page as it is rather than swapping it for an error or the offline page.
+ */
+export async function pageIsReachable(): Promise<boolean> {
+  if (!navigator.onLine) return false;
+  try {
+    const response = await fetch(location.href, { cache: "no-store", credentials: "same-origin" });
+    await response.body?.cancel();
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 interface SafeReloadOptions {
   doc?: Document;
+  events?: Pick<Window, "addEventListener">;
   holds?: UpdateHolds;
+  isReachable?: () => Promise<boolean>;
+  now?: () => number;
   pollMs?: number;
   reload?: () => void;
 }
@@ -75,13 +98,18 @@ export interface SafeReload {
 }
 
 /**
- * Reloads the page onto a newer version at its own safe moment, never mid-task. Until then, it
- * re-checks whenever a hold is released, focus leaves a field, the page's visibility changes, and
- * every {@link SAFE_RELOAD_POLL_MS}, which catches dialogs closing.
+ * Reloads the page onto a newer version at its own safe moment, never mid-task, and only when the
+ * reload would load the page ({@link pageIsReachable}). Until then, it re-checks whenever a hold is
+ * released, focus leaves a field, the page's visibility changes, the browser comes back online,
+ * and every {@link SAFE_RELOAD_POLL_MS}, which catches dialogs closing. After an unreachable probe,
+ * it waits {@link UNREACHABLE_RETRY_MS} before probing again, unless the browser comes online.
  */
 export function createSafeReload({
   doc = document,
+  events = globalThis,
   holds = updateHolds,
+  isReachable = pageIsReachable,
+  now = Date.now,
   pollMs = SAFE_RELOAD_POLL_MS,
   reload = () => {
     location.reload();
@@ -89,6 +117,8 @@ export function createSafeReload({
 }: SafeReloadOptions = {}): SafeReload {
   let pending = false;
   let reloading = false;
+  let probing = false;
+  let lastUnreachable = -Infinity;
   const watchers = new AbortController();
   let stopHoldWatch: (() => void) | undefined;
   let poll: ReturnType<typeof setInterval> | undefined;
@@ -99,27 +129,48 @@ export function createSafeReload({
     clearInterval(poll);
   }
 
-  function attempt(): void {
-    if (!pending || reloading || isPageBusy(doc, holds)) return;
+  function ready(): boolean {
+    return pending && !reloading && !probing && !isPageBusy(doc, holds);
+  }
+
+  async function attempt(retryNow = false): Promise<void> {
+    if (!ready()) return;
+    if (!retryNow && now() - lastUnreachable < UNREACHABLE_RETRY_MS) return;
+    probing = true;
+    let reachable = false;
+    try {
+      reachable = await isReachable();
+    } catch {
+      reachable = false;
+    } finally {
+      probing = false;
+    }
+    if (!reachable) lastUnreachable = now();
+    // The page may have become busy, or a navigation taken the reload, while the probe ran.
+    if (!reachable || !ready()) return;
     reloading = true;
     stopWatching();
     reload();
   }
 
+  function check(): void {
+    void attempt();
+  }
+
   // Deferred a task, so focus has settled and a released hold's component has finished its work.
-  function attemptSoon(): void {
-    setTimeout(attempt, 0);
+  function checkSoon(): void {
+    setTimeout(check, 0);
   }
 
   function request(): void {
     if (pending || watchers.signal.aborted) return;
     pending = true;
-    attempt();
-    if (reloading) return;
-    stopHoldWatch = holds.onRelease(attemptSoon);
-    doc.addEventListener("focusout", attemptSoon, { signal: watchers.signal });
-    doc.addEventListener("visibilitychange", attempt, { signal: watchers.signal });
-    poll = setInterval(attempt, pollMs);
+    stopHoldWatch = holds.onRelease(checkSoon);
+    doc.addEventListener("focusout", checkSoon, { signal: watchers.signal });
+    doc.addEventListener("visibilitychange", check, { signal: watchers.signal });
+    events.addEventListener("online", () => void attempt(true), { signal: watchers.signal });
+    poll = setInterval(check, pollMs);
+    check();
   }
 
   function claimNavigation(): boolean {

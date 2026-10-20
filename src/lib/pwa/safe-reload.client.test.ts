@@ -1,19 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createSafeReload, hasOpenDialog, isEditing, SAFE_RELOAD_POLL_MS } from "./safe-reload.js";
+import {
+  createSafeReload,
+  hasOpenDialog,
+  isEditing,
+  SAFE_RELOAD_POLL_MS,
+  UNREACHABLE_RETRY_MS,
+} from "./safe-reload.js";
 import { holdUpdatesWhile, UpdateHolds } from "./update-holds.js";
 
 import type { SafeReload } from "./safe-reload.js";
 
 let holds: UpdateHolds;
 let reload: ReturnType<typeof vi.fn<() => void>>;
+let isReachable: ReturnType<typeof vi.fn<() => Promise<boolean>>>;
+let events: EventTarget;
 let scheduler: SafeReload;
 
 beforeEach(() => {
   vi.useFakeTimers();
   holds = new UpdateHolds();
   reload = vi.fn();
-  scheduler = createSafeReload({ holds, reload });
+  isReachable = vi.fn(() => Promise.resolve(true));
+  events = new EventTarget();
+  scheduler = createSafeReload({ events, holds, isReachable, now: Date.now, reload });
 });
 
 afterEach(() => {
@@ -28,6 +38,11 @@ function append(html: string): HTMLElement {
   const element = template.content.firstElementChild as HTMLElement;
   document.body.append(element);
   return element;
+}
+
+/** Lets timers & the reachability probe settle. */
+async function advance(ms: number): Promise<void> {
+  await vi.advanceTimersByTimeAsync(ms);
 }
 
 describe("busy detection", () => {
@@ -65,70 +80,113 @@ describe("busy detection", () => {
 });
 
 describe("createSafeReload", () => {
-  it("never reloads without an update", () => {
-    vi.advanceTimersByTime(SAFE_RELOAD_POLL_MS * 10);
+  it("never reloads or probes without an update", async () => {
+    await advance(SAFE_RELOAD_POLL_MS * 10);
     document.dispatchEvent(new Event("visibilitychange"));
+    events.dispatchEvent(new Event("online"));
+    await advance(0);
     expect(reload).not.toHaveBeenCalled();
+    expect(isReachable).not.toHaveBeenCalled();
     expect(scheduler.pending).toBe(false);
     expect(scheduler.claimNavigation()).toBe(false);
   });
 
-  it("reloads at once when the page isn't busy, and only once", () => {
+  it("reloads at once when the page isn't busy, and only once", async () => {
     scheduler.request();
     scheduler.request();
-    vi.advanceTimersByTime(SAFE_RELOAD_POLL_MS * 5);
+    await advance(SAFE_RELOAD_POLL_MS * 5);
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it("waits out a held task and reloads once it's released", () => {
+  it("waits out a held task and reloads once it's released", async () => {
     const release = holds.hold();
     scheduler.request();
-    vi.advanceTimersByTime(SAFE_RELOAD_POLL_MS * 5);
+    await advance(SAFE_RELOAD_POLL_MS * 5);
     expect(reload).not.toHaveBeenCalled();
     expect(scheduler.pending).toBe(true);
 
     release();
-    vi.advanceTimersByTime(0);
+    await advance(0);
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it("waits until every overlapping hold is released", () => {
+  it("waits until every overlapping hold is released", async () => {
     const first = holds.hold();
     const second = holds.hold();
     scheduler.request();
     first();
     first();
-    vi.advanceTimersByTime(SAFE_RELOAD_POLL_MS);
+    await advance(SAFE_RELOAD_POLL_MS);
     expect(reload).not.toHaveBeenCalled();
     second();
-    vi.advanceTimersByTime(0);
+    await advance(0);
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it("waits out an open dialog and reloads once it closes", () => {
+  it("waits out an open dialog and reloads once it closes", async () => {
     const dialog = append('<div role="dialog" aria-modal="true"></div>');
     scheduler.request();
-    vi.advanceTimersByTime(SAFE_RELOAD_POLL_MS * 3);
+    await advance(SAFE_RELOAD_POLL_MS * 3);
     expect(reload).not.toHaveBeenCalled();
 
     dialog.remove();
-    vi.advanceTimersByTime(SAFE_RELOAD_POLL_MS);
+    await advance(SAFE_RELOAD_POLL_MS);
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it("waits while a field has focus and reloads once focus leaves it", () => {
+  it("waits while a field has focus and reloads once focus leaves it", async () => {
     const field = append("<textarea></textarea>");
     field.focus();
     scheduler.request();
-    vi.advanceTimersByTime(SAFE_RELOAD_POLL_MS * 3);
+    await advance(SAFE_RELOAD_POLL_MS * 3);
     expect(reload).not.toHaveBeenCalled();
 
     field.blur();
-    vi.advanceTimersByTime(0);
+    await advance(0);
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it("hands the next navigation the reload unless a task holds the update off", () => {
+  // Reloading onto a 5xx mid-deploy, or offline onto a page no cache holds, would swap a working
+  // page for an error. The page stays until the reload would load it.
+  it("keeps an unreachable page as it is and retries after a pause", async () => {
+    isReachable.mockResolvedValue(false);
+    scheduler.request();
+    await advance(SAFE_RELOAD_POLL_MS * 5);
+    expect(reload).not.toHaveBeenCalled();
+    // Polls don't hammer the server: one probe until the pause is over.
+    expect(isReachable).toHaveBeenCalledTimes(1);
+
+    isReachable.mockResolvedValue(true);
+    await advance(UNREACHABLE_RETRY_MS);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("probes again at once when the browser comes back online", async () => {
+    isReachable.mockResolvedValue(false);
+    scheduler.request();
+    await advance(0);
+    isReachable.mockResolvedValue(true);
+
+    events.dispatchEvent(new Event("online"));
+    await advance(0);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't reload if the page turned busy while the probe ran", async () => {
+    const probe = Promise.withResolvers<boolean>();
+    isReachable.mockReturnValueOnce(probe.promise);
+    scheduler.request();
+    const dialog = append('<div role="dialog"></div>');
+    probe.resolve(true);
+    await advance(0);
+    expect(reload).not.toHaveBeenCalled();
+
+    dialog.remove();
+    await advance(SAFE_RELOAD_POLL_MS);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("hands the next navigation the reload unless a task holds the update off", async () => {
     append('<div role="dialog"></div>');
     const release = holds.hold();
     scheduler.request();
@@ -138,18 +196,19 @@ describe("createSafeReload", () => {
     // A dialog stays behind when the player leaves the page, so it doesn't block this.
     expect(scheduler.claimNavigation()).toBe(true);
     // The navigation reloads; nothing else does, and a second navigation isn't handed one.
-    vi.advanceTimersByTime(SAFE_RELOAD_POLL_MS * 3);
+    await advance(SAFE_RELOAD_POLL_MS * 3);
     expect(reload).not.toHaveBeenCalled();
     expect(scheduler.claimNavigation()).toBe(false);
     expect(scheduler.pending).toBe(false);
   });
 
-  it("stops watching once stopped", () => {
+  it("stops watching once stopped", async () => {
     holds.hold();
     scheduler.request();
     scheduler.stop();
     holds.hold()();
-    vi.advanceTimersByTime(SAFE_RELOAD_POLL_MS * 5);
+    events.dispatchEvent(new Event("online"));
+    await advance(SAFE_RELOAD_POLL_MS * 5);
     expect(reload).not.toHaveBeenCalled();
   });
 });

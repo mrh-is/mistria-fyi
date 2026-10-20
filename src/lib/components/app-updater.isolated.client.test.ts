@@ -33,7 +33,7 @@ vi.mock("#lib/pwa/safe-reload.js", async (importOriginal) => {
   return {
     ...original,
     createSafeReload: (options: Parameters<typeof original.createSafeReload>[0]) =>
-      original.createSafeReload({ ...options, reload }),
+      original.createSafeReload({ ...options, isReachable: () => Promise.resolve(true), reload }),
   };
 });
 
@@ -99,7 +99,9 @@ describe("app updater", () => {
     updated.current = true;
     await tick();
 
-    expect(reload).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(reload).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("keeps a busy page in place and loads its next link in full", async () => {
