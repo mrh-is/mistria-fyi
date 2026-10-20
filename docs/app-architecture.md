@@ -85,9 +85,11 @@ persistence until an explicit replace (reset, restore, or save import); the play
 from the Backup & Restore card. The ephemeral UI-only `showCompleted` field is not persisted.
 
 The serializer writes exactly the fields `SerializedState` declares; unrecognized fields in a loaded
-blob are dropped. There are no legacy readers: the launch format starts at version `1`, and a later
-shape change needs a versioned migration. Fields added after launch must be optional so older blobs
-keep loading. `user-state-golden.test.ts` pins the launch shape & the storage keys.
+blob are dropped. Data written by a newer version than the build is never quarantined; #106
+implements the “newer data” state (writes blocked, nothing quarantined). There are no legacy
+readers: the launch format starts at version `1`, and a later shape change needs a versioned
+migration. Fields added after launch must be optional so older blobs keep loading.
+`user-state-golden.test.ts` pins the launch shape & the storage keys.
 
 ### Save File Import
 
@@ -131,6 +133,10 @@ fact produces a warning rather than aborting the import:
 | Above the domain maximum       | Clamped to the maximum, warns |
 | Negative                       | Ignored, warns                |
 | Wrong type, `NaN`, or infinite | Ignored, warns                |
+
+The save’s mine-floor field is a zero-based index, so a valid zero imports as floor one and index 99
+imports as floor 100; missing or invalid values remain unknown. It is normalized against the maximum
+index before adding one (see [the save format](save-file-format.md)).
 
 Renown is the exception: it never warns, since nothing in ordinary play produces an out-of-domain
 value. Above its maximum it clamps; a negative or non-numeric renown is left unknown with only a
@@ -262,7 +268,8 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   needs a redirect from the old slug.
 - **Query & fragment links:** `/data?section=import|transfer` (the welcome card) and
   `/villagers#villager-<id>` (search results, keyed by game villager IDs).
-- **Unlocalized paths:** `/api/feedback` & `/sitemap.xml`.
+- **Unlocalized paths:** `/api/feedback`, `/sitemap.xml`, & `/licenses.txt` (the build-generated
+  open-source notices, linked from the About page; see `src/lib/build/licenses.ts`).
 - **Storage keys:** `mistria-fyi:progress`, `mistria-fyi:progress-quarantine`,
   `mistria-fyi:preferences`, & `mistria-fyi:theme`, plus the progress blob's shape & version (see
   [localStorage](#localstorage)).
