@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 
 import BackupCard from "./backup-card.svelte";
 
@@ -11,6 +12,11 @@ async function restoreFromFile(file: File) {
   await fireEvent.change(input, { target: { files: [file] } });
 }
 
+// Client files share one store per worker, so each test starts from defaults (#174).
+beforeEach(() => {
+  userState.resetAll();
+});
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -19,7 +25,7 @@ afterEach(() => {
 
 describe("BackupCard export", () => {
   it("downloads the serialized state as a dated JSON file", async () => {
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     const createObjectURL = vi.fn((_blob: Blob) => "blob:mistria/backup");
     const revokeObjectURL = vi.fn();
     vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL }));
@@ -61,7 +67,7 @@ describe("BackupCard restore", () => {
   });
 
   it("rejects malformed JSON and leaves the current state untouched", async () => {
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     const before = userState.exportBackup();
     render(BackupCard, { open: true });
 

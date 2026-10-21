@@ -1,10 +1,17 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 
 import DangerZoneCard from "./danger-zone-card.svelte";
+
+// Client files share one store per worker, so each test starts from defaults (#174).
+beforeEach(async () => {
+  userState.resetAll();
+  await tick();
+});
 
 afterEach(async () => {
   cleanup();
@@ -14,7 +21,7 @@ afterEach(async () => {
 
 describe("DangerZoneCard", () => {
   it("asks for confirmation before resetting and keeps progress when cancelled", async () => {
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     render(DangerZoneCard, { open: true });
 
     await fireEvent.click(screen.getByRole("button", { name: "Reset all progress" }));
@@ -33,7 +40,7 @@ describe("DangerZoneCard", () => {
 
   it("resets all progress once confirmed and closes the dialog", async () => {
     userState.setRenown(7);
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     render(DangerZoneCard, { open: true });
 
     await fireEvent.click(screen.getByRole("button", { name: "Reset all progress" }));
