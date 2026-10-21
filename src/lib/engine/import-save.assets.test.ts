@@ -7,6 +7,7 @@ import { trackerData } from "#lib/data/index.js";
 
 import { extractSave, extractSaveProgress } from "./import-save.js";
 import { parseSavArchive } from "./parse-sav.js";
+import { readSaveIdentity } from "./save-identity.js";
 
 import type { SaveBundle, SaveExtraction } from "./import-save.js";
 
@@ -39,6 +40,13 @@ describe.each(SAVE_FILES)("real save %s", (name) => {
   let bundle: SaveBundle;
   beforeAll(async () => {
     bundle = await readSave(name);
+  });
+
+  it("reads the native farm number and creation version without using display names as identity", () => {
+    expect(readSaveIdentity(bundle).identity).toEqual({
+      creationVersion: bundle.info?.creation_version,
+      saveNumber: /^game-(\d+)-/.exec(name)?.[1],
+    });
   });
 
   it("holds no unrecognized IDs, so every field it fully records is complete", () => {

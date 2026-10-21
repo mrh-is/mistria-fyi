@@ -88,9 +88,9 @@
     if (!includeSaveData) return "";
     try {
       const exported = JSON.parse(userState.exportBackup()) as {
-        completed: Record<string, unknown>;
+        progress: Record<string, unknown>;
       };
-      return JSON.stringify(exported.completed, null, 2);
+      return JSON.stringify(exported.progress, null, 2);
     } catch {
       return "(could not load progress data)";
     }
@@ -292,9 +292,9 @@
       if (includeSaveData) {
         try {
           const exported = JSON.parse(userState.exportBackup()) as {
-            completed: Record<string, unknown>;
+            progress: Record<string, unknown>;
           };
-          saveData = exported.completed;
+          saveData = exported.progress;
         } catch {
           // Serialization failed; submit without save data
         }

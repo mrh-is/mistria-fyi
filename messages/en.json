@@ -667,5 +667,9 @@
         "countPlural=other": "Complete {count} sets in the {wing} wing"
       }
     }
-  ]
+  ],
+  "import_last_imported": "Last imported {time}",
+  "import_farm_identity": "Save #{number} · Created in {version}",
+  "import_unknown_number": "unknown",
+  "import_unknown_version": "unknown version"
 }

@@ -675,5 +675,9 @@
         "countPlural=other": "Compléter {count} collections dans l’aile {wing}"
       }
     }
-  ]
+  ],
+  "import_last_imported": "Dernière importation : {time}",
+  "import_farm_identity": "Sauvegarde n° {number} · Créée en {version}",
+  "import_unknown_number": "inconnu",
+  "import_unknown_version": "version inconnue"
 }

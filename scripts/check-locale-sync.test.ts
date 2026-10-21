@@ -192,7 +192,17 @@ describe("checkLocaleSync", () => {
   function git(...args: string[]): void {
     execFileSync(
       "git",
-      ["-c", "commit.gpgsign=false", "-c", "user.name=t", "-c", "user.email=t@t", ...args],
+      [
+        "-c",
+        "commit.gpgsign=false",
+        "-c",
+        "tag.gpgsign=false",
+        "-c",
+        "user.name=t",
+        "-c",
+        "user.email=t@t",
+        ...args,
+      ],
       { cwd: repository, stdio: "ignore" },
     );
   }

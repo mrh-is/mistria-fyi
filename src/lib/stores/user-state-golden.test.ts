@@ -62,12 +62,14 @@ describe("persisted format contract", () => {
     const { animalCosmetics, animals, ...progress } = GOLDEN_BACKUP.progress;
     expect(JSON.parse(userState.exportBackup())).toEqual({
       ...GOLDEN_BACKUP,
+      lastImport: null,
       progress: {
         ...progress,
         ...POST_LAUNCH_FIELDS,
         animalCosmetics: expect.objectContaining(animalCosmetics) as unknown,
         animals: expect.objectContaining(animals) as unknown,
       },
+      version: 2,
     });
   });
 

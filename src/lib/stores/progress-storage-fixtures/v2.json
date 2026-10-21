@@ -1,0 +1,58 @@
+{
+  "progress": {
+    "almanac": ["turnip", "animated_waterfall_v2", "item_from_a_later_update"],
+    "almanacRecipes": ["basic_wood_chest"],
+    "animalCosmetics": {
+      "chicken": ["ribbon_red"],
+      "animal_from_a_later_update": ["ribbon_red"]
+    },
+    "animals": {
+      "chicken": ["red", "variant_from_a_later_update"]
+    },
+    "childChoice": "no",
+    "cosmetics": ["back_gear_ancient_witch_broom"],
+    "dates": ["inn_meal"],
+    "hasUpperFloor": true,
+    "heartLevels": {
+      "balor": 4,
+      "villager_from_a_later_update": 12
+    },
+    "mineFloor": 20,
+    "museum": ["turnip"],
+    "petCosmetics": ["flower_crown"],
+    "petSkins": ["sapling"],
+    "questStates": {
+      "repair_the_general_store": "completed"
+    },
+    "reachedSeason": "fall",
+    "renown": 17,
+    "skillLevels": {
+      "farming": 7
+    },
+    "spells": ["summon_rain"],
+    "unlockedPerks": ["museum_quality_one"],
+    "villagerRelationships": {
+      "balor": "romantic"
+    }
+  },
+  "showCompleted": true,
+  "version": 2,
+  "worldState": {
+    "season": "summer",
+    "weather": "inclement"
+  },
+  "lastImport": {
+    "identity": {
+      "saveNumber": "123456",
+      "creationVersion": {
+        "major": 0,
+        "minor": 11,
+        "patch": 7,
+        "pre": null
+      }
+    },
+    "farmName": "Fern",
+    "playerName": "Ada",
+    "importedAt": 1792531800000
+  }
+}

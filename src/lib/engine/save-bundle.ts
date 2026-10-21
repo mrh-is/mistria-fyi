@@ -8,6 +8,8 @@ export interface SaveBundle {
   info?: SaveSection;
   player?: SaveSection;
   quests?: SaveSection;
+  /** Random game number in a native save filename, independent of its autosave/manual slot. */
+  saveNumber?: string;
 }
 
 /** The sections that record progress; a bundle needs at least one of them to import. */

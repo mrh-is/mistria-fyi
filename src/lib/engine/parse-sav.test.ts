@@ -93,6 +93,20 @@ function u64LE(n: number): Uint8Array {
 // ─── parseSavArchive ──────────────────────────────────────────────────
 
 describe("parseSavArchive", () => {
+  it.each(["game-123456-autosave.sav", "game-123456-1.sav", "GAME-123456-12.SAV"])(
+    "retains the save number from %s without treating the slot as identity",
+    async (name) => {
+      const file = await compressToFile(buildRawSav({ player: { items_acquired: [] } }), name);
+      expect(await parseSavArchive(file)).toHaveProperty("saveNumber", "123456");
+    },
+  );
+
+  it("imports a renamed save without inventing its number", async () => {
+    const file = await compressToFile(buildRawSav({ player: { items_acquired: [] } }), "farm.sav");
+    const bundle = await parseSavArchive(file);
+    expect(bundle.saveNumber).toBeUndefined();
+  });
+
   it("extracts player, gamedata, and quests entries", async () => {
     const player = { gold: 500, name: "TestPlayer" };
     const gamedata = { day: 5, season: "spring" };
