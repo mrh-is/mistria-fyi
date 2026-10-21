@@ -152,6 +152,12 @@ not here.
 
 ## Tooling failures
 
+Absent or stale project dependencies are a routine setup step: agents may run
+`pnpm install --frozen-lockfile` without additional approval, using the configured external store
+and preserving the lockfile. This permission covers neither dependency additions or bumps nor
+changes to runtime, authentication, or package-manager configuration. If the frozen install fails,
+follow the stop, report, & diagnose procedure below; do not retry with a workaround.
+
 When a local tooling or environment issue blocks the task (a missing tool, wrong runtime version,
 broken or unconfigured install, authentication failure, or any other local setup problem), **stop on
 the first occurrence and report it**. Wrangler is the standard example: if `pnpm exec wrangler` is
