@@ -1,3 +1,2 @@
-# Vendored & generated paths (AGENTS.md, architecture boundaries). Changes need the owner's review.
-/src/lib/components/ui/ @mrh-is
+# Generated paths (AGENTS.md, architecture boundaries). Changes need the owner's review.
 /src/lib/data/tracker-data.json @mrh-is

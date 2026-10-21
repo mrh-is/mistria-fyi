@@ -216,7 +216,7 @@ glued around it, since fragments force English word order. Render it with `messa
 `src/lib/utils/message-parts.ts` (`about/+page.svelte` is the model) and place each slot in a
 snippet or `{#each}`; a message that drops a placeholder throws.
 
-The vendored `Dialog.Content` hardcodes an English "Close" label, so dialogs pass
+The `ui/` `Dialog.Content` hardcodes an English "Close" label, so dialogs pass
 `showCloseButton={false}` & render `dialog-close-button.svelte`, which uses `common_close`.
 
 ### Page metadata & manifest
@@ -342,9 +342,9 @@ of Mistria", a person's name) from ordinary prose — those need a
 `<!-- eslint-disable local/no-hardcoded-ui-text -- reason -->` /
 `<!-- eslint-enable local/no-hardcoded-ui-text -->` pair around the element, with a reason.
 
-The rule applies to every `src/**/*.svelte` file except vendored `src/lib/components/ui/**`,
-development routes under `src/routes/dev/**`, and `*.test-harness.svelte` fixtures. Keep these
-exceptions narrow so new app templates receive the rule automatically.
+The rule applies to every `src/**/*.svelte` file except `src/lib/components/ui/**`, development
+routes under `src/routes/dev/**`, and `*.test-harness.svelte` fixtures. Keep these exceptions narrow
+so new app templates receive the rule automatically.
 
 ## Limits of the tooling
 

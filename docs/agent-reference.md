@@ -93,6 +93,7 @@ reason it was reviewed, rather than weakening the check.
 | `pnpm run check:i18n`         | Verify locale files match `en.json`’s keys                         |
 | `pnpm run check:locale-sync`  | Verify a changed English message changed in each locale too        |
 | `pnpm run check:routes`       | Verify built static assets bypass Functions                        |
+| `pnpm run knip`               | Find unused files, exports, & dependencies                         |
 | `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, & ShellCheck                     |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                                         |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)                          |
@@ -113,9 +114,11 @@ reason it was reviewed, rather than weakening the check.
   `.claude/settings.json` & `.codex/hooks.json`. Codex skips new or changed hooks until they are
   re-trusted in its hook review (`/hooks`); review & trust them before relying on enforcement.
 - `guard-generated-paths.ts` denies file-tool edits, patch headers (including deletions & moves),
-  and direct shell writes referring to generated tracker data or vendored UI. Recover by running the
-  pipeline or vendor CLI. CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership and
-  the `shadcn-update` or `generated-data` label.
+  and direct shell writes referring to generated tracker data. Recover by running the pipeline.
+  CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership and the `generated-data`
+  label. `src/lib/components/ui/` is project-owned & not guarded. The hook matches the exact
+  tracker-data file, so a directory-level or `cd`-relative write that reaches it is not caught
+  there; the “Guarded paths” CI check catches it.
 - `guard-generated-reads.ts` denies file-tool & direct shell reads of generated tracker data; read
   `src/lib/types/tracker-data.ts` or pipeline source instead. Existing symlinks are resolved.
 - Shell guards check each command segment (split at `;`, `&&`, `||`, `|`, & newlines) on its own, so

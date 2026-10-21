@@ -121,17 +121,26 @@ all three exist. `user-state-golden.test.ts` pins the current shape & the storag
 The app processes save files entirely client-side. No save data is uploaded.
 
 1. The user selects a `.sav` file or the extracted JSON files (`player.json`, `gamedata.json`,
-   `quests.json`).
+   `quests.json`, and optionally `header.json` & `info.json`).
 2. `parseSavArchive` or `parseExtractedSaveFiles` bundles the sections into a `SaveBundle`. A
    section must be a JSON object, and `player` must contain at least one recognizable progress
-   field. When some JSON files are unusable but at least one parses, the others are reported as
-   warnings.
-3. `extractSaveProgress` maps the bundle to a `Partial<ProgressState>` using `trackerData` for
-   validation and warning generation. Every field is read through a type guard: a field of the wrong
-   shape (a string where a list belongs, `null` where an object belongs) is dropped with a warning,
-   and non-text list entries are dropped individually. A quest listed as both completed and active
-   imports as `completed`. It returns that state & its warnings; it doesn’t count anything.
-4. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
+   field. When some JSON files are unusable but at least one progress file parses, the others are
+   reported as warnings. `header` & `info` only identify the save, so an unreadable one in a `.sav`
+   is left out rather than rejecting the file.
+3. `extractSave` reads each progress field into its value, a completeness flag, & diagnostics, using
+   `trackerData` for validation. A field is `complete` only when the save records all of it; an
+   absent or malformed field is `unknown` with no value, never an empty list or a zero. Every ID is
+   tracked, known-but-untracked (a game ID the tracker deliberately leaves out, listed in
+   `untracked-save-ids.ts`), or unrecognized; an unrecognized ID or an unreadable entry makes its
+   field `unknown`. Relationships are never `complete`, since the save’s dating flags are all that
+   is read, and neither are mount appearances, since the Mistmare is inferred from one scene ID in
+   an uncatalogued scene history. It also retains the save’s identity: `info.creation_version` &
+   `header.playtime`. A quest listed as both completed and active imports as `completed`.
+4. `extractSaveProgress` turns that into the `Partial<ProgressState>` of every value it could read,
+   plus the diagnostics the player sees as warnings (`absent` & `invalid-value` are diagnostics
+   only). It doesn’t count anything. See the
+   [decision record](decisions/2026-10-20-save-extraction-completeness.md).
+5. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
    values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
    quest state (`none` → `obtained` → `completed`). Relationships & child choice merge as one
    household through the pure `mergeHousehold` in `src/lib/engine/relationships.ts`, which reports
@@ -143,21 +152,22 @@ fact produces a warning rather than aborting the import:
 
 | Input                          | Result                        |
 | ------------------------------ | ----------------------------- |
-| Missing or `0`                 | Treated as unset, no warning  |
+| Missing                        | Unknown, no warning           |
+| `0`                            | Treated as unset, no warning  |
 | Fractional                     | Floored, no warning           |
 | Above the domain maximum       | Clamped to the maximum, warns |
 | Negative                       | Ignored, warns                |
 | Wrong type, `NaN`, or infinite | Ignored, warns                |
 
 The save’s mine-floor field is a zero-based index, so a valid zero imports as floor one and index 99
-imports as floor 100; missing or invalid values remain unset. It is normalized against the maximum
+imports as floor 100; missing or invalid values remain unknown. It is normalized against the maximum
 index before adding one (see [the save format](save-file-format.md)).
 
-Renown is the exception: it clamps silently at every boundary, since nothing in ordinary play
-produces an out-of-domain value. Backup restore (`restoreBackup`) uses the same domain maximums but
-rejects the whole document when a mine floor, heart level, or skill level is out of domain; renown
-is clamped there too rather than rejected. See
-[Backup Restore vs Transfer](#backup-restore-vs-transfer).
+Renown is the exception: it never warns, since nothing in ordinary play produces an out-of-domain
+value. Above its maximum it clamps; a negative or non-numeric renown is left unknown with only a
+diagnostic. Backup restore (`restoreBackup`) uses the same domain maximums but rejects the whole
+document when a mine floor, heart level, or skill level is out of domain; renown is clamped there
+too rather than rejected. See [Backup Restore vs Transfer](#backup-restore-vs-transfer).
 
 ### Backup Restore vs Transfer
 
@@ -168,6 +178,8 @@ These flows are not interchangeable:
 - **Save import / device transfer** (`mergeFromSave`) unions imported progress into the current
   state. It is additive and never removes existing entries. The versioned binary contract and
   failure behavior are documented in [the progress transfer format](transfer-format.md).
+- **Save-driven sync** (planned, #123) will apply a save from the game as a policy-driven diff
+  through one serialized write path, rather than through either flow above. See [sync.md](sync.md).
 
 ## 4. Route Composition
 
@@ -180,8 +192,8 @@ Pages are layout compositors. They handle data fetching and composition, not bus
   `#lib/components/skills-content.svelte`.
 - **Colocated components** — components used by a single page live in the same directory (e.g.,
   `src/routes/data/import-card.svelte`).
-- **Shared components** — reusable components live in `src/lib/components/` or vendored
-  `src/lib/components/ui/`.
+- **Shared components** — reusable components live in `src/lib/components/` or the project-owned
+  `src/lib/components/ui/` (forked from shadcn-svelte).
 - **"Everything" view** — `src/routes/everything/+page.svelte` computes overall completion and
   renders one `category-section.svelte` per category. That component owns the category-to-content
   map (which content component, whether it's compact, whether its rows stack), the sticky

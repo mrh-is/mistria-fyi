@@ -89,9 +89,10 @@ not here.
 
 ## Architecture boundaries
 
-- Hooks deny edits of generated `src/lib/data/tracker-data.json` & vendored
-  `src/lib/components/ui/`; regenerate or use the vendor CLI, and read
-  `src/lib/types/tracker-data.ts` for the shared contract.
+- Hooks deny edits of generated `src/lib/data/tracker-data.json`; regenerate it, & read
+  `src/lib/types/tracker-data.ts` for the shared contract. `src/lib/components/ui/` began as
+  shadcn-svelte code but is project-owned: edit it directly, & keep its MIT notice in
+  `THIRD-PARTY-NOTICES.md`.
 - Pipeline extractors throw on unexpected source data. Never invent fallback display text to paper
   over a missing or unrecognized value.
 - `src/lib/engine/` is pure domain logic; side effects belong at store or component boundaries.
@@ -114,9 +115,10 @@ not here.
   conventions. Read [app-architecture.md](docs/app-architecture.md) for app boundaries,
   [styling.md](docs/styling.md) for UI/CSS & visual direction,
   [localization.md](docs/localization.md) for user-facing text,
-  [save-file-format.md](docs/save-file-format.md) for saves,
-  [mistria-wiki-api.md](docs/mistria-wiki-api.md) for wiki integration, &
-  [cloud-agent-environments.md](docs/cloud-agent-environments.md) for cloud setup when relevant.
+  [save-file-format.md](docs/save-file-format.md) for saves, [sync.md](docs/sync.md) for save-driven
+  sync (the courier, relay, pairing, & apply rules), [mistria-wiki-api.md](docs/mistria-wiki-api.md)
+  for wiki integration, & [cloud-agent-environments.md](docs/cloud-agent-environments.md) for cloud
+  setup when relevant.
 
 ## Review gates
 
