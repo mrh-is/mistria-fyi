@@ -402,7 +402,7 @@ test("relaunches offline in a language chosen while a new version was installing
   const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
   const newCache = `cache-${newVersion}`;
 
-  // The new version fetches the English home page right after reading the last-used locale. Hold
+  // The new version precaches the English home page right after reading the offline locales. Hold
   // that fetch until the switch below has happened.
   const { promise: homeHeld, resolve: releaseHome } = Promise.withResolvers<boolean>();
   const { promise: localeRead, resolve: homeRequested } = Promise.withResolvers<boolean>();
@@ -501,6 +501,44 @@ test("relaunches offline after a new version failed to fetch the last-used home 
       .toBe(1);
     await reportVersion(relaunched, newVersion);
     await expect.poll(() => cacheNames(relaunched)).not.toContain(oldCache);
+  } finally {
+    restore();
+  }
+});
+
+// Each launch page comes from the new version's install, not a page message: the reloaded page
+// reports only its own locale, so `/` & another offline locale's home prove the precache (#110).
+test("precaches `/` & each offline locale's home page when a new version installs", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/");
+  await waitForControl(page);
+  await page.getByRole("button", { name: "Quick settings" }).click();
+  await page.getByRole("button", { name: "Choose language" }).click();
+  await page.getByRole("button", { name: /^Français/ }).click();
+  await expect(page).toHaveURL(/\/fr$/);
+  await expect.poll(() => lastLocale(page)).toBe("fr");
+
+  const oldCache = versionCacheOf(await cacheNames(page));
+  const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
+  const newCache = `cache-${newVersion}`;
+
+  try {
+    await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
+    await waitForTakeover(context, newCache);
+    for (const path of ["/", "/en", "/fr"]) {
+      // oxlint-disable-next-line no-await-in-loop -- One assertion per launch page, for its message.
+      expect(await cacheHolds(page, newCache, path), path).toBe(true);
+    }
+    expect(await cacheHolds(page, newCache, "/ja")).toBe(false);
+
+    await goOffline(context);
+    await page.close();
+    const relaunched = await context.newPage();
+    await relaunched.goto("/");
+    await expect(relaunched).toHaveURL(/\/fr$/);
+    await expect(relaunched.getByRole("main")).toBeVisible();
   } finally {
     restore();
   }

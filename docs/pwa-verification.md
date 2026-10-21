@@ -35,23 +35,27 @@ Other languages download the first time the player uses them, then stay availabl
   already imported may come from a cache an update has replaced. If any chunk is still missing, the
   page stays in place and shows “Go online to download the Japanese text, then try again.”
 - **An offline launch opens the last-used language (#728).** The manifest’s `start_url` is `/`,
-  which has no page of its own: online, the server redirects it to a locale. An installed app’s
-  first launch loads that page before the worker exists, and browsing after that is client-side, so
-  no page load ever passes through the worker to cache it. Instead, the page’s `mfg:cache-locales`
+  whose prerendered stub picks a locale in the browser. An installed app’s first launch loads that
+  page before the worker exists, and browsing after that is client-side, so no page load ever passes
+  through the worker to cache it. Instead, each version’s install precaches its launch pages (#110):
+  `/` and the prerendered home page (`/en`, `/ja`, …) of every offline locale and of the last-used
+  one, picked from `$app/manifest`’s `prerendered` by extensionless path, since a request for
+  `/en.html` reaches the Function and 404s. A prerendered page embeds its build’s version, so the
+  copy in `cache-<version>` always matches that cache’s chunks. The precache is best-effort, like
+  the name chunks: a page that fails doesn’t fail the install. The page’s `mfg:cache-locales`
   message names its current locale (on every load and every picker switch), and the worker records
-  it as the last-used locale in `offline-locales-v1` and fetches that locale’s home page into its
-  cache. Each new version’s install fetches the last-used home page again, since activating deletes
-  the old cache; a switch during that install reaches it through the message above. If the new
-  version still lacks that page when it activates (its fetch failed, or the switch happened
-  offline), activation keeps the old version’s cache, which holds the only working copy, and records
-  it in `offline-locales-v1`. The active worker deletes it once a page message has cached the home
-  page in the new version. The record is never cached in memory, because during an update two
-  workers write it (#18). A full page load through the worker records its locale too. When a
-  bare-path navigation fails offline, the worker redirects to the same path under the last-used
-  locale, or under any locale whose page is cached, before trying the bare path's cached stub & then
-  the offline page. Locale home pages (`/en`, `/ja`, …) are exempt from runtime-cache eviction, and
-  a navigation that comes back as a followed redirect is answered with the redirect itself and never
-  cached.
+  it as the last-used locale in `offline-locales-v1` and fetches that locale’s home page if its
+  cache lacks it, which covers a language first used after the install, including a switch during
+  that install. If the new version still lacks the last-used home page when it activates (its fetch
+  failed, or the switch happened offline), activation keeps the old version’s cache, which holds the
+  only working copy, and records it in `offline-locales-v1`. The active worker deletes it once a
+  page message has cached the home page in the new version. The record is never cached in memory,
+  because during an update two workers write it (#18). A full page load through the worker records
+  its locale too. When a bare-path navigation fails offline, the worker redirects to the same path
+  under the last-used locale, or under any locale whose page is cached, before trying the bare
+  path's cached stub & then the offline page. Launch pages (`/`, `/en`, `/ja`, …) are exempt from
+  runtime-cache eviction, and a navigation that comes back as a followed redirect is answered with
+  the redirect itself and never cached.
 
 ### Byte budget
 
@@ -140,6 +144,8 @@ The suite verifies:
 - the offline document for a previously uncached navigation;
 - an offline launch from `start_url` (`/`) into the home page, after one online launch with only
   client-side browsing, and into the language last chosen in the picker;
+- a new version’s install precaching `/` and each offline locale’s home page, then an offline
+  relaunch into the last-used language (#110);
 - a new version’s install caching the last-used locale’s home page, and an offline relaunch into a
   language chosen while that install was underway (#18);
 - an offline relaunch after a new version failed to fetch the last-used home page, served from the
@@ -189,9 +195,11 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
    since Cloudflare Pages redirects `.html` paths (#226).
 7. Still offline, open `/`. Confirm it lands on the language you last used online (for example
    `/en`), not the offline page. On an installed app, launch it from its icon instead. If it
-   doesn’t, check Cache Storage for `/__last-locale` in `offline-locales-v1` and the home page in
-   `cache-<version>`. Then switch languages online, force-quit, and repeat offline: it should open
-   the new language.
+   doesn’t, check Cache Storage for `/__last-locale` in `offline-locales-v1` and for `/` and the
+   home page in `cache-<version>`. Then switch languages online, force-quit, and repeat offline: it
+   should open the new language. On an iPhone, check this from the Home Screen app: WebKit refuses
+   to render a cached navigation that was redirected, so the cached `/` and home pages must be plain
+   200 responses.
 8. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
    the online application renders normally.
 9. To check the update flow, keep two tabs open on the deployment, open a dialog (the About page’s
