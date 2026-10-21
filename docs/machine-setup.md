@@ -11,6 +11,18 @@ a machine misbehaves. Always run it with `node`, never through pnpm: `pnpm run` 
 dependencies first and runs scripts on the `devEngines` runtime from `package.json`, which hides the
 Node version agent shells actually use.
 
+The doctor groups its checks into sections by work area. `core` covers "Required for every
+contributor" & always runs; the others match "Needed for specific work": `browser` (Playwright
+browsers), `pipeline` (game assets), & `release` (the Wrangler login). With no flag it checks every
+section; `--for` checks core plus the named ones, lists the rest as skipped, & leaves skipped
+sections out of the exit status. An unknown section name exits 2 with the valid names.
+
+```bash
+node scripts/machine-doctor.ts                         # every section
+node scripts/machine-doctor.ts --for core              # UI work, no game files
+node scripts/machine-doctor.ts --for browser,pipeline  # core, browser tests, & pipeline
+```
+
 Agents may initialize an isolated harness-created worktree with `node scripts/setup-worktree.ts`
 when dependencies or included links are absent; this standard setup is preauthorized, including
 after a missing-dependency preflight failure. Other local tooling failures, including failure of
@@ -56,16 +68,18 @@ setup itself, require agents to stop & report them; see “Tooling failures” i
 
 ## Needed for specific work
 
-1. **Playwright browsers** for the accessibility & PWA suites, which only CI installs by default:
-   `pnpm exec playwright install chromium`, which includes the headless shell that headless runs
-   launch. The suites use Chromium only. The doctor checks the exact revisions the installed
+Each item names the doctor section that checks it.
+
+1. **Playwright browsers** (`browser`) for the accessibility & PWA suites, which only CI installs by
+   default: `pnpm exec playwright install chromium`, which includes the headless shell that headless
+   runs launch. The suites use Chromium only. The doctor checks the exact revisions the installed
    Playwright expects.
-2. **Game assets** for pipeline work: place or link them at `pipeline/input/` (see
+2. **Game assets** (`pipeline`) for pipeline work: place or link them at `pipeline/input/` (see
    [game-version-update-protocol.md](game-version-update-protocol.md)). `pnpm run game-assets:share`
    copies them to the maintainer's shared drive.
-3. **Wrangler login** for R2 uploads: `pnpm exec wrangler login`, then `pnpm exec wrangler whoami`.
-   The doctor does not probe this because the login is interactive & stored credentials stay out of
-   its reach. Never run `pnpx wrangler`.
+3. **Wrangler login** (`release`) for R2 uploads: `pnpm exec wrangler login`, then
+   `pnpm exec wrangler whoami`. The doctor lists this as a todo & does not probe it, because the
+   login is interactive & stored credentials stay out of its reach. Never run `pnpx wrangler`.
 
 ## Codex shells
 
@@ -97,8 +111,8 @@ approve.
 
 ## Verify the result
 
-1. `node scripts/machine-doctor.ts` exits 0, or reports only the "Needed for specific work" items
-   you don't need, such as game assets outside pipeline work.
+1. `node scripts/machine-doctor.ts --for <the sections you need>` exits 0; for example, `--for core`
+   on a machine that never runs the pipeline.
 2. `pnpm run verify` passes.
 
 If a step fails, the doctor's output names the prerequisite; fix it there, not by working around the
