@@ -84,6 +84,19 @@ function compareVersions(a: [number, number, number], b: [number, number, number
   return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
 }
 
+function readEnginesNode(manifest: string | undefined): string | undefined {
+  try {
+    return (JSON.parse(manifest ?? "{}") as { engines?: { node?: string } }).engines?.node;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Homebrew's versioned formulae are keg-only, so each install also links the binary. */
+function brewVersioned(formula: string): string {
+  return `brew install ${formula} && brew link --force ${formula}`;
+}
+
 /**
  * The shell's Node only has to satisfy package.json's `engines`: `devEngines.runtime` makes every
  * `pnpm run` & `pnpm exec` use `.node-version`'s release, and this script & Claude's hooks, which
@@ -92,7 +105,7 @@ function compareVersions(a: [number, number, number], b: [number, number, number
 export function checkNode(machine: Environment): CheckResult {
   const pinned = machine.read(join(machine.root, ".node-version"))?.trim();
   const manifest = machine.read(join(machine.root, "package.json"));
-  const range = (JSON.parse(manifest ?? "{}") as { engines?: { node?: string } }).engines?.node;
+  const range = readEnginesNode(manifest);
   const bounds = /^>=\s*(\d+\.\d+\.\d+)\s+<\s*(\d+\.\d+\.\d+)$/.exec(range?.trim() ?? "");
   const min = bounds ? parseVersion(bounds[1]) : undefined;
   const max = bounds ? parseVersion(bounds[2]) : undefined;
@@ -105,7 +118,13 @@ export function checkNode(machine: Environment): CheckResult {
       "Declare engines.node in package.json as a >= & < pair",
     );
   }
-  const fix = `Install a Node release within package.json engines (${range}); pnpm supplies ${pinned ?? "the pinned release"} for scripts, so no version manager is needed`;
+  // The unversioned Homebrew & winget packages track Node's newest major, which can leave engines.
+  const major = pinned ? parseVersion(pinned)?.[0] : undefined;
+  const installers: Partial<Record<NodeJS.Platform, string>> = {
+    darwin: `${brewVersioned(`node@${major ?? "<major>"}`)} (brew unlink node first if Homebrew's newer node is linked)`,
+    win32: "winget install OpenJS.NodeJS.LTS",
+  };
+  const fix = `Install a Node release within package.json engines (${range}): ${installers[machine.platform] ?? "use your package manager"}; pnpm supplies ${pinned ?? "the pinned release"} for scripts, so no version manager is needed`;
   const have = parseVersion(machine.nodeVersion);
   if (!have || compareVersions(have, min) < 0 || compareVersions(have, max) >= 0) {
     return check("node", "Node.js", "wrong", `found ${machine.nodeVersion}, outside ${range}`, fix);
@@ -124,9 +143,10 @@ export function checkPnpm(machine: Environment): CheckResult {
   const major = pinned ? parseVersion(pinned)?.[0] : undefined;
   // Homebrew's unversioned pnpm formula tracks pnpm's newest major, so name the pinned one.
   const version = major === undefined ? "pnpm" : `pnpm ${major}`;
+  const brew = brewVersioned(`pnpm@${major ?? "<major>"}`);
   const install =
     machine.platform === "darwin"
-      ? `brew install pnpm@${major ?? "<major>"}`
+      ? brew
       : `Install ${version}; docs/machine-setup.md lists installers`;
   const result = machine.run("pnpm", ["--version"]);
   if (!result.ok) {
@@ -155,7 +175,9 @@ export function checkPnpm(machine: Environment): CheckResult {
       "pnpm",
       "wrong",
       `found ${have}, package.json pins ${pinned}; the launcher major should match`,
-      `pnpm self-update ${major}; for Homebrew's pnpm, brew uninstall pnpm && brew install pnpm@${major}`,
+      machine.platform === "darwin"
+        ? `pnpm self-update ${major}; for Homebrew's pnpm, brew uninstall pnpm && ${brew}`
+        : `pnpm self-update ${major}`,
     );
   }
   return check("pnpm", "pnpm", "ok", have);

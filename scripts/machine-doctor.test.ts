@@ -55,6 +55,10 @@ describe("parseVersion", () => {
   });
 });
 
+function readMalformedManifest(path: string): string | undefined {
+  return basename(path) === "package.json" ? "{" : files[basename(path)];
+}
+
 function readCaretEngines(path: string): string | undefined {
   return basename(path) === "package.json" ? '{"engines": {"node": "^24"}}' : files[basename(path)];
 }
@@ -74,7 +78,18 @@ describe("checkNode", () => {
       expect(result.status).toBe("wrong");
       expect(result.detail).toContain(nodeVersion);
       expect(result.fix).toContain(">=24.15.0 <27.0.0");
+      expect(result.fix).toContain("brew install node@24 && brew link --force node@24");
     }
+    expect(checkNode(machine({ nodeVersion: "27.0.0", platform: "win32" })).fix).toContain(
+      "winget install OpenJS.NodeJS.LTS",
+    );
+  });
+
+  it("reports an unparsable package.json instead of crashing", () => {
+    expect(checkNode(machine({ read: readMalformedManifest }))).toMatchObject({
+      detail: expect.stringContaining("missing") as string,
+      status: "wrong",
+    });
   });
 
   it("flags an engines range it can't read instead of guessing", () => {
@@ -89,9 +104,10 @@ describe("checkPnpm", () => {
   it("reports a missing pnpm with an install command for the pinned major", () => {
     expect(checkPnpm(machine())).toMatchObject({
       detail: "not found on PATH",
-      fix: expect.stringContaining("brew install pnpm@11") as string,
+      fix: expect.stringContaining("brew install pnpm@11 && brew link --force pnpm@11") as string,
       status: "missing",
     });
+    expect(checkPnpm(machine({ platform: "linux" })).fix).not.toContain("brew");
     expect(checkPnpm(machine({ platform: "win32" })).fix).toContain("pnpm.cmd");
   });
 
@@ -124,7 +140,11 @@ describe("checkPnpm", () => {
   it("flags a launcher whose major differs from the pin", () => {
     const result = checkPnpm(machine({ commands: { "pnpm --version": "12.11.2\n" } }));
     expect(result.status).toBe("wrong");
-    expect(result.fix).toContain("pnpm@11");
+    expect(result.fix).toContain("brew link --force pnpm@11");
+    const linux = checkPnpm(
+      machine({ commands: { "pnpm --version": "12.11.2\n" }, platform: "linux" }),
+    );
+    expect(linux.fix).toBe("pnpm self-update 11");
   });
 
   it("passes a matching major", () => {
