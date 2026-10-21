@@ -18,6 +18,7 @@
   } from "#lib/engine/import-save.js";
   import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
+  import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { isIosDevice } from "#lib/utils/ios-device.js";
   import { messageParts } from "#lib/utils/message-parts.js";
@@ -68,6 +69,9 @@
 
   // ── Hidden file input ref ──
   let fileInput = $state<HTMLInputElement | null>(null);
+
+  // An app update's reload waits while an import applies and while its summary is on screen.
+  $effect(() => holdUpdatesWhile(importing || importResult !== null));
 
   // ── Save location dialog ──
   const SAV_PATH = String.raw`%LOCALAPPDATA%\FieldsOfMistria\saves`;

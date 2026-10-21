@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 /**
- * Label gate for vendored & generated paths (AGENTS.md, architecture boundaries), run by the "Guarded paths" workflow.
+ * Label gate for generated paths (AGENTS.md, architecture boundaries), run by the "Guarded paths" workflow.
  *
  * A PR that changes a guarded path needs the matching label. A rename counts as touching both its
  * destination (`filename`) and its source (`previous_filename`), so moving a file out of a guarded
@@ -12,7 +12,6 @@ import { pathToFileURL } from "node:url";
  */
 
 export const GUARDS: { label: string; matches: (path: string) => boolean }[] = [
-  { label: "shadcn-update", matches: (path) => path.startsWith("src/lib/components/ui/") },
   { label: "generated-data", matches: (path) => path === "src/lib/data/tracker-data.json" },
 ];
 

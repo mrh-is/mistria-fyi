@@ -76,8 +76,9 @@ export function progressFacts(progress: DeepReadonly<ProgressState>): Map<string
   }
   for (const field of ["animalCosmetics", "animals"] as const) {
     for (const [animalId, ids] of Object.entries(progress[field])) {
-      for (const id of (ids ?? []) as Iterable<string>)
-        {facts.set(factKey(field, animalId, id), "1");}
+      for (const id of (ids ?? []) as Iterable<string>) {
+        facts.set(factKey(field, animalId, id), "1");
+      }
     }
   }
   for (const field of ["heartLevels", "skillLevels"] as const) {

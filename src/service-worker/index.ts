@@ -1,4 +1,12 @@
-import { VERSION_METADATA_PATH } from "#lib/pwa/config.js";
+import {
+  cachesNoPageNeeds,
+  CLIENT_VERSIONS_CACHE,
+  parseClientVersionMessage,
+  readClientVersions,
+  rememberClientVersion,
+  versionsInUse,
+} from "#lib/pwa/client-versions.js";
+import { IMMUTABLE_DIRECTORY, VERSION_METADATA_PATH } from "#lib/pwa/config.js";
 import {
   cacheLocaleChunks,
   cacheLocaleHome,
@@ -34,7 +42,12 @@ declare const __LOCALE_NAME_CHUNKS__: LocaleNameChunks | undefined;
 
 const sw = globalThis as unknown as ServiceWorkerGlobalScope;
 
-const CACHE = `cache-${version}`;
+/** The cache holding `appVersion`'s build, named the same by every version's worker. */
+function versionCache(appVersion: string): string {
+  return `cache-${appVersion}`;
+}
+
+const CACHE = versionCache(version);
 const SPRITES_CACHE = "sprites-v1";
 // Manifest paths are relative to the base path, which is the registration scope's pathname.
 const ASSETS = [...immutable, ...assets].map(
@@ -42,6 +55,7 @@ const ASSETS = [...immutable, ...assets].map(
 );
 const ASSET_PATHS = new Set(ASSETS);
 const VERSION_PATH = new URL(VERSION_METADATA_PATH, sw.registration.scope).pathname;
+const IMMUTABLE_PREFIX = new URL(`${IMMUTABLE_DIRECTORY}/`, sw.registration.scope).pathname;
 const LOCALE_NAME_CHUNKS: LocaleNameChunks =
   // oxlint-disable-next-line unicorn/no-typeof-undefined -- Only builds define this identifier; reading it bare throws a ReferenceError in dev.
   typeof __LOCALE_NAME_CHUNKS__ === "undefined" ? {} : __LOCALE_NAME_CHUNKS__;
@@ -65,14 +79,53 @@ async function keepLocaleHome(locale: LocaleCode): Promise<void> {
   }
 }
 
+/** Every open page in scope, whichever worker (if any) controls it. */
+async function openClientIds(): Promise<Set<string>> {
+  const windows = await sw.clients.matchAll({ type: "window", includeUncontrolled: true });
+  return new Set(windows.map((client) => client.id));
+}
+
+// Reports arrive concurrently; each read-modify-write of the record waits for the one before.
+let clientVersionWrites: Promise<void> = Promise.resolve();
+
+async function writeClientVersion(
+  previous: Promise<void>,
+  clientId: string,
+  appVersion: string,
+): Promise<void> {
+  await previous;
+  try {
+    const cache = await caches.open(CLIENT_VERSIONS_CACHE);
+    await rememberClientVersion(cache, clientId, appVersion, await openClientIds());
+  } catch {
+    // Out of quota: the page reads as unknown, which keeps every older cache until it reloads.
+  }
+}
+
+/** Records the version a page reported. Best-effort: an unrecorded page reads as unknown. */
+function recordClientVersion(clientId: string, appVersion: string): Promise<void> {
+  clientVersionWrites = writeClientVersion(clientVersionWrites, clientId, appVersion);
+  return clientVersionWrites;
+}
+
 /**
- * Deletes the `older` versions' caches, except one holding the only copy of the last-used locale's
- * home page, which stays until this version has cached it (#18). Records what it kept, so a later
- * message can finish the job.
+ * Deletes the `older` versions' caches that no open page needs (#111): a page still running an
+ * older version imports its chunks from that version's cache, since the server no longer has
+ * them. Of those, one holding the only copy of the last-used locale's home page stays until this
+ * version has cached it (#18). Records what it kept, so a later message can finish the job.
  */
 async function deleteObsoleteCaches(older: readonly string[]): Promise<void> {
-  const lastLocale = await LAST_LOCALE.read();
-  const obsolete = await obsoleteCaches(caches, CACHE, older, lastLocale, sw.registration.scope);
+  const [lastLocale, clientVersions, openClients] = await Promise.all([
+    LAST_LOCALE.read(),
+    caches.open(CLIENT_VERSIONS_CACHE).then(readClientVersions),
+    openClientIds(),
+  ]);
+  const unneeded = cachesNoPageNeeds(
+    older,
+    versionsInUse(clientVersions, openClients),
+    versionCache,
+  );
+  const obsolete = await obsoleteCaches(caches, CACHE, unneeded, lastLocale, sw.registration.scope);
   await Promise.all(obsolete.map((name) => caches.delete(name)));
   const kept = older.filter((name) => !obsolete.includes(name));
   try {
@@ -83,7 +136,9 @@ async function deleteObsoleteCaches(older: readonly string[]): Promise<void> {
 }
 
 /**
- * Deletes the caches this version's activation kept, once it has the home page they were kept for.
+ * Deletes the caches this version's activation kept, once no open page runs their version and this
+ * version has the home page they were kept for. Runs on page messages, since a closing or
+ * reloading page tells the worker nothing; the next page to report its version settles it.
  * Only the active worker does, and only with no other version installing or waiting: that version
  * hears the same page messages, and a rollback's may reuse a kept cache's name. Browsers without
  * `self.serviceWorker` leave kept caches to the next activation.
@@ -110,15 +165,32 @@ sw.addEventListener("install", (event) => {
       // Fetched fresh: the old version's page imports chunks that go with its cache.
       const lastLocale = await LAST_LOCALE.read();
       if (lastLocale) await keepLocaleHome(lastLocale);
-      // No `skipWaiting()`. A first install activates at once; an update waits until a tab accepts
-      // the update prompt, since taking over would delete the cache open tabs still import from.
+      // Take over as soon as installed, with no tab's consent: activation keeps every older cache
+      // an open page still imports from, and each page reloads onto this version at its own safe
+      // moment (#111).
+      await sw.skipWaiting();
     })(),
   );
 });
 
 sw.addEventListener("message", (event) => {
+  // Sent by tabs from releases before #111 when the player accepts the update prompt. This
+  // version activates on its own, so the request is only ever early.
   if (isSkipWaitingRequest(event.data)) {
     event.waitUntil(sw.skipWaiting());
+    return;
+  }
+  const clientVersion = parseClientVersionMessage(event.data);
+  if (clientVersion !== undefined) {
+    const { source } = event;
+    if (!(source instanceof Client)) return;
+    event.waitUntil(
+      (async () => {
+        await recordClientVersion(source.id, clientVersion);
+        // A page reporting in may be the reload that frees an older version's cache.
+        await deleteRetainedCaches();
+      })(),
+    );
     return;
   }
   const locales = parseCacheLocalesMessage(event.data, LOCALE_NAME_CHUNKS);
@@ -158,20 +230,29 @@ sw.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       // No fetch here: until activation finishes, every fetch event waits, and the launch with it.
-      // A home page this version couldn't fetch keeps the old cache instead.
+      // A home page this version couldn't fetch keeps the old cache instead, as does any open
+      // page's version.
       const keys = await caches.keys();
-      await deleteObsoleteCaches(
-        keys.filter(
-          (key) => key !== CACHE && key !== SPRITES_CACHE && key !== OFFLINE_LOCALES_CACHE,
-        ),
-      );
+      const persistent = new Set([
+        CACHE,
+        SPRITES_CACHE,
+        OFFLINE_LOCALES_CACHE,
+        CLIENT_VERSIONS_CACHE,
+      ]);
+      await deleteObsoleteCaches(keys.filter((key) => !persistent.has(key)));
       await sw.clients.claim();
     })(),
   );
 });
 
 sw.addEventListener("fetch", (event) => {
-  const strategy = fetchStrategy(event.request, ASSET_PATHS, sw.location.origin, VERSION_PATH);
+  const strategy = fetchStrategy(
+    event.request,
+    ASSET_PATHS,
+    sw.location.origin,
+    VERSION_PATH,
+    IMMUTABLE_PREFIX,
+  );
   // Without `respondWith`, the browser fetches the request itself.
   if (!strategy) return;
   const url = new URL(event.request.url);
@@ -180,14 +261,18 @@ sw.addEventListener("fetch", (event) => {
     event.respondWith(
       // Build assets are content-addressed, so a `Vary` header can't make a cached copy wrong. Vite's
       // CORS middleware adds `Vary: Origin`, which would otherwise miss for module imports: they
-      // send an `Origin` header the precache requests didn't.
+      // send an `Origin` header the precache requests didn't. This version's cache answers first;
+      // then every other one, so a page still on an older version finds its chunks in that
+      // version's cache.
       (async () => {
-        const cached = await caches.match(event.request, { ignoreVary: true });
+        const current = await caches.open(CACHE);
+        const cached =
+          (await current.match(event.request, { ignoreVary: true })) ??
+          (await caches.match(event.request, { ignoreVary: true }));
         if (cached) return cached;
         const response = await fetch(event.request);
         if (response.ok && isLazyAsset(url.pathname, LOCALE_NAME_CHUNK_PATHS)) {
-          const cache = await caches.open(CACHE);
-          await cache.put(event.request, response.clone());
+          await current.put(event.request, response.clone());
         }
         return response;
       })(),
@@ -214,7 +299,9 @@ sw.addEventListener("fetch", (event) => {
           cache,
           fetcher: (request) => fetch(request),
           lastLocale: LAST_LOCALE,
-          matchCache: (request) => caches.match(request),
+          // This version's copy first: an older version's cache kept for an open page may hold
+          // the same page from that version's build.
+          matchCache: async (request) => (await cache.match(request)) ?? caches.match(request),
           offlinePage: () =>
             new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html; charset=utf-8" } }),
           waitUntil: (promise) => {

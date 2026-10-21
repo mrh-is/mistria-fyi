@@ -1,12 +1,18 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import ImportCard from "./import-card.svelte";
+
+// Client files share one store per worker, so each test starts from defaults (#174).
+beforeEach(() => {
+  userState.resetAll();
+});
 
 afterEach(() => {
   userState.resetAll();
@@ -77,7 +83,7 @@ describe("save import", () => {
   });
 
   it("reports unparseable JSON files and preserves tracker state", async () => {
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     const before = userState.exportBackup();
 
     await importFiles([new File(["{"], "player.json")]);
@@ -94,7 +100,7 @@ describe("save import", () => {
   });
 
   it("offers the manual extraction fallback for an unreadable .sav and preserves tracker state", async () => {
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     const before = userState.exportBackup();
 
     await importFiles([new File([new Uint8Array([1, 2, 3, 4])], "broken.sav")]);
@@ -120,7 +126,7 @@ describe("save import", () => {
 
 describe("save import atomicity", () => {
   it("rejects an oversized save before reading it and preserves tracker state", async () => {
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     const before = userState.exportBackup();
     const file = new File([], "oversized.sav");
     Object.defineProperty(file, "size", { value: MAX_COMPRESSED_SIZE + 1 });

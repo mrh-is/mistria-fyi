@@ -127,16 +127,23 @@ Every progress write goes through the store's `writeProgress`, run under the
 `mistria-fyi:progress-write` Web Lock so tabs write one at a time. Inside the lock it re-reads the
 stored value & validates it before writing:
 
-| Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset, save import) |
-| ---------------------------------------- | ---------------------------- | ---------------------------------------------- |
-| Unchanged, or cleared                    | Writes                       | Writes                                         |
-| Another tab's readable write             | Adopts it, writes nothing    | Writes over it                                 |
-| Unreadable                               | Quarantines it               | Copies it to quarantine, then writes           |
-| A newer build's                          | Blocks writes                | Blocks writes                                  |
+| Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset) | Additive import (save, transfer) |
+| ---------------------------------------- | ---------------------------- | --------------------------------- | -------------------------------- |
+| Unchanged, or cleared                    | Writes                       | Writes captured replacement       | Writes merged progress           |
+| Another tab's readable write             | Adopts it, writes nothing    | Writes captured replacement       | Unions with stored progress      |
+| Unreadable                               | Quarantines it               | Quarantines, then writes          | Quarantines, then writes         |
+| A newer build's                          | Blocks writes                | Blocks writes                     | Blocks writes                    |
 
-Auto-saves wait for a 300 ms quiet period; explicit replaces skip it but still take the lock. The
-pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
-compare-before-write. A browser without Web Locks runs every write synchronously; see the
+Auto-saves wait for a 300 ms quiet period; explicit writes skip it but still take the lock. Explicit
+writes capture their payload at confirmation & invalidate auto-saves already waiting for the lock.
+Imports carry the additive preview, including unsaved local progress, and merge it with the stored
+progress inside the lock. Their synchronous counts & conflicts describe that immediate preview; the
+locked merge applies the same household conflict policy to the latest stored household. An import
+preserves captured world state & unknown IDs. Edits made after confirmation are rebased onto the
+locked merge result for the next auto-save, including removals & decreases; a later household edit
+replaces that household as a unit to preserve the marriage cascade. The pagehide flush can't wait
+for a lock, so it runs the same function synchronously, keeping the compare-before-write. A browser
+without Web Locks runs every write synchronously; see the
 [decision record](decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Save File Import
@@ -215,8 +222,8 @@ Pages are layout compositors. They handle data fetching and composition, not bus
   `#lib/components/skills-content.svelte`.
 - **Colocated components** — components used by a single page live in the same directory (e.g.,
   `src/routes/data/import-card.svelte`).
-- **Shared components** — reusable components live in `src/lib/components/` or vendored
-  `src/lib/components/ui/`.
+- **Shared components** — reusable components live in `src/lib/components/` or the project-owned
+  `src/lib/components/ui/` (forked from shadcn-svelte).
 - **"Everything" view** — `src/routes/everything/+page.svelte` computes overall completion and
   renders one `category-section.svelte` per category. That component owns the category-to-content
   map (which content component, whether it's compact, whether its rows stack), the sticky
@@ -329,12 +336,16 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   a library change can't silently reset every player's language.
 - **PWA identity:** the manifest's `id: "/"` & `start_url: "/"`. Changing the `id` orphans every
   installed copy.
-- **Service-worker messages:** `mfg:skip-waiting` & `mfg:cache-locales`. An open page posts these to
-  a newer waiting worker, so renaming one strands tabs on the old version.
+- **Service-worker messages:** `mfg:cache-locales`, `mfg:client-version`, & `mfg:skip-waiting`. An
+  open page posts these to whichever worker is active, installing, or waiting, which may be a newer
+  version than the page, so renaming one strands tabs on the old version. A page reports its version
+  with `mfg:client-version` so its version's cache outlives an update (#111). Tabs from releases
+  before #111 post `mfg:skip-waiting` from their update prompt; the worker still honors it.
 
 ### Not promised
 
-- **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`): the worker's `activate`
-  deletes every cache it doesn't recognize, so a rename only costs a re-download, or forgets which
-  locales a player kept offline.
+- **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`, `client-versions-v1`): the
+  worker's `activate` deletes every cache it doesn't recognize (once no open page needs it), so a
+  rename only costs a re-download, forgets which locales a player kept offline, or keeps older
+  caches until the open pages report their versions again.
 - Internal identifiers such as category keys, message keys, & component names.
