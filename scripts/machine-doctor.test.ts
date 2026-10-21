@@ -224,6 +224,40 @@ describe("checkGit", () => {
     const results = checkGit(machine({ commands: { "git --version": "git version 2.50.0" } }));
     expect(results.find((r) => r.id === "git-signing")?.status).toBe("manual");
   });
+
+  it("reports tag signing only when tag.gpgsign is on", () => {
+    const commands = { "git --version": "git version 2.50.0" };
+    expect(checkGit(machine({ commands })).map((r) => r.id)).not.toContain("git-tag-signing");
+  });
+
+  it("warns that signed tags need a message when a key is configured", () => {
+    const results = checkGit(
+      machine({
+        commands: {
+          "git --version": "git version 2.50.0",
+          "git config --get tag.gpgsign": "true\n",
+          "git config --get user.signingkey": "~/.ssh/id_ed25519_signing.pub\n",
+        },
+      }),
+    );
+    const tags = results.find((r) => r.id === "git-tag-signing");
+    expect(tags?.status).toBe("ok");
+    expect(tags?.detail).toContain("tag.gpgsign=false");
+  });
+
+  it("flags tag signing without a key, since every `git tag` fails", () => {
+    const results = checkGit(
+      machine({
+        commands: {
+          "git --version": "git version 2.50.0",
+          "git config --get tag.gpgsign": "true\n",
+        },
+      }),
+    );
+    const tags = results.find((r) => r.id === "git-tag-signing");
+    expect(tags?.status).toBe("wrong");
+    expect(tags?.fix).toContain("git config --global --unset tag.gpgsign");
+  });
 });
 
 describe("checkGh", () => {
