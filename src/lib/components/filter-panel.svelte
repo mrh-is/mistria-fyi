@@ -244,6 +244,23 @@
     </section>
   {/if}
 
+  {#if toolbarState.hasAlmanacFilters}
+    <section
+      class="filter-section filter-section--completed"
+      aria-label={m.almanac_show_unobtainable()}
+    >
+      <span><IconSquareX class="size-3.5" />{m.almanac_show_unobtainable()}</span>
+      <BlockySwitch
+        label={m.almanac_show_unobtainable()}
+        checked={toolbarState.showUnobtainable}
+        onCheckedChange={() => {
+          toolbarState.showUnobtainable = !toolbarState.showUnobtainable;
+          onFilterChange?.();
+        }}
+      />
+    </section>
+  {/if}
+
   <section
     class="filter-section filter-section--completed"
     aria-label={m.visibility_completion_aria()}
