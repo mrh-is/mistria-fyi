@@ -1,5 +1,7 @@
 import type * as v from "valibot";
 
+import type { NonEmptyArray } from "#lib/utils/record.js";
+
 import type { AvailabilityLeafSchema, SourceSchema } from "./tracker-data-schema.js";
 import type { SourcedEntity } from "./tracker-data.js";
 
@@ -7,8 +9,8 @@ export type ActivityId = string & v.Brand<"ActivityId">;
 /** Recursive edges require an explicit annotation; the schema owns all leaf payloads. */
 export type AvailabilityCondition =
   | v.InferOutput<typeof AvailabilityLeafSchema>
-  | { type: "all"; conditions: [AvailabilityCondition, ...AvailabilityCondition[]] }
-  | { type: "any"; conditions: [AvailabilityCondition, ...AvailabilityCondition[]] }
+  | { type: "all"; conditions: NonEmptyArray<AvailabilityCondition> }
+  | { type: "any"; conditions: NonEmptyArray<AvailabilityCondition> }
   | { type: "not"; condition: AvailabilityCondition };
 /** Reviewed cutscenes with no native player-facing name. */
 export const CUTSCENE_SOURCE_IDS = ["elsie_dating_tutorial", "great_bird_0"] as const;
