@@ -10,7 +10,12 @@ import { THEME_COLORS, THEME_STORAGE_KEY } from "#lib/theme.js";
 // copy that could drift.
 const appHtml = readFileSync(resolve(import.meta.dirname, "../app.html"), "utf8");
 
-const scriptBlocks = [...appHtml.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+function extractInlineScripts(html: string): string[] {
+  const parsed = new DOMParser().parseFromString(html, "text/html");
+  return [...parsed.querySelectorAll("script:not([src])")].map((script) => script.textContent);
+}
+
+const scriptBlocks = extractInlineScripts(appHtml);
 const themeBootstrapScript = scriptBlocks[0];
 const themeColorScript = scriptBlocks[1];
 
@@ -66,8 +71,20 @@ describe("theme bootstrap", () => {
   });
 
   it("extracts both inline scripts from app.html", () => {
+    expect(scriptBlocks).toHaveLength(2);
     expect(themeBootstrapScript).toContain("localStorage");
     expect(themeColorScript).toContain("theme-color");
+  });
+
+  it("parses mixed-case tags and ignores comments and external scripts", () => {
+    expect(
+      extractInlineScripts(`
+        <!-- <script>commentedOut()</script> -->
+        <SCRIPT data-label=">">first()</SCRIPT>
+        <script src="external.js"></script>
+        <ScRiPt>second()</sCrIpT>
+      `),
+    ).toEqual(["first()", "second()"]);
   });
 
   it("applies dark class when stored preference is dark", () => {
