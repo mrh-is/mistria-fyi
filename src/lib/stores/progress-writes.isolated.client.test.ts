@@ -130,6 +130,59 @@ afterEach(() => {
 });
 
 describe("serialized progress writes", () => {
+  it("persists captured import metadata with the locked merge and hydrates it", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    const metadata = {
+      farmName: "Fern",
+      identity: { creationVersion: null, saveNumber: "123" },
+      importedAt: 1000,
+      playerName: "Ada",
+    };
+    tab.userState.mergeFromSave({ mineFloor: 10 }, { metadata });
+    metadata.farmName = "Mutated after confirmation";
+    storage.setItem(PROGRESS_KEY, buildState(12));
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    const loaded = await openTab();
+    expect(loaded.userState.state.lastImport).toMatchObject({
+      farmName: "Fern",
+      identity: { saveNumber: "123" },
+      importedAt: 1000,
+    });
+    expect(loaded.userState.state.progress.renown).toBe(12);
+    expect(loaded.userState.state.progress.mineFloor).toBe(10);
+  });
+
+  it("keeps a concurrent manual import's metadata during a progress-only merge", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const metadata = {
+      farmName: "Fern",
+      identity: { creationVersion: null, saveNumber: "123" },
+      importedAt: 1000,
+      playerName: null,
+    };
+    storage.setItem(PROGRESS_KEY, buildState(12, { lastImport: metadata }, 2));
+    tab.userState.mergeFromSave({ mineFloor: 10 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    expect(tab.userState.state.lastImport).toEqual(metadata);
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toHaveProperty(
+      "lastImport",
+      metadata,
+    );
+  });
+
   it.each(["locks", "no locks", "rejected locks"])(
     "keeps another tab’s progress when importing with %s",
     async (mode) => {

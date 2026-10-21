@@ -28,14 +28,23 @@ const PAGES_INTERNAL_FILES = new Set([
 
 export interface RoutesReport {
   /**
-   * URL paths of `.html` static assets. Pages redirects `/x.html` to `/x`, which the Function then
-   * redirects to a locale, so the file is unreachable at its own path & the service worker's
-   * precache of it fails the whole install (#226).
+   * URL paths of `.html` static assets that Functions would answer at their served path. Pages
+   * redirects `/x.html` to `/x`, which the Function then redirects to a locale, so the file is
+   * unreachable at its own path & the service worker's precache of it fails the whole install
+   * (#226). A prerendered page is the exception: the adapter excludes `/x`, so Pages serves it.
    */
   htmlAssets: string[];
   ruleCount: number;
   /** URL paths of static assets that would invoke the Function. */
   unexcludedAssets: string[];
+}
+
+/** The path Pages serves an asset at: `/en/data.html` at `/en/data`, `/a/index.html` at `/a`. */
+export function servedPath(asset: string): string {
+  if (!asset.endsWith(".html")) return asset;
+  const directory = path.posix.dirname(asset);
+  const name = path.posix.basename(asset, ".html");
+  return name === "index" ? directory : path.posix.join(directory, name);
 }
 
 interface RoutesJson {
@@ -49,9 +58,11 @@ export async function checkRoutes(buildDir = BUILD_DIR): Promise<RoutesReport> {
   const routes = JSON.parse(raw) as RoutesJson;
   const assets = await listStaticAssets(buildDir);
   return {
-    htmlAssets: assets.filter((asset) => asset.endsWith(".html")),
+    htmlAssets: assets.filter(
+      (asset) => asset.endsWith(".html") && isFunctionRoute(routes, servedPath(asset)),
+    ),
     ruleCount: routes.include.length + routes.exclude.length,
-    unexcludedAssets: assets.filter((asset) => isFunctionRoute(routes, asset)),
+    unexcludedAssets: assets.filter((asset) => isFunctionRoute(routes, servedPath(asset))),
   };
 }
 
@@ -124,7 +135,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     process.exitCode = 1;
   } else {
     console.log(
-      `_routes.json uses ${ruleCount} rules; every static asset bypasses Functions & none is .html.`,
+      `_routes.json uses ${ruleCount} rules; every static asset bypasses Functions & every .html asset is reachable.`,
     );
   }
 }

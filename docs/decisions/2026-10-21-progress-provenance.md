@@ -18,8 +18,8 @@ change has to migrate it forward without guessing.
   records every key that changed, ticks & unticks alike, so a new mutator can't forget to record.
   The outermost call decides the source; a manual edit that names its own fact records the facts it
   changes besides (a marriage cascade, a quest's recipe rewards) as `inferred`.
-- **Storage version 2.** `MIGRATIONS[2]` marks every fact a version 1 blob holds `unknown` and adds
-  no resolutions. It reads the facts through hydration's own schema & normalization, so a key exists
+- **Storage version 3.** `MIGRATIONS[3]` marks every fact an older blob holds `unknown` and adds no
+  resolutions. It reads the facts through hydration's own schema & normalization, so a key exists
   exactly for each fact hydration stores.
 - **Hydration keeps history aligned with facts.** Each load rekeys a historical almanac ID's history
   under its canonical entry, as it does the fact, and records a relationship the marriage cascade

@@ -659,5 +659,9 @@
         "countPlural=other": "{wing}の展示セットを{count}個完成させる"
       }
     }
-  ]
+  ],
+  "import_last_imported": "最終インポート：{time}",
+  "import_farm_identity": "セーブ番号 {number} · 作成時のバージョン {version}",
+  "import_unknown_number": "不明",
+  "import_unknown_version": "不明"
 }

@@ -43,7 +43,7 @@ const GOLDEN_BACKUP = {
 /** Optional fields added after launch, as an empty launch-era blob writes them back. */
 const POST_LAUNCH_FIELDS = { mountAppearances: [] };
 
-/** Version 2's history, as its migration writes it for the launch backup: every fact `unknown`. */
+/** Version 3's history, as its migration writes it for the launch backup: every fact `unknown`. */
 const MIGRATED_HISTORY = {
   provenance: Object.fromEntries(
     [
@@ -92,6 +92,7 @@ describe("persisted format contract", () => {
     const { animalCosmetics, animals, ...progress } = GOLDEN_BACKUP.progress;
     expect(JSON.parse(userState.exportBackup())).toEqual({
       ...GOLDEN_BACKUP,
+      lastImport: null,
       progress: {
         ...progress,
         ...POST_LAUNCH_FIELDS,

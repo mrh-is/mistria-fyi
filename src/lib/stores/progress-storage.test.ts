@@ -88,6 +88,24 @@ describe("migrateDocument", () => {
 });
 
 describe("readProgressBlob", () => {
+  it.each(POLICIES)("migrates launch progress without inventing import history (%s)", (policy) => {
+    const loaded = readOk(JSON.stringify(fixture(1)), policy);
+    expect(loaded.lastImport).toBeNull();
+    expect(loaded.progress.renown).toBe(17);
+  });
+
+  it.each(POLICIES)("round-trips identity and display metadata (%s)", (policy) => {
+    const loaded = readOk(JSON.stringify(fixture(2)), policy);
+    expect(loaded.lastImport).toEqual(fixture(2).lastImport);
+    expect(readOk(serializeProgress(loaded), policy).lastImport).toEqual(loaded.lastImport);
+  });
+
+  it("repairs invalid import metadata on hydration and rejects it in a backup", () => {
+    const json = JSON.stringify({ ...fixture(2), lastImport: { importedAt: -1 } });
+    expect(readOk(json, "repair").lastImport).toBeNull();
+    expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
+  });
+
   it.each(POLICIES)("reads every version's fixture under the %s policy", (policy) => {
     for (const version of Object.keys(MIGRATIONS).map(Number)) {
       const loaded = readOk(JSON.stringify(fixture(version)), policy);
@@ -134,8 +152,8 @@ describe("readProgressBlob", () => {
     });
   });
 
-  it.each(POLICIES)("reads version 2's history as stored (%s)", (policy) => {
-    const stored = fixture(2) as { progress: Record<string, unknown> };
+  it.each(POLICIES)("reads version 3's history as stored (%s)", (policy) => {
+    const stored = fixture(3) as { progress: Record<string, unknown> };
     const { history } = readOk(JSON.stringify(stored), policy);
 
     expect(history).toEqual({
@@ -154,7 +172,7 @@ describe("readProgressBlob", () => {
   });
 
   it("drops malformed history entries on hydration but rejects them in a backup", () => {
-    const stored = fixture(2) as { progress: Record<string, unknown> };
+    const stored = fixture(3) as { progress: Record<string, unknown> };
     const json = JSON.stringify({
       ...stored,
       progress: {
@@ -245,7 +263,7 @@ describe("readProgressBlob", () => {
   });
 
   it.each(POLICIES)("rekeys a historical almanac ID's history under its entry (%s)", (policy) => {
-    const stored = fixture(2) as { progress: Record<string, unknown> };
+    const stored = fixture(3) as { progress: Record<string, unknown> };
     const json = JSON.stringify({
       ...stored,
       progress: {
@@ -273,7 +291,7 @@ describe("readProgressBlob", () => {
   });
 
   it("keeps an entry already under the canonical key over a member's", () => {
-    const stored = fixture(2) as { progress: Record<string, unknown> };
+    const stored = fixture(3) as { progress: Record<string, unknown> };
     const json = JSON.stringify({
       ...stored,
       progress: {
@@ -294,7 +312,7 @@ describe("readProgressBlob", () => {
   });
 
   it.each([null, "x", 5])("drops a malformed history container (%j) on hydration only", (bad) => {
-    const stored = fixture(2) as { progress: Record<string, unknown> };
+    const stored = fixture(3) as { progress: Record<string, unknown> };
     const json = JSON.stringify({
       ...stored,
       progress: { ...stored.progress, provenance: bad, resolutions: bad },

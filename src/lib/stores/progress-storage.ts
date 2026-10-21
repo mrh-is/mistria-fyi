@@ -40,6 +40,7 @@ import {
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import type { ProvenanceRecord, ResolutionRecord } from "#lib/engine/provenance.js";
+import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -67,10 +68,12 @@ export type Migration = (document: StoredDocument) => StoredDocument;
  */
 export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   1: (document) => document,
-  // Version 2 adds provenance & resolutions. Every fact a version 1 blob holds predates provenance,
+  // Earlier builds recorded neither an identity nor an import timestamp. Do not invent either.
+  2: (document) => ({ ...document, lastImport: null }),
+  // Version 3 adds provenance & resolutions. Every fact a version 2 blob holds predates provenance,
   // so it's marked `unknown`; nothing has been resolved yet. The facts are read the way hydration
   // reads them, so each key names a fact it stores.
-  2: (document) => {
+  3: (document) => {
     if (!isPlainObject(document.progress)) return document;
     const read = v.safeParse(RepairBlobSchema, document);
     if (!read.success) return document;
@@ -140,6 +143,26 @@ const EnvelopeSchema = v.looseObject({ version: VersionSchema });
 const StringListSchema = v.array(v.string());
 const FiniteNumberSchema = v.pipe(v.number(), v.finite());
 
+const VersionPartSchema = v.pipe(v.number(), v.safeInteger(), v.minValue(0));
+const LastImportSchema = v.nullable(
+  v.object({
+    farmName: v.nullable(v.string()),
+    identity: v.object({
+      creationVersion: v.nullable(
+        v.object({
+          major: VersionPartSchema,
+          minor: VersionPartSchema,
+          patch: VersionPartSchema,
+          pre: v.nullable(v.string()),
+        }),
+      ),
+      saveNumber: v.nullable(v.pipe(v.string(), v.regex(/^\d+$/))),
+    }),
+    importedAt: v.pipe(FiniteNumberSchema, v.minValue(0), v.maxValue(8_640_000_000_000_000)),
+    playerName: v.nullable(v.string()),
+  }),
+);
+
 function domainInteger(max: number) {
   return v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(max));
 }
@@ -198,6 +221,7 @@ const ResolutionSchema = v.object({
 });
 
 const StrictBlobSchema = v.object({
+  lastImport: v.optional(LastImportSchema, null),
   progress: v.object({
     ...LIST_ENTRIES,
     animalCosmetics: v.record(v.string(), StringListSchema),
@@ -232,6 +256,7 @@ const DeviceLocalSchema = v.looseObject({
 export type DeviceLocalState = v.InferOutput<typeof DeviceLocalSchema>;
 
 const RepairBlobSchema = v.object({
+  lastImport: v.fallback(v.optional(LastImportSchema, null), null),
   // Only storage holds this section; the strict schema strips it, so no restore brings one in.
   local: v.fallback(v.optional(DeviceLocalSchema), undefined),
   progress: v.object({
@@ -327,6 +352,7 @@ export function emptyProgressHistory(): ProgressHistory {
 
 export interface LoadedProgress {
   history: ProgressHistory;
+  lastImport: null | SaveImportMetadata;
   /** This device's own section; always empty from a backup. */
   local: DeviceLocalState;
   progress: ProgressState;
@@ -482,7 +508,12 @@ function splitAnimalIds<T extends string>(
   return { known, unknown };
 }
 
-function normalizeBlob({ local, progress: stored, worldState }: ValidatedBlob): LoadedProgress {
+function normalizeBlob({
+  lastImport,
+  local,
+  progress: stored,
+  worldState,
+}: ValidatedBlob): LoadedProgress {
   const retained = emptyRetainedProgress();
 
   const lists = {} as Record<ListField, Set<string>>;
@@ -569,7 +600,14 @@ function normalizeBlob({ local, progress: stored, worldState }: ValidatedBlob): 
   };
   backfillAnimalMaps(progress);
 
-  return { history, local: local ?? {}, progress, retained, worldState: { ...worldState } };
+  return {
+    history,
+    lastImport,
+    local: local ?? {},
+    progress,
+    retained,
+    worldState: { ...worldState },
+  };
 }
 
 /**
@@ -654,6 +692,8 @@ export function serializeProgress(snapshot: ProgressSnapshot): string {
 export interface ProgressSnapshot {
   // Not DeepReadonly: its JsonValue resolutions are too deep for the compiler to map.
   history: Readonly<ProgressHistory>;
+  /** The last manual import; absent writes `null`. */
+  lastImport?: DeepReadonly<null | SaveImportMetadata>;
   progress: DeepReadonly<ProgressState>;
   retained: DeepReadonly<RetainedProgress>;
   worldState: Readonly<WorldState>;
@@ -695,12 +735,14 @@ function sortedRecord<V>(record: Readonly<Record<string, V>>): Record<string, V>
 
 function serializedState({
   history,
+  lastImport,
   progress,
   retained,
   worldState,
 }: ProgressSnapshot): SerializedState {
   const list = (field: ListField) => sortedUnion(progress[field], retained.lists[field]);
   const s: SerializedState = {
+    lastImport: lastImport ?? null,
     progress: {
       ...(history.lastSavePlaytime === undefined
         ? {}

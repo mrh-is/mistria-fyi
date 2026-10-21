@@ -17,7 +17,7 @@ export interface PageMetadata {
   /** Absent means indexable; the sitemap lists every page without a directive. */
   robots?: RobotsDirective;
   title: string;
-  /** `"hidden"` removes the bottom toolbar entirely (settings, legal, & dev pages). */
+  /** `"hidden"` removes the bottom toolbar entirely (legal & dev pages). */
   toolbar: "hidden" | ToolbarConfig;
 }
 

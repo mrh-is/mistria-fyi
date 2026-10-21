@@ -204,7 +204,7 @@ state. Each difference falls into one policy: apply silently, apply & tell, ask 
 ### Provenance
 
 Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unknown`) with the
-`playtime` of the last applied save (#126), added by storage version 2 (see
+`playtime` of the last applied save (#126), added by storage version 3 (see
 [app-architecture.md](app-architecture.md#provenance)).
 
 - “Record prerequisites” writes are `inferred` (#126).

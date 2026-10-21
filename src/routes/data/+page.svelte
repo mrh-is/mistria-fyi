@@ -16,8 +16,10 @@
 
   let importSection = $state<HTMLElement | null>(null);
   let transferSection = $state<HTMLElement | null>(null);
-  let importOpen = $state(page.url.searchParams.get("section") === "import");
-  let transferOpen = $state(page.url.searchParams.get("section") === "transfer");
+  // `?section=` opens a tool once the page is in the browser (the effect below). The page is
+  // prerendered, and a prerendered page can't read its query on the server.
+  let importOpen = $state(false);
+  let transferOpen = $state(false);
 
   function scrollToTransfer(): void {
     void openThenScroll(

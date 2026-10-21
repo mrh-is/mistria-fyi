@@ -43,6 +43,7 @@ import {
 import type { FactProvenance, ProvenanceSource, Resolution } from "#lib/engine/provenance.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
+import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -85,6 +86,7 @@ type WriteIntent =
   | {
       /** What `json` builds on: the stored value this tab last read, or a pending explicit write. */
       base: null | string;
+      importedSave: boolean;
       /** Serialized at confirmation, so later storage events cannot change the requested write. */
       json: string;
       keepLocal: boolean;
@@ -121,6 +123,7 @@ export interface QuestCompletion {
 
 export interface UserState {
   availabilityWindows: AvailabilityWindow[];
+  lastImport: null | SaveImportMetadata;
   progress: ProgressState;
   showCompleted: boolean;
   showSpoilers: boolean;
@@ -209,6 +212,7 @@ function createDefaultPreferences(): SerializedPreferences {
 function createDefaultState(): UserState {
   return {
     ...createDefaultPreferences(),
+    lastImport: null,
     progress: createDefaultProgress(),
     showCompleted: false,
     worldState: createDefaultWorldState(),
@@ -260,7 +264,13 @@ function createUserState() {
   }
 
   function snapshot(): ProgressSnapshot {
-    return { history, progress: state.progress, retained, worldState: state.worldState };
+    return {
+      history,
+      lastImport: state.lastImport,
+      progress: state.progress,
+      retained,
+      worldState: state.worldState,
+    };
   }
 
   /** The stored form of the current state, `local` section included. */
@@ -374,6 +384,7 @@ function createUserState() {
         mergeProgress(loaded.progress, captured.loaded.progress);
         mergeRetainedProgress(loaded.retained, captured.loaded.retained);
         loaded.worldState = captured.loaded.worldState;
+        if (intent.importedSave) loaded.lastImport = captured.loaded.lastImport;
         const mergedFacts = progressFacts(loaded.progress);
         // The captured history adds what this tab recorded since its base, the merge included;
         // rebased, it keeps the history another tab stored meanwhile. A save or transfer agreeing
@@ -443,13 +454,18 @@ function createUserState() {
   }
 
   /** Captures an explicit write now, rather than after the auto-save debounce. */
-  function writeExplicitProgress(kind: "merge" | "replace" = "replace", keepLocal = true): void {
+  function writeExplicitProgress(
+    kind: "merge" | "replace" = "replace",
+    keepLocal = true,
+    importedSave = false,
+  ): void {
     clearPendingSave();
     const json = serialize();
     const base = pendingExplicitJson ?? lastKnownStoredValue;
     pendingExplicitJson = json;
     requestProgressWrite({
       base,
+      importedSave,
       json,
       keepLocal,
       kind,
@@ -532,6 +548,7 @@ function createUserState() {
    * device's preferences & `local` section untouched.
    */
   function replaceProgress(loaded: Omit<LoadedProgress, "local">): void {
+    state.lastImport = loaded.lastImport;
     state.progress = loaded.progress;
     state.worldState = loaded.worldState;
     retained = loaded.retained;
@@ -741,22 +758,28 @@ function createUserState() {
      * Merges a native save into current progress: sets union, levels take the max, and the
      * household follows {@link mergeHousehold}'s conflict policy. Never removes progress. Every
      * fact it changes records `source` (a save, or `unknown` for a device transfer, whose payload
-     * carries no provenance); a save's `playtime` becomes the last applied save's.
+     * carries no provenance); a save's `playtime` becomes the last applied save's, and a manual
+     * import's `metadata` the last import's.
      */
     mergeFromSave(
       imported: Partial<ProgressState>,
-      { playtime, source = "save" }: { playtime?: number; source?: "save" | "unknown" } = {},
+      {
+        metadata,
+        playtime,
+        source = "save",
+      }: { metadata?: SaveImportMetadata; playtime?: number; source?: "save" | "unknown" } = {},
     ): MergeResult {
       if (source === "save" && playtime !== undefined) history.lastSavePlaytime = playtime;
       // A save's facts carry its own playtime, none if it couldn't be read; a transfer's carry the
       // last applied save's, like an edit.
       const stamp = { playtime: source === "save" ? playtime : history.lastSavePlaytime };
       const result = track(source, () => mergeProgress(state.progress, imported), [], stamp);
+      if (metadata !== undefined) state.lastImport = structuredClone(metadata);
 
       // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
       // persistence like a reset or restore (only once the unreadable blob is safely stored).
       enablePersistenceAfterExplicitReplace();
-      writeExplicitProgress("merge");
+      writeExplicitProgress("merge", true, metadata !== undefined);
       return result;
     },
     get persistenceFailed(): boolean {
@@ -795,6 +818,7 @@ function createUserState() {
     resetProgress() {
       replaceProgress({
         history: emptyProgressHistory(),
+        lastImport: null,
         progress: createDefaultProgress(),
         retained: emptyRetainedProgress(),
         worldState: createDefaultWorldState(),

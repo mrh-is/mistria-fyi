@@ -1,39 +1,58 @@
 {
   "progress": {
-    "almanac": ["turnip", "item_from_a_later_update"],
+    "almanac": ["turnip", "animated_waterfall_v2", "item_from_a_later_update"],
     "almanacRecipes": ["basic_wood_chest"],
-    "animalCosmetics": { "chicken": ["ribbon_red"] },
-    "animals": { "chicken": ["red"] },
+    "animalCosmetics": {
+      "chicken": ["ribbon_red"],
+      "animal_from_a_later_update": ["ribbon_red"]
+    },
+    "animals": {
+      "chicken": ["red", "variant_from_a_later_update"]
+    },
     "childChoice": "no",
     "cosmetics": ["back_gear_ancient_witch_broom"],
     "dates": ["inn_meal"],
     "hasUpperFloor": true,
-    "heartLevels": { "balor": 4 },
-    "lastSavePlaytime": 7200.5,
+    "heartLevels": {
+      "balor": 4,
+      "villager_from_a_later_update": 12
+    },
     "mineFloor": 20,
-    "mountAppearances": ["mistmare"],
     "museum": ["turnip"],
     "petCosmetics": ["flower_crown"],
     "petSkins": ["sapling"],
-    "provenance": {
-      "almanac/item_from_a_later_update": { "playtime": 7200.5, "source": "save" },
-      "almanac/turnip": { "playtime": 7200.5, "source": "save" },
-      "cosmetics/back_gear_ancient_witch_broom": { "source": "unknown" },
-      "heartLevels/balor": { "playtime": 7200.5, "source": "manual" },
-      "museum/fossil_unticked_by_hand": { "playtime": 7200.5, "source": "manual" },
-      "questStates/repair_the_general_store": { "source": "inferred" }
+    "questStates": {
+      "repair_the_general_store": "completed"
     },
-    "questStates": { "repair_the_general_store": "completed" },
     "reachedSeason": "fall",
     "renown": 17,
-    "resolutions": {
-      "heartLevels/balor": { "saveValue": 6 }
+    "skillLevels": {
+      "farming": 7
     },
-    "skillLevels": { "farming": 7 },
     "spells": ["summon_rain"],
     "unlockedPerks": ["museum_quality_one"],
-    "villagerRelationships": { "balor": "romantic" }
+    "villagerRelationships": {
+      "balor": "romantic"
+    }
   },
+  "showCompleted": true,
   "version": 2,
-  "worldState": { "season": "summer", "weather": "inclement" }
+  "worldState": {
+    "season": "summer",
+    "weather": "inclement"
+  },
+  "lastImport": {
+    "identity": {
+      "saveNumber": "123456",
+      "creationVersion": {
+        "major": 0,
+        "minor": 11,
+        "patch": 7,
+        "pre": null
+      }
+    },
+    "farmName": "Fern",
+    "playerName": "Ada",
+    "importedAt": 1792531800000
+  }
 }
