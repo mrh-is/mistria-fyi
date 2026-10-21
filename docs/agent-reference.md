@@ -93,6 +93,7 @@ reason it was reviewed, rather than weakening the check.
 | `pnpm run check:i18n`         | Verify locale files match `en.json`’s keys                         |
 | `pnpm run check:locale-sync`  | Verify a changed English message changed in each locale too        |
 | `pnpm run check:routes`       | Verify built static assets bypass Functions                        |
+| `pnpm run knip`               | Find unused files, exports, & dependencies                         |
 | `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, & ShellCheck                     |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                                         |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)                          |

@@ -9,6 +9,7 @@
       "Bash(pnpm run check:locale-sync *)",
       "Bash(pnpm run check:routes *)",
       "Bash(pnpm run check:built *)",
+      "Bash(pnpm run knip *)",
       "Bash(pnpm run data:diff *)",
       "Bash(pnpm run test *)",
       "Bash(pnpm run test:accessibility *)",

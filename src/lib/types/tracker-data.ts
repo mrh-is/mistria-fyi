@@ -6,17 +6,13 @@ import type { VisibilityCondition } from "./visibility.js";
 export type {
   ActivityId,
   AvailabilityCondition,
-  DialogueChoiceId,
-  DungeonLootGroup,
   JsonValue,
   LocationId,
   MonsterId,
   ProductionMethod,
   Source,
-  SourceDetails,
   SourceTuple,
   StationId,
-  UpgradeId,
   WaterType,
 } from "./acquisition.js";
 

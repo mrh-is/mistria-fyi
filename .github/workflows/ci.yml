@@ -167,6 +167,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run verify -- --step=check
       - run: pnpm run verify -- --step=check:i18n
+      # Run even when an earlier check failed, so one push reports every failing check.
+      - if: ${{ !cancelled() }}
+        run: pnpm run verify -- --step=knip
 
   test:
     name: Test

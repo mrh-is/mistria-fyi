@@ -16,6 +16,7 @@
     "check:built": "tsx --test --test-timeout=120000 --test-force-exit tests/build-output/*.spec.ts",
     "check:routes": "tsx scripts/check-routes.ts",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "knip": "knip",
     "data:diff": "node scripts/data-diff.ts",
     "cloudflare:logs": "tsx scripts/cloudflare-pages-logs.ts",
     "lint": "node scripts/lint-files.ts",
@@ -75,6 +76,7 @@
     "globals": "^17.13.0",
     "happy-dom": "^20.14.5",
     "husky": "^9.1.7",
+    "knip": "^6.42.0",
     "lint-staged": "^17.6.0",
     "oxfmt": "^0.71.0",
     "oxlint": "^1.87.0",
@@ -114,7 +116,6 @@
   },
   "imports": {
     "#game-version": "./pipeline/src/game-version.ts",
-    "#lib": "./src/lib/index.js",
     "#lib/*": "./src/lib/*",
     "#scripts/*": "./scripts/*.ts"
   },
