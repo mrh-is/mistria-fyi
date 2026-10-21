@@ -13,7 +13,7 @@
   <div class="stripe-scale">
     <CategoryStripe
       categoryTotal={total}
-      color="fg-green"
+      color="var(--color-brand-accent)"
       completed={1416}
       completedLabel="??"
       description={m.og_share_description()}

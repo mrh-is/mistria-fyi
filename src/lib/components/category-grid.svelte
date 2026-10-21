@@ -3,11 +3,25 @@
   import { Icon } from "#lib/components/icon/index.js";
   import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
   import type { AllProgress } from "#lib/engine/progress.js";
 
   let { progress }: { progress: AllProgress } = $props();
+
+  // Both groups share number columns so grouped counts fit and every slash stays aligned.
+  let countWidth = $derived(
+    Math.max(
+      4,
+      ...CATEGORY_KEYS.flatMap((key) => {
+        const { completed, remainingInScope } = progress[key];
+        return [completed, completed + remainingInScope].map(
+          (count) => formatNumber(count, page.data.locale).length,
+        );
+      }),
+    ),
+  );
 
   let activeCategories = $derived(
     sortCategoryKeysByName(
@@ -30,7 +44,7 @@
   );
 </script>
 
-<div class="flex flex-col gap-5">
+<div class="flex flex-col gap-5" style="--category-count-width: {countWidth}ch">
   {#if activeCategories.length > 0}
     <ul class="flex flex-col gap-1.5" aria-label={m.home_active_categories_label()}>
       {#each activeCategories as key (key)}
