@@ -1,6 +1,6 @@
 import { PRODUCTION_ASSET_ORIGIN } from "#lib/asset-origin.js";
 import { UNLOCALIZED_PATH_PREFIXES } from "#lib/i18n/paraglide-options.js";
-import { VERSION_METADATA_PATH } from "#lib/pwa/config.js";
+import { IMMUTABLE_DIRECTORY, VERSION_METADATA_PATH } from "#lib/pwa/config.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -47,9 +47,9 @@ export interface CacheLocalesMessage {
 }
 
 /**
- * Page → waiting service worker: take over now. A new version installs and then waits, so tabs
- * running the old version keep the cache their modules came from until the player accepts the
- * update prompt.
+ * Page → waiting service worker: take over now. Sent only by tabs from releases before #111, when
+ * the player accepts their update prompt; current versions activate on their own once installed.
+ * Still honored, so those tabs aren't stranded (see docs/app-architecture.md's public contract).
  */
 export const SKIP_WAITING_MESSAGE = "mfg:skip-waiting";
 
@@ -551,12 +551,16 @@ export function fetchStrategy(
   assetPaths: ReadonlySet<string>,
   origin: string,
   versionPath = `/${VERSION_METADATA_PATH}`,
+  immutablePrefix = `/${IMMUTABLE_DIRECTORY}/`,
 ): FetchStrategy | undefined {
   if (request.method !== "GET") return undefined;
   const url = new URL(request.url);
   // Version checks must reach the network, including when an older cache holds this path.
   if (url.origin === origin && url.pathname === versionPath) return undefined;
   if (assetPaths.has(url.pathname)) return "asset";
+  // Another version's build asset: a page still running that version imports it after this one
+  // took over, and the server no longer has it. Content-addressed, so any cache's copy is right.
+  if (url.origin === origin && url.pathname.startsWith(immutablePrefix)) return "asset";
   if (isExternalSpriteAsset(url)) return "sprite";
   if (isEligibleForRuntimeCaching(url, origin)) return "runtime";
   return undefined;

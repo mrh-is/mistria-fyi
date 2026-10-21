@@ -124,15 +124,15 @@ stream & decoder are not.
 
 ### Static & layout
 
-| Component                                                                                                                    | Server  | happy-dom | Notes                                                                 |
-| ---------------------------------------------------------------------------------------------------------------------------- | :-----: | :-------: | --------------------------------------------------------------------- |
-| `category-card` (with `category-stripe`), `category-grid`, `content-counters`, `overall-progress`, `page-header`, `seo-head` |    ✓    |           | Static                                                                |
-| `welcome-card`                                                                                                               |         |     ✓     |                                                                       |
-| `persistence-warning`                                                                                                        |         |           | Gap: store-level lifecycle is tested                                  |
-| `ai-disclosure-dialog`                                                                                                       |         |           | Gap: open/dismiss                                                     |
-| `update-prompt`                                                                                                              |         |     ✓     | Uncontrolled refresh, reactive detection, & dismissal across remounts |
-| `og-share-card`, `pencil-filter`, `icon/*`, `all-completed`                                                                  |         |           | Static; no test needed                                                |
-| Route `+page.svelte` files, `routes/everything/category-section.svelte`                                                      | partial |           | `about`, `data`, `privacy`, `error`, `everything` have tests          |
+| Component                                                                                                                    | Server  | happy-dom | Notes                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------- | :-----: | :-------: | -------------------------------------------------------------- |
+| `category-card` (with `category-stripe`), `category-grid`, `content-counters`, `overall-progress`, `page-header`, `seo-head` |    ✓    |           | Static                                                         |
+| `welcome-card`                                                                                                               |         |     ✓     |                                                                |
+| `persistence-warning`                                                                                                        |         |           | Gap: store-level lifecycle is tested                           |
+| `ai-disclosure-dialog`                                                                                                       |         |           | Gap: open/dismiss                                              |
+| `app-updater`                                                                                                                |         |     ✓     | Idle reload, busy deferral, & guarded reloads after navigation |
+| `og-share-card`, `pencil-filter`, `icon/*`, `all-completed`                                                                  |         |           | Static; no test needed                                         |
+| Route `+page.svelte` files, `routes/everything/category-section.svelte`                                                      | partial |           | `about`, `data`, `privacy`, `error`, `everything` have tests   |
 
 ## Remaining gaps
 
