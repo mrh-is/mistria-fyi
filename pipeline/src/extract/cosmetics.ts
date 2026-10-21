@@ -74,7 +74,7 @@ export function extractCosmetics(fiddle: ParsedGameData, localizer: Localizer): 
     }
     const slot = rawSlot;
     const subCategory = asset.ui_sub_category as string | undefined;
-    if (subCategory === undefined || !cosmeticSlots[slot].subCategories.includes(subCategory)) {
+    if (subCategory === undefined || !cosmeticSlots[slot]?.subCategories.includes(subCategory)) {
       throw new Error(
         `Player cosmetic "${id}" has ui_sub_category ${JSON.stringify(subCategory)} with no entry under "${slot}" in ui/character_customization.toml`,
       );
