@@ -173,11 +173,13 @@ When nothing better is available, the app serves English rather than an error or
 is the rule for every layer: a game-data name with no translation, a UI string a locale hasn't
 translated, and a request with no usable locale all resolve to English.
 
-Every page URL carries a locale prefix (`/ja/almanac`); there is no unprefixed default. A bare path
-redirects (307) to the stored preference cookie's (`mistria-fyi-locale`) locale, then the best
-`Accept-Language` match, then `/en` (`bareLocaleRedirect` in `src/hooks.server.ts`). The redirect
-sends `Vary: Cookie, Accept-Language` so caches don't hand one visitor's locale to another. A prefix
-in the wrong case (`/zh-hans/almanac`) redirects permanently (308) to its BCP 47 casing.
+Every page URL carries a locale prefix (`/ja/almanac`); there is no unprefixed default. Every bare
+URL lands on the right locale's copy of its page, keeping its query & fragment: the stored
+preference cookie's (`mistria-fyi-locale`) locale, then the browser's best language match, then
+`/en`. Each bare path is a static stub page whose inline script picks the locale and replaces itself
+(`src/lib/i18n/bare-path-stub.ts`), so the choice happens in the browser and no shared cache can
+hand one visitor's locale to another. A prefix in the wrong case (`/zh-hans/almanac`, or all
+uppercase) lands permanently on its BCP 47 casing.
 
 ## Locale list & Paraglide config
 

@@ -1,14 +1,8 @@
 import { sequence } from "@sveltejs/kit/hooks";
 
+import { BARE_PATHS, renderBarePathStub } from "#lib/i18n/bare-path-stub.js";
 import { UNLOCALIZED_PATH_PREFIXES } from "#lib/i18n/paraglide-options.js";
-import {
-  baseLocale,
-  cookieName,
-  extractLocaleFromHeader,
-  getTextDirection,
-  isLocale,
-  locales,
-} from "#lib/paraglide/runtime.js";
+import { getTextDirection, isLocale, locales } from "#lib/paraglide/runtime.js";
 import { paraglideMiddleware } from "#lib/paraglide/server.js";
 import { withSecurityHeaders } from "#lib/security/security-headers.js";
 
@@ -39,13 +33,17 @@ function isUnlocalizedPath(pathname: string): boolean {
   );
 }
 
+const BARE_PATH_SET: ReadonlySet<string> = new Set(BARE_PATHS);
+
 /**
- * There is no unprefixed default locale, so a bare path (e.g. `/almanac`) can't be rendered as
- * is. Redirect it to a resolved locale: the stored preference cookie, then `Accept-Language`
- * negotiation, then English. Clients with no usable language (link unfurlers, crawlers, speakers
- * of unsupported languages) still land on a real page rather than a dead end.
+ * Production serves every bare path (e.g. `/almanac`) as a static stub that picks the locale in
+ * the browser, and fixes a miscased locale prefix with `_redirects` (`src/lib/build/
+ * bare-path-stubs.ts`); there, only `/api` reaches this Function. The dev server & `vite preview`
+ * have neither file, so this serves the same stub and the same redirect, keeping every bare URL
+ * landing on the right locale's page wherever the app runs. An unknown bare path falls through to
+ * the not-found page.
  */
-export const bareLocaleRedirect: Handle = ({ event, resolve }) => {
+export const barePathStub: Handle = ({ event, resolve }) => {
   const { pathname } = event.url;
 
   if (isUnlocalizedPath(pathname) || hasLocalePrefix(pathname)) {
@@ -61,19 +59,9 @@ export const bareLocaleRedirect: Handle = ({ event, resolve }) => {
     });
   }
 
-  const cookieLocale = event.cookies.get(cookieName);
-  const preferredLocale =
-    (cookieLocale && isLocale(cookieLocale) ? cookieLocale : undefined) ??
-    extractLocaleFromHeader(event.request) ??
-    baseLocale;
-
-  // `event.url.search` is inaccessible while prerendering; every prerendered route is already
-  // excluded above, so this only runs for on-demand SSR requests, where reading it is safe.
-  const location = `/${preferredLocale}${pathname === "/" ? "" : pathname}${event.url.search}`;
-  // The target depends on the cookie & `Accept-Language`, so caches must key on both.
-  return new Response(undefined, {
-    headers: { location, vary: "Cookie, Accept-Language" },
-    status: 307,
+  if (!BARE_PATH_SET.has(pathname)) return resolve(event);
+  return new Response(renderBarePathStub(pathname), {
+    headers: { "content-type": "text/html; charset=utf-8" },
   });
 };
 
@@ -89,11 +77,11 @@ const paraglideHandle: Handle = ({ event, resolve }) =>
 
 /**
  * Cloudflare Pages applies `_headers` to static files only, never to Function responses. Responses
- * passing through this hook (pages, bare-path redirects, `/api`) get the security headers here.
- * SvelteKit adds the CSP to rendered pages itself; pre-hook responses, such as trailing-slash
- * normalization redirects, do not receive these headers.
+ * passing through this hook (`/api` in production; every server response in development & preview)
+ * get the security headers here. SvelteKit adds the CSP to rendered pages itself; pre-hook
+ * responses, such as trailing-slash normalization redirects, do not receive these headers.
  */
 export const securityHeaders: Handle = async ({ event, resolve }) =>
   withSecurityHeaders(await resolve(event));
 
-export const handle: Handle = sequence(securityHeaders, bareLocaleRedirect, paraglideHandle);
+export const handle: Handle = sequence(securityHeaders, barePathStub, paraglideHandle);

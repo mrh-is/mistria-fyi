@@ -1,8 +1,8 @@
 // Verifies the production build's Cloudflare `_routes.json` keeps every static asset out of
 // Functions routing. Cloudflare Pages caps the file at 100 rules, and the adapter silently drops
-// any excess, so a per-file exclusion list overflows once `static/sprites/` is counted. This
-// check walks the build output and proves every asset (including the ones alphabetically past
-// where a truncated list would stop) matches an exclude rule. See #312.
+// any excess (#312). This check walks the build output and proves no asset (including the ones
+// alphabetically past where a truncated list would stop) falls under an include rule without a
+// matching exclude.
 import "#scripts/lib/require-pinned-node";
 
 import { readdir, readFile } from "node:fs/promises";
@@ -31,7 +31,7 @@ export interface RoutesReport {
    * URL paths of `.html` static assets that Functions would answer at their served path. Pages
    * redirects `/x.html` to `/x`, which the Function then redirects to a locale, so the file is
    * unreachable at its own path & the service worker's precache of it fails the whole install
-   * (#226). A prerendered page is the exception: the adapter excludes `/x`, so Pages serves it.
+   * (#226). Prerendered pages & bare-path stubs pass, since `_routes.json` includes only `/api/*`.
    */
   htmlAssets: string[];
   ruleCount: number;

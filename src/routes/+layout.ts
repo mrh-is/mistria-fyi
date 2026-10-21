@@ -5,6 +5,13 @@ import { browser } from "$app/env";
 import type { LayoutLoad } from "./$types";
 
 /**
+ * Every page is prerendered once per locale (`PRERENDERED_ROUTES` in
+ * `src/lib/i18n/prerender-entries.ts`), so pages are static files and an offline launch never waits
+ * on a server. Only `/api` stays dynamic.
+ */
+export const prerender = true;
+
+/**
  * Resolves the route's locale once, at the top of the tree, so every page and component can source
  * it from `load()` data rather than ambient state. `getLocaleForUrl` is route-aware, which matters
  * because `hooks.ts` de-localizes the URL before SvelteKit matches routes — there is no `[locale]`

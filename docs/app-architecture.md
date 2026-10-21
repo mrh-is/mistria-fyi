@@ -343,12 +343,12 @@ usable anywhere, though unlocked through mine progression.
 (`Permissions-Policy`, `Referrer-Policy`, `Strict-Transport-Security`, and
 `X-Content-Type-Options`). Cloudflare Pages delivers them by two paths, and both derive from it:
 
-- **Server responses passing through `handle`** — SvelteKit emits the CSP, with a per-response
-  script nonce, from the `csp` option in `vite.config.ts`; the `securityHeaders` hook in
-  `hooks.server.ts` adds the rest to pages, bare-path redirects, & API responses. Framework
-  responses emitted before `handle`, such as trailing-slash normalization redirects
-  (`HEAD /en/everything/` returns `308`), do not receive these headers. Pages never applies
-  `_headers` to Function responses.
+- **Server responses passing through `handle`** — in production only `/api`; in development &
+  `vite preview`, every page too. SvelteKit emits a rendered page's CSP, with a per-response script
+  nonce, from the `csp` option in `vite.config.ts`; the `securityHeaders` hook in `hooks.server.ts`
+  adds the rest to every response passing through it. Framework responses emitted before `handle`,
+  such as trailing-slash normalization redirects (`HEAD /en/everything/` returns `308`), do not
+  receive these headers. Pages never applies `_headers` to Function responses.
 - **Static files** — `withHeadersFile` (`src/lib/build/headers-file.ts`) wraps the adapter and
   writes `_headers` (gitignored) from the same directives just before `@sveltejs/adapter-cloudflare`
   copies it into `build/` with its own cache rules. Never commit or hand-edit it.
@@ -359,15 +359,32 @@ hash, which the build recomputes and `security-headers.test.ts` pins.
 
 ### Prerendered pages
 
-A prerendered page (`/data` in every locale, listed in `src/lib/i18n/prerender-entries.ts`) is a
-static file, so its CSP comes from `_headers`, not SvelteKit. SvelteKit also writes a
-`<meta http-equiv>` policy into the page, hashing its inline start script; a browser enforces both
-policies, so the `/*` header (with no hash for that script) would block hydration. Each prerendered
-route therefore gets its own `_headers` rule (`/:locale/data`) that detaches the inherited CSP
+Every page is prerendered in every locale (the root `+layout.ts` opts in; the routes are listed in
+`src/lib/i18n/prerender-entries.ts`), so each is a static file, so its CSP comes from `_headers`,
+not SvelteKit. SvelteKit also writes a `<meta http-equiv>` policy into the page, hashing its inline
+start script; a browser enforces both policies, so the `/*` header (with no hash for that script)
+would block hydration. Each prerendered route therefore gets its own `_headers` rule
+(`/:locale/almanac`; a locale home keeps its literal path, `/en`) that detaches the inherited CSP
 (`! Content-Security-Policy`) and sets the same directives plus that route's start-script hashes.
 The header keeps `frame-ancestors`, which a `<meta>` policy can't carry. A prerendered page can't
 read its query on the server, so `?section=` is handled in the browser. See
 [the decision record](decisions/2026-10-20-prerender-csp.md).
+
+### Bare paths & routing
+
+`_routes.json` sends only `/api/*` to the Pages Function; everything else is a static file, a
+`_redirects` rule, or the adapter's plain-text `404.html`. An include list stays one rule however
+many pages there are, where excluding each prerendered page would overflow Pages' 100-rule cap.
+
+`withBarePathStubs` (`src/lib/build/bare-path-stubs.ts`) wraps the adapter outside
+`withHeadersFile`. It writes a stub page for each bare path (`/` as `index.html`, `/almanac` as
+`almanac.html`) beside the prerendered pages, and lists the stubs among them, so each stub's path
+gets a `_headers` rule allowing its one inline script by hash. It also writes `_redirects`
+(gitignored) for miscased locale prefixes. The dev server & `vite preview` have neither file, so the
+`barePathStub` hook in `hooks.server.ts` serves the same stub & the same redirect there. An offline
+launch at a bare path is handled by the service worker before the stub (see
+[PWA verification](pwa-verification.md)). See
+[the decision record](decisions/2026-10-21-bare-path-stubs.md).
 
 `security-headers.test.ts` pins the full production policy, so any change to it shows up in review.
 The asset origin lives in `src/lib/asset-origin.ts`; `asset-origin.test.ts` holds the copies that
@@ -382,9 +399,10 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
 ### Promised
 
 - **Locale prefixes:** `/en`, `/ja`, `/zh-Hans`, `/zh-Hant`, `/es`, `/fr`, `/ko`, & `/ru`, in BCP 47
-  casing, with no unprefixed default. A bare path redirects (307) to a negotiated locale; a miscased
-  prefix (`/zh-hans/…`) redirects permanently (308) to the canonical casing. Both live in
-  `bareLocaleRedirect` in `src/hooks.server.ts`.
+  casing, with no unprefixed default. Every bare URL lands on the right locale's copy of that page
+  (the stored preference, then the browser's languages, then English), keeping its query & fragment,
+  and a lowercase or uppercase prefix (`/zh-hans/…`) lands permanently on the canonical casing. See
+  [Bare paths & routing](#bare-paths--routing).
 - **Route slugs:** `almanac`, `animals`, `cosmetics`, `mines`, `museum`, `quests`, `recipes`,
   `renown`, `skills`, `villagers`, `everything`, `about`, `data`, & `privacy`. A rename needs a
   redirect from the old slug.
@@ -409,10 +427,12 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
 
 ### Not promised
 
-- The retired beta route `/settings` returns the normal not-found page; use
-  `/data?section=import|transfer` for data-management links. Its removal without a redirect was
-  explicitly approved in #156; see
+- The retired beta route `/settings` returns the not-found page; use `/data?section=import|transfer`
+  for data-management links. Its removal without a redirect was explicitly approved in #156; see
   [the decision record](decisions/2026-10-20-retire-settings-route.md).
+- **The not-found page's content:** an unknown path gets the adapter's plain-text `404.html`, not
+  the app's styled error page, since only `/api` reaches the Function. A locale prefix in a mixed
+  casing other than all lowercase or all uppercase (`/zh-HaNs/…`) gets it too.
 - **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`, `client-versions-v1`): the
   worker's `activate` deletes every cache it doesn't recognize (once no open page needs it), so a
   rename only costs a re-download, forgets which locales a player kept offline, or keeps older

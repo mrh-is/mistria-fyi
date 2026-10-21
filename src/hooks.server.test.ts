@@ -1,29 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { bareLocaleRedirect, securityHeaders } from "./hooks.server.js";
+import { renderBarePathStub } from "#lib/i18n/bare-path-stub.js";
+
+import { barePathStub, securityHeaders } from "./hooks.server.js";
 
 import type { RequestEvent } from "@sveltejs/kit";
 
-function makeEvent(
-  path: string,
-  { acceptLanguage, cookie }: { acceptLanguage?: string; cookie?: string } = {},
-): RequestEvent {
-  const headers = new Headers();
-  if (acceptLanguage) headers.set("accept-language", acceptLanguage);
-
+function makeEvent(path: string): RequestEvent {
   return {
-    cookies: { get: () => cookie },
-    request: new Request(`https://mistria-fyi.test${path}`, { headers }),
+    request: new Request(`https://mistria-fyi.test${path}`),
     url: new URL(`https://mistria-fyi.test${path}`),
   } as unknown as RequestEvent;
 }
 
 const PASS_THROUGH = new Response("pass-through");
 
-describe("bareLocaleRedirect", () => {
+describe("barePathStub", () => {
   it("passes through a path that already has a locale prefix", async () => {
     const resolve = vi.fn().mockResolvedValue(PASS_THROUGH);
-    const response = await bareLocaleRedirect({
+    const response = await barePathStub({
       event: makeEvent("/en/almanac"),
       resolve,
     });
@@ -35,8 +30,8 @@ describe("bareLocaleRedirect", () => {
   it("passes through /api and /sitemap.xml unmodified", async () => {
     const resolve = vi.fn().mockResolvedValue(PASS_THROUGH);
 
-    await bareLocaleRedirect({ event: makeEvent("/api/feedback"), resolve });
-    await bareLocaleRedirect({ event: makeEvent("/sitemap.xml"), resolve });
+    await barePathStub({ event: makeEvent("/api/feedback"), resolve });
+    await barePathStub({ event: makeEvent("/sitemap.xml"), resolve });
 
     expect(resolve).toHaveBeenCalledTimes(2);
   });
@@ -47,93 +42,31 @@ describe("bareLocaleRedirect", () => {
     ["/EN/villagers?x=1", "/en/villagers?x=1"],
   ])("permanently redirects the miscased locale in %s", async (path, location) => {
     const resolve = vi.fn();
-    const response = await bareLocaleRedirect({ event: makeEvent(path), resolve });
+    const response = await barePathStub({ event: makeEvent(path), resolve });
 
     expect(resolve).not.toHaveBeenCalled();
     expect(response.status).toBe(308);
     expect(response.headers.get("location")).toBe(location);
   });
 
-  it("redirects a bare path to the cookie-preferred locale", async () => {
-    const resolve = vi.fn();
-    const response = await bareLocaleRedirect({
-      event: makeEvent("/almanac", { cookie: "fr" }),
-      resolve,
-    });
+  it.each(["/", "/almanac", "/data"])(
+    "serves %s the same stub page the static build does",
+    async (path) => {
+      const resolve = vi.fn();
+      const response = await barePathStub({ event: makeEvent(`${path}?q=1`), resolve });
 
-    expect(resolve).not.toHaveBeenCalled();
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("/fr/almanac");
-  });
+      expect(resolve).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
+      expect(await response.text()).toBe(renderBarePathStub(path));
+    },
+  );
 
-  it("falls back to Accept-Language negotiation when there is no cookie", async () => {
-    const response = await bareLocaleRedirect({
-      event: makeEvent("/almanac", { acceptLanguage: "ja" }),
-      resolve: vi.fn(),
-    });
+  it("leaves an unknown bare path to the not-found page", async () => {
+    const resolve = vi.fn().mockResolvedValue(PASS_THROUGH);
+    const response = await barePathStub({ event: makeEvent("/characters"), resolve });
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("/ja/almanac");
-  });
-
-  it("prefers the cookie over Accept-Language when both are present", async () => {
-    const response = await bareLocaleRedirect({
-      event: makeEvent("/almanac", { acceptLanguage: "ja", cookie: "es" }),
-      resolve: vi.fn(),
-    });
-
-    expect(response.headers.get("location")).toBe("/es/almanac");
-  });
-
-  it("ignores a cookie value that isn't a supported locale", async () => {
-    const response = await bareLocaleRedirect({
-      event: makeEvent("/almanac", { acceptLanguage: "ko", cookie: "not-a-locale" }),
-      resolve: vi.fn(),
-    });
-
-    expect(response.headers.get("location")).toBe("/ko/almanac");
-  });
-
-  it("redirects the bare root path to /<locale>, not /<locale>/", async () => {
-    const response = await bareLocaleRedirect({
-      event: makeEvent("/", { cookie: "ru" }),
-      resolve: vi.fn(),
-    });
-
-    expect(response.headers.get("location")).toBe("/ru");
-  });
-
-  it("preserves the query string on redirect", async () => {
-    const response = await bareLocaleRedirect({
-      event: makeEvent("/data?section=transfer", { cookie: "en" }),
-      resolve: vi.fn(),
-    });
-
-    expect(response.headers.get("location")).toBe("/en/data?section=transfer");
-  });
-
-  it("falls back to English when neither a cookie nor Accept-Language yields a supported locale", async () => {
-    const withoutHeader = await bareLocaleRedirect({
-      event: makeEvent("/almanac"),
-      resolve: vi.fn(),
-    });
-    const unsupportedLanguage = await bareLocaleRedirect({
-      event: makeEvent("/", { acceptLanguage: "tlh" }),
-      resolve: vi.fn(),
-    });
-
-    expect(withoutHeader.status).toBe(307);
-    expect(withoutHeader.headers.get("location")).toBe("/en/almanac");
-    expect(unsupportedLanguage.headers.get("location")).toBe("/en");
-  });
-
-  it("marks the redirect as varying by the inputs that choose its locale", async () => {
-    const response = await bareLocaleRedirect({
-      event: makeEvent("/almanac", { cookie: "fr" }),
-      resolve: vi.fn(),
-    });
-
-    expect(response.headers.get("vary")).toBe("Cookie, Accept-Language");
+    expect(response).toBe(PASS_THROUGH);
   });
 });
 
