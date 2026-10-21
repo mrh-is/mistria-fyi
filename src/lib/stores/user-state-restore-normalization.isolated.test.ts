@@ -159,7 +159,6 @@ function expectUnknownIdsRetained(store: {
     "almanac",
     "almanacRecipes",
     "cosmetics",
-    "legacyDates",
     "mountAppearances",
     "museum",
     "petCosmetics",

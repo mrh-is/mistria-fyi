@@ -14,6 +14,7 @@
     TransferDecodeError,
   } from "#lib/engine/transfer.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { holdUpdatesWhile, updateHolds } from "#lib/pwa/update-holds.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { version } from "$app/env";
 
@@ -46,6 +47,10 @@
   let transferError = $state<null | string>(null);
   let versionMismatch = $state(false);
   let copiedRecoverySteps = $state(false);
+
+  // An app update's reload waits while a code is being made or shown to the other device, a scan
+  // is running, or the player is reading what it merged.
+  $effect(() => holdUpdatesWhile(generating || qr !== null || scanning || transferResult !== null));
 
   // ── Generate QR Code ──
   async function handleGenerate() {
@@ -170,11 +175,14 @@
       const file = input.files?.[0];
       input.remove();
       if (!file) return;
+      const release = updateHolds.hold();
       try {
         const data = await decodeQrImage(file);
         await handleScanResult(data);
       } catch {
         transferError = m.transfer_error_no_qr_in_image();
+      } finally {
+        release();
       }
     });
     input.className = "sr-only";
@@ -187,10 +195,13 @@
 
   // ── Common decode + merge ──
   async function handleScanResult(data: string) {
-    stopScanning();
+    // Acquire before closing the scanner: decoding yields before the result's effect can hold.
+    const release = updateHolds.hold();
     try {
+      stopScanning();
       const decoded = await decodeTransferPayload(data, version);
-      transferResult = userState.mergeFromSave(decoded);
+      // A transfer carries no provenance, so what it adds is `unknown` rather than from a save.
+      transferResult = userState.mergeFromSave(decoded, { source: "unknown" });
     } catch (error) {
       if (!(error instanceof TransferDecodeError)) {
         transferError = `${m.transfer_error_invalid_qr_prefix()} ${m.transfer_error_could_not_decode()}`;
@@ -199,6 +210,8 @@
       } else {
         transferError = formatTransferDecodeError(error.code);
       }
+    } finally {
+      release();
     }
   }
 </script>

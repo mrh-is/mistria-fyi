@@ -44,43 +44,43 @@ export function createSpoilerGuard(): SpoilerGuard {
     },
     proceedAndRecordPrerequisites(): void {
       if (condition) {
-        for (const mutation of planConditionMutations(
-          condition,
-          userState.state.progress,
-          trackerData,
-        )) {
-          switch (mutation.type) {
-            case "hasUpperFloor":
-              userState.setHasUpperFloor(true);
-              break;
-            case "heartLevel":
-              userState.setHeartLevel(mutation.villagerId, mutation.level);
-              break;
-            case "married":
-              userState.setVillagerRelationship(mutation.villagerId, "married");
-              break;
-            case "mineFloor":
-              userState.setMineFloor(mutation.floor);
-              break;
-            case "perkUnlocked":
-              if (!userState.state.progress.unlockedPerks.has(mutation.perkId)) {
-                userState.togglePerk(mutation.perkId);
-              }
-              break;
-            case "questCompleted":
-              userState.setQuestState(mutation.questId, "completed");
-              break;
-            case "reachedSeason":
-              userState.setReachedSeason(mutation.season);
-              break;
-            case "renownLevel":
-              userState.setRenown(mutation.level);
-              break;
-            case "skillLevel":
-              userState.setSkillLevel(mutation.skillId, mutation.level);
-              break;
+        const mutations = planConditionMutations(condition, userState.state.progress, trackerData);
+        // The player asked for the prerequisites, not each fact, so every change is `inferred`.
+        userState.recordInferred(() => {
+          for (const mutation of mutations) {
+            switch (mutation.type) {
+              case "hasUpperFloor":
+                userState.setHasUpperFloor(true);
+                break;
+              case "heartLevel":
+                userState.setHeartLevel(mutation.villagerId, mutation.level);
+                break;
+              case "married":
+                userState.setVillagerRelationship(mutation.villagerId, "married");
+                break;
+              case "mineFloor":
+                userState.setMineFloor(mutation.floor);
+                break;
+              case "perkUnlocked":
+                if (!userState.state.progress.unlockedPerks.has(mutation.perkId)) {
+                  userState.togglePerk(mutation.perkId);
+                }
+                break;
+              case "questCompleted":
+                userState.setQuestState(mutation.questId, "completed");
+                break;
+              case "reachedSeason":
+                userState.setReachedSeason(mutation.season);
+                break;
+              case "renownLevel":
+                userState.setRenown(mutation.level);
+                break;
+              case "skillLevel":
+                userState.setSkillLevel(mutation.skillId, mutation.level);
+                break;
+            }
           }
-        }
+        });
       }
       pendingAction?.();
       open = false;

@@ -51,9 +51,14 @@ not here.
 
 - Worktrees are optional. To use one, run
   `pnpm run worktree:new <issue-number>-<short-description>`, or `node scripts/setup-worktree.ts`
-  inside a harness-created worktree. Setup links `.worktreeinclude` entries (game assets, env
+  inside a harness-created worktree. Setup links the game assets & `.worktreeinclude` entries (env
   files), installs with the frozen lockfile, & runs `prepare`. Read
   [agent-reference.md](docs/agent-reference.md#worktree-mechanics) first.
+- Standard setup in an isolated harness-created worktree is preauthorized: `SessionStart` hooks run
+  it automatically, & you run `node scripts/setup-worktree.ts` when dependencies or its links are
+  still absent, including after a missing-dependency preflight failure. Use the configured global
+  pnpm store & worktree-local dependencies; request any required sandbox access. If setup itself
+  fails, follow “Tooling failures” below.
 - A fresh, platform-managed ephemeral container with a session-isolated assigned branch works
   directly in its checkout. Do not create a nested worktree or replace that branch.
 - Start from the refreshed remote tip of the intended branch. Never reset existing work, switch a
@@ -89,9 +94,10 @@ not here.
 
 ## Architecture boundaries
 
-- Hooks deny edits of generated `src/lib/data/tracker-data.json` & vendored
-  `src/lib/components/ui/`; regenerate or use the vendor CLI, and read
-  `src/lib/types/tracker-data.ts` for the shared contract.
+- Hooks deny edits of generated `src/lib/data/tracker-data.json`; regenerate it, & read
+  `src/lib/types/tracker-data.ts` for the shared contract. `src/lib/components/ui/` began as
+  shadcn-svelte code but is project-owned: edit it directly, & keep its MIT notice in
+  `THIRD-PARTY-NOTICES.md`.
 - Pipeline extractors throw on unexpected source data. Never invent fallback display text to paper
   over a missing or unrecognized value.
 - `src/lib/engine/` is pure domain logic; side effects belong at store or component boundaries.
@@ -151,22 +157,34 @@ not here.
 
 ## Tooling failures
 
+Absent or stale project dependencies are a routine setup step: agents may run
+`pnpm install --frozen-lockfile` without additional approval, using the configured external store
+and preserving the lockfile. This permission covers neither dependency additions or bumps nor
+changes to runtime, authentication, or package-manager configuration. If the frozen install fails,
+follow the stop, report, & diagnose procedure below; do not retry with a workaround.
+
 When a local tooling or environment issue blocks the task (a missing tool, wrong runtime version,
 broken or unconfigured install, authentication failure, or any other local setup problem), **stop on
-the first occurrence and report it**. Wrangler is the standard example: if `pnpm exec wrangler` is
-missing, unconfigured, or not logged in, report that; do not install it, run `wrangler login`, or
-substitute another upload path.
+the first occurrence and report it**, except for the preauthorized standard worktree setup above.
+Wrangler is the standard example: if `pnpm exec wrangler` is missing, unconfigured, or not logged
+in, report that; do not install it, run `wrangler login`, or substitute another upload path.
 
 - **Report immediately,** before any other action: the failing command or operation, the relevant
   error (redact tokens & other credentials), & the work it blocks.
 - **Diagnose read-only.** `node scripts/machine-doctor.ts` reports each prerequisite as ok, missing,
   or wrong without changing anything; run it with `node`, not through pnpm, which would check the
-  wrong runtime; include its output. The setup procedure is
-  [machine-setup.md](docs/machine-setup.md).
+  wrong runtime; include its output. Pass `--for` with the sections your task needs (`browser`,
+  `pipeline`, `release`; core always runs), so unrelated prerequisites such as game assets do not
+  read as failures. The setup procedure is [machine-setup.md](docs/machine-setup.md).
 - **Then wait for the user’s explicit direction.** Do not install, configure, authenticate,
   substitute a tool, skip or bypass a check, or retry with a workaround unless the user directs it.
   Retrying the same command is not a fix. Requesting a sandbox escalation for the operation the task
   already requires is not a workaround.
+- **Missing Playwright browsers are a standing exception.** When a required browser check needs a
+  missing browser binary, install that component with workspace Playwright, for example
+  `pnpm exec playwright install chromium --only-shell`, then run the check. Use the external browser
+  cache, request sandbox access if needed, & report the install. This does not authorize dependency
+  changes, system-package installation, or substituting another browser or executable.
 - **Repository bugs are included.** A failing documented command or stale doc blocks you the same
   way. Search open issues for it while you report; add evidence to an existing issue, or offer to
   file one with the symptom & a root-cause guess. The user decides whether to proceed around it.

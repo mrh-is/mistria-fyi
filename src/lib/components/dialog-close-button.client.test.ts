@@ -9,7 +9,7 @@ describe("dialog close button", () => {
   it("is the one localized close control, and it dismisses the dialog", async () => {
     render(AiDisclosureDialog, { open: true });
 
-    // The vendored dialog's own English close button is switched off, so there is exactly one.
+    // The `ui/` dialog's own English close button is switched off, so there is exactly one.
     const close = screen.getByRole("button", { name: "Close" });
     expect(screen.getAllByRole("button", { name: /close/iu })).toHaveLength(1);
 

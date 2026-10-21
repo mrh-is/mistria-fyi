@@ -10,60 +10,39 @@
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
-  import { trackerData, trackerIndex } from "#lib/data/index.js";
+  import { trackerIndex } from "#lib/data/index.js";
   import { getAlmanacEntryNames, getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { isInProgressScope, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
-  import { isConditionVisible } from "#lib/engine/visibility.js";
+  import { projectAlmanac } from "#lib/engine/projections/almanac.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
-  import { recordEntries } from "#lib/utils/record.js";
   import { sectionRowLimit, trackerRowDisplay } from "#lib/utils/row-display.js";
 
-  import type { Source } from "#lib/types/acquisition.js";
+  import type { AlmanacRow } from "#lib/engine/projections/almanac.js";
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { AlmanacEntry, Item, ItemId } from "#lib/types/tracker-data.js";
-  import type { VisibilityCondition } from "#lib/types/visibility.js";
+  import type { ItemId } from "#lib/types/tracker-data.js";
   import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 
   const spoilerGuard = createSpoilerGuard();
 
-  function aggregateSources(entry: AlmanacEntry): Source[] {
-    return trackerIndex.getAggregatedAlmanacSources(entry.itemIds[0]);
-  }
-
   function isItemCompleted(itemId: ItemId): boolean {
     return userState.state.progress.almanac.has(itemId);
   }
 
-  function isItemSpoilered(item: { visibility?: VisibilityCondition }): boolean {
-    return !isConditionVisible(item.visibility, userState.progressionState);
-  }
-
-  function rowDisplay(
-    itemId: ItemId,
-    item: { visibility?: VisibilityCondition },
-    sources: Source[],
-  ): TrackerRowDisplay {
-    const completed = isItemCompleted(itemId);
+  function rowDisplay(row: AlmanacRow): TrackerRowDisplay {
     return trackerRowDisplay({
-      completed,
-      dimmed: isItemDimmed(
-        sources,
-        completed,
-        userState.state.worldState,
-        userState.state.availabilityWindows,
-      ),
-      leaving: recentlyCompleted.has(itemId),
-      spoilered: isItemSpoilered(item),
+      completed: row.completed,
+      dimmed: row.dimmed,
+      leaving: recentlyCompleted.has(row.canonicalId),
+      spoilered: row.spoilered,
     });
   }
 
@@ -96,71 +75,32 @@
 
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
 
-  interface AlmanacRow {
-    canonicalId: ItemId;
-    entry: AlmanacEntry;
-    item: Item;
-    /** Every member's name, so the filter finds a merged row by any of them. */
-    memberNames: string[];
-    name: string;
-  }
-
-  /** Each almanac category's rows, named & sorted for the locale. */
-  let almanacSections = $derived(
-    recordEntries(trackerData.almanac).map(([id, cat]) => ({
-      canonicalIds: cat.items.map((entry) => entry.itemIds[0]),
-      id,
-      rows: cat.items
-        .map((entry): AlmanacRow => {
-          const canonicalId = entry.itemIds[0];
-          const memberNames = getAlmanacEntryNames(entry, locale);
-          return {
-            canonicalId,
-            entry,
-            item: trackerData.items[canonicalId],
-            memberNames,
-            name: memberNames[0],
-          };
-        })
-        .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
-    })),
+  // Page context includes user filters and the animation's temporary completed-row retention.
+  let projection = $derived(
+    projectAlmanac(userState.state, {
+      hideSpoilered: Boolean(nameFilter),
+      matchesEntry: (ids) =>
+        getAlmanacEntryNames({ itemIds: ids }, locale).some((name) =>
+          matchesName(name, nameFilter, locale),
+        ),
+      matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
+      progressionState: userState.progressionState,
+      recentlyCompleted: recentlyCompleted.ids,
+      showCompleted: userState.state.showCompleted,
+      showUnobtainable: toolbarState.showUnobtainable,
+    }),
   );
 
-  /**
-   * Each section's rows narrowed in three steps: `baseRows` (search & availability; the section
-   * renders only when non-empty), `scopedRows` (plus source filters; the counter), and
-   * `visibleRows` (plus completed-row hiding; what renders).
-   */
   let sectionViews = $derived(
-    almanacSections.map((section) => {
-      const baseRows = section.rows.filter(({ canonicalId, entry, item, memberNames }) => {
-        if (!memberNames.some((name) => matchesFilter(name))) return false;
-        if (nameFilter && isItemSpoilered(item)) return false;
-        return isInProgressScope(
-          aggregateSources(entry),
-          isItemCompleted(canonicalId),
-          userState.state.worldState,
-          userState.state.availabilityWindows,
-        );
-      });
-      const scopedRows = baseRows.filter(({ entry }) =>
-        toolbarState.matchesSourceFilters(aggregateSources(entry)),
-      );
-      return {
-        ...section,
-        baseRows,
-        completedCount: scopedRows.filter(({ canonicalId }) => isItemCompleted(canonicalId)).length,
-        scopedRows,
-        visibleRows: scopedRows.filter(({ canonicalId }) =>
-          isRowVisible(
-            canonicalId,
-            isItemCompleted(canonicalId),
-            userState.state.showCompleted,
-            recentlyCompleted.ids,
-          ),
-        ),
-      };
-    }),
+    projection.sections.map((section) => ({
+      ...section,
+      visibleRows: section.visibleRows
+        .map((row) => ({
+          ...row,
+          name: getAlmanacEntryNames(row.entry, locale)[0],
+        }))
+        .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
+    })),
   );
 
   onDestroy(() => {
@@ -169,10 +109,6 @@
     }
     sectionFrames.clear();
   });
-
-  function matchesFilter(name: string): boolean {
-    return matchesName(name, nameFilter, locale);
-  }
 
   function scheduleSectionRendering(sectionId: string, targetCount: number): void {
     stopSectionRendering(sectionId);
@@ -266,21 +202,20 @@
         }}
         {renderedCount}
       >
-        {#snippet row({ canonicalId, entry, item, name })}
-          {@const itemCompleted = isItemCompleted(canonicalId)}
-          {@const itemSources = aggregateSources(entry)}
+        {#snippet row(row)}
+          {@const { canonicalId, completed, item, name, sources, spoilered } = row}
           {@const itemVisibility = item.visibility}
           <TrackerRow
-            display={rowDisplay(canonicalId, { visibility: itemVisibility }, itemSources)}
+            display={rowDisplay(row)}
             segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
             {name}
             reportCategory="almanac-item"
             reportEntityId={canonicalId}
-            sources={itemSources}
+            {sources}
             sprite={canonicalId}
             spriteClass="text-(--color-category-almanac)"
             onToggle={() => {
-              if (!isItemSpoilered({ visibility: itemVisibility }) || itemCompleted) {
+              if (!spoilered || completed) {
                 toggleItem(canonicalId, name, canonicalIds);
               } else {
                 spoilerGuard.requestGuardedAction(itemVisibility, () => {

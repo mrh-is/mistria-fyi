@@ -1,12 +1,10 @@
 {
+  "almanac_show_unobtainable": "Показать недоступные для получения?",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Отслеживайте коллекции, задания, навыки и многое другое",
   "og_share_description": "Вся Мистрия в одном месте",
   "source_spoilered": "Скрыто",
-  "app_update_available": "Mistria Field Guide обновился! Обновите страницу, чтобы получить новую версию.",
-  "app_update_later": "Не сейчас",
-  "app_update_refresh": "Обновить",
   "onboarding_region_label": "Начало работы",
   "onboarding_overline": "Новый полевой справочник",
   "onboarding_title": "Добро пожаловать, фермер!",
@@ -684,5 +682,9 @@
         "countPlural=other": "Собрать {count} коллекции в крыле «{wing}»"
       }
     }
-  ]
+  ],
+  "import_last_imported": "Последний импорт: {time}",
+  "import_farm_identity": "Сохранение №{number} · Создано в версии {version}",
+  "import_unknown_number": "неизвестно",
+  "import_unknown_version": "неизвестно"
 }

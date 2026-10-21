@@ -1,8 +1,9 @@
-import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { trackerData } from "#lib/data/index.js";
 import { isVariantInScope } from "#lib/engine/animal-availability.js";
-import { isAlmanacEntryObtainable, isItemObtainable } from "#lib/engine/applicability.js";
-import { filterAvailableItems, isItemAvailable } from "#lib/engine/availability.js";
+import { isItemObtainable } from "#lib/engine/applicability.js";
+import { filterAvailableItems } from "#lib/engine/availability.js";
 import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
+import { projectAlmanac } from "#lib/engine/projections/almanac.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import type { CategoryKey } from "#lib/data/categories.js";
@@ -162,35 +163,8 @@ export function normalizeLevel(level: unknown, max: number): NormalizedLevel {
   return { value: floored };
 }
 
-function almanacEntryProgress(
-  canonicalIds: ItemId[],
-  completedSet: ReadonlySet<ItemId>,
-  ctx: ProgressContext,
-): CategoryProgress {
-  const applicableIds = canonicalIds.filter((id) => {
-    if (completedSet.has(id)) return true;
-    const entry = trackerIndex.almanacEntryByCanonicalId.get(id);
-    if (!entry) return isItemObtainable(id, ctx.progress);
-    return isAlmanacEntryObtainable(entry.itemIds, ctx.progress);
-  });
-
-  const incompleteIds = applicableIds.filter((id) => !completedSet.has(id));
-  const remainingInScope = incompleteIds.filter((id) =>
-    isItemAvailable(
-      trackerIndex.getAggregatedAlmanacSources(id),
-      ctx.worldState,
-      ctx.availabilityWindows,
-    ),
-  );
-  return {
-    completed: applicableIds.length - incompleteIds.length,
-    remainingInScope: remainingInScope.length,
-    total: applicableIds.length,
-  };
-}
-
 function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
-  return almanacEntryProgress(trackerIndex.almanacCanonicalIds, ctx.progress.almanac, ctx);
+  return projectAlmanac(ctx).totals;
 }
 
 function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {

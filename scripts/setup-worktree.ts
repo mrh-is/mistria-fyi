@@ -1,9 +1,12 @@
-// Sets up an existing linked worktree per AGENTS.md, Worktrees: links the `.worktreeinclude` entries from
-// the main checkout, then installs dependencies. `worktree:new` runs it after creating a worktree;
+// Sets up an existing linked worktree per AGENTS.md, Worktrees: links the shared directories & the
+// `.worktreeinclude` entries from the main checkout, then installs dependencies. `worktree:new` runs it after creating a worktree;
 // run it directly inside a harness-created worktree (e.g. under `.claude/worktrees/`).
 // Usage: node scripts/setup-worktree.ts (not a pnpm script: `pnpm run` refuses to start without the
-// dependencies this installs). It runs on the shell's Node, which may differ from the pin, so it
-// skips the require-pinned-node guard: the install it runs downloads the pinned runtime, and every
+// dependencies this installs). Agent SessionStart hooks run it with `--session-start`, which only
+// fills in what's absent or stale, also covers the main checkout's dependencies, sends tool output
+// to stderr, & reports the outcome as session context.
+// It runs on the shell's Node, which may differ from the pin, so it skips the require-pinned-node
+// guard: the install it runs downloads the pinned runtime, and every
 // later step goes through pnpm, which uses that runtime.
 //
 // This is a Node script rather than a shell script so it behaves the same under Windows, where
@@ -21,9 +24,12 @@ import {
 import { dirname, join, posix, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { contextOutput } from "#scripts/lib/agent-hook";
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 import type { SpawnSyncOptions } from "node:child_process";
+
+import type { HookInput } from "#scripts/lib/agent-hook";
 
 export interface LinkPlan {
   destination: string;
@@ -35,6 +41,13 @@ export interface InstallPlan {
   env: Record<string, string>;
   installArgs: string[];
 }
+
+/**
+ * Read-only directories every worktree links from the main checkout. They stay out of
+ * `.worktreeinclude`, which harnesses such as Claude Code copy into new worktrees, so the game
+ * assets are never duplicated.
+ */
+export const SHARED_DIRECTORIES = ["pipeline/input/"];
 
 /**
  * Resolves `.worktreeinclude` lines to the main-checkout entries that exist and aren't already in
@@ -166,37 +179,109 @@ function git(...args: string[]): string {
   return result.stdout.trim();
 }
 
-function main(): number {
-  const install = planInstall(process.platform, process.env);
+/**
+ * The session's directory from a SessionStart hook's stdin. Claude Code runs hooks from the
+ * session's original checkout, so a worktree created for the session arrives only as `cwd`. A
+ * manual run has no input.
+ */
+function hookCwd(): string | undefined {
+  if (process.stdin.isTTY) {
+    return undefined;
+  }
+  const text = readFileSync(0, "utf8").trim();
+  return text === "" ? undefined : (JSON.parse(text) as HookInput).cwd;
+}
+
+/**
+ * pnpm's own `verifyDepsBeforeRun` check: `pnpm exec` refuses to start when dependencies are
+ * absent or stale (a lockfile or workspace change since the last install).
+ */
+function dependenciesCurrent(cwd: string): boolean {
+  return runPnpm(["exec", "node", "--version"], { cwd, stdio: "ignore" }) === 0;
+}
+
+/**
+ * Links the absent shared & `.worktreeinclude` entries, & installs dependencies. At session start, the main
+ * checkout gets dependencies only, and dependencies install only when absent or stale, so a
+ * current checkout is left alone.
+ */
+function main(sessionStart: boolean): number {
   const worktreeDir = resolve(git("rev-parse", "--show-toplevel"));
   // `git worktree list` lists the main worktree first.
   const repoRoot = resolve(
     (git("worktree", "list", "--porcelain").split("\n")[0] ?? "").replace(/^worktree /, ""),
   );
-  if (worktreeDir === repoRoot) {
+  const mainCheckout = worktreeDir === repoRoot;
+  if (mainCheckout && !sessionStart) {
     console.error(`error: ${worktreeDir} is the main checkout; run this inside a linked worktree.`);
     return 1;
   }
 
-  const patterns = readFileSync(join(repoRoot, ".worktreeinclude"), "utf8").split(/\r?\n/);
-  for (const plan of planLinks(repoRoot, worktreeDir, patterns)) {
+  const links = mainCheckout
+    ? []
+    : planLinks(repoRoot, worktreeDir, [
+        ...SHARED_DIRECTORIES,
+        ...readFileSync(join(repoRoot, ".worktreeinclude"), "utf8").split(/\r?\n/),
+      ]);
+  const installs =
+    !sessionStart ||
+    !existsSync(join(worktreeDir, "node_modules")) ||
+    !dependenciesCurrent(worktreeDir);
+  if (links.length === 0 && !installs) {
+    return 0;
+  }
+  const install = installs ? planInstall(process.platform, process.env) : undefined;
+  for (const plan of links) {
     linkEntry(plan);
   }
-
-  const options: SpawnSyncOptions = {
-    cwd: worktreeDir,
-    env: { ...process.env, ...install.env },
-    stdio: "inherit",
-  };
-  const status = runPnpm(install.installArgs, options);
-  return status === 0 ? runPnpm(["run", "prepare"], options) : status;
+  if (install) {
+    const options: SpawnSyncOptions = {
+      cwd: worktreeDir,
+      env: { ...process.env, ...install.env },
+      // Session context is the hook's stdout, so keep install logs out of it.
+      stdio: sessionStart ? ["ignore", 2, 2] : "inherit",
+    };
+    const installed = runPnpm(install.installArgs, options);
+    const status = installed === 0 ? runPnpm(["run", "prepare"], options) : installed;
+    if (status !== 0) {
+      return status;
+    }
+  }
+  if (sessionStart) {
+    const steps = [
+      ...(links.length > 0 ? [`linked ${links.length} entries from the main checkout`] : []),
+      ...(install ? ["installed dependencies with the frozen lockfile & ran prepare"] : []),
+    ];
+    console.log(
+      contextOutput(
+        "SessionStart",
+        `Initialized ${worktreeDir} with node scripts/setup-worktree.ts: ${steps.join("; ")}.`,
+      ),
+    );
+  }
+  return 0;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const sessionStart = process.argv.includes("--session-start");
   try {
-    process.exitCode = main();
+    const cwd = sessionStart ? hookCwd() : undefined;
+    if (cwd) {
+      process.chdir(cwd);
+    }
+    process.exitCode = main(sessionStart);
   } catch (error) {
     console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
     process.exitCode = 1;
+  }
+  if (sessionStart && process.exitCode !== 0) {
+    // A failed setup must not block the session; the agent stops & reports instead.
+    console.log(
+      contextOutput(
+        "SessionStart",
+        `Automatic worktree setup (node scripts/setup-worktree.ts --session-start) failed with exit status ${String(process.exitCode)}; its output is in the hook's stderr. Follow AGENTS.md, Tooling failures: report this before other work, then rerun node scripts/setup-worktree.ts to see the error.`,
+      ),
+    );
+    process.exitCode = 0;
   }
 }

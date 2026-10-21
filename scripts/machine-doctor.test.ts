@@ -14,9 +14,12 @@ import {
   checkPnpmStore,
   exitCode,
   formatReport,
+  parseSections,
   parseVersion,
   realEnvironment,
   runChecks,
+  SECTION_NAMES,
+  SECTIONS,
 } from "./machine-doctor.js";
 
 import type { CommandOutput, Environment, ProcessRunner } from "./machine-doctor.js";
@@ -24,7 +27,7 @@ import type { CommandOutput, Environment, ProcessRunner } from "./machine-doctor
 const none: CommandOutput = { errorCode: "ENOENT", ok: false, stdout: "" };
 const files: Record<string, string> = {
   ".node-version": "24.21.0\n",
-  "package.json": '{"packageManager": "pnpm@11.28.2"}',
+  "package.json": '{"engines": {"node": ">=24.15.0 <27.0.0"}, "packageManager": "pnpm@11.28.2"}',
 };
 
 function machine(overrides: Partial<Environment> & { commands?: Record<string, string> } = {}) {
@@ -55,26 +58,60 @@ describe("parseVersion", () => {
   });
 });
 
+function readMalformedManifest(path: string): string | undefined {
+  return basename(path) === "package.json" ? "{" : files[basename(path)];
+}
+
+function readCaretEngines(path: string): string | undefined {
+  return basename(path) === "package.json" ? '{"engines": {"node": "^24"}}' : files[basename(path)];
+}
+
 describe("checkNode", () => {
-  it("passes the pinned version & later minors of the same major", () => {
+  it("passes any release within package.json engines, since pnpm runs the pinned one", () => {
     expect(checkNode(machine()).status).toBe("ok");
-    expect(checkNode(machine({ nodeVersion: "24.15.1" })).status).toBe("ok");
+    expect(checkNode(machine({ nodeVersion: "24.15.0" })).status).toBe("ok");
+    const newer = checkNode(machine({ nodeVersion: "26.12.0" }));
+    expect(newer.status).toBe("ok");
+    expect(newer.detail).toContain("24.21.0");
   });
 
-  it("flags another major, such as the Node 26 shell from issue 17", () => {
-    const result = checkNode(machine({ nodeVersion: "26.5.0" }));
-    expect(result.status).toBe("wrong");
-    expect(result.detail).toContain("26.5.0");
+  it("flags a release outside engines, such as Claude Code cloud's Node 22", () => {
+    for (const nodeVersion of ["22.22.0", "24.14.9", "27.0.0"]) {
+      const result = checkNode(machine({ nodeVersion }));
+      expect(result.status).toBe("wrong");
+      expect(result.detail).toContain(nodeVersion);
+      expect(result.fix).toContain(">=24.15.0 <27.0.0");
+      expect(result.fix).toContain("brew install node@24 && brew link --force node@24");
+    }
+    expect(checkNode(machine({ nodeVersion: "27.0.0", platform: "win32" })).fix).toContain(
+      "winget install OpenJS.NodeJS.LTS",
+    );
+  });
+
+  it("reports an unparsable package.json instead of crashing", () => {
+    expect(checkNode(machine({ read: readMalformedManifest }))).toMatchObject({
+      detail: expect.stringContaining("missing") as string,
+      status: "wrong",
+    });
+  });
+
+  it("flags an engines range it can't read instead of guessing", () => {
+    expect(checkNode(machine({ read: readCaretEngines }))).toMatchObject({
+      detail: expect.stringContaining("^24") as string,
+      status: "wrong",
+    });
   });
 });
 
 describe("checkPnpm", () => {
-  it("reports a missing pnpm with a fix", () => {
+  it("reports a missing pnpm with an install command for the pinned major", () => {
     expect(checkPnpm(machine())).toMatchObject({
       detail: "not found on PATH",
-      fix: expect.stringContaining("Install pnpm") as string,
+      fix: expect.stringContaining("brew install pnpm@11 && brew link --force pnpm@11") as string,
       status: "missing",
     });
+    expect(checkPnpm(machine({ platform: "linux" })).fix).not.toContain("brew");
+    expect(checkPnpm(machine({ platform: "win32" })).fix).toContain("pnpm.cmd");
   });
 
   it("reports pnpm's first error line without an install suggestion", () => {
@@ -104,8 +141,13 @@ describe("checkPnpm", () => {
   });
 
   it("flags a launcher whose major differs from the pin", () => {
-    const result = checkPnpm(machine({ commands: { "pnpm --version": "10.0.0\n" } }));
+    const result = checkPnpm(machine({ commands: { "pnpm --version": "12.11.2\n" } }));
     expect(result.status).toBe("wrong");
+    expect(result.fix).toContain("brew link --force pnpm@11");
+    const linux = checkPnpm(
+      machine({ commands: { "pnpm --version": "12.11.2\n" }, platform: "linux" }),
+    );
+    expect(linux.fix).toBe("pnpm self-update 11");
   });
 
   it("passes a matching major", () => {
@@ -185,6 +227,40 @@ describe("checkGit", () => {
     const results = checkGit(machine({ commands: { "git --version": "git version 2.50.0" } }));
     expect(results.find((r) => r.id === "git-signing")?.status).toBe("manual");
   });
+
+  it("reports tag signing only when tag.gpgsign is on", () => {
+    const commands = { "git --version": "git version 2.50.0" };
+    expect(checkGit(machine({ commands })).map((r) => r.id)).not.toContain("git-tag-signing");
+  });
+
+  it("warns that signed tags need a message when a key is configured", () => {
+    const results = checkGit(
+      machine({
+        commands: {
+          "git --version": "git version 2.50.0",
+          "git config --get tag.gpgsign": "true\n",
+          "git config --get user.signingkey": "~/.ssh/id_ed25519_signing.pub\n",
+        },
+      }),
+    );
+    const tags = results.find((r) => r.id === "git-tag-signing");
+    expect(tags?.status).toBe("ok");
+    expect(tags?.detail).toContain("tag.gpgsign=false");
+  });
+
+  it("flags tag signing without a key, since every `git tag` fails", () => {
+    const results = checkGit(
+      machine({
+        commands: {
+          "git --version": "git version 2.50.0",
+          "git config --get tag.gpgsign": "true\n",
+        },
+      }),
+    );
+    const tags = results.find((r) => r.id === "git-tag-signing");
+    expect(tags?.status).toBe("wrong");
+    expect(tags?.fix).toContain("git config --global --unset tag.gpgsign");
+  });
 });
 
 describe("checkGh", () => {
@@ -204,11 +280,61 @@ describe("checkGh", () => {
 });
 
 describe("checkPlaywright", () => {
-  it("requires both browsers in the platform cache", () => {
+  const cache = "/home/test/Library/Caches/ms-playwright";
+  const store = "/repo/node_modules/.pnpm";
+  const browsers = JSON.stringify({
+    browsers: [
+      { name: "chromium", revision: "1243" },
+      { name: "chromium-headless-shell", revision: "1243" },
+      { name: "firefox", revision: "1543" },
+      { name: "webkit", revision: "2359" },
+    ],
+  });
+  const installed = (entries: string[]) =>
+    machine({
+      list: (path) => {
+        if (path === cache) {
+          return entries;
+        }
+        return path === store ? ["@playwright+test@1.63.0", "playwright-core@1.63.0"] : [];
+      },
+      read: (path) =>
+        path === `${store}/playwright-core@1.63.0/node_modules/playwright-core/browsers.json`
+          ? browsers
+          : undefined,
+    });
+
+  it("requires the exact revisions the installed Playwright expects", () => {
+    expect(
+      checkPlaywright(installed(["chromium-1243", "chromium_headless_shell-1243"])),
+    ).toMatchObject({ status: "ok" });
+    expect(checkPlaywright(installed(["chromium-1200", "firefox-1543"]))).toMatchObject({
+      detail: `chromium-1243, chromium_headless_shell-1243 not found in ${cache}`,
+      fix: "pnpm exec playwright install chromium",
+      status: "missing",
+    });
+  });
+
+  it("reports a missing headless shell beside a full chromium", () => {
+    expect(checkPlaywright(installed(["chromium-1243"]))).toMatchObject({
+      detail: `chromium_headless_shell-1243 not found in ${cache}`,
+      status: "missing",
+    });
+  });
+
+  it("checks any revision before dependencies are installed", () => {
     const partial = machine({ list: () => ["chromium-1200"] });
-    expect(checkPlaywright(partial)).toMatchObject({ status: "missing" });
-    const full = machine({ list: () => ["chromium-1200", "firefox-1500"] });
-    expect(checkPlaywright(full).status).toBe("ok");
+    expect(checkPlaywright(partial)).toMatchObject({
+      detail: expect.stringContaining("chromium_headless_shell-*") as string,
+      status: "missing",
+    });
+    const full = machine({
+      list: () => ["chromium-1200", "chromium_headless_shell-1200"],
+    });
+    expect(checkPlaywright(full)).toMatchObject({
+      detail: expect.stringContaining("revisions unchecked") as string,
+      status: "ok",
+    });
   });
 });
 
@@ -320,17 +446,89 @@ describe("checkPnpmStore", () => {
   });
 });
 
+describe("parseSections", () => {
+  it("selects every section without a flag", () => {
+    expect(parseSections([])).toEqual(SECTION_NAMES);
+    expect(SECTION_NAMES.toSorted()).toEqual(Object.keys(SECTIONS).toSorted());
+  });
+
+  it("always includes core & keeps report order", () => {
+    expect(parseSections(["--for", "pipeline,browser"])).toEqual(["core", "browser", "pipeline"]);
+    expect(parseSections(["--for=release"])).toEqual(["core", "release"]);
+    expect(parseSections(["--for", "core"])).toEqual(["core"]);
+  });
+
+  it("rejects unknown sections, naming them & the valid ones", () => {
+    expect(() => parseSections(["--for", "browser,ui"])).toThrow(
+      /unknown section: ui\n.*core, browser, pipeline, release/,
+    );
+    expect(() => parseSections(["--for="])).toThrow("no section named");
+  });
+
+  it("rejects a missing value or stray arguments", () => {
+    expect(() => parseSections(["--for"])).toThrow("unexpected arguments");
+    expect(() => parseSections(["browser"])).toThrow("unexpected arguments");
+    expect(() => parseSections(["--for", "browser", "extra"])).toThrow("unexpected arguments");
+    expect(() => parseSections(["--for=browser", "extra"])).toThrow("unexpected arguments");
+  });
+});
+
 describe("report", () => {
+  const ready = machine({
+    commands: {
+      "gh --version": "gh",
+      "gh auth status": "",
+      "git --version": "git version 2.50.0",
+      "git config --get commit.gpgsign": "true\n",
+      "git config --get user.signingkey": "~/.ssh/id_ed25519_signing.pub\n",
+      "pnpm --version": "11.28.2\n",
+      "shellcheck --version": "ok",
+    },
+    exists: (path) => path === join("/repo", "node_modules"),
+  });
+
   it("fails on missing or wrong results, not on manual ones", () => {
-    expect(exitCode([{ detail: "", id: "a", label: "A", status: "manual" }])).toBe(0);
+    const manual = { detail: "", id: "a", label: "A", status: "manual" } as const;
+    expect(exitCode([{ results: [manual], section: "release", skipped: false }])).toBe(0);
     expect(exitCode(runChecks(machine()))).toBe(1);
   });
 
-  it("prints fixes for failures only", () => {
+  it("checks only the selected sections & ignores skipped ones in the exit status", () => {
+    expect(exitCode(runChecks(ready))).toBe(1);
+    const coreOnly = runChecks(ready, parseSections(["--for", "core"]));
+    expect(coreOnly.filter((r) => r.skipped).map((r) => r.section)).toEqual([
+      "browser",
+      "pipeline",
+      "release",
+    ]);
+    expect(coreOnly.find((r) => r.skipped)?.results).toEqual([]);
+    expect(exitCode(coreOnly)).toBe(0);
+    expect(exitCode(runChecks(ready, ["core", "release"]))).toBe(0);
+    expect(exitCode(runChecks(ready, ["core", "pipeline"]))).toBe(1);
+  });
+
+  it("prints fixes for failures only, under section headings", () => {
     const report = formatReport(runChecks(machine()));
+    expect(report).toContain("Core (every contributor):\n[ok]      Node.js");
     expect(report).toContain("[missing] pnpm");
+    expect(report).toContain("Release (R2 uploads):\n[todo]    Wrangler login");
     expect(report).toContain("fix: pnpm exec wrangler login");
-    expect(report).toContain("[ok]      Node.js");
+    expect(report).not.toContain("Skipped");
+  });
+
+  it("lists skipped sections instead of their checks", () => {
+    const report = formatReport(runChecks(ready, ["core", "browser"]));
+    expect(report).toContain("Browser tests (accessibility & PWA suites):");
+    expect(report).not.toContain("Game assets");
+    expect(report).not.toContain("Wrangler");
+    expect(report).toContain("Skipped: pipeline, release.");
+  });
+
+  it("mentions [todo] steps only when one was printed", () => {
+    expect(formatReport(runChecks(ready, ["core"]))).not.toContain("[todo]");
+    expect(formatReport(runChecks(ready, ["core", "release"]))).toContain(
+      "All checked prerequisites pass. Steps marked [todo] are interactive",
+    );
   });
 });
 
@@ -348,5 +546,11 @@ describe("repository configuration", () => {
     };
     expect(scripts).not.toHaveProperty("machine:doctor");
     expect(scripts).not.toHaveProperty("worktree:setup");
+  });
+
+  it("declares a Node engines range the doctor can read, including .node-version's release", () => {
+    const pinned = readFileSync(join(root, ".node-version"), "utf8").trim();
+    const result = checkNode({ ...realEnvironment(root), nodeVersion: pinned });
+    expect(result.status).toBe("ok");
   });
 });

@@ -1,12 +1,10 @@
 {
+  "almanac_show_unobtainable": "Afficher les objets impossibles à obtenir ?",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Suivez toutes vos collections, quêtes, compétences et plus encore",
   "og_share_description": "Tout Mistria au même endroit",
   "source_spoilered": "Masqué",
-  "app_update_available": "Mistria Field Guide a été mis à jour ! Actualisez la page pour obtenir la dernière version.",
-  "app_update_later": "Plus tard",
-  "app_update_refresh": "Actualiser",
   "onboarding_region_label": "Bien démarrer",
   "onboarding_overline": "Nouveau guide de terrain",
   "onboarding_title": "Bienvenue à la ferme !",
@@ -676,5 +674,9 @@
         "countPlural=other": "Compléter {count} collections dans l’aile {wing}"
       }
     }
-  ]
+  ],
+  "import_last_imported": "Dernière importation : {time}",
+  "import_farm_identity": "Sauvegarde n° {number} · Créée en {version}",
+  "import_unknown_number": "inconnu",
+  "import_unknown_version": "version inconnue"
 }

@@ -57,7 +57,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
       story: { type: "always" },
     },
     cosmetics: {},
-    cosmeticSlots: {} as TrackerData["cosmeticSlots"],
+    cosmeticSlots: {},
     dates: {},
     festivals: {},
     items: {},

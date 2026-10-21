@@ -26,12 +26,29 @@ function weatherStrip() {
 afterEach(async () => {
   cleanup();
   toolbarState.unregisterSourceFilters("test");
+  toolbarState.unregisterSourceFilters("almanac");
+  toolbarState.showUnobtainable = false;
   userState.resetAll();
   pageStub.reset();
   await tick();
 });
 
 describe("FilterPanel interactions", () => {
+  it("offers the unobtainable filter only while the almanac is mounted", async () => {
+    render(FilterPanel, { showWorldStateFilters: true });
+    expect(screen.queryByRole("switch", { name: "Show unobtainable?" })).toBeNull();
+    toolbarState.registerSourceFilters("almanac", []);
+    await tick();
+    const toggle = screen.getByRole("switch", { name: "Show unobtainable?" });
+    await fireEvent.click(toggle);
+    expect(toolbarState.showUnobtainable).toBe(true);
+    await fireEvent.click(toggle);
+    expect(toolbarState.showUnobtainable).toBe(false);
+    toolbarState.unregisterSourceFilters("almanac");
+    await tick();
+    expect(screen.queryByRole("switch", { name: "Show unobtainable?" })).toBeNull();
+  });
+
   it("toggles availability windows as pressed chips", async () => {
     render(FilterPanel, { showWorldStateFilters: true });
 

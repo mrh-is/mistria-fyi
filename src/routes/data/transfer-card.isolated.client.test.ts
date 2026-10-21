@@ -4,11 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
+import { createSafeReload, SAFE_RELOAD_POLL_MS } from "#lib/pwa/safe-reload.js";
+import { updateHolds } from "#lib/pwa/update-holds.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordValues } from "#lib/utils/record.js";
 import { version } from "$app/env";
 
 import TransferCard from "./transfer-card.svelte";
+
+import type { SafeReload } from "#lib/pwa/safe-reload.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 
 import type { TransferQr } from "./transfer-qr.js";
 
@@ -17,6 +22,7 @@ const transferQr = vi.hoisted(() => ({
   generateTransferQr: vi.fn(),
   startQrCamera: vi.fn(),
 }));
+let scheduler: SafeReload | undefined;
 
 vi.mock("./transfer-qr.js", () => transferQr);
 
@@ -38,11 +44,15 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  scheduler?.stop();
+  scheduler = undefined;
   cleanup();
   // The file picker is appended to body and can outlive a canceled scan.
   for (const input of document.querySelectorAll('input[name="transfer-image"]')) input.remove();
   userState.resetAll();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  vi.useRealTimers();
   await tick();
 });
 
@@ -114,6 +124,8 @@ describe("TransferCard scan from image", () => {
     expect(screen.getByText("Museum donations: +1")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("QR code scanned successfully.");
     expect(userState.state.progress.museum.has(museumItemId)).toBe(true);
+    // A transfer carries no provenance, so what it adds isn't credited to a save.
+    expect(userState.provenanceOf(`museum/${museumItemId}`)).toEqual({ source: "unknown" });
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -185,6 +197,80 @@ describe("TransferCard scan from image", () => {
 function fakeScanner() {
   return { destroy: vi.fn(), stop: vi.fn() };
 }
+
+describe("TransferCard update holds", () => {
+  it("holds a pending update from a camera result through payload decoding & the result", async () => {
+    const decoded = Promise.withResolvers<Partial<ProgressState>>();
+    const transfer = await import("#lib/engine/transfer.js");
+    vi.spyOn(transfer, "decodeTransferPayload").mockReturnValueOnce(decoded.promise);
+    let emit: ((data: string) => void) | undefined;
+    transferQr.startQrCamera.mockImplementation(
+      (_video: HTMLVideoElement, _overlay: HTMLCanvasElement, onResult: (data: string) => void) => {
+        emit = onResult;
+        return Promise.resolve(fakeScanner());
+      },
+    );
+    render(TransferCard, { open: true });
+    await fireEvent.click(screen.getByRole("button", { name: "Scan QR Code" }));
+    await waitFor(() => {
+      expect(emit).toBeDefined();
+    });
+    vi.useFakeTimers();
+    const reload = vi.fn();
+    scheduler = createSafeReload({ isReachable: () => Promise.resolve(true), reload });
+    scheduler.request();
+
+    emit?.("camera payload");
+    await vi.advanceTimersByTimeAsync(SAFE_RELOAD_POLL_MS * 2);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(updateHolds.held).toBe(true);
+    expect(reload).not.toHaveBeenCalled();
+
+    decoded.resolve({ museum: new Set([museumItemId]) });
+    await vi.advanceTimersByTimeAsync(SAFE_RELOAD_POLL_MS);
+    expect(userState.state.progress.museum.has(museumItemId)).toBe(true);
+    expect(updateHolds.held).toBe(true);
+    expect(reload).not.toHaveBeenCalled();
+
+    cleanup();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("holds a pending update through image decoding, payload decoding, & the result", async () => {
+    const image = Promise.withResolvers<string>();
+    const decoded = Promise.withResolvers<Partial<ProgressState>>();
+    const transfer = await import("#lib/engine/transfer.js");
+    vi.spyOn(transfer, "decodeTransferPayload").mockReturnValueOnce(decoded.promise);
+    transferQr.decodeQrImage.mockReturnValueOnce(image.promise);
+    render(TransferCard, { open: true });
+    vi.useFakeTimers();
+    const reload = vi.fn();
+    await scanImage(new File(["png"], "qr.png", { type: "image/png" }));
+    scheduler = createSafeReload({ isReachable: () => Promise.resolve(true), reload });
+    scheduler.request();
+
+    await vi.advanceTimersByTimeAsync(SAFE_RELOAD_POLL_MS * 2);
+    expect(updateHolds.held).toBe(true);
+    expect(reload).not.toHaveBeenCalled();
+
+    image.resolve("image payload");
+    await vi.advanceTimersByTimeAsync(SAFE_RELOAD_POLL_MS);
+    expect(transfer.decodeTransferPayload).toHaveBeenCalledWith("image payload", version);
+    expect(updateHolds.held).toBe(true);
+    expect(reload).not.toHaveBeenCalled();
+
+    decoded.resolve({ museum: new Set([museumItemId]) });
+    await vi.advanceTimersByTimeAsync(SAFE_RELOAD_POLL_MS);
+    expect(userState.state.progress.museum.has(museumItemId)).toBe(true);
+    expect(updateHolds.held).toBe(true);
+    expect(reload).not.toHaveBeenCalled();
+
+    cleanup();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("TransferCard scan from camera", () => {
   it("merges the first decoded frame and releases the camera", async () => {

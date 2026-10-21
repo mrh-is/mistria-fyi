@@ -14,8 +14,8 @@ import type { SerializedState } from "../../../src/lib/stores/progress-storage.j
 import type { SerializedPreferences } from "../../../src/lib/stores/user-state.svelte.js";
 import type { AccessibilityTheme } from "./violations.js";
 
-/** Every progress field the store writes. */
-type SerializedProgress = Required<SerializedState["progress"]>;
+/** Every progress field the store writes; `lastSavePlaytime` only once a save was applied. */
+type SerializedProgress = Omit<Required<SerializedState["progress"]>, "lastSavePlaytime">;
 
 /** The two localStorage blobs the store reads at startup: progress and this device's preferences. */
 export interface StoredState {
@@ -39,15 +39,16 @@ export function createStoredState(
     cosmetics: [],
     hasUpperFloor: false,
     heartLevels: {},
-    legacyDates: [],
     mineFloor: 0,
     mountAppearances: [],
     museum: [],
     petCosmetics: [],
     petSkins: [],
+    provenance: {},
     questStates: {},
     reachedSeason: "spring",
     renown: 0,
+    resolutions: {},
     skillLevels: {},
     spells: [],
     unlockedPerks: [],
