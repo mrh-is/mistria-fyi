@@ -312,21 +312,59 @@ export function playwrightCacheDirectory(machine: Environment): string {
     : join(machine.home, ".cache", "ms-playwright");
 }
 
+// Headless runs launch the separate headless shell, not the full chromium build.
+const PLAYWRIGHT_BROWSERS = ["chromium", "chromium-headless-shell", "firefox"];
+
+/**
+ * The browser revisions the installed playwright-core expects, from its browsers.json, or undefined
+ * before `pnpm install` or when the store holds more than one playwright-core.
+ */
+export function playwrightRevisions(machine: Environment): Map<string, string> | undefined {
+  const store = join(machine.root, "node_modules", ".pnpm");
+  const cores = machine.list(store).filter((entry) => /^playwright-core@[^_]+$/.test(entry));
+  if (cores.length !== 1) {
+    return undefined;
+  }
+  const text = machine.read(
+    join(store, cores[0], "node_modules", "playwright-core", "browsers.json"),
+  );
+  try {
+    const { browsers } = JSON.parse(text ?? "") as {
+      browsers: { name: string; revision: string }[];
+    };
+    return new Map(browsers.map(({ name, revision }) => [name, revision]));
+  } catch {
+    return undefined;
+  }
+}
+
 export function checkPlaywright(machine: Environment): CheckResult {
   const directory = playwrightCacheDirectory(machine);
-  // Browser folders carry a build suffix, such as chromium-1234.
-  const installed = machine.list(directory);
-  const absent = ["firefox", "chromium"].filter(
-    (browser) => !installed.some((entry) => entry.startsWith(`${browser}-`)),
+  const revisions = playwrightRevisions(machine);
+  // Cache folders join an underscored name & revision, such as chromium_headless_shell-1243.
+  const folders = PLAYWRIGHT_BROWSERS.map(
+    (browser) => `${browser.replaceAll("-", "_")}-${revisions?.get(browser) ?? "*"}`,
   );
+  const installed = machine.list(directory);
+  const absent = folders.filter((folder) =>
+    folder.endsWith("-*")
+      ? !installed.some((entry) => entry.startsWith(folder.slice(0, -1)))
+      : !installed.includes(folder),
+  );
+  const unchecked = revisions === undefined ? "; revisions unchecked until pnpm install" : "";
   return absent.length === 0
-    ? check("playwright", "Playwright browsers", "ok", `firefox & chromium in ${directory}`)
+    ? check(
+        "playwright",
+        "Playwright browsers",
+        "ok",
+        `${folders.join(", ")} in ${directory}${unchecked}`,
+      )
     : check(
         "playwright",
-        "Playwright browsers (accessibility suites only)",
+        "Playwright browsers (accessibility & PWA suites only)",
         "missing",
-        `${absent.join(" & ")} not found in ${directory}`,
-        "pnpm exec playwright install firefox chromium",
+        `${absent.join(", ")} not found in ${directory}`,
+        "pnpm exec playwright install chromium firefox",
       );
 }
 
