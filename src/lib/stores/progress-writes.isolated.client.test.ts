@@ -304,6 +304,84 @@ describe("serialized progress writes", () => {
     expect(tab.userState.state.progress.villagerRelationships).not.toHaveProperty("adeline");
   });
 
+  it("keeps the history another tab stored while merging the importing tab's", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    expect(tab.userState.provenanceOf("renown")).toEqual({ source: "unknown" });
+    const other = JSON.parse(buildState(12, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    other.progress.almanac = ["turnip"];
+    other.progress.provenance = {
+      "almanac/turnip": { source: "manual" },
+      renown: { source: "manual" },
+    };
+    other.progress.resolutions = { mineFloor: { saveValue: 4 } };
+    storage.setItem(PROGRESS_KEY, JSON.stringify(other));
+
+    tab.userState.toggleMuseumItem("turnip" as ItemId);
+    tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    const history = {
+      lastSavePlaytime: 50,
+      provenance: {
+        "almanac/turnip": { source: "manual" },
+        mineFloor: { playtime: 50, source: "save" },
+        "museum/turnip": { source: "manual" },
+        renown: { source: "manual" },
+      },
+      resolutions: { mineFloor: { saveValue: 4 } },
+    };
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { ...history, renown: 12 },
+    });
+    expect(tab.userState.provenanceOf("renown")).toEqual({ source: "manual" });
+    expect(tab.userState.resolutionOf("mineFloor")).toEqual({ saveValue: 4 });
+  });
+
+  it("rebases the history of edits made after a queued import", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    tab.userState.keepMine("renown", 9);
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
+    tab.userState.setRenown(7);
+    const other = JSON.parse(buildState(5, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    other.progress.museum = ["turnip"];
+    other.progress.provenance = { "museum/turnip": { source: "manual" } };
+    storage.setItem(PROGRESS_KEY, JSON.stringify(other));
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    const stored = JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null") as {
+      progress: Record<string, unknown>;
+    };
+    expect(stored.progress).toMatchObject({
+      lastSavePlaytime: 50,
+      provenance: {
+        mineFloor: { playtime: 50, source: "save" },
+        "museum/turnip": { source: "manual" },
+        renown: { playtime: 50, source: "manual" },
+      },
+      renown: 7,
+      // The manual edit of renown cleared its “keep mine”.
+      resolutions: {},
+    });
+    expect(tab.userState.provenanceOf("museum/turnip")).toEqual({ source: "manual" });
+  });
+
   it("writes multiple confirmed replacements in order without reverting memory", async () => {
     const { locks } = sharedLocks();
     const { storage, writes } = recordingStorage({ [PROGRESS_KEY]: buildState(1) });

@@ -72,14 +72,15 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `1`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `2`.
   - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
-    filtered to non-default entries.
+    filtered to non-default entries, plus each fact's history (see [Provenance](#provenance)):
+    `provenance`, `resolutions`, & `lastSavePlaytime`.
   - `worldState`: the in-game season & weather the availability filters read.
   - `local` (storage only, left out while empty): this device's own section, with slots reserved for
     sync's receipt & farm-switch backup. Exports never include it; a restore keeps this device's and
     never brings one in; a progress reset keeps it and a full reset clears it. Provenance & resolved
-    diffs will live in `progress`, so they travel with backups.
+    diffs live in `progress`, so they travel with backups.
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
   `now`, `anytime`, & `later`, and `showSpoilers`). These are per-device conveniences: they're never
   exported, so restoring a backup or resetting progress keeps them, and a missing or invalid field
@@ -118,8 +119,8 @@ unrecognized fields in a loaded blob are dropped. The ephemeral UI-only `showCom
 persisted. A shape change adds a migration: bump `CURRENT_SERIALIZATION_VERSION`, add the
 `MIGRATIONS` step that produces the new version from the previous one, and add that version's
 fixture under `src/lib/stores/progress-storage-fixtures/`. `progress-storage.test.ts` fails until
-all three exist. `user-state-golden.test.ts` pins the current shape & the storage keys. See the
-[decision record](decisions/2026-10-20-storage-migrations-valibot.md).
+all three exist. `user-state-golden.test.ts` pins the launch shape, what it migrates to, & the
+storage keys. See the [decision record](decisions/2026-10-20-storage-migrations-valibot.md).
 
 ### One write path
 
@@ -139,12 +140,36 @@ writes capture their payload at confirmation & invalidate auto-saves already wai
 Imports carry the additive preview, including unsaved local progress, and merge it with the stored
 progress inside the lock. Their synchronous counts & conflicts describe that immediate preview; the
 locked merge applies the same household conflict policy to the latest stored household. An import
-preserves captured world state & unknown IDs. Edits made after confirmation are rebased onto the
-locked merge result for the next auto-save, including removals & decreases; a later household edit
-replaces that household as a unit to preserve the marriage cascade. The pagehide flush can't wait
-for a lock, so it runs the same function synchronously, keeping the compare-before-write. A browser
-without Web Locks runs every write synchronously; see the
-[decision record](decisions/2026-10-20-serialized-progress-writes.md).
+preserves captured world state & unknown IDs. Its history merges three ways: each provenance entry,
+resolution, or last save playtime the importing tab recorded since it last read storage overwrites
+the stored one, and the rest keep the history another tab stored meanwhile. Edits made after
+confirmation are rebased onto the locked merge result for the next auto-save, including removals &
+decreases, and so is their history; a later household edit replaces that household as a unit to
+preserve the marriage cascade. The pagehide flush can't wait for a lock, so it runs the same
+function synchronously, keeping the compare-before-write. A browser without Web Locks runs every
+write synchronously; see the [decision record](decisions/2026-10-20-serialized-progress-writes.md).
+
+### Provenance
+
+Every progress fact records where it came from, so applying a save (see
+[sync.md](sync.md#applying-a-bundle)) can tell a fact the player set by hand from one a save or an
+inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the store records them.
+
+- **A fact** is one tickable or settable entry, keyed by its field & the IDs that locate it:
+  `almanac/turnip`, `animals/chicken/red`, `mineFloor`. Ticks & unticks both record, so an untick
+  the player made is remembered.
+- **Sources.** Setters & toggles record `manual`. A marriage cascade, a quest's recipe rewards (&
+  the undo that takes them back), default unlocks, & “Record prerequisites” record `inferred`. A
+  save import records `save`; a device transfer records `unknown`, since its payload carries no
+  provenance. Facts stored before version 2 migrate as `unknown`. Only facts a call changes record:
+  a save agreeing with a fact leaves its provenance as it was.
+- **Playtime.** Each record carries the `playtime` of the last applied save, so ordering needs no
+  clock. A `save` record carries the save's own, or none when its `header.playtime` couldn't be
+  read; only a readable one becomes the last applied save's.
+- **Resolutions.** A “keep mine” remembers the save's value the player declined, holding until a
+  save reports a different value (`resolutionHolds`). A manual edit of that fact clears it.
+- **Lifetime.** Backups carry the history, a restore replaces it, & both resets clear it. See the
+  [decision record](decisions/2026-10-21-progress-provenance.md).
 
 ### Save File Import
 

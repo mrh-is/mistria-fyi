@@ -96,6 +96,82 @@ describe("readProgressBlob", () => {
     }
   });
 
+  it.each(POLICIES)("marks every fact a version 1 blob holds unknown (%s)", (policy) => {
+    const { history } = readOk(JSON.stringify(fixture(1)), policy);
+
+    expect(history).toEqual({
+      provenance: Object.fromEntries(
+        [
+          // A historical almanac ID is keyed as the canonical entry hydration stores it under.
+          "almanac/animated_waterfall_v1",
+          "almanac/item_from_a_later_update",
+          "almanac/turnip",
+          "almanacRecipes/basic_wood_chest",
+          "animalCosmetics/animal_from_a_later_update/ribbon_red",
+          "animalCosmetics/chicken/ribbon_red",
+          "animals/chicken/red",
+          "animals/chicken/variant_from_a_later_update",
+          "childChoice",
+          "cosmetics/back_gear_ancient_witch_broom",
+          "dates/inn_meal",
+          "hasUpperFloor",
+          "heartLevels/balor",
+          "heartLevels/villager_from_a_later_update",
+          "mineFloor",
+          "museum/turnip",
+          "petCosmetics/flower_crown",
+          "petSkins/sapling",
+          "questStates/repair_the_general_store",
+          "reachedSeason",
+          "renown",
+          "skillLevels/farming",
+          "spells/summon_rain",
+          "unlockedPerks/museum_quality_one",
+          "villagerRelationships/balor",
+        ].map((key) => [key, { source: "unknown" }]),
+      ),
+      resolutions: {},
+    });
+  });
+
+  it.each(POLICIES)("reads version 2's history as stored (%s)", (policy) => {
+    const stored = fixture(2) as { progress: Record<string, unknown> };
+    const { history } = readOk(JSON.stringify(stored), policy);
+
+    expect(history).toEqual({
+      lastSavePlaytime: stored.progress.lastSavePlaytime,
+      provenance: stored.progress.provenance,
+      resolutions: stored.progress.resolutions,
+    });
+    const written = JSON.parse(serializeProgress(readOk(JSON.stringify(stored), policy))) as {
+      progress: Record<string, unknown>;
+    };
+    expect(written.progress).toMatchObject({
+      lastSavePlaytime: stored.progress.lastSavePlaytime,
+      provenance: stored.progress.provenance,
+      resolutions: stored.progress.resolutions,
+    });
+  });
+
+  it("drops malformed history entries on hydration but rejects them in a backup", () => {
+    const stored = fixture(2) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...stored,
+      progress: {
+        ...stored.progress,
+        lastSavePlaytime: -1,
+        provenance: { mineFloor: { source: "guess" }, renown: { source: "manual" } },
+        resolutions: { mineFloor: {}, renown: { saveValue: 3 } },
+      },
+    });
+
+    expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
+    expect(readOk(json, "repair").history).toEqual({
+      provenance: { renown: { source: "manual" } },
+      resolutions: { renown: { saveValue: 3 } },
+    });
+  });
+
   it.each(POLICIES)("reports a newer version under the %s policy without reading it", (policy) => {
     const newer = CURRENT_SERIALIZATION_VERSION + 1;
     // A newer build may change any field, so even an unrecognizable body is reported as newer.

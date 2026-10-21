@@ -83,6 +83,8 @@ import type {
 /** How a write treats a value another tab stored since this one last read it. */
 type WriteIntent =
   | {
+      /** The stored value this tab last read or wrote at confirmation, which `json` builds on. */
+      base: null | string;
       /** Serialized at confirmation, so later storage events cannot change the requested write. */
       json: string;
       keepLocal: boolean;
@@ -262,13 +264,11 @@ function createUserState() {
   }
 
   /**
-   * Records `source` & the last applied save's playtime for one fact. A manual edit also clears
-   * the fact's “keep mine”, since the player has now decided it themselves.
+   * Records `source` & `playtime` for one fact. A manual edit also clears the fact's “keep mine”,
+   * since the player has now decided it themselves.
    */
-  function recordFact(key: string, source: ProvenanceSource): void {
-    const { lastSavePlaytime } = history;
-    history.provenance[key] =
-      lastSavePlaytime === undefined ? { source } : { playtime: lastSavePlaytime, source };
+  function recordFact(key: string, source: ProvenanceSource, playtime: number | undefined): void {
+    history.provenance[key] = playtime === undefined ? { source } : { playtime, source };
     if (source === "manual" && Object.hasOwn(history.resolutions, key)) {
       const { [key]: _cleared, ...kept } = history.resolutions;
       history.resolutions = kept;
@@ -278,10 +278,17 @@ function createUserState() {
   /**
    * Runs `mutate` & records provenance for every fact it changed, ticks & unticks alike. A manual
    * change that names its `primary` facts records the rest (a marriage cascade, a quest's recipe
-   * rewards) as `inferred`. Nested calls record nothing themselves; the outermost call does.
+   * rewards) as `inferred`. Each record carries `stamp`'s playtime, by default the last applied
+   * save's. Nested calls record nothing themselves; the outermost call does.
    */
-  function track<T>(source: ProvenanceSource, mutate: () => T, primary: readonly string[] = []): T {
+  function track<T>(
+    source: ProvenanceSource,
+    mutate: () => T,
+    primary: readonly string[] = [],
+    stamp?: { playtime: number | undefined },
+  ): T {
     if (trackingSource !== undefined) return mutate();
+    const { playtime } = stamp ?? { playtime: history.lastSavePlaytime };
     const before = progressFacts(state.progress);
     trackingSource = source;
     let result: T;
@@ -292,7 +299,7 @@ function createUserState() {
     }
     for (const key of changedFacts(before, progressFacts(state.progress))) {
       const consequence = source === "manual" && primary.length > 0 && !primary.includes(key);
-      recordFact(key, consequence ? "inferred" : source);
+      recordFact(key, consequence ? "inferred" : source, playtime);
     }
     return result;
   }
@@ -361,9 +368,9 @@ function createUserState() {
         mergeProgress(loaded.progress, captured.loaded.progress);
         mergeRetainedProgress(loaded.retained, captured.loaded.retained);
         loaded.worldState = captured.loaded.worldState;
-        // The captured history holds the provenance this merge recorded. TODO(#126): this drops
-        // provenance another tab stored since; merge the two histories instead.
-        loaded.history = captured.loaded.history;
+        // The captured history adds what this tab recorded since it last read storage, the merge
+        // included, to the base; rebased, it keeps the history another tab stored meanwhile.
+        rebaseHistory(loaded.history, storedHistory(intent.base), captured.loaded.history);
       }
       json = serializeStoredProgress(loaded, loaded.local);
       if (intent.sequence === explicitSequence) {
@@ -374,6 +381,9 @@ function createUserState() {
           const rebased = readProgressBlob(json, "repair");
           if (rebased.kind !== "ok") throw new Error("Invalid merged progress write");
           rebaseProgressEdits(rebased.loaded.progress, captured.loaded.progress, state.progress);
+          // Snapshotted as `unknown`: mapping JsonValue resolutions is too deep for the compiler.
+          const current = $state.snapshot<unknown>(history) as ProgressHistory;
+          rebaseHistory(rebased.loaded.history, captured.loaded.history, current);
           rebased.loaded.worldState = state.worldState;
           replaceProgress(rebased.loaded);
         }
@@ -417,6 +427,7 @@ function createUserState() {
   function writeExplicitProgress(kind: "merge" | "replace" = "replace", keepLocal = true): void {
     clearPendingSave();
     requestProgressWrite({
+      base: lastKnownStoredValue,
       json: serialize(),
       keepLocal,
       kind,
@@ -713,7 +724,10 @@ function createUserState() {
       { playtime, source = "save" }: { playtime?: number; source?: "save" | "unknown" } = {},
     ): MergeResult {
       if (source === "save" && playtime !== undefined) history.lastSavePlaytime = playtime;
-      const result = track(source, () => mergeProgress(state.progress, imported));
+      // A save's facts carry its own playtime, none if it couldn't be read; a transfer's carry the
+      // last applied save's, like an edit.
+      const stamp = { playtime: source === "save" ? playtime : history.lastSavePlaytime };
+      const result = track(source, () => mergeProgress(state.progress, imported), [], stamp);
 
       // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
       // persistence like a reset or restore (only once the unreadable blob is safely stored).
@@ -1079,6 +1093,42 @@ function rebaseProgressEdits(
     target.villagerRelationships = { ...after.villagerRelationships };
     target.childChoice = after.childChoice;
   }
+}
+
+/**
+ * Rebases history as {@link rebaseProgressEdits} rebases progress: each entry `after` added,
+ * changed, or removed since `before` applies to `target`, and every other entry keeps `target`'s.
+ * Entries are whole, so a fact's source & playtime always come from the same recording.
+ */
+function rebaseHistory(
+  target: ProgressHistory,
+  before: Readonly<ProgressHistory>,
+  after: Readonly<ProgressHistory>,
+): void {
+  rebaseEntries(target.provenance, before.provenance, after.provenance);
+  rebaseEntries(target.resolutions, before.resolutions, after.resolutions);
+  if (before.lastSavePlaytime !== after.lastSavePlaytime) {
+    if (after.lastSavePlaytime === undefined) delete target.lastSavePlaytime;
+    else target.lastSavePlaytime = after.lastSavePlaytime;
+  }
+}
+
+function rebaseEntries<V>(
+  target: Record<string, V>,
+  before: Readonly<Record<string, V>>,
+  after: Readonly<Record<string, V>>,
+): void {
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    if (JSON.stringify(before[key]) === JSON.stringify(after[key])) continue;
+    if (Object.hasOwn(after, key)) target[key] = after[key];
+    else Reflect.deleteProperty(target, key);
+  }
+}
+
+/** The history a stored value holds; none for an absent or unreadable one. */
+function storedHistory(json: null | string): ProgressHistory {
+  const read = json === null ? undefined : readProgressBlob(json, "repair");
+  return read?.kind === "ok" ? read.loaded.history : emptyProgressHistory();
 }
 
 function rebaseFields(

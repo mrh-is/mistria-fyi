@@ -203,11 +203,11 @@ state. Each difference falls into one policy: apply silently, apply & tell, ask 
 
 ### Provenance
 
-Stored progress gains per-fact provenance (`manual`, `inferred`, `save`) with a timestamp (#126),
-through a storage migration (see
-[app-architecture.md](app-architecture.md#3-persistence--serialization)).
+Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unknown`) with the
+`playtime` of the last applied save (#126), added by storage version 2 (see
+[app-architecture.md](app-architecture.md#provenance)).
 
-- “Record prerequisites” writes become `inferred` (#126).
+- “Record prerequisites” writes are `inferred` (#126).
 - Facts stored before provenance existed get `unknown`, treated like manual ones. A save may add
   them, or agree & promote them to `save`. A disagreeing save asks once per category, not per fact.
 - Unticks are stamped manual facts too.

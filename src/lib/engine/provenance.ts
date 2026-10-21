@@ -24,7 +24,8 @@ export type ProvenanceSource = (typeof PROVENANCE_SOURCES)[number];
 export interface FactProvenance {
   /**
    * The `playtime` of the last applied save when the fact was recorded: a save's own playtime for
-   * `save`, or the playtime the player's edit came after. Absent before any save was applied.
+   * `save`, or the playtime an edit came after. Absent before any save was applied, and for a save
+   * whose playtime couldn't be read.
    */
   playtime?: number;
   source: ProvenanceSource;

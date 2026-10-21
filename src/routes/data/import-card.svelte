@@ -162,8 +162,8 @@
       if (bundle.quests) filesUsed.push("quests.json");
 
       importStatus = m.import_status_importing();
-      const { completed, warnings } = extractSaveProgress(bundle);
-      const merged = userState.mergeFromSave(completed);
+      const { completed, playtime, warnings } = extractSaveProgress(bundle);
+      const merged = userState.mergeFromSave(completed, { playtime });
 
       importResult = {
         conflicts: merged.conflicts,

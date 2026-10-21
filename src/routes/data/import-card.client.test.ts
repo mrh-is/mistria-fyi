@@ -62,6 +62,24 @@ describe("save import", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("records what the save adds with the save's playtime", async () => {
+    const cosmeticId = recordKeys(trackerData.cosmetics)[0];
+
+    await importFiles([
+      new File([JSON.stringify({ cosmetic_unlocks: [cosmeticId] })], "player.json"),
+      new File([JSON.stringify({ playtime: 3600.25 })], "header.json"),
+    ]);
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+    });
+    expect(userState.lastSavePlaytime).toBe(3600.25);
+    expect(userState.provenanceOf(`cosmetics/${cosmeticId}`)).toEqual({
+      playtime: 3600.25,
+      source: "save",
+    });
+  });
+
   it("imports extracted JSON files and lists each warning", async () => {
     const cosmeticId = recordKeys(trackerData.cosmetics)[0];
     const player = new File(

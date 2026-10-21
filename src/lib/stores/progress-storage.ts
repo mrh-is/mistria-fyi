@@ -83,20 +83,26 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/**
- * The fact key of every non-default fact in an unvalidated version 1 `progress` object. A
- * malformed part contributes nothing; validation after migration decides what to do with it.
- */
+/** The strings in an unvalidated list; anything else contributes nothing. */
 function strings(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((entry): entry is string => typeof entry === "string")
     : [];
 }
 
+/**
+ * The fact key of every non-default fact in an unvalidated version 1 `progress` object. A
+ * malformed part contributes nothing; validation after migration decides what to do with it. A
+ * historical almanac ID is keyed as its canonical entry, which hydration stores it under.
+ */
 function existingFactKeys(progress: Record<string, unknown>): string[] {
   const keys: string[] = [];
   for (const field of LIST_FIELDS) {
-    for (const id of strings(progress[field])) keys.push(factKey(field, id));
+    for (const id of strings(progress[field])) {
+      const canonical =
+        field === "almanac" ? trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId) : undefined;
+      keys.push(factKey(field, canonical ?? id));
+    }
   }
   for (const field of ["animalCosmetics", "animals"] as const) {
     const byAnimal = progress[field];

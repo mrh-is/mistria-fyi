@@ -956,4 +956,12 @@ describe("extractSave", () => {
     expect(completed).not.toHaveProperty("unlockedPerks");
     expect(completed).not.toHaveProperty("mineFloor");
   });
+
+  it("hands the additive import the save's playtime, when it could be read", () => {
+    const player = { cosmetic_unlocks: [] };
+
+    expect(extractSaveProgress({ header: { playtime: 3600.25 }, player }).playtime).toBe(3600.25);
+    expect(extractSaveProgress({ header: { playtime: -1 }, player }).playtime).toBeUndefined();
+    expect(extractSaveProgress({ player }).playtime).toBeUndefined();
+  });
 });
