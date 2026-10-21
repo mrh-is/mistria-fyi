@@ -51,6 +51,14 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
 - **Save import** — parses extracted save JSON files and builds a `Partial<ProgressState>` for
   merging.
 
+`engine/projections/almanac.ts` supplies the almanac page, progress counters, and search with one
+row policy. It returns section membership, canonical rows, applicability, spoiler and filter flags,
+and progress totals (including dates). Unobtainable entries are hidden by default; the almanac's
+temporary filter can reveal them without changing header totals. Page callers pass user-selected
+availability windows, name/source filters, and completed-row retention. Search explicitly uses
+default windows, includes out-of-window results for ranking, hides spoilers, and deduplicates rows
+that belong to several sections. Section progress still counts each in-game section membership.
+
 ### `src/lib/stores/user-state.svelte.ts`
 
 Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$effect`). It:

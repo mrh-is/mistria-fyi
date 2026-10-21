@@ -1,4 +1,5 @@
 {
+  "almanac_show_unobtainable": "入手できないアイテムを表示？",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "コレクション、クエスト、スキルなどの進捗を記録",

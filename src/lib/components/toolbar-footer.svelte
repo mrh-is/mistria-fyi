@@ -127,13 +127,17 @@
       ),
   );
   let filtersActive = $derived(
-    !availabilityIsDefault || userState.state.showCompleted || toolbarState.isSourceFilterNarrowing,
+    !availabilityIsDefault ||
+      userState.state.showCompleted ||
+      toolbarState.isSourceFilterNarrowing ||
+      (toolbarState.hasAlmanacFilters && toolbarState.showUnobtainable),
   );
 
   function resetFilters(): void {
     userState.setAvailabilityWindows(DEFAULT_AVAILABILITY_WINDOWS);
     if (userState.state.showCompleted) userState.toggleShowCompleted();
     toolbarState.resetSourceFilters();
+    toolbarState.showUnobtainable = false;
     announceFilters();
   }
   let filterStatus = $state("");
