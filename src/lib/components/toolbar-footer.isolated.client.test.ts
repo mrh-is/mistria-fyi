@@ -58,6 +58,8 @@ afterEach(async () => {
   vi.unstubAllGlobals();
   toolbarState.closeSearch();
   toolbarState.unregisterSourceFilters("test");
+  toolbarState.unregisterSourceFilters("almanac");
+  toolbarState.showUnobtainable = false;
   userState.resetAll();
   // Flush pending Svelte microtasks after unmount and state reset.
   await tick();
@@ -318,6 +320,19 @@ describe("ToolbarFooter search", () => {
 });
 
 describe("ToolbarFooter filters", () => {
+  it("includes unobtainable rows in filter status and reset", async () => {
+    toolbarState.registerSourceFilters("almanac", []);
+    renderToolbar();
+    await fireEvent.click(visibilityButton());
+    const dialog = await screen.findByRole("dialog", { name: "Filters" });
+    await fireEvent.click(within(dialog).getByRole("switch", { name: "Show unobtainable?" }));
+    expect(toolbarState.showUnobtainable).toBe(true);
+    expect(screen.getByRole("status")).toHaveTextContent("Filters applied");
+    await fireEvent.click(within(dialog).getByRole("button", { name: "Reset" }));
+    expect(toolbarState.showUnobtainable).toBe(false);
+    expect(visibilityButton()).not.toHaveClass("floating-tool--filtered");
+  });
+
   it("shows a reset action once filters diverge from the default and clears them", async () => {
     renderToolbar();
     await fireEvent.click(visibilityButton());

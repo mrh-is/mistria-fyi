@@ -9,6 +9,13 @@ export class ToolbarState {
 
   searchQuery = $state("");
 
+  // A temporary page filter, like source selection; never part of saved progress.
+  showUnobtainable = $state(false);
+
+  get hasAlmanacFilters(): boolean {
+    return this.sourceFilterRegistrations.has("almanac");
+  }
+
   sourceFilters = $state<readonly SourceFilter[]>([]);
   get isSourceFilterNarrowing(): boolean {
     return (

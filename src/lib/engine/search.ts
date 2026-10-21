@@ -1,9 +1,10 @@
-import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { trackerData } from "#lib/data/index.js";
 import { animalNameId, getAlmanacEntryNames, getName, nameCollator } from "#lib/data/names.js";
-import { isAlmanacEntryObtainable, isItemObtainable } from "#lib/engine/applicability.js";
+import { isItemObtainable } from "#lib/engine/applicability.js";
 import { isItemAvailable } from "#lib/engine/availability.js";
 import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { isVillagerComplete } from "#lib/engine/progress.js";
+import { projectAlmanac } from "#lib/engine/projections/almanac.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
 import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { composeDescriptorName } from "#lib/utils/format.js";
@@ -13,7 +14,7 @@ import { recordEntries } from "#lib/utils/record.js";
 import type { SearchCategoryKey } from "#lib/data/categories.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { ItemId, Season, Weather } from "#lib/types/tracker-data.js";
+import type { Season, Weather } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -61,14 +62,18 @@ type SearchProvider = (context: SearchContext) => Iterable<SearchCandidate>;
 const SEARCH_PROVIDERS: readonly SearchProvider[] = [
   // Almanac entries: one result per collapsed row, canonical ID
   function* almanac({ completed, locale, progressionState, worldState }) {
-    const seen = new Set<ItemId>();
-    for (const entry of trackerIndex.almanacEntries) {
-      const canonicalId = entry.itemIds[0];
-      if (seen.has(canonicalId)) continue;
-      seen.add(canonicalId);
-      const item = trackerData.items[canonicalId];
-      if (item.visibility && !isConditionVisible(item.visibility, progressionState)) continue;
-      if (!isAlmanacEntryObtainable(entry.itemIds, completed)) continue;
+    // Search availability is independent of page filters and completed-row retention.
+    const projection = projectAlmanac(
+      {
+        availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
+        progress: completed,
+        worldState,
+      },
+      { hideSpoilered: true, includeUnavailable: true, progressionState },
+    );
+    for (const { available, canonicalId, completed: rowCompleted, entry } of projection.rows.filter(
+      (row) => row.visible,
+    )) {
       const [name, ...otherLocalizedNames] = getAlmanacEntryNames(entry, locale);
       const [englishName, ...otherEnglishNames] = getAlmanacEntryNames(entry, "en");
       yield {
@@ -77,13 +82,9 @@ const SEARCH_PROVIDERS: readonly SearchProvider[] = [
         otherEnglishNames,
         otherLocalizedNames,
         result: () => ({
-          available: isItemAvailable(
-            trackerIndex.getAggregatedAlmanacSources(canonicalId),
-            worldState,
-            DEFAULT_AVAILABILITY_WINDOWS,
-          ),
+          available,
           category: "almanac",
-          completed: completed.almanac.has(canonicalId),
+          completed: rowCompleted,
           id: canonicalId,
           name,
         }),
