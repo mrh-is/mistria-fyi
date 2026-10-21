@@ -26,8 +26,9 @@
   points and fails when one lacks the guard; the Claude edit-guard hook and the machine doctor
   (which must run on any Node to report a wrong one) are the exemptions. To move the pin, edit both
   files and run `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails when they disagree. Check
-  with `pnpm exec node -v`. `package.json`'s `engines` accepts 24.15 or later so Codex cloud can use
-  its preinstalled patch release.
+  with `pnpm exec node -v`. `package.json`'s `engines` accepts 24.15 up to (not including) 27, so
+  Codex cloud can use its preinstalled patch release & contributors can keep a newer system Node;
+  the machine doctor checks the shell's own `node` against that range only.
 - **ShellCheck**: `pnpm run lint` runs the system `shellcheck`. CI uses the runner image's copy, and
   `scripts/setup-cloud-agent.sh` installs it with apt. Local install: see machine-setup.md.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.
@@ -37,11 +38,11 @@
   ```
 - **pnpm launcher**: The `packageManager` field pins pnpm, and your installed pnpm downloads and
   runs that version. pnpm 12 ships as a native executable, which pnpm 11's launcher runs through
-  Node and fails with `SyntaxError: Invalid or unexpected token` (#563). Before or when the pin
-  moves to pnpm 12, upgrade the machine's pnpm itself to 12 (for example `pnpm self-update 12`, or
-  your installer's equivalent). As a stopgap, put the downloaded native pnpm 12 executable first on
-  `PATH` so nested scripts use it too. CI uses `pnpm/setup`, which installs the native binary
-  directly and isn't affected.
+  Node and fails with `SyntaxError: Invalid or unexpected token` (issue #563 in the private beta).
+  Before or when the pin moves to pnpm 12, upgrade the machine's pnpm itself to 12 (for example
+  `pnpm self-update 12`, or your installer's equivalent). As a stopgap, put the downloaded native
+  pnpm 12 executable first on `PATH` so nested scripts use it too. CI uses `pnpm/setup`, which
+  installs the native binary directly and isn't affected.
 - **Environment Configuration**: Copy `.env.example` to `.env` if local environment variables are
   required.
 - **Cloud agents**: Configure Claude Code cloud and Codex cloud with the shared setup script and

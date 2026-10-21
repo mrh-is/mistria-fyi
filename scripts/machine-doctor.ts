@@ -80,22 +80,54 @@ function installHint(brew: string, winget: string, platform: NodeJS.Platform): s
     : `Install ${brew} with your package manager`;
 }
 
+function compareVersions(a: [number, number, number], b: [number, number, number]): number {
+  return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+}
+
+/**
+ * The shell's Node only has to satisfy package.json's `engines`: `devEngines.runtime` makes every
+ * `pnpm run` & `pnpm exec` use `.node-version`'s release, and this script & Claude's hooks, which
+ * run on bare `node`, skip the pinned-Node guard. Contributors need no version manager.
+ */
 export function checkNode(machine: Environment): CheckResult {
-  const wanted = machine.read(join(machine.root, ".node-version"))?.trim();
-  const fix = `Install Node ${wanted ?? "per .node-version"} and activate it for agent shells (fnm, nvm, Volta, or mise with idiomatic_version_file_enable_tools including node)`;
+  const pinned = machine.read(join(machine.root, ".node-version"))?.trim();
+  const manifest = machine.read(join(machine.root, "package.json"));
+  const range = (JSON.parse(manifest ?? "{}") as { engines?: { node?: string } }).engines?.node;
+  const bounds = /^>=\s*(\d+\.\d+\.\d+)\s+<\s*(\d+\.\d+\.\d+)$/.exec(range?.trim() ?? "");
+  const min = bounds ? parseVersion(bounds[1]) : undefined;
+  const max = bounds ? parseVersion(bounds[2]) : undefined;
+  if (!min || !max) {
+    return check(
+      "node",
+      "Node.js",
+      "wrong",
+      `package.json engines.node is ${range ? `"${range}"` : "missing"}, not ">=X.Y.Z <X.Y.Z"`,
+      "Declare engines.node in package.json as a >= & < pair",
+    );
+  }
+  const fix = `Install a Node release within package.json engines (${range}); pnpm supplies ${pinned ?? "the pinned release"} for scripts, so no version manager is needed`;
   const have = parseVersion(machine.nodeVersion);
-  const want = wanted ? parseVersion(wanted) : undefined;
-  if (!have || !want) {
-    return check("node", "Node.js", "wrong", `found ${machine.nodeVersion}`, fix);
+  if (!have || compareVersions(have, min) < 0 || compareVersions(have, max) >= 0) {
+    return check("node", "Node.js", "wrong", `found ${machine.nodeVersion}, outside ${range}`, fix);
   }
-  // package.json accepts 24.15 or later, so the same major with a minor of at least 15 passes.
-  if (have[0] !== want[0] || have[1] < Math.min(want[1], 15)) {
-    return check("node", "Node.js", "wrong", `found ${have.join(".")}, wanted ${wanted}`, fix);
-  }
-  return check("node", "Node.js", "ok", have.join("."));
+  return check(
+    "node",
+    "Node.js",
+    "ok",
+    `${have.join(".")}; pnpm runs scripts on ${pinned ?? "the pinned release"}`,
+  );
 }
 
 export function checkPnpm(machine: Environment): CheckResult {
+  const manifest = machine.read(join(machine.root, "package.json"));
+  const pinned = /"packageManager":\s*"pnpm@([^"]+)"/.exec(manifest ?? "")?.[1];
+  const major = pinned ? parseVersion(pinned)?.[0] : undefined;
+  // Homebrew's unversioned pnpm formula tracks pnpm's newest major, so name the pinned one.
+  const version = major === undefined ? "pnpm" : `pnpm ${major}`;
+  const install =
+    machine.platform === "darwin"
+      ? `brew install pnpm@${major ?? "<major>"}`
+      : `Install ${version}; docs/machine-setup.md lists installers`;
   const result = machine.run("pnpm", ["--version"]);
   if (!result.ok) {
     if (result.errorCode !== "ENOENT") {
@@ -111,19 +143,19 @@ export function checkPnpm(machine: Environment): CheckResult {
     return missingTool(
       "pnpm",
       "pnpm",
-      "Install pnpm; on Windows PowerShell, run pnpm.cmd if the execution policy blocks pnpm.ps1",
+      machine.platform === "win32"
+        ? `${install}; on Windows PowerShell, run pnpm.cmd if the execution policy blocks pnpm.ps1`
+        : install,
     );
   }
-  const manifest = machine.read(join(machine.root, "package.json"));
-  const pinned = /"packageManager":\s*"pnpm@([^"]+)"/.exec(manifest ?? "")?.[1];
   const have = result.stdout.trim();
-  if (pinned && parseVersion(pinned)?.[0] !== parseVersion(have)?.[0]) {
+  if (major !== undefined && major !== parseVersion(have)?.[0]) {
     return check(
       "pnpm",
       "pnpm",
       "wrong",
       `found ${have}, package.json pins ${pinned}; the launcher major should match`,
-      "Upgrade the machine's pnpm (for example `pnpm self-update`)",
+      `pnpm self-update ${major}; for Homebrew's pnpm, brew uninstall pnpm && brew install pnpm@${major}`,
     );
   }
   return check("pnpm", "pnpm", "ok", have);
