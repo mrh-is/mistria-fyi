@@ -312,8 +312,8 @@ export function playwrightCacheDirectory(machine: Environment): string {
     : join(machine.home, ".cache", "ms-playwright");
 }
 
-// Headless runs launch the separate headless shell, not the full chromium build.
-const PLAYWRIGHT_BROWSERS = ["chromium", "chromium-headless-shell", "firefox"];
+// The suites run Desktop Chrome only; headless runs launch the separate headless shell.
+const PLAYWRIGHT_BROWSERS = ["chromium", "chromium-headless-shell"];
 
 /**
  * The browser revisions the installed playwright-core expects, from its browsers.json, or undefined
@@ -364,7 +364,7 @@ export function checkPlaywright(machine: Environment): CheckResult {
         "Playwright browsers (accessibility & PWA suites only)",
         "missing",
         `${absent.join(", ")} not found in ${directory}`,
-        "pnpm exec playwright install chromium firefox",
+        "pnpm exec playwright install chromium",
       );
 }
 

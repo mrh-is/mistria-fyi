@@ -303,30 +303,30 @@ describe("checkPlaywright", () => {
 
   it("requires the exact revisions the installed Playwright expects", () => {
     expect(
-      checkPlaywright(installed(["chromium-1243", "chromium_headless_shell-1243", "firefox-1543"])),
+      checkPlaywright(installed(["chromium-1243", "chromium_headless_shell-1243"])),
     ).toMatchObject({ status: "ok" });
     expect(checkPlaywright(installed(["chromium-1200", "firefox-1543"]))).toMatchObject({
       detail: `chromium-1243, chromium_headless_shell-1243 not found in ${cache}`,
-      fix: "pnpm exec playwright install chromium firefox",
+      fix: "pnpm exec playwright install chromium",
       status: "missing",
     });
   });
 
   it("reports a missing headless shell beside a full chromium", () => {
-    expect(checkPlaywright(installed(["chromium-1243", "firefox-1543"]))).toMatchObject({
+    expect(checkPlaywright(installed(["chromium-1243"]))).toMatchObject({
       detail: `chromium_headless_shell-1243 not found in ${cache}`,
       status: "missing",
     });
   });
 
   it("checks any revision before dependencies are installed", () => {
-    const partial = machine({ list: () => ["chromium-1200", "firefox-1500"] });
+    const partial = machine({ list: () => ["chromium-1200"] });
     expect(checkPlaywright(partial)).toMatchObject({
       detail: expect.stringContaining("chromium_headless_shell-*") as string,
       status: "missing",
     });
     const full = machine({
-      list: () => ["chromium-1200", "chromium_headless_shell-1200", "firefox-1500"],
+      list: () => ["chromium-1200", "chromium_headless_shell-1200"],
     });
     expect(checkPlaywright(full)).toMatchObject({
       detail: expect.stringContaining("revisions unchecked") as string,
