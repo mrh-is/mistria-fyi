@@ -57,8 +57,9 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 
 - Holds the canonical `UserState` shape (`availabilityWindows`, `progress`, `showCompleted`,
   `showSpoilers`, `worldState`).
-- Persists progress & world state to `localStorage` with a 300 ms debounce, and this device's
-  preferences under a separate key (see [localStorage](#localstorage)).
+- Persists progress & world state to `localStorage` through one locked write function (see
+  [One write path](#one-write-path)), and this device's preferences under a separate key (see
+  [localStorage](#localstorage)).
 - Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
   resetting.
 - Enforces domain constraints at the mutation boundary (e.g., heart level caps, mine floor bounds,
@@ -71,42 +72,105 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version: 1`, an integer. Any other value is rejected as `unsupported-version`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `1`.
   - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
     filtered to non-default entries.
   - `worldState`: the in-game season & weather the availability filters read.
+  - `local` (storage only, left out while empty): this device's own section, with slots reserved for
+    sync's receipt & farm-switch backup. Exports never include it; a restore keeps this device's and
+    never brings one in; a progress reset keeps it and a full reset clears it. Provenance & resolved
+    diffs will live in `progress`, so they travel with backups.
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
   `now`, `anytime`, & `later`, and `showSpoilers`). These are per-device conveniences: they're never
   exported, so restoring a backup or resetting progress keeps them, and a missing or invalid field
   falls back to its default rather than blocking anything.
 
-A progress blob that fails validation is copied to `mistria-fyi:progress-quarantine` and blocks
-persistence until an explicit replace (reset, restore, or save import); the player can download it
-from the Backup & Restore card. The ephemeral UI-only `showCompleted` field is not persisted.
+`src/lib/stores/progress-storage.ts` owns the blob. Storage hydration & backup restore both read it
+the same way: parse it, dispatch on `version`, run the numbered `MIGRATIONS` that bring it up to
+this build's version, validate it with Valibot, then normalize it against tracker data. Each path
+keeps its own policy above that validation:
 
-The serializer writes exactly the fields `SerializedState` declares; unrecognized fields in a loaded
-blob are dropped. Data written by a newer version than the build is never quarantined; #106
-implements the “newer data” state (writes blocked, nothing quarantined). There are no legacy
-readers: the launch format starts at version `1`, and a later shape change needs a versioned
-migration. Fields added after launch must be optional so older blobs keep loading.
-`user-state-golden.test.ts` pins the launch shape & the storage keys.
+| Ingress           | Policy         | A malformed value                                        |
+| ----------------- | -------------- | -------------------------------------------------------- |
+| Storage hydration | Repairs        | Falls back to its default, or its entry is dropped       |
+| Backup restore    | Strict         | Rejects the whole document, which changes nothing        |
+| Save import       | Warns          | Is skipped with a warning (see below)                    |
+| Device transfer   | All-or-nothing | Rejects the whole payload ([format](transfer-format.md)) |
+
+Outcomes by stored version:
+
+- **This build's version or older:** migrated & loaded. Backups from every earlier build restore.
+- **Newer than this build's:** the “newer data” state. The store blocks every write, quarantines
+  nothing, and asks the player to update (“Your progress was saved by a newer version. Update to
+  continue.”). An explicit replace doesn't lift it; another tab clearing or rewriting the stored
+  value does. Exporting a backup meanwhile hands over the stored blob verbatim, never the defaults
+  in memory. A newer backup is refused the same way, leaving progress untouched.
+- **Unreadable** (not JSON, no valid `version`, or a malformed structure): copied to
+  `mistria-fyi:progress-quarantine`, and persistence is blocked until an explicit replace (reset,
+  restore, or save import). The player can download the copy from the Backup & Restore card.
+
+An ID this build's tracker data doesn't know is never dropped: the store keeps it out of
+`ProgressState`, so counts ignore it, and writes it back with the rest of the blob. A game update
+that renames an ID therefore loses nothing; a migration can map the old ID once it's known.
+
+The serializer writes exactly the fields `SerializedState` declares, plus those retained entries;
+unrecognized fields in a loaded blob are dropped. The ephemeral UI-only `showCompleted` field is not
+persisted. A shape change adds a migration: bump `CURRENT_SERIALIZATION_VERSION`, add the
+`MIGRATIONS` step that produces the new version from the previous one, and add that version's
+fixture under `src/lib/stores/progress-storage-fixtures/`. `progress-storage.test.ts` fails until
+all three exist. `user-state-golden.test.ts` pins the current shape & the storage keys. See the
+[decision record](decisions/2026-10-20-storage-migrations-valibot.md).
+
+### One write path
+
+Every progress write goes through the store's `writeProgress`, run under the
+`mistria-fyi:progress-write` Web Lock so tabs write one at a time. Inside the lock it re-reads the
+stored value & validates it before writing:
+
+| Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset) | Additive import (save, transfer) |
+| ---------------------------------------- | ---------------------------- | --------------------------------- | -------------------------------- |
+| Unchanged, or cleared                    | Writes                       | Writes captured replacement       | Writes merged progress           |
+| Another tab's readable write             | Adopts it, writes nothing    | Writes captured replacement       | Unions with stored progress      |
+| Unreadable                               | Quarantines it               | Quarantines, then writes          | Quarantines, then writes         |
+| A newer build's                          | Blocks writes                | Blocks writes                     | Blocks writes                    |
+
+Auto-saves wait for a 300 ms quiet period; explicit writes skip it but still take the lock. Explicit
+writes capture their payload at confirmation & invalidate auto-saves already waiting for the lock.
+Imports carry the additive preview, including unsaved local progress, and merge it with the stored
+progress inside the lock. Their synchronous counts & conflicts describe that immediate preview; the
+locked merge applies the same household conflict policy to the latest stored household. An import
+preserves captured world state & unknown IDs. Edits made after confirmation are rebased onto the
+locked merge result for the next auto-save, including removals & decreases; a later household edit
+replaces that household as a unit to preserve the marriage cascade. The pagehide flush can't wait
+for a lock, so it runs the same function synchronously, keeping the compare-before-write. A browser
+without Web Locks runs every write synchronously; see the
+[decision record](decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Save File Import
 
 The app processes save files entirely client-side. No save data is uploaded.
 
 1. The user selects a `.sav` file or the extracted JSON files (`player.json`, `gamedata.json`,
-   `quests.json`).
+   `quests.json`, and optionally `header.json` & `info.json`).
 2. `parseSavArchive` or `parseExtractedSaveFiles` bundles the sections into a `SaveBundle`. A
    section must be a JSON object, and `player` must contain at least one recognizable progress
-   field. When some JSON files are unusable but at least one parses, the others are reported as
-   warnings.
-3. `extractSaveProgress` maps the bundle to a `Partial<ProgressState>` using `trackerData` for
-   validation and warning generation. Every field is read through a type guard: a field of the wrong
-   shape (a string where a list belongs, `null` where an object belongs) is dropped with a warning,
-   and non-text list entries are dropped individually. A quest listed as both completed and active
-   imports as `completed`. It returns that state & its warnings; it doesn’t count anything.
-4. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
+   field. When some JSON files are unusable but at least one progress file parses, the others are
+   reported as warnings. `header` & `info` only identify the save, so an unreadable one in a `.sav`
+   is left out rather than rejecting the file.
+3. `extractSave` reads each progress field into its value, a completeness flag, & diagnostics, using
+   `trackerData` for validation. A field is `complete` only when the save records all of it; an
+   absent or malformed field is `unknown` with no value, never an empty list or a zero. Every ID is
+   tracked, known-but-untracked (a game ID the tracker deliberately leaves out, listed in
+   `untracked-save-ids.ts`), or unrecognized; an unrecognized ID or an unreadable entry makes its
+   field `unknown`. Relationships are never `complete`, since the save’s dating flags are all that
+   is read, and neither are mount appearances, since the Mistmare is inferred from one scene ID in
+   an uncatalogued scene history. It also retains the save’s identity: `info.creation_version` &
+   `header.playtime`. A quest listed as both completed and active imports as `completed`.
+4. `extractSaveProgress` turns that into the `Partial<ProgressState>` of every value it could read,
+   plus the diagnostics the player sees as warnings (`absent` & `invalid-value` are diagnostics
+   only). It doesn’t count anything. See the
+   [decision record](decisions/2026-10-20-save-extraction-completeness.md).
+5. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
    values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
    quest state (`none` → `obtained` → `completed`). Relationships & child choice merge as one
    household through the pure `mergeHousehold` in `src/lib/engine/relationships.ts`, which reports
@@ -118,21 +182,22 @@ fact produces a warning rather than aborting the import:
 
 | Input                          | Result                        |
 | ------------------------------ | ----------------------------- |
-| Missing or `0`                 | Treated as unset, no warning  |
+| Missing                        | Unknown, no warning           |
+| `0`                            | Treated as unset, no warning  |
 | Fractional                     | Floored, no warning           |
 | Above the domain maximum       | Clamped to the maximum, warns |
 | Negative                       | Ignored, warns                |
 | Wrong type, `NaN`, or infinite | Ignored, warns                |
 
 The save’s mine-floor field is a zero-based index, so a valid zero imports as floor one and index 99
-imports as floor 100; missing or invalid values remain unset. It is normalized against the maximum
+imports as floor 100; missing or invalid values remain unknown. It is normalized against the maximum
 index before adding one (see [the save format](save-file-format.md)).
 
-Renown is the exception: it clamps silently at every boundary, since nothing in ordinary play
-produces an out-of-domain value. Backup restore (`restoreBackup`) uses the same domain maximums but
-rejects the whole document when a mine floor, heart level, or skill level is out of domain; renown
-is clamped there too rather than rejected. See
-[Backup Restore vs Transfer](#backup-restore-vs-transfer).
+Renown is the exception: it never warns, since nothing in ordinary play produces an out-of-domain
+value. Above its maximum it clamps; a negative or non-numeric renown is left unknown with only a
+diagnostic. Backup restore (`restoreBackup`) uses the same domain maximums but rejects the whole
+document when a mine floor, heart level, or skill level is out of domain; renown is clamped there
+too rather than rejected. See [Backup Restore vs Transfer](#backup-restore-vs-transfer).
 
 ### Backup Restore vs Transfer
 
@@ -143,6 +208,8 @@ These flows are not interchangeable:
 - **Save import / device transfer** (`mergeFromSave`) unions imported progress into the current
   state. It is additive and never removes existing entries. The versioned binary contract and
   failure behavior are documented in [the progress transfer format](transfer-format.md).
+- **Save-driven sync** (planned, #123) will apply a save from the game as a policy-driven diff
+  through one serialized write path, rather than through either flow above. See [sync.md](sync.md).
 
 ## 4. Route Composition
 
@@ -155,8 +222,8 @@ Pages are layout compositors. They handle data fetching and composition, not bus
   `#lib/components/skills-content.svelte`.
 - **Colocated components** — components used by a single page live in the same directory (e.g.,
   `src/routes/data/import-card.svelte`).
-- **Shared components** — reusable components live in `src/lib/components/` or vendored
-  `src/lib/components/ui/`.
+- **Shared components** — reusable components live in `src/lib/components/` or the project-owned
+  `src/lib/components/ui/` (forked from shadcn-svelte).
 - **"Everything" view** — `src/routes/everything/+page.svelte` computes overall completion and
   renders one `category-section.svelte` per category. That component owns the category-to-content
   map (which content component, whether it's compact, whether its rows stack), the sticky
@@ -277,14 +344,19 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
 - **Unlocalized paths:** `/api/feedback`, `/sitemap.xml`, & `/licenses.txt` (the build-generated
   open-source notices, linked from the About page; see `src/lib/build/licenses.ts`).
 - **Storage keys:** `mistria-fyi:progress`, `mistria-fyi:progress-quarantine`,
-  `mistria-fyi:preferences`, & `mistria-fyi:theme`, plus the progress blob's shape & version (see
+  `mistria-fyi:preferences`, & `mistria-fyi:theme`.
+- **Stored progress & backups:** whatever any earlier build stored or exported keeps loading in
+  every later build, and a build never overwrites or quarantines data a newer build wrote (see
   [localStorage](#localstorage)).
 - **Locale cookie:** `mistria-fyi-locale`, set explicitly in `src/lib/i18n/paraglide-options.ts` so
   a library change can't silently reset every player's language.
 - **PWA identity:** the manifest's `id: "/"` & `start_url: "/"`. Changing the `id` orphans every
   installed copy.
-- **Service-worker messages:** `mfg:skip-waiting` & `mfg:cache-locales`. An open page posts these to
-  a newer waiting worker, so renaming one strands tabs on the old version.
+- **Service-worker messages:** `mfg:cache-locales`, `mfg:client-version`, & `mfg:skip-waiting`. An
+  open page posts these to whichever worker is active, installing, or waiting, which may be a newer
+  version than the page, so renaming one strands tabs on the old version. A page reports its version
+  with `mfg:client-version` so its version's cache outlives an update (#111). Tabs from releases
+  before #111 post `mfg:skip-waiting` from their update prompt; the worker still honors it.
 
 ### Not promised
 
@@ -292,7 +364,8 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   `/data?section=import|transfer` for data-management links. Its removal without a redirect was
   explicitly approved in #156; see
   [the decision record](decisions/2026-10-20-retire-settings-route.md).
-- **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`): the worker's `activate`
-  deletes every cache it doesn't recognize, so a rename only costs a re-download, or forgets which
-  locales a player kept offline.
+- **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`, `client-versions-v1`): the
+  worker's `activate` deletes every cache it doesn't recognize (once no open page needs it), so a
+  rename only costs a re-download, forgets which locales a player kept offline, or keeps older
+  caches until the open pages report their versions again.
 - Internal identifiers such as category keys, message keys, & component names.

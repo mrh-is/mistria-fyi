@@ -6,12 +6,12 @@
 
   import { onMount } from "svelte";
 
+  import AppUpdater from "#lib/components/app-updater.svelte";
   import PencilFilter from "#lib/components/pencil-filter.svelte";
   import PersistenceWarning from "#lib/components/persistence-warning.svelte";
   import SeoHead from "#lib/components/seo-head.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
   import { Toaster } from "#lib/components/ui/sonner/index.js";
-  import UpdatePrompt from "#lib/components/update-prompt.svelte";
   import { errorPageMetadata } from "#lib/data/page-metadata.js";
   import { FeedbackContext, setFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { localeFontStylesheet } from "#lib/fonts/locale-fonts.js";
@@ -100,6 +100,8 @@
   <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
 
   <PersistenceWarning />
-  <UpdatePrompt />
   <PencilFilter />
 {/key}
+
+<!-- Outside the locale key: a pending update must survive a client-side locale switch. -->
+<AppUpdater />

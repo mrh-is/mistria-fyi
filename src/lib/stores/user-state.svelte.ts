@@ -1,6 +1,6 @@
 import { SvelteSet } from "svelte/reactivity";
 
-import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { trackerData } from "#lib/data/index.js";
 import {
   emptyMergeCounts,
   nextQuestState,
@@ -11,7 +11,6 @@ import {
   clampLevel,
   clampMineFloor,
   clampRenownLevel,
-  getMaxMineFloor,
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
@@ -20,19 +19,22 @@ import { applyMarriageCascade, getSpouseId, mergeHousehold } from "#lib/engine/r
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
-import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
-import {
-  CHILD_CHOICES,
-  CURRENT_SERIALIZATION_VERSION,
-  QUEST_STATES,
-} from "#lib/types/user-progress.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 import { unionInto } from "#lib/utils/set.js";
 
 import {
+  backfillAnimalMaps,
+  emptyRetainedProgress,
+  readProgressBlob,
+  serializeProgress,
+  serializeStoredProgress,
+  withoutDeviceLocal,
+} from "./progress-storage.js";
+import {
   PREFERENCES_STORAGE_KEY,
   PROGRESS_STORAGE_KEY,
+  PROGRESS_WRITE_LOCK,
   QUARANTINE_STORAGE_KEY,
 } from "./storage-keys.js";
 
@@ -66,17 +68,38 @@ import type {
 } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
+import type { DeviceLocalState, LoadedProgress, RetainedProgress } from "./progress-storage.js";
+
+/** How a write treats a value another tab stored since this one last read it. */
+type WriteIntent =
+  | {
+      /** Serialized at confirmation, so later storage events cannot change the requested write. */
+      json: string;
+      keepLocal: boolean;
+      kind: "merge" | "replace";
+      progress: ProgressState;
+      sequence: number;
+    }
+  | { generation: number; kind: "auto-save" };
+
+/** The browser's Web Locks, where it has them; absent in old browsers & insecure contexts. */
+function progressLockManager(): LockManager | undefined {
+  const { navigator } = globalThis as { navigator?: { locks?: LockManager } };
+  return navigator?.locks;
+}
+
 // ─── Types ──────────────────────────────────────────────────────────
 
 /** The outcome of restoring a backup with `restoreBackup`, which replaces all progress. */
 export type BackupRestoreResult = { error: BackupRestoreErrorKind; ok: false } | { ok: true };
-export type BackupRestoreErrorKind = "invalid-fields" | "malformed-json" | "unsupported-version";
+/** `newer-version`: a newer build wrote the backup, so this one can't read it. */
+export type BackupRestoreErrorKind = "invalid-fields" | "malformed-json" | "newer-version";
 
 /**
- * Why changes aren't being saved: browser storage refused a read or write, or the stored progress
- * couldn't be read and was quarantined.
+ * Why changes aren't being saved: browser storage refused a read or write, the stored progress
+ * couldn't be read and was quarantined, or a newer build wrote it and this one mustn't overwrite it.
  */
-export type PersistenceFailureKind = "unavailable" | "unreadable";
+export type PersistenceFailureKind = "newer-data" | "unavailable" | "unreadable";
 
 /** The outcome of one `completeQuestWithRecipes` call, enough to undo exactly that call. */
 export interface QuestCompletion {
@@ -94,39 +117,6 @@ export interface UserState {
 
 // ─── Serialization ──────────────────────────────────────────────────
 
-/**
- * The persisted progress blob, also the JSON backup. Field names, the key, & the version are a
- * public contract (see `docs/app-architecture.md` §3); `user-state.golden.test.ts` pins them.
- * Fields added after launch must stay optional so older blobs keep loading.
- */
-export interface SerializedState {
-  progress: {
-    almanac: string[];
-    almanacRecipes?: string[];
-    animalCosmetics: Record<string, string[]>;
-    animals: Record<string, string[]>;
-    childChoice?: ChildChoice;
-    cosmetics: string[];
-    dates?: string[];
-    hasUpperFloor?: boolean;
-    heartLevels?: Record<string, number>;
-    mineFloor: number;
-    mountAppearances?: string[];
-    museum: string[];
-    petCosmetics?: string[];
-    petSkins?: string[];
-    questStates?: Record<string, QuestState>;
-    reachedSeason?: Season;
-    renown: number;
-    skillLevels?: Record<string, number>;
-    spells: string[];
-    unlockedPerks?: string[];
-    villagerRelationships?: Record<string, VillagerRelationship>;
-  };
-  version: number;
-  worldState: { season: Season; weather: Weather };
-}
-
 /** Per-device display preferences, stored apart from progress so a backup restore keeps them. */
 export interface SerializedPreferences {
   availabilityWindows: AvailabilityWindow[];
@@ -135,36 +125,6 @@ export interface SerializedPreferences {
 
 /** Quiet period after the last change before progress is written to localStorage. */
 export const PERSIST_DEBOUNCE_MS = 300;
-
-const VALID_CHILD_CHOICES = new Set<string>(CHILD_CHOICES);
-const VALID_RELATIONSHIPS = new Set<string>(VILLAGER_RELATIONSHIPS);
-const VALID_QUEST_STATES = new Set<string>(QUEST_STATES);
-const VALID_SEASONS = new Set<string>(SEASONS);
-const VALID_WEATHER = new Set<string>(WEATHERS);
-/**
- * Version 1 backups once allowed 12 hearts, above the game's real maximum of 10. Strict restore
- * still accepts those levels, and normalization clamps them to `MAX_HEART_LEVEL`.
- */
-const LEGACY_MAX_HEART_LEVEL = 12;
-
-type DeserializeResult =
-  | { error: BackupRestoreErrorKind; ok: false }
-  | { ok: true; progress: ProgressState; worldState: UserState["worldState"] };
-type ValidationMode = "local" | "strict";
-
-const QUEST_IDS = new Set(
-  Object.values(trackerData.quests).flatMap((quests) => Object.keys(quests)),
-);
-const MUSEUM_ITEM_IDS = new Set(
-  Object.values(trackerData.museum).flatMap((wing) =>
-    Object.values(wing.sets).flatMap((set) => set.items),
-  ),
-);
-const PERK_IDS = new Set(
-  Object.values(trackerData.skills).flatMap((skill) =>
-    skill.perkTiers.flatMap((tier) => Object.keys(tier)),
-  ),
-);
 
 function addDefaultUnlocks(progress: ProgressState): void {
   for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
@@ -192,19 +152,6 @@ function addDefaultUnlocks(progress: ProgressState): void {
     if (recipe.sources.some((s) => s.type === "default")) {
       progress.almanacRecipes.add(id);
     }
-  }
-}
-
-/**
- * Ensures every animal in trackerData has an entry in both the animals and
- * animalCosmetics records. Deserialized or merged state may predate newly added
- * animals; this backfills empty sets so downstream code can access maps without
- * guarding missing keys.
- */
-function backfillAnimalMaps(progress: ProgressState): void {
-  for (const animalId of recordKeys(trackerData.animals)) {
-    progress.animals[animalId] ??= new SvelteSet<AnimalVariantId>();
-    progress.animalCosmetics[animalId] ??= new SvelteSet<CosmeticId>();
   }
 }
 
@@ -269,15 +216,21 @@ function createUserState() {
   let _persistenceFailureKind = $state<PersistenceFailureKind>("unavailable");
   let _unreadableData = $state<null | string>(null);
   let _preferencesReady = $state(false);
+  /** True while stored progress came from a newer build, which this one must leave untouched. */
+  let newerDataBlocked = false;
+  let retained = $state.raw<RetainedProgress>(emptyRetainedProgress());
+  /** This device's own section of the stored blob; never exported, kept across a restore. */
+  let local = $state.raw<DeviceLocalState>({});
   let lastKnownPreferencesValue: null | string = null;
   let lastKnownStoredValue: null | string = null;
-  let pendingSave: undefined | { expectedStoredValue: null | string; json: string };
   let saveTimeout: ReturnType<typeof setTimeout> | undefined;
+  let saveGeneration = 0;
+  let explicitSequence = 0;
 
   function clearPendingSave(): void {
+    saveGeneration++;
     if (saveTimeout !== undefined) clearTimeout(saveTimeout);
     saveTimeout = undefined;
-    pendingSave = undefined;
   }
 
   function reportStorageUnavailable(): void {
@@ -285,70 +238,190 @@ function createUserState() {
     _persistenceFailureGeneration++;
   }
 
+  /** The stored form of the current state, `local` section included. */
+  function serialize(): string {
+    return serializeStoredProgress(state, retained, local);
+  }
+
   /** Blocks persistence and keeps the unreadable value, in storage & memory, for recovery. */
   function quarantine(value: string): void {
     _persistenceReady = false;
     persistenceBlocked = true;
+    newerDataBlocked = false;
     quarantineAvailable = trySetItem(QUARANTINE_STORAGE_KEY, value);
     _unreadableData = value;
     _persistenceFailureKind = "unreadable";
     _persistenceFailureGeneration++;
   }
 
-  function persist(json: string, expectedStoredValue: null | string): void {
+  /**
+   * The one function that writes progress. It re-reads the stored value & validates it first,
+   * since another tab may have written since this one last read:
+   *
+   * - A newer build's data blocks the write; nothing is overwritten.
+   * - An `auto-save` adopts the other tab's value rather than writing a stale state over it. Its
+   *   storage event may never arrive (e.g. while this page sat in the back/forward cache), and
+   *   waiting would leave every later save comparing against a value no longer stored.
+   * - A `replace` is the player's explicit choice, so it overwrites, once an unreadable value is
+   *   safely copied to quarantine.
+   * - A `merge` unions the captured import preview into the current stored progress, preserving
+   *   both another tab's saved progress & this tab's unsaved edits.
+   *
+   * Cleared storage has nothing to conflict with, so it's written normally. Callers hold the
+   * progress Web Lock (see {@link requestProgressWrite}); only the pagehide flush calls it bare.
+   */
+  function writeProgress(intent: WriteIntent): void {
+    if (intent.kind === "auto-save" && intent.generation !== saveGeneration) return;
+    if (!_persistenceReady) return;
     const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
     if (!storedResult.ok) {
       reportStorageUnavailable();
       return;
     }
 
-    // A different tab wrote after this save was scheduled. Adopt its value rather than writing the
-    // stale snapshot back; its storage event may never arrive (e.g. while this page sat in the
-    // back/forward cache), and waiting for it would leave every later save comparing against a
-    // value that is no longer stored. Cleared storage has nothing to conflict with, so it's
-    // written normally.
-    if (storedResult.value !== expectedStoredValue && storedResult.value !== null) {
-      applyStorageValue(storedResult.value);
-      return;
+    const stored = storedResult.value;
+    const read = stored === null ? undefined : readProgressBlob(stored, "repair");
+    if (stored !== null && stored !== lastKnownStoredValue) {
+      if (read?.kind === "newer" || intent.kind === "auto-save") {
+        applyStorageValue(stored);
+        return;
+      }
+      if (read?.kind === "unreadable") {
+        if (!trySetItem(QUARANTINE_STORAGE_KEY, stored)) {
+          quarantine(stored);
+          return;
+        }
+        _unreadableData = stored;
+      }
     }
 
-    if (!trySetItem(PROGRESS_STORAGE_KEY, json)) {
+    let json = serialize();
+    if (intent.kind !== "auto-save") {
+      const snapshot = readProgressBlob(intent.json, "repair");
+      if (snapshot.kind !== "ok") throw new Error("Invalid captured progress write");
+      let loaded = snapshot.loaded;
+      if (intent.keepLocal && read?.kind === "ok") loaded.local = read.loaded.local;
+      if (intent.kind === "merge" && read?.kind === "ok") {
+        loaded = read.loaded;
+        // The captured preview includes unsaved local edits as well as the imported progress.
+        mergeProgress(loaded.progress, snapshot.loaded.progress);
+        mergeRetainedProgress(loaded.retained, snapshot.loaded.retained);
+        loaded.worldState = snapshot.loaded.worldState;
+      }
+      json = serializeStoredProgress(loaded, loaded.retained, loaded.local);
+      if (intent.sequence === explicitSequence) {
+        if (state.progress !== intent.progress || serialize() === intent.json) {
+          replaceProgress(loaded);
+        } else if (intent.kind === "merge") {
+          // The captured merge is persisted first; later local edits remain for the next auto-save.
+          const rebased = readProgressBlob(json, "repair");
+          if (rebased.kind !== "ok") throw new Error("Invalid merged progress write");
+          rebaseProgressEdits(rebased.loaded.progress, snapshot.loaded.progress, state.progress);
+          rebased.loaded.worldState = state.worldState;
+          replaceProgress(rebased.loaded);
+        }
+        local = loaded.local;
+      }
+    }
+    if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
       reportStorageUnavailable();
       return;
     }
-
     lastKnownStoredValue = json;
     _persistenceFailureGeneration = 0;
   }
 
-  function flushPendingSave(): void {
-    const pending = pendingSave;
-    clearPendingSave();
-    if (pending) persist(pending.json, pending.expectedStoredValue);
+  /**
+   * Runs {@link writeProgress} under the progress Web Lock, so no other tab writes between its
+   * re-read & its write. Without Web Locks it runs at once: the read & write are synchronous, so
+   * only another tab running in parallel in that same instant could slip between them.
+   */
+  function requestProgressWrite(intent: WriteIntent): void {
+    const locks = progressLockManager();
+    if (!locks) {
+      writeProgress(intent);
+      return;
+    }
+    void writeUnderLock(locks, intent);
   }
 
+  async function writeUnderLock(locks: LockManager, intent: WriteIntent): Promise<void> {
+    try {
+      await locks.request(PROGRESS_WRITE_LOCK, () => {
+        writeProgress(intent);
+      });
+    } catch {
+      // The lock couldn't be taken (e.g. a sandboxed frame); write as a browser without locks does.
+      writeProgress(intent);
+    }
+  }
+
+  /** Captures an explicit write now, rather than after the auto-save debounce. */
+  function writeExplicitProgress(kind: "merge" | "replace" = "replace", keepLocal = true): void {
+    clearPendingSave();
+    requestProgressWrite({
+      json: serialize(),
+      keepLocal,
+      kind,
+      progress: state.progress,
+      sequence: ++explicitSequence,
+    });
+  }
+
+  /**
+   * The pagehide flush. A page being hidden can't wait for a lock, so this keeps the synchronous
+   * compare-before-write: it adopts another tab's value rather than overwriting it.
+   */
   function flushCurrentState(): void {
     if (!_persistenceReady) return;
     clearPendingSave();
-    persist(serialize(state), lastKnownStoredValue);
+    writeProgress({ generation: saveGeneration, kind: "auto-save" });
+  }
+
+  /**
+   * Blocks persistence without copying or touching the stored value: a newer build wrote it, so it
+   * isn't unreadable, and an explicit replace mustn't overwrite it either.
+   */
+  function blockForNewerData(): void {
+    _persistenceReady = false;
+    persistenceBlocked = true;
+    quarantineAvailable = false;
+    newerDataBlocked = true;
+    _persistenceFailureKind = "newer-data";
+    _persistenceFailureGeneration++;
+  }
+
+  function resumePersistence(): void {
+    persistenceBlocked = false;
+    quarantineAvailable = false;
+    newerDataBlocked = false;
+    _persistenceFailureGeneration = 0;
+    _persistenceReady = true;
+  }
+
+  /** Hydrates from a stored value under the repair policy, or blocks persistence if it can't. */
+  function adoptStoredValue(value: string): void {
+    const result = readProgressBlob(value, "repair");
+    if (result.kind === "ok") {
+      replaceProgress(result.loaded);
+      local = result.loaded.local;
+      resumePersistence();
+    } else if (result.kind === "newer") {
+      blockForNewerData();
+    } else {
+      quarantine(value);
+    }
   }
 
   function applyStorageValue(value: null | string): void {
     clearPendingSave();
     lastKnownStoredValue = value;
-    if (value === null) return;
-
-    const result = deserialize(value, "local");
-    if (result.ok) {
-      replaceProgress(result);
-      persistenceBlocked = false;
-      quarantineAvailable = false;
-      _persistenceFailureGeneration = 0;
-      _persistenceReady = true;
-      return;
+    if (value !== null) {
+      adoptStoredValue(value);
+    } else if (newerDataBlocked) {
+      // Another tab cleared the newer data, so there's nothing left to protect.
+      resumePersistence();
     }
-
-    quarantine(value);
   }
 
   function resyncFromStorage(): void {
@@ -362,10 +435,14 @@ function createUserState() {
     }
   }
 
-  /** Swaps in loaded progress & world state, leaving this device's preferences untouched. */
-  function replaceProgress(loaded: Pick<UserState, "progress" | "worldState">): void {
+  /**
+   * Swaps in loaded progress, world state, & retained unknown entries, leaving this device's
+   * preferences & `local` section untouched.
+   */
+  function replaceProgress(loaded: Omit<LoadedProgress, "local">): void {
     state.progress = loaded.progress;
     state.worldState = loaded.worldState;
+    retained = loaded.retained;
   }
 
   /**
@@ -397,12 +474,16 @@ function createUserState() {
       $effect(() => {
         if (!_persistenceReady) return;
 
-        const json = serialize(state);
+        // Every change, including a hydrated blob that migration or repair rewrote, is saved by an
+        // auto-save write once the quiet period passes.
+        const json = serialize();
         clearPendingSave();
         if (json === lastKnownStoredValue) return;
 
-        pendingSave = { expectedStoredValue: lastKnownStoredValue, json };
-        saveTimeout = setTimeout(flushPendingSave, PERSIST_DEBOUNCE_MS);
+        saveTimeout = setTimeout(() => {
+          saveTimeout = undefined;
+          requestProgressWrite({ generation: saveGeneration, kind: "auto-save" });
+        }, PERSIST_DEBOUNCE_MS);
       });
 
       // Preferences are tiny & rarely change, so they're written immediately; a failed write only
@@ -487,8 +568,19 @@ function createUserState() {
         _persistenceFailureGeneration = 0;
       }
     },
+    /**
+     * The backup of this device's progress, never its `local` section. While a newer build's data
+     * blocks writes, that is the stored blob itself, otherwise verbatim: memory holds only defaults
+     * or stale progress then, and a backup of those would overwrite the real progress wherever it
+     * was restored.
+     */
     exportBackup(): string {
-      return serialize(state);
+      if (newerDataBlocked) {
+        const stored = tryGetItem(PROGRESS_STORAGE_KEY);
+        const value = stored.ok ? stored.value : lastKnownStoredValue;
+        if (value !== null) return withoutDeviceLocal(value);
+      }
+      return serializeProgress(state, retained);
     },
     get hasAnyProgress(): boolean {
       return hasAnyProgress;
@@ -516,20 +608,9 @@ function createUserState() {
       const stored = storedResult.value;
       lastKnownStoredValue = stored;
       if (stored === null) {
-        persistenceBlocked = false;
-        quarantineAvailable = false;
-        _persistenceReady = true;
-        return;
-      }
-
-      const result = deserialize(stored, "local");
-      if (result.ok) {
-        replaceProgress(result);
-        persistenceBlocked = false;
-        quarantineAvailable = false;
-        _persistenceReady = true;
+        resumePersistence();
       } else {
-        quarantine(stored);
+        adoptStoredValue(stored);
       }
     },
     markDefaultUnlocksComplete() {
@@ -540,92 +621,14 @@ function createUserState() {
      * household follows {@link mergeHousehold}'s conflict policy. Never removes progress.
      */
     mergeFromSave(imported: Partial<ProgressState>): MergeResult {
-      const progress = state.progress;
-      const counts: MergeCounts = emptyMergeCounts();
-
-      counts.almanac = unionInto(progress.almanac, imported.almanac ?? []);
-      counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
-      counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
-      counts.dates = unionInto(progress.dates, imported.dates ?? []);
-      counts.mountAppearances = unionInto(
-        progress.mountAppearances,
-        imported.mountAppearances ?? [],
-      );
-      counts.museum = unionInto(progress.museum, imported.museum ?? []);
-      counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);
-      counts.petCosmetics = unionInto(progress.petCosmetics, imported.petCosmetics ?? []);
-      counts.petSkins = unionInto(progress.petSkins, imported.petSkins ?? []);
-      counts.spells = unionInto(progress.spells, imported.spells ?? []);
-      for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
-        const existing = getOrCreate(
-          progress.animals,
-          animalId,
-          () => new SvelteSet<AnimalVariantId>(),
-        );
-        counts.animals += unionInto(existing, variants);
-      }
-      for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics ?? {})) {
-        const existing = getOrCreate(
-          progress.animalCosmetics,
-          animalId,
-          () => new SvelteSet<CosmeticId>(),
-        );
-        counts.animalCosmetics += unionInto(existing, cosmetics);
-      }
-
-      // Levels are clamped again here so the canonical state stays inside its domains even if a
-      // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
-      if (imported.mineFloor !== undefined) {
-        const mineFloor = clampMineFloor(imported.mineFloor);
-        if (mineFloor > progress.mineFloor) {
-          counts.mineFloor = mineFloor - progress.mineFloor;
-          progress.mineFloor = mineFloor;
-        }
-      }
-      if (imported.renown !== undefined) {
-        const renown = clampRenownLevel(imported.renown);
-        if (renown > progress.renown) {
-          counts.renown = renown - progress.renown;
-          progress.renown = renown;
-        }
-      }
-      counts.heartLevels = raiseLevels(progress.heartLevels, imported.heartLevels, MAX_HEART_LEVEL);
-      counts.skillLevels = raiseLevels(progress.skillLevels, imported.skillLevels, MAX_SKILL_LEVEL);
-
-      // Quest states take the more advanced state: none < obtained < completed.
-      for (const [id, importedState] of recordEntries(imported.questStates ?? {})) {
-        if (questStateRank(importedState) > questStateRank(progress.questStates[id] ?? "none")) {
-          progress.questStates[id] = importedState;
-          counts.quests++;
-        }
-      }
-
-      if (
-        imported.reachedSeason !== undefined &&
-        seasonOrdinal(imported.reachedSeason) > seasonOrdinal(progress.reachedSeason)
-      ) {
-        progress.reachedSeason = imported.reachedSeason;
-        counts.reachedSeason = 1;
-      }
-      if (imported.hasUpperFloor && !progress.hasUpperFloor) {
-        progress.hasUpperFloor = true;
-        counts.hasUpperFloor = 1;
-      }
-
-      const household = mergeHousehold(progress, imported);
-      progress.villagerRelationships = household.villagerRelationships;
-      progress.childChoice = household.childChoice;
-      counts.villagerRelationships = household.counts.villagerRelationships;
-      counts.childChoice = household.counts.childChoice;
-
-      // Backfill animal maps for any animals added since the imported state was created
-      backfillAnimalMaps(progress);
+      const result = mergeProgress(state.progress, imported);
 
       // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
       // persistence like a reset or restore (only once the unreadable blob is safely stored).
       enablePersistenceAfterExplicitReplace();
+      writeExplicitProgress("merge");
 
-      return { conflicts: household.conflicts, counts };
+      return result;
     },
     get persistenceFailed(): boolean {
       return _persistenceFailureGeneration > 0;
@@ -639,22 +642,36 @@ function createUserState() {
     get progressionState(): UserProgressionState {
       return progressionState;
     },
-    /** Restores every field to its default, this device's preferences included. */
+    /** Restores every field to its default, this device's preferences & `local` section included. */
     resetAll() {
       state = createDefaultState();
+      retained = emptyRetainedProgress();
+      local = {};
       enablePersistenceAfterExplicitReplace();
+      writeExplicitProgress("replace", false);
     },
-    /** Clears progress & world state; this device's preferences are kept. */
+    /** Clears progress & world state; this device's preferences & `local` section are kept. */
     resetProgress() {
-      replaceProgress({ progress: createDefaultProgress(), worldState: createDefaultWorldState() });
+      replaceProgress({
+        progress: createDefaultProgress(),
+        retained: emptyRetainedProgress(),
+        worldState: createDefaultWorldState(),
+      });
       enablePersistenceAfterExplicitReplace();
+      writeExplicitProgress();
     },
-    /** Replaces progress & world state from a backup; this device's preferences are kept. */
+    /**
+     * Replaces progress & world state from a backup under the strict policy; this device's
+     * preferences & `local` section are kept, and a backup never brings one in. A backup from a
+     * newer build is refused, never partly read.
+     */
     restoreBackup(json: string): BackupRestoreResult {
-      const result = deserialize(json, "strict");
-      if (!result.ok) return result;
-      replaceProgress(result);
+      const result = readProgressBlob(json, "strict");
+      if (result.kind === "newer") return { error: "newer-version", ok: false };
+      if (result.kind === "unreadable") return { error: result.error, ok: false };
+      replaceProgress(result.loaded);
       enablePersistenceAfterExplicitReplace();
+      writeExplicitProgress();
       return { ok: true };
     },
     setAvailabilityWindows(windows: readonly AvailabilityWindow[]) {
@@ -792,314 +809,157 @@ function createUserState() {
   };
 }
 
-function deserialize(json: string, mode: ValidationMode): DeserializeResult {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(json);
-  } catch {
-    return { error: "malformed-json", ok: false };
-  }
+/** Applies the additive import policy to an explicit target, including a locked storage snapshot. */
+function mergeProgress(progress: ProgressState, imported: Partial<ProgressState>): MergeResult {
+  const counts: MergeCounts = emptyMergeCounts();
 
-  if (typeof parsed !== "object" || parsed === null) {
-    return { error: "malformed-json", ok: false };
-  }
-
-  const raw = parsed as Record<string, unknown>;
-
-  if (!("version" in raw)) {
-    return { error: "invalid-fields", ok: false };
-  }
-
-  if (raw.version !== CURRENT_SERIALIZATION_VERSION) {
-    return { error: "unsupported-version", ok: false };
-  }
-
-  if (!isSerializedState(raw, mode)) {
-    return { error: "invalid-fields", ok: false };
-  }
-
-  try {
-    const s = raw;
-
-    const heartLevels = normalizeLevelRecord<VillagerId>(
-      s.progress.heartLevels ?? {},
-      trackerData.villagers,
-      MAX_HEART_LEVEL,
+  counts.almanac = unionInto(progress.almanac, imported.almanac ?? []);
+  counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
+  counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
+  counts.dates = unionInto(progress.dates, imported.dates ?? []);
+  counts.mountAppearances = unionInto(progress.mountAppearances, imported.mountAppearances ?? []);
+  counts.museum = unionInto(progress.museum, imported.museum ?? []);
+  counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);
+  counts.petCosmetics = unionInto(progress.petCosmetics, imported.petCosmetics ?? []);
+  counts.petSkins = unionInto(progress.petSkins, imported.petSkins ?? []);
+  counts.spells = unionInto(progress.spells, imported.spells ?? []);
+  for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
+    const existing = getOrCreate(
+      progress.animals,
+      animalId,
+      () => new SvelteSet<AnimalVariantId>(),
     );
-    const skillLevels = normalizeLevelRecord<SkillId>(
-      s.progress.skillLevels ?? {},
-      trackerData.skills,
-      MAX_SKILL_LEVEL,
+    counts.animals += unionInto(existing, variants);
+  }
+  for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics ?? {})) {
+    const existing = getOrCreate(
+      progress.animalCosmetics,
+      animalId,
+      () => new SvelteSet<CosmeticId>(),
     );
-    const questStates = normalizeEnumRecord<QuestId, QuestState>(
-      s.progress.questStates ?? {},
-      QUEST_IDS,
-      VALID_QUEST_STATES,
-    );
+    counts.animalCosmetics += unionInto(existing, cosmetics);
+  }
 
-    const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
-    for (const [id, rel] of Object.entries(s.progress.villagerRelationships ?? {})) {
-      if (
-        Object.hasOwn(trackerData.villagers, id) &&
-        isEnumValue(rel, VALID_RELATIONSHIPS) &&
-        rel !== "undecided"
-      ) {
-        villagerRelationships[id as VillagerId] = rel;
-      }
+  // Levels are clamped again here so the canonical state stays inside its domains even if a
+  // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
+  if (imported.mineFloor !== undefined) {
+    const mineFloor = clampMineFloor(imported.mineFloor);
+    if (mineFloor > progress.mineFloor) {
+      counts.mineFloor = mineFloor - progress.mineFloor;
+      progress.mineFloor = mineFloor;
     }
-    applyMarriageCascade(villagerRelationships);
-
-    const childChoice: ChildChoice =
-      s.progress.childChoice && VALID_CHILD_CHOICES.has(s.progress.childChoice)
-        ? s.progress.childChoice
-        : "undeclared";
-
-    const progress: ProgressState = {
-      almanac: normalizeAlmanacIds(s.progress.almanac),
-      almanacRecipes: knownBrandedSet<RecipeId>(
-        s.progress.almanacRecipes ?? [],
-        trackerData.recipes,
-      ),
-      animalCosmetics: normalizeAnimalCosmetics(s.progress.animalCosmetics),
-      animals: normalizeAnimalVariants(s.progress.animals),
-      childChoice,
-      cosmetics: knownBrandedSet<CosmeticId>(s.progress.cosmetics, trackerData.cosmetics),
-      dates: knownBrandedSet<DateId>(s.progress.dates ?? [], trackerData.dates),
-      hasUpperFloor:
-        typeof s.progress.hasUpperFloor === "boolean" ? s.progress.hasUpperFloor : false,
-      heartLevels,
-      mineFloor: isFiniteNumber(s.progress.mineFloor) ? clampMineFloor(s.progress.mineFloor) : 0,
-      mountAppearances: knownBrandedSet<MountAppearanceId>(
-        s.progress.mountAppearances ?? [],
-        trackerData.mount.appearances,
-      ),
-      museum: knownBrandedSet<ItemId>(s.progress.museum, MUSEUM_ITEM_IDS),
-      petCosmetics: knownBrandedSet<PetCosmeticSetId>(
-        s.progress.petCosmetics ?? [],
-        trackerData.pets.cosmetics,
-      ),
-      petSkins: knownBrandedSet<PetSkinId>(s.progress.petSkins ?? [], trackerData.pets.skins),
-      questStates,
-      reachedSeason: isEnumValue(s.progress.reachedSeason, VALID_SEASONS)
-        ? s.progress.reachedSeason
-        : "spring",
-      renown: isFiniteNumber(s.progress.renown) ? clampRenownLevel(s.progress.renown) : 0,
-      skillLevels,
-      spells: knownBrandedSet<SpellId>(s.progress.spells, trackerData.mines.spells),
-      unlockedPerks: knownBrandedSet<PerkId>(s.progress.unlockedPerks ?? [], PERK_IDS),
-      villagerRelationships,
-    };
-
-    backfillAnimalMaps(progress);
-
-    return {
-      ok: true,
-      progress,
-      worldState: {
-        season: isEnumValue(s.worldState.season, VALID_SEASONS) ? s.worldState.season : "spring",
-        weather: isEnumValue(s.worldState.weather, VALID_WEATHER) ? s.worldState.weather : "calm",
-      },
-    };
-  } catch {
-    return { error: "invalid-fields", ok: false };
   }
-}
+  if (imported.renown !== undefined) {
+    const renown = clampRenownLevel(imported.renown);
+    if (renown > progress.renown) {
+      counts.renown = renown - progress.renown;
+      progress.renown = renown;
+    }
+  }
+  counts.heartLevels = raiseLevels(progress.heartLevels, imported.heartLevels, MAX_HEART_LEVEL);
+  counts.skillLevels = raiseLevels(progress.skillLevels, imported.skillLevels, MAX_SKILL_LEVEL);
 
-function filterRecord<V>(
-  record: Partial<Record<string, V>>,
-  predicate: (v: V) => boolean,
-): Record<string, V> {
-  return Object.fromEntries(recordEntries(record).filter(([, v]) => predicate(v)));
-}
-
-function hasKnownId(knownIds: object | ReadonlySet<string>, id: string): boolean {
-  return knownIds instanceof Set ? knownIds.has(id) : Object.hasOwn(knownIds, id);
-}
-
-function isDomainInteger(value: unknown, max: number): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= max;
-}
-
-function isEnumValue(value: unknown, validValues: Set<string>): value is string {
-  return typeof value === "string" && validValues.has(value);
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
-}
-
-function isOptionalEnumRecord(value: unknown, validValues: Set<string>): boolean {
-  return (
-    value === undefined ||
-    (isRecord(value) && Object.values(value).every((entry) => isEnumValue(entry, validValues)))
-  );
-}
-
-function isOptionalIntegerRecord(value: unknown, max: number): boolean {
-  return (
-    value === undefined ||
-    (isRecord(value) && Object.values(value).every((entry) => isDomainInteger(entry, max)))
-  );
-}
-
-function isOptionalRecord(value: unknown): boolean {
-  return value === undefined || isRecord(value);
-}
-
-function isOptionalStringArray(value: unknown): boolean {
-  return value === undefined || isStringArray(value);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isSerializedState(value: unknown, mode: ValidationMode): value is SerializedState {
-  if (!isRecord(value)) return false;
-  const progress = value.progress;
-  const worldState = value.worldState;
-  if (!isRecord(progress) || !isRecord(worldState)) return false;
+  // Quest states take the more advanced state: none < obtained < completed.
+  for (const [id, importedState] of recordEntries(imported.questStates ?? {})) {
+    if (questStateRank(importedState) > questStateRank(progress.questStates[id] ?? "none")) {
+      progress.questStates[id] = importedState;
+      counts.quests++;
+    }
+  }
 
   if (
-    mode === "strict" &&
-    (!isEnumValue(worldState.season, VALID_SEASONS) ||
-      !isEnumValue(worldState.weather, VALID_WEATHER))
+    imported.reachedSeason !== undefined &&
+    seasonOrdinal(imported.reachedSeason) > seasonOrdinal(progress.reachedSeason)
   ) {
-    return false;
+    progress.reachedSeason = imported.reachedSeason;
+    counts.reachedSeason = 1;
+  }
+  if (imported.hasUpperFloor && !progress.hasUpperFloor) {
+    progress.hasUpperFloor = true;
+    counts.hasUpperFloor = 1;
   }
 
-  if (!isStringArray(progress.almanac)) return false;
-  if (
-    !(mode === "local"
-      ? isRecord(progress.animalCosmetics)
-      : isStringArrayRecord(progress.animalCosmetics))
-  ) {
-    return false;
-  }
-  if (!(mode === "local" ? isRecord(progress.animals) : isStringArrayRecord(progress.animals))) {
-    return false;
-  }
-  if (!isStringArray(progress.cosmetics)) return false;
-  if (mode === "strict" && !isDomainInteger(progress.mineFloor, getMaxMineFloor())) return false;
-  if (!isStringArray(progress.spells)) return false;
-  if (!isStringArray(progress.museum)) return false;
-  // Strict backup imports require a numeric value; local recovery defaults malformed values and
-  // clamps numeric drift so one scalar cannot discard otherwise valid persisted progress.
-  if (mode === "strict" && !isFiniteNumber(progress.renown)) return false;
+  const household = mergeHousehold(progress, imported);
+  progress.villagerRelationships = household.villagerRelationships;
+  progress.childChoice = household.childChoice;
+  counts.villagerRelationships = household.counts.villagerRelationships;
+  counts.childChoice = household.counts.childChoice;
 
-  return (
-    isOptionalStringArray(progress.almanacRecipes) &&
-    (mode === "local" ||
-      progress.childChoice === undefined ||
-      isEnumValue(progress.childChoice, VALID_CHILD_CHOICES)) &&
-    isOptionalStringArray(progress.dates) &&
-    (mode === "local" ||
-      progress.hasUpperFloor === undefined ||
-      typeof progress.hasUpperFloor === "boolean") &&
-    (mode === "local"
-      ? isOptionalRecord(progress.heartLevels)
-      : isOptionalIntegerRecord(progress.heartLevels, LEGACY_MAX_HEART_LEVEL)) &&
-    (mode === "local"
-      ? isOptionalRecord(progress.villagerRelationships)
-      : isOptionalEnumRecord(progress.villagerRelationships, VALID_RELATIONSHIPS)) &&
-    isOptionalStringArray(progress.mountAppearances) &&
-    isOptionalStringArray(progress.petCosmetics) &&
-    isOptionalStringArray(progress.petSkins) &&
-    (mode === "local"
-      ? isOptionalRecord(progress.questStates)
-      : isOptionalEnumRecord(progress.questStates, VALID_QUEST_STATES)) &&
-    (mode === "local" ||
-      progress.reachedSeason === undefined ||
-      isEnumValue(progress.reachedSeason, VALID_SEASONS)) &&
-    (mode === "local"
-      ? isOptionalRecord(progress.skillLevels)
-      : isOptionalIntegerRecord(progress.skillLevels, MAX_SKILL_LEVEL)) &&
-    isOptionalStringArray(progress.unlockedPerks)
+  // Backfill animal maps for any animals added since the imported state was created
+  backfillAnimalMaps(progress);
+  return { conflicts: household.conflicts, counts };
+}
+
+/** Retain unknown IDs from both sides of an additive import; opaque relationship conflicts keep storage. */
+function mergeRetainedProgress(target: RetainedProgress, imported: RetainedProgress): void {
+  for (const field of ["animalCosmetics", "animals", "lists"] as const) {
+    const entries: Record<string, string[] | undefined> = target[field];
+    for (const [id, values] of recordEntries(imported[field])) {
+      entries[id] = [...new Set([...(entries[id] ?? []), ...values])];
+    }
+  }
+  for (const field of ["heartLevels", "skillLevels"] as const) {
+    for (const [id, value] of recordEntries(imported[field])) {
+      target[field][id] = Math.max(target[field][id] ?? 0, value);
+    }
+  }
+  for (const [id, value] of recordEntries(imported.questStates)) {
+    if (questStateRank(value) > questStateRank(target.questStates[id] ?? "none")) {
+      target.questStates[id] = value;
+    }
+  }
+  target.villagerRelationships = {
+    ...imported.villagerRelationships,
+    ...target.villagerRelationships,
+  };
+}
+
+/** Rebase only edits made after confirmation; unchanged fields retain concurrent stored progress. */
+function rebaseProgressEdits(
+  target: ProgressState,
+  before: ProgressState,
+  after: ProgressState,
+): void {
+  rebaseFields(
+    target as unknown as Record<string, unknown>,
+    before as unknown as Record<string, unknown>,
+    after as unknown as Record<string, unknown>,
   );
+  const relationships = new Set([
+    ...recordKeys(before.villagerRelationships),
+    ...recordKeys(after.villagerRelationships),
+  ]);
+  if (
+    before.childChoice !== after.childChoice ||
+    [...relationships].some(
+      (id) => before.villagerRelationships[id] !== after.villagerRelationships[id],
+    )
+  ) {
+    // A later explicit household edit replaces the household as a unit, preserving its cascade.
+    target.villagerRelationships = { ...after.villagerRelationships };
+    target.childChoice = after.childChoice;
+  }
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
-}
-
-function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
-  return isRecord(value) && Object.values(value).every((entry) => isStringArray(entry));
-}
-
-// ─── Serialization helpers ───────────────────────────────────────────
-
-function knownBrandedSet<T>(
-  ids: readonly string[],
-  knownIds: object | ReadonlySet<string>,
-): Set<T> {
-  return new SvelteSet(ids.filter((id) => hasKnownId(knownIds, id))) as unknown as Set<T>;
-}
-
-function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
-  const result = new SvelteSet<ItemId>();
-  for (const id of ids) {
-    const canonical = trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId);
-    if (canonical) {
-      result.add(canonical);
+function rebaseFields(
+  target: Record<string, unknown>,
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+): void {
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    const previous = before[key];
+    const current = after[key];
+    const destination = target[key];
+    if (previous instanceof Set && current instanceof Set && destination instanceof Set) {
+      for (const value of previous) if (!current.has(value)) destination.delete(value);
+      for (const value of current) if (!previous.has(value)) destination.add(value);
+    } else if (isRecord(previous) && isRecord(current) && isRecord(destination)) {
+      rebaseFields(destination, previous, current);
+    } else if (previous !== current) {
+      if (Object.hasOwn(after, key)) target[key] = current;
+      else Reflect.deleteProperty(target, key);
     }
   }
-  return result;
-}
-
-function normalizeAnimalCosmetics(
-  record: Record<string, unknown>,
-): Record<AnimalId, Set<CosmeticId>> {
-  const result: Record<string, Set<CosmeticId>> = {};
-  for (const [animalId, ids] of Object.entries(record)) {
-    if (Object.hasOwn(trackerData.animals, animalId) && isStringArray(ids)) {
-      const animal = trackerData.animals[animalId as AnimalId];
-      result[animalId] = knownBrandedSet<CosmeticId>(ids, animal.cosmetics);
-    }
-  }
-  return result;
-}
-
-function normalizeAnimalVariants(
-  record: Record<string, unknown>,
-): Record<AnimalId, Set<AnimalVariantId>> {
-  const result: Record<string, Set<AnimalVariantId>> = {};
-  for (const [animalId, ids] of Object.entries(record)) {
-    if (Object.hasOwn(trackerData.animals, animalId) && isStringArray(ids)) {
-      const animal = trackerData.animals[animalId as AnimalId];
-      const variantIds = new Set(animal.variantTiers.flatMap((tier) => Object.keys(tier)));
-      result[animalId] = knownBrandedSet<AnimalVariantId>(ids, variantIds);
-    }
-  }
-  return result;
-}
-
-function normalizeEnumRecord<K extends string, V extends string>(
-  record: Record<string, unknown>,
-  knownIds: object | ReadonlySet<string>,
-  validValues: ReadonlySet<string>,
-): Record<K, V> {
-  const result: Record<string, V> = {};
-  for (const [id, value] of Object.entries(record)) {
-    if (hasKnownId(knownIds, id) && typeof value === "string" && validValues.has(value)) {
-      result[id] = value as V;
-    }
-  }
-  return result;
-}
-
-function normalizeLevelRecord<K extends string>(
-  record: Record<string, unknown>,
-  knownIds: object | ReadonlySet<string>,
-  max: number,
-): Record<K, number> {
-  const result: Record<string, number> = {};
-  for (const [id, value] of Object.entries(record)) {
-    if (hasKnownId(knownIds, id) && isFiniteNumber(value)) {
-      const level = clampLevel(value, max);
-      if (level > 0) result[id] = level;
-    }
-  }
-  return result;
 }
 
 /**
@@ -1122,6 +982,14 @@ function raiseLevels(
   return raised;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
+}
+
 /** Reads stored preferences, defaulting each missing or invalid field. */
 function deserializePreferences(json: null | string): SerializedPreferences {
   const defaults = createDefaultPreferences();
@@ -1142,48 +1010,6 @@ function deserializePreferences(json: null | string): SerializedPreferences {
     showSpoilers:
       typeof parsed.showSpoilers === "boolean" ? parsed.showSpoilers : defaults.showSpoilers,
   };
-}
-
-/**
- * Writes exactly the fields of {@link SerializedState}. Unrecognized fields in a loaded blob are
- * dropped rather than carried forward, so renamed keys don't linger.
- */
-function serialize(state: UserState): string {
-  const s: SerializedState = {
-    progress: {
-      almanac: [...state.progress.almanac].toSorted(),
-      almanacRecipes: [...state.progress.almanacRecipes].toSorted(),
-      animalCosmetics: Object.fromEntries(
-        recordEntries(state.progress.animalCosmetics).map(([k, v]) => [k, [...v].toSorted()]),
-      ),
-      animals: Object.fromEntries(
-        recordEntries(state.progress.animals).map(([k, v]) => [k, [...v].toSorted()]),
-      ),
-      childChoice: state.progress.childChoice,
-      cosmetics: [...state.progress.cosmetics].toSorted(),
-      dates: [...state.progress.dates].toSorted(),
-      hasUpperFloor: state.progress.hasUpperFloor,
-      heartLevels: filterRecord(state.progress.heartLevels, (v) => v > 0),
-      mineFloor: state.progress.mineFloor,
-      mountAppearances: [...state.progress.mountAppearances].toSorted(),
-      museum: [...state.progress.museum].toSorted(),
-      petCosmetics: [...state.progress.petCosmetics].toSorted(),
-      petSkins: [...state.progress.petSkins].toSorted(),
-      questStates: filterRecord(state.progress.questStates, (v) => v !== "none"),
-      reachedSeason: state.progress.reachedSeason,
-      renown: state.progress.renown,
-      skillLevels: filterRecord(state.progress.skillLevels, (v) => v > 0),
-      spells: [...state.progress.spells].toSorted(),
-      unlockedPerks: [...state.progress.unlockedPerks].toSorted(),
-      villagerRelationships: filterRecord(
-        state.progress.villagerRelationships as Record<string, VillagerRelationship>,
-        (v) => v !== "undecided",
-      ),
-    },
-    version: CURRENT_SERIALIZATION_VERSION,
-    worldState: { season: state.worldState.season, weather: state.worldState.weather },
-  };
-  return JSON.stringify(s);
 }
 
 function serializePreferences(state: UserState): string {

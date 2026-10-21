@@ -94,7 +94,9 @@ reason it was reviewed, rather than weakening the check.
 | `pnpm run build`              | Production build (Cloudflare Pages)                                |
 | `pnpm run check`              | SvelteKit type checking                                            |
 | `pnpm run check:i18n`         | Verify locale files match `en.json`’s keys                         |
+| `pnpm run check:locale-sync`  | Verify a changed English message changed in each locale too        |
 | `pnpm run check:routes`       | Verify built static assets bypass Functions                        |
+| `pnpm run knip`               | Find unused files, exports, & dependencies                         |
 | `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, & ShellCheck                     |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                                         |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)                          |
@@ -107,16 +109,25 @@ reason it was reviewed, rather than weakening the check.
 | `pnpm run verify`             | Full CI matrix locally (exception-only; see agent-verification.md) |
 | `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets                         |
 | `pnpm run data:diff [ref]`    | Path-level `tracker-data.json` changes from a ref (`origin/main`)  |
+| `pnpm run game-update:report` | Game-update review report (ID inventory, keys, sprite deltas)      |
 
 ## Enforcement boundaries
 
 - Claude Code & Codex share `PreToolUse`, `PostToolUse`, `Stop`, & `SubagentStart` command hooks in
   `.claude/settings.json` & `.codex/hooks.json`. Codex skips new or changed hooks until they are
   re-trusted in its hook review (`/hooks`); review & trust them before relying on enforcement.
+- Hook changes take effect next session. Claude Code runs each hook from `$CLAUDE_PROJECT_DIR`,
+  fixed at session start to the session’s original checkout, so an edit to a hook script or its
+  settings in a worktree (including a subagent’s) does not change the hooks guarding that session.
+  Hooks deliberately do not re-exec from the tool call’s tree, which would let a branch weaken its
+  own guard. When a PR changes a guard & also needs the edit it newly permits, land the hook change
+  first & make the guarded edit in a later session; record the deferred criterion in the PR.
 - `guard-generated-paths.ts` denies file-tool edits, patch headers (including deletions & moves),
-  and direct shell writes referring to generated tracker data or vendored UI. Recover by running the
-  pipeline or vendor CLI. CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership and
-  the `shadcn-update` or `generated-data` label.
+  and direct shell writes referring to generated tracker data. Recover by running the pipeline.
+  CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership and the `generated-data`
+  label. `src/lib/components/ui/` is project-owned & not guarded. The hook matches the exact
+  tracker-data file, so a directory-level or `cd`-relative write that reaches it is not caught
+  there; the “Guarded paths” CI check catches it.
 - `guard-generated-reads.ts` denies file-tool & direct shell reads of generated tracker data; read
   `src/lib/types/tracker-data.ts` or pipeline source instead. Existing symlinks are resolved.
 - Shell guards check each command segment (split at `;`, `&&`, `||`, `|`, & newlines) on its own, so

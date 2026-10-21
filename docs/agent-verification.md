@@ -16,21 +16,26 @@ require an exception.
 
 ## CI coverage
 
-`ci.yml` runs `lint`, `pnpm audit`, `check`, `check:i18n`, the complete asset-independent test suite
-with per-file & wall-time budgets (the cleanup test runs only when its script changes), `build`, &
-`check:routes`, then the accessibility and PWA suites against that build when `src/`, `static/`,
-`tests/`, or their tooling change. Its “CI passed” job aggregates every result. Coverage runs
-nightly & remains reported, not gated. Timing ceilings are documented in
+The steps CI runs are listed in one place, `STEPS` in [scripts/verify.ts](../scripts/verify.ts):
+each step names the `ci.yml` job that runs it, & each job runs its steps with
+`pnpm run verify -- --step=<name>` (the audit job, which installs nothing, uses
+`node scripts/verify.ts --step=audit`). The `knip` step fails on unused files, exports, &
+dependencies; its reviewed exceptions live in `knip.jsonc`. Some steps are not in the local matrix:
+the audit, the budgeted test run (the complete asset-independent suite with per-file & wall-time
+budgets; the cleanup test runs only when its script changes), & the stale-translation check (pull
+requests that touch `messages/` only). The accessibility and PWA suites run against the build job’s
+output when `src/`, `static/`, `tests/`, or their tooling change. The “CI passed” job aggregates
+every result. Coverage runs nightly & remains reported, not gated. Timing ceilings are documented in
 [the development workflow](development-workflow.md#vitest-time-budgets). A PR merges only when it
 passes; fix CI failures on the branch rather than merging around them (see agent-workflow.md’s CI
 monitoring rule).
 
 ## Full verification
 
-`pnpm run verify` is read-only & runs CI’s non-browser matrix (`lint`, `check`, `check:i18n`,
-`test`, `build`, `check:routes`, `check:built`); run `pnpm run lint:fix` first. Add `-- --assets`
-for `test:pipeline:assets`, `--browser` for the Playwright suites, or `--all` for both. Run it once,
-when commit-ready, only when:
+`pnpm run verify` is read-only & runs CI’s non-browser matrix (the steps `STEPS` in
+[scripts/verify.ts](../scripts/verify.ts) marks as default); run `pnpm run lint:fix` first. Add
+`-- --assets` for `test:pipeline:assets`, `--browser` for the Playwright suites, or `--all` for
+both; `-- --step=<name>` runs one step. Run it once, when commit-ready, only when:
 
 - The change regenerates `tracker-data.json` or touches the pipeline parser, evaluator, extractors,
   or shared tracker contract. CI has no game assets, so `pnpm run test:pipeline:assets` and the

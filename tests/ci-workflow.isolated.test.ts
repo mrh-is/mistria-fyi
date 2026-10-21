@@ -7,6 +7,8 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
 
+import { STEPS } from "../scripts/verify.js";
+
 interface Workflow {
   concurrency?: { "cancel-in-progress"?: boolean; group?: string };
   jobs?: Record<string, WorkflowJob>;
@@ -77,6 +79,20 @@ function runCommands(job: undefined | WorkflowJob): string[] {
   return job?.steps?.flatMap((step) => (step.run === undefined ? [] : [step.run])) ?? [];
 }
 
+/** The `run` text of a job step that starts a verify step with no extra arguments. */
+function verifyCommand(name: string): string {
+  return `pnpm run verify -- --step=${name}`;
+}
+
+/** The verify step names a job runs: `pnpm run verify -- --step=<name>` or the `node` form. */
+function verifySteps(job: undefined | WorkflowJob): string[] {
+  return runCommands(job).flatMap((command) =>
+    [...command.matchAll(/(?:pnpm run verify --|node scripts\/verify\.ts) --step=([\w:-]+)/gu)].map(
+      (match) => match[1],
+    ),
+  );
+}
+
 describe("CI workflow triggers", () => {
   it("runs for pull requests, main pushes, nightly, and manual dispatch", () => {
     expect(workflow.on).toEqual({
@@ -114,42 +130,67 @@ describe("CI workflow jobs", () => {
     // Lint needs its own sync step: it runs on a separate runner from `check`, which is the
     // only script that generates .svelte-kit/tsconfig.json (required by oxlint's type-aware rules).
     const lintCommands = runCommands(jobs.lint);
-    expect(lintCommands).toContain("pnpm run lint");
     expect(lintCommands.indexOf("pnpm exec svelte-kit sync")).toBeGreaterThan(-1);
     expect(lintCommands.indexOf("pnpm exec svelte-kit sync")).toBeLessThan(
-      lintCommands.indexOf("pnpm run lint"),
+      lintCommands.findIndex((command) => command.includes("--step=lint")),
     );
-    expect(runCommands(jobs.check)).toContain("pnpm run check");
-    // One pass runs the complete suite; scheduled runs also collect coverage.
+    // One pass runs the complete suite with budgets, never the plain local `test` step; scheduled
+    // runs also collect coverage.
     const testCommands = runCommands(jobs.test);
-    expect(testCommands).toContain("node scripts/vitest-timings.ts");
-    expect(testCommands).not.toContain("pnpm run test");
-    expect(testCommands.indexOf("node scripts/vitest-timings.ts")).toBeLessThan(
+    expect(testCommands).not.toContain(verifyCommand("test"));
+    expect(testCommands.indexOf(verifyCommand("test:budgets"))).toBeLessThan(
       testCommands.indexOf('node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"'),
-    );
-    // The build job also proves the Cloudflare route table keeps static assets off Functions.
-    expect(runCommands(jobs.build)).toEqual(
-      expect.arrayContaining(["pnpm run build", "pnpm run check:routes"]),
     );
   });
 
-  it("runs each verification command exactly once", () => {
-    const commands = Object.values(jobs).flatMap((job) => runCommands(job));
-    for (const command of [
-      "pnpm run lint",
-      "pnpm run check",
-      "pnpm run check:i18n",
-      "node scripts/vitest-timings.ts",
-      "pnpm run build",
-      "pnpm run check:routes",
-    ]) {
-      expect(commands.filter((entry) => entry === command)).toHaveLength(1);
+  // scripts/verify.ts is the one list of steps: each step that names a job runs in exactly that job,
+  // & every step a job runs is in the list. The commands themselves live in verify.ts.
+  it("runs each verify step with a job exactly once, in that job", () => {
+    const allSteps = Object.entries(jobs).flatMap(([jobName, job]) =>
+      verifySteps(job).map((step) => [jobName, step] as const),
+    );
+    for (const step of STEPS.filter(({ job }) => job !== undefined)) {
+      expect(
+        allSteps.filter(([, name]) => name === step.name),
+        step.name,
+      ).toEqual([[step.job, step.name]]);
     }
+    for (const [jobName, name] of allSteps) {
+      const definition = STEPS.find((step) => step.name === name);
+      expect(definition, `${jobName} runs unknown step ${name}`).toBeDefined();
+      expect(definition?.job, `${name} is not meant for ${jobName}`).toBe(jobName);
+    }
+  });
+
+  it("runs verification only through verify, not by calling scripts directly", () => {
+    // Every line of every `run:` block, so a direct call after the first line is caught too. The
+    // scripts are the ones a step runs (`pnpm run <script>` or `pnpm <script>`), plus the audit & the
+    // tools a script wraps.
+    const scripts = STEPS.flatMap(({ command }) =>
+      command.kind === "pnpm" && command.args[0] === "run" ? [command.args[1] ?? ""] : [],
+    );
+    const direct = new RegExp(
+      // Script names are plain words, colons, & hyphens, so they need no regex escaping.
+      `^(?:pnpm (?:run )?(?:${scripts.join("|")}|audit)(?:\\s|$)${String.raw`|pnpm exec (?:vitest|playwright|svelte-check)\b`}|node scripts/vitest-timings)`,
+      "u",
+    );
+    const offenders = Object.entries(jobs).flatMap(([jobName, job]) =>
+      runCommands(job)
+        .flatMap((command) => command.split("\n").map((line) => line.trim()))
+        .filter((line) => direct.test(line))
+        .map((line) => `${jobName}: ${line}`),
+    );
+    expect(offenders).toEqual([]);
+    // The guard catches what it claims to: a direct call on a later line of a block.
+    expect(direct.test("pnpm test")).toBe(true);
+    expect(direct.test("pnpm run check:i18n")).toBe(true);
+    expect(direct.test("pnpm exec vitest run")).toBe(true);
+    expect(direct.test("pnpm run verify -- --step=lint")).toBe(false);
   });
 
   it("collects coverage only nightly & publishes timing evidence after failures", () => {
     const steps = jobs.test.steps ?? [];
-    const testStep = steps.find((step) => step.run === "node scripts/vitest-timings.ts");
+    const testStep = steps.find((step) => step.run === verifyCommand("test:budgets"));
     expect(testStep?.env?.VITEST_COVERAGE).toBe("${{ github.event_name == 'schedule' }}");
     expect(testStep?.["continue-on-error"]).toBeUndefined();
     const coverageSummary = steps.find((step) => step.name === "Summarize coverage");
@@ -166,7 +207,7 @@ describe("CI workflow jobs", () => {
     expect(filter).toContain("cleanup=false");
     expect(filter).toContain("scripts/cleanup-merged-worktrees.ts) cleanup=true");
     expect(filter).toContain('git diff --no-renames --name-only "$BASE_SHA" HEAD');
-    const testStep = jobs.test.steps?.find((step) => step.run === "node scripts/vitest-timings.ts");
+    const testStep = jobs.test.steps?.find((step) => step.run === verifyCommand("test:budgets"));
     expect(testStep?.env?.VITEST_CLEANUP_CHANGED).toBe("${{ needs.changes.outputs.cleanup }}");
   });
 
@@ -225,7 +266,7 @@ describe("CI workflow jobs", () => {
   it("restores Vitest's module cache before running the tests", () => {
     const steps = jobs.test.steps ?? [];
     const cacheIndex = steps.findIndex((step) => step.uses?.startsWith("actions/cache@"));
-    const testIndex = steps.findIndex((step) => step.run === "node scripts/vitest-timings.ts");
+    const testIndex = steps.findIndex((step) => step.run === verifyCommand("test:budgets"));
     expect(cacheIndex).toBeGreaterThan(-1);
     expect(cacheIndex).toBeLessThan(testIndex);
     expect(steps[cacheIndex].with?.path).toBe("node_modules/.vitest-cache");
@@ -368,7 +409,7 @@ describe("CI workflow browser suites", () => {
 
     for (const jobName of browserJobs) {
       const steps = jobs[jobName].steps ?? [];
-      expect(runCommands(jobs[jobName])).not.toContain("pnpm run build");
+      expect(verifySteps(jobs[jobName])).not.toContain("build");
       const download = steps.find((step) => step.uses?.startsWith("actions/download-artifact@"));
       expect(download?.with?.name).toBe("build-output");
       expect(download?.with?.path).toBe(".svelte-kit/output/");
@@ -382,11 +423,11 @@ describe("CI workflow browser suites", () => {
       "pnpm exec tsx scripts/playwright-allocation.ts ${{ matrix.shard }}",
     );
     expect(accessibilityStep?.run).toContain(
-      "pnpm run test:accessibility --test-list=.playwright-artifacts/test-list.txt",
+      "pnpm run verify -- --step=test:accessibility --test-list=.playwright-artifacts/test-list.txt",
     );
     expect(accessibilityStep?.run).not.toContain("--shard=");
     expect(accessibilityStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
-    expect(pwaStep?.run).toBe("pnpm run test:pwa");
+    expect(pwaStep?.run).toBe(verifyCommand("test:pwa"));
     expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
   });
 
@@ -469,6 +510,71 @@ describe("CI workflow browser suites", () => {
     expect(download?.with?.pattern).toBe("accessibility-report-*");
     expect(download?.with?.path).toBe("playwright-shard-reports");
     expect(download?.with?.["merge-multiple"]).toBeUndefined();
+  });
+});
+
+describe("CI workflow locale sync", () => {
+  it("exposes the change detector's messages output", () => {
+    expect(jobs.changes.outputs?.messages).toBe("${{ steps.filter.outputs.messages }}");
+  });
+
+  it.each([
+    ["pull_request", "messages/fr.json", true],
+    ["pull_request", "scripts/locale-sync-allowlist.json", true],
+    ["pull_request", "scripts/check-locale-sync.ts", true],
+    ["pull_request", "src/app.css", false],
+    ["push", "messages/fr.json", false],
+    ["schedule", "messages/fr.json", false],
+    ["workflow_dispatch", "messages/fr.json", false],
+  ] as const)("detects message changes for %s: %s", (event, files, expected) => {
+    const directory = mkdtempSync(join(tmpdir(), "ci-filter-"));
+    const output = join(directory, "output");
+    try {
+      const filter = jobs.changes.steps?.find((step) => step.id === "filter")?.run ?? "";
+      const result = spawnSync(
+        "bash",
+        [
+          "-eu",
+          "-o",
+          "pipefail",
+          "-c",
+          `
+        gh() { printf '%s\\n' "$CHANGED_FILES"; }
+        git() { if [[ $1 == diff ]]; then printf '%s\\n' "$CHANGED_FILES"; fi; }
+        ${filter}
+      `,
+        ],
+        {
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            BASE_SHA: "base",
+            CHANGED_FILES: files,
+            EVENT_NAME: event,
+            GITHUB_OUTPUT: output,
+            PR_NUMBER: "689",
+            REPOSITORY: "owner/repo",
+          },
+        },
+      );
+      expect(result.status, result.stderr).toBe(0);
+      expect(readFileSync(output, "utf8")).toContain(`messages=${String(expected)}`);
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
+    }
+  });
+
+  it("runs the check on pull requests that change messages, against the merge checkout's base", () => {
+    const job = jobs["locale-sync"];
+    expect(job.needs).toBe("changes");
+    expect(job.if).toBe(
+      "github.event_name == 'pull_request' && needs.changes.outputs.messages == 'true'",
+    );
+    const checkout = job.steps?.find((step) => step.uses?.startsWith("actions/checkout@"));
+    // HEAD^1 of the PR's merge commit is the base branch tip, so two commits of history suffice.
+    expect(checkout?.with?.["fetch-depth"]).toBe(2);
+    expect(runCommands(job)).toContain("pnpm run verify -- --step=check:locale-sync --base HEAD^1");
+    expect(jobs["ci-passed"].needs).toContain("locale-sync");
   });
 });
 
