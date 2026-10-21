@@ -1,6 +1,6 @@
 import { fireEvent, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import QuestsContent from "#lib/components/quests-content.svelte";
 import { trackerData } from "#lib/data/index.js";
@@ -14,6 +14,14 @@ describe("QuestsContent empty sections", () => {
   beforeEach(() => {
     userState.resetAll();
     userState.toggleShowSpoilers();
+    toolbarState.closeSearch();
+    toolbarState.resetSourceFilters();
+  });
+
+  // The `client` project shares stores across the files a worker runs, so leave spoilers off &
+  // the toolbar closed for the next file.
+  afterEach(() => {
+    userState.resetAll();
     toolbarState.closeSearch();
     toolbarState.resetSourceFilters();
   });
