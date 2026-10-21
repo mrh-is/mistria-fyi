@@ -1,12 +1,29 @@
 import { LOCALE_CODES } from "../types/locale.js";
 
 /**
- * Routes whose `+page.ts` sets `prerender = true`. SvelteKit's default `*` entry would prerender
- * them at their unprefixed paths, which only redirect (there is no unprefixed default locale), so
- * the build lists each locale's copy instead. A route marked prerenderable but missing here fails
- * the build as unseen.
+ * Every page route as its unprefixed path (`""` is the home page): the root layout prerenders them
+ * all, and each is also a promised slug whose bare path gets a locale-picking stub
+ * (`bare-path-stub.ts`). SvelteKit's default `*` entry would prerender the unprefixed paths, which
+ * have no locale, so the build lists each locale's copy instead. A route missing here fails the
+ * build as unseen; `prerender-entries.test.ts` checks the list against the route files.
  */
-export const PRERENDERED_ROUTES = ["/data"] as const;
+export const PRERENDERED_ROUTES = [
+  "",
+  "/about",
+  "/almanac",
+  "/animals",
+  "/cosmetics",
+  "/data",
+  "/everything",
+  "/mines",
+  "/museum",
+  "/privacy",
+  "/quests",
+  "/recipes",
+  "/renown",
+  "/skills",
+  "/villagers",
+] as const;
 
 /** Prerendered paths outside the locale prefixes (see `UNLOCALIZED_PATH_PREFIXES`). */
 const UNLOCALIZED_PRERENDERED_PATHS = ["/sitemap.xml"] as const;

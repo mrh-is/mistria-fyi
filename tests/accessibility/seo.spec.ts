@@ -3,7 +3,7 @@ import { expect, test } from "../browser/test.js";
 test.use({ javaScriptEnabled: false });
 
 test("Data management is rendered but excluded from indexing", async ({ page }) => {
-  const response = await page.goto("/data");
+  const response = await page.goto("/en/data");
 
   expect(response?.ok()).toBe(true);
   await expect(page).toHaveTitle("Data management — Mistria Field Guide");

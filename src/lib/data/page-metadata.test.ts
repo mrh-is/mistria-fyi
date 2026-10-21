@@ -162,6 +162,12 @@ describe("crawler files", () => {
     expect(sitemap).toContain(
       `<xhtml:link rel="alternate" hreflang="en" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), { locale: "en" }).href}" />`,
     );
+    expect(sitemap).toContain(
+      `<xhtml:link rel="alternate" hreflang="x-default" href="${SITE_ORIGIN}/almanac" />`,
+    );
+    expect(sitemap).toContain(
+      `<xhtml:link rel="alternate" hreflang="x-default" href="${SITE_ORIGIN}/" />`,
+    );
   });
 
   it("keeps every page crawlable", () => {

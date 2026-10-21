@@ -4,10 +4,28 @@ import { locales, localizeHref } from "#lib/paraglide/runtime.js";
 
 import { PRERENDER_ENTRIES, PRERENDERED_ROUTES } from "./prerender-entries.js";
 
+/** Every page route on disk as its unprefixed path (`""` for the home page), groups dropped. */
+function pageRoutes(): string[] {
+  return Object.keys(import.meta.glob("/src/routes/**/+page.svelte")).map((file) =>
+    file
+      .replace(/^\/src\/routes/, "")
+      .replace(/\/\+page\.svelte$/, "")
+      .replaceAll(/\/\([^)]+\)/g, ""),
+  );
+}
+
 describe("prerender entries", () => {
+  it("prerenders every page route except the development-only tools", () => {
+    expect([...PRERENDERED_ROUTES].toSorted()).toEqual(
+      pageRoutes()
+        .filter((route) => route !== "/dev" && !route.startsWith("/dev/"))
+        .toSorted(),
+    );
+  });
+
   it("lists every prerendered route at Paraglide's prefixed path in every locale", () => {
     const localized = locales.flatMap((locale) =>
-      PRERENDERED_ROUTES.map((route) => localizeHref(route, { locale })),
+      PRERENDERED_ROUTES.map((route) => localizeHref(route || "/", { locale })),
     );
     expect(PRERENDER_ENTRIES.filter((entry) => entry !== "/sitemap.xml").toSorted()).toEqual(
       localized.toSorted(),
@@ -15,7 +33,7 @@ describe("prerender entries", () => {
   });
 
   it("never lists an unprefixed page, which would prerender a locale redirect", () => {
-    for (const route of PRERENDERED_ROUTES) expect(PRERENDER_ENTRIES).not.toContain(route);
+    for (const route of PRERENDERED_ROUTES) expect(PRERENDER_ENTRIES).not.toContain(route || "/");
   });
 
   it("keeps the sitemap, which is prerendered outside the locale prefixes", () => {

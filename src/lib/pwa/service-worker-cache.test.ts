@@ -346,6 +346,27 @@ describe("service-worker offline launch from start_url", () => {
     expect(response.headers.get("location")).toBe(`${ORIGIN}/fr`);
   });
 
+  it("prefers a cached locale page over the bare path's cached stub", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/`, new Response("stub"));
+    await cache.put(`${ORIGIN}/ja`, new Response("ja home"));
+    const deps = dependencies(cache, offline());
+    await deps.lastLocale.remember("ja");
+
+    const response = await fetchRuntimeRequest(navigation("/"), deps);
+
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/ja`);
+  });
+
+  it("serves the bare path's cached stub when no locale's page is cached", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/`, new Response("stub"));
+
+    const response = await fetchRuntimeRequest(navigation("/"), dependencies(cache, offline()));
+
+    expect(await response.text()).toBe("stub");
+  });
+
   it("serves the offline page when no locale's page is cached", async () => {
     const response = await fetchRuntimeRequest(
       navigation("/"),

@@ -5,7 +5,7 @@ import { sveltekit } from "@sveltejs/kit/vite";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { svelteTesting } from "@testing-library/svelte/vite";
-import { readdirSync, readFileSync, rmSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
@@ -16,8 +16,9 @@ import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
+import { withBarePathStubs } from "./src/lib/build/bare-path-stubs.js";
 import { withHeadersFile } from "./src/lib/build/headers-file.js";
-import { LICENSES_FILE_NAME, licensesPlugin, noticeBlock } from "./src/lib/build/licenses.js";
+import { licensesPlugin, noticeBlock } from "./src/lib/build/licenses.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
 import { PARAGLIDE_OPTIONS } from "./src/lib/i18n/paraglide-options.js";
 import { PRERENDER_ENTRIES } from "./src/lib/i18n/prerender-entries.js";
@@ -102,20 +103,6 @@ const clientTestOptions = {
   ],
 };
 
-/**
- * Cloudflare Pages caps `_routes.json` at 100 rules. The adapter's default `<files>` exclusion
- * lists every static asset individually, which can overflow that cap once `static/` holds enough
- * files (it did for the ~2,500 sprites now hosted on assets.mistria.fyi instead, see #312, #247).
- * Exclude each top-level `static/` directory with one wildcard instead, and keep top-level files
- * as individual rules. Dynamic routes (locale pages, `/api/feedback`) stay covered by the `/*`
- * include.
- */
-const staticExcludes = readdirSync(path.join(import.meta.dirname, "static"), {
-  withFileTypes: true,
-})
-  .filter((entry) => !entry.name.startsWith("."))
-  .map((entry) => (entry.isDirectory() ? `/${entry.name}/*` : `/${entry.name}`));
-
 export default defineConfig({
   build: {
     // tracker-data.json is the largest chunk: ~844 kB minified, ~75 kB gzipped as of the 1.0.5
@@ -144,27 +131,23 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     sveltekit({
-      adapter: withHeadersFile(
-        adapter({
-          // Concurrent preview servers (the Playwright suites, #19) must not share Miniflare's
-          // default `.wrangler/state` SQLite files, so scripts/playwright-preview.ts hands each one
-          // its own directory.
-          platformProxy: process.env.MISTRIA_PREVIEW_PERSIST_DIR
-            ? { persist: { path: process.env.MISTRIA_PREVIEW_PERSIST_DIR } }
-            : {},
-          routes: {
-            exclude: [
-              "<build>",
-              "<prerendered>",
-              "<redirects>",
-              "/service-worker.js",
-              `/${LICENSES_FILE_NAME}`,
-              ...staticExcludes,
-            ],
-            include: ["/*"],
-          },
-        }),
-        contentSecurityPolicy,
+      adapter: withBarePathStubs(
+        withHeadersFile(
+          adapter({
+            // Concurrent preview servers (the Playwright suites, #19) must not share Miniflare's
+            // default `.wrangler/state` SQLite files, so scripts/playwright-preview.ts hands each one
+            // its own directory.
+            platformProxy: process.env.MISTRIA_PREVIEW_PERSIST_DIR
+              ? { persist: { path: process.env.MISTRIA_PREVIEW_PERSIST_DIR } }
+              : {},
+            // Every page is prerendered and every bare path is a static stub or a `_redirects` rule,
+            // so only `/api` needs the Function. An include list stays one rule however many pages
+            // there are; Pages caps `_routes.json` at 100, and excluding each prerendered page
+            // would overflow it. Anything else is a static file or the not-found page.
+            routes: { exclude: [], include: ["/api/*"] },
+          }),
+          contentSecurityPolicy,
+        ),
       ),
       preprocess: vitePreprocess(),
 
