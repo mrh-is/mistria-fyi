@@ -1,62 +1,19 @@
 import type * as v from "valibot";
 
-import type { NonEmptyArray } from "#lib/utils/record.js";
-
-import type {
-  AnimalId,
-  DateId,
-  Day,
-  FestivalId,
-  ItemId,
-  MinesBiomeId,
-  MuseumWingId,
-  PerkId,
-  QuestId,
-  QuestType,
-  RecipeId,
-  Season,
-  SkillId,
-  StoreId,
-  TreasureChestTierId,
-  VillagerId,
-  Weather,
-} from "./tracker-data.js";
-import type { QuestVisibility, VisibilityCondition } from "./visibility.js";
+import type { AvailabilityLeafSchema, SourceSchema } from "./tracker-data-schema.js";
+import type { SourcedEntity } from "./tracker-data.js";
 
 export type ActivityId = string & v.Brand<"ActivityId">;
+/** Recursive edges require an explicit annotation; the schema owns all leaf payloads. */
 export type AvailabilityCondition =
-  | { type: "all"; conditions: NonEmptyArray<AvailabilityCondition> }
-  | { type: "always" }
-  | { type: "any"; conditions: NonEmptyArray<AvailabilityCondition> }
-  /** A date type is unlocked; without `dateId`, any date type is. */
-  | { type: "dateUnlocked"; dateId?: DateId }
-  | { type: "gamePredicate"; predicate: string; value: JsonValue }
-  | { type: "hasUpperFloor" }
-  | { type: "heartLevel"; level: number; villagerId: VillagerId }
-  | { type: "isDating" }
-  | { type: "mineFloor"; floor: number }
-  | { type: "not"; condition: AvailabilityCondition }
-  | { type: "perkUnlocked"; perkId: PerkId }
-  | { type: "quest"; questId: QuestId; state: Exclude<QuestVisibility, "unavailable"> }
-  | { type: "reachedSeason"; season: Season }
-  | { type: "season"; seasons: NonEmptyArray<Season> }
-  | { type: "skillLevel"; level: number; skillId: SkillId }
-  | { type: "time"; start: number; end: number }
-  | { type: "weather"; weathers: Weather[] };
-/**
- * Cutscenes a reviewed override names as a source. Each has its own wording, since the game names
- * no cutscene; deriving every `cutscenes.toml` grant natively would replace this closed list.
- */
+  | v.InferOutput<typeof AvailabilityLeafSchema>
+  | { type: "all"; conditions: [AvailabilityCondition, ...AvailabilityCondition[]] }
+  | { type: "any"; conditions: [AvailabilityCondition, ...AvailabilityCondition[]] }
+  | { type: "not"; condition: AvailabilityCondition };
+/** Reviewed cutscenes with no native player-facing name. */
 export const CUTSCENE_SOURCE_IDS = ["elsie_dating_tutorial", "great_bird_0"] as const;
 export type CutsceneSourceId = (typeof CUTSCENE_SOURCE_IDS)[number];
-/**
- * How a date inspiration item drops before its date is unlocked: digging up a dig site or catching
- * a fish at `locationId`, or opening a Mines chest anywhere.
- */
 export const DATE_INSPIRATION_DROP_ACTIVITIES = ["dig_site", "fish", "mines_chest"] as const;
-export type DateInspirationDropActivity = (typeof DATE_INSPIRATION_DROP_ACTIVITIES)[number];
-export type DialogueChoiceId = string & v.Brand<"DialogueChoiceId">;
-export type DungeonLootGroup = string & v.Brand<"DungeonLootGroup">;
 export type JsonValue =
   | boolean
   | JsonValue[]
@@ -66,87 +23,9 @@ export type JsonValue =
   | { [key: string]: JsonValue };
 export type LocationId = string & v.Brand<"LocationId">;
 export type MonsterId = string & v.Brand<"MonsterId">;
-export type ProductionMethod = "cook" | "craft" | "dragon_forge" | "mill" | "smith";
-export type Source =
-  | (SourceDetails &
-      (
-        | { type: "animal_product"; animalId: AnimalId }
-        | { type: "artifact_dig"; locationIds?: NonEmptyArray<LocationId> }
-        | { type: "artifact_replicator"; originalItemId: ItemId }
-        | { type: "bait_fish"; baitItemIds: NonEmptyArray<ItemId> }
-        | { type: "breed" }
-        | { type: "bug_catch"; locationIds?: NonEmptyArray<LocationId> }
-        | { type: "chicken_statue"; cost: number }
-        | { type: "chicken_statue"; unlockCondition: "breed_all_chicken_tiers" }
-        | { type: "crop"; seedItemId: ItemId }
-        | { type: "cutscene"; cutsceneId: CutsceneSourceId }
-        | { type: "date"; dateId: DateId }
-        | { type: "date_inspiration"; itemId: ItemId }
-        | { type: "date_inspiration_drop"; activity: "mines_chest"; dateId: DateId }
-        | {
-            type: "date_inspiration_drop";
-            activity: Exclude<DateInspirationDropActivity, "mines_chest">;
-            dateId: DateId;
-            locationId: LocationId;
-          }
-        | { type: "dive"; waterTypes?: NonEmptyArray<WaterType> }
-        | { type: "donate_item"; triggerItemId: ItemId }
-        | { type: "engagement" }
-        | { type: "equipment"; itemId: ItemId }
-        | { type: "festival"; festivalId: FestivalId; storeId?: StoreId }
-        | { type: "festival_activity"; activityId: ActivityId; festivalId: FestivalId }
-        | { type: "fish"; waterTypes?: NonEmptyArray<WaterType> }
-        | { type: "fish_trap"; baitItemIds: NonEmptyArray<ItemId> }
-        | { type: "forage"; locationIds?: NonEmptyArray<LocationId> }
-        | { type: "horse_statue"; cost: number; questId: QuestId }
-        | { type: "letter"; letterId: string; trigger: "birthday" | "condition" }
-        | { type: "lost_and_found" }
-        | { type: "mine"; biomeId: MinesBiomeId }
-        | { type: "mine_fish"; biomeId?: MinesBiomeId }
-        | {
-            type: "mines_chest";
-            biomeId: MinesBiomeId;
-            lootGroup?: DungeonLootGroup;
-            perkId?: PerkId;
-          }
-        | { type: "mines_dig_site"; biomeId: MinesBiomeId; perkId: PerkId }
-        | { type: "monster"; monsterId: MonsterId }
-        | { type: "monster_feed"; monsterId: MonsterId }
-        | { type: "museum_donation"; setCount: number; wingId: MuseumWingId }
-        | { type: "perk"; perkId: PerkId }
-        | { type: "perk_drop"; activity: "crop_harvest"; perkId: PerkId }
-        | { type: "proposal"; villagerId: VillagerId }
-        | {
-            type: "quest";
-            challengeRecipeId?: RecipeId;
-            choiceId?: DialogueChoiceId;
-            questId: QuestId;
-            questType?: QuestType;
-            requestedItemId?: ItemId;
-            trigger: "completion" | "dialogue_choice";
-          }
-        | { type: "reach_day"; triggerDate: Day & { year?: number } }
-        | { type: "recipe"; method: ProductionMethod; recipeId: RecipeId }
-        | { type: "renown"; level: number }
-        | { type: "ritual_chamber"; perkId: PerkId }
-        | { type: "scroll_bundle"; bundleItemId: ItemId; storeId: StoreId }
-        | { type: "secret_chest"; locationId: LocationId }
-        | { type: "ship_item"; triggerItemId: ItemId }
-        | { type: "spouseGift"; villagerId: VillagerId }
-        | { type: "station"; stationId: StationId }
-        | { type: "store"; storeId: StoreId }
-        | { type: "treasure_chest"; tier: TreasureChestTierId }
-        | { type: "tree"; saplingItemId: ItemId }
-        | { type: "upgrade"; storeId: StoreId; upgradeId: UpgradeId }
-        | { type: "wedding" }
-        | { type: "wishing_well"; cost: number }
-      ))
-  | { type: "default" };
-export interface SourceDetails {
-  availability?: AvailabilityCondition;
-  visibility?: VisibilityCondition;
-}
-export type SourceTuple = NonEmptyArray<Source>;
+export type Source = v.InferOutput<typeof SourceSchema>;
+export type SourceTuple = SourcedEntity["sources"];
+export type ProductionMethod = Extract<Source, { type: "recipe" }>["method"];
 export type StationId = string & v.Brand<"StationId">;
 /** Purchasable home & farm upgrades; each id is also the upgraded item's id. */
 export const UPGRADE_IDS = ["adept_kitchen", "cozy_kitchen", "farm_bridge", "stairs"] as const;

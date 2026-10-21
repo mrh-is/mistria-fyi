@@ -1,3 +1,6 @@
+import { getDotPath, safeParse } from "valibot";
+
+import { TrackerDataSchema } from "#lib/types/tracker-data-schema.js";
 /**
  * Assembles `tracker-data.json` and its locale chunks from an evaluated fiddle. Reads no files and
  * writes none: localization arrives through an injected {@link Localizer}, and `main.ts` owns
@@ -386,6 +389,14 @@ export function assembleTrackerData(
   diagnostics.validate();
   assertNoStockGates(trackerData);
   validateAcquisitionSources(trackerData, buildAcquisitionReferences(trackerData, fiddle));
+  const validation = safeParse(TrackerDataSchema, trackerData);
+  if (!validation.success) {
+    throw new Error(
+      `Tracker data schema validation failed:\n${validation.issues
+        .map((issue) => `${getDotPath(issue) ?? "<root>"}: ${issue.message}`)
+        .join("\n")}`,
+    );
+  }
   console.log("  Tracker data validation passed");
 
   return {

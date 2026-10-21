@@ -12,9 +12,14 @@ skills, stores, and sources.
 
 ### `src/lib/types/tracker-data.ts`
 
-The shared data contract between the pipeline and the app. It defines branded ID types (`ItemId`,
-`RecipeId`, `VillagerId`, etc.) and the `TrackerData` interface. The pipeline emits JSON that must
-conform to these types.
+The shared data contract between the pipeline and the app. Its entity types, including
+`TrackerData`, derive from the Valibot schemas in `tracker-data-schema.ts`; branded IDs (`ItemId`,
+`RecipeId`, `VillagerId`, etc.) retain their public identities. Only recursive condition edges need
+explicit TypeScript annotations; their leaf payloads derive from the schemas. The pipeline validates
+the complete assembled output after enrichment and before publication, alongside
+acquisition-reference, provenance, and cycle checks. Unknown fields and malformed payloads fail with
+a field path. The app imports the schemas only as types and trusts this validated, committed JSON,
+so schema validation adds no client runtime dependency.
 
 ### `src/lib/types/user-progress.ts`
 
