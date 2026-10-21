@@ -43,10 +43,12 @@ describe("FeedbackPanel", () => {
     userState.mergeFromSave(
       { renown: 7 },
       {
-        farmName: "Private Farm Name",
-        identity: { creationVersion: null, saveNumber: "123456" },
-        importedAt: Date.now(),
-        playerName: "Private Player Name",
+        metadata: {
+          farmName: "Private Farm Name",
+          identity: { creationVersion: null, saveNumber: "123456" },
+          importedAt: Date.now(),
+          playerName: "Private Player Name",
+        },
       },
     );
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });

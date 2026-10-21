@@ -200,7 +200,8 @@
     try {
       stopScanning();
       const decoded = await decodeTransferPayload(data, version);
-      transferResult = userState.mergeFromSave(decoded);
+      // A transfer carries no provenance, so what it adds is `unknown` rather than from a save.
+      transferResult = userState.mergeFromSave(decoded, { source: "unknown" });
     } catch (error) {
       if (!(error instanceof TransferDecodeError)) {
         transferError = `${m.transfer_error_invalid_qr_prefix()} ${m.transfer_error_could_not_decode()}`;

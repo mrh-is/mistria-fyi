@@ -53,7 +53,7 @@ describe("save import", () => {
       importedAt: Date.now() - 120_000,
       playerName: "Ada",
     };
-    userState.mergeFromSave({}, metadata);
+    userState.mergeFromSave({}, { metadata });
     render(ImportCard, { open: true });
     expect(screen.getByTestId("last-import")).toHaveTextContent("Save #123456 · Created in 0.11.7");
     expect(screen.getByTestId("last-import")).toHaveTextContent("Last imported 2 minutes ago");
@@ -98,6 +98,24 @@ describe("save import", () => {
     expect(screen.getByText(/Imported from player.json/)).toBeInTheDocument();
     expect(screen.getByText("1 warnings", { exact: true })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("records what the save adds with the save's playtime", async () => {
+    const cosmeticId = recordKeys(trackerData.cosmetics)[0];
+
+    await importFiles([
+      new File([JSON.stringify({ cosmetic_unlocks: [cosmeticId] })], "player.json"),
+      new File([JSON.stringify({ playtime: 3600.25 })], "header.json"),
+    ]);
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+    });
+    expect(userState.lastSavePlaytime).toBe(3600.25);
+    expect(userState.provenanceOf(`cosmetics/${cosmeticId}`)).toEqual({
+      playtime: 3600.25,
+      source: "save",
+    });
   });
 
   it("imports extracted JSON files and lists each warning", async () => {

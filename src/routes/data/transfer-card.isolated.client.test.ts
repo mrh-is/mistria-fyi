@@ -124,6 +124,8 @@ describe("TransferCard scan from image", () => {
     expect(screen.getByText("Museum donations: +1")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("QR code scanned successfully.");
     expect(userState.state.progress.museum.has(museumItemId)).toBe(true);
+    // A transfer carries no provenance, so what it adds isn't credited to a save.
+    expect(userState.provenanceOf(`museum/${museumItemId}`)).toEqual({ source: "unknown" });
     expect(screen.queryByRole("alert")).toBeNull();
   });
 

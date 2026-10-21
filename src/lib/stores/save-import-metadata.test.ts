@@ -15,7 +15,7 @@ afterEach(() => {
 
 describe("manual import metadata", () => {
   it("travels in backups, restores, and survives progress-only merges", () => {
-    userState.mergeFromSave({}, metadata);
+    userState.mergeFromSave({}, { metadata });
     const backup = userState.exportBackup();
     userState.resetAll();
     expect(userState.restoreBackup(backup)).toEqual({ ok: true });
@@ -25,14 +25,16 @@ describe("manual import metadata", () => {
   });
 
   it("updates the display on a rename while keeping the stable identity", () => {
-    userState.mergeFromSave({}, metadata);
+    userState.mergeFromSave({}, { metadata });
     userState.mergeFromSave(
       {},
       {
-        ...metadata,
-        farmName: "Moss",
-        importedAt: metadata.importedAt + 60_000,
-        playerName: "Bea",
+        metadata: {
+          ...metadata,
+          farmName: "Moss",
+          importedAt: metadata.importedAt + 60_000,
+          playerName: "Bea",
+        },
       },
     );
     expect(userState.state.lastImport).toMatchObject({
@@ -43,7 +45,7 @@ describe("manual import metadata", () => {
   });
 
   it("clears import history when progress is reset", () => {
-    userState.mergeFromSave({}, metadata);
+    userState.mergeFromSave({}, { metadata });
     userState.resetProgress();
     expect(userState.state.lastImport).toBeNull();
   });
