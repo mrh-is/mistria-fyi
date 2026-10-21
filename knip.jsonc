@@ -1,0 +1,50 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // A stale ignore or an unresolvable entry should fail CI, not print a hint nobody reads.
+  "treatConfigHintsAsErrors": true,
+  // Knip reads the SvelteKit & Vitest setup from vite.config.ts. Entries here are files that nothing
+  // imports because a runner, a hook, or a package script starts them.
+  "workspaces": {
+    ".": {
+      "entry": [
+        // SvelteKit's universal hooks module (`reroute`), loaded by the framework.
+        "src/hooks.ts",
+      ],
+      "ignore": [
+        // `scripts/locale-fonts/` is its own pnpm package with its own scripts & dependencies.
+        "scripts/locale-fonts/**",
+        // Fixtures the lint-ownership test feeds to ESLint & oxlint as text; nothing imports them.
+        "tests/lint-probes/**",
+      ],
+      "ignoreDependencies": [
+        // Registered by name in project.inlang/settings.json, never imported.
+        "@inlang/plugin-message-format",
+        // `cloudflare:workers` is a Workers runtime module, but Knip reads the `cloudflare` prefix as
+        // the npm SDK of the same name & reports it unlisted. We do not use that package.
+        "cloudflare",
+      ],
+    },
+    "pipeline": {
+      // The atlas CLI starts through `cd pipeline && tsx src/atlas/main.ts`, which Knip does not follow.
+      "entry": ["src/main.ts", "src/atlas/main.ts"],
+    },
+  },
+  "ignoreIssues": {
+    // The ui/ barrels follow shadcn-svelte's namespace pattern: `Root`, `DialogContent`, & other
+    // aliases, plus the prop & variant types (`ButtonProps`, `ToggleVariant`), so some exported names
+    // are intentionally unused. Only the barrels are covered; the components themselves are not.
+    "src/lib/components/ui/*/index.ts": ["exports", "types"],
+    // The script passes its own path to Vitest as a reporter, which loads this default export.
+    "scripts/vitest-timings.ts": ["exports"],
+    // `page` is `$app/state`'s export name, so the stub exports one object under two names.
+    "src/lib/test-utils/page-stub.svelte.ts": ["duplicates"],
+  },
+  "ignoreBinaries": [
+    // System tools the scripts probe for; contributors install them (docs/machine-setup.md).
+    "shellcheck",
+  ],
+  // Exports only used inside their own file stay allowed. That is a style question, not dead code,
+  // & enforcing it would have meant unexporting dozens of symbols in this PR; narrowing it is a
+  // follow-up (#113).
+  "ignoreExportsUsedInFile": true,
+}

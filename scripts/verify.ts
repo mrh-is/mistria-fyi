@@ -73,6 +73,7 @@ export const STEPS: readonly StepDefinition[] = [
   },
   { command: script("check"), job: "check", matrix: "default", name: "check" },
   { command: script("check:i18n"), job: "check", matrix: "default", name: "check:i18n" },
+  { command: script("knip"), job: "check", matrix: "default", name: "knip" },
   // Pull requests only: CI passes `--base HEAD^1`; there is no base to compare against locally.
   {
     command: script("check:locale-sync"),
