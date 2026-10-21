@@ -167,7 +167,21 @@ const StrictBlobSchema = v.object({
   worldState: v.object({ season: v.picklist(SEASONS), weather: v.picklist(WEATHERS) }),
 });
 
+/**
+ * This device's own data under the progress key, which never leaves it: exports leave it out and
+ * a restore keeps this device's. Its slots are reserved for sync: `syncReceipt` (what this device
+ * last applied) & `farmSwitchBackup` (progress saved before switching farms). Their shapes belong to
+ * the sync work that fills them, so they're carried through as stored, unknown keys included.
+ */
+const DeviceLocalSchema = v.looseObject({
+  farmSwitchBackup: v.optional(v.unknown()),
+  syncReceipt: v.optional(v.unknown()),
+});
+export type DeviceLocalState = v.InferOutput<typeof DeviceLocalSchema>;
+
 const RepairBlobSchema = v.object({
+  // Only storage holds this section; the strict schema strips it, so no restore brings one in.
+  local: v.fallback(v.optional(DeviceLocalSchema), undefined),
   progress: v.object({
     ...LIST_ENTRIES,
     animalCosmetics: validEntries(StringListSchema),
@@ -241,6 +255,8 @@ export interface RetainedProgress {
 }
 
 export interface LoadedProgress {
+  /** This device's own section; always empty from a backup. */
+  local: DeviceLocalState;
   progress: ProgressState;
   retained: RetainedProgress;
   worldState: WorldState;
@@ -394,7 +410,7 @@ function splitAnimalIds<T extends string>(
   return { known, unknown };
 }
 
-function normalizeBlob({ progress: stored, worldState }: ValidatedBlob): LoadedProgress {
+function normalizeBlob({ local, progress: stored, worldState }: ValidatedBlob): LoadedProgress {
   const retained = emptyRetainedProgress();
 
   const lists = {} as Record<ListField, Set<string>>;
@@ -467,7 +483,7 @@ function normalizeBlob({ progress: stored, worldState }: ValidatedBlob): LoadedP
   };
   backfillAnimalMaps(progress);
 
-  return { progress, retained, worldState: { ...worldState } };
+  return { local: local ?? {}, progress, retained, worldState: { ...worldState } };
 }
 
 /**
@@ -525,6 +541,42 @@ export function serializeProgress(
   { progress, worldState }: DeepReadonly<Pick<LoadedProgress, "progress" | "worldState">>,
   retained: DeepReadonly<RetainedProgress>,
 ): string {
+  return JSON.stringify(serializedState({ progress, worldState }, retained));
+}
+
+/**
+ * The stored form: the backup plus this device's `local` section, which only storage holds. An
+ * empty section is left out, so storage stays byte-identical to a backup until sync fills it.
+ */
+export function serializeStoredProgress(
+  loaded: DeepReadonly<Pick<LoadedProgress, "progress" | "worldState">>,
+  retained: DeepReadonly<RetainedProgress>,
+  local: DeepReadonly<DeviceLocalState>,
+): string {
+  const backup = serializedState(loaded, retained);
+  return JSON.stringify(Object.keys(local).length === 0 ? backup : { local, ...backup });
+}
+
+/**
+ * A stored blob as a backup: the same JSON without this device's `local` section. Used for a newer
+ * build's blob this one can't otherwise read, so only the section's top-level key is touched.
+ */
+export function withoutDeviceLocal(json: string): string {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return json;
+  }
+  if (typeof parsed !== "object" || parsed === null || !("local" in parsed)) return json;
+  const { local: _local, ...backup } = parsed;
+  return JSON.stringify(backup);
+}
+
+function serializedState(
+  { progress, worldState }: DeepReadonly<Pick<LoadedProgress, "progress" | "worldState">>,
+  retained: DeepReadonly<RetainedProgress>,
+): SerializedState {
   const list = (field: ListField) => sortedUnion(progress[field], retained.lists[field]);
   const s: SerializedState = {
     progress: {
@@ -561,5 +613,5 @@ export function serializeProgress(
     version: CURRENT_SERIALIZATION_VERSION,
     worldState: { season: worldState.season, weather: worldState.weather },
   };
-  return JSON.stringify(s);
+  return s;
 }
