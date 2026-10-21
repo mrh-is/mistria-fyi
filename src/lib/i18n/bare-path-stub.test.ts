@@ -1,6 +1,9 @@
 import { runInNewContext } from "node:vm";
+import { render } from "svelte/server";
 import { describe, expect, it, vi } from "vitest";
 
+import SeoHead from "../components/seo-head.svelte";
+import { pageMetadata, SITE_ORIGIN } from "../data/page-metadata.js";
 import { inlineScriptHashes } from "../security/inline-scripts.js";
 import { LOCALE_CODES } from "../types/locale.js";
 import {
@@ -55,6 +58,18 @@ describe("bare-path stub script", () => {
     ).toBe("/fr/almanac");
   });
 
+  it("reads a percent-encoded cookie, as SvelteKit's cookie parser did", () => {
+    expect(
+      landingUrl({ cookie: "mistria-fyi-locale=%66%72", languages: ["ja-JP"], url: "/almanac" }),
+    ).toBe("/fr/almanac");
+  });
+
+  it("treats a malformed escape as no stored preference", () => {
+    expect(
+      landingUrl({ cookie: "mistria-fyi-locale=%E0%A4%A", languages: ["ko"], url: "/almanac" }),
+    ).toBe("/ko/almanac");
+  });
+
   it("ignores a cookie that isn't a supported locale", () => {
     expect(
       landingUrl({ cookie: "mistria-fyi-locale=xx", languages: ["ko"], url: "/almanac" }),
@@ -89,7 +104,30 @@ describe("bare-path stub script", () => {
   });
 });
 
+/** Every `<link rel="alternate">` in `html`, as sorted `hreflang href` pairs. */
+function alternates(html: string): string[] {
+  return [...html.matchAll(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"\/?>/g)]
+    .map(([, hreflang, href]) => `${hreflang} ${href}`)
+    .toSorted();
+}
+
 describe("renderBarePathStub", () => {
+  it.each([
+    ["/almanac", "/ja/almanac"],
+    ["/", "/zh-Hant"],
+  ])(
+    "annotates %s with the same hreflang set as its localized pages, so x-default is reciprocal",
+    (barePath, localizedPath) => {
+      const metadata = pageMetadata({ description: "Description.", title: "Title" });
+      const { head } = render(SeoHead, { props: { metadata, pathname: localizedPath } });
+
+      const stubAlternates = alternates(renderBarePathStub(barePath));
+      expect(stubAlternates).toHaveLength(LOCALE_CODES.length + 1);
+      expect(stubAlternates).toContain(`x-default ${new URL(barePath, SITE_ORIGIN).href}`);
+      expect(stubAlternates).toEqual(alternates(head));
+    },
+  );
+
   it("carries the same single inline script on every stub, so one hash allows them all", () => {
     const hashes = new Set(
       BARE_PATHS.flatMap((barePath) => inlineScriptHashes(renderBarePathStub(barePath))),

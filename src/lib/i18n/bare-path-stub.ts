@@ -1,5 +1,5 @@
 import localeManifest from "../data/locales.json" with { type: "json" };
-import { SITE_NAME } from "../data/page-metadata.js";
+import { SITE_NAME, SITE_ORIGIN } from "../data/page-metadata.js";
 import { LOCALE_CODES } from "../types/locale.js";
 import { PARAGLIDE_OPTIONS } from "./paraglide-options.js";
 import { PRERENDERED_ROUTES } from "./prerender-entries.js";
@@ -26,7 +26,7 @@ const COOKIE_PREFIX = `${PARAGLIDE_OPTIONS.cookieName}=`;
 
 /**
  * Picks the locale the way the server did before pages were prerendered: the stored preference
- * cookie, then the browser's languages (each full tag, then its base language, matched without
+ * cookie (percent-decoded, as SvelteKit's cookie parser did), then the browser's languages (each full tag, then its base language, matched without
  * regard to case, as Paraglide's negotiation does), then English. It keeps the path, query, &
  * fragment, and `location.replace` keeps the stub out of the history, so Back skips it. One text
  * for every stub, so one CSP hash allows them all.
@@ -35,7 +35,13 @@ export const BARE_PATH_STUB_SCRIPT = `(() => {
   const locales = ${JSON.stringify(LOCALE_CODES)};
   const toLocale = (tag) => locales.find((locale) => locale.toLowerCase() === tag.toLowerCase());
   const cookie = document.cookie.split(/;\\s*/).find((entry) => entry.startsWith(${JSON.stringify(COOKIE_PREFIX)}));
-  const stored = cookie && locales.find((locale) => locale === cookie.slice(${String(COOKIE_PREFIX.length)}));
+  let stored;
+  try {
+    const value = cookie && decodeURIComponent(cookie.slice(${String(COOKIE_PREFIX.length)}));
+    stored = locales.find((locale) => locale === value);
+  } catch {
+    // A malformed escape is no stored preference.
+  }
   const negotiated = (navigator.languages || [])
     .map((tag) => toLocale(tag) || toLocale(tag.split("-")[0]))
     .find(Boolean);
@@ -50,10 +56,19 @@ const LOCALE_NAMES = new Map(
 
 /**
  * The page served at `barePath`. Its script sends the visitor on to their locale's copy of the
- * page; without JavaScript, it lists every locale's copy instead.
+ * page; without JavaScript, it lists every locale's copy instead. Its head carries the same
+ * hreflang set as those copies (`seo-head.svelte`), which name this page as `x-default`; search
+ * engines ignore an annotation the other page doesn't return.
  */
 export function renderBarePathStub(barePath: string): string {
   const rest = barePath === "/" ? "" : barePath;
+  const alternates = [
+    ...LOCALE_CODES.map(
+      (locale) =>
+        `<link rel="alternate" hreflang="${locale}" href="${new URL(`/${locale}${rest}`, SITE_ORIGIN).href}">`,
+    ),
+    `<link rel="alternate" hreflang="x-default" href="${new URL(barePath, SITE_ORIGIN).href}">`,
+  ];
   const links = LOCALE_CODES.map(
     (locale) =>
       `<li><a href="/${locale}${rest}" hreflang="${locale}" lang="${locale}">${LOCALE_NAMES.get(locale) ?? locale}</a></li>`,
@@ -66,6 +81,7 @@ export function renderBarePathStub(barePath: string): string {
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     '<meta name="color-scheme" content="light dark">',
     `<title>${SITE_NAME}</title>`,
+    ...alternates,
     `<script>${BARE_PATH_STUB_SCRIPT}</script>`,
     "</head>",
     "<body>",
