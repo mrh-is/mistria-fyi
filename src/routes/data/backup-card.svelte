@@ -5,6 +5,7 @@
 
   import { Button } from "#lib/components/ui/button/index.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
@@ -21,6 +22,9 @@
   let restoring = $state(false);
   let restoreError = $state("");
   let restoreStatus = $state("");
+
+  // An app update's reload waits until a restore has finished applying.
+  $effect(() => holdUpdatesWhile(restoring));
 
   function downloadJson(json: string, prefix: string) {
     const blob = new Blob([json], { type: "application/json" });

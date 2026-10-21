@@ -511,6 +511,23 @@ export function changedFiles(cwd: string, branch: boolean | string = false): str
   return [...paths].toSorted();
 }
 
+/**
+ * Paths with unresolved index stages, relative to the repository root. Index state, not conflict
+ * markers, is the boundary: Git's alternate conflict styles & marker sizes defeat a text check.
+ */
+export function unmergedFiles(cwd: string): Set<string> {
+  const result = spawnSync("git", ["diff", "--name-only", "--diff-filter=U", "-z"], {
+    cwd: repositoryRoot(cwd),
+    encoding: "utf8",
+  });
+  if (result.status !== 0) {
+    throw new Error(
+      result.error?.message ?? (result.stderr.trim() || "Could not list unmerged files"),
+    );
+  }
+  return new Set(result.stdout.split("\0").filter(Boolean));
+}
+
 export function contextOutput(event: string, additionalContext: string): string {
   return JSON.stringify({ hookSpecificOutput: { additionalContext, hookEventName: event } });
 }

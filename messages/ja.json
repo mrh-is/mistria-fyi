@@ -1,12 +1,10 @@
 {
+  "almanac_show_unobtainable": "入手できないアイテムを表示？",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "コレクション、クエスト、スキルなどの進捗を記録",
   "og_share_description": "ミストリアのすべてをひとつに",
   "source_spoilered": "非表示",
-  "app_update_available": "Mistria Field Guideが更新されました！再読み込みして最新バージョンを入手してください。",
-  "app_update_later": "後で",
-  "app_update_refresh": "再読み込み",
   "onboarding_region_label": "はじめに",
   "onboarding_overline": "新しいフィールドガイド",
   "onboarding_title": "農家さん、ようこそ！",
@@ -662,5 +660,9 @@
         "countPlural=other": "{wing}の展示セットを{count}個完成させる"
       }
     }
-  ]
+  ],
+  "import_last_imported": "最終インポート：{time}",
+  "import_farm_identity": "セーブ番号 {number} · 作成時のバージョン {version}",
+  "import_unknown_number": "不明",
+  "import_unknown_version": "不明"
 }

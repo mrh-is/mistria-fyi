@@ -70,4 +70,19 @@ describe("extractTownRankQuestLevels", () => {
     });
     expect(() => extractTownRankQuestLevels(fiddle, ranks)).toThrow(/additional requirements/);
   });
+
+  it.each([
+    undefined,
+    null,
+    {},
+    [],
+    [null],
+    [{ requirements: null }],
+    [rankQuest({}), rankQuest({})],
+  ])("rejects missing or ambiguous rank stages: %j", (stages) => {
+    const fiddle = makeFiddle({
+      quests: { story_quests: { reach_example_town_rank: { stages } } },
+    });
+    expect(() => extractTownRankQuestLevels(fiddle, ranks)).toThrow(/reach_example_town_rank/);
+  });
 });

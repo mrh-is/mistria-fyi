@@ -1,12 +1,10 @@
 {
+  "almanac_show_unobtainable": "Show unobtainable?",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Track every collection, quest, skill & more",
   "og_share_description": "All of Mistria in one place",
   "source_spoilered": "Hidden",
-  "app_update_available": "The Mistria Field Guide has been updated! Refresh to get the newest version.",
-  "app_update_later": "Not now",
-  "app_update_refresh": "Refresh",
   "onboarding_region_label": "Getting started",
   "onboarding_overline": "New field guide",
   "onboarding_title": "Welcome, farmer!",
@@ -670,5 +668,9 @@
         "countPlural=other": "Complete {count} sets in the {wing} wing"
       }
     }
-  ]
+  ],
+  "import_last_imported": "Last imported {time}",
+  "import_farm_identity": "Save #{number} · Created in {version}",
+  "import_unknown_number": "unknown",
+  "import_unknown_version": "unknown version"
 }

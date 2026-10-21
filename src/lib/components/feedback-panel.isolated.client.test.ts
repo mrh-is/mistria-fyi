@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import FeedbackPanel from "#lib/components/feedback-panel.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), warning: vi.fn() }));
@@ -32,6 +33,44 @@ describe("FeedbackPanel", () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     mockTurnstile();
+  });
+
+  it("previews and attaches progress without player or farm names", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ issueUrl: "https://example.com/issues/1" }));
+    vi.stubGlobal("fetch", fetchMock);
+    userState.mergeFromSave(
+      { renown: 7 },
+      {
+        metadata: {
+          farmName: "Private Farm Name",
+          identity: { creationVersion: null, saveNumber: "123456" },
+          importedAt: Date.now(),
+          playerName: "Private Player Name",
+        },
+      },
+    );
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
+    const preview = document.querySelector("pre")?.textContent ?? "";
+    expect(preview).toContain('"renown": 7');
+    expect(preview).not.toContain("Private");
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "Import feedback" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = options.body as string;
+    expect(JSON.parse(body)).toHaveProperty("saveData.renown", 7);
+    expect(body).not.toContain("Private");
+    expect(body).not.toContain("lastImport");
+    userState.resetAll();
   });
 
   it("renders form fields when open", () => {

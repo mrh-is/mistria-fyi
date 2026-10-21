@@ -1,20 +1,13 @@
-import type { PerkId, QuestId, Season, SkillId, VillagerId } from "./tracker-data.js";
+import type * as v from "valibot";
+
+import type { NonEmptyArray } from "#lib/utils/record.js";
+
+import type { VisibilityLeafSchema } from "./tracker-data-schema.js";
 
 export type QuestVisibility = "available" | "completed" | "unavailable";
 
+/** Only recursive edges are annotated; leaf payloads derive from the shared schema. */
 export type VisibilityCondition =
-  | { type: "always" }
-  | { type: "and"; conditions: [VisibilityCondition, ...VisibilityCondition[]] }
-  | { type: "hasUpperFloor" }
-  | { type: "heartLevel"; level: number; villagerId: VillagerId }
-  | { type: "isDating" }
-  | { type: "married"; villagerId: VillagerId }
-  | { type: "mineFloor"; floor: number }
-  | { type: "or"; conditions: [VisibilityCondition, ...VisibilityCondition[]] }
-  | { type: "perkUnlocked"; perkId: PerkId }
-  | { type: "questAvailable"; questId: QuestId }
-  | { type: "questCompleted"; questId: QuestId }
-  | { type: "reachedSeason"; season: Season }
-  | { type: "renownLevel"; level: number }
-  | { type: "skillLevel"; level: number; skillId: SkillId }
-  | { type: "villagerKnown"; villagerId: VillagerId };
+  | v.InferOutput<typeof VisibilityLeafSchema>
+  | { type: "and"; conditions: NonEmptyArray<VisibilityCondition> }
+  | { type: "or"; conditions: NonEmptyArray<VisibilityCondition> };

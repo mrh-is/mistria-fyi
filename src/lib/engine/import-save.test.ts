@@ -117,6 +117,31 @@ describe("starting unlocks", () => {
 });
 
 describe("town rank quest inference", () => {
+  const rankQuests = recordEntries(trackerData.quests.story).filter(
+    (entry): entry is [(typeof entry)[0], (typeof entry)[1] & { townRankLevel: number }] =>
+      entry[1].townRankLevel !== undefined,
+  );
+
+  it.each(rankQuests)("credits %s exactly at its native threshold", (questId, quest) => {
+    for (const offset of [-1, 0, 1]) {
+      const { completed } = extractSaveProgress({
+        gamedata: { t2_world_facts: { renown: quest.townRankLevel + offset } },
+      });
+      expect(completed.questStates?.[questId], `threshold offset ${offset}`).toBe(
+        offset < 0 ? undefined : "completed",
+      );
+    }
+  });
+
+  it("credits every rank for above-maximum renown, preserving its existing clamp", () => {
+    const { completed } = extractSaveProgress({
+      gamedata: { t2_world_facts: { renown: getMaxRenownLevel() + 1 } },
+    });
+    expect(completed.renown).toBe(getMaxRenownLevel());
+    expect(Object.keys(completed.questStates ?? {})).toHaveLength(rankQuests.length);
+    expect(rankQuests).toHaveLength(9);
+  });
+
   it("credits all reached ranks when only the latest completion fact is recorded", () => {
     const { completed } = extractSaveProgress({
       gamedata: {
@@ -151,13 +176,62 @@ describe("town rank quest inference", () => {
     });
   });
 
-  it.each([undefined, "100", null, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+  it.each([undefined, "100", null, false, {}, -1, Number.NaN, Number.POSITIVE_INFINITY])(
     "does not infer rank quests from invalid renown %s",
     (renown) => {
       const { completed } = extractSaveProgress({ gamedata: { t2_world_facts: { renown } } });
       expect(completed.questStates).toBeUndefined();
     },
   );
+
+  it.each([true, 1])("honors explicit completion %s without readable renown", (value) => {
+    const { fields } = extractSave({
+      gamedata: { t2_world_facts: { quest_reach_mistril_star_town_rank_complete: value } },
+      quests: { active_quests: [], completed_quests: [] },
+    });
+    expect(fields.questStates).toMatchObject({
+      completeness: "unknown",
+      value: { reach_mistril_star_town_rank: "completed" },
+    });
+    expect(fields.questStates.diagnostics).toContainEqual({
+      code: "absent",
+      path: "gamedata.t2_world_facts.renown",
+    });
+  });
+
+  it.each([false, 0, "1", 2, null])("does not credit an unreached rank from fact %s", (value) => {
+    const { fields } = extractSave({
+      gamedata: {
+        t2_world_facts: { quest_reach_mistril_star_town_rank_complete: value, renown: 0 },
+      },
+      quests: { active_quests: [], completed_quests: [] },
+    });
+    expect(fields.questStates.value).toEqual({});
+    expect(fields.questStates.completeness).toBe(
+      value === false || value === 0 ? "complete" : "unknown",
+    );
+  });
+
+  it("keeps inferred ranks additive when journal evidence is incomplete", () => {
+    const { fields } = extractSave({ gamedata: { t2_world_facts: { renown: 20 } } });
+    expect(fields.questStates.completeness).toBe("unknown");
+    expect(fields.questStates.value).toEqual({ reach_copper_star_town_rank: "completed" });
+  });
+
+  it("keeps journal progress when renown is malformed", () => {
+    const { fields } = extractSave({
+      gamedata: { t2_world_facts: { renown: "100" } },
+      quests: { active_quests: [], completed_quests: ["reach_copper_star_town_rank"] },
+    });
+    expect(fields.questStates).toMatchObject({
+      completeness: "unknown",
+      value: { reach_copper_star_town_rank: "completed" },
+    });
+    expect(fields.questStates.diagnostics).toContainEqual({
+      code: "invalid-value",
+      path: "gamedata.t2_world_facts.renown",
+    });
+  });
 });
 
 describe("extractSaveProgress", () => {
@@ -999,5 +1073,13 @@ describe("extractSave", () => {
     expect(completed).toHaveProperty("spells", new Set([spellId]));
     expect(completed).not.toHaveProperty("unlockedPerks");
     expect(completed).not.toHaveProperty("mineFloor");
+  });
+
+  it("hands the additive import the save's playtime, when it could be read", () => {
+    const player = { cosmetic_unlocks: [] };
+
+    expect(extractSaveProgress({ header: { playtime: 3600.25 }, player }).playtime).toBe(3600.25);
+    expect(extractSaveProgress({ header: { playtime: -1 }, player }).playtime).toBeUndefined();
+    expect(extractSaveProgress({ player }).playtime).toBeUndefined();
   });
 });

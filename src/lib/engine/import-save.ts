@@ -218,12 +218,13 @@ interface SectionReader {
 // ─── Extraction ─────────────────────────────────────────────────────
 
 /**
- * Maps a save bundle to the progress it records, plus warnings for the parts it skipped. What the
- * import changes is counted later, by the store's merge, which stays additive: an `unknown` field
- * still adds what could be read.
+ * Maps a save bundle to the progress it records & its `playtime` (when readable), plus warnings for
+ * the parts it skipped. What the import changes is counted later, by the store's merge, which stays
+ * additive: an `unknown` field still adds what could be read.
  */
 export function extractSaveProgress(bundle: SaveBundle): {
   completed: Partial<ProgressState>;
+  playtime: number | undefined;
   warnings: SaveImportWarning[];
 } {
   const extraction = extractSave(bundle);
@@ -233,6 +234,7 @@ export function extractSaveProgress(bundle: SaveBundle): {
   }
   return {
     completed: completed as Partial<ProgressState>,
+    playtime: extraction.identity.playtime.value,
     warnings: extraction.diagnostics.filter(isSaveImportWarning),
   };
 }
@@ -826,11 +828,7 @@ function readActiveQuestNames(raw: unknown, collector: Collector): string[] | un
 
 // ─── .sav file unpacking (client-side) ──────────────────────────────
 
-export {
-  SavArchiveError,
-  type SavArchiveErrorDetail,
-  parseSavArchive as unpackSavFile,
-} from "./parse-sav.js";
+export { SavArchiveError, parseSavArchive as unpackSavFile } from "./parse-sav.js";
 export type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 // ─── Season derivation ─────────────────────────────────────────────

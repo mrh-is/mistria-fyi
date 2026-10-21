@@ -11,20 +11,44 @@ a machine misbehaves. Always run it with `node`, never through pnpm: `pnpm run` 
 dependencies first and runs scripts on the `devEngines` runtime from `package.json`, which hides the
 Node version agent shells actually use.
 
-Agents that hit a local tooling failure stop & report it instead of repairing it; see "Local tooling
-failures" in [AGENTS.md](../AGENTS.md). A human or the user fixes the machine with this procedure,
-then the agent resumes.
+The doctor groups its checks into sections by work area. `core` covers "Required for every
+contributor" & always runs; the others match "Needed for specific work": `browser` (Playwright
+browsers), `pipeline` (game assets), & `release` (the Wrangler login). With no flag it checks every
+section; `--for` checks core plus the named ones, lists the rest as skipped, & leaves skipped
+sections out of the exit status. An unknown section name exits 2 with the valid names.
+
+```bash
+node scripts/machine-doctor.ts                         # every section
+node scripts/machine-doctor.ts --for core              # UI work, no game files
+node scripts/machine-doctor.ts --for browser,pipeline  # core, browser tests, & pipeline
+```
+
+Agents may initialize an isolated harness-created worktree with `node scripts/setup-worktree.ts`
+when dependencies or included links are absent; this standard setup is preauthorized, including
+after a missing-dependency preflight failure. Other local tooling failures, including failure of
+setup itself, require agents to stop & report them; see “Tooling failures” in
+[AGENTS.md](../AGENTS.md). A human or the user directs the repair, then the agent resumes.
 
 ## Required for every contributor
 
 1. **Git** (`brew install git`, `winget install Git.Git`). On Windows, also run
    `git config --global core.longpaths true`, or worktrees with deep `node_modules` paths fail.
-2. **Node** at the version in `.node-version`, activated so agent shells see it, not only your
-   interactive shell (fnm, nvm, Volta, or mise; confirm with `node --version` in a fresh shell). A
-   newer major, such as Node 26, fails the doctor. mise ignores `.node-version` unless
-   `mise settings add idiomatic_version_file_enable_tools node` enables it.
-3. **pnpm**, at a major version matching `packageManager` in `package.json`. Its launcher then
-   downloads the pinned release. On Windows PowerShell, use `pnpm.cmd` if the execution policy
+2. **Node** within `engines.node` in `package.json` (currently `>=24.15.0 <27.0.0`). Install a
+   versioned package, because the unversioned ones track Node's newest major, which can fall outside
+   `engines`: `brew install node@24 && brew link --force node@24` on macOS (the versioned formula is
+   keg-only; run `brew unlink node` first if Homebrew's newer `node` is linked), or
+   `winget install OpenJS.NodeJS.LTS` on Windows. You don't need `.node-version`'s exact release or
+   a version manager: `devEngines.runtime` makes `pnpm install` download that release, and every
+   `pnpm run` & `pnpm exec` uses it. Your system `node` only runs the doctor & Claude's hooks, and
+   repository scripts started with bare `node` refuse to run on another release (use `pnpm run` or
+   `pnpm exec node` instead).
+3. **pnpm**, at the major version in `packageManager` in `package.json` (currently 11). Its launcher
+   then downloads the exact pinned release. Install the major explicitly, because the default
+   packages track pnpm's newest major: `brew install pnpm@11 && brew link --force pnpm@11` on macOS
+   (the versioned formula is keg-only, and plain `brew install pnpm` installs pnpm 12), or elsewhere
+   pnpm's standalone installer with `PNPM_VERSION` set to the pinned release. An installed pnpm of
+   another major can switch with `pnpm self-update 11`. Corepack is not an option, because Node 25
+   and later no longer bundle it. On Windows PowerShell, use `pnpm.cmd` if the execution policy
    blocks `pnpm.ps1`. See the pnpm launcher note in
    [development-workflow.md](development-workflow.md#1-local-setup-requirements).
 4. **ShellCheck**, because `pnpm run lint` runs it (`brew install shellcheck`,
@@ -37,18 +61,25 @@ then the agent resumes.
    them implicitly.
 7. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
    `gpg.ssh.program = ssh-keygen`, per [git identity](agent-workflow.md#git-identity). The doctor
-   lists this as a todo, never a failure, because cloud sandboxes legitimately skip it.
+   lists this as a todo, never a failure, because cloud sandboxes legitimately skip it. If
+   `tag.gpgsign` is on, every `git tag` becomes a signed annotated tag that needs a message, so
+   scripts & tests that create tags pass `-c tag.gpgsign=false`; the doctor flags `tag.gpgsign`
+   without a signing key as wrong.
 
 ## Needed for specific work
 
-1. **Playwright browsers** for the accessibility & PWA suites, which only CI installs by default:
-   `pnpm exec playwright install firefox chromium`.
-2. **Game assets** for pipeline work: place or link them at `pipeline/input/` (see
+Each item names the doctor section that checks it.
+
+1. **Playwright browsers** (`browser`) for the accessibility & PWA suites, which only CI installs by
+   default: `pnpm exec playwright install chromium`, which includes the headless shell that headless
+   runs launch. The suites use Chromium only. The doctor checks the exact revisions the installed
+   Playwright expects.
+2. **Game assets** (`pipeline`) for pipeline work: place or link them at `pipeline/input/` (see
    [game-version-update-protocol.md](game-version-update-protocol.md)). `pnpm run game-assets:share`
    copies them to the maintainer's shared drive.
-3. **Wrangler login** for R2 uploads: `pnpm exec wrangler login`, then `pnpm exec wrangler whoami`.
-   The doctor does not probe this because the login is interactive & stored credentials stay out of
-   its reach. Never run `pnpx wrangler`.
+3. **Wrangler login** (`release`) for R2 uploads: `pnpm exec wrangler login`, then
+   `pnpm exec wrangler whoami`. The doctor lists this as a todo & does not probe it, because the
+   login is interactive & stored credentials stay out of its reach. Never run `pnpx wrangler`.
 
 ## Codex shells
 
@@ -80,7 +111,8 @@ approve.
 
 ## Verify the result
 
-1. `node scripts/machine-doctor.ts` exits 0.
+1. `node scripts/machine-doctor.ts --for <the sections you need>` exits 0; for example, `--for core`
+   on a machine that never runs the pipeline.
 2. `pnpm run verify` passes.
 
 If a step fails, the doctor's output names the prerequisite; fix it there, not by working around the

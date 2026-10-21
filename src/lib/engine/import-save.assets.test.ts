@@ -4,9 +4,11 @@ import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
+import { recordEntries } from "#lib/utils/record.js";
 
 import { extractSave, extractSaveProgress } from "./import-save.js";
 import { parseSavArchive } from "./parse-sav.js";
+import { readSaveIdentity } from "./save-identity.js";
 
 import type { SaveBundle, SaveExtraction } from "./import-save.js";
 
@@ -41,6 +43,13 @@ describe.each(SAVE_FILES)("real save %s", (name) => {
     bundle = await readSave(name);
   });
 
+  it("reads the native farm number and creation version without using display names as identity", () => {
+    expect(readSaveIdentity(bundle).identity).toEqual({
+      creationVersion: bundle.info?.creation_version,
+      saveNumber: /^game-(\d+)-/.exec(name)?.[1],
+    });
+  });
+
   it("holds no unrecognized IDs, so every field it fully records is complete", () => {
     const extraction = extractSave(bundle);
 
@@ -49,6 +58,25 @@ describe.each(SAVE_FILES)("real save %s", (name) => {
       const expected = PARTIAL_KEYS.has(key) ? "unknown" : "complete";
       expect(field.completeness, `${key}: ${JSON.stringify(field.diagnostics)}`).toBe(expected);
     }
+  });
+
+  it("credits every reached rank even when its historical completion fact is false", () => {
+    const facts = bundle.gamedata?.t2_world_facts as Record<string, unknown>;
+    const renown = facts.renown as number;
+    const { completed } = extractSaveProgress(bundle);
+    const rankQuests = recordEntries(trackerData.quests.story).filter(
+      ([, quest]) => quest.townRankLevel !== undefined,
+    );
+    expect(rankQuests).toHaveLength(9);
+    const reachedQuests = rankQuests.filter(([id, quest]) => {
+      const explicit = facts[`quest_${id}_complete`];
+      return (
+        (quest.townRankLevel !== undefined && quest.townRankLevel <= renown) ||
+        explicit === 1 ||
+        explicit === true
+      );
+    });
+    for (const [id] of reachedQuests) expect(completed.questStates?.[id], id).toBe("completed");
   });
 
   it("retains the creation version & playtime that identify it", () => {
@@ -62,6 +90,20 @@ describe.each(SAVE_FILES)("real save %s", (name) => {
     });
     expect(identity.playtime.value).toBeGreaterThan(0);
   });
+});
+
+it("recovers the nine rank quests in the reported late-game save", async () => {
+  const bundle = await readSave("game-1315159680-autosave.sav");
+  const facts = bundle.gamedata?.t2_world_facts as Record<string, unknown>;
+  expect(facts.renown).toBeGreaterThanOrEqual(100);
+  expect(facts.quest_reach_copper_star_town_rank_complete).toBe(0);
+  expect(facts.quest_reach_mistril_star_town_rank_complete).toBe(1);
+  const { completed } = extractSaveProgress(bundle);
+  const rankIds = recordEntries(trackerData.quests.story)
+    .filter(([, quest]) => quest.townRankLevel !== undefined)
+    .map(([id]) => id);
+  expect(rankIds).toHaveLength(9);
+  for (const id of rankIds) expect(completed.questStates?.[id], id).toBe("completed");
 });
 
 describe("fields mutated from a real save", () => {

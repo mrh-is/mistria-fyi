@@ -12,9 +12,14 @@ skills, stores, and sources.
 
 ### `src/lib/types/tracker-data.ts`
 
-The shared data contract between the pipeline and the app. It defines branded ID types (`ItemId`,
-`RecipeId`, `VillagerId`, etc.) and the `TrackerData` interface. The pipeline emits JSON that must
-conform to these types.
+The shared data contract between the pipeline and the app. Its entity types, including
+`TrackerData`, derive from the Valibot schemas in `tracker-data-schema.ts`; branded IDs (`ItemId`,
+`RecipeId`, `VillagerId`, etc.) retain their public identities. Only recursive condition edges need
+explicit TypeScript annotations; their leaf payloads derive from the schemas. The pipeline validates
+the complete assembled output after enrichment and before publication, alongside
+acquisition-reference, provenance, and cycle checks. Unknown fields and malformed payloads fail with
+a field path. The app imports the schemas only as types and trusts this validated, committed JSON,
+so schema validation adds no client runtime dependency.
 
 ### `src/lib/types/user-progress.ts`
 
@@ -51,14 +56,23 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
 - **Save import** — parses extracted save JSON files and builds a `Partial<ProgressState>` for
   merging.
 
+`engine/projections/almanac.ts` supplies the almanac page, progress counters, and search with one
+row policy. It returns section membership, canonical rows, applicability, spoiler and filter flags,
+and progress totals (including dates). Unobtainable entries are hidden by default; the almanac's
+temporary filter can reveal them without changing header totals. Page callers pass user-selected
+availability windows, name/source filters, and completed-row retention. Search explicitly uses
+default windows, includes out-of-window results for ranking, hides spoilers, and deduplicates rows
+that belong to several sections. Section progress still counts each in-game section membership.
+
 ### `src/lib/stores/user-state.svelte.ts`
 
 Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$effect`). It:
 
 - Holds the canonical `UserState` shape (`availabilityWindows`, `progress`, `showCompleted`,
   `showSpoilers`, `worldState`).
-- Persists progress & world state to `localStorage` with a 300 ms debounce, and this device's
-  preferences under a separate key (see [localStorage](#localstorage)).
+- Persists progress & world state to `localStorage` through one locked write function (see
+  [One write path](#one-write-path)), and this device's preferences under a separate key (see
+  [localStorage](#localstorage)).
 - Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
   resetting.
 - Enforces domain constraints at the mutation boundary (e.g., heart level caps, mine floor bounds,
@@ -71,10 +85,20 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `1`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `3`.
+  - `lastImport`: the last manual save import's timestamp, identity (filename number plus creation
+    version), & player/farm display names, or `null`. Version 1 migrates to `null` without inventing
+    history. Missing or malformed game metadata remains unknown and never blocks importing progress.
+    Names are display information, never identity, and feedback attaches only `progress`, excluding
+    this section. Backup restore carries it; a progress or full reset clears it.
   - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
-    filtered to non-default entries.
+    filtered to non-default entries, plus each fact's history (see [Provenance](#provenance)):
+    `provenance`, `resolutions`, & `lastSavePlaytime`.
   - `worldState`: the in-game season & weather the availability filters read.
+  - `local` (storage only, left out while empty): this device's own section, with slots reserved for
+    sync's receipt & farm-switch backup. Exports never include it; a restore keeps this device's and
+    never brings one in; a progress reset keeps it and a full reset clears it. Provenance & resolved
+    diffs live in `progress`, so they travel with backups.
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
   `now`, `anytime`, & `later`, and `showSpoilers`). These are per-device conveniences: they're never
   exported, so restoring a backup or resetting progress keeps them, and a missing or invalid field
@@ -113,8 +137,66 @@ unrecognized fields in a loaded blob are dropped. The ephemeral UI-only `showCom
 persisted. A shape change adds a migration: bump `CURRENT_SERIALIZATION_VERSION`, add the
 `MIGRATIONS` step that produces the new version from the previous one, and add that version's
 fixture under `src/lib/stores/progress-storage-fixtures/`. `progress-storage.test.ts` fails until
-all three exist. `user-state-golden.test.ts` pins the current shape & the storage keys. See the
-[decision record](decisions/2026-10-20-storage-migrations-valibot.md).
+all three exist. `user-state-golden.test.ts` pins the launch shape, what it migrates to, & the
+storage keys. See the [decision record](decisions/2026-10-20-storage-migrations-valibot.md).
+
+### One write path
+
+Every progress write goes through the store's `writeProgress`, run under the
+`mistria-fyi:progress-write` Web Lock so tabs write one at a time. Inside the lock it re-reads the
+stored value & validates it before writing:
+
+| Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset) | Additive import (save, transfer) |
+| ---------------------------------------- | ---------------------------- | --------------------------------- | -------------------------------- |
+| Unchanged, or cleared                    | Writes                       | Writes captured replacement       | Writes merged progress           |
+| Another tab's readable write             | Adopts it, writes nothing    | Writes captured replacement       | Unions with stored progress      |
+| Unreadable                               | Quarantines it               | Quarantines, then writes          | Quarantines, then writes         |
+| A newer build's                          | Blocks writes                | Blocks writes                     | Blocks writes                    |
+
+Auto-saves wait for a 300 ms quiet period; explicit writes skip it but still take the lock. Explicit
+writes capture their payload at confirmation & invalidate auto-saves already waiting for the lock.
+Imports carry the additive preview, including unsaved local progress, and merge it with the stored
+progress inside the lock. Their synchronous counts & conflicts describe that immediate preview; the
+locked merge applies the same household conflict policy to the latest stored household. An import
+preserves captured world state & unknown IDs. Its history merges three ways: each provenance entry,
+resolution, or last save playtime the importing tab recorded since its base (the stored value it
+last read, or its own explicit write still waiting for the lock) overwrites the stored one, and the
+rest keep the history another tab stored meanwhile. A save or transfer agreeing with a fact already
+stored leaves that fact's stored provenance in place. Edits made after confirmation are rebased onto
+the locked merge result for the next auto-save, including removals & decreases, and so is their
+history; a later household edit replaces that household as a unit to preserve the marriage cascade.
+The pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
+compare-before-write. A browser without Web Locks runs every write synchronously; see the
+[decision record](decisions/2026-10-20-serialized-progress-writes.md).
+
+### Provenance
+
+Every progress fact records where it came from, so applying a save (see
+[sync.md](sync.md#applying-a-bundle)) can tell a fact the player set by hand from one a save or an
+inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the store records them.
+
+- **A fact** is one tickable or settable entry, keyed by its field & the IDs that locate it:
+  `almanac/turnip`, `animals/chicken/red`, `mineFloor`. Ticks & unticks both record, so an untick
+  the player made is remembered.
+- **Sources.** Setters & toggles record `manual`. A marriage cascade, a quest's recipe rewards (&
+  the undo that takes them back), default unlocks, & “Record prerequisites” record `inferred`. A
+  save import records `save`; a device transfer records `unknown`, since its payload carries no
+  provenance. Only facts a call changes record: a save agreeing with a fact leaves its provenance as
+  it was.
+- **Hydration.** Facts stored before version 3 migrate as `unknown`, read the way hydration reads
+  them, so a value it repairs to the default gets no record. A relationship the marriage cascade
+  sets on load, such as a villager a later build makes dateable, records `inferred`. History for a
+  historical almanac ID is rekeyed under its canonical entry on every load, as the fact itself is;
+  when several collide, an entry already under the canonical key wins. A malformed `provenance` or
+  `resolutions` container is dropped on hydration rather than quarantining progress, and rejected by
+  backup restore.
+- **Playtime.** Each record carries the `playtime` of the last applied save, so ordering needs no
+  clock. A `save` record carries the save's own, or none when its `header.playtime` couldn't be
+  read; only a readable one becomes the last applied save's.
+- **Resolutions.** A “keep mine” remembers the save's value the player declined, holding until a
+  save reports a different value (`resolutionHolds`). A manual edit of that fact clears it.
+- **Lifetime.** Backups carry the history, a restore replaces it, & both resets clear it. See the
+  [decision record](decisions/2026-10-21-progress-provenance.md).
 
 ### Save File Import
 
@@ -122,11 +204,13 @@ The app processes save files entirely client-side. No save data is uploaded.
 
 1. The user selects a `.sav` file or the extracted JSON files (`player.json`, `gamedata.json`,
    `quests.json`, and optionally `header.json` & `info.json`).
-2. `parseSavArchive` or `parseExtractedSaveFiles` bundles the sections into a `SaveBundle`. A
-   section must be a JSON object, and `player` must contain at least one recognizable progress
-   field. When some JSON files are unusable but at least one progress file parses, the others are
-   reported as warnings. `header` & `info` only identify the save, so an unreadable one in a `.sav`
-   is left out rather than rejecting the file.
+2. `parseSavArchive` or `parseExtractedSaveFiles` bundles the sections into a `SaveBundle`. Native
+   filenames supply `saveNumber` from both autosaves & manual slots; renamed files and extracted
+   JSON leave it unknown. `readSaveIdentity` copies optional identity & display fields for the
+   manual import record. A section must be a JSON object, and `player` must contain at least one
+   recognizable progress field. When some JSON files are unusable but at least one progress file
+   parses, the others are reported as warnings. `header` & `info` only identify the save, so an
+   unreadable one in a `.sav` is left out rather than rejecting the file.
 3. `extractSave` reads each progress field into its value, a completeness flag, & diagnostics, using
    `trackerData` for validation. A field is `complete` only when the save records all of it; an
    absent or malformed field is `unknown` with no value, never an empty list or a zero. Every ID is
@@ -192,8 +276,8 @@ Pages are layout compositors. They handle data fetching and composition, not bus
   `#lib/components/skills-content.svelte`.
 - **Colocated components** — components used by a single page live in the same directory (e.g.,
   `src/routes/data/import-card.svelte`).
-- **Shared components** — reusable components live in `src/lib/components/` or vendored
-  `src/lib/components/ui/`.
+- **Shared components** — reusable components live in `src/lib/components/` or the project-owned
+  `src/lib/components/ui/` (forked from shadcn-svelte).
 - **"Everything" view** — `src/routes/everything/+page.svelte` computes overall completion and
   renders one `category-section.svelte` per category. That component owns the category-to-content
   map (which content component, whether it's compact, whether its rows stack), the sticky
@@ -270,9 +354,25 @@ usable anywhere, though unlocked through mine progression.
   responses emitted before `handle`, such as trailing-slash normalization redirects
   (`HEAD /en/everything/` returns `308`), do not receive these headers. Pages never applies
   `_headers` to Function responses.
-- **Static files** — the build writes `_headers` (gitignored) from the same directives, and
-  `@sveltejs/adapter-cloudflare` copies it into `build/` with its own cache rules. Never commit or
-  hand-edit it.
+- **Static files** — `withHeadersFile` (`src/lib/build/headers-file.ts`) wraps the adapter and
+  writes `_headers` (gitignored) from the same directives just before `@sveltejs/adapter-cloudflare`
+  copies it into `build/` with its own cache rules. Never commit or hand-edit it.
+
+`app.html`'s two inline scripts are allowed by SHA-256 hash in every policy, not by nonce: SvelteKit
+refuses to prerender a template containing `%sveltekit.nonce%`. Editing either script changes its
+hash, which the build recomputes and `security-headers.test.ts` pins.
+
+### Prerendered pages
+
+A prerendered page (`/data` in every locale, listed in `src/lib/i18n/prerender-entries.ts`) is a
+static file, so its CSP comes from `_headers`, not SvelteKit. SvelteKit also writes a
+`<meta http-equiv>` policy into the page, hashing its inline start script; a browser enforces both
+policies, so the `/*` header (with no hash for that script) would block hydration. Each prerendered
+route therefore gets its own `_headers` rule (`/:locale/data`) that detaches the inherited CSP
+(`! Content-Security-Policy`) and sets the same directives plus that route's start-script hashes.
+The header keeps `frame-ancestors`, which a `<meta>` policy can't carry. A prerendered page can't
+read its query on the server, so `?section=` is handled in the browser. See
+[the decision record](decisions/2026-10-20-prerender-csp.md).
 
 `security-headers.test.ts` pins the full production policy, so any change to it shows up in review.
 The asset origin lives in `src/lib/asset-origin.ts`; `asset-origin.test.ts` holds the copies that
@@ -291,8 +391,8 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   prefix (`/zh-hans/…`) redirects permanently (308) to the canonical casing. Both live in
   `bareLocaleRedirect` in `src/hooks.server.ts`.
 - **Route slugs:** `almanac`, `animals`, `cosmetics`, `mines`, `museum`, `quests`, `recipes`,
-  `renown`, `skills`, `villagers`, `everything`, `about`, `data`, `privacy`, & `settings`. A rename
-  needs a redirect from the old slug.
+  `renown`, `skills`, `villagers`, `everything`, `about`, `data`, & `privacy`. A rename needs a
+  redirect from the old slug.
 - **Query & fragment links:** `/data?section=import|transfer` (the welcome card) and
   `/villagers#villager-<id>` (search results, keyed by game villager IDs).
 - **Unlocalized paths:** `/api/feedback`, `/sitemap.xml`, & `/licenses.txt` (the build-generated
@@ -306,12 +406,20 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   a library change can't silently reset every player's language.
 - **PWA identity:** the manifest's `id: "/"` & `start_url: "/"`. Changing the `id` orphans every
   installed copy.
-- **Service-worker messages:** `mfg:skip-waiting` & `mfg:cache-locales`. An open page posts these to
-  a newer waiting worker, so renaming one strands tabs on the old version.
+- **Service-worker messages:** `mfg:cache-locales`, `mfg:client-version`, & `mfg:skip-waiting`. An
+  open page posts these to whichever worker is active, installing, or waiting, which may be a newer
+  version than the page, so renaming one strands tabs on the old version. A page reports its version
+  with `mfg:client-version` so its version's cache outlives an update (#111). Tabs from releases
+  before #111 post `mfg:skip-waiting` from their update prompt; the worker still honors it.
 
 ### Not promised
 
-- **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`): the worker's `activate`
-  deletes every cache it doesn't recognize, so a rename only costs a re-download, or forgets which
-  locales a player kept offline.
+- The retired beta route `/settings` returns the normal not-found page; use
+  `/data?section=import|transfer` for data-management links. Its removal without a redirect was
+  explicitly approved in #156; see
+  [the decision record](decisions/2026-10-20-retire-settings-route.md).
+- **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`, `client-versions-v1`): the
+  worker's `activate` deletes every cache it doesn't recognize (once no open page needs it), so a
+  rename only costs a re-download, forgets which locales a player kept offline, or keeps older
+  caches until the open pages report their versions again.
 - Internal identifiers such as category keys, message keys, & component names.

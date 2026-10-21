@@ -7,6 +7,7 @@ import {
 } from "#lib/stores/storage-keys.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { THEME_STORAGE_KEY } from "#lib/theme.js";
+import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 
 // The launch shape of the progress blob & JSON backup. Unlike round-trip tests, this literal pins
 // the stored contract independently of the serializer: renaming a field, the wrapper, or the
@@ -42,6 +43,35 @@ const GOLDEN_BACKUP = {
 /** Optional fields added after launch, as an empty launch-era blob writes them back. */
 const POST_LAUNCH_FIELDS = { mountAppearances: [] };
 
+/** Version 3's history, as its migration writes it for the launch backup: every fact `unknown`. */
+const MIGRATED_HISTORY = {
+  provenance: Object.fromEntries(
+    [
+      "almanac/turnip",
+      "almanacRecipes/basic_wood_chest",
+      "animalCosmetics/chicken/ribbon_red",
+      "animals/chicken/red",
+      "childChoice",
+      "cosmetics/back_gear_ancient_witch_broom",
+      "dates/inn_meal",
+      "hasUpperFloor",
+      "heartLevels/balor",
+      "mineFloor",
+      "museum/turnip",
+      "petCosmetics/flower_crown",
+      "petSkins/sapling",
+      "questStates/repair_the_general_store",
+      "reachedSeason",
+      "renown",
+      "skillLevels/farming",
+      "spells/summon_rain",
+      "unlockedPerks/museum_quality_one",
+      "villagerRelationships/balor",
+    ].map((key) => [key, { source: "unknown" }]),
+  ),
+  resolutions: {},
+};
+
 afterEach(() => {
   userState.resetAll();
 });
@@ -54,7 +84,7 @@ describe("persisted format contract", () => {
     expect(THEME_STORAGE_KEY).toBe("mistria-fyi:theme");
   });
 
-  it("restores the launch backup and writes it back unchanged", () => {
+  it("restores the launch backup and writes its facts back unchanged, migrated", () => {
     expect(userState.restoreBackup(JSON.stringify(GOLDEN_BACKUP))).toEqual({ ok: true });
 
     // Every animal gets an entry on load; animals added by later game data appear as empty lists.
@@ -62,12 +92,15 @@ describe("persisted format contract", () => {
     const { animalCosmetics, animals, ...progress } = GOLDEN_BACKUP.progress;
     expect(JSON.parse(userState.exportBackup())).toEqual({
       ...GOLDEN_BACKUP,
+      lastImport: null,
       progress: {
         ...progress,
         ...POST_LAUNCH_FIELDS,
+        ...MIGRATED_HISTORY,
         animalCosmetics: expect.objectContaining(animalCosmetics) as unknown,
         animals: expect.objectContaining(animals) as unknown,
       },
+      version: CURRENT_SERIALIZATION_VERSION,
     });
   });
 

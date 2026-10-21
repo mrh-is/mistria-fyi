@@ -1,12 +1,18 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import ImportCard from "./import-card.svelte";
+
+// Client files share one store per worker, so each test starts from defaults (#174).
+beforeEach(() => {
+  userState.resetAll();
+});
 
 afterEach(() => {
   userState.resetAll();
@@ -20,6 +26,44 @@ async function importFiles(files: File[]) {
 }
 
 describe("save import", () => {
+  it("records a manual import and shows its display even when creation_version is absent", async () => {
+    await importFiles([
+      new File(
+        [JSON.stringify({ farm_name: "Fern", items_acquired: [], name: "Ada" })],
+        "player.json",
+      ),
+    ]);
+    const history = await screen.findByTestId("last-import");
+    expect(history).toHaveTextContent("Fern · Ada");
+    expect(history).toHaveTextContent("Last imported now");
+    expect(history).toHaveTextContent("unknown version");
+    expect(userState.state.lastImport?.identity).toEqual({
+      creationVersion: null,
+      saveNumber: null,
+    });
+  });
+
+  it("shows persisted import history and preserves it after an unsuccessful import", async () => {
+    const metadata = {
+      farmName: "Fern",
+      identity: {
+        creationVersion: { major: 0, minor: 11, patch: 7, pre: null },
+        saveNumber: "123456",
+      },
+      importedAt: Date.now() - 120_000,
+      playerName: "Ada",
+    };
+    userState.mergeFromSave({}, { metadata });
+    render(ImportCard, { open: true });
+    expect(screen.getByTestId("last-import")).toHaveTextContent("Save #123456 · Created in 0.11.7");
+    expect(screen.getByTestId("last-import")).toHaveTextContent("Last imported 2 minutes ago");
+    await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
+      target: { files: [new File(["{"], "player.json")] },
+    });
+    await screen.findByRole("alert");
+    expect(userState.state.lastImport).toEqual(metadata);
+  });
+
   it("announces no new data on a repeated import after a successful source-file summary", async () => {
     render(ImportCard, { open: true });
     const input = screen.getByLabelText("Choose save files to import");
@@ -56,6 +100,24 @@ describe("save import", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("records what the save adds with the save's playtime", async () => {
+    const cosmeticId = recordKeys(trackerData.cosmetics)[0];
+
+    await importFiles([
+      new File([JSON.stringify({ cosmetic_unlocks: [cosmeticId] })], "player.json"),
+      new File([JSON.stringify({ playtime: 3600.25 })], "header.json"),
+    ]);
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+    });
+    expect(userState.lastSavePlaytime).toBe(3600.25);
+    expect(userState.provenanceOf(`cosmetics/${cosmeticId}`)).toEqual({
+      playtime: 3600.25,
+      source: "save",
+    });
+  });
+
   it("imports extracted JSON files and lists each warning", async () => {
     const cosmeticId = recordKeys(trackerData.cosmetics)[0];
     const player = new File(
@@ -77,7 +139,7 @@ describe("save import", () => {
   });
 
   it("reports unparseable JSON files and preserves tracker state", async () => {
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     const before = userState.exportBackup();
 
     await importFiles([new File(["{"], "player.json")]);
@@ -94,7 +156,7 @@ describe("save import", () => {
   });
 
   it("offers the manual extraction fallback for an unreadable .sav and preserves tracker state", async () => {
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     const before = userState.exportBackup();
 
     await importFiles([new File([new Uint8Array([1, 2, 3, 4])], "broken.sav")]);
@@ -120,7 +182,7 @@ describe("save import", () => {
 
 describe("save import atomicity", () => {
   it("rejects an oversized save before reading it and preserves tracker state", async () => {
-    userState.toggleShowSpoilers();
+    enableSpoilers();
     const before = userState.exportBackup();
     const file = new File([], "oversized.sav");
     Object.defineProperty(file, "size", { value: MAX_COMPRESSED_SIZE + 1 });

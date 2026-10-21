@@ -1,12 +1,10 @@
 {
+  "almanac_show_unobtainable": "¿Mostrar los que no se pueden obtener?",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Sigue todas tus colecciones, misiones, habilidades y más",
   "og_share_description": "Todo Mistria en un solo lugar",
   "source_spoilered": "Oculto",
-  "app_update_available": "¡Mistria Field Guide se ha actualizado! Actualiza la página para obtener la versión más reciente.",
-  "app_update_later": "Ahora no",
-  "app_update_refresh": "Actualizar",
   "onboarding_region_label": "Primeros pasos",
   "onboarding_overline": "Nueva guía de campo",
   "onboarding_title": "¡Te damos la bienvenida!",
@@ -678,5 +676,9 @@
         "countPlural=other": "Completar {count} colecciones en el ala de {wing}"
       }
     }
-  ]
+  ],
+  "import_last_imported": "Última importación: {time}",
+  "import_farm_identity": "Partida n.º {number} · Creada en {version}",
+  "import_unknown_number": "desconocido",
+  "import_unknown_version": "versión desconocida"
 }

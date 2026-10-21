@@ -9,9 +9,9 @@
 
 > **New machine?** Follow [machine-setup.md](machine-setup.md); it holds the per-platform install &
 > login steps. Run `node scripts/machine-doctor.ts` (with `node`, not through pnpm) to see which
-> prerequisites are present, missing, or the wrong version. It changes nothing. If a tool is missing
-> or broken mid-task, agents stop & report instead of repairing it (AGENTS.md, "Local tooling
-> failures").
+> prerequisites are present, missing, or the wrong version; `--for` limits it to the sections your
+> work needs (see machine-setup.md). It changes nothing. If a tool is missing or broken mid-task,
+> agents stop & report instead of repairing it (AGENTS.md, "Local tooling failures").
 
 - **Node.js**: `.node-version` is the single source of truth (Node 24 LTS). `package.json`’s
   `devEngines.runtime` repeats it with `onFail: "download"`, so `pnpm install` downloads that exact
@@ -26,8 +26,9 @@
   points and fails when one lacks the guard; the Claude edit-guard hook and the machine doctor
   (which must run on any Node to report a wrong one) are the exemptions. To move the pin, edit both
   files and run `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails when they disagree. Check
-  with `pnpm exec node -v`. `package.json`'s `engines` accepts 24.15 or later so Codex cloud can use
-  its preinstalled patch release.
+  with `pnpm exec node -v`. `package.json`'s `engines` accepts 24.15 up to (not including) 27, so
+  Codex cloud can use its preinstalled patch release & contributors can keep a newer system Node;
+  the machine doctor checks the shell's own `node` against that range only.
 - **ShellCheck**: `pnpm run lint` runs the system `shellcheck`. CI uses the runner image's copy, and
   `scripts/setup-cloud-agent.sh` installs it with apt. Local install: see machine-setup.md.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.
@@ -37,11 +38,11 @@
   ```
 - **pnpm launcher**: The `packageManager` field pins pnpm, and your installed pnpm downloads and
   runs that version. pnpm 12 ships as a native executable, which pnpm 11's launcher runs through
-  Node and fails with `SyntaxError: Invalid or unexpected token` (#563). Before or when the pin
-  moves to pnpm 12, upgrade the machine's pnpm itself to 12 (for example `pnpm self-update 12`, or
-  your installer's equivalent). As a stopgap, put the downloaded native pnpm 12 executable first on
-  `PATH` so nested scripts use it too. CI uses `pnpm/setup`, which installs the native binary
-  directly and isn't affected.
+  Node and fails with `SyntaxError: Invalid or unexpected token` (issue #563 in the private beta).
+  Before or when the pin moves to pnpm 12, upgrade the machine's pnpm itself to 12 (for example
+  `pnpm self-update 12`, or your installer's equivalent). As a stopgap, put the downloaded native
+  pnpm 12 executable first on `PATH` so nested scripts use it too. CI uses `pnpm/setup`, which
+  installs the native binary directly and isn't affected.
 - **Environment Configuration**: Copy `.env.example` to `.env` if local environment variables are
   required.
 - **Cloud agents**: Configure Claude Code cloud and Codex cloud with the shared setup script and
@@ -65,8 +66,8 @@ pnpm run worktree:new <issue-number>-<short-description> [starting-branch]
 The script validates the slug (`<issue-number>-<short-description>`, lowercase), fetches the
 starting branch (default `main`), creates `.worktrees/<slug>` on a matching branch from the
 refreshed `origin/<starting-branch>` under the main checkout, removes the worktree & branch again if
-a later step fails, refuses to run if `.worktrees/` is not gitignored, links every
-`.worktreeinclude` entry from the main checkout, and runs `pnpm install --frozen-lockfile` and
+a later step fails, refuses to run if `.worktrees/` is not gitignored, links `pipeline/input/` &
+every `.worktreeinclude` entry from the main checkout, and runs `pnpm install --frozen-lockfile` and
 `pnpm run prepare` (Husky hooks, Paraglide output, & `svelte-kit sync`). The link & install steps
 live in `scripts/setup-worktree.ts`, which skips entries already present or missing from the main
 checkout. Both scripts run under Node so Windows behaves the same; see
@@ -153,15 +154,18 @@ retain the original failure when assessing reliability.
 
 ### Shared vs. Isolated Worktree Resources (`.worktreeinclude`)
 
-The `.worktreeinclude` file lists ignored local entries required for development:
+Worktree setup links these ignored local entries from the main checkout:
 
-- **`pipeline/input/`** (Game TOML assets, ~114 MB): Shared read-only resource. Create a symbolic
-  link from the primary checkout to avoid duplicating assets:
+- **`pipeline/input/`** (game assets): Shared read-only resource, always symlinked
+  (`SHARED_DIRECTORIES` in `scripts/setup-worktree.ts`). It is deliberately absent from
+  `.worktreeinclude`, which Claude Code copies into new worktrees, so the assets are never
+  duplicated. To link it by hand:
   ```sh
   ln -s /path/to/main/repo/pipeline/input pipeline/input
   ```
-- **`.env` / `.env.*`**: Machine-local environment configuration files. Symlink or copy from the
-  main checkout.
+- **`.worktreeinclude`** entries:
+  - **`.env` / `.env.*`**: Machine-local environment configuration files. Symlink or copy from the
+    main checkout.
 - **Worktree-Isolated Entries**:
   - **`node_modules/`**, **`.svelte-kit/`**, **`build/`**: Never copy or link across worktrees. Run
     `pnpm install --frozen-lockfile` to install dependencies independently.
@@ -269,8 +273,9 @@ commands are references for CI or the explicit full-local-matrix exceptions in
   ```sh
   pnpm run test
   ```
-  This command passes in a fresh clone without `pipeline/input/`. CI runs the same suite through
-  `node scripts/vitest-timings.ts`, which reports per-file timings & enforces budgets.
+  This command passes in a fresh clone without `pipeline/input/`. CI runs the same suite through its
+  `test:budgets` step (`node scripts/vitest-timings.ts`), which reports per-file timings & enforces
+  budgets.
 - **Measure coverage** (opt-in; the same suite plus v8 coverage):
   ```sh
   pnpm run test:coverage
@@ -312,18 +317,19 @@ commands are references for CI or the explicit full-local-matrix exceptions in
 
 ### Vitest time budgets
 
-CI runs `node scripts/vitest-timings.ts` over every asset-independent project. The cleanup test runs
-only when `scripts/cleanup-merged-worktrees.ts` changes: PRs use their complete changed-file list, &
-main pushes compare the event’s before/after commits. Scheduled & manual runs omit it. Direct local
-runs still include it, so test-only edits can be verified with the focused command. It publishes all
-per-file test & hook durations, slowest first, in the job summary & the `vitest-timings` artifact.
-On two-CPU noncoverage runs, ordinary files use both workers; the allocation, lint-ownership, &
-project-configuration CLI probes run separately with one worker, reserving a CPU for their
-subprocesses. Both invocations share one wall-time budget & their file timings are combined.
-Coverage & other runner classes use half the available CPUs (at least one worker, capped at four).
-The JSON also records CPU count, coverage mode, whole-command wall time, & the enforced ceilings.
-Imports, environment setup, transforms, startup, & report generation count toward the wall budget.
-Missing timing reports & unsuccessful tests fail the step independently of the budgets.
+CI runs the `test:budgets` step (`node scripts/vitest-timings.ts`) over every asset-independent
+project. The cleanup test runs only when `scripts/cleanup-merged-worktrees.ts` changes: PRs use
+their complete changed-file list, & main pushes compare the event’s before/after commits. Scheduled
+& manual runs omit it. Direct local runs still include it, so test-only edits can be verified with
+the focused command. It publishes all per-file test & hook durations, slowest first, in the job
+summary & the `vitest-timings` artifact. On two-CPU noncoverage runs, ordinary files use both
+workers; the allocation, lint-ownership, & project-configuration CLI probes run separately with one
+worker, reserving a CPU for their subprocesses. Both invocations share one wall-time budget & their
+file timings are combined. Coverage & other runner classes use half the available CPUs (at least one
+worker, capped at four). The JSON also records CPU count, coverage mode, whole-command wall time, &
+the enforced ceilings. Imports, environment setup, transforms, startup, & report generation count
+toward the wall budget. Missing timing reports & unsuccessful tests fail the step independently of
+the budgets.
 
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
@@ -433,19 +439,13 @@ other full-suite command during development.
 
 ### CI
 
-`.github/workflows/ci.yml` runs on every pull request and main push:
-
-| Command                             | Description & Purpose                                                                            | Scope                |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------- |
-| `pnpm run lint`                     | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), Stylelint, ShellCheck                | All files            |
-| `pnpm audit --audit-level=moderate` | Fails on moderate or worse advisories in the lockfile, minus `auditConfig` exceptions            | Dependencies         |
-| `pnpm run check:i18n`               | Verifies every locale file matches `en.json`'s key shape                                         | `messages/`          |
-| `pnpm run check:locale-sync`        | Pull requests only (not in `verify`): fails when an English message changed but a locale did not | `messages/`          |
-| `pnpm run check`                    | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`                     | `src/` & `pipeline/` |
-| `node scripts/vitest-timings.ts`    | Executes the complete Vitest suite with file & wall-time budgets; coverage only nightly          | Unit & logic tests   |
-| `pnpm run build`                    | Compiles SvelteKit app and verifies Cloudflare adapter                                           | Build validation     |
-| `pnpm run check:built`              | Checks sitemap/head SSR metadata & per-locale gzip budgets against the production build          | Build validation     |
-| `pnpm run check:routes`             | Proves every built static asset bypasses Cloudflare Functions via `_routes.json`                 | Build validation     |
+`.github/workflows/ci.yml` runs on every pull request and main push. The steps it runs are the ones
+`STEPS` lists in [scripts/verify.ts](../scripts/verify.ts), each naming its CI job; a job runs a
+step with `pnpm run verify -- --step=<name>`. Add or change a step there, not by copying a command
+into the workflow, & give a new step both a `STEPS` entry & its `--step` line in `ci.yml` (the CI
+test fails until both exist). Some steps run only in CI: the audit, the budgeted Vitest run (file &
+wall-time budgets, coverage only nightly), & the pull-request-only stale-translation check are
+outside the default `verify` matrix.
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see
@@ -571,8 +571,8 @@ above the finding.
 
 ### Full local matrix
 
-`pnpm run verify` runs CI's non-browser matrix locally (`lint`, `check`, `check:i18n`, `test`,
-`build`, `check:routes`, `check:built`) with live output, stopping on the first failure. It is
+`pnpm run verify` runs CI's non-browser matrix locally (the default steps in `STEPS`,
+[scripts/verify.ts](../scripts/verify.ts)) with live output, stopping on the first failure. It is
 read-only: it runs `lint`, not `lint:fix`, so run `pnpm run lint:fix` beforehand. Opt-in flags add
 the local-only steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`, `--browser` adds
 `test:accessibility` & `test:pwa`, and `--all` adds both. Run it once, when commit-ready, only for
@@ -862,10 +862,11 @@ Windows runs them without a shell. The earlier Bash versions failed there (#353)
 prunable and whose launcher can outlive `verify`'s child without returning its exit status, while
 Git Bash's `ln -s` copies or fails instead of linking.
 
-- **Links**: setup links each `.worktreeinclude` entry that exists in the main checkout and skips
-  the rest. On Windows, directories become junctions, which need neither administrator rights nor
-  Developer Mode. Files become symlinks where Windows allows them and hard links otherwise; an
-  editor that saves by replacing the file breaks a hard link, so edit `.env` in the main checkout.
+- **Links**: setup links `pipeline/input/` & each `.worktreeinclude` entry that exists in the main
+  checkout and skips the rest. On Windows, directories become junctions, which need neither
+  administrator rights nor Developer Mode. Files become symlinks where Windows allows them and hard
+  links otherwise; an editor that saves by replacing the file breaks a hard link, so edit `.env` in
+  the main checkout.
 - **Leftover junctions**: Git for Windows' `git worktree remove` unregisters a worktree but leaves
   its junctions behind, and without `git config --global core.longpaths true` it stops with
   `Filename too long` inside `node_modules`. Delete the leftover directory with

@@ -1,12 +1,10 @@
 {
+  "almanac_show_unobtainable": "顯示無法取得的物品？",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "追蹤所有收藏、任務、技能及更多內容",
   "og_share_description": "米斯特里亞的一切，盡在一處",
   "source_spoilered": "已隱藏",
-  "app_update_available": "Mistria Field Guide 已更新！重新整理頁面即可取得最新版本。",
-  "app_update_later": "稍後",
-  "app_update_refresh": "重新整理",
   "onboarding_region_label": "開始使用",
   "onboarding_overline": "新田野指南",
   "onboarding_title": "歡迎你，農場主！",
@@ -662,5 +660,9 @@
         "countPlural=other": "在{wing}展區完成{count}套收藏"
       }
     }
-  ]
+  ],
+  "import_last_imported": "上次匯入：{time}",
+  "import_farm_identity": "存檔編號 {number} · 建立版本 {version}",
+  "import_unknown_number": "未知",
+  "import_unknown_version": "未知"
 }
