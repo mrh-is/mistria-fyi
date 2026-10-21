@@ -22,7 +22,10 @@ test("home stripe counts fit before their ribbons", async ({ page }) => {
   await gotoRenderedApplication(page, "/");
   for (const width of [360, 390, 1280]) {
     await page.setViewportSize({ height: 800, width });
+    const slashPositions: number[] = [];
     for (const stripe of await page.locator("[data-category-stripe]").all()) {
+      const slash = await requireBox(stripe.locator(".category-slash"));
+      slashPositions.push(slash.x);
       const ribbon = await requireBox(stripe.locator("[data-category-ribbon]"));
       const count = await requireBox(stripe.locator(".category-count"));
       const parts = stripe.locator(".category-count > span");
@@ -36,6 +39,7 @@ test("home stripe counts fit before their ribbons", async ({ page }) => {
       }
       await expect(stripe.locator(".category-count")).not.toHaveCSS("overflow", "hidden");
     }
+    expect(Math.max(...slashPositions) - Math.min(...slashPositions)).toBeLessThan(1);
   }
   await expect(page.getByRole("link", { name: /^Renown,/ })).toHaveClass(
     /category-stripe--complete/,

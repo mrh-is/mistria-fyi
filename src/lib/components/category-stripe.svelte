@@ -149,7 +149,9 @@
 
   .category-count {
     display: grid;
-    grid-template-columns: minmax(4ch, max-content) auto minmax(4ch, max-content);
+    grid-template-columns:
+      minmax(var(--category-count-width, 4ch), max-content) auto
+      minmax(var(--category-count-width, 4ch), max-content);
     column-gap: 0.45ch;
     align-items: baseline;
     font-family: var(--font-data);
