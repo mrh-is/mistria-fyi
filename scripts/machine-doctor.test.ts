@@ -14,9 +14,12 @@ import {
   checkPnpmStore,
   exitCode,
   formatReport,
+  parseSections,
   parseVersion,
   realEnvironment,
   runChecks,
+  SECTION_NAMES,
+  SECTIONS,
 } from "./machine-doctor.js";
 
 import type { CommandOutput, Environment, ProcessRunner } from "./machine-doctor.js";
@@ -443,17 +446,89 @@ describe("checkPnpmStore", () => {
   });
 });
 
+describe("parseSections", () => {
+  it("selects every section without a flag", () => {
+    expect(parseSections([])).toEqual(SECTION_NAMES);
+    expect(SECTION_NAMES.toSorted()).toEqual(Object.keys(SECTIONS).toSorted());
+  });
+
+  it("always includes core & keeps report order", () => {
+    expect(parseSections(["--for", "pipeline,browser"])).toEqual(["core", "browser", "pipeline"]);
+    expect(parseSections(["--for=release"])).toEqual(["core", "release"]);
+    expect(parseSections(["--for", "core"])).toEqual(["core"]);
+  });
+
+  it("rejects unknown sections, naming them & the valid ones", () => {
+    expect(() => parseSections(["--for", "browser,ui"])).toThrow(
+      /unknown section: ui\n.*core, browser, pipeline, release/,
+    );
+    expect(() => parseSections(["--for="])).toThrow("no section named");
+  });
+
+  it("rejects a missing value or stray arguments", () => {
+    expect(() => parseSections(["--for"])).toThrow("unexpected arguments");
+    expect(() => parseSections(["browser"])).toThrow("unexpected arguments");
+    expect(() => parseSections(["--for", "browser", "extra"])).toThrow("unexpected arguments");
+    expect(() => parseSections(["--for=browser", "extra"])).toThrow("unexpected arguments");
+  });
+});
+
 describe("report", () => {
+  const ready = machine({
+    commands: {
+      "gh --version": "gh",
+      "gh auth status": "",
+      "git --version": "git version 2.50.0",
+      "git config --get commit.gpgsign": "true\n",
+      "git config --get user.signingkey": "~/.ssh/id_ed25519_signing.pub\n",
+      "pnpm --version": "11.28.2\n",
+      "shellcheck --version": "ok",
+    },
+    exists: (path) => path === join("/repo", "node_modules"),
+  });
+
   it("fails on missing or wrong results, not on manual ones", () => {
-    expect(exitCode([{ detail: "", id: "a", label: "A", status: "manual" }])).toBe(0);
+    const manual = { detail: "", id: "a", label: "A", status: "manual" } as const;
+    expect(exitCode([{ results: [manual], section: "release", skipped: false }])).toBe(0);
     expect(exitCode(runChecks(machine()))).toBe(1);
   });
 
-  it("prints fixes for failures only", () => {
+  it("checks only the selected sections & ignores skipped ones in the exit status", () => {
+    expect(exitCode(runChecks(ready))).toBe(1);
+    const coreOnly = runChecks(ready, parseSections(["--for", "core"]));
+    expect(coreOnly.filter((r) => r.skipped).map((r) => r.section)).toEqual([
+      "browser",
+      "pipeline",
+      "release",
+    ]);
+    expect(coreOnly.find((r) => r.skipped)?.results).toEqual([]);
+    expect(exitCode(coreOnly)).toBe(0);
+    expect(exitCode(runChecks(ready, ["core", "release"]))).toBe(0);
+    expect(exitCode(runChecks(ready, ["core", "pipeline"]))).toBe(1);
+  });
+
+  it("prints fixes for failures only, under section headings", () => {
     const report = formatReport(runChecks(machine()));
+    expect(report).toContain("Core (every contributor):\n[ok]      Node.js");
     expect(report).toContain("[missing] pnpm");
+    expect(report).toContain("Release (R2 uploads):\n[todo]    Wrangler login");
     expect(report).toContain("fix: pnpm exec wrangler login");
-    expect(report).toContain("[ok]      Node.js");
+    expect(report).not.toContain("Skipped");
+  });
+
+  it("lists skipped sections instead of their checks", () => {
+    const report = formatReport(runChecks(ready, ["core", "browser"]));
+    expect(report).toContain("Browser tests (accessibility & PWA suites):");
+    expect(report).not.toContain("Game assets");
+    expect(report).not.toContain("Wrangler");
+    expect(report).toContain("Skipped: pipeline, release.");
+  });
+
+  it("mentions [todo] steps only when one was printed", () => {
+    expect(formatReport(runChecks(ready, ["core"]))).not.toContain("[todo]");
+    expect(formatReport(runChecks(ready, ["core", "release"]))).toContain(
+      "All checked prerequisites pass. Steps marked [todo] are interactive",
+    );
   });
 });
 

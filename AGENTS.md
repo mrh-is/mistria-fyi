@@ -173,8 +173,9 @@ in, report that; do not install it, run `wrangler login`, or substitute another 
   error (redact tokens & other credentials), & the work it blocks.
 - **Diagnose read-only.** `node scripts/machine-doctor.ts` reports each prerequisite as ok, missing,
   or wrong without changing anything; run it with `node`, not through pnpm, which would check the
-  wrong runtime; include its output. The setup procedure is
-  [machine-setup.md](docs/machine-setup.md).
+  wrong runtime; include its output. Pass `--for` with the sections your task needs (`browser`,
+  `pipeline`, `release`; core always runs), so unrelated prerequisites such as game assets do not
+  read as failures. The setup procedure is [machine-setup.md](docs/machine-setup.md).
 - **Then wait for the user’s explicit direction.** Do not install, configure, authenticate,
   substitute a tool, skip or bypass a check, or retry with a workaround unless the user directs it.
   Retrying the same command is not a fix. Requesting a sandbox escalation for the operation the task
