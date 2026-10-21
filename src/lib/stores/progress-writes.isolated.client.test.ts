@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 
 import type { userState } from "#lib/stores/user-state.svelte.js";
+import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const WRITE_LOCK = "mistria-fyi:progress-write";
@@ -73,7 +74,7 @@ function sharedLocks() {
         await previous;
         await nextTask();
         state.held = true;
-        return task();
+        return await task();
       } finally {
         state.held = false;
         release(undefined);
@@ -126,6 +127,198 @@ afterEach(() => {
 });
 
 describe("serialized progress writes", () => {
+  it.each(["locks", "no locks", "rejected locks"])(
+    "keeps another tab’s progress when importing with %s",
+    async (mode) => {
+      const { locks } = sharedLocks();
+      let manager: object | undefined = locks;
+      if (mode === "no locks") manager = undefined;
+      if (mode === "rejected locks") {
+        manager = { request: () => Promise.reject(new DOMException("Denied", "SecurityError")) };
+      }
+      vi.stubGlobal("navigator", { locks: manager });
+      const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+      vi.stubGlobal("localStorage", storage);
+      const tab = await openTab();
+      const other = JSON.parse(buildState(12)) as { progress: { almanac: string[] } };
+      other.progress.almanac = ["turnip"];
+      storage.setItem(PROGRESS_KEY, JSON.stringify(other));
+      tab.userState.toggleMuseumItem("turnip" as ItemId);
+      tab.userState.mergeFromSave({ mineFloor: 10 });
+      await settle(tab.PERSIST_DEBOUNCE_MS);
+      expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+        progress: { almanac: ["turnip"], mineFloor: 10, museum: ["turnip"], renown: 12 },
+      });
+      expect(tab.userState.state.progress.renown).toBe(12);
+    },
+  );
+
+  it.each([false, true])(
+    "keeps a captured restore behind a queued auto-save (storage event: %s)",
+    async (storageEvent) => {
+      const { locks, state } = sharedLocks();
+      const { storage, writes } = recordingStorage({ [PROGRESS_KEY]: buildState(1) }, state);
+      vi.stubGlobal("localStorage", storage);
+      vi.stubGlobal("navigator", { locks });
+      const tab = await openTab();
+      const gate = Promise.withResolvers<undefined>();
+      const held = locks.request(WRITE_LOCK, () => gate.promise);
+      await vi.advanceTimersByTimeAsync(1);
+      tab.userState.setRenown(5);
+      await vi.advanceTimersByTimeAsync(tab.PERSIST_DEBOUNCE_MS);
+      expect(state.requests).toHaveLength(2);
+      const other = buildState(12);
+      storage.setItem(PROGRESS_KEY, other);
+      expect(tab.userState.restoreBackup(buildState(20))).toEqual({ ok: true });
+      // A storage event can also replace memory while the restore waits for the lock.
+      if (storageEvent) tab.tabWindow.dispatch("storage", { key: PROGRESS_KEY, newValue: other });
+      gate.resolve(undefined);
+      await held;
+      await settle(tab.PERSIST_DEBOUNCE_MS);
+      expect(storedRenown(storage)).toBe(20);
+      expect(tab.userState.state.progress.renown).toBe(20);
+      expect(writes.map(({ value }) => storedRenownOf(value))).toEqual([12, 20]);
+    },
+  );
+
+  it("captures imports before the caller mutates them & keeps later local edits", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    const imported = { mineFloor: 10 };
+    tab.userState.mergeFromSave(imported);
+    imported.mineFloor = 99;
+    tab.userState.setRenown(8);
+    const other = JSON.parse(buildState(5)) as { progress: { almanac: string[] } };
+    other.progress.almanac = ["turnip", "future-item"];
+    storage.setItem(PROGRESS_KEY, JSON.stringify(other));
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { almanac: ["future-item", "turnip"], mineFloor: 10, renown: 8 },
+    });
+  });
+
+  it("keeps later edits after a captured replacement", async () => {
+    const { locks } = sharedLocks();
+    const { storage, writes } = recordingStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    tab.userState.restoreBackup(buildState(20));
+    tab.userState.setRenown(21);
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    expect(writes.map(({ value }) => storedRenownOf(value))).toEqual([20, 21]);
+    expect(tab.userState.state.progress.renown).toBe(21);
+  });
+
+  it("keeps a later household edit atomic when a concurrent tab also changes spouses", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    tab.userState.mergeFromSave({ mineFloor: 10 });
+    tab.userState.setVillagerRelationship("adeline" as VillagerId, "married");
+    const other = JSON.parse(buildState(5)) as {
+      progress: { villagerRelationships: Record<string, string> };
+    };
+    other.progress.villagerRelationships = { balor: "married" };
+    storage.setItem(PROGRESS_KEY, JSON.stringify(other));
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    const relationships = tab.userState.state.progress.villagerRelationships;
+    expect(relationships["adeline" as VillagerId]).toBe("married");
+    expect(relationships["balor" as VillagerId]).not.toBe("married");
+    expect(Object.values(relationships).filter((value) => value === "married")).toHaveLength(1);
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { mineFloor: 10, villagerRelationships: { adeline: "married" } },
+    });
+  });
+
+  it("keeps unsaved world state & retained entries from the importing tab", async () => {
+    const original = JSON.parse(buildState(1)) as { progress: { almanac: string[] } };
+    original.progress.almanac = ["future-item"];
+    const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(original) });
+    const { locks } = sharedLocks();
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    tab.userState.setSeason("fall");
+    tab.userState.setWeather("inclement");
+    storage.setItem(PROGRESS_KEY, buildState(5));
+    tab.userState.mergeFromSave({ mineFloor: 10 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { almanac: ["future-item"], mineFloor: 10, renown: 5 },
+      worldState: { season: "fall", weather: "inclement" },
+    });
+    expect(tab.userState.state.worldState).toEqual({ season: "fall", weather: "inclement" });
+  });
+
+  it("rebases later removals, decreases, & record deletions onto a queued import", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    tab.userState.toggleMuseumItem("turnip" as ItemId);
+    tab.userState.setRenown(8);
+    tab.userState.setVillagerRelationship("adeline" as VillagerId, "platonic");
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    tab.userState.mergeFromSave({ mineFloor: 10 });
+    tab.userState.toggleMuseumItem("turnip" as ItemId);
+    tab.userState.setRenown(7);
+    tab.userState.setVillagerRelationship("adeline" as VillagerId, "undecided");
+    const other = JSON.parse(buildState(5)) as { progress: { museum: string[] } };
+    other.progress.museum = ["future-item"];
+    storage.setItem(PROGRESS_KEY, JSON.stringify(other));
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { mineFloor: 10, museum: ["future-item"], renown: 7, villagerRelationships: {} },
+    });
+    expect(tab.userState.state.progress.renown).toBe(7);
+    expect(tab.userState.state.progress.museum.has("turnip" as ItemId)).toBe(false);
+    expect(tab.userState.state.progress.villagerRelationships).not.toHaveProperty("adeline");
+  });
+
+  it("writes multiple confirmed replacements in order without reverting memory", async () => {
+    const { locks } = sharedLocks();
+    const { storage, writes } = recordingStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    tab.userState.restoreBackup(buildState(20));
+    tab.userState.resetProgress();
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    expect(writes.map(({ value }) => storedRenownOf(value))).toEqual([20, 0]);
+    expect(tab.userState.state.progress.renown).toBe(0);
+  });
+
   it("writes every progress change while holding the progress Web Lock", async () => {
     const { locks, state } = sharedLocks();
     const { storage, writes } = recordingStorage({ [PROGRESS_KEY]: buildState(1) }, state);

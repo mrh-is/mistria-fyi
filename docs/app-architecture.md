@@ -127,16 +127,23 @@ Every progress write goes through the store's `writeProgress`, run under the
 `mistria-fyi:progress-write` Web Lock so tabs write one at a time. Inside the lock it re-reads the
 stored value & validates it before writing:
 
-| Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset, save import) |
-| ---------------------------------------- | ---------------------------- | ---------------------------------------------- |
-| Unchanged, or cleared                    | Writes                       | Writes                                         |
-| Another tab's readable write             | Adopts it, writes nothing    | Writes over it                                 |
-| Unreadable                               | Quarantines it               | Copies it to quarantine, then writes           |
-| A newer build's                          | Blocks writes                | Blocks writes                                  |
+| Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset) | Additive import (save, transfer) |
+| ---------------------------------------- | ---------------------------- | --------------------------------- | -------------------------------- |
+| Unchanged, or cleared                    | Writes                       | Writes captured replacement       | Writes merged progress           |
+| Another tab's readable write             | Adopts it, writes nothing    | Writes captured replacement       | Unions with stored progress      |
+| Unreadable                               | Quarantines it               | Quarantines, then writes          | Quarantines, then writes         |
+| A newer build's                          | Blocks writes                | Blocks writes                     | Blocks writes                    |
 
-Auto-saves wait for a 300 ms quiet period; explicit replaces skip it but still take the lock. The
-pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
-compare-before-write. A browser without Web Locks runs every write synchronously; see the
+Auto-saves wait for a 300 ms quiet period; explicit writes skip it but still take the lock. Explicit
+writes capture their payload at confirmation & invalidate auto-saves already waiting for the lock.
+Imports carry the additive preview, including unsaved local progress, and merge it with the stored
+progress inside the lock. Their synchronous counts & conflicts describe that immediate preview; the
+locked merge applies the same household conflict policy to the latest stored household. An import
+preserves captured world state & unknown IDs. Edits made after confirmation are rebased onto the
+locked merge result for the next auto-save, including removals & decreases; a later household edit
+replaces that household as a unit to preserve the marriage cascade. The pagehide flush can't wait
+for a lock, so it runs the same function synchronously, keeping the compare-before-write. A browser
+without Web Locks runs every write synchronously; see the
 [decision record](decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Save File Import

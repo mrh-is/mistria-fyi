@@ -72,10 +72,15 @@ import type { DeviceLocalState, LoadedProgress, RetainedProgress } from "./progr
 
 /** How a write treats a value another tab stored since this one last read it. */
 type WriteIntent =
-  /** Auto-save (every edit & a migrated or repaired hydration) & the pagehide flush: adopt it. */
-  | "auto-save"
-  /** Restore, reset, & save import, which the player chose: replace it. */
-  | "replace";
+  | {
+      /** Serialized at confirmation, so later storage events cannot change the requested write. */
+      json: string;
+      keepLocal: boolean;
+      kind: "merge" | "replace";
+      progress: ProgressState;
+      sequence: number;
+    }
+  | { generation: number; kind: "auto-save" };
 
 /** The browser's Web Locks, where it has them; absent in old browsers & insecure contexts. */
 function progressLockManager(): LockManager | undefined {
@@ -219,8 +224,11 @@ function createUserState() {
   let lastKnownPreferencesValue: null | string = null;
   let lastKnownStoredValue: null | string = null;
   let saveTimeout: ReturnType<typeof setTimeout> | undefined;
+  let saveGeneration = 0;
+  let explicitSequence = 0;
 
   function clearPendingSave(): void {
+    saveGeneration++;
     if (saveTimeout !== undefined) clearTimeout(saveTimeout);
     saveTimeout = undefined;
   }
@@ -256,11 +264,14 @@ function createUserState() {
    *   waiting would leave every later save comparing against a value no longer stored.
    * - A `replace` is the player's explicit choice, so it overwrites, once an unreadable value is
    *   safely copied to quarantine.
+   * - A `merge` unions the captured import preview into the current stored progress, preserving
+   *   both another tab's saved progress & this tab's unsaved edits.
    *
    * Cleared storage has nothing to conflict with, so it's written normally. Callers hold the
    * progress Web Lock (see {@link requestProgressWrite}); only the pagehide flush calls it bare.
    */
   function writeProgress(intent: WriteIntent): void {
+    if (intent.kind === "auto-save" && intent.generation !== saveGeneration) return;
     if (!_persistenceReady) return;
     const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
     if (!storedResult.ok) {
@@ -269,13 +280,13 @@ function createUserState() {
     }
 
     const stored = storedResult.value;
+    const read = stored === null ? undefined : readProgressBlob(stored, "repair");
     if (stored !== null && stored !== lastKnownStoredValue) {
-      const read = readProgressBlob(stored, "repair");
-      if (read.kind === "newer" || intent === "auto-save") {
+      if (read?.kind === "newer" || intent.kind === "auto-save") {
         applyStorageValue(stored);
         return;
       }
-      if (read.kind === "unreadable") {
+      if (read?.kind === "unreadable") {
         if (!trySetItem(QUARANTINE_STORAGE_KEY, stored)) {
           quarantine(stored);
           return;
@@ -284,7 +295,34 @@ function createUserState() {
       }
     }
 
-    const json = serialize();
+    let json = serialize();
+    if (intent.kind !== "auto-save") {
+      const snapshot = readProgressBlob(intent.json, "repair");
+      if (snapshot.kind !== "ok") throw new Error("Invalid captured progress write");
+      let loaded = snapshot.loaded;
+      if (intent.keepLocal && read?.kind === "ok") loaded.local = read.loaded.local;
+      if (intent.kind === "merge" && read?.kind === "ok") {
+        loaded = read.loaded;
+        // The captured preview includes unsaved local edits as well as the imported progress.
+        mergeProgress(loaded.progress, snapshot.loaded.progress);
+        mergeRetainedProgress(loaded.retained, snapshot.loaded.retained);
+        loaded.worldState = snapshot.loaded.worldState;
+      }
+      json = serializeStoredProgress(loaded, loaded.retained, loaded.local);
+      if (intent.sequence === explicitSequence) {
+        if (state.progress !== intent.progress || serialize() === intent.json) {
+          replaceProgress(loaded);
+        } else if (intent.kind === "merge") {
+          // The captured merge is persisted first; later local edits remain for the next auto-save.
+          const rebased = readProgressBlob(json, "repair");
+          if (rebased.kind !== "ok") throw new Error("Invalid merged progress write");
+          rebaseProgressEdits(rebased.loaded.progress, snapshot.loaded.progress, state.progress);
+          rebased.loaded.worldState = state.worldState;
+          replaceProgress(rebased.loaded);
+        }
+        local = loaded.local;
+      }
+    }
     if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
       reportStorageUnavailable();
       return;
@@ -318,10 +356,16 @@ function createUserState() {
     }
   }
 
-  /** Persists an explicit replace now, rather than after the auto-save debounce. */
-  function writeExplicitReplace(): void {
+  /** Captures an explicit write now, rather than after the auto-save debounce. */
+  function writeExplicitProgress(kind: "merge" | "replace" = "replace", keepLocal = true): void {
     clearPendingSave();
-    requestProgressWrite("replace");
+    requestProgressWrite({
+      json: serialize(),
+      keepLocal,
+      kind,
+      progress: state.progress,
+      sequence: ++explicitSequence,
+    });
   }
 
   /**
@@ -331,7 +375,7 @@ function createUserState() {
   function flushCurrentState(): void {
     if (!_persistenceReady) return;
     clearPendingSave();
-    writeProgress("auto-save");
+    writeProgress({ generation: saveGeneration, kind: "auto-save" });
   }
 
   /**
@@ -438,7 +482,7 @@ function createUserState() {
 
         saveTimeout = setTimeout(() => {
           saveTimeout = undefined;
-          requestProgressWrite("auto-save");
+          requestProgressWrite({ generation: saveGeneration, kind: "auto-save" });
         }, PERSIST_DEBOUNCE_MS);
       });
 
@@ -577,93 +621,14 @@ function createUserState() {
      * household follows {@link mergeHousehold}'s conflict policy. Never removes progress.
      */
     mergeFromSave(imported: Partial<ProgressState>): MergeResult {
-      const progress = state.progress;
-      const counts: MergeCounts = emptyMergeCounts();
-
-      counts.almanac = unionInto(progress.almanac, imported.almanac ?? []);
-      counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
-      counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
-      counts.dates = unionInto(progress.dates, imported.dates ?? []);
-      counts.mountAppearances = unionInto(
-        progress.mountAppearances,
-        imported.mountAppearances ?? [],
-      );
-      counts.museum = unionInto(progress.museum, imported.museum ?? []);
-      counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);
-      counts.petCosmetics = unionInto(progress.petCosmetics, imported.petCosmetics ?? []);
-      counts.petSkins = unionInto(progress.petSkins, imported.petSkins ?? []);
-      counts.spells = unionInto(progress.spells, imported.spells ?? []);
-      for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
-        const existing = getOrCreate(
-          progress.animals,
-          animalId,
-          () => new SvelteSet<AnimalVariantId>(),
-        );
-        counts.animals += unionInto(existing, variants);
-      }
-      for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics ?? {})) {
-        const existing = getOrCreate(
-          progress.animalCosmetics,
-          animalId,
-          () => new SvelteSet<CosmeticId>(),
-        );
-        counts.animalCosmetics += unionInto(existing, cosmetics);
-      }
-
-      // Levels are clamped again here so the canonical state stays inside its domains even if a
-      // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
-      if (imported.mineFloor !== undefined) {
-        const mineFloor = clampMineFloor(imported.mineFloor);
-        if (mineFloor > progress.mineFloor) {
-          counts.mineFloor = mineFloor - progress.mineFloor;
-          progress.mineFloor = mineFloor;
-        }
-      }
-      if (imported.renown !== undefined) {
-        const renown = clampRenownLevel(imported.renown);
-        if (renown > progress.renown) {
-          counts.renown = renown - progress.renown;
-          progress.renown = renown;
-        }
-      }
-      counts.heartLevels = raiseLevels(progress.heartLevels, imported.heartLevels, MAX_HEART_LEVEL);
-      counts.skillLevels = raiseLevels(progress.skillLevels, imported.skillLevels, MAX_SKILL_LEVEL);
-
-      // Quest states take the more advanced state: none < obtained < completed.
-      for (const [id, importedState] of recordEntries(imported.questStates ?? {})) {
-        if (questStateRank(importedState) > questStateRank(progress.questStates[id] ?? "none")) {
-          progress.questStates[id] = importedState;
-          counts.quests++;
-        }
-      }
-
-      if (
-        imported.reachedSeason !== undefined &&
-        seasonOrdinal(imported.reachedSeason) > seasonOrdinal(progress.reachedSeason)
-      ) {
-        progress.reachedSeason = imported.reachedSeason;
-        counts.reachedSeason = 1;
-      }
-      if (imported.hasUpperFloor && !progress.hasUpperFloor) {
-        progress.hasUpperFloor = true;
-        counts.hasUpperFloor = 1;
-      }
-
-      const household = mergeHousehold(progress, imported);
-      progress.villagerRelationships = household.villagerRelationships;
-      progress.childChoice = household.childChoice;
-      counts.villagerRelationships = household.counts.villagerRelationships;
-      counts.childChoice = household.counts.childChoice;
-
-      // Backfill animal maps for any animals added since the imported state was created
-      backfillAnimalMaps(progress);
+      const result = mergeProgress(state.progress, imported);
 
       // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
       // persistence like a reset or restore (only once the unreadable blob is safely stored).
       enablePersistenceAfterExplicitReplace();
-      writeExplicitReplace();
+      writeExplicitProgress("merge");
 
-      return { conflicts: household.conflicts, counts };
+      return result;
     },
     get persistenceFailed(): boolean {
       return _persistenceFailureGeneration > 0;
@@ -683,7 +648,7 @@ function createUserState() {
       retained = emptyRetainedProgress();
       local = {};
       enablePersistenceAfterExplicitReplace();
-      writeExplicitReplace();
+      writeExplicitProgress("replace", false);
     },
     /** Clears progress & world state; this device's preferences & `local` section are kept. */
     resetProgress() {
@@ -693,7 +658,7 @@ function createUserState() {
         worldState: createDefaultWorldState(),
       });
       enablePersistenceAfterExplicitReplace();
-      writeExplicitReplace();
+      writeExplicitProgress();
     },
     /**
      * Replaces progress & world state from a backup under the strict policy; this device's
@@ -706,7 +671,7 @@ function createUserState() {
       if (result.kind === "unreadable") return { error: result.error, ok: false };
       replaceProgress(result.loaded);
       enablePersistenceAfterExplicitReplace();
-      writeExplicitReplace();
+      writeExplicitProgress();
       return { ok: true };
     },
     setAvailabilityWindows(windows: readonly AvailabilityWindow[]) {
@@ -842,6 +807,159 @@ function createUserState() {
       return _unreadableData;
     },
   };
+}
+
+/** Applies the additive import policy to an explicit target, including a locked storage snapshot. */
+function mergeProgress(progress: ProgressState, imported: Partial<ProgressState>): MergeResult {
+  const counts: MergeCounts = emptyMergeCounts();
+
+  counts.almanac = unionInto(progress.almanac, imported.almanac ?? []);
+  counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
+  counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
+  counts.dates = unionInto(progress.dates, imported.dates ?? []);
+  counts.mountAppearances = unionInto(progress.mountAppearances, imported.mountAppearances ?? []);
+  counts.museum = unionInto(progress.museum, imported.museum ?? []);
+  counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);
+  counts.petCosmetics = unionInto(progress.petCosmetics, imported.petCosmetics ?? []);
+  counts.petSkins = unionInto(progress.petSkins, imported.petSkins ?? []);
+  counts.spells = unionInto(progress.spells, imported.spells ?? []);
+  for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
+    const existing = getOrCreate(
+      progress.animals,
+      animalId,
+      () => new SvelteSet<AnimalVariantId>(),
+    );
+    counts.animals += unionInto(existing, variants);
+  }
+  for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics ?? {})) {
+    const existing = getOrCreate(
+      progress.animalCosmetics,
+      animalId,
+      () => new SvelteSet<CosmeticId>(),
+    );
+    counts.animalCosmetics += unionInto(existing, cosmetics);
+  }
+
+  // Levels are clamped again here so the canonical state stays inside its domains even if a
+  // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
+  if (imported.mineFloor !== undefined) {
+    const mineFloor = clampMineFloor(imported.mineFloor);
+    if (mineFloor > progress.mineFloor) {
+      counts.mineFloor = mineFloor - progress.mineFloor;
+      progress.mineFloor = mineFloor;
+    }
+  }
+  if (imported.renown !== undefined) {
+    const renown = clampRenownLevel(imported.renown);
+    if (renown > progress.renown) {
+      counts.renown = renown - progress.renown;
+      progress.renown = renown;
+    }
+  }
+  counts.heartLevels = raiseLevels(progress.heartLevels, imported.heartLevels, MAX_HEART_LEVEL);
+  counts.skillLevels = raiseLevels(progress.skillLevels, imported.skillLevels, MAX_SKILL_LEVEL);
+
+  // Quest states take the more advanced state: none < obtained < completed.
+  for (const [id, importedState] of recordEntries(imported.questStates ?? {})) {
+    if (questStateRank(importedState) > questStateRank(progress.questStates[id] ?? "none")) {
+      progress.questStates[id] = importedState;
+      counts.quests++;
+    }
+  }
+
+  if (
+    imported.reachedSeason !== undefined &&
+    seasonOrdinal(imported.reachedSeason) > seasonOrdinal(progress.reachedSeason)
+  ) {
+    progress.reachedSeason = imported.reachedSeason;
+    counts.reachedSeason = 1;
+  }
+  if (imported.hasUpperFloor && !progress.hasUpperFloor) {
+    progress.hasUpperFloor = true;
+    counts.hasUpperFloor = 1;
+  }
+
+  const household = mergeHousehold(progress, imported);
+  progress.villagerRelationships = household.villagerRelationships;
+  progress.childChoice = household.childChoice;
+  counts.villagerRelationships = household.counts.villagerRelationships;
+  counts.childChoice = household.counts.childChoice;
+
+  // Backfill animal maps for any animals added since the imported state was created
+  backfillAnimalMaps(progress);
+  return { conflicts: household.conflicts, counts };
+}
+
+/** Retain unknown IDs from both sides of an additive import; opaque relationship conflicts keep storage. */
+function mergeRetainedProgress(target: RetainedProgress, imported: RetainedProgress): void {
+  for (const field of ["animalCosmetics", "animals", "lists"] as const) {
+    const entries: Record<string, string[] | undefined> = target[field];
+    for (const [id, values] of recordEntries(imported[field])) {
+      entries[id] = [...new Set([...(entries[id] ?? []), ...values])];
+    }
+  }
+  for (const field of ["heartLevels", "skillLevels"] as const) {
+    for (const [id, value] of recordEntries(imported[field])) {
+      target[field][id] = Math.max(target[field][id] ?? 0, value);
+    }
+  }
+  for (const [id, value] of recordEntries(imported.questStates)) {
+    if (questStateRank(value) > questStateRank(target.questStates[id] ?? "none")) {
+      target.questStates[id] = value;
+    }
+  }
+  target.villagerRelationships = {
+    ...imported.villagerRelationships,
+    ...target.villagerRelationships,
+  };
+}
+
+/** Rebase only edits made after confirmation; unchanged fields retain concurrent stored progress. */
+function rebaseProgressEdits(
+  target: ProgressState,
+  before: ProgressState,
+  after: ProgressState,
+): void {
+  rebaseFields(
+    target as unknown as Record<string, unknown>,
+    before as unknown as Record<string, unknown>,
+    after as unknown as Record<string, unknown>,
+  );
+  const relationships = new Set([
+    ...recordKeys(before.villagerRelationships),
+    ...recordKeys(after.villagerRelationships),
+  ]);
+  if (
+    before.childChoice !== after.childChoice ||
+    [...relationships].some(
+      (id) => before.villagerRelationships[id] !== after.villagerRelationships[id],
+    )
+  ) {
+    // A later explicit household edit replaces the household as a unit, preserving its cascade.
+    target.villagerRelationships = { ...after.villagerRelationships };
+    target.childChoice = after.childChoice;
+  }
+}
+
+function rebaseFields(
+  target: Record<string, unknown>,
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+): void {
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    const previous = before[key];
+    const current = after[key];
+    const destination = target[key];
+    if (previous instanceof Set && current instanceof Set && destination instanceof Set) {
+      for (const value of previous) if (!current.has(value)) destination.delete(value);
+      for (const value of current) if (!previous.has(value)) destination.add(value);
+    } else if (isRecord(previous) && isRecord(current) && isRecord(destination)) {
+      rebaseFields(destination, previous, current);
+    } else if (previous !== current) {
+      if (Object.hasOwn(after, key)) target[key] = current;
+      else Reflect.deleteProperty(target, key);
+    }
+  }
 }
 
 /**

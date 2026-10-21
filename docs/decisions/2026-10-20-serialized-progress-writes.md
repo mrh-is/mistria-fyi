@@ -12,11 +12,17 @@ leaking into backups.
 
 - **One write function, one lock.** `writeProgress(intent)` is the only code that writes the
   progress key. Auto-save (including the rewrite of a migrated or repaired blob) and explicit
-  replaces (restore, reset, save import, & sync apply later) request it under the
-  `mistria-fyi:progress-write` Web Lock. Inside the lock it re-reads & validates the stored value: a
-  newer build's data blocks the write, an auto-save adopts another tab's write, and an explicit
-  replace overwrites it once an unreadable value is safely in quarantine. Explicit replaces skip the
-  300 ms debounce, not the lock.
+  replaces (restore, reset, & sync apply later) and additive imports (save & transfer) request it
+  under the `mistria-fyi:progress-write` Web Lock. Inside the lock it re-reads & validates the
+  stored value: a newer build's data blocks the write, an auto-save adopts another tab's write, and
+  an explicit replace overwrites it once an unreadable value is safely in quarantine. An import
+  unions its captured preview, including unsaved local progress & retained unknown IDs, with stored
+  progress under the lock, keeping captured world state. Later edits are rebased onto that merge for
+  the next auto-save, including removals & decreases. A later household edit replaces the household
+  as a unit, preserving the marriage cascade. Explicit writes capture their payload at confirmation
+  & invalidate queued auto-saves with a generation counter; a later storage event cannot erase a
+  waiting replacement. They skip the 300 ms debounce, not the lock. PR #179’s adversarial review
+  exposed both races & prompted these corrections before merge.
 - **pagehide stays synchronous.** A page being hidden can't await a lock, so the flush calls the
   same function directly and keeps today's compare-before-write: it adopts another tab's value
   rather than overwriting it.
@@ -44,6 +50,12 @@ before this change, and an auto-save that loses it is corrected by the storage e
   atomically, so a crash between them could pair a receipt with progress it doesn't describe.
 - **Run pagehide under the lock too.** Rejected: the page may be frozen before the lock is granted,
   losing the last edits outright.
+- **Treat an import as a replacement.** Rejected after review: another tab’s saved progress would be
+  lost, violating the existing additive import contract. Synchronous import counts & conflicts
+  describe the immediate preview; persistence merges against the latest stored household under the
+  same conflict policy.
+- **Serialize mutable state when a queued replace runs.** Rejected after review: an earlier
+  auto-save or a storage event can replace memory before the confirmed restore gets its lock.
 - **Bump the storage version for `local`.** Deferred: the section is empty until sync fills it; the
   first feature that stores data there adds the migration.
 
