@@ -277,11 +277,61 @@ describe("checkGh", () => {
 });
 
 describe("checkPlaywright", () => {
-  it("requires both browsers in the platform cache", () => {
+  const cache = "/home/test/Library/Caches/ms-playwright";
+  const store = "/repo/node_modules/.pnpm";
+  const browsers = JSON.stringify({
+    browsers: [
+      { name: "chromium", revision: "1243" },
+      { name: "chromium-headless-shell", revision: "1243" },
+      { name: "firefox", revision: "1543" },
+      { name: "webkit", revision: "2359" },
+    ],
+  });
+  const installed = (entries: string[]) =>
+    machine({
+      list: (path) => {
+        if (path === cache) {
+          return entries;
+        }
+        return path === store ? ["@playwright+test@1.63.0", "playwright-core@1.63.0"] : [];
+      },
+      read: (path) =>
+        path === `${store}/playwright-core@1.63.0/node_modules/playwright-core/browsers.json`
+          ? browsers
+          : undefined,
+    });
+
+  it("requires the exact revisions the installed Playwright expects", () => {
+    expect(
+      checkPlaywright(installed(["chromium-1243", "chromium_headless_shell-1243"])),
+    ).toMatchObject({ status: "ok" });
+    expect(checkPlaywright(installed(["chromium-1200", "firefox-1543"]))).toMatchObject({
+      detail: `chromium-1243, chromium_headless_shell-1243 not found in ${cache}`,
+      fix: "pnpm exec playwright install chromium",
+      status: "missing",
+    });
+  });
+
+  it("reports a missing headless shell beside a full chromium", () => {
+    expect(checkPlaywright(installed(["chromium-1243"]))).toMatchObject({
+      detail: `chromium_headless_shell-1243 not found in ${cache}`,
+      status: "missing",
+    });
+  });
+
+  it("checks any revision before dependencies are installed", () => {
     const partial = machine({ list: () => ["chromium-1200"] });
-    expect(checkPlaywright(partial)).toMatchObject({ status: "missing" });
-    const full = machine({ list: () => ["chromium-1200", "firefox-1500"] });
-    expect(checkPlaywright(full).status).toBe("ok");
+    expect(checkPlaywright(partial)).toMatchObject({
+      detail: expect.stringContaining("chromium_headless_shell-*") as string,
+      status: "missing",
+    });
+    const full = machine({
+      list: () => ["chromium-1200", "chromium_headless_shell-1200"],
+    });
+    expect(checkPlaywright(full)).toMatchObject({
+      detail: expect.stringContaining("revisions unchecked") as string,
+      status: "ok",
+    });
   });
 });
 

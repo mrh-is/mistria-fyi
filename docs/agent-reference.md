@@ -24,7 +24,7 @@ use `git pull --ff-only`. Never reset existing work, switch a shared checkout, o
 changes to refresh a base.
 
 This creates `.worktrees/<slug>` on a matching branch (`<issue-number>-<short-description>`),
-symlinks the `.worktreeinclude` entries in from the main checkout, and runs
+symlinks `pipeline/input/` & the `.worktreeinclude` entries in from the main checkout, and runs
 `pnpm install --frozen-lockfile` and `pnpm run prepare`. It never copies dependencies, caches, build
 artifacts, or other writable generated directories. See
 [docs/development-workflow.md §2](development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
@@ -35,6 +35,22 @@ already failed; no additional confirmation is needed. Setup failures still requi
 procedure in AGENTS.md. It is deliberately not a pnpm script: `verifyDepsBeforeRun: error` in
 `pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse to start on absent or stale dependencies
 rather than installing them implicitly.
+
+**Automatic initialization:** Claude Code & Codex `SessionStart` hooks run
+`node scripts/setup-worktree.ts --session-start`, the harness entry point. In a linked worktree it
+links absent `pipeline/input/` & `.worktreeinclude` entries; in any checkout, including the main
+one, it runs the frozen install & `prepare` when dependencies are absent or stale, which it detects
+with pnpm’s own `verifyDepsBeforeRun` check. A current checkout is left alone. Install output goes
+to the hook’s stderr, and the outcome arrives as session context. A failed setup never blocks the
+session; its context message is a tooling failure to report under AGENTS.md. Dependencies that go
+stale mid-session (a merge that changes the lockfile) need `pnpm install --frozen-lockfile`, which
+agents run without asking.
+
+**No shared dependencies:** a worktree never links `node_modules` from another checkout. pnpm
+records each install’s workspace layout, so `verifyDepsBeforeRun` refuses a linked directory with
+`ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`, and Vitest & Vite write caches beneath `node_modules`, which
+links would share between concurrent sessions. An isolated frozen install from the shared global
+store takes seconds & gives each worktree its own caches & build state.
 
 **Subagent worktrees:** an orchestrator gives each editing subagent a worktree its harness lets that
 subagent edit. In Claude Code, the session’s edit guard refuses Write/Edit outside the session’s own
@@ -55,13 +71,13 @@ you must stash, address your entry by its commit ID (see
 ## Asset inputs
 
 **Check `pipeline/input/` before assuming a machine has no game files.** Worktree setup symlinks it
-from the main checkout (`.worktreeinclude`), so `ls pipeline/input` settles the question; a
-`needs game installation` label is not, by itself, a blocker. When present, it holds one `vX.Y.Z/`
-folder per release, each with `assets/` (`fiddle/` TOML, `localization/` translation tables, `gml/`,
-`tiled/`) and/or `save/`. Regenerate data from it with `pnpm run pipeline:assets`, which stamps
-`CURRENT_GAME_VERSION` (`pipeline/src/game-version.ts`). Relative paths passed to the plain
-`pipeline` script resolve from where you run `pnpm`; `--version` is required there (see
-[pipeline/README.md](../pipeline/README.md#setup--commands)). Read
+from the main checkout (`SHARED_DIRECTORIES` in `scripts/setup-worktree.ts`), so `ls pipeline/input`
+settles the question; a `needs game installation` label is not, by itself, a blocker. When present,
+it holds one `vX.Y.Z/` folder per release, each with `assets/` (`fiddle/` TOML, `localization/`
+translation tables, `gml/`, `tiled/`) and/or `save/`. Regenerate data from it with
+`pnpm run pipeline:assets`, which stamps `CURRENT_GAME_VERSION` (`pipeline/src/game-version.ts`).
+Relative paths passed to the plain `pipeline` script resolve from where you run `pnpm`; `--version`
+is required there (see [pipeline/README.md](../pipeline/README.md#setup--commands)). Read
 [game-asset-format.md](game-asset-format.md) before exploring the files themselves, and run
 `pnpm run pipeline:atlas` for per-file keys instead of opening each file.
 
@@ -113,9 +129,11 @@ reason it was reviewed, rather than weakening the check.
 
 ## Enforcement boundaries
 
-- Claude Code & Codex share `PreToolUse`, `PostToolUse`, `Stop`, & `SubagentStart` command hooks in
-  `.claude/settings.json` & `.codex/hooks.json`. Codex skips new or changed hooks until they are
-  re-trusted in its hook review (`/hooks`); review & trust them before relying on enforcement.
+- Claude Code & Codex share `PreToolUse`, `PostToolUse`, `Stop`, `SubagentStart`, & worktree
+  `SessionStart` command hooks in `.claude/settings.json` & `.codex/hooks.json`. The post-tool
+  formatter skips files with unresolved index stages, so it never rewrites conflict markers; they
+  format once resolved & staged. Codex skips new or changed hooks until they are re-trusted in its
+  hook review (`/hooks`); review & trust them before relying on enforcement.
 - Hook changes take effect next session. Claude Code runs each hook from `$CLAUDE_PROJECT_DIR`,
   fixed at session start to the session’s original checkout, so an edit to a hook script or its
   settings in a worktree (including a subagent’s) does not change the hooks guarding that session.

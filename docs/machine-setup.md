@@ -57,7 +57,9 @@ setup itself, require agents to stop & report them; see “Tooling failures” i
 ## Needed for specific work
 
 1. **Playwright browsers** for the accessibility & PWA suites, which only CI installs by default:
-   `pnpm exec playwright install firefox chromium`.
+   `pnpm exec playwright install chromium`, which includes the headless shell that headless runs
+   launch. The suites use Chromium only. The doctor checks the exact revisions the installed
+   Playwright expects.
 2. **Game assets** for pipeline work: place or link them at `pipeline/input/` (see
    [game-version-update-protocol.md](game-version-update-protocol.md)). `pnpm run game-assets:share`
    copies them to the maintainer's shared drive.
