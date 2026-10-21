@@ -20,6 +20,7 @@
   import { version } from "$app/env";
 
   import type { ReportTarget } from "#lib/feedback/types.js";
+  import type { SerializedState } from "#lib/stores/progress-storage.js";
 
   const TURNSTILE_SITE_KEY = "0x4AAAAAAEjKeNTnEDdgRcXX";
 
@@ -87,9 +88,7 @@
   let saveDataPreview = $derived.by(() => {
     if (!includeSaveData) return "";
     try {
-      const exported = JSON.parse(userState.exportBackup()) as {
-        progress: Record<string, unknown>;
-      };
+      const exported = JSON.parse(userState.exportBackup()) as SerializedState;
       return JSON.stringify(exported.progress, null, 2);
     } catch {
       return "(could not load progress data)";
@@ -291,9 +290,7 @@
       let saveData: Record<string, unknown> | undefined;
       if (includeSaveData) {
         try {
-          const exported = JSON.parse(userState.exportBackup()) as {
-            progress: Record<string, unknown>;
-          };
+          const exported = JSON.parse(userState.exportBackup()) as SerializedState;
           saveData = exported.progress;
         } catch {
           // Serialization failed; submit without save data
