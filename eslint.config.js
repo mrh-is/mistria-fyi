@@ -103,7 +103,7 @@ export default defineConfig(
     rules: { "local/no-untokened-classes": "error" },
   },
   {
-    // Cover app templates by default. Vendored primitives, dev-only pages, and fixture
+    // Cover app templates by default. The `ui/` primitives, dev-only pages, and fixture
     // templates are intentionally outside the user-facing localization contract.
     files: ["src/**/*.svelte"],
     ignores: ["src/lib/components/ui/**", "src/routes/dev/**", "**/*.test-harness.svelte"],
