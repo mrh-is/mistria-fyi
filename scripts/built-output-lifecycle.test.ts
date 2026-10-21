@@ -32,11 +32,13 @@ describe("built-output runner lifecycle", () => {
       try {
         writeFileSync(
           fixture,
-          `import { describe, test, ${hook} } from "node:test";
+          `import { after, before, describe, test } from "node:test";
+const hook = process.env.MISTRIA_LIFECYCLE_HOOK === "before" ? before : after;
+const hookTimeout = process.env.MISTRIA_LIFECYCLE_TIMEOUT;
 // A finite sentinel keeps a regressed runner from leaving a live worker behind.
 setTimeout(() => { console.error("lifecycle sentinel expired"); process.exit(99); }, 1500);
-describe("stalled ${hook}", () => {
-  ${hook}(async () => { await new Promise(() => {}); }, ${JSON.stringify(hookTimeout === undefined ? {} : { timeout: hookTimeout })});
+describe("stalled hook", () => {
+  hook(async () => { await new Promise(() => {}); }, hookTimeout === undefined ? {} : { timeout: Number(hookTimeout) });
   test("assertions pass", () => {});
 });
 `,
@@ -51,7 +53,17 @@ describe("stalled ${hook}", () => {
             ),
             fixture,
           ],
-          { encoding: "utf8", killSignal: "SIGKILL", timeout: 5000 },
+          {
+            encoding: "utf8",
+            env: {
+              ...process.env,
+              MISTRIA_LIFECYCLE_HOOK: hook,
+              MISTRIA_LIFECYCLE_TIMEOUT:
+                hookTimeout === undefined ? undefined : String(hookTimeout),
+            },
+            killSignal: "SIGKILL",
+            timeout: 5000,
+          },
         );
         expect(result.error).toBeUndefined();
         expect(result.status).toBe(1);
