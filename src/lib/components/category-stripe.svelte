@@ -245,7 +245,7 @@
     content: "";
   }
 
-  .category-stripe:is(:hover, :focus-visible) {
+  .category-stripe:is(:active, :focus-visible) {
     z-index: 3;
     box-shadow: var(--shadow-medium);
     outline: 2px solid var(--category-color);
@@ -253,13 +253,32 @@
     transform: translateY(-1px);
   }
 
-  .category-stripe:is(:hover, :focus-visible) .category-ribbon {
+  .category-stripe:is(:active, :focus-visible) .category-ribbon {
     filter: drop-shadow(var(--shadow-ribbon));
     transform: translateX(-3px);
   }
 
-  .category-stripe:is(:hover, :focus-visible) .category-ribbon :global(.category-icon) {
+  .category-stripe:is(:active, :focus-visible) .category-ribbon :global(.category-icon) {
     transform: rotate(-4deg);
+  }
+
+  @media (hover: hover) {
+    .category-stripe:hover {
+      z-index: 3;
+      box-shadow: var(--shadow-medium);
+      outline: 2px solid var(--category-color);
+      outline-offset: 2px;
+      transform: translateY(-1px);
+    }
+
+    .category-stripe:hover .category-ribbon {
+      filter: drop-shadow(var(--shadow-ribbon));
+      transform: translateX(-3px);
+    }
+
+    .category-stripe:hover .category-ribbon :global(.category-icon) {
+      transform: rotate(-4deg);
+    }
   }
 
   /* Ribbons hang in the gutter beside the column; landscape phones have no gutter (app.css). */
@@ -285,8 +304,14 @@
       background: inherit;
     }
 
-    .category-stripe:is(:hover, :focus-visible) .category-ribbon {
+    .category-stripe:is(:active, :focus-visible) .category-ribbon {
       transform: translateX(3px);
+    }
+
+    @media (hover: hover) {
+      .category-stripe:hover .category-ribbon {
+        transform: translateX(3px);
+      }
     }
 
     .category-stripe--complete .category-ribbon::after {
@@ -349,9 +374,9 @@
       transition-duration: 0.01ms;
     }
 
-    .category-stripe:is(:hover, :focus-visible),
-    .category-stripe:is(:hover, :focus-visible) .category-ribbon,
-    .category-stripe:is(:hover, :focus-visible) .category-ribbon :global(.category-icon) {
+    .category-stripe:is(:hover, :active, :focus-visible),
+    .category-stripe:is(:hover, :active, :focus-visible) .category-ribbon,
+    .category-stripe:is(:hover, :active, :focus-visible) .category-ribbon :global(.category-icon) {
       transform: none;
     }
   }

@@ -171,10 +171,18 @@
     text-align: left;
   }
 
-  .section-trigger:is(:hover, :focus-visible) {
+  .section-trigger:is(:active, :focus-visible) {
     background: color-mix(in srgb, var(--primary) 7%, transparent);
     outline: 2px solid var(--primary);
     outline-offset: -2px;
+  }
+
+  @media (hover: hover) {
+    .section-trigger:hover {
+      background: color-mix(in srgb, var(--primary) 7%, transparent);
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
+    }
   }
 
   .section-trigger :global(.section-disclosure) {
