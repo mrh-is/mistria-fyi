@@ -336,12 +336,16 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   a library change can't silently reset every player's language.
 - **PWA identity:** the manifest's `id: "/"` & `start_url: "/"`. Changing the `id` orphans every
   installed copy.
-- **Service-worker messages:** `mfg:skip-waiting` & `mfg:cache-locales`. An open page posts these to
-  a newer waiting worker, so renaming one strands tabs on the old version.
+- **Service-worker messages:** `mfg:cache-locales`, `mfg:client-version`, & `mfg:skip-waiting`. An
+  open page posts these to whichever worker is active, installing, or waiting, which may be a newer
+  version than the page, so renaming one strands tabs on the old version. A page reports its version
+  with `mfg:client-version` so its version's cache outlives an update (#111). Tabs from releases
+  before #111 post `mfg:skip-waiting` from their update prompt; the worker still honors it.
 
 ### Not promised
 
-- **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`): the worker's `activate`
-  deletes every cache it doesn't recognize, so a rename only costs a re-download, or forgets which
-  locales a player kept offline.
+- **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`, `client-versions-v1`): the
+  worker's `activate` deletes every cache it doesn't recognize (once no open page needs it), so a
+  rename only costs a re-download, forgets which locales a player kept offline, or keeps older
+  caches until the open pages report their versions again.
 - Internal identifiers such as category keys, message keys, & component names.

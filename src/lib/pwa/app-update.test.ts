@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SKIP_WAITING_MESSAGE } from "#lib/pwa/service-worker-cache.js";
+import { CLIENT_VERSION_MESSAGE } from "#lib/pwa/client-versions.js";
 
 import {
+  reportClientVersion,
   UPDATE_CHECK_INTERVAL_MS,
   UPDATE_RETRY_INTERVAL_MS,
   watchForAppUpdate,
@@ -16,11 +17,12 @@ afterEach(() => {
 });
 
 class FakeRegistration extends EventTarget {
+  active: FakeWorker | null = null;
   installing: FakeWorker | null = null;
   readonly update = vi.fn(() => Promise.resolve());
   waiting: FakeWorker | null = null;
 
-  /** Plays out the browser finding and installing a new version. */
+  /** Plays out the browser finding a new version and installing it, up to waiting. */
   install(worker: FakeWorker): void {
     this.installing = worker;
     this.dispatchEvent(new Event("updatefound"));
@@ -60,15 +62,13 @@ async function watch({ controlled = true, waiting = null as FakeWorker | null } 
   });
   const visibility = new FakeVisibility();
   const clock = { now: 0 };
-  const onUpdateReady = vi.fn<(activate: () => void) => void>();
-  const reload = vi.fn();
+  const onUpdateReady = vi.fn<() => void>();
   const events = new EventTarget();
   const { newVersionDetected, stop } = watchForAppUpdate({
     container,
     events,
     now: () => clock.now,
     onUpdateReady,
-    reload,
     visibility,
   });
   stops.push(stop);
@@ -80,70 +80,47 @@ async function watch({ controlled = true, waiting = null as FakeWorker | null } 
     newVersionDetected,
     onUpdateReady,
     registration,
-    reload,
     stop,
     visibility,
   };
 }
 
 describe("watchForAppUpdate", () => {
-  it("announces a version that was already waiting when the page loaded", async () => {
+  it("announces once when a new version takes control", async () => {
+    const { container, onUpdateReady } = await watch();
+
+    container.dispatchEvent(new Event("controllerchange"));
+    container.dispatchEvent(new Event("controllerchange"));
+
+    expect(onUpdateReady).toHaveBeenCalledTimes(1);
+  });
+
+  it("neither announces nor activates a version that is merely installed", async () => {
     const waiting = new FakeWorker();
-    const { onUpdateReady } = await watch({ waiting });
+    const { onUpdateReady, registration } = await watch({ waiting });
+    registration.install(new FakeWorker());
 
-    expect(onUpdateReady).toHaveBeenCalledTimes(1);
-  });
-
-  it("announces a version once it finishes installing", async () => {
-    const { onUpdateReady, registration } = await watch();
+    // A new version activates itself; a page never hands it control.
+    expect(waiting.postMessage).not.toHaveBeenCalled();
     expect(onUpdateReady).not.toHaveBeenCalled();
-
-    registration.install(new FakeWorker());
-
-    expect(onUpdateReady).toHaveBeenCalledTimes(1);
   });
 
-  it("asks the newest waiting worker to take over when accepted", async () => {
-    const { onUpdateReady, registration } = await watch();
-    const first = new FakeWorker();
-    const second = new FakeWorker();
-    registration.install(first);
-    registration.install(second);
+  it("doesn't announce the first-ever install", async () => {
+    const { container, onUpdateReady } = await watch({ controlled: false });
 
-    const [[activate]] = onUpdateReady.mock.calls as [[() => void]];
-    activate();
-
-    expect(first.postMessage).not.toHaveBeenCalled();
-    expect(second.postMessage).toHaveBeenCalledWith({ type: SKIP_WAITING_MESSAGE });
-  });
-
-  it("reloads once when a new version takes control", async () => {
-    const { container, reload } = await watch();
-
-    container.dispatchEvent(new Event("controllerchange"));
-    container.dispatchEvent(new Event("controllerchange"));
-
-    expect(reload).toHaveBeenCalledTimes(1);
-  });
-
-  it("neither announces nor reloads for the first-ever install", async () => {
-    const { container, onUpdateReady, registration, reload } = await watch({ controlled: false });
-
-    registration.install(new FakeWorker());
     container.dispatchEvent(new Event("controllerchange"));
 
     expect(onUpdateReady).not.toHaveBeenCalled();
-    expect(reload).not.toHaveBeenCalled();
   });
 
-  it("reloads for an update that arrives after the first install claimed the page", async () => {
-    const { container, reload } = await watch({ controlled: false });
+  it("announces an update that arrives after the first install claimed the page", async () => {
+    const { container, onUpdateReady } = await watch({ controlled: false });
 
     container.dispatchEvent(new Event("controllerchange"));
-    expect(reload).not.toHaveBeenCalled();
+    expect(onUpdateReady).not.toHaveBeenCalled();
 
     container.dispatchEvent(new Event("controllerchange"));
-    expect(reload).toHaveBeenCalledTimes(1);
+    expect(onUpdateReady).toHaveBeenCalledTimes(1);
   });
 
   it("leaves detection to SvelteKit, even after the old visibility interval", async () => {
@@ -159,14 +136,16 @@ describe("watchForAppUpdate", () => {
   });
 
   it("installs immediately once a new version is detected, with no browser event", async () => {
-    const { newVersionDetected, registration } = await watch();
+    const { newVersionDetected, onUpdateReady, registration } = await watch();
     newVersionDetected();
     newVersionDetected();
     expect(registration.update).toHaveBeenCalledTimes(1);
+    // Installing isn't the update: the page reloads once the new version controls it.
+    expect(onUpdateReady).not.toHaveBeenCalled();
   });
 
   it.each(["rejection", "no-op", "redundant"] as const)(
-    "retries a %s on browser events, throttles attempts, and stops when waiting",
+    "retries a %s on browser events, throttles attempts, and stops once a version installs",
     async (failure) => {
       const { clock, events, newVersionDetected, registration, visibility } = await watch();
       if (failure === "rejection") registration.update.mockRejectedValueOnce(new Error("offline"));
@@ -211,28 +190,55 @@ describe("watchForAppUpdate", () => {
     expect(registration.update).toHaveBeenCalledTimes(2);
   });
 
-  it("offers a reload on a detected deploy without a controlling worker", async () => {
-    const { newVersionDetected, onUpdateReady, registration, reload } = await watch({
+  it("stops retrying once the new version takes control", async () => {
+    const { clock, container, newVersionDetected, registration } = await watch();
+    registration.update.mockRejectedValueOnce(new Error("offline"));
+    newVersionDetected();
+    await vi.advanceTimersByTimeAsync(0);
+    container.dispatchEvent(new Event("controllerchange"));
+    clock.now = UPDATE_RETRY_INTERVAL_MS;
+    await vi.advanceTimersByTimeAsync(UPDATE_RETRY_INTERVAL_MS);
+    expect(registration.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("announces a detected deploy at once without a controlling worker", async () => {
+    const { newVersionDetected, onUpdateReady, registration } = await watch({
       controlled: false,
     });
     newVersionDetected();
-    onUpdateReady.mock.calls[0]?.[0]();
-    expect(reload).toHaveBeenCalledTimes(1);
+    expect(onUpdateReady).toHaveBeenCalledTimes(1);
     expect(registration.update).not.toHaveBeenCalled();
   });
 
   it("stops watching once stopped", async () => {
-    const { clock, container, onUpdateReady, registration, reload, stop, visibility } =
+    const { clock, container, newVersionDetected, onUpdateReady, registration, stop, visibility } =
       await watch();
 
     stop();
-    registration.install(new FakeWorker());
+    newVersionDetected();
     container.dispatchEvent(new Event("controllerchange"));
     clock.now = UPDATE_CHECK_INTERVAL_MS;
     refocus(visibility);
 
     expect(onUpdateReady).not.toHaveBeenCalled();
-    expect(reload).not.toHaveBeenCalled();
     expect(registration.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("reportClientVersion", () => {
+  it("tells the active worker which version the page runs", async () => {
+    const registration = new FakeRegistration();
+    const active = new FakeWorker();
+    registration.active = active;
+    const ready = Promise.resolve(registration as unknown as ServiceWorkerRegistration);
+
+    reportClientVersion("2026.10.20 (abc)", { ready });
+    await ready;
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(active.postMessage).toHaveBeenCalledWith({
+      type: CLIENT_VERSION_MESSAGE,
+      version: "2026.10.20 (abc)",
+    });
   });
 });

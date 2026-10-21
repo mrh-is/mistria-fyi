@@ -141,6 +141,27 @@ describe("service-worker fetch strategy", () => {
     expect(strategyFor(`${ORIGIN}/_app/immutable/entry/start.js`)).toBe("asset");
     expect(strategyFor("https://assets.mistria.fyi/sprites/items/apple.webp")).toBe("sprite");
     expect(strategyFor(`${ORIGIN}/en/villagers`)).toBe("runtime");
+  });
+
+  // After an update takes over, a page still on the old version imports the old build's chunks,
+  // which the server no longer has. Only the old version's cache does (#111).
+  it("answers another version's build assets from the caches", () => {
+    expect(strategyFor(`${ORIGIN}/_app/immutable/chunks/older.Ab12.js`)).toBe("asset");
+    expect(
+      strategyFor("https://elsewhere.test/_app/immutable/chunks/older.Ab12.js"),
+    ).toBeUndefined();
+    expect(
+      fetchStrategy(
+        { method: "GET", url: `${ORIGIN}/guide/_app/immutable/chunks/older.js` },
+        assetPaths,
+        ORIGIN,
+        "/guide/_app/version.json",
+        "/guide/_app/immutable/",
+      ),
+    ).toBe("asset");
+  });
+
+  it("runtime-caches fonts", () => {
     expect(strategyFor("https://assets.mistria.fyi/fonts/satoshi-regular.woff2")).toBe("runtime");
   });
 

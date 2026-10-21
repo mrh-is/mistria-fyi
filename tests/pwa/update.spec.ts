@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
+import { builtLocaleChunks } from "../../scripts/built-locale-chunks.js";
 import { expect, test } from "../browser/test.js";
 import { goOffline, goOnline, waitForControl } from "./service-worker.js";
 
@@ -7,8 +8,6 @@ import type { BrowserContext, Page } from "@playwright/test";
 
 const WORKER_PATH = ".svelte-kit/output/client/service-worker.js";
 const VERSION_PATH = ".svelte-kit/output/client/_app/version.json";
-const UPDATE_MESSAGE =
-  "The Mistria Field Guide has been updated! Refresh to get the newest version.";
 
 function cacheNames(page: Page): Promise<string[]> {
   return page.evaluate(() => caches.keys());
@@ -18,6 +17,10 @@ function cacheNames(page: Page): Promise<string[]> {
  * Simulates a deploy by rewriting the built worker's version, which names its cache. The preview
  * server records each file's size at startup and sends it as `Content-Length`, so the new version
  * must keep the byte length: this swaps the version's last letter or digit.
+ *
+ * Only the worker & version metadata change: the pages and their chunks are the same build, so a
+ * page reloaded onto the new worker still reports the old version. {@link reportVersion} stands in
+ * for a page built as the new version.
  */
 function deployNewVersion(version: string): { newVersion: string; restore: () => void } {
   const original = readFileSync(WORKER_PATH, "utf8");
@@ -36,79 +39,239 @@ function deployNewVersion(version: string): { newVersion: string; restore: () =>
   };
 }
 
-test("keeps open tabs on their version until one accepts the update, then reloads them all", async ({
+/** The versions the worker has recorded for open pages, as the pages reported them. */
+function reportedVersions(page: Page): Promise<string[]> {
+  return page.evaluate(async () => {
+    const cache = await caches.open("client-versions-v1");
+    const response = await cache.match("/__client-versions");
+    const record = (await response?.json()) as Record<string, string> | undefined;
+    return Object.values(record ?? {});
+  });
+}
+
+/** Has `page` report `version` to the worker, as a page built as that version would. */
+async function reportVersion(page: Page, version: string): Promise<void> {
+  await page.evaluate((reported) => {
+    navigator.serviceWorker.controller?.postMessage({
+      type: "mfg:client-version",
+      version: reported,
+    });
+  }, version);
+}
+
+function versionCacheOf(names: readonly string[]): string {
+  const name = names.find((candidate) => candidate.startsWith("cache-"));
+  if (!name) throw new Error("The service worker has no versioned cache");
+  return name;
+}
+
+/** Marks the document, so a reload (which replaces it) shows as the mark's absence. */
+async function markDocument(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    document.documentElement.dataset.beforeUpdate = "true";
+  });
+}
+
+function stillSameDocument(page: Page): Promise<boolean> {
+  return page.evaluate(() => document.documentElement.dataset.beforeUpdate === "true");
+}
+
+test("keeps offline navigation to an unopened category working while an update waits", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/en");
+  await waitForControl(page);
+  const oldCache = versionCacheOf(await cacheNames(page));
+  const englishChunks = builtLocaleChunks().en;
+  expect(englishChunks.length).toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      page.evaluate(async (paths) => {
+        const cached = await Promise.all(paths.map((path) => caches.match(path)));
+        return cached.every(Boolean);
+      }, englishChunks),
+    )
+    .toBe(true);
+  await page.getByRole("button", { name: "Quick settings" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await markDocument(page);
+  const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
+  try {
+    await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
+    await waitForTakeover(context, `cache-${newVersion}`);
+    expect(await stillSameDocument(page)).toBe(true);
+    expect(await page.evaluate(() => caches.match("/en/recipes").then(Boolean))).toBe(false);
+
+    await goOffline(context);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await page
+      .getByRole("link", { name: /^Recipes/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/en\/recipes$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Recipes" })).toBeVisible();
+    expect(await stillSameDocument(page)).toBe(true);
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/en$/);
+    expect(await stillSameDocument(page)).toBe(true);
+    await page.goForward();
+    await expect(page).toHaveURL(/\/en\/recipes$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Recipes" })).toBeVisible();
+    expect(await stillSameDocument(page)).toBe(true);
+
+    const reloaded = page.waitForEvent("load");
+    await goOnline(context);
+    await reloaded;
+    await waitForControl(page);
+    expect(await stillSameDocument(page)).toBe(false);
+    await expect(page.getByRole("heading", { level: 1, name: "Recipes" })).toBeVisible();
+  } finally {
+    restore();
+  }
+});
+
+test("activates a new version on its own, reloading idle tabs at once & a busy one when it's free", async ({
   context,
   page,
 }) => {
   await page.clock.install();
   await page.goto("/en");
   await waitForControl(page);
-  const otherTab = await context.newPage();
-  await otherTab.goto("/en/animals");
-  await waitForControl(otherTab);
+  const busyTab = await context.newPage();
+  await busyTab.goto("/en/about");
+  await waitForControl(busyTab);
+  // Each open page reports its version; the worker keeps that version's cache while one runs it.
+  await expect.poll(() => reportedVersions(page).then((versions) => versions.length)).toBe(2);
 
-  // The page reports its language, which the next version's install reads.
-  await expect
-    .poll(() =>
-      page.evaluate(async () => {
-        const record = await caches.match("/__last-locale");
-        return record?.json() as Promise<unknown>;
-      }),
-    )
-    .toBe("en");
-
-  const initialCacheNames = await cacheNames(page);
-  const oldCache = initialCacheNames.find((name) => name.startsWith("cache-"));
-  if (!oldCache) throw new Error("The service worker has no versioned cache");
+  const oldCache = versionCacheOf(await cacheNames(page));
   const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
   const newCache = `cache-${newVersion}`;
 
   try {
-    // No focus or visibility event: the app’s production poll alone detects this deploy.
-    await page.clock.runFor(600_001);
+    // The busy tab has a dialog open, which an update must never interrupt.
+    await busyTab.getByRole("button", { name: "AI disclosure" }).click();
+    await expect(busyTab.getByRole("dialog")).toBeVisible();
+    await markDocument(busyTab);
 
-    // The new version installs and waits; both tabs offer it.
-    await expect(page.getByText(UPDATE_MESSAGE)).toBeVisible();
-    await expect(otherTab.getByText(UPDATE_MESSAGE)).toBeVisible();
-    expect(await cacheNames(page)).toEqual(expect.arrayContaining([oldCache, newCache]));
-    // Activating deletes the old cache, so the install fetched the last-used home page itself, for
-    // an offline launch right after the update (#728).
-    const homeInNewCache: boolean = await page.evaluate(async (name) => {
+    // No focus or visibility event, and nobody accepts anything: the production poll detects the
+    // deploy, the new version installs & takes over, and the idle tab reloads onto it.
+    const idleReload = page.waitForEvent("load");
+    await page.clock.runFor(600_001);
+    await idleReload;
+    await waitForControl(page);
+    const takenOver = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready;
+      return registration.waiting === null && registration.active?.state === "activated";
+    });
+    expect(takenOver).toBe(true);
+    const names = await cacheNames(page);
+    // The busy tab still runs the old version, so its cache stays.
+    expect(names).toEqual(expect.arrayContaining([oldCache, newCache]));
+    const homeInNewCache = await page.evaluate(async (name) => {
       const cache = await caches.open(name);
-      const home = await cache.match("/en");
-      return home !== undefined;
+      return (await cache.match("/en")) !== undefined;
     }, newCache);
     expect(homeInNewCache).toBe(true);
 
-    // Until a tab accepts, the old version keeps working, cache and all.
-    await page
-      .getByRole("link", { name: /^Recipes/ })
-      .first()
-      .click();
-    await expect(page).toHaveURL(/\/en\/recipes$/);
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    // The busy tab stays put, dialog and all, past several of its safe-moment checks.
+    await busyTab.waitForTimeout(2500);
+    expect(await stillSameDocument(busyTab)).toBe(true);
+    await expect(busyTab.getByRole("dialog")).toBeVisible();
+
+    // Closing the dialog is its safe moment.
+    const busyReload = busyTab.waitForEvent("load");
+    await busyTab.keyboard.press("Escape");
+    await busyReload;
+    await waitForControl(busyTab);
+    expect(await stillSameDocument(busyTab)).toBe(false);
+
+    // Once no open page runs the old version, its cache goes.
     expect(await cacheNames(page)).toContain(oldCache);
-
-    // Dismissing the prompt in one tab doesn't keep that tab off the update another tab accepts.
-    await otherTab.getByRole("button", { name: "Not now" }).click();
-    await expect(otherTab.getByText(UPDATE_MESSAGE)).toBeHidden();
-
-    const reloads = Promise.all([page.waitForEvent("load"), otherTab.waitForEvent("load")]);
-    await page.getByRole("button", { name: "Refresh" }).click();
-    await reloads;
-
-    for (const tab of [page, otherTab]) {
-      await waitForControl(tab);
-      await expect(tab.getByText(UPDATE_MESSAGE)).toBeHidden();
+    await expect.poll(() => reportedVersions(page).then((versions) => versions.length)).toBe(2);
+    for (const tab of [page, busyTab]) {
+      // oxlint-disable-next-line no-await-in-loop -- Reports are sent one tab at a time.
+      await reportVersion(tab, newVersion);
     }
-    const noWaitingWorker = await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.ready;
-      return registration.waiting === null;
-    });
-    expect(noWaitingWorker).toBe(true);
-    const finalCacheNames = await cacheNames(page);
-    expect(finalCacheNames).toContain(newCache);
-    expect(finalCacheNames).not.toContain(oldCache);
+    await expect.poll(() => cacheNames(page)).not.toContain(oldCache);
+    expect(await cacheNames(page)).toContain(newCache);
+  } finally {
+    restore();
+  }
+});
+
+/** A route node chunk in `cacheName` that `page` hasn't loaded yet, as a path. */
+async function unloadedNodeChunk(page: Page, cacheName: string): Promise<string> {
+  const path = await page.evaluate(async (name) => {
+    const loaded = new Set(
+      performance.getEntriesByType("resource").map((entry) => new URL(entry.name).pathname),
+    );
+    const cache = await caches.open(name);
+    const requests = await cache.keys();
+    const chunks = requests
+      .map((request) => new URL(request.url).pathname)
+      .filter((pathname) => pathname.includes("/_app/immutable/nodes/"));
+    return chunks.find((pathname) => !loaded.has(pathname));
+  }, cacheName);
+  if (!path) throw new Error(`No unloaded route chunk in ${cacheName}`);
+  return path;
+}
+
+test("keeps serving an old page's lazy chunks from its version's cache after the update", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/en/about");
+  await waitForControl(page);
+  await expect.poll(() => reportedVersions(page).then((versions) => versions.length)).toBe(1);
+  const oldCache = versionCacheOf(await cacheNames(page));
+  const chunk = await unloadedNodeChunk(page, oldCache);
+
+  // Busy, so it stays on the old version after the new one takes over.
+  await page.getByRole("button", { name: "AI disclosure" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await markDocument(page);
+
+  const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
+  const newCache = `cache-${newVersion}`;
+  try {
+    await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
+    await expect
+      .poll(() =>
+        page.evaluate(async () => {
+          const registration = await navigator.serviceWorker.ready;
+          return registration.active?.state === "activated" && registration.waiting === null;
+        }),
+      )
+      .toBe(true);
+    await expect.poll(() => cacheNames(page)).toContain(newCache);
+
+    // Make the old version's cache the only copy of the chunk, as after a real deploy: the new
+    // build doesn't have it, and the server no longer serves it.
+    await page.evaluate(
+      async ([name, path]) => {
+        const cache = await caches.open(name);
+        await cache.delete(path);
+      },
+      [newCache, chunk],
+    );
+    await context.route(
+      (url) => url.pathname === chunk,
+      (route) => route.fulfill({ body: "Not Found", status: 404 }),
+    );
+
+    const imported = await page.evaluate(async (path) => {
+      try {
+        await import(/* @vite-ignore */ path);
+        return true;
+      } catch {
+        return false;
+      }
+    }, chunk);
+    expect(imported).toBe(true);
+    expect(await stillSameDocument(page)).toBe(true);
   } finally {
     restore();
   }
@@ -118,15 +281,13 @@ function isEnglishHome(url: URL): boolean {
   return url.pathname === "/en";
 }
 
-test("refreshes an uncontrolled page from the network even with an old active worker", async ({
+test("reloads an uncontrolled page from the network even with an old active worker", async ({
   context,
   page,
 }) => {
   await page.goto("/en");
   await waitForControl(page);
-  const names = await cacheNames(page);
-  const oldCache = names.find((name) => name.startsWith("cache-"));
-  if (!oldCache) throw new Error("The service worker has no versioned cache");
+  const oldCache = versionCacheOf(await cacheNames(page));
 
   // Model a hard reload that bypassed the worker, while its registration remains active.
   const session = await context.newCDPSession(page);
@@ -159,12 +320,10 @@ test("refreshes an uncontrolled page from the network even with an old active wo
   });
   const { restore } = deployNewVersion(oldCache.slice("cache-".length));
   try {
+    // An idle page reloads on detection, with no prompt to accept.
+    const reload = page.waitForEvent("load");
     await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
-    await expect(page.getByText(UPDATE_MESSAGE)).toBeVisible();
-    await Promise.all([
-      page.waitForEvent("load"),
-      page.getByRole("button", { exact: true, name: "Refresh" }).click(),
-    ]);
+    await reload;
     expect(
       await page.evaluate(() =>
         document.head.querySelector('meta[name="pwa-build-source"]')?.getAttribute("content"),
@@ -188,9 +347,10 @@ function cacheHolds(page: Page, cacheName: string, path: string): Promise<boolea
 }
 
 /**
- * Waits for the new version to take over with no tab open. Chromium activates it only once the
- * closed tab has gone, as iOS's launch after a force-quit would. A worker restarting mid-check just
- * reads again.
+ * Waits for the new version to be the active one: the newest worker itself has activated, with no
+ * other installing. Its cache exists from the start of its install, so that alone proves nothing;
+ * going offline mid-install would fail it and leave the old version active. A worker restarting
+ * mid-check just reads again.
  */
 async function waitForTakeover(context: BrowserContext, newCache: string): Promise<void> {
   await expect
@@ -200,12 +360,15 @@ async function waitForTakeover(context: BrowserContext, newCache: string): Promi
           .serviceWorkers()
           .at(-1)
           ?.evaluate(async (name) => {
-            const { registration } = globalThis as unknown as {
+            const { registration, serviceWorker } = globalThis as unknown as {
               registration: ServiceWorkerRegistration;
+              serviceWorker: ServiceWorker;
             };
             const names = await caches.keys();
             return (
-              registration.active?.state === "activated" &&
+              serviceWorker.state === "activated" &&
+              registration.active === serviceWorker &&
+              registration.installing === null &&
               registration.waiting === null &&
               names.includes(name)
             );
@@ -217,17 +380,6 @@ async function waitForTakeover(context: BrowserContext, newCache: string): Promi
     .toBe(true);
 }
 
-async function waitForWaiting(page: Page): Promise<void> {
-  await expect
-    .poll(() =>
-      page.evaluate(async () => {
-        const registration = await navigator.serviceWorker.ready;
-        return registration.waiting !== null;
-      }),
-    )
-    .toBe(true);
-}
-
 function lastLocale(page: Page): Promise<unknown> {
   return page.evaluate(async () => {
     const record = await caches.match("/__last-locale");
@@ -236,8 +388,8 @@ function lastLocale(page: Page): Promise<unknown> {
 }
 
 // A new version reads the last-used locale partway through its install. A language switch after
-// that read, but before the install finishes, must still reach it: activating deletes the old
-// version's cache, and the next launch may be offline (#18).
+// that read, but before the install finishes, must still reach it: the next launch may be offline
+// (#18).
 test("relaunches offline in a language chosen while a new version was installing", async ({
   context,
   page,
@@ -246,9 +398,7 @@ test("relaunches offline in a language chosen while a new version was installing
   await waitForControl(page);
   await expect.poll(() => lastLocale(page)).toBe("en");
 
-  const initialNames = await cacheNames(page);
-  const oldCache = initialNames.find((name) => name.startsWith("cache-"));
-  if (!oldCache) throw new Error("The service worker has no versioned cache");
+  const oldCache = versionCacheOf(await cacheNames(page));
   const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
   const newCache = `cache-${newVersion}`;
 
@@ -272,18 +422,20 @@ test("relaunches offline in a language chosen while a new version was installing
     await expect(page).toHaveURL(/\/ja$/);
     await expect.poll(() => lastLocale(page)).toBe("ja");
 
+    // The idle page reloads onto the new version once it takes over.
+    const reloaded = page.waitForEvent("load");
     releaseHome(true);
-    await waitForWaiting(page);
+    await waitForTakeover(context, newCache);
+    await reloaded;
+    await waitForControl(page);
     await context.unroute(isEnglishHome);
     // The switch reached the installing version itself, not only the active one. Waited for before
     // going offline: the new version's own fetch may still be in flight.
     await expect.poll(() => cacheHolds(page, newCache, "/ja")).toBe(true);
 
-    // Force-quit and go offline: the new version takes over with nothing open, and it can't fetch
-    // what it's missing.
+    // Force-quit and go offline: the next launch can't fetch what it's missing.
     await goOffline(context);
     await page.close();
-    await waitForTakeover(context, newCache);
     const relaunched = await context.newPage();
     await relaunched.goto("/");
     await expect(relaunched).toHaveURL(/\/ja$/);
@@ -303,10 +455,9 @@ test("relaunches offline after a new version failed to fetch the last-used home 
   await page.goto("/");
   await waitForControl(page);
   await expect.poll(() => lastLocale(page)).toBe("en");
-  const initialNames = await cacheNames(page);
-  const oldCache = initialNames.find((name) => name.startsWith("cache-"));
-  if (!oldCache) throw new Error("The service worker has no versioned cache");
+  const oldCache = versionCacheOf(await cacheNames(page));
   await expect.poll(() => cacheHolds(page, oldCache, "/en")).toBe(true);
+  await markDocument(page);
 
   const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
   const newCache = `cache-${newVersion}`;
@@ -315,13 +466,22 @@ test("relaunches offline after a new version failed to fetch the last-used home 
   );
 
   try {
+    // Before reloading onto the new version, the idle page probes its own URL.
+    const probed = page.waitForResponse(
+      (response) =>
+        isEnglishHome(new URL(response.url())) && response.request().resourceType() === "fetch",
+    );
     await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
-    await waitForWaiting(page);
+    await waitForTakeover(context, newCache);
+    // It answers 503, so the page stays: an unprompted reload never swaps a working page for an
+    // error.
+    const probe = await probed;
+    expect(probe.status()).toBe(503);
+    expect(await stillSameDocument(page)).toBe(true);
     expect(await cacheHolds(page, newCache, "/en")).toBe(false);
 
     await goOffline(context);
     await page.close();
-    await waitForTakeover(context, newCache);
     const relaunched = await context.newPage();
     await relaunched.goto("/");
     await expect(relaunched).toHaveURL(/\/en$/);
@@ -330,12 +490,16 @@ test("relaunches offline after a new version failed to fetch the last-used home 
     expect(await cacheNames(relaunched)).toContain(oldCache);
 
     // Back online, the next load's message caches the home page in the new version, and the old
-    // version's cache goes.
+    // version's cache goes once no page runs that version.
     await context.unroute(isEnglishHome);
     await goOnline(context);
     await relaunched.reload();
     await waitForControl(relaunched);
     await expect.poll(() => cacheHolds(relaunched, newCache, "/en")).toBe(true);
+    await expect
+      .poll(() => reportedVersions(relaunched).then((versions) => versions.length))
+      .toBe(1);
+    await reportVersion(relaunched, newVersion);
     await expect.poll(() => cacheNames(relaunched)).not.toContain(oldCache);
   } finally {
     restore();

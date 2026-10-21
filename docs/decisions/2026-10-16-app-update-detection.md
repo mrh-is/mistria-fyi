@@ -1,5 +1,8 @@
 # App update detection
 
+Superseded by [2026-10-20-automatic-app-updates.md](2026-10-20-automatic-app-updates.md): updates
+now activate without consent and each page reloads at its own safe moment. Detection is unchanged.
+
 ## Context
 
 A tracker tab behind a fullscreen game can remain visible to Chrome for days, with neither a

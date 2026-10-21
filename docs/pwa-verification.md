@@ -62,34 +62,49 @@ gzipped.
 
 ## Update flow
 
-Decided in #360. A deploy never swaps the worker out from under an open tab. Cloudflare Pages serves
-only the current deployment, so once the old version’s cache is gone, a tab still running the old
-JavaScript can’t load any chunk it hasn’t imported yet.
+Decided in #111 (see [the decision record](decisions/2026-10-20-automatic-app-updates.md)), which
+replaced #360’s consent prompt. Updates apply without a prompt, and never mid-task. Cloudflare Pages
+serves only the current deployment, so a tab still running an older version’s JavaScript can load a
+chunk only from that version’s cache.
 
-- **A new version waits.** The worker doesn’t call `skipWaiting()` on install. With a previous
-  version active, the new one installs into its own `cache-<version>` and waits; old tabs keep the
-  old worker and its cache. The first-ever install has nothing to wait for, so it activates and
-  claims the page at once.
-- **Open tabs offer it.** `watchForAppUpdate` (`src/lib/pwa/app-update.ts`) finds a worker that is
-  already waiting when the page loads, or one that finishes installing later, and the root layout’s
-  `UpdatePrompt` shows a toast: “The Mistria Field Guide has been updated! Refresh to get the newest
-  version.” The toast stays until the player acts on it, is announced through the toaster’s live
-  region, and has “Refresh” and “Not now” buttons. Dismissing it hides it for that page; the next
-  page load offers the update again.
-- **Accepting updates every tab.** “Refresh” posts `mfg:skip-waiting` to the waiting worker, which
-  activates, deletes the old cache, and claims every tab. Each tab that was already controlled
-  reloads on `controllerchange`, including tabs that dismissed the prompt.
+- **A new version takes over once installed.** The worker’s install ends with `skipWaiting()`, and
+  activation claims every tab. The first-ever install claims the page too; that isn’t an update.
+- **Older caches stay while a page runs that version.** Each page reports its version to the active
+  worker (`mfg:client-version`) when it loads; the worker records the reports in
+  `client-versions-v1`, pruned to the pages still open. Activation deletes an older version’s
+  `cache-<version>` only when every open page has reported and none runs that version; until then
+  it’s recorded as kept, and each later report retries. A page that hasn’t reported (one still
+  loading, or a tab from an earlier release) keeps every older cache. The kept home-page cache
+  described in the offline contract follows the same rule.
+- **Old pages keep loading their chunks.** Any same-origin `/_app/immutable/` request is answered
+  from the caches, this version’s first, so an older page’s lazy route finds its chunk after the
+  update.
+- **Each page reloads at its own safe moment.** `watchForAppUpdate` (`src/lib/pwa/app-update.ts`)
+  reports when a newer version takes control (`controllerchange` on a page that was already
+  controlled). The root layout’s `AppUpdater` then reloads at once if the page isn’t busy, and
+  otherwise waits (`src/lib/pwa/safe-reload.ts`). Busy means a task holds updates off
+  (`holdUpdatesWhile`, used by save import, backup restore, & transfer), a dialog or panel is open,
+  or a text field has focus. A waiting page re-checks when a hold is released, focus leaves a field,
+  visibility changes, the browser comes online, & every second. Before reloading, it probes its own
+  URL through the worker, as the reload would: offline, a 5xx, or a page no cache holds keeps it as
+  it is, with the next probe 30 s later or on `online`. Client-side navigation finishes normally,
+  then the destination is probed before the same guarded reload (links, back, forward, & `goto`).
+  Offline navigation stays client-side, with the update pending. QR reception holds updates through
+  image decoding, payload decoding, & the merge, then while its result is shown.
 - **Long-lived tabs still find updates.** SvelteKit’s `updated` state checks `/_app/version.json`
   every 10 minutes, and on focus & visibility changes. The worker leaves that file to the browser,
   so an offline check can’t mistake cached metadata for a deploy. Detection calls
-  `registration.update()` immediately; the toast waits for the installed worker. Failed or no-op
-  installs retry on online, focus, & visible events, at most once every five minutes, plus an hourly
-  fallback for unattended tabs. Retries stop when a worker is waiting. Without a controlling worker,
-  detection offers the same toast, and “Refresh” reloads from the network.
+  `registration.update()` immediately. Failed or no-op installs retry on online, focus, & visible
+  events, at most once every five minutes, plus an hourly fallback for unattended tabs. Retries stop
+  once a new version is installing, or takes control. Without a controlling worker, a detected
+  deploy reloads the page from the network at its safe moment.
+- **Older tabs reload once.** Tabs from releases before #111 still reload on `controllerchange`,
+  whatever they’re doing, when the first version with this flow takes over. The worker still honors
+  their `mfg:skip-waiting` message.
 
-Note: A player who ignores the prompt stays on the old version until they accept it or close every
-tab. Progress data doesn’t depend on the app version, so that’s safe. An old tab still can’t load a
-chunk its version never cached, such as another language’s names, since the server no longer has it.
+Note: Progress data doesn’t depend on the app version, and the store persists on `pagehide`, so a
+reload loses no progress. An old tab still can’t load a chunk its version never cached, such as
+another language’s names, since the server no longer has it.
 
 ## Automated verification
 
@@ -131,9 +146,14 @@ The suite verifies:
 - no name chunks at install, then every chunk for the visited locale and none for another;
 - offline navigation to an unopened category, offline search, and the offline language-switch
   message;
-- an update with two tabs open: the new version waits while the old tabs keep working on the old
-  cache, both tabs offer it, dismissing it in one tab doesn’t block it, and accepting it in the
-  other reloads both onto the new version and deletes the old cache; and
+- an update with two tabs open: the new version takes over with no prompt, the idle tab reloads at
+  once, the tab with a dialog open stays put until the dialog closes and then reloads, and the old
+  cache stays until no open tab runs the old version;
+- an old-version tab importing a route chunk after the update, which only the old version’s cache
+  still holds;
+- a pending update preserving offline navigation to an unopened category, back & forward, then
+  reloading the destination once online;
+- an uncontrolled tab reloading from the network on a detected deploy; and
 - normal online rendering when Playwright blocks service workers.
 
 The `pwa` job in `.github/workflows/ci.yml` runs the same Chromium suite for pull requests that
@@ -173,11 +193,12 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
    the new language.
 8. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
    the online application renders normally.
-9. To check the update flow, keep a tab open on the deployment, deploy a new version, and leave the
-   tab untouched for 10 minutes. Also check detection after focusing the tab or returning online
-   after a failed install; don’t click “Update” in the service-worker panel. Confirm the new worker
-   shows as waiting, the tab shows the update toast, and “Refresh” reloads onto the new version with
-   only the new `cache-<version>` left.
+9. To check the update flow, keep two tabs open on the deployment, open a dialog (the About page’s
+   “AI disclosure”) in one, deploy a new version, and leave both untouched for 10 minutes. Also
+   check detection after focusing a tab or returning online after a failed install; don’t click
+   “Update” in the service-worker panel. Confirm the new worker activates without a prompt, the idle
+   tab reloads onto it, the other stays put with its dialog open and both `cache-<version>` caches
+   remain, and closing the dialog reloads that tab, after which only the new cache is left.
 10. Record the browser name and exact version, OS, whether the app was installed or in a tab, commit
     or release, date, and result. File each verified failure as a separate issue.
 
