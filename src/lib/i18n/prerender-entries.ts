@@ -6,7 +6,7 @@ import { LOCALE_CODES } from "../types/locale.js";
  * the build lists each locale's copy instead. A route marked prerenderable but missing here fails
  * the build as unseen.
  */
-export const PRERENDERED_ROUTES = ["/data", "/settings"] as const;
+export const PRERENDERED_ROUTES = ["/data"] as const;
 
 /** Prerendered paths outside the locale prefixes (see `UNLOCALIZED_PATH_PREFIXES`). */
 const UNLOCALIZED_PRERENDERED_PATHS = ["/sitemap.xml"] as const;

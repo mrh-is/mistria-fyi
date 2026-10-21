@@ -29,8 +29,8 @@ under the existing Content-Security-Policy. Three constraints shaped it:
   (`src/lib/i18n/prerender-entries.ts`); SvelteKit's default `*` entry would prerender the
   unprefixed path, which only redirects.
 - Query-dependent behavior on a prerendered route runs in the browser: `/data` opens the `?section=`
-  tool in an effect, and `/settings` forwards to `/data` (keeping the query) from its `load` in the
-  browser only.
+  tool in an effect. The obsolete beta route `/settings` is removed with the maintainer’s approval;
+  see [the retirement decision](2026-10-20-retire-settings-route.md).
 
 Detaching and resetting a header in one rule is not covered by Cloudflare's documentation. The
 adapter's own `/_app/immutable/*` rule relies on it for `Cache-Control`, and production serves the
