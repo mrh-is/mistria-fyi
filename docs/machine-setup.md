@@ -49,7 +49,10 @@ setup itself, require agents to stop & report them; see “Tooling failures” i
    them implicitly.
 7. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
    `gpg.ssh.program = ssh-keygen`, per [git identity](agent-workflow.md#git-identity). The doctor
-   lists this as a todo, never a failure, because cloud sandboxes legitimately skip it.
+   lists this as a todo, never a failure, because cloud sandboxes legitimately skip it. If
+   `tag.gpgsign` is on, every `git tag` becomes a signed annotated tag that needs a message, so
+   scripts & tests that create tags pass `-c tag.gpgsign=false`; the doctor flags `tag.gpgsign`
+   without a signing key as wrong.
 
 ## Needed for specific work
 
