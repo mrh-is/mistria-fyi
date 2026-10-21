@@ -241,6 +241,26 @@ export function checkGit(machine: Environment): CheckResult[] {
           "Configure a local SSH signing key per docs/agent-workflow.md, git identity (gpg.format = ssh, gpg.ssh.program = ssh-keygen)",
         ),
   );
+  // tag.gpgsign turns every `git tag` into a signed annotated tag, which needs a message & a key.
+  const tagSigning = machine.run("git", ["config", "--get", "tag.gpgsign"]);
+  if (tagSigning.stdout.trim() === "true") {
+    results.push(
+      key.ok
+        ? check(
+            "git-tag-signing",
+            "Tag signing",
+            "ok",
+            "tag.gpgsign is on; scripts & tests that run `git tag` need -m or -c tag.gpgsign=false",
+          )
+        : check(
+            "git-tag-signing",
+            "Tag signing",
+            "wrong",
+            "tag.gpgsign is on without user.signingkey, so every `git tag` fails",
+            "git config --global --unset tag.gpgsign, or configure a signing key",
+          ),
+    );
+  }
   return results;
 }
 
