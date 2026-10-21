@@ -26,6 +26,44 @@ async function importFiles(files: File[]) {
 }
 
 describe("save import", () => {
+  it("records a manual import and shows its display even when creation_version is absent", async () => {
+    await importFiles([
+      new File(
+        [JSON.stringify({ farm_name: "Fern", items_acquired: [], name: "Ada" })],
+        "player.json",
+      ),
+    ]);
+    const history = await screen.findByTestId("last-import");
+    expect(history).toHaveTextContent("Fern · Ada");
+    expect(history).toHaveTextContent("Last imported now");
+    expect(history).toHaveTextContent("unknown version");
+    expect(userState.state.lastImport?.identity).toEqual({
+      creationVersion: null,
+      saveNumber: null,
+    });
+  });
+
+  it("shows persisted import history and preserves it after an unsuccessful import", async () => {
+    const metadata = {
+      farmName: "Fern",
+      identity: {
+        creationVersion: { major: 0, minor: 11, patch: 7, pre: null },
+        saveNumber: "123456",
+      },
+      importedAt: Date.now() - 120_000,
+      playerName: "Ada",
+    };
+    userState.mergeFromSave({}, metadata);
+    render(ImportCard, { open: true });
+    expect(screen.getByTestId("last-import")).toHaveTextContent("Save #123456 · Created in 0.11.7");
+    expect(screen.getByTestId("last-import")).toHaveTextContent("Last imported 2 minutes ago");
+    await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
+      target: { files: [new File(["{"], "player.json")] },
+    });
+    await screen.findByRole("alert");
+    expect(userState.state.lastImport).toEqual(metadata);
+  });
+
   it("announces no new data on a repeated import after a successful source-file summary", async () => {
     render(ImportCard, { open: true });
     const input = screen.getByLabelText("Choose save files to import");

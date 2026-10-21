@@ -16,7 +16,7 @@ describe("restoreBackup validation", () => {
 
   it("succeeds with a valid backup", () => {
     const json = userState.exportBackup();
-    expect(JSON.parse(json)).toMatchObject({ version: 1 });
+    expect(JSON.parse(json)).toMatchObject({ version: 2 });
     const result = userState.restoreBackup(json);
     expect(result.ok).toBe(true);
   });

@@ -280,6 +280,8 @@ versions, though new items, recipes, and quests are added in content updates.
    (`treasure_box_<tier>`, tracked as chest tiers), and the Mistmare's perks (`horsepower`,
    `harvest_horse`, `nice_ride`). The importer counts these as known-but-untracked; anything else it
    doesn't recognize marks its field incomplete.
-8. `info.creation_version` & `header.playtime` identify a save across imports: the first never
-   changes, and the second only grows as the save is played. The importer reads nothing else from
-   either entry.
+8. A farm's identity is the number in `game-<number>-<autosave or slot>.sav` plus
+   `info.creation_version`. Both are optional when importing: renamed files, extracted JSON, & old
+   saves may omit them. `header.playtime` only grows as the save is played. The manual importer also
+   reads player/farm names from `player` (or `header` when absent) for display; renaming them does
+   not change identity. These display names never enter the feedback progress attachment.
