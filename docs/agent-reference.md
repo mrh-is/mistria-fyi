@@ -113,6 +113,12 @@ reason it was reviewed, rather than weakening the check.
 - Claude Code & Codex share `PreToolUse`, `PostToolUse`, `Stop`, & `SubagentStart` command hooks in
   `.claude/settings.json` & `.codex/hooks.json`. Codex skips new or changed hooks until they are
   re-trusted in its hook review (`/hooks`); review & trust them before relying on enforcement.
+- Hook changes take effect next session. Claude Code runs each hook from `$CLAUDE_PROJECT_DIR`,
+  fixed at session start to the session’s original checkout, so an edit to a hook script or its
+  settings in a worktree (including a subagent’s) does not change the hooks guarding that session.
+  Hooks deliberately do not re-exec from the tool call’s tree, which would let a branch weaken its
+  own guard. When a PR changes a guard & also needs the edit it newly permits, land the hook change
+  first & make the guarded edit in a later session; record the deferred criterion in the PR.
 - `guard-generated-paths.ts` denies file-tool edits, patch headers (including deletions & moves),
   and direct shell writes referring to generated tracker data. Recover by running the pipeline.
   CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership and the `generated-data`
