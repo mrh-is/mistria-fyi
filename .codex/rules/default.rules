@@ -14,6 +14,7 @@ prefix_rule(
             "dev",
             "fonts:check",
             "fonts:lint",
+            "game-update:report",
             "knip",
             "lint",
             "lint:fix",

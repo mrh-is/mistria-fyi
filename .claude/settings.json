@@ -11,6 +11,7 @@
       "Bash(pnpm run check:built *)",
       "Bash(pnpm run knip *)",
       "Bash(pnpm run data:diff *)",
+      "Bash(pnpm run game-update:report *)",
       "Bash(pnpm run test *)",
       "Bash(pnpm run test:accessibility *)",
       "Bash(pnpm run test:accessibility:critical *)",
