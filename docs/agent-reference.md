@@ -36,6 +36,20 @@ procedure in AGENTS.md. It is deliberately not a pnpm script: `verifyDepsBeforeR
 `pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse to start on absent or stale dependencies
 rather than installing them implicitly.
 
+**Automatic initialization:** Claude Code & Codex `SessionStart` hooks run
+`node scripts/setup-worktree.ts --session-start`, the harness entry point. In a linked worktree it
+links absent `.worktreeinclude` entries & installs dependencies only when `node_modules` is absent;
+the main checkout & a complete worktree are left alone. Install output goes to the hook’s stderr,
+and the outcome arrives as session context. A failed setup never blocks the session; its context
+message is a tooling failure to report under AGENTS.md. Stale dependencies (a lockfile changed by a
+merge) still need a manual `pnpm install --frozen-lockfile`.
+
+**No shared dependencies:** a worktree never links `node_modules` from another checkout. pnpm
+records each install’s workspace layout, so `verifyDepsBeforeRun` refuses a linked directory with
+`ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`, and Vitest & Vite write caches beneath `node_modules`, which
+links would share between concurrent sessions. An isolated frozen install from the shared global
+store takes seconds & gives each worktree its own caches & build state.
+
 **Subagent worktrees:** an orchestrator gives each editing subagent a worktree its harness lets that
 subagent edit. In Claude Code, the session’s edit guard refuses Write/Edit outside the session’s own
 worktree, including `.worktrees/`, so spawn editing subagents with the Agent tool’s
@@ -113,9 +127,11 @@ reason it was reviewed, rather than weakening the check.
 
 ## Enforcement boundaries
 
-- Claude Code & Codex share `PreToolUse`, `PostToolUse`, `Stop`, & `SubagentStart` command hooks in
-  `.claude/settings.json` & `.codex/hooks.json`. Codex skips new or changed hooks until they are
-  re-trusted in its hook review (`/hooks`); review & trust them before relying on enforcement.
+- Claude Code & Codex share `PreToolUse`, `PostToolUse`, `Stop`, `SubagentStart`, & worktree
+  `SessionStart` command hooks in `.claude/settings.json` & `.codex/hooks.json`. The post-tool
+  formatter skips files with unresolved index stages, so it never rewrites conflict markers; they
+  format once resolved & staged. Codex skips new or changed hooks until they are re-trusted in its
+  hook review (`/hooks`); review & trust them before relying on enforcement.
 - Hook changes take effect next session. Claude Code runs each hook from `$CLAUDE_PROJECT_DIR`,
   fixed at session start to the session’s original checkout, so an edit to a hook script or its
   settings in a worktree (including a subagent’s) does not change the hooks guarding that session.

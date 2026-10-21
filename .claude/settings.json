@@ -140,6 +140,15 @@
         ]
       },
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/setup-worktree.ts\" --session-start",
+            "timeout": 600
+          }
+        ]
+      },
+      {
         "matcher": "startup",
         "hooks": [
           {
