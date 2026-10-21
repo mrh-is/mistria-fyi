@@ -14,12 +14,13 @@ function bash(command: string) {
 }
 
 describe("guardMessage", () => {
-  it("blocks vendored shadcn files, absolute or relative", () => {
+  it("allows edits of the project-owned ui components", () => {
     expect(
       guardMessage(edit("/work/mistria/src/lib/components/ui/button/button.svelte")),
-    ).toContain("shadcn-svelte");
-    expect(guardMessage(edit("src/lib/components/ui/dialog/index.ts"))).toContain("shadcn-svelte");
-    expect(guardMessage(edit("src/lib/components/ui/../ui/card.svelte"))).toBeDefined();
+    ).toBeUndefined();
+    expect(guardMessage(edit("src/lib/components/ui/dialog/index.ts"))).toBeUndefined();
+    expect(bash("rm -rf src/lib/components/ui/toggle")).toBeUndefined();
+    expect(bash("cd src/lib/components/ui && touch button.svelte")).toBeUndefined();
   });
 
   it("blocks the generated tracker data", () => {
@@ -61,11 +62,10 @@ describe("guardMessage", () => {
   it("denies direct shell writes without denying reads or pipeline execution", () => {
     for (const command of [
       'echo "{}" > src/lib/data/tracker-data.json',
-      "tee src/lib/components/ui/button.ts",
+      "tee src/lib/data/tracker-data.json",
       "sed -i 's/a/b/' src/lib/data/tracker-data.json",
       "rm src/lib/data/tracker-data.json",
-      "rm -rf src/lib/components/ui",
-      "mv src/lib/components/ui /tmp/ui",
+      "mv src/lib/data/tracker-data.json /tmp/data.json",
     ]) {
       expect(guardMessage({ cwd, tool_input: { command }, tool_name: "Bash" })).toContain(
         "Blocked edit",
@@ -74,7 +74,7 @@ describe("guardMessage", () => {
     expect(
       guardMessage({
         cwd,
-        tool_input: { command: "cat src/lib/components/ui/button.ts" },
+        tool_input: { command: "cat src/lib/types/tracker-data.ts" },
         tool_name: "Bash",
       }),
     ).toBeUndefined();
@@ -89,22 +89,22 @@ describe("guardMessage", () => {
 
   it("ignores guarded reads in a compound command with an unrelated write", () => {
     for (const command of [
-      "echo done > /tmp/log.txt; ls src/lib/components/ui",
-      "ls src/lib/components/ui && touch /tmp/marker",
+      "echo done > /tmp/log.txt; ls src/lib/data",
+      "ls src/lib/data && touch /tmp/marker",
       "git log --oneline -- src/lib/data/tracker-data.json | tee /tmp/log.txt",
       "cat src/lib/data/tracker-data.json > /tmp/copy.json",
-      "ls src/lib/components/ui 2>&1 >/dev/null",
-      "ls src/lib/components/ui &>/tmp/out.txt",
+      "ls src/lib/data 2>&1 >/dev/null",
+      "ls src/lib/data &>/tmp/out.txt",
       "grep x <<< src/lib/data/tracker-data.json; touch /tmp/y",
       "jq . src/lib/data/tracker-data.json > /tmp/out.json",
-      "rg foo src/lib/components/ui 2>/dev/null | head > /tmp/o",
-      "cd src/lib/components/ui && ls 2>/dev/null",
+      "rg foo src/lib/data 2>/dev/null | head > /tmp/o",
+      "cd src/lib/data && ls 2>/dev/null",
       "cp -t /tmp src/lib/data/tracker-data.json",
       "cp src/lib/data/tracker-data.json /tmp/copy.json",
       "sed -n '1,5p' src/lib/data/tracker-data.json; rm /tmp/x",
       `cd /work/mistria && node -e 'require("node:fs").writeFileSync("/tmp/scratch/oxfmt.json", "{}")' && pnpm exec oxfmt --check -c /tmp/scratch/oxfmt.json src/lib/data/tracker-data.json`,
-      "cd /work/mistria && echo x > /tmp/log.txt; ls src/lib/components/ui",
-      "cd /work/mistria && rm -f ~/scratch/a.txt; ls src/lib/components/ui",
+      "cd /work/mistria && echo x > /tmp/log.txt; ls src/lib/data",
+      "cd /work/mistria && rm -f ~/scratch/a.txt; ls src/lib/data",
     ]) {
       expect(bash(command), command).toBeUndefined();
     }
@@ -112,46 +112,44 @@ describe("guardMessage", () => {
 
   it("blocks a guarded write anywhere in a compound command", () => {
     for (const command of [
-      "ls src/lib/components/ui; echo '{}' > src/lib/data/tracker-data.json",
-      "cd /tmp && rm -rf /work/mistria/src/lib/components/ui",
+      "ls src/lib/data; echo '{}' > src/lib/data/tracker-data.json",
+      "cd /tmp && rm -rf /work/mistria/src/lib/data/tracker-data.json",
       "git status || cp /tmp/x.json src/lib/data/tracker-data.json",
-      "echo x | tee -a src/lib/components/ui/button.ts",
+      "echo x | tee -a src/lib/data/tracker-data.json",
       "true\nsed -i 's/a;b/c/' src/lib/data/tracker-data.json",
       "echo {} >>src/lib/data/tracker-data.json && ls",
       "echo {} &> src/lib/data/tracker-data.json",
-      String.raw`ls; find /tmp -exec rm {} \; src/lib/components/ui/a.ts`,
+      String.raw`ls; find /tmp -exec rm {} \; src/lib/data/tracker-data.json`,
       "echo x >& src/lib/data/tracker-data.json",
       "echo x >&src/lib/data/tracker-data.json",
-      "cd src/lib/components/ui && touch button.svelte",
-      "(cd src/lib/components/ui; rm -f x.svelte)",
+      "cd /work/mistria && touch src/lib/data/tracker-data.json",
+      "(cd /work/mistria; rm -f src/lib/data/tracker-data.json)",
       "echo src/lib/data/tracker-data.json | xargs rm",
-      "find src/lib/components/ui -name '*.svelte' | xargs sed -i s/a/b/",
-      'ls src/lib/components/ui | while read f; do rm "$f"; done',
+      "find src/lib/data/tracker-data.json | xargs sed -i s/a/b/",
+      'ls src/lib/data/tracker-data.json | while read f; do rm "$f"; done',
       "bash <<'EOF'\necho x > src/lib/data/tracker-data.json\nEOF",
       "sh <<EOF\ncp a src/lib/data/tracker-data.json\nEOF",
-      "cp -t src/lib/components/ui a.svelte",
-      "cp -rt src/lib/components/ui a.svelte",
-      "install -Dt src/lib/components/ui a.svelte",
+      "install -D a.json src/lib/data/tracker-data.json",
       "/bin/bash <<'EOF'\necho x > src/lib/data/tracker-data.json\nEOF",
       "sudo sh <<EOF\ntouch src/lib/data/tracker-data.json\nEOF",
       "env bash <<EOF\nrm src/lib/data/tracker-data.json\nEOF",
       "f=src/lib/data/tracker-data.json; echo x > $f",
-      "cp a.svelte src/lib/components/ui/ -v",
-      "cp a src/lib/components/ui/b.svelte # copy",
+      "cp a.json src/lib/data/tracker-data.json -v",
+      "cp a src/lib/data/tracker-data.json # copy",
       "echo $((1<<2))\ncp a src/lib/data/tracker-data.json",
-      "cat > src/lib/components/ui/a.ts <<'EOF'\nexport {};\nEOF",
+      "cat > src/lib/data/tracker-data.json <<'EOF'\n{}\nEOF",
       "python3 - <<'EOF'\nPath('src/lib/data/tracker-data.json').write_text('{}')\nEOF",
       `node -e 'require("node:fs").writeFileSync("src/lib/data/tracker-data.json", "{}")'`,
       `python3 -c "Path('src/lib/data/tracker-data.json').write_text('{}')"`,
-      'cd src/lib/components/ui && node -e \'writeFileSync("a.svelte", "")\'',
-      "cd src/lib/components/ui && node -e 'writeFileSync(name, \"\")'",
-      "cd src/lib/components/ui && echo x > /tmp/a; touch b.svelte",
+      'cd /work/mistria && node -e \'writeFileSync("src/lib/data/tracker-data.json", "")\'',
+      "node -e 'writeFileSync(name, \"\")' src/lib/data/tracker-data.json",
+      "cd /work/mistria && echo x > /tmp/a; touch src/lib/data/tracker-data.json",
       "bash <<'EOF' | tail\necho x > src/lib/data/tracker-data.json\nEOF",
       "bash <<'EOF' && echo done\nrm src/lib/data/tracker-data.json\nEOF",
       `node -e 'require("fs").writeFileSync("./" + process.argv[1], "x")' src/lib/data/tracker-data.json`,
       "exec 3<>src/lib/data/tracker-data.json; echo x >&3",
       "cat <<'EOF' | sh\nrm src/lib/data/tracker-data.json\nEOF",
-      String.raw`cd src/lib/components/ui && touch \a.svelte`,
+      String.raw`cd /work/mistria && touch \src/lib/data/tracker-data.json`,
       "cat > /tmp/out.md <<EOF\n$(rm src/lib/data/tracker-data.json)\nEOF",
     ]) {
       expect(bash(command), command).toContain("Blocked edit");
@@ -161,7 +159,7 @@ describe("guardMessage", () => {
   it("allows heredoc redirects to an outside file", () => {
     expect(
       bash(
-        "cat >> ~/notes/outside.md <<'EOF'\nTouched src/lib/components/ui; rm nothing > here.\nEOF\nls src/lib/components/ui; git log --oneline -- src/lib/components/ui",
+        "cat >> ~/notes/outside.md <<'EOF'\nTouched src/lib/data/tracker-data.json; rm nothing > here.\nEOF\nls src/lib/data; git log --oneline -- src/lib/data/tracker-data.json",
       ),
     ).toBeUndefined();
     expect(

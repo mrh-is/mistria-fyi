@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it } from "vitest";
 
-import { changedFiles } from "./agent-hook.js";
+import { changedFiles, shellWriteTargets } from "./agent-hook.js";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -48,4 +48,31 @@ it("reports Git enumeration failures instead of treating them as a clean checkou
   const cwd = mkdtempSync(join(tmpdir(), "agent-no-git-"));
   roots.push(cwd);
   expect(() => changedFiles(cwd)).toThrow(/not a git repository/i);
+});
+
+// The directory-level cases below once rode on the `ui/` guard's tests; the surviving guard names an
+// exact file, so the helper's contract is pinned here instead.
+it.each([
+  "cd src/lib/data && touch tracker-data.json",
+  "pushd src/lib/data && touch tracker-data.json",
+  "(cd src/lib/data; rm -f tracker-data.json)",
+  "cd src/lib/data && echo x > /tmp/a; touch tracker-data.json",
+])("shellWriteTargets counts every path when a cd precedes a relative write: %s", (command) => {
+  expect(shellWriteTargets(command)).toContain("src/lib/data");
+});
+
+it("shellWriteTargets keeps only the absolute write when a cd precedes no relative write", () => {
+  expect(shellWriteTargets("cd /work/mistria && echo x > /tmp/log.txt; ls src/lib/data")).toEqual([
+    "/tmp/log.txt",
+  ]);
+  expect(shellWriteTargets("cd src/lib/data && ls")).toEqual([]);
+});
+
+it.each([
+  "cp -t src/lib/data a.json",
+  "cp -rt src/lib/data a.json",
+  "cp --target-directory=src/lib/data a.json",
+  "install -Dt src/lib/data a.json",
+])("shellWriteTargets returns the target directory of: %s", (command) => {
+  expect(shellWriteTargets(command)).toEqual(["src/lib/data"]);
 });

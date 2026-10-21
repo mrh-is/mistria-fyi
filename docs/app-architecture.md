@@ -192,8 +192,8 @@ Pages are layout compositors. They handle data fetching and composition, not bus
   `#lib/components/skills-content.svelte`.
 - **Colocated components** — components used by a single page live in the same directory (e.g.,
   `src/routes/data/import-card.svelte`).
-- **Shared components** — reusable components live in `src/lib/components/` or vendored
-  `src/lib/components/ui/`.
+- **Shared components** — reusable components live in `src/lib/components/` or the project-owned
+  `src/lib/components/ui/` (forked from shadcn-svelte).
 - **"Everything" view** — `src/routes/everything/+page.svelte` computes overall completion and
   renders one `category-section.svelte` per category. That component owns the category-to-content
   map (which content component, whether it's compact, whether its rows stack), the sticky

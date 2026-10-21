@@ -110,7 +110,7 @@ describe("lint tool ownership", () => {
     await expect(eslintRules("probe.svelte.ts")).resolves.toStrictEqual([]);
   });
 
-  it("checks app templates for hardcoded text, excluding vendored, dev, and fixture files", async () => {
+  it("checks app templates for hardcoded text, excluding ui/, dev, and fixture files", async () => {
     const eslint = new ESLint();
     for (const file of [
       "src/lib/components/source-segment-text.svelte",

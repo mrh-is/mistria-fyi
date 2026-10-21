@@ -6,7 +6,7 @@
 </script>
 
 <!--
-  The vendored `Dialog.Content` close button hardcodes an English "Close", so dialogs pass
+  The `ui/` `Dialog.Content` close button hardcodes an English "Close", so dialogs pass
   `showCloseButton={false}` and render this one, which matches its placement & styling.
 -->
 <Dialog.Close

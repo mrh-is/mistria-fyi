@@ -14,8 +14,8 @@ Import each Tabler icon from its own module, e.g.
 `import IconX from "@tabler/icons-svelte-runes/icons/x"`, never from the package root. The root
 barrel re-exports about 6,000 components, and Vitest compiles all of them in every worker that
 imports it. ESLint rejects value imports from the root; type-only imports such as `Icon` are fine.
-This applies to the vendored shadcn-svelte components in `src/lib/components/ui/` too, so re-check
-their icon imports after regenerating them with the shadcn CLI.
+This applies to the components in `src/lib/components/ui/` too. Use the shadcn CLI only to add new
+components, never to regenerate existing ones, & fix any root-barrel icon import it writes.
 
 The pipeline:
 

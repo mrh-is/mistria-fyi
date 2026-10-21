@@ -449,7 +449,7 @@
       }
     },
     {
-      // shadcn-svelte generated components: vendored code, so relax strict rules
+      // Components forked from shadcn-svelte keep its import style, so relax those strict rules
       "files": ["src/lib/components/ui/**/*.svelte", "src/lib/components/ui/**/*.ts"],
       "rules": {
         "import/consistent-type-specifier-style": "off",

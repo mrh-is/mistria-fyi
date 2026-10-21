@@ -25,7 +25,7 @@ could an LLM have generated this? If it could, choose something else. Avoid in p
 ## Utilities vs. scoped CSS
 
 - **Tailwind utilities** handle layout, spacing, the utilitarian screens (data transfer, feedback,
-  legal pages), and the vendored shadcn-svelte layer in `src/lib/components/ui/`.
+  legal pages), and the project-owned `src/lib/components/ui/` layer (forked from shadcn-svelte).
 - **Scoped `<style>` blocks** handle components with a designed visual identity: records, cards,
   paper stacks, tags, and ribbons.
 - Follow whichever mode the surrounding component already uses. Don't convert one to the other in
@@ -40,8 +40,7 @@ A token's name says what kind of value it holds, then what it's for: `--<kind>-<
 - **Other kinds** keep their prefix: `--shadow-*`, `--filter-*`, `--radius-*`, `--size-*`,
   `--font-*`, `--text-*`, `--z-*`.
 - **shadcn-svelte's names** (`--background`, `--primary`, `--muted-foreground`, `--card`, `--ring`,
-  …) stay as they are, since the vendored `src/lib/components/ui/` reads them. They alias the Field
-  Guide tokens.
+  …) stay as they are, since `src/lib/components/ui/` reads them. They alias the Field Guide tokens.
 - **Component-local custom properties** (set in one component, read by it or its children) are
   prefixed with the component's name, like `--tracker-row-gap`, and say what they hold.
 
@@ -145,9 +144,8 @@ prevention, not a style guide:
   `color-mix()` or a shadow.
 - No `px` or `rem` in `font-size`, `box-shadow`, or `border-*-radius`.
 
-`src/app.css` is exempt, since it defines the tokens. So are the vendored `src/lib/components/ui/`
-and generated files. The config is `stylelint.config.js`, and `scripts/stylelint-config.test.ts`
-covers it.
+`src/app.css` is exempt, since it defines the tokens. So are `src/lib/components/ui/` and generated
+files. The config is `stylelint.config.js`, and `scripts/stylelint-config.test.ts` covers it.
 
 ESLint's `local/no-untokened-classes` covers what Stylelint can't see: class strings in `.svelte`
 markup, including `class={...}` expressions (string, template, ternary, `cn(...)` arguments, &
@@ -160,9 +158,8 @@ object keys) and `class:` directives. It rejects:
   (`text-(--color-status-success)`, `border-(--color-status-warning)/40`); tokens already switch
   with the theme, so they need no `dark:` twin.
 
-Arbitrary values that read a token, like `z-[var(--z-panel)]`, pass. The vendored
-`src/lib/components/ui/` and `*.test-harness.svelte` files are exempt. The rule lives in
-`eslint-rules/no-untokened-classes.ts`.
+Arbitrary values that read a token, like `z-[var(--z-panel)]`, pass. `src/lib/components/ui/` and
+`*.test-harness.svelte` files are exempt. The rule lives in `eslint-rules/no-untokened-classes.ts`.
 
 For an error, warning, or success message box, use `StatusNote`
 (`tone="error" | "warning" | "success"`) rather than restyling a `<div>`. It tints the background
