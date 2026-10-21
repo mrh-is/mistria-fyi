@@ -78,8 +78,14 @@
     visibility: hidden;
   }
 
-  .spoiler-cover:hover .spoiler-cover__mask {
+  .spoiler-cover:active .spoiler-cover__mask {
     background: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+  }
+
+  @media (hover: hover) {
+    .spoiler-cover:hover .spoiler-cover__mask {
+      background: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+    }
   }
 
   .spoiler-cover:focus-visible {

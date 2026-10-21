@@ -146,10 +146,18 @@
     font-size: var(--text-sm);
   }
 
-  .everything-link:is(:hover, :focus-visible) {
+  .everything-link:is(:active, :focus-visible) {
     color: var(--color-ink);
     outline: 2px solid var(--color-home-accent);
     outline-offset: 0;
+  }
+
+  @media (hover: hover) {
+    .everything-link:hover {
+      color: var(--color-ink);
+      outline: 2px solid var(--color-home-accent);
+      outline-offset: 0;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

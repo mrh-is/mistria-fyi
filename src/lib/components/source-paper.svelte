@@ -150,11 +150,18 @@
   }
 
   .source-paper:has(
-      .source-paper__control:is(:hover, :focus-visible),
-      .source-paper__stationary-control:hover
+      .source-paper__control:is(:active, :focus-visible),
+      .source-paper__stationary-control:active
     )
     .source-paper__surface {
     background: color-mix(in srgb, var(--color-ink) 4%, transparent);
+  }
+
+  @media (hover: hover) {
+    .source-paper:has(.source-paper__control:hover, .source-paper__stationary-control:hover)
+      .source-paper__surface {
+      background: color-mix(in srgb, var(--color-ink) 4%, transparent);
+    }
   }
 
   .source-paper__stationary-control {

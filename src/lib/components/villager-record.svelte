@@ -440,10 +440,22 @@
     font-weight: 650;
   }
 
-  .relationship-actions button:is(:hover, :focus-visible) {
+  .relationship-actions button:is(:active, :focus-visible) {
     background: color-mix(in srgb, var(--color-category-villagers) 10%, var(--color-paper-raised));
     outline: 2px solid var(--color-category-villagers);
     outline-offset: -2px;
+  }
+
+  @media (hover: hover) {
+    .relationship-actions button:hover {
+      background: color-mix(
+        in srgb,
+        var(--color-category-villagers) 10%,
+        var(--color-paper-raised)
+      );
+      outline: 2px solid var(--color-category-villagers);
+      outline-offset: -2px;
+    }
   }
 
   .relationship-warning {
