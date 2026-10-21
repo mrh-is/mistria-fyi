@@ -95,17 +95,17 @@ export function isItemDimmed(
 }
 
 /**
- * Whether a scoped item row should be rendered.
- * An item is visible when it is not completed, showCompleted is true,
+ * Whether a scoped row (an item, or another tracked id such as a recipe) should be rendered.
+ * A row is visible when it is not completed, showCompleted is true,
  * or it is in the recentlyCompleted linger set.
  */
-export function isRowVisible(
-  itemId: ItemId,
+export function isRowVisible<Id extends string = ItemId>(
+  id: Id,
   isCompleted: boolean,
   showCompleted: boolean,
-  recentlyCompleted?: ReadonlySet<ItemId>,
+  recentlyCompleted?: ReadonlySet<Id>,
 ): boolean {
-  if (recentlyCompleted?.has(itemId)) return true;
+  if (recentlyCompleted?.has(id)) return true;
   return !isCompleted || showCompleted;
 }
 

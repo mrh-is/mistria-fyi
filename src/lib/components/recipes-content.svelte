@@ -11,6 +11,7 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
+  import { isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -99,6 +100,8 @@
   }
 
   function matchesFilter(entry: RecipeEntry): boolean {
+    if (!nameFilter) return true;
+    if (entry.spoilered) return false;
     return matchesName(entry.name, nameFilter, locale);
   }
 
@@ -119,11 +122,13 @@
       );
       return {
         completedCount: scopedEntries.filter((e) => isRecipeCompleted(e.id)).length,
-        filteredEntries: scopedEntries.filter(
-          (e) =>
-            userState.state.showCompleted ||
-            !isRecipeCompleted(e.id) ||
-            recentlyCompleted.has(e.id),
+        filteredEntries: scopedEntries.filter((e) =>
+          isRowVisible(
+            e.id,
+            isRecipeCompleted(e.id),
+            userState.state.showCompleted,
+            recentlyCompleted.ids,
+          ),
         ),
         group,
         namedEntries,
