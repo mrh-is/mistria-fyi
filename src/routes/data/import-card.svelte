@@ -16,12 +16,14 @@
     SavArchiveError,
     unpackSavFile,
   } from "#lib/engine/import-save.js";
+  import { readSaveIdentity } from "#lib/engine/save-identity.js";
   import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { isIosDevice } from "#lib/utils/ios-device.js";
   import { messageParts } from "#lib/utils/message-parts.js";
+  import { page } from "$app/state";
 
   import DataCard from "./data-card.svelte";
   import {
@@ -29,6 +31,7 @@
     formatSavArchiveError,
     formatSaveImportWarning,
   } from "./data-error-messages.js";
+  import LastImport from "./last-import.svelte";
   import MergeSummary from "./merge-summary.svelte";
 
   import type { SaveImportReport, SaveImportWarning } from "#lib/engine/import-save.js";
@@ -163,7 +166,10 @@
 
       importStatus = m.import_status_importing();
       const { completed, warnings } = extractSaveProgress(bundle);
-      const merged = userState.mergeFromSave(completed);
+      const merged = userState.mergeFromSave(completed, {
+        ...readSaveIdentity(bundle),
+        importedAt: Date.now(),
+      });
 
       importResult = {
         conflicts: merged.conflicts,
@@ -198,6 +204,9 @@
 
 <DataCard bind:open title={m.import_card_title()} summary={m.import_card_summary()}>
   <div>
+    {#if userState.state.lastImport}
+      <LastImport metadata={userState.state.lastImport} locale={page.data.locale} />
+    {/if}
     <div class="sr-only" role="status" aria-live="polite">
       {#if importing}
         {importStatus || m.import_status_importing()}

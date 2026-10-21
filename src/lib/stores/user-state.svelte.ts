@@ -40,6 +40,7 @@ import {
 
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
+import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -72,15 +73,16 @@ import type { DeviceLocalState, LoadedProgress, RetainedProgress } from "./progr
 
 /** How a write treats a value another tab stored since this one last read it. */
 type WriteIntent =
+  | { generation: number; kind: "auto-save" }
   | {
+      importedSave: boolean;
       /** Serialized at confirmation, so later storage events cannot change the requested write. */
       json: string;
       keepLocal: boolean;
       kind: "merge" | "replace";
       progress: ProgressState;
       sequence: number;
-    }
-  | { generation: number; kind: "auto-save" };
+    };
 
 /** The browser's Web Locks, where it has them; absent in old browsers & insecure contexts. */
 function progressLockManager(): LockManager | undefined {
@@ -109,6 +111,7 @@ export interface QuestCompletion {
 
 export interface UserState {
   availabilityWindows: AvailabilityWindow[];
+  lastImport: null | SaveImportMetadata;
   progress: ProgressState;
   showCompleted: boolean;
   showSpoilers: boolean;
@@ -197,6 +200,7 @@ function createDefaultPreferences(): SerializedPreferences {
 function createDefaultState(): UserState {
   return {
     ...createDefaultPreferences(),
+    lastImport: null,
     progress: createDefaultProgress(),
     showCompleted: false,
     worldState: createDefaultWorldState(),
@@ -307,6 +311,7 @@ function createUserState() {
         mergeProgress(loaded.progress, snapshot.loaded.progress);
         mergeRetainedProgress(loaded.retained, snapshot.loaded.retained);
         loaded.worldState = snapshot.loaded.worldState;
+        if (intent.importedSave) loaded.lastImport = snapshot.loaded.lastImport;
       }
       json = serializeStoredProgress(loaded, loaded.retained, loaded.local);
       if (intent.sequence === explicitSequence) {
@@ -357,9 +362,14 @@ function createUserState() {
   }
 
   /** Captures an explicit write now, rather than after the auto-save debounce. */
-  function writeExplicitProgress(kind: "merge" | "replace" = "replace", keepLocal = true): void {
+  function writeExplicitProgress(
+    kind: "merge" | "replace" = "replace",
+    keepLocal = true,
+    importedSave = false,
+  ): void {
     clearPendingSave();
     requestProgressWrite({
+      importedSave,
       json: serialize(),
       keepLocal,
       kind,
@@ -440,6 +450,7 @@ function createUserState() {
    * preferences & `local` section untouched.
    */
   function replaceProgress(loaded: Omit<LoadedProgress, "local">): void {
+    state.lastImport = loaded.lastImport;
     state.progress = loaded.progress;
     state.worldState = loaded.worldState;
     retained = loaded.retained;
@@ -620,13 +631,14 @@ function createUserState() {
      * Merges a native save into current progress: sets union, levels take the max, and the
      * household follows {@link mergeHousehold}'s conflict policy. Never removes progress.
      */
-    mergeFromSave(imported: Partial<ProgressState>): MergeResult {
+    mergeFromSave(imported: Partial<ProgressState>, metadata?: SaveImportMetadata): MergeResult {
       const result = mergeProgress(state.progress, imported);
+      if (metadata !== undefined) state.lastImport = structuredClone(metadata);
 
       // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
       // persistence like a reset or restore (only once the unreadable blob is safely stored).
       enablePersistenceAfterExplicitReplace();
-      writeExplicitProgress("merge");
+      writeExplicitProgress("merge", true, metadata !== undefined);
 
       return result;
     },
@@ -653,6 +665,7 @@ function createUserState() {
     /** Clears progress & world state; this device's preferences & `local` section are kept. */
     resetProgress() {
       replaceProgress({
+        lastImport: null,
         progress: createDefaultProgress(),
         retained: emptyRetainedProgress(),
         worldState: createDefaultWorldState(),

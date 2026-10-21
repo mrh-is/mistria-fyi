@@ -88,6 +88,26 @@ describe("migrateDocument", () => {
 });
 
 describe("readProgressBlob", () => {
+  it.each(POLICIES)("migrates launch progress without inventing import history (%s)", (policy) => {
+    const loaded = readOk(JSON.stringify(fixture(1)), policy);
+    expect(loaded.lastImport).toBeNull();
+    expect(loaded.progress.renown).toBe(17);
+  });
+
+  it.each(POLICIES)("round-trips identity and display metadata (%s)", (policy) => {
+    const loaded = readOk(JSON.stringify(fixture(2)), policy);
+    expect(loaded.lastImport).toEqual(fixture(2).lastImport);
+    expect(readOk(serializeProgress(loaded, loaded.retained), policy).lastImport).toEqual(
+      loaded.lastImport,
+    );
+  });
+
+  it("repairs invalid import metadata on hydration and rejects it in a backup", () => {
+    const json = JSON.stringify({ ...fixture(2), lastImport: { importedAt: -1 } });
+    expect(readOk(json, "repair").lastImport).toBeNull();
+    expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
+  });
+
   it.each(POLICIES)("reads every version's fixture under the %s policy", (policy) => {
     for (const version of Object.keys(MIGRATIONS).map(Number)) {
       const loaded = readOk(JSON.stringify(fixture(version)), policy);

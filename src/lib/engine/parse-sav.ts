@@ -82,7 +82,10 @@ export async function parseSavArchive(
     if (error instanceof SavArchiveError) throw error;
     throw corrupt("Save file is not valid compressed data", { cause: error });
   }
-  return extractBundle(decompressed);
+  const bundle = extractBundle(decompressed);
+  const saveNumber = /^game-(\d+)-(?:autosave|\d+)\.sav$/i.exec(file.name)?.[1];
+  if (saveNumber !== undefined) bundle.saveNumber = saveNumber;
+  return bundle;
 }
 
 function corrupt(message: string, options?: ErrorOptions): SavArchiveError {

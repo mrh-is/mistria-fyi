@@ -72,7 +72,12 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `1`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `2`.
+  - `lastImport`: the last manual save import's timestamp, identity (filename number plus creation
+    version), & player/farm display names, or `null`. Version 1 migrates to `null` without inventing
+    history. Missing or malformed game metadata remains unknown and never blocks importing progress.
+    Names are display information, never identity, and feedback attaches only `progress`, excluding
+    this section. Backup restore carries it; a progress or full reset clears it.
   - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
     filtered to non-default entries.
   - `worldState`: the in-game season & weather the availability filters read.
@@ -152,11 +157,13 @@ The app processes save files entirely client-side. No save data is uploaded.
 
 1. The user selects a `.sav` file or the extracted JSON files (`player.json`, `gamedata.json`,
    `quests.json`, and optionally `header.json` & `info.json`).
-2. `parseSavArchive` or `parseExtractedSaveFiles` bundles the sections into a `SaveBundle`. A
-   section must be a JSON object, and `player` must contain at least one recognizable progress
-   field. When some JSON files are unusable but at least one progress file parses, the others are
-   reported as warnings. `header` & `info` only identify the save, so an unreadable one in a `.sav`
-   is left out rather than rejecting the file.
+2. `parseSavArchive` or `parseExtractedSaveFiles` bundles the sections into a `SaveBundle`. Native
+   filenames supply `saveNumber` from both autosaves & manual slots; renamed files and extracted
+   JSON leave it unknown. `readSaveIdentity` copies optional identity & display fields for the
+   manual import record. A section must be a JSON object, and `player` must contain at least one
+   recognizable progress field. When some JSON files are unusable but at least one progress file
+   parses, the others are reported as warnings. `header` & `info` only identify the save, so an
+   unreadable one in a `.sav` is left out rather than rejecting the file.
 3. `extractSave` reads each progress field into its value, a completeness flag, & diagnostics, using
    `trackerData` for validation. A field is `complete` only when the save records all of it; an
    absent or malformed field is `unknown` with no value, never an empty list or a zero. Every ID is

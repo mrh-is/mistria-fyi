@@ -38,6 +38,7 @@ import {
 } from "#lib/types/user-progress.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
+import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -65,6 +66,8 @@ export type Migration = (document: StoredDocument) => StoredDocument;
  */
 export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   1: (document) => document,
+  // Earlier builds recorded neither an identity nor an import timestamp. Do not invent either.
+  2: (document) => ({ ...document, lastImport: null }),
 };
 
 /**
@@ -99,6 +102,26 @@ const EnvelopeSchema = v.looseObject({ version: VersionSchema });
 
 const StringListSchema = v.array(v.string());
 const FiniteNumberSchema = v.pipe(v.number(), v.finite());
+
+const VersionPartSchema = v.pipe(v.number(), v.safeInteger(), v.minValue(0));
+const LastImportSchema = v.nullable(
+  v.object({
+    farmName: v.nullable(v.string()),
+    identity: v.object({
+      creationVersion: v.nullable(
+        v.object({
+          major: VersionPartSchema,
+          minor: VersionPartSchema,
+          patch: VersionPartSchema,
+          pre: v.nullable(v.string()),
+        }),
+      ),
+      saveNumber: v.nullable(v.pipe(v.string(), v.regex(/^\d+$/))),
+    }),
+    importedAt: v.pipe(FiniteNumberSchema, v.minValue(0), v.maxValue(8_640_000_000_000_000)),
+    playerName: v.nullable(v.string()),
+  }),
+);
 
 function domainInteger(max: number) {
   return v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(max));
@@ -149,6 +172,7 @@ const LIST_ENTRIES = {
 };
 
 const StrictBlobSchema = v.object({
+  lastImport: v.optional(LastImportSchema, null),
   progress: v.object({
     ...LIST_ENTRIES,
     animalCosmetics: v.record(v.string(), StringListSchema),
@@ -180,6 +204,7 @@ const DeviceLocalSchema = v.looseObject({
 export type DeviceLocalState = v.InferOutput<typeof DeviceLocalSchema>;
 
 const RepairBlobSchema = v.object({
+  lastImport: v.fallback(v.optional(LastImportSchema, null), null),
   // Only storage holds this section; the strict schema strips it, so no restore brings one in.
   local: v.fallback(v.optional(DeviceLocalSchema), undefined),
   progress: v.object({
@@ -255,6 +280,7 @@ export interface RetainedProgress {
 }
 
 export interface LoadedProgress {
+  lastImport: null | SaveImportMetadata;
   /** This device's own section; always empty from a backup. */
   local: DeviceLocalState;
   progress: ProgressState;
@@ -410,7 +436,12 @@ function splitAnimalIds<T extends string>(
   return { known, unknown };
 }
 
-function normalizeBlob({ local, progress: stored, worldState }: ValidatedBlob): LoadedProgress {
+function normalizeBlob({
+  lastImport,
+  local,
+  progress: stored,
+  worldState,
+}: ValidatedBlob): LoadedProgress {
   const retained = emptyRetainedProgress();
 
   const lists = {} as Record<ListField, Set<string>>;
@@ -483,7 +514,7 @@ function normalizeBlob({ local, progress: stored, worldState }: ValidatedBlob): 
   };
   backfillAnimalMaps(progress);
 
-  return { local: local ?? {}, progress, retained, worldState: { ...worldState } };
+  return { lastImport, local: local ?? {}, progress, retained, worldState: { ...worldState } };
 }
 
 /**
@@ -538,10 +569,10 @@ function mergeAnimalIds(
  * renamed keys don't linger.
  */
 export function serializeProgress(
-  { progress, worldState }: DeepReadonly<Pick<LoadedProgress, "progress" | "worldState">>,
+  loaded: SerializableProgress,
   retained: DeepReadonly<RetainedProgress>,
 ): string {
-  return JSON.stringify(serializedState({ progress, worldState }, retained));
+  return JSON.stringify(serializedState(loaded, retained));
 }
 
 /**
@@ -549,7 +580,7 @@ export function serializeProgress(
  * empty section is left out, so storage stays byte-identical to a backup until sync fills it.
  */
 export function serializeStoredProgress(
-  loaded: DeepReadonly<Pick<LoadedProgress, "progress" | "worldState">>,
+  loaded: SerializableProgress,
   retained: DeepReadonly<RetainedProgress>,
   local: DeepReadonly<DeviceLocalState>,
 ): string {
@@ -573,12 +604,17 @@ export function withoutDeviceLocal(json: string): string {
   return JSON.stringify(backup);
 }
 
+type SerializableProgress = DeepReadonly<
+  Partial<Pick<LoadedProgress, "lastImport">> & Pick<LoadedProgress, "progress" | "worldState">
+>;
+
 function serializedState(
-  { progress, worldState }: DeepReadonly<Pick<LoadedProgress, "progress" | "worldState">>,
+  { lastImport, progress, worldState }: SerializableProgress,
   retained: DeepReadonly<RetainedProgress>,
 ): SerializedState {
   const list = (field: ListField) => sortedUnion(progress[field], retained.lists[field]);
   const s: SerializedState = {
+    lastImport: lastImport ?? null,
     progress: {
       almanac: list("almanac"),
       almanacRecipes: list("almanacRecipes"),
