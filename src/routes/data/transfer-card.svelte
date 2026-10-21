@@ -14,7 +14,7 @@
     TransferDecodeError,
   } from "#lib/engine/transfer.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
+  import { holdUpdatesWhile, updateHolds } from "#lib/pwa/update-holds.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { version } from "$app/env";
 
@@ -175,11 +175,14 @@
       const file = input.files?.[0];
       input.remove();
       if (!file) return;
+      const release = updateHolds.hold();
       try {
         const data = await decodeQrImage(file);
         await handleScanResult(data);
       } catch {
         transferError = m.transfer_error_no_qr_in_image();
+      } finally {
+        release();
       }
     });
     input.className = "sr-only";
@@ -192,8 +195,10 @@
 
   // ── Common decode + merge ──
   async function handleScanResult(data: string) {
-    stopScanning();
+    // Acquire before closing the scanner: decoding yields before the result's effect can hold.
+    const release = updateHolds.hold();
     try {
+      stopScanning();
       const decoded = await decodeTransferPayload(data, version);
       transferResult = userState.mergeFromSave(decoded);
     } catch (error) {
@@ -204,6 +209,8 @@
       } else {
         transferError = formatTransferDecodeError(error.code);
       }
+    } finally {
+      release();
     }
   }
 </script>

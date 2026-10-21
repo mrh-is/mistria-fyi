@@ -88,7 +88,9 @@ describe("createSafeReload", () => {
     expect(reload).not.toHaveBeenCalled();
     expect(isReachable).not.toHaveBeenCalled();
     expect(scheduler.pending).toBe(false);
-    expect(scheduler.claimNavigation()).toBe(false);
+    scheduler.navigationCompleted();
+    await advance(0);
+    expect(reload).not.toHaveBeenCalled();
   });
 
   it("reloads at once when the page isn't busy, and only once", async () => {
@@ -186,20 +188,63 @@ describe("createSafeReload", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it("hands the next navigation the reload unless a task holds the update off", async () => {
-    append('<div role="dialog"></div>');
+  it("probes after navigation and still waits for a held task", async () => {
     const release = holds.hold();
     scheduler.request();
-    expect(scheduler.claimNavigation()).toBe(false);
+    scheduler.navigationCompleted();
+    await advance(0);
+    expect(isReachable).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
     release();
 
-    // A dialog stays behind when the player leaves the page, so it doesn't block this.
-    expect(scheduler.claimNavigation()).toBe(true);
-    // The navigation reloads; nothing else does, and a second navigation isn't handed one.
+    scheduler.navigationCompleted();
     await advance(SAFE_RELOAD_POLL_MS * 3);
-    expect(reload).not.toHaveBeenCalled();
-    expect(scheduler.claimNavigation()).toBe(false);
+    expect(isReachable).toHaveBeenCalledTimes(1);
+    expect(reload).toHaveBeenCalledTimes(1);
     expect(scheduler.pending).toBe(false);
+  });
+
+  it("keeps an unreachable destination pending and re-probes a later navigation immediately", async () => {
+    isReachable.mockResolvedValue(false);
+    scheduler.request();
+    await advance(0);
+    expect(isReachable).toHaveBeenCalledTimes(1);
+
+    scheduler.navigationCompleted();
+    await advance(0);
+    expect(isReachable).toHaveBeenCalledTimes(2);
+    expect(reload).not.toHaveBeenCalled();
+    expect(scheduler.pending).toBe(true);
+
+    isReachable.mockResolvedValue(true);
+    scheduler.navigationCompleted();
+    await advance(0);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("discards a previous route's successful probe when navigation overtakes it", async () => {
+    const probe = Promise.withResolvers<boolean>();
+    isReachable.mockReturnValueOnce(probe.promise).mockResolvedValue(false);
+    scheduler.request();
+    scheduler.navigationCompleted();
+    await advance(0);
+    expect(isReachable).toHaveBeenCalledTimes(1);
+
+    probe.resolve(true);
+    await advance(1);
+    expect(isReachable).toHaveBeenCalledTimes(2);
+    expect(reload).not.toHaveBeenCalled();
+    expect(scheduler.pending).toBe(true);
+  });
+
+  it("doesn't reload after stopping while a probe is in flight", async () => {
+    const probe = Promise.withResolvers<boolean>();
+    isReachable.mockReturnValueOnce(probe.promise);
+    scheduler.request();
+    scheduler.stop();
+    probe.resolve(true);
+    await advance(0);
+    expect(reload).not.toHaveBeenCalled();
   });
 
   it("stops watching once stopped", async () => {

@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
+import { builtLocaleChunks } from "../../scripts/built-locale-chunks.js";
 import { expect, test } from "../browser/test.js";
 import { goOffline, goOnline, waitForControl } from "./service-worker.js";
 
@@ -74,6 +75,63 @@ async function markDocument(page: Page): Promise<void> {
 function stillSameDocument(page: Page): Promise<boolean> {
   return page.evaluate(() => document.documentElement.dataset.beforeUpdate === "true");
 }
+
+test("keeps offline navigation to an unopened category working while an update waits", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/en");
+  await waitForControl(page);
+  const oldCache = versionCacheOf(await cacheNames(page));
+  const englishChunks = builtLocaleChunks().en;
+  expect(englishChunks.length).toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      page.evaluate(async (paths) => {
+        const cached = await Promise.all(paths.map((path) => caches.match(path)));
+        return cached.every(Boolean);
+      }, englishChunks),
+    )
+    .toBe(true);
+  await page.getByRole("button", { name: "Quick settings" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await markDocument(page);
+  const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
+  try {
+    await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
+    await waitForTakeover(context, `cache-${newVersion}`);
+    expect(await stillSameDocument(page)).toBe(true);
+    expect(await page.evaluate(() => caches.match("/en/recipes").then(Boolean))).toBe(false);
+
+    await goOffline(context);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await page
+      .getByRole("link", { name: /^Recipes/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/en\/recipes$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Recipes" })).toBeVisible();
+    expect(await stillSameDocument(page)).toBe(true);
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/en$/);
+    expect(await stillSameDocument(page)).toBe(true);
+    await page.goForward();
+    await expect(page).toHaveURL(/\/en\/recipes$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Recipes" })).toBeVisible();
+    expect(await stillSameDocument(page)).toBe(true);
+
+    const reloaded = page.waitForEvent("load");
+    await goOnline(context);
+    await reloaded;
+    await waitForControl(page);
+    expect(await stillSameDocument(page)).toBe(false);
+    await expect(page.getByRole("heading", { level: 1, name: "Recipes" })).toBeVisible();
+  } finally {
+    restore();
+  }
+});
 
 test("activates a new version on its own, reloading idle tabs at once & a busy one when it's free", async ({
   context,

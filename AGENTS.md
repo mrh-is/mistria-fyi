@@ -166,6 +166,11 @@ substitute another upload path.
   substitute a tool, skip or bypass a check, or retry with a workaround unless the user directs it.
   Retrying the same command is not a fix. Requesting a sandbox escalation for the operation the task
   already requires is not a workaround.
+- **Missing Playwright browsers are a standing exception.** When a required browser check needs a
+  missing browser binary, install that component with workspace Playwright, for example
+  `pnpm exec playwright install chromium --only-shell`, then run the check. Use the external browser
+  cache, request sandbox access if needed, & report the install. This does not authorize dependency
+  changes, system-package installation, or substituting another browser or executable.
 - **Repository bugs are included.** A failing documented command or stale doc blocks you the same
   way. Search open issues for it while you report; add evidence to an existing issue, or offer to
   file one with the symptom & a root-cause guess. The user decides whether to proceed around it.

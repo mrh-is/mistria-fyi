@@ -31,8 +31,10 @@ builds don't know the lock and a dialog left open overnight would block updates 
   re-checks on hold release, focus leaving a field, visibility changes, coming online, & every
   second. Before reloading, it probes its own URL through the worker, as the reload would; offline,
   a 5xx, or a page no cache holds keeps it as it is, and it probes again 30 s later or on `online`.
-  Its next client-side navigation loads the destination in full instead, unless a task holds updates
-  off.
+  Client-side navigation finishes normally, then the destination is probed before a guarded reload.
+  Offline navigation therefore keeps working while the update waits. Probes from before a later
+  navigation are discarded. QR reception holds continuously through image decoding, payload
+  decoding, & the merge, until the result’s hold takes over.
 - **The prompt is gone.** Its three messages are deleted. The worker still honors
   `mfg:skip-waiting`, which tabs from earlier releases send, and those tabs reload once under their
   old behavior when the first version with this change takes over.
@@ -48,6 +50,8 @@ builds don't know the lock and a dialog left open overnight would block updates 
   of a timeout on every activation.
 - **Treating an unreported page as running the current version:** frees caches sooner, but a page
   from an older build whose report was lost would lose its chunks mid-use.
+- **Replacing client-side navigation with a full load:** rejected because an unopened category’s
+  cached chunks support offline client-side navigation even when its HTML has never been cached.
 
 ## Revisit if
 

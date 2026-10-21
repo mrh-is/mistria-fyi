@@ -87,9 +87,10 @@ chunk only from that version’s cache.
   or a text field has focus. A waiting page re-checks when a hold is released, focus leaves a field,
   visibility changes, the browser comes online, & every second. Before reloading, it probes its own
   URL through the worker, as the reload would: offline, a 5xx, or a page no cache holds keeps it as
-  it is, with the next probe 30 s later or on `online`. Its next client-side navigation loads the
-  destination in full instead (a link) or reloads where it landed (back, forward, `goto`), unless a
-  task holds updates off.
+  it is, with the next probe 30 s later or on `online`. Client-side navigation finishes normally,
+  then the destination is probed before the same guarded reload (links, back, forward, & `goto`).
+  Offline navigation stays client-side, with the update pending. QR reception holds updates through
+  image decoding, payload decoding, & the merge, then while its result is shown.
 - **Long-lived tabs still find updates.** SvelteKit’s `updated` state checks `/_app/version.json`
   every 10 minutes, and on focus & visibility changes. The worker leaves that file to the browser,
   so an offline check can’t mistake cached metadata for a deploy. Detection calls
@@ -150,6 +151,8 @@ The suite verifies:
   cache stays until no open tab runs the old version;
 - an old-version tab importing a route chunk after the update, which only the old version’s cache
   still holds;
+- a pending update preserving offline navigation to an unopened category, back & forward, then
+  reloading the destination once online;
 - an uncontrolled tab reloading from the network on a detected deploy; and
 - normal online rendering when Playwright blocks service workers.
 

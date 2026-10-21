@@ -84,12 +84,10 @@ interface SafeReloadOptions {
 
 export interface SafeReload {
   /**
-   * Called for a client-side navigation: whether to load it in full instead, picking up the update
-   * on the way. True once an update waits and no task holds it off; leaving the page leaves its
-   * dialogs & fields behind, so only holds count here. A true answer hands the reload to the
-   * caller, so the page never reloads twice.
+   * Re-checks a pending update after a client-side navigation. The destination must be reachable
+   * before reloading it; otherwise the navigation stays client-side and the update stays pending.
    */
-  claimNavigation: () => boolean;
+  navigationCompleted: () => void;
   /** Whether a requested reload is still waiting for a safe moment. */
   readonly pending: boolean;
   /** An update is ready: reload now if the page isn't busy, or at its first safe moment. */
@@ -119,6 +117,7 @@ export function createSafeReload({
   let reloading = false;
   let probing = false;
   let lastUnreachable = -Infinity;
+  let navigation = 0;
   const watchers = new AbortController();
   let stopHoldWatch: (() => void) | undefined;
   let poll: ReturnType<typeof setInterval> | undefined;
@@ -130,12 +129,14 @@ export function createSafeReload({
   }
 
   function ready(): boolean {
-    return pending && !reloading && !probing && !isPageBusy(doc, holds);
+    return pending && !watchers.signal.aborted && !reloading && !probing && !isPageBusy(doc, holds);
   }
 
   async function attempt(retryNow = false): Promise<void> {
     if (!ready()) return;
     if (!retryNow && now() - lastUnreachable < UNREACHABLE_RETRY_MS) return;
+    const probedNavigation = navigation;
+    const probedUrl = location.href;
     probing = true;
     let reachable = false;
     try {
@@ -145,8 +146,14 @@ export function createSafeReload({
     } finally {
       probing = false;
     }
+    // A probe of the previous route says nothing about the destination of a later navigation.
+    if (probedNavigation !== navigation || probedUrl !== location.href) {
+      lastUnreachable = -Infinity;
+      checkSoon();
+      return;
+    }
     if (!reachable) lastUnreachable = now();
-    // The page may have become busy, or a navigation taken the reload, while the probe ran.
+    // The page may have become busy or stopped watching while the probe ran.
     if (!reachable || !ready()) return;
     reloading = true;
     stopWatching();
@@ -173,15 +180,15 @@ export function createSafeReload({
     check();
   }
 
-  function claimNavigation(): boolean {
-    if (!pending || reloading || holds.held) return false;
-    reloading = true;
-    stopWatching();
-    return true;
+  function navigationCompleted(): void {
+    navigation += 1;
+    lastUnreachable = -Infinity;
+    // Let the destination's focus & component effects settle before checking whether it is busy.
+    checkSoon();
   }
 
   return {
-    claimNavigation,
+    navigationCompleted,
     get pending() {
       return pending && !reloading;
     },
