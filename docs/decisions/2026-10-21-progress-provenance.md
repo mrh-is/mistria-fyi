@@ -18,15 +18,20 @@ change has to migrate it forward without guessing.
   records every key that changed, ticks & unticks alike, so a new mutator can't forget to record.
   The outermost call decides the source; a manual edit that names its own fact records the facts it
   changes besides (a marriage cascade, a quest's recipe rewards) as `inferred`.
-- **Storage version 2.** `MIGRATIONS[2]` marks every fact a version 1 blob holds `unknown`, keying a
-  historical almanac ID as its canonical entry, and adds no resolutions.
+- **Storage version 2.** `MIGRATIONS[2]` marks every fact a version 1 blob holds `unknown` and adds
+  no resolutions. It reads the facts through hydration's own schema & normalization, so a key exists
+  exactly for each fact hydration stores.
+- **Hydration keeps history aligned with facts.** Each load rekeys a historical almanac ID's history
+  under its canonical entry, as it does the fact, and records a relationship the marriage cascade
+  sets as `inferred`. A malformed history container is dropped rather than quarantining progress.
 - **A transfer is `unknown`.** Its payload carries no provenance, and crediting it to a save would
   let it outrank the player's own edits on the next sync.
 - **Resolutions remember the declined value.** A “keep mine” stores the save value the player
   declined and holds while a save reports that value; a manual edit of the fact clears it.
 - **A locked merge rebases history.** A save import merges its captured history three ways, against
-  the stored value the importing tab last read, so another tab's provenance survives, as its
-  progress already does.
+  what the capture builds on (the stored value the importing tab last read, or its own explicit
+  write still waiting for the lock), so another tab's provenance survives, as its progress already
+  does. A save or transfer agreeing with a fact already stored keeps that fact's stored provenance.
 
 ## Alternatives
 

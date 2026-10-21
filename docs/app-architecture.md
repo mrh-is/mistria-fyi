@@ -141,13 +141,15 @@ Imports carry the additive preview, including unsaved local progress, and merge 
 progress inside the lock. Their synchronous counts & conflicts describe that immediate preview; the
 locked merge applies the same household conflict policy to the latest stored household. An import
 preserves captured world state & unknown IDs. Its history merges three ways: each provenance entry,
-resolution, or last save playtime the importing tab recorded since it last read storage overwrites
-the stored one, and the rest keep the history another tab stored meanwhile. Edits made after
-confirmation are rebased onto the locked merge result for the next auto-save, including removals &
-decreases, and so is their history; a later household edit replaces that household as a unit to
-preserve the marriage cascade. The pagehide flush can't wait for a lock, so it runs the same
-function synchronously, keeping the compare-before-write. A browser without Web Locks runs every
-write synchronously; see the [decision record](decisions/2026-10-20-serialized-progress-writes.md).
+resolution, or last save playtime the importing tab recorded since its base (the stored value it
+last read, or its own explicit write still waiting for the lock) overwrites the stored one, and the
+rest keep the history another tab stored meanwhile. A save or transfer agreeing with a fact already
+stored leaves that fact's stored provenance in place. Edits made after confirmation are rebased onto
+the locked merge result for the next auto-save, including removals & decreases, and so is their
+history; a later household edit replaces that household as a unit to preserve the marriage cascade.
+The pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
+compare-before-write. A browser without Web Locks runs every write synchronously; see the
+[decision record](decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Provenance
 
@@ -161,8 +163,15 @@ inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the st
 - **Sources.** Setters & toggles record `manual`. A marriage cascade, a quest's recipe rewards (&
   the undo that takes them back), default unlocks, & “Record prerequisites” record `inferred`. A
   save import records `save`; a device transfer records `unknown`, since its payload carries no
-  provenance. Facts stored before version 2 migrate as `unknown`. Only facts a call changes record:
-  a save agreeing with a fact leaves its provenance as it was.
+  provenance. Only facts a call changes record: a save agreeing with a fact leaves its provenance as
+  it was.
+- **Hydration.** Facts stored before version 2 migrate as `unknown`, read the way hydration reads
+  them, so a value it repairs to the default gets no record. A relationship the marriage cascade
+  sets on load, such as a villager a later build makes dateable, records `inferred`. History for a
+  historical almanac ID is rekeyed under its canonical entry on every load, as the fact itself is;
+  when several collide, an entry already under the canonical key wins. A malformed `provenance` or
+  `resolutions` container is dropped on hydration rather than quarantining progress, and rejected by
+  backup restore.
 - **Playtime.** Each record carries the `playtime` of the last applied save, so ordering needs no
   clock. A `save` record carries the save's own, or none when its `header.playtime` couldn't be
   read; only a readable one becomes the last applied save's.

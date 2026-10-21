@@ -172,6 +172,141 @@ describe("readProgressBlob", () => {
     });
   });
 
+  it("keys a version 1 blob's levels only as hydration stores them", () => {
+    const { progress } = fixture(1) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...fixture(1),
+      progress: {
+        ...progress,
+        heartLevels: { balor: 0.5, villager_from_a_later_update: 0.5 },
+        mineFloor: 0.5,
+        renown: 0.5,
+      },
+    });
+    // Strict restore refuses a fractional level for a known ID outright.
+    const { history } = readOk(json, "repair");
+
+    // Floored to zero, so the facts are at their default and have nothing to record.
+    expect(history.provenance).not.toHaveProperty("heartLevels/balor");
+    expect(history.provenance).not.toHaveProperty("mineFloor");
+    expect(history.provenance).not.toHaveProperty("renown");
+    // An unknown ID's level is retained as stored, so that fact is.
+    expect(history.provenance).toHaveProperty("heartLevels/villager_from_a_later_update");
+  });
+
+  it("keys no fact for a version 1 value hydration repairs to its default", () => {
+    const { progress } = fixture(1) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...fixture(1),
+      progress: {
+        ...progress,
+        questStates: { repair_the_general_store: "bogus" },
+        reachedSeason: "bogus",
+        villagerRelationships: { balor: "bogus" },
+      },
+    });
+    const { history } = readOk(json, "repair");
+
+    expect(history.provenance).not.toHaveProperty("questStates/repair_the_general_store");
+    expect(history.provenance).not.toHaveProperty("reachedSeason");
+    expect(history.provenance).not.toHaveProperty("villagerRelationships/balor");
+  });
+
+  it.each([1, 2])(
+    "records the relationships a marriage cascade sets as inferred (v%i)",
+    (version) => {
+      const { progress } = fixture(version) as { progress: Record<string, unknown> };
+      const json = JSON.stringify({
+        ...fixture(version),
+        progress: { ...progress, villagerRelationships: { balor: "married" } },
+      });
+      const { history, progress: loaded } = readOk(json, "repair");
+
+      const platonic = Object.entries(loaded.villagerRelationships)
+        .filter(([, relationship]) => relationship === "platonic")
+        .map(([id]) => id);
+      expect(platonic.length).toBeGreaterThan(0);
+      for (const id of platonic) {
+        expect(history.provenance[`villagerRelationships/${id}`]?.source, id).toBe("inferred");
+      }
+    },
+  );
+
+  it("marks a version 1 blob's married villager unknown, beside the inferred cascade", () => {
+    const { progress } = fixture(1) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...fixture(1),
+      progress: { ...progress, villagerRelationships: { balor: "married" } },
+    });
+
+    expect(readOk(json, "repair").history.provenance["villagerRelationships/balor"]).toEqual({
+      source: "unknown",
+    });
+  });
+
+  it.each(POLICIES)("rekeys a historical almanac ID's history under its entry (%s)", (policy) => {
+    const stored = fixture(2) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...stored,
+      progress: {
+        ...stored.progress,
+        almanac: ["animated_waterfall_v2", "turnip"],
+        provenance: {
+          "almanac/animated_waterfall_v2": { source: "manual" },
+          "almanac/turnip": { source: "save" },
+          "almanac/turnip_from_a_later_update": { source: "manual" },
+        },
+        resolutions: { "almanac/animated_waterfall_v2": { saveValue: null } },
+      },
+    });
+    const { history, progress } = readOk(json, policy);
+
+    expect(progress.almanac).toEqual(new Set(["animated_waterfall_v1", "turnip"]));
+    expect(history.provenance).toEqual({
+      "almanac/animated_waterfall_v1": { source: "manual" },
+      "almanac/turnip": { source: "save" },
+      "almanac/turnip_from_a_later_update": { source: "manual" },
+    });
+    expect(history.resolutions).toEqual({
+      "almanac/animated_waterfall_v1": { saveValue: null },
+    });
+  });
+
+  it("keeps an entry already under the canonical key over a member's", () => {
+    const stored = fixture(2) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...stored,
+      progress: {
+        ...stored.progress,
+        provenance: {
+          "almanac/animated_waterfall_v1": { source: "save" },
+          "almanac/animated_waterfall_v2": { source: "manual" },
+        },
+      },
+    });
+
+    expect(readOk(json, "repair").history.provenance).toMatchObject({
+      "almanac/animated_waterfall_v1": { source: "save" },
+    });
+    expect(readOk(json, "repair").history.provenance).not.toHaveProperty(
+      "almanac/animated_waterfall_v2",
+    );
+  });
+
+  it.each([null, "x", 5])("drops a malformed history container (%j) on hydration only", (bad) => {
+    const stored = fixture(2) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...stored,
+      progress: { ...stored.progress, provenance: bad, resolutions: bad },
+    });
+
+    expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
+    const loaded = readOk(json, "repair");
+    expect(loaded.history.provenance).toEqual({});
+    expect(loaded.history.resolutions).toEqual({});
+    expect(loaded.progress.renown).toBe(17);
+  });
+
   it.each(POLICIES)("reports a newer version under the %s policy without reading it", (policy) => {
     const newer = CURRENT_SERIALIZATION_VERSION + 1;
     // A newer build may change any field, so even an unrecognizable body is reported as newer.

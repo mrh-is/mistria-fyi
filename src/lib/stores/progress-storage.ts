@@ -29,7 +29,7 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
-import { factKey, PROVENANCE_SOURCES } from "#lib/engine/provenance.js";
+import { factKey, progressFacts, PROVENANCE_SOURCES } from "#lib/engine/provenance.js";
 import { applyMarriageCascade } from "#lib/engine/relationships.js";
 import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
 import {
@@ -68,14 +68,19 @@ export type Migration = (document: StoredDocument) => StoredDocument;
 export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   1: (document) => document,
   // Version 2 adds provenance & resolutions. Every fact a version 1 blob holds predates provenance,
-  // so it's marked `unknown`; nothing has been resolved yet.
+  // so it's marked `unknown`; nothing has been resolved yet. The facts are read the way hydration
+  // reads them, so each key names a fact it stores.
   2: (document) => {
-    const { progress } = document;
-    if (!isPlainObject(progress)) return document;
-    const provenance = Object.fromEntries(
-      existingFactKeys(progress).map((key) => [key, { source: "unknown" }]),
-    );
-    return { ...document, progress: { ...progress, provenance, resolutions: {} } };
+    if (!isPlainObject(document.progress)) return document;
+    const read = v.safeParse(RepairBlobSchema, document);
+    if (!read.success) return document;
+    const loaded = normalizeBlob(read.output);
+    const provenance = {
+      ...Object.fromEntries(storedFactKeys(loaded).map((key) => [key, { source: "unknown" }])),
+      // A cascade hydration applied is the app's inference, recorded as such.
+      ...loaded.history.provenance,
+    };
+    return { ...document, progress: { ...document.progress, provenance, resolutions: {} } };
   },
 };
 
@@ -83,56 +88,21 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** The strings in an unvalidated list; anything else contributes nothing. */
-function strings(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((entry): entry is string => typeof entry === "string")
-    : [];
-}
-
-/**
- * The fact key of every non-default fact in an unvalidated version 1 `progress` object. A
- * malformed part contributes nothing; validation after migration decides what to do with it. A
- * historical almanac ID is keyed as its canonical entry, which hydration stores it under.
- */
-function existingFactKeys(progress: Record<string, unknown>): string[] {
-  const keys: string[] = [];
-  for (const field of LIST_FIELDS) {
-    for (const id of strings(progress[field])) {
-      const canonical =
-        field === "almanac" ? trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId) : undefined;
-      keys.push(factKey(field, canonical ?? id));
-    }
+/** The key of every fact loaded progress holds, retained unknown IDs included. */
+function storedFactKeys({ progress, retained }: Pick<LoadedProgress, "progress" | "retained">) {
+  const keys = [...progressFacts(progress).keys()];
+  for (const [field, ids] of recordEntries(retained.lists)) {
+    for (const id of ids) keys.push(factKey(field, id));
   }
   for (const field of ["animalCosmetics", "animals"] as const) {
-    const byAnimal = progress[field];
-    if (!isPlainObject(byAnimal)) continue;
-    for (const [animalId, ids] of Object.entries(byAnimal)) {
-      for (const id of strings(ids)) keys.push(factKey(field, animalId, id));
+    for (const [animalId, ids] of recordEntries(retained[field])) {
+      for (const id of ids) keys.push(factKey(field, animalId, id));
     }
   }
-  const recordFacts = {
-    heartLevels: (value: unknown) => typeof value === "number" && value > 0,
-    questStates: (value: unknown) => typeof value === "string" && value !== "none",
-    skillLevels: (value: unknown) => typeof value === "number" && value > 0,
-    villagerRelationships: (value: unknown) => typeof value === "string" && value !== "undecided",
-  };
-  for (const [field, isSet] of Object.entries(recordFacts)) {
-    const record = progress[field];
-    if (!isPlainObject(record)) continue;
-    for (const [id, value] of Object.entries(record)) {
-      if (isSet(value)) keys.push(factKey(field, id));
+  for (const field of ["heartLevels", "questStates", "skillLevels", "villagerRelationships"]) {
+    for (const id of Object.keys(retained[field as keyof RetainedProgress])) {
+      keys.push(factKey(field, id));
     }
-  }
-  const scalarFacts = {
-    childChoice: (value: unknown) => typeof value === "string" && value !== "undeclared",
-    hasUpperFloor: (value: unknown) => value === true,
-    mineFloor: (value: unknown) => typeof value === "number" && value > 0,
-    reachedSeason: (value: unknown) => typeof value === "string" && value !== "spring",
-    renown: (value: unknown) => typeof value === "number" && value > 0,
-  };
-  for (const [field, isSet] of Object.entries(scalarFacts)) {
-    if (isSet(progress[field])) keys.push(factKey(field));
   }
   return keys;
 }
@@ -273,11 +243,12 @@ const RepairBlobSchema = v.object({
     heartLevels: v.optional(validEntries(FiniteNumberSchema)),
     lastSavePlaytime: v.fallback(v.optional(PlaytimeSchema), undefined),
     mineFloor: v.fallback(FiniteNumberSchema, 0),
-    provenance: v.optional(validEntries(FactProvenanceSchema)),
+    // History is no reason to quarantine progress, so a malformed container is dropped whole.
+    provenance: v.fallback(v.optional(validEntries(FactProvenanceSchema)), undefined),
     questStates: v.optional(validEntries(v.picklist(QUEST_STATES))),
     reachedSeason: v.fallback(v.optional(v.picklist(SEASONS)), undefined),
     renown: v.fallback(FiniteNumberSchema, 0),
-    resolutions: v.optional(validEntries(ResolutionSchema)),
+    resolutions: v.fallback(v.optional(validEntries(ResolutionSchema)), undefined),
     skillLevels: v.optional(validEntries(FiniteNumberSchema)),
     villagerRelationships: v.optional(validEntries(v.picklist(VILLAGER_RELATIONSHIPS))),
   }),
@@ -557,7 +528,21 @@ function normalizeBlob({ local, progress: stored, worldState }: ValidatedBlob): 
   const villagerRelationships = relationships.known as Partial<
     Record<VillagerId, VillagerRelationship>
   >;
+  const history: ProgressHistory = {
+    provenance: withCanonicalAlmanacKeys(stored.provenance ?? {}),
+    // Parsed from JSON, so every saveValue is a JsonValue.
+    resolutions: withCanonicalAlmanacKeys((stored.resolutions ?? {}) as ResolutionRecord),
+  };
+  if (stored.lastSavePlaytime !== undefined) history.lastSavePlaytime = stored.lastSavePlaytime;
+  const beforeCascade = { ...villagerRelationships };
   applyMarriageCascade(villagerRelationships);
+  // A relationship the cascade set (e.g. a villager this build makes dateable) is inferred.
+  for (const [id, relationship] of recordEntries(villagerRelationships)) {
+    if (beforeCascade[id] === relationship) continue;
+    const { lastSavePlaytime: playtime } = history;
+    history.provenance[factKey("villagerRelationships", id)] =
+      playtime === undefined ? { source: "inferred" } : { playtime, source: "inferred" };
+  }
 
   const progress: ProgressState = {
     almanac,
@@ -584,14 +569,30 @@ function normalizeBlob({ local, progress: stored, worldState }: ValidatedBlob): 
   };
   backfillAnimalMaps(progress);
 
-  const history: ProgressHistory = {
-    provenance: stored.provenance ?? {},
-    // Parsed from JSON, so every saveValue is a JsonValue.
-    resolutions: (stored.resolutions ?? {}) as ResolutionRecord,
-  };
-  if (stored.lastSavePlaytime !== undefined) history.lastSavePlaytime = stored.lastSavePlaytime;
-
   return { history, local: local ?? {}, progress, retained, worldState: { ...worldState } };
+}
+
+/**
+ * Rekeys history for a historical almanac ID under its canonical entry, as hydration stores the
+ * fact itself, since a later build may merge an ID with no storage migration. When several land on
+ * one key, an entry already under the canonical key wins, then the first member in key order.
+ */
+function withCanonicalAlmanacKeys<V>(record: Readonly<Record<string, V>>): Record<string, V> {
+  const rekeyed: Record<string, V> = {};
+  const moved: [string, V][] = [];
+  for (const [key, value] of Object.entries(record).toSorted(([a], [b]) =>
+    a.localeCompare(b, "en"),
+  )) {
+    const id = key.startsWith("almanac/") ? key.slice("almanac/".length) : undefined;
+    const canonical =
+      id === undefined ? undefined : trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId);
+    if (canonical === undefined || canonical === id) rekeyed[key] = value;
+    else moved.push([factKey("almanac", canonical), value]);
+  }
+  for (const [key, value] of moved) {
+    if (!Object.hasOwn(rekeyed, key)) rekeyed[key] = value;
+  }
+  return rekeyed;
 }
 
 /**

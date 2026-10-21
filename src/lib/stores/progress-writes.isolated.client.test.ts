@@ -343,6 +343,65 @@ describe("serialized progress writes", () => {
     expect(tab.userState.resolutionOf("mineFloor")).toEqual({ saveValue: 4 });
   });
 
+  it("leaves a fact's stored provenance alone when an importing tab's save agrees", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const other = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    other.progress.almanac = ["turnip"];
+    other.progress.provenance = { "almanac/turnip": { source: "manual" } };
+    storage.setItem(PROGRESS_KEY, JSON.stringify(other));
+
+    tab.userState.mergeFromSave(
+      { almanac: new Set(["potato", "turnip"] as ItemId[]) },
+      { playtime: 50 },
+    );
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: {
+        almanac: ["potato", "turnip"],
+        provenance: {
+          "almanac/potato": { playtime: 50, source: "save" },
+          "almanac/turnip": { source: "manual" },
+        },
+      },
+    });
+  });
+
+  it("merges an import queued behind a reset against the reset, not the old value", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+
+    tab.userState.resetProgress();
+    // Re-importing the same save records exactly what the old stored value held.
+    tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: {
+        lastSavePlaytime: 50,
+        mineFloor: 10,
+        provenance: { mineFloor: { playtime: 50, source: "save" } },
+      },
+    });
+    expect(tab.userState.provenanceOf("mineFloor")).toEqual({ playtime: 50, source: "save" });
+  });
+
   it("rebases the history of edits made after a queued import", async () => {
     const { locks } = sharedLocks();
     const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });

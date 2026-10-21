@@ -83,7 +83,7 @@ import type {
 /** How a write treats a value another tab stored since this one last read it. */
 type WriteIntent =
   | {
-      /** The stored value this tab last read or wrote at confirmation, which `json` builds on. */
+      /** What `json` builds on: the stored value this tab last read, or a pending explicit write. */
       base: null | string;
       /** Serialized at confirmation, so later storage events cannot change the requested write. */
       json: string;
@@ -242,6 +242,11 @@ function createUserState() {
   let saveTimeout: ReturnType<typeof setTimeout> | undefined;
   let saveGeneration = 0;
   let explicitSequence = 0;
+  /**
+   * The newest explicit write's payload until it's written. Memory builds on it meanwhile, so it,
+   * not the stored value, is the base the next import's history merges against.
+   */
+  let pendingExplicitJson: string | undefined;
 
   function clearPendingSave(): void {
     saveGeneration++;
@@ -365,12 +370,23 @@ function createUserState() {
       if (intent.kind === "merge" && read?.kind === "ok") {
         loaded = read.loaded;
         // The captured preview includes unsaved local edits as well as the imported progress.
+        const storedFacts = progressFacts(loaded.progress);
         mergeProgress(loaded.progress, captured.loaded.progress);
         mergeRetainedProgress(loaded.retained, captured.loaded.retained);
         loaded.worldState = captured.loaded.worldState;
-        // The captured history adds what this tab recorded since it last read storage, the merge
-        // included, to the base; rebased, it keeps the history another tab stored meanwhile.
-        rebaseHistory(loaded.history, storedHistory(intent.base), captured.loaded.history);
+        const mergedFacts = progressFacts(loaded.progress);
+        // The captured history adds what this tab recorded since its base, the merge included;
+        // rebased, it keeps the history another tab stored meanwhile. A save or transfer agreeing
+        // with a fact already stored leaves that fact's provenance as stored.
+        rebaseHistory(
+          loaded.history,
+          storedHistory(intent.base),
+          captured.loaded.history,
+          (key, { source }) =>
+            (source === "save" || source === "unknown") &&
+            storedFacts.has(key) &&
+            storedFacts.get(key) === mergedFacts.get(key),
+        );
       }
       json = serializeStoredProgress(loaded, loaded.local);
       if (intent.sequence === explicitSequence) {
@@ -395,6 +411,9 @@ function createUserState() {
       return;
     }
     lastKnownStoredValue = json;
+    if (intent.kind !== "auto-save" && intent.sequence === explicitSequence) {
+      pendingExplicitJson = undefined;
+    }
     _persistenceFailureGeneration = 0;
   }
 
@@ -426,9 +445,12 @@ function createUserState() {
   /** Captures an explicit write now, rather than after the auto-save debounce. */
   function writeExplicitProgress(kind: "merge" | "replace" = "replace", keepLocal = true): void {
     clearPendingSave();
+    const json = serialize();
+    const base = pendingExplicitJson ?? lastKnownStoredValue;
+    pendingExplicitJson = json;
     requestProgressWrite({
-      base: lastKnownStoredValue,
-      json: serialize(),
+      base,
+      json,
       keepLocal,
       kind,
       progress: state.progress,
@@ -484,6 +506,8 @@ function createUserState() {
   function applyStorageValue(value: null | string): void {
     clearPendingSave();
     lastKnownStoredValue = value;
+    // Memory now builds on the adopted value, not on any write still waiting for the lock.
+    pendingExplicitJson = undefined;
     if (value !== null) {
       adoptStoredValue(value);
     } else if (newerDataBlocked) {
@@ -1104,8 +1128,9 @@ function rebaseHistory(
   target: ProgressHistory,
   before: Readonly<ProgressHistory>,
   after: Readonly<ProgressHistory>,
+  keepTarget?: (key: string, entry: FactProvenance) => boolean,
 ): void {
-  rebaseEntries(target.provenance, before.provenance, after.provenance);
+  rebaseEntries(target.provenance, before.provenance, after.provenance, keepTarget);
   rebaseEntries(target.resolutions, before.resolutions, after.resolutions);
   if (before.lastSavePlaytime !== after.lastSavePlaytime) {
     if (after.lastSavePlaytime === undefined) delete target.lastSavePlaytime;
@@ -1113,13 +1138,16 @@ function rebaseHistory(
   }
 }
 
+/** As {@link rebaseHistory}, entry by entry; `keepTarget` keeps `target`'s for a changed entry. */
 function rebaseEntries<V>(
   target: Record<string, V>,
   before: Readonly<Record<string, V>>,
   after: Readonly<Record<string, V>>,
+  keepTarget?: (key: string, entry: V) => boolean,
 ): void {
   for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
     if (JSON.stringify(before[key]) === JSON.stringify(after[key])) continue;
+    if (Object.hasOwn(after, key) && keepTarget?.(key, after[key])) continue;
     if (Object.hasOwn(after, key)) target[key] = after[key];
     else Reflect.deleteProperty(target, key);
   }
