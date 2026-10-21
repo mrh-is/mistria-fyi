@@ -479,6 +479,8 @@ describe("report", () => {
       "gh --version": "gh",
       "gh auth status": "",
       "git --version": "git version 2.50.0",
+      "git config --get commit.gpgsign": "true\n",
+      "git config --get user.signingkey": "~/.ssh/id_ed25519_signing.pub\n",
       "pnpm --version": "11.28.2\n",
       "shellcheck --version": "ok",
     },
@@ -520,6 +522,13 @@ describe("report", () => {
     expect(report).not.toContain("Game assets");
     expect(report).not.toContain("Wrangler");
     expect(report).toContain("Skipped: pipeline, release.");
+  });
+
+  it("mentions [todo] steps only when one was printed", () => {
+    expect(formatReport(runChecks(ready, ["core"]))).not.toContain("[todo]");
+    expect(formatReport(runChecks(ready, ["core", "release"]))).toContain(
+      "All checked prerequisites pass. Steps marked [todo] are interactive",
+    );
   });
 });
 

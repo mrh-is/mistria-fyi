@@ -569,15 +569,17 @@ export function formatReport(reports: SectionReport[]): string {
     ]),
   ]);
   if (skipped.length > 0) {
-    lines.push("", `Skipped: ${skipped.join(", ")}. Add them with --for to check that work.`);
+    lines.push("", `Skipped: ${skipped.join(", ")}. Name a section in --for to check it.`);
   }
-  const problems = checked
-    .flatMap(({ results }) => results)
-    .filter((r) => r.status === "missing" || r.status === "wrong").length;
+  const results = checked.flatMap((report) => report.results);
+  const problems = results.filter((r) => r.status === "missing" || r.status === "wrong").length;
+  const todo = results.some((r) => r.status === "manual")
+    ? " Steps marked [todo] are interactive; see docs/machine-setup.md."
+    : "";
   lines.push(
     "",
     problems === 0
-      ? "All checked prerequisites pass. Steps marked [todo] are interactive; see docs/machine-setup.md."
+      ? `All checked prerequisites pass.${todo}`
       : `${problems} prerequisite(s) need attention. This script changes nothing; follow docs/machine-setup.md.`,
   );
   return lines.join("\n");
