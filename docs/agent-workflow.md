@@ -58,9 +58,8 @@ Agent attribution is mandatory for agent-authored Git and GitHub content:
    approval or create a duplicate checklist.
 4. **Branch**; work on a branch from the refreshed remote tip. A worktree is optional (see
    AGENTS.md, Worktrees).
-5. **Baseline**; install dependencies (Node 24 per `.node-version`;
-   `pnpm install --frozen-lockfile`) and verify a clean baseline with focused checks, not a full
-   suite.
+5. **Baseline**; install dependencies (`pnpm install --frozen-lockfile`, which also supplies
+   `.node-version`'s Node) and verify a clean baseline with focused checks, not a full suite.
 6. **Understand contracts**; read the affected subsystem, its boundaries, and existing tests before
    editing.
 7. **Test first**; add or update tests for behavioral changes, preferably before implementation. Run

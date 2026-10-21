@@ -24,7 +24,7 @@ import type { CommandOutput, Environment, ProcessRunner } from "./machine-doctor
 const none: CommandOutput = { errorCode: "ENOENT", ok: false, stdout: "" };
 const files: Record<string, string> = {
   ".node-version": "24.21.0\n",
-  "package.json": '{"packageManager": "pnpm@11.28.2"}',
+  "package.json": '{"engines": {"node": ">=24.15.0 <27.0.0"}, "packageManager": "pnpm@11.28.2"}',
 };
 
 function machine(overrides: Partial<Environment> & { commands?: Record<string, string> } = {}) {
@@ -55,26 +55,60 @@ describe("parseVersion", () => {
   });
 });
 
+function readMalformedManifest(path: string): string | undefined {
+  return basename(path) === "package.json" ? "{" : files[basename(path)];
+}
+
+function readCaretEngines(path: string): string | undefined {
+  return basename(path) === "package.json" ? '{"engines": {"node": "^24"}}' : files[basename(path)];
+}
+
 describe("checkNode", () => {
-  it("passes the pinned version & later minors of the same major", () => {
+  it("passes any release within package.json engines, since pnpm runs the pinned one", () => {
     expect(checkNode(machine()).status).toBe("ok");
-    expect(checkNode(machine({ nodeVersion: "24.15.1" })).status).toBe("ok");
+    expect(checkNode(machine({ nodeVersion: "24.15.0" })).status).toBe("ok");
+    const newer = checkNode(machine({ nodeVersion: "26.12.0" }));
+    expect(newer.status).toBe("ok");
+    expect(newer.detail).toContain("24.21.0");
   });
 
-  it("flags another major, such as the Node 26 shell from issue 17", () => {
-    const result = checkNode(machine({ nodeVersion: "26.5.0" }));
-    expect(result.status).toBe("wrong");
-    expect(result.detail).toContain("26.5.0");
+  it("flags a release outside engines, such as Claude Code cloud's Node 22", () => {
+    for (const nodeVersion of ["22.22.0", "24.14.9", "27.0.0"]) {
+      const result = checkNode(machine({ nodeVersion }));
+      expect(result.status).toBe("wrong");
+      expect(result.detail).toContain(nodeVersion);
+      expect(result.fix).toContain(">=24.15.0 <27.0.0");
+      expect(result.fix).toContain("brew install node@24 && brew link --force node@24");
+    }
+    expect(checkNode(machine({ nodeVersion: "27.0.0", platform: "win32" })).fix).toContain(
+      "winget install OpenJS.NodeJS.LTS",
+    );
+  });
+
+  it("reports an unparsable package.json instead of crashing", () => {
+    expect(checkNode(machine({ read: readMalformedManifest }))).toMatchObject({
+      detail: expect.stringContaining("missing") as string,
+      status: "wrong",
+    });
+  });
+
+  it("flags an engines range it can't read instead of guessing", () => {
+    expect(checkNode(machine({ read: readCaretEngines }))).toMatchObject({
+      detail: expect.stringContaining("^24") as string,
+      status: "wrong",
+    });
   });
 });
 
 describe("checkPnpm", () => {
-  it("reports a missing pnpm with a fix", () => {
+  it("reports a missing pnpm with an install command for the pinned major", () => {
     expect(checkPnpm(machine())).toMatchObject({
       detail: "not found on PATH",
-      fix: expect.stringContaining("Install pnpm") as string,
+      fix: expect.stringContaining("brew install pnpm@11 && brew link --force pnpm@11") as string,
       status: "missing",
     });
+    expect(checkPnpm(machine({ platform: "linux" })).fix).not.toContain("brew");
+    expect(checkPnpm(machine({ platform: "win32" })).fix).toContain("pnpm.cmd");
   });
 
   it("reports pnpm's first error line without an install suggestion", () => {
@@ -104,8 +138,13 @@ describe("checkPnpm", () => {
   });
 
   it("flags a launcher whose major differs from the pin", () => {
-    const result = checkPnpm(machine({ commands: { "pnpm --version": "10.0.0\n" } }));
+    const result = checkPnpm(machine({ commands: { "pnpm --version": "12.11.2\n" } }));
     expect(result.status).toBe("wrong");
+    expect(result.fix).toContain("brew link --force pnpm@11");
+    const linux = checkPnpm(
+      machine({ commands: { "pnpm --version": "12.11.2\n" }, platform: "linux" }),
+    );
+    expect(linux.fix).toBe("pnpm self-update 11");
   });
 
   it("passes a matching major", () => {
@@ -348,5 +387,11 @@ describe("repository configuration", () => {
     };
     expect(scripts).not.toHaveProperty("machine:doctor");
     expect(scripts).not.toHaveProperty("worktree:setup");
+  });
+
+  it("declares a Node engines range the doctor can read, including .node-version's release", () => {
+    const pinned = readFileSync(join(root, ".node-version"), "utf8").trim();
+    const result = checkNode({ ...realEnvironment(root), nodeVersion: pinned });
+    expect(result.status).toBe("ok");
   });
 });

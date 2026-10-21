@@ -13,6 +13,9 @@ completionists track progress toward 100%.
 
 ## Quick start
 
+New machine? Install the prerequisites in [docs/machine-setup.md](docs/machine-setup.md) first
+(Node, pnpm, ShellCheck, & the GitHub CLI), and run `node scripts/machine-doctor.ts` to check them.
+
 ```bash
 pnpm install --frozen-lockfile
 pnpm run dev

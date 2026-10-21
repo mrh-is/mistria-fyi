@@ -19,12 +19,22 @@ then the agent resumes.
 
 1. **Git** (`brew install git`, `winget install Git.Git`). On Windows, also run
    `git config --global core.longpaths true`, or worktrees with deep `node_modules` paths fail.
-2. **Node** at the version in `.node-version`, activated so agent shells see it, not only your
-   interactive shell (fnm, nvm, Volta, or mise; confirm with `node --version` in a fresh shell). A
-   newer major, such as Node 26, fails the doctor. mise ignores `.node-version` unless
-   `mise settings add idiomatic_version_file_enable_tools node` enables it.
-3. **pnpm**, at a major version matching `packageManager` in `package.json`. Its launcher then
-   downloads the pinned release. On Windows PowerShell, use `pnpm.cmd` if the execution policy
+2. **Node** within `engines.node` in `package.json` (currently `>=24.15.0 <27.0.0`). Install a
+   versioned package, because the unversioned ones track Node's newest major, which can fall outside
+   `engines`: `brew install node@24 && brew link --force node@24` on macOS (the versioned formula is
+   keg-only; run `brew unlink node` first if Homebrew's newer `node` is linked), or
+   `winget install OpenJS.NodeJS.LTS` on Windows. You don't need `.node-version`'s exact release or
+   a version manager: `devEngines.runtime` makes `pnpm install` download that release, and every
+   `pnpm run` & `pnpm exec` uses it. Your system `node` only runs the doctor & Claude's hooks, and
+   repository scripts started with bare `node` refuse to run on another release (use `pnpm run` or
+   `pnpm exec node` instead).
+3. **pnpm**, at the major version in `packageManager` in `package.json` (currently 11). Its launcher
+   then downloads the exact pinned release. Install the major explicitly, because the default
+   packages track pnpm's newest major: `brew install pnpm@11 && brew link --force pnpm@11` on macOS
+   (the versioned formula is keg-only, and plain `brew install pnpm` installs pnpm 12), or elsewhere
+   pnpm's standalone installer with `PNPM_VERSION` set to the pinned release. An installed pnpm of
+   another major can switch with `pnpm self-update 11`. Corepack is not an option, because Node 25
+   and later no longer bundle it. On Windows PowerShell, use `pnpm.cmd` if the execution policy
    blocks `pnpm.ps1`. See the pnpm launcher note in
    [development-workflow.md](development-workflow.md#1-local-setup-requirements).
 4. **ShellCheck**, because `pnpm run lint` runs it (`brew install shellcheck`,
@@ -80,7 +90,8 @@ approve.
 
 ## Verify the result
 
-1. `node scripts/machine-doctor.ts` exits 0.
+1. `node scripts/machine-doctor.ts` exits 0, or reports only the "Needed for specific work" items
+   you don't need, such as game assets outside pipeline work.
 2. `pnpm run verify` passes.
 
 If a step fails, the doctor's output names the prerequisite; fix it there, not by working around the
