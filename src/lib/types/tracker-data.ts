@@ -1,3 +1,5 @@
+import type * as v from "valibot";
+
 import type { Source, SourceTuple } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
 
@@ -21,7 +23,7 @@ export type {
 export interface AlmanacCategory {
   items: AlmanacEntry[];
 }
-export type AlmanacCategoryId = string & { readonly __brand: "AlmanacCategoryId" };
+export type AlmanacCategoryId = string & v.Brand<"AlmanacCategoryId">;
 export interface AlmanacEntry {
   itemIds: ItemId[];
   recipeId?: RecipeId;
@@ -32,13 +34,13 @@ export interface Animal {
   visibility?: VisibilityCondition;
 }
 export type AnimalCosmetic = SourcedEntity;
-export type AnimalId = string & { readonly __brand: "AnimalId" };
+export type AnimalId = string & v.Brand<"AnimalId">;
 export interface AnimalVariant {
   source: Extract<Source, { type: "breed" | "default" }>;
 }
-export type AnimalVariantId = string & { readonly __brand: "AnimalVariantId" };
+export type AnimalVariantId = string & v.Brand<"AnimalVariantId">;
 export type AnimalVariantTier = Record<AnimalVariantId, AnimalVariant>;
-export type AnyId = string & { readonly __brand: string };
+export type AnyId = string & v.Brand<string>;
 export interface CookingQuest extends Quest {
   recipeId: RecipeId;
 }
@@ -48,8 +50,8 @@ export interface Cosmetic extends SourcedEntity {
   /** A `ui_sub_category` key; its label resolves via `getName("cosmetics/subcategories", key, locale)`. */
   subCategory: string;
 }
-export type CosmeticId = string & { readonly __brand: "CosmeticId" };
-export type DateId = string & { readonly __brand: "DateId" };
+export type CosmeticId = string & v.Brand<"CosmeticId">;
+export type DateId = string & v.Brand<"DateId">;
 /** The sections of `ui/character_customization.toml`, verbatim. */
 export type CosmeticSlot =
   | "back"
@@ -74,7 +76,7 @@ export interface Day {
 export interface Festival {
   date: Day;
 }
-export type FestivalId = string & { readonly __brand: "FestivalId" };
+export type FestivalId = string & v.Brand<"FestivalId">;
 export interface FetchQuest extends Quest {
   itemId: ItemId;
   rewardRecipeId?: RecipeId;
@@ -91,12 +93,12 @@ export interface HeartQuest extends Quest {
 export interface Item extends SourcedEntity {
   category: string;
 }
-export type ItemId = string & { readonly __brand: "ItemId" };
+export type ItemId = string & v.Brand<"ItemId">;
 export interface MinesBiome {
   floors: LevelRange;
   id: MinesBiomeId;
 }
-export type MinesBiomeId = string & { readonly __brand: "MinesBiomeId" };
+export type MinesBiomeId = string & v.Brand<"MinesBiomeId">;
 /** The Mistmare's ride-able skins; names live in the `mount` locale chunk, keyed by ID. */
 export interface Mount {
   appearances: Record<MountAppearanceId, MountAppearance>;
@@ -104,26 +106,26 @@ export interface Mount {
 /** An appearance the player unlocks for the Mistmare, separate from any horse they breed. */
 export type MountAppearance = SourcedEntity;
 /** A `ranching/animals/horse` variant ID the game reserves for the mount. */
-export type MountAppearanceId = string & { readonly __brand: "MountAppearanceId" };
+export type MountAppearanceId = string & v.Brand<"MountAppearanceId">;
 export interface MuseumWing {
   sets: Record<MuseumWingSetId, MuseumWingSet>;
 }
-export type MuseumWingId = string & { readonly __brand: "MuseumWingId" };
+export type MuseumWingId = string & v.Brand<"MuseumWingId">;
 export interface MuseumWingSet {
   items: ItemId[];
 }
-export type MuseumWingSetId = string & { readonly __brand: "MuseumWingSetId" };
+export type MuseumWingSetId = string & v.Brand<"MuseumWingSetId">;
 /** A perk's entry carries no data; names live in the locale files, keyed by `PerkId`. */
 export type Perk = Record<string, never>;
-export type PerkId = string & { readonly __brand: "PerkId" };
+export type PerkId = string & v.Brand<"PerkId">;
 export type PerkTier = Record<PerkId, Perk>;
 export type PetCosmeticSet = SourcedEntity;
-export type PetCosmeticSetId = string & { readonly __brand: "PetCosmeticSetId" };
+export type PetCosmeticSetId = string & v.Brand<"PetCosmeticSetId">;
 export type PetSkin = SourcedEntity;
-export type PetSkinId = string & { readonly __brand: "PetSkinId" };
+export type PetSkinId = string & v.Brand<"PetSkinId">;
 /** Quests carry no acquisition sources of their own today, so the list is empty. */
 export type Quest = TrackerEntity;
-export type QuestId = string & { readonly __brand: "QuestId" };
+export type QuestId = string & v.Brand<"QuestId">;
 export interface QuestTypeSpecializations {
   cooking: CookingQuest;
   fetch: FetchQuest;
@@ -139,7 +141,7 @@ export interface LevelRange {
   start: number;
 }
 export type Recipe = SourcedEntity;
-export type RecipeId = string & { readonly __brand: "RecipeId" };
+export type RecipeId = string & v.Brand<"RecipeId">;
 export const SEASONS = ["fall", "spring", "summer", "winter"] as const;
 export type Season = (typeof SEASONS)[number];
 export interface Skill {
@@ -149,16 +151,16 @@ export interface Skill {
 export interface SourcedEntity extends TrackerEntity {
   sources: SourceTuple;
 }
-export type SkillId = string & { readonly __brand: "SkillId" };
+export type SkillId = string & v.Brand<"SkillId">;
 /** A spell without a known unlock quest has an empty source list. */
 export type Spell = TrackerEntity;
-export type SpellId = string & { readonly __brand: "SpellId" };
+export type SpellId = string & v.Brand<"SpellId">;
 export interface Store {
   /** How the store's own upgrade quest is phrased; absent means upgrading. */
   upgradeAction?: StoreUpgradeAction;
   visibility?: VisibilityCondition;
 }
-export type StoreId = string & { readonly __brand: "StoreId" };
+export type StoreId = string & v.Brand<"StoreId">;
 export const STORE_UPGRADE_ACTIONS = ["repair"] as const;
 export type StoreUpgradeAction = (typeof STORE_UPGRADE_ACTIONS)[number];
 export interface StoryQuest extends Quest {
@@ -211,7 +213,7 @@ export interface TrackerEntity {
 }
 /** A chest tier's entry carries no data; names live in the locale files, keyed by tier ID. */
 export type TreasureChestTier = Record<string, never>;
-export type TreasureChestTierId = string & { readonly __brand: "TreasureChestTierId" };
+export type TreasureChestTierId = string & v.Brand<"TreasureChestTierId">;
 /**
  * Player-facing villager names are deliberately absent: they live in the per-locale `villagers`
  * chunks and are resolved through `getName("villagers", id, locale)`. A `name` field that doesn't
@@ -222,7 +224,7 @@ export interface Villager {
   dateable?: true;
   visibility?: VisibilityCondition;
 }
-export type VillagerId = string & { readonly __brand: "VillagerId" };
+export type VillagerId = string & v.Brand<"VillagerId">;
 export const VILLAGER_RELATIONSHIPS = [
   "married",
   "platonic",

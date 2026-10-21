@@ -115,9 +115,10 @@ not here.
   conventions. Read [app-architecture.md](docs/app-architecture.md) for app boundaries,
   [styling.md](docs/styling.md) for UI/CSS & visual direction,
   [localization.md](docs/localization.md) for user-facing text,
-  [save-file-format.md](docs/save-file-format.md) for saves,
-  [mistria-wiki-api.md](docs/mistria-wiki-api.md) for wiki integration, &
-  [cloud-agent-environments.md](docs/cloud-agent-environments.md) for cloud setup when relevant.
+  [save-file-format.md](docs/save-file-format.md) for saves, [sync.md](docs/sync.md) for save-driven
+  sync (the courier, relay, pairing, & apply rules), [mistria-wiki-api.md](docs/mistria-wiki-api.md)
+  for wiki integration, & [cloud-agent-environments.md](docs/cloud-agent-environments.md) for cloud
+  setup when relevant.
 
 ## Review gates
 

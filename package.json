@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p src/service-worker/tsconfig.json && tsc --noEmit -p pipeline/tsconfig.json",
     "check:i18n": "tsx scripts/check-translation-keys.ts",
+    "check:locale-sync": "node scripts/check-locale-sync.ts",
     "check:built": "tsx --test --test-timeout=120000 --test-force-exit tests/build-output/*.spec.ts",
     "check:routes": "tsx scripts/check-routes.ts",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -106,7 +107,8 @@
     "qr": "^0.7.2",
     "svelte-sonner": "^1.2.1",
     "tailwind-merge": "^3.7.0",
-    "tailwind-variants": "^3.3.1"
+    "tailwind-variants": "^3.3.1",
+    "valibot": "^1.5.0"
   },
   "packageManager": "pnpm@11.28.2",
   "engines": {

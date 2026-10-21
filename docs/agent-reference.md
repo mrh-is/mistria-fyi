@@ -91,6 +91,7 @@ reason it was reviewed, rather than weakening the check.
 | `pnpm run build`              | Production build (Cloudflare Pages)                                |
 | `pnpm run check`              | SvelteKit type checking                                            |
 | `pnpm run check:i18n`         | Verify locale files match `en.json`’s keys                         |
+| `pnpm run check:locale-sync`  | Verify a changed English message changed in each locale too        |
 | `pnpm run check:routes`       | Verify built static assets bypass Functions                        |
 | `pnpm run knip`               | Find unused files, exports, & dependencies                         |
 | `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, & ShellCheck                     |

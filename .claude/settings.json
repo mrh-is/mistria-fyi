@@ -6,6 +6,7 @@
       "Bash(pnpm run lint:shell *)",
       "Bash(pnpm run check *)",
       "Bash(pnpm run check:i18n *)",
+      "Bash(pnpm run check:locale-sync *)",
       "Bash(pnpm run check:routes *)",
       "Bash(pnpm run check:built *)",
       "Bash(pnpm run knip *)",
