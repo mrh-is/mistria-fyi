@@ -76,7 +76,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     animals: {},
     categoryVisibility: {},
     cosmetics: {},
-    cosmeticSlots: {} as TrackerData["cosmeticSlots"],
+    cosmeticSlots: {},
     dates: {},
     festivals: {},
     items: {},

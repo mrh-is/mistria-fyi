@@ -114,6 +114,12 @@ contracts. It does not regenerate data; `pnpm run pipeline -- <path>` remains a 
 
 ## Stage boundaries
 
+The complete output contract lives in `src/lib/types/tracker-data-schema.ts` (Valibot); the public
+TypeScript entity types derive from it. Assembly validates the final enriched data against that
+schema before returning anything for publication. Acquisition checks additionally enforce reference
+integrity, source provenance, exclusions, and recipe-cycle rules. Schema failures include the
+failing field path. The client consumes the validated generated JSON without runtime validation.
+
 `parse/` owns native TOML input, requirement parsing, & expression evaluation. `extract/` projects
 registries & quest facts, `acquisition/` collects sources, `enrich/` assigns visibility, `localize/`
 resolves locale text, & `emit/` stages sprites and publishes outputs. The root contains CLI,

@@ -118,6 +118,13 @@ beforeEach(() => {
 });
 
 describe("assembleTrackerData", () => {
+  it("rejects malformed output before returning it for publication", () => {
+    const fiddle = syntheticFiddle();
+    const npcs = fiddle.npcs as Record<string, { birthday: { season: string } }>;
+    npcs.adeline.birthday.season = "autumn";
+    expect(() => assembleTrackerData(fiddle, localizer, options)).toThrow(/season/);
+  });
+
   it("assembles a synthetic fiddle into validated tracker data", () => {
     const { iconSpritesByItemId, iconSpritesByVillagerId, trackerData } = assembleTrackerData(
       syntheticFiddle(),
