@@ -29,6 +29,7 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
+import { factKey, progressFacts, PROVENANCE_SOURCES } from "#lib/engine/provenance.js";
 import { applyMarriageCascade } from "#lib/engine/relationships.js";
 import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
 import {
@@ -38,6 +39,7 @@ import {
 } from "#lib/types/user-progress.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
+import type { ProvenanceRecord, ResolutionRecord } from "#lib/engine/provenance.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
@@ -68,7 +70,45 @@ export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   1: (document) => document,
   // Earlier builds recorded neither an identity nor an import timestamp. Do not invent either.
   2: (document) => ({ ...document, lastImport: null }),
+  // Version 3 adds provenance & resolutions. Every fact a version 2 blob holds predates provenance,
+  // so it's marked `unknown`; nothing has been resolved yet. The facts are read the way hydration
+  // reads them, so each key names a fact it stores.
+  3: (document) => {
+    if (!isPlainObject(document.progress)) return document;
+    const read = v.safeParse(RepairBlobSchema, document);
+    if (!read.success) return document;
+    const loaded = normalizeBlob(read.output);
+    const provenance = {
+      ...Object.fromEntries(storedFactKeys(loaded).map((key) => [key, { source: "unknown" }])),
+      // A cascade hydration applied is the app's inference, recorded as such.
+      ...loaded.history.provenance,
+    };
+    return { ...document, progress: { ...document.progress, provenance, resolutions: {} } };
+  },
 };
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** The key of every fact loaded progress holds, retained unknown IDs included. */
+function storedFactKeys({ progress, retained }: Pick<LoadedProgress, "progress" | "retained">) {
+  const keys = [...progressFacts(progress).keys()];
+  for (const [field, ids] of recordEntries(retained.lists)) {
+    for (const id of ids) keys.push(factKey(field, id));
+  }
+  for (const field of ["animalCosmetics", "animals"] as const) {
+    for (const [animalId, ids] of recordEntries(retained[field])) {
+      for (const id of ids) keys.push(factKey(field, animalId, id));
+    }
+  }
+  for (const field of ["heartLevels", "questStates", "skillLevels", "villagerRelationships"]) {
+    for (const id of Object.keys(retained[field as keyof RetainedProgress])) {
+      keys.push(factKey(field, id));
+    }
+  }
+  return keys;
+}
 
 /**
  * Runs every step after `from` up to `to`, stamping each result with the version it produced. Throws
@@ -171,6 +211,15 @@ const LIST_ENTRIES = {
   unlockedPerks: v.optional(StringListSchema),
 };
 
+const PlaytimeSchema = v.pipe(FiniteNumberSchema, v.minValue(0));
+const FactProvenanceSchema = v.object({
+  playtime: v.optional(PlaytimeSchema),
+  source: v.picklist(PROVENANCE_SOURCES),
+});
+const ResolutionSchema = v.object({
+  saveValue: v.custom<unknown>((value) => value !== undefined),
+});
+
 const StrictBlobSchema = v.object({
   lastImport: v.optional(LastImportSchema, null),
   progress: v.object({
@@ -180,10 +229,13 @@ const StrictBlobSchema = v.object({
     childChoice: v.optional(v.picklist(CHILD_CHOICES)),
     hasUpperFloor: v.optional(v.boolean()),
     heartLevels: v.optional(strictLevels(trackerData.villagers, LEGACY_MAX_HEART_LEVEL)),
+    lastSavePlaytime: v.optional(PlaytimeSchema),
     mineFloor: domainInteger(getMaxMineFloor()),
+    provenance: v.optional(v.record(v.string(), FactProvenanceSchema)),
     questStates: v.optional(v.record(v.string(), v.picklist(QUEST_STATES))),
     reachedSeason: v.optional(v.picklist(SEASONS)),
     renown: FiniteNumberSchema,
+    resolutions: v.optional(v.record(v.string(), ResolutionSchema)),
     skillLevels: v.optional(strictLevels(trackerData.skills, MAX_SKILL_LEVEL)),
     villagerRelationships: v.optional(v.record(v.string(), v.picklist(VILLAGER_RELATIONSHIPS))),
   }),
@@ -214,10 +266,14 @@ const RepairBlobSchema = v.object({
     childChoice: v.fallback(v.optional(v.picklist(CHILD_CHOICES)), undefined),
     hasUpperFloor: v.fallback(v.optional(v.boolean()), undefined),
     heartLevels: v.optional(validEntries(FiniteNumberSchema)),
+    lastSavePlaytime: v.fallback(v.optional(PlaytimeSchema), undefined),
     mineFloor: v.fallback(FiniteNumberSchema, 0),
+    // History is no reason to quarantine progress, so a malformed container is dropped whole.
+    provenance: v.fallback(v.optional(validEntries(FactProvenanceSchema)), undefined),
     questStates: v.optional(validEntries(v.picklist(QUEST_STATES))),
     reachedSeason: v.fallback(v.optional(v.picklist(SEASONS)), undefined),
     renown: v.fallback(FiniteNumberSchema, 0),
+    resolutions: v.fallback(v.optional(validEntries(ResolutionSchema)), undefined),
     skillLevels: v.optional(validEntries(FiniteNumberSchema)),
     villagerRelationships: v.optional(validEntries(v.picklist(VILLAGER_RELATIONSHIPS))),
   }),
@@ -279,7 +335,23 @@ export interface RetainedProgress {
   villagerRelationships: Record<string, VillagerRelationship>;
 }
 
+/**
+ * Where each fact came from & which save diffs the player resolved; carried by backups. Keyed by
+ * `factKey`, including facts whose IDs this build doesn't know, so nothing here is dropped.
+ */
+export interface ProgressHistory {
+  /** The `playtime` of the last applied save, if any. */
+  lastSavePlaytime?: number;
+  provenance: ProvenanceRecord;
+  resolutions: ResolutionRecord;
+}
+
+export function emptyProgressHistory(): ProgressHistory {
+  return { provenance: {}, resolutions: {} };
+}
+
 export interface LoadedProgress {
+  history: ProgressHistory;
   lastImport: null | SaveImportMetadata;
   /** This device's own section; always empty from a backup. */
   local: DeviceLocalState;
@@ -487,7 +559,21 @@ function normalizeBlob({
   const villagerRelationships = relationships.known as Partial<
     Record<VillagerId, VillagerRelationship>
   >;
+  const history: ProgressHistory = {
+    provenance: withCanonicalAlmanacKeys(stored.provenance ?? {}),
+    // Parsed from JSON, so every saveValue is a JsonValue.
+    resolutions: withCanonicalAlmanacKeys((stored.resolutions ?? {}) as ResolutionRecord),
+  };
+  if (stored.lastSavePlaytime !== undefined) history.lastSavePlaytime = stored.lastSavePlaytime;
+  const beforeCascade = { ...villagerRelationships };
   applyMarriageCascade(villagerRelationships);
+  // A relationship the cascade set (e.g. a villager this build makes dateable) is inferred.
+  for (const [id, relationship] of recordEntries(villagerRelationships)) {
+    if (beforeCascade[id] === relationship) continue;
+    const { lastSavePlaytime: playtime } = history;
+    history.provenance[factKey("villagerRelationships", id)] =
+      playtime === undefined ? { source: "inferred" } : { playtime, source: "inferred" };
+  }
 
   const progress: ProgressState = {
     almanac,
@@ -514,7 +600,37 @@ function normalizeBlob({
   };
   backfillAnimalMaps(progress);
 
-  return { lastImport, local: local ?? {}, progress, retained, worldState: { ...worldState } };
+  return {
+    history,
+    lastImport,
+    local: local ?? {},
+    progress,
+    retained,
+    worldState: { ...worldState },
+  };
+}
+
+/**
+ * Rekeys history for a historical almanac ID under its canonical entry, as hydration stores the
+ * fact itself, since a later build may merge an ID with no storage migration. When several land on
+ * one key, an entry already under the canonical key wins, then the first member in key order.
+ */
+function withCanonicalAlmanacKeys<V>(record: Readonly<Record<string, V>>): Record<string, V> {
+  const rekeyed: Record<string, V> = {};
+  const moved: [string, V][] = [];
+  for (const [key, value] of Object.entries(record).toSorted(([a], [b]) =>
+    a.localeCompare(b, "en"),
+  )) {
+    const id = key.startsWith("almanac/") ? key.slice("almanac/".length) : undefined;
+    const canonical =
+      id === undefined ? undefined : trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId);
+    if (canonical === undefined || canonical === id) rekeyed[key] = value;
+    else moved.push([factKey("almanac", canonical), value]);
+  }
+  for (const [key, value] of moved) {
+    if (!Object.hasOwn(rekeyed, key)) rekeyed[key] = value;
+  }
+  return rekeyed;
 }
 
 /**
@@ -568,11 +684,19 @@ function mergeAnimalIds(
  * couldn't place. Unrecognized fields in a loaded blob are dropped rather than carried forward, so
  * renamed keys don't linger.
  */
-export function serializeProgress(
-  loaded: SerializableProgress,
-  retained: DeepReadonly<RetainedProgress>,
-): string {
-  return JSON.stringify(serializedState(loaded, retained));
+export function serializeProgress(snapshot: ProgressSnapshot): string {
+  return JSON.stringify(serializedState(snapshot));
+}
+
+/** Everything a backup holds, as the store keeps it. */
+export interface ProgressSnapshot {
+  // Not DeepReadonly: its JsonValue resolutions are too deep for the compiler to map.
+  history: Readonly<ProgressHistory>;
+  /** The last manual import; absent writes `null`. */
+  lastImport?: DeepReadonly<null | SaveImportMetadata>;
+  progress: DeepReadonly<ProgressState>;
+  retained: DeepReadonly<RetainedProgress>;
+  worldState: Readonly<WorldState>;
 }
 
 /**
@@ -580,11 +704,10 @@ export function serializeProgress(
  * empty section is left out, so storage stays byte-identical to a backup until sync fills it.
  */
 export function serializeStoredProgress(
-  loaded: SerializableProgress,
-  retained: DeepReadonly<RetainedProgress>,
+  snapshot: ProgressSnapshot,
   local: DeepReadonly<DeviceLocalState>,
 ): string {
-  const backup = serializedState(loaded, retained);
+  const backup = serializedState(snapshot);
   return JSON.stringify(Object.keys(local).length === 0 ? backup : { local, ...backup });
 }
 
@@ -604,18 +727,26 @@ export function withoutDeviceLocal(json: string): string {
   return JSON.stringify(backup);
 }
 
-type SerializableProgress = DeepReadonly<
-  Partial<Pick<LoadedProgress, "lastImport">> & Pick<LoadedProgress, "progress" | "worldState">
->;
+function sortedRecord<V>(record: Readonly<Record<string, V>>): Record<string, V> {
+  return Object.fromEntries(
+    Object.entries(record).toSorted(([a], [b]) => a.localeCompare(b, "en")),
+  );
+}
 
-function serializedState(
-  { lastImport, progress, worldState }: SerializableProgress,
-  retained: DeepReadonly<RetainedProgress>,
-): SerializedState {
+function serializedState({
+  history,
+  lastImport,
+  progress,
+  retained,
+  worldState,
+}: ProgressSnapshot): SerializedState {
   const list = (field: ListField) => sortedUnion(progress[field], retained.lists[field]);
   const s: SerializedState = {
     lastImport: lastImport ?? null,
     progress: {
+      ...(history.lastSavePlaytime === undefined
+        ? {}
+        : { lastSavePlaytime: history.lastSavePlaytime }),
       almanac: list("almanac"),
       almanacRecipes: list("almanacRecipes"),
       animalCosmetics: mergeAnimalIds(progress.animalCosmetics, retained.animalCosmetics),
@@ -630,6 +761,7 @@ function serializedState(
       museum: list("museum"),
       petCosmetics: list("petCosmetics"),
       petSkins: list("petSkins"),
+      provenance: sortedRecord(history.provenance),
       questStates: mergeRecord(
         progress.questStates,
         retained.questStates,
@@ -637,6 +769,7 @@ function serializedState(
       ),
       reachedSeason: progress.reachedSeason,
       renown: progress.renown,
+      resolutions: sortedRecord(history.resolutions),
       skillLevels: mergeRecord(progress.skillLevels, retained.skillLevels, (level) => level > 0),
       spells: list("spells"),
       unlockedPerks: list("unlockedPerks"),

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
+import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 
 import BackupCard from "./backup-card.svelte";
 
@@ -89,7 +90,8 @@ describe("BackupCard restore", () => {
   it("rejects a backup from a newer version", async () => {
     render(BackupCard, { open: true });
 
-    await restoreFromFile(new File(['{"version":3}'], "future.json"));
+    const future = JSON.stringify({ version: CURRENT_SERIALIZATION_VERSION + 1 });
+    await restoreFromFile(new File([future], "future.json"));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/newer version/);
   });

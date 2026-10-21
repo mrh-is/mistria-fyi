@@ -165,10 +165,10 @@
       if (bundle.quests) filesUsed.push("quests.json");
 
       importStatus = m.import_status_importing();
-      const { completed, warnings } = extractSaveProgress(bundle);
+      const { completed, playtime, warnings } = extractSaveProgress(bundle);
       const merged = userState.mergeFromSave(completed, {
-        ...readSaveIdentity(bundle),
-        importedAt: Date.now(),
+        metadata: { ...readSaveIdentity(bundle), importedAt: Date.now() },
+        playtime,
       });
 
       importResult = {
