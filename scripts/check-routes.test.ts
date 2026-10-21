@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { checkRoutes, isFunctionRoute, matchesRoute } from "./check-routes.js";
+import { checkRoutes, isFunctionRoute, matchesRoute, servedPath } from "./check-routes.js";
 
 describe("matchesRoute", () => {
   it("matches exact paths", () => {
@@ -79,6 +79,31 @@ describe("checkRoutes", () => {
     await writeRoutes(dir, ["/robots.txt", "/offline.html", "/sprites/*", "/fonts/*"]);
     const report = await checkRoutes(dir);
     expect(report.htmlAssets).toEqual(["/offline.html"]);
+  });
+
+  it("accepts a prerendered page whose served path bypasses the Function", async () => {
+    await mkdir(path.join(dir, "en"), { recursive: true });
+    await writeFile(path.join(dir, "en", "data.html"), "");
+    await writeRoutes(dir, ["/robots.txt", "/en/data", "/sprites/*", "/fonts/*"]);
+    expect(await checkRoutes(dir)).toMatchObject({ htmlAssets: [], unexcludedAssets: [] });
+  });
+
+  it("reports a prerendered page the Function would answer", async () => {
+    await mkdir(path.join(dir, "en"), { recursive: true });
+    await writeFile(path.join(dir, "en", "data.html"), "");
+    await writeRoutes(dir, ["/robots.txt", "/sprites/*", "/fonts/*"]);
+    expect(await checkRoutes(dir)).toMatchObject({
+      htmlAssets: ["/en/data.html"],
+      unexcludedAssets: ["/en/data.html"],
+    });
+  });
+});
+
+describe("servedPath", () => {
+  it("serves .html files at their extensionless path", () => {
+    expect(servedPath("/en/data.html")).toBe("/en/data");
+    expect(servedPath("/guide/index.html")).toBe("/guide");
+    expect(servedPath("/robots.txt")).toBe("/robots.txt");
   });
 });
 

@@ -16,13 +16,13 @@ import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
-import { headersFilePlugin } from "./src/lib/build/headers-file.js";
+import { withHeadersFile } from "./src/lib/build/headers-file.js";
 import { LICENSES_FILE_NAME, licensesPlugin, noticeBlock } from "./src/lib/build/licenses.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
 import { PARAGLIDE_OPTIONS } from "./src/lib/i18n/paraglide-options.js";
+import { PRERENDER_ENTRIES } from "./src/lib/i18n/prerender-entries.js";
 import { APP_DIRECTORY } from "./src/lib/pwa/config.js";
 import { cspDirectives } from "./src/lib/security/csp-directives.js";
-import { renderHeadersFile } from "./src/lib/security/security-headers.js";
 
 const wranglerTestDirectory = configureVitestWranglerEnv();
 if (wranglerTestDirectory) {
@@ -144,29 +144,33 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     sveltekit({
-      adapter: adapter({
-        // Concurrent preview servers (the Playwright suites, #19) must not share Miniflare's
-        // default `.wrangler/state` SQLite files, so scripts/playwright-preview.ts hands each one
-        // its own directory.
-        platformProxy: process.env.MISTRIA_PREVIEW_PERSIST_DIR
-          ? { persist: { path: process.env.MISTRIA_PREVIEW_PERSIST_DIR } }
-          : {},
-        routes: {
-          exclude: [
-            "<build>",
-            "<prerendered>",
-            "<redirects>",
-            "/service-worker.js",
-            `/${LICENSES_FILE_NAME}`,
-            ...staticExcludes,
-          ],
-          include: ["/*"],
-        },
-      }),
+      adapter: withHeadersFile(
+        adapter({
+          // Concurrent preview servers (the Playwright suites, #19) must not share Miniflare's
+          // default `.wrangler/state` SQLite files, so scripts/playwright-preview.ts hands each one
+          // its own directory.
+          platformProxy: process.env.MISTRIA_PREVIEW_PERSIST_DIR
+            ? { persist: { path: process.env.MISTRIA_PREVIEW_PERSIST_DIR } }
+            : {},
+          routes: {
+            exclude: [
+              "<build>",
+              "<prerendered>",
+              "<redirects>",
+              "/service-worker.js",
+              `/${LICENSES_FILE_NAME}`,
+              ...staticExcludes,
+            ],
+            include: ["/*"],
+          },
+        }),
+        contentSecurityPolicy,
+      ),
       preprocess: vitePreprocess(),
 
       appDir: APP_DIRECTORY,
       csp: { directives: contentSecurityPolicy },
+      prerender: { entries: PRERENDER_ENTRIES },
       version: { name: getAppVersion(), pollInterval: 600_000 },
     }),
     localeNameChunksPlugin(),
@@ -187,7 +191,6 @@ export default defineConfig({
         },
       ],
     }),
-    headersFilePlugin(renderHeadersFile(contentSecurityPolicy)),
     paraglideVitePlugin(PARAGLIDE_OPTIONS),
     svelteCssCachePlugin(),
   ],

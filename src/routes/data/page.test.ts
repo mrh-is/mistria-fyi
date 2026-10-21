@@ -39,12 +39,13 @@ describe("data management page", () => {
     expect(text).not.toContain("AI disclosure");
   });
 
-  it("opens the requested deep-linked tool", () => {
+  // The page is prerendered, so the server never sees `?section=`; the browser opens the tool.
+  it("renders deep-linked tools closed on the server", () => {
     pageStub.navigate("/en/data?section=transfer");
 
     const { container } = renderToFragment(DataPage, { props: {} });
 
     expect(disclosureState(container, "Import from Save File")).toBe("false");
-    expect(disclosureState(container, "Transfer to Another Device")).toBe("true");
+    expect(disclosureState(container, "Transfer to Another Device")).toBe("false");
   });
 });

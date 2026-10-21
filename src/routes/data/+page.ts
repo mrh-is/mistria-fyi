@@ -5,6 +5,8 @@ import type { RobotsDirective } from "#lib/data/page-metadata.js";
 
 import type { PageLoad } from "./$types";
 
+export const prerender = true;
+
 export const _robots: RobotsDirective = "noindex, follow";
 
 // The merge summary's household-conflict messages name villagers by their localized display name.

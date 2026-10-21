@@ -1,6 +1,9 @@
 import { PRODUCTION_ASSET_ORIGIN } from "../asset-origin.js";
+import { APP_HTML_SCRIPT_HASHES } from "./inline-scripts.js";
 
 import type { Config } from "@sveltejs/kit/vite";
+
+import type { CspScriptHash } from "./inline-scripts.js";
 
 export type CspDirectives = NonNullable<NonNullable<Config["csp"]>["directives"]>;
 type CspSource = NonNullable<CspDirectives["img-src"]>[number];
@@ -21,8 +24,15 @@ function originSource(base: string): CspSource {
  * `spriteAssetBase` is the build's resolved sprite base URL (see `resolveSpriteAssetBase`); fonts
  * always come from the production bucket. `connect-src` lists both origins because the service
  * worker fetches fonts & sprites with `fetch()`, which `font-src` & `img-src` don't cover.
+ *
+ * `scriptHashes` allows inline scripts by hash: `app.html`'s bootstraps everywhere, plus a
+ * prerendered page's own SvelteKit start script in that page's `_headers` rule. SvelteKit adds a
+ * nonce or hash for its start script itself; it never hashes the template's scripts.
  */
-export function cspDirectives(spriteAssetBase: string = PRODUCTION_ASSET_ORIGIN): CspDirectives {
+export function cspDirectives(
+  spriteAssetBase: string = PRODUCTION_ASSET_ORIGIN,
+  scriptHashes: readonly CspScriptHash[] = APP_HTML_SCRIPT_HASHES,
+): CspDirectives {
   const spriteOrigin = originSource(spriteAssetBase);
   return {
     "base-uri": ["self"],
@@ -42,11 +52,13 @@ export function cspDirectives(spriteAssetBase: string = PRODUCTION_ASSET_ORIGIN)
     "img-src": ["self", "data:", "blob:", spriteOrigin],
     "manifest-src": ["self"],
     "object-src": ["none"],
-    "script-src": ["self", "https://challenges.cloudflare.com"],
+    "script-src": [
+      ...new Set<CspSource>(["self", ...scriptHashes, "https://challenges.cloudflare.com"]),
+    ],
     "style-src": ["self", "unsafe-inline"],
     "worker-src": ["self", "blob:"],
   };
 }
 
-/** The production policy, with sprites on the production bucket. */
+/** The production policy, with sprites on the production bucket & `app.html`'s script hashes. */
 export const CSP_DIRECTIVES = cspDirectives();

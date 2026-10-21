@@ -11,9 +11,11 @@ a machine misbehaves. Always run it with `node`, never through pnpm: `pnpm run` 
 dependencies first and runs scripts on the `devEngines` runtime from `package.json`, which hides the
 Node version agent shells actually use.
 
-Agents that hit a local tooling failure stop & report it instead of repairing it; see "Local tooling
-failures" in [AGENTS.md](../AGENTS.md). A human or the user fixes the machine with this procedure,
-then the agent resumes.
+Agents may initialize an isolated harness-created worktree with `node scripts/setup-worktree.ts`
+when dependencies or included links are absent; this standard setup is preauthorized, including
+after a missing-dependency preflight failure. Other local tooling failures, including failure of
+setup itself, require agents to stop & report them; see “Tooling failures” in
+[AGENTS.md](../AGENTS.md). A human or the user directs the repair, then the agent resumes.
 
 ## Required for every contributor
 

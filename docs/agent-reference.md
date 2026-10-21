@@ -29,9 +29,12 @@ symlinks the `.worktreeinclude` entries in from the main checkout, and runs
 artifacts, or other writable generated directories. See
 [docs/development-workflow.md §2](development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
 for the manual steps and troubleshooting. Inside a harness-created worktree, run
-`node scripts/setup-worktree.ts` for the same symlink & install steps. It is deliberately not a pnpm
-script: `verifyDepsBeforeRun: error` in `pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse
-to start on absent or stale dependencies rather than installing them implicitly.
+`node scripts/setup-worktree.ts` for the same symlink & install steps. This standard initialization
+is preauthorized when dependencies or included links are absent, even if a dependency preflight
+already failed; no additional confirmation is needed. Setup failures still require the stop & report
+procedure in AGENTS.md. It is deliberately not a pnpm script: `verifyDepsBeforeRun: error` in
+`pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse to start on absent or stale dependencies
+rather than installing them implicitly.
 
 **Subagent worktrees:** an orchestrator gives each editing subagent a worktree its harness lets that
 subagent edit. In Claude Code, the session’s edit guard refuses Write/Edit outside the session’s own

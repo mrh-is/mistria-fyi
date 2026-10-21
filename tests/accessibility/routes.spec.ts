@@ -14,15 +14,25 @@ const headingOverrides: Record<string, string | undefined> = {
   "/": "Mistria Field Guide",
   "/everything": "Everything",
   "/privacy": "Privacy Policy",
-  "/settings": "Data management",
 };
 
 const auditRegressionByRoute: Partial<Record<string, string>> = {
   "/": "c166673 unnamed progress bars, fixed by #155",
   "/mines": "c166673 unlabeled input and contrast violations, fixed by #154 and #155",
-  "/settings": "c166673 contrast violations, fixed by #154",
   "/villagers": "c166673 unnamed buttons and contrast violations, fixed by #154 and #155",
 };
+
+test("retired settings route returns a recoverable not-found page", async ({ page }) => {
+  await initializeApplication(page, "system");
+  const response = await gotoApplication(page, "/en/settings?section=import");
+
+  expect(response?.status()).toBe(404);
+  await expect(page).toHaveURL(/\/en\/settings\?section=import$/);
+  await expect(page.getByText("404", { exact: true })).toBeVisible();
+  await page.getByRole("link", { exact: true, name: "Back to home" }).click();
+  await expect(page).toHaveURL(/\/en$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Mistria Field Guide" })).toBeVisible();
+});
 
 test.describe("route accessibility journeys", () => {
   for (const route of accessibilityRoutes) {
