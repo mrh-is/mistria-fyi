@@ -4,6 +4,7 @@ import { after, before, describe, test } from "node:test";
 import { preview } from "vite";
 
 import { SITE_NAME, SITE_ORIGIN } from "../../src/lib/data/page-metadata.js";
+import { renderBarePathStub } from "../../src/lib/i18n/bare-path-stub.js";
 import { LOCALE_CODES } from "../../src/lib/types/locale.js";
 
 import type { PreviewServer } from "vite";
@@ -142,8 +143,20 @@ void describe("built search metadata", { concurrency: 4, timeout: 120_000 }, () 
 
   for (const locale of LOCALE_CODES) registerLocaleTest(locale);
 
+  void test("a bare path serves its locale-picking stub", async () => {
+    for (const path of ["/", "/data"]) {
+      const response = await fetch(`${origin}${path}`, {
+        headers: { accept: "text/html" },
+        redirect: "manual",
+        signal: AbortSignal.timeout(10_000),
+      });
+      assert.equal(response.status, 200, path);
+      assert.equal(await response.text(), renderBarePathStub(path), path);
+    }
+  });
+
   void test("Data management is rendered but excluded from indexing", async () => {
-    const window = await readPage("/data");
+    const window = await readPage("/en/data");
     try {
       const { document } = window;
       assert.equal(document.title, `Data management — ${SITE_NAME}`);

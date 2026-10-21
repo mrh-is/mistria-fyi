@@ -15,6 +15,9 @@
   let alternateLocaleHrefs = $derived(
     locales.map((locale) => ({ href: localizeHref(deLocalizeHref(pathname), { locale }), locale })),
   );
+  // The bare path picks each visitor's locale (cookie, then browser languages, then English), which
+  // is what `x-default` asks for.
+  let defaultHref = $derived(new URL(deLocalizeHref(pathname), SITE_ORIGIN).href);
 </script>
 
 <svelte:head>
@@ -28,6 +31,7 @@
       href={new URL(alternate.href, SITE_ORIGIN).href}
     />
   {/each}
+  <link rel="alternate" hreflang="x-default" href={defaultHref} />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={metadata.description} />
   <meta property="og:url" content={canonicalUrl} />

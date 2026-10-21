@@ -269,9 +269,9 @@ export async function cacheSpriteResponse(
  * fetch decides between the two paths: the cache write is best-effort and happens off the response
  * path, so a failed write (a full quota) never discards a good network response.
  *
- * A bare path (the manifest's `start_url` is `/`) has no page of its own: the server redirects it
- * to a locale. Offline, the worker does the same, redirecting to the last-used locale's cached
- * page (#728). It never caches a redirected navigation, which WebKit refuses to render.
+ * A bare path (the manifest's `start_url` is `/`) has no page of its own: its stub picks a locale
+ * in the browser. Offline, the worker redirects it to the last-used locale's cached page instead
+ * (#728). It never caches a redirected navigation, which WebKit refuses to render.
  */
 export async function fetchRuntimeRequest(
   request: Request,
@@ -281,10 +281,15 @@ export async function fetchRuntimeRequest(
   try {
     response = await dependencies.fetcher(request);
   } catch {
+    // A bare path's own cached response is its locale-picking stub, which may pick a locale with
+    // nothing cached; a cached locale page is the surer landing.
+    const redirect =
+      request.mode === "navigate" ? await offlineLocaleRedirect(request, dependencies) : undefined;
+    if (redirect) return redirect;
     const cached = await dependencies.matchCache(request);
     if (cached) return cached;
     if (request.mode !== "navigate") return Response.error();
-    return (await offlineLocaleRedirect(request, dependencies)) ?? dependencies.offlinePage();
+    return dependencies.offlinePage();
   }
   const isNavigation = request.mode === "navigate";
   // A navigation answered with a followed redirect is a network error (its redirect mode is
@@ -321,7 +326,7 @@ export async function fetchRuntimeRequest(
 }
 
 /**
- * A redirect from an uncached bare-path navigation to the same path under a locale whose page is
+ * A redirect from an offline bare-path navigation to the same path under a locale whose page is
  * cached, trying the last-used locale first; `undefined` when there's nothing to redirect to. A
  * path's query is kept when that exact page is cached and dropped otherwise, so a `start_url`
  * that gains one (`/?source=pwa`) still finds the home page.

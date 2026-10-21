@@ -66,18 +66,23 @@ ${urls}
   );
 }
 
-/** One `<url>` entry per locale for `path`, each cross-linked to the other locales' URLs. */
+/**
+ * One `<url>` entry per locale for `path`, each cross-linked to the other locales' URLs and to the
+ * bare path as `x-default`.
+ */
 function localizedUrlEntries(path: Path): string[] {
   const canonicalUrl = new URL(path, SITE_ORIGIN);
   const hrefByLocale = new Map(
     locales.map((locale) => [locale, localizeUrl(canonicalUrl, { locale }).href]),
   );
-  const alternateLinks = locales
-    .map(
+  const alternateLinks = [
+    ...locales.map(
       (locale) =>
         `    <xhtml:link rel="alternate" hreflang="${locale}" href="${hrefByLocale.get(locale)}" />`,
-    )
-    .join("\n");
+    ),
+    // The bare path picks each visitor's locale, as `x-default` asks for.
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${canonicalUrl.href}" />`,
+  ].join("\n");
 
   return locales.map(
     (locale: Locale) =>

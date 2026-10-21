@@ -48,9 +48,10 @@ Other languages download the first time the player uses them, then stay availabl
   page in the new version. The record is never cached in memory, because during an update two
   workers write it (#18). A full page load through the worker records its locale too. When a
   bare-path navigation fails offline, the worker redirects to the same path under the last-used
-  locale, or under any locale whose page is cached, before falling back to the offline page. Locale
-  home pages (`/en`, `/ja`, …) are exempt from runtime-cache eviction, and a navigation that comes
-  back as a followed redirect is answered with the redirect itself and never cached.
+  locale, or under any locale whose page is cached, before trying the bare path's cached stub & then
+  the offline page. Locale home pages (`/en`, `/ja`, …) are exempt from runtime-cache eviction, and
+  a navigation that comes back as a followed redirect is answered with the redirect itself and never
+  cached.
 
 ### Byte budget
 

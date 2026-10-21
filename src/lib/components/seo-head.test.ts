@@ -50,7 +50,8 @@ describe("SEO head", () => {
     });
     const { head } = render(SeoHead, { props: { metadata, pathname: "/ja/museum" } });
 
-    const alternates = head.match(/<link rel="alternate" hreflang="[^"]+" href="[^"]+"\/>/g) ?? [];
+    const alternates =
+      head.match(/<link rel="alternate" hreflang="[a-zA-Z]{2}[^"]*" href="[^"]+"\/>/g) ?? [];
     expect(alternates).toHaveLength(LOCALE_CODES.length);
     for (const locale of LOCALE_CODES) {
       expect(head).toContain(
@@ -58,6 +59,21 @@ describe("SEO head", () => {
       );
     }
     expect(head).not.toContain("[locale]");
+  });
+
+  it.each([
+    ["/ja/museum", "/museum"],
+    ["/zh-Hans", "/"],
+  ])("points x-default at %s's bare path, which picks the visitor's locale", (pathname, bare) => {
+    const metadata = pageMetadata({
+      description: "Track every museum collection.",
+      title: "Museum",
+    });
+    const { head } = render(SeoHead, { props: { metadata, pathname } });
+
+    expect(head).toContain(
+      `<link rel="alternate" hreflang="x-default" href="${new URL(bare, SITE_ORIGIN).href}"/>`,
+    );
   });
 
   it("renders an explicit robots directive for non-indexable pages", () => {
