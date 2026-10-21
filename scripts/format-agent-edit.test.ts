@@ -211,6 +211,44 @@ describe("format after agent edit", () => {
     ).toContain("parse error");
   });
 
+  it("leaves files with unresolved merge conflicts untouched until they are staged", () => {
+    const cwd = fixture();
+    const git = (...args: string[]) =>
+      spawnSync("git", ["-c", "commit.gpgsign=false", ...args], { cwd, encoding: "utf8" });
+    writeFileSync(join(cwd, "list.md"), "- a\n- b\n");
+    git("add", ".");
+    git("commit", "-m", "list");
+    git("checkout", "-b", "other");
+    writeFileSync(join(cwd, "list.md"), "- a\n- c\n");
+    git("commit", "-am", "other");
+    git("checkout", "-");
+    writeFileSync(join(cwd, "list.md"), "- a\n- d\n");
+    git("commit", "-am", "main");
+
+    // The Bash call that merges both leaves the conflict & edits another file.
+    const input = { cwd, tool_name: "Bash", tool_use_id: `conflict-${cwd}` };
+    snapshotShellEdit(input);
+    expect(git("merge", "other").status).not.toBe(0);
+    writeFileSync(join(cwd, "other.md"), "edited");
+    const run = vi.fn(() => ({ output: "", status: 0 }));
+    formatEdit(input, run);
+    expect(run).toHaveBeenCalledWith(
+      ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "other.md"],
+      cwd,
+    );
+    run.mockClear();
+    expect(formatEdit({ cwd, tool_input: { file_path: "list.md" } }, run)).toBeUndefined();
+    expect(run).not.toHaveBeenCalled();
+
+    writeFileSync(join(cwd, "list.md"), "- a\n- c\n- d\n");
+    git("add", "list.md");
+    formatEdit({ cwd, tool_input: { file_path: "list.md" } }, run);
+    expect(run).toHaveBeenCalledWith(
+      ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "list.md"],
+      cwd,
+    );
+  });
+
   it("ignores outside-worktree paths & nonexistent files", () => {
     const cwd = fixture();
     const run = vi.fn();

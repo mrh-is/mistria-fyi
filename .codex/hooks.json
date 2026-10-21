@@ -68,6 +68,16 @@
     ],
     "SessionStart": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/setup-worktree.ts\" --session-start",
+            "statusMessage": "Initializing worktree",
+            "timeout": 600
+          }
+        ]
+      },
+      {
         "matcher": "startup",
         "hooks": [
           {

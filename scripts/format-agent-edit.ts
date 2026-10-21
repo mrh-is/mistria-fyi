@@ -12,18 +12,22 @@ import {
   readHookInput,
   repositoryHead,
   runPnpm,
+  unmergedFiles,
 } from "#scripts/lib/agent-hook";
 
 import type { HookInput, RunCommand } from "#scripts/lib/agent-hook";
 
+/** Formatting a file mid-conflict rewrites its markers, so those wait until they're staged. */
 function formatFiles(cwd: string, targets: string[]): string[] {
   const root = canonicalPath(cwd, ".");
+  const unmerged = unmergedFiles(cwd);
   return [...new Set(targets)].filter((file) => {
     const rel = relative(root, canonicalPath(cwd, file));
     return (
       !isAbsolute(rel) &&
       rel !== ".." &&
       !rel.startsWith(`..${sep}`) &&
+      !unmerged.has(rel.split(sep).join("/")) &&
       existsSync(resolve(cwd, file)) &&
       statSync(resolve(cwd, file)).isFile() &&
       /\.(?:[cm]?[jt]sx?|svelte|css|jsonc?|md|html?|ya?ml|toml)$/i.test(file) &&

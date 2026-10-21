@@ -120,7 +120,7 @@ describe("planLinks", () => {
   });
 });
 
-/** A main checkout with shared inputs (CRLF `.worktreeinclude`), a linked worktree, & a fake pnpm. */
+/** A main checkout with shared game assets, a CRLF `.worktreeinclude`, a linked worktree, & a fake pnpm. */
 function fixture() {
   const root = temporaryDirectory();
   const main = join(root, "main");
@@ -128,7 +128,7 @@ function fixture() {
   mkdirSync(main);
   git(main, "init");
   writeFileSync(join(main, ".gitignore"), "pipeline/input/\n.env\n");
-  writeFileSync(join(main, ".worktreeinclude"), "pipeline/input/\r\n.env\r\n.dev.vars\r\n");
+  writeFileSync(join(main, ".worktreeinclude"), ".env\r\n.dev.vars\r\n");
   git(main, "add", ".");
   execFileSync(
     "git",
@@ -158,11 +158,13 @@ function fixture() {
     pnpm,
     `import { appendFileSync } from "node:fs";
 appendFileSync(${JSON.stringify(log)}, process.argv.slice(2).join(" ") + "\\n");
+const fails = process.env.FAKE_PNPM_FAIL;
+process.exitCode = fails && process.argv.slice(2).join(" ").startsWith(fails) ? 1 : 0;
 `,
   );
-  const run = (env: NodeJS.ProcessEnv = {}) =>
-    spawnSync(process.execPath, [script], {
-      cwd: worktree,
+  const run = (env: NodeJS.ProcessEnv = {}, args: string[] = [], cwd = worktree) =>
+    spawnSync(process.execPath, [script, ...args], {
+      cwd,
       encoding: "utf8",
       env: { ...withFakePnpm(pnpm), CODEX_THREAD_ID: "", ...env },
     });
@@ -216,6 +218,84 @@ describe("setup-worktree", () => {
       "version = 1\n",
     );
     expect(readFileSync(join(main, ".env"), "utf8")).toBe("SECRET=1\n");
+  });
+
+  it("initializes an absent worktree at session start, then leaves it alone", () => {
+    const { log, run, worktree } = fixture();
+    const first = run({}, ["--session-start"]);
+    expect(first.status, first.stderr).toBe(0);
+    expect(JSON.parse(first.stdout)).toMatchObject({
+      hookSpecificOutput: {
+        additionalContext: expect.stringContaining(
+          "linked 2 entries from the main checkout; installed dependencies",
+        ) as string,
+        hookEventName: "SessionStart",
+      },
+    });
+    expect(readFileSync(join(worktree, ".env"), "utf8")).toBe("SECRET=1\n");
+    expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
+
+    mkdirSync(join(worktree, "node_modules"));
+    const again = run({}, ["--session-start"]);
+    expect(again.status, again.stderr).toBe(0);
+    expect(again.stdout).toBe("");
+    expect(readFileSync(log, "utf8")).toBe(
+      "install --frozen-lockfile\nrun prepare\nexec node --version\n",
+    );
+  });
+
+  it("reinstalls stale dependencies at session start", () => {
+    const { log, run, worktree } = fixture();
+    mkdirSync(join(worktree, "node_modules"));
+    expect(run().status).toBe(0);
+    rmSync(log);
+    const result = run({ FAKE_PNPM_FAIL: "exec" }, ["--session-start"]);
+    expect(result.status, result.stderr).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      hookSpecificOutput: {
+        additionalContext: expect.stringMatching(/: installed dependencies/) as string,
+      },
+    });
+    expect(readFileSync(log, "utf8")).toBe(
+      "exec node --version\ninstall --frozen-lockfile\nrun prepare\n",
+    );
+  });
+
+  it("links absent entries at session start without reinstalling present dependencies", () => {
+    const { log, run, worktree } = fixture();
+    mkdirSync(join(worktree, "node_modules"));
+    const result = run({}, ["--session-start"]);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("linked 2 entries from the main checkout.");
+    expect(existsSync(join(worktree, "pipeline/input/assets/misc.toml"))).toBe(true);
+    expect(readFileSync(log, "utf8")).toBe("exec node --version\n");
+  });
+
+  it("reports a failed session-start setup as context without blocking the session", () => {
+    const { log, run } = fixture();
+    const result = run({ FAKE_PNPM_FAIL: "install" }, ["--session-start"]);
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      hookSpecificOutput: {
+        additionalContext: expect.stringContaining("failed with exit status 1") as string,
+      },
+    });
+    expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\n");
+  });
+
+  it("installs only the main checkout's absent dependencies at session start", () => {
+    const { log, main, run } = fixture();
+    const session = () => run({}, ["--session-start"], main);
+    const first = session();
+    expect(first.status, first.stderr).toBe(0);
+    expect(first.stdout).not.toContain("linked");
+    expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
+    mkdirSync(join(main, "node_modules"));
+    const again = session();
+    expect(again.stdout).toBe("");
+    expect(readFileSync(log, "utf8")).toBe(
+      "install --frozen-lockfile\nrun prepare\nexec node --version\n",
+    );
   });
 
   it("refuses to run in the main checkout", () => {
