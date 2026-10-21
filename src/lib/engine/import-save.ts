@@ -7,7 +7,7 @@ import {
   MAX_SKILL_LEVEL,
   normalizeLevel,
 } from "#lib/engine/progress.js";
-import { getOrCreate, recordKeys, recordValues } from "#lib/utils/record.js";
+import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import { hasProgressSection, isSaveSection } from "./save-bundle.js";
 import { isKnownItemId, isUntrackedPerkId } from "./untracked-save-ids.js";
@@ -502,6 +502,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   const facts = gamedata.record("t2_world_facts", [
     "heartLevels",
     "renown",
+    "questStates",
     "skillLevels",
     "villagerRelationships",
   ]);
@@ -537,11 +538,11 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     // level is still recorded as a diagnostic.
     const renownPath = "gamedata.t2_world_facts.renown";
     if (facts.renown === undefined) {
-      collector.report({ code: "absent", path: renownPath }, ["renown"]);
+      collector.report({ code: "absent", path: renownPath }, ["renown", "questStates"]);
     } else {
       const normalized = normalizeLevel(facts.renown, getMaxRenownLevel());
       if (normalized.issue && normalized.issue !== "above-max") {
-        collector.report({ code: "invalid-value", path: renownPath }, ["renown"]);
+        collector.report({ code: "invalid-value", path: renownPath }, ["renown", "questStates"]);
       } else {
         renown = normalized.value;
       }
@@ -607,7 +608,34 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     "quests.active_quests",
     "obtained",
   );
-  const questStates = readCompleted || readActive ? foundQuests : undefined;
+  // Rank quests arrived after older saves had already passed their targets. Their native stage
+  // thresholds recover those completions; explicit journal/fact evidence stays additive.
+  let readRankCompletion = renown !== undefined;
+  for (const [questId, quest] of recordEntries(trackerData.quests.story)) {
+    if (quest.townRankLevel === undefined) continue;
+    const key = `quest_${questId}_complete`;
+    const completedFact = facts?.[key];
+    if (
+      (renown !== undefined && renown >= quest.townRankLevel) ||
+      completedFact === true ||
+      completedFact === 1
+    ) {
+      foundQuests[questId] = "completed";
+      readRankCompletion = true;
+    }
+    if (
+      completedFact !== undefined &&
+      completedFact !== true &&
+      completedFact !== false &&
+      completedFact !== 0 &&
+      completedFact !== 1
+    ) {
+      collector.report({ code: "invalid-value", path: `gamedata.t2_world_facts.${key}` }, [
+        "questStates",
+      ]);
+    }
+  }
+  const questStates = readCompleted || readActive || readRankCompletion ? foundQuests : undefined;
 
   // ── Identity (from info.json & header.json) ──
   const creationVersion = readScalar(

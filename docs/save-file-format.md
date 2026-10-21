@@ -242,6 +242,15 @@ world state. Keys follow naming conventions:
 | `blackboard`                 | `object`                        | Blackboard quest state                |
 | `manual_quest_unlocks`       | `string[]`                      | Quests unlocked outside normal flow   |
 
+Older saves can have passed several town ranks before the “Reach … Town Rank” quests were added,
+leaving only a later rank’s completion recorded. Import uses `t2_world_facts.renown` to complete
+every rank quest at or below that level. The pipeline derives `StoryQuest.townRankLevel` from its
+native stage’s `reached_renown_level` requirement and validates it against the extracted town-rank
+boundaries; missing, unmatched, or additional objectives fail extraction. Explicit journal
+completions & true `quest_<id>_complete` facts remain additive, even above the imported rank.
+Malformed renown never infers completion, and incomplete evidence keeps quest extraction unknown.
+This inference applies to native save import; manually editing renown does not change quest state.
+
 ---
 
 ## `header` entry

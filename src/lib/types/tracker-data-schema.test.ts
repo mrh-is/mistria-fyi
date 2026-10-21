@@ -51,6 +51,10 @@ describe("TrackerDataSchema", () => {
     ["items", { test: { category: "crop", sources: [{ type: "unknown" }] } }],
     ["items", { test: { category: "crop", sources: [{ type: "store" }] } }],
     ["quests", { ...trackerDataJson.quests, cooking: { test: { sources: [] } } }],
+    [
+      "quests",
+      { ...trackerDataJson.quests, story: { test: { sources: [], townRankLevel: "20" } } },
+    ],
     ["mount", { appearances: { test: { sources: [] } } }],
     [
       "animals",

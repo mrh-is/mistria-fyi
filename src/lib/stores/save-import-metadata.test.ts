@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "./user-state.svelte.js";
 
@@ -8,6 +8,10 @@ const metadata = {
   importedAt: 1_792_531_800_000,
   playerName: "Ada",
 };
+
+beforeEach(() => {
+  userState.resetAll();
+});
 
 afterEach(() => {
   userState.resetAll();
