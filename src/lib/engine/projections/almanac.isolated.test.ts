@@ -116,7 +116,7 @@ describe("projectAlmanac", () => {
     expect(search.totals).toEqual(page.totals);
   });
 
-  it("property: section progress, including dates, sums to the header for generated contexts", () => {
+  it("property: canonical section progress sums to the header for generated contexts", () => {
     // A fixed seed makes failures reproducible, while varying completion, relationships, windows,
     // world state and display filters independently. No fixture total is assumed.
     let seed = 117;
@@ -128,9 +128,6 @@ describe("projectAlmanac", () => {
       const ctx = context();
       for (const id of trackerIndex.almanacCanonicalIds) {
         if (random() < 0.3) ctx.progress.almanac.add(id);
-      }
-      for (const id of recordKeys(trackerData.dates)) {
-        if (random() < 0.5) ctx.progress.dates.add(id);
       }
       for (const id of recordKeys(ctx.progress.villagerRelationships)) {
         ctx.progress.villagerRelationships[id] = random() < 0.5 ? "platonic" : "undecided";
@@ -149,10 +146,7 @@ describe("projectAlmanac", () => {
         showUnobtainable: random() < 0.5,
       });
       const sum = { completed: 0, remainingInScope: 0, total: 0 };
-      for (const section of [
-        projection.dates,
-        ...projection.sections.map((view) => view.progress),
-      ]) {
+      for (const { progress: section } of projection.sections) {
         sum.completed += section.completed;
         sum.remainingInScope += section.remainingInScope;
         sum.total += section.total;
@@ -162,7 +156,7 @@ describe("projectAlmanac", () => {
       const applicableRows = projection.sections
         .flatMap(({ rows }) => rows)
         .filter((row) => row.obtainable);
-      expect(sum.total).toBe(applicableRows.length + trackerIndex.almanacDateCount);
+      expect(sum.total).toBe(applicableRows.length);
     }
   });
 });

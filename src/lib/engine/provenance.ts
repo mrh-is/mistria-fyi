@@ -57,7 +57,6 @@ const LIST_FIELDS = [
   "almanac",
   "almanacRecipes",
   "cosmetics",
-  "dates",
   "mountAppearances",
   "museum",
   "petCosmetics",

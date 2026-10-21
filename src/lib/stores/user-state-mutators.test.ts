@@ -16,7 +16,6 @@ const variantId = Object.keys(
 )[0] as AnimalVariantId;
 const animalCosmeticId = recordKeys(animal.cosmetics)[0];
 const cosmeticId = recordKeys(trackerData.cosmetics)[0];
-const dateId = recordKeys(trackerData.dates)[0];
 const petCosmeticId = recordKeys(trackerData.pets.cosmetics)[0];
 const petSkinId = recordKeys(trackerData.pets.skins)[0];
 const mountAppearanceId = recordKeys(trackerData.mount.appearances)[0];
@@ -30,14 +29,6 @@ const COLLECTIONS = [
       userState.toggleCosmetic(cosmeticId);
     },
     value: cosmeticId,
-  },
-  {
-    name: "dates",
-    read: () => [...userState.state.progress.dates],
-    toggle: () => {
-      userState.toggleDate(dateId);
-    },
-    value: dateId,
   },
   {
     name: "animal variants",

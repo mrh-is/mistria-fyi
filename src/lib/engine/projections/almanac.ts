@@ -47,7 +47,6 @@ interface AlmanacSection {
 }
 
 interface AlmanacProjection {
-  dates: CategoryProgress;
   rows: AlmanacRow[];
   sections: AlmanacSection[];
   totals: CategoryProgress;
@@ -59,7 +58,6 @@ interface AlmanacProjection {
  *
  * Callers choose context explicitly: search passes default availability windows and hides
  * spoilers; pages pass user windows, name/source filters and temporary completed-row retention.
- * Dates contribute their own section to the header but are rendered by DatesSection.
  */
 export function projectAlmanac(
   ctx: ProgressContext,
@@ -122,12 +120,7 @@ export function projectAlmanac(
       visibleRows: rows.filter((row) => row.visible),
     };
   });
-  const dates: CategoryProgress = {
-    completed: ctx.progress.dates.size,
-    remainingInScope: trackerIndex.almanacDateCount - ctx.progress.dates.size,
-    total: trackerIndex.almanacDateCount,
-  };
-  const totals = { ...dates };
+  const totals: CategoryProgress = { completed: 0, remainingInScope: 0, total: 0 };
   for (const { progress } of sections) {
     totals.completed += progress.completed;
     totals.remainingInScope += progress.remainingInScope;
@@ -140,5 +133,5 @@ export function projectAlmanac(
       sections.flatMap((section) => section.rows).map((row) => [row.canonicalId, row]),
     ).values(),
   ];
-  return { dates, rows, sections, totals };
+  return { rows, sections, totals };
 }

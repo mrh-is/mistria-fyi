@@ -103,7 +103,6 @@
       }
     }
   ],
-  "dates_section_name": "デート",
   "animals_cosmetics_section_name": "コスメ",
   "animals_pet_cosmetics_section_name": "ペットのコスメ",
   "animals_pet_skins_section_name": "ペットのスキン",
@@ -470,7 +469,6 @@
   "merge_label_animal_cosmetics": "動物のコスメ：+{count}",
   "merge_label_animals": "動物のバリエーション：+{count}",
   "merge_label_cosmetics": "コスメ：+{count}",
-  "merge_label_dates": "日付：+{count}",
   "merge_label_museum": "博物館への寄贈：+{count}",
   "merge_label_villager_relationships": "町の住民との関係：+{count}",
   "merge_label_perks": "スキルボーナス：+{count}",

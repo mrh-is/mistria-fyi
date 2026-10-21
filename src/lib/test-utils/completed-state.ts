@@ -23,7 +23,6 @@ export function makeCompletedState(overrides: Partial<ProgressState> = {}): Prog
     animals,
     childChoice: "undeclared",
     cosmetics: new Set(),
-    dates: new Set(),
     hasUpperFloor: false,
     heartLevels: {},
     mineFloor: 0,

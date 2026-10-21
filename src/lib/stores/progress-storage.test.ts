@@ -51,7 +51,6 @@ const MIGRATED_FIXTURE_HISTORY = {
       "animals/chicken/variant_from_a_later_update",
       "childChoice",
       "cosmetics/back_gear_ancient_witch_broom",
-      "dates/inn_meal",
       "hasUpperFloor",
       "heartLevels/balor",
       "heartLevels/villager_from_a_later_update",
@@ -89,6 +88,11 @@ describe("migration table", () => {
   it("keeps the launch format's step as the identity", () => {
     const document = fixture(1);
     expect(MIGRATIONS[1]?.(document)).toBe(document);
+  });
+
+  it("pins the retired-checklist format as version four", () => {
+    expect(fixture(4)).not.toHaveProperty("progress.dates");
+    expect(fixture(4)).toHaveProperty("progress.almanac", ["inn_menu", "turnip"]);
   });
 });
 
@@ -401,6 +405,22 @@ describe("readProgressBlob", () => {
   it("drops fields the format doesn't declare", () => {
     const loaded = readOk(JSON.stringify(fixture(1)), "strict");
     expect(JSON.parse(serializeProgress(loaded))).not.toHaveProperty("showCompleted");
+  });
+
+  it.each(POLICIES)("drops known & unknown retired dates under the %s policy", (policy) => {
+    const launch = fixture(1);
+    const document = {
+      ...launch,
+      progress: { ...(launch.progress as StoredDocument), dates: ["inn_meal", "unmapped_date"] },
+    };
+    const loaded = readOk(JSON.stringify(document), policy);
+    const written = serializeProgress(loaded);
+    expect(JSON.parse(written)).not.toHaveProperty("progress.dates");
+    expect(JSON.parse(written)).not.toHaveProperty("progress.legacyDates");
+    expect(loaded.progress).not.toHaveProperty("dates");
+    expect(loaded.progress.almanac).not.toContain("inn_menu");
+    const reread = readOk(written, policy);
+    expect(serializeProgress(reread)).toBe(written);
   });
 
   it("repairs malformed values on hydration but rejects them in a backup", () => {

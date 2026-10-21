@@ -13,7 +13,6 @@ import type {
   AnimalId,
   AnimalVariantId,
   CosmeticId,
-  DateId,
   ItemId,
   MountAppearanceId,
   PerkId,
@@ -195,10 +194,6 @@ export async function encodeTransferPayload(
   // 14. Pet skins bitfield
   const petSkinOrder = getPetSkinOrder();
   parts.push(toBitfield(petSkinOrder, completed.petSkins));
-
-  // 15. Date bitfield
-  const dateOrder = getDateOrder();
-  parts.push(toBitfield(dateOrder, completed.dates));
 
   // 16. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor
   const progressionByte =
@@ -456,11 +451,6 @@ async function decodeTransferPayloadUnchecked(
   const petSkinBytes = readBytes(Math.ceil(petSkinOrder.length / 8));
   const petSkins = fromBitfield(petSkinOrder, petSkinBytes, "pet skin bitfield") as Set<PetSkinId>;
 
-  // 15. Date bitfield
-  const dateOrder = getDateOrder();
-  const dateBytes = readBytes(Math.ceil(dateOrder.length / 8));
-  const dates = fromBitfield(dateOrder, dateBytes, "date bitfield") as Set<DateId>;
-
   // 16. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bits 4-0: reserved
   const progressionByte = readBytes(1)[0];
   if (progressionByte & 0x1f) {
@@ -537,7 +527,6 @@ async function decodeTransferPayloadUnchecked(
     animals,
     childChoice,
     cosmetics,
-    dates,
     hasUpperFloor,
     heartLevels,
     mineFloor: clampMineFloor(mineFloor),
@@ -684,7 +673,6 @@ function getTransferRawLength(): number {
     Math.ceil(getPerkOrder().length / 8) +
     Math.ceil(getPetCosmeticOrder().length / 8) +
     Math.ceil(getPetSkinOrder().length / 8) +
-    Math.ceil(getDateOrder().length / 8) +
     1 +
     Math.ceil((getDateableVillagerOrder().length * 3) / 8) +
     1 +
@@ -753,10 +741,6 @@ function getDateableVillagerOrder(): VillagerId[] {
   return (Object.keys(trackerData.villagers) as VillagerId[])
     .filter((id) => trackerData.villagers[id].dateable)
     .toSorted();
-}
-
-function getDateOrder(): DateId[] {
-  return (Object.keys(trackerData.dates) as DateId[]).toSorted();
 }
 
 function getMuseumOrder(): ItemId[] {

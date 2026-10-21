@@ -12,8 +12,6 @@ export const REPORT_CATEGORIES = [
   "craving-quest",
   "cosmetic",
   "cosmetic-slot",
-  "date",
-  "dates",
   "mines",
   "mount-appearance",
   "mount-appearances",

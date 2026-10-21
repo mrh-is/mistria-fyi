@@ -81,7 +81,7 @@ describe("TrackerDataSchema", () => {
     expect(
       v.safeParse(TrackerDataSchema, {
         ...trackerDataJson,
-        categoryVisibility: { dates: { type: "and", conditions: [{ type: "always" }] } },
+        categoryVisibility: { story: { type: "and", conditions: [{ type: "always" }] } },
         recipes: { test: { sources: [{ type: "store", availability, storeId: "shop" }] } },
       }).success,
     ).toBe(true);

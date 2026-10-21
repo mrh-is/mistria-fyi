@@ -85,6 +85,23 @@ export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
     };
     return { ...document, progress: { ...document.progress, provenance, resolutions: {} } };
   },
+  // Dates was a duplicate manual checklist, not evidence of acquiring an inspiration item.
+  // Retire it without changing canonical Almanac progress or its history.
+  4: (document) => {
+    if (!isPlainObject(document.progress)) return document;
+    const progress = Object.fromEntries(
+      Object.entries(document.progress).filter(([key]) => key !== "dates" && key !== "legacyDates"),
+    );
+    for (const field of ["provenance", "resolutions"]) {
+      const history = progress[field];
+      if (isPlainObject(history)) {
+        progress[field] = Object.fromEntries(
+          Object.entries(history).filter(([key]) => !key.startsWith("dates/")),
+        );
+      }
+    }
+    return { ...document, progress };
+  },
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -202,7 +219,6 @@ const LIST_ENTRIES = {
   almanac: StringListSchema,
   almanacRecipes: v.optional(StringListSchema),
   cosmetics: StringListSchema,
-  dates: v.optional(StringListSchema),
   mountAppearances: v.optional(StringListSchema),
   museum: StringListSchema,
   petCosmetics: v.optional(StringListSchema),
@@ -311,7 +327,6 @@ const LIST_FIELDS = [
   "almanac",
   "almanacRecipes",
   "cosmetics",
-  "dates",
   "mountAppearances",
   "museum",
   "petCosmetics",
@@ -426,7 +441,6 @@ type KnownIds = object | ReadonlySet<string>;
 const LIST_KNOWN_IDS: Record<Exclude<ListField, "almanac">, KnownIds> = {
   almanacRecipes: trackerData.recipes,
   cosmetics: trackerData.cosmetics,
-  dates: trackerData.dates,
   mountAppearances: trackerData.mount.appearances,
   museum: MUSEUM_ITEM_IDS,
   petCosmetics: trackerData.pets.cosmetics,
@@ -582,7 +596,6 @@ function normalizeBlob({
     animals: animals.known,
     childChoice: stored.childChoice ?? "undeclared",
     cosmetics: lists.cosmetics as ProgressState["cosmetics"],
-    dates: lists.dates as ProgressState["dates"],
     hasUpperFloor: stored.hasUpperFloor ?? false,
     heartLevels: heartLevels.known,
     mineFloor: clampMineFloor(stored.mineFloor),
@@ -753,7 +766,6 @@ function serializedState({
       animals: mergeAnimalIds(progress.animals, retained.animals),
       childChoice: progress.childChoice,
       cosmetics: list("cosmetics"),
-      dates: list("dates"),
       hasUpperFloor: progress.hasUpperFloor,
       heartLevels: mergeRecord(progress.heartLevels, retained.heartLevels, (level) => level > 0),
       mineFloor: progress.mineFloor,

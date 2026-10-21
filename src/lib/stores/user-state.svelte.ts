@@ -48,7 +48,6 @@ import type {
   AnimalId,
   AnimalVariantId,
   CosmeticId,
-  DateId,
   ItemId,
   JsonValue,
   MountAppearanceId,
@@ -185,7 +184,6 @@ function createDefaultProgress(): ProgressState {
     animals,
     childChoice: "undeclared",
     cosmetics: new SvelteSet<CosmeticId>(),
-    dates: new SvelteSet<DateId>(),
     hasUpperFloor: false,
     heartLevels: {},
     mineFloor: 0,
@@ -635,7 +633,6 @@ function createUserState() {
       state.progress.cosmetics.size > 0 ||
       state.progress.hasUpperFloor ||
       state.progress.museum.size > 0 ||
-      state.progress.dates.size > 0 ||
       state.progress.reachedSeason !== "spring" ||
       Object.keys(state.progress.villagerRelationships).length > 0 ||
       state.progress.childChoice !== "undeclared" ||
@@ -961,9 +958,6 @@ function createUserState() {
     toggleCosmetic(id: CosmeticId) {
       toggleFact("cosmetics", state.progress.cosmetics, id);
     },
-    toggleDate(id: DateId) {
-      toggleFact("dates", state.progress.dates, id);
-    },
     toggleMountAppearance(id: MountAppearanceId) {
       toggleFact("mountAppearances", state.progress.mountAppearances, id);
     },
@@ -1018,7 +1012,6 @@ function mergeProgress(progress: ProgressState, imported: Partial<ProgressState>
   counts.almanac = unionInto(progress.almanac, imported.almanac ?? []);
   counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
   counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
-  counts.dates = unionInto(progress.dates, imported.dates ?? []);
   counts.mountAppearances = unionInto(progress.mountAppearances, imported.mountAppearances ?? []);
   counts.museum = unionInto(progress.museum, imported.museum ?? []);
   counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);

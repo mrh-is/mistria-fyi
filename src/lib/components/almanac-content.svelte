@@ -3,7 +3,6 @@
   import { SvelteMap } from "svelte/reactivity";
 
   import AllCompleted from "#lib/components/all-completed.svelte";
-  import DatesSection from "#lib/components/dates-section.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
@@ -230,13 +229,5 @@
     </ExpandableSection>
   {/if}
 {/each}
-
-<DatesSection
-  {locale}
-  onAllComplete={() => {
-    if (isAlmanacComplete()) celebrateCategory();
-    else celebrate();
-  }}
-/>
 
 <AllCompleted isAllCompleted={isAlmanacComplete()} />

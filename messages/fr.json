@@ -109,7 +109,6 @@
       }
     }
   ],
-  "dates_section_name": "Rendez-vous",
   "animals_cosmetics_section_name": "Cosmétiques",
   "animals_pet_cosmetics_section_name": "Cosmétiques d'animal",
   "animals_pet_skins_section_name": "Apparences d'animal",
@@ -476,7 +475,6 @@
   "merge_label_animal_cosmetics": "Cosmétiques d’animaux : +{count}",
   "merge_label_animals": "Variantes d’animaux : +{count}",
   "merge_label_cosmetics": "Cosmétiques : +{count}",
-  "merge_label_dates": "Dates : +{count}",
   "merge_label_museum": "Dons au musée : +{count}",
   "merge_label_villager_relationships": "Relations avec les habitants : +{count}",
   "merge_label_perks": "Bonus de compétences : +{count}",

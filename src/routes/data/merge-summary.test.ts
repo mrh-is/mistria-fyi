@@ -16,7 +16,6 @@ const CASES: { expected: string; imported: Partial<ProgressState>; setup?: () =>
       userState.setVillagerRelationship("adeline" as VillagerId, "married");
     },
   },
-  { expected: "Dates: +1", imported: { dates: new Set(["review-date" as never]) } },
   { expected: "Upper floor unlocked", imported: { hasUpperFloor: true } },
   {
     expected: "Villager relationships: +1",

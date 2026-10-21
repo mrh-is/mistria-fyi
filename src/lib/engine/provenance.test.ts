@@ -13,7 +13,6 @@ function progress(overrides: Partial<ProgressState> = {}): ProgressState {
     animals: {},
     childChoice: "undeclared",
     cosmetics: new Set(),
-    dates: new Set(),
     hasUpperFloor: false,
     heartLevels: {},
     mineFloor: 0,

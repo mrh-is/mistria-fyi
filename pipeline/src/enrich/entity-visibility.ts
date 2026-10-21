@@ -84,29 +84,10 @@ export function assignEntityVisibility(
 }
 
 /** Hardcoded category visibility gates (see pipeline/README.md, reviewed game facts). */
-export function extractCategoryVisibility(
-  villagers: TrackerData["villagers"],
-): Record<string, VisibilityCondition> {
-  const dateableVillagerIds = Object.entries(villagers)
-    .filter(([, villager]) => villager.dateable)
-    .map(([id]) => id as VillagerId);
-
-  const datesVisibility: VisibilityCondition =
-    dateableVillagerIds.length > 0
-      ? {
-          type: "or",
-          conditions: dateableVillagerIds.map((villagerId) => ({
-            type: "heartLevel" as const,
-            level: 8,
-            villagerId,
-          })) as [VisibilityCondition, ...VisibilityCondition[]],
-        }
-      : ALWAYS_VISIBLE;
-
+export function extractCategoryVisibility(): Record<string, VisibilityCondition> {
   return {
     cooking: { type: "villagerKnown", villagerId: "taliferro" as VillagerId },
     crown: { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL },
-    dates: datesVisibility,
     fetch: ALWAYS_VISIBLE,
     heart: ALWAYS_VISIBLE,
     mission: { type: "villagerKnown", villagerId: "stillwell" as VillagerId },
@@ -353,7 +334,7 @@ function assignQuestVisibility(
   cutsceneMap: CutsceneQuestMap,
   chains: QuestChainData,
 ): void {
-  const categoryVisibility = extractCategoryVisibility(trackerData.villagers);
+  const categoryVisibility = extractCategoryVisibility();
 
   for (const [questId, quest] of Object.entries(trackerData.quests.story)) {
     const prerequisites = chains.story[questId as QuestId]?.prerequisites ?? [];
