@@ -1,7 +1,7 @@
 import "#scripts/lib/require-pinned-node";
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -14,7 +14,7 @@ import type { PendingUpload, R2UploadTree } from "#scripts/lib/r2-upload";
 
 /**
  * The game-update review report (#121), run as
- * `pnpm run game-update:report -- <baseline-ref> [--skip-sprites]`.
+ * `pnpm run game-update:report -- <baseline-ref> [--skip-sprites] [--out=<file>]`.
  *
  * It compares the tracker data at a baseline Git ref with the working copy & prints, as markdown
  * for the PR comment `docs/game-version-update-protocol.md` requires: the ID inventory by domain
@@ -46,6 +46,24 @@ function entriesOf(value: unknown, label: string): Entries {
   return new Map(Object.entries(record(value, label)));
 }
 
+/** A string ID, or a throw: a missing or non-string ID would otherwise collapse to "undefined". */
+function idOf(value: unknown, label: string): string {
+  if (typeof value !== "string" || value === "") {
+    throw new Error(`Expected ${label} to be a non-empty string ID.`);
+  }
+  return value;
+}
+
+/** Builds a domain's entries, throwing on a repeated ID rather than silently keeping the last. */
+function uniqueEntries(rows: Iterable<readonly [string, unknown]>, label: string): Entries {
+  const entries = new Map<string, unknown>();
+  for (const [id, entry] of rows) {
+    if (entries.has(id)) throw new Error(`Expected each ${label} ID to be unique; ${id} repeats.`);
+    entries.set(id, entry);
+  }
+  return entries;
+}
+
 /** `parent/child` entries for each child record of `value`. */
 function nested(value: unknown, label: string, childPath: (child: unknown) => unknown): Entries {
   const entries = new Map<string, unknown>();
@@ -58,6 +76,57 @@ function nested(value: unknown, label: string, childPath: (child: unknown) => un
   return entries;
 }
 
+function arrayOf(value: unknown, label: string): unknown[] {
+  if (!Array.isArray(value)) throw new Error(`Expected ${label} to be a list.`);
+  return value;
+}
+
+/** Mines biomes by ID; an older version without biomes has none. */
+function minesBiomes(data: Record<string, unknown>): Entries {
+  const biomes = record(data.mines, "mines").biomes;
+  if (biomes === undefined) return new Map();
+  return uniqueEntries(
+    arrayOf(biomes, "mines.biomes").map((biome): [string, unknown] => [
+      idOf(record(biome, "mines.biomes").id, "mines.biomes[].id"),
+      biome,
+    ]),
+    "mines biome",
+  );
+}
+
+/** `skill/perk` for every perk in every tier of every skill. */
+function perks(data: Record<string, unknown>): Entries {
+  return uniqueEntries(
+    Object.entries(record(data.skills, "skills")).flatMap(([skillId, skill]) =>
+      arrayOf(
+        record(skill, `skills.${skillId}`).perkTiers ?? [],
+        `skills.${skillId}.perkTiers`,
+      ).flatMap((tier) =>
+        Object.entries(record(tier, `skills.${skillId}.perkTiers`)).map(
+          ([perkId, perk]): [string, unknown] => [`${skillId}/${perkId}`, perk],
+        ),
+      ),
+    ),
+    "perk",
+  );
+}
+
+/** `wing/set/item` for every item in every museum set. */
+function museumSetMembers(data: Record<string, unknown>): Entries {
+  return uniqueEntries(
+    [...nested(data.museum, "museum", (wing) => record(wing, "wing").sets)].flatMap(
+      ([setPath, set]) =>
+        arrayOf(record(set, `museum.${setPath}`).items, `museum.${setPath}.items`).map(
+          (itemId): [string, unknown] => [
+            `${setPath}/${idOf(itemId, `museum.${setPath}.items[]`)}`,
+            itemId,
+          ],
+        ),
+    ),
+    "museum set member",
+  );
+}
+
 function almanacItems(value: unknown, label: string): [string, Record<string, unknown>][] {
   const rows: [string, Record<string, unknown>][] = [];
   for (const [category, entry] of Object.entries(record(value, label))) {
@@ -67,6 +136,7 @@ function almanacItems(value: unknown, label: string): [string, Record<string, un
       if (!isRecord(item) || !Array.isArray(item.itemIds) || item.itemIds.length === 0) {
         throw new Error(`Expected every ${label}.${category} entry to have item IDs.`);
       }
+      for (const itemId of item.itemIds) idOf(itemId, `${label}.${category} item IDs`);
       rows.push([category, item]);
     }
   }
@@ -82,23 +152,25 @@ export const DOMAINS: readonly Domain[] = [
   {
     // An entry's ID is its canonical (first) member, so a regrouping shows as a removal & addition.
     entries: (data) =>
-      new Map(
-        almanacItems(data.almanac, "almanac").map(([category, entry]) => [
-          `${category}/${String((entry.itemIds as unknown[])[0])}`,
+      uniqueEntries(
+        almanacItems(data.almanac, "almanac").map(([category, entry]): [string, unknown] => [
+          `${category}/${(entry.itemIds as string[])[0]}`,
           entry,
         ]),
+        "almanac entry",
       ),
     name: "almanac entries (canonical ID)",
   },
   {
     entries: (data) =>
-      new Map(
+      uniqueEntries(
         almanacItems(data.almanac, "almanac").flatMap(([category, entry]) =>
-          (entry.itemIds as unknown[]).map((itemId): [string, unknown] => [
-            `${category}/${String(itemId)}`,
+          (entry.itemIds as string[]).map((itemId): [string, unknown] => [
+            `${category}/${itemId}`,
             entry,
           ]),
         ),
+        "almanac member",
       ),
     name: "almanac members",
   },
@@ -110,7 +182,7 @@ export const DOMAINS: readonly Domain[] = [
   },
   {
     entries: (data) =>
-      new Map(
+      uniqueEntries(
         Object.entries(record(data.animals, "animals")).flatMap(([animalId, animal]) => {
           const tiers = record(animal, `animals.${animalId}`).variantTiers;
           if (!Array.isArray(tiers)) throw new Error(`Expected animals.${animalId}.variantTiers.`);
@@ -120,6 +192,7 @@ export const DOMAINS: readonly Domain[] = [
             ),
           );
         }),
+        "animal variant",
       ),
     name: "animal variants",
   },
@@ -128,21 +201,7 @@ export const DOMAINS: readonly Domain[] = [
   { entries: (data) => entriesOf(data.dates, "dates"), name: "dates" },
   { entries: (data) => entriesOf(data.festivals, "festivals"), name: "festivals" },
   { entries: (data) => entriesOf(data.items, "items"), name: "items" },
-  {
-    entries: (data) =>
-      new Map(
-        (() => {
-          const biomes = record(data.mines, "mines").biomes;
-          if (biomes === undefined) return [];
-          if (!Array.isArray(biomes)) throw new Error("Expected mines.biomes to be a list.");
-          return biomes.map((biome): [string, unknown] => [
-            String(record(biome, "mines.biomes").id),
-            biome,
-          ]);
-        })(),
-      ),
-    name: "mines biomes",
-  },
+  { entries: minesBiomes, name: "mines biomes" },
   {
     entries: (data) => entriesOf(record(data.mines, "mines").spells, "mines.spells"),
     name: "mines spells",
@@ -156,6 +215,7 @@ export const DOMAINS: readonly Domain[] = [
     entries: (data) => nested(data.museum, "museum", (wing) => record(wing, "wing").sets),
     name: "museum sets",
   },
+  { entries: museumSetMembers, name: "museum set members" },
   {
     entries: (data) => entriesOf(record(data.pets, "pets").cosmetics, "pets.cosmetics"),
     name: "pet cosmetics",
@@ -170,6 +230,7 @@ export const DOMAINS: readonly Domain[] = [
   },
   { entries: (data) => entriesOf(data.recipes, "recipes"), name: "recipes" },
   { entries: (data) => entriesOf(data.skills, "skills"), name: "skills" },
+  { entries: perks, name: "perks" },
   { entries: (data) => entriesOf(data.stores, "stores"), name: "stores" },
   {
     entries: (data) => entriesOf(data.treasureChestTiers, "treasureChestTiers"),
@@ -194,20 +255,34 @@ export const COVERAGE = {
   items: ["items"],
   mines: ["mines biomes", "mines spells"],
   mount: ["mount appearances"],
-  museum: ["museum wings", "museum sets"],
+  museum: ["museum wings", "museum sets", "museum set members"],
   perkTierLevels: "none",
   pets: ["pet cosmetics", "pet skins"],
   pregnancyQuestByVillager: "none",
   questOrder: "none",
   quests: ["quests (type/ID)"],
   recipes: ["recipes"],
-  skills: ["skills"],
+  skills: ["skills", "perks"],
   stores: ["stores"],
   townRanks: "none",
   treasureChestTiers: ["treasure chest tiers"],
   version: "none",
   villagers: ["villagers"],
 } as const satisfies Record<keyof TrackerData, "none" | readonly string[]>;
+
+/** Top-level keys whose value is a container of domains, so a key added inside one shows. */
+const CONTAINERS = [
+  "mines",
+  "mount",
+  "pets",
+  "quests",
+] as const satisfies readonly (keyof TrackerData)[];
+
+export interface ContainerKeyDiff {
+  added: string[];
+  name: string;
+  removed: string[];
+}
 
 export interface DomainDiff {
   added: string[];
@@ -221,6 +296,7 @@ export interface DomainDiff {
 
 export interface DataComparison {
   baseVersion: string;
+  containers: ContainerKeyDiff[];
   domains: DomainDiff[];
   headVersion: string;
   topLevelAdded: string[];
@@ -239,7 +315,10 @@ function difference(from: ReadonlySet<string>, other: ReadonlySet<string>): stri
   return sorted([...from].filter((value) => !other.has(value)));
 }
 
-/** The union of the field names of every entry that is an object. */
+/**
+ * The union of the field names of every entry that is an object. A field already present on any
+ * baseline entry never shows as added, even when it spreads to more entries.
+ */
 function fieldNames(entries: Entries): Set<string> {
   const names = new Set<string>();
   for (const value of entries.values()) {
@@ -280,8 +359,16 @@ export function compareData(base: unknown, head: unknown): DataComparison {
       removed: difference(beforeIds, afterIds),
     };
   });
+  // A container new or gone at the top level is already reported there, so only shared ones count.
+  const shared = CONTAINERS.filter((name) => baseKeys.has(name) && headKeys.has(name));
+  const containers = shared.map((name): ContainerKeyDiff => {
+    const before = new Set(Object.keys(record(baseData[name], name)));
+    const after = new Set(Object.keys(record(headData[name], name)));
+    return { added: difference(after, before), name, removed: difference(before, after) };
+  });
   return {
     baseVersion: versionOf(baseData),
+    containers,
     domains,
     headVersion: versionOf(headData),
     topLevelAdded: difference(headKeys, baseKeys),
@@ -291,7 +378,7 @@ export function compareData(base: unknown, head: unknown): DataComparison {
 
 /** The sprite check: skipped on request, or the objects the upload dry run would still send. */
 export type SpriteCheck =
-  | { kind: "checked"; pending: PendingUpload[]; staged: number }
+  | { kind: "checked"; pending: PendingUpload[]; staged: number; unstaged: string[] }
   | { kind: "skipped" };
 
 const SPRITE_KINDS = ["items", "villagers"] as const;
@@ -355,6 +442,14 @@ export function renderReport(
   if (comparison.topLevelRemoved.length > 0) {
     keyChanges.push(`- Top-level keys removed: ${list(comparison.topLevelRemoved)}`);
   }
+  for (const container of comparison.containers) {
+    if (container.added.length > 0) {
+      keyChanges.push(`- ${code(container.name)} keys added: ${list(container.added)}`);
+    }
+    if (container.removed.length > 0) {
+      keyChanges.push(`- ${code(container.name)} keys removed: ${list(container.removed)}`);
+    }
+  }
   for (const domain of comparison.domains) {
     if (domain.fieldsAdded.length > 0) {
       keyChanges.push(`- ${domain.name}, entry fields added: ${list(domain.fieldsAdded)}`);
@@ -369,6 +464,14 @@ export function renderReport(
     "### Sprite deltas",
     "",
   );
+  if (sprites.kind === "checked" && sprites.unstaged.length > 0) {
+    lines.push(
+      `Warning: ${String(sprites.unstaged.length)} added sprite IDs have no staged sprite, so the staging may be stale or partial (some items have no icon by design).`,
+      "",
+      detail("Added without a staged sprite", sprites.unstaged),
+      "",
+    );
+  }
   if (sprites.kind === "skipped") {
     lines.push("The sprite dry run was skipped (`--skip-sprites`); production was not checked.");
   } else if (sprites.pending.length === 0) {
@@ -407,6 +510,8 @@ export function renderReport(
 
 export interface ReportOptions {
   baseRef: string;
+  /** Where to write the report as UTF-8; standard output when absent. */
+  out?: string;
   skipSprites: boolean;
   spritesDirectory: string;
 }
@@ -427,34 +532,52 @@ function spriteTree(directory: string): R2UploadTree {
   };
 }
 
-async function checkSprites(directory: string): Promise<SpriteCheck> {
-  if (!existsSync(directory)) {
+/** The staged sprite paths each added item & villager would need. */
+function expectedSprites(comparison: DataComparison): string[] {
+  return SPRITE_KINDS.flatMap((kind) =>
+    (comparison.domains.find((domain) => domain.name === kind)?.added ?? []).map(
+      (id) => `${kind}/${id}.webp`,
+    ),
+  );
+}
+
+async function checkSprites(directory: string, comparison: DataComparison): Promise<SpriteCheck> {
+  const stageHint =
+    "stage them with `pnpm run pipeline -- <path> --sprites` (gaming PC) or pass --skip-sprites.";
+  if (!existsSync(directory)) throw new Error(`No staged sprites in ${directory}; ${stageHint}`);
+  const stagedFiles = await listFiles(directory);
+  // The uploader refuses a tree with anything but converted sprites, so the gate does too.
+  const nonWebp = stagedFiles.filter((file) => !file.endsWith(".webp"));
+  if (nonWebp.length > 0) {
     throw new Error(
-      `No staged sprites in ${directory}; stage them with \`pnpm run pipeline -- <path> --sprites\` (gaming PC) or pass --skip-sprites.`,
+      `${directory} contains non-.webp files, which the upload refuses: ${nonWebp.join(", ")}`,
     );
   }
-  const tree = spriteTree(directory);
-  const stagedFiles = await listFiles(directory);
-  const staged = stagedFiles.filter((file) => file.endsWith(".webp")).length;
-  const pending = await findPendingUploads(tree, r2UploadOptionsFromEnv());
+  if (stagedFiles.length === 0) throw new Error(`No staged sprites in ${directory}; ${stageHint}`);
+  const stagedSet = new Set(stagedFiles);
+  const unstaged = expectedSprites(comparison).filter((file) => !stagedSet.has(file));
+  const pending = await findPendingUploads(spriteTree(directory), r2UploadOptionsFromEnv());
   const unreachable = pending.filter((p) => p.status === "unreachable");
   if (unreachable.length > 0) {
     throw new Error(
       `Could not check ${String(unreachable.length)} sprite objects against production (for example ${unreachable[0]?.key ?? ""}); check the network & retry.`,
     );
   }
-  return { kind: "checked", pending, staged };
+  return { kind: "checked", pending, staged: stagedFiles.length, unstaged };
 }
 
-/** Parses `<baseline-ref> [--skip-sprites] [--sprites=<dir>]`; `undefined` when invalid. */
+/** Parses `<baseline-ref> [--skip-sprites] [--sprites=<dir>] [--out=<file>]`; `undefined` when invalid. */
 export function parseArgs(argv: readonly string[], root: string): ReportOptions | undefined {
   let baseRef: string | undefined;
+  let out: string | undefined;
   let skipSprites = false;
   let spritesDirectory = path.join(root, "pipeline", "output", "sprites");
   for (const arg of argv) {
     if (arg === "--") continue;
     if (arg === "--skip-sprites") {
       skipSprites = true;
+    } else if (arg.startsWith("--out=")) {
+      out = path.resolve(arg.slice("--out=".length));
     } else if (arg.startsWith("--sprites=")) {
       spritesDirectory = path.resolve(arg.slice("--sprites=".length));
     } else if (arg.startsWith("-") || baseRef !== undefined) {
@@ -463,10 +586,14 @@ export function parseArgs(argv: readonly string[], root: string): ReportOptions 
       baseRef = arg;
     }
   }
-  return baseRef === undefined ? undefined : { baseRef, skipSprites, spritesDirectory };
+  if (baseRef === undefined) return undefined;
+  return out === undefined
+    ? { baseRef, skipSprites, spritesDirectory }
+    : { baseRef, out, skipSprites, spritesDirectory };
 }
 
-const USAGE = "Usage: pnpm run game-update:report -- <baseline-ref> [--skip-sprites]";
+const USAGE =
+  "Usage: pnpm run game-update:report -- <baseline-ref> [--skip-sprites] [--sprites=<dir>] [--out=<file>]";
 
 async function main(): Promise<number> {
   const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
@@ -477,10 +604,16 @@ async function main(): Promise<number> {
   }
   const base = readAtRef(root, options.baseRef);
   const head = JSON.parse(readFileSync(path.join(root, TRACKER_DATA_PATH), "utf8")) as unknown;
+  const comparison = compareData(base, head);
   const sprites: SpriteCheck = options.skipSprites
     ? { kind: "skipped" }
-    : await checkSprites(options.spritesDirectory);
-  process.stdout.write(renderReport(compareData(base, head), sprites, options.baseRef));
+    : await checkSprites(options.spritesDirectory, comparison);
+  const report = renderReport(comparison, sprites, options.baseRef);
+  if (options.out === undefined) {
+    process.stdout.write(report);
+  } else {
+    writeFileSync(options.out, report, "utf8");
+  }
   if (!reportPasses(sprites)) {
     console.error("Sprites are pending upload; the report fails until the dry run lists nothing.");
     return 1;

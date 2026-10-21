@@ -121,6 +121,9 @@ const defaultIo: R2UploadIo = {
   retryDelay: (attempt) => sleep(attempt * 1000),
 };
 
+/** How long one HEAD check may take before it counts as unreachable. */
+const CHECK_TIMEOUT_MS = 30_000;
+
 /**
  * How a local file compares with the public object: `current` (nothing to upload), `changed` (the
  * object exists but its ETag differs), `missing` (no such object), or `unreachable` (the check
@@ -138,17 +141,19 @@ async function remoteStatus(
   try {
     // A unique query string misses the edge cache, which can hold a superseded copy of the bare URL
     // (one uploaded with the year-long immutable policy stays stale there long after a re-upload).
-    response = await io.fetch(`${url}?check=${randomUUID()}`, { method: "HEAD" });
+    response = await io.fetch(`${url}?check=${randomUUID()}`, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+    });
   } catch {
     return "unreachable";
   }
-  if (skipMode === "exists") {
-    return response.status === 200 ? "current" : "missing";
-  }
-  const etag = response.ok ? response.headers.get("etag")?.replaceAll('"', "") : undefined;
-  if (!etag) {
-    return "missing";
-  }
+  // Only a 404 proves the object is absent; a 403, 429, or 5xx says nothing about it.
+  if (response.status === 404) return "missing";
+  if (!response.ok) return "unreachable";
+  if (skipMode === "exists") return "current";
+  const etag = response.headers.get("etag")?.replaceAll('"', "");
+  if (!etag) return "unreachable";
   const md5 = createHash("md5")
     .update(await readFile(file))
     .digest("hex");
@@ -163,6 +168,24 @@ async function isCurrent(
   io: R2UploadIo,
 ): Promise<boolean> {
   return (await remoteStatus(url, file, skipMode, io)) === "current";
+}
+
+/** Runs `task` on each of `files`, at most `parallel` at a time. */
+async function forEachPooled(
+  files: readonly string[],
+  parallel: number,
+  task: (file: string) => Promise<void>,
+): Promise<void> {
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    while (next < files.length) {
+      const file = files[next];
+      next += 1;
+      // oxlint-disable-next-line eslint/no-await-in-loop -- each worker handles one file at a time; the pool bounds concurrency
+      await task(file);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(parallel, files.length) }, worker));
 }
 
 /** A file whose public object is absent, differs, or could not be checked. */
@@ -184,23 +207,16 @@ export async function findPendingUploads(
   const allFiles = await listFiles(tree.dir);
   const files = allFiles.filter((file) => file.endsWith(tree.extension));
   const pending: PendingUpload[] = [];
-  let next = 0;
-  const worker = async (): Promise<void> => {
-    while (next < files.length) {
-      const file = files[next];
-      next += 1;
-      const key = `${tree.keyPrefix}${file}`;
-      // oxlint-disable-next-line eslint/no-await-in-loop -- each worker checks one file at a time; the pool bounds concurrency
-      const status = await remoteStatus(
-        `${options.origin}/${key}`,
-        path.join(tree.dir, file),
-        tree.skipMode,
-        io,
-      );
-      if (status !== "current") pending.push({ key, status });
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(options.parallel, files.length) }, worker));
+  await forEachPooled(files, options.parallel, async (file) => {
+    const key = `${tree.keyPrefix}${file}`;
+    const status = await remoteStatus(
+      `${options.origin}/${key}`,
+      path.join(tree.dir, file),
+      tree.skipMode,
+      io,
+    );
+    if (status !== "current") pending.push({ key, status });
+  });
   return pending.toSorted((a, b) => {
     if (a.key < b.key) return -1;
     return a.key > b.key ? 1 : 0;
@@ -268,19 +284,10 @@ export async function r2UploadTree(
 ): Promise<boolean> {
   const allFiles = await listFiles(tree.dir);
   const files = allFiles.filter((file) => file.endsWith(tree.extension));
-  let next = 0;
   let failed = 0;
-  const worker = async (): Promise<void> => {
-    while (next < files.length) {
-      const file = files[next];
-      next += 1;
-      // oxlint-disable-next-line eslint/no-await-in-loop -- each worker uploads one file at a time; the pool bounds concurrency
-      if (!(await uploadOne(file, tree, options, io))) {
-        failed += 1;
-      }
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(options.parallel, files.length) }, worker));
+  await forEachPooled(files, options.parallel, async (file) => {
+    if (!(await uploadOne(file, tree, options, io))) failed += 1;
+  });
   if (failed > 0) {
     io.logError("Some uploads failed; rerun to retry them.");
     return false;

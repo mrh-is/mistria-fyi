@@ -1,7 +1,7 @@
 import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { once } from "node:events";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -50,7 +50,7 @@ function data(overrides: Record<string, unknown> = {}): Record<string, unknown> 
     questOrder: {},
     quests: { main: { first: { name: "a" } } },
     recipes: { carp_stew: {} },
-    skills: { farming: {} },
+    skills: { farming: { perkTiers: [{ green_thumb: {} }, {}, {}, {}, {}] } },
     stores: { general: {} },
     townRanks: [],
     treasureChestTiers: {},
@@ -141,6 +141,30 @@ describe("compareData", () => {
     expect(row(comparison, "animal variants").headCount).toBe(1);
     expect(row(comparison, "quests (type/ID)").headCount).toBe(1);
     expect(row(comparison, "mines biomes").headCount).toBe(1);
+    expect(row(comparison, "museum set members")).toMatchObject({
+      baseCount: 1,
+      headCount: 0,
+      removed: ["art/paintings/bass"],
+    });
+  });
+
+  it("inventories perks by skill & keys inside the domain containers", () => {
+    const head = data({
+      mines: { biomes: [], extra: {}, spells: {} },
+      skills: { farming: { perkTiers: [{ green_thumb: {} }, { deep_roots: {} }, {}, {}, {}] } },
+    });
+
+    const comparison = compareData(data(), head);
+
+    expect(row(comparison, "perks")).toMatchObject({ added: ["farming/deep_roots"], headCount: 2 });
+    expect(comparison.containers.find(({ name }) => name === "mines")).toEqual({
+      added: ["extra"],
+      name: "mines",
+      removed: [],
+    });
+    expect(renderReport(comparison, { kind: "skipped" }, "HEAD")).toContain(
+      "- `mines` keys added: `extra`",
+    );
   });
 
   it("reports top-level keys & entry fields that appeared or disappeared", () => {
@@ -169,6 +193,21 @@ describe("compareData", () => {
       /almanac.fish.items/,
     );
     expect(() => compareData([], data())).toThrow(/baseline/);
+  });
+
+  it("throws on a missing ID or a repeated one instead of coercing or overwriting", () => {
+    expect(() =>
+      compareData(data(), data({ mines: { biomes: [{ floors: [1, 5] }], spells: {} } })),
+    ).toThrow(/mines.biomes\[\].id/);
+    expect(() =>
+      compareData(data(), data({ almanac: { fish: { items: [{ itemIds: [7] }] } } })),
+    ).toThrow(/almanac.fish item IDs/);
+    expect(() =>
+      compareData(
+        data(),
+        data({ almanac: { fish: { items: [{ itemIds: ["bass"] }, { itemIds: ["bass"] }] } } }),
+      ),
+    ).toThrow(/bass repeats/);
   });
 });
 
@@ -209,6 +248,7 @@ describe("renderReport", () => {
         { key: "sprites/villagers/adeline.webp", status: "missing" },
       ],
       staged: 10,
+      unstaged: [],
     };
 
     const markdown = renderReport(comparison, pending, "HEAD");
@@ -218,20 +258,32 @@ describe("renderReport", () => {
     expect(markdown).toContain("| villagers | 1 | 0 |");
     expect(markdown).toContain("`sprites/items/old.webp`");
     expect(
-      renderReport(comparison, { kind: "checked", pending: [], staged: 10 }, "HEAD"),
+      renderReport(comparison, { kind: "checked", pending: [], staged: 10, unstaged: [] }, "HEAD"),
     ).toContain("production has all 10 staged sprites");
+  });
+
+  it("warns about added items & villagers with no staged sprite", () => {
+    const markdown = renderReport(
+      compareData(data(), data()),
+      { kind: "checked", pending: [], staged: 1, unstaged: ["items/trout.webp"] },
+      "HEAD",
+    );
+
+    expect(markdown).toContain("Warning: 1 added sprite IDs have no staged sprite");
+    expect(markdown).toContain("`items/trout.webp`");
   });
 });
 
 describe("reportPasses", () => {
   it("fails only while the sprite dry run lists pending objects", () => {
     expect(reportPasses({ kind: "skipped" })).toBe(true);
-    expect(reportPasses({ kind: "checked", pending: [], staged: 3 })).toBe(true);
+    expect(reportPasses({ kind: "checked", pending: [], staged: 3, unstaged: [] })).toBe(true);
     expect(
       reportPasses({
         kind: "checked",
         pending: [{ key: "sprites/items/a.webp", status: "missing" }],
         staged: 3,
+        unstaged: [],
       }),
     ).toBe(false);
   });
@@ -247,6 +299,8 @@ describe("parseArgs", () => {
     expect(parseArgs(["HEAD", "--sprites=out/sprites"], "/repo")?.spritesDirectory).toBe(
       path.resolve("out/sprites"),
     );
+    expect(parseArgs(["HEAD", "--out=report.md"], "/repo")?.out).toBe(path.resolve("report.md"));
+    expect(parseArgs(["HEAD"], "/repo")?.out).toBeUndefined();
   });
 
   it("rejects a missing ref, a second ref, & an unknown flag", () => {
@@ -311,6 +365,15 @@ describe("command line", () => {
     expect(result.stdout).toContain("| items | 2 | 2 | 1 | 1 |");
   });
 
+  it("writes the report as UTF-8 to --out instead of standard output", async () => {
+    const out = path.join(repository, "update-report.md");
+    const result = await run(["base", "--skip-sprites", `--out=${out}`]);
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toBe("");
+    expect(readFileSync(out, "utf8")).toContain("## Game update review report");
+  });
+
   it("exits 2 with usage for a missing ref, & 1 for an unknown ref", async () => {
     const noRef = await run([]);
     const unknownRef = await run(["no-such-ref", "--skip-sprites"]);
@@ -324,6 +387,23 @@ describe("command line", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("No staged sprites");
+
+    const empty = path.join(repository, "empty");
+    mkdirSync(empty);
+    const emptyResult = await run(["base", `--sprites=${empty}`]);
+    expect(emptyResult.status).toBe(1);
+    expect(emptyResult.stderr).toContain("No staged sprites");
+  });
+
+  it("fails on a staged file the upload would refuse", async () => {
+    const sprites = path.join(repository, "sprites");
+    mkdirSync(path.join(sprites, "items"), { recursive: true });
+    writeFileSync(path.join(sprites, "items", "trout.png"), "raw");
+
+    const result = await run(["base", `--sprites=${sprites}`]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("non-.webp");
   });
 
   it("prints the report but fails while production lacks a staged sprite, & passes once it has it", async () => {

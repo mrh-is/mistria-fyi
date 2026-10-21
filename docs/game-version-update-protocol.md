@@ -133,6 +133,9 @@ would replace an existing sprite, its pixels changed: bump `spriteGeneration` in
 Wrangler needs a Cloudflare login on the uploading machine; an agent can’t complete the interactive
 login, so ask the maintainer to run `pnpm exec wrangler login` first.
 
+After the upload, rerun the review report (see [Classify changes](#classify-changes)) as the gate:
+it exits 0 only once production has every staged sprite.
+
 ## Classify changes
 
 Start from the structural diff of the game files:
@@ -146,20 +149,27 @@ Generate the mechanical comparison with the report script, naming the baseline c
 release’s data commit, or `origin/main` before the candidate is committed):
 
 ```sh
-pnpm run game-update:report -- <baseline-ref> > update-report.md
+pnpm run game-update:report -- <baseline-ref> --out=update-report.md
 ```
 
 It prints, as markdown, the ID inventory by domain (additions & removals, with the almanac entries
 by canonical ID & by member so regroupings show), the contract-key changes (top-level keys & each
-domain’s entry fields), & the sprite deltas from the upload dry run. It exits 1 while that dry run
-still lists pending objects, so upload the sprites first; `--skip-sprites` omits the check when no
-sprites are staged, & the report then says production was not checked. It does not infer renames.
-`DOMAINS` in `scripts/game-update-report.ts` is the domain list, & its `COVERAGE` map is typed
-against the tracker-data contract, so a new top-level key must be classified there.
+domain’s entry fields, & keys inside `mines`, `mount`, `pets`, & `quests`), & the sprite deltas from
+the upload dry run. A field counts as added only when no baseline entry had it, so one that spreads
+to more entries does not show. `--out` writes UTF-8 without pnpm’s banner, unlike a shell redirect.
 
-Then inspect what the report cannot: value-only changes, relationships and dates, perks, progression
-ranges, visibility conditions, & acquisition sources, along with the review of each addition,
-removal, & regrouping it lists.
+The first run comes before the sprite upload, so it exits 1 and its sprite section lists what the
+upload will send, new & changed; post that run’s report, since it records the deltas. After
+[uploading the sprites](#upload-sprites), rerun it as the gate, which exits 0 only when the dry run
+lists nothing. It fails when the staged directory is missing, empty, or holds anything but `.webp`
+files, & warns when an added item or villager has no staged sprite. `--skip-sprites` omits the check
+when no sprites are staged, & the report then says production was not checked. It does not infer
+renames. `DOMAINS` in `scripts/game-update-report.ts` is the domain list, & its `COVERAGE` map is
+typed against the tracker-data contract, so a new top-level key must be classified there.
+
+Then inspect what the report cannot: value-only changes, relationships and dates, perk tiers,
+progression ranges, visibility conditions, & acquisition sources, along with the review of each
+addition, removal, & regrouping it lists.
 
 Classify every compatibility-relevant difference:
 

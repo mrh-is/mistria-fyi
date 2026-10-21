@@ -164,6 +164,42 @@ describe("findPendingUploads", () => {
     ]);
   });
 
+  it("reports a non-404 failure or a missing ETag as unreachable, never as missing", async () => {
+    const dir = tree({ "a.webp": "a", "b.webp": "b", "c.webp": "c" });
+    const io = fakeIo({
+      "https://assets.example/sprites/a.webp": new Response(null, { status: 503 }),
+      "https://assets.example/sprites/b.webp": new Response(null, { status: 403 }),
+      "https://assets.example/sprites/c.webp": new Response(null, { status: 200 }),
+    });
+
+    await expect(findPendingUploads(sprites(dir), options, io)).resolves.toEqual([
+      { key: "sprites/a.webp", status: "unreachable" },
+      { key: "sprites/b.webp", status: "unreachable" },
+      { key: "sprites/c.webp", status: "unreachable" },
+    ]);
+    await expect(
+      findPendingUploads({ ...sprites(dir), skipMode: "exists" }, options, io),
+    ).resolves.toEqual([
+      { key: "sprites/a.webp", status: "unreachable" },
+      { key: "sprites/b.webp", status: "unreachable" },
+    ]);
+  });
+
+  it("bounds each check with a timeout signal", async () => {
+    const dir = tree({ "a.webp": "a" });
+    const io = fakeIo();
+    const signals: (AbortSignal | null | undefined)[] = [];
+    const { fetch } = io;
+    io.fetch = (input, init) => {
+      signals.push(init?.signal);
+      return fetch(input, init);
+    };
+
+    await findPendingUploads(sprites(dir), options, io);
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toBeInstanceOf(AbortSignal);
+  });
+
   it("is empty when every object is current, & in exists mode when each exists", async () => {
     const dir = tree({ "a.webp": "a" });
     const io = fakeIo({
