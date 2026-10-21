@@ -54,6 +54,11 @@ not here.
   inside a harness-created worktree. Setup links `.worktreeinclude` entries (game assets, env
   files), installs with the frozen lockfile, & runs `prepare`. Read
   [agent-reference.md](docs/agent-reference.md#worktree-mechanics) first.
+- Standard setup in an isolated harness-created worktree is preauthorized: run
+  `node scripts/setup-worktree.ts` when dependencies or `.worktreeinclude` links are absent,
+  including after a missing-dependency preflight failure. Use the configured global pnpm store &
+  worktree-local dependencies; request any required sandbox access. If setup itself fails, follow
+  “Tooling failures” below.
 - A fresh, platform-managed ephemeral container with a session-isolated assigned branch works
   directly in its checkout. Do not create a nested worktree or replace that branch.
 - Start from the refreshed remote tip of the intended branch. Never reset existing work, switch a
@@ -160,9 +165,9 @@ follow the stop, report, & diagnose procedure below; do not retry with a workaro
 
 When a local tooling or environment issue blocks the task (a missing tool, wrong runtime version,
 broken or unconfigured install, authentication failure, or any other local setup problem), **stop on
-the first occurrence and report it**. Wrangler is the standard example: if `pnpm exec wrangler` is
-missing, unconfigured, or not logged in, report that; do not install it, run `wrangler login`, or
-substitute another upload path.
+the first occurrence and report it**, except for the preauthorized standard worktree setup above.
+Wrangler is the standard example: if `pnpm exec wrangler` is missing, unconfigured, or not logged
+in, report that; do not install it, run `wrangler login`, or substitute another upload path.
 
 - **Report immediately,** before any other action: the failing command or operation, the relevant
   error (redact tokens & other credentials), & the work it blocks.

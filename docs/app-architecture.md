@@ -300,9 +300,25 @@ usable anywhere, though unlocked through mine progression.
   responses emitted before `handle`, such as trailing-slash normalization redirects
   (`HEAD /en/everything/` returns `308`), do not receive these headers. Pages never applies
   `_headers` to Function responses.
-- **Static files** — the build writes `_headers` (gitignored) from the same directives, and
-  `@sveltejs/adapter-cloudflare` copies it into `build/` with its own cache rules. Never commit or
-  hand-edit it.
+- **Static files** — `withHeadersFile` (`src/lib/build/headers-file.ts`) wraps the adapter and
+  writes `_headers` (gitignored) from the same directives just before `@sveltejs/adapter-cloudflare`
+  copies it into `build/` with its own cache rules. Never commit or hand-edit it.
+
+`app.html`'s two inline scripts are allowed by SHA-256 hash in every policy, not by nonce: SvelteKit
+refuses to prerender a template containing `%sveltekit.nonce%`. Editing either script changes its
+hash, which the build recomputes and `security-headers.test.ts` pins.
+
+### Prerendered pages
+
+A prerendered page (`/data` in every locale, listed in `src/lib/i18n/prerender-entries.ts`) is a
+static file, so its CSP comes from `_headers`, not SvelteKit. SvelteKit also writes a
+`<meta http-equiv>` policy into the page, hashing its inline start script; a browser enforces both
+policies, so the `/*` header (with no hash for that script) would block hydration. Each prerendered
+route therefore gets its own `_headers` rule (`/:locale/data`) that detaches the inherited CSP
+(`! Content-Security-Policy`) and sets the same directives plus that route's start-script hashes.
+The header keeps `frame-ancestors`, which a `<meta>` policy can't carry. A prerendered page can't
+read its query on the server, so `?section=` is handled in the browser. See
+[the decision record](decisions/2026-10-20-prerender-csp.md).
 
 `security-headers.test.ts` pins the full production policy, so any change to it shows up in review.
 The asset origin lives in `src/lib/asset-origin.ts`; `asset-origin.test.ts` holds the copies that
@@ -321,8 +337,8 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   prefix (`/zh-hans/…`) redirects permanently (308) to the canonical casing. Both live in
   `bareLocaleRedirect` in `src/hooks.server.ts`.
 - **Route slugs:** `almanac`, `animals`, `cosmetics`, `mines`, `museum`, `quests`, `recipes`,
-  `renown`, `skills`, `villagers`, `everything`, `about`, `data`, `privacy`, & `settings`. A rename
-  needs a redirect from the old slug.
+  `renown`, `skills`, `villagers`, `everything`, `about`, `data`, & `privacy`. A rename needs a
+  redirect from the old slug.
 - **Query & fragment links:** `/data?section=import|transfer` (the welcome card) and
   `/villagers#villager-<id>` (search results, keyed by game villager IDs).
 - **Unlocalized paths:** `/api/feedback`, `/sitemap.xml`, & `/licenses.txt` (the build-generated
@@ -344,6 +360,10 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
 
 ### Not promised
 
+- The retired beta route `/settings` returns the normal not-found page; use
+  `/data?section=import|transfer` for data-management links. Its removal without a redirect was
+  explicitly approved in #156; see
+  [the decision record](decisions/2026-10-20-retire-settings-route.md).
 - **Cache names** (`cache-<version>`, `sprites-v1`, `offline-locales-v1`, `client-versions-v1`): the
   worker's `activate` deletes every cache it doesn't recognize (once no open page needs it), so a
   rename only costs a re-download, forgets which locales a player kept offline, or keeps older
