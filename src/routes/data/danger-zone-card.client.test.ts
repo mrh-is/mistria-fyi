@@ -3,20 +3,15 @@ import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 
 import DangerZoneCard from "./danger-zone-card.svelte";
 
-// Client files share one store per worker, so an earlier file can leave preferences changed. Each test
-// starts from defaults & enables spoilers explicitly rather than toggling an unknown value (#174).
+// Client files share one store per worker, so each test starts from defaults (#174).
 beforeEach(async () => {
   userState.resetAll();
   await tick();
 });
-
-function enableSpoilers() {
-  if (!userState.state.showSpoilers) userState.toggleShowSpoilers();
-  expect(userState.state.showSpoilers).toBe(true);
-}
 
 afterEach(async () => {
   cleanup();
