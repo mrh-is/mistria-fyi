@@ -241,7 +241,12 @@ export const StoryQuestSchema = v.strictObject({
   ...TrackerEntitySchema.entries,
   heartLevelChanges: v.optional(v.array(HeartLevelChangeSchema)),
 });
-export const ItemSchema = v.strictObject({ ...SourcedEntitySchema.entries, category: v.string() });
+export const ItemSchema = v.strictObject({
+  ...SourcedEntitySchema.entries,
+  category: v.string(),
+  /** Fixed grants from native set_unlock tags; absent for runtime-target scrolls. */
+  recipeUnlocks: v.optional(v.array(id("RecipeId"))),
+});
 export const MinesBiomeSchema = v.strictObject({
   floors: LevelRangeSchema,
   id: id("MinesBiomeId"),

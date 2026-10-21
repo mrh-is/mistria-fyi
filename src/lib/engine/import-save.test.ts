@@ -117,6 +117,68 @@ describe("starting unlocks", () => {
 });
 
 describe("extractSaveProgress", () => {
+  it("credits the Engagement Ring recipe from its acquired scroll without a recipe unlock", () => {
+    const { completed, warnings } = extractSaveProgress({
+      player: { items_acquired: ["engagement_ring_recipe_scroll"], recipe_unlocks: [] },
+    });
+    expect(completed.almanacRecipes).toContain("engagement_ring");
+    expect(warnings).toEqual([]);
+  });
+
+  it("credits every fixed scroll's native grants, including whole recipe bundles", () => {
+    const scrolls = Object.entries(trackerData.items).filter(([, item]) => item.recipeUnlocks);
+    expect(scrolls.length).toBeGreaterThan(0);
+    for (const [scrollId, item] of scrolls) {
+      const { completed } = extractSaveProgress({ player: { items_acquired: [scrollId] } });
+      expect(completed.almanacRecipes).toEqual(
+        new Set([...getDefaultRecipeIds(), ...(item.recipeUnlocks ?? [])]),
+      );
+    }
+  });
+
+  it("does not infer learning from an output item or generic runtime-target scroll", () => {
+    const { completed } = extractSaveProgress({
+      player: { items_acquired: ["engagement_ring", "recipe_scroll"] },
+    });
+    expect(completed.almanacRecipes).toEqual(getDefaultRecipeIds());
+  });
+
+  it("keeps partial scroll grants while marking malformed acquisition evidence unknown", () => {
+    const extraction = extractSave({
+      player: { items_acquired: ["engagement_ring_recipe_scroll", 7], recipe_unlocks: [] },
+    });
+    const field = extraction.fields.almanacRecipes;
+    expect(field.value).toContain("engagement_ring");
+    expect(field.completeness).toBe("unknown");
+    expect(field.diagnostics).toEqual([
+      { code: "unreadable-entries", count: 1, path: "player.items_acquired" },
+    ]);
+    expect(
+      extraction.diagnostics.filter((entry) => entry.code === "unreadable-entries"),
+    ).toHaveLength(1);
+  });
+
+  it("requires both acquisition & unlock lists for complete learned-recipe evidence", () => {
+    const missing = extractSave({ player: { recipe_unlocks: [] } });
+    expect(missing.fields.almanacRecipes.completeness).toBe("unknown");
+    expect(missing.fields.almanacRecipes.diagnostics).toContainEqual({
+      code: "absent",
+      path: "player.items_acquired",
+    });
+    const complete = extractSave({ player: { items_acquired: [], recipe_unlocks: [] } });
+    expect(complete.fields.almanacRecipes.completeness).toBe("complete");
+  });
+
+  it("does not claim complete recipe evidence when an acquired item ID is unknown", () => {
+    const extraction = extractSave({
+      player: { items_acquired: ["unknown_scroll_id"], recipe_unlocks: [] },
+    });
+    expect(extraction.fields.almanacRecipes.completeness).toBe("unknown");
+    expect(extraction.fields.almanacRecipes.diagnostics).toEqual([
+      { code: "unknown-id", id: "unknown_scroll_id", path: "player.items_acquired" },
+    ]);
+  });
+
   it("imports tracked progress from a preceding 1.0.2 save shape", () => {
     const { completed, warnings } = extractSaveProgress({
       player: { items_acquired: ["animated_waterfall_v2"] },

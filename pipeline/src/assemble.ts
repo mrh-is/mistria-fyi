@@ -55,6 +55,7 @@ import { extractMuseum } from "./extract/museum.js";
 import { extractPetCosmetics, extractPetSkins } from "./extract/pets.js";
 import { extractQuestChains } from "./extract/quest-chains.js";
 import { extractQuests } from "./extract/quests.js";
+import { extractRecipeScrollUnlocks } from "./extract/recipe-scrolls.js";
 import { deriveRecipeLocaleNames, extractRecipes } from "./extract/recipes.js";
 import { extractTownRanks } from "./extract/renown.js";
 import { extractSkills } from "./extract/skills.js";
@@ -301,8 +302,10 @@ export function assembleTrackerData(
 
   // Every kind below promises a non-empty `SourceTuple`, so finalizing throws on the first entity
   // that has no sources rather than emitting an empty list under that type.
+  const scrollUnlocks = extractRecipeScrollUnlocks(fiddle, recipeIdByItemId);
   const items: Record<ItemId, Item> = recordMap(itemMetadata, ({ category }, itemId) => ({
     category,
+    ...(scrollUnlocks[itemId as ItemId] ? { recipeUnlocks: scrollUnlocks[itemId as ItemId] } : {}),
     sources: requireSources(`items.${itemId}`, itemSources.get(itemId as ItemId)),
   }));
   const cosmetics = finalizeSources("cosmetics", cosmeticDrafts);

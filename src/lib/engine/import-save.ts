@@ -269,14 +269,22 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
 
   // ── Almanac: items_acquired only, as the game's almanac counts it ──
   // items_sold holds a zero for every item, and recipes_created can name items never acquired.
-  const itemsAcquired = player.stringList("items_acquired", ["almanac"]);
+  const itemsAcquired = player.stringList("items_acquired", ["almanac", "almanacRecipes"]);
   let almanac: Set<ItemId> | undefined;
   if (itemsAcquired) {
     almanac = new Set();
     for (const id of itemsAcquired) {
       const canonical = trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId);
-      if (canonical) almanac.add(canonical);
-      else classify(id, "player.items_acquired", ["almanac"], isKnownItemId);
+      if (canonical) {
+        almanac.add(canonical);
+      } else if (isKnownItemId(id)) {
+        collector.untracked(id, ["almanac"]);
+      } else {
+        collector.report({ code: "unknown-id", id, path: "player.items_acquired" }, [
+          "almanac",
+          "almanacRecipes",
+        ]);
+      }
     }
   }
 
@@ -299,6 +307,15 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
       else collector.untracked(id, ["almanacRecipes"]);
     } else {
       classify(id, "player.recipe_unlocks", ["almanacRecipes"], isKnownItemId);
+    }
+  }
+
+  // Fixed scrolls can grant recipes absent from recipe_unlocks (notably the Engagement Ring).
+  // Their pipeline mapping follows set_unlock tags; generic scrolls have a runtime target instead.
+  for (const id of itemsAcquired ?? []) {
+    if (!Object.hasOwn(trackerData.items, id)) continue;
+    for (const recipeId of trackerData.items[id as ItemId].recipeUnlocks ?? []) {
+      almanacRecipes.add(recipeId);
     }
   }
 
