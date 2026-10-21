@@ -3,7 +3,6 @@ import type { AlmanacEntry, ItemId, TrackerData } from "#lib/types/tracker-data.
 
 export interface TrackerIndex {
   almanacCanonicalIds: ItemId[];
-  almanacDateCount: number;
   almanacEntries: AlmanacEntry[];
   almanacEntryByCanonicalId: ReadonlyMap<ItemId, AlmanacEntry>;
   categorySourceTypes: Readonly<Record<string, readonly SourceType[]>>;
@@ -95,9 +94,6 @@ export function buildTrackerIndex(trackerData: TrackerData): TrackerIndex {
         sources.map(({ type }) => type),
       ),
     ),
-    dates: uniqueSourceTypes(
-      Object.values(trackerData.dates).flatMap(({ sources }) => sources.map(({ type }) => type)),
-    ),
     mines: uniqueSourceTypes(
       Object.values(trackerData.mines.spells).flatMap(({ sources }) =>
         sources.map(({ type }) => type),
@@ -140,7 +136,6 @@ export function buildTrackerIndex(trackerData: TrackerData): TrackerIndex {
 
   return {
     almanacCanonicalIds,
-    almanacDateCount: Object.keys(trackerData.dates).length,
     almanacEntries,
     almanacEntryByCanonicalId,
     categorySourceTypes,

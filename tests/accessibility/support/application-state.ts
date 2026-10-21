@@ -37,7 +37,6 @@ export function createStoredState(
     animals: {},
     childChoice: "undeclared",
     cosmetics: [],
-    dates: [],
     hasUpperFloor: false,
     heartLevels: {},
     mineFloor: 0,

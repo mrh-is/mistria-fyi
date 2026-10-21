@@ -212,24 +212,18 @@ describe("stampVillagerVisibility", () => {
 });
 
 describe("extractCategoryVisibility", () => {
-  const mockVillagers = {
-    celine: { birthday: { day: 1, season: "spring" as const }, dateable: true, name: "Celine" },
-    holt: { birthday: { day: 2, season: "summer" as const }, name: "Holt" },
-    reina: { birthday: { day: 3, season: "fall" as const }, dateable: true, name: "Reina" },
-  } as unknown as TrackerData["villagers"];
-
   it("gates mission behind knowing Stillwell", () => {
-    const result = extractCategoryVisibility(mockVillagers);
+    const result = extractCategoryVisibility();
     expect(result.mission).toEqual({ type: "villagerKnown", villagerId: "stillwell" });
   });
 
   it("gates cooking behind knowing Taliferro", () => {
-    const result = extractCategoryVisibility(mockVillagers);
+    const result = extractCategoryVisibility();
     expect(result.cooking).toEqual({ type: "villagerKnown", villagerId: "taliferro" });
   });
 
   it("leaves story, heart, and fetch always visible", () => {
-    const result = extractCategoryVisibility(mockVillagers);
+    const result = extractCategoryVisibility();
     expect(result.story).toEqual({ type: "always" });
     expect(result.heart).toEqual({ type: "always" });
     expect(result.fetch).toEqual({ type: "always" });
@@ -237,27 +231,12 @@ describe("extractCategoryVisibility", () => {
 
   it("gates crown behind Iron Star (renown level 40), per Ari.gml's crown cooldown", () => {
     expect(CROWN_QUEST_RENOWN_LEVEL).toBe(40);
-    const result = extractCategoryVisibility(mockVillagers);
+    const result = extractCategoryVisibility();
     expect(result.crown).toEqual({ type: "renownLevel", level: 40 });
   });
 
-  it("gates dates behind OR of dateable Villagers at heart level 8", () => {
-    const result = extractCategoryVisibility(mockVillagers);
-    expect(result.dates).toEqual({
-      type: "or",
-      conditions: [
-        { type: "heartLevel", level: 8, villagerId: "celine" },
-        { type: "heartLevel", level: 8, villagerId: "reina" },
-      ],
-    });
-  });
-
-  it("sets dates to always when no dateable Villagers exist", () => {
-    const noDateable = {
-      holt: { birthday: { day: 2, season: "summer" as const }, name: "Holt" },
-    } as unknown as TrackerData["villagers"];
-    const result = extractCategoryVisibility(noDateable);
-    expect(result.dates).toEqual({ type: "always" });
+  it("omits the removed Dates checklist gate", () => {
+    expect(extractCategoryVisibility()).not.toHaveProperty("dates");
   });
 });
 

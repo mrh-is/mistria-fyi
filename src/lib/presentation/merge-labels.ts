@@ -24,7 +24,6 @@ export const MERGE_COUNT_LABELS = {
   animals: { format: (count: number) => m.merge_label_animals({ count }) },
   childChoice: { boolean: true, format: () => m.merge_label_child_choice() },
   cosmetics: { format: (count: number) => m.merge_label_cosmetics({ count }) },
-  dates: { format: (count: number) => m.merge_label_dates({ count }) },
   hasUpperFloor: { boolean: true, format: () => m.merge_label_has_upper_floor() },
   heartLevels: { format: (count: number) => m.merge_label_heart_levels({ count }) },
   mineFloor: { format: (count: number) => m.merge_label_mine_floor({ count }) },

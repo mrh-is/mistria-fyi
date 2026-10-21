@@ -53,7 +53,6 @@ const MIGRATED_HISTORY = {
       "animals/chicken/red",
       "childChoice",
       "cosmetics/back_gear_ancient_witch_broom",
-      "dates/inn_meal",
       "hasUpperFloor",
       "heartLevels/balor",
       "mineFloor",
@@ -84,12 +83,12 @@ describe("persisted format contract", () => {
     expect(THEME_STORAGE_KEY).toBe("mistria-fyi:theme");
   });
 
-  it("restores the launch backup and writes its facts back unchanged, migrated", () => {
+  it("restores launch progress while dropping the retired Dates checklist", () => {
     expect(userState.restoreBackup(JSON.stringify(GOLDEN_BACKUP))).toEqual({ ok: true });
 
     // Every animal gets an entry on load; animals added by later game data appear as empty lists.
     // Fields added after launch are optional on read and written empty.
-    const { animalCosmetics, animals, ...progress } = GOLDEN_BACKUP.progress;
+    const { animalCosmetics, animals, dates: _dates, ...progress } = GOLDEN_BACKUP.progress;
     expect(JSON.parse(userState.exportBackup())).toEqual({
       ...GOLDEN_BACKUP,
       lastImport: null,

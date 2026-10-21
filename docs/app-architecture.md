@@ -58,11 +58,12 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
 
 `engine/projections/almanac.ts` supplies the almanac page, progress counters, and search with one
 row policy. It returns section membership, canonical rows, applicability, spoiler and filter flags,
-and progress totals (including dates). Unobtainable entries are hidden by default; the almanac's
-temporary filter can reveal them without changing header totals. Page callers pass user-selected
-availability windows, name/source filters, and completed-row retention. Search explicitly uses
-default windows, includes out-of-window results for ranking, hides spoilers, and deduplicates rows
-that belong to several sections. Section progress still counts each in-game section membership.
+and progress totals. Date Inspiration is counted only through its canonical Almanac entries.
+Unobtainable entries are hidden by default; the almanac's temporary filter can reveal them without
+changing header totals. Page callers pass user-selected availability windows, name/source filters,
+and completed-row retention. Search explicitly uses default windows, includes out-of-window results
+for ranking, hides spoilers, and deduplicates rows that belong to several sections. Section progress
+still counts each in-game section membership.
 
 ### `src/lib/stores/user-state.svelte.ts`
 
@@ -85,7 +86,7 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `3`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `4`.
   - `lastImport`: the last manual save import's timestamp, identity (filename number plus creation
     version), & player/farm display names, or `null`. Version 1 migrates to `null` without inventing
     history. Missing or malformed game metadata remains unknown and never blocks importing progress.
@@ -128,9 +129,16 @@ Outcomes by stored version:
   `mistria-fyi:progress-quarantine`, and persistence is blocked until an explicit replace (reset,
   restore, or save import). The player can download the copy from the Backup & Restore card.
 
-An ID this build's tracker data doesn't know is never dropped: the store keeps it out of
-`ProgressState`, so counts ignore it, and writes it back with the rest of the blob. A game update
-that renames an ID therefore loses nothing; a migration can map the old ID once it's known.
+An ID this build's tracker data doesn't know is retained: the store keeps it out of `ProgressState`,
+so counts ignore it, and writes it back with the rest of the blob. A game update that renames an ID
+therefore loses nothing; a migration can map the old ID once it's known.
+
+Version 4 deliberately drops the obsolete `progress.dates` checklist and its provenance &
+resolutions, without mapping it into Almanac progress. It duplicated Date Inspiration, whose
+canonical entries are already tracked by save import. Existing Almanac progress is preserved;
+unknown IDs in supported fields still follow the retention policy above. Hydration & backup restore
+both apply this removal, including when obsolete Dates values are malformed. See the
+[decision record](decisions/2026-10-20-date-inspiration-migration.md).
 
 The serializer writes exactly the fields `SerializedState` declares, plus those retained entries;
 unrecognized fields in a loaded blob are dropped. The ephemeral UI-only `showCompleted` field is not

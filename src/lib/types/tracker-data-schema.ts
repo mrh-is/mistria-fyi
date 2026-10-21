@@ -280,7 +280,7 @@ export const VillagerSchema = v.strictObject({
 export const TrackerDataSchema = v.strictObject({
   almanac: v.record(id("AlmanacCategoryId"), AlmanacCategorySchema),
   animals: v.record(id("AnimalId"), AnimalSchema),
-  categoryVisibility: v.record(v.union([v.literal("dates"), questType]), VisibilitySchema),
+  categoryVisibility: v.record(questType, VisibilitySchema),
   cosmetics: v.record(id("CosmeticId"), CosmeticSchema),
   /** Wardrobe slots and subcategories retain the game's menu order. */
   cosmeticSlots: v.record(cosmeticSlot, CosmeticSlotMetaSchema),

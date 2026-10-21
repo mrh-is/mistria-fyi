@@ -16,7 +16,6 @@ import type {
   AnimalId,
   AnimalVariantId,
   CosmeticId,
-  DateId,
   ItemId,
   MountAppearanceId,
   PerkId,
@@ -204,8 +203,7 @@ function getTransferFieldOffsets(): Record<
     bytesForBits(questCount * 2) +
     bytesForBits(perkCount) +
     bytesForBits(recordKeys(trackerData.pets.cosmetics).length) +
-    bytesForBits(recordKeys(trackerData.pets.skins).length) +
-    bytesForBits(recordKeys(trackerData.dates).length);
+    bytesForBits(recordKeys(trackerData.pets.skins).length);
   const progression = offset;
   offset += 1;
   const relationship = offset;
@@ -223,7 +221,6 @@ function makeGoldenCompleted(): ProgressState {
     almanacRecipes: new Set(["basic_wood_chest" as RecipeId]),
     childChoice: "yes",
     cosmetics: new Set(["back_gear_ancient_witch_broom" as CosmeticId]),
-    dates: new Set(["inn_meal" as DateId]),
     hasUpperFloor: true,
     heartLevels: { ["balor" as VillagerId]: 4 },
     mineFloor: 20,
@@ -459,7 +456,6 @@ describe("transfer codec", () => {
           .filter(([, cosmetic]) => !cosmetic.sources.some((source) => source.type === "default"))
           .map(([id]) => id),
       ),
-      dates: new Set(recordKeys(trackerData.dates)),
       hasUpperFloor: true,
       heartLevels: Object.fromEntries(
         recordKeys(trackerData.villagers).map((id) => [id, MAX_HEART_LEVEL]),
@@ -581,14 +577,6 @@ describe("transfer codec", () => {
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.mountAppearances).toEqual(new Set(appearanceIds));
-  });
-
-  it("round-trips dates", async () => {
-    const dateIds = Object.keys(trackerData.dates).slice(0, 3) as DateId[];
-    const completed = makeCompletedState({ dates: new Set(dateIds) });
-    const payload = await encodeTransferPayload(completed);
-    const decoded = await decodeTransferPayload(payload);
-    expect(decoded.dates).toEqual(new Set(dateIds));
   });
 
   it("round-trips hasUpperFloor", async () => {

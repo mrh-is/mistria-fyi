@@ -110,7 +110,7 @@ export interface ExtractedField<T> {
 }
 
 /** The progress facts a save holds. Dates & the child choice aren't in it. */
-export type ExtractedProgressKey = Exclude<keyof ProgressState, "childChoice" | "dates">;
+export type ExtractedProgressKey = Exclude<keyof ProgressState, "childChoice">;
 export type SaveFields = { [K in ExtractedProgressKey]: ExtractedField<ProgressState[K]> };
 
 /** A game version as `info` records it (`{ major, minor, patch, pre }`). */

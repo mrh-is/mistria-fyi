@@ -97,7 +97,6 @@ function fullyCompletedState(): ProgressState {
     animals,
     childChoice: "yes",
     cosmetics: new Set(recordKeys(trackerData.cosmetics)),
-    dates: new Set(recordKeys(trackerData.dates)),
     heartLevels,
     mineFloor: getMaxMineFloor(),
     mountAppearances: new Set(recordKeys(trackerData.mount.appearances)),
@@ -232,7 +231,7 @@ describe("isCategoryComplete", () => {
   it("agrees with progress when one item is missing from each category", () => {
     const full = fullyCompletedState();
     const missingOne: Record<CategoryKey, ProgressState> = {
-      almanac: { ...full, dates: new Set([...full.dates].slice(1)) },
+      almanac: { ...full, almanac: new Set([...full.almanac].slice(1)) },
       animals: { ...full, petSkins: new Set([...full.petSkins].slice(1)) },
       cosmetics: { ...full, cosmetics: new Set([...full.cosmetics].slice(1)) },
       mines: { ...full, mineFloor: full.mineFloor - 1 },
@@ -288,7 +287,7 @@ describe("almanac progress", () => {
       (sum, cat) => sum + cat.items.length,
       0,
     );
-    expect(progress.total).toBe(expectedTotal + recordKeys(trackerData.dates).length);
+    expect(progress.total).toBe(expectedTotal);
   });
 
   it("reflects completed almanac entries", () => {
@@ -300,11 +299,15 @@ describe("almanac progress", () => {
     expect(progress.completed).toBe(3);
   });
 
-  it("counts completed dates with the almanac", () => {
-    const dateIds = recordKeys(trackerData.dates).slice(0, 2);
+  it("counts date inspiration items once through their Almanac entries", () => {
+    const category = recordEntries(trackerData.almanac).find(
+      ([id]) => id === "date_inspiration",
+    )?.[1];
+    if (!category) throw new Error("Expected the Date Inspiration category");
+    const itemIds = category.items.map((entry) => entry.itemIds[0]);
     const progress = getCategoryProgress(
       "almanac",
-      ctx({ completed: { dates: new Set(dateIds) } }),
+      ctx({ completed: { almanac: new Set(itemIds.slice(0, 2)) } }),
     );
     expect(progress.completed).toBe(2);
   });

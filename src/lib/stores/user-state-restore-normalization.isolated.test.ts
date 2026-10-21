@@ -159,7 +159,6 @@ function expectUnknownIdsRetained(store: {
     "almanac",
     "almanacRecipes",
     "cosmetics",
-    "dates",
     "mountAppearances",
     "museum",
     "petCosmetics",
@@ -193,7 +192,6 @@ function expectUnknownIdsOutOfProgress(completed: DeepReadonly<ProgressState>): 
   expect(completed.almanac).not.toContain(UNKNOWN_ID);
   expect(completed.almanacRecipes).not.toContain(UNKNOWN_ID);
   expect(completed.cosmetics).not.toContain(UNKNOWN_ID);
-  expect(completed.dates).not.toContain(UNKNOWN_ID);
   expect(completed.spells).not.toContain(UNKNOWN_ID);
   expect(completed.museum).not.toContain(UNKNOWN_ID);
   expect(completed.petCosmetics).not.toContain(UNKNOWN_ID);

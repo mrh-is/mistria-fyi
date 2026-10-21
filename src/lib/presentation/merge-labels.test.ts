@@ -16,7 +16,6 @@ function zeroCounts(): MergeCounts {
     animals: 0,
     childChoice: 0,
     cosmetics: 0,
-    dates: 0,
     hasUpperFloor: 0,
     heartLevels: 0,
     mineFloor: 0,
@@ -56,7 +55,6 @@ describe("totalMergeCounts", () => {
   it("includes every previously omitted field in the total", () => {
     const previouslyOmitted = [
       "childChoice",
-      "dates",
       "hasUpperFloor",
       "villagerRelationships",
       "perks",
@@ -93,7 +91,6 @@ describe("formatMergeCount", () => {
   it("returns a label for every previously omitted field when non-zero", () => {
     const previouslyOmitted = [
       "childChoice",
-      "dates",
       "hasUpperFloor",
       "villagerRelationships",
       "perks",

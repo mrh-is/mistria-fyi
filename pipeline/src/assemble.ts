@@ -332,7 +332,7 @@ export function assembleTrackerData(
   console.log("Step 3b: Extracting visibility data...");
   const questChainsRaw = extractQuestChains(fiddle);
   const heartLevelChangesData = extractHeartLevelChanges(fiddle, cutsceneQuestMap);
-  const categoryVisibilityData = extractCategoryVisibility(villagers);
+  const categoryVisibilityData = extractCategoryVisibility();
 
   for (const [questId, changes] of recordEntries(heartLevelChangesData)) {
     const quest = quests.story[questId];
