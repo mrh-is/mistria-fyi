@@ -2,11 +2,35 @@ import * as v from "valibot";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import trackerDataJson from "../data/tracker-data.json";
-import { TrackerDataSchema } from "./tracker-data-schema.js";
+import { ItemSchema, TrackerDataSchema } from "./tracker-data-schema.js";
 
 import type { ItemId, Source, TrackerData } from "./tracker-data.js";
 
 describe("TrackerDataSchema", () => {
+  it("preserves fixed-scroll grants while allowing items without them", () => {
+    for (const recipeUnlocks of [undefined, ["engagement_ring"], ["chair", "table"]]) {
+      const item = {
+        category: "misc",
+        sources: [{ type: "default" }],
+        ...(recipeUnlocks ? { recipeUnlocks } : {}),
+      };
+      expect(v.parse(ItemSchema, item)).toEqual(item);
+    }
+  });
+
+  it.each([null, "engagement_ring", [7]])(
+    "rejects malformed scroll grants: %j",
+    (recipeUnlocks) => {
+      expect(
+        v.safeParse(ItemSchema, {
+          category: "misc",
+          recipeUnlocks,
+          sources: [{ type: "default" }],
+        }).success,
+      ).toBe(false);
+    },
+  );
+
   it("accepts the committed output without stripping or transforming fields", () => {
     expect(v.parse(TrackerDataSchema, trackerDataJson)).toEqual(trackerDataJson);
     expectTypeOf<v.InferOutput<typeof TrackerDataSchema>>().toEqualTypeOf<TrackerData>();
