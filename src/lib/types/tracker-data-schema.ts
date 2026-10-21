@@ -240,6 +240,8 @@ export const HeartQuestSchema = v.strictObject({
 export const StoryQuestSchema = v.strictObject({
   ...TrackerEntitySchema.entries,
   heartLevelChanges: v.optional(v.array(HeartLevelChangeSchema)),
+  /** Completion threshold for native Reach Town Rank quests, validated against townRanks. */
+  townRankLevel: v.optional(number),
 });
 export const ItemSchema = v.strictObject({
   ...SourcedEntitySchema.entries,

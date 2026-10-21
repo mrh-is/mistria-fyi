@@ -116,6 +116,124 @@ describe("starting unlocks", () => {
   });
 });
 
+describe("town rank quest inference", () => {
+  const rankQuests = recordEntries(trackerData.quests.story).filter(
+    (entry): entry is [(typeof entry)[0], (typeof entry)[1] & { townRankLevel: number }] =>
+      entry[1].townRankLevel !== undefined,
+  );
+
+  it.each(rankQuests)("credits %s exactly at its native threshold", (questId, quest) => {
+    for (const offset of [-1, 0, 1]) {
+      const { completed } = extractSaveProgress({
+        gamedata: { t2_world_facts: { renown: quest.townRankLevel + offset } },
+      });
+      expect(completed.questStates?.[questId], `threshold offset ${offset}`).toBe(
+        offset < 0 ? undefined : "completed",
+      );
+    }
+  });
+
+  it("credits every rank for above-maximum renown, preserving its existing clamp", () => {
+    const { completed } = extractSaveProgress({
+      gamedata: { t2_world_facts: { renown: getMaxRenownLevel() + 1 } },
+    });
+    expect(completed.renown).toBe(getMaxRenownLevel());
+    expect(Object.keys(completed.questStates ?? {})).toHaveLength(rankQuests.length);
+    expect(rankQuests).toHaveLength(9);
+  });
+
+  it("credits all reached ranks when only the latest completion fact is recorded", () => {
+    const { completed } = extractSaveProgress({
+      gamedata: {
+        t2_world_facts: {
+          quest_reach_copper_star_town_rank_complete: 0,
+          quest_reach_iron_star_town_rank_complete: 1,
+          quest_reach_ruby_star_town_rank_complete: 0,
+          renown: 40,
+        },
+      },
+    });
+    expect(completed.questStates).toMatchObject({
+      reach_copper_star_town_rank: "completed",
+      reach_iron_star_town_rank: "completed",
+      reach_ruby_star_town_rank: "completed",
+    });
+    expect(completed.questStates).not.toHaveProperty("reach_sapphire_star_town_rank");
+  });
+
+  it("honors explicit rank completion facts & journal completions above the imported rank", () => {
+    const { completed } = extractSaveProgress({
+      gamedata: { t2_world_facts: { quest_reach_mistril_star_town_rank_complete: 1, renown: 20 } },
+      quests: {
+        active_quests: [{ quest_name: "reach_copper_star_town_rank" }],
+        completed_quests: ["reach_diamond_star_town_rank"],
+      },
+    });
+    expect(completed.questStates).toMatchObject({
+      reach_copper_star_town_rank: "completed",
+      reach_diamond_star_town_rank: "completed",
+      reach_mistril_star_town_rank: "completed",
+    });
+  });
+
+  it.each([undefined, "100", null, false, {}, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    "does not infer rank quests from invalid renown %s",
+    (renown) => {
+      const { completed } = extractSaveProgress({ gamedata: { t2_world_facts: { renown } } });
+      expect(completed.questStates).toBeUndefined();
+    },
+  );
+
+  it.each([true, 1])("honors explicit completion %s without readable renown", (value) => {
+    const { fields } = extractSave({
+      gamedata: { t2_world_facts: { quest_reach_mistril_star_town_rank_complete: value } },
+      quests: { active_quests: [], completed_quests: [] },
+    });
+    expect(fields.questStates).toMatchObject({
+      completeness: "unknown",
+      value: { reach_mistril_star_town_rank: "completed" },
+    });
+    expect(fields.questStates.diagnostics).toContainEqual({
+      code: "absent",
+      path: "gamedata.t2_world_facts.renown",
+    });
+  });
+
+  it.each([false, 0, "1", 2, null])("does not credit an unreached rank from fact %s", (value) => {
+    const { fields } = extractSave({
+      gamedata: {
+        t2_world_facts: { quest_reach_mistril_star_town_rank_complete: value, renown: 0 },
+      },
+      quests: { active_quests: [], completed_quests: [] },
+    });
+    expect(fields.questStates.value).toEqual({});
+    expect(fields.questStates.completeness).toBe(
+      value === false || value === 0 ? "complete" : "unknown",
+    );
+  });
+
+  it("keeps inferred ranks additive when journal evidence is incomplete", () => {
+    const { fields } = extractSave({ gamedata: { t2_world_facts: { renown: 20 } } });
+    expect(fields.questStates.completeness).toBe("unknown");
+    expect(fields.questStates.value).toEqual({ reach_copper_star_town_rank: "completed" });
+  });
+
+  it("keeps journal progress when renown is malformed", () => {
+    const { fields } = extractSave({
+      gamedata: { t2_world_facts: { renown: "100" } },
+      quests: { active_quests: [], completed_quests: ["reach_copper_star_town_rank"] },
+    });
+    expect(fields.questStates).toMatchObject({
+      completeness: "unknown",
+      value: { reach_copper_star_town_rank: "completed" },
+    });
+    expect(fields.questStates.diagnostics).toContainEqual({
+      code: "invalid-value",
+      path: "gamedata.t2_world_facts.renown",
+    });
+  });
+});
+
 describe("extractSaveProgress", () => {
   it("credits the Engagement Ring recipe from its acquired scroll without a recipe unlock", () => {
     const { completed, warnings } = extractSaveProgress({
