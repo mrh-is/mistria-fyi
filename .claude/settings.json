@@ -30,6 +30,7 @@
       "Bash(pnpm run preview *)",
       "Bash(pnpm run verify *)",
       "Bash(node scripts/machine-doctor.ts)",
+      "Bash(node scripts/machine-doctor.ts *)",
       "Bash(pnpm run dev *)",
       "Bash(pnpm run pipeline *)",
       "Bash(pnpm run pipeline:assets *)",

@@ -14,6 +14,9 @@ import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from "node:
  * `pnpm install` (and before pnpm exists): `node scripts/machine-doctor.ts`. There is deliberately no
  * pnpm script for it: `pnpm run` would verify (or install) dependencies first and substitute the
  * devEngines runtime for the shell's own Node, which is the version this script must check.
+ *
+ * Checks are grouped into sections by work area. `--for browser,pipeline` checks core plus the named
+ * sections; with no flag every section runs.
  */
 
 export type CheckStatus = "manual" | "missing" | "ok" | "wrong";
@@ -361,7 +364,7 @@ export function checkPlaywright(machine: Environment): CheckResult {
       )
     : check(
         "playwright",
-        "Playwright browsers (accessibility & PWA suites only)",
+        "Playwright browsers",
         "missing",
         `${absent.join(", ")} not found in ${directory}`,
         "pnpm exec playwright install chromium",
@@ -389,7 +392,7 @@ export function checkGameAssets(machine: Environment): CheckResult {
       )
     : check(
         "game-assets",
-        "Game assets (pipeline work only)",
+        "Game assets",
         "missing",
         `${location} is absent; available releases: ${available}`,
         "Point pipeline/input at the synced Mistria folder containing vX.Y.Z/assets; see docs/game-version-update-protocol.md",
@@ -449,7 +452,7 @@ export function manualSteps(): CheckResult[] {
   return [
     check(
       "wrangler",
-      "Wrangler login (R2 uploads only)",
+      "Wrangler login",
       "manual",
       "not probed; the login is interactive",
       "pnpm exec wrangler login, then pnpm exec wrangler whoami",
@@ -457,39 +460,120 @@ export function manualSteps(): CheckResult[] {
   ];
 }
 
-export function runChecks(machine: Environment): CheckResult[] {
-  const store = checkPnpmStore(machine);
-  return [
-    checkNode(machine),
-    checkPnpm(machine),
-    checkDependencies(machine),
-    ...checkGit(machine),
-    ...checkGh(machine),
-    checkShellcheck(machine),
-    checkPlaywright(machine),
-    checkGameAssets(machine),
-    ...(store ? [store] : []),
-    ...manualSteps(),
-  ];
+/** Work areas. Core always runs; the rest are needed only for specific work. */
+export const SECTIONS = {
+  browser: {
+    checks: (machine: Environment): CheckResult[] => [checkPlaywright(machine)],
+    title: "Browser tests (accessibility & PWA suites)",
+  },
+  core: {
+    checks: (machine: Environment): CheckResult[] => {
+      const store = checkPnpmStore(machine);
+      return [
+        checkNode(machine),
+        checkPnpm(machine),
+        checkDependencies(machine),
+        ...checkGit(machine),
+        ...checkGh(machine),
+        checkShellcheck(machine),
+        ...(store ? [store] : []),
+      ];
+    },
+    title: "Core (every contributor)",
+  },
+  pipeline: {
+    checks: (machine: Environment): CheckResult[] => [checkGameAssets(machine)],
+    title: "Pipeline (game files)",
+  },
+  release: {
+    checks: (): CheckResult[] => manualSteps(),
+    title: "Release (R2 uploads)",
+  },
+} as const;
+
+export type Section = keyof typeof SECTIONS;
+
+/** Report order, which object keys can't carry because the linter sorts them. */
+export const SECTION_NAMES: readonly Section[] = ["core", "browser", "pipeline", "release"];
+
+export interface SectionReport {
+  results: CheckResult[];
+  section: Section;
+  /** True for a section left out by --for; its (empty) results never affect the exit status. */
+  skipped: boolean;
+}
+
+/**
+ * Reads `--for a,b` or `--for=a,b` from the arguments after the script path. Core is always
+ * included; no flag selects every section. Throws on unknown sections or arguments.
+ */
+export function parseSections(args: string[]): Section[] {
+  const usage = `usage: node scripts/machine-doctor.ts [--for <section>[,<section>...]]; sections: ${SECTION_NAMES.join(", ")}`;
+  if (args.length === 0) {
+    return [...SECTION_NAMES];
+  }
+  const [flag, next] = args;
+  const inline = flag.startsWith("--for=") ? flag.slice("--for=".length) : undefined;
+  const value = inline ?? (flag === "--for" ? next : undefined);
+  if (value === undefined || args.length > (inline === undefined ? 2 : 1)) {
+    throw new Error(`unexpected arguments: ${args.join(" ")}\n${usage}`);
+  }
+  const names = value
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const unknown = names.filter((name) => !Object.hasOwn(SECTIONS, name));
+  if (names.length === 0 || unknown.length > 0) {
+    throw new Error(
+      `${names.length === 0 ? "no section named" : `unknown section: ${unknown.join(", ")}`}\n${usage}`,
+    );
+  }
+  return SECTION_NAMES.filter((name) => name === "core" || names.includes(name));
+}
+
+export function runChecks(
+  machine: Environment,
+  selected: readonly Section[] = SECTION_NAMES,
+): SectionReport[] {
+  return SECTION_NAMES.map((section) =>
+    selected.includes(section)
+      ? { results: SECTIONS[section].checks(machine), section, skipped: false }
+      : { results: [], section, skipped: true },
+  );
 }
 
 /** Exit status: nonzero while any check is missing or wrong; manual steps never fail the run. */
-export function exitCode(results: CheckResult[]): number {
-  return results.some((result) => result.status === "missing" || result.status === "wrong") ? 1 : 0;
+export function exitCode(reports: SectionReport[]): number {
+  return reports.some(({ results }) =>
+    results.some((result) => result.status === "missing" || result.status === "wrong"),
+  )
+    ? 1
+    : 0;
 }
 
-export function formatReport(results: CheckResult[]): string {
+export function formatReport(reports: SectionReport[]): string {
   const marks: Record<CheckStatus, string> = {
     manual: "[todo]   ",
     missing: "[missing]",
     ok: "[ok]     ",
     wrong: "[wrong]  ",
   };
-  const lines = results.flatMap((result) => [
-    `${marks[result.status]} ${result.label}: ${result.detail}`,
-    ...(result.status !== "ok" && result.fix ? [`          fix: ${result.fix}`] : []),
+  const checked = reports.filter((report) => !report.skipped);
+  const skipped = reports.filter((report) => report.skipped).map((report) => report.section);
+  const lines = checked.flatMap(({ results, section }, index) => [
+    ...(index > 0 ? [""] : []),
+    `${SECTIONS[section].title}:`,
+    ...results.flatMap((result) => [
+      `${marks[result.status]} ${result.label}: ${result.detail}`,
+      ...(result.status !== "ok" && result.fix ? [`          fix: ${result.fix}`] : []),
+    ]),
   ]);
-  const problems = results.filter((r) => r.status === "missing" || r.status === "wrong").length;
+  if (skipped.length > 0) {
+    lines.push("", `Skipped: ${skipped.join(", ")}. Add them with --for to check that work.`);
+  }
+  const problems = checked
+    .flatMap(({ results }) => results)
+    .filter((r) => r.status === "missing" || r.status === "wrong").length;
   lines.push(
     "",
     problems === 0
@@ -575,8 +659,17 @@ export function realEnvironment(
 }
 
 if (process.argv[1] && import.meta.filename === process.argv[1]) {
-  const root = fileURLToPath(new URL("..", import.meta.url));
-  const results = runChecks(realEnvironment(root));
-  console.log(formatReport(results));
-  process.exitCode = exitCode(results);
+  let sections: Section[] | undefined;
+  try {
+    sections = parseSections(process.argv.slice(2));
+  } catch (error) {
+    console.error((error as Error).message);
+    process.exitCode = 2;
+  }
+  if (sections) {
+    const root = fileURLToPath(new URL("..", import.meta.url));
+    const reports = runChecks(realEnvironment(root), sections);
+    console.log(formatReport(reports));
+    process.exitCode = exitCode(reports);
+  }
 }

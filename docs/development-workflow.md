@@ -9,9 +9,9 @@
 
 > **New machine?** Follow [machine-setup.md](machine-setup.md); it holds the per-platform install &
 > login steps. Run `node scripts/machine-doctor.ts` (with `node`, not through pnpm) to see which
-> prerequisites are present, missing, or the wrong version. It changes nothing. If a tool is missing
-> or broken mid-task, agents stop & report instead of repairing it (AGENTS.md, "Local tooling
-> failures").
+> prerequisites are present, missing, or the wrong version; `--for` limits it to the sections your
+> work needs (see machine-setup.md). It changes nothing. If a tool is missing or broken mid-task,
+> agents stop & report instead of repairing it (AGENTS.md, "Local tooling failures").
 
 - **Node.js**: `.node-version` is the single source of truth (Node 24 LTS). `package.json`’s
   `devEngines.runtime` repeats it with `onFail: "download"`, so `pnpm install` downloads that exact
