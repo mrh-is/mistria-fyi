@@ -36,6 +36,41 @@ function withVersion(version: unknown): string {
   return JSON.stringify({ ...fixture(CURRENT_SERIALIZATION_VERSION), version });
 }
 
+/** The history the version 1 & 2 fixtures migrate to: every fact they hold, `unknown`. */
+const MIGRATED_FIXTURE_HISTORY = {
+  provenance: Object.fromEntries(
+    [
+      // A historical almanac ID is keyed as the canonical entry hydration stores it under.
+      "almanac/animated_waterfall_v1",
+      "almanac/item_from_a_later_update",
+      "almanac/turnip",
+      "almanacRecipes/basic_wood_chest",
+      "animalCosmetics/animal_from_a_later_update/ribbon_red",
+      "animalCosmetics/chicken/ribbon_red",
+      "animals/chicken/red",
+      "animals/chicken/variant_from_a_later_update",
+      "childChoice",
+      "cosmetics/back_gear_ancient_witch_broom",
+      "dates/inn_meal",
+      "hasUpperFloor",
+      "heartLevels/balor",
+      "heartLevels/villager_from_a_later_update",
+      "mineFloor",
+      "museum/turnip",
+      "petCosmetics/flower_crown",
+      "petSkins/sapling",
+      "questStates/repair_the_general_store",
+      "reachedSeason",
+      "renown",
+      "skillLevels/farming",
+      "spells/summon_rain",
+      "unlockedPerks/museum_quality_one",
+      "villagerRelationships/balor",
+    ].map((key) => [key, { source: "unknown" }]),
+  ),
+  resolutions: {},
+};
+
 describe("migration table", () => {
   it("has one contiguous step per version up to this build's", () => {
     const versions = Object.keys(MIGRATIONS).map(Number);
@@ -114,43 +149,24 @@ describe("readProgressBlob", () => {
     }
   });
 
-  it.each(POLICIES)("marks every fact a version 1 blob holds unknown (%s)", (policy) => {
-    const { history } = readOk(JSON.stringify(fixture(1)), policy);
+  // Version 2 shipped (#188), so real players hold it as well as version 1.
+  it.each([1, 2].flatMap((version) => POLICIES.map((policy) => [version, policy] as const)))(
+    "marks every fact a version %i blob holds unknown (%s)",
+    (version, policy) => {
+      const stored = fixture(version);
+      const loaded = readOk(JSON.stringify(stored), policy);
+      expect(loaded.history).toEqual(MIGRATED_FIXTURE_HISTORY);
+      expect(loaded.lastImport).toEqual(stored.lastImport ?? null);
 
-    expect(history).toEqual({
-      provenance: Object.fromEntries(
-        [
-          // A historical almanac ID is keyed as the canonical entry hydration stores it under.
-          "almanac/animated_waterfall_v1",
-          "almanac/item_from_a_later_update",
-          "almanac/turnip",
-          "almanacRecipes/basic_wood_chest",
-          "animalCosmetics/animal_from_a_later_update/ribbon_red",
-          "animalCosmetics/chicken/ribbon_red",
-          "animals/chicken/red",
-          "animals/chicken/variant_from_a_later_update",
-          "childChoice",
-          "cosmetics/back_gear_ancient_witch_broom",
-          "dates/inn_meal",
-          "hasUpperFloor",
-          "heartLevels/balor",
-          "heartLevels/villager_from_a_later_update",
-          "mineFloor",
-          "museum/turnip",
-          "petCosmetics/flower_crown",
-          "petSkins/sapling",
-          "questStates/repair_the_general_store",
-          "reachedSeason",
-          "renown",
-          "skillLevels/farming",
-          "spells/summon_rain",
-          "unlockedPerks/museum_quality_one",
-          "villagerRelationships/balor",
-        ].map((key) => [key, { source: "unknown" }]),
-      ),
-      resolutions: {},
-    });
-  });
+      const written = JSON.parse(serializeProgress(loaded)) as StoredDocument;
+      expect(written).toMatchObject({
+        lastImport: stored.lastImport ?? null,
+        progress: MIGRATED_FIXTURE_HISTORY,
+        version: CURRENT_SERIALIZATION_VERSION,
+      });
+      expect(readOk(JSON.stringify(written), "strict").history).toEqual(MIGRATED_FIXTURE_HISTORY);
+    },
+  );
 
   it.each(POLICIES)("reads version 3's history as stored (%s)", (policy) => {
     const stored = fixture(3) as { progress: Record<string, unknown> };
