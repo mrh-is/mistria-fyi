@@ -120,7 +120,7 @@ describe("planLinks", () => {
   });
 });
 
-/** A main checkout with shared inputs (CRLF `.worktreeinclude`), a linked worktree, & a fake pnpm. */
+/** A main checkout with shared game assets, a CRLF `.worktreeinclude`, a linked worktree, & a fake pnpm. */
 function fixture() {
   const root = temporaryDirectory();
   const main = join(root, "main");
@@ -128,7 +128,7 @@ function fixture() {
   mkdirSync(main);
   git(main, "init");
   writeFileSync(join(main, ".gitignore"), "pipeline/input/\n.env\n");
-  writeFileSync(join(main, ".worktreeinclude"), "pipeline/input/\r\n.env\r\n.dev.vars\r\n");
+  writeFileSync(join(main, ".worktreeinclude"), ".env\r\n.dev.vars\r\n");
   git(main, "add", ".");
   execFileSync(
     "git",
@@ -227,7 +227,7 @@ describe("setup-worktree", () => {
     expect(JSON.parse(first.stdout)).toMatchObject({
       hookSpecificOutput: {
         additionalContext: expect.stringContaining(
-          "linked 2 .worktreeinclude entries; installed dependencies",
+          "linked 2 entries from the main checkout; installed dependencies",
         ) as string,
         hookEventName: "SessionStart",
       },
@@ -266,7 +266,7 @@ describe("setup-worktree", () => {
     mkdirSync(join(worktree, "node_modules"));
     const result = run({}, ["--session-start"]);
     expect(result.status, result.stderr).toBe(0);
-    expect(result.stdout).toContain("linked 2 .worktreeinclude entries.");
+    expect(result.stdout).toContain("linked 2 entries from the main checkout.");
     expect(existsSync(join(worktree, "pipeline/input/assets/misc.toml"))).toBe(true);
     expect(readFileSync(log, "utf8")).toBe("exec node --version\n");
   });

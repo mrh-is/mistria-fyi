@@ -24,7 +24,7 @@ use `git pull --ff-only`. Never reset existing work, switch a shared checkout, o
 changes to refresh a base.
 
 This creates `.worktrees/<slug>` on a matching branch (`<issue-number>-<short-description>`),
-symlinks the `.worktreeinclude` entries in from the main checkout, and runs
+symlinks `pipeline/input/` & the `.worktreeinclude` entries in from the main checkout, and runs
 `pnpm install --frozen-lockfile` and `pnpm run prepare`. It never copies dependencies, caches, build
 artifacts, or other writable generated directories. See
 [docs/development-workflow.md §2](development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
@@ -38,13 +38,13 @@ rather than installing them implicitly.
 
 **Automatic initialization:** Claude Code & Codex `SessionStart` hooks run
 `node scripts/setup-worktree.ts --session-start`, the harness entry point. In a linked worktree it
-links absent `.worktreeinclude` entries; in any checkout, including the main one, it runs the frozen
-install & `prepare` when dependencies are absent or stale, which it detects with pnpm’s own
-`verifyDepsBeforeRun` check. A current checkout is left alone. Install output goes to the hook’s
-stderr, and the outcome arrives as session context. A failed setup never blocks the session; its
-context message is a tooling failure to report under AGENTS.md. Dependencies that go stale
-mid-session (a merge that changes the lockfile) need `pnpm install --frozen-lockfile`, which agents
-run without asking.
+links absent `pipeline/input/` & `.worktreeinclude` entries; in any checkout, including the main
+one, it runs the frozen install & `prepare` when dependencies are absent or stale, which it detects
+with pnpm’s own `verifyDepsBeforeRun` check. A current checkout is left alone. Install output goes
+to the hook’s stderr, and the outcome arrives as session context. A failed setup never blocks the
+session; its context message is a tooling failure to report under AGENTS.md. Dependencies that go
+stale mid-session (a merge that changes the lockfile) need `pnpm install --frozen-lockfile`, which
+agents run without asking.
 
 **No shared dependencies:** a worktree never links `node_modules` from another checkout. pnpm
 records each install’s workspace layout, so `verifyDepsBeforeRun` refuses a linked directory with
@@ -71,13 +71,13 @@ you must stash, address your entry by its commit ID (see
 ## Asset inputs
 
 **Check `pipeline/input/` before assuming a machine has no game files.** Worktree setup symlinks it
-from the main checkout (`.worktreeinclude`), so `ls pipeline/input` settles the question; a
-`needs game installation` label is not, by itself, a blocker. When present, it holds one `vX.Y.Z/`
-folder per release, each with `assets/` (`fiddle/` TOML, `localization/` translation tables, `gml/`,
-`tiled/`) and/or `save/`. Regenerate data from it with `pnpm run pipeline:assets`, which stamps
-`CURRENT_GAME_VERSION` (`pipeline/src/game-version.ts`). Relative paths passed to the plain
-`pipeline` script resolve from where you run `pnpm`; `--version` is required there (see
-[pipeline/README.md](../pipeline/README.md#setup--commands)). Read
+from the main checkout (`SHARED_DIRECTORIES` in `scripts/setup-worktree.ts`), so `ls pipeline/input`
+settles the question; a `needs game installation` label is not, by itself, a blocker. When present,
+it holds one `vX.Y.Z/` folder per release, each with `assets/` (`fiddle/` TOML, `localization/`
+translation tables, `gml/`, `tiled/`) and/or `save/`. Regenerate data from it with
+`pnpm run pipeline:assets`, which stamps `CURRENT_GAME_VERSION` (`pipeline/src/game-version.ts`).
+Relative paths passed to the plain `pipeline` script resolve from where you run `pnpm`; `--version`
+is required there (see [pipeline/README.md](../pipeline/README.md#setup--commands)). Read
 [game-asset-format.md](game-asset-format.md) before exploring the files themselves, and run
 `pnpm run pipeline:atlas` for per-file keys instead of opening each file.
 

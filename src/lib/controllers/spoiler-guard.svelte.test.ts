@@ -103,6 +103,21 @@ describe("createSpoilerGuard", () => {
     expect(userState.state.progress.childChoice).toBe("undeclared");
   });
 
+  it("records the prerequisites as inferred & the action it then runs as manual", () => {
+    const villagerId = "holt" as VillagerId;
+    userState.setChildChoice("yes");
+    const guard = createSpoilerGuard();
+    guard.requestGuardedAction({ type: "married", villagerId }, () => {
+      userState.setRenown(3);
+    });
+
+    guard.proceedAndRecordPrerequisites();
+
+    expect(userState.provenanceOf(`villagerRelationships/${villagerId}`)?.source).toBe("inferred");
+    expect(userState.provenanceOf("childChoice")?.source).toBe("inferred");
+    expect(userState.provenanceOf("renown")?.source).toBe("manual");
+  });
+
   it("proceedAndRecordPrerequisites with no condition still runs the action", () => {
     const guard = createSpoilerGuard();
     const action = vi.fn();

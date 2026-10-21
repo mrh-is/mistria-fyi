@@ -1,5 +1,5 @@
-// Sets up an existing linked worktree per AGENTS.md, Worktrees: links the `.worktreeinclude` entries from
-// the main checkout, then installs dependencies. `worktree:new` runs it after creating a worktree;
+// Sets up an existing linked worktree per AGENTS.md, Worktrees: links the shared directories & the
+// `.worktreeinclude` entries from the main checkout, then installs dependencies. `worktree:new` runs it after creating a worktree;
 // run it directly inside a harness-created worktree (e.g. under `.claude/worktrees/`).
 // Usage: node scripts/setup-worktree.ts (not a pnpm script: `pnpm run` refuses to start without the
 // dependencies this installs). Agent SessionStart hooks run it with `--session-start`, which only
@@ -39,6 +39,13 @@ export interface InstallPlan {
   env: Record<string, string>;
   installArgs: string[];
 }
+
+/**
+ * Read-only directories every worktree links from the main checkout. They stay out of
+ * `.worktreeinclude`, which harnesses such as Claude Code copy into new worktrees, so the game
+ * assets are never duplicated.
+ */
+export const SHARED_DIRECTORIES = ["pipeline/input/"];
 
 /**
  * Resolves `.worktreeinclude` lines to the main-checkout entries that exist and aren't already in
@@ -179,7 +186,7 @@ function dependenciesCurrent(cwd: string): boolean {
 }
 
 /**
- * Links the absent `.worktreeinclude` entries & installs dependencies. At session start, the main
+ * Links the absent shared & `.worktreeinclude` entries, & installs dependencies. At session start, the main
  * checkout gets dependencies only, and dependencies install only when absent or stale, so a
  * current checkout is left alone.
  */
@@ -197,11 +204,10 @@ function main(sessionStart: boolean): number {
 
   const links = mainCheckout
     ? []
-    : planLinks(
-        repoRoot,
-        worktreeDir,
-        readFileSync(join(repoRoot, ".worktreeinclude"), "utf8").split(/\r?\n/),
-      );
+    : planLinks(repoRoot, worktreeDir, [
+        ...SHARED_DIRECTORIES,
+        ...readFileSync(join(repoRoot, ".worktreeinclude"), "utf8").split(/\r?\n/),
+      ]);
   const installs =
     !sessionStart ||
     !existsSync(join(worktreeDir, "node_modules")) ||
@@ -228,7 +234,7 @@ function main(sessionStart: boolean): number {
   }
   if (sessionStart) {
     const steps = [
-      ...(links.length > 0 ? [`linked ${links.length} .worktreeinclude entries`] : []),
+      ...(links.length > 0 ? [`linked ${links.length} entries from the main checkout`] : []),
       ...(install ? ["installed dependencies with the frozen lockfile & ran prepare"] : []),
     ];
     console.log(

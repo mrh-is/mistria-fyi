@@ -66,8 +66,8 @@ pnpm run worktree:new <issue-number>-<short-description> [starting-branch]
 The script validates the slug (`<issue-number>-<short-description>`, lowercase), fetches the
 starting branch (default `main`), creates `.worktrees/<slug>` on a matching branch from the
 refreshed `origin/<starting-branch>` under the main checkout, removes the worktree & branch again if
-a later step fails, refuses to run if `.worktrees/` is not gitignored, links every
-`.worktreeinclude` entry from the main checkout, and runs `pnpm install --frozen-lockfile` and
+a later step fails, refuses to run if `.worktrees/` is not gitignored, links `pipeline/input/` &
+every `.worktreeinclude` entry from the main checkout, and runs `pnpm install --frozen-lockfile` and
 `pnpm run prepare` (Husky hooks, Paraglide output, & `svelte-kit sync`). The link & install steps
 live in `scripts/setup-worktree.ts`, which skips entries already present or missing from the main
 checkout. Both scripts run under Node so Windows behaves the same; see
@@ -154,15 +154,18 @@ retain the original failure when assessing reliability.
 
 ### Shared vs. Isolated Worktree Resources (`.worktreeinclude`)
 
-The `.worktreeinclude` file lists ignored local entries required for development:
+Worktree setup links these ignored local entries from the main checkout:
 
-- **`pipeline/input/`** (Game TOML assets, ~114 MB): Shared read-only resource. Create a symbolic
-  link from the primary checkout to avoid duplicating assets:
+- **`pipeline/input/`** (game assets): Shared read-only resource, always symlinked
+  (`SHARED_DIRECTORIES` in `scripts/setup-worktree.ts`). It is deliberately absent from
+  `.worktreeinclude`, which Claude Code copies into new worktrees, so the assets are never
+  duplicated. To link it by hand:
   ```sh
   ln -s /path/to/main/repo/pipeline/input pipeline/input
   ```
-- **`.env` / `.env.*`**: Machine-local environment configuration files. Symlink or copy from the
-  main checkout.
+- **`.worktreeinclude`** entries:
+  - **`.env` / `.env.*`**: Machine-local environment configuration files. Symlink or copy from the
+    main checkout.
 - **Worktree-Isolated Entries**:
   - **`node_modules/`**, **`.svelte-kit/`**, **`build/`**: Never copy or link across worktrees. Run
     `pnpm install --frozen-lockfile` to install dependencies independently.
@@ -859,10 +862,11 @@ Windows runs them without a shell. The earlier Bash versions failed there (#353)
 prunable and whose launcher can outlive `verify`'s child without returning its exit status, while
 Git Bash's `ln -s` copies or fails instead of linking.
 
-- **Links**: setup links each `.worktreeinclude` entry that exists in the main checkout and skips
-  the rest. On Windows, directories become junctions, which need neither administrator rights nor
-  Developer Mode. Files become symlinks where Windows allows them and hard links otherwise; an
-  editor that saves by replacing the file breaks a hard link, so edit `.env` in the main checkout.
+- **Links**: setup links `pipeline/input/` & each `.worktreeinclude` entry that exists in the main
+  checkout and skips the rest. On Windows, directories become junctions, which need neither
+  administrator rights nor Developer Mode. Files become symlinks where Windows allows them and hard
+  links otherwise; an editor that saves by replacing the file breaks a hard link, so edit `.env` in
+  the main checkout.
 - **Leftover junctions**: Git for Windows' `git worktree remove` unregisters a worktree but leaves
   its junctions behind, and without `git config --global core.longpaths true` it stops with
   `Filename too long` inside `node_modules`. Delete the leftover directory with
