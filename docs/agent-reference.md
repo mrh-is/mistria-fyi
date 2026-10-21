@@ -38,11 +38,13 @@ rather than installing them implicitly.
 
 **Automatic initialization:** Claude Code & Codex `SessionStart` hooks run
 `node scripts/setup-worktree.ts --session-start`, the harness entry point. In a linked worktree it
-links absent `.worktreeinclude` entries & installs dependencies only when `node_modules` is absent;
-the main checkout & a complete worktree are left alone. Install output goes to the hook’s stderr,
-and the outcome arrives as session context. A failed setup never blocks the session; its context
-message is a tooling failure to report under AGENTS.md. Stale dependencies (a lockfile changed by a
-merge) still need a manual `pnpm install --frozen-lockfile`.
+links absent `.worktreeinclude` entries; in any checkout, including the main one, it runs the frozen
+install & `prepare` when dependencies are absent or stale, which it detects with pnpm’s own
+`verifyDepsBeforeRun` check. A current checkout is left alone. Install output goes to the hook’s
+stderr, and the outcome arrives as session context. A failed setup never blocks the session; its
+context message is a tooling failure to report under AGENTS.md. Dependencies that go stale
+mid-session (a merge that changes the lockfile) need `pnpm install --frozen-lockfile`, which agents
+run without asking.
 
 **No shared dependencies:** a worktree never links `node_modules` from another checkout. pnpm
 records each install’s workspace layout, so `verifyDepsBeforeRun` refuses a linked directory with

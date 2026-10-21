@@ -158,12 +158,13 @@ function fixture() {
     pnpm,
     `import { appendFileSync } from "node:fs";
 appendFileSync(${JSON.stringify(log)}, process.argv.slice(2).join(" ") + "\\n");
-process.exitCode = Number(process.env.FAKE_PNPM_STATUS ?? 0);
+const fails = process.env.FAKE_PNPM_FAIL;
+process.exitCode = fails && process.argv.slice(2).join(" ").startsWith(fails) ? 1 : 0;
 `,
   );
-  const run = (env: NodeJS.ProcessEnv = {}, args: string[] = []) =>
+  const run = (env: NodeJS.ProcessEnv = {}, args: string[] = [], cwd = worktree) =>
     spawnSync(process.execPath, [script, ...args], {
-      cwd: worktree,
+      cwd,
       encoding: "utf8",
       env: { ...withFakePnpm(pnpm), CODEX_THREAD_ID: "", ...env },
     });
@@ -238,7 +239,26 @@ describe("setup-worktree", () => {
     const again = run({}, ["--session-start"]);
     expect(again.status, again.stderr).toBe(0);
     expect(again.stdout).toBe("");
-    expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
+    expect(readFileSync(log, "utf8")).toBe(
+      "install --frozen-lockfile\nrun prepare\nexec node --version\n",
+    );
+  });
+
+  it("reinstalls stale dependencies at session start", () => {
+    const { log, run, worktree } = fixture();
+    mkdirSync(join(worktree, "node_modules"));
+    expect(run().status).toBe(0);
+    rmSync(log);
+    const result = run({ FAKE_PNPM_FAIL: "exec" }, ["--session-start"]);
+    expect(result.status, result.stderr).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      hookSpecificOutput: {
+        additionalContext: expect.stringMatching(/: installed dependencies/) as string,
+      },
+    });
+    expect(readFileSync(log, "utf8")).toBe(
+      "exec node --version\ninstall --frozen-lockfile\nrun prepare\n",
+    );
   });
 
   it("links absent entries at session start without reinstalling present dependencies", () => {
@@ -248,12 +268,12 @@ describe("setup-worktree", () => {
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("linked 2 .worktreeinclude entries.");
     expect(existsSync(join(worktree, "pipeline/input/assets/misc.toml"))).toBe(true);
-    expect(existsSync(log)).toBe(false);
+    expect(readFileSync(log, "utf8")).toBe("exec node --version\n");
   });
 
   it("reports a failed session-start setup as context without blocking the session", () => {
     const { log, run } = fixture();
-    const result = run({ FAKE_PNPM_STATUS: "1" }, ["--session-start"]);
+    const result = run({ FAKE_PNPM_FAIL: "install" }, ["--session-start"]);
     expect(result.status).toBe(0);
     expect(JSON.parse(result.stdout)).toMatchObject({
       hookSpecificOutput: {
@@ -263,14 +283,19 @@ describe("setup-worktree", () => {
     expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\n");
   });
 
-  it("leaves the main checkout alone at session start", () => {
-    const { main } = fixture();
-    const result = spawnSync(process.execPath, [script, "--session-start"], {
-      cwd: main,
-      encoding: "utf8",
-    });
-    expect(result.status, result.stderr).toBe(0);
-    expect(result.stdout).toBe("");
+  it("installs only the main checkout's absent dependencies at session start", () => {
+    const { log, main, run } = fixture();
+    const session = () => run({}, ["--session-start"], main);
+    const first = session();
+    expect(first.status, first.stderr).toBe(0);
+    expect(first.stdout).not.toContain("linked");
+    expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
+    mkdirSync(join(main, "node_modules"));
+    const again = session();
+    expect(again.stdout).toBe("");
+    expect(readFileSync(log, "utf8")).toBe(
+      "install --frozen-lockfile\nrun prepare\nexec node --version\n",
+    );
   });
 
   it("refuses to run in the main checkout", () => {

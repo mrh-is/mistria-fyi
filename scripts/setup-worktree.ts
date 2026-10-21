@@ -3,7 +3,8 @@
 // run it directly inside a harness-created worktree (e.g. under `.claude/worktrees/`).
 // Usage: node scripts/setup-worktree.ts (not a pnpm script: `pnpm run` refuses to start without the
 // dependencies this installs). Agent SessionStart hooks run it with `--session-start`, which only
-// fills in what's absent, sends tool output to stderr, & reports the outcome as session context.
+// fills in what's absent or stale, also covers the main checkout's dependencies, sends tool output
+// to stderr, & reports the outcome as session context.
 // It runs on the shell's Node, which may differ from the pin, so it skips the require-pinned-node
 // guard: the install it runs downloads the pinned runtime, and every
 // later step goes through pnpm, which uses that runtime.
@@ -170,9 +171,17 @@ function git(...args: string[]): string {
 }
 
 /**
- * Links the absent `.worktreeinclude` entries & installs dependencies. At session start, a main
- * checkout or a complete worktree is left alone, and dependencies install only when absent: the
- * hook never reinstalls over a worktree's own state.
+ * pnpm's own `verifyDepsBeforeRun` check: `pnpm exec` refuses to start when dependencies are
+ * absent or stale (a lockfile or workspace change since the last install).
+ */
+function dependenciesCurrent(cwd: string): boolean {
+  return runPnpm(["exec", "node", "--version"], { cwd, stdio: "ignore" }) === 0;
+}
+
+/**
+ * Links the absent `.worktreeinclude` entries & installs dependencies. At session start, the main
+ * checkout gets dependencies only, and dependencies install only when absent or stale, so a
+ * current checkout is left alone.
  */
 function main(sessionStart: boolean): number {
   const worktreeDir = resolve(git("rev-parse", "--show-toplevel"));
@@ -180,17 +189,23 @@ function main(sessionStart: boolean): number {
   const repoRoot = resolve(
     (git("worktree", "list", "--porcelain").split("\n")[0] ?? "").replace(/^worktree /, ""),
   );
-  if (worktreeDir === repoRoot) {
-    if (sessionStart) {
-      return 0;
-    }
+  const mainCheckout = worktreeDir === repoRoot;
+  if (mainCheckout && !sessionStart) {
     console.error(`error: ${worktreeDir} is the main checkout; run this inside a linked worktree.`);
     return 1;
   }
 
-  const patterns = readFileSync(join(repoRoot, ".worktreeinclude"), "utf8").split(/\r?\n/);
-  const links = planLinks(repoRoot, worktreeDir, patterns);
-  const installs = !sessionStart || !existsSync(join(worktreeDir, "node_modules"));
+  const links = mainCheckout
+    ? []
+    : planLinks(
+        repoRoot,
+        worktreeDir,
+        readFileSync(join(repoRoot, ".worktreeinclude"), "utf8").split(/\r?\n/),
+      );
+  const installs =
+    !sessionStart ||
+    !existsSync(join(worktreeDir, "node_modules")) ||
+    !dependenciesCurrent(worktreeDir);
   if (links.length === 0 && !installs) {
     return 0;
   }
