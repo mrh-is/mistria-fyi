@@ -29,6 +29,8 @@ import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 import type { SpawnSyncOptions } from "node:child_process";
 
+import type { HookInput } from "#scripts/lib/agent-hook";
+
 export interface LinkPlan {
   destination: string;
   directory: boolean;
@@ -178,6 +180,19 @@ function git(...args: string[]): string {
 }
 
 /**
+ * The session's directory from a SessionStart hook's stdin. Claude Code runs hooks from the
+ * session's original checkout, so a worktree created for the session arrives only as `cwd`. A
+ * manual run has no input.
+ */
+function hookCwd(): string | undefined {
+  if (process.stdin.isTTY) {
+    return undefined;
+  }
+  const text = readFileSync(0, "utf8").trim();
+  return text === "" ? undefined : (JSON.parse(text) as HookInput).cwd;
+}
+
+/**
  * pnpm's own `verifyDepsBeforeRun` check: `pnpm exec` refuses to start when dependencies are
  * absent or stale (a lockfile or workspace change since the last install).
  */
@@ -240,7 +255,7 @@ function main(sessionStart: boolean): number {
     console.log(
       contextOutput(
         "SessionStart",
-        `Initialized this worktree with node scripts/setup-worktree.ts: ${steps.join("; ")}.`,
+        `Initialized ${worktreeDir} with node scripts/setup-worktree.ts: ${steps.join("; ")}.`,
       ),
     );
   }
@@ -250,6 +265,10 @@ function main(sessionStart: boolean): number {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const sessionStart = process.argv.includes("--session-start");
   try {
+    const cwd = sessionStart ? hookCwd() : undefined;
+    if (cwd) {
+      process.chdir(cwd);
+    }
     process.exitCode = main(sessionStart);
   } catch (error) {
     console.error(`error: ${error instanceof Error ? error.message : String(error)}`);

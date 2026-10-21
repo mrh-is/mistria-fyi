@@ -1,5 +1,13 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -162,11 +170,12 @@ const fails = process.env.FAKE_PNPM_FAIL;
 process.exitCode = fails && process.argv.slice(2).join(" ").startsWith(fails) ? 1 : 0;
 `,
   );
-  const run = (env: NodeJS.ProcessEnv = {}, args: string[] = [], cwd = worktree) =>
+  const run = (env: NodeJS.ProcessEnv = {}, args: string[] = [], cwd = worktree, input = "") =>
     spawnSync(process.execPath, [script, ...args], {
       cwd,
       encoding: "utf8",
       env: { ...withFakePnpm(pnpm), CODEX_THREAD_ID: "", ...env },
+      input,
     });
   return { log, main, run, worktree };
 }
@@ -242,6 +251,26 @@ describe("setup-worktree", () => {
     expect(readFileSync(log, "utf8")).toBe(
       "install --frozen-lockfile\nrun prepare\nexec node --version\n",
     );
+  });
+
+  it("sets up the hook input's directory when the hook runs from the main checkout", () => {
+    const { log, main, run, worktree } = fixture();
+    const result = run(
+      {},
+      ["--session-start"],
+      main,
+      JSON.stringify({ cwd: worktree, hook_event_name: "SessionStart" }),
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain(
+      `Initialized ${JSON.stringify(realpathSync(worktree)).slice(1, -1)} with`,
+    );
+    expect(result.stdout).toContain("linked 2 entries");
+    expect(readFileSync(join(worktree, "pipeline/input/assets/misc.toml"), "utf8")).toBe(
+      "version = 1\n",
+    );
+    expect(existsSync(join(main, "node_modules"))).toBe(false);
+    expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
   });
 
   it("reinstalls stale dependencies at session start", () => {
