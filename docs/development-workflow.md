@@ -253,7 +253,12 @@ Tests sit next to the module they cover, so moving or deleting a module takes it
   builder or stub. [The testing inventory](testing-inventory.md#shared-helpers) lists them.
 
 The committed `.vscode/settings.json` nests each test under its source in the VS Code explorer, so
-colocated tests don’t double the length of directory listings.
+colocated tests don’t double the length of directory listings. It also points the Vitest extension
+at `node_modules/.bin/node`, the pinned Node that `pnpm install` links from `devEngines.runtime`.
+Without it, the extension starts Vitest with whatever `node` is first on `PATH`, and
+`require-pinned-node` (the first import in `vite.config.ts`) exits on any other release, which the
+extension reports only as “There were errors during config load.” Run `pnpm install` before opening
+the folder, so the link exists.
 
 ### Executing Tests
 
