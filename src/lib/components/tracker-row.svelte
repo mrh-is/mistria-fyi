@@ -3,7 +3,7 @@
 
   import SourcePaper from "#lib/components/source-paper.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
-  import SpriteSlot from "#lib/components/sprite-slot.svelte";
+  import SpritePreviewButton from "#lib/components/sprite-preview-button.svelte";
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
   import TrackerPaper from "#lib/components/tracker-paper.svelte";
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
@@ -189,7 +189,12 @@
     />
 
     {#if sprite}
-      <SpriteSlot {sprite} state={spriteState} class={spriteClass} />
+      <SpritePreviewButton
+        {sprite}
+        state={spriteState}
+        class={spriteClass}
+        label={m.tracker_row_preview_sprite({ name })}
+      />
     {/if}
 
     <span class="tracker-row__label">

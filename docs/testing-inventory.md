@@ -73,7 +73,7 @@ single-component row's marks disagree with its test files.
 
 | Component                    | Server | happy-dom  | Notes                                                     |
 | ---------------------------- | :----: | :--------: | --------------------------------------------------------- |
-| `tracker-row`                |   ✓    |     ✓      | Spoiler reveal, completion, source papers, focus movement |
+| `tracker-row`                |   ✓    |     ✓      | Spoiler, completion, source papers, focus, sprite preview |
 | `tracker-row-stack`          |   ✓    |            | Layout only                                               |
 | `tracker-row-list`           |        |     ✓      | Row cap, show more, progressive count, empty note         |
 | `tracker-empty-state`        |        | via parent | Through `tracker-row-list`                                |
@@ -87,6 +87,7 @@ single-component row's marks disagree with its test files.
 | `status-note`                |   ✓    |            | Tone classes; alert role for errors & warnings            |
 | `expandable-section`         |        |     ✓      | Disclosure, IDs, nesting, reporting                       |
 | `spoiler`, `spoiler-section` |        | via parent | Through `tracker-row`                                     |
+| `sprite-preview-button`      |        | via parent | Through `tracker-row`                                     |
 | `sprite-slot`                |        | via parent | Through `tracker-row`                                     |
 | `source-card`                |   ✓    |            | Static rendering                                          |
 | `source-paper`               |        | via parent | Through `tracker-row`                                     |

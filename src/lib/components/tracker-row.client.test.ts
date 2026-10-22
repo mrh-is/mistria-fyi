@@ -1,9 +1,10 @@
 import { fireEvent, screen, waitFor } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import { SPRITE_PREVIEW_FADE_MS, SPRITE_PREVIEW_HOLD_MS } from "#lib/utils/row-timing.js";
 
 describe("TrackerRow reportable metadata", () => {
   it("reveals a ready sprite with the spoiler name", async () => {
@@ -184,5 +185,94 @@ describe("TrackerRow reportable metadata", () => {
     // Testing Library's cleanup removes only its own containers, not this hand-built list.
     list.remove();
     vi.unstubAllGlobals();
+  });
+});
+
+function previewLayer(container: HTMLElement): Element | null {
+  return container.querySelector("[data-sprite-layer='preview']");
+}
+
+describe("TrackerRow sprite preview", () => {
+  const props = {
+    display: { mode: "incomplete" },
+    name: "Animated Clouds Window",
+    reportCategory: "almanac-item",
+    reportEntityId: "animated_clouds_window_blue",
+    sprite: "spr_ui_item_animated_clouds_window_blue",
+  } as const;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("reveals the full sprite for a few seconds without toggling the row", async () => {
+    vi.useFakeTimers();
+    const onToggle = vi.fn();
+    const view = renderWithFeedback(TrackerRow, { ...props, onToggle });
+    const button = screen.getByRole("button", { name: "Show Animated Clouds Window in color" });
+
+    expect(previewLayer(view.container)).toBeNull();
+    await fireEvent.click(button);
+
+    expect(previewLayer(view.container)).toBeTruthy();
+    expect(onToggle).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(SPRITE_PREVIEW_HOLD_MS - 1);
+    expect(previewLayer(view.container)).toBeTruthy();
+    await vi.advanceTimersByTimeAsync(1 + SPRITE_PREVIEW_FADE_MS);
+    expect(previewLayer(view.container)).toBeNull();
+  });
+
+  it("restarts the hold when activated again", async () => {
+    vi.useFakeTimers();
+    const view = renderWithFeedback(TrackerRow, { ...props, onToggle: vi.fn() });
+    const button = screen.getByRole("button", { name: "Show Animated Clouds Window in color" });
+
+    await fireEvent.click(button);
+    await vi.advanceTimersByTimeAsync(SPRITE_PREVIEW_HOLD_MS - 100);
+    await fireEvent.click(button);
+    // Past where the first hold & its fade would have ended had the second click not restarted it.
+    await vi.advanceTimersByTimeAsync(100 + SPRITE_PREVIEW_FADE_MS + 1);
+    expect(previewLayer(view.container)).toBeTruthy();
+  });
+
+  it("is a focusable native button, so Enter & Space activate it", async () => {
+    const view = renderWithFeedback(TrackerRow, { ...props, onToggle: vi.fn() });
+    const button = screen.getByRole("button", { name: "Show Animated Clouds Window in color" });
+
+    expect(button.tagName).toBe("BUTTON");
+    expect(button.getAttribute("type")).toBe("button");
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    // A native button turns Enter & Space into click; the click is what reveals.
+    await fireEvent.click(button);
+    expect(previewLayer(view.container)).toBeTruthy();
+  });
+
+  it("offers no preview on completed rows, which already show the sticker", () => {
+    renderWithFeedback(TrackerRow, {
+      ...props,
+      display: { mode: "completed" },
+      onToggle: vi.fn(),
+    });
+
+    expect(screen.queryByRole("button", { name: /in color/ })).toBeNull();
+  });
+
+  it("keeps a spoilered row's sprite behind the spoiler guard until it is revealed", async () => {
+    const view = renderWithFeedback(TrackerRow, {
+      ...props,
+      display: { mode: "spoilered" },
+      onToggle: vi.fn(),
+    });
+
+    expect(screen.queryByRole("button", { name: /in color/ })).toBeNull();
+    expect(previewLayer(view.container)).toBeNull();
+
+    await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Show Animated Clouds Window in color" }),
+    );
+    expect(previewLayer(view.container)).toBeTruthy();
   });
 });

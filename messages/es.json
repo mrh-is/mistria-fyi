@@ -121,6 +121,7 @@
   "tracker_row_uncheck": "Desmarcar {name}",
   "tracker_row_check_spoilered": "Marcar elemento con spoiler",
   "tracker_row_check": "Marcar {name}",
+  "tracker_row_preview_sprite": "Mostrar {name} a color",
   "tracker_row_active_badge": "Activo",
   "tracker_row_sources_label": "Fuentes de {name}",
   "all_completed_message": "¡Todo listo! Activa «Mostrar completados» para revisar.",

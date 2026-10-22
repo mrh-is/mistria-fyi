@@ -1,15 +1,22 @@
 <script lang="ts">
+  import { prefersReducedMotion } from "svelte/motion";
+  import { fade } from "svelte/transition";
+
   import { itemSpriteUrl } from "#lib/sprites/sprite-url.js";
+  import { SPRITE_PREVIEW_FADE_MS } from "#lib/utils/row-timing.js";
 
   export type SpriteSlotState = "complete" | "ready" | "spoilered";
 
   let {
     class: className = "",
+    previewing = false,
     sprite,
     spriteClass = "text-primary",
     state: slotState,
   }: {
     class?: string;
+    /** Overlays the full-color sprite on a ready silhouette. */
+    previewing?: boolean;
     sprite: string;
     spriteClass?: string;
     state: SpriteSlotState;
@@ -74,6 +81,23 @@
           onerror={handleImageError}
           style="image-rendering: pixelated;"
         />
+        {#if previewing}
+          <!-- Same alpha as the silhouette, so the full-color sprite covers it exactly -->
+          <image
+            data-sprite-layer="preview"
+            href={source}
+            crossorigin="anonymous"
+            x="0"
+            y="0"
+            width="18"
+            height="18"
+            onerror={handleImageError}
+            style="image-rendering: pixelated;"
+            transition:fade={{
+              duration: prefersReducedMotion.current ? 0 : SPRITE_PREVIEW_FADE_MS,
+            }}
+          />
+        {/if}
       {:else if slotState === "spoilered"}
         <image
           data-sprite-layer="silhouette"

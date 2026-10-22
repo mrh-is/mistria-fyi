@@ -121,6 +121,7 @@
   "tracker_row_uncheck": "Décocher {name}",
   "tracker_row_check_spoilered": "Cocher l'élément spoilé",
   "tracker_row_check": "Cocher {name}",
+  "tracker_row_preview_sprite": "Afficher {name} en couleur",
   "tracker_row_active_badge": "Actif",
   "tracker_row_sources_label": "Sources de {name}",
   "all_completed_message": "Tout est fait ! Activez « Afficher terminés » pour vérifier.",

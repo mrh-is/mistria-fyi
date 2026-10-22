@@ -124,6 +124,7 @@
   "tracker_row_uncheck": "Снять отметку с «{name}»",
   "tracker_row_check_spoilered": "Отметить заспойлеренный предмет",
   "tracker_row_check": "Отметить «{name}»",
+  "tracker_row_preview_sprite": "Показать «{name}» в цвете",
   "tracker_row_active_badge": "Активно",
   "tracker_row_sources_label": "Источники «{name}»",
   "all_completed_message": "Всё готово! Включите «Показать выполненные», чтобы просмотреть.",

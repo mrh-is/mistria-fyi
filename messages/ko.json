@@ -115,6 +115,7 @@
   "tracker_row_uncheck": "{name} 선택 해제",
   "tracker_row_check_spoilered": "스포일러 항목 선택",
   "tracker_row_check": "{name} 선택",
+  "tracker_row_preview_sprite": "{name} 컬러로 보기",
   "tracker_row_active_badge": "활성",
   "tracker_row_sources_label": "{name} 획득처",
   "all_completed_message": "모두 완료했습니다! 확인하려면 \"완료 항목 표시\"를 켜세요.",
