@@ -3,8 +3,13 @@ import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
 import type { Source } from "#lib/types/acquisition.js";
 
+/** The filter-panel sections that collapse into disclosures on phones. */
+export type FilterSectionId = "availability" | "sources";
+
 export class ToolbarState {
   enabledSourceFilterIds = $state<SvelteSet<SourceFilterId>>(new SvelteSet());
+  // Phone-width disclosure state; session-only, so sections start collapsed on each visit.
+  readonly expandedFilterSections = new SvelteSet<FilterSectionId>();
   searchOpen = $state(false);
 
   searchQuery = $state("");
@@ -61,6 +66,14 @@ export class ToolbarState {
 
   setSearchQuery(query: string): void {
     this.searchQuery = query;
+  }
+
+  toggleFilterSection(section: FilterSectionId): void {
+    if (this.expandedFilterSections.has(section)) {
+      this.expandedFilterSections.delete(section);
+    } else {
+      this.expandedFilterSections.add(section);
+    }
   }
 
   toggleSourceFilter(filter: SourceFilter): void {

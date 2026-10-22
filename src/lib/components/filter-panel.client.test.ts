@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import FilterPanel from "#lib/components/filter-panel.svelte";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
@@ -23,11 +23,27 @@ function weatherStrip() {
   return screen.getByRole("radiogroup", { name: "Weather" });
 }
 
+function emulatePhone(): void {
+  vi.spyOn(globalThis, "matchMedia").mockImplementation(
+    (query: string) =>
+      ({
+        addEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+        matches: true,
+        media: query,
+        onchange: null,
+        removeEventListener: vi.fn(),
+      }) as unknown as MediaQueryList,
+  );
+}
+
 afterEach(async () => {
   cleanup();
   toolbarState.unregisterSourceFilters("test");
   toolbarState.unregisterSourceFilters("almanac");
   toolbarState.showUnobtainable = false;
+  toolbarState.expandedFilterSections.clear();
+  vi.restoreAllMocks();
   userState.resetAll();
   pageStub.reset();
   await tick();
@@ -207,5 +223,81 @@ describe("FilterPanel interactions", () => {
     await fireEvent.click(showCompleted);
     expect(showCompleted).not.toBeChecked();
     expect(userState.state.showCompleted).toBe(false);
+  });
+
+  it("pairs the completed & unobtainable switches in one row under a Show heading", async () => {
+    render(FilterPanel, { showWorldStateFilters: false });
+
+    const show = screen.getByRole("region", { name: "Show" });
+    expect(within(show).getAllByRole("switch")).toHaveLength(1);
+    expect(within(show).getByText("Completed")).toBeInTheDocument();
+
+    toolbarState.registerSourceFilters("almanac", []);
+    await tick();
+
+    expect(
+      within(show)
+        .getAllByRole("switch")
+        .map((toggle) => toggle.getAttribute("aria-label")),
+    ).toEqual(["Show completed?", "Show unobtainable?"]);
+    expect(within(show).getByText("Unobtainable")).toBeInTheDocument();
+  });
+
+  it("keeps every section expanded without a disclosure control on wide screens", () => {
+    toolbarState.registerSourceFilters("test", [gatheringFilter, storesFilter]);
+    render(FilterPanel, { showWorldStateFilters: true });
+
+    expect(screen.getByRole("heading", { name: "When to find" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Source types" })).toBeInTheDocument();
+    expect(document.querySelector("[aria-expanded]")).toBeNull();
+    expect(screen.getByRole("button", { name: "Now" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Gathering" })).toBeVisible();
+  });
+
+  it("collapses when-to-find & source types into summarized disclosures on phones", async () => {
+    emulatePhone();
+    toolbarState.registerSourceFilters("test", [gatheringFilter, storesFilter]);
+    render(FilterPanel, { showWorldStateFilters: true });
+
+    const whenToFind = screen.getByRole("button", { name: /^When to find/ });
+    const sourceTypes = screen.getByRole("button", { name: /^Source types/ });
+    expect(whenToFind).toHaveAttribute("aria-expanded", "false");
+    expect(whenToFind).toHaveTextContent("When to find Now · Anytime · Spring · Sun");
+    expect(sourceTypes).toHaveAttribute("aria-expanded", "false");
+    expect(sourceTypes).toHaveTextContent("Source types 2 of 2");
+
+    const whenToFindBody = document.getElementById(whenToFind.getAttribute("aria-controls") ?? "");
+    const sourceTypesBody = document.getElementById(
+      sourceTypes.getAttribute("aria-controls") ?? "",
+    );
+    expect(whenToFindBody).not.toBeVisible();
+    expect(sourceTypesBody).not.toBeVisible();
+    expect(screen.queryByRole("button", { name: "Gathering" })).toBeNull();
+
+    await fireEvent.click(sourceTypes);
+    expect(sourceTypes).toHaveAttribute("aria-expanded", "true");
+    expect(sourceTypes).toHaveTextContent(/^Source types$/);
+    expect(sourceTypesBody).toBeVisible();
+    await fireEvent.click(screen.getByRole("button", { name: "Gathering" }));
+    expect(whenToFindBody).not.toBeVisible();
+
+    await fireEvent.click(sourceTypes);
+    expect(sourceTypes).toHaveAttribute("aria-expanded", "false");
+    expect(sourceTypes).toHaveTextContent("Source types 1 of 2");
+    expect(sourceTypesBody).not.toBeVisible();
+  });
+
+  it("remembers expanded sections for the session across panel openings", async () => {
+    emulatePhone();
+    const first = render(FilterPanel, { showWorldStateFilters: true });
+    await fireEvent.click(screen.getByRole("button", { name: /^When to find/ }));
+    first.unmount();
+
+    render(FilterPanel, { showWorldStateFilters: true });
+    expect(screen.getByRole("button", { name: /^When to find/ })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Now" })).toBeVisible();
   });
 });
