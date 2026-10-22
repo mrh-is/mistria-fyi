@@ -1,6 +1,6 @@
 import { getDotPath, safeParse } from "valibot";
 
-import { trackedPerkIds } from "#lib/engine/perk-ids.js";
+import { skillPerkIds } from "#lib/engine/perk-ids.js";
 import { TrackerDataSchema } from "#lib/types/tracker-data-schema.js";
 /**
  * Assembles `tracker-data.json` and its locale chunks from an evaluated fiddle. Reads no files and
@@ -213,7 +213,7 @@ export function assembleTrackerData(
     localeNames: mountLocaleNames,
     mount,
     perkLocaleNames: mountPerkLocaleNames,
-  } = extractMount(fiddle, localizer, requirementContext);
+  } = extractMount(fiddle, localizer, requirementContext, new Set(skillPerkIds({ skills })));
   const allPerkLocaleNames = recordMap(perkLocaleNames, (names, locale) => ({
     ...names,
     ...mountPerkLocaleNames[locale],
@@ -468,7 +468,7 @@ function buildAcquisitionReferences(
       animals: trackerData.animals,
       biomes: trackerData.mines.biomes,
       festivals: trackerData.festivals,
-      perks: trackedPerkIds(trackerData),
+      perks: skillPerkIds(trackerData),
       questTypes: Object.keys(trackerData.quests),
       skills: trackerData.skills,
       stores: trackerData.stores,

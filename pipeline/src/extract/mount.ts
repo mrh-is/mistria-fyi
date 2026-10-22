@@ -35,6 +35,7 @@ export function extractMount(
   fiddle: ParsedGameData,
   localizer: Localizer,
   requirementContext: RequirementContext,
+  skillPerkIds: ReadonlySet<string>,
 ): MountExtraction {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
@@ -87,7 +88,12 @@ export function extractMount(
     for (const locale of LOCALE_CODES) localeNames[locale][appearanceId] = values[locale];
   }
 
-  const { perkLocaleNames, perks } = extractMountPerks(fiddle, localizer, horseStatueQuestId);
+  const { perkLocaleNames, perks } = extractMountPerks(
+    fiddle,
+    localizer,
+    horseStatueQuestId,
+    skillPerkIds,
+  );
 
   console.log(
     `  Mount: ${Object.keys(appearances).length} appearances, ${Object.keys(perks).length} perks`,
@@ -101,12 +107,14 @@ const MOUNT_PERK_TIER = "tier_1";
 /**
  * The Mistmare's perks are the Horse Statue's menu, `ui/skill_menu/mount.toml`: one tier of perks,
  * each bought with essence. Names come from `perks/<id>/name`, like every skill perk. Throws on a
- * tier beyond the first, which the tracker would need a review to model.
+ * tier beyond the first, which the tracker would need a review to model, & on a perk listed twice or
+ * sharing its ID with a skill perk, since both share `unlockedPerks` & the perks locale chunk.
  */
 function extractMountPerks(
   fiddle: ParsedGameData,
   localizer: Localizer,
   questId: QuestId,
+  skillPerkIds: ReadonlySet<string>,
 ): Pick<MountExtraction, "perkLocaleNames"> & { perks: Mount["perks"] } {
   const perkLocaleNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
@@ -138,6 +146,12 @@ function extractMountPerks(
       fieldPath: `${fieldPath}.perk`,
       sourcePath,
     }) as PerkId;
+    if (Object.hasOwn(perks, perkId)) {
+      throw new Error(`Duplicate mount perk "${perkId}" in ${sourcePath}`);
+    }
+    if (skillPerkIds.has(perkId)) {
+      throw new Error(`Mount perk "${perkId}" is also a skill perk (${sourcePath})`);
+    }
     const cost = expectNumber(record.essence, {
       entityId: `mount.perks.${perkId}`,
       fieldPath: "essence",

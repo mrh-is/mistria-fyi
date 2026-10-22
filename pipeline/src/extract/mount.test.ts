@@ -56,7 +56,7 @@ function extract(fiddle: ReturnType<typeof makeMountFiddle>) {
     fiddle.requirements as Record<string, unknown>,
     buildCutsceneQuestMap(fiddle),
   );
-  return extractMount(fiddle, stubLocalizer(), context);
+  return extractMount(fiddle, stubLocalizer(), context, new Set(["mining_1"]));
 }
 
 describe("extractMount", () => {
@@ -129,7 +129,7 @@ describe("extractMount", () => {
       fiddle.requirements as Record<string, unknown>,
       buildCutsceneQuestMap(fiddle),
     );
-    extractMount(fiddle, localizer, context);
+    extractMount(fiddle, localizer, context, new Set());
     expect(localizer.localizeField).toHaveBeenCalledWith(
       expect.objectContaining({ category: "perks", field: "name", id: "horsepower" }),
     );
@@ -151,6 +151,21 @@ describe("extractMount", () => {
     const fiddle = makeMountFiddle();
     mountMenu(fiddle).tier_1 = [{ perk: "horsepower" }];
     expect(() => extract(fiddle)).toThrow("mount.perks.horsepower");
+  });
+
+  it("throws when the mount menu lists a perk twice", () => {
+    const fiddle = makeMountFiddle();
+    mountMenu(fiddle).tier_1 = [
+      { essence: 200, perk: "horsepower" },
+      { essence: 210, perk: "horsepower" },
+    ];
+    expect(() => extract(fiddle)).toThrow('Duplicate mount perk "horsepower"');
+  });
+
+  it("throws when a mount perk shares its ID with a skill perk", () => {
+    const fiddle = makeMountFiddle();
+    mountMenu(fiddle).tier_1 = [{ essence: 200, perk: "mining_1" }];
+    expect(() => extract(fiddle)).toThrow('Mount perk "mining_1" is also a skill perk');
   });
 
   it("throws when a mount perk has no name in the perks table", () => {
