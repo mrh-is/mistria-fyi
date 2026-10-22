@@ -149,6 +149,33 @@ test("styles the offline page with the app's fonts & the player's saved theme", 
   await expect.poll(() => page.evaluate(() => document.fonts.check('16px "Petrona"'))).toBe(true);
 });
 
+test("speaks the uncached URL's locale on the offline page", async ({ context, page }) => {
+  await page.goto("/");
+  await waitForControl(page);
+
+  await goOffline(context);
+  await page.goto("/ja/pwa-uncached-offline-probe");
+  await expect(page.getByRole("heading", { name: "オフラインです" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "再試行" })).toHaveAttribute("href", "");
+
+  const document_ = await page.evaluate(() => ({
+    dir: document.documentElement.dir,
+    font: getComputedStyle(document.body).fontFamily,
+    fontStylesheet: document.querySelector<HTMLLinkElement>('link[rel="stylesheet"]')?.href,
+    lang: document.documentElement.lang,
+    title: document.title,
+  }));
+  expect(document_).toEqual({
+    dir: "ltr",
+    // app.css's `html:lang(ja)` stack: Petrona for Latin, then the Japanese face.
+    font: expect.stringMatching(/^"?Petrona"?, "?BIZ UDPMincho"?,/) as unknown,
+    // Its faces, which apply once the stylesheet is cached from an online visit in Japanese.
+    fontStylesheet: expect.stringMatching(/\/locale-fonts-ja\.[^/.]+\.css$/) as unknown,
+    lang: "ja",
+    title: "Mistria Field Guide — オフライン",
+  });
+});
+
 async function startUrl(page: Page): Promise<string> {
   const response = await page.request.get("/manifest.json");
   const manifest = (await response.json()) as { start_url: string };
