@@ -15,11 +15,13 @@ import {
   isLazyAsset,
   isSkipWaitingRequest,
   lastLocaleStore,
+  launchPagePaths,
   MAX_SPRITE_ENTRIES,
   mayDeleteRetainedCaches,
   obsoleteCaches,
   parseCacheLocalesMessage,
   parseCurrentLocale,
+  precacheLaunchPages,
   readOfflineLocales,
   readRetainedCaches,
   rememberOfflineLocales,
@@ -84,6 +86,14 @@ function redirectedResponse(body: string, location: string): Response {
   Object.defineProperty(response, "redirected", { value: true });
   Object.defineProperty(response, "url", { value: new URL(location, ORIGIN).href });
   return response;
+}
+
+/** Fails `/ja` as a dropped connection & redirects `/fr`; answers every other page. */
+function unreliableFetcher(request: Request): Promise<Response> {
+  const { pathname } = new URL(request.url);
+  if (pathname === "/ja") return Promise.reject(new TypeError("offline"));
+  if (pathname === "/fr") return Promise.resolve(redirectedResponse("moved", "/en"));
+  return Promise.resolve(new Response(`page ${pathname}`));
 }
 
 function requestUrl(request: RequestInfo | URL): string {
@@ -558,6 +568,42 @@ describe("service-worker locale home pages", () => {
   });
 });
 
+describe("service-worker launch-page precache", () => {
+  const PRERENDERED = new Set(["/en", "/en/data", "/ja", "/ja/data", "/fr"]);
+
+  it("lists `/` & the prerendered home of each offline locale, once each", () => {
+    expect(launchPagePaths(["ja", "en", "ja"], PRERENDERED)).toEqual(["/", "/ja", "/en"]);
+  });
+
+  it("leaves out a locale whose home the build didn't prerender, & an unknown locale", () => {
+    expect(launchPagePaths(["en", "ko", "xx"], PRERENDERED)).toEqual(["/", "/en"]);
+    expect(launchPagePaths(["en"], new Set())).toEqual(["/"]);
+  });
+
+  it("caches every launch page, keeping the rest when one fails", async () => {
+    const cache = new MemoryCache();
+
+    expect(
+      await precacheLaunchPages(cache, ["/", "/en", "/ja", "/fr"], `${ORIGIN}/`, unreliableFetcher),
+    ).toEqual(["/ja", "/fr"]);
+
+    expect(await cachedText(cache, new Request(`${ORIGIN}/`))).toBe("page /");
+    expect(await cachedText(cache, new Request(`${ORIGIN}/en`))).toBe("page /en");
+    expect(cache.entries.size).toBe(2);
+  });
+
+  it("doesn't refetch a launch page that's already cached", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/en`, new Response("cached"));
+    const fetcher = vi.fn((request: Request) => Promise.resolve(new Response(request.url)));
+
+    expect(await precacheLaunchPages(cache, ["/", "/en"], `${ORIGIN}/`, fetcher)).toEqual([]);
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(await cachedText(cache, new Request(`${ORIGIN}/en`))).toBe("cached");
+  });
+});
+
 /** Named caches holding the given paths, as `CacheStorage` opens them. */
 function storage(contents: Record<string, string[]>) {
   const named = new Map<string, MemoryCache>();
@@ -657,8 +703,9 @@ describe("service-worker eviction path", () => {
     expect(cache.entries.size).toBe(51);
   });
 
-  it("exempts locale home pages, the offline launch targets, from eviction", async () => {
+  it("exempts `/` & locale home pages, the offline launch targets, from eviction", async () => {
     const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/`, new Response("stub"));
     await cache.put(`${ORIGIN}/en`, new Response("en home"));
     await cache.put(`${ORIGIN}/en?q=1`, new Response("query"));
     await cache.put(`${ORIGIN}/page-0`, new Response("0"));
@@ -672,6 +719,7 @@ describe("service-worker eviction path", () => {
       2,
     );
 
+    expect(await cache.match(`${ORIGIN}/`)).toBeDefined();
     expect(await cache.match(`${ORIGIN}/en`)).toBeDefined();
     expect(await cache.match(`${ORIGIN}/en?q=1`)).toBeUndefined();
     expect(await cache.match(`${ORIGIN}/page-0`)).toBeUndefined();

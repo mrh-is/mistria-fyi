@@ -35,23 +35,27 @@ Other languages download the first time the player uses them, then stay availabl
   already imported may come from a cache an update has replaced. If any chunk is still missing, the
   page stays in place and shows “Go online to download the Japanese text, then try again.”
 - **An offline launch opens the last-used language (#728).** The manifest’s `start_url` is `/`,
-  which has no page of its own: online, the server redirects it to a locale. An installed app’s
-  first launch loads that page before the worker exists, and browsing after that is client-side, so
-  no page load ever passes through the worker to cache it. Instead, the page’s `mfg:cache-locales`
+  whose prerendered stub picks a locale in the browser. An installed app’s first launch loads that
+  page before the worker exists, and browsing after that is client-side, so no page load ever passes
+  through the worker to cache it. Instead, each version’s install precaches its launch pages (#110):
+  `/` and the prerendered home page (`/en`, `/ja`, …) of every offline locale and of the last-used
+  one, picked from `$app/manifest`’s `prerendered` by extensionless path, since a request for
+  `/en.html` reaches the Function and 404s. A prerendered page embeds its build’s version, so the
+  copy in `cache-<version>` always matches that cache’s chunks. The precache is best-effort, like
+  the name chunks: a page that fails doesn’t fail the install. The page’s `mfg:cache-locales`
   message names its current locale (on every load and every picker switch), and the worker records
-  it as the last-used locale in `offline-locales-v1` and fetches that locale’s home page into its
-  cache. Each new version’s install fetches the last-used home page again, since activating deletes
-  the old cache; a switch during that install reaches it through the message above. If the new
-  version still lacks that page when it activates (its fetch failed, or the switch happened
-  offline), activation keeps the old version’s cache, which holds the only working copy, and records
-  it in `offline-locales-v1`. The active worker deletes it once a page message has cached the home
-  page in the new version. The record is never cached in memory, because during an update two
-  workers write it (#18). A full page load through the worker records its locale too. When a
-  bare-path navigation fails offline, the worker redirects to the same path under the last-used
-  locale, or under any locale whose page is cached, before trying the bare path's cached stub & then
-  the offline page. Locale home pages (`/en`, `/ja`, …) are exempt from runtime-cache eviction, and
-  a navigation that comes back as a followed redirect is answered with the redirect itself and never
-  cached.
+  it as the last-used locale in `offline-locales-v1` and fetches that locale’s home page if its
+  cache lacks it, which covers a language first used after the install, including a switch during
+  that install. If the new version still lacks the last-used home page when it activates (its fetch
+  failed, or the switch happened offline), activation keeps the old version’s cache, which holds the
+  only working copy, and records it in `offline-locales-v1`. The active worker deletes it once a
+  page message has cached the home page in the new version. The record is never cached in memory,
+  because during an update two workers write it (#18). A full page load through the worker records
+  its locale too. When a bare-path navigation fails offline, the worker redirects to the same path
+  under the last-used locale, or under any locale whose page is cached, before trying the bare
+  path's cached stub & then the offline page. Launch pages (`/`, `/en`, `/ja`, …) are exempt from
+  runtime-cache eviction, and a navigation that comes back as a followed redirect is answered with
+  the redirect itself and never cached.
 
 ### Byte budget
 
@@ -140,6 +144,8 @@ The suite verifies:
 - the offline document for a previously uncached navigation;
 - an offline launch from `start_url` (`/`) into the home page, after one online launch with only
   client-side browsing, and into the language last chosen in the picker;
+- a new version’s install precaching `/` and each offline locale’s home page, then an offline
+  relaunch into the last-used language (#110);
 - a new version’s install caching the last-used locale’s home page, and an offline relaunch into a
   language chosen while that install was underway (#18);
 - an offline relaunch after a new version failed to fetch the last-used home page, served from the
@@ -163,14 +169,15 @@ Failure traces, screenshots, and the HTML report are retained as CI artifacts.
 
 ## Browser record
 
-| Browser                                                             | Platform                        | Install state                                | Result and evidence                                                                                                                             |
-| ------------------------------------------------------------------- | ------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chrome for Testing 151.0.7922.34, Playwright Chromium revision 1234 | macOS, local production preview | Browser tab; active worker, not OS-installed | Passed registration and activation on 2026-09-03. The complete suite passes after the separately tracked fetch-binding defect in #208 is fixed. |
-| Chrome for Testing 151.0.7922.34, Playwright Chromium revision 1234 | Ubuntu GitHub Actions           | Browser tab; active worker, not OS-installed | Evaluated by the PWA workflow on every pull request and main push.                                                                              |
-| Chrome or Edge stable                                               | Not run                         | Not run                                      | Complete the manual procedure below before making browser-specific release claims.                                                              |
-| Firefox stable                                                      | Not run                         | Not run                                      | Complete the manual procedure below; the automated suite does not claim Firefox coverage.                                                       |
-| Safari stable                                                       | Not run                         | Not run                                      | Complete the manual procedure below; the automated suite does not claim Safari coverage.                                                        |
-| Installed desktop or mobile PWA                                     | Not run                         | Not run                                      | Installation and standalone-window checks remain manual because CI exercises a browser tab.                                                     |
+| Browser                                                             | Platform                         | Install state                                | Result and evidence                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------------------- | -------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chrome for Testing 151.0.7922.34, Playwright Chromium revision 1234 | macOS, local production preview  | Browser tab; active worker, not OS-installed | Passed registration and activation on 2026-09-03. The complete suite passes after the separately tracked fetch-binding defect in #208 is fixed.                                                                                                                                   |
+| Chrome for Testing 151.0.7922.34, Playwright Chromium revision 1234 | Ubuntu GitHub Actions            | Browser tab; active worker, not OS-installed | Evaluated by the PWA workflow on every pull request and main push.                                                                                                                                                                                                                |
+| Safari (WebKit), iOS 27.2                                           | iPhone, PR #202’s branch preview | Home Screen web app                          | Passed on 2026-10-21 with the Safari steps below: registration & control; `/` & `/en` cached unredirected; offline launch from the icon into the last-used language (French); and an update whose install precached `/`, `/en`, & `/fr`, then another offline launch into French. |
+| Chrome or Edge stable                                               | Not run                          | Not run                                      | Complete the manual procedure below before making browser-specific release claims.                                                                                                                                                                                                |
+| Firefox stable                                                      | Not run                          | Not run                                      | Complete the manual procedure below; the automated suite does not claim Firefox coverage.                                                                                                                                                                                         |
+| Safari stable                                                       | Not run                          | Not run                                      | Complete the manual procedure below; the automated suite does not claim Safari coverage.                                                                                                                                                                                          |
+| Installed desktop or mobile PWA                                     | Not run                          | Not run                                      | Installation and standalone-window checks remain manual because CI exercises a browser tab.                                                                                                                                                                                       |
 
 ## Manual developer-tools check
 
@@ -189,9 +196,11 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
    since Cloudflare Pages redirects `.html` paths (#226).
 7. Still offline, open `/`. Confirm it lands on the language you last used online (for example
    `/en`), not the offline page. On an installed app, launch it from its icon instead. If it
-   doesn’t, check Cache Storage for `/__last-locale` in `offline-locales-v1` and the home page in
-   `cache-<version>`. Then switch languages online, force-quit, and repeat offline: it should open
-   the new language.
+   doesn’t, check Cache Storage for `/__last-locale` in `offline-locales-v1` and for `/` and the
+   home page in `cache-<version>`. Then switch languages online, force-quit, and repeat offline: it
+   should open the new language. On an iPhone, check this from the Home Screen app: WebKit refuses
+   to render a cached navigation that was redirected, so the cached `/` and home pages must be plain
+   200 responses.
 8. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
    the online application renders normally.
 9. To check the update flow, keep two tabs open on the deployment, open a dialog (the About page’s
@@ -205,3 +214,63 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
 
 Note: Browser developer tools may bypass the worker when “Update on reload” or an equivalent option
 is enabled. Disable that option during the offline checks.
+
+### Safari on an iPhone, from a Mac
+
+Safari’s Web Inspector has no service-worker or Cache Storage panel, so the checks above run from
+the console instead.
+
+1. **Connect.** On the iPhone, turn on Settings → Apps → Safari → Advanced → Web Inspector. On the
+   Mac, turn on Safari → Settings → Advanced → “Show features for web developers”, then connect the
+   iPhone by cable. Its pages appear under Develop → [the iPhone’s name]. Inspecting over the
+   network works too, but it disconnects once the phone goes offline; a cable keeps the inspector
+   attached through step 5.
+2. **Test the right build in the right container.** Open the PR’s branch preview, not production.
+   For the offline-launch check, add it to the Home Screen and inspect the Home Screen app: it has
+   its own storage, worker, & caches, separate from Safari’s tabs, so a working Safari tab proves
+   nothing about it. With the app open on the phone, it appears as its own entry in the Develop
+   menu.
+3. **Registration.** The worker is listed under its own Service Workers heading in the device’s
+   Develop submenu once registered; opening it inspects the worker itself. To check control from the
+   page’s console, wrap the code in an async function, since Safari’s console may reject a top-level
+   `await` (“Unexpected identifier”):
+
+   ```js
+   (async () => {
+     const r = await navigator.serviceWorker.getRegistration();
+     console.log({
+       scope: r?.scope,
+       script: r?.active?.scriptURL,
+       state: r?.active?.state,
+       controlled: !!navigator.serviceWorker.controller,
+     });
+   })();
+   ```
+
+   Expect the `/` scope, `/service-worker.js`, `"activated"`, and `controlled: true`. All
+   `undefined` means no worker yet: reload once and run it again.
+
+4. **Caches.** List each cache’s entries outside `/_app/`:
+
+   ```js
+   (async () => {
+     for (const name of await caches.keys()) {
+       const keys = await (await caches.open(name)).keys();
+       console.log(
+         name,
+         keys.map((k) => new URL(k.url).pathname).filter((p) => !p.startsWith("/_app/")),
+       );
+     }
+   })();
+   ```
+
+   `cache-<version>` should hold `/` and the home page of each language used (`/en`, …), and
+   `offline-locales-v1` should hold `/__last-locale`.
+
+5. **Offline launch.** Safari’s Web Inspector can’t simulate offline, and the iPhone’s network
+   conditioning needs Xcode, which this project doesn’t require, so take the phone offline for real.
+   Turn on Airplane Mode and check that Wi-Fi is off too (Airplane Mode leaves it on if it was
+   turned back on in Airplane Mode before). Force-quit the Home Screen app from the app switcher and
+   launch it from its icon. It should open the last-used language’s home page, not the offline page.
+   The landing page is the result, so inspecting over the network works too: note where the launch
+   lands, then turn Airplane Mode off and inspect. Record the iOS version in the browser record.
