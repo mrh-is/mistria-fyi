@@ -6,7 +6,7 @@
   import PetCollectiblesSection from "#lib/components/pet-collectibles-section.svelte";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
-  import { isCategoryComplete } from "#lib/engine/progress.js";
+  import { isCategoryComplete } from "#lib/engine/categories.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 

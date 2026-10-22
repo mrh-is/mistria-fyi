@@ -12,7 +12,7 @@
   import { getName } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showQuestToast } from "#lib/effects/undo-toast.js";
-  import { isCategoryComplete } from "#lib/engine/progress.js";
+  import { isCategoryComplete } from "#lib/engine/categories.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildQuestSections } from "#lib/presentation/quest-sections.js";

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
-import { getCategoryProgress } from "./progress.js";
+import { getCategoryProgress } from "./categories.js";
 
 import type { ProgressState } from "#lib/types/user-progress.js";
 

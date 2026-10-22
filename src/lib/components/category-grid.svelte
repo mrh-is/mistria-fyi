@@ -1,12 +1,13 @@
 <script lang="ts">
   import CategoryCard from "#lib/components/category-card.svelte";
   import { Icon } from "#lib/components/icon/index.js";
-  import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
+  import { sortCategoryKeysByName } from "#lib/data/categories.js";
+  import { CATEGORY_KEYS } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
-  import type { AllProgress } from "#lib/engine/progress.js";
+  import type { AllProgress } from "#lib/engine/categories.js";
 
   let { progress }: { progress: AllProgress } = $props();
 

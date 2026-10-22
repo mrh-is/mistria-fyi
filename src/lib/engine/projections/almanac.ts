@@ -1,20 +1,22 @@
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { isAlmanacEntryObtainable } from "#lib/engine/applicability.js";
 import { isItemAvailable, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
-import { isConditionVisible } from "#lib/engine/visibility.js";
+import { isSpoilered } from "#lib/engine/projections/category-projection.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { CategoryProgress, ProgressContext } from "#lib/engine/progress.js";
-import type { UserProgressionState } from "#lib/engine/visibility.js";
+import type {
+  CategoryProjection,
+  CategoryProjectionOptions,
+} from "#lib/engine/projections/category-projection.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { AlmanacCategoryId, AlmanacEntry, Item, ItemId } from "#lib/types/tracker-data.js";
 
-interface AlmanacProjectionOptions {
+interface AlmanacProjectionOptions extends CategoryProjectionOptions {
   hideSpoilered?: boolean;
   includeUnavailable?: boolean;
   matchesEntry?: (itemIds: ItemId[]) => boolean;
   matchesSources?: (sources: Source[]) => boolean;
-  progressionState?: UserProgressionState;
   recentlyCompleted?: ReadonlySet<ItemId>;
   showCompleted?: boolean;
   showUnobtainable?: boolean;
@@ -38,23 +40,27 @@ export interface AlmanacRow {
 interface AlmanacSection {
   baseRows: AlmanacRow[];
   canonicalIds: ItemId[];
+  /** Completed rows among `scopedRows`. */
   completedCount: number;
   id: AlmanacCategoryId;
   progress: CategoryProgress;
   rows: AlmanacRow[];
+  /** Rows matching the filters, including unobtainable rows the filter reveals. */
   scopedRows: AlmanacRow[];
+  /** Obtainable rows among `scopedRows`: revealed unobtainable rows never count toward a total. */
+  scopedTotal: number;
   visibleRows: AlmanacRow[];
 }
 
-interface AlmanacProjection {
+export interface AlmanacProjection extends CategoryProjection {
   rows: AlmanacRow[];
   sections: AlmanacSection[];
-  totals: CategoryProgress;
 }
 
 /**
  * One almanac row policy for progress, search and pages. Totals count obtainable entries,
- * independently of spoilers and display filters. Completed entries remain applicable.
+ * independently of spoilers and display filters; showing unobtainable rows reveals them without
+ * counting them, in section totals as well. Completed entries remain applicable.
  *
  * Callers choose context explicitly: search passes default availability windows and hides
  * spoilers; pages pass user windows, name/source filters and temporary completed-row retention.
@@ -71,9 +77,7 @@ export function projectAlmanac(
       const completed = ctx.progress.almanac.has(canonicalId);
       const obtainable = isAlmanacEntryObtainable(entry.itemIds, ctx.progress);
       const available = isItemAvailable(sources, ctx.worldState, ctx.availabilityWindows);
-      const spoilered =
-        options.progressionState !== undefined &&
-        !isConditionVisible(item.visibility, options.progressionState);
+      const spoilered = isSpoilered(item.visibility, options.progressionState);
       const matchesBaseFilters =
         (obtainable || options.showUnobtainable === true) &&
         (completed || available || options.includeUnavailable === true) &&
@@ -117,6 +121,7 @@ export function projectAlmanac(
       progress,
       rows,
       scopedRows,
+      scopedTotal: scopedRows.filter((row) => row.obtainable).length,
       visibleRows: rows.filter((row) => row.visible),
     };
   });

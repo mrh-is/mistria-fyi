@@ -7,7 +7,7 @@
   import OverallProgress from "#lib/components/overall-progress.svelte";
   import SearchResults from "#lib/components/search-results.svelte";
   import WelcomeCard from "#lib/components/welcome-card.svelte";
-  import { getAllProgress, getOverallProgress } from "#lib/engine/progress.js";
+  import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";

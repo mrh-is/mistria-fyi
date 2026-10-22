@@ -5,7 +5,7 @@
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
-  import type { CategoryKey } from "#lib/data/categories.js";
+  import type { CategoryKey } from "#lib/engine/categories.js";
   import type { Path } from "$app/types";
 
   /**

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
-import { getCategoryProgress } from "#lib/engine/progress.js";
+import { getCategoryProgress } from "#lib/engine/categories.js";
 import { searchAllCategories } from "#lib/engine/search.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
@@ -52,6 +52,13 @@ describe("projectAlmanac", () => {
       hidden.sections.flatMap(({ visibleRows }) => visibleRows).every((row) => row.obtainable),
     ).toBe(true);
     expect(shown.totals).toEqual(hidden.totals);
+    // Revealed rows render but never count, so section totals match too.
+    expect(shown.sections.map(({ scopedTotal }) => scopedTotal)).toEqual(
+      hidden.sections.map(({ scopedTotal }) => scopedTotal),
+    );
+    expect(
+      shown.sections.some(({ scopedRows, scopedTotal }) => scopedRows.length > scopedTotal),
+    ).toBe(true);
     const id = unobtainable[0].canonicalId;
     ctx.progress.almanac.add(id);
     const completed = projectAlmanac(ctx)
