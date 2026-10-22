@@ -14,7 +14,6 @@ import type { AlmanacCategoryId, AlmanacEntry, Item, ItemId } from "#lib/types/t
 
 interface AlmanacProjectionOptions extends CategoryProjectionOptions {
   hideSpoilered?: boolean;
-  includeUnavailable?: boolean;
   matchesEntry?: (itemIds: ItemId[]) => boolean;
   matchesSources?: (sources: Source[]) => boolean;
   recentlyCompleted?: ReadonlySet<ItemId>;
@@ -62,8 +61,9 @@ export interface AlmanacProjection extends CategoryProjection {
  * independently of spoilers and display filters; showing unobtainable rows reveals them without
  * counting them, in section totals as well. Completed entries remain applicable.
  *
- * Callers choose context explicitly: search passes default availability windows and hides
- * spoilers; pages pass user windows, name/source filters and temporary completed-row retention.
+ * Callers choose context explicitly: search projects with default availability windows and offers
+ * obtainable, unspoilered rows whatever their availability (`searchAlmanac`); pages pass user
+ * windows, name/source filters and temporary completed-row retention.
  */
 export function projectAlmanac(
   ctx: ProgressContext,
@@ -80,7 +80,7 @@ export function projectAlmanac(
       const spoilered = isSpoilered(item.visibility, options.progressionState);
       const matchesBaseFilters =
         (obtainable || options.showUnobtainable === true) &&
-        (completed || available || options.includeUnavailable === true) &&
+        (completed || available) &&
         (!options.hideSpoilered || !spoilered) &&
         (options.matchesEntry?.(entry.itemIds) ?? true);
       const matchesFilters = matchesBaseFilters && (options.matchesSources?.(sources) ?? true);
