@@ -228,6 +228,14 @@ page's title and description come from messages through `localizedPageLoad`. `st
 is a single static file, so it stays English and declares `"lang": "en"` & `"id": "/"`; a per-locale
 manifest would need a route and a locale-aware `<link rel="manifest">`.
 
+### Offline page
+
+The service worker serves `src/service-worker/offline.html` with no Paraglide runtime, so its text
+comes from `%m.<key>%` slots instead: `offlinePagePlugin` (`src/lib/build/offline-page.ts`) reads
+every locale's `messages/<locale>.json` at build time, falling back to English as Paraglide does.
+Only plain-text messages fit; the build throws for one with placeholders. The worker picks the URL's
+locale prefix, then the last-used locale, then English, and sets `<html lang>` & `dir` to match.
+
 ### Regional variants
 
 A locale tag doesn't pin down a region, but the game's translation does. MFG's chrome text sits

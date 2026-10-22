@@ -73,8 +73,8 @@ interface RuntimeRequestDependencies {
   lastLocale: LastLocaleStore;
   matchCache: (request: RequestInfo | URL) => Promise<Response | undefined>;
   maxEntries?: number;
-  /** Builds the page an uncached navigation gets when the network fails. */
-  offlinePage: () => Response;
+  /** Builds the page, in `locale`, that an uncached navigation gets when the network fails. */
+  offlinePage: (locale: LocaleCode) => Response;
   /** The pages {@link offlinePagePaths} lists for every locale, by path. */
   pagePaths: ReadonlySet<string>;
   /** Keeps the worker alive for cache writes that settle after the response is returned. */
@@ -359,7 +359,7 @@ export async function fetchRuntimeRequest(
         : undefined);
     if (cached) return cached;
     if (request.mode !== "navigate") return Response.error();
-    return dependencies.offlinePage();
+    return dependencies.offlinePage(await offlinePageLocale(request, dependencies.lastLocale));
   }
   const isNavigation = request.mode === "navigate";
   // A navigation answered with a followed redirect is a network error (its redirect mode is
@@ -435,6 +435,17 @@ async function cachedPageWithoutQuery(
   if (url.search === "" || !dependencies.pagePaths.has(url.pathname)) return undefined;
   url.search = "";
   return dependencies.matchCache(url.href);
+}
+
+/**
+ * The locale the offline page speaks for an uncached navigation: the URL's locale prefix, else the
+ * last-used locale, else English, the app's fallback for every layer (#206).
+ */
+export async function offlinePageLocale(
+  request: Pick<Request, "url">,
+  lastLocale: Pick<LastLocaleStore, "read">,
+): Promise<LocaleCode> {
+  return localeOfPath(new URL(request.url).pathname) ?? (await lastLocale.read()) ?? "en";
 }
 
 /** The locale a path is prefixed with, if any. */
@@ -685,6 +696,22 @@ export function isExternalSpriteAsset(url: URL): boolean {
  */
 export function isLazyAsset(pathname: string, localeChunkPaths: ReadonlySet<string>): boolean {
   return LAZY_ASSET_PATTERN.test(pathname) || localeChunkPaths.has(pathname);
+}
+
+/**
+ * `locale`'s `@font-face` stylesheet among the build's assets, if it has one; base Latin locales
+ * have none. Vite names it after its source plus a content hash: `locale-fonts-zh-Hans.<hash>.css`.
+ * The dot after the locale keeps one locale's name from matching another's.
+ */
+export function localeFontStylesheetAsset(
+  assetPaths: Iterable<string>,
+  locale: LocaleCode,
+): string | undefined {
+  const prefix = `locale-fonts-${locale}.`;
+  return [...assetPaths].find((path) => {
+    const file = path.slice(path.lastIndexOf("/") + 1);
+    return file.startsWith(prefix) && file.endsWith(".css");
+  });
 }
 
 /** Whether a page asked the waiting service worker to take over. */

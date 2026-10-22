@@ -15,9 +15,11 @@ import {
   isLazyAsset,
   isSkipWaitingRequest,
   lastLocaleStore,
+  localeFontStylesheetAsset,
   MAX_SPRITE_ENTRIES,
   mayDeleteRetainedCaches,
   obsoleteCaches,
+  offlinePageLocale,
   offlinePagePaths,
   parseCacheLocalesMessage,
   parseCurrentLocale,
@@ -29,6 +31,8 @@ import {
   SKIP_WAITING_MESSAGE,
   SPRITE_CACHED_AT_HEADER,
 } from "./service-worker-cache.js";
+
+import type { LocaleCode } from "#lib/types/locale.js";
 
 const ORIGIN = "https://mistria.fyi";
 
@@ -66,7 +70,7 @@ function dependencies(cache: MemoryCache, fetcher: (request: Request) => Promise
     lastLocale: lastLocaleStore(() => Promise.resolve(lastLocaleCache)),
     lastLocaleCache,
     matchCache: (request: RequestInfo | URL) => cache.match(request),
-    offlinePage: () => new Response("offline page"),
+    offlinePage: vi.fn((_locale: LocaleCode) => new Response("offline page")),
     pagePaths: new Set(["/", "/en", "/en/data"]),
     settled: () => Promise.all(pending),
     waitUntil: (promise: Promise<unknown>) => {
@@ -351,6 +355,44 @@ describe("service-worker runtime request path", () => {
 function offline() {
   return vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
 }
+
+describe("service-worker offline page locale", () => {
+  it.each([
+    ["/ja/missing", "ja"],
+    ["/zh-Hant", "zh-Hant"],
+    ["/ru/animals?q=cow", "ru"],
+  ] as const)("speaks the locale prefix of %s", async (path, locale) => {
+    const lastLocale = { read: vi.fn(() => Promise.resolve<LocaleCode>("fr")) };
+
+    expect(await offlinePageLocale(navigation(path), lastLocale)).toBe(locale);
+    expect(lastLocale.read).not.toHaveBeenCalled();
+  });
+
+  it.each(["/missing", "/sitemap.xml", "/jap/missing", "/zh-hans/missing"])(
+    "speaks the last-used locale outside a locale prefix, at %s",
+    async (path) => {
+      const lastLocale = { read: () => Promise.resolve<LocaleCode>("fr") };
+
+      expect(await offlinePageLocale(navigation(path), lastLocale)).toBe("fr");
+    },
+  );
+
+  it("speaks English with no locale prefix and no last-used locale", async () => {
+    const lastLocale = { read: () => Promise.resolve(undefined) };
+
+    expect(await offlinePageLocale(navigation("/missing"), lastLocale)).toBe("en");
+  });
+
+  it("builds the offline page in the navigation's locale", async () => {
+    const deps = dependencies(new MemoryCache(), offline());
+    await deps.lastLocale.remember("ko");
+
+    await fetchRuntimeRequest(navigation("/es/missing"), deps);
+    await fetchRuntimeRequest(navigation("/missing"), deps);
+
+    expect(deps.offlinePage.mock.calls).toEqual([["es"], ["ko"]]);
+  });
+});
 
 describe("service-worker offline launch from start_url", () => {
   it("redirects an offline launch at / to the last-used locale's cached home", async () => {
@@ -834,6 +876,21 @@ describe("service-worker font asset handling", () => {
     );
     expect(isLazyAsset("/_app/immutable/assets/0.C1a2b3.css", noChunks)).toBe(false);
     expect(isLazyAsset("/fonts/petrona-latin.woff2", noChunks)).toBe(false);
+  });
+
+  it("finds a locale's font stylesheet among the build assets", () => {
+    const assets = [
+      "/_app/immutable/assets/0.C1a2b3.css",
+      "/_app/immutable/assets/locale-fonts-zh-Hans.fmJl25lL.css",
+      "/_app/immutable/assets/locale-fonts-zh-Hant.BOkA_ads.css",
+      "/_app/immutable/assets/locale-fonts-ja.BNLoUt8C.css",
+    ];
+
+    expect(localeFontStylesheetAsset(assets, "ja")).toBe(assets[3]);
+    expect(localeFontStylesheetAsset(assets, "zh-Hant")).toBe(assets[2]);
+    expect(localeFontStylesheetAsset(assets, "zh-Hans")).toBe(assets[1]);
+    expect(localeFontStylesheetAsset(assets, "en")).toBeUndefined();
+    expect(localeFontStylesheetAsset(assets, "ko")).toBeUndefined();
   });
 });
 

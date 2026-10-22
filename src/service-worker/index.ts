@@ -1,3 +1,9 @@
+// Bundled rather than precached from `static/`: Cloudflare Pages redirects `/offline.html` to
+// `/offline`, which the locale middleware redirects again to a 404, & one failed precache request
+// aborts the whole install (#226). `offlinePagePlugin` renders it with the app's fonts & theme,
+// and every locale's text for the worker to pick from (#206).
+import OFFLINE_PAGE from "virtual:mfg/offline-page";
+
 import {
   cachesNoPageNeeds,
   CLIENT_VERSIONS_CACHE,
@@ -7,6 +13,7 @@ import {
   versionsInUse,
 } from "#lib/pwa/client-versions.js";
 import { IMMUTABLE_DIRECTORY, VERSION_METADATA_PATH } from "#lib/pwa/config.js";
+import { offlinePageHtml } from "#lib/pwa/offline-page.js";
 import {
   cacheLocaleChunks,
   cacheLocaleHome,
@@ -16,6 +23,7 @@ import {
   isLazyAsset,
   isSkipWaitingRequest,
   lastLocaleStore,
+  localeFontStylesheetAsset,
   mayDeleteRetainedCaches,
   obsoleteCaches,
   OFFLINE_LOCALES_CACHE,
@@ -31,11 +39,6 @@ import {
 import { LOCALE_CODES } from "#lib/types/locale.js";
 import { version } from "$app/env";
 import { assets, immutable, prerendered } from "$app/manifest";
-
-// Bundled rather than precached from `static/`: Cloudflare Pages redirects `/offline.html` to
-// `/offline`, which the locale middleware redirects again to a 404, & one failed precache request
-// aborts the whole install (#226). `offlinePagePlugin` renders it with the app's fonts & theme.
-import OFFLINE_HTML from "./offline.html?raw";
 
 import type { CacheLocalesReply, LocaleNameChunks } from "#lib/pwa/service-worker-cache.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -329,8 +332,11 @@ sw.addEventListener("fetch", (event) => {
           // This version's copy first: an older version's cache kept for an open page may hold
           // the same page from that version's build.
           matchCache: async (request) => (await cache.match(request)) ?? caches.match(request),
-          offlinePage: () =>
-            new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html; charset=utf-8" } }),
+          offlinePage: (locale) =>
+            new Response(
+              offlinePageHtml(OFFLINE_PAGE, locale, localeFontStylesheetAsset(ASSETS, locale)),
+              { headers: { "Content-Type": "text/html; charset=utf-8" } },
+            ),
           pagePaths: PAGE_PATHS,
           waitUntil: (promise) => {
             event.waitUntil(promise);
