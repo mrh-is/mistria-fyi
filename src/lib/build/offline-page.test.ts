@@ -69,6 +69,24 @@ describe("renderOfflinePage", () => {
     expect(inlineScriptHashes(html)).toEqual(inlineScriptHashes(APP_HTML));
   });
 
+  it("parses mixed-case tags and ignores comments and external scripts", () => {
+    const html = renderOfflinePage(
+      TEMPLATE,
+      APP_CSS,
+      `<!-- <script>commentedOut()</script> -->
+<SCRIPT data-label=">">first()</SCRIPT>
+<script src="external.js"></script>
+<META content="#fff" NAME="theme-color">
+<ScRiPt>second()</sCrIpT>`,
+    );
+
+    expect(html).toContain('<script data-label=">">first()</script>');
+    expect(html).toContain('<meta content="#fff" name="theme-color">');
+    expect(html).toContain("<script>second()</script>");
+    expect(html).not.toContain("commentedOut");
+    expect(html).not.toContain("external.js");
+  });
+
   it("throws when the template has no slot", () => {
     expect(() => renderOfflinePage("<html></html>", APP_CSS, APP_HTML)).toThrow(/slot/);
   });
