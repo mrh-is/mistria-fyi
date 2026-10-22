@@ -1563,6 +1563,7 @@ function validateMount(
   const record = requireRecord(mount, "mount", "mount", diagnostics);
   if (!record) return;
   validateEntities("mount.appearances", record.appearances, references, diagnostics);
+  validateEntities("mount.perks", record.perks, references, diagnostics);
 }
 
 function validatePets(

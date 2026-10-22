@@ -311,6 +311,10 @@ function assignMountVisibility(trackerData: TrackerData, ctx: SourceVisibilityCo
     if (isMount(appearance)) continue;
     appearance.visibility = andSimplify([appearance.visibility ?? ALWAYS_VISIBLE, mountGate]);
   }
+  // The Horse Statue sells the perks beside the Mistmare, so their own source carries its gate.
+  for (const perk of Object.values(trackerData.mount.perks)) {
+    assignSourcedEntityVisibility(perk, ctx);
+  }
 }
 
 function assignOrderedChain(

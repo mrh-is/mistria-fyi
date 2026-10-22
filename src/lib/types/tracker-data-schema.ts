@@ -255,6 +255,7 @@ export const MinesBiomeSchema = v.strictObject({
 });
 export const MountSchema = v.strictObject({
   appearances: v.record(id("MountAppearanceId"), SourcedEntitySchema),
+  perks: v.record(id("PerkId"), SourcedEntitySchema),
 });
 export const MuseumWingSetSchema = v.strictObject({ items: v.array(id("ItemId")) });
 export const MuseumWingSchema = v.strictObject({

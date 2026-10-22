@@ -58807,6 +58807,59 @@
           "questId": "find_the_weathervane"
         }
       }
+    },
+    "perks": {
+      "horsepower": {
+        "sources": [
+          {
+            "type": "horse_statue",
+            "cost": 200,
+            "questId": "find_the_weathervane",
+            "visibility": {
+              "type": "questAvailable",
+              "questId": "find_the_weathervane"
+            }
+          }
+        ],
+        "visibility": {
+          "type": "questAvailable",
+          "questId": "find_the_weathervane"
+        }
+      },
+      "harvest_horse": {
+        "sources": [
+          {
+            "type": "horse_statue",
+            "cost": 190,
+            "questId": "find_the_weathervane",
+            "visibility": {
+              "type": "questAvailable",
+              "questId": "find_the_weathervane"
+            }
+          }
+        ],
+        "visibility": {
+          "type": "questAvailable",
+          "questId": "find_the_weathervane"
+        }
+      },
+      "nice_ride": {
+        "sources": [
+          {
+            "type": "horse_statue",
+            "cost": 205,
+            "questId": "find_the_weathervane",
+            "visibility": {
+              "type": "questAvailable",
+              "questId": "find_the_weathervane"
+            }
+          }
+        ],
+        "visibility": {
+          "type": "questAvailable",
+          "questId": "find_the_weathervane"
+        }
+      }
     }
   },
   "museum": {

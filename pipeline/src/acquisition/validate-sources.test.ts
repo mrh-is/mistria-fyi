@@ -94,7 +94,7 @@ describe("validateAcquisitionSources", () => {
 
   it("accepts a Horse Statue source on a mount appearance", () => {
     const source = { type: "horse_statue", cost: 100, questId: "known_quest" };
-    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } } } };
+    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } }, perks: {} } };
     const references = AcquisitionReferenceIndex.from({
       native: { quests: ["known_quest"] },
     });
@@ -102,6 +102,20 @@ describe("validateAcquisitionSources", () => {
     expect(() => {
       validateAcquisitionSources(assembly(trackerData), references);
     }).not.toThrow();
+  });
+
+  it("rejects a Horse Statue source naming an unknown quest on a mount perk", () => {
+    const source = { type: "horse_statue", cost: 200, questId: "unknown_quest" };
+    const trackerData = {
+      mount: { appearances: {}, perks: { horsepower: { sources: [source] } } },
+    };
+    const references = AcquisitionReferenceIndex.from({
+      native: { quests: ["known_quest"] },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(assembly(trackerData), references);
+    }).toThrow(AcquisitionSourceValidationError);
   });
 
   it.each([
@@ -112,7 +126,7 @@ describe("validateAcquisitionSources", () => {
       source: { type: "horse_statue", cost: 100, questId: "unknown_quest" },
     },
   ])("rejects a Horse Statue source with $name", ({ source }) => {
-    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } } } };
+    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } }, perks: {} } };
     const references = AcquisitionReferenceIndex.from({
       native: { quests: ["known_quest"] },
     });
@@ -818,7 +832,7 @@ function assembly(partial: Record<string, unknown>): AcquisitionSourceAssembly {
     cosmetics: {},
     items: {},
     mines: { biomes: [], spells: {} },
-    mount: { appearances: {} },
+    mount: { appearances: {}, perks: {} },
     museum: {},
     pets: { cosmetics: {}, skins: {} },
     quests: {},
@@ -1154,6 +1168,11 @@ function realShapes(): Record<string, unknown> {
       appearances: {
         mistmare: {
           sources: [{ type: "horse_statue", cost: 100, questId: "repair_the_bridge" }],
+        },
+      },
+      perks: {
+        horsepower: {
+          sources: [{ type: "horse_statue", cost: 200, questId: "repair_the_bridge" }],
         },
       },
     },

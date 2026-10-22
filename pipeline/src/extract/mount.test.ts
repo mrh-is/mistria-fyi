@@ -12,6 +12,19 @@ const MOUNT_VARIANTS = {
   mistmare: { acquirable: false, name: "Mistmare" },
 };
 
+const MOUNT_MENU = {
+  name: "Mistmare",
+  tier_1: [
+    { essence: 200, icon: "spr_horsepower", perk: "horsepower" },
+    { essence: 190, icon: "spr_harvest_horse", perk: "harvest_horse" },
+  ],
+};
+
+function mountMenu(fiddle: ReturnType<typeof makeMountFiddle>): Record<string, unknown> {
+  const ui = fiddle.ui as { skill_menu: { mount: Record<string, unknown> } };
+  return ui.skill_menu.mount;
+}
+
 function makeMountFiddle(variants: Record<string, Record<string, unknown>> = MOUNT_VARIANTS) {
   return makeFiddle({
     cutscenes: {
@@ -26,9 +39,15 @@ function makeMountFiddle(variants: Record<string, Record<string, unknown>> = MOU
       giant_chicken_white: "Big White Chicken",
       mistmare: "Mistmare",
     },
+    perks: {
+      harvest_horse: { name: "Harvest Horse" },
+      horsepower: { name: "Horsepower" },
+      mining_1: { name: "Mining I" },
+    },
     quests: { story_quests: { find_the_weathervane: {} } },
     ranching: { animals: { horse: { core: { name: "Horse" }, variants } } },
     requirements: { repaired_horse_statue: { seen_cutscene: "find_the_weathervane_setup" } },
+    ui: { skill_menu: { mount: structuredClone(MOUNT_MENU) } },
   });
 }
 
@@ -85,5 +104,58 @@ describe("extractMount", () => {
     expect(() => extract(fiddle)).toThrow(
       "Expected nonempty string for mount.appearances.mistmare",
     );
+  });
+
+  it("emits each Mistmare perk with its Horse Statue essence cost", () => {
+    const { mount, perkLocaleNames } = extract(makeMountFiddle());
+    expect(mount.perks).toEqual({
+      harvest_horse: {
+        sources: [{ type: "horse_statue", cost: 190, questId: "find_the_weathervane" }],
+      },
+      horsepower: {
+        sources: [{ type: "horse_statue", cost: 200, questId: "find_the_weathervane" }],
+      },
+    });
+    expect(perkLocaleNames.en).toEqual({
+      harvest_horse: "Harvest Horse",
+      horsepower: "Horsepower",
+    });
+  });
+
+  it("localizes perk names from the perks table", () => {
+    const localizer = stubLocalizer();
+    const fiddle = makeMountFiddle();
+    const context = createRequirementContext(
+      fiddle.requirements as Record<string, unknown>,
+      buildCutsceneQuestMap(fiddle),
+    );
+    extractMount(fiddle, localizer, context);
+    expect(localizer.localizeField).toHaveBeenCalledWith(
+      expect.objectContaining({ category: "perks", field: "name", id: "horsepower" }),
+    );
+  });
+
+  it("throws when the mount skill menu is missing", () => {
+    const fiddle = makeMountFiddle();
+    fiddle.ui = { skill_menu: {} };
+    expect(() => extract(fiddle)).toThrow("ui/skill_menu/mount.toml");
+  });
+
+  it("throws when the mount skill menu has a tier beyond the first", () => {
+    const fiddle = makeMountFiddle();
+    mountMenu(fiddle).tier_2 = [{ essence: 300, perk: "horsepower" }];
+    expect(() => extract(fiddle)).toThrow('Unreviewed mount perk tier "tier_2"');
+  });
+
+  it("throws when a mount perk has no essence cost", () => {
+    const fiddle = makeMountFiddle();
+    mountMenu(fiddle).tier_1 = [{ perk: "horsepower" }];
+    expect(() => extract(fiddle)).toThrow("mount.perks.horsepower");
+  });
+
+  it("throws when a mount perk has no name in the perks table", () => {
+    const fiddle = makeMountFiddle();
+    mountMenu(fiddle).tier_1 = [{ essence: 205, perk: "nice_ride" }];
+    expect(() => extract(fiddle)).toThrow("mount.perks.nice_ride");
   });
 });

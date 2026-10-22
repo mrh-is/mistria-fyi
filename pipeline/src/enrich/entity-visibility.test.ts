@@ -81,7 +81,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     festivals: {},
     items: {},
     mines: { biomes: [], spells: {} },
-    mount: { appearances: {} },
+    mount: { appearances: {}, perks: {} },
     museum: {},
     perkTierLevels: [1, 10, 20, 45, 60],
     pets: { cosmetics: {}, skins: {} },
@@ -1156,6 +1156,7 @@ describe("assignEntityVisibility — mount appearances", () => {
             sources: [{ type: "horse_statue", cost: 100, questId: "find_the_weathervane" }],
           },
         },
+        perks: {},
       },
     });
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
@@ -1164,5 +1165,27 @@ describe("assignEntityVisibility — mount appearances", () => {
     expect(
       trackerData.mount.appearances["giant_chicken_gold" as MountAppearanceId].visibility,
     ).toEqual(gate);
+  });
+
+  it("hides the Mistmare's perks until the Mistmare itself is revealed", () => {
+    const trackerData = makeTrackerData({
+      mount: {
+        appearances: {
+          mistmare: {
+            sources: [{ type: "horse_statue", cost: 100, questId: "find_the_weathervane" }],
+          },
+        },
+        perks: {
+          horsepower: {
+            sources: [{ type: "horse_statue", cost: 200, questId: "find_the_weathervane" }],
+          },
+        },
+      },
+    });
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+    expect(trackerData.mount.perks["horsepower" as PerkId].visibility).toEqual({
+      type: "questAvailable",
+      questId: "find_the_weathervane",
+    });
   });
 });
