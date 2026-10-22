@@ -61,10 +61,13 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
   The epic gives the compressed size of the pruned save: about 161 KB for a late-game farm & 79 KB
   for a new one (the full late-game save is about 290 KB compressed, per
   [save-file-format.md](save-file-format.md#size-profile-v102-late-game-save)). A 2026-10-22
-  measurement on v1.0.8 autosaves, pruned & re-deflated at zlib's default level, gave about 178 KB
-  for a late-game farm (from 333 KB) & 83 KB for an early one (from 107 KB). Confirm the figures on
-  the courier's own pruned container, before encryption; the relay’s 256 KB bundle cap sits above
-  them, with less headroom for a late-game farm than the epic's figure suggests.
+  measurement on v1.0.8 autosaves gave 181,618 bytes (177 KiB) for a late-game farm, from 340,523
+  (333 KiB), & 84,339 bytes (82 KiB) for an early one, from 109,379 (107 KiB). The method: inflate
+  the save, drop the three entries, rebuild the u64 container (entry count, then each name length,
+  name, data length, & data) with the remaining entries in their original order, & compress it with
+  Node’s `zlib.deflateSync` at the default level. Confirm the figures on the courier’s own pruned
+  container, before encryption; the relay’s 256 KB bundle cap sits above them, with less headroom
+  for a late-game farm than the epic’s figure suggests.
 - **Envelope.** The file name, modification time, & `playtime` travel inside the ciphertext, never
   beside it.
 - **One courier per profile.** Web Locks allow a single courier per browser profile; a second window
