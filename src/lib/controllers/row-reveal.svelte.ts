@@ -33,7 +33,9 @@ interface PendingList {
   step: () => boolean;
 }
 
-// Lists waiting for rows, in mount order, so the first sections on the page fill first.
+// Lists waiting for rows. Each step goes to the list at the front, which then moves to the back,
+// so every waiting list fills at the same pace: one opened later (or widened by a search) doesn't
+// wait for a long list ahead of it to finish.
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Scheduler bookkeeping, not rendered state.
 const pending = new Set<PendingList>();
 let frame: number | undefined;
@@ -65,7 +67,8 @@ function runFrame(): void {
   do {
     const next = pending.values().next();
     if (next.done === true) break;
-    if (!next.value.step()) pending.delete(next.value);
+    pending.delete(next.value);
+    if (next.value.step()) pending.add(next.value);
     flushSync();
   } while (performance.now() < deadline);
   if (pending.size > 0) frame = requestAnimationFrame(runFrame);
@@ -124,8 +127,12 @@ export function createRowReveal(getTotal: () => number): RowReveal {
       return count;
     },
     measure(renderedHeight) {
-      if (count === 0 || renderedHeight <= 0) return;
-      rowHeight = renderedHeight / count;
+      // Untracked: a caller's effect re-runs on a new height, which already includes every rendered
+      // row. Re-running when only the count grows (rows added within a frame, before the next
+      // measurement) would divide the old height by the new count & shrink the reserved space.
+      const rendered = untrack(() => count);
+      if (rendered === 0 || renderedHeight <= 0) return;
+      rowHeight = renderedHeight / rendered;
       lastRowHeight = rowHeight;
     },
     get reservedHeight() {
