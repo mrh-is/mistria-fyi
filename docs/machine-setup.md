@@ -94,9 +94,11 @@ Each item names the doctor section that checks it.
       profile: `export R2_UPLOAD_TOKEN=…` & `export CLOUDFLARE_ACCOUNT_ID=…`. Never put the token in
       a committed file or print it. Every process started from that shell, agent sessions included,
       can read it, so close the shell after uploading.
-   5. Confirm with the next real upload (`pnpm run sprites:upload`; a `DRY_RUN=1` run never calls
-      Wrangler). A bare `pnpm exec wrangler whoami` doesn't see the token, since only the upload
-      scripts map it.
+   5. Confirm the token can reach R2:
+      `CLOUDFLARE_API_TOKEN="$R2_UPLOAD_TOKEN" pnpm exec wrangler r2 bucket list` should list
+      `mistria-fyi-assets`. A real upload doesn't prove it, because uploads skip every sprite that
+      is already current and so may never call Wrangler. Without `R2_UPLOAD_TOKEN`, the upload
+      scripts drop any inherited `CLOUDFLARE_API_TOKEN` & fall back to `wrangler login`.
 
    The doctor checks only that both variables are set; it never prints or validates the token. A
    token has no interactive step, so it can be revoked & replaced in the dashboard at any time.

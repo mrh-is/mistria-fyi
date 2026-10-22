@@ -89,10 +89,12 @@ const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
  * Wrangler's environment: `R2_UPLOAD_TOKEN` becomes its `CLOUDFLARE_API_TOKEN`, for this child
  * only. A separate name keeps the R2 token from replacing the read-only Pages token that
  * `cloudflare:logs` & cloud agents hold in `CLOUDFLARE_API_TOKEN` (docs/cloud-agent-environments.md).
- * Without it, Wrangler falls back to whatever the environment or `wrangler login` provides.
+ * Without it, that inherited token is dropped too, so Wrangler falls back to `wrangler login`
+ * rather than failing every put with a token that can't write R2.
  */
 export function wranglerEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
-  return env.R2_UPLOAD_TOKEN ? { ...env, CLOUDFLARE_API_TOKEN: env.R2_UPLOAD_TOKEN } : env;
+  const { CLOUDFLARE_API_TOKEN: _inherited, ...rest } = env;
+  return env.R2_UPLOAD_TOKEN ? { ...rest, CLOUDFLARE_API_TOKEN: env.R2_UPLOAD_TOKEN } : rest;
 }
 
 /**

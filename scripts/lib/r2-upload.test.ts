@@ -105,9 +105,10 @@ describe("wranglerEnv", () => {
     ).toEqual({ CLOUDFLARE_API_TOKEN: "r2-admin", PATH: "/bin", R2_UPLOAD_TOKEN: "r2-admin" });
   });
 
-  it("leaves the environment alone without an upload token", () => {
-    const env = { CLOUDFLARE_API_TOKEN: "pages-read", R2_UPLOAD_TOKEN: "" };
-    expect(wranglerEnv(env)).toBe(env);
+  it("drops an inherited CLOUDFLARE_API_TOKEN without an upload token, leaving wrangler login", () => {
+    expect(
+      wranglerEnv({ CLOUDFLARE_API_TOKEN: "pages-read", PATH: "/bin", R2_UPLOAD_TOKEN: "" }),
+    ).toEqual({ PATH: "/bin", R2_UPLOAD_TOKEN: "" });
   });
 });
 
