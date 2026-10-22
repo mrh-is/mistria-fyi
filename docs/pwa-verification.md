@@ -221,8 +221,9 @@ the console instead.
 
 1. **Connect.** On the iPhone, turn on Settings → Apps → Safari → Advanced → Web Inspector. On the
    Mac, turn on Safari → Settings → Advanced → “Show features for web developers”, then connect the
-   iPhone by cable (or pair it once for network inspection). Its pages appear under Develop → [the
-   iPhone’s name].
+   iPhone by cable. Its pages appear under Develop → [the iPhone’s name]. Inspecting over the
+   network works too, but it disconnects once the phone goes offline; a cable keeps the inspector
+   attached through step 5.
 2. **Test the right build in the right container.** Open the PR’s branch preview, not production.
    For the offline-launch check, add it to the Home Screen and inspect the Home Screen app: it has
    its own storage, worker, & caches, separate from Safari’s tabs, so a working Safari tab proves
@@ -265,6 +266,10 @@ the console instead.
    `cache-<version>` should hold `/` and the home page of each language used (`/en`, …), and
    `offline-locales-v1` should hold `/__last-locale`.
 
-5. **Offline launch.** Turn on Airplane Mode, force-quit the Home Screen app from the app switcher,
-   and launch it from its icon. It should open the last-used language’s home page, not the offline
-   page. Record the iOS version in the browser record.
+5. **Offline launch.** Safari’s Web Inspector can’t simulate offline, and the iPhone’s network
+   conditioning needs Xcode, which this project doesn’t require, so take the phone offline for real.
+   Turn on Airplane Mode and check that Wi-Fi is off too (Airplane Mode leaves it on if it was
+   turned back on in Airplane Mode before). Force-quit the Home Screen app from the app switcher and
+   launch it from its icon. It should open the last-used language’s home page, not the offline page.
+   The landing page is the result, so inspecting over the network works too: note where the launch
+   lands, then turn Airplane Mode off and inspect. Record the iOS version in the browser record.
