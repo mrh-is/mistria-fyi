@@ -46,6 +46,17 @@ export interface Resolution {
 export type ResolutionRecord = Record<string, Resolution>;
 
 /**
+ * Where each fact came from & which save diffs the player resolved; carried by backups. Keyed by
+ * `factKey`, including facts whose IDs this build doesn't know, so nothing here is dropped.
+ */
+export interface ProgressHistory {
+  /** The `playtime` of the last applied save, if any. */
+  lastSavePlaytime?: number;
+  provenance: ProvenanceRecord;
+  resolutions: ResolutionRecord;
+}
+
+/**
  * The key for one fact: its `ProgressState` field, then the IDs that locate it within the field
  * (`almanac/turnip`, `animals/chicken/red`, `mineFloor`). Game IDs never contain `/`.
  */
