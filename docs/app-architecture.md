@@ -471,3 +471,64 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   rename only costs a re-download, forgets which locales a player kept offline, or keeps older
   caches until the open pages report their versions again.
 - Internal identifiers such as category keys, message keys, & component names.
+
+## 8. Feedback credentials
+
+`/api/feedback` files issues on `mrh-is/mistria-fyi` as a GitHub App installation.
+`src/lib/server/github-app-auth.ts` signs a nine-minute RS256 App JWT with Web Crypto, exchanges it
+at `POST /app/installations/{id}/access_tokens`, & caches the installation token per isolate until
+five minutes before its `expires_at`; concurrent requests share one exchange. The endpoint reads
+three settings, & uses the App only once all three exist:
+
+- `GITHUB_APP_ID`: the App ID (or client ID), the JWT issuer. Not secret.
+- `GITHUB_APP_INSTALLATION_ID`: the App's installation on this repository. Not secret.
+- `GITHUB_APP_PRIVATE_KEY`: the App's private key as a PKCS#8 PEM (`BEGIN PRIVATE KEY`). Secret,
+  production only.
+
+Until then the endpoint falls back to the legacy fine-grained `GITHUB_FEEDBACK_TOKEN`, & with
+neither it returns `503` & logs only the missing variable names. A failed exchange returns the same
+`503` as a failed issue request & logs only GitHub's status & request ID, never the key, the JWT, or
+a token. App credentials that fail never fall back to the legacy token.
+
+`wrangler.toml` is the source of truth for the Pages project's configuration, so plain-text
+variables can't be set in the dashboard. Store all three settings as production **secrets**: the IDs
+aren't sensitive, but a secret keeps them production-only without restating the KV binding in a
+per-environment `wrangler.toml` block.
+
+### Setting up the App (maintainer)
+
+1. On GitHub, open **Settings → Developer settings → GitHub Apps → New GitHub App** for the account
+   that owns `mrh-is/mistria-fyi`. Set the homepage URL to `https://mistria.fyi`, clear **Webhook →
+   Active**, & under **Repository permissions** set only **Issues: Read and write** (GitHub adds
+   **Metadata: Read-only** itself). Leave every other permission at **No access**, choose **Only on
+   this account**, & create the App. Note its **App ID**.
+2. **Install App → Only select repositories →** `mistria-fyi`. The installation ID is the number at
+   the end of the installation's settings URL (`…/settings/installations/<id>`).
+3. **Generate a private key.** GitHub downloads it as PKCS#1 (`BEGIN RSA PRIVATE KEY`), which Web
+   Crypto can't import, so convert it:
+   `openssl pkcs8 -topk8 -nocrypt -in app.pem -out app-pkcs8.pem`.
+4. Store the settings as production secrets. Each command prompts for the value, or reads it from
+   standard input:
+
+   ```sh
+   pnpm exec wrangler pages secret put GITHUB_APP_ID --project-name mistria-fyi
+   pnpm exec wrangler pages secret put GITHUB_APP_INSTALLATION_ID --project-name mistria-fyi
+   pnpm exec wrangler pages secret put GITHUB_APP_PRIVATE_KEY --project-name mistria-fyi < app-pkcs8.pem
+   ```
+
+   The dashboard works too: **Workers & Pages → mistria-fyi → Settings → Variables and Secrets →
+   Production → Add**, type **Secret**. Confirm that none of the three appear under **Preview**,
+   then delete both local `.pem` files; GitHub can't re-download a key, but you can generate
+   another.
+
+5. Redeploy production (secrets apply to new deployments), submit feedback, & confirm the issue's
+   author is the App's bot account.
+6. Remove the legacy token, then revoke it under **Settings → Developer settings → Personal access
+   tokens → Fine-grained tokens**:
+   `pnpm exec wrangler pages secret delete GITHUB_FEEDBACK_TOKEN --project-name mistria-fyi`.
+
+The App key doesn't expire, so there is no rotation schedule. To replace it, generate a second key,
+store it as above, redeploy, then delete the old key in the App's settings. If the key leaks, delete
+it there first: GitHub rejects JWTs signed with a deleted key immediately, though an installation
+token already issued stays valid for up to an hour unless you also suspend the installation. See the
+[decision record](decisions/2026-10-22-feedback-github-app.md).
