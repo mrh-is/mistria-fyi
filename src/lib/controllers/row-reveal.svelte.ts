@@ -8,10 +8,10 @@ import { flushSync, untrack } from "svelte";
 export const INITIAL_ROW_BUDGET = 30;
 
 /** Rows a list reveals per step; a frame checks its time budget between steps. */
-export const REVEAL_STEP = 6;
+const REVEAL_STEP = 6;
 
 /** Rows that may reappear without waiting for a frame, such as an undone completion. */
-export const RESTORE_SLACK = INITIAL_ROW_BUDGET;
+export const RESTORE_SLACK = 30;
 
 /** Script time per animation frame spent revealing rows, leaving room for layout & paint. */
 const FRAME_BUDGET_MS = 8;
