@@ -1,4 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { installationTokens } from "#lib/server/github-app-auth.js";
+import { generateTestRsaKey } from "#lib/test-utils/rsa-test-key.js";
 
 import { OPTIONS as handleOptions, POST as handlePost } from "./+server.js";
 
@@ -70,6 +73,75 @@ const turnstileSuccessResponse = () => Response.json({ success: true }, { status
 
 const turnstileFailureResponse = () => Response.json({ success: false }, { status: 200 });
 
+const INSTALLATION_TOKEN = "ghs_test_installation_token";
+
+const installationTokenResponse = () =>
+  Response.json(
+    { expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), token: INSTALLATION_TOKEN },
+    { status: 201 },
+  );
+
+let testPrivateKeyPem: string;
+
+beforeAll(async () => {
+  ({ privateKeyPem: testPrivateKeyPem } = await generateTestRsaKey());
+});
+
+beforeEach(() => {
+  // The installation token cache is isolate-wide, so one test's token must not leak into the next.
+  installationTokens.clear();
+});
+
+function appPlatform(overrides: Partial<WorkerEnv> = {}): { env: WorkerEnv } {
+  const { env: base } = mockPlatform();
+  return {
+    env: {
+      ...base,
+      GITHUB_APP_ID: "123456",
+      GITHUB_APP_INSTALLATION_ID: "7890",
+      GITHUB_APP_PRIVATE_KEY: testPrivateKeyPem,
+      ...overrides,
+    },
+  };
+}
+
+/** Every argument passed to the spied console methods, flattened for secret scanning. */
+function consoleOutput(...spies: { mock: { calls: unknown[][] } }[]): string {
+  return spies
+    .flatMap((spy) => spy.mock.calls)
+    .map((args) =>
+      args
+        .map((arg) =>
+          arg instanceof Error
+            ? `${arg.name}: ${arg.message} ${arg.stack ?? ""}`
+            : JSON.stringify(arg),
+        )
+        .join(" "),
+    )
+    .join("\n");
+}
+
+function expectNoSecrets(output: string): void {
+  const keyBody = testPrivateKeyPem.split("\n")[1];
+  expect(output).not.toContain(keyBody);
+  expect(output).not.toContain("-----BEGIN");
+  expect(output).not.toContain(INSTALLATION_TOKEN);
+  expect(output).not.toContain("ghp_test_token");
+  expect(output).not.toContain("test-turnstile-secret");
+  // A JWT is three base64url segments, & an App JWT's header always starts with `eyJ`.
+  expect(output).not.toMatch(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+}
+
+function countCalls(
+  fetchMock: ReturnType<typeof vi.fn>,
+  matches: (url: string) => boolean,
+): number {
+  return fetchMock.mock.calls.filter((args: unknown[]) => matches(String(args[0]))).length;
+}
+
+const isExchange = (url: string) => url.endsWith("/access_tokens");
+const isIssue = (url: string) => url.endsWith("/issues");
+
 const githubSuccessResponse = () =>
   Response.json(
     {
@@ -81,7 +153,7 @@ const githubSuccessResponse = () =>
 
 function getGitHubCall(fetchMock: ReturnType<typeof vi.fn>): [url: string, options: RequestInit] {
   const call = fetchMock.mock.calls.find(
-    (args: unknown[]) => typeof args[0] === "string" && args[0].includes("github"),
+    (args: unknown[]) => typeof args[0] === "string" && args[0].endsWith("/issues"),
   );
   if (!call) {
     throw new Error("No GitHub API call found");
@@ -118,11 +190,14 @@ function mockPlatform(overrides?: {
 }
 
 function routingFetchMock(
-  overrides: { github?: Response; turnstile?: Response } = {},
+  overrides: { github?: Response; installationToken?: Response; turnstile?: Response } = {},
 ): ReturnType<typeof vi.fn> {
   return vi.fn((url: string) => {
     if (typeof url === "string" && url.includes("turnstile")) {
       return Promise.resolve(overrides.turnstile ?? turnstileSuccessResponse());
+    }
+    if (typeof url === "string" && url.endsWith("/access_tokens")) {
+      return Promise.resolve(overrides.installationToken ?? installationTokenResponse());
     }
     return Promise.resolve(overrides.github ?? githubSuccessResponse());
   });
@@ -544,6 +619,186 @@ describe("POST /api/feedback", () => {
       method: "POST",
     });
     await expect(callPost(request)).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe("POST /api/feedback GitHub credentials", () => {
+  it("files the issue with an App installation token when the App is configured", async () => {
+    const fetchMock = routingFetchMock();
+    const response = await callPost(makeRequest(validPayload), {
+      fetchMock,
+      platform: appPlatform({ GITHUB_FEEDBACK_TOKEN: "" }),
+    });
+
+    expect(response.status).toBe(200);
+    const exchangeCall = fetchMock.mock.calls.find((args: unknown[]) =>
+      isExchange(String(args[0])),
+    ) as [string, RequestInit] | undefined;
+    expect(exchangeCall?.[0]).toBe("https://api.github.com/app/installations/7890/access_tokens");
+    const [, options] = getGitHubCall(fetchMock);
+    expect(new Headers(options.headers).get("Authorization")).toBe(`Bearer ${INSTALLATION_TOKEN}`);
+  });
+
+  it("prefers the App over the fallback token", async () => {
+    const fetchMock = routingFetchMock();
+    await callPost(makeRequest(validPayload), { fetchMock, platform: appPlatform() });
+
+    const [, options] = getGitHubCall(fetchMock);
+    expect(new Headers(options.headers).get("Authorization")).toBe(`Bearer ${INSTALLATION_TOKEN}`);
+  });
+
+  it("reuses the cached installation token across requests", async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes("turnstile")) return Promise.resolve(turnstileSuccessResponse());
+      if (isExchange(url)) return Promise.resolve(installationTokenResponse());
+      return Promise.resolve(githubSuccessResponse());
+    });
+
+    await callPost(makeRequest(validPayload), { fetchMock, platform: appPlatform() });
+    await callPost(makeRequest(validPayload), { fetchMock, platform: appPlatform() });
+
+    expect(countCalls(fetchMock, isExchange)).toBe(1);
+    expect(countCalls(fetchMock, isIssue)).toBe(2);
+  });
+
+  it("drops the cached installation token when GitHub rejects it", async () => {
+    vi.spyOn(console, "error").mockReturnValue(undefined);
+    let issueStatus = 401;
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes("turnstile")) return Promise.resolve(turnstileSuccessResponse());
+      if (isExchange(url)) return Promise.resolve(installationTokenResponse());
+      return Promise.resolve(
+        issueStatus === 401
+          ? Response.json({ message: "Bad credentials" }, { status: 401 })
+          : githubSuccessResponse(),
+      );
+    });
+
+    await expect(
+      callPost(makeRequest(validPayload), { fetchMock, platform: appPlatform() }),
+    ).rejects.toMatchObject({ status: 503 });
+    issueStatus = 201;
+    const response = await callPost(makeRequest(validPayload), {
+      fetchMock,
+      platform: appPlatform(),
+    });
+
+    expect(response.status).toBe(200);
+    expect(countCalls(fetchMock, isExchange)).toBe(2);
+  });
+
+  it("falls back to the fine-grained token while the App is partly configured", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockReturnValue(undefined);
+    const fetchMock = routingFetchMock();
+
+    const response = await callPost(makeRequest(validPayload), {
+      fetchMock,
+      platform: appPlatform({ GITHUB_APP_PRIVATE_KEY: "" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(countCalls(fetchMock, isExchange)).toBe(0);
+    const [, options] = getGitHubCall(fetchMock);
+    expect(new Headers(options.headers).get("Authorization")).toBe("Bearer ghp_test_token");
+    expect(consoleWarn).toHaveBeenCalledWith(
+      "GitHub App is partly configured (missing GITHUB_APP_PRIVATE_KEY); using GITHUB_FEEDBACK_TOKEN",
+    );
+    expectNoSecrets(consoleOutput(consoleWarn));
+  });
+
+  it("uses the fine-grained token without a warning when no App setting exists", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockReturnValue(undefined);
+    const fetchMock = routingFetchMock();
+
+    await callPost(makeRequest(validPayload), { fetchMock, platform: mockPlatform() });
+
+    const [, options] = getGitHubCall(fetchMock);
+    expect(new Headers(options.headers).get("Authorization")).toBe("Bearer ghp_test_token");
+    expect(consoleWarn).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 naming only the missing variables when no credentials exist", async () => {
+    const consoleError = vi.spyOn(console, "error").mockReturnValue(undefined);
+    const fetchMock = routingFetchMock();
+
+    await expect(
+      callPost(makeRequest(validPayload), {
+        fetchMock,
+        platform: mockPlatform({ tokenMissing: true }),
+      }),
+    ).rejects.toMatchObject({ status: 503 });
+
+    expect(consoleError).toHaveBeenCalledWith(
+      "GitHub credentials are not configured: missing GITHUB_APP_ID, GITHUB_APP_INSTALLATION_ID, GITHUB_APP_PRIVATE_KEY, GITHUB_FEEDBACK_TOKEN",
+    );
+    expect(countCalls(fetchMock, (url) => url.includes("api.github.com"))).toBe(0);
+  });
+
+  it("returns 503 & logs only status & request ID when the token exchange fails", async () => {
+    const consoleError = vi.spyOn(console, "error").mockReturnValue(undefined);
+    const consoleWarn = vi.spyOn(console, "warn").mockReturnValue(undefined);
+    const fetchMock = routingFetchMock({
+      installationToken: Response.json(
+        { message: "A JSON web token could not be decoded" },
+        { headers: { "X-GitHub-Request-Id": "request-456" }, status: 401 },
+      ),
+    });
+
+    await expect(
+      callPost(makeRequest(validPayload), { fetchMock, platform: appPlatform() }),
+    ).rejects.toMatchObject({ status: 503 });
+
+    expect(consoleError).toHaveBeenCalledWith("GitHub App token exchange failed", {
+      requestId: "request-456",
+      status: 401,
+    });
+    expect(countCalls(fetchMock, isIssue)).toBe(0);
+    expectNoSecrets(consoleOutput(consoleError, consoleWarn));
+  });
+
+  it("does not fall back to the fine-grained token when the App fails", async () => {
+    vi.spyOn(console, "error").mockReturnValue(undefined);
+    const fetchMock = routingFetchMock({
+      installationToken: Response.json({}, { status: 500 }),
+    });
+
+    await expect(
+      callPost(makeRequest(validPayload), { fetchMock, platform: appPlatform() }),
+    ).rejects.toMatchObject({ status: 503 });
+    expect(countCalls(fetchMock, isIssue)).toBe(0);
+  });
+
+  it("returns 503 without echoing key material when the private key is unusable", async () => {
+    const consoleError = vi.spyOn(console, "error").mockReturnValue(undefined);
+    const pkcs1 = testPrivateKeyPem.replaceAll("PRIVATE KEY", "RSA PRIVATE KEY");
+    const fetchMock = routingFetchMock();
+
+    await expect(
+      callPost(makeRequest(validPayload), {
+        fetchMock,
+        platform: appPlatform({ GITHUB_APP_PRIVATE_KEY: pkcs1 }),
+      }),
+    ).rejects.toMatchObject({ status: 503 });
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringMatching(/^GitHub App authentication failed: .*PKCS#8/),
+    );
+    expect(countCalls(fetchMock, (url) => url.includes("api.github.com"))).toBe(0);
+    expectNoSecrets(consoleOutput(consoleError));
+  });
+
+  it("returns 503 without logging the error when the token exchange request throws", async () => {
+    const consoleError = vi.spyOn(console, "error").mockReturnValue(undefined);
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes("turnstile")) return Promise.resolve(turnstileSuccessResponse());
+      return Promise.reject(new TypeError("fetch failed"));
+    });
+
+    await expect(
+      callPost(makeRequest(validPayload), { fetchMock, platform: appPlatform() }),
+    ).rejects.toMatchObject({ status: 503 });
+    expect(consoleError).toHaveBeenCalledWith("GitHub App token exchange request failed");
+    expectNoSecrets(consoleOutput(consoleError));
   });
 });
 
