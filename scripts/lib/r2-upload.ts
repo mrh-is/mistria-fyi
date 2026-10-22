@@ -3,8 +3,9 @@
 // `cmd.exe` can resolve to WSL (#727).
 //
 // Env read by `r2UploadOptionsFromEnv`: R2_BUCKET, ASSET_ORIGIN, PARALLEL, FORCE=1 (re-upload
-// everything), & DRY_RUN=1 (print what would be uploaded without running Wrangler). Wrangler itself
-// gets R2_UPLOAD_TOKEN as its CLOUDFLARE_API_TOKEN (see `wranglerEnv`).
+// everything), DRY_RUN=1 (print what would be uploaded without running Wrangler), & whether
+// R2_UPLOAD_TOKEN is set (a real upload refuses to start without it). Wrangler itself gets
+// R2_UPLOAD_TOKEN as its CLOUDFLARE_API_TOKEN (see `wranglerEnv`).
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
@@ -30,6 +31,8 @@ export interface R2UploadOptions {
   bucket: string;
   dryRun: boolean;
   force: boolean;
+  /** Whether `R2_UPLOAD_TOKEN` is set; never its value. */
+  hasUploadToken: boolean;
   origin: string;
   parallel: number;
 }
@@ -66,6 +69,7 @@ export function r2UploadOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): R2
     bucket: env.R2_BUCKET ?? DEFAULT_BUCKET,
     dryRun: env.DRY_RUN === "1",
     force: env.FORCE === "1",
+    hasUploadToken: Boolean(env.R2_UPLOAD_TOKEN),
     origin: env.ASSET_ORIGIN ?? DEFAULT_ASSET_ORIGIN,
     parallel: Number.isInteger(parallel) && parallel > 0 ? parallel : 8,
   };
@@ -89,8 +93,12 @@ const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
  * Wrangler's environment: `R2_UPLOAD_TOKEN` becomes its `CLOUDFLARE_API_TOKEN`, for this child
  * only. A separate name keeps the R2 token from replacing the read-only Pages token that
  * `cloudflare:logs` & cloud agents hold in `CLOUDFLARE_API_TOKEN` (docs/cloud-agent-environments.md).
- * Without it, that inherited token is dropped too, so Wrangler falls back to `wrangler login`
- * rather than failing every put with a token that can't write R2.
+ * Wrangler also loads `.env` & `.env.local` from the repository root, but a nonempty process value
+ * wins over them, so the token set here always reaches it. Without `R2_UPLOAD_TOKEN`, the inherited
+ * token is dropped, and `r2UploadTree` refuses to upload, so no upload reaches Wrangler without the
+ * token. A `.env` that defines `CLOUDFLARE_API_TOKEN` would still apply to a direct call then; an
+ * empty value can't block it, because Wrangler's `.env` loader treats an empty process value as
+ * unset.
  */
 export function wranglerEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
   const { CLOUDFLARE_API_TOKEN: _inherited, ...rest } = env;
@@ -289,13 +297,21 @@ async function uploadOne(
 
 /**
  * Uploads every `tree.extension` file under `tree.dir`, keyed as `keyPrefix` + its relative path,
- * up to `options.parallel` at a time. Resolves to whether every upload succeeded.
+ * up to `options.parallel` at a time. Resolves to whether every upload succeeded; a real upload
+ * without `R2_UPLOAD_TOKEN` fails before checking or putting anything.
  */
 export async function r2UploadTree(
   tree: R2UploadTree,
   options: R2UploadOptions,
   io: R2UploadIo = defaultIo,
 ): Promise<boolean> {
+  // Without the token, Wrangler would fall back to an account-wide stored login (#115).
+  if (!options.dryRun && !options.hasUploadToken) {
+    io.logError(
+      "R2_UPLOAD_TOKEN is not set; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
+    );
+    return false;
+  }
   const allFiles = await listFiles(tree.dir);
   const files = allFiles.filter((file) => file.endsWith(tree.extension));
   let failed = 0;

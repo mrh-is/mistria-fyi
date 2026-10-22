@@ -89,9 +89,10 @@ installed in the workspace through `@sveltejs/adapter-cloudflare`, and `allowBui
 `pnpm exec wrangler <command>` (including `pnpm exec wrangler login`). `pnpx wrangler` installs a
 separate copy that ignores `allowBuilds` and fails with `ERR_PNPM_IGNORED_BUILDS`. The R2 uploader
 (`scripts/lib/r2-upload.ts`, behind `sprites:upload` & `fonts:upload`) runs the workspace binary the
-same way, handing it `R2_UPLOAD_TOKEN` as `CLOUDFLARE_API_TOKEN`. Wrangler may need access to
-Cloudflare’s API and to its stored credentials (on macOS, under `~/Library/Preferences/.wrangler/`;
-on Windows, under `%APPDATA%\xdg.config\.wrangler\`); never read or expose the stored OAuth token.
+same way, handing it `R2_UPLOAD_TOKEN` as `CLOUDFLARE_API_TOKEN`, and refuses a real upload without
+that token rather than falling back to a stored login. Wrangler may need access to Cloudflare’s API
+and to its stored credentials (on macOS, under `~/Library/Preferences/.wrangler/`; on Windows, under
+`%APPDATA%\xdg.config\.wrangler\`); never read or expose the stored OAuth token.
 
 **Adding or bumping a dependency:** run `pnpm audit --audit-level=moderate` before committing, and
 check what the new package pulls in (`pnpm why <transitive>` for anything flagged). Don’t add a

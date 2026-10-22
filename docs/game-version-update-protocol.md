@@ -133,7 +133,8 @@ would replace an existing sprite, its pixels changed: bump `spriteGeneration` in
 Wrangler authenticates with the R2 upload token: `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` in the
 uploading shell ([machine setup](machine-setup.md#needed-for-specific-work)). If
 `node scripts/machine-doctor.ts --for release` lists the token as a todo, ask the maintainer to set
-it up; an agent never creates, reads, or prints it.
+it up; an agent never creates, reads, or prints it. Without the token, a real upload refuses to
+start; it never falls back to a stored `wrangler login`.
 
 After the upload, rerun the review report (see [Classify changes](#classify-changes)) as the gate:
 it exits 0 only once production has every staged sprite.

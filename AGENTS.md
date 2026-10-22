@@ -74,8 +74,9 @@ not here.
 ## Tool boundaries
 
 - Use pnpm exclusively; the lockfile is pnpm’s. Do not use `npm`, `npx`, `yarn`, `bun`, or `pnpx`.
-  Use workspace Wrangler: `pnpm exec wrangler <command>`, including login. Never read or expose
-  stored OAuth tokens.
+  Use workspace Wrangler: `pnpm exec wrangler <command>`, including login. R2 uploads authenticate
+  only with `R2_UPLOAD_TOKEN`, never a login. Never read or expose stored OAuth tokens or
+  `R2_UPLOAD_TOKEN`; never print the environment of a shell that may hold it.
 - If a harness or hook refuses an edit, stop & report it. Never bypass the refusal with shell
   writes, heredocs, `sed -i`, `perl -i`, or scripts.
 - Before dependency additions or bumps, read
@@ -166,8 +167,9 @@ follow the stop, report, & diagnose procedure below; do not retry with a workaro
 When a local tooling or environment issue blocks the task (a missing tool, wrong runtime version,
 broken or unconfigured install, authentication failure, or any other local setup problem), **stop on
 the first occurrence and report it**, except for the preauthorized standard worktree setup above.
-Wrangler is the standard example: if `pnpm exec wrangler` is missing, unconfigured, or not logged
-in, report that; do not install it, run `wrangler login`, or substitute another upload path.
+Wrangler is the standard example: if `pnpm exec wrangler` is missing, unconfigured, or an upload
+runs without `R2_UPLOAD_TOKEN`, report that; do not install it, run `wrangler login`, or substitute
+another upload path.
 
 - **Report immediately,** before any other action: the failing command or operation, the relevant
   error (redact tokens & other credentials), & the work it blocks.
