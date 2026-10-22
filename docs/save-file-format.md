@@ -43,6 +43,27 @@ The checked-in fixture is exactly 298,271 bytes compressed and 3,216,869 bytes d
 browser importer caps input at 8 MiB and expanded output at 64 MiB, leaving more than 20x headroom
 over this measured late-game save while bounding memory use on constrained devices.
 
+### Field presence, early vs. late game (v1.0.8)
+
+Compared on 2026-10-22 between two local v1.0.8 autosaves: an early-game farm created in 1.0.8 (107
+KB compressed, 1.2 MB decompressed, 34 entries) & a late-game farm created in 0.11.7 & last written
+by 1.0.8 (333 KB compressed, 3.7 MB decompressed, 42 entries).
+
+- **Entries.** Both saves hold every global state entry. The late-game save's extra entries are all
+  `DynamicGrid_*` scene grids.
+- **Keys.** `player` (68 keys), `gamedata` (27), `quests` (7), `header` (8), & `info` (3) carry the
+  same key set in both saves; no key the importer reads is absent early. Early-game progress shows
+  up as empty arrays & objects rather than missing keys: for example `perks`, `spells_learned`,
+  `museum_progress`, `completed_quests`, & `pet_skin_unlocks` are all `[]`.
+- **Null until reached.** Six keys are `null` early & populated late: `player.mount`,
+  `player.pinned_spell`, `player.crown_cooldown`, `player.proposal_date`, `player.wedding_date`, &
+  `gamedata.active_mist_sight`. The importer reads none of them.
+- **World facts.** `gamedata.t2_world_facts` grows from about 6,600 to 9,300 entries, & `renown` is
+  present in both.
+
+`import-save.assets.test.ts` runs both saves through the importer: neither reports an unrecognized
+ID, & every field the save fully records extracts as complete.
+
 ## Entries
 
 A save contains a mix of **global state entries** and **per-location entries**. The importer only

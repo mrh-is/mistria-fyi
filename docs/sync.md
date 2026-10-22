@@ -32,11 +32,12 @@ A Windows laptop with Chrome 155 & Edge, on 2026-10-16:
   save arrived on time.
 
 Checks still open before the network pieces are built (#130, owner hardware): the “every visit”
-grant across a browser restart & in the installed app; early-game & late-game v1.0.8 field presence
-(record it in [save-file-format.md](save-file-format.md)); Steam Deck save access; current Firefox
+grant across a browser restart & in the installed app; Steam Deck save access; current Firefox
 behavior; Android opening the installed app from a scanned URL; & `FileSystemObserver` when the game
 replaces the file instead of rewriting it. Record the results in this document & flag any failed
-assumption on #123.
+assumption on #123. Early- & late-game v1.0.8 field presence is recorded in
+[save-file-format.md](save-file-format.md#field-presence-early-vs-late-game-v108): every key the
+importer reads is present in both, with early progress as empty lists.
 
 ## Shape
 
@@ -59,9 +60,11 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
   `date_photos`, `farm`) & keeps the save’s own container format, so the phone reuses its parser.
   The epic gives the compressed size of the pruned save: about 161 KB for a late-game farm & 79 KB
   for a new one (the full late-game save is about 290 KB compressed, per
-  [save-file-format.md](save-file-format.md#size-profile-v102-late-game-save)). Confirm the figures
-  on the pruned container, before encryption, when building the courier; the relay’s 256 KB bundle
-  cap sits above them.
+  [save-file-format.md](save-file-format.md#size-profile-v102-late-game-save)). A 2026-10-22
+  measurement on v1.0.8 autosaves, pruned & re-deflated at zlib's default level, gave about 178 KB
+  for a late-game farm (from 333 KB) & 83 KB for an early one (from 107 KB). Confirm the figures on
+  the courier's own pruned container, before encryption; the relay’s 256 KB bundle cap sits above
+  them, with less headroom for a late-game farm than the epic's figure suggests.
 - **Envelope.** The file name, modification time, & `playtime` travel inside the ciphertext, never
   beside it.
 - **One courier per profile.** Web Locks allow a single courier per browser profile; a second window
