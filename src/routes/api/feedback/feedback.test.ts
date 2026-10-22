@@ -731,7 +731,7 @@ describe("POST /api/feedback GitHub credentials", () => {
     expect(consoleError).toHaveBeenCalledWith(
       "GitHub credentials are not configured: missing GITHUB_APP_ID, GITHUB_APP_INSTALLATION_ID, GITHUB_APP_PRIVATE_KEY, GITHUB_FEEDBACK_TOKEN",
     );
-    expect(countCalls(fetchMock, (url) => url.includes("api.github.com"))).toBe(0);
+    expect(countCalls(fetchMock, (url) => new URL(url).host === "api.github.com")).toBe(0);
   });
 
   it("returns 503 & logs only status & request ID when the token exchange fails", async () => {
@@ -783,7 +783,7 @@ describe("POST /api/feedback GitHub credentials", () => {
     expect(consoleError).toHaveBeenCalledWith(
       expect.stringMatching(/^GitHub App authentication failed: .*PKCS#8/),
     );
-    expect(countCalls(fetchMock, (url) => url.includes("api.github.com"))).toBe(0);
+    expect(countCalls(fetchMock, (url) => new URL(url).host === "api.github.com")).toBe(0);
     expectNoSecrets(consoleOutput(consoleError));
   });
 
