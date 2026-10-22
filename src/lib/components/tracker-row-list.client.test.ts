@@ -83,16 +83,42 @@ describe("TrackerRowList", () => {
 
     expect(rowCount(view.container)).toBe(INITIAL_ROW_BUDGET);
     expect(screen.queryByRole("button")).toBeNull();
-    const list = view.container.querySelector<HTMLElement>("[data-tracker-row-list]");
-    expect(list?.style.paddingBlockEnd).toMatch(/^[1-9][\d.]*px$/);
     expect(queuedFrames.length).toBeGreaterThan(0);
 
     await runFrames();
 
     expect(rowCount(view.container)).toBe(total);
     expect(view.container.textContent).toContain(`Row ${total - 1}`);
-    expect(list?.style.paddingBlockEnd).toBe("");
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("reserves the unrendered rows' height after the last row, inside the stack", async () => {
+    const view = renderList({ items: names(INITIAL_ROW_BUDGET * 6) });
+    await tick();
+
+    const stack = view.container.querySelector("[data-tracker-row-stack]");
+    const reserve = stack?.lastElementChild as HTMLElement | null | undefined;
+    // The last rendered row isn't the stack's last child, so it keeps square bottom corners.
+    expect(reserve?.matches("[data-tracker-row-reserve]")).toBe(true);
+    expect(reserve?.getAttribute("aria-hidden")).toBe("true");
+    expect(reserve?.style.blockSize).toMatch(/^[1-9][\d.]*px$/);
+
+    await runFrames();
+
+    expect(view.container.querySelector("[data-tracker-row-reserve]")).toBeNull();
+    expect(stack?.lastElementChild?.matches("[data-tracker-row]")).toBe(true);
+  });
+
+  it("marks the list busy until every row renders", async () => {
+    const view = renderList({ items: names(INITIAL_ROW_BUDGET * 3) });
+    await tick();
+
+    const list = view.container.querySelector("[data-tracker-row-list]");
+    expect(list?.getAttribute("aria-busy")).toBe("true");
+
+    await runFrames();
+
+    expect(list?.getAttribute("aria-busy")).toBe("false");
   });
 
   it("shares the first-paint budget between lists mounted together", async () => {

@@ -44,7 +44,10 @@ let budgetResetQueued = false;
 let lastRowHeight = FALLBACK_ROW_HEIGHT_PX;
 
 function claimInitialRows(total: number): number {
-  // The server has no frames to reveal rows in, so it renders every row.
+  // The server has no frames to reveal rows in, so it renders every row (for crawlers & no-JS
+  // readers). Hydration doesn't keep them all: a hydrating list claims from this budget like any
+  // other, so Svelte drops the server rows past it & reveals them again over frames. Only short
+  // lists prerender open today; a long one that does would briefly show reserved space instead.
   if (typeof document === "undefined") return total;
   // One update mounts all its lists in a single synchronous flush, so they share the budget.
   if (!budgetResetQueued) {
@@ -71,7 +74,8 @@ function runFrame(): void {
     if (next.value.step()) pending.add(next.value);
     flushSync();
   } while (performance.now() < deadline);
-  if (pending.size > 0) frame = requestAnimationFrame(runFrame);
+  // A step that mounted or grew another list may have queued the next frame already.
+  if (pending.size > 0) frame ??= requestAnimationFrame(runFrame);
 }
 
 function enqueue(list: PendingList): void {

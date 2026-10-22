@@ -99,4 +99,26 @@ describe("createRowReveal", () => {
     expect(first?.count).toBeGreaterThan(before[0]);
     expect(second?.count).toBeGreaterThan(before[1]);
   });
+
+  it("keeps one frame chain when a step makes another list wait", async () => {
+    stepsPerFrame();
+    let grown = $state(0);
+    cleanups.push(
+      $effect.root(() => {
+        const first = createRowReveal(() => 300);
+        createRowReveal(() => grown);
+        // A revealed row that mounts or grows another list, as a nested list in a row would.
+        $effect(() => {
+          if (first.count > INITIAL_ROW_BUDGET) grown = 300;
+        });
+      }),
+    );
+    flushSync();
+    await nextTask();
+    expect(queuedFrames).toHaveLength(1);
+
+    runQueuedFrames();
+
+    expect(queuedFrames).toHaveLength(1);
+  });
 });
