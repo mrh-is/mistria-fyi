@@ -17,12 +17,11 @@ export const REDIRECTS_RULE_LIMIT = 100;
  */
 export function renderRedirectsFile(): string {
   const rules = LOCALE_CODES.flatMap((locale) =>
-    [...new Set([locale.toLowerCase(), locale.toUpperCase()])]
-      .filter((variant) => variant !== locale)
-      .flatMap((variant) => [
-        `/${variant} /${locale} 308`,
-        `/${variant}/* /${locale}/:splat 308`,
-      ]),
+    [...new Set([locale.toLowerCase(), locale.toUpperCase()])].flatMap((variant) =>
+      variant === locale
+        ? []
+        : [`/${variant} /${locale} 308`, `/${variant}/* /${locale}/:splat 308`],
+    ),
   );
   if (rules.length > REDIRECTS_RULE_LIMIT) {
     throw new Error(`_redirects has ${rules.length} rules; Pages caps it at ${REDIRECTS_RULE_LIMIT}.`);

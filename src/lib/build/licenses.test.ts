@@ -36,15 +36,25 @@ afterEach(() => {
 function installPackage(
   name: string,
   files: Record<string, string>,
-  manifest: Record<string, unknown> = { license: "MIT" },
+  manifest: Record<string, unknown> = {},
 ): string {
   const root = path.join(project, "node_modules", name);
   mkdirSync(root, { recursive: true });
-  writeFileSync(path.join(root, "package.json"), JSON.stringify({ name, version: "1.2.3", ...manifest }));
+  writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({ license: "MIT", name, version: "1.2.3", ...manifest }),
+  );
   for (const [file, text] of Object.entries(files)) {
     writeFileSync(path.join(root, file), text);
   }
   return root;
+}
+
+/** A licenses plugin resolved against the temporary project. */
+function configured(options: Parameters<typeof licensesPlugin>[0]): Plugin {
+  const plugin = licensesPlugin(options);
+  (plugin.configResolved as (config: { root: string }) => void)({ root: project });
+  return plugin;
 }
 
 function entry(overrides: Partial<LicenseEntry> = {}): LicenseEntry {
@@ -222,9 +232,9 @@ describe("noticeBlock", () => {
 describe("licensesPlugin", () => {
   type GenerateBundle = (
     this: {
-      emitFile(file: { fileName: string; source: string; type: string }): void;
+      emitFile: (file: { type: string; fileName: string; source: string }) => void;
       environment: { name: string };
-      error(message: string): never;
+      error: (message: string) => never;
     },
     options: object,
     bundle: Record<string, unknown>,
@@ -233,7 +243,7 @@ describe("licensesPlugin", () => {
   function run(plugin: Plugin, environment: string, ids: string[]) {
     const emitted: { fileName: string; source: string }[] = [];
     const context = {
-      emitFile: (file: { fileName: string; source: string; type: string }) => emitted.push(file),
+      emitFile: (file: { type: string; fileName: string; source: string }) => emitted.push(file),
       environment: { name: environment },
       error: (message: string): never => {
         throw new Error(message);
@@ -241,18 +251,12 @@ describe("licensesPlugin", () => {
     };
     const bundle = {
       "chunk.js": {
-        modules: Object.fromEntries(ids.map((id) => [id, { renderedLength: 10 }])),
         type: "chunk",
+        modules: Object.fromEntries(ids.map((id) => [id, { renderedLength: 10 }])),
       },
     };
     (plugin.generateBundle as GenerateBundle).call(context, {}, bundle);
     return emitted;
-  }
-
-  function configured(options: Parameters<typeof licensesPlugin>[0]): Plugin {
-    const plugin = licensesPlugin(options);
-    (plugin.configResolved as (config: { root: string }) => void)({ root: project });
-    return plugin;
   }
 
   it("emits licenses.txt for the packages a client chunk rendered", () => {
@@ -261,10 +265,10 @@ describe("licensesPlugin", () => {
 
     const [file] = run(configured({ allowlist: {} }), "client", [toPosixPath(path.join(root, "index.js"))]);
 
-    expect(file?.fileName).toBe(LICENSES_FILE_NAME);
-    expect(file?.source).toContain("bundled 1.2.3");
-    expect(file?.source).toContain("Bundled license text");
-    expect(file?.source).not.toContain("unbundled");
+    expect(file.fileName).toBe(LICENSES_FILE_NAME);
+    expect(file.source).toContain("bundled 1.2.3");
+    expect(file.source).toContain("Bundled license text");
+    expect(file.source).not.toContain("unbundled");
   });
 
   it("fails the build when a bundled package has no license text", () => {
@@ -281,7 +285,7 @@ describe("licensesPlugin", () => {
 
     const [file] = run(plugin, "client", [toPosixPath(path.join(root, "i.js"))]);
 
-    expect(file?.source).toContain("Reviewed.");
+    expect(file.source).toContain("Reviewed.");
   });
 
   it("includes packages a listed stylesheet imports", () => {
@@ -291,7 +295,7 @@ describe("licensesPlugin", () => {
 
     const [file] = run(configured({ allowlist: {}, stylesheets: ["src/app.css"] }), "client", []);
 
-    expect(file?.source).toContain("css-lib 1.2.3");
+    expect(file.source).toContain("css-lib 1.2.3");
   });
 
   it("includes a scoped package a listed stylesheet imports", () => {
@@ -301,8 +305,8 @@ describe("licensesPlugin", () => {
 
     const [file] = run(configured({ allowlist: {}, stylesheets: ["src/app.css"] }), "client", []);
 
-    expect(file?.source).toContain("@scope/theme 1.2.3");
-    expect(file?.source).toContain("Scoped license");
+    expect(file.source).toContain("@scope/theme 1.2.3");
+    expect(file.source).toContain("Scoped license");
   });
 
   it("attributes a nested package to itself, not its parent", () => {
@@ -316,8 +320,8 @@ describe("licensesPlugin", () => {
       toPosixPath(path.join(inner, "index.js")),
     ]);
 
-    expect(file?.source).toContain("inner 9.0.0");
-    expect(file?.source).not.toContain("outer 1.2.3");
+    expect(file.source).toContain("inner 9.0.0");
+    expect(file.source).not.toContain("outer 1.2.3");
   });
 
   it("lists copied code, with its license text, once a module of it rendered", () => {
@@ -338,9 +342,9 @@ describe("licensesPlugin", () => {
     ]);
     const [unused] = run(plugin, "client", [toPosixPath(path.join(project, "src/lib/other.ts"))]);
 
-    expect(rendered?.source).toContain("vendored-lib");
-    expect(rendered?.source).toContain("Vendored MIT text");
-    expect(unused?.source).not.toContain("vendored-lib");
+    expect(rendered.source).toContain("vendored-lib");
+    expect(rendered.source).toContain("Vendored MIT text");
+    expect(unused.source).not.toContain("vendored-lib");
   });
 
   it("lists the package behind generated project code", () => {
@@ -352,8 +356,8 @@ describe("licensesPlugin", () => {
       [toPosixPath(path.join(project, "src/lib/generated/runtime.js"))],
     );
 
-    expect(file?.source).toContain("generator 1.2.3");
-    expect(file?.source).toContain("Generator license");
+    expect(file.source).toContain("generator 1.2.3");
+    expect(file.source).toContain("Generator license");
   });
 
   it("leaves the server & service worker builds alone", () => {

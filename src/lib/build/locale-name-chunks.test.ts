@@ -35,7 +35,7 @@ describe("localeNameChunks", () => {
 
 describe("assertLocaleNameChunksInlined", () => {
   it("throws when the service worker never received the map", () => {
-    expect(() => assertLocaleNameChunksInlined(false)).toThrow(/__LOCALE_NAME_CHUNKS__/);
-    expect(() => assertLocaleNameChunksInlined(true)).not.toThrow();
+    expect(() =>{  assertLocaleNameChunksInlined(false); }).toThrow(/__LOCALE_NAME_CHUNKS__/);
+    expect(() =>{  assertLocaleNameChunksInlined(true); }).not.toThrow();
   });
 });
