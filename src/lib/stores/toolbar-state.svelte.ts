@@ -10,6 +10,8 @@ export class ToolbarState {
   enabledSourceFilterIds = $state<SvelteSet<SourceFilterId>>(new SvelteSet());
   // Phone-width disclosure state; session-only, so sections start collapsed on each visit.
   readonly expandedFilterSections = new SvelteSet<FilterSectionId>();
+  // Pixels an open toolbar panel occupies above the viewport bottom; toasts rise above it.
+  panelClearance = $state(0);
   searchOpen = $state(false);
 
   searchQuery = $state("");
