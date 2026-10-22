@@ -1,7 +1,7 @@
 <script lang="ts">
   import PageHeader from "#lib/components/page-header.svelte";
   import { categoryForKey, categoryKeyForPathname } from "#lib/data/categories.js";
-  import { getCategoryProgress } from "#lib/engine/progress.js";
+  import { getCategoryProgress } from "#lib/engine/categories.js";
   import { deLocalizeHref } from "#lib/paraglide/runtime.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { page } from "$app/state";

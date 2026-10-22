@@ -1,8 +1,9 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
+import { sortCategoryKeysByName } from "#lib/data/categories.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
-import { getAllProgress, getMaxRenownLevel, getOverallProgress } from "#lib/engine/progress.js";
+import { CATEGORY_KEYS, getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
+import { getMaxRenownLevel } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 import { formatNumber } from "#lib/utils/format.js";

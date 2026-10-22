@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  CATEGORY_KEYS,
-  categoryForKey,
-  categoryKeyForPathname,
-  SEARCH_RESULT_CATEGORY_KEYS,
-  sortCategoryKeysByName,
-} from "./categories.js";
+import { CATEGORY_KEYS } from "#lib/engine/categories.js";
+
+import { categoryForKey, categoryKeyForPathname, sortCategoryKeysByName } from "./categories.js";
 
 describe("categoryForKey", () => {
   it("labels the villagers category with the game's Villagers term", () => {
@@ -33,10 +29,10 @@ describe("locale-explicit messages", () => {
   });
 });
 
-describe("SEARCH_RESULT_CATEGORY_KEYS", () => {
-  it("only contains valid category keys", () => {
-    for (const key of SEARCH_RESULT_CATEGORY_KEYS) {
-      expect(CATEGORY_KEYS).toContain(key);
+describe("categoryKeyForPathname", () => {
+  it("maps every category's registry route back to its key", () => {
+    for (const key of CATEGORY_KEYS) {
+      expect(categoryKeyForPathname(`/${categoryForKey(key, "en").href}`)).toBe(key);
     }
   });
 });

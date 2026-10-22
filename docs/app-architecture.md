@@ -56,14 +56,24 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
 - **Save import** — parses extracted save JSON files and builds a `Partial<ProgressState>` for
   merging.
 
+`engine/categories.ts` is the category registry: one entry per category, keyed and ordered by
+`CategoryKey`. Every entry has a projection (`engine/projections/<category>.ts`) that returns the
+category's rows and its progress `totals`; a route and a search provider are optional capabilities.
+`getCategoryProgress`, `getAllProgress`, & `isCategoryComplete` read each projection's totals, and
+search runs only the categories that declare `search`, whose providers
+(`engine/search-providers.ts`) read their own projection. `data/categories.ts` adds each category's
+localized name & description, which the engine can't import. See the
+[decision record](decisions/2026-10-21-category-registry.md).
+
 `engine/projections/almanac.ts` supplies the almanac page, progress counters, and search with one
 row policy. It returns section membership, canonical rows, applicability, spoiler and filter flags,
 and progress totals. Date Inspiration is counted only through its canonical Almanac entries.
 Unobtainable entries are hidden by default; the almanac's temporary filter can reveal them without
-changing header totals. Page callers pass user-selected availability windows, name/source filters,
-and completed-row retention. Search explicitly uses default windows, includes out-of-window results
-for ranking, hides spoilers, and deduplicates rows that belong to several sections. Section progress
-still counts each in-game section membership.
+changing any total: header progress and each section's count & total count only obtainable rows.
+Page callers pass user-selected availability windows, name/source filters, and completed-row
+retention. Search explicitly uses default windows, includes out-of-window results for ranking, hides
+spoilers, and deduplicates rows that belong to several sections. Section progress still counts each
+in-game section membership.
 
 ### `src/lib/stores/user-state.svelte.ts`
 
@@ -317,15 +327,16 @@ Pages are layout compositors. They handle data fetching and composition, not bus
 
 Progress calculation and UI row visibility are separate concerns.
 
-- **Progress** is computed in `src/lib/engine/progress.ts` from the full `ProgressState`, regardless
-  of filters.
+- **Progress** is each category projection's `totals`, computed from the full `ProgressState`
+  regardless of display filters; `src/lib/engine/progress.ts` holds its types & level rules.
 - **Visibility** is controlled by `availabilityWindows` (`now`, `anytime`, `later`),
   `showCompleted`, and `showSpoilers` at the component level.
 - Hidden completed rows still contribute to progress totals. This ensures the overall percentage
   remains accurate even when the user filters out completed content.
-- **Category completion** is `isCategoryComplete(key, ctx)`, which is the category's progress at
-  100%. The header, the all-completed banner, & `celebrateCategory()` all read it; components don't
-  re-derive completion. See the [decision record](decisions/2026-10-06-category-completion.md).
+- **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the
+  category's progress at 100%. The header, the all-completed banner, & `celebrateCategory()` all
+  read it; components don't re-derive completion. See the
+  [decision record](decisions/2026-10-06-category-completion.md).
 
 ## Domain glossary
 

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
-import { getAllProgress } from "#lib/engine/progress.js";
+import { getAllProgress } from "#lib/engine/categories.js";
 import { searchAllCategories } from "#lib/engine/search.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";

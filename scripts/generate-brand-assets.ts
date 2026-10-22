@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 import { trackerData } from "../src/lib/data/index.js";
-import { getAllProgress } from "../src/lib/engine/progress.js";
+import { getAllProgress } from "../src/lib/engine/categories.js";
 
 import type { ProgressState } from "../src/lib/types/user-progress.js";
 

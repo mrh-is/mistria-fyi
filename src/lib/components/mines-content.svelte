@@ -11,7 +11,8 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { getMaxMineFloor, isCategoryComplete } from "#lib/engine/progress.js";
+  import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { getMaxMineFloor } from "#lib/engine/progress.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";

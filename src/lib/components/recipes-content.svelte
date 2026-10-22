@@ -12,7 +12,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isRowVisible } from "#lib/engine/availability.js";
-  import { isCategoryComplete } from "#lib/engine/progress.js";
+  import { isCategoryComplete } from "#lib/engine/categories.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";

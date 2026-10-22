@@ -1,6 +1,6 @@
 import * as m from "#lib/paraglide/messages.js";
 
-import type { CategoryKey } from "#lib/data/categories.js";
+import type { CategoryKey } from "#lib/engine/categories.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 
 export const SITE_ORIGIN = "https://mistria.fyi";
