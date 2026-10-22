@@ -414,6 +414,41 @@ describe("applySync: facts from before provenance", () => {
     });
   });
 
+  it("asks before replacing an existing level or quest, but adds one at its default", () => {
+    const state = syncState({
+      mineFloor: 20,
+      provenance: {
+        [`questStates/${STORY_QUEST}`]: { source: "unknown" },
+        mineFloor: { source: "unknown" },
+      },
+      questStates: { [STORY_QUEST]: "obtained" },
+    });
+    const questions = asked(
+      applySync(
+        state,
+        bundle(
+          { mineFloor: 30, questStates: { [STORY_QUEST]: "completed" }, renown: 12 },
+          { playtime: 100 },
+        ),
+        { fresh: FRESH },
+      ),
+    );
+    expect(
+      questions.map((question) => question.kind === "facts" && [question.field, question.reason]),
+    ).toEqual([
+      ["mineFloor", "local-disagrees"],
+      ["questStates", "local-disagrees"],
+    ]);
+
+    const kept = settle(
+      state,
+      bundle({ mineFloor: 30, renown: 12 }, { playtime: 100 }),
+      () => "keep",
+    );
+    expect(kept.state.progress.mineFloor).toBe(20);
+    expect(policies(kept)).toMatchObject({ renown: "apply-silently" });
+  });
+
   it("takes the save's values when the player accepts", () => {
     const result = settle(
       legacy(),
@@ -439,6 +474,40 @@ describe("applySync: facts from before provenance", () => {
     const [reasked] = asked(outcome);
     expect(reasked.id).not.toBe(question.id);
     expect(reasked.kind === "facts" && reasked.differences).toHaveLength(2);
+  });
+});
+
+describe("applySync: resolutions", () => {
+  it("lapses “keep mine” once the save reports the default, so a later change asks again", () => {
+    const state = syncState({
+      lastSavePlaytime: 100,
+      provenance: { hasUpperFloor: { source: "manual" } },
+    });
+    const kept = settle(state, bundle({ hasUpperFloor: true }, { playtime: 130 }), () => "keep");
+    expect(kept.state.history.resolutions).toEqual({ hasUpperFloor: { saveValue: "1" } });
+
+    const lapsed = applied(
+      applySync(kept.state, bundle({ hasUpperFloor: false }, { playtime: 160 }), { fresh: FRESH }),
+    );
+    expect(lapsed.state.history.resolutions).toEqual({});
+
+    const [question] = asked(
+      applySync(lapsed.state, bundle({ hasUpperFloor: true }, { playtime: 190 }), {
+        fresh: FRESH,
+      }),
+    );
+    expect(question).toMatchObject({ field: "hasUpperFloor", kind: "facts" });
+  });
+
+  it("keeps “keep mine” when the field couldn't be read in full", () => {
+    const state = syncState({ provenance: { [`almanac/${TURNIP}`]: { source: "manual" } } });
+    const kept = settle(state, bundle({ almanac: set(TURNIP) }, { playtime: 100 }), () => "keep");
+    const partial = applied(
+      applySync(kept.state, bundle({ almanac: field(set(), "unknown") }, { playtime: 130 }), {
+        fresh: FRESH,
+      }),
+    );
+    expect(partial.state.history.resolutions).toEqual(kept.state.history.resolutions);
   });
 });
 

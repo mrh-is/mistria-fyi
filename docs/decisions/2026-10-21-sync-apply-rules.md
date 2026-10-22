@@ -17,9 +17,9 @@ to edits that can't be ordered, & how a farm switch keeps its backup in the same
   name the changes they cover.
 - **The table is keyed by provenance, fact kind, & direction.** Kinds are ticks, levels (seasons
   included), & quests. A save or inference yields to the save; a manual edit is ordered by
-  `playtime`; `unknown` lets the save add but asks before removing. The guardrails run after the
-  table: any level decrease asks unless a manual level beats the save, & more than five removals
-  (`REMOVAL_HANDFUL`) in one bundle all ask.
+  `playtime`; `unknown` lets the save add a fact at its default but asks before replacing, removing,
+  or lowering one. The guardrails run after the table: any level decrease asks unless a manual level
+  beats the save, & more than five removals (`REMOVAL_HANDFUL`) in one bundle all ask.
 - **An edit that can't be ordered asks.** A manual edit with no playtime (none had been applied) or
   a save whose playtime couldn't be read is treated like `unknown`: removals & disagreements ask,
   per field. Letting an unordered save win would undo the player's own edits on a guess.

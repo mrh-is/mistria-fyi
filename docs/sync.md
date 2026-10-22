@@ -220,8 +220,9 @@ records a resolution per fact; an answer that doesn’t fit its question counts 
   tells.
 - A manual edit is ordered by `playtime` (below). One with no playtime to order by (made before any
   save was applied, or against a save whose playtime couldn’t be read) asks.
-- An `unknown` fact lets the save add & is promoted to `save` when the save agrees; a removal or
-  decrease asks, once per field.
+- An `unknown` fact lets the save add a fact still at its default & is promoted to `save` when the
+  save agrees. Replacing an existing value (raising a level, advancing a quest), removing, or
+  lowering asks, once per field.
 
 ### Provenance
 
@@ -249,7 +250,8 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
 ### Resolved diffs
 
 A memory of resolved diffs makes “keep mine” stick until the save’s value changes. Editing that
-field by hand clears it.
+field by hand clears it. A complete field also lapses resolutions for facts it reports at their
+default, so true, then false, then true again asks again.
 
 ### Completeness
 
