@@ -93,6 +93,21 @@ describe("SkillRecord", () => {
     expect(view.getByText("31 / 60")).toBeInTheDocument();
   });
 
+  it("offers the skill's perks below its level", () => {
+    const view = render(SkillRecordHarness, {
+      feedbackContext: new FeedbackContext(),
+      id: skillId,
+      name: "Mining",
+    });
+
+    const record = view.container.querySelector("[data-skill-record]");
+    expect(record?.querySelector("[data-skill-perks]")).not.toBeNull();
+    expect(view.getByRole("button", { name: /^Mining perks, 0 of \d+ unlocked$/ })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
+
   it("keeps controls bounded and marks completion without color alone", async () => {
     const view = render(SkillRecordHarness, {
       compact: true,

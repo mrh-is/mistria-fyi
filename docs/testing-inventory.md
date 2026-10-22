@@ -81,7 +81,8 @@ single-component row's marks disagree with its test files.
 | `tracker-paper`                           |        |            | Layout only; no interaction                               |
 | `confirm-spoiler-dialog`                  |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |
 | `spoiler-guard-dialog`                    |        |     ✓      | Renders only while the guard holds a condition            |
-| `skill-record`                            |        |     ✓      | Level editing                                             |
+| `skill-record`                            |        |     ✓      | Level editing, perk drawer                                |
+| `skill-perks`                             |        |     ✓      | Disclosure, tier levels, perk check-off & reversal        |
 | `stepper`                                 |        |     ✓      | Grouped controls                                          |
 | `dialog-close-button`                     |        |     ✓      | Localized close control, dismisses the dialog             |
 | `status-note`                             |   ✓    |            | Tone classes; alert role for errors & warnings            |

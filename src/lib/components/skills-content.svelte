@@ -23,7 +23,7 @@
   {#each skills as skill (skill.id)}
     {@const level = userState.state.progress.skillLevels[skill.id] ?? 0}
     {#if level >= MAX_SKILL_LEVEL ? userState.state.showCompleted : true}
-      <SkillRecord {compact} id={skill.id} name={skill.name} />
+      <SkillRecord {compact} id={skill.id} {locale} name={skill.name} />
     {/if}
   {/each}
 </ul>

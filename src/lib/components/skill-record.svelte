@@ -1,5 +1,6 @@
 <script lang="ts">
   import IconCompletion from "#lib/components/icon/icon-completion.svelte";
+  import SkillPerks from "#lib/components/skill-perks.svelte";
   import Stepper from "#lib/components/stepper.svelte";
   import { Input } from "#lib/components/ui/input/index.js";
   import { celebrateCategory } from "#lib/effects/celebrate.js";
@@ -10,6 +11,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { page } from "$app/state";
 
+  import type { LocaleCode } from "#lib/types/locale.js";
   import type { SkillId } from "#lib/types/tracker-data.js";
 
   /** The level bar's quarters, each spanning an equal share of `MAX_SKILL_LEVEL`. */
@@ -20,7 +22,12 @@
     end: (index + 1) * SEGMENT_SPAN,
   }));
 
-  let { compact = false, id, name }: { compact?: boolean; id: SkillId; name: string } = $props();
+  let {
+    compact = false,
+    id,
+    locale,
+    name,
+  }: { compact?: boolean; id: SkillId; locale: LocaleCode; name: string } = $props();
 
   const feedbackContext = getFeedbackContext();
   let level = $derived(userState.state.progress.skillLevels[id] ?? 0);
@@ -147,6 +154,8 @@
       {/if}
     </div>
   </Stepper>
+
+  <SkillPerks {id} {locale} {name} />
 </li>
 
 <style>
