@@ -172,6 +172,16 @@
     recipes: "recipe",
     villagers: "villager",
   } as const satisfies Record<SearchCategoryKey, ReportCategory>;
+
+  /**
+   * A pictured result's tint, matching its category page's rows. Spelled out per category so
+   * Tailwind sees each class; categories whose pages show no picture keep the row default.
+   */
+  const SEARCH_SPRITE_CLASS: Partial<Record<SearchCategoryKey, string>> = {
+    almanac: "text-(--color-category-almanac)",
+    museum: "text-(--color-category-museum)",
+    recipes: "text-(--color-category-recipes)",
+  };
 </script>
 
 {#if namesError}
@@ -213,6 +223,8 @@
               reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
               reportEntityId={result.id}
               sources={getSources(result)}
+              sprite={result.sprite}
+              spriteClass={SEARCH_SPRITE_CLASS[result.category]}
               onToggle={() => {
                 if (result.category === "quests") {
                   handleQuestToggle(result);

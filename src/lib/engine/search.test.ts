@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
+import { CATEGORY_DEFINITIONS } from "#lib/engine/categories.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
+import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import { searchAllCategories } from "./search.js";
@@ -18,6 +20,7 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 
+import type { SearchContext, SearchResult } from "./search.js";
 import type { UserProgressionState } from "./visibility.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -664,5 +667,81 @@ describe("pet cosmetic and skin result IDs", () => {
     const results = search(getName("mount", id, "en"), { mountAppearances: new Set([id]) });
     const match = results.find((r) => r.id === `mount-appearance:${id}`);
     expect(match).toMatchObject({ category: "animals", completed: true });
+  });
+});
+
+// ─── Result sprites ───────────────────────────────────────────────
+
+/** Every result each provider can offer, with spoilers shown so no row is withheld. */
+function allResults(): SearchResult[] {
+  const context: SearchContext = {
+    locale: "en",
+    progressionState: makeProgressionState({ showSpoilers: true }),
+    projectionContext: {
+      availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
+      progress: makeCompletedState(),
+      worldState: defaultWorld,
+    },
+  };
+  return CATEGORY_DEFINITIONS.flatMap(({ search: provider }) =>
+    provider ? [...provider(context)].map((candidate) => candidate.result()) : [],
+  );
+}
+
+/** The Recipes page's picture per recipe: the first almanac entry the recipe makes. */
+function recipePageSprites(): Map<RecipeId, ItemId> {
+  const sprites = new Map<RecipeId, ItemId>();
+  for (const category of Object.values(trackerData.almanac)) {
+    for (const entry of category.items) {
+      const canonicalId = entry.itemIds[0];
+      const recipeId = trackerData.items[canonicalId].sources.find(
+        (source) => source.type === "recipe",
+      )?.recipeId;
+      if (recipeId && !sprites.has(recipeId)) sprites.set(recipeId, canonicalId);
+    }
+  }
+  return sprites;
+}
+
+describe("result sprites", () => {
+  it("pictures almanac and museum results with their own item, available or not", () => {
+    const results = allResults().filter(
+      (result) => result.category === "almanac" || result.category === "museum",
+    );
+    expect(results.some((result) => !result.available)).toBe(true);
+    for (const result of results) {
+      expect(result.sprite, `${result.category} ${result.id}`).toBe(result.id);
+    }
+  });
+
+  it("pictures a recipe result with the item its Recipes page row shows", () => {
+    const expected = recipePageSprites();
+    const recipes = allResults().filter((result) => result.category === "recipes");
+    expect(recipes.some((result) => result.sprite !== undefined)).toBe(true);
+    for (const result of recipes) {
+      expect(result.sprite, `recipe ${result.id}`).toBe(expected.get(result.id as RecipeId));
+    }
+  });
+
+  it("leaves results from categories without pictures unpictured", () => {
+    const unpictured = allResults().filter(
+      (result) =>
+        result.category !== "almanac" &&
+        result.category !== "museum" &&
+        result.category !== "recipes",
+    );
+    expect(unpictured.length).toBeGreaterThan(0);
+    for (const result of unpictured) {
+      expect(result.sprite, `${result.category} ${result.id}`).toBeUndefined();
+    }
+  });
+
+  it("carries a recipe's sprite through the ranked search", () => {
+    const expected = recipePageSprites().get("strawberry_shortcake" as RecipeId);
+    const shortcake = search("Strawberry Shortcake").find(
+      (result) => result.category === "recipes",
+    );
+    expect(expected).toBeDefined();
+    expect(shortcake?.sprite).toBe(expected);
   });
 });

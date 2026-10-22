@@ -37,6 +37,32 @@ describe("SearchResults category tags", () => {
   });
 });
 
+describe("SearchResults pictures", () => {
+  it("pictures almanac and museum rows with their item in their category color", () => {
+    const { id, name } = overlappingFixture();
+
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
+
+    for (const [category, key] of [
+      ["Almanac", "almanac"],
+      ["Museum", "museum"],
+    ] as const) {
+      const slot = resultRow(category, name).querySelector("[data-sprite-slot]");
+      expect(slot).toHaveAttribute("data-sprite-slot", "ready");
+      expect(slot).toHaveClass(`text-(--color-category-${key})`);
+      expect(slot?.querySelector("image")?.getAttribute("href")).toContain(id);
+    }
+  });
+
+  it("leaves a quest row unpictured, as on the Quests page", () => {
+    const { name } = questFixture();
+
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
+
+    expect(resultRow("Quests", name).querySelector("[data-sprite-slot]")).toBeNull();
+  });
+});
+
 describe("SearchResults completion dispatch", () => {
   it("links a villager result to its record instead of toggling hearts", () => {
     const id = "adeline" as VillagerId;
@@ -220,13 +246,17 @@ function overlappingFixture(): { id: ItemId; name: string } {
 
 /** The toggle button in the search row whose category badge reads `category`. */
 function rowToggle(category: string, name: string): HTMLElement {
+  return within(resultRow(category, name)).getByRole("button", { name: `Check ${name}` });
+}
+
+/** The search row for `name` whose category badge reads `category`. */
+function resultRow(category: string, name: string): HTMLElement {
   const toggleName = `Check ${name}`;
   for (const badge of screen.getAllByText(category, {
     selector: ".search-result__category-name",
   })) {
     const row = badge.closest<HTMLElement>(".search-result");
-    const toggle = row && within(row).queryByRole("button", { name: toggleName });
-    if (toggle) return toggle;
+    if (row && within(row).queryByRole("button", { name: toggleName })) return row;
   }
   throw new Error(`Expected a ${category} search row with a "${toggleName}" toggle`);
 }
