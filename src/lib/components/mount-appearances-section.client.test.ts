@@ -1,5 +1,5 @@
 import { fireEvent, screen } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import MountAppearancesSection from "#lib/components/mount-appearances-section.svelte";
 import { trackerData } from "#lib/data/index.js";
@@ -11,9 +11,7 @@ import { recordKeys } from "#lib/utils/record.js";
 
 import type { PerkId } from "#lib/types/tracker-data.js";
 
-// Finishing the section fires confetti, which needs a canvas happy-dom doesn't provide.
-vi.mock("#lib/effects/celebrate.js", () => ({ celebrate: vi.fn(), celebrateCategory: vi.fn() }));
-
+// No test finishes the section, so none fires the confetti that happy-dom can't draw.
 const horsepower = "horsepower" as PerkId;
 
 async function openMountSection(): Promise<void> {
