@@ -1,10 +1,12 @@
 <script lang="ts">
   import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SectionGroups from "#lib/components/section-groups.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
@@ -36,6 +38,7 @@
   }
 
   const spoilerGuard = createSpoilerGuard();
+  const sectionGrouping = createSectionGrouping<CosmeticSlot>();
 
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
@@ -113,7 +116,12 @@
 
   registerSourceFilters("cosmetics", () => trackerIndex.categorySourceTypes.cosmetics);
 
-  function toggleCosmetic(cosmetic: CosmeticEntry, allInSlot: CosmeticEntry[]): void {
+  function toggleCosmetic(
+    cosmetic: CosmeticEntry,
+    slot: CosmeticSlot,
+    allInSlot: CosmeticEntry[],
+  ): void {
+    sectionGrouping.hold(slot);
     userState.toggleCosmetic(cosmetic.id);
     const completed = userState.state.progress.cosmetics.has(cosmetic.id);
     showUndoToast(getName("cosmetics", cosmetic.id, locale), completed, () => {
@@ -131,86 +139,88 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#each groups() as { name, nested, slot, subCategories } (slot)}
-  {@const allInSlot = subCategories.flatMap(({ cosmetics }) => cosmetics)}
-  {@const scopedInSlot = allInSlot.filter((c) => toolbarState.matchesSourceFilters(c.sources))}
-  {@const visibleInSlot = scopedInSlot.filter((c) => {
-    const done = userState.state.progress.cosmetics.has(c.id);
-    return done ? userState.state.showCompleted : true;
-  })}
-  {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
-    {@const completed = userState.state.progress.cosmetics.has(cosmetic.id)}
-    {@const spoilered = !isConditionVisible(cosmetic.visibility, userState.progressionState)}
-    <TrackerRow
-      display={trackerRowDisplay({ completed, spoilered })}
-      segmentLookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
-      name={cosmetic.name}
-      reportCategory="cosmetic"
-      reportEntityId={cosmetic.id}
-      sources={cosmetic.sources}
-      onToggle={() => {
-        if (!spoilered || completed) {
-          toggleCosmetic(cosmetic, allInSlot);
-        } else {
-          spoilerGuard.requestGuardedAction(cosmetic.visibility, () => {
-            toggleCosmetic(cosmetic, allInSlot);
-          });
-        }
-      }}
-    />
-  {/snippet}
-  {#if visibleInSlot.length > 0 || toolbarState.isSourceFilterNarrowing}
-    <ExpandableSection
-      {locale}
-      count={scopedInSlot.filter((c) => userState.state.progress.cosmetics.has(c.id)).length}
-      {name}
-      reportCategory="cosmetic-slot"
-      reportEntityId={slot}
-      total={scopedInSlot.length}
-    >
-      {#each subCategories as { cosmetics, key: subCategory, name: subCategoryName } (subCategory)}
-        {@const visibleCosmetics = cosmetics.filter((c) => {
-          if (!toolbarState.matchesSourceFilters(c.sources)) return false;
-          const done = userState.state.progress.cosmetics.has(c.id);
-          return done ? userState.state.showCompleted : true;
-        })}
-        {#if visibleCosmetics.length > 0}
-          {#if nested}
-            <ExpandableSection
-              {locale}
-              count={cosmetics.filter(
-                (c) =>
-                  toolbarState.matchesSourceFilters(c.sources) &&
-                  userState.state.progress.cosmetics.has(c.id),
-              ).length}
-              depth={1}
-              name={subCategoryName}
-              reportCategory="cosmetic"
-              reportEntityId={`${slot}:${subCategory}`}
-              total={cosmetics.filter((c) => toolbarState.matchesSourceFilters(c.sources)).length}
-            >
+<SectionGroups getKey={(group) => group.slot} grouping={sectionGrouping} items={groups()}>
+  {#snippet section({ name, nested, slot, subCategories })}
+    {@const allInSlot = subCategories.flatMap(({ cosmetics }) => cosmetics)}
+    {@const scopedInSlot = allInSlot.filter((c) => toolbarState.matchesSourceFilters(c.sources))}
+    {@const visibleInSlot = scopedInSlot.filter((c) => {
+      const done = userState.state.progress.cosmetics.has(c.id);
+      return done ? userState.state.showCompleted : true;
+    })}
+    {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
+      {@const completed = userState.state.progress.cosmetics.has(cosmetic.id)}
+      {@const spoilered = !isConditionVisible(cosmetic.visibility, userState.progressionState)}
+      <TrackerRow
+        display={trackerRowDisplay({ completed, spoilered })}
+        segmentLookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
+        name={cosmetic.name}
+        reportCategory="cosmetic"
+        reportEntityId={cosmetic.id}
+        sources={cosmetic.sources}
+        onToggle={() => {
+          if (!spoilered || completed) {
+            toggleCosmetic(cosmetic, slot, allInSlot);
+          } else {
+            spoilerGuard.requestGuardedAction(cosmetic.visibility, () => {
+              toggleCosmetic(cosmetic, slot, allInSlot);
+            });
+          }
+        }}
+      />
+    {/snippet}
+    {#if visibleInSlot.length > 0 || toolbarState.isSourceFilterNarrowing}
+      <ExpandableSection
+        {locale}
+        count={scopedInSlot.filter((c) => userState.state.progress.cosmetics.has(c.id)).length}
+        {name}
+        reportCategory="cosmetic-slot"
+        reportEntityId={slot}
+        total={scopedInSlot.length}
+      >
+        {#each subCategories as { cosmetics, key: subCategory, name: subCategoryName } (subCategory)}
+          {@const visibleCosmetics = cosmetics.filter((c) => {
+            if (!toolbarState.matchesSourceFilters(c.sources)) return false;
+            const done = userState.state.progress.cosmetics.has(c.id);
+            return done ? userState.state.showCompleted : true;
+          })}
+          {#if visibleCosmetics.length > 0}
+            {#if nested}
+              <ExpandableSection
+                {locale}
+                count={cosmetics.filter(
+                  (c) =>
+                    toolbarState.matchesSourceFilters(c.sources) &&
+                    userState.state.progress.cosmetics.has(c.id),
+                ).length}
+                depth={1}
+                name={subCategoryName}
+                reportCategory="cosmetic"
+                reportEntityId={`${slot}:${subCategory}`}
+                total={cosmetics.filter((c) => toolbarState.matchesSourceFilters(c.sources)).length}
+              >
+                <TrackerRowList
+                  getKey={(cosmetic) => cosmetic.id}
+                  items={visibleCosmetics}
+                  row={cosmeticRow}
+                  showEmpty={false}
+                />
+              </ExpandableSection>
+            {:else}
               <TrackerRowList
                 getKey={(cosmetic) => cosmetic.id}
                 items={visibleCosmetics}
                 row={cosmeticRow}
                 showEmpty={false}
               />
-            </ExpandableSection>
-          {:else}
-            <TrackerRowList
-              getKey={(cosmetic) => cosmetic.id}
-              items={visibleCosmetics}
-              row={cosmeticRow}
-              showEmpty={false}
-            />
+            {/if}
           {/if}
+        {/each}
+        {#if visibleInSlot.length === 0}
+          <TrackerEmptyState />
         {/if}
-      {/each}
-      {#if visibleInSlot.length === 0}
-        <TrackerEmptyState />
-      {/if}
-    </ExpandableSection>
-  {/if}
-{/each}
+      </ExpandableSection>
+    {/if}
+  {/snippet}
+</SectionGroups>
 
 <AllCompleted isAllCompleted={isCosmeticsComplete()} />

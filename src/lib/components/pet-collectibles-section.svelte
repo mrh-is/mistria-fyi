@@ -3,6 +3,7 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
@@ -19,8 +20,16 @@
 
   let {
     areAllAnimalsComplete,
+    collection,
     locale,
-  }: { areAllAnimalsComplete: () => boolean; locale: LocaleCode } = $props();
+  }: {
+    areAllAnimalsComplete: () => boolean;
+    /** Each collection is its own section, so the page can group it on its own. */
+    collection: "cosmetics" | "skins";
+    locale: LocaleCode;
+  } = $props();
+
+  const sectionGroupItem = getSectionGroupItem();
 
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
@@ -85,7 +94,7 @@
   }
 </script>
 
-{#if visibleCosmeticEntries.length > 0}
+{#if collection === "cosmetics" && visibleCosmeticEntries.length > 0}
   <ExpandableSection
     {locale}
     count={cosmeticCompletedCount}
@@ -105,6 +114,7 @@
           reportEntityId={entry.id}
           sources={entry.sources}
           onToggle={() => {
+            sectionGroupItem?.hold();
             userState.togglePetCosmetic(entry.id);
             const completed = userState.state.progress.petCosmetics.has(entry.id);
             showUndoToast(entry.name, completed, () => {
@@ -122,7 +132,7 @@
   </ExpandableSection>
 {/if}
 
-{#if visibleSkinEntries.length > 0}
+{#if collection === "skins" && visibleSkinEntries.length > 0}
   <ExpandableSection
     {locale}
     count={skinCompletedCount}
@@ -142,6 +152,7 @@
           reportEntityId={entry.id}
           sources={entry.sources}
           onToggle={() => {
+            sectionGroupItem?.hold();
             userState.togglePetSkin(entry.id);
             const completed = userState.state.progress.petSkins.has(entry.id);
             showUndoToast(entry.name, completed, () => {
@@ -159,6 +170,7 @@
   </ExpandableSection>
 {/if}
 
-{#if toolbarState.isSourceFilterNarrowing && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
+<!-- One empty state covers both pet collections. -->
+{#if collection === "skins" && toolbarState.isSourceFilterNarrowing && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
   <TrackerEmptyState />
 {/if}

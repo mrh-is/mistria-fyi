@@ -49,7 +49,7 @@
   "all_page_title": "Checklist of everything",
   "all_page_description": "View & track every Fields of Mistria completion category in one checklist.",
   "home_active_categories_label": "Categories in progress",
-  "home_completed_heading": "Completed",
+  "common_completed_heading": "Completed",
   "home_completed_categories_label": "Completed categories",
   "overall_progress_label": "{completed} of {total} completed overall, {pct}",
   "foldout_close": "Close {title}",

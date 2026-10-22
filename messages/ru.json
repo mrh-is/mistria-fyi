@@ -49,7 +49,7 @@
   "all_page_title": "Список всего",
   "all_page_description": "Просматривайте и отслеживайте все категории прохождения Fields of Mistria в одном списке.",
   "home_active_categories_label": "Категории в процессе",
-  "home_completed_heading": "Выполнено",
+  "common_completed_heading": "Выполнено",
   "home_completed_categories_label": "Выполненные категории",
   "overall_progress_label": "Выполнено {completed} из {total} всего, {pct}",
   "foldout_close": "Закрыть {title}",
