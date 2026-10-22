@@ -115,7 +115,11 @@ it("reads Ryis as the spouse in the reported married save, over its other dating
   expect(facts.adeline_is_dating).toBe(1);
   const { completed } = extractSaveProgress(bundle);
   expect(completed.villagerRelationships?.["ryis" as VillagerId]).toBe("married");
-  expect(completed.villagerRelationships?.["adeline" as VillagerId]).toBe("platonic");
+  expect(completed.villagerRelationships?.["adeline" as VillagerId]).toBe("romantic");
+  expect(completed.breakUpsDisabled).toBe(true);
+  expect(
+    Object.values(completed.villagerRelationships ?? {}).filter((rel) => rel === "romantic"),
+  ).toHaveLength(7);
   expect(completed.childChoice).toBe("undeclared");
 });
 

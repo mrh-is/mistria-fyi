@@ -1,0 +1,37 @@
+{
+  "lastImport": null,
+  "progress": {
+    "almanac": ["inn_menu", "turnip"],
+    "almanacRecipes": [],
+    "animalCosmetics": {},
+    "animals": {},
+    "childChoice": "undeclared",
+    "cosmetics": [],
+    "hasUpperFloor": false,
+    "heartLevels": {},
+    "mineFloor": 0,
+    "mountAppearances": [],
+    "museum": [],
+    "petCosmetics": [],
+    "petSkins": [],
+    "provenance": {
+      "almanac/inn_menu": {
+        "source": "save"
+      }
+    },
+    "questStates": {},
+    "reachedSeason": "spring",
+    "renown": 0,
+    "resolutions": {},
+    "skillLevels": {},
+    "spells": [],
+    "unlockedPerks": [],
+    "villagerRelationships": {},
+    "breakUpsDisabled": true
+  },
+  "version": 5,
+  "worldState": {
+    "season": "spring",
+    "weather": "calm"
+  }
+}

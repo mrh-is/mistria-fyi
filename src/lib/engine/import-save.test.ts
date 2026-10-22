@@ -235,6 +235,21 @@ describe("town rank quest inference", () => {
 });
 
 describe("extractSaveProgress", () => {
+  it.each([true, false])("extracts the break-ups setting as complete (%s)", (value) => {
+    expect(
+      extractSave({ player: { disable_break_ups: value } }).fields.breakUpsDisabled,
+    ).toMatchObject({ completeness: "complete", value });
+  });
+
+  it.each([undefined, null, 1, "true"])(
+    "leaves an absent or malformed break-ups setting unknown (%s)",
+    (value) => {
+      expect(
+        extractSave({ player: { disable_break_ups: value } }).fields.breakUpsDisabled,
+      ).toMatchObject({ completeness: "unknown", value: undefined });
+    },
+  );
+
   it("credits the Engagement Ring recipe from its acquired scroll without a recipe unlock", () => {
     const { completed, warnings } = extractSaveProgress({
       player: { items_acquired: ["engagement_ring_recipe_scroll"], recipe_unlocks: [] },
@@ -444,7 +459,7 @@ describe("extractSaveProgress", () => {
       });
     });
 
-    it("marries the spouse over any dating flag and makes every other dateable villager platonic", () => {
+    it("marries the spouse over a stale dating flag while preserving other stored romances", () => {
       const bundle: SaveBundle = {
         gamedata: {
           t2_world_facts: {
@@ -456,12 +471,7 @@ describe("extractSaveProgress", () => {
         },
       };
       const { completed } = extractSaveProgress(bundle);
-      const dateable = recordKeys(trackerData.villagers).filter(
-        (id) => trackerData.villagers[id].dateable,
-      );
-      expect(completed.villagerRelationships).toEqual(
-        Object.fromEntries(dateable.map((id) => [id, id === "ryis" ? "married" : "platonic"])),
-      );
+      expect(completed.villagerRelationships).toEqual({ adeline: "romantic", ryis: "married" });
     });
 
     it("names the spouse from a listed pregnancy quest when no spouse fact does", () => {

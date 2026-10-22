@@ -48,6 +48,7 @@ function progress(overrides: Record<string, unknown> = {}): ProgressState {
     almanacRecipes: new Set(),
     animalCosmetics: {},
     animals: {},
+    breakUpsDisabled: false,
     childChoice: "undeclared",
     cosmetics: new Set(),
     hasUpperFloor: false,
@@ -524,6 +525,7 @@ describe("applySync: quests & household facts", () => {
 
   it("leaves household facts the player's own", () => {
     const state = syncState({
+      breakUpsDisabled: true,
       childChoice: "yes",
       questStates: { [PREGNANCY_QUEST]: "completed" },
       villagerRelationships: { [BALOR]: "married" },
@@ -533,6 +535,7 @@ describe("applySync: quests & household facts", () => {
         state,
         bundle(
           {
+            breakUpsDisabled: field(false, "complete"),
             questStates: {},
             villagerRelationships: field({ [CELINE]: "romantic" }, "unknown"),
           },

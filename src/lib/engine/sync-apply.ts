@@ -64,7 +64,10 @@ export type SyncDirection = "backward" | "forward";
 export type AskReason = "level-decrease" | "local-disagrees" | "many-removals";
 
 /** The fields sync compares. Household facts stay the player's own (see {@link isHouseholdFact}). */
-export type SyncField = Exclude<ExtractedProgressKey, "childChoice" | "villagerRelationships">;
+export type SyncField = Exclude<
+  ExtractedProgressKey,
+  "breakUpsDisabled" | "childChoice" | "villagerRelationships"
+>;
 
 /** One fact on which stored progress & the save disagree. Values are `progressFacts` values. */
 export interface SyncDifference {
@@ -533,6 +536,7 @@ function emptyProgress(): ProgressState {
     almanacRecipes: new Set(),
     animalCosmetics: {},
     animals: {},
+    breakUpsDisabled: false,
     childChoice: "undeclared",
     cosmetics: new Set(),
     hasUpperFloor: false,

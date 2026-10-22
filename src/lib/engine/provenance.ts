@@ -105,6 +105,7 @@ export function progressFacts(progress: DeepReadonly<ProgressState>): Map<string
     if (relationship !== "undecided") facts.set(factKey("villagerRelationships", id), relationship);
   }
   if (progress.childChoice !== "undeclared") facts.set("childChoice", progress.childChoice);
+  if (progress.breakUpsDisabled) facts.set("breakUpsDisabled", "1");
   if (progress.hasUpperFloor) facts.set("hasUpperFloor", "1");
   if (progress.mineFloor > 0) facts.set("mineFloor", String(progress.mineFloor));
   if (progress.reachedSeason !== "spring") facts.set("reachedSeason", progress.reachedSeason);

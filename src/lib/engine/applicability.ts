@@ -1,5 +1,5 @@
 import { trackerData } from "#lib/data/index.js";
-import { getSpouseId } from "#lib/engine/relationships.js";
+import { getPartnerId } from "#lib/engine/relationships.js";
 
 import type { Source } from "#lib/types/acquisition.js";
 import type { ItemId, VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
@@ -16,9 +16,9 @@ export function isItemObtainable(itemId: ItemId, completed: DeepReadonly<Progres
   );
   if (!hasMarriageExclusiveSource) return true;
 
-  const marriedVillager = getSpouseId(completed.villagerRelationships);
+  const partnerVillager = getPartnerId(completed.villagerRelationships);
   return item.sources.some(
-    (s) => !isSourceSuppressed(s, completed.villagerRelationships, marriedVillager),
+    (s) => !isSourceSuppressed(s, completed.villagerRelationships, partnerVillager),
   );
 }
 
@@ -34,14 +34,17 @@ export function isAlmanacEntryObtainable(
 function isSourceSuppressed(
   source: Source,
   villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>,
-  marriedVillager: null | VillagerId,
+  partnerVillager: null | VillagerId,
 ): boolean {
   if (source.type === "proposal") {
-    return villagerRelationships[source.villagerId] === "platonic";
+    return (
+      villagerRelationships[source.villagerId] === "platonic" ||
+      (partnerVillager !== null && partnerVillager !== source.villagerId)
+    );
   }
   if (source.type === "spouseGift") {
     if (villagerRelationships[source.villagerId] === "platonic") return true;
-    if (marriedVillager !== null && marriedVillager !== source.villagerId) return true;
+    if (partnerVillager !== null && partnerVillager !== source.villagerId) return true;
     return false;
   }
   return false;

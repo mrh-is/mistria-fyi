@@ -13,6 +13,8 @@
   "crown_requests": "皇室請求",
   "date_inspiration": "約會靈感",
   "dating": "約會中",
+  "disable_break_ups": "停用分手",
+  "disable_break_ups_description": "選擇此項設定後，訂婚後其他「約會中」NPC 的預設狀態不會再變為「摯友」。請注意訂婚後即無法更改此設定。",
   "engaged": "已訂婚",
   "fall": "秋季",
   "fish": "漁獲珍品",

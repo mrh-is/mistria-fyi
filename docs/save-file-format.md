@@ -182,15 +182,23 @@ evidence.
 
 ### Household fields
 
-| Field           | Type             | Description                                                    |
-| --------------- | ---------------- | -------------------------------------------------------------- |
-| `proposal_date` | `number \| null` | Calendar time of the accepted proposal; `null` before one      |
-| `wedding_date`  | `number \| null` | Calendar time of the wedding; `null` before one                |
-| `pending_child` | `object \| null` | `{ due_date, utero }` while a child is on the way, else `null` |
-| `children`      | `array`          | One entry per child born                                       |
+| Field               | Type             | Description                                                               |
+| ------------------- | ---------------- | ------------------------------------------------------------------------- |
+| `proposal_date`     | `number \| null` | Calendar time of the accepted proposal; `null` before one                 |
+| `wedding_date`      | `number \| null` | Calendar time of the wedding; `null` before one                           |
+| `pending_child`     | `object \| null` | `{ due_date, utero }` while a child is on the way, else `null`            |
+| `children`          | `array`          | One entry per child born                                                  |
+| `disable_break_ups` | `boolean`        | Keep other dating relationships when getting engaged; defaults to `false` |
 
-The importer reads `pending_child` & `children`: either one present means the household chose
-children (`childChoice: "yes"`). Choosing no children leaves no trace, so a childless save reads as
+The importer reads `disable_break_ups` as the household setting `breakUpsDisabled`. In v1.0.8,
+`process_proposal` in `AriUtils.gml` changes other dating NPCs to `best_friend` and sets
+`{npc}_is_ex` only when break-ups are enabled. Marriage itself changes no other relationships. The
+game locks the setting after engagement; the tracker leaves it editable so players can correct older
+imported progress. `disable_break_up_letters` suppresses letters only, not status changes. No v1.0.8
+GML implements divorce.
+
+A non-null `pending_child` or non-empty `children` array means the household chose children
+(`childChoice: "yes"`). Choosing no children leaves no trace, so a childless save reads as
 `"undeclared"` & the child choice is never complete. The dates aren’t tracked; who the player
 proposed to or married comes from the status flags in `t2_world_facts` (below).
 
@@ -228,10 +236,10 @@ world state. Keys follow naming conventions:
 - **`{npc_id}_status`** → `string | undefined`: the relationship status, `best_friend`, `dating`,
   `fiance`, or `spouse`. `Npc.report_relationship` mirrors it into `{npc_id}_is_best_friend`,
   `_is_dating`, `_is_fiance`, & `_is_spouse` (`0`/`1`), plus `has_spouse` & `has_fiance`. The
-  importer reads the flags as platonic, romantic, proposed, & married; a spouse takes precedence,
-  and marriage makes every other dateable villager platonic. The game leaves other partners `dating`
-  after a wedding (a v1.0.8 married save keeps eight), so a spouse must win. No v1.0.8 script writes
-  `ari_is_married` or `ari_is_engaged`, so the importer ignores them.
+  importer reads the flags as platonic, romantic, proposed, & married. A spouse takes precedence
+  over a stale dating flag for the same villager. Other dating relationships remain as stored; the
+  v1.0.8 married save has break-ups disabled and retains seven other partners. No v1.0.8 script
+  writes `ari_is_married` or `ari_is_engaged`, so the importer ignores them.
 - **Various flags** → `boolean | number | string`: quest triggers, event flags, world unlocks
 
 ### Other `gamedata` fields

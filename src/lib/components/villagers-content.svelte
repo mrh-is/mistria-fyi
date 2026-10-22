@@ -1,6 +1,8 @@
 <script lang="ts">
+  import BlockySwitch from "#lib/components/blocky-switch.svelte";
   import VillagerAlphabetIndex from "#lib/components/villager-alphabet-index.svelte";
   import VillagerRecord from "#lib/components/villager-record.svelte";
+  import { getName } from "#lib/data/names.js";
   import { buildVillagerRoster, filterVillagerRoster } from "#lib/engine/villager-roster.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -13,6 +15,14 @@
     indexed = false,
     locale,
   }: { compact?: boolean; indexed?: boolean; locale: LocaleCode } = $props();
+
+  let showBreakUpsSetting = $derived(
+    userState.state.progress.breakUpsDisabled ||
+      Object.values(userState.state.progress.villagerRelationships).some(
+        (relationship) =>
+          relationship === "romantic" || relationship === "proposed" || relationship === "married",
+      ),
+  );
 
   let villagers = $derived(buildVillagerRoster(locale));
   // A villager linked by hash (e.g. from search) stays rendered even when completed ones are hidden.
@@ -35,6 +45,19 @@
       })),
   );
 </script>
+
+{#if !compact && showBreakUpsSetting}
+  <div class="break-ups-setting">
+    <BlockySwitch
+      checked={userState.state.progress.breakUpsDisabled}
+      label={getName("ui", "disable_break_ups", locale)}
+      onCheckedChange={(value) => userState.setBreakUpsDisabled(value)}
+    >
+      <span>{getName("ui", "disable_break_ups", locale)}</span>
+    </BlockySwitch>
+    <p>{getName("ui", "disable_break_ups_description", locale)}</p>
+  </div>
+{/if}
 
 <div class:villager-roster-shell={indexed}>
   <ul
@@ -60,6 +83,22 @@
 </div>
 
 <style>
+  .break-ups-setting {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding: 12px;
+    border: 1px solid var(--color-ink-hairline);
+    background: var(--color-paper-raised);
+  }
+
+  .break-ups-setting p {
+    margin: 0;
+    color: var(--color-ink-muted);
+    font-size: var(--text-xs);
+    white-space: pre-line;
+  }
+
   .villager-roster-shell {
     display: grid;
     min-width: 0;

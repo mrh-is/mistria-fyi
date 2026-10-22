@@ -244,9 +244,6 @@ function makeGoldenCompleted(): ProgressState {
 function makeGoldenDecodedExpectation(): Partial<ProgressState> {
   const completed = makeGoldenCompleted();
   const balor = "balor" as VillagerId;
-  const dateableVillagers = recordEntries(trackerData.villagers)
-    .filter(([, villager]) => villager.dateable)
-    .map(([id]) => id);
 
   return {
     ...completed,
@@ -265,9 +262,7 @@ function makeGoldenDecodedExpectation(): Partial<ProgressState> {
     skillLevels: Object.fromEntries(
       recordKeys(trackerData.skills).map((id) => [id, completed.skillLevels[id] ?? 0]),
     ),
-    villagerRelationships: Object.fromEntries(
-      dateableVillagers.map((id) => [id, id === balor ? "married" : "platonic"]),
-    ),
+    villagerRelationships: { [balor]: "married" },
   };
 }
 
@@ -287,6 +282,25 @@ function toBase64url(bytes: Uint8Array): string {
 }
 
 describe("transfer codec", () => {
+  it.each([true, false])(
+    "round-trips the setting and enforces engagement when disabled=%s",
+    async (breakUpsDisabled) => {
+      const completed = makeCompletedState({
+        breakUpsDisabled,
+        villagerRelationships: {
+          ["adeline" as VillagerId]: "married",
+          ["balor" as VillagerId]: "romantic",
+        },
+      });
+      const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
+      expect(decoded.breakUpsDisabled).toBe(breakUpsDisabled);
+      expect(decoded.villagerRelationships).toEqual({
+        adeline: "married",
+        balor: breakUpsDisabled ? "romantic" : "platonic",
+      });
+    },
+  );
+
   it("starts the envelope with the build fingerprint", async () => {
     const payload = await encodeTransferPayload(makeGoldenCompleted());
 
@@ -536,7 +550,10 @@ describe("transfer codec", () => {
     for (const other of dateableVillagers.slice(1)) {
       relationships[other] = "platonic";
     }
-    const completed = makeCompletedState({ villagerRelationships: relationships });
+    const completed = makeCompletedState({
+      breakUpsDisabled: true,
+      villagerRelationships: relationships,
+    });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.villagerRelationships?.[villagerId]).toBe("married");
@@ -596,7 +613,7 @@ describe("transfer codec", () => {
     },
   );
 
-  it("round-trips villagerRelationships", async () => {
+  it("round-trips villagerRelationships with break-ups disabled", async () => {
     const dateableVillagers = (Object.keys(trackerData.villagers) as VillagerId[]).filter(
       (id) => trackerData.villagers[id].dateable,
     );
@@ -605,7 +622,10 @@ describe("transfer codec", () => {
       [dateableVillagers[1]]: "proposed",
       [dateableVillagers[2]]: "platonic",
     };
-    const completed = makeCompletedState({ villagerRelationships: relationships });
+    const completed = makeCompletedState({
+      breakUpsDisabled: true,
+      villagerRelationships: relationships,
+    });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.villagerRelationships?.[dateableVillagers[0]]).toBe("romantic");

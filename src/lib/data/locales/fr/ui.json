@@ -13,6 +13,8 @@
   "crown_requests": "Requêtes royales",
   "date_inspiration": "Idées de rendez-vous",
   "dating": "En couple",
+  "disable_break_ups": "Désactiver les ruptures",
+  "disable_break_ups_description": "Cette option désactive le passage automatique, après vos fiançailles, du statut de « En couple » à « Proche » avec les autres PNJ avec qui vous sortez.\n\nUne fois vos fiançailles célébrées, ce réglage ne sera plus modifiable.",
   "engaged": "En couple",
   "fall": "Automne",
   "fish": "Pêche et plongée",

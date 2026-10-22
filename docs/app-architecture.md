@@ -96,7 +96,7 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `4`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `5`.
   - `lastImport`: the last manual save import's timestamp, identity (filename number plus creation
     version), & player/farm display names, or `null`. Version 1 migrates to `null` without inventing
     history. Missing or malformed game metadata remains unknown and never blocks importing progress.
@@ -150,6 +150,11 @@ unknown IDs in supported fields still follow the retention policy above. Hydrati
 both apply this removal, including when obsolete Dates values are malformed. See the
 [decision record](decisions/2026-10-20-date-inspiration-migration.md).
 
+Version 5 adds `breakUpsDisabled`, defaulting to `false` for older blobs. Hydration and transfer
+preserve other dating relationships when it is true. With break-ups enabled, an engagement or
+marriage makes only existing romantic/proposed relationships platonic; absent and undecided paths
+remain undecided. Transfer codes use progression bit `0x10` for the setting.
+
 The serializer writes exactly the fields `SerializedState` declares, plus those retained entries;
 unrecognized fields in a loaded blob are dropped. The ephemeral UI-only `showCompleted` field is not
 persisted. A shape change adds a migration: bump `CURRENT_SERIALIZATION_VERSION`, add the
@@ -182,10 +187,10 @@ last read, or its own explicit write still waiting for the lock) overwrites the 
 rest keep the history another tab stored meanwhile. A save or transfer agreeing with a fact already
 stored leaves that fact's stored provenance in place. Edits made after confirmation are rebased onto
 the locked merge result for the next auto-save, including removals & decreases, and so is their
-history; a later household edit replaces that household as a unit to preserve the marriage cascade.
-The pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
-compare-before-write. A browser without Web Locks runs every write synchronously; see the
-[decision record](decisions/2026-10-20-serialized-progress-writes.md).
+history; a later household edit replaces that household as a unit to preserve the engagement
+cascade. The pagehide flush can't wait for a lock, so it runs the same function synchronously,
+keeping the compare-before-write. A browser without Web Locks runs every write synchronously; see
+the [decision record](decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Provenance
 
@@ -196,18 +201,17 @@ inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the st
 - **A fact** is one tickable or settable entry, keyed by its field & the IDs that locate it:
   `almanac/turnip`, `animals/chicken/red`, `mineFloor`. Ticks & unticks both record, so an untick
   the player made is remembered.
-- **Sources.** Setters & toggles record `manual`. A marriage cascade, a quest's recipe rewards (&
+- **Sources.** Setters & toggles record `manual`. An engagement cascade, a quest's recipe rewards (&
   the undo that takes them back), default unlocks, & “Record prerequisites” record `inferred`. A
   save import records `save`; a device transfer records `unknown`, since its payload carries no
   provenance. Only facts a call changes record: a save agreeing with a fact leaves its provenance as
   it was.
 - **Hydration.** Facts stored before version 3 migrate as `unknown`, read the way hydration reads
-  them, so a value it repairs to the default gets no record. A relationship the marriage cascade
-  sets on load, such as a villager a later build makes dateable, records `inferred`. History for a
-  historical almanac ID is rekeyed under its canonical entry on every load, as the fact itself is;
-  when several collide, an entry already under the canonical key wins. A malformed `provenance` or
-  `resolutions` container is dropped on hydration rather than quarantining progress, and rejected by
-  backup restore.
+  them, so a value it repairs to the default gets no record. A relationship the engagement cascade
+  applies on load records `inferred`. History for a historical almanac ID is rekeyed under its
+  canonical entry on every load, as the fact itself is; when several collide, an entry already under
+  the canonical key wins. A malformed `provenance` or `resolutions` container is dropped on
+  hydration rather than quarantining progress, and rejected by backup restore.
 - **Playtime.** Each record carries the `playtime` of the last applied save, so ordering needs no
   clock. A `save` record carries the save's own, or none when its `header.playtime` couldn't be
   read; only a readable one becomes the last applied save's.
@@ -234,9 +238,9 @@ The app processes save files entirely client-side. No save data is uploaded.
    absent or malformed field is `unknown` with no value, never an empty list or a zero. Every ID is
    tracked, known-but-untracked (a game ID the tracker deliberately leaves out, listed in
    `untracked-save-ids.ts`), or unrecognized; an unrecognized ID or an unreadable entry makes its
-   field `unknown`. Relationships are never `complete`, since how breakups & divorce show in a save
-   isn’t verified; nor is the child choice, since only wanting children leaves evidence; nor are
-   mount appearances, since the Mistmare is inferred from one scene ID in an uncatalogued scene
+   field `unknown`. Relationships are never `complete`, since absent status flags do not establish a
+   relationship removal; nor is the child choice, since only wanting children leaves evidence; nor
+   are mount appearances, since the Mistmare is inferred from one scene ID in an uncatalogued scene
    history. It also retains the save’s identity: `info.creation_version` & `header.playtime`. A
    quest listed as both completed and active imports as `completed`.
 4. `extractSaveProgress` turns that into the `Partial<ProgressState>` of every value it could read,
@@ -245,9 +249,13 @@ The app processes save files entirely client-side. No save data is uploaded.
    [decision record](decisions/2026-10-20-save-extraction-completeness.md).
 5. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
    values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
-   quest state (`none` → `obtained` → `completed`). Relationships & child choice merge as one
-   household through the pure `mergeHousehold` in `src/lib/engine/relationships.ts`, which reports
-   conflicts rather than guessing. The merge’s counts are the ones the import summary shows.
+   quest state (`none` → `obtained` → `completed`). Relationships, the break-ups setting, & child
+   choice merge as one household through the pure `mergeHousehold` in
+   `src/lib/engine/relationships.ts`, which reports conflicts rather than guessing. A defined
+   incoming break-ups setting replaces the local setting. When it changes to disabled for a
+   household that already had a partner, incoming romantic values may correct platonic values left
+   by the old cascade. Other branch changes still conflict. The merge’s counts are the ones the
+   import summary shows.
 
 Numeric levels are normalized by `normalizeLevel` in `src/lib/engine/progress.ts` at extraction
 time, and `mergeFromSave` clamps them again before installing. Import stays additive, so an invalid

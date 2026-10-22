@@ -13,6 +13,8 @@
   "crown_requests": "Crown Requests",
   "date_inspiration": "Date Inspiration",
   "dating": "Dating",
+  "disable_break_ups": "Disable Break-ups",
+  "disable_break_ups_description": "Selecting this option will disable the default status change from \"Dating\" to \"Best Friends\" with other \"Dating\" status NPCs after you get engaged.\n\nPlease note that once you're engaged, you will not be able to change this setting.",
   "engaged": "Engaged",
   "fall": "Fall",
   "fish": "Fishing and Diving",

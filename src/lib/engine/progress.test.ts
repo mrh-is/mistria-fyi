@@ -625,6 +625,21 @@ describe("availability filtering on item-based categories", () => {
 // ─── isVillagerComplete ────────────────────────────────────────────────
 
 describe("isVillagerComplete", () => {
+  it.each(["proposed", "married"] as const)(
+    "settles a max-heart dating villager when another partner is %s",
+    (relationship) => {
+      const completed = makeCompletedState({
+        breakUpsDisabled: true,
+        heartLevels: { ["adeline" as VillagerId]: MAX_HEART_LEVEL },
+        villagerRelationships: {
+          ["adeline" as VillagerId]: "romantic",
+          ["balor" as VillagerId]: relationship,
+        },
+      });
+      expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(true);
+    },
+  );
+
   it("non-dateable Villager is complete at max hearts", () => {
     const completed = makeCompletedState({
       heartLevels: { darcy: MAX_HEART_LEVEL } as Record<VillagerId, number>,
