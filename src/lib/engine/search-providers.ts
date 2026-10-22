@@ -1,11 +1,10 @@
-import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getAlmanacEntryNames, getName } from "#lib/data/names.js";
 import { projectAlmanac } from "#lib/engine/projections/almanac.js";
 import { projectAnimals } from "#lib/engine/projections/animals.js";
 import { projectCosmetics } from "#lib/engine/projections/cosmetics.js";
 import { projectMuseum } from "#lib/engine/projections/museum.js";
 import { projectQuests } from "#lib/engine/projections/quests.js";
-import { projectRecipes } from "#lib/engine/projections/recipes.js";
+import { projectRecipes, recipePlacements } from "#lib/engine/projections/recipes.js";
 import { projectVillagers } from "#lib/engine/projections/villagers.js";
 import { composeDescriptorName } from "#lib/utils/format.js";
 
@@ -216,9 +215,8 @@ function collectible<Chunk extends "mount" | "pets/cosmetic_sets" | "pets/skins"
 let recipeSprites: ReadonlyMap<RecipeId, ItemId> | undefined;
 
 /**
- * The item the Recipes page pictures for `id`: that page lists each recipe once, under the first
- * almanac entry (in almanac order) whose item it makes, pictured with that entry's canonical item.
- * A recipe that page doesn't list has no picture.
+ * The item the Recipes page pictures for `id`, from its first placement there. A recipe that page
+ * doesn't list has no picture.
  */
 function recipeSprite(id: RecipeId): ItemId | undefined {
   recipeSprites ??= buildRecipeSprites();
@@ -227,12 +225,10 @@ function recipeSprite(id: RecipeId): ItemId | undefined {
 
 function buildRecipeSprites(): ReadonlyMap<RecipeId, ItemId> {
   const sprites = new Map<RecipeId, ItemId>();
-  for (const entry of trackerIndex.almanacEntries) {
-    const canonicalId = entry.itemIds[0];
-    const recipeId = trackerData.items[canonicalId].sources.find(
-      (source) => source.type === "recipe",
-    )?.recipeId;
-    if (recipeId && !sprites.has(recipeId)) sprites.set(recipeId, canonicalId);
+  for (const { recipes } of recipePlacements()) {
+    for (const { itemId, recipeId } of recipes) {
+      if (!sprites.has(recipeId)) sprites.set(recipeId, itemId);
+    }
   }
   return sprites;
 }

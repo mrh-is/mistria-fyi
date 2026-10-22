@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
 import { CATEGORY_DEFINITIONS } from "#lib/engine/categories.js";
+import { recipePlacements } from "#lib/engine/projections/recipes.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
@@ -689,15 +690,12 @@ function allResults(): SearchResult[] {
 }
 
 /** The Recipes page's picture per recipe: the first almanac entry the recipe makes. */
-function recipePageSprites(): Map<RecipeId, ItemId> {
+/** Each recipe's picture on the Recipes page: its first placement's item. */
+function firstPlacementSprites(): Map<RecipeId, ItemId> {
   const sprites = new Map<RecipeId, ItemId>();
-  for (const category of Object.values(trackerData.almanac)) {
-    for (const entry of category.items) {
-      const canonicalId = entry.itemIds[0];
-      const recipeId = trackerData.items[canonicalId].sources.find(
-        (source) => source.type === "recipe",
-      )?.recipeId;
-      if (recipeId && !sprites.has(recipeId)) sprites.set(recipeId, canonicalId);
+  for (const { recipes } of recipePlacements()) {
+    for (const { itemId, recipeId } of recipes) {
+      if (!sprites.has(recipeId)) sprites.set(recipeId, itemId);
     }
   }
   return sprites;
@@ -714,8 +712,8 @@ describe("result sprites", () => {
     }
   });
 
-  it("pictures a recipe result with the item its Recipes page row shows", () => {
-    const expected = recipePageSprites();
+  it("pictures a recipe result with the item of its first Recipes page placement", () => {
+    const expected = firstPlacementSprites();
     const recipes = allResults().filter((result) => result.category === "recipes");
     expect(recipes.some((result) => result.sprite !== undefined)).toBe(true);
     for (const result of recipes) {
@@ -737,7 +735,7 @@ describe("result sprites", () => {
   });
 
   it("carries a recipe's sprite through the ranked search", () => {
-    const expected = recipePageSprites().get("strawberry_shortcake" as RecipeId);
+    const expected = firstPlacementSprites().get("strawberry_shortcake" as RecipeId);
     const shortcake = search("Strawberry Shortcake").find(
       (result) => result.category === "recipes",
     );
