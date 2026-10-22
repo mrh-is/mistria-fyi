@@ -447,6 +447,20 @@ describe("readProgressBlob", () => {
     });
   });
 
+  it.each(POLICIES)("loads the Mistmare's perks as tracked perks under the %s policy", (policy) => {
+    const stored = fixture(5) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...stored,
+      progress: { ...stored.progress, unlockedPerks: ["harvest_horse", "horsepower", "nice_ride"] },
+    });
+    const loaded = readOk(json, policy);
+
+    expect(loaded.progress.unlockedPerks).toEqual(
+      new Set(["harvest_horse", "horsepower", "nice_ride"]),
+    );
+    expect(loaded.retained.lists.unlockedPerks ?? []).toEqual([]);
+  });
+
   it("drops fields the format doesn't declare", () => {
     const loaded = readOk(JSON.stringify(fixture(1)), "strict");
     expect(JSON.parse(serializeProgress(loaded))).not.toHaveProperty("showCompleted");
