@@ -115,6 +115,7 @@
   "tracker_row_uncheck": "取消勾選{name}",
   "tracker_row_check_spoilered": "勾選爆雷項目",
   "tracker_row_check": "勾選{name}",
+  "tracker_row_preview_sprite": "以彩色顯示{name}",
   "tracker_row_active_badge": "使用中",
   "tracker_row_sources_label": "{name}的取得來源",
   "all_completed_message": "全部完成！切換「顯示已完成」即可查看。",
