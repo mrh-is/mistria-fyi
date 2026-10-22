@@ -261,8 +261,18 @@ extension reports only as “There were errors during config load.”
 
 - Run `pnpm install` (or `node scripts/setup-worktree.ts` in a worktree) before opening the folder.
   Until the link exists, the extension fails to spawn `node_modules/.bin/node` (`ENOENT`).
-- On Windows, pnpm may link the runtime under another name, such as `node.exe`. If the extension
-  can’t spawn it, set `vitest.nodeExecutable` in your user settings to the pinned `node.exe`.
+- The extension honors `vitest.nodeExecutable` only with its default `vitest.shellType`,
+  `child_process`. With `"vitest.shellType": "terminal"` in your user settings, it runs the
+  terminal’s `PATH` node instead and fails the same way.
+- On Windows, pnpm usually links the runtime in `node_modules\.bin` as shims (`node.cmd`,
+  `node.ps1`, and an extensionless shell script), which the extension can’t spawn without a shell,
+  so the committed value likely fails there. A user-level `vitest.nodeExecutable` can’t fix it,
+  because VS Code applies the workspace’s `.vscode/settings.json` over user settings. Instead, edit
+  the committed file locally & keep the edit out of commits:
+  1. Print the pinned runtime’s real path with `pnpm exec node -p process.execPath`.
+  2. Set `vitest.nodeExecutable` in `.vscode/settings.json` to that path.
+  3. Run `git update-index --skip-worktree .vscode/settings.json`, so Git ignores the local edit.
+     Undo it with `--no-skip-worktree` before pulling a change to that file, then reapply.
 
 ### Executing Tests
 
