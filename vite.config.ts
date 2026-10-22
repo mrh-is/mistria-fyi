@@ -20,6 +20,7 @@ import { withBarePathStubs } from "./src/lib/build/bare-path-stubs.js";
 import { withHeadersFile } from "./src/lib/build/headers-file.js";
 import { licensesPlugin, noticeBlock } from "./src/lib/build/licenses.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
+import { offlinePagePlugin } from "./src/lib/build/offline-page.js";
 import { PARAGLIDE_OPTIONS } from "./src/lib/i18n/paraglide-options.js";
 import { PRERENDER_ENTRIES } from "./src/lib/i18n/prerender-entries.js";
 import { APP_DIRECTORY } from "./src/lib/pwa/config.js";
@@ -157,6 +158,7 @@ export default defineConfig({
       version: { name: getAppVersion(), pollInterval: 600_000 },
     }),
     localeNameChunksPlugin(),
+    offlinePagePlugin(),
     licensesPlugin({
       // Paraglide compiles its runtime into src/lib/paraglide/ from this package.
       generatedFrom: { "src/lib/paraglide/": "@inlang/paraglide-js" },
