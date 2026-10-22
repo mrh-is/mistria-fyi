@@ -213,3 +213,58 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
 
 Note: Browser developer tools may bypass the worker when “Update on reload” or an equivalent option
 is enabled. Disable that option during the offline checks.
+
+### Safari on an iPhone, from a Mac
+
+Safari’s Web Inspector has no service-worker or Cache Storage panel, so the checks above run from
+the console instead.
+
+1. **Connect.** On the iPhone, turn on Settings → Apps → Safari → Advanced → Web Inspector. On the
+   Mac, turn on Safari → Settings → Advanced → “Show features for web developers”, then connect the
+   iPhone by cable (or pair it once for network inspection). Its pages appear under Develop → [the
+   iPhone’s name].
+2. **Test the right build in the right container.** Open the PR’s branch preview, not production.
+   For the offline-launch check, add it to the Home Screen and inspect the Home Screen app: it has
+   its own storage, worker, & caches, separate from Safari’s tabs, so a working Safari tab proves
+   nothing about it. With the app open on the phone, it appears as its own entry in the Develop
+   menu.
+3. **Registration.** The worker is listed under its own Service Workers heading in the device’s
+   Develop submenu once registered; opening it inspects the worker itself. To check control from the
+   page’s console, wrap the code in an async function, since Safari’s console may reject a top-level
+   `await` (“Unexpected identifier”):
+
+   ```js
+   (async () => {
+     const r = await navigator.serviceWorker.getRegistration();
+     console.log({
+       scope: r?.scope,
+       script: r?.active?.scriptURL,
+       state: r?.active?.state,
+       controlled: !!navigator.serviceWorker.controller,
+     });
+   })();
+   ```
+
+   Expect the `/` scope, `/service-worker.js`, `"activated"`, and `controlled: true`. All
+   `undefined` means no worker yet: reload once and run it again.
+
+4. **Caches.** List each cache’s entries outside `/_app/`:
+
+   ```js
+   (async () => {
+     for (const name of await caches.keys()) {
+       const keys = await (await caches.open(name)).keys();
+       console.log(
+         name,
+         keys.map((k) => new URL(k.url).pathname).filter((p) => !p.startsWith("/_app/")),
+       );
+     }
+   })();
+   ```
+
+   `cache-<version>` should hold `/` and the home page of each language used (`/en`, …), and
+   `offline-locales-v1` should hold `/__last-locale`.
+
+5. **Offline launch.** Turn on Airplane Mode, force-quit the Home Screen app from the app switcher,
+   and launch it from its icon. It should open the last-used language’s home page, not the offline
+   page. Record the iOS version in the browser record.
