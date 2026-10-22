@@ -131,27 +131,82 @@ export function parseCurrentLocale(data: unknown): LocaleCode | undefined {
   return LOCALE_CODES.find((locale) => locale === current);
 }
 
+type PageCache = Pick<Cache, "match" | "put">;
+
 /**
- * Caches `locale`'s home page (`/en`), the page an offline launch at `start_url` opens, unless
- * it's cached already. A redirected or failed response isn't stored. Resolves whether the page is
- * cached afterward.
- *
- * The installed app's first page load happens before the worker exists, and browsing after that
- * is client-side, so no page load passes through the worker to cache it. A new version's install
- * calls this too, because activating deletes the old version's cache, home pages included.
+ * Caches the page at `path` unless it's cached already. A redirected or failed response isn't
+ * stored, since WebKit refuses to render a redirected navigation from the cache. Resolves whether
+ * the page is cached afterward.
  */
-export async function cacheLocaleHome(
-  cache: Pick<Cache, "match" | "put">,
-  locale: LocaleCode,
+async function cachePage(
+  cache: PageCache,
+  path: string,
   base: string,
   fetcher: (request: Request) => Promise<Response>,
 ): Promise<boolean> {
-  const request = new Request(new URL(`/${locale}`, base));
+  const request = new Request(new URL(path, base));
   if (await cache.match(request)) return true;
   const response = await fetcher(request);
   if (!response.ok || response.redirected) return false;
   await cache.put(request, response);
   return true;
+}
+
+/**
+ * Caches `locale`'s home page (`/en`), the page an offline launch at `start_url` opens, unless
+ * it's cached already. Resolves whether the page is cached afterward.
+ *
+ * The installed app's first page load happens before the worker exists, and browsing after that
+ * is client-side, so no page load passes through the worker to cache it. A version's install
+ * precaches the homes of the locales known by then ({@link precacheLaunchPages}); this caches one
+ * the player switches to afterward.
+ */
+export function cacheLocaleHome(
+  cache: PageCache,
+  locale: LocaleCode,
+  base: string,
+  fetcher: (request: Request) => Promise<Response>,
+): Promise<boolean> {
+  return cachePage(cache, `/${locale}`, base, fetcher);
+}
+
+/**
+ * The pages a version's install precaches for an offline launch: `/`, the manifest's `start_url`,
+ * whose stub picks a locale in the browser, and the home page of each known locale in `locales`
+ * among the build's `prerendered` paths. A prerendered page embeds its build's version, so the
+ * copy fetched at install always matches the chunks in that version's cache. A development build
+ * prerenders nothing, which leaves its homes to {@link cacheLocaleHome}.
+ */
+export function launchPagePaths(
+  locales: readonly string[],
+  prerendered: ReadonlySet<string>,
+): string[] {
+  const homes = [...new Set(locales)]
+    .filter((locale) => LOCALE_CODES.some((code) => code === locale))
+    .map((locale) => `/${locale}`)
+    .filter((path) => prerendered.has(path));
+  return ["/", ...homes];
+}
+
+/**
+ * Caches each of `paths` that isn't cached yet. Best-effort, like the locale chunks: a page that
+ * fails (a dropped connection mid-install) doesn't fail the install, and the old version's cache
+ * stays while it holds the only copy of the last-used home ({@link obsoleteCaches}). Resolves with
+ * the paths still uncached.
+ */
+export async function precacheLaunchPages(
+  cache: PageCache,
+  paths: readonly string[],
+  base: string,
+  fetcher: (request: Request) => Promise<Response>,
+): Promise<string[]> {
+  const cached = await Promise.allSettled(
+    paths.map((path) => cachePage(cache, path, base, fetcher)),
+  );
+  return paths.filter((_, index) => {
+    const result = cached[index];
+    return result.status !== "fulfilled" || !result.value;
+  });
 }
 
 /**
@@ -227,11 +282,11 @@ export async function cacheRuntimeResponse(
 ): Promise<void> {
   await cache.put(request, response.clone());
   const keys = await cache.keys();
-  // Locale home pages are where an offline launch lands, so browsing can't push them out; there is
-  // at most one per locale.
+  // Launch pages are where an offline launch lands, so browsing can't push them out; there is at
+  // most one per locale, plus `/`.
   const runtimeKeys = keys.filter((key) => {
     const url = new URL(key.url);
-    return !assetPaths.has(url.pathname) && !isExternalFontAsset(url) && !isLocaleHome(url);
+    return !assetPaths.has(url.pathname) && !isExternalFontAsset(url) && !isLaunchPage(url);
   });
   const excess = runtimeKeys.length - maxEntries;
   await Promise.all(runtimeKeys.slice(0, Math.max(0, excess)).map((key) => cache.delete(key)));
@@ -357,9 +412,12 @@ function localeOfPath(pathname: string): LocaleCode | undefined {
   return LOCALE_CODES.find((locale) => locale === segment);
 }
 
-/** A locale's home page (`/en`), without a query. */
-function isLocaleHome(url: URL): boolean {
-  return url.search === "" && LOCALE_CODES.some((locale) => url.pathname === `/${locale}`);
+/** `/` or a locale's home page (`/en`), without a query: a page {@link launchPagePaths} lists. */
+function isLaunchPage(url: URL): boolean {
+  return (
+    url.search === "" &&
+    (url.pathname === "/" || LOCALE_CODES.some((locale) => url.pathname === `/${locale}`))
+  );
 }
 
 function isUnlocalizedPath(pathname: string): boolean {
