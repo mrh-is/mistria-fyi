@@ -40,26 +40,27 @@ describe("renderRedirectsFile", () => {
   });
 });
 
+/** A builder with one prerendered page, writing it where the adapter asks. */
+function fakeBuilder(): Builder {
+  return {
+    prerendered: {
+      pages: new Map([["/en/data", { file: "en/data.html" }]]),
+      paths: ["/en/data"],
+    },
+    writePrerendered(dest: string) {
+      mkdirSync(path.join(dest, "en"), { recursive: true });
+      writeFileSync(path.join(dest, "en", "data.html"), "<p>data</p>");
+      return ["en/data.html"];
+    },
+  } as unknown as Builder;
+}
+
 describe("withBarePathStubs", () => {
   let directory: string | undefined;
 
   afterEach(() => {
     if (directory !== undefined) rmSync(directory, { force: true, recursive: true });
   });
-
-  function fakeBuilder(): Builder {
-    return {
-      prerendered: {
-        pages: new Map([["/en/data", { file: "en/data.html" }]]),
-        paths: ["/en/data"],
-      },
-      writePrerendered(dest: string) {
-        mkdirSync(path.join(dest, "en"), { recursive: true });
-        writeFileSync(path.join(dest, "en", "data.html"), "<p>data</p>");
-        return ["en/data.html"];
-      },
-    } as unknown as Builder;
-  }
 
   it("writes _redirects before the adapter copies it", async () => {
     directory = mkdtempSync(path.join(tmpdir(), "bare-path-stubs-"));

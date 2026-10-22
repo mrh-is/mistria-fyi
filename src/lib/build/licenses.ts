@@ -82,14 +82,14 @@ export function readLicenseEntry(root: string): LicenseEntry {
   >;
   const texts = readdirSync(root)
     .filter((file) => LICENSE_FILE.test(file) && statSync(path.join(root, file)).isFile())
-    .sort(compareText)
+    .toSorted(compareText)
     .map((file) => readFileSync(path.join(root, file), "utf8").trim())
     .filter((text) => text.length > 0);
   return {
     declared: declaredLicense(manifest),
-    name: String(manifest.name ?? path.basename(root)),
+    name: typeof manifest.name === "string" ? manifest.name : path.basename(root),
     texts,
-    version: String(manifest.version ?? "0.0.0"),
+    version: typeof manifest.version === "string" ? manifest.version : "0.0.0",
   };
 }
 
@@ -131,8 +131,8 @@ export function renderLicenses(
   allowlist: Readonly<Record<string, string>> = LICENSE_ALLOWLIST,
 ): string {
   const rule = "=".repeat(72);
-  const blocks = [...entries]
-    .sort((a, b) => compareText(a.name, b.name) || compareText(a.version, b.version))
+  const blocks = entries
+    .toSorted((a, b) => compareText(a.name, b.name) || compareText(a.version, b.version))
     .map((entry) => {
       const heading = `${entry.name} ${entry.version}`.trim();
       const declared = entry.declared === undefined ? "" : `License: ${entry.declared}\n`;
@@ -160,9 +160,9 @@ export function cssImportedPackages(css: string): string[] {
   for (const match of code.matchAll(
     /@import\s+["'](?![a-z][a-z0-9+.-]*:)(@[^/"'\s]+\/[^/"'\s]+|[^@./"'\s][^/"'\s]*)/giu,
   )) {
-    names.add(match[1] ?? "");
+    names.add(match[1]);
   }
-  return [...names].sort(compareText);
+  return [...names].toSorted(compareText);
 }
 
 /**
@@ -268,9 +268,9 @@ export function licensesPlugin({
       const missing = findMissingLicenses(entries, allowlist);
       if (missing.length > 0) this.error(describeMissingLicenses(missing));
       this.emitFile({
+        type: "asset",
         fileName: LICENSES_FILE_NAME,
         source: renderLicenses(entries, allowlist),
-        type: "asset",
       });
     },
     name: "mfg:licenses",
