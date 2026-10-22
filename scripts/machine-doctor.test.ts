@@ -12,6 +12,7 @@ import {
   checkPlaywright,
   checkPnpm,
   checkPnpmStore,
+  checkR2Token,
   exitCode,
   formatReport,
   parseSections,
@@ -446,6 +447,34 @@ describe("checkPnpmStore", () => {
   });
 });
 
+describe("checkR2Token", () => {
+  const secret = "token-value-that-must-not-print";
+
+  it("passes once the token & account ID are set, without printing either", () => {
+    const result = checkR2Token(
+      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "account-id", CLOUDFLARE_API_TOKEN: secret } }),
+    );
+    expect(result.status).toBe("ok");
+    expect(result.detail).not.toContain(secret);
+    expect(result.detail).not.toContain("account-id");
+  });
+
+  it("lists whichever variable is unset as a manual step", () => {
+    const result = checkR2Token(machine({ env: { CLOUDFLARE_API_TOKEN: secret } }));
+    expect(result.status).toBe("manual");
+    expect(result.detail).toBe("CLOUDFLARE_ACCOUNT_ID is not set");
+    expect(result.fix).toContain("docs/machine-setup.md");
+  });
+
+  it("treats an empty variable as unset", () => {
+    const result = checkR2Token(
+      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "", CLOUDFLARE_API_TOKEN: "" } }),
+    );
+    expect(result.status).toBe("manual");
+    expect(result.detail).toBe("CLOUDFLARE_API_TOKEN & CLOUDFLARE_ACCOUNT_ID are not set");
+  });
+});
+
 describe("parseSections", () => {
   it("selects every section without a flag", () => {
     expect(parseSections([])).toEqual(SECTION_NAMES);
@@ -511,8 +540,8 @@ describe("report", () => {
     const report = formatReport(runChecks(machine()));
     expect(report).toContain("Core (every contributor):\n[ok]      Node.js");
     expect(report).toContain("[missing] pnpm");
-    expect(report).toContain("Release (R2 uploads):\n[todo]    Wrangler login");
-    expect(report).toContain("fix: pnpm exec wrangler login");
+    expect(report).toContain("Release (R2 uploads):\n[todo]    R2 upload token");
+    expect(report).toContain("fix: Create an R2 API token");
     expect(report).not.toContain("Skipped");
   });
 
@@ -520,14 +549,14 @@ describe("report", () => {
     const report = formatReport(runChecks(ready, ["core", "browser"]));
     expect(report).toContain("Browser tests (accessibility & PWA suites):");
     expect(report).not.toContain("Game assets");
-    expect(report).not.toContain("Wrangler");
+    expect(report).not.toContain("R2 upload token");
     expect(report).toContain("Skipped: pipeline, release.");
   });
 
   it("mentions [todo] steps only when one was printed", () => {
     expect(formatReport(runChecks(ready, ["core"]))).not.toContain("[todo]");
     expect(formatReport(runChecks(ready, ["core", "release"]))).toContain(
-      "All checked prerequisites pass. Steps marked [todo] are interactive",
+      "All checked prerequisites pass. Steps marked [todo] are manual",
     );
   });
 });

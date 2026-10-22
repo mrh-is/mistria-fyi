@@ -447,17 +447,28 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
     : check("pnpm-store", label, "wrong", `pnpm uses ${resolved}, not ${configured}`, fix);
 }
 
-/** Logins no script can perform for the user. */
-export function manualSteps(): CheckResult[] {
-  return [
-    check(
-      "wrangler",
-      "Wrangler login",
-      "manual",
-      "not probed; the login is interactive",
-      "pnpm exec wrangler login, then pnpm exec wrangler whoami",
-    ),
-  ];
+/**
+ * The R2 API token that `sprites:upload` & `fonts:upload` hand to Wrangler. Only presence is
+ * checked: the doctor never reads, prints, or validates the token itself.
+ */
+export function checkR2Token(machine: Environment): CheckResult {
+  const unset = ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"].filter(
+    (name) => !machine.env[name],
+  );
+  return unset.length === 0
+    ? check(
+        "r2-token",
+        "R2 upload token",
+        "ok",
+        "CLOUDFLARE_API_TOKEN & CLOUDFLARE_ACCOUNT_ID are set",
+      )
+    : check(
+        "r2-token",
+        "R2 upload token",
+        "manual",
+        `${unset.join(" & ")} ${unset.length === 1 ? "is" : "are"} not set`,
+        "Create an R2 API token & export it with the account ID (docs/machine-setup.md, R2 upload token)",
+      );
 }
 
 /** Work areas. Core always runs; the rest are needed only for specific work. */
@@ -486,7 +497,7 @@ export const SECTIONS = {
     title: "Pipeline (game files)",
   },
   release: {
-    checks: (): CheckResult[] => manualSteps(),
+    checks: (machine: Environment): CheckResult[] => [checkR2Token(machine)],
     title: "Release (R2 uploads)",
   },
 } as const;
@@ -574,7 +585,7 @@ export function formatReport(reports: SectionReport[]): string {
   const results = checked.flatMap((report) => report.results);
   const problems = results.filter((r) => r.status === "missing" || r.status === "wrong").length;
   const todo = results.some((r) => r.status === "manual")
-    ? " Steps marked [todo] are interactive; see docs/machine-setup.md."
+    ? " Steps marked [todo] are manual; see docs/machine-setup.md."
     : "";
   lines.push(
     "",
