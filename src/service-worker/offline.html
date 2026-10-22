@@ -15,43 +15,89 @@
       }
       body {
         font-family: var(--font-body);
-        display: flex;
-        align-items: center;
-        justify-content: center;
         min-height: 100dvh;
-        padding: 2rem;
+        padding: max(3rem, 12vh) 1rem 3rem;
         background: var(--background);
         color: var(--foreground);
         -webkit-tap-highlight-color: transparent;
       }
-      .container {
-        text-align: center;
-        max-width: 20rem;
+      /* A journal entry for the spot where the map runs out: off-centre & a touch askew, as a
+         page pinned in the field would sit, never a centred hero. */
+      .note {
+        position: relative;
+        max-width: 26rem;
+        margin: 0 auto;
+        padding: 1.5rem 1.5rem 1.75rem 2.5rem;
+        border: 1px solid var(--color-ink-hairline);
+        border-radius: var(--radius);
+        background: var(--color-paper-raised);
+        box-shadow: var(--shadow-medium);
+        transform: rotate(-0.6deg);
+      }
+      @media (min-width: 701px) {
+        .note {
+          margin-left: max(2rem, calc(50% - 20rem));
+        }
+      }
+      /* The journal's margin rule, doubled like a ruled notebook's. */
+      .note::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 1.25rem;
+        width: 3px;
+        border-inline: 1px solid color-mix(in srgb, var(--color-brand-mark) 55%, transparent);
+      }
+      .eyebrow {
+        font-family: var(--font-controls);
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted-foreground);
+        margin-bottom: 0.75rem;
       }
       h1 {
         font-family: var(--font-display);
         font-style: var(--font-display-style);
-        font-size: 1.875rem;
+        font-size: 2.25rem;
         font-weight: 400;
-        line-height: 1.2;
-        margin-bottom: 0.5rem;
+        line-height: 1.1;
+        margin-bottom: 0.75rem;
       }
       p {
         font-size: 1rem;
         line-height: 1.5;
         color: var(--muted-foreground);
-        margin-bottom: 1.5rem;
+      }
+      .trail {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin: 1rem 0 1.25rem;
+        overflow: visible;
+      }
+      .trail .path {
+        stroke: var(--color-brand-accent);
+      }
+      .trail .ink {
+        stroke: var(--color-ink-hairline);
+      }
+      .trail .label {
+        font-family: var(--font-display);
+        font-style: var(--font-display-style);
+        font-size: 15px;
+        fill: var(--muted-foreground);
       }
       .retry {
         display: inline-flex;
         align-items: center;
-        height: 2.75rem;
-        padding: 0 1.5rem;
+        min-height: 2.75rem;
+        padding: 0 1.25rem;
         border-radius: var(--radius);
         border: 1px solid var(--border);
         background: var(--background);
         color: var(--foreground);
-        font-size: 1rem;
+        font-family: var(--font-controls);
+        font-size: 0.875rem;
         text-decoration: none;
       }
       .retry:hover {
@@ -65,14 +111,54 @@
     </style>
   </head>
   <body>
-    <div class="container">
+    <main class="note">
+      <p class="eyebrow">Field note · No signal</p>
       <h1>You're offline</h1>
       <p>
         The Mistria Field Guide needs an internet connection to load for the first time. Your
         tracked progress is saved locally and will be here when you reconnect.
       </p>
+      <!-- The trail walked so far, in pencil, petering out where this page was never mapped. -->
+      <svg class="trail" viewBox="0 0 300 84" aria-hidden="true" fill="none" stroke-linecap="round">
+        <defs>
+          <!-- The app’s small pencil filter (src/lib/components/pencil-filter.svelte). -->
+          <filter id="pencil" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence
+              type="turbulence"
+              baseFrequency="0.035"
+              numOctaves="4"
+              seed="2"
+              result="noise"
+            />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="noise"
+              scale="1"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+        </defs>
+        <g filter="url(#pencil)">
+          <path
+            class="ink"
+            stroke-width="1.5"
+            d="M14 66 l6 -11 l6 11 M44 58 l5 -9 l5 9 M118 30 l6 -11 l6 11"
+          />
+          <circle class="path" cx="10" cy="72" r="3.5" stroke-width="2" />
+          <path class="path" stroke-width="2" d="M16 70 C 50 64, 62 46, 96 48 S 140 64, 166 50" />
+          <path
+            class="path"
+            stroke-width="2"
+            stroke-dasharray="1 7"
+            d="M172 47 C 190 38, 204 30, 226 34"
+          />
+          <path class="ink" stroke-width="1.5" d="M234 30 l8 8 m0 -8 l-8 8" />
+        </g>
+        <text class="label" x="206" y="64">uncharted</text>
+      </svg>
       <!-- A link, not a script: the CSP blocks inline handlers. An empty href reloads this URL. -->
       <a class="retry" href="">Try again</a>
-    </div>
+    </main>
   </body>
 </html>
