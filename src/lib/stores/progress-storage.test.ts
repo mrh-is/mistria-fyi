@@ -4,11 +4,14 @@ import {
   migrateDocument,
   MIGRATIONS,
   readProgressBlob,
+  serializeFarmSwitch,
   serializeProgress,
+  withoutDeviceLocal,
 } from "#lib/stores/progress-storage.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 
 import type {
+  FarmSwitchBackup,
   IngressPolicy,
   LoadedProgress,
   StoredDocument,
@@ -480,5 +483,37 @@ describe("readProgressBlob", () => {
         kind: "unreadable",
       });
     }
+  });
+});
+
+function currentFixture(version = CURRENT_SERIALIZATION_VERSION): LoadedProgress {
+  return readOk(JSON.stringify(fixture(version)), "repair");
+}
+
+describe("serializeFarmSwitch", () => {
+  it("writes the new farm & one backup of the outgoing farm in the same document", () => {
+    const outgoing = currentFixture();
+    const next = readOk(serializeProgress({ ...currentFixture(), lastImport: null }), "repair");
+    next.progress.almanac.clear();
+    const earlier = { backup: { nested: true }, farmName: "Earlier farm" };
+    const json = serializeFarmSwitch(next, outgoing, { farmSwitchBackup: earlier, syncReceipt: 7 });
+    if (json === null) throw new Error("Expected the switch to serialize");
+
+    const stored = readOk(json, "repair");
+    expect(stored.progress.almanac.size).toBe(0);
+    expect(stored.local.syncReceipt).toBe(7);
+    const { backup, farmName } = stored.local.farmSwitchBackup as FarmSwitchBackup;
+    expect(farmName).toBe(outgoing.lastImport?.farmName ?? null);
+    // The backup restores as the outgoing farm, & replaced the earlier one rather than nesting it.
+    expect(backup).not.toHaveProperty("local");
+    expect(JSON.stringify(backup)).not.toContain("Earlier farm");
+    expect(readOk(JSON.stringify(backup), "strict").progress).toEqual(outgoing.progress);
+    expect(withoutDeviceLocal(json)).toBe(serializeProgress(next));
+  });
+
+  it("refuses the switch when the outgoing farm's backup wouldn't restore", () => {
+    const outgoing = currentFixture();
+    outgoing.progress.renown = Number.NaN;
+    expect(serializeFarmSwitch(currentFixture(), outgoing, {})).toBeNull();
   });
 });

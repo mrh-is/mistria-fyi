@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { readSaveIdentity } from "./save-identity.js";
+import { compareFarms, readSaveIdentity } from "./save-identity.js";
 
 describe("readSaveIdentity", () => {
   it("keeps identity separate from names, and normalizes an omitted prerelease", () => {
@@ -36,5 +36,26 @@ describe("readSaveIdentity", () => {
       identity: { creationVersion: null, saveNumber: null },
       playerName: null,
     });
+  });
+});
+
+describe("compareFarms", () => {
+  const version = { major: 1, minor: 0, patch: 8, pre: null };
+  const farm = { creationVersion: version, saveNumber: "123" };
+
+  it("matches on the game number, guarded by a creation version both sides read", () => {
+    expect(compareFarms(farm, farm)).toBe("same");
+    expect(compareFarms(farm, { ...farm, creationVersion: null })).toBe("same");
+    expect(compareFarms({ ...farm, creationVersion: null }, farm)).toBe("same");
+    expect(compareFarms(farm, { ...farm, saveNumber: "456" })).toBe("different");
+    expect(compareFarms(farm, { ...farm, creationVersion: { ...version, patch: 7 } })).toBe(
+      "different",
+    );
+  });
+
+  it("leaves unidentified progress or an unnumbered save for the player to decide", () => {
+    expect(compareFarms(null, farm)).toBe("unidentified");
+    expect(compareFarms({ creationVersion: version, saveNumber: null }, farm)).toBe("unidentified");
+    expect(compareFarms(farm, { creationVersion: version, saveNumber: null })).toBe("unidentified");
   });
 });

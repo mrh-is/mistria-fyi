@@ -40,7 +40,12 @@ import {
   QUARANTINE_STORAGE_KEY,
 } from "./storage-keys.js";
 
-import type { FactProvenance, ProvenanceSource, Resolution } from "#lib/engine/provenance.js";
+import type {
+  FactProvenance,
+  ProgressHistory,
+  ProvenanceSource,
+  Resolution,
+} from "#lib/engine/provenance.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
@@ -75,7 +80,6 @@ import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 import type {
   DeviceLocalState,
   LoadedProgress,
-  ProgressHistory,
   ProgressSnapshot,
   RetainedProgress,
 } from "./progress-storage.js";

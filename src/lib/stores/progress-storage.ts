@@ -39,7 +39,7 @@ import {
 } from "#lib/types/user-progress.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
-import type { ProvenanceRecord, ResolutionRecord } from "#lib/engine/provenance.js";
+import type { ProgressHistory, ResolutionRecord } from "#lib/engine/provenance.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
@@ -348,17 +348,6 @@ export interface RetainedProgress {
   questStates: Record<string, QuestState>;
   skillLevels: Record<string, number>;
   villagerRelationships: Record<string, VillagerRelationship>;
-}
-
-/**
- * Where each fact came from & which save diffs the player resolved; carried by backups. Keyed by
- * `factKey`, including facts whose IDs this build doesn't know, so nothing here is dropped.
- */
-export interface ProgressHistory {
-  /** The `playtime` of the last applied save, if any. */
-  lastSavePlaytime?: number;
-  provenance: ProvenanceRecord;
-  resolutions: ResolutionRecord;
 }
 
 export function emptyProgressHistory(): ProgressHistory {
@@ -722,6 +711,33 @@ export function serializeStoredProgress(
 ): string {
   const backup = serializedState(snapshot);
   return JSON.stringify(Object.keys(local).length === 0 ? backup : { local, ...backup });
+}
+
+/** The outgoing farm's progress, kept in this device's `local` section when sync switches farms. */
+export interface FarmSwitchBackup {
+  /** A backup of the outgoing farm, restorable as is. It never holds a `local` section itself. */
+  backup: SerializedState;
+  farmName: null | string;
+}
+
+/**
+ * The stored form of a farm switch: the new farm's progress, with the outgoing farm's backup in
+ * this device's `local` section, so one write lands both or neither. The backup replaces any
+ * earlier one rather than nesting it. `null` when the backup wouldn't restore, so the switch must
+ * not happen.
+ */
+export function serializeFarmSwitch(
+  next: ProgressSnapshot,
+  outgoing: ProgressSnapshot,
+  local: DeepReadonly<DeviceLocalState>,
+): null | string {
+  const backup = serializedState(outgoing);
+  if (readProgressBlob(JSON.stringify(backup), "strict").kind !== "ok") return null;
+  const farmSwitchBackup: FarmSwitchBackup = {
+    backup,
+    farmName: outgoing.lastImport?.farmName ?? null,
+  };
+  return serializeStoredProgress(next, { ...local, farmSwitchBackup });
 }
 
 /**
