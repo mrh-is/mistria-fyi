@@ -706,6 +706,24 @@ describe("POST /api/feedback GitHub credentials", () => {
     expectNoSecrets(consoleOutput(consoleWarn));
   });
 
+  it("treats a whitespace-only private key as missing", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockReturnValue(undefined);
+    const fetchMock = routingFetchMock();
+
+    const response = await callPost(makeRequest(validPayload), {
+      fetchMock,
+      platform: appPlatform({ GITHUB_APP_PRIVATE_KEY: " \n " }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(countCalls(fetchMock, isExchange)).toBe(0);
+    const [, options] = getGitHubCall(fetchMock);
+    expect(new Headers(options.headers).get("Authorization")).toBe("Bearer ghp_test_token");
+    expect(consoleWarn).toHaveBeenCalledWith(
+      "GitHub App is partly configured (missing GITHUB_APP_PRIVATE_KEY); using GITHUB_FEEDBACK_TOKEN",
+    );
+  });
+
   it("uses the fine-grained token without a warning when no App setting exists", async () => {
     const consoleWarn = vi.spyOn(console, "warn").mockReturnValue(undefined);
     const fetchMock = routingFetchMock();

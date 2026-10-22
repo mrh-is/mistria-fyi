@@ -13,8 +13,10 @@ still works until it is deleted, so the gain is ending rotation, not a smaller b
 ## Decision
 
 - **Auth:** the Worker signs an RS256 App JWT with Web Crypto, exchanges it for an installation
-  token, & caches the token per isolate until five minutes before it expires. Concurrent requests
-  share one exchange, & a rejected cached token is dropped. See
+  token downscoped to `issues: write` on `mistria-fyi`, & caches the token per isolate until five
+  minutes before it expires. Requests share only a settled token, never a pending exchange, because
+  a Worker's pending I/O belongs to the request that started it; a rejected token is dropped from
+  the cache only if it is still the cached one. See
   [Feedback credentials](../app-architecture.md#8-feedback-credentials).
 - **Permissions:** Issues: Read and write on `mrh-is/mistria-fyi` only, no webhook.
 - **Configuration:** `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, & `GITHUB_APP_PRIVATE_KEY`
@@ -34,6 +36,9 @@ still works until it is deleted, so the gain is ending rotation, not a smaller b
   creates the App & stores its key.
 - **Fall back to the token when the App fails:** rejected; it would hide a broken App setup until
   the token was revoked.
+- **Share one in-flight exchange between concurrent requests:** rejected; on Workers, a request
+  awaiting another request's pending `fetch` can hang if that request is torn down first. The cost
+  is an occasional duplicate exchange under concurrency.
 - **`[vars]` for the IDs:** rejected for now; top-level vars reach previews, & an `[env.production]`
   block must restate every binding.
 

@@ -195,7 +195,7 @@ async function getGitHubToken(auth: GitHubAuth): Promise<string> {
 function resolveGitHubAuth(): GitHubAuth {
   const appId = env.GITHUB_APP_ID?.trim();
   const installationId = env.GITHUB_APP_INSTALLATION_ID?.trim();
-  const privateKeyPem = env.GITHUB_APP_PRIVATE_KEY;
+  const privateKeyPem = env.GITHUB_APP_PRIVATE_KEY?.trim();
   if (appId && installationId && privateKeyPem) {
     return { credentials: { appId, installationId, privateKeyPem }, kind: "app" };
   }
@@ -480,8 +480,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
     if (!response.ok) {
       if (auth.kind === "app" && response.status === 401) {
-        // GitHub no longer accepts the cached installation token, so the next request fetches one.
-        installationTokens.clear();
+        // GitHub no longer accepts this installation token, so the next request fetches one, unless
+        // another request has already cached a newer token.
+        installationTokens.clear(token);
       }
       console.error("GitHub API error", await getGitHubFailureDiagnostics(response));
       httpError(503, GITHUB_UNAVAILABLE_MESSAGE);

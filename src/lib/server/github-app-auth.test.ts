@@ -121,6 +121,11 @@ describe("createInstallationTokenProvider", () => {
     const [, payload] = authorization.slice("Bearer ".length).split(".");
     expect(decodeSegment(payload)).toMatchObject({ iss: "123456" });
     expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(JSON.parse(init.body as string)).toEqual({
+      permissions: { issues: "write" },
+      repositories: ["mistria-fyi"],
+    });
   });
 
   it("encodes the installation ID into the request path", async () => {
@@ -154,12 +159,14 @@ describe("createInstallationTokenProvider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("shares one in-flight exchange between concurrent callers", async () => {
-    let resolveExchange: ((response: Response) => void) | undefined;
+  it("gives each concurrent caller its own exchange when nothing is cached", async () => {
+    // Workers can't share pending I/O across request contexts, so concurrent callers never await
+    // one shared exchange; only a settled token is shared.
+    const resolvers: ((response: Response) => void)[] = [];
     const fetchMock = vi.fn(
       () =>
         new Promise<Response>((resolve) => {
-          resolveExchange = resolve;
+          resolvers.push(resolve);
         }),
     );
     const provider = createInstallationTokenProvider({ fetch: fetchMock, now: () => NOW_MS });
@@ -167,12 +174,15 @@ describe("createInstallationTokenProvider", () => {
     const first = provider.getToken(credentials());
     const second = provider.getToken(credentials());
     await vi.waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
-    resolveExchange?.(tokenResponse("ghs_shared", new Date(NOW_MS + 60 * 60 * 1000)));
+    const expiresAt = new Date(NOW_MS + 60 * 60 * 1000);
+    resolvers[0]?.(tokenResponse("ghs_first", expiresAt));
+    resolvers[1]?.(tokenResponse("ghs_second", expiresAt));
 
-    await expect(Promise.all([first, second])).resolves.toEqual(["ghs_shared", "ghs_shared"]);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await expect(Promise.all([first, second])).resolves.toEqual(["ghs_first", "ghs_second"]);
+    await expect(provider.getToken(credentials())).resolves.toBe("ghs_second");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("does not reuse a token cached for another installation", async () => {
@@ -201,6 +211,33 @@ describe("createInstallationTokenProvider", () => {
     provider.clear();
 
     await expect(provider.getToken(credentials())).resolves.toBe("ghs_second");
+  });
+
+  it("drops the cached token when the rejected token matches it", async () => {
+    const expiresAt = new Date(NOW_MS + 60 * 60 * 1000);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(tokenResponse("ghs_first", expiresAt))
+      .mockResolvedValueOnce(tokenResponse("ghs_second", expiresAt));
+    const provider = createInstallationTokenProvider({ fetch: fetchMock, now: () => NOW_MS });
+
+    await provider.getToken(credentials());
+    provider.clear("ghs_first");
+
+    await expect(provider.getToken(credentials())).resolves.toBe("ghs_second");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a fresher cached token when an older token is rejected", async () => {
+    const expiresAt = new Date(NOW_MS + 60 * 60 * 1000);
+    const fetchMock = vi.fn().mockResolvedValueOnce(tokenResponse("ghs_fresh", expiresAt));
+    const provider = createInstallationTokenProvider({ fetch: fetchMock, now: () => NOW_MS });
+
+    await provider.getToken(credentials());
+    provider.clear("ghs_stale");
+
+    await expect(provider.getToken(credentials())).resolves.toBe("ghs_fresh");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("reports only status & request ID when GitHub refuses the exchange", async () => {

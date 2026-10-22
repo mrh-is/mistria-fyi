@@ -17,6 +17,14 @@ const JWT_LIFETIME_SECONDS = 9 * 60;
 /** Refresh this long before GitHub's `expires_at`, so a request never starts with a stale token. */
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
 const DEFAULT_TIMEOUT_MS = 10_000;
+/**
+ * Downscopes every installation token to filing issues on this repository, so a permission or
+ * repository later added to the App for another purpose never reaches the feedback Worker.
+ */
+const TOKEN_SCOPE = {
+  permissions: { issues: "write" },
+  repositories: ["mistria-fyi"],
+} as const;
 
 export interface GitHubAppCredentials {
   /** The App ID (or client ID), used as the JWT issuer. */
@@ -48,14 +56,12 @@ interface CachedToken {
   token: string;
 }
 
-interface InFlightExchange {
-  key: string;
-  promise: Promise<CachedToken>;
-}
-
 interface InstallationTokenProvider {
-  /** Drops the cached token, e.g. after GitHub rejects it. */
-  clear: () => void;
+  /**
+   * Drops the cached token after GitHub rejects `rejectedToken`, unless another request has already
+   * cached a newer one. With no argument, drops whatever is cached.
+   */
+  clear: (rejectedToken?: string) => void;
   getToken: (credentials: GitHubAppCredentials) => Promise<string>;
 }
 
@@ -159,8 +165,10 @@ function parseTokenResponse(body: unknown): { expiresAt: number; token: string }
 }
 
 /**
- * Creates a token provider with its own cache. Concurrent callers share one in-flight exchange, and
- * a failed exchange is never cached, so the next call retries.
+ * Creates a token provider with its own cache. Only a settled token is shared between callers: on a
+ * Worker, a pending exchange belongs to the request that started it, and another request awaiting it
+ * can hang if that request is torn down, so each caller without a fresh cached token runs its own
+ * exchange. A failed exchange is never cached, so the next call retries.
  */
 export function createInstallationTokenProvider(
   options: InstallationTokenProviderOptions = {},
@@ -169,7 +177,6 @@ export function createInstallationTokenProvider(
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const fetchFn = options.fetch ?? ((url: string, init: RequestInit) => fetch(url, init));
   let cached: CachedToken | undefined;
-  let inFlight: InFlightExchange | undefined;
 
   async function exchange(credentials: GitHubAppCredentials, key: string): Promise<CachedToken> {
     const jwt = await createAppJwt(credentials.appId, credentials.privateKeyPem, now());
@@ -182,9 +189,11 @@ export function createInstallationTokenProvider(
       const response = await fetchFn(
         `${GITHUB_API}/app/installations/${encodeURIComponent(credentials.installationId)}/access_tokens`,
         {
+          body: JSON.stringify(TOKEN_SCOPE),
           headers: {
             Accept: "application/vnd.github+json",
             Authorization: `Bearer ${jwt}`,
+            "Content-Type": "application/json",
             "User-Agent": USER_AGENT,
             "X-GitHub-Api-Version": GITHUB_API_VERSION,
           },
@@ -205,30 +214,19 @@ export function createInstallationTokenProvider(
     }
   }
 
-  /** Runs one exchange & caches its result; `inFlight` points at this call until it settles. */
-  async function refresh(credentials: GitHubAppCredentials, key: string): Promise<CachedToken> {
-    try {
-      const fresh = await exchange(credentials, key);
-      cached = fresh;
-      return fresh;
-    } finally {
-      if (inFlight?.key === key) inFlight = undefined;
-    }
-  }
-
   return {
-    clear() {
-      cached = undefined;
+    clear(rejectedToken) {
+      if (rejectedToken === undefined || cached?.token === rejectedToken) {
+        cached = undefined;
+      }
     },
     async getToken(credentials) {
       const key = `${credentials.appId}:${credentials.installationId}`;
       if (cached?.key === key && now() < cached.refreshAt) {
         return cached.token;
       }
-      if (inFlight?.key !== key) {
-        inFlight = { key, promise: refresh(credentials, key) };
-      }
-      const fresh = await inFlight.promise;
+      const fresh = await exchange(credentials, key);
+      cached = fresh;
       return fresh.token;
     },
   };

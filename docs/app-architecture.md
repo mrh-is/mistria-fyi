@@ -477,8 +477,12 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
 `/api/feedback` files issues on `mrh-is/mistria-fyi` as a GitHub App installation.
 `src/lib/server/github-app-auth.ts` signs a nine-minute RS256 App JWT with Web Crypto, exchanges it
 at `POST /app/installations/{id}/access_tokens`, & caches the installation token per isolate until
-five minutes before its `expires_at`; concurrent requests share one exchange. The endpoint reads
-three settings, & uses the App only once all three exist:
+five minutes before its `expires_at`. Each exchange asks for only `issues: write` on `mistria-fyi`,
+so a permission or repository later added to the App never reaches these tokens. Requests share only
+a settled token, never a pending exchange: a Worker's pending I/O belongs to the request that
+started it, so concurrent requests with no fresh cached token each run their own exchange. A `401`
+on the issue request drops the cached token only if it is the one GitHub rejected. The endpoint
+reads three settings, & uses the App only once all three exist:
 
 - `GITHUB_APP_ID`: the App ID (or client ID), the JWT issuer. Not secret.
 - `GITHUB_APP_INSTALLATION_ID`: the App's installation on this repository. Not secret.
@@ -525,7 +529,11 @@ per-environment `wrangler.toml` block.
    author is the App's bot account.
 6. Remove the legacy token, then revoke it under **Settings → Developer settings → Personal access
    tokens → Fine-grained tokens**:
-   `pnpm exec wrangler pages secret delete GITHUB_FEEDBACK_TOKEN --project-name mistria-fyi`.
+   `pnpm exec wrangler pages secret delete GITHUB_FEEDBACK_TOKEN --project-name mistria-fyi`. That
+   command takes no environment flag, so confirm in the dashboard (**Settings → Variables and
+   Secrets**) that `GITHUB_FEEDBACK_TOKEN` is gone from both **Production** & **Preview**, and
+   delete any copy that remains. A preview still holding it keeps filing issues with it until the
+   revocation, then returns `503` with a misleading “missing `GITHUB_APP_*`” log.
 
 The App key doesn't expire, so there is no rotation schedule. To replace it, generate a second key,
 store it as above, redeploy, then delete the old key in the App's settings. If the key leaks, delete
