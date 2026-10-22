@@ -115,6 +115,7 @@
   "tracker_row_uncheck": "{name} 선택 해제",
   "tracker_row_check_spoilered": "스포일러 항목 선택",
   "tracker_row_check": "{name} 선택",
+  "tracker_row_preview_sprite": "{name} 컬러로 보기",
   "tracker_row_active_badge": "활성",
   "tracker_row_sources_label": "{name} 획득처",
   "all_completed_message": "모두 완료했습니다! 확인하려면 \"완료 항목 표시\"를 켜세요.",
@@ -662,5 +663,9 @@
   "import_last_imported": "마지막 가져오기: {time}",
   "import_farm_identity": "저장 번호 {number} · 생성 버전 {version}",
   "import_unknown_number": "알 수 없음",
-  "import_unknown_version": "알 수 없는 버전"
+  "import_unknown_version": "알 수 없는 버전",
+  "offline_page_title": "Mistria Field Guide — 오프라인",
+  "offline_eyebrow": "필드 노트 · 신호 없음",
+  "offline_heading": "오프라인 상태입니다",
+  "offline_body": "Mistria Field Guide를 처음 불러오려면 인터넷 연결이 필요합니다. 기록한 진행 상황은 이 기기에 저장되어 있으니 다시 연결하면 그대로 남아 있습니다."
 }
