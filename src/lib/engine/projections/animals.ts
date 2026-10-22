@@ -36,8 +36,8 @@ export interface AnimalsProjection extends CategoryProjection {
 }
 
 /**
- * Every variant, cosmetic, appearance, Mistmare perk, & skin is one step. A variant is in scope only within the
- * context's availability windows; everything else stays in scope until collected.
+ * Every variant, cosmetic, appearance, Mistmare perk, & skin is one step. A variant is in scope
+ * only within the context's availability windows; everything else stays in scope until collected.
  */
 export function projectAnimals(
   ctx: ProgressContext,
