@@ -10,8 +10,9 @@ import {
 import { getSpouseId } from "#lib/engine/relationships.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
+import { trackedPerkIds } from "./perk-ids.js";
 import { hasProgressSection, isSaveSection } from "./save-bundle.js";
-import { isKnownItemId, isUntrackedPerkId } from "./untracked-save-ids.js";
+import { isKnownItemId } from "./untracked-save-ids.js";
 
 import type { LevelIssue } from "#lib/engine/progress.js";
 import type {
@@ -449,18 +450,13 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     (id) => Object.hasOwn(trackerData.mines.spells, id),
     collector,
   );
-  const validPerks = new Set<string>(
-    recordValues(trackerData.skills).flatMap((skill) =>
-      skill.perkTiers.flatMap((tier) => recordKeys(tier)),
-    ),
-  );
+  const validPerks = new Set<string>(trackedPerkIds(trackerData));
   const unlockedPerks = knownIdSet<PerkId>(
     player.stringList("perks", ["unlockedPerks"]),
     "player.perks",
     "unlockedPerks",
     (id) => validPerks.has(id),
     collector,
-    isUntrackedPerkId,
   );
 
   // ── Museum donations (from gamedata.json → museum_progress) ──

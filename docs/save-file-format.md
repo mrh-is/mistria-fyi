@@ -328,9 +328,10 @@ versions, though new items, recipes, and quests are added in content updates.
    the save is incomplete for that field, not that the level is zero.
 7. Saves list game IDs the tracker deliberately doesn't track: items outside the almanac, the
    cosmetic token items (`cosmetic`, `animal_cosmetic`, `pet_cosmetic`), treasure chests
-   (`treasure_box_<tier>`, tracked as chest tiers), and the Mistmare's perks (`horsepower`,
-   `harvest_horse`, `nice_ride`). The importer counts these as known-but-untracked; anything else it
-   doesn't recognize marks its field incomplete.
+   (`treasure_box_<tier>`, tracked as chest tiers). The importer counts these as
+   known-but-untracked; anything else it doesn't recognize marks its field incomplete. The
+   Mistmare's perks (`horsepower`, `harvest_horse`, `nice_ride`) share `perks` with the skill perks
+   and import into the same `unlockedPerks` set.
 8. A farm's identity is the number in `game-<number>-<autosave or slot>.sav` plus
    `info.creation_version`. Both are optional when importing: renamed files, extracted JSON, & old
    saves may omit them. `header.playtime` only grows as the save is played. The manual importer also

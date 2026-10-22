@@ -406,6 +406,15 @@ describe("extractSaveProgress", () => {
     });
   });
 
+  it("imports the Mistmare's perks from player.perks without warning", () => {
+    const { completed, warnings } = extractSaveProgress({
+      player: { perks: ["horsepower", "harvest_horse", "nice_ride"] },
+    });
+
+    expect(completed.unlockedPerks).toEqual(new Set(["horsepower", "harvest_horse", "nice_ride"]));
+    expect(warnings).toEqual([]);
+  });
+
   describe("new progression fields from save", () => {
     it("extracts hasUpperFloor from player.upper_floor", () => {
       const bundle: SaveBundle = {
@@ -1024,17 +1033,12 @@ describe("extractSave", () => {
     const { fields } = extractSave({
       player: {
         items_acquired: ["cosmetic", `treasure_box_${tier}`],
-        perks: ["horsepower"],
       },
     });
 
     expect(fields.almanac).toMatchObject({
       completeness: "complete",
       untracked: ["cosmetic", `treasure_box_${tier}`],
-    });
-    expect(fields.unlockedPerks).toMatchObject({
-      completeness: "complete",
-      untracked: ["horsepower"],
     });
 
     const renamed = extractSave({ player: { items_acquired: ["renamed_in_a_game_update"] } });

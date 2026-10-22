@@ -21,6 +21,7 @@ import { SvelteSet } from "svelte/reactivity";
 import * as v from "valibot";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { trackedPerkIds } from "#lib/engine/perk-ids.js";
 import {
   clampLevel,
   clampMineFloor,
@@ -422,11 +423,7 @@ const MUSEUM_ITEM_IDS = new Set(
     Object.values(wing.sets).flatMap((set) => set.items),
   ),
 );
-const PERK_IDS = new Set(
-  Object.values(trackerData.skills).flatMap((skill) =>
-    skill.perkTiers.flatMap((tier) => Object.keys(tier)),
-  ),
-);
+const PERK_IDS = new Set<string>(trackedPerkIds(trackerData));
 
 type KnownIds = object | ReadonlySet<string>;
 

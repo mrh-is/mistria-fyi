@@ -82,6 +82,10 @@ export function* searchAnimals({
         yield collectible(row.completed, "mount", row.id, `mount-appearance:${row.id}`, locale);
         break;
 
+      case "mountPerk":
+        yield collectible(row.completed, "perks", row.id, `mount-perk:${row.id}`, locale);
+        break;
+
       case "petCosmetic":
         yield collectible(
           row.completed,
@@ -190,8 +194,11 @@ export function* searchVillagers({
 }
 /* oxlint-enable jsdoc/require-yields */
 
-/** A pet or mount collectible: its name is also its full name, so ranking reads it unqualified. */
-function collectible<Chunk extends "mount" | "pets/cosmetic_sets" | "pets/skins">(
+/**
+ * A pet or mount collectible (a Mistmare perk included): its name is also its full name, so ranking
+ * reads it unqualified.
+ */
+function collectible<Chunk extends "mount" | "perks" | "pets/cosmetic_sets" | "pets/skins">(
   completed: boolean,
   chunk: Chunk,
   nameId: LocalizedCategoryId[Chunk],
