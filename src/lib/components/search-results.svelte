@@ -15,7 +15,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
-  import type { SearchCategoryKey } from "#lib/data/categories.js";
+  import type { SearchCategoryKey } from "#lib/engine/categories.js";
   import type { SearchResult } from "#lib/engine/search.js";
   import type { ReportCategory } from "#lib/feedback/types.js";
   import type { Source } from "#lib/types/acquisition.js";

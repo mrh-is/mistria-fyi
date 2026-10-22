@@ -1,21 +1,10 @@
 import { getName, nameCollator } from "#lib/data/names.js";
+import { CATEGORIES, CATEGORY_KEYS } from "#lib/engine/categories.js";
 import * as m from "#lib/paraglide/messages.js";
 
+import type { CategoryKey } from "#lib/engine/categories.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { Path } from "$app/types";
-
-export const CATEGORY_KEYS = [
-  "almanac",
-  "animals",
-  "cosmetics",
-  "mines",
-  "museum",
-  "quests",
-  "recipes",
-  "renown",
-  "skills",
-  "villagers",
-] as const;
 
 export interface CategoryInfo {
   color: string;
@@ -23,27 +12,10 @@ export interface CategoryInfo {
   href: Path;
   name: string;
 }
-export type CategoryKey = (typeof CATEGORY_KEYS)[number];
 
 /**
- * Category keys the cross-category search index produces results for. Kept as an explicit,
- * type-checked subset (via `satisfies`) rather than a capability flag, since it drives a type
- * (`SearchCategoryKey`), not runtime branching.
- */
-export const SEARCH_RESULT_CATEGORY_KEYS = [
-  "almanac",
-  "animals",
-  "cosmetics",
-  "museum",
-  "quests",
-  "recipes",
-  "villagers",
-] as const satisfies readonly CategoryKey[];
-
-export type SearchCategoryKey = (typeof SEARCH_RESULT_CATEGORY_KEYS)[number];
-
-/**
- * Category names are the game's own words wherever it has one (the `ui` chunk, awaited by the
+ * Localized labels for the engine's category registry (`engine/categories.ts`), which can't import
+ * messages. Category names are the game's own words wherever it has one (the `ui` chunk, awaited by the
  * root layout); only concepts the game never labels on their own fall back to MFG's messages.
  */
 const CATEGORY_NAMES: Record<CategoryKey, (locale: LocaleCode) => string> = {
@@ -72,19 +44,6 @@ const CATEGORY_DESCRIPTIONS: Record<CategoryKey, (locale: LocaleCode) => string>
   villagers: (locale) => m.category_villagers_description({}, { locale }),
 };
 
-const CATEGORY_HREFS: Record<CategoryKey, Path> = {
-  almanac: "almanac",
-  animals: "animals",
-  cosmetics: "cosmetics",
-  mines: "mines",
-  museum: "museum",
-  quests: "quests",
-  recipes: "recipes",
-  renown: "renown",
-  skills: "skills",
-  villagers: "villagers",
-};
-
 /** A category's color as a CSS `var()` reference; the one lookup that needs no locale. */
 export function categoryColor<Key extends CategoryKey>(key: Key): `var(--color-category-${Key})` {
   return `var(--color-category-${key})`;
@@ -95,14 +54,14 @@ export function categoryForKey(key: CategoryKey, locale: LocaleCode): CategoryIn
   return {
     color: categoryColor(key),
     description: CATEGORY_DESCRIPTIONS[key](locale),
-    href: CATEGORY_HREFS[key],
+    href: CATEGORIES[key].route,
     name: CATEGORY_NAMES[key](locale),
   };
 }
 
 /** Look up a category key from its public route. */
 export function categoryKeyForPathname(pathname: string): CategoryKey | undefined {
-  return CATEGORY_KEYS.find((key) => `/${CATEGORY_HREFS[key]}` === pathname);
+  return CATEGORY_KEYS.find((key) => `/${CATEGORIES[key].route}` === pathname);
 }
 
 /** Display name for a category, or the raw key when it isn't a known category. */

@@ -14,7 +14,7 @@
   import { getAlmanacEntryNames, getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { isCategoryComplete } from "#lib/engine/progress.js";
+  import { isCategoryComplete } from "#lib/engine/categories.js";
   import { projectAlmanac } from "#lib/engine/projections/almanac.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -165,7 +165,7 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#each sectionViews as { baseRows, canonicalIds, completedCount, id, scopedRows, visibleRows } (id)}
+{#each sectionViews as { baseRows, canonicalIds, completedCount, id, scopedTotal, visibleRows } (id)}
   {#if baseRows.length > 0}
     {@const showAll = expandedSections[id] ?? false}
     {@const isOpen = openSections[id] ?? false}
@@ -186,7 +186,7 @@
       }}
       reportCategory="almanac"
       reportEntityId={id}
-      total={scopedRows.length}
+      total={scopedTotal}
     >
       <TrackerRowList
         expanded={showAll}

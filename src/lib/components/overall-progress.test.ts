@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import OverallProgress from "#lib/components/overall-progress.svelte";
-import { getAllProgress } from "#lib/engine/progress.js";
+import { getAllProgress } from "#lib/engine/categories.js";
 import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";

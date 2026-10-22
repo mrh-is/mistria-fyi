@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
-import { getCategoryProgress } from "#lib/engine/progress.js";
+import { getCategoryProgress } from "#lib/engine/categories.js";
+import { searchAlmanac } from "#lib/engine/search-providers.js";
 import { searchAllCategories } from "#lib/engine/search.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
@@ -52,6 +53,13 @@ describe("projectAlmanac", () => {
       hidden.sections.flatMap(({ visibleRows }) => visibleRows).every((row) => row.obtainable),
     ).toBe(true);
     expect(shown.totals).toEqual(hidden.totals);
+    // Revealed rows render but never count, so section totals match too.
+    expect(shown.sections.map(({ scopedTotal }) => scopedTotal)).toEqual(
+      hidden.sections.map(({ scopedTotal }) => scopedTotal),
+    );
+    expect(
+      shown.sections.some(({ scopedRows, scopedTotal }) => scopedRows.length > scopedTotal),
+    ).toBe(true);
     const id = unobtainable[0].canonicalId;
     ctx.progress.almanac.add(id);
     const completed = projectAlmanac(ctx)
@@ -95,11 +103,14 @@ describe("projectAlmanac", () => {
 
   it("search can include out-of-window rows while page context excludes them", () => {
     const ctx = { ...context(), availabilityWindows: [] };
+    const progressionState = deriveProgressionState(ctx.progress, trackerData, true);
     const page = projectAlmanac(ctx);
     expect(page.rows.filter((row) => row.visible)).toHaveLength(0);
-    const search = projectAlmanac(ctx, { includeUnavailable: true });
-    expect(search.rows.some((row) => row.visible && !row.available)).toBe(true);
-    expect(search.totals).toEqual(page.totals);
+    const offered = [
+      ...searchAlmanac({ locale: "en", progressionState, projectionContext: ctx }),
+    ].map((candidate) => candidate.result());
+    expect(offered.length).toBeGreaterThan(0);
+    expect(offered.every((result) => !result.available)).toBe(true);
   });
 
   it("marks spoilers and excludes them only when the caller requests it", () => {

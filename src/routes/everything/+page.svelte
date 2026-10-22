@@ -3,9 +3,9 @@
   import { Icon } from "#lib/components/icon/index.js";
   import PageHeader from "#lib/components/page-header.svelte";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
-  import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
+  import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
-  import { getAllProgress, getOverallProgress } from "#lib/engine/progress.js";
+  import { CATEGORY_KEYS, getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 

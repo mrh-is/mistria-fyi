@@ -7,19 +7,21 @@ import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/a
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import {
-  clampRenownLevel,
   getAllProgress,
   getCategoryProgress,
-  getMaxMineFloor,
-  getMaxRenownLevel,
   getOverallProgress,
   isCategoryComplete,
+} from "./categories.js";
+import {
+  clampRenownLevel,
+  getMaxMineFloor,
+  getMaxRenownLevel,
   isVillagerComplete,
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "./progress.js";
 
-import type { CategoryKey } from "#lib/data/categories.js";
+import type { CategoryKey } from "#lib/engine/categories.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type {
   AnimalVariantId,

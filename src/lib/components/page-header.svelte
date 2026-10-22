@@ -9,7 +9,7 @@
 
   import type { Snippet } from "svelte";
 
-  import type { CategoryKey } from "#lib/data/categories.js";
+  import type { CategoryKey } from "#lib/engine/categories.js";
   import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { Path } from "$app/types";
 

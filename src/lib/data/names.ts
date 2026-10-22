@@ -56,7 +56,7 @@ export const NAME_CHUNKS = [
 ] as const;
 export type NameChunk = (typeof NAME_CHUNKS)[number];
 
-interface LocalizedCategoryId {
+export interface LocalizedCategoryId {
   animals: AnimalNameId;
   cosmetics: CosmeticId;
   "cosmetics/subcategories": string;

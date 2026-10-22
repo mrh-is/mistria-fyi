@@ -7,7 +7,8 @@
   import Stepper from "#lib/components/stepper.svelte";
   import { getName } from "#lib/data/names.js";
   import { celebrateCategory } from "#lib/effects/celebrate.js";
-  import { isCategoryComplete, isVillagerComplete, MAX_HEART_LEVEL } from "#lib/engine/progress.js";
+  import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { isVillagerComplete, MAX_HEART_LEVEL } from "#lib/engine/progress.js";
   import { getSpouseId, relationshipPresentation } from "#lib/engine/relationships.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
