@@ -2,8 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Mistria Field Guide — Offline</title>
+    <!-- offlinePagePlugin (src/lib/build/offline-page.ts) fills this slot from src/app.css &
+         src/app.html: the app's fonts, light & dark tokens, and saved-theme bootstrap. -->
+    <!-- %offline.app-theme% -->
     <style>
       * {
         margin: 0;
@@ -11,72 +14,131 @@
         box-sizing: border-box;
       }
       body {
-        font-family:
-          system-ui,
-          -apple-system,
-          sans-serif;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        font-family: var(--font-body);
         min-height: 100dvh;
-        padding: 2rem;
-        background: #fff;
-        color: #1a1a2e;
+        padding: max(3rem, 12vh) 1rem 3rem;
+        background: var(--background);
+        color: var(--foreground);
+        -webkit-tap-highlight-color: transparent;
       }
-      @media (prefers-color-scheme: dark) {
-        body {
-          background: #1a1a2e;
-          color: #e8e8f0;
-        }
-        a {
-          color: #93a3f8;
+      /* A journal entry for the spot where the map runs out: off-centre & a touch askew, as a
+         page pinned in the field would sit, never a centred hero. */
+      .note {
+        position: relative;
+        max-width: 26rem;
+        margin: 0 auto;
+        padding: 1.5rem 1.5rem 1.75rem 2.5rem;
+        border: 1px solid var(--color-ink-hairline);
+        border-radius: var(--radius);
+        background: var(--color-paper-raised);
+        box-shadow: var(--shadow-medium);
+        transform: rotate(-0.6deg);
+      }
+      @media (min-width: 701px) {
+        .note {
+          margin-left: max(2rem, calc(50% - 20rem));
         }
       }
-      .container {
-        text-align: center;
-        max-width: 20rem;
+      /* The journal's margin rule, doubled like a ruled notebook's. */
+      .note::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 1.25rem;
+        width: 3px;
+        border-inline: 1px solid color-mix(in srgb, var(--color-brand-mark) 55%, transparent);
+      }
+      .eyebrow {
+        font-family: var(--font-controls);
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted-foreground);
+        margin-bottom: 0.75rem;
       }
       h1 {
-        font-size: 1.25rem;
-        margin-bottom: 0.5rem;
+        font-family: var(--font-display);
+        font-style: var(--font-display-style);
+        font-size: 2.25rem;
+        font-weight: 400;
+        line-height: 1.1;
+        margin-bottom: 0.75rem;
       }
       p {
-        font-size: 0.875rem;
-        color: #666;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: var(--muted-foreground);
         margin-bottom: 1.5rem;
       }
-      @media (prefers-color-scheme: dark) {
-        p {
-          color: #999;
-        }
+      /* A near peak & a far ridge, sketched in the entry's empty top corner. */
+      .range {
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+        display: flex;
+        align-items: flex-end;
+      }
+      .range svg {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .peak-near {
+        width: 4rem;
+        height: 4rem;
+        color: var(--color-brand-accent);
+      }
+      .peak-far {
+        width: 2.75rem;
+        height: 2.75rem;
+        margin-left: -0.875rem;
+        color: var(--color-ink-hairline);
       }
       .retry {
-        display: inline-block;
-        padding: 0.5rem 1.5rem;
-        border-radius: 0.5rem;
-        border: 1px solid #ddd;
-        background: transparent;
-        color: inherit;
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.75rem;
+        padding: 0 1.25rem;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: var(--background);
+        color: var(--foreground);
+        font-family: var(--font-controls);
         font-size: 0.875rem;
         text-decoration: none;
       }
-      @media (prefers-color-scheme: dark) {
-        .retry {
-          border-color: #444;
-          color: #e8e8f0;
-        }
+      .retry:hover {
+        background: var(--accent);
+        color: var(--accent-foreground);
+      }
+      .retry:focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
       }
     </style>
   </head>
   <body>
-    <div class="container">
+    <main class="note">
+      <p class="eyebrow">Field note · No signal</p>
       <h1>You're offline</h1>
       <p>
         The Mistria Field Guide needs an internet connection to load for the first time. Your
         tracked progress is saved locally and will be here when you reconnect.
       </p>
+      <!-- Tabler's `mountain` icon (MIT, @tabler/icons-svelte-runes), drawn twice as a range. -->
+      <div class="range" aria-hidden="true">
+        <svg class="peak-near" viewBox="0 0 24 24">
+          <path d="M3 20h18l-6.921 -14.612a2.3 2.3 0 0 0 -4.158 0l-6.921 14.612" />
+          <path d="M7.5 11l2 2.5l2.5 -2.5l2 3l2.5 -2" />
+        </svg>
+        <svg class="peak-far" viewBox="0 0 24 24">
+          <path d="M3 20h18l-6.921 -14.612a2.3 2.3 0 0 0 -4.158 0l-6.921 14.612" />
+          <path d="M7.5 11l2 2.5l2.5 -2.5l2 3l2.5 -2" />
+        </svg>
+      </div>
       <!-- A link, not a script: the CSP blocks inline handlers. An empty href reloads this URL. -->
       <a class="retry" href="">Try again</a>
-    </div>
+    </main>
   </body>
 </html>
