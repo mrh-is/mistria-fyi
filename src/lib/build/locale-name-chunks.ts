@@ -30,8 +30,8 @@ export function localeNameChunks(manifest: Manifest): Record<string, string[]> {
   }
   return Object.fromEntries(
     Object.entries(chunks)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([locale, files]) => [locale, [...files].sort()]),
+      .toSorted(([a], [b]) => a.localeCompare(b))
+      .map(([locale, files]) => [locale, [...files].toSorted()]),
   );
 }
 
@@ -77,7 +77,7 @@ export function localeNameChunksPlugin(): Plugin {
       if (!existsSync(manifestPath)) {
         throw new Error(`localeNameChunksPlugin needs the client manifest at ${manifestPath}.`);
       }
-      const chunks = localeNameChunks(JSON.parse(readFileSync(manifestPath, "utf-8")) as Manifest);
+      const chunks = localeNameChunks(JSON.parse(readFileSync(manifestPath, "utf8")) as Manifest);
       inlined = true;
       return {
         code: code.replaceAll(
