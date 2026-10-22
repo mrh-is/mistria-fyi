@@ -1,7 +1,8 @@
 <!--
   The header surface shared by every tracker section: an expandable section's
   disclosure button, & the inert header a spoiler-hidden section shows in its
-  place. Sharing it keeps their box, ink, & hover in step.
+  place. Sharing it keeps their box & hover in step; only the button shows a
+  pressed or focused state, since the inert header does nothing when tapped.
 -->
 <script lang="ts">
   import type { Snippet } from "svelte";
@@ -43,7 +44,7 @@
     text-align: left;
   }
 
-  .section-trigger:is(:active, :focus-visible) {
+  button.section-trigger:is(:active, :focus-visible) {
     background: color-mix(in srgb, var(--primary) 7%, transparent);
     outline: 2px solid var(--primary);
     outline-offset: -2px;
