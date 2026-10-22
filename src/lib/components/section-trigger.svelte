@@ -1,32 +1,25 @@
 <!--
-  The header surface shared by every tracker section: an expandable section's
-  disclosure button, & the inert header a spoiler-hidden section shows in its
-  place. Sharing it keeps their box & hover in step; only the button shows a
-  pressed or focused state, since the inert header does nothing when tapped.
+  The header button shared by every tracker section: an expandable section's
+  disclosure, & the reveal button a spoiler-hidden section shows in its place.
+  Sharing it keeps their box, disclosure icon, hover, & focus in step.
 -->
 <script lang="ts">
   import type { Snippet } from "svelte";
   import type { HTMLButtonAttributes } from "svelte/elements";
 
   let {
+    type = "button",
     children,
     class: className,
-    element = "button",
     ...rest
   }: HTMLButtonAttributes & {
     children: Snippet;
-    element?: "button" | "div";
   } = $props();
 </script>
 
-<svelte:element
-  this={element}
-  class={["section-trigger", className]}
-  data-section-trigger
-  {...rest}
->
+<button class={["section-trigger", className]} data-section-trigger {type} {...rest}>
   {@render children()}
-</svelte:element>
+</button>
 
 <style>
   .section-trigger {
@@ -44,7 +37,11 @@
     text-align: left;
   }
 
-  button.section-trigger:is(:active, :focus-visible) {
+  .section-trigger :global(.section-disclosure) {
+    color: var(--color-ink-muted);
+  }
+
+  .section-trigger:is(:active, :focus-visible) {
     background: color-mix(in srgb, var(--primary) 7%, transparent);
     outline: 2px solid var(--primary);
     outline-offset: -2px;

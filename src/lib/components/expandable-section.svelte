@@ -175,10 +175,6 @@
     font: inherit;
   }
 
-  .section-heading :global(.section-disclosure) {
-    color: var(--color-ink-muted);
-  }
-
   .section-name {
     margin: 0;
     overflow: hidden;

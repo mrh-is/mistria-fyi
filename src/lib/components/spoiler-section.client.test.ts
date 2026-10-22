@@ -9,14 +9,24 @@ const children = createRawSnippet(() => ({
 }));
 
 describe("SpoilerSection", () => {
-  it("renders the hidden header on the shared section trigger surface", () => {
+  it("makes the whole hidden header, on the shared trigger surface, the one reveal button", () => {
     const view = render(SpoilerSection, { children, name: "Town Quests", spoilered: true });
 
-    const header = view.container.querySelector("[data-section-trigger]");
-    expect(header).toBeInTheDocument();
-    expect(header?.tagName).toBe("DIV");
-    expect(header).not.toHaveClass("hover:bg-accent/50");
+    const header = view.getByRole("button", { name: "Reveal spoiler" });
+    expect(header).toHaveAttribute("data-section-trigger");
+    // The mask inside is presentational, so there's no second, nested button.
+    expect(view.getAllByRole("button")).toHaveLength(1);
+    expect(view.getByTestId("spoiler-cover-mask")).toBeInTheDocument();
     expect(view.queryByTestId("revealed-section")).not.toBeInTheDocument();
+  });
+
+  it("styles the hidden header's disclosure & name like a visible section's", () => {
+    const view = render(SpoilerSection, { children, name: "Town Quests", spoilered: true });
+
+    const header = view.getByRole("button", { name: "Reveal spoiler" });
+    expect(header.querySelector(".section-disclosure")).toBeInTheDocument();
+    expect(header.querySelector(".text-muted-foreground")).toBeNull();
+    expect(header.querySelector(".font-semibold")).toBeInTheDocument();
   });
 
   it("shows no progress on the hidden header", () => {
@@ -29,7 +39,8 @@ describe("SpoilerSection", () => {
   it("renders the section itself once the spoiler is revealed", async () => {
     const view = render(SpoilerSection, { children, name: "Town Quests", spoilered: true });
 
-    await fireEvent.click(view.getByRole("button"));
+    // Anywhere on the row reveals it, not only the mask.
+    await fireEvent.click(view.getByRole("button", { name: "Reveal spoiler" }));
 
     expect(view.getByTestId("revealed-section")).toBeInTheDocument();
     expect(view.container.querySelector("[data-section-trigger]")).not.toBeInTheDocument();
