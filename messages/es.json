@@ -552,6 +552,7 @@
   "source_bug_catch_any": "Atrapar",
   "source_chicken_statue_cost": "Obtener de la estatua del pollo ({cost} cuentas)",
   "source_horse_statue": "Desbloquear en la estatua del caballo ({cost} de esencia) tras empezar la misión: {quest}",
+  "source_horse_statue_perk": "Comprar en la estatua del caballo ({cost} de esencia) cuando tengas a {mount}",
   "source_chicken_statue_all_tiers": "Obtener de la estatua del pollo tras criar todos los niveles de pollo",
   "source_crop": "Cultivar a partir de {seed}",
   "source_cutscene_elsie_dating_tutorial": "Recibir durante el tutorial de citas de {villager}",

@@ -1177,7 +1177,7 @@ describe("assignEntityVisibility — mount appearances", () => {
         },
         perks: {
           horsepower: {
-            sources: [{ type: "horse_statue", cost: 200, questId: "find_the_weathervane" }],
+            sources: [{ type: "horse_statue", cost: 200, mountAppearanceId: "mistmare" }],
           },
         },
       },

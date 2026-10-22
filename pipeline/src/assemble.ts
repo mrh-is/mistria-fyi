@@ -468,6 +468,7 @@ function buildAcquisitionReferences(
       animals: trackerData.animals,
       biomes: trackerData.mines.biomes,
       festivals: trackerData.festivals,
+      mountAppearances: trackerData.mount.appearances,
       perks: skillPerkIds(trackerData),
       questTypes: Object.keys(trackerData.quests),
       skills: trackerData.skills,

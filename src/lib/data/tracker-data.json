@@ -58814,10 +58814,9 @@
           {
             "type": "horse_statue",
             "cost": 200,
-            "questId": "find_the_weathervane",
+            "mountAppearanceId": "mistmare",
             "visibility": {
-              "type": "questAvailable",
-              "questId": "find_the_weathervane"
+              "type": "always"
             }
           }
         ],
@@ -58831,10 +58830,9 @@
           {
             "type": "horse_statue",
             "cost": 190,
-            "questId": "find_the_weathervane",
+            "mountAppearanceId": "mistmare",
             "visibility": {
-              "type": "questAvailable",
-              "questId": "find_the_weathervane"
+              "type": "always"
             }
           }
         ],
@@ -58848,10 +58846,9 @@
           {
             "type": "horse_statue",
             "cost": 205,
-            "questId": "find_the_weathervane",
+            "mountAppearanceId": "mistmare",
             "visibility": {
-              "type": "questAvailable",
-              "questId": "find_the_weathervane"
+              "type": "always"
             }
           }
         ],

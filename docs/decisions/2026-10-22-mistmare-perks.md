@@ -11,8 +11,11 @@ known-but-untracked (#86).
 
 Tracker data has a `mount.perks` registry beside `mount.appearances`, extracted from the mount
 menu's one tier. Each perk has a `horse_statue` source carrying that perk's own essence cost and the
-quest that repairs the statue, so it shares the Mistmare's visibility. Names come from
-`perks/<id>/name` and join the skill perks in the `perks` locale chunk.
+mount it needs (`mountAppearanceId: "mistmare"`): `obj_horse_statue.gml` opens the perk menu only
+once `ARI.mount` is set, so a player buys perks only after paying for the Mistmare. The perk shares
+the Mistmare's visibility and renders its own `source_horse_statue_perk` message (“Buy at the Horse
+Statue (200 essence) once you have the Mistmare”). Names come from `perks/<id>/name` and join the
+skill perks in the `perks` locale chunk.
 
 Checking a Mistmare perk records it in the existing `unlockedPerks` progress set, which the game's
 own `player.perks` list mirrors. Save import, backup restore, and transfer codes all accept the
@@ -26,6 +29,8 @@ animals category total include both. The skills screen stays limited to skill pe
 
 - **A separate `mountPerks` progress set.** Rejected: it would split one game list across two stored
   fields and need a storage schema change for no gain.
+- **Reuse the Mistmare's quest-based Horse Statue source text.** Rejected in review: it told players
+  they could buy perks once the quest started, before they own the Mistmare.
 - **Leave the perks out of the animals totals.** Rejected: the section's own count would then
   disagree with the category total it rolls up into.
 

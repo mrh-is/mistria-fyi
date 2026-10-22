@@ -106,14 +106,14 @@ describe("extractMount", () => {
     );
   });
 
-  it("emits each Mistmare perk with its Horse Statue essence cost", () => {
+  it("emits each Mistmare perk with its essence cost, bought once the player has the Mistmare", () => {
     const { mount, perkLocaleNames } = extract(makeMountFiddle());
     expect(mount.perks).toEqual({
       harvest_horse: {
-        sources: [{ type: "horse_statue", cost: 190, questId: "find_the_weathervane" }],
+        sources: [{ type: "horse_statue", cost: 190, mountAppearanceId: "mistmare" }],
       },
       horsepower: {
-        sources: [{ type: "horse_statue", cost: 200, questId: "find_the_weathervane" }],
+        sources: [{ type: "horse_statue", cost: 200, mountAppearanceId: "mistmare" }],
       },
     });
     expect(perkLocaleNames.en).toEqual({
@@ -166,6 +166,13 @@ describe("extractMount", () => {
     const fiddle = makeMountFiddle();
     mountMenu(fiddle).tier_1 = [{ essence: 200, perk: "mining_1" }];
     expect(() => extract(fiddle)).toThrow('Mount perk "mining_1" is also a skill perk');
+  });
+
+  it("throws when no appearance comes from the Horse Statue to sell its perks", () => {
+    const { mistmare: _mistmare, ...variants } = MOUNT_VARIANTS;
+    expect(() => extract(makeMountFiddle(variants))).toThrow(
+      "Expected exactly one Horse Statue mount appearance",
+    );
   });
 
   it("throws when a mount perk has no name in the perks table", () => {

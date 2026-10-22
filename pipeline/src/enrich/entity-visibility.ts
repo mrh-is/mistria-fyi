@@ -217,7 +217,10 @@ function acquisitionSourceCondition(
     case "bait_fish":
       return { type: "questCompleted", questId: "apiaries_and_terrariums" as QuestId };
     case "horse_statue":
-      return { type: "questAvailable", questId: source.questId };
+      // A perk's own gate is the mount it names, which `assignMountVisibility` resolves.
+      return "questId" in source
+        ? { type: "questAvailable", questId: source.questId }
+        : ALWAYS_VISIBLE;
     case "festival":
       return source.storeId
         ? storeGateCondition(source.storeId, ctx.storeVisibility)
@@ -290,7 +293,7 @@ function assignItemVisibility(trackerData: TrackerData, ctx: SourceVisibilityCon
 
 /** The appearance that is the mount itself, as opposed to a skin for it. */
 function isMount(appearance: SourcedEntity): boolean {
-  return appearance.sources.some((source) => source.type === "horse_statue");
+  return appearance.sources.some((source) => source.type === "horse_statue" && "questId" in source);
 }
 
 /**
@@ -311,9 +314,15 @@ function assignMountVisibility(trackerData: TrackerData, ctx: SourceVisibilityCo
     if (isMount(appearance)) continue;
     appearance.visibility = andSimplify([appearance.visibility ?? ALWAYS_VISIBLE, mountGate]);
   }
-  // The Horse Statue sells the perks beside the Mistmare, so their own source carries its gate.
+  // The Horse Statue sells a perk only to a player who has the mount its source names.
   for (const perk of Object.values(trackerData.mount.perks)) {
     assignSourcedEntityVisibility(perk, ctx);
+    const mountGates = perk.sources.flatMap((source) =>
+      source.type === "horse_statue" && "mountAppearanceId" in source
+        ? [trackerData.mount.appearances[source.mountAppearanceId]?.visibility ?? ALWAYS_VISIBLE]
+        : [],
+    );
+    perk.visibility = andSimplify([perk.visibility ?? ALWAYS_VISIBLE, ...mountGates]);
   }
 }
 
@@ -466,6 +475,13 @@ function acquisitionSourceConditions(
       };
     }
     case "horse_statue":
+      return {
+        entity,
+        source:
+          "questId" in source
+            ? { type: "questAvailable", questId: source.questId }
+            : ALWAYS_VISIBLE,
+      };
     case "quest":
       return {
         entity,

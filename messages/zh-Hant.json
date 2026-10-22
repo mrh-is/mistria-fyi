@@ -538,6 +538,7 @@
   "source_bug_catch_any": "捕捉",
   "source_chicken_statue_cost": "從小雞雕像處獲得（{cost}顆珠子）",
   "source_horse_statue": "開始任務「{quest}」後，在馬雕像處解鎖（{cost}精華）",
+  "source_horse_statue_perk": "獲得{mount}後，在馬雕像處購買（{cost}精華）",
   "source_chicken_statue_all_tiers": "繁殖出所有等級的雞後，從小雞雕像處獲得",
   "source_crop": "由{seed}種植",
   "source_cutscene_elsie_dating_tutorial": "在{villager}的約會教學中獲得",

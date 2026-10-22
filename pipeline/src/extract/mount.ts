@@ -91,7 +91,7 @@ export function extractMount(
   const { perkLocaleNames, perks } = extractMountPerks(
     fiddle,
     localizer,
-    horseStatueQuestId,
+    horseStatueMount(appearances),
     skillPerkIds,
   );
 
@@ -105,15 +105,33 @@ export function extractMount(
 const MOUNT_PERK_TIER = "tier_1";
 
 /**
+ * The appearance the Horse Statue grants. `obj_horse_statue.gml` offers its perk menu
+ * (`ShrineMenuVariant.Horse`) only once `ARI.mount` is set, so every perk needs this mount first.
+ */
+function horseStatueMount(appearances: Mount["appearances"]): MountAppearanceId {
+  const mounts = Object.entries(appearances)
+    .filter(([, { sources }]) => sources.some((source) => source.type === "horse_statue"))
+    .map(([id]) => id as MountAppearanceId);
+  const [mount] = mounts;
+  if (mounts.length !== 1 || !mount) {
+    throw new Error(
+      `Expected exactly one Horse Statue mount appearance to sell its perks, got ${JSON.stringify(mounts)}`,
+    );
+  }
+  return mount;
+}
+
+/**
  * The Mistmare's perks are the Horse Statue's menu, `ui/skill_menu/mount.toml`: one tier of perks,
- * each bought with essence. Names come from `perks/<id>/name`, like every skill perk. Throws on a
- * tier beyond the first, which the tracker would need a review to model, & on a perk listed twice or
- * sharing its ID with a skill perk, since both share `unlockedPerks` & the perks locale chunk.
+ * each bought with essence once the player has the mount. Names come from `perks/<id>/name`, like
+ * every skill perk. Throws on a tier beyond the first, which the tracker would need a review to
+ * model, & on a perk listed twice or sharing its ID with a skill perk, since both share
+ * `unlockedPerks` & the perks locale chunk.
  */
 function extractMountPerks(
   fiddle: ParsedGameData,
   localizer: Localizer,
-  questId: QuestId,
+  mountAppearanceId: MountAppearanceId,
   skillPerkIds: ReadonlySet<string>,
 ): Pick<MountExtraction, "perkLocaleNames"> & { perks: Mount["perks"] } {
   const perkLocaleNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
@@ -157,7 +175,7 @@ function extractMountPerks(
       fieldPath: "essence",
       sourcePath,
     });
-    perks[perkId] = { sources: [{ type: "horse_statue", cost, questId }] };
+    perks[perkId] = { sources: [{ type: "horse_statue", cost, mountAppearanceId }] };
 
     const englishValue = expectNonEmptyString(perksData?.[perkId]?.name, {
       entityId: `mount.perks.${perkId}`,

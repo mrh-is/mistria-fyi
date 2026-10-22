@@ -410,7 +410,9 @@ from `misc.seridia_armor`. Runtime wishing-well rewards use `misc.wishing_well.l
 prices nor outfit inventories are duplicated in reviewed tables. The crown visibility gate is Iron
 Star (renown level 40), from `Ari.gml`’s crown cooldown. Mount appearance unlocks (the Horse Statue
 or the Big Egg) & the Horse Statue’s 100-essence cost come from `obj_horse_statue.gml` &
-`AriFsm.gml`; an assets test asserts the cost against the GML.
+`AriFsm.gml`; an assets test asserts the cost against the GML. The statue's perk menu opens only
+once the player has a mount (`ARI.mount != undefined`), so each Mistmare perk's source names the
+Mistmare rather than a quest; an assets test pins that gate too.
 
 Early Access used 50. See #638 (private beta).
 

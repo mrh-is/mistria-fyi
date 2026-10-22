@@ -538,6 +538,7 @@
   "source_bug_catch_any": "잡기",
   "source_chicken_statue_cost": "닭 조각상에서 획득 (구슬 {cost}개)",
   "source_horse_statue": "퀘스트 '{quest}' 시작 후 말 조각상에서 해금 (정수 {cost})",
+  "source_horse_statue_perk": "{mount} 획득 후 말 조각상에서 구매 (정수 {cost})",
   "source_chicken_statue_all_tiers": "모든 등급의 닭을 번식시킨 후 닭 조각상에서 획득",
   "source_crop": "{seed}에서 재배",
   "source_cutscene_elsie_dating_tutorial": "{villager}의 데이트 튜토리얼에서 받기",

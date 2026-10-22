@@ -552,6 +552,7 @@
   "source_bug_catch_any": "Attraper",
   "source_chicken_statue_cost": "Obtenir auprès de la statue de poule ({cost} perles)",
   "source_horse_statue": "Débloquer à la statue de cheval ({cost} d’essence) après avoir commencé la quête : {quest}",
+  "source_horse_statue_perk": "Acheter à la statue de cheval ({cost} d’essence) une fois que vous avez {mount}",
   "source_chicken_statue_all_tiers": "Obtenir auprès de la statue de poule après avoir élevé tous les niveaux de poule",
   "source_crop": "Cultiver à partir de : {seed}",
   "source_cutscene_elsie_dating_tutorial": "Recevoir pendant le tutoriel des rendez-vous de {villager}",

@@ -104,13 +104,40 @@ describe("validateAcquisitionSources", () => {
     }).not.toThrow();
   });
 
-  it("rejects a Horse Statue source naming an unknown quest on a mount perk", () => {
-    const source = { type: "horse_statue", cost: 200, questId: "unknown_quest" };
+  it("accepts a Horse Statue source naming the mount a perk needs", () => {
+    const source = { type: "horse_statue", cost: 200, mountAppearanceId: "mistmare" };
     const trackerData = {
       mount: { appearances: {}, perks: { horsepower: { sources: [source] } } },
     };
     const references = AcquisitionReferenceIndex.from({
-      native: { quests: ["known_quest"] },
+      native: { mountAppearances: ["mistmare"] },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(assembly(trackerData), references);
+    }).not.toThrow();
+  });
+
+  it.each([
+    {
+      name: "an unknown mount appearance",
+      source: { type: "horse_statue", cost: 200, mountAppearanceId: "unknown_mount" },
+    },
+    {
+      name: "both a quest & a mount appearance",
+      source: {
+        type: "horse_statue",
+        cost: 200,
+        mountAppearanceId: "mistmare",
+        questId: "known_quest",
+      },
+    },
+  ])("rejects a mount perk's Horse Statue source with $name", ({ source }) => {
+    const trackerData = {
+      mount: { appearances: {}, perks: { horsepower: { sources: [source] } } },
+    };
+    const references = AcquisitionReferenceIndex.from({
+      native: { mountAppearances: ["mistmare"], quests: ["known_quest"] },
     });
 
     expect(() => {
@@ -864,6 +891,7 @@ describe("validateAcquisitionSources on assembled tracker data", () => {
     },
     native: {
       animals: ["chicken"],
+      mountAppearances: ["mistmare"],
       perks: ["mist_sight"],
       quests: ["repair_the_bridge", "the_water_tablet", "berry_quest", "tart_quest", "date_quest"],
       questTypes: ["cooking", "fetch", "heart", "story"],
@@ -1172,7 +1200,7 @@ function realShapes(): Record<string, unknown> {
       },
       perks: {
         horsepower: {
-          sources: [{ type: "horse_statue", cost: 200, questId: "repair_the_bridge" }],
+          sources: [{ type: "horse_statue", cost: 200, mountAppearanceId: "mistmare" }],
         },
       },
     },
