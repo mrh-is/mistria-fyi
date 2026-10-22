@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { builtLocaleChunks } from "../../scripts/built-locale-chunks.js";
+import { PRERENDERED_ROUTES } from "../../src/lib/i18n/prerender-entries.js";
 import { expect, test } from "../browser/test.js";
 import { goOffline, goOnline, waitForControl } from "./service-worker.js";
 
@@ -101,7 +102,6 @@ test("keeps offline navigation to an unopened category working while an update w
     await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
     await waitForTakeover(context, `cache-${newVersion}`);
     expect(await stillSameDocument(page)).toBe(true);
-    expect(await page.evaluate(() => caches.match("/en/recipes").then(Boolean))).toBe(false);
 
     await goOffline(context);
     await page.keyboard.press("Escape");
@@ -421,6 +421,18 @@ test("relaunches offline in a language chosen while a new version was installing
     await page.getByRole("button", { name: /^日本語/ }).click();
     await expect(page).toHaveURL(/\/ja$/);
     await expect.poll(() => lastLocale(page)).toBe("ja");
+    // Let the active version finish caching Japanese's pages first. Chromium stops it for the
+    // takeover once idle, and a request restarting it then holds the takeover off: under
+    // Playwright, the restarted worker never reads as idle.
+    const japanesePages = PRERENDERED_ROUTES.map((route) => `/ja${route}`);
+    await expect
+      .poll(async () => {
+        const cached = await Promise.all(
+          japanesePages.map(async (path) => cacheHolds(page, oldCache, path)),
+        );
+        return cached.every(Boolean);
+      })
+      .toBe(true);
 
     // The idle page reloads onto the new version once it takes over.
     const reloaded = page.waitForEvent("load");
@@ -506,18 +518,18 @@ test("relaunches offline after a new version failed to fetch the last-used home 
   }
 });
 
-// Each launch page comes from the new version's install, not a page message: the reloaded page
-// reports only its own locale, so `/` & another offline locale's home prove the precache (#110).
-test("precaches `/` & each offline locale's home page when a new version installs", async ({
+// The reloaded page asks for its own locale & English, so their pages may come from its message.
+// Japanese, used earlier, is an offline locale no page asks for, so its pages prove the install's
+// precache (#110, #204).
+test("precaches `/` & each offline locale's pages when a new version installs", async ({
   context,
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/ja");
   await waitForControl(page);
-  await page.getByRole("button", { name: "Quick settings" }).click();
-  await page.getByRole("button", { name: "Choose language" }).click();
-  await page.getByRole("button", { name: /^Français/ }).click();
-  await expect(page).toHaveURL(/\/fr$/);
+  await expect.poll(() => lastLocale(page)).toBe("ja");
+  await page.goto("/fr");
+  await waitForControl(page);
   await expect.poll(() => lastLocale(page)).toBe("fr");
 
   const oldCache = versionCacheOf(await cacheNames(page));
@@ -527,11 +539,12 @@ test("precaches `/` & each offline locale's home page when a new version install
   try {
     await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
     await waitForTakeover(context, newCache);
-    for (const path of ["/", "/en", "/fr"]) {
-      // oxlint-disable-next-line no-await-in-loop -- One assertion per launch page, for its message.
+    for (const path of ["/", "/en", "/fr", "/fr/museum", "/ja", "/ja/museum", "/ja/everything"]) {
+      // oxlint-disable-next-line no-await-in-loop -- One assertion per page, for its message.
       expect(await cacheHolds(page, newCache, path), path).toBe(true);
     }
-    expect(await cacheHolds(page, newCache, "/ja")).toBe(false);
+    expect(await cacheHolds(page, newCache, "/ko")).toBe(false);
+    expect(await cacheHolds(page, newCache, "/ko/museum")).toBe(false);
 
     await goOffline(context);
     await page.close();
