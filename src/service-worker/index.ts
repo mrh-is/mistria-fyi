@@ -31,7 +31,7 @@ import { assets, immutable } from "$app/manifest";
 
 // Bundled rather than precached from `static/`: Cloudflare Pages redirects `/offline.html` to
 // `/offline`, which the locale middleware redirects again to a 404, & one failed precache request
-// aborts the whole install (#226).
+// aborts the whole install (#226). `offlinePagePlugin` renders it with the app's fonts & theme.
 import OFFLINE_HTML from "./offline.html?raw";
 
 import type { CacheLocalesReply, LocaleNameChunks } from "#lib/pwa/service-worker-cache.js";

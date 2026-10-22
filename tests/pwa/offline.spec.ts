@@ -114,6 +114,41 @@ test("serves cached routes and assets offline, then falls back for an uncached n
   await expect(page.getByRole("heading", { name: /offline/i })).toBeHidden();
 });
 
+test("styles the offline page with the app's fonts & the player's saved theme", async ({
+  context,
+  page,
+}) => {
+  // A dark choice on a light system: the page must follow the choice, as the app does.
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/");
+  await waitForControl(page);
+  await page.evaluate(() => {
+    localStorage.setItem("mistria-fyi:theme", "dark");
+  });
+
+  await goOffline(context);
+  await page.goto("/pwa-uncached-offline-probe");
+  await expect(page.getByRole("heading", { name: /offline/i })).toBeVisible();
+
+  const style = await page.evaluate(() => {
+    const body = getComputedStyle(document.body);
+    return {
+      background: body.backgroundColor,
+      dark: document.documentElement.classList.contains("dark"),
+      font: body.fontFamily,
+      themeColor: document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.content,
+    };
+  });
+  expect(style).toEqual({
+    background: "rgb(34, 34, 38)",
+    dark: true,
+    font: expect.stringMatching(/^"?Petrona"?,/) as unknown,
+    themeColor: "#222226",
+  });
+  // Petrona is a precached static font, so it renders offline on first sight.
+  await expect.poll(() => page.evaluate(() => document.fonts.check('16px "Petrona"'))).toBe(true);
+});
+
 async function startUrl(page: Page): Promise<string> {
   const response = await page.request.get("/manifest.json");
   const manifest = (await response.json()) as { start_url: string };

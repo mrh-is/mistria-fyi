@@ -186,7 +186,8 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
    remains usable and a cached static asset still loads.
 6. While offline, navigate to a same-origin path that has never been requested. Confirm the page
    displays the “You’re offline” heading. The worker bundles that page rather than precaching it,
-   since Cloudflare Pages redirects `.html` paths (#226).
+   since Cloudflare Pages redirects `.html` paths (#226). It should share the app’s paper colours,
+   fonts, & saved theme: pick the theme opposite the device’s setting online, then repeat offline.
 7. Still offline, open `/`. Confirm it lands on the language you last used online (for example
    `/en`), not the offline page. On an installed app, launch it from its icon instead. If it
    doesn’t, check Cache Storage for `/__last-locale` in `offline-locales-v1` and the home page in
