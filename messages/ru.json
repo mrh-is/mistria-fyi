@@ -98,19 +98,6 @@
   "renown_page_description": "Отслеживайте ранг вашего города, репутацию и награды в Fields of Mistria.",
   "skills_page_description": "Отслеживайте уровни умений и навыки в Fields of Mistria.",
   "no_items_match_filters": "Ничего не соответствует текущим фильтрам",
-  "almanac_loading_items": "Загрузка предметов…",
-  "show_more_count": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "Показать ещё {count}…",
-        "countPlural=few": "Показать ещё {count}…",
-        "countPlural=many": "Показать ещё {count}…",
-        "countPlural=other": "Показать ещё {count}…"
-      }
-    }
-  ],
   "animals_cosmetics_section_name": "Косметика",
   "animals_pet_cosmetics_section_name": "Косметика питомца",
   "animals_pet_skins_section_name": "Скины питомца",
