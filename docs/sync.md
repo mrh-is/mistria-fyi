@@ -196,10 +196,32 @@ as best effort until real sessions prove it.
 
 ## Applying a bundle
 
-The pure core is built in #129. Planned location (not yet created): src/lib/engine/sync-apply.ts.
-Given stored progress & an extracted save, it computes each difference’s policy & the resulting
-state. Each difference falls into one policy: apply silently, apply & tell, ask first, or keep local
-& tell, chosen by a table keyed by provenance (including `unknown`) & fact kind.
+The pure core is `applySync` in `src/lib/engine/sync-apply.ts` (#129). Given stored progress (its
+facts, history, & farm), an extracted save, & the answers so far, it returns either the questions
+still open or each difference’s policy & the resulting state. Each difference falls into one policy:
+apply silently, apply & tell, ask first, or keep local & tell, chosen by `POLICY_TABLE`, keyed by
+provenance (`manual`, `inferred`, `save`, `unknown`, or none) & fact kind (tick, level, quest) in
+each direction, then by the guardrails below. The receiver (#135) asks the questions, calls it again
+with the answers, & writes the result in one write. See
+[the decision record](decisions/2026-10-21-sync-apply-rules.md).
+
+### Questions
+
+Questions come in stages, because each answer changes what follows: whether unidentified progress is
+this farm, then whether to roll back to an older save, then every field’s questions at once. Nothing
+a question covers changes until all are answered. Fact questions are grouped by field & reason
+(`local-disagrees`, `level-decrease`, `many-removals`), and each question’s ID names exactly the
+changes it covers, so a question whose effect changed while it waited is asked again. “Keep mine”
+records a resolution per fact; an answer that doesn’t fit its question counts as unanswered.
+
+### The table
+
+- A save or inference is superseded by the save: an addition applies silently, a removal applies &
+  tells.
+- A manual edit is ordered by `playtime` (below). One with no playtime to order by (made before any
+  save was applied, or against a save whose playtime couldn’t be read) asks.
+- An `unknown` fact lets the save add & is promoted to `save` when the save agrees; a removal or
+  decrease asks, once per field.
 
 ### Provenance
 
@@ -217,7 +239,9 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
 
 - A manual tick records the `playtime` of the last applied save & beats any save with that
   `playtime` or lower. A newer save wins & tells.
-- Within a farm, a lower `playtime` asks.
+- Within a farm, a lower `playtime` asks. Keeping current progress applies nothing from that save.
+- A save whose `playtime` couldn’t be read can’t be ordered: it doesn’t ask as an older save, but
+  every manual edit it disagrees with asks, & the baseline stays where it was.
 - Accepting an older save at `playtime` P resets the baseline & re-stamps every manual fact stamped
   above P to P, so ticks survive the rollback itself & the next disagreeing save wins & tells.
   Rollback is supported but rare, so nothing more elaborate.
@@ -230,18 +254,24 @@ field by hand clears it.
 ### Completeness
 
 - An absent or malformed field is `unknown`, never empty or zero, & `unknown` never replaces
-  anything.
+  anything: an absent field is skipped, & an `unknown` field only adds or raises.
 - An unrecognized ID or unreadable entry makes its field `unknown` for removals (it may still add),
-  & the sync log records the unknown IDs.
-- Any level decrease, or a removal of more than a handful of facts in one bundle, goes to “ask
-  first” regardless of the table. This doubles as an early warning that a game update renamed
-  something.
-- Quest states are replaced only for quest kinds the game reliably lists as completed.
+  & the result lists the unknown IDs by field for the sync log.
+- Any level decrease (hearts, skills, the mine floor, renown, the reached season), or a removal of
+  more than a handful of facts in one bundle (`REMOVAL_HANDFUL`, 5), goes to “ask first” regardless
+  of the table. This doubles as an early warning that a game update renamed something. A manual
+  level that beats the save stays as it is without asking.
+- Quest states are replaced (lowered by a complete save) only for quest kinds the game reliably
+  lists as completed, per `QUEST_KINDS_LISTED_AS_COMPLETED`; other kinds only advance. In v1.0.8
+  every tracked kind qualifies: `QuestLog.complete` is the only way into `completed_quests` & out of
+  `active_quests`, & a late-game save’s `quest_<id>_complete` facts match its list for every kind.
 - Household facts stay manual until public #6 extracts them (the fields exist in `player`; a married
-  save is still needed). They then follow the same rules, breakups & divorce included.
+  save is still needed): relationships aren’t compared, the child choice isn’t extracted, &
+  pregnancy quests follow the household. They then follow the same rules, breakups & divorce
+  included.
 
-Property & scenario tests cover the rollback, untick, renamed-ID, farm-switch, & pre-provenance
-cases.
+Property & scenario tests (`sync-apply.test.ts`) cover the rollback, untick, renamed-ID,
+farm-switch, & pre-provenance cases.
 
 ## Farm identity
 
@@ -256,6 +286,13 @@ plus `info.creation_version`, parsed tolerantly (#128).
 - Switching farms automatically keeps a backup of the outgoing farm (“We saved a backup of {old
   farm}”) on the phone beside progress, in the same write as the switch. There is one backup, never
   nested. If the backup cannot be written, the switch does not happen & the phone says why.
+  `compareFarms` (`src/lib/engine/save-identity.ts`) decides same, different, or unidentified; a
+  creation version only one side could read doesn’t make farms differ. `applySync` returns the
+  outgoing state as `farmSwitch.backup` & starts the new farm from the receiver’s fresh state.
+  `serializeFarmSwitch` (`src/lib/stores/progress-storage.ts`) writes the new farm & the backup into
+  one stored document, the backup under `local.farmSwitchBackup` as `{ backup, farmName }` in the
+  restorable backup format, replacing any earlier one; it returns `null` when the backup wouldn’t
+  restore, & the switch doesn’t happen.
 - Switching back is a restore. Multi-farm profiles stay later.
 - Manual import stores the same identity & shows “last imported {time ago}”. Player & farm names
   stay out of the feedback snapshot.
