@@ -15,13 +15,13 @@ import {
   isLazyAsset,
   isSkipWaitingRequest,
   lastLocaleStore,
-  launchPagePaths,
   MAX_SPRITE_ENTRIES,
   mayDeleteRetainedCaches,
   obsoleteCaches,
+  offlinePagePaths,
   parseCacheLocalesMessage,
   parseCurrentLocale,
-  precacheLaunchPages,
+  precachePages,
   readOfflineLocales,
   readRetainedCaches,
   rememberOfflineLocales,
@@ -67,6 +67,7 @@ function dependencies(cache: MemoryCache, fetcher: (request: Request) => Promise
     lastLocaleCache,
     matchCache: (request: RequestInfo | URL) => cache.match(request),
     offlinePage: () => new Response("offline page"),
+    pagePaths: new Set(["/", "/en", "/en/data"]),
     settled: () => Promise.all(pending),
     waitUntil: (promise: Promise<unknown>) => {
       pending.push(promise);
@@ -310,6 +311,39 @@ describe("service-worker runtime request path", () => {
     );
 
     expect(await response.text()).toBe("offline page");
+  });
+
+  // The welcome card links `/en/data?section=import`, and an offline reload keeps the query.
+  it("serves an offline page's cached copy for a navigation to it with a query", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/en/data`, new Response("data page"));
+    const deps = dependencies(cache, offline());
+
+    const page = await fetchRuntimeRequest(navigation("/en/data?section=import"), deps);
+    expect(await page.text()).toBe("data page");
+
+    // Only a navigation to a precached page: any other request needs its own response.
+    const subresource = await fetchRuntimeRequest(
+      new Request(`${ORIGIN}/en/data?section=import`),
+      deps,
+    );
+    expect(subresource.type).toBe("error");
+    await cache.put(`${ORIGIN}/missing`, new Response("other page"));
+    const other = await fetchRuntimeRequest(navigation("/missing?q=1"), deps);
+    expect(await other.text()).toBe("offline page");
+  });
+
+  it("prefers a navigation's exact cached copy, query included", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/en/data`, new Response("data page"));
+    await cache.put(`${ORIGIN}/en/data?section=import`, new Response("loaded online"));
+
+    const response = await fetchRuntimeRequest(
+      navigation("/en/data?section=import"),
+      dependencies(cache, offline()),
+    );
+
+    expect(await response.text()).toBe("loaded online");
   });
 });
 
@@ -568,23 +602,46 @@ describe("service-worker locale home pages", () => {
   });
 });
 
-describe("service-worker launch-page precache", () => {
-  const PRERENDERED = new Set(["/en", "/en/data", "/ja", "/ja/data", "/fr"]);
+describe("service-worker page precache", () => {
+  const PRERENDERED = new Set([
+    "/en",
+    "/en/data",
+    "/en/museum",
+    "/ja",
+    "/ja/data",
+    "/fr",
+    "/zh-Hans",
+    "/zh-Hans/data",
+    "/zh-Hant",
+    "/zh-Hant/data",
+    "/sitemap.xml",
+  ]);
 
-  it("lists `/` & the prerendered home of each offline locale, once each", () => {
-    expect(launchPagePaths(["ja", "en", "ja"], PRERENDERED)).toEqual(["/", "/ja", "/en"]);
+  it("lists `/` & every prerendered page of each offline locale, once each", () => {
+    expect(offlinePagePaths(["ja", "en", "ja"], PRERENDERED)).toEqual([
+      "/",
+      "/ja",
+      "/ja/data",
+      "/en",
+      "/en/data",
+      "/en/museum",
+    ]);
   });
 
-  it("leaves out a locale whose home the build didn't prerender, & an unknown locale", () => {
-    expect(launchPagePaths(["en", "ko", "xx"], PRERENDERED)).toEqual(["/", "/en"]);
-    expect(launchPagePaths(["en"], new Set())).toEqual(["/"]);
+  it("keeps each locale to its own pages, even one whose code prefixes another's", () => {
+    expect(offlinePagePaths(["zh-Hans"], PRERENDERED)).toEqual(["/", "/zh-Hans", "/zh-Hans/data"]);
   });
 
-  it("caches every launch page, keeping the rest when one fails", async () => {
+  it("leaves out a locale the build didn't prerender, an unknown locale, & unlocalized files", () => {
+    expect(offlinePagePaths(["fr", "ko", "xx"], PRERENDERED)).toEqual(["/", "/fr"]);
+    expect(offlinePagePaths(["en"], new Set())).toEqual(["/"]);
+  });
+
+  it("caches every page, keeping the rest when one fails", async () => {
     const cache = new MemoryCache();
 
     expect(
-      await precacheLaunchPages(cache, ["/", "/en", "/ja", "/fr"], `${ORIGIN}/`, unreliableFetcher),
+      await precachePages(cache, ["/", "/en", "/ja", "/fr"], `${ORIGIN}/`, unreliableFetcher),
     ).toEqual(["/ja", "/fr"]);
 
     expect(await cachedText(cache, new Request(`${ORIGIN}/`))).toBe("page /");
@@ -592,12 +649,12 @@ describe("service-worker launch-page precache", () => {
     expect(cache.entries.size).toBe(2);
   });
 
-  it("doesn't refetch a launch page that's already cached", async () => {
+  it("doesn't refetch a page that's already cached", async () => {
     const cache = new MemoryCache();
     await cache.put(`${ORIGIN}/en`, new Response("cached"));
     const fetcher = vi.fn((request: Request) => Promise.resolve(new Response(request.url)));
 
-    expect(await precacheLaunchPages(cache, ["/", "/en"], `${ORIGIN}/`, fetcher)).toEqual([]);
+    expect(await precachePages(cache, ["/", "/en"], `${ORIGIN}/`, fetcher)).toEqual([]);
 
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(await cachedText(cache, new Request(`${ORIGIN}/en`))).toBe("cached");
@@ -694,6 +751,7 @@ describe("service-worker eviction path", () => {
       new Request(`${ORIGIN}/newest`),
       new Response("new"),
       new Set(["/favicon.png"]),
+      new Set(),
       50,
     );
 
@@ -703,11 +761,13 @@ describe("service-worker eviction path", () => {
     expect(cache.entries.size).toBe(51);
   });
 
-  it("exempts `/` & locale home pages, the offline launch targets, from eviction", async () => {
+  it("exempts `/`, locale homes, & precached pages, what offline loads find, from eviction", async () => {
     const cache = new MemoryCache();
     await cache.put(`${ORIGIN}/`, new Response("stub"));
     await cache.put(`${ORIGIN}/en`, new Response("en home"));
     await cache.put(`${ORIGIN}/en?q=1`, new Response("query"));
+    await cache.put(`${ORIGIN}/en/museum`, new Response("museum"));
+    await cache.put(`${ORIGIN}/en/museum?q=1`, new Response("museum query"));
     await cache.put(`${ORIGIN}/page-0`, new Response("0"));
     await cache.put(`${ORIGIN}/page-1`, new Response("1"));
 
@@ -716,12 +776,15 @@ describe("service-worker eviction path", () => {
       new Request(`${ORIGIN}/newest`),
       new Response("new"),
       new Set(),
+      new Set(["/en/museum"]),
       2,
     );
 
     expect(await cache.match(`${ORIGIN}/`)).toBeDefined();
     expect(await cache.match(`${ORIGIN}/en`)).toBeDefined();
+    expect(await cache.match(`${ORIGIN}/en/museum`)).toBeDefined();
     expect(await cache.match(`${ORIGIN}/en?q=1`)).toBeUndefined();
+    expect(await cache.match(`${ORIGIN}/en/museum?q=1`)).toBeUndefined();
     expect(await cache.match(`${ORIGIN}/page-0`)).toBeUndefined();
     expect(await cache.match(`${ORIGIN}/page-1`)).toBeDefined();
   });
@@ -740,11 +803,12 @@ describe("service-worker font asset handling", () => {
   it("exempts font chunks from LRU eviction", async () => {
     const cache = new MemoryCache();
     const font = new Request("https://assets.mistria.fyi/fonts/lora-5.3.0/lora-cyrillic-400.woff2");
-    await cacheRuntimeResponse(cache, font, new Response("font"), new Set(), 1);
+    await cacheRuntimeResponse(cache, font, new Response("font"), new Set(), new Set(), 1);
     await cacheRuntimeResponse(
       cache,
       new Request(`${ORIGIN}/animals`),
       new Response("a"),
+      new Set(),
       new Set(),
       1,
     );
@@ -752,6 +816,7 @@ describe("service-worker font asset handling", () => {
       cache,
       new Request(`${ORIGIN}/fish`),
       new Response("b"),
+      new Set(),
       new Set(),
       1,
     );

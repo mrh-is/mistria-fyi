@@ -75,6 +75,8 @@ interface RuntimeRequestDependencies {
   maxEntries?: number;
   /** Builds the page an uncached navigation gets when the network fails. */
   offlinePage: () => Response;
+  /** The pages {@link offlinePagePaths} lists for every locale, by path. */
+  pagePaths: ReadonlySet<string>;
   /** Keeps the worker alive for cache writes that settle after the response is returned. */
   waitUntil: (promise: Promise<unknown>) => void;
 }
@@ -158,8 +160,8 @@ async function cachePage(
  *
  * The installed app's first page load happens before the worker exists, and browsing after that
  * is client-side, so no page load passes through the worker to cache it. A version's install
- * precaches the homes of the locales known by then ({@link precacheLaunchPages}); this caches one
- * the player switches to afterward.
+ * precaches the pages of the locales known by then ({@link precachePages}); this caches the home
+ * of one the player switches to afterward, ahead of that locale's other pages.
  */
 export function cacheLocaleHome(
   cache: PageCache,
@@ -171,21 +173,24 @@ export function cacheLocaleHome(
 }
 
 /**
- * The pages a version's install precaches for an offline launch: `/`, the manifest's `start_url`,
- * whose stub picks a locale in the browser, and the home page of each known locale in `locales`
- * among the build's `prerendered` paths. A prerendered page embeds its build's version, so the
- * copy fetched at install always matches the chunks in that version's cache. A development build
- * prerenders nothing, which leaves its homes to {@link cacheLocaleHome}.
+ * The pages kept for offline use: `/`, the manifest's `start_url`, whose stub picks a locale in the
+ * browser, and every page of each known locale in `locales` among the build's `prerendered` paths
+ * (`/en`, `/en/animals`, …). Browsing is client-side, so a page the player reached by tapping never
+ * passed through the worker, yet an offline reload of it must still find it (#204). A prerendered
+ * page embeds its build's version, so the copy fetched into a version's cache always matches that
+ * cache's chunks. A development build prerenders nothing, which leaves its homes to
+ * {@link cacheLocaleHome}.
  */
-export function launchPagePaths(
+export function offlinePagePaths(
   locales: readonly string[],
   prerendered: ReadonlySet<string>,
 ): string[] {
-  const homes = [...new Set(locales)]
+  const pages = [...new Set(locales)]
     .filter((locale) => LOCALE_CODES.some((code) => code === locale))
-    .map((locale) => `/${locale}`)
-    .filter((path) => prerendered.has(path));
-  return ["/", ...homes];
+    .flatMap((locale) =>
+      [...prerendered].filter((path) => path === `/${locale}` || path.startsWith(`/${locale}/`)),
+    );
+  return ["/", ...pages];
 }
 
 /**
@@ -194,7 +199,7 @@ export function launchPagePaths(
  * stays while it holds the only copy of the last-used home ({@link obsoleteCaches}). Resolves with
  * the paths still uncached.
  */
-export async function precacheLaunchPages(
+export async function precachePages(
   cache: PageCache,
   paths: readonly string[],
   base: string,
@@ -278,15 +283,21 @@ export async function cacheRuntimeResponse(
   request: Request,
   response: Response,
   assetPaths: ReadonlySet<string>,
+  pagePaths: ReadonlySet<string>,
   maxEntries = MAX_RUNTIME_ENTRIES,
 ): Promise<void> {
   await cache.put(request, response.clone());
   const keys = await cache.keys();
-  // Launch pages are where an offline launch lands, so browsing can't push them out; there is at
-  // most one per locale, plus `/`.
+  // Precached pages are what an offline launch or reload finds, so browsing can't push them out;
+  // they're bounded by the build's prerendered pages, plus `/`.
   const runtimeKeys = keys.filter((key) => {
     const url = new URL(key.url);
-    return !assetPaths.has(url.pathname) && !isExternalFontAsset(url) && !isLaunchPage(url);
+    return (
+      !assetPaths.has(url.pathname) &&
+      !isExternalFontAsset(url) &&
+      !isLaunchPage(url) &&
+      !isPage(url, pagePaths)
+    );
   });
   const excess = runtimeKeys.length - maxEntries;
   await Promise.all(runtimeKeys.slice(0, Math.max(0, excess)).map((key) => cache.delete(key)));
@@ -341,7 +352,11 @@ export async function fetchRuntimeRequest(
     const redirect =
       request.mode === "navigate" ? await offlineLocaleRedirect(request, dependencies) : undefined;
     if (redirect) return redirect;
-    const cached = await dependencies.matchCache(request);
+    const cached =
+      (await dependencies.matchCache(request)) ??
+      (request.mode === "navigate"
+        ? await cachedPageWithoutQuery(request, dependencies)
+        : undefined);
     if (cached) return cached;
     if (request.mode !== "navigate") return Response.error();
     return dependencies.offlinePage();
@@ -369,6 +384,7 @@ export async function fetchRuntimeRequest(
           request,
           copy,
           dependencies.assetPaths,
+          dependencies.pagePaths,
           dependencies.maxEntries,
         );
       } catch {
@@ -406,18 +422,41 @@ async function offlineLocaleRedirect(
   return undefined;
 }
 
+/**
+ * The cached copy of a page in `pagePaths`, for an offline navigation to it with a query
+ * (`/en/data?section=import`). A prerendered page is the same whatever the query, which the page
+ * reads once it runs; the document keeps the navigation's URL, query included.
+ */
+async function cachedPageWithoutQuery(
+  request: Request,
+  dependencies: RuntimeRequestDependencies,
+): Promise<Response | undefined> {
+  const url = new URL(request.url);
+  if (url.search === "" || !dependencies.pagePaths.has(url.pathname)) return undefined;
+  url.search = "";
+  return dependencies.matchCache(url.href);
+}
+
 /** The locale a path is prefixed with, if any. */
 function localeOfPath(pathname: string): LocaleCode | undefined {
   const segment = pathname.split("/")[1];
   return LOCALE_CODES.find((locale) => locale === segment);
 }
 
-/** `/` or a locale's home page (`/en`), without a query: a page {@link launchPagePaths} lists. */
+/**
+ * `/` or a locale's home page (`/en`), without a query: where an offline launch lands, even in a
+ * development build, which prerenders nothing.
+ */
 function isLaunchPage(url: URL): boolean {
   return (
     url.search === "" &&
     (url.pathname === "/" || LOCALE_CODES.some((locale) => url.pathname === `/${locale}`))
   );
+}
+
+/** One of `pagePaths`, without a query: the copy {@link precachePages} stores. */
+function isPage(url: URL, pagePaths: ReadonlySet<string>): boolean {
+  return url.search === "" && pagePaths.has(url.pathname);
 }
 
 function isUnlocalizedPath(pathname: string): boolean {

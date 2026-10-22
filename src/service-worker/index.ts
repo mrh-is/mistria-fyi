@@ -16,18 +16,19 @@ import {
   isLazyAsset,
   isSkipWaitingRequest,
   lastLocaleStore,
-  launchPagePaths,
   mayDeleteRetainedCaches,
   obsoleteCaches,
   OFFLINE_LOCALES_CACHE,
+  offlinePagePaths,
   parseCacheLocalesMessage,
   parseCurrentLocale,
-  precacheLaunchPages,
+  precachePages,
   readOfflineLocales,
   readRetainedCaches,
   rememberOfflineLocales,
   rememberRetainedCaches,
 } from "#lib/pwa/service-worker-cache.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 import { version } from "$app/env";
 import { assets, immutable, prerendered } from "$app/manifest";
 
@@ -69,11 +70,13 @@ const PRECACHED_ASSETS = ASSETS.filter((path) => !isLazyAsset(path, LOCALE_NAME_
 const PRERENDERED_PATHS: ReadonlySet<string> = new Set(
   prerendered.map(({ path }) => new URL(path, sw.registration.scope).pathname),
 );
+/** Every locale's offline pages, which runtime-cache eviction leaves alone. */
+const PAGE_PATHS: ReadonlySet<string> = new Set(offlinePagePaths(LOCALE_CODES, PRERENDERED_PATHS));
 const LAST_LOCALE = lastLocaleStore(() => caches.open(OFFLINE_LOCALES_CACHE));
 
 /**
  * Best-effort: caches `locale`'s home page in this version's cache, where an offline launch at
- * `start_url` lands (#728), for a locale used since this version's install precached its homes. A
+ * `start_url` lands (#728), for a locale used since this version's install precached its pages. A
  * failure only costs that launch, and the page's next message retries.
  */
 async function keepLocaleHome(locale: LocaleCode): Promise<void> {
@@ -168,13 +171,13 @@ sw.addEventListener("install", (event) => {
       // block the install, and the page's next request retries it.
       const offlineLocales = await readOfflineLocales(await caches.open(OFFLINE_LOCALES_CACHE));
       await cacheLocaleChunks(cache, offlineLocales, LOCALE_NAME_CHUNKS);
-      // Activating deletes the old cache, launch pages included, and the next launch may be
-      // offline. Fetched fresh: the old version's page imports chunks that go with its cache. The
+      // Activating deletes the old cache, pages included, and the next launch or reload may be
+      // offline. Fetched fresh: the old version's pages import chunks that go with its cache. The
       // last-used locale is normally an offline one already, but a page message records it first.
       const lastLocale = await LAST_LOCALE.read();
-      await precacheLaunchPages(
+      await precachePages(
         cache,
-        launchPagePaths(
+        offlinePagePaths(
           [...(lastLocale ? [lastLocale] : []), ...offlineLocales],
           PRERENDERED_PATHS,
         ),
@@ -238,6 +241,14 @@ sw.addEventListener("message", (event) => {
         reply?.postMessage({ failed } satisfies CacheLocalesReply);
       }
       await rememberOfflineLocales(await caches.open(OFFLINE_LOCALES_CACHE), locales);
+      // After the reply, which a language switch waits for. Best-effort, like the chunks: a page
+      // that fails waits for the next message, and an offline reload of it shows the offline page.
+      await precachePages(
+        await caches.open(CACHE),
+        offlinePagePaths(locales, PRERENDERED_PATHS),
+        sw.registration.scope,
+        (request) => fetch(request),
+      );
     })(),
   );
 });
@@ -320,6 +331,7 @@ sw.addEventListener("fetch", (event) => {
           matchCache: async (request) => (await cache.match(request)) ?? caches.match(request),
           offlinePage: () =>
             new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html; charset=utf-8" } }),
+          pagePaths: PAGE_PATHS,
           waitUntil: (promise) => {
             event.waitUntil(promise);
           },
