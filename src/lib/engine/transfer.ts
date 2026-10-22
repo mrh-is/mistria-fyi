@@ -6,7 +6,7 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
-import { applyMarriageCascade } from "#lib/engine/relationships.js";
+import { applyEngagementCascade } from "#lib/engine/relationships.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import type {
@@ -195,9 +195,11 @@ export async function encodeTransferPayload(
   const petSkinOrder = getPetSkinOrder();
   parts.push(toBitfield(petSkinOrder, completed.petSkins));
 
-  // 16. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor
+  // 16. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bit 4: breakUpsDisabled
   const progressionByte =
-    ((seasonOrdinal(completed.reachedSeason) & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
+    ((seasonOrdinal(completed.reachedSeason) & 0x3) << 6) |
+    (completed.hasUpperFloor ? 0x20 : 0) |
+    (completed.breakUpsDisabled ? 0x10 : 0);
   parts.push(new Uint8Array([progressionByte]));
 
   // 17. Villager relationship states — 3 bits per dateable villager
@@ -451,13 +453,14 @@ async function decodeTransferPayloadUnchecked(
   const petSkinBytes = readBytes(Math.ceil(petSkinOrder.length / 8));
   const petSkins = fromBitfield(petSkinOrder, petSkinBytes, "pet skin bitfield") as Set<PetSkinId>;
 
-  // 16. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bits 4-0: reserved
+  // 16. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bit 4: breakUpsDisabled, bits 3-0: reserved
   const progressionByte = readBytes(1)[0];
-  if (progressionByte & 0x1f) {
+  if (progressionByte & 0x0f) {
     throw new Error("Invalid progression reserved bits: expected zero");
   }
   const reachedSeason: Season = seasonFromOrdinal((progressionByte >> 6) & 0x3);
   const hasUpperFloor = Boolean(progressionByte & 0x20);
+  const breakUpsDisabled = Boolean(progressionByte & 0x10);
 
   const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
 
@@ -511,7 +514,7 @@ async function decodeTransferPayloadUnchecked(
     "mount appearance bitfield",
   ) as Set<MountAppearanceId>;
 
-  applyMarriageCascade(villagerRelationships);
+  applyEngagementCascade(villagerRelationships, breakUpsDisabled);
 
   for (const id of recordKeys(skillLevels)) {
     skillLevels[id] = Math.min(skillLevels[id], MAX_SKILL_LEVEL);
@@ -525,6 +528,7 @@ async function decodeTransferPayloadUnchecked(
     almanacRecipes,
     animalCosmetics,
     animals,
+    breakUpsDisabled,
     childChoice,
     cosmetics,
     hasUpperFloor,

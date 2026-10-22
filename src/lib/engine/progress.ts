@@ -1,4 +1,5 @@
 import { trackerData } from "#lib/data/index.js";
+import { getPartnerId } from "#lib/engine/relationships.js";
 
 import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { Season, VillagerId, Weather } from "#lib/types/tracker-data.js";
@@ -91,8 +92,8 @@ export function normalizeLevel(level: unknown, max: number): NormalizedLevel {
 }
 
 /**
- * A non-dateable Villager has nothing to settle; a dateable one settles as platonic, or as married
- * once the household declares its child choice.
+ * A non-dateable Villager has nothing to settle. A dateable one settles as platonic, as dating
+ * when someone else is the partner, or as married once the household declares its child choice.
  */
 export function isRelationshipSettled(
   villagerId: VillagerId,
@@ -101,6 +102,8 @@ export function isRelationshipSettled(
   if (!trackerData.villagers[villagerId].dateable) return true;
   const relationship = completed.villagerRelationships[villagerId] ?? "undecided";
   if (relationship === "platonic") return true;
+  const partner = getPartnerId(completed.villagerRelationships);
+  if (relationship === "romantic" && partner !== null && partner !== villagerId) return true;
   if (relationship === "married") return completed.childChoice !== "undeclared";
   return false;
 }

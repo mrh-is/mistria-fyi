@@ -11,6 +11,7 @@ function progress(overrides: Partial<ProgressState> = {}): ProgressState {
     almanacRecipes: new Set(),
     animalCosmetics: {},
     animals: {},
+    breakUpsDisabled: false,
     childChoice: "undeclared",
     cosmetics: new Set(),
     hasUpperFloor: false,

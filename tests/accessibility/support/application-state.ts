@@ -35,6 +35,7 @@ export function createStoredState(
     almanacRecipes: [],
     animalCosmetics: {},
     animals: {},
+    breakUpsDisabled: false,
     childChoice: "undeclared",
     cosmetics: [],
     hasUpperFloor: false,

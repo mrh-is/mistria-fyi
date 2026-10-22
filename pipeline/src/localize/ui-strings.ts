@@ -43,6 +43,8 @@ export const APP_UI_STRINGS: readonly UiStringRequest[] = [
   "winter",
   "best_friend",
   "dating",
+  "disable_break_ups",
+  "disable_break_ups_description",
   "engaged",
   "married",
   "magic_spells",

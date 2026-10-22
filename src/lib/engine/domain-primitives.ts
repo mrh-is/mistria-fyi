@@ -13,6 +13,7 @@ export function emptyMergeCounts(): MergeCounts {
     almanacRecipes: 0,
     animalCosmetics: 0,
     animals: 0,
+    breakUpsDisabled: 0,
     childChoice: 0,
     cosmetics: 0,
     hasUpperFloor: 0,

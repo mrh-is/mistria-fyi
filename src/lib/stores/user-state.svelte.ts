@@ -16,7 +16,7 @@ import {
 } from "#lib/engine/progress.js";
 import { changedFacts, factKey, progressFacts } from "#lib/engine/provenance.js";
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
-import { applyMarriageCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
+import { applyEngagementCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
@@ -186,6 +186,7 @@ function createDefaultProgress(): ProgressState {
     almanacRecipes: new SvelteSet<RecipeId>(),
     animalCosmetics,
     animals,
+    breakUpsDisabled: false,
     childChoice: "undeclared",
     cosmetics: new SvelteSet<CosmeticId>(),
     hasUpperFloor: false,
@@ -294,7 +295,7 @@ function createUserState() {
 
   /**
    * Runs `mutate` & records provenance for every fact it changed, ticks & unticks alike. A manual
-   * change that names its `primary` facts records the rest (a marriage cascade, a quest's recipe
+   * change that names its `primary` facts records the rest (an engagement cascade, a quest's recipe
    * rewards) as `inferred`. Each record carries `stamp`'s playtime, by default the last applied
    * save's. Nested calls record nothing themselves; the outermost call does.
    */
@@ -639,6 +640,7 @@ function createUserState() {
       state.progress.museum.size > 0 ||
       state.progress.reachedSeason !== "spring" ||
       Object.keys(state.progress.villagerRelationships).length > 0 ||
+      state.progress.breakUpsDisabled ||
       state.progress.childChoice !== "undeclared" ||
       state.progress.mineFloor > 0 ||
       state.progress.spells.size > 0 ||
@@ -848,6 +850,12 @@ function createUserState() {
     setAvailabilityWindows(windows: readonly AvailabilityWindow[]) {
       state.availabilityWindows = AVAILABILITY_WINDOWS.filter((window) => windows.includes(window));
     },
+    setBreakUpsDisabled(value: boolean) {
+      manual("breakUpsDisabled", () => {
+        state.progress.breakUpsDisabled = value;
+        applyEngagementCascade(state.progress.villagerRelationships, value);
+      });
+    },
     setChildChoice(choice: ChildChoice) {
       manual("childChoice", () => {
         state.progress.childChoice = choice;
@@ -896,7 +904,7 @@ function createUserState() {
         state.progress.skillLevels[id] = clampLevel(level, MAX_SKILL_LEVEL);
       });
     },
-    /** Sets one relationship; the marriage cascade & child-choice reset it causes are `inferred`. */
+    /** Sets one relationship; the engagement cascade & child-choice reset it causes are `inferred`. */
     setVillagerRelationship(villagerId: VillagerId, relationship: VillagerRelationship) {
       manual(factKey("villagerRelationships", villagerId), () => {
         const oldMarried = getSpouseId(state.progress.villagerRelationships);
@@ -906,7 +914,10 @@ function createUserState() {
         } else {
           state.progress.villagerRelationships[villagerId] = relationship;
         }
-        applyMarriageCascade(state.progress.villagerRelationships);
+        applyEngagementCascade(
+          state.progress.villagerRelationships,
+          state.progress.breakUpsDisabled,
+        );
         const newMarried = getSpouseId(state.progress.villagerRelationships);
         if (oldMarried !== newMarried) {
           state.progress.childChoice = "undeclared";
@@ -1080,8 +1091,10 @@ function mergeProgress(progress: ProgressState, imported: Partial<ProgressState>
 
   const household = mergeHousehold(progress, imported);
   progress.villagerRelationships = household.villagerRelationships;
+  progress.breakUpsDisabled = household.breakUpsDisabled;
   progress.childChoice = household.childChoice;
   counts.villagerRelationships = household.counts.villagerRelationships;
+  counts.breakUpsDisabled = household.counts.breakUpsDisabled;
   counts.childChoice = household.counts.childChoice;
 
   // Backfill animal maps for any animals added since the imported state was created
@@ -1129,6 +1142,7 @@ function rebaseProgressEdits(
     ...recordKeys(after.villagerRelationships),
   ]);
   if (
+    before.breakUpsDisabled !== after.breakUpsDisabled ||
     before.childChoice !== after.childChoice ||
     [...relationships].some(
       (id) => before.villagerRelationships[id] !== after.villagerRelationships[id],
@@ -1136,6 +1150,7 @@ function rebaseProgressEdits(
   ) {
     // A later explicit household edit replaces the household as a unit, preserving its cascade.
     target.villagerRelationships = { ...after.villagerRelationships };
+    target.breakUpsDisabled = after.breakUpsDisabled;
     target.childChoice = after.childChoice;
   }
 }

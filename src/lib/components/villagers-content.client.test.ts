@@ -3,12 +3,15 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import VillagersContent from "#lib/components/villagers-content.svelte";
 import { trackerData } from "#lib/data/index.js";
+import { getName } from "#lib/data/names.js";
 import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
 import { buildVillagerRoster } from "#lib/engine/villager-roster.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordKeys } from "#lib/utils/record.js";
+
+import type { VillagerId } from "#lib/types/tracker-data.js";
 
 describe("VillagersContent localization", () => {
   beforeEach(() => {
@@ -17,6 +20,25 @@ describe("VillagersContent localization", () => {
 
   afterEach(() => {
     userState.resetAll();
+  });
+
+  it("reveals the setting with romance and supports turning it on and off", async () => {
+    const view = renderWithFeedback(VillagersContent, { locale: "en" });
+    expect(view.queryByRole("switch")).not.toBeInTheDocument();
+    userState.setVillagerRelationship("adeline" as VillagerId, "romantic");
+    const toggle = await view.findByRole("switch", {
+      name: getName("ui", "disable_break_ups", "en"),
+    });
+    await fireEvent.click(toggle);
+    expect(userState.state.progress.breakUpsDisabled).toBe(true);
+    await fireEvent.click(toggle);
+    expect(userState.state.progress.breakUpsDisabled).toBe(false);
+  });
+
+  it("hides the household setting in compact rosters", () => {
+    userState.setBreakUpsDisabled(true);
+    const view = renderWithFeedback(VillagersContent, { compact: true, locale: "en" });
+    expect(view.queryByRole("switch")).not.toBeInTheDocument();
   });
 
   it("renders English names under the en locale", () => {

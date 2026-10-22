@@ -9,7 +9,7 @@
   import { celebrateCategory } from "#lib/effects/celebrate.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { isVillagerComplete, MAX_HEART_LEVEL } from "#lib/engine/progress.js";
-  import { getSpouseId, relationshipPresentation } from "#lib/engine/relationships.js";
+  import { getPartnerId, relationshipPresentation } from "#lib/engine/relationships.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
@@ -41,7 +41,7 @@
   } = $props();
 
   const instanceId = $props.id();
-  const warningId = `${instanceId}-marriage-warning`;
+  const warningId = `${instanceId}-proposal-warning`;
   let relationshipStatusLabel: Record<RelationshipStatus, string> = $derived({
     best_friends: getName("ui", "best_friend", page.data.locale),
     dating: getName("ui", "dating", page.data.locale),
@@ -86,9 +86,10 @@
   let relationship = $derived(userState.state.progress.villagerRelationships[id] ?? "undecided");
   let presentation = $derived(
     relationshipPresentation({
+      breakUpsDisabled: userState.state.progress.breakUpsDisabled,
       childChoice: userState.state.progress.childChoice,
       level: storedLevel,
-      marriedVillager: getSpouseId(userState.state.progress.villagerRelationships),
+      partnerVillager: getPartnerId(userState.state.progress.villagerRelationships),
       relationship,
       villagerId: id,
     }),
@@ -252,16 +253,18 @@
           <button
             type="button"
             data-relationship-action
-            aria-describedby={action === "married" ? warningId : undefined}
+            aria-describedby={action === "proposed" && presentation.showsProposalWarning
+              ? warningId
+              : undefined}
             onclick={() => applyAction(action)}
           >
             {relationshipActionLabel[action]}
           </button>
         {/each}
       </span>
-      {#if presentation.showsMarriageWarning}
+      {#if presentation.showsProposalWarning}
         <small id={warningId} class="relationship-warning">
-          {m.relationship_warning_marriage()}
+          {m.relationship_warning_proposal()}
         </small>
       {/if}
     </div>

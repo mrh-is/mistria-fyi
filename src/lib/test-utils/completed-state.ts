@@ -21,6 +21,7 @@ export function makeCompletedState(overrides: Partial<ProgressState> = {}): Prog
     almanacRecipes: new Set(),
     animalCosmetics,
     animals,
+    breakUpsDisabled: false,
     childChoice: "undeclared",
     cosmetics: new Set(),
     hasUpperFloor: false,

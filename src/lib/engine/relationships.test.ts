@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "#lib/data/index.js";
-
 import {
-  applyMarriageCascade,
+  applyEngagementCascade,
+  getPartnerId,
   getSpouseId,
   isRomantic,
   mergeHousehold,
@@ -67,41 +66,64 @@ describe("isRomantic", () => {
   });
 });
 
-// ─── applyMarriageCascade ───────────────────────────────────────
+// ─── applyEngagementCascade ───────────────────────────────────────
 
-describe("applyMarriageCascade", () => {
-  it("does nothing when no one is married", () => {
-    const input = rels({ adeline: "romantic", balor: "proposed" });
-    const copy = { ...input };
-    applyMarriageCascade(copy);
-    expect(copy).toEqual(input);
-  });
+describe("applyEngagementCascade", () => {
+  it.each(["proposed", "married"] as const)(
+    "ends other romances at %s without deciding missing paths",
+    (partner) => {
+      const input = rels({ adeline: partner, balor: "romantic", celine: "undecided" });
+      applyEngagementCascade(input, false);
+      expect(input).toEqual({ adeline: partner, balor: "platonic", celine: "undecided" });
+    },
+  );
 
-  it("forces all other dateable Villagers to platonic when one is married", () => {
+  it("preserves dating when break-ups are disabled", () => {
     const input = rels({ adeline: "married", balor: "romantic" });
-    applyMarriageCascade(input);
-    expect(input["adeline" as VillagerId]).toBe("married");
-    expect(input["balor" as VillagerId]).toBe("platonic");
+    applyEngagementCascade(input, true);
+    expect(input).toEqual({ adeline: "married", balor: "romantic" });
   });
 
-  it("adds platonic for dateable Villagers not yet in the map", () => {
-    const input = rels({ adeline: "married" });
-    applyMarriageCascade(input);
-
-    const dateableVillagers = Object.entries(trackerData.villagers)
-      .filter(([, villager]) => villager.dateable)
-      .map(([id]) => id as VillagerId);
-
-    for (const villagerId of dateableVillagers) {
-      expect(input[villagerId]).toBe(
-        villagerId === ("adeline" as VillagerId) ? "married" : "platonic",
-      );
-    }
+  it("prefers the spouse over a stale engagement", () => {
+    expect(getPartnerId(rels({ adeline: "married", balor: "proposed" }))).toBe("adeline");
+    expect(getPartnerId(rels({ balor: "proposed" }))).toBe("balor");
+    expect(getPartnerId(rels({ balor: "romantic" }))).toBeNull();
   });
 });
 
 describe("relationshipPresentation", () => {
   const villagerId = "adeline" as VillagerId;
+
+  it.each([false, true])(
+    "keeps undecided paths available with another partner (disabled=%s)",
+    (breakUpsDisabled) => {
+      const presentation = relationshipPresentation({
+        breakUpsDisabled,
+        childChoice: "undeclared",
+        level: 8,
+        partnerVillager: "balor" as VillagerId,
+        relationship: "undecided",
+        villagerId,
+      });
+      expect(presentation.actions).toEqual(
+        breakUpsDisabled ? ["platonic", "romantic"] : ["platonic"],
+      );
+      expect(presentation.status).toBe("path_not_chosen");
+    },
+  );
+
+  it("omits the proposal warning with break-ups disabled", () => {
+    expect(
+      relationshipPresentation({
+        breakUpsDisabled: true,
+        childChoice: "undeclared",
+        level: 10,
+        partnerVillager: null,
+        relationship: "romantic",
+        villagerId,
+      }),
+    ).toMatchObject({ actions: ["proposed"], showsProposalWarning: false });
+  });
 
   it.each([
     {
@@ -185,9 +207,10 @@ describe("relationshipPresentation", () => {
     "projects $relationship at level $level with household choice $childChoice",
     ({ actions, childChoice, level, relationship, status }) => {
       const presentation = relationshipPresentation({
+        breakUpsDisabled: false,
         childChoice,
         level,
-        marriedVillager: relationship === "married" ? villagerId : null,
+        partnerVillager: relationship === "married" ? villagerId : null,
         relationship,
         villagerId,
       });
@@ -197,29 +220,31 @@ describe("relationshipPresentation", () => {
     },
   );
 
-  it("associates a warning only with the marriage action", () => {
+  it("associates a warning with the proposal action", () => {
     const presentation = relationshipPresentation({
+      breakUpsDisabled: false,
       childChoice: "undeclared",
       level: 10,
-      marriedVillager: null,
-      relationship: "proposed",
+      partnerVillager: null,
+      relationship: "romantic",
       villagerId,
     });
 
-    expect(presentation.showsMarriageWarning).toBe(true);
-    expect(presentation.actions).toEqual(["married"]);
+    expect(presentation.showsProposalWarning).toBe(true);
+    expect(presentation.actions).toEqual(["proposed"]);
   });
 
   it("closes romantic actions when another Villager is married", () => {
     expect(
       relationshipPresentation({
+        breakUpsDisabled: false,
         childChoice: "undeclared",
         level: 10,
-        marriedVillager: "celine" as VillagerId,
+        partnerVillager: "celine" as VillagerId,
         relationship: "romantic",
         villagerId,
       }),
-    ).toEqual({ actions: [], status: "best_friends" });
+    ).toMatchObject({ actions: [], status: "dating" });
   });
 });
 
@@ -230,37 +255,114 @@ describe("mergeHousehold", () => {
   const BALOR = "balor" as VillagerId;
   const CELINE = "celine" as VillagerId;
 
+  it("preserves romances alongside a newly imported spouse when break-ups are disabled", () => {
+    const result = mergeHousehold(
+      {
+        breakUpsDisabled: false,
+        childChoice: "undeclared",
+        villagerRelationships: rels({ balor: "romantic" }),
+      },
+      {
+        breakUpsDisabled: true,
+        villagerRelationships: rels({ adeline: "married", celine: "romantic" }),
+      },
+    );
+    expect(result.villagerRelationships).toEqual({
+      adeline: "married",
+      balor: "romantic",
+      celine: "romantic",
+    });
+    expect(result.breakUpsDisabled).toBe(true);
+    expect(result.counts.breakUpsDisabled).toBe(1);
+    expect(result.conflicts).toEqual([]);
+  });
+
+  it("repairs old cascades only when the imported setting corrects an existing partner's household", () => {
+    const local = {
+      breakUpsDisabled: false,
+      childChoice: "undeclared" as const,
+      villagerRelationships: rels({ adeline: "married", balor: "platonic" }),
+    };
+    const incoming = {
+      breakUpsDisabled: true,
+      villagerRelationships: rels({ adeline: "married", balor: "romantic" }),
+    };
+    expect(mergeHousehold(local, incoming)).toMatchObject({
+      conflicts: [],
+      villagerRelationships: { balor: "romantic" },
+    });
+    expect(mergeHousehold({ ...local, breakUpsDisabled: true }, incoming).conflicts).toHaveLength(
+      1,
+    );
+    expect(local.villagerRelationships[BALOR]).toBe("platonic");
+  });
+
+  it("applies a setting-only import and cascades when break-ups are turned back on", () => {
+    const result = mergeHousehold(
+      {
+        breakUpsDisabled: true,
+        childChoice: "undeclared",
+        villagerRelationships: rels({ adeline: "proposed", balor: "romantic" }),
+      },
+      { breakUpsDisabled: false },
+    );
+    expect(result.villagerRelationships).toEqual({ adeline: "proposed", balor: "platonic" });
+    expect(result.counts.breakUpsDisabled).toBe(1);
+  });
+
   it("leaves the household unchanged when nothing comes in", () => {
     const local = {
+      breakUpsDisabled: false,
       childChoice: "yes" as const,
       villagerRelationships: rels({ adeline: "married" }),
     };
 
     expect(mergeHousehold(local, {})).toEqual({
+      breakUpsDisabled: false,
       childChoice: "yes",
       conflicts: [],
-      counts: { childChoice: 0, villagerRelationships: 0 },
+      counts: { breakUpsDisabled: 0, childChoice: 0, villagerRelationships: 0 },
       villagerRelationships: { adeline: "married" },
     });
   });
 
   it("applies an incoming marriage and its child choice when no local spouse exists", () => {
     const result = mergeHousehold(
-      { childChoice: "undeclared", villagerRelationships: rels({ celine: "proposed" }) },
-      { childChoice: "no", villagerRelationships: rels({ adeline: "married" }) },
+      {
+        breakUpsDisabled: false,
+        childChoice: "undeclared",
+        villagerRelationships: rels({ celine: "proposed" }),
+      },
+      {
+        breakUpsDisabled: false,
+        childChoice: "no",
+        villagerRelationships: rels({ adeline: "married" }),
+      },
     );
 
     expect(result.villagerRelationships[ADELINE]).toBe("married");
     expect(result.villagerRelationships[CELINE]).toBe("platonic");
     expect(result.childChoice).toBe("no");
-    expect(result.counts).toEqual({ childChoice: 1, villagerRelationships: 1 });
+    expect(result.counts).toEqual({
+      breakUpsDisabled: 0,
+      childChoice: 1,
+      villagerRelationships: 1,
+    });
     expect(result.conflicts).toEqual([]);
   });
 
   it("reports one spouse conflict and skips the incoming child choice", () => {
     const result = mergeHousehold(
-      { childChoice: "undeclared", villagerRelationships: rels({ adeline: "married" }) },
-      { childChoice: "yes", villagerRelationships: rels({ balor: "married" }) },
+      {
+        breakUpsDisabled: false,
+        childChoice: "undeclared",
+        villagerRelationships: rels({ adeline: "married" }),
+      },
+      {
+        breakUpsDisabled: false,
+        childChoice: "yes",
+        villagerRelationships: rels({ balor: "married" }),
+      },
     );
 
     expect(result.conflicts).toEqual([
@@ -273,6 +375,7 @@ describe("mergeHousehold", () => {
   it("moves forward within a branch and flags a move between branches", () => {
     const result = mergeHousehold(
       {
+        breakUpsDisabled: false,
         childChoice: "undeclared",
         villagerRelationships: rels({ adeline: "romantic", balor: "platonic" }),
       },
@@ -295,7 +398,11 @@ describe("mergeHousehold", () => {
     const localRelationships = rels({ celine: "proposed" });
 
     mergeHousehold(
-      { childChoice: "undeclared", villagerRelationships: localRelationships },
+      {
+        breakUpsDisabled: false,
+        childChoice: "undeclared",
+        villagerRelationships: localRelationships,
+      },
       { villagerRelationships: rels({ adeline: "married" }) },
     );
 

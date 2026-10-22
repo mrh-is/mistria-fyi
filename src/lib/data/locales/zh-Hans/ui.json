@@ -13,6 +13,8 @@
   "crown_requests": "皇家委托",
   "date_inspiration": "约会灵感",
   "dating": "约会中",
+  "disable_break_ups": "关闭分手",
+  "disable_break_ups_description": "勾选此选项后，你订婚时，其他处于“约会”关系的NPC默认变为“挚友”的流程将不再触发。\n\n请注意：一旦订婚，你将无法再更改此设置。",
   "engaged": "已订婚",
   "fall": "秋季",
   "fish": "渔获珍品",

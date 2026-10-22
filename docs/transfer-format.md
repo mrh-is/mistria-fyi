@@ -27,6 +27,10 @@ field needs no version bump or compatibility review: every outstanding code from
 already reads as `version-mismatch`. See
 [the build-binding decision](decisions/2026-10-13-transfer-build-binding.md).
 
+The progression byte carries the reached season in bits 7–6, upper-floor ownership in bit 5, and
+`breakUpsDisabled` in bit 4. Bits 3–0 remain reserved. Decoding applies the engagement cascade only
+when break-ups are enabled, preserving married-plus-dating households when they are disabled.
+
 ## Validation contract
 
 Decoding is all-or-nothing. The decoder validates these boundaries before returning any progress:

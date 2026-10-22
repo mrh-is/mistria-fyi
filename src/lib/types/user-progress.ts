@@ -22,7 +22,7 @@ import type {
 } from "./tracker-data.js";
 
 /** Version stamped on every persisted progress blob; the browser suites build fixtures from it. */
-export const CURRENT_SERIALIZATION_VERSION = 4;
+export const CURRENT_SERIALIZATION_VERSION = 5;
 export const CHILD_CHOICES = ["no", "undeclared", "yes"] as const;
 export const QUEST_STATES = ["completed", "none", "obtained"] as const;
 export type ChildChoice = (typeof CHILD_CHOICES)[number];
@@ -31,6 +31,7 @@ export interface ProgressState {
   almanacRecipes: Set<RecipeId>;
   animalCosmetics: Partial<Record<AnimalId, Set<CosmeticId>>>;
   animals: Partial<Record<AnimalId, Set<AnimalVariantId>>>;
+  breakUpsDisabled: boolean;
   childChoice: ChildChoice;
   cosmetics: Set<CosmeticId>;
   hasUpperFloor: boolean;
@@ -79,6 +80,7 @@ export interface MergeCounts {
   almanacRecipes: number;
   animalCosmetics: number;
   animals: number;
+  breakUpsDisabled: number;
   childChoice: number;
   cosmetics: number;
   hasUpperFloor: number;

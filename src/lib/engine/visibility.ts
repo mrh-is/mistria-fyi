@@ -1,5 +1,5 @@
 import { seasonOrdinal } from "#lib/engine/domain-primitives.js";
-import { applyMarriageCascade, getSpouseId, isRomantic } from "#lib/engine/relationships.js";
+import { applyEngagementCascade, getSpouseId, isRomantic } from "#lib/engine/relationships.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import type {
@@ -165,6 +165,7 @@ function evaluateCondition(
 
 type ConditionDraft = Pick<
   ProgressState,
+  | "breakUpsDisabled"
   | "hasUpperFloor"
   | "heartLevels"
   | "mineFloor"
@@ -267,7 +268,7 @@ function planConditionMutationsInDraft(
     case "married":
       if (!getSpouseId(completed.villagerRelationships)) {
         completed.villagerRelationships[condition.villagerId] = "married";
-        applyMarriageCascade(completed.villagerRelationships);
+        applyEngagementCascade(completed.villagerRelationships, completed.breakUpsDisabled);
       }
       return;
     case "mineFloor":

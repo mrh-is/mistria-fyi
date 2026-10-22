@@ -135,10 +135,13 @@ describe("VillagerRecord", () => {
       villager: adeline,
     });
 
+    expect(view.getByRole("button", { name: "Record proposal" })).toHaveAccessibleDescription(
+      /Getting engaged moves everyone else/i,
+    );
     await fireEvent.click(view.getByRole("button", { name: "Record proposal" }));
     const marriage = await view.findByRole("button", { name: "Record marriage" });
     expect(view.getByText("Engaged")).toBeInTheDocument();
-    expect(marriage).toHaveAccessibleDescription(/closes every other romantic path/i);
+    expect(marriage).not.toHaveAttribute("aria-describedby");
     expect(document.activeElement).toBe(marriage);
 
     await fireEvent.click(marriage);

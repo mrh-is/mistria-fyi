@@ -13,6 +13,32 @@ afterEach(() => {
 });
 
 describe("mergeFromSave household policy", () => {
+  it("records the setting as manual and its engagement cascade as inferred", () => {
+    userState.setBreakUpsDisabled(true);
+    userState.setVillagerRelationship(BALOR, "romantic");
+    userState.setVillagerRelationship(ADELINE, "proposed");
+    expect(userState.state.progress.villagerRelationships[BALOR]).toBe("romantic");
+    userState.setBreakUpsDisabled(false);
+    expect(userState.state.progress.villagerRelationships[BALOR]).toBe("platonic");
+    expect(userState.provenanceOf("breakUpsDisabled")?.source).toBe("manual");
+    expect(userState.provenanceOf("villagerRelationships/balor")?.source).toBe("inferred");
+    userState.setBreakUpsDisabled(true);
+    expect(userState.state.progress.villagerRelationships[BALOR]).toBe("platonic");
+  });
+
+  it("corrects a prior cascade from a disabled-break-ups save", () => {
+    userState.setVillagerRelationship(BALOR, "romantic");
+    userState.setVillagerRelationship(ADELINE, "married");
+    expect(userState.state.progress.villagerRelationships[BALOR]).toBe("platonic");
+    const result = userState.mergeFromSave({
+      breakUpsDisabled: true,
+      villagerRelationships: { [ADELINE]: "married", [BALOR]: "romantic" },
+    });
+    expect(result.conflicts).toEqual([]);
+    expect(userState.state.progress.villagerRelationships[BALOR]).toBe("romantic");
+    expect(userState.state.progress.breakUpsDisabled).toBe(true);
+  });
+
   it("silently applies an incoming marriage when no local spouse exists", () => {
     userState.setVillagerRelationship(CELINE, "proposed");
 
@@ -87,7 +113,7 @@ describe("mergeFromSave household policy", () => {
     });
 
     expect(userState.state.progress.villagerRelationships[ADELINE]).toBe("married");
-    expect(userState.state.progress.villagerRelationships[BALOR]).toBe("platonic");
+    expect(userState.state.progress.villagerRelationships[BALOR]).toBeUndefined();
     expect(userState.state.progress.childChoice).toBe("yes");
     expect(counts.villagerRelationships).toBe(0);
     expect(counts.childChoice).toBe(0);
@@ -116,6 +142,7 @@ describe("mergeFromSave household policy", () => {
   });
 
   it("no-ops for a villager omitted from the incoming data", () => {
+    userState.setBreakUpsDisabled(true);
     userState.setVillagerRelationship(BALOR, "proposed");
 
     const { conflicts, counts } = userState.mergeFromSave({
@@ -139,7 +166,7 @@ describe("mergeFromSave household policy", () => {
     expect(userState.state.progress.villagerRelationships[ADELINE]).toBe("married");
     expect(userState.state.progress.villagerRelationships[CELINE]).toBe("platonic");
     expect(userState.state.progress.childChoice).toBe("yes");
-    expect(counts.villagerRelationships).toBe(0);
+    expect(counts.villagerRelationships).toBe(1);
     expect(conflicts).toEqual([]);
   });
 

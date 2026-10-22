@@ -7,6 +7,7 @@ import {
   MAX_SKILL_LEVEL,
   normalizeLevel,
 } from "#lib/engine/progress.js";
+import { getSpouseId } from "#lib/engine/relationships.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import { hasProgressSection, isSaveSection } from "./save-bundle.js";
@@ -28,7 +29,12 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
-import type { MergeResult, ProgressState, QuestState } from "#lib/types/user-progress.js";
+import type {
+  ChildChoice,
+  MergeResult,
+  ProgressState,
+  QuestState,
+} from "#lib/types/user-progress.js";
 
 import type { SaveBundle, SaveSection, SaveSectionName } from "./save-bundle.js";
 
@@ -39,6 +45,14 @@ const MISTMARE_APPEARANCE = "mistmare" as MountAppearanceId;
 function isMountAppearance(id: string): id is MountAppearanceId {
   return Object.hasOwn(trackerData.mount.appearances, id);
 }
+
+/** Each `{villager}_is_{suffix}` status flag & its relationship, the spouse first. */
+const RELATIONSHIP_FACTS: readonly (readonly [string, VillagerRelationship])[] = [
+  ["spouse", "married"],
+  ["fiance", "proposed"],
+  ["dating", "romantic"],
+  ["best_friend", "platonic"],
+];
 
 // ─── Import result ──────────────────────────────────────────────────
 
@@ -109,8 +123,8 @@ export interface ExtractedField<T> {
   value: T | undefined;
 }
 
-/** The progress facts a save holds. Dates & the child choice aren't in it. */
-export type ExtractedProgressKey = Exclude<keyof ProgressState, "childChoice">;
+/** The progress facts a save holds. */
+export type ExtractedProgressKey = keyof ProgressState;
 export type SaveFields = { [K in ExtractedProgressKey]: ExtractedField<ProgressState[K]> };
 
 /** A game version as `info` records it (`{ major, minor, patch, pre }`). */
@@ -141,13 +155,16 @@ type FieldKey = ExtractedProgressKey | keyof SaveIdentity;
 /**
  * Fields the save can't fully determine, so they never support a removal:
  *
- * - **Relationships:** the dating flags say who is romantic, but no other relationship (married,
- *   platonic) is read.
+ * - **Relationships:** the status flags are read, but absent flags do not establish a relationship
+ *   removal, so a villager the save leaves undecided may not be.
+ * - **Child choice:** only wanting children leaves evidence (a child, a pending child, or the
+ *   spouse's pregnancy quest); choosing none looks the same as not choosing yet.
  * - **Mount appearances:** the Mistmare is inferred from one cutscene in `scene_history`, a list of
  *   ~150 scene IDs in a late-game save with no catalog to check them against, so a renamed reveal
  *   scene would look exactly like a Mistmare not yet revealed.
  */
 const PARTIAL_FIELDS: ReadonlySet<FieldKey> = new Set<FieldKey>([
+  "childChoice",
   "mountAppearances",
   "villagerRelationships",
 ]);
@@ -558,19 +575,6 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     collector,
   );
 
-  // ── Villager relationships (from gamedata.json → t2_world_facts → {villager}_is_dating) ──
-  let villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> | undefined;
-  if (facts) {
-    villagerRelationships = {};
-    for (const [villagerId, villager] of Object.entries(trackerData.villagers)) {
-      if (villager.dateable !== true) continue;
-      const val = facts[`${villagerId}_is_dating`];
-      if (val === true || val === 1) {
-        villagerRelationships[villagerId as VillagerId] = "romantic";
-      }
-    }
-  }
-
   // ── Reached season (from gamedata.json → date timestamp) ──
   const date = readScalar(
     gamedata.value("date"),
@@ -637,6 +641,48 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   }
   const questStates = readCompleted || readActive || readRankCompletion ? foundQuests : undefined;
 
+  // ── Villager relationships (from gamedata.json → t2_world_facts → {villager}_is_{status}) ──
+  // The game writes one flag per status (`Npc.report_relationship`); a spouse flag beats stale
+  // dating for the same villager. Only a spouse's pregnancy quest can be listed, so it names the
+  // spouse when no flag does. Other relationships stay as stored.
+  const pregnancyVillagerId = recordEntries(trackerData.pregnancyQuestByVillager).find(
+    ([, questId]) => Object.hasOwn(foundQuests, questId),
+  )?.[0];
+  let villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> | undefined;
+  if (facts || pregnancyVillagerId) {
+    villagerRelationships = {};
+    for (const [villagerId, villager] of recordEntries(trackerData.villagers)) {
+      if (villager.dateable !== true || !facts) continue;
+      const status = RELATIONSHIP_FACTS.find(([suffix]) => {
+        const val = facts[`${villagerId}_is_${suffix}`];
+        return val === true || val === 1;
+      });
+      if (status) villagerRelationships[villagerId] = status[1];
+    }
+    if (pregnancyVillagerId && getSpouseId(villagerRelationships) === null) {
+      villagerRelationships[pregnancyVillagerId] = "married";
+    }
+  }
+
+  const breakUpsDisabled = readScalar(
+    player.value("disable_break_ups"),
+    "player.disable_break_ups",
+    "breakUpsDisabled",
+    (value): value is boolean => typeof value === "boolean",
+    collector,
+  );
+
+  // ── Child choice (from player.json → pending_child & children, or a pregnancy quest) ──
+  // Only wanting children leaves evidence; a household that chose none reads as undeclared.
+  let childChoice: ChildChoice | undefined;
+  if (playerSection || pregnancyVillagerId) {
+    const children = player.value("children");
+    const hasChild =
+      (player.value("pending_child") ?? null) !== null ||
+      (Array.isArray(children) && children.length > 0);
+    childChoice = hasChild || pregnancyVillagerId ? "yes" : "undeclared";
+  }
+
   // ── Identity (from info.json & header.json) ──
   const creationVersion = readScalar(
     bundle.info && Object.hasOwn(bundle.info, "creation_version")
@@ -660,6 +706,8 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     almanacRecipes: collector.finish("almanacRecipes", almanacRecipes),
     animalCosmetics: collector.finish("animalCosmetics", animalCosmetics),
     animals: collector.finish("animals", animals),
+    breakUpsDisabled: collector.finish("breakUpsDisabled", breakUpsDisabled),
+    childChoice: collector.finish("childChoice", childChoice),
     cosmetics: collector.finish("cosmetics", cosmetics),
     hasUpperFloor: collector.finish("hasUpperFloor", hasUpperFloor),
     heartLevels: collector.finish("heartLevels", heartLevels),
@@ -956,6 +1004,7 @@ export async function parseExtractedSaveFiles(files: File[]): Promise<{
 export function isPlayerSaveSection(data: unknown): data is SaveSection {
   if (!isSaveSection(data)) return false;
   return (
+    typeof data.disable_break_ups === "boolean" ||
     Array.isArray(data.items_acquired) ||
     Array.isArray(data.recipe_unlocks) ||
     Array.isArray(data.cosmetic_unlocks) ||

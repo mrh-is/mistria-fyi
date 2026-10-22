@@ -159,7 +159,7 @@
   "relationship_prompt_choose_path": "Choose path",
   "relationship_prompt_household": "Household",
   "relationship_prompt_next_note": "Next note",
-  "relationship_warning_marriage": "Marriage closes every other romantic path.",
+  "relationship_warning_proposal": "Getting engaged moves everyone else you're dating to best friends.",
   "relationship_action_romantic": "Start dating",
   "relationship_action_proposed": "Record proposal",
   "relationship_action_married": "Record marriage",

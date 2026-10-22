@@ -130,6 +130,48 @@ describe("migrateDocument", () => {
 });
 
 describe("readProgressBlob", () => {
+  it.each(POLICIES)(
+    "defaults older backups to enabled break-ups and round-trips v5 (%s)",
+    (policy) => {
+      for (const version of [1, 2, 3, 4]) {
+        expect(readOk(JSON.stringify(fixture(version)), policy).progress.breakUpsDisabled).toBe(
+          false,
+        );
+      }
+      const loaded = readOk(JSON.stringify(fixture(5)), policy);
+      expect(loaded.progress.breakUpsDisabled).toBe(true);
+      expect(readOk(serializeProgress(loaded), policy).progress.breakUpsDisabled).toBe(true);
+    },
+  );
+
+  it("repairs an invalid setting during hydration but rejects it in a backup", () => {
+    const stored = fixture(5) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...stored,
+      progress: { ...stored.progress, breakUpsDisabled: "true" },
+    });
+    expect(readOk(json, "repair").progress.breakUpsDisabled).toBe(false);
+    expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
+  });
+
+  it.each(POLICIES)(
+    "keeps married-plus-dating households when break-ups are disabled (%s)",
+    (policy) => {
+      const stored = fixture(5) as { progress: Record<string, unknown> };
+      const json = JSON.stringify({
+        ...stored,
+        progress: {
+          ...stored.progress,
+          villagerRelationships: { adeline: "married", balor: "romantic" },
+        },
+      });
+      expect(readOk(json, policy).progress.villagerRelationships).toEqual({
+        adeline: "married",
+        balor: "romantic",
+      });
+    },
+  );
+
   it.each(POLICIES)("migrates launch progress without inventing import history (%s)", (policy) => {
     const loaded = readOk(JSON.stringify(fixture(1)), policy);
     expect(loaded.lastImport).toBeNull();
@@ -259,7 +301,7 @@ describe("readProgressBlob", () => {
       const { progress } = fixture(version) as { progress: Record<string, unknown> };
       const json = JSON.stringify({
         ...fixture(version),
-        progress: { ...progress, villagerRelationships: { balor: "married" } },
+        progress: { ...progress, villagerRelationships: { adeline: "romantic", balor: "married" } },
       });
       const { history, progress: loaded } = readOk(json, "repair");
 
@@ -277,7 +319,7 @@ describe("readProgressBlob", () => {
     const { progress } = fixture(1) as { progress: Record<string, unknown> };
     const json = JSON.stringify({
       ...fixture(1),
-      progress: { ...progress, villagerRelationships: { balor: "married" } },
+      progress: { ...progress, villagerRelationships: { adeline: "romantic", balor: "married" } },
     });
 
     expect(readOk(json, "repair").history.provenance["villagerRelationships/balor"]).toEqual({
