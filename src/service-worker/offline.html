@@ -67,25 +67,33 @@
         font-size: 1rem;
         line-height: 1.5;
         color: var(--muted-foreground);
+        margin-bottom: 1.5rem;
       }
-      .trail {
-        display: block;
-        width: 100%;
-        height: auto;
-        margin: 1rem 0 1.25rem;
-        overflow: visible;
+      /* A near peak & a far ridge, sketched in the entry's empty top corner. */
+      .range {
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+        display: flex;
+        align-items: flex-end;
       }
-      .trail .path {
-        stroke: var(--color-brand-accent);
+      .range svg {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
-      .trail .ink {
-        stroke: var(--color-ink-hairline);
+      .peak-near {
+        width: 4rem;
+        height: 4rem;
+        color: var(--color-brand-accent);
       }
-      .trail .label {
-        font-family: var(--font-display);
-        font-style: var(--font-display-style);
-        font-size: 15px;
-        fill: var(--muted-foreground);
+      .peak-far {
+        width: 2.75rem;
+        height: 2.75rem;
+        margin-left: -0.875rem;
+        color: var(--color-ink-hairline);
       }
       .retry {
         display: inline-flex;
@@ -118,45 +126,17 @@
         The Mistria Field Guide needs an internet connection to load for the first time. Your
         tracked progress is saved locally and will be here when you reconnect.
       </p>
-      <!-- The trail walked so far, in pencil, petering out where this page was never mapped. -->
-      <svg class="trail" viewBox="0 0 300 84" aria-hidden="true" fill="none" stroke-linecap="round">
-        <defs>
-          <!-- The app’s small pencil filter (src/lib/components/pencil-filter.svelte). -->
-          <filter id="pencil" x="-5%" y="-5%" width="110%" height="110%">
-            <feTurbulence
-              type="turbulence"
-              baseFrequency="0.035"
-              numOctaves="4"
-              seed="2"
-              result="noise"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="noise"
-              scale="1"
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </defs>
-        <g filter="url(#pencil)">
-          <path
-            class="ink"
-            stroke-width="1.5"
-            d="M14 66 l6 -11 l6 11 M44 58 l5 -9 l5 9 M118 30 l6 -11 l6 11"
-          />
-          <circle class="path" cx="10" cy="72" r="3.5" stroke-width="2" />
-          <path class="path" stroke-width="2" d="M16 70 C 50 64, 62 46, 96 48 S 140 64, 166 50" />
-          <path
-            class="path"
-            stroke-width="2"
-            stroke-dasharray="1 7"
-            d="M172 47 C 190 38, 204 30, 226 34"
-          />
-          <path class="ink" stroke-width="1.5" d="M234 30 l8 8 m0 -8 l-8 8" />
-        </g>
-        <text class="label" x="206" y="64">uncharted</text>
-      </svg>
+      <!-- Tabler's `mountain` icon (MIT, @tabler/icons-svelte-runes), drawn twice as a range. -->
+      <div class="range" aria-hidden="true">
+        <svg class="peak-near" viewBox="0 0 24 24">
+          <path d="M3 20h18l-6.921 -14.612a2.3 2.3 0 0 0 -4.158 0l-6.921 14.612" />
+          <path d="M7.5 11l2 2.5l2.5 -2.5l2 3l2.5 -2" />
+        </svg>
+        <svg class="peak-far" viewBox="0 0 24 24">
+          <path d="M3 20h18l-6.921 -14.612a2.3 2.3 0 0 0 -4.158 0l-6.921 14.612" />
+          <path d="M7.5 11l2 2.5l2.5 -2.5l2 3l2.5 -2" />
+        </svg>
+      </div>
       <!-- A link, not a script: the CSP blocks inline handlers. An empty href reloads this URL. -->
       <a class="retry" href="">Try again</a>
     </main>
