@@ -17,6 +17,7 @@ const showQuestToast = vi.hoisted(() => vi.fn());
 vi.mock("#lib/effects/undo-toast.js", () => ({ showQuestToast, showUndoToast }));
 
 afterEach(() => {
+  vi.restoreAllMocks();
   userState.resetAll();
   showUndoToast.mockReset();
   showQuestToast.mockReset();
@@ -54,6 +55,29 @@ describe("SearchResults pictures", () => {
         `var(--color-category-${key})`,
       );
     }
+  });
+
+  it("pictures a villager row with the portrait the Villagers page shows", () => {
+    // A loaded image, so the portrait isn't swapped for its fallback.
+    vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(44);
+
+    renderWithFeedback(SearchResults, { locale: "en", query: "Adeline" });
+
+    const link = screen.getByRole("link", { name: /^Adeline relationship level/ });
+    const portrait = link.querySelector("img");
+    expect(portrait?.getAttribute("src")).toMatch(/\/sprites\/villagers\/adeline\.webp\?/);
+    expect(portrait).toHaveAttribute("alt", "");
+    expect(portrait?.closest("[aria-hidden='true']")).not.toBeNull();
+  });
+
+  it("falls back to the villager's initial when the portrait can't load, as on their page", () => {
+    vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(0);
+
+    renderWithFeedback(SearchResults, { locale: "en", query: "Adeline" });
+
+    const link = screen.getByRole("link", { name: /^Adeline relationship level/ });
+    expect(link.querySelector("img")).toBeNull();
+    expect(within(link).getByTestId("villager-portrait-fallback")).toHaveTextContent("A");
   });
 
   it("leaves a quest row unpictured, as on the Quests page", () => {

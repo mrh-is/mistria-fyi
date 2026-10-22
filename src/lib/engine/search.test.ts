@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
 import { CATEGORY_DEFINITIONS } from "#lib/engine/categories.js";
-import { recipePlacements } from "#lib/engine/projections/recipes.js";
+import { recipeForItem, recipePlacements } from "#lib/engine/projections/recipes.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
@@ -689,18 +689,6 @@ function allResults(): SearchResult[] {
   );
 }
 
-/** The Recipes page's picture per recipe: the first almanac entry the recipe makes. */
-/** Each recipe's picture on the Recipes page: its first placement's item. */
-function firstPlacementSprites(): Map<RecipeId, ItemId> {
-  const sprites = new Map<RecipeId, ItemId>();
-  for (const { recipes } of recipePlacements()) {
-    for (const { itemId, recipeId } of recipes) {
-      if (!sprites.has(recipeId)) sprites.set(recipeId, itemId);
-    }
-  }
-  return sprites;
-}
-
 describe("result sprites", () => {
   it("pictures almanac and museum results with their own item, available or not", () => {
     const results = allResults().filter(
@@ -712,13 +700,28 @@ describe("result sprites", () => {
     }
   });
 
-  it("pictures a recipe result with the item of its first Recipes page placement", () => {
-    const expected = firstPlacementSprites();
+  it("pictures each recipe the Recipes page lists with an item that recipe makes", () => {
+    const listed = new Set(
+      recipePlacements().flatMap(({ recipes }) => recipes.map(({ recipeId }) => recipeId)),
+    );
     const recipes = allResults().filter((result) => result.category === "recipes");
-    expect(recipes.some((result) => result.sprite !== undefined)).toBe(true);
-    for (const result of recipes) {
-      expect(result.sprite, `recipe ${result.id}`).toBe(expected.get(result.id as RecipeId));
+    const pictured = recipes.filter((result) => listed.has(result.id as RecipeId));
+    expect(pictured.length).toBeGreaterThan(0);
+    for (const { id, sprite } of pictured) {
+      const item = sprite === undefined ? undefined : trackerData.items[sprite];
+      expect(item && recipeForItem(item), `recipe ${id}`).toBe(id);
     }
+    for (const { id, sprite } of recipes.filter((result) => !pictured.includes(result))) {
+      expect(sprite, `unlisted recipe ${id}`).toBeUndefined();
+    }
+  });
+
+  it("pictures a recipe listed under two Recipes page sections with its one item", () => {
+    // Basic wood appears under both Fish and Materials on the Recipes page.
+    const wood = allResults().find(
+      (result) => result.category === "recipes" && result.id === "basic_wood",
+    );
+    expect(wood?.sprite).toBe("basic_wood");
   });
 
   it("leaves results from categories without pictures unpictured", () => {
@@ -735,11 +738,9 @@ describe("result sprites", () => {
   });
 
   it("carries a recipe's sprite through the ranked search", () => {
-    const expected = firstPlacementSprites().get("strawberry_shortcake" as RecipeId);
     const shortcake = search("Strawberry Shortcake").find(
       (result) => result.category === "recipes",
     );
-    expect(expected).toBeDefined();
-    expect(shortcake?.sprite).toBe(expected);
+    expect(shortcake?.sprite).toBe("strawberry_shortcake");
   });
 });
