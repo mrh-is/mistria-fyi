@@ -452,15 +452,23 @@ describe("checkR2Token", () => {
 
   it("passes once the token & account ID are set, without printing either", () => {
     const result = checkR2Token(
-      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "account-id", CLOUDFLARE_API_TOKEN: secret } }),
+      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: secret } }),
     );
     expect(result.status).toBe("ok");
     expect(result.detail).not.toContain(secret);
     expect(result.detail).not.toContain("account-id");
   });
 
+  it("ignores CLOUDFLARE_API_TOKEN, which may hold the read-only Pages token", () => {
+    const result = checkR2Token(
+      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "account-id", CLOUDFLARE_API_TOKEN: secret } }),
+    );
+    expect(result.status).toBe("manual");
+    expect(result.detail).toBe("R2_UPLOAD_TOKEN is not set");
+  });
+
   it("lists whichever variable is unset as a manual step", () => {
-    const result = checkR2Token(machine({ env: { CLOUDFLARE_API_TOKEN: secret } }));
+    const result = checkR2Token(machine({ env: { R2_UPLOAD_TOKEN: secret } }));
     expect(result.status).toBe("manual");
     expect(result.detail).toBe("CLOUDFLARE_ACCOUNT_ID is not set");
     expect(result.fix).toContain("docs/machine-setup.md");
@@ -468,10 +476,10 @@ describe("checkR2Token", () => {
 
   it("treats an empty variable as unset", () => {
     const result = checkR2Token(
-      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "", CLOUDFLARE_API_TOKEN: "" } }),
+      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "", R2_UPLOAD_TOKEN: "" } }),
     );
     expect(result.status).toBe("manual");
-    expect(result.detail).toBe("CLOUDFLARE_API_TOKEN & CLOUDFLARE_ACCOUNT_ID are not set");
+    expect(result.detail).toBe("R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID are not set");
   });
 });
 

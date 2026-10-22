@@ -448,20 +448,14 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
 }
 
 /**
- * The R2 API token that `sprites:upload` & `fonts:upload` hand to Wrangler. Only presence is
- * checked: the doctor never reads, prints, or validates the token itself.
+ * The R2 API token that `sprites:upload` & `fonts:upload` hand to Wrangler (`R2_UPLOAD_TOKEN`, not
+ * `CLOUDFLARE_API_TOKEN`, which may hold an unrelated read-only token). Only presence is checked:
+ * the doctor never prints or validates the token itself.
  */
 export function checkR2Token(machine: Environment): CheckResult {
-  const unset = ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"].filter(
-    (name) => !machine.env[name],
-  );
+  const unset = ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"].filter((name) => !machine.env[name]);
   return unset.length === 0
-    ? check(
-        "r2-token",
-        "R2 upload token",
-        "ok",
-        "CLOUDFLARE_API_TOKEN & CLOUDFLARE_ACCOUNT_ID are set",
-      )
+    ? check("r2-token", "R2 upload token", "ok", "R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID are set")
     : check(
         "r2-token",
         "R2 upload token",

@@ -6,10 +6,10 @@ passing `pnpm run verify`. Linux works with the same steps; use your package man
 
 The doctor is the diagnostic for this document. It reports each prerequisite as present, missing, or
 the wrong version, prints the exact fix, & changes nothing. It never installs, configures, or
-authenticates, and it never reads credentials; the logins below are yours to run. Re-run it any time
-a machine misbehaves. Always run it with `node`, never through pnpm: `pnpm run` installs or verifies
-dependencies first and runs scripts on the `devEngines` runtime from `package.json`, which hides the
-Node version agent shells actually use.
+authenticates, and it never prints or validates credentials; the logins & tokens below are yours to
+set up. Re-run it any time a machine misbehaves. Always run it with `node`, never through pnpm:
+`pnpm run` installs or verifies dependencies first and runs scripts on the `devEngines` runtime from
+`package.json`, which hides the Node version agent shells actually use.
 
 The doctor groups its checks into sections by work area. `core` covers "Required for every
 contributor" & always runs; the others match "Needed for specific work": `browser` (Playwright
@@ -78,22 +78,27 @@ Each item names the doctor section that checks it.
    [game-version-update-protocol.md](game-version-update-protocol.md)). `pnpm run game-assets:share`
    copies them to the maintainer's shared drive.
 3. **R2 upload token** (`release`) for `sprites:upload` & `fonts:upload`, which run Wrangler against
-   the `mistria-fyi-assets` bucket. Wrangler authenticates with `CLOUDFLARE_API_TOKEN` &
-   `CLOUDFLARE_ACCOUNT_ID` from the environment, so no `wrangler login` is needed. The maintainer
-   creates the token once per machine:
+   the `mistria-fyi-assets` bucket. The upload scripts hand `R2_UPLOAD_TOKEN` to Wrangler as its
+   `CLOUDFLARE_API_TOKEN`, for that child process only, so no `wrangler login` is needed. The
+   separate name keeps the R2 token from replacing the read-only Pages token that `cloudflare:logs`
+   & cloud agents read from `CLOUDFLARE_API_TOKEN`
+   ([cloud-agent-environments.md](cloud-agent-environments.md)). The maintainer creates the token
+   once per machine:
    1. In the Cloudflare dashboard, open **R2 → Manage API tokens → Create API token**.
    2. Choose **Admin Read & Write**. Cloudflare documents the bucket-scoped **Object Read & Write**
       permission as S3-API only, and Wrangler uses the Cloudflare API, so an object token is not
       expected to work (#115 tracks a test).
    3. Copy the **Token value**; the S3 access key pair it also shows isn't used. Copy the account ID
       from the R2 overview.
-   4. Export both in the shell that runs uploads, from a password manager or a shell profile outside
-      the repository: `export CLOUDFLARE_API_TOKEN=…` & `export CLOUDFLARE_ACCOUNT_ID=…`. Never put
-      the token in a committed file or print it. Every process started from that shell, agent
-      sessions included, can read it.
-   5. Confirm with `pnpm exec wrangler whoami`, which reports token authentication & the account.
+   4. Export both only in the shell you upload from, from a password manager rather than a shell
+      profile: `export R2_UPLOAD_TOKEN=…` & `export CLOUDFLARE_ACCOUNT_ID=…`. Never put the token in
+      a committed file or print it. Every process started from that shell, agent sessions included,
+      can read it, so close the shell after uploading.
+   5. Confirm with the next real upload (`pnpm run sprites:upload`; a `DRY_RUN=1` run never calls
+      Wrangler). A bare `pnpm exec wrangler whoami` doesn't see the token, since only the upload
+      scripts map it.
 
-   The doctor checks only that both variables are set; it never reads or validates the token. A
+   The doctor checks only that both variables are set; it never prints or validates the token. A
    token has no interactive step, so it can be revoked & replaced in the dashboard at any time.
    Never run `pnpx wrangler`.
 

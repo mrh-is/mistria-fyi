@@ -130,8 +130,8 @@ The upload skips every sprite whose production ETag already matches. The check a
 string so it reads the bucket’s current object rather than a stale edge-cached copy. If the dry run
 would replace an existing sprite, its pixels changed: bump `spriteGeneration` in
 `src/lib/sprites/sprite-url.ts` in the same pull request (see [sprite assets](sprite-assets.md)).
-Wrangler authenticates with the R2 upload token: `CLOUDFLARE_API_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` in
-the uploading shell ([machine setup](machine-setup.md#needed-for-specific-work)). If
+Wrangler authenticates with the R2 upload token: `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` in the
+uploading shell ([machine setup](machine-setup.md#needed-for-specific-work)). If
 `node scripts/machine-doctor.ts --for release` lists the token as a todo, ask the maintainer to set
 it up; an agent never creates, reads, or prints it.
 

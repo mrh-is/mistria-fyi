@@ -10,6 +10,7 @@ import {
   listFiles,
   r2UploadOptionsFromEnv,
   r2UploadTree,
+  wranglerEnv,
 } from "#scripts/lib/r2-upload";
 
 import type {
@@ -92,6 +93,23 @@ function sprites(dir: string): R2UploadTree {
     skipMode: "etag",
   };
 }
+
+describe("wranglerEnv", () => {
+  it("hands R2_UPLOAD_TOKEN to Wrangler as its CLOUDFLARE_API_TOKEN", () => {
+    expect(
+      wranglerEnv({
+        CLOUDFLARE_API_TOKEN: "pages-read",
+        PATH: "/bin",
+        R2_UPLOAD_TOKEN: "r2-admin",
+      }),
+    ).toEqual({ CLOUDFLARE_API_TOKEN: "r2-admin", PATH: "/bin", R2_UPLOAD_TOKEN: "r2-admin" });
+  });
+
+  it("leaves the environment alone without an upload token", () => {
+    const env = { CLOUDFLARE_API_TOKEN: "pages-read", R2_UPLOAD_TOKEN: "" };
+    expect(wranglerEnv(env)).toBe(env);
+  });
+});
 
 describe("r2UploadOptionsFromEnv", () => {
   it("defaults to the production bucket & origin", () => {

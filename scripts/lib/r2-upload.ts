@@ -3,7 +3,8 @@
 // `cmd.exe` can resolve to WSL (#727).
 //
 // Env read by `r2UploadOptionsFromEnv`: R2_BUCKET, ASSET_ORIGIN, PARALLEL, FORCE=1 (re-upload
-// everything), & DRY_RUN=1 (print what would be uploaded without running Wrangler).
+// everything), & DRY_RUN=1 (print what would be uploaded without running Wrangler). Wrangler itself
+// gets R2_UPLOAD_TOKEN as its CLOUDFLARE_API_TOKEN (see `wranglerEnv`).
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
@@ -85,6 +86,16 @@ export async function listFiles(dir: string): Promise<string[]> {
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 
 /**
+ * Wrangler's environment: `R2_UPLOAD_TOKEN` becomes its `CLOUDFLARE_API_TOKEN`, for this child
+ * only. A separate name keeps the R2 token from replacing the read-only Pages token that
+ * `cloudflare:logs` & cloud agents hold in `CLOUDFLARE_API_TOKEN` (docs/cloud-agent-environments.md).
+ * Without it, Wrangler falls back to whatever the environment or `wrangler login` provides.
+ */
+export function wranglerEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  return env.R2_UPLOAD_TOKEN ? { ...env, CLOUDFLARE_API_TOKEN: env.R2_UPLOAD_TOKEN } : env;
+}
+
+/**
  * Runs the workspace's own Wrangler (installed for `@sveltejs/adapter-cloudflare`, whose native
  * deps `allowBuilds` in pnpm-workspace.yaml already approves) through pnpm's own executable, so no
  * shell shim is involved. `pnpx` would install a separate copy that ignores that approval.
@@ -94,6 +105,7 @@ export function runWrangler(args: string[]): Promise<WranglerResult> {
   return new Promise((resolve) => {
     const child = spawn(pnpm.command, pnpm.args, {
       cwd: REPO_ROOT,
+      env: wranglerEnv(),
       shell: pnpm.shell,
       windowsHide: true,
     });
