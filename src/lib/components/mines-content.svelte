@@ -1,10 +1,12 @@
 <script lang="ts">
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
+  import SectionGroups from "#lib/components/section-groups.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
@@ -23,6 +25,7 @@
   import type { SpellId } from "#lib/types/tracker-data.js";
 
   const spoilerGuard = createSpoilerGuard();
+  const sectionGrouping = createSectionGrouping<"floors" | "spells">();
 
   function isSpellSpoilered(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility;
@@ -30,6 +33,7 @@
   }
 
   function toggleSpell(spellId: SpellId): void {
+    sectionGrouping.hold("spells");
     userState.toggleSpell(spellId);
     const completed = userState.state.progress.spells.has(spellId);
     showUndoToast(getName("spells", spellId, locale), completed, () => {
@@ -77,6 +81,7 @@
   });
 
   function setFloorWithCelebration(floor: number): void {
+    sectionGrouping.hold("floors");
     const wasMinesComplete = isMinesComplete();
     const previousFloor = userState.state.progress.mineFloor;
     userState.setMineFloor(floor);
@@ -121,65 +126,74 @@
     {locale}
     onChange={setFloorWithCelebration}
   />
-{:else}
-  <ExpandableSection
-    {locale}
-    count={userState.state.progress.mineFloor}
-    name={m.mines_floor_progress_section()}
-    reportCategory="mines"
-    reportEntityId="floors"
-    reportExtra={{
-      biome: getName("mines", currentBiome.id, locale),
-      floor: userState.state.progress.mineFloor,
-    }}
-    {defaultOpen}
-    total={maxFloors}
-  >
-    <MineFloorRecord
-      {biomes}
-      floor={userState.state.progress.mineFloor}
-      isReportable={false}
-      {locale}
-      onChange={setFloorWithCelebration}
-    />
-  </ExpandableSection>
 {/if}
 
-{#if scopedSpells.length > 0}
-  <ExpandableSection
-    {locale}
-    count={scopedSpells.filter((spell) => userState.state.progress.spells.has(spell.id)).length}
-    name={getName("ui", "magic_spells", locale)}
-    reportCategory="mines"
-    reportEntityId="spells"
-    {defaultOpen}
-    total={scopedSpells.length}
-  >
-    <TrackerRowList getKey={(spell) => spell.id} items={visibleSpells}>
-      {#snippet row(spell)}
-        {@const completed = userState.state.progress.spells.has(spell.id)}
-        <TrackerRow
-          display={trackerRowDisplay({ completed, spoilered: isSpellSpoilered(spell.id) })}
-          name={spell.name}
-          reportCategory="spell"
-          reportEntityId={spell.id}
-          sources={spell.sources}
-          onToggle={() => {
-            if (!isSpellSpoilered(spell.id) || completed) {
-              toggleSpell(spell.id);
-            } else {
-              spoilerGuard.requestGuardedAction(
-                trackerData.mines.spells[spell.id].visibility,
-                () => {
-                  toggleSpell(spell.id);
-                },
-              );
-            }
-          }}
+<!-- The compact floor stepper sits above the sections rather than in one. -->
+<SectionGroups
+  getKey={(key) => key}
+  grouping={sectionGrouping}
+  items={compact ? (["spells"] as const) : (["floors", "spells"] as const)}
+>
+  {#snippet section(key)}
+    {#if key === "floors"}
+      <ExpandableSection
+        {locale}
+        count={userState.state.progress.mineFloor}
+        name={m.mines_floor_progress_section()}
+        reportCategory="mines"
+        reportEntityId="floors"
+        reportExtra={{
+          biome: getName("mines", currentBiome.id, locale),
+          floor: userState.state.progress.mineFloor,
+        }}
+        {defaultOpen}
+        total={maxFloors}
+      >
+        <MineFloorRecord
+          {biomes}
+          floor={userState.state.progress.mineFloor}
+          isReportable={false}
+          {locale}
+          onChange={setFloorWithCelebration}
         />
-      {/snippet}
-    </TrackerRowList>
-  </ExpandableSection>
-{:else if toolbarState.isSourceFilterNarrowing}
-  <TrackerEmptyState />
-{/if}
+      </ExpandableSection>
+    {:else if scopedSpells.length > 0}
+      <ExpandableSection
+        {locale}
+        count={scopedSpells.filter((spell) => userState.state.progress.spells.has(spell.id)).length}
+        name={getName("ui", "magic_spells", locale)}
+        reportCategory="mines"
+        reportEntityId="spells"
+        {defaultOpen}
+        total={scopedSpells.length}
+      >
+        <TrackerRowList getKey={(spell) => spell.id} items={visibleSpells}>
+          {#snippet row(spell)}
+            {@const completed = userState.state.progress.spells.has(spell.id)}
+            <TrackerRow
+              display={trackerRowDisplay({ completed, spoilered: isSpellSpoilered(spell.id) })}
+              name={spell.name}
+              reportCategory="spell"
+              reportEntityId={spell.id}
+              sources={spell.sources}
+              onToggle={() => {
+                if (!isSpellSpoilered(spell.id) || completed) {
+                  toggleSpell(spell.id);
+                } else {
+                  spoilerGuard.requestGuardedAction(
+                    trackerData.mines.spells[spell.id].visibility,
+                    () => {
+                      toggleSpell(spell.id);
+                    },
+                  );
+                }
+              }}
+            />
+          {/snippet}
+        </TrackerRowList>
+      </ExpandableSection>
+    {:else if toolbarState.isSourceFilterNarrowing}
+      <TrackerEmptyState />
+    {/if}
+  {/snippet}
+</SectionGroups>

@@ -49,7 +49,7 @@
   "all_page_title": "Liste de tout",
   "all_page_description": "Consultez et suivez chaque catégorie de complétion de Fields of Mistria dans une seule liste.",
   "home_active_categories_label": "Catégories en cours",
-  "home_completed_heading": "Terminé",
+  "common_completed_heading": "Terminé",
   "home_completed_categories_label": "Catégories terminées",
   "overall_progress_label": "{completed} sur {total} terminés au total, {pct}",
   "foldout_close": "Fermer {title}",

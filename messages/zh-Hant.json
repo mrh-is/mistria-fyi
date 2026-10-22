@@ -49,7 +49,7 @@
   "all_page_title": "全部清單",
   "all_page_description": "在同一份清單中查看並追蹤《Fields of Mistria》的所有完成度類別。",
   "home_active_categories_label": "進行中的分類",
-  "home_completed_heading": "已完成",
+  "common_completed_heading": "已完成",
   "home_completed_categories_label": "已完成的分類",
   "overall_progress_label": "總計已完成 {completed}/{total}，{pct}",
   "foldout_close": "關閉{title}",

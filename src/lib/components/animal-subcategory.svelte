@@ -4,6 +4,7 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
@@ -15,6 +16,8 @@
   import type { AnimalId, AnyId } from "#lib/types/tracker-data.js";
 
   let props: AnimalSubcategoryProps<Id> = $props();
+
+  const sectionGroupItem = getSectionGroupItem();
 
   let animals = $derived(
     Object.entries(trackerData.animals)
@@ -76,6 +79,7 @@
                     reportEntityId={`${animal.id}:${itemRow.id}`}
                     subtitle={itemRow.subtitle}
                     onToggle={() => {
+                      sectionGroupItem?.hold();
                       props.toggleCompletion(animal.id, itemRow.id);
                       const completed = props.completionCheck(animal.id, itemRow.id);
                       showUndoToast(itemRow.name, completed, () => {

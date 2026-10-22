@@ -1,10 +1,12 @@
 <script lang="ts">
   import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SectionGroups from "#lib/components/section-groups.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
@@ -32,6 +34,7 @@
   const spoilerGuard = createSpoilerGuard();
 
   const recentlyCompleted = createLeavingSet<RecipeId>();
+  const sectionGrouping = createSectionGrouping<string>();
 
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
@@ -139,7 +142,8 @@
 
   const expandedSections = $state<Record<string, boolean>>({});
 
-  function toggleRecipe(entry: RecipeEntry, sectionRecipeIds: RecipeId[]): void {
+  function toggleRecipe(entry: RecipeEntry, sectionId: string, sectionRecipeIds: RecipeId[]): void {
+    sectionGrouping.hold(sectionId);
     userState.toggleAlmanacRecipe(entry.id);
     const nowCompleted = userState.state.progress.almanacRecipes.has(entry.id);
     showUndoToast(entry.name, nowCompleted, () => {
@@ -154,61 +158,65 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#each groupViews as { completedCount, filteredEntries, group, namedEntries, scopedEntries } (group.id)}
-  {#if namedEntries.length > 0}
-    <ExpandableSection
-      {locale}
-      count={completedCount}
-      forceOpen={!!nameFilter || toolbarState.isSourceFilterNarrowing}
-      name={group.name}
-      reportCategory="recipe-category"
-      reportEntityId={group.id}
-      total={scopedEntries.length}
-    >
-      <TrackerRowList
-        expanded={expandedSections[group.id] ?? false}
-        getKey={(entry) => entry.id}
-        items={filteredEntries}
-        limited
-        onShowMore={() => {
-          expandedSections[group.id] = true;
-        }}
+<SectionGroups getKey={(view) => view.group.id} grouping={sectionGrouping} items={groupViews}>
+  {#snippet section({ completedCount, filteredEntries, group, namedEntries, scopedEntries })}
+    {#if namedEntries.length > 0}
+      <ExpandableSection
+        {locale}
+        count={completedCount}
+        forceOpen={!!nameFilter || toolbarState.isSourceFilterNarrowing}
+        name={group.name}
+        reportCategory="recipe-category"
+        reportEntityId={group.id}
+        total={scopedEntries.length}
       >
-        {#snippet row(entry)}
-          {@const completed = userState.state.progress.almanacRecipes.has(entry.id)}
-          <TrackerRow
-            display={trackerRowDisplay({
-              completed,
-              leaving: recentlyCompleted.has(entry.id),
-              spoilered: entry.spoilered,
-            })}
-            segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
-            name={entry.name}
-            reportCategory="recipe"
-            reportEntityId={entry.id}
-            sources={entry.sources}
-            sprite={entry.itemId}
-            spriteClass="text-(--color-category-recipes)"
-            onToggle={() => {
-              if (!entry.spoilered || completed) {
-                toggleRecipe(
-                  entry,
-                  group.entries.map((candidate) => candidate.id),
-                );
-              } else {
-                spoilerGuard.requestGuardedAction(entry.visibility, () => {
+        <TrackerRowList
+          expanded={expandedSections[group.id] ?? false}
+          getKey={(entry) => entry.id}
+          items={filteredEntries}
+          limited
+          onShowMore={() => {
+            expandedSections[group.id] = true;
+          }}
+        >
+          {#snippet row(entry)}
+            {@const completed = userState.state.progress.almanacRecipes.has(entry.id)}
+            <TrackerRow
+              display={trackerRowDisplay({
+                completed,
+                leaving: recentlyCompleted.has(entry.id),
+                spoilered: entry.spoilered,
+              })}
+              segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
+              name={entry.name}
+              reportCategory="recipe"
+              reportEntityId={entry.id}
+              sources={entry.sources}
+              sprite={entry.itemId}
+              spriteClass="text-(--color-category-recipes)"
+              onToggle={() => {
+                if (!entry.spoilered || completed) {
                   toggleRecipe(
                     entry,
+                    group.id,
                     group.entries.map((candidate) => candidate.id),
                   );
-                });
-              }
-            }}
-          />
-        {/snippet}
-      </TrackerRowList>
-    </ExpandableSection>
-  {/if}
-{/each}
+                } else {
+                  spoilerGuard.requestGuardedAction(entry.visibility, () => {
+                    toggleRecipe(
+                      entry,
+                      group.id,
+                      group.entries.map((candidate) => candidate.id),
+                    );
+                  });
+                }
+              }}
+            />
+          {/snippet}
+        </TrackerRowList>
+      </ExpandableSection>
+    {/if}
+  {/snippet}
+</SectionGroups>
 
 <AllCompleted isAllCompleted={isAllComplete()} />

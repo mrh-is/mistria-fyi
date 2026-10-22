@@ -4,6 +4,7 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
@@ -26,6 +27,7 @@
     locale,
   }: { areAllAnimalsComplete: () => boolean; locale: LocaleCode } = $props();
 
+  const sectionGroupItem = getSectionGroupItem();
   const spoilerGuard = createSpoilerGuard();
 
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
@@ -63,6 +65,7 @@
   }
 
   function toggleAppearance(entry: AppearanceEntry): void {
+    sectionGroupItem?.hold();
     userState.toggleMountAppearance(entry.id);
     const completed = userState.state.progress.mountAppearances.has(entry.id);
     showUndoToast(entry.name, completed, () => {

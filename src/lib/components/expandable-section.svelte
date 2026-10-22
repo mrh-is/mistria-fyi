@@ -4,6 +4,7 @@
   import { slide } from "svelte/transition";
 
   import { Icon } from "#lib/components/icon/index.js";
+  import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
@@ -15,6 +16,7 @@
   import type { LocaleCode } from "#lib/types/locale.js";
 
   const feedbackContext = getFeedbackContext();
+  const sectionGroupItem = getSectionGroupItem();
 
   let {
     children,
@@ -68,6 +70,8 @@
       ? Math.min(100, Math.max(0, (boundedCount / total) * 100))
       : 0,
   );
+  // A filter that leaves nothing in scope is not a finished section.
+  let complete = $derived(total !== undefined && total > 0 && boundedCount === total);
   let instanceId = $props.id();
   let contentId = $derived(
     `expandable-${instanceId}-${name
@@ -78,6 +82,22 @@
 
   onMount(() => {
     hydrated = true;
+  });
+
+  // The top-level section groups by the same counts its header shows.
+  $effect(() => {
+    if (depth !== 0 || !sectionGroupItem) return;
+    const { report } = sectionGroupItem;
+    const reportedComplete = complete;
+    // Reporting writes the grouping's state; reading it here would re-run this effect forever.
+    untrack(() => {
+      report(reportedComplete);
+    });
+    return () => {
+      untrack(() => {
+        report(undefined);
+      });
+    };
   });
 
   $effect(() => {
@@ -93,7 +113,6 @@
 
 <div
   class="section"
-  class:section--complete={total !== undefined && total > 0 && boundedCount === total}
   data-tracker-section
   data-section-depth={depth}
   style="--section-depth: {depth}"
@@ -230,11 +249,6 @@
     min-width: 0;
     padding-inline-start: var(--section-indent);
     padding-block-start: 4px;
-  }
-
-  .section--complete .section-name,
-  .section--complete .section-count {
-    color: var(--color-ink-muted);
   }
 
   .section[data-section-depth]:not([data-section-depth="0"]) .section-progress {

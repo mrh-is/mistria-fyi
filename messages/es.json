@@ -49,7 +49,7 @@
   "all_page_title": "Lista de todo",
   "all_page_description": "Consulta y sigue todas las categorías de completado de Fields of Mistria en una sola lista.",
   "home_active_categories_label": "Categorías en curso",
-  "home_completed_heading": "Completado",
+  "common_completed_heading": "Completado",
   "home_completed_categories_label": "Categorías completadas",
   "overall_progress_label": "{completed} de {total} completados en total, {pct}",
   "foldout_close": "Cerrar {title}",

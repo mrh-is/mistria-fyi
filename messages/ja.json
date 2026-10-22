@@ -49,7 +49,7 @@
   "all_page_title": "すべてのチェックリスト",
   "all_page_description": "Fields of Mistriaのすべてのコンプリート項目を1つのチェックリストで確認・記録できます。",
   "home_active_categories_label": "進行中のカテゴリー",
-  "home_completed_heading": "完了済み",
+  "common_completed_heading": "完了済み",
   "home_completed_categories_label": "完了済みのカテゴリー",
   "overall_progress_label": "全体で{total}件中{completed}件完了、{pct}",
   "foldout_close": "{title}を閉じる",

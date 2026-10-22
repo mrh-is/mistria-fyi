@@ -4,10 +4,12 @@
 
   import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SectionGroups from "#lib/components/section-groups.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerIndex } from "#lib/data/index.js";
@@ -26,7 +28,7 @@
 
   import type { AlmanacRow } from "#lib/engine/projections/almanac.js";
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { ItemId } from "#lib/types/tracker-data.js";
+  import type { AlmanacCategoryId, ItemId } from "#lib/types/tracker-data.js";
   import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
   let { locale }: { locale: LocaleCode } = $props();
@@ -51,6 +53,7 @@
   let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   const recentlyCompleted = createLeavingSet<ItemId>();
+  const sectionGrouping = createSectionGrouping<AlmanacCategoryId>();
 
   function checkCelebration(canonicalIds: ItemId[]): void {
     if (isAlmanacComplete()) {
@@ -150,7 +153,13 @@
     }
   }
 
-  function toggleItem(canonicalId: ItemId, name: string, catCanonicalIds: ItemId[]): void {
+  function toggleItem(
+    canonicalId: ItemId,
+    name: string,
+    sectionId: AlmanacCategoryId,
+    catCanonicalIds: ItemId[],
+  ): void {
+    sectionGrouping.hold(sectionId);
     userState.toggleAlmanacItem(canonicalId);
     const completed = isItemCompleted(canonicalId);
     showUndoToast(name, completed, () => {
@@ -165,69 +174,71 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#each sectionViews as { baseRows, canonicalIds, completedCount, id, scopedTotal, visibleRows } (id)}
-  {#if baseRows.length > 0}
-    {@const showAll = expandedSections[id] ?? false}
-    {@const isOpen = openSections[id] ?? false}
-    {@const renderTarget = sectionRowLimit(visibleRows.length, showAll)}
-    {@const shouldBypassBatching =
-      isOpen && !sectionFrames.has(id) && (renderedSectionCounts[id] ?? 0) < renderTarget}
-    {@const renderedCount =
-      nameFilter || shouldBypassBatching
-        ? renderTarget
-        : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
-    <ExpandableSection
-      {locale}
-      count={completedCount}
-      forceOpen={!!nameFilter}
-      name={getName("ui", id, locale)}
-      onExpandedChange={(open: boolean) => {
-        setSectionOpen(id, open, sectionRowLimit(visibleRows.length, showAll));
-      }}
-      reportCategory="almanac"
-      reportEntityId={id}
-      total={scopedTotal}
-    >
-      <TrackerRowList
-        expanded={showAll}
-        getKey={(item) => item.canonicalId}
-        items={visibleRows}
-        limited
-        loadingMessage={nameFilter ? undefined : m.almanac_loading_items()}
-        onShowMore={() => {
-          expandedSections[id] = true;
-          if (openSections[id]) {
-            scheduleSectionRendering(id, visibleRows.length);
-          }
+<SectionGroups getKey={(view) => view.id} grouping={sectionGrouping} items={sectionViews}>
+  {#snippet section({ baseRows, canonicalIds, completedCount, id, scopedTotal, visibleRows })}
+    {#if baseRows.length > 0}
+      {@const showAll = expandedSections[id] ?? false}
+      {@const isOpen = openSections[id] ?? false}
+      {@const renderTarget = sectionRowLimit(visibleRows.length, showAll)}
+      {@const shouldBypassBatching =
+        isOpen && !sectionFrames.has(id) && (renderedSectionCounts[id] ?? 0) < renderTarget}
+      {@const renderedCount =
+        nameFilter || shouldBypassBatching
+          ? renderTarget
+          : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
+      <ExpandableSection
+        {locale}
+        count={completedCount}
+        forceOpen={!!nameFilter}
+        name={getName("ui", id, locale)}
+        onExpandedChange={(open: boolean) => {
+          setSectionOpen(id, open, sectionRowLimit(visibleRows.length, showAll));
         }}
-        {renderedCount}
+        reportCategory="almanac"
+        reportEntityId={id}
+        total={scopedTotal}
       >
-        {#snippet row(row)}
-          {@const { canonicalId, completed, item, name, sources, spoilered } = row}
-          {@const itemVisibility = item.visibility}
-          <TrackerRow
-            display={rowDisplay(row)}
-            segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
-            {name}
-            reportCategory="almanac-item"
-            reportEntityId={canonicalId}
-            {sources}
-            sprite={canonicalId}
-            spriteClass="text-(--color-category-almanac)"
-            onToggle={() => {
-              if (!spoilered || completed) {
-                toggleItem(canonicalId, name, canonicalIds);
-              } else {
-                spoilerGuard.requestGuardedAction(itemVisibility, () => {
-                  toggleItem(canonicalId, name, canonicalIds);
-                });
-              }
-            }}
-          />
-        {/snippet}
-      </TrackerRowList>
-    </ExpandableSection>
-  {/if}
-{/each}
+        <TrackerRowList
+          expanded={showAll}
+          getKey={(item) => item.canonicalId}
+          items={visibleRows}
+          limited
+          loadingMessage={nameFilter ? undefined : m.almanac_loading_items()}
+          onShowMore={() => {
+            expandedSections[id] = true;
+            if (openSections[id]) {
+              scheduleSectionRendering(id, visibleRows.length);
+            }
+          }}
+          {renderedCount}
+        >
+          {#snippet row(row)}
+            {@const { canonicalId, completed, item, name, sources, spoilered } = row}
+            {@const itemVisibility = item.visibility}
+            <TrackerRow
+              display={rowDisplay(row)}
+              segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
+              {name}
+              reportCategory="almanac-item"
+              reportEntityId={canonicalId}
+              {sources}
+              sprite={canonicalId}
+              spriteClass="text-(--color-category-almanac)"
+              onToggle={() => {
+                if (!spoilered || completed) {
+                  toggleItem(canonicalId, name, id, canonicalIds);
+                } else {
+                  spoilerGuard.requestGuardedAction(itemVisibility, () => {
+                    toggleItem(canonicalId, name, id, canonicalIds);
+                  });
+                }
+              }}
+            />
+          {/snippet}
+        </TrackerRowList>
+      </ExpandableSection>
+    {/if}
+  {/snippet}
+</SectionGroups>
 
 <AllCompleted isAllCompleted={isAlmanacComplete()} />

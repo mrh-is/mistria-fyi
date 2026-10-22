@@ -4,6 +4,8 @@
   import AnimalVariantsSection from "#lib/components/animal-variants-section.svelte";
   import MountAppearancesSection from "#lib/components/mount-appearances-section.svelte";
   import PetCollectiblesSection from "#lib/components/pet-collectibles-section.svelte";
+  import SectionGroups from "#lib/components/section-groups.svelte";
+  import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
@@ -19,6 +21,11 @@
   } from "#lib/types/tracker-data.js";
 
   let { locale }: { locale: LocaleCode } = $props();
+
+  const SECTION_KEYS = ["variants", "cosmetics", "mount", "pet-cosmetics", "pet-skins"] as const;
+
+  // Each sub-section holds its own group on toggles, through the section's context.
+  const sectionGrouping = createSectionGrouping<(typeof SECTION_KEYS)[number]>();
 
   function areAllAnimalsComplete(): boolean {
     return isCategoryComplete("animals", userState.state);
@@ -62,12 +69,30 @@
   registerSourceFilters("animals", () => trackerIndex.categorySourceTypes.animals);
 </script>
 
-<AnimalVariantsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} {locale} />
-
-<AnimalCosmeticsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} {locale} />
-
-<MountAppearancesSection {areAllAnimalsComplete} {locale} />
-
-<PetCollectiblesSection {areAllAnimalsComplete} {locale} />
+<SectionGroups getKey={(key) => key} grouping={sectionGrouping} items={SECTION_KEYS}>
+  {#snippet section(key)}
+    {#if key === "variants"}
+      <AnimalVariantsSection
+        {areAllAnimalsComplete}
+        {isAnimalComplete}
+        {isSpeciesVisible}
+        {locale}
+      />
+    {:else if key === "cosmetics"}
+      <AnimalCosmeticsSection
+        {areAllAnimalsComplete}
+        {isAnimalComplete}
+        {isSpeciesVisible}
+        {locale}
+      />
+    {:else if key === "mount"}
+      <MountAppearancesSection {areAllAnimalsComplete} {locale} />
+    {:else if key === "pet-cosmetics"}
+      <PetCollectiblesSection {areAllAnimalsComplete} collection="cosmetics" {locale} />
+    {:else}
+      <PetCollectiblesSection {areAllAnimalsComplete} collection="skins" {locale} />
+    {/if}
+  {/snippet}
+</SectionGroups>
 
 <AllCompleted isAllCompleted={areAllAnimalsComplete()} />

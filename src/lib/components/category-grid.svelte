@@ -1,6 +1,6 @@
 <script lang="ts">
   import CategoryCard from "#lib/components/category-card.svelte";
-  import { Icon } from "#lib/components/icon/index.js";
+  import CompletedHeading from "#lib/components/completed-heading.svelte";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { CATEGORY_KEYS } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -56,12 +56,7 @@
 
   {#if completedCategories.length > 0}
     <section class="flex flex-col gap-2">
-      <div
-        class="flex items-center gap-1.5 px-1 font-controls text-2xs tracking-[0.14em] text-(--color-progress-complete) uppercase"
-      >
-        <Icon.Category category="complete" class="size-3.5" />
-        <h2>{m.home_completed_heading()}</h2>
-      </div>
+      <CompletedHeading class="px-1" />
       <ul class="flex flex-col gap-1.5" aria-label={m.home_completed_categories_label()}>
         {#each completedCategories as key (key)}
           <li><CategoryCard {key} progress={progress[key]} /></li>

@@ -49,7 +49,7 @@
   "all_page_title": "전체 체크리스트",
   "all_page_description": "Fields of Mistria의 모든 달성 카테고리를 하나의 체크리스트에서 확인하고 기록하세요.",
   "home_active_categories_label": "진행 중인 카테고리",
-  "home_completed_heading": "완료",
+  "common_completed_heading": "완료",
   "home_completed_categories_label": "완료된 카테고리",
   "overall_progress_label": "전체 {total}개 중 {completed}개 완료, {pct}",
   "foldout_close": "{title} 닫기",
