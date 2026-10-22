@@ -257,8 +257,12 @@ colocated tests don’t double the length of directory listings. It also points 
 at `node_modules/.bin/node`, the pinned Node that `pnpm install` links from `devEngines.runtime`.
 Without it, the extension starts Vitest with whatever `node` is first on `PATH`, and
 `require-pinned-node` (the first import in `vite.config.ts`) exits on any other release, which the
-extension reports only as “There were errors during config load.” Run `pnpm install` before opening
-the folder, so the link exists.
+extension reports only as “There were errors during config load.”
+
+- Run `pnpm install` (or `node scripts/setup-worktree.ts` in a worktree) before opening the folder.
+  Until the link exists, the extension fails to spawn `node_modules/.bin/node` (`ENOENT`).
+- On Windows, pnpm may link the runtime under another name, such as `node.exe`. If the extension
+  can’t spawn it, set `vitest.nodeExecutable` in your user settings to the pinned `node.exe`.
 
 ### Executing Tests
 
