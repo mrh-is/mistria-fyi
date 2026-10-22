@@ -231,11 +231,12 @@ describe("TrackerRow sprite preview", () => {
     await fireEvent.click(button);
     await vi.advanceTimersByTimeAsync(SPRITE_PREVIEW_HOLD_MS - 100);
     await fireEvent.click(button);
-    await vi.advanceTimersByTimeAsync(200);
+    // Past where the first hold & its fade would have ended had the second click not restarted it.
+    await vi.advanceTimersByTimeAsync(100 + SPRITE_PREVIEW_FADE_MS + 1);
     expect(previewLayer(view.container)).toBeTruthy();
   });
 
-  it("is reachable and activatable from the keyboard", async () => {
+  it("is a focusable native button, so Enter & Space activate it", async () => {
     const view = renderWithFeedback(TrackerRow, { ...props, onToggle: vi.fn() });
     const button = screen.getByRole("button", { name: "Show Animated Clouds Window in color" });
 
