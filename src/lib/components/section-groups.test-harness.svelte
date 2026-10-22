@@ -11,6 +11,7 @@
 
   interface HarnessSection {
     count: number;
+    hidden?: boolean;
     id: string;
     total: number;
   }
@@ -32,9 +33,11 @@
 </script>
 
 <SectionGroups getKey={(section) => section.id} {grouping} items={sections}>
-  {#snippet section({ count, id, total })}
-    <ExpandableSection locale="en" {count} name={id} {total}>
-      <button type="button">Row in {id}</button>
-    </ExpandableSection>
+  {#snippet section({ count, hidden, id, total })}
+    {#if !hidden}
+      <ExpandableSection locale="en" {count} name={id} {total}>
+        <button type="button">Row in {id}</button>
+      </ExpandableSection>
+    {/if}
   {/snippet}
 </SectionGroups>

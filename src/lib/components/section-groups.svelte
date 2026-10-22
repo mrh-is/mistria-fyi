@@ -25,6 +25,10 @@
   // One keyed list, not two, so a section changing groups is moved rather than remounted and keeps
   // its expansion & rendered rows.
   let entries = $derived.by((): Entry[] => {
+    // A lone section has nothing to be grouped apart from.
+    if (items.length < 2) {
+      return items.map((item) => ({ item, key: getKey(item), kind: "section" }));
+    }
     const active: Entry[] = [];
     const completed: Entry[] = [];
     for (const item of items) {

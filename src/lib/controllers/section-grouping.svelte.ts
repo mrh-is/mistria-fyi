@@ -9,7 +9,10 @@ export interface SectionGrouping<Key> {
    * inside a section never moves it mid-interaction. Holding again restarts the window.
    */
   hold: (key: Key) => void;
-  /** Whether `key` renders in the completed group. Unreported sections count as unfinished. */
+  /**
+   * Whether `key` renders in the completed group. Unreported sections, including held ones that
+   * stopped rendering, count as unfinished.
+   */
   isGroupedComplete: (key: Key) => boolean;
   /** Records the completion a section's header shows, or `undefined` once it stops rendering. */
   report: (key: Key, complete: boolean | undefined) => void;
@@ -41,7 +44,9 @@ export function createSectionGrouping<Key>(
   });
 
   function isGroupedComplete(key: Key): boolean {
-    return held.get(key) ?? reported.get(key) ?? false;
+    const complete = reported.get(key);
+    if (complete === undefined) return false;
+    return held.get(key) ?? complete;
   }
 
   return {

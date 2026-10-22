@@ -10,6 +10,7 @@ import type { SectionGrouping } from "#lib/controllers/section-grouping.svelte.j
 
 interface Section {
   count: number;
+  hidden?: boolean;
   id: string;
   total: number;
 }
@@ -41,6 +42,36 @@ describe("SectionGroups", () => {
     await tick();
 
     expect(headingOrder()).toEqual(["Artifacts", "Bugs"]);
+  });
+
+  it("leaves a lone finished section ungrouped", async () => {
+    renderGroups([{ count: 2, id: "Spells", total: 2 }]);
+    await tick();
+
+    expect(headingOrder()).toEqual(["Spells"]);
+  });
+
+  it("drops a held section from the completed group once it stops rendering", async () => {
+    vi.useFakeTimers();
+    const { grouping, view } = renderGroups([
+      { count: 0, id: "Artifacts", total: 2 },
+      { count: 2, id: "Bugs", total: 2 },
+      { count: 1, id: "Crops", total: 2 },
+    ]);
+    await tick();
+    expect(headingOrder()).toEqual(["Artifacts", "Crops", "Completed", "Bugs"]);
+
+    grouping.hold("Bugs");
+    await view.rerender({
+      sections: [
+        { count: 0, id: "Artifacts", total: 2 },
+        { count: 2, hidden: true, id: "Bugs", total: 2 },
+        { count: 1, id: "Crops", total: 2 },
+      ],
+    });
+    await tick();
+
+    expect(headingOrder()).toEqual(["Artifacts", "Crops"]);
   });
 
   it("regroups a section as soon as its counts change outside a toggle", async () => {
