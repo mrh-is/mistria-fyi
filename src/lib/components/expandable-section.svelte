@@ -4,6 +4,7 @@
   import { slide } from "svelte/transition";
 
   import { Icon } from "#lib/components/icon/index.js";
+  import SectionTrigger from "#lib/components/section-trigger.svelte";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -118,8 +119,7 @@
   style="--section-depth: {depth}"
 >
   <svelte:element this={headingTag} class="section-heading">
-    <button
-      class="section-trigger"
+    <SectionTrigger
       disabled={!hydrated}
       onclick={toggleExpanded}
       type="button"
@@ -150,7 +150,7 @@
           <i data-testid="section-progress-fill" style="width: {progress}%"></i>
         </span>
       {/if}
-    </button>
+    </SectionTrigger>
   </svelte:element>
 
   {#if isOpen}
@@ -175,36 +175,7 @@
     font: inherit;
   }
 
-  .section-trigger {
-    position: relative;
-    display: grid;
-    width: 100%;
-    min-height: 44px;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 8px 7px;
-    border: 0;
-    background: transparent;
-    color: var(--color-ink);
-    text-align: left;
-  }
-
-  .section-trigger:is(:active, :focus-visible) {
-    background: color-mix(in srgb, var(--primary) 7%, transparent);
-    outline: 2px solid var(--primary);
-    outline-offset: -2px;
-  }
-
-  @media (hover: hover) {
-    .section-trigger:hover {
-      background: color-mix(in srgb, var(--primary) 7%, transparent);
-      outline: 2px solid var(--primary);
-      outline-offset: -2px;
-    }
-  }
-
-  .section-trigger :global(.section-disclosure) {
+  .section-heading :global(.section-disclosure) {
     color: var(--color-ink-muted);
   }
 
