@@ -38,7 +38,7 @@ describe("SearchResults category tags", () => {
 });
 
 describe("SearchResults pictures", () => {
-  it("pictures almanac and museum rows with their item in their category color", () => {
+  it("pictures almanac and museum rows with their item under their category's accent", () => {
     const { id, name } = overlappingFixture();
 
     renderWithFeedback(SearchResults, { locale: "en", query: name });
@@ -49,8 +49,10 @@ describe("SearchResults pictures", () => {
     ] as const) {
       const slot = resultRow(category, name).querySelector("[data-sprite-slot]");
       expect(slot).toHaveAttribute("data-sprite-slot", "ready");
-      expect(slot).toHaveClass(`text-(--color-category-${key})`);
       expect(slot?.querySelector("image")?.getAttribute("href")).toContain(id);
+      expect(slot?.closest<HTMLElement>("[style]")?.style.getPropertyValue("--primary")).toBe(
+        `var(--color-category-${key})`,
+      );
     }
   });
 
