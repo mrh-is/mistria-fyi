@@ -107,14 +107,12 @@ function bundle(
 ): SyncBundle {
   const absent = field(undefined, "unknown");
   const all = Object.fromEntries(
-    (Object.keys(progress()) as (keyof ProgressState)[])
-      .filter((key) => key !== "childChoice")
-      .map((key) => {
-        const given = fields[key];
-        if (given === undefined) return [key, absent];
-        const isField = typeof given === "object" && given !== null && "completeness" in given;
-        return [key, isField ? given : field(given)];
-      }),
+    (Object.keys(progress()) as (keyof ProgressState)[]).map((key) => {
+      const given = fields[key];
+      if (given === undefined) return [key, absent];
+      const isField = typeof given === "object" && given !== null && "completeness" in given;
+      return [key, isField ? given : field(given)];
+    }),
   ) as unknown as SaveFields;
   const extraction: SaveExtraction = {
     diagnostics: [],

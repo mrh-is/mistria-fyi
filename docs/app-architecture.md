@@ -234,10 +234,11 @@ The app processes save files entirely client-side. No save data is uploaded.
    absent or malformed field is `unknown` with no value, never an empty list or a zero. Every ID is
    tracked, known-but-untracked (a game ID the tracker deliberately leaves out, listed in
    `untracked-save-ids.ts`), or unrecognized; an unrecognized ID or an unreadable entry makes its
-   field `unknown`. Relationships are never `complete`, since the save’s dating flags are all that
-   is read, and neither are mount appearances, since the Mistmare is inferred from one scene ID in
-   an uncatalogued scene history. It also retains the save’s identity: `info.creation_version` &
-   `header.playtime`. A quest listed as both completed and active imports as `completed`.
+   field `unknown`. Relationships are never `complete`, since how breakups & divorce show in a save
+   isn’t verified; nor is the child choice, since only wanting children leaves evidence; nor are
+   mount appearances, since the Mistmare is inferred from one scene ID in an uncatalogued scene
+   history. It also retains the save’s identity: `info.creation_version` & `header.playtime`. A
+   quest listed as both completed and active imports as `completed`.
 4. `extractSaveProgress` turns that into the `Partial<ProgressState>` of every value it could read,
    plus the diagnostics the player sees as warnings (`absent` & `invalid-value` are diagnostics
    only). It doesn’t count anything. See the

@@ -180,6 +180,20 @@ evidence.
 | `pronouns`              | `object`              | Player's pronoun configuration          |
 | `stats`                 | `object`              | Aggregate gameplay statistics           |
 
+### Household fields
+
+| Field           | Type             | Description                                                    |
+| --------------- | ---------------- | -------------------------------------------------------------- |
+| `proposal_date` | `number \| null` | Calendar time of the accepted proposal; `null` before one      |
+| `wedding_date`  | `number \| null` | Calendar time of the wedding; `null` before one                |
+| `pending_child` | `object \| null` | `{ due_date, utero }` while a child is on the way, else `null` |
+| `children`      | `array`          | One entry per child born                                       |
+
+The importer reads `pending_child` & `children`: either one present means the household chose
+children (`childChoice: "yes"`). Choosing no children leaves no trace, so a childless save reads as
+`"undeclared"` & the child choice is never complete. The dates aren’t tracked; who the player
+proposed to or married comes from the status flags in `t2_world_facts` (below).
+
 ---
 
 ## `gamedata` entry
@@ -211,6 +225,13 @@ world state. Keys follow naming conventions:
 - **`{npc_id}_heart_level`** → `number`: Villager relationship level (0–10+)
 - **`{skill_id}_level`** → `number`: Skill level
 - **`renown`** → `number`: Player's renown level
+- **`{npc_id}_status`** → `string | undefined`: the relationship status, `best_friend`, `dating`,
+  `fiance`, or `spouse`. `Npc.report_relationship` mirrors it into `{npc_id}_is_best_friend`,
+  `_is_dating`, `_is_fiance`, & `_is_spouse` (`0`/`1`), plus `has_spouse` & `has_fiance`. The
+  importer reads the flags as platonic, romantic, proposed, & married; a spouse takes precedence,
+  and marriage makes every other dateable villager platonic. The game leaves other partners `dating`
+  after a wedding (a v1.0.8 married save keeps eight), so a spouse must win. No v1.0.8 script writes
+  `ari_is_married` or `ari_is_engaged`, so the importer ignores them.
 - **Various flags** → `boolean | number | string`: quest triggers, event flags, world unlocks
 
 ### Other `gamedata` fields

@@ -425,6 +425,76 @@ describe("extractSaveProgress", () => {
       });
     });
 
+    it("reads best friends as platonic and a fiancé as proposed", () => {
+      const bundle: SaveBundle = {
+        gamedata: {
+          t2_world_facts: {
+            celine_is_best_friend: 1,
+            juniper_is_dating: 1,
+            march_is_dating: 0,
+            march_is_fiance: 1,
+          },
+        },
+      };
+      const { completed } = extractSaveProgress(bundle);
+      expect(completed.villagerRelationships).toEqual({
+        celine: "platonic",
+        juniper: "romantic",
+        march: "proposed",
+      });
+    });
+
+    it("marries the spouse over any dating flag and makes every other dateable villager platonic", () => {
+      const bundle: SaveBundle = {
+        gamedata: {
+          t2_world_facts: {
+            adeline_is_dating: 1,
+            has_spouse: 1,
+            ryis_is_dating: 1,
+            ryis_is_spouse: 1,
+          },
+        },
+      };
+      const { completed } = extractSaveProgress(bundle);
+      const dateable = recordKeys(trackerData.villagers).filter(
+        (id) => trackerData.villagers[id].dateable,
+      );
+      expect(completed.villagerRelationships).toEqual(
+        Object.fromEntries(dateable.map((id) => [id, id === "ryis" ? "married" : "platonic"])),
+      );
+    });
+
+    it("names the spouse from a listed pregnancy quest when no spouse fact does", () => {
+      const [villagerId, questId] = recordEntries(trackerData.pregnancyQuestByVillager)[0];
+      const { completed } = extractSaveProgress({
+        gamedata: { t2_world_facts: { [`${villagerId}_is_dating`]: 1 } },
+        quests: { active_quests: [], completed_quests: [questId] },
+      });
+      expect(completed.villagerRelationships?.[villagerId]).toBe("married");
+      expect(completed.childChoice).toBe("yes");
+    });
+
+    it.each([
+      ["a pending child", { pending_child: { due_date: 1, utero: 0 } }],
+      ["a child", { children: [{ name: "Wren" }] }],
+    ])("reads %s as wanting children", (_label, fields) => {
+      const { completed } = extractSaveProgress({
+        player: { children: [], items_acquired: [], pending_child: null, ...fields },
+      });
+      expect(completed.childChoice).toBe("yes");
+    });
+
+    it("leaves the child choice undeclared without a child, and unknown without a player", () => {
+      const childless = extractSave({
+        player: { children: [], items_acquired: [], pending_child: null },
+      });
+      expect(childless.fields.childChoice).toMatchObject({
+        completeness: "unknown",
+        value: "undeclared",
+      });
+      expect(extractSave({}).fields.childChoice.value).toBeUndefined();
+    });
+
     it("derives reachedSeason from gamedata.date timestamp", () => {
       const GAME_SEASON = 28 * 259_200;
       const bundle: SaveBundle = {
@@ -1077,7 +1147,7 @@ describe("extractSave", () => {
     expect(missing.fields.skillLevels.completeness).toBe("complete");
   });
 
-  it("never treats relationships as complete, since only dating flags are read", () => {
+  it("never treats relationships as complete, since breakups & divorce aren't verified", () => {
     const { fields } = extractSave({ gamedata: { t2_world_facts: allFacts } });
     expect(fields.villagerRelationships).toMatchObject({ completeness: "unknown", value: {} });
   });

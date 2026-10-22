@@ -10,6 +10,8 @@ import { extractSave, extractSaveProgress } from "./import-save.js";
 import { parseSavArchive } from "./parse-sav.js";
 import { readSaveIdentity } from "./save-identity.js";
 
+import type { VillagerId } from "#lib/types/tracker-data.js";
+
 import type { SaveBundle, SaveExtraction } from "./import-save.js";
 
 // Real saves for the committed tracker data's game version, read locally & never committed.
@@ -20,7 +22,7 @@ const SAVE_DIR = path.join(
 );
 const SAVE_FILES = readdirSync(SAVE_DIR).filter((name) => name.endsWith(".sav"));
 /** Fields a save never fully determines (see `PARTIAL_FIELDS` in `import-save.ts`). */
-const PARTIAL_KEYS = new Set(["mountAppearances", "villagerRelationships"]);
+const PARTIAL_KEYS = new Set(["childChoice", "mountAppearances", "villagerRelationships"]);
 
 async function readSave(name: string): Promise<SaveBundle> {
   return parseSavArchive(new File([readFileSync(path.join(SAVE_DIR, name))], name));
@@ -104,6 +106,17 @@ it("recovers the nine rank quests in the reported late-game save", async () => {
     .map(([id]) => id);
   expect(rankIds).toHaveLength(9);
   for (const id of rankIds) expect(completed.questStates?.[id], id).toBe("completed");
+});
+
+it("reads Ryis as the spouse in the reported married save, over its other dating flags", async () => {
+  const bundle = await readSave("game-1315159680-autosave.sav");
+  const facts = bundle.gamedata?.t2_world_facts as Record<string, unknown>;
+  expect(facts.ryis_is_spouse).toBe(1);
+  expect(facts.adeline_is_dating).toBe(1);
+  const { completed } = extractSaveProgress(bundle);
+  expect(completed.villagerRelationships?.["ryis" as VillagerId]).toBe("married");
+  expect(completed.villagerRelationships?.["adeline" as VillagerId]).toBe("platonic");
+  expect(completed.childChoice).toBe("undeclared");
 });
 
 describe("fields mutated from a real save", () => {

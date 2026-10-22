@@ -64,7 +64,7 @@ export type SyncDirection = "backward" | "forward";
 export type AskReason = "level-decrease" | "local-disagrees" | "many-removals";
 
 /** The fields sync compares. Household facts stay the player's own (see {@link isHouseholdFact}). */
-export type SyncField = Exclude<ExtractedProgressKey, "villagerRelationships">;
+export type SyncField = Exclude<ExtractedProgressKey, "childChoice" | "villagerRelationships">;
 
 /** One fact on which stored progress & the save disagree. Values are `progressFacts` values. */
 export interface SyncDifference {
@@ -207,9 +207,9 @@ const QUEST_KIND = new Map<string, QuestType>(
 );
 
 /**
- * Household facts stay the player's own until the importer reads them (public #6): relationships
- * aren't compared at all, the child choice isn't extracted, & pregnancy quests (the craving quest)
- * follow the household.
+ * Household facts stay the player's own: the importer reads them (public #6) for manual import,
+ * but sync doesn't compare relationships or the child choice yet, & pregnancy quests (the craving
+ * quest) follow the household.
  */
 function isHouseholdFact(field: SyncField, id: string | undefined): boolean {
   return field === "questStates" && PREGNANCY_QUEST_IDS.has(id as QuestId);
