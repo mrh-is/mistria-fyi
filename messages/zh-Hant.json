@@ -662,5 +662,9 @@
   "import_last_imported": "上次匯入：{time}",
   "import_farm_identity": "存檔編號 {number} · 建立版本 {version}",
   "import_unknown_number": "未知",
-  "import_unknown_version": "未知"
+  "import_unknown_version": "未知",
+  "offline_page_title": "Mistria Field Guide — 離線",
+  "offline_eyebrow": "野外筆記 · 無訊號",
+  "offline_heading": "你已離線",
+  "offline_body": "首次載入 Mistria Field Guide 需要連上網路。你記錄的進度已儲存在本機，重新連線後仍會在這裡。"
 }

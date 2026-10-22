@@ -678,5 +678,9 @@
   "import_last_imported": "Última importación: {time}",
   "import_farm_identity": "Partida n.º {number} · Creada en {version}",
   "import_unknown_number": "desconocido",
-  "import_unknown_version": "versión desconocida"
+  "import_unknown_version": "versión desconocida",
+  "offline_page_title": "Mistria Field Guide — Sin conexión",
+  "offline_eyebrow": "Nota de campo · Sin señal",
+  "offline_heading": "Estás sin conexión",
+  "offline_body": "Mistria Field Guide necesita conexión a internet para cargarse por primera vez. Tu progreso se guarda en este dispositivo y seguirá aquí cuando vuelvas a conectarte."
 }

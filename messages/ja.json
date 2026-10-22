@@ -662,5 +662,9 @@
   "import_last_imported": "最終インポート：{time}",
   "import_farm_identity": "セーブ番号 {number} · 作成時のバージョン {version}",
   "import_unknown_number": "不明",
-  "import_unknown_version": "不明"
+  "import_unknown_version": "不明",
+  "offline_page_title": "Mistria Field Guide — オフライン",
+  "offline_eyebrow": "フィールドノート · 圏外",
+  "offline_heading": "オフラインです",
+  "offline_body": "Mistria Field Guideを初めて読み込むには、インターネット接続が必要です。記録した進捗はこの端末に保存されているので、再接続すればそのまま残っています。"
 }

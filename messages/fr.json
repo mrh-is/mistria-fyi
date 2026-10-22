@@ -678,5 +678,9 @@
   "import_last_imported": "Dernière importation : {time}",
   "import_farm_identity": "Sauvegarde n° {number} · Créée en {version}",
   "import_unknown_number": "inconnu",
-  "import_unknown_version": "version inconnue"
+  "import_unknown_version": "version inconnue",
+  "offline_page_title": "Mistria Field Guide — Hors ligne",
+  "offline_eyebrow": "Note de terrain · Pas de réseau",
+  "offline_heading": "Vous êtes hors ligne",
+  "offline_body": "Mistria Field Guide a besoin d’une connexion Internet pour se charger la première fois. Votre progression est enregistrée sur cet appareil et vous attendra à votre reconnexion."
 }

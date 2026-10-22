@@ -670,5 +670,9 @@
   "import_last_imported": "Last imported {time}",
   "import_farm_identity": "Save #{number} · Created in {version}",
   "import_unknown_number": "unknown",
-  "import_unknown_version": "unknown version"
+  "import_unknown_version": "unknown version",
+  "offline_page_title": "Mistria Field Guide — Offline",
+  "offline_eyebrow": "Field note · No signal",
+  "offline_heading": "You’re offline",
+  "offline_body": "The Mistria Field Guide needs an internet connection to load for the first time. Your tracked progress is saved locally and will be here when you reconnect."
 }

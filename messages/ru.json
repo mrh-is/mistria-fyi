@@ -686,5 +686,9 @@
   "import_last_imported": "Последний импорт: {time}",
   "import_farm_identity": "Сохранение №{number} · Создано в версии {version}",
   "import_unknown_number": "неизвестно",
-  "import_unknown_version": "неизвестно"
+  "import_unknown_version": "неизвестно",
+  "offline_page_title": "Mistria Field Guide — Нет сети",
+  "offline_eyebrow": "Полевая заметка · Нет сигнала",
+  "offline_heading": "Нет подключения к сети",
+  "offline_body": "Для первой загрузки Mistria Field Guide нужно подключение к интернету. Ваш прогресс сохранён на этом устройстве и будет на месте, когда вы снова подключитесь."
 }
