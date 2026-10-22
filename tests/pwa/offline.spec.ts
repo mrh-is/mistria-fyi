@@ -149,6 +149,42 @@ test("styles the offline page with the app's fonts & the player's saved theme", 
   await expect.poll(() => page.evaluate(() => document.fonts.check('16px "Petrona"'))).toBe(true);
 });
 
+function isCached(page: Page, path: string): Promise<boolean> {
+  return page.evaluate(async (key) => (await caches.match(key)) !== undefined, path);
+}
+
+// Browsing is client-side, so no page reached by tapping loads through the worker. It caches every
+// page of the player's languages instead, so an offline reload finds each one (#204).
+test("reloads a page reached only by tapping while offline, then goes back", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/en");
+  await waitForControl(page);
+  await expect.poll(() => isCached(page, "/en/museum")).toBe(true);
+  await page
+    .getByRole("link", { name: /^Museum/ })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/en\/museum$/);
+
+  await goOffline(context);
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1, name: "Museum" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /offline/i })).toBeHidden();
+
+  // Back to the entry the first document's client-side navigation left behind.
+  await page.goBack();
+  await expect(page).toHaveURL(/\/en$/);
+  await expect(page.getByRole("main")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /offline/i })).toBeHidden();
+
+  // The welcome card links the data page with a query, which a reload keeps.
+  await page.goto("/en/data?section=import");
+  await expect(page).toHaveURL(/\/en\/data\?section=import$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Data management" })).toBeVisible();
+});
+
 test("speaks the uncached URL's locale on the offline page", async ({ context, page }) => {
   await page.goto("/");
   await waitForControl(page);
