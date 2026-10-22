@@ -13,6 +13,8 @@
   "crown_requests": "Encargos de la Corona",
   "date_inspiration": "Inspiración para cita",
   "dating": "Pareja",
+  "disable_break_ups": "Deshabilitar rupturas",
+  "disable_break_ups_description": "Si seleccionas esta opción, se deshabilitará el cambio de estado predeterminado de «Pareja» a «Gran amistad» con otros PNJ después de prometerte.\n\nTen en cuenta que cuando te hayas prometido no podrás cambiar este ajuste.",
   "engaged": "Prometide",
   "fall": "Otoño",
   "fish": "Pesca y submarinismo",

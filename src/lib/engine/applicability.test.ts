@@ -26,6 +26,23 @@ function findItemWithSource(
 // ─── isItemObtainable ─────────────────────────────────────────────
 
 describe("isItemObtainable", () => {
+  it.each(["proposed", "married"] as const)(
+    "suppresses another villager's proposal with a %s partner even when dating continues",
+    (relationship) => {
+      const proposalItem = findItemWithSource("proposal");
+      if (!proposalItem) throw new Error("Missing proposal source");
+      const other = Object.entries(trackerData.villagers).find(
+        ([id, villager]) => villager.dateable && id !== proposalItem.villagerId,
+      );
+      if (!other) throw new Error("Missing other partner");
+      const completed = makeCompletedState({
+        breakUpsDisabled: true,
+        villagerRelationships: { [other[0]]: relationship, [proposalItem.villagerId]: "romantic" },
+      });
+      expect(isItemObtainable(proposalItem.itemId, completed)).toBe(false);
+    },
+  );
+
   it("returns true for items with no marriage-exclusive sources", () => {
     const nonMarriageItem = Object.entries(trackerData.items).find(
       ([, item]) => !item.sources.some((s) => s.type === "proposal" || s.type === "spouseGift"),

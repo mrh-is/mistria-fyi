@@ -30,7 +30,7 @@ import {
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
 import { factKey, progressFacts, PROVENANCE_SOURCES } from "#lib/engine/provenance.js";
-import { applyMarriageCascade } from "#lib/engine/relationships.js";
+import { applyEngagementCascade } from "#lib/engine/relationships.js";
 import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
 import {
   CHILD_CHOICES,
@@ -102,6 +102,7 @@ export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
     }
     return { ...document, progress };
   },
+  5: (document) => document,
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -242,6 +243,7 @@ const StrictBlobSchema = v.object({
     ...LIST_ENTRIES,
     animalCosmetics: v.record(v.string(), StringListSchema),
     animals: v.record(v.string(), StringListSchema),
+    breakUpsDisabled: v.optional(v.boolean()),
     childChoice: v.optional(v.picklist(CHILD_CHOICES)),
     hasUpperFloor: v.optional(v.boolean()),
     heartLevels: v.optional(strictLevels(trackerData.villagers, LEGACY_MAX_HEART_LEVEL)),
@@ -279,6 +281,7 @@ const RepairBlobSchema = v.object({
     ...LIST_ENTRIES,
     animalCosmetics: validEntries(StringListSchema),
     animals: validEntries(StringListSchema),
+    breakUpsDisabled: v.fallback(v.optional(v.boolean()), undefined),
     childChoice: v.fallback(v.optional(v.picklist(CHILD_CHOICES)), undefined),
     hasUpperFloor: v.fallback(v.optional(v.boolean()), undefined),
     heartLevels: v.optional(validEntries(FiniteNumberSchema)),
@@ -569,8 +572,8 @@ function normalizeBlob({
   };
   if (stored.lastSavePlaytime !== undefined) history.lastSavePlaytime = stored.lastSavePlaytime;
   const beforeCascade = { ...villagerRelationships };
-  applyMarriageCascade(villagerRelationships);
-  // A relationship the cascade set (e.g. a villager this build makes dateable) is inferred.
+  applyEngagementCascade(villagerRelationships, stored.breakUpsDisabled ?? false);
+  // A relationship changed by the engagement cascade is inferred.
   for (const [id, relationship] of recordEntries(villagerRelationships)) {
     if (beforeCascade[id] === relationship) continue;
     const { lastSavePlaytime: playtime } = history;
@@ -583,6 +586,7 @@ function normalizeBlob({
     almanacRecipes: lists.almanacRecipes as ProgressState["almanacRecipes"],
     animalCosmetics: animalCosmetics.known,
     animals: animals.known,
+    breakUpsDisabled: stored.breakUpsDisabled ?? false,
     childChoice: stored.childChoice ?? "undeclared",
     cosmetics: lists.cosmetics as ProgressState["cosmetics"],
     hasUpperFloor: stored.hasUpperFloor ?? false,
@@ -780,6 +784,7 @@ function serializedState({
       almanacRecipes: list("almanacRecipes"),
       animalCosmetics: mergeAnimalIds(progress.animalCosmetics, retained.animalCosmetics),
       animals: mergeAnimalIds(progress.animals, retained.animals),
+      breakUpsDisabled: progress.breakUpsDisabled,
       childChoice: progress.childChoice,
       cosmetics: list("cosmetics"),
       hasUpperFloor: progress.hasUpperFloor,

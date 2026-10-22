@@ -267,10 +267,10 @@ default, so true, then false, then true again asks again.
   lists as completed, per `QUEST_KINDS_LISTED_AS_COMPLETED`; other kinds only advance. In v1.0.8
   every tracked kind qualifies: `QuestLog.complete` is the only way into `completed_quests` & out of
   `active_quests`, & a late-game save’s `quest_<id>_complete` facts match its list for every kind.
-- Household facts stay manual until public #6 extracts them (the fields exist in `player`; a married
-  save is still needed): relationships aren’t compared, the child choice isn’t extracted, &
-  pregnancy quests follow the household. They then follow the same rules, breakups & divorce
-  included.
+- Household facts stay manual in sync. The importer extracts relationships, the break-ups setting, &
+  the child choice (public #6), & a manual import merges them through `mergeHousehold`, but sync
+  doesn’t compare them yet, & pregnancy quests follow the household. Bringing them under the same
+  rules, including engagement break-ups, is follow-up work. The v1.0.8 game has no divorce flow.
 
 Property & scenario tests (`sync-apply.test.ts`) cover the rollback, untick, renamed-ID,
 farm-switch, & pre-provenance cases.

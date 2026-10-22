@@ -41,7 +41,7 @@ const GOLDEN_BACKUP = {
 };
 
 /** Optional fields added after launch, as an empty launch-era blob writes them back. */
-const POST_LAUNCH_FIELDS = { mountAppearances: [] };
+const POST_LAUNCH_FIELDS = { breakUpsDisabled: false, mountAppearances: [] };
 
 /** Version 3's history, as its migration writes it for the launch backup: every fact `unknown`. */
 const MIGRATED_HISTORY = {

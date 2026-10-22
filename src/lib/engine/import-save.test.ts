@@ -235,6 +235,21 @@ describe("town rank quest inference", () => {
 });
 
 describe("extractSaveProgress", () => {
+  it.each([true, false])("extracts the break-ups setting as complete (%s)", (value) => {
+    expect(
+      extractSave({ player: { disable_break_ups: value } }).fields.breakUpsDisabled,
+    ).toMatchObject({ completeness: "complete", value });
+  });
+
+  it.each([undefined, null, 1, "true"])(
+    "leaves an absent or malformed break-ups setting unknown (%s)",
+    (value) => {
+      expect(
+        extractSave({ player: { disable_break_ups: value } }).fields.breakUpsDisabled,
+      ).toMatchObject({ completeness: "unknown", value: undefined });
+    },
+  );
+
   it("credits the Engagement Ring recipe from its acquired scroll without a recipe unlock", () => {
     const { completed, warnings } = extractSaveProgress({
       player: { items_acquired: ["engagement_ring_recipe_scroll"], recipe_unlocks: [] },
@@ -423,6 +438,71 @@ describe("extractSaveProgress", () => {
         juniper: "romantic",
         march: "romantic",
       });
+    });
+
+    it("reads best friends as platonic and a fiancé as proposed", () => {
+      const bundle: SaveBundle = {
+        gamedata: {
+          t2_world_facts: {
+            celine_is_best_friend: 1,
+            juniper_is_dating: 1,
+            march_is_dating: 0,
+            march_is_fiance: 1,
+          },
+        },
+      };
+      const { completed } = extractSaveProgress(bundle);
+      expect(completed.villagerRelationships).toEqual({
+        celine: "platonic",
+        juniper: "romantic",
+        march: "proposed",
+      });
+    });
+
+    it("marries the spouse over a stale dating flag while preserving other stored romances", () => {
+      const bundle: SaveBundle = {
+        gamedata: {
+          t2_world_facts: {
+            adeline_is_dating: 1,
+            has_spouse: 1,
+            ryis_is_dating: 1,
+            ryis_is_spouse: 1,
+          },
+        },
+      };
+      const { completed } = extractSaveProgress(bundle);
+      expect(completed.villagerRelationships).toEqual({ adeline: "romantic", ryis: "married" });
+    });
+
+    it("names the spouse from a listed pregnancy quest when no spouse fact does", () => {
+      const [villagerId, questId] = recordEntries(trackerData.pregnancyQuestByVillager)[0];
+      const { completed } = extractSaveProgress({
+        gamedata: { t2_world_facts: { [`${villagerId}_is_dating`]: 1 } },
+        quests: { active_quests: [], completed_quests: [questId] },
+      });
+      expect(completed.villagerRelationships?.[villagerId]).toBe("married");
+      expect(completed.childChoice).toBe("yes");
+    });
+
+    it.each([
+      ["a pending child", { pending_child: { due_date: 1, utero: 0 } }],
+      ["a child", { children: [{ name: "Wren" }] }],
+    ])("reads %s as wanting children", (_label, fields) => {
+      const { completed } = extractSaveProgress({
+        player: { children: [], items_acquired: [], pending_child: null, ...fields },
+      });
+      expect(completed.childChoice).toBe("yes");
+    });
+
+    it("leaves the child choice undeclared without a child, and unknown without a player", () => {
+      const childless = extractSave({
+        player: { children: [], items_acquired: [], pending_child: null },
+      });
+      expect(childless.fields.childChoice).toMatchObject({
+        completeness: "unknown",
+        value: "undeclared",
+      });
+      expect(extractSave({}).fields.childChoice.value).toBeUndefined();
     });
 
     it("derives reachedSeason from gamedata.date timestamp", () => {
@@ -1077,7 +1157,7 @@ describe("extractSave", () => {
     expect(missing.fields.skillLevels.completeness).toBe("complete");
   });
 
-  it("never treats relationships as complete, since only dating flags are read", () => {
+  it("never treats relationships as complete, since breakups & divorce aren't verified", () => {
     const { fields } = extractSave({ gamedata: { t2_world_facts: allFacts } });
     expect(fields.villagerRelationships).toMatchObject({ completeness: "unknown", value: {} });
   });

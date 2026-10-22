@@ -1,10 +1,9 @@
-import { trackerData } from "#lib/data/index.js";
-
 import type { VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
 import type { ChildChoice, MergeConflict } from "#lib/types/user-progress.js";
 
 /** The relationship facts a save merge treats as one unit: who the player is with, and kids. */
 export interface Household {
+  breakUpsDisabled: boolean;
   childChoice: ChildChoice;
   villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>;
 }
@@ -12,7 +11,7 @@ export interface Household {
 /** The merged household, with what changed and what was skipped as a conflict. */
 export interface HouseholdMergeResult extends Household {
   conflicts: MergeConflict[];
-  counts: { childChoice: number; villagerRelationships: number };
+  counts: { breakUpsDisabled: number; childChoice: number; villagerRelationships: number };
 }
 
 export type RelationshipActionValue =
@@ -26,7 +25,7 @@ export type RelationshipActionValue =
 export interface RelationshipPresentation {
   actions: RelationshipActionValue[];
   prompt?: RelationshipPrompt;
-  showsMarriageWarning?: boolean;
+  showsProposalWarning?: boolean;
   status?: RelationshipStatus;
 }
 
@@ -42,9 +41,10 @@ export type RelationshipStatus =
   | "path_not_chosen";
 
 interface RelationshipPresentationInput {
+  breakUpsDisabled: boolean;
   childChoice: ChildChoice;
   level: number;
-  marriedVillager: null | VillagerId;
+  partnerVillager: null | VillagerId;
   relationship: VillagerRelationship;
   villagerId: VillagerId;
 }
@@ -54,6 +54,18 @@ export function getSpouseId(
 ): null | VillagerId {
   for (const [villagerId, rel] of Object.entries(villagerRelationships)) {
     if (rel === "married") return villagerId as VillagerId;
+  }
+  return null;
+}
+
+/** A spouse takes precedence over an engagement left in inconsistent input. */
+export function getPartnerId(
+  villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>,
+): null | VillagerId {
+  const spouse = getSpouseId(villagerRelationships);
+  if (spouse !== null) return spouse;
+  for (const [villagerId, relationship] of Object.entries(villagerRelationships)) {
+    if (relationship === "proposed") return villagerId as VillagerId;
   }
   return null;
 }
@@ -69,8 +81,8 @@ export function isRomantic(
 /**
  * Merges an imported household into the local one without mutating either. The policy:
  *
- * - No local spouse: an incoming marriage applies silently and cascades every other dateable
- *   villager to platonic. This is the one allowed downgrade.
+ * - No local spouse: an incoming marriage applies silently. With break-ups enabled, other
+ *   romances become platonic; undecided paths stay open.
  * - Different spouses: one spouse conflict; the incoming marriage and child choice are skipped,
  *   while other villagers still merge.
  * - Same spouse: an incoming non-married value for the local spouse is a conflict, and disputes
@@ -86,7 +98,16 @@ export function mergeHousehold(
   incoming: Partial<Household>,
 ): HouseholdMergeResult {
   const conflicts: MergeConflict[] = [];
-  const counts = { childChoice: 0, villagerRelationships: 0 };
+  const breakUpsDisabled = incoming.breakUpsDisabled ?? local.breakUpsDisabled;
+  const correctOldCascade =
+    breakUpsDisabled &&
+    !local.breakUpsDisabled &&
+    getPartnerId(local.villagerRelationships) !== null;
+  const counts = {
+    breakUpsDisabled: Number(breakUpsDisabled !== local.breakUpsDisabled),
+    childChoice: 0,
+    villagerRelationships: 0,
+  };
   const villagerRelationships = { ...local.villagerRelationships };
   let childChoice = local.childChoice;
 
@@ -99,15 +120,13 @@ export function mergeHousehold(
     const importedMarried = getSpouseId(importedRelationships);
     // Spouses, past or present, that the general per-villager pass must not touch.
     const skipVillagerIds = new Set<VillagerId>();
-    // A new marriage forces every other dateable villager to platonic, so the general pass must
-    // not evaluate them for conflicts at all.
-    let skipGeneralPass = false;
 
     if (localMarried === null && importedMarried !== null) {
       villagerRelationships[importedMarried] = "married";
       counts.villagerRelationships++;
       householdVillagerId = importedMarried;
-      skipGeneralPass = true;
+      skipVillagerIds.add(importedMarried);
+      applyEngagementCascade(villagerRelationships, breakUpsDisabled);
     } else if (
       localMarried !== null &&
       importedMarried !== null &&
@@ -135,35 +154,32 @@ export function mergeHousehold(
       skipVillagerIds.add(localMarried);
     }
 
-    if (!skipGeneralPass) {
-      for (const [villagerIdStr, importedRel] of Object.entries(importedRelationships)) {
-        const villagerId = villagerIdStr as VillagerId;
-        if (!importedRel || importedRel === "undecided" || skipVillagerIds.has(villagerId)) {
-          continue;
-        }
+    for (const [villagerIdStr, importedRel] of Object.entries(importedRelationships)) {
+      const villagerId = villagerIdStr as VillagerId;
+      if (!importedRel || importedRel === "undecided" || skipVillagerIds.has(villagerId)) {
+        continue;
+      }
 
-        const localRel = villagerRelationships[villagerId] ?? "undecided";
-        if (localRel === importedRel) continue;
+      const localRel = villagerRelationships[villagerId] ?? "undecided";
+      if (localRel === importedRel) continue;
 
-        const movesForward =
-          localRel === "undecided" ||
-          (relationshipBranch(localRel) === relationshipBranch(importedRel) &&
-            relationshipRank(importedRel) > relationshipRank(localRel));
-        if (movesForward) {
-          villagerRelationships[villagerId] = importedRel;
-          counts.villagerRelationships++;
-        } else {
-          conflicts.push({
-            incomingRelationship: importedRel,
-            kind: "relationship",
-            localRelationship: localRel,
-            villagerId,
-          });
-        }
+      const movesForward =
+        localRel === "undecided" ||
+        (correctOldCascade && localRel === "platonic" && importedRel === "romantic") ||
+        (relationshipBranch(localRel) === relationshipBranch(importedRel) &&
+          relationshipRank(importedRel) > relationshipRank(localRel));
+      if (movesForward) {
+        villagerRelationships[villagerId] = importedRel;
+        counts.villagerRelationships++;
+      } else {
+        conflicts.push({
+          incomingRelationship: importedRel,
+          kind: "relationship",
+          localRelationship: localRel,
+          villagerId,
+        });
       }
     }
-
-    applyMarriageCascade(villagerRelationships);
   }
 
   const importedChoice = incoming.childChoice;
@@ -185,31 +201,21 @@ export function mergeHousehold(
     }
   }
 
-  return { childChoice, conflicts, counts, villagerRelationships };
+  applyEngagementCascade(villagerRelationships, breakUpsDisabled);
+  return { breakUpsDisabled, childChoice, conflicts, counts, villagerRelationships };
 }
 
-/**
- * When someone is married, makes every other villager platonic. Mutates
- * `villagerRelationships` in place, filling in platonic entries for unmentioned dateable villagers.
- */
-export function applyMarriageCascade(
+/** Ends existing romances when a partner exists and break-ups are enabled. Mutates in place. */
+export function applyEngagementCascade(
   villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>,
+  breakUpsDisabled: boolean,
 ): void {
-  const marriedVillager = getSpouseId(villagerRelationships);
-  if (!marriedVillager) return;
-
+  if (breakUpsDisabled) return;
+  const partnerVillager = getPartnerId(villagerRelationships);
+  if (!partnerVillager) return;
   for (const [villagerId, rel] of Object.entries(villagerRelationships)) {
-    if (villagerId !== marriedVillager && rel !== "platonic") {
+    if (villagerId !== partnerVillager && (rel === "romantic" || rel === "proposed")) {
       villagerRelationships[villagerId as VillagerId] = "platonic";
-    }
-  }
-
-  const dateableVillagers = Object.entries(trackerData.villagers)
-    .filter(([, villager]) => villager.dateable)
-    .map(([id]) => id as VillagerId);
-  for (const villagerId of dateableVillagers) {
-    if (villagerId !== marriedVillager && !(villagerId in villagerRelationships)) {
-      villagerRelationships[villagerId] = "platonic";
     }
   }
 }
@@ -228,20 +234,19 @@ export function relationshipBranch(
 }
 
 export function relationshipPresentation({
+  breakUpsDisabled,
   childChoice,
   level,
-  marriedVillager,
+  partnerVillager,
   relationship,
   villagerId,
 }: RelationshipPresentationInput): RelationshipPresentation {
-  if (marriedVillager !== null && marriedVillager !== villagerId) {
-    return { actions: [], status: "best_friends" };
-  }
+  const hasOtherPartner = partnerVillager !== null && partnerVillager !== villagerId;
 
   if (relationship === "undecided") {
     if (level < 8) return { actions: [] };
     return {
-      actions: ["platonic", "romantic"],
+      actions: hasOtherPartner && !breakUpsDisabled ? ["platonic"] : ["platonic", "romantic"],
       prompt: "choose_path",
       status: "path_not_chosen",
     };
@@ -251,8 +256,9 @@ export function relationshipPresentation({
 
   if (relationship === "romantic") {
     return {
-      actions: level >= 10 ? ["proposed"] : [],
-      prompt: level >= 10 ? "next_note" : undefined,
+      actions: level >= 10 && !hasOtherPartner ? ["proposed"] : [],
+      prompt: level >= 10 && !hasOtherPartner ? "next_note" : undefined,
+      showsProposalWarning: level >= 10 && !hasOtherPartner && !breakUpsDisabled,
       status: "dating",
     };
   }
@@ -261,7 +267,6 @@ export function relationshipPresentation({
     return {
       actions: ["married"],
       prompt: "next_note",
-      showsMarriageWarning: true,
       status: "engaged",
     };
   }

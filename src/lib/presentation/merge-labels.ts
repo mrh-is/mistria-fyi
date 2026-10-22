@@ -1,4 +1,6 @@
+import { getName } from "#lib/data/names.js";
 import * as m from "#lib/paraglide/messages.js";
+import { getLocale } from "#lib/paraglide/runtime.js";
 
 import type { MergeCounts } from "#lib/types/user-progress.js";
 
@@ -22,6 +24,10 @@ export const MERGE_COUNT_LABELS = {
   almanacRecipes: { format: (count: number) => m.merge_label_almanac_recipes({ count }) },
   animalCosmetics: { format: (count: number) => m.merge_label_animal_cosmetics({ count }) },
   animals: { format: (count: number) => m.merge_label_animals({ count }) },
+  breakUpsDisabled: {
+    boolean: true,
+    format: () => getName("ui", "disable_break_ups", getLocale()),
+  },
   childChoice: { boolean: true, format: () => m.merge_label_child_choice() },
   cosmetics: { format: (count: number) => m.merge_label_cosmetics({ count }) },
   hasUpperFloor: { boolean: true, format: () => m.merge_label_has_upper_floor() },

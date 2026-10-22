@@ -13,6 +13,8 @@
   "crown_requests": "왕실 의뢰",
   "date_inspiration": "데이트 영감",
   "dating": "데이트",
+  "disable_break_ups": "이별 비활성화",
+  "disable_break_ups_description": "이 옵션을 선택하면 약혼한 후 다른 '데이트 중' 상태 NPC들과의 기본 상태가 '데이트 중'에서 '절친'으로 변경되지 않습니다.\n\n일단 약혼하면 이 설정을 변경할 수 없습니다.",
   "engaged": "약혼 상태",
   "fall": "가을",
   "fish": "낚시와 잠수",

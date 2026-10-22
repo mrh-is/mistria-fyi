@@ -13,6 +13,8 @@
   "crown_requests": "ロイヤルリクエスト",
   "date_inspiration": "デートプラン",
   "dating": "恋人",
+  "disable_break_ups": "Disable Break-ups",
+  "disable_break_ups_description": "Selecting this option will disable the default status change from \"Dating\" to \"Best Friends\" with other \"Dating\" status NPCs after you get engaged.\n\nPlease note that once you're engaged, you will not be able to change this setting.",
   "engaged": "婚約中",
   "fall": "秋",
   "fish": "釣り＆ダイビング",

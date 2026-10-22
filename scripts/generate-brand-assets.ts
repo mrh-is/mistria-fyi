@@ -92,6 +92,7 @@ function emptyCompletedState(): ProgressState {
       Object.keys(trackerData.animals).map((id) => [id, new Set()]),
     ),
     animals: Object.fromEntries(Object.keys(trackerData.animals).map((id) => [id, new Set()])),
+    breakUpsDisabled: false,
     childChoice: "undeclared",
     cosmetics: new Set(),
     hasUpperFloor: false,
