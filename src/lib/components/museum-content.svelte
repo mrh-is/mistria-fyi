@@ -1,10 +1,12 @@
 <script lang="ts">
   import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SectionGroups from "#lib/components/section-groups.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
@@ -63,6 +65,7 @@
   }
 
   const recentlyCompleted = createLeavingSet<ItemId>();
+  const sectionGrouping = createSectionGrouping<MuseumWingId>();
 
   function isItemComplete(itemId: ItemId): boolean {
     return userState.state.progress.museum.has(itemId);
@@ -146,6 +149,7 @@
     };
   }
   function toggleItem(itemId: ItemId, setId: MuseumWingSetId, wingId: MuseumWingId): void {
+    sectionGrouping.hold(wingId);
     userState.toggleMuseumItem(itemId);
     const completed = isItemComplete(itemId);
     showUndoToast(getName("items", itemId, locale), completed, () => {
@@ -189,59 +193,61 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#each wingViews as { config, wingId } (wingId)}
-  {#if config.isVisible}
-    <ExpandableSection
-      {locale}
-      count={config.scopedCompletedItemCount}
-      forceOpen={!!nameFilter}
-      name={getName("museum_wings", wingId, locale)}
-      reportCategory="museum-wing"
-      reportEntityId={wingId}
-      total={config.scopedItemCount}
-    >
-      {#each config.setConfigs as set (set.setId)}
-        <ExpandableSection
-          {locale}
-          depth={1}
-          count={set.scopedCompletedItemCount}
-          forceOpen={!!nameFilter}
-          name={set.name}
-          reportCategory="museum-set"
-          reportEntityId={set.setId}
-          total={set.scopedItemCount}
-        >
-          <TrackerRowList getKey={(item) => item.itemId} items={set.visibleItems}>
-            {#snippet row(item)}
-              {@const itemId = item.itemId}
-              {@const museumCompleted = isItemComplete(itemId)}
-              {@const museumItemSources = trackerData.items[itemId].sources}
-              {@const museumItemVisibility = trackerData.items[itemId].visibility}
-              <TrackerRow
-                display={rowDisplay(itemId, museumItemSources)}
-                segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
-                name={getName("items", itemId, locale)}
-                reportCategory="museum-item"
-                reportEntityId={itemId}
-                sources={museumItemSources}
-                sprite={itemId}
-                spriteClass="text-(--color-category-museum)"
-                onToggle={() => {
-                  if (!isItemSpoilered(itemId) || museumCompleted) {
-                    toggleItem(itemId, set.setId, wingId);
-                  } else {
-                    spoilerGuard.requestGuardedAction(museumItemVisibility, () => {
+<SectionGroups getKey={(view) => view.wingId} grouping={sectionGrouping} items={wingViews}>
+  {#snippet section({ config, wingId })}
+    {#if config.isVisible}
+      <ExpandableSection
+        {locale}
+        count={config.scopedCompletedItemCount}
+        forceOpen={!!nameFilter}
+        name={getName("museum_wings", wingId, locale)}
+        reportCategory="museum-wing"
+        reportEntityId={wingId}
+        total={config.scopedItemCount}
+      >
+        {#each config.setConfigs as set (set.setId)}
+          <ExpandableSection
+            {locale}
+            depth={1}
+            count={set.scopedCompletedItemCount}
+            forceOpen={!!nameFilter}
+            name={set.name}
+            reportCategory="museum-set"
+            reportEntityId={set.setId}
+            total={set.scopedItemCount}
+          >
+            <TrackerRowList getKey={(item) => item.itemId} items={set.visibleItems}>
+              {#snippet row(item)}
+                {@const itemId = item.itemId}
+                {@const museumCompleted = isItemComplete(itemId)}
+                {@const museumItemSources = trackerData.items[itemId].sources}
+                {@const museumItemVisibility = trackerData.items[itemId].visibility}
+                <TrackerRow
+                  display={rowDisplay(itemId, museumItemSources)}
+                  segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
+                  name={getName("items", itemId, locale)}
+                  reportCategory="museum-item"
+                  reportEntityId={itemId}
+                  sources={museumItemSources}
+                  sprite={itemId}
+                  spriteClass="text-(--color-category-museum)"
+                  onToggle={() => {
+                    if (!isItemSpoilered(itemId) || museumCompleted) {
                       toggleItem(itemId, set.setId, wingId);
-                    });
-                  }
-                }}
-              />
-            {/snippet}
-          </TrackerRowList>
-        </ExpandableSection>
-      {/each}
-    </ExpandableSection>
-  {/if}
-{/each}
+                    } else {
+                      spoilerGuard.requestGuardedAction(museumItemVisibility, () => {
+                        toggleItem(itemId, set.setId, wingId);
+                      });
+                    }
+                  }}
+                />
+              {/snippet}
+            </TrackerRowList>
+          </ExpandableSection>
+        {/each}
+      </ExpandableSection>
+    {/if}
+  {/snippet}
+</SectionGroups>
 
 <AllCompleted isAllCompleted={isMuseumComplete()} />

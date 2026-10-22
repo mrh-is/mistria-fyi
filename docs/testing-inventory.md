@@ -71,34 +71,36 @@ single-component row's marks disagree with its test files.
 
 ### Tracker rows & controls
 
-| Component                    | Server | happy-dom  | Notes                                                     |
-| ---------------------------- | :----: | :--------: | --------------------------------------------------------- |
-| `tracker-row`                |   ✓    |     ✓      | Spoiler reveal, completion, source papers, focus movement |
-| `tracker-row-stack`          |   ✓    |            | Layout only                                               |
-| `tracker-row-list`           |        |     ✓      | Row cap, show more, progressive count, empty note         |
-| `tracker-empty-state`        |        | via parent | Through `tracker-row-list`                                |
-| `tracker-checkbox`           |        |     ✓      | Label, click forwarding, visual states                    |
-| `tracker-paper`              |        |            | Layout only; no interaction                               |
-| `confirm-spoiler-dialog`     |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |
-| `spoiler-guard-dialog`       |        |     ✓      | Renders only while the guard holds a condition            |
-| `skill-record`               |        |     ✓      | Level editing                                             |
-| `stepper`                    |        |     ✓      | Grouped controls                                          |
-| `dialog-close-button`        |        |     ✓      | Localized close control, dismisses the dialog             |
-| `status-note`                |   ✓    |            | Tone classes; alert role for errors & warnings            |
-| `expandable-section`         |        |     ✓      | Disclosure, IDs, nesting, reporting                       |
-| `spoiler`, `spoiler-section` |        | via parent | Through `tracker-row`                                     |
-| `sprite-slot`                |        | via parent | Through `tracker-row`                                     |
-| `source-card`                |   ✓    |            | Static rendering                                          |
-| `source-paper`               |        | via parent | Through `tracker-row`                                     |
-| `source-segment-text`        |   ✓    |            | Static rendering                                          |
-| `source-filtered-content`    |   ✓    |            | Filtering logic is store-tested                           |
-| `restriction-badges`         |        |            | Gap: static; server test would suffice                    |
-| `mine-floor-record`          |        |     ✓      |                                                           |
-| `renown-current-record`      |        |     ✓      |                                                           |
-| `villager-record`            |   ✓    |     ✓      | Server: sprite has no inline handler (CSP)                |
-| `villagers-content`          |        |     ✓      |                                                           |
-| `villager-alphabet-index`    |        |     ✓      |                                                           |
-| `rank-record`                |        |     ✓      |                                                           |
+| Component                                 | Server | happy-dom  | Notes                                                     |
+| ----------------------------------------- | :----: | :--------: | --------------------------------------------------------- |
+| `tracker-row`                             |   ✓    |     ✓      | Spoiler reveal, completion, source papers, focus movement |
+| `tracker-row-stack`                       |   ✓    |            | Layout only                                               |
+| `tracker-row-list`                        |        |     ✓      | Row cap, show more, progressive count, empty note         |
+| `tracker-empty-state`                     |        | via parent | Through `tracker-row-list`                                |
+| `tracker-checkbox`                        |        |     ✓      | Label, click forwarding, visual states                    |
+| `tracker-paper`                           |        |            | Layout only; no interaction                               |
+| `confirm-spoiler-dialog`                  |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |
+| `spoiler-guard-dialog`                    |        |     ✓      | Renders only while the guard holds a condition            |
+| `skill-record`                            |        |     ✓      | Level editing                                             |
+| `stepper`                                 |        |     ✓      | Grouped controls                                          |
+| `dialog-close-button`                     |        |     ✓      | Localized close control, dismisses the dialog             |
+| `status-note`                             |   ✓    |            | Tone classes; alert role for errors & warnings            |
+| `expandable-section`                      |        |     ✓      | Disclosure, IDs, nesting, reporting                       |
+| `section-groups`                          |        |     ✓      | Completed grouping, toggle hold window, kept expansion    |
+| `section-group-item`, `completed-heading` |        | via parent | Through `section-groups`                                  |
+| `spoiler`, `spoiler-section`              |        | via parent | Through `tracker-row`                                     |
+| `sprite-slot`                             |        | via parent | Through `tracker-row`                                     |
+| `source-card`                             |   ✓    |            | Static rendering                                          |
+| `source-paper`                            |        | via parent | Through `tracker-row`                                     |
+| `source-segment-text`                     |   ✓    |            | Static rendering                                          |
+| `source-filtered-content`                 |   ✓    |            | Filtering logic is store-tested                           |
+| `restriction-badges`                      |        |            | Gap: static; server test would suffice                    |
+| `mine-floor-record`                       |        |     ✓      |                                                           |
+| `renown-current-record`                   |        |     ✓      |                                                           |
+| `villager-record`                         |   ✓    |     ✓      | Server: sprite has no inline handler (CSP)                |
+| `villagers-content`                       |        |     ✓      |                                                           |
+| `villager-alphabet-index`                 |        |     ✓      |                                                           |
+| `rank-record`                             |        |     ✓      |                                                           |
 
 ### Category content
 
