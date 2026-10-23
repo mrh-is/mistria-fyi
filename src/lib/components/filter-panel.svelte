@@ -23,6 +23,7 @@
   import { page } from "$app/state";
 
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
+  import type { Snippet } from "svelte";
 
   import type { FilterSectionId } from "#lib/stores/toolbar-state.svelte.js";
   import type { AvailabilityWindow } from "#lib/types/availability.js";
@@ -36,6 +37,8 @@
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const allWeathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
   const TRANSITION_MS = 180;
+  // Past this many enabled types, the sources summary names a count instead of listing them.
+  const MAX_LISTED_SOURCE_TYPES = 3;
   const availabilityLabels: Record<AvailabilityWindow, string> = {
     anytime: m.availability_anytime(),
     later: m.availability_later(),
@@ -50,27 +53,40 @@
 
   let sourcesExplainerOpen = $state(false);
   let currentSeason = $derived(userState.state.worldState.season);
-  let availabilitySummary = $derived(
-    [
-      ...userState.state.availabilityWindows.map((window) => availabilityLabels[window]),
-      seasonLabel(currentSeason, page.data.locale),
-      weatherLabel(userState.state.worldState.weather, currentSeason),
-    ].join(" · "),
+  let availabilityEverything = $derived(
+    userState.state.availabilityWindows.length === AVAILABILITY_WINDOWS.length,
   );
-  let sourceSummary = $derived(
-    m.visibility_source_types_summary({
-      enabled: toolbarState.enabledSourceFilterIds.size,
-      total: toolbarState.sourceFilters.length,
-    }),
-  );
-  let showSummary = $derived(
-    [
-      ...(userState.state.showCompleted ? [m.visibility_completed_toggle()] : []),
-      ...(toolbarState.hasAlmanacFilters && toolbarState.showUnobtainable
-        ? [m.visibility_unobtainable_toggle()]
-        : []),
-    ].join(" · ") || m.visibility_show_none(),
-  );
+  let sourceSummary = $derived.by(() => {
+    const enabled = sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale).filter(
+      (filter) => toolbarState.enabledSourceFilterIds.has(filter.id),
+    );
+    if (enabled.length === toolbarState.sourceFilters.length) return m.visibility_sources_all();
+    if (enabled.length === 0) return m.visibility_sources_none();
+    if (enabled.length > MAX_LISTED_SOURCE_TYPES) {
+      return m.visibility_source_types_summary({
+        enabled: enabled.length,
+        total: toolbarState.sourceFilters.length,
+      });
+    }
+    // Labels are title-like on their own; mid-phrase they read as ordinary nouns.
+    const labels = enabled.map((filter) =>
+      sourceFilterLabel(filter.id, page.data.locale).toLocaleLowerCase(page.data.locale),
+    );
+    if (labels.length === 1) return m.visibility_sources_only({ type: labels[0] ?? "" });
+    const list = new Intl.ListFormat(page.data.locale, { type: "conjunction", style: "short" });
+    const phrase = list.format(labels);
+    return phrase.charAt(0).toLocaleUpperCase(page.data.locale) + phrase.slice(1);
+  });
+  let showSummary = $derived.by(() => {
+    const completed = userState.state.showCompleted;
+    if (!toolbarState.hasAlmanacFilters) {
+      return completed ? m.visibility_show_everything() : m.visibility_show_todo();
+    }
+    if (toolbarState.showUnobtainable) {
+      return completed ? m.visibility_show_everything() : m.visibility_show_uncompleted();
+    }
+    return completed ? m.visibility_show_obtainable() : m.visibility_show_todo();
+  });
   let availableWeathers = $derived(weathersForSeason(currentSeason));
   let hasSpecialWeather = $derived(availableWeathers.includes("special"));
   let weatherColumns = $derived(
@@ -89,6 +105,13 @@
         { icon: weatherIcon(weather, season), label: weatherLabel(weather, season) },
       ]),
     ) as Record<Weather, WeatherSlot>;
+  }
+
+  /** Joins labels with “+”, lowercasing all but the first, since they read mid-phrase. */
+  function joinMidPhrase(labels: string[]): string {
+    return labels
+      .map((label, index) => (index === 0 ? label : label.toLocaleLowerCase(page.data.locale)))
+      .join(" + ");
   }
 
   function isCollapsed(section: FilterSectionId): boolean {
@@ -154,11 +177,35 @@
   }
 </script>
 
+{#snippet availabilitySummary()}
+  {#if availabilityEverything}
+    {m.visibility_when_everything()}
+  {:else}
+    {`${joinMidPhrase(userState.state.availabilityWindows.map((window) => availabilityLabels[window]))} · `}<span
+      class="disclosure__icons"
+      ><Icon.Season season={currentSeason} class="size-3" /><Icon.Weather
+        season={currentSeason}
+        weather={userState.state.worldState.weather}
+        class="size-3"
+      /></span
+    ><span class="sr-only"
+      >{[
+        seasonLabel(currentSeason, page.data.locale),
+        weatherLabel(userState.state.worldState.weather, currentSeason),
+      ].join(", ")}</span
+    >
+  {/if}
+{/snippet}
+
+{#snippet sourceSummaryText()}{sourceSummary}{/snippet}
+
+{#snippet showSummaryText()}{showSummary}{/snippet}
+
 {#snippet sectionHeading(
   section: FilterSectionId,
   SectionIcon: AppIcon,
   label: string,
-  summary: string,
+  summary: Snippet,
 )}
   {#if compact.current}
     {@const expanded = toolbarState.expandedFilterSections.has(section)}
@@ -175,7 +222,7 @@
         <SectionIcon class="size-3.5 shrink-0" />
         <span class="disclosure__label">{label}</span>
         {#if !expanded}
-          <span class="disclosure__summary">{summary}</span>
+          <span class="disclosure__summary">{@render summary()}</span>
         {/if}
         <IconChevronDown class="disclosure__chevron size-3.5 shrink-0" />
       </button>
@@ -196,87 +243,94 @@
         m.visibility_when_to_find(),
         availabilitySummary,
       )}
-      <div id="availability-filter-body" hidden={isCollapsed("availability")}>
-        <div class="chip-row chip-row--availability">
-          {#each AVAILABILITY_WINDOWS as window (window)}
-            {@const selected = userState.state.availabilityWindows.includes(window)}
-            <button
-              class="filter-chip filter-chip--wide"
-              class:filter-chip--active={selected}
-              type="button"
-              aria-pressed={selected}
-              onclick={() => {
-                toggleAvailability(window);
-              }}>{availabilityLabels[window]}</button
-            >
-          {/each}
-        </div>
-
-        <div class="world-state-grid">
-          <div>
-            <p>{m.visibility_season_label()}</p>
-            <div class="radio-strip" role="radiogroup" aria-label={m.visibility_season_label()}>
-              {#each seasons as season (season)}
-                {@const selected = season === currentSeason}
-                <button
-                  type="button"
-                  role="radio"
-                  onkeydown={moveRadioFocus}
-                  aria-label={seasonLabel(season, page.data.locale)}
-                  aria-checked={selected}
-                  tabindex={selected ? 0 : -1}
-                  class:radio-strip__active={selected}
-                  onclick={() => {
-                    userState.setSeason(season);
-                  }}><Icon.Season {season} class="size-3" />{seasonLabelAbbr(season)}</button
-                >
-              {/each}
-            </div>
+      <div
+        id="availability-filter-body"
+        class="collapsible"
+        class:collapsible--collapsed={isCollapsed("availability")}
+        inert={isCollapsed("availability")}
+      >
+        <div class="collapsible__inner">
+          <div class="chip-row chip-row--availability">
+            {#each AVAILABILITY_WINDOWS as window (window)}
+              {@const selected = userState.state.availabilityWindows.includes(window)}
+              <button
+                class="filter-chip filter-chip--wide"
+                class:filter-chip--active={selected}
+                type="button"
+                aria-pressed={selected}
+                onclick={() => {
+                  toggleAvailability(window);
+                }}>{availabilityLabels[window]}</button
+              >
+            {/each}
           </div>
 
-          <div>
-            <p>{m.visibility_weather_label()}</p>
-            <div
-              class="radio-strip radio-strip--weather"
-              role="radiogroup"
-              aria-label={m.visibility_weather_label()}
-              style:grid-template-columns={weatherColumns}
-              style:transition-duration="{transitionDuration()}ms"
-            >
-              {#each allWeathers as weather (weather)}
-                {@const selected = weather === userState.state.worldState.weather}
-                {@const isSpecial = weather === "special"}
-                {@const SlotIcon = weatherSlotDisplay[weather].icon}
-                <div
-                  class="radio-strip__slot"
-                  class:radio-strip__slot--last-visible={!hasSpecialWeather &&
-                    weather === "heavy_inclement"}
-                >
+          <div class="world-state-grid">
+            <div>
+              <p>{m.visibility_season_label()}</p>
+              <div class="radio-strip" role="radiogroup" aria-label={m.visibility_season_label()}>
+                {#each seasons as season (season)}
+                  {@const selected = season === currentSeason}
                   <button
                     type="button"
                     role="radio"
                     onkeydown={moveRadioFocus}
-                    aria-label={weatherLabel(weather, currentSeason)}
+                    aria-label={seasonLabel(season, page.data.locale)}
                     aria-checked={selected}
-                    aria-hidden={isSpecial && !hasSpecialWeather}
+                    tabindex={selected ? 0 : -1}
                     class:radio-strip__active={selected}
-                    disabled={isSpecial && !hasSpecialWeather}
-                    tabindex={selected && !(isSpecial && !hasSpecialWeather) ? 0 : -1}
                     onclick={() => {
-                      userState.setWeather(weather);
-                    }}
+                      userState.setSeason(season);
+                    }}><Icon.Season {season} class="size-3" />{seasonLabelAbbr(season)}</button
                   >
-                    <span
-                      class="radio-strip__content"
-                      style:opacity={weatherSlotFading[weather] ? 0 : 1}
-                      style:transition-duration="{transitionDuration() / 2}ms"
+                {/each}
+              </div>
+            </div>
+
+            <div>
+              <p>{m.visibility_weather_label()}</p>
+              <div
+                class="radio-strip radio-strip--weather"
+                role="radiogroup"
+                aria-label={m.visibility_weather_label()}
+                style:grid-template-columns={weatherColumns}
+                style:transition-duration="{transitionDuration()}ms"
+              >
+                {#each allWeathers as weather (weather)}
+                  {@const selected = weather === userState.state.worldState.weather}
+                  {@const isSpecial = weather === "special"}
+                  {@const SlotIcon = weatherSlotDisplay[weather].icon}
+                  <div
+                    class="radio-strip__slot"
+                    class:radio-strip__slot--last-visible={!hasSpecialWeather &&
+                      weather === "heavy_inclement"}
+                  >
+                    <button
+                      type="button"
+                      role="radio"
+                      onkeydown={moveRadioFocus}
+                      aria-label={weatherLabel(weather, currentSeason)}
+                      aria-checked={selected}
+                      aria-hidden={isSpecial && !hasSpecialWeather}
+                      class:radio-strip__active={selected}
+                      disabled={isSpecial && !hasSpecialWeather}
+                      tabindex={selected && !(isSpecial && !hasSpecialWeather) ? 0 : -1}
+                      onclick={() => {
+                        userState.setWeather(weather);
+                      }}
                     >
-                      <SlotIcon class="size-3" />
-                      {weatherSlotDisplay[weather].label}
-                    </span>
-                  </button>
-                </div>
-              {/each}
+                      <span
+                        class="radio-strip__content"
+                        style:opacity={weatherSlotFading[weather] ? 0 : 1}
+                        style:transition-duration="{transitionDuration() / 2}ms"
+                      >
+                        <SlotIcon class="size-3" />
+                        {weatherSlotDisplay[weather].label}
+                      </span>
+                    </button>
+                  </div>
+                {/each}
+              </div>
             </div>
           </div>
         </div>
@@ -287,7 +341,12 @@
   {#if toolbarState.sourceFilters.length > 0}
     <section class="filter-section" aria-labelledby="sources-filter-label">
       <div class="filter-section__heading" class:filter-section__heading--compact={compact.current}>
-        {@render sectionHeading("sources", IconTags, m.visibility_source_types(), sourceSummary)}
+        {@render sectionHeading(
+          "sources",
+          IconTags,
+          m.visibility_source_types(),
+          sourceSummaryText,
+        )}
         <!-- Sits just left of the disclosure caret, so every section's caret lines up. -->
         {#if !isCollapsed("sources")}
           <button
@@ -298,58 +357,78 @@
           >
         {/if}
       </div>
-      <div id="sources-filter-body" class="chip-row" hidden={isCollapsed("sources")}>
-        {#each sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale) as filter (filter.id)}
-          {@const SourceIcon = SOURCE_FILTER_ICON[filter.id]}
-          {@const selected = toolbarState.enabledSourceFilterIds.has(filter.id)}
-          <button
-            class="filter-chip"
-            class:filter-chip--active={selected}
-            type="button"
-            aria-pressed={selected}
-            onclick={() => {
-              toolbarState.toggleSourceFilter(filter);
-              onFilterChange?.();
-            }}
-          >
-            <SourceIcon class="size-3" />{sourceFilterLabel(filter.id, page.data.locale)}
-          </button>
-        {/each}
+      <div
+        id="sources-filter-body"
+        class="collapsible"
+        class:collapsible--collapsed={isCollapsed("sources")}
+        inert={isCollapsed("sources")}
+      >
+        <div class="collapsible__inner">
+          <div class="chip-row">
+            {#each sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale) as filter (filter.id)}
+              {@const SourceIcon = SOURCE_FILTER_ICON[filter.id]}
+              {@const selected = toolbarState.enabledSourceFilterIds.has(filter.id)}
+              <button
+                class="filter-chip"
+                class:filter-chip--active={selected}
+                type="button"
+                aria-pressed={selected}
+                onclick={() => {
+                  toolbarState.toggleSourceFilter(filter);
+                  onFilterChange?.();
+                }}
+              >
+                <SourceIcon class="size-3" />{sourceFilterLabel(filter.id, page.data.locale)}
+              </button>
+            {/each}
+          </div>
+        </div>
       </div>
     </section>
   {/if}
 
   <section class="filter-section" aria-labelledby="show-filter-label">
-    {@render sectionHeading("show", IconEye, m.visibility_show_heading(), showSummary)}
-    <div id="show-filter-body" class="toggle-row" hidden={isCollapsed("show")}>
-      <div class="toggle">
-        <BlockySwitch
-          checked={userState.state.showCompleted}
-          onCheckedChange={() => {
-            userState.toggleShowCompleted();
-            onFilterChange?.();
-          }}
-        >
-          <span class="toggle__label"
-            ><IconCircleCheck class="size-3.5 shrink-0" />{m.visibility_completed_toggle()}</span
-          >
-        </BlockySwitch>
-      </div>
-      {#if toolbarState.hasAlmanacFilters}
-        <div class="toggle">
-          <BlockySwitch
-            checked={toolbarState.showUnobtainable}
-            onCheckedChange={() => {
-              toolbarState.showUnobtainable = !toolbarState.showUnobtainable;
-              onFilterChange?.();
-            }}
-          >
-            <span class="toggle__label"
-              ><IconBan class="size-3.5 shrink-0" />{m.visibility_unobtainable_toggle()}</span
+    {@render sectionHeading("show", IconEye, m.visibility_show_heading(), showSummaryText)}
+    <div
+      id="show-filter-body"
+      class="collapsible"
+      class:collapsible--collapsed={isCollapsed("show")}
+      inert={isCollapsed("show")}
+    >
+      <div class="collapsible__inner">
+        <div class="toggle-row">
+          <div class="toggle">
+            <BlockySwitch
+              checked={userState.state.showCompleted}
+              onCheckedChange={() => {
+                userState.toggleShowCompleted();
+                onFilterChange?.();
+              }}
             >
-          </BlockySwitch>
+              <span class="toggle__label"
+                ><IconCircleCheck
+                  class="size-3.5 shrink-0"
+                />{m.visibility_completed_toggle()}</span
+              >
+            </BlockySwitch>
+          </div>
+          {#if toolbarState.hasAlmanacFilters}
+            <div class="toggle">
+              <BlockySwitch
+                checked={toolbarState.showUnobtainable}
+                onCheckedChange={() => {
+                  toolbarState.showUnobtainable = !toolbarState.showUnobtainable;
+                  onFilterChange?.();
+                }}
+              >
+                <span class="toggle__label"
+                  ><IconBan class="size-3.5 shrink-0" />{m.visibility_unobtainable_toggle()}</span
+                >
+              </BlockySwitch>
+            </div>
+          {/if}
         </div>
-      {/if}
+      </div>
     </div>
   </section>
 </div>
@@ -438,6 +517,12 @@
     white-space: nowrap;
   }
 
+  .disclosure__icons {
+    display: inline-flex;
+    gap: 3px;
+    vertical-align: -2px;
+  }
+
   .disclosure__summary::before {
     content: "· ";
     color: var(--color-ink-muted);
@@ -445,7 +530,40 @@
 
   .disclosure :global(.disclosure__chevron) {
     margin-inline-start: auto;
-    transition: transform 150ms ease-out;
+    transition: transform 180ms ease-out;
+  }
+
+  /*
+   * Opening grows the height, then fades the contents in; closing fades them out, then shrinks.
+   * The inner box's padding & matching negative margin leave room for focus outlines.
+   */
+  .collapsible {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition:
+      grid-template-rows 180ms ease-out,
+      visibility 0s;
+  }
+
+  .collapsible__inner {
+    min-height: 0;
+    padding: 4px;
+    margin: -4px;
+    overflow: hidden;
+    transition: opacity 120ms ease-out 180ms;
+  }
+
+  .collapsible--collapsed {
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+      grid-template-rows 180ms ease-in 120ms,
+      visibility 0s 300ms;
+  }
+
+  .collapsible--collapsed > .collapsible__inner {
+    opacity: 0;
+    transition: opacity 120ms ease-in;
   }
 
   .disclosure[aria-expanded="true"] :global(.disclosure__chevron) {
@@ -647,8 +765,11 @@
     .radio-strip button,
     .radio-strip__content,
     .radio-strip--weather,
-    .disclosure :global(.disclosure__chevron) {
+    .disclosure :global(.disclosure__chevron),
+    .collapsible,
+    .collapsible__inner {
       transition-duration: 0.01ms !important;
+      transition-delay: 0s !important;
     }
   }
 </style>

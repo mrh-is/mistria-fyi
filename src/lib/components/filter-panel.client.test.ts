@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { tick } from "svelte";
+import { flushSync, tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import FilterPanel from "#lib/components/filter-panel.svelte";
@@ -260,51 +260,98 @@ describe("FilterPanel interactions", () => {
     const whenToFind = screen.getByRole("button", { name: /^When to find/ });
     const sourceTypes = screen.getByRole("button", { name: /^Source types/ });
     expect(whenToFind).toHaveAttribute("aria-expanded", "false");
-    expect(whenToFind).toHaveTextContent("When to find Now · Anytime · Spring · Sun");
+    // Season & weather show as icons, with their names for screen readers only.
+    expect(whenToFind).toHaveTextContent("When to find Now + anytime · Spring, Sun");
     expect(sourceTypes).toHaveAttribute("aria-expanded", "false");
-    expect(sourceTypes).toHaveTextContent("Source types 2 of 2");
+    expect(sourceTypes).toHaveTextContent("Source types All types");
 
     const whenToFindBody = document.getElementById(whenToFind.getAttribute("aria-controls") ?? "");
     const sourceTypesBody = document.getElementById(
       sourceTypes.getAttribute("aria-controls") ?? "",
     );
-    expect(whenToFindBody).not.toBeVisible();
-    expect(sourceTypesBody).not.toBeVisible();
-    expect(screen.queryByRole("button", { name: "Gathering" })).toBeNull();
+    // Collapsed bodies are inert at once & hidden by CSS once their closing transition ends.
+    expect(whenToFindBody).toHaveAttribute("inert");
+    expect(sourceTypesBody).toHaveAttribute("inert");
     expect(screen.queryByRole("button", { name: "About source types" })).toBeNull();
 
     await fireEvent.click(sourceTypes);
     expect(sourceTypes).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("button", { name: "About source types" })).toBeVisible();
     expect(sourceTypes).toHaveTextContent(/^Source types$/);
-    expect(sourceTypesBody).toBeVisible();
+    expect(sourceTypesBody).not.toHaveAttribute("inert");
     await fireEvent.click(screen.getByRole("button", { name: "Gathering" }));
-    expect(whenToFindBody).not.toBeVisible();
+    expect(whenToFindBody).toHaveAttribute("inert");
 
     await fireEvent.click(sourceTypes);
     expect(sourceTypes).toHaveAttribute("aria-expanded", "false");
-    expect(sourceTypes).toHaveTextContent("Source types 1 of 2");
-    expect(sourceTypesBody).not.toBeVisible();
+    expect(sourceTypes).toHaveTextContent("Source types Only stores");
+    expect(sourceTypesBody).toHaveAttribute("inert");
   });
 
-  it("collapses the show toggles into a disclosure summarizing which are on", async () => {
+  it("summarizes every time window as Everything, without season or weather", () => {
+    emulatePhone();
+    userState.toggleAvailabilityWindow("later");
+    render(FilterPanel, { showWorldStateFilters: true });
+
+    expect(screen.getByRole("button", { name: /^When to find/ })).toHaveTextContent(
+      /^When to find Everything$/,
+    );
+  });
+
+  it("lists up to three enabled source types, then counts them", () => {
+    emulatePhone();
+    const ids: SourceFilterId[] = ["chests", "fishing", "gathering", "museum", "stores"];
+    toolbarState.registerSourceFilters(
+      "test",
+      ids.map((id) => sourceFilter(id)),
+    );
+    render(FilterPanel, { showWorldStateFilters: false });
+    const sourceTypes = screen.getByRole("button", { name: /^Source types/ });
+    expect(sourceTypes).toHaveTextContent("Source types All types");
+
+    const summaries: string[] = [];
+    for (const id of ids) {
+      toolbarState.toggleSourceFilter(sourceFilter(id));
+      flushSync();
+      summaries.push(sourceTypes.textContent.replaceAll(/\s+/g, " ").trim());
+    }
+    expect(summaries).toEqual([
+      "Source types 4 of 5",
+      "Source types Gathering, museum, & stores",
+      "Source types Museum & stores",
+      "Source types Only stores",
+      "Source types No types",
+    ]);
+  });
+
+  it("names what the show toggles leave in view", async () => {
     emulatePhone();
     render(FilterPanel, { showWorldStateFilters: false });
 
     const show = screen.getByRole("button", { name: /^Show/ });
     expect(show).toHaveAttribute("aria-expanded", "false");
-    expect(show).toHaveTextContent("Show None");
-    expect(screen.queryByRole("switch", { name: "Completed" })).toBeNull();
+    expect(show).toHaveTextContent("Show To do");
+    expect(document.getElementById("show-filter-body")).toHaveAttribute("inert");
 
     userState.toggleShowCompleted();
+    await tick();
+    expect(show).toHaveTextContent("Show Everything");
+
     toolbarState.registerSourceFilters("almanac", []);
+    await tick();
+    expect(show).toHaveTextContent("Show Obtainable");
+
     toolbarState.showUnobtainable = true;
     await tick();
-    expect(show).toHaveTextContent("Show Completed · Unobtainable");
+    expect(show).toHaveTextContent("Show Everything");
+
+    userState.toggleShowCompleted();
+    await tick();
+    expect(show).toHaveTextContent("Show Uncompleted");
 
     await fireEvent.click(show);
     expect(show).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("switch", { name: "Completed" })).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Completed" })).not.toBeChecked();
     expect(screen.getByRole("switch", { name: "Unobtainable" })).toBeChecked();
   });
 
