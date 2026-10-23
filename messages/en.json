@@ -94,17 +94,6 @@
   "renown_page_description": "Track your town rank, renown, & rewards in Fields of Mistria.",
   "skills_page_description": "Track skill levels & perks in Fields of Mistria.",
   "no_items_match_filters": "No items match the current filters",
-  "almanac_loading_items": "Loading items…",
-  "show_more_count": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "Show {count} more…",
-        "countPlural=other": "Show {count} more…"
-      }
-    }
-  ],
   "animals_cosmetics_section_name": "Cosmetics",
   "animals_pet_cosmetics_section_name": "Pet cosmetics",
   "animals_pet_skins_section_name": "Pet skins",

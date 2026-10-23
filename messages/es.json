@@ -96,18 +96,6 @@
   "renown_page_description": "Sigue la categoría de tu aldea, su reputación y sus recompensas en Fields of Mistria.",
   "skills_page_description": "Sigue los niveles de habilidad y los dones de habilidad en Fields of Mistria.",
   "no_items_match_filters": "Ningún elemento coincide con los filtros actuales",
-  "almanac_loading_items": "Cargando elementos…",
-  "show_more_count": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "Mostrar {count} más…",
-        "countPlural=many": "Mostrar {count} más…",
-        "countPlural=other": "Mostrar {count} más…"
-      }
-    }
-  ],
   "animals_cosmetics_section_name": "Cosméticos",
   "animals_pet_cosmetics_section_name": "Cosméticos de mascota",
   "animals_pet_skins_section_name": "Aspectos de mascota",

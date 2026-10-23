@@ -92,16 +92,6 @@
   "renown_page_description": "追踪《Fields of Mistria》中你的城镇等级、声望与奖励。",
   "skills_page_description": "追踪《Fields of Mistria》中的技能等级与技能特长。",
   "no_items_match_filters": "没有符合当前筛选条件的物品",
-  "almanac_loading_items": "正在加载物品…",
-  "show_more_count": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=other": "显示另外 {count} 个…"
-      }
-    }
-  ],
   "animals_cosmetics_section_name": "装饰",
   "animals_pet_cosmetics_section_name": "宠物装饰",
   "animals_pet_skins_section_name": "宠物皮肤",
