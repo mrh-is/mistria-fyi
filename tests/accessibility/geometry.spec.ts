@@ -314,7 +314,6 @@ test.describe("tracker paper touch geometry", () => {
     );
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
-    await page.getByRole("button", { name: /Show \d+ more/ }).click();
 
     await expect(page.getByRole("button", { name: "Reveal spoiler" }).first()).toBeVisible();
     // Long names wrap at 320 pixels; measure a cover that fits on one line.

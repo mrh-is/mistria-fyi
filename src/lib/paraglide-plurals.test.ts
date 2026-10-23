@@ -17,10 +17,6 @@ describe("plural messages", () => {
         expect(result).not.toBe("search_results_count");
         expect(result).toContain(count.toString());
 
-        const showMoreResult = m.show_more_count({ count }, { locale });
-        expect(showMoreResult).not.toBe("show_more_count");
-        expect(showMoreResult).toContain(count.toString());
-
         const questRecipesResult = m.quest_marked_completed_with_recipes(
           { count, name: "Copper Sword" },
           { locale },
@@ -53,15 +49,6 @@ describe("plural messages", () => {
     expect(m.search_results_count({ count: 5 }, { locale })).toBe("5 результатов");
     expect(m.search_results_count({ count: 11 }, { locale })).toBe("11 результатов");
     expect(m.search_results_count({ count: 0 }, { locale })).toBe("0 результатов");
-  });
-
-  it("resolves all four Russian plural categories for the almanac show-more count", () => {
-    const locale: Locale = "ru";
-
-    expect(m.show_more_count({ count: 1 }, { locale })).toBe("Показать ещё 1…");
-    expect(m.show_more_count({ count: 3 }, { locale })).toBe("Показать ещё 3…");
-    expect(m.show_more_count({ count: 5 }, { locale })).toBe("Показать ещё 5…");
-    expect(m.show_more_count({ count: 11 }, { locale })).toBe("Показать ещё 11…");
   });
 
   it("interpolates the item name alongside the recipe-count plural", () => {

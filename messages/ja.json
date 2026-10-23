@@ -92,16 +92,6 @@
   "renown_page_description": "Fields of Mistriaのタウンランク、名声、報酬を記録します。",
   "skills_page_description": "Fields of Mistriaのスキルレベルとスキルボーナスを記録します。",
   "no_items_match_filters": "現在のフィルターに一致するアイテムがありません",
-  "almanac_loading_items": "アイテムを読み込み中…",
-  "show_more_count": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=other": "他{count}件を表示…"
-      }
-    }
-  ],
   "animals_cosmetics_section_name": "コスメ",
   "animals_pet_cosmetics_section_name": "ペットのコスメ",
   "animals_pet_skins_section_name": "ペットのスキン",

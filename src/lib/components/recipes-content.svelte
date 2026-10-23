@@ -122,8 +122,6 @@
     }),
   );
 
-  const expandedSections = $state<Record<string, boolean>>({});
-
   function toggleRecipe(entry: RecipeEntry, sectionId: string, sectionRecipeIds: RecipeId[]): void {
     sectionGrouping.hold(sectionId);
     userState.toggleAlmanacRecipe(entry.id);
@@ -152,15 +150,7 @@
         reportEntityId={group.id}
         total={scopedEntries.length}
       >
-        <TrackerRowList
-          expanded={expandedSections[group.id] ?? false}
-          getKey={(entry) => entry.id}
-          items={filteredEntries}
-          limited
-          onShowMore={() => {
-            expandedSections[group.id] = true;
-          }}
-        >
+        <TrackerRowList getKey={(entry) => entry.id} items={filteredEntries}>
           {#snippet row(entry)}
             {@const completed = userState.state.progress.almanacRecipes.has(entry.id)}
             <TrackerRow

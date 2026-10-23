@@ -92,16 +92,6 @@
   "renown_page_description": "Fields of Mistria의 마을 등급, 명성, 보상을 기록하세요.",
   "skills_page_description": "Fields of Mistria의 스킬 레벨과 스킬 특성을 기록하세요.",
   "no_items_match_filters": "현재 필터와 일치하는 항목이 없습니다",
-  "almanac_loading_items": "항목을 불러오는 중…",
-  "show_more_count": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=other": "{count}개 더 보기…"
-      }
-    }
-  ],
   "animals_cosmetics_section_name": "코스메틱",
   "animals_pet_cosmetics_section_name": "펫 코스메틱",
   "animals_pet_skins_section_name": "펫 스킨",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { SECTION_ROW_LIMIT, sectionRowLimit, trackerRowDisplay } from "#lib/utils/row-display.js";
+import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
 describe("trackerRowDisplay", () => {
   it("defaults to a visible, undimmed row", () => {
@@ -29,16 +29,5 @@ describe("trackerRowDisplay", () => {
     expect(trackerRowDisplay({ completed: false, spoilered: true })).toEqual({
       mode: "spoilered",
     });
-  });
-});
-
-describe("sectionRowLimit", () => {
-  it("caps a collapsed section at the limit", () => {
-    expect(sectionRowLimit(SECTION_ROW_LIMIT + 10, false)).toBe(SECTION_ROW_LIMIT);
-    expect(sectionRowLimit(3, false)).toBe(3);
-  });
-
-  it("renders every row once expanded", () => {
-    expect(sectionRowLimit(SECTION_ROW_LIMIT + 10, true)).toBe(SECTION_ROW_LIMIT + 10);
   });
 });

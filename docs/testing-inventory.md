@@ -75,7 +75,8 @@ single-component row's marks disagree with its test files.
 | ----------------------------------------- | :----: | :--------: | --------------------------------------------------------- |
 | `tracker-row`                             |   ✓    |     ✓      | Spoiler, completion, source papers, focus, sprite preview |
 | `tracker-row-stack`                       |   ✓    |            | Layout only                                               |
-| `tracker-row-list`                        |        |     ✓      | Row cap, show more, progressive count, empty note         |
+| `tracker-row-list`                        |   ✓    |     ✓      | Prerender, reveal over frames, reserve, busy, undo, empty |
+| `row-reveal` (controller)                 |        |     ✓      | Height estimate, shared frames, one frame chain           |
 | `tracker-empty-state`                     |        | via parent | Through `tracker-row-list`                                |
 | `tracker-checkbox`                        |        |     ✓      | Label, click forwarding, visual states                    |
 | `tracker-paper`                           |        |            | Layout only; no interaction                               |

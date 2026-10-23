@@ -16,7 +16,6 @@
     forceOpen = false,
     locale = "en",
     name = "Test Section",
-    onExpandedChange,
     reportCategory,
     reportEntityId,
     reportExtra,
@@ -29,7 +28,6 @@
     forceOpen?: boolean;
     locale?: LocaleCode;
     name?: string;
-    onExpandedChange?: (expanded: boolean) => void;
     reportCategory?: ReportCategory;
     reportEntityId?: string;
     reportExtra?: Record<string, number | string>;
@@ -46,7 +44,6 @@
   {depth}
   {forceOpen}
   {name}
-  {onExpandedChange}
   {reportCategory}
   {reportEntityId}
   {reportExtra}

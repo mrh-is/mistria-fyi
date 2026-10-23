@@ -1,6 +1,6 @@
 import { fireEvent, render, waitFor, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import ExpandableSectionHarness from "#lib/components/expandable-section.test-harness.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -23,20 +23,6 @@ describe("ExpandableSection", () => {
     await fireEvent.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(document.getElementById(contentId)).toBeInTheDocument();
-  });
-
-  it("reports effective expansion on mount, toggles, and forced expansion", async () => {
-    const onExpandedChange = vi.fn();
-    const props = { feedbackContext: new FeedbackContext(), name: "Spells", onExpandedChange };
-    const view = render(ExpandableSectionHarness, props);
-    expect(onExpandedChange).toHaveBeenLastCalledWith(false);
-    await fireEvent.click(view.getByRole("button", { name: "Spells" }));
-    expect(onExpandedChange).toHaveBeenLastCalledWith(true);
-    await fireEvent.click(view.getByRole("button", { name: "Spells" }));
-    expect(onExpandedChange).toHaveBeenLastCalledWith(false);
-    await view.rerender({ ...props, forceOpen: true });
-    expect(onExpandedChange).toHaveBeenLastCalledWith(true);
-    expect(onExpandedChange).toHaveBeenCalledTimes(4);
   });
 
   it("formats progress using the caller’s locale", () => {
@@ -137,24 +123,6 @@ describe("ExpandableSection", () => {
       "aria-expanded",
       "false",
     );
-  });
-
-  it("reports expansion state changes", async () => {
-    const states: boolean[] = [];
-    const view = render(ExpandableSectionHarness, {
-      feedbackContext: new FeedbackContext(),
-      name: "Spells",
-      onExpandedChange: (expanded: boolean) => {
-        states.push(expanded);
-      },
-    });
-
-    const trigger = view.getByRole("button", { name: "Spells" });
-    await tick();
-    await fireEvent.click(trigger);
-    await fireEvent.click(trigger);
-
-    expect(states).toEqual([false, true, false]);
   });
 
   it("registers when reportCategory is provided", async () => {

@@ -27,7 +27,6 @@
     forceOpen = false,
     locale,
     name,
-    onExpandedChange,
     reportCategory,
     reportEntityId,
     reportExtra,
@@ -40,7 +39,6 @@
     forceOpen?: boolean;
     locale: LocaleCode;
     name: string;
-    onExpandedChange?: (expanded: boolean) => void;
     reportCategory?: ReportCategory;
     reportEntityId?: string;
     reportExtra?: Record<string, number | string>;
@@ -99,12 +97,6 @@
         report(undefined);
       });
     };
-  });
-
-  $effect(() => {
-    const open = isOpen;
-    // Notify the parent of effective state, including externally forced expansion.
-    untrack(() => onExpandedChange?.(open));
   });
 
   function toggleExpanded(): void {
