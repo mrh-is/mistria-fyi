@@ -76,7 +76,9 @@ message that mentions one of these concepts, use the term below.
 - **Perks** follow the game's skill-perk tutorial (`ui/tutorials/skill_perks/title`) and its
   dialogue. Standalone labels use the full term; English keeps "perk", which the game uses on its
   own ("Select a perk to see its description"). Note: the game calls skills умения in Russian and
-  perks навыки.
+  perks навыки. Note: French names the perk menu « Bonus de compétences » (plural compétences,
+  `ui/tutorials/skill_perks/steps/1/text`), so labels for a set of perks use that plural, while a
+  single perk is a « bonus de compétence ».
 
 | Concept   | en        | es                      | fr                       | ja             | ko        | ru          | zh-Hans  | zh-Hant  |
 | --------- | --------- | ----------------------- | ------------------------ | -------------- | --------- | ----------- | -------- | -------- |

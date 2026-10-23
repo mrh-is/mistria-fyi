@@ -174,6 +174,20 @@ describe("fields mutated from a real save", () => {
     });
   });
 
+  it("imports bought perks the player has switched off", () => {
+    const player = bundle.player as {
+      perks: string[];
+      stats: { perks_active: Record<string, boolean> };
+    };
+    const switchedOff = Object.entries(player.stats.perks_active)
+      .filter(([id, active]) => !active && player.perks.includes(id))
+      .map(([id]) => id);
+    expect(switchedOff.length).toBeGreaterThan(0);
+
+    const imported = extractSave(bundle).fields.unlockedPerks.value ?? new Set();
+    for (const id of switchedOff) expect(imported.has(id as never), id).toBe(true);
+  });
+
   it("marks a field with a renamed ID unknown but keeps its other values", () => {
     const original = extractSave(bundle).fields.unlockedPerks.value ?? new Set();
     const [renamedId] = original;
