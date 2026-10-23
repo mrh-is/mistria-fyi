@@ -415,6 +415,17 @@ describe("extractSaveProgress", () => {
     expect(warnings).toEqual([]);
   });
 
+  it("imports a bought perk the player has switched off", () => {
+    // Switching a perk off clears its `perks_active` flag & `perk_unlocked_*` world fact, but the
+    // game keeps it in `player.perks`, so it still counts as bought.
+    const bundle = {
+      gamedata: { t2_world_facts: { perk_unlocked_magic_design: 0 } },
+      player: { perks: ["magic_design"], stats: { perks_active: { magic_design: false } } },
+    };
+    const { completed } = extractSaveProgress(bundle);
+    expect(completed.unlockedPerks).toEqual(new Set(["magic_design"]));
+  });
+
   describe("new progression fields from save", () => {
     it("extracts hasUpperFloor from player.upper_floor", () => {
       const bundle: SaveBundle = {

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import SkillRecordHarness from "#lib/components/skill-record.test-harness.svelte";
+import { perksOfSkill } from "#lib/engine/projections/skills.js";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
@@ -62,7 +63,9 @@ describe("SkillRecord", () => {
     expect(segments[0].querySelector("i")).toHaveStyle("width: 100%");
     expect(segments[1].querySelector("i")).toHaveStyle("width: 46.666666666666664%");
     expect(segments[2].querySelector("i")).toHaveStyle("width: 0%");
-    expect(view.getByText("22 / 60")).toBeInTheDocument();
+    expect(
+      view.getByRole("button", { name: "Edit Mining level, currently 22 of 60" }),
+    ).toHaveTextContent("Level 22 / 60");
     expect(view.getByRole("group", { name: "Mining level, 22 of 60" })).toBeInTheDocument();
   });
 
@@ -78,19 +81,34 @@ describe("SkillRecord", () => {
     let input = view.getByRole("spinbutton", { name: "Mining level" });
     await fireEvent.input(input, { target: { value: "31" } });
     await fireEvent.keyDown(input, { key: "Enter" });
-    expect(view.getByText("31 / 60")).toBeInTheDocument();
+    expect(editButton()).toHaveTextContent("Level 31 / 60");
 
     await fireEvent.click(editButton());
     input = view.getByRole("spinbutton", { name: "Mining level" });
     await fireEvent.input(input, { target: { value: "not-a-number" } });
     await fireEvent.blur(input);
-    expect(view.getByText("31 / 60")).toBeInTheDocument();
+    expect(editButton()).toHaveTextContent("Level 31 / 60");
 
     await fireEvent.click(editButton());
     input = view.getByRole("spinbutton", { name: "Mining level" });
     await fireEvent.input(input, { target: { value: "55" } });
     await fireEvent.keyDown(input, { key: "Escape" });
-    expect(view.getByText("31 / 60")).toBeInTheDocument();
+    expect(editButton()).toHaveTextContent("Level 31 / 60");
+  });
+
+  it("offers the skill's perks below its level", () => {
+    const view = render(SkillRecordHarness, {
+      feedbackContext: new FeedbackContext(),
+      id: skillId,
+      name: "Mining",
+    });
+
+    const record = view.container.querySelector("[data-skill-record]");
+    expect(record?.querySelector("[data-skill-perks]")).not.toBeNull();
+    expect(view.getByRole("button", { name: /^Mining perks, \d+ locked$/ })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
   });
 
   it("keeps controls bounded and marks completion without color alone", async () => {
@@ -110,10 +128,15 @@ describe("SkillRecord", () => {
     await waitFor(() => {
       expect(view.getByRole("button", { name: "Increase Mining level" })).toBeDisabled();
     });
-    expect(view.container.querySelector("[data-skill-record]")).toHaveAttribute(
-      "data-maxed",
-      "true",
-    );
+    // Level 60 alone leaves the skill incomplete while it has perks to buy.
+    const record = view.container.querySelector("[data-skill-record]");
+    expect(record).toHaveAttribute("data-complete", "false");
+    expect(view.queryByTestId("skill-completion-mark")).toBeNull();
+
+    for (const perkId of perksOfSkill(skillId)) userState.togglePerk(perkId);
+    await waitFor(() => {
+      expect(record).toHaveAttribute("data-complete", "true");
+    });
     expect(view.getByTestId("skill-completion-mark")).toBeInTheDocument();
   });
 });

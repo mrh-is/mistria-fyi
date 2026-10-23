@@ -4,7 +4,7 @@
   import { Icon } from "#lib/components/icon/index.js";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import VillagerSearchResult from "#lib/components/villager-search-result.svelte";
-  import { categoryNameForKey } from "#lib/data/categories.js";
+  import { categoryColor, categoryNameForKey } from "#lib/data/categories.js";
   import { trackerData } from "#lib/data/index.js";
   import { hasNames, loadNames, NAME_CHUNKS } from "#lib/data/names.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
@@ -199,7 +199,9 @@
     {#each results as result (result.category + result.id)}
       {@const label = result.fullName ?? result.name}
       <div class="search-result">
-        <div class="min-w-0 flex-1">
+        <!-- Each row takes its category's accent, as under its category page's layout, so a
+             pictured row's silhouette has that page's tint. -->
+        <div class="min-w-0 flex-1" style="--primary: {categoryColor(result.category)}">
           {#if result.category === "villagers"}
             <VillagerSearchResult
               completed={result.completed}
@@ -217,6 +219,7 @@
               reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
               reportEntityId={result.id}
               sources={getSources(result)}
+              sprite={result.sprite}
               onToggle={() => {
                 if (result.category === "quests") {
                   handleQuestToggle(result);

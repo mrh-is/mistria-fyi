@@ -17,6 +17,7 @@ const showQuestToast = vi.hoisted(() => vi.fn());
 vi.mock("#lib/effects/undo-toast.js", () => ({ showQuestToast, showUndoToast }));
 
 afterEach(() => {
+  vi.restoreAllMocks();
   userState.resetAll();
   showUndoToast.mockReset();
   showQuestToast.mockReset();
@@ -34,6 +35,57 @@ describe("SearchResults category tags", () => {
       expect(icon).toHaveAttribute("aria-hidden", "true");
       expect(icon).toHaveClass("search-result__category-icon");
     }
+  });
+});
+
+describe("SearchResults pictures", () => {
+  it("pictures almanac and museum rows with their item under their category's accent", () => {
+    const { id, name } = overlappingFixture();
+
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
+
+    for (const [category, key] of [
+      ["Almanac", "almanac"],
+      ["Museum", "museum"],
+    ] as const) {
+      const slot = resultRow(category, name).querySelector("[data-sprite-slot]");
+      expect(slot).toHaveAttribute("data-sprite-slot", "ready");
+      expect(slot?.querySelector("image")?.getAttribute("href")).toContain(id);
+      expect(slot?.closest<HTMLElement>("[style]")?.style.getPropertyValue("--primary")).toBe(
+        `var(--color-category-${key})`,
+      );
+    }
+  });
+
+  it("pictures a villager row with the portrait the Villagers page shows", () => {
+    // A loaded image, so the portrait isn't swapped for its fallback.
+    vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(44);
+
+    renderWithFeedback(SearchResults, { locale: "en", query: "Adeline" });
+
+    const link = screen.getByRole("link", { name: /^Adeline relationship level/ });
+    const portrait = link.querySelector("img");
+    expect(portrait?.getAttribute("src")).toMatch(/\/sprites\/villagers\/adeline\.webp\?/);
+    expect(portrait).toHaveAttribute("alt", "");
+    expect(portrait?.closest("[aria-hidden='true']")).not.toBeNull();
+  });
+
+  it("falls back to the villager's initial when the portrait can't load, as on their page", () => {
+    vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(0);
+
+    renderWithFeedback(SearchResults, { locale: "en", query: "Adeline" });
+
+    const link = screen.getByRole("link", { name: /^Adeline relationship level/ });
+    expect(link.querySelector("img")).toBeNull();
+    expect(within(link).getByTestId("villager-portrait-fallback")).toHaveTextContent("A");
+  });
+
+  it("leaves a quest row unpictured, as on the Quests page", () => {
+    const { name } = questFixture();
+
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
+
+    expect(resultRow("Quests", name).querySelector("[data-sprite-slot]")).toBeNull();
   });
 });
 
@@ -220,13 +272,17 @@ function overlappingFixture(): { id: ItemId; name: string } {
 
 /** The toggle button in the search row whose category badge reads `category`. */
 function rowToggle(category: string, name: string): HTMLElement {
+  return within(resultRow(category, name)).getByRole("button", { name: `Check ${name}` });
+}
+
+/** The search row for `name` whose category badge reads `category`. */
+function resultRow(category: string, name: string): HTMLElement {
   const toggleName = `Check ${name}`;
   for (const badge of screen.getAllByText(category, {
     selector: ".search-result__category-name",
   })) {
     const row = badge.closest<HTMLElement>(".search-result");
-    const toggle = row && within(row).queryByRole("button", { name: toggleName });
-    if (toggle) return toggle;
+    if (row && within(row).queryByRole("button", { name: toggleName })) return row;
   }
   throw new Error(`Expected a ${category} search row with a "${toggleName}" toggle`);
 }
