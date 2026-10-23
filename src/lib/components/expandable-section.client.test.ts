@@ -65,6 +65,15 @@ describe("ExpandableSection", () => {
     );
   });
 
+  it("renders its trigger on the shared section trigger surface", () => {
+    const view = render(ExpandableSectionHarness, {
+      feedbackContext: new FeedbackContext(),
+      name: "Spells",
+    });
+
+    expect(view.getByRole("button", { name: "Spells" })).toHaveAttribute("data-section-trigger");
+  });
+
   it("renders a spaced count and a bounded decorative progress rule", () => {
     const view = render(ExpandableSectionHarness, {
       count: 7,
