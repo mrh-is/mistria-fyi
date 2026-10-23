@@ -535,7 +535,7 @@
    */
   .filters {
     --disclosure-open-ms: 260ms;
-    --disclosure-close-ms: 200ms;
+    --disclosure-close-ms: 240ms;
     --disclosure-ease: cubic-bezier(0.2, 0.6, 0.35, 1);
   }
 
