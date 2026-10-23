@@ -215,6 +215,7 @@
   "visibility_source_types_about_aria": "О типах источников",
   "visibility_source_types_summary": "{enabled} из {total}",
   "visibility_show_heading": "Показать",
+  "visibility_show_none": "Ничего",
   "visibility_completed_toggle": "Завершённые",
   "visibility_unobtainable_toggle": "Недоступные",
   "source_explainer_overline": "Инвентарь путеводителя",

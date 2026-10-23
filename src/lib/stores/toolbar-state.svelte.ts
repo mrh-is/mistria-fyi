@@ -4,7 +4,7 @@ import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
 import type { Source } from "#lib/types/acquisition.js";
 
 /** The filter-panel sections that collapse into disclosures on phones. */
-export type FilterSectionId = "availability" | "sources";
+export type FilterSectionId = "availability" | "show" | "sources";
 
 export class ToolbarState {
   enabledSourceFilterIds = $state<SvelteSet<SourceFilterId>>(new SvelteSet());

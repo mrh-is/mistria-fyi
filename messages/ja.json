@@ -206,6 +206,7 @@
   "visibility_source_types_about_aria": "入手方法の種類について",
   "visibility_source_types_summary": "{enabled}/{total}",
   "visibility_show_heading": "表示",
+  "visibility_show_none": "なし",
   "visibility_completed_toggle": "完了済み",
   "visibility_unobtainable_toggle": "入手不可",
   "source_explainer_overline": "フィールドガイドの持ち物",

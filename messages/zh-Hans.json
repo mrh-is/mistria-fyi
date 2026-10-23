@@ -206,6 +206,7 @@
   "visibility_source_types_about_aria": "关于来源类型",
   "visibility_source_types_summary": "{enabled}/{total}",
   "visibility_show_heading": "显示",
+  "visibility_show_none": "无",
   "visibility_completed_toggle": "已完成",
   "visibility_unobtainable_toggle": "无法获取",
   "source_explainer_overline": "田野指南物品栏",

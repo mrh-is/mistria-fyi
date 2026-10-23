@@ -63,6 +63,14 @@
       total: toolbarState.sourceFilters.length,
     }),
   );
+  let showSummary = $derived(
+    [
+      ...(userState.state.showCompleted ? [m.visibility_completed_toggle()] : []),
+      ...(toolbarState.hasAlmanacFilters && toolbarState.showUnobtainable
+        ? [m.visibility_unobtainable_toggle()]
+        : []),
+    ].join(" · ") || m.visibility_show_none(),
+  );
   let availableWeathers = $derived(weathersForSeason(currentSeason));
   let hasSpecialWeather = $derived(availableWeathers.includes("special"));
   let weatherColumns = $derived(
@@ -278,14 +286,17 @@
 
   {#if toolbarState.sourceFilters.length > 0}
     <section class="filter-section" aria-labelledby="sources-filter-label">
-      <div class="filter-section__heading">
+      <div class="filter-section__heading" class:filter-section__heading--compact={compact.current}>
         {@render sectionHeading("sources", IconTags, m.visibility_source_types(), sourceSummary)}
-        <button
-          class="info-button"
-          type="button"
-          aria-label={m.visibility_source_types_about_aria()}
-          onclick={() => (sourcesExplainerOpen = true)}><IconInfoCircle class="size-4" /></button
-        >
+        <!-- Sits just left of the disclosure caret, so every section's caret lines up. -->
+        {#if !isCollapsed("sources")}
+          <button
+            class="info-button"
+            type="button"
+            aria-label={m.visibility_source_types_about_aria()}
+            onclick={() => (sourcesExplainerOpen = true)}><IconInfoCircle class="size-4" /></button
+          >
+        {/if}
       </div>
       <div id="sources-filter-body" class="chip-row" hidden={isCollapsed("sources")}>
         {#each sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale) as filter (filter.id)}
@@ -309,8 +320,8 @@
   {/if}
 
   <section class="filter-section" aria-labelledby="show-filter-label">
-    <h3 id="show-filter-label"><IconEye class="size-3.5" />{m.visibility_show_heading()}</h3>
-    <div class="toggle-row">
+    {@render sectionHeading("show", IconEye, m.visibility_show_heading(), showSummary)}
+    <div id="show-filter-body" class="toggle-row" hidden={isCollapsed("show")}>
       <div class="toggle">
         <BlockySwitch
           checked={userState.state.showCompleted}
@@ -375,6 +386,26 @@
   .filter-section__heading h3 {
     min-width: 0;
     flex: 1;
+  }
+
+  /* The disclosure spans the row; the info button overlays it just left of the caret. */
+  .filter-section__heading--compact {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .filter-section__heading--compact > * {
+    grid-row: 1;
+  }
+
+  .filter-section__heading--compact h3 {
+    grid-column: 1 / -1;
+  }
+
+  .filter-section__heading--compact .info-button {
+    z-index: 1;
+    grid-column: 2;
+    margin-inline-end: 20px;
   }
 
   .disclosure {

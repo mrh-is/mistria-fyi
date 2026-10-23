@@ -212,6 +212,7 @@
   "visibility_source_types_about_aria": "À propos des types de source",
   "visibility_source_types_summary": "{enabled} sur {total}",
   "visibility_show_heading": "Afficher",
+  "visibility_show_none": "Aucun",
   "visibility_completed_toggle": "Terminés",
   "visibility_unobtainable_toggle": "Impossibles à obtenir",
   "source_explainer_overline": "Inventaire du guide",

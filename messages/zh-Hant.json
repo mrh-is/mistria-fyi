@@ -206,6 +206,7 @@
   "visibility_source_types_about_aria": "關於來源類型",
   "visibility_source_types_summary": "{enabled}/{total}",
   "visibility_show_heading": "顯示",
+  "visibility_show_none": "無",
   "visibility_completed_toggle": "已完成",
   "visibility_unobtainable_toggle": "無法取得",
   "source_explainer_overline": "田野指南物品欄",

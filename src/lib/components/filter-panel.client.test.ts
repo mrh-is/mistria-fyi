@@ -271,9 +271,11 @@ describe("FilterPanel interactions", () => {
     expect(whenToFindBody).not.toBeVisible();
     expect(sourceTypesBody).not.toBeVisible();
     expect(screen.queryByRole("button", { name: "Gathering" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "About source types" })).toBeNull();
 
     await fireEvent.click(sourceTypes);
     expect(sourceTypes).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: "About source types" })).toBeVisible();
     expect(sourceTypes).toHaveTextContent(/^Source types$/);
     expect(sourceTypesBody).toBeVisible();
     await fireEvent.click(screen.getByRole("button", { name: "Gathering" }));
@@ -283,6 +285,27 @@ describe("FilterPanel interactions", () => {
     expect(sourceTypes).toHaveAttribute("aria-expanded", "false");
     expect(sourceTypes).toHaveTextContent("Source types 1 of 2");
     expect(sourceTypesBody).not.toBeVisible();
+  });
+
+  it("collapses the show toggles into a disclosure summarizing which are on", async () => {
+    emulatePhone();
+    render(FilterPanel, { showWorldStateFilters: false });
+
+    const show = screen.getByRole("button", { name: /^Show/ });
+    expect(show).toHaveAttribute("aria-expanded", "false");
+    expect(show).toHaveTextContent("Show None");
+    expect(screen.queryByRole("switch", { name: "Completed" })).toBeNull();
+
+    userState.toggleShowCompleted();
+    toolbarState.registerSourceFilters("almanac", []);
+    toolbarState.showUnobtainable = true;
+    await tick();
+    expect(show).toHaveTextContent("Show Completed · Unobtainable");
+
+    await fireEvent.click(show);
+    expect(show).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("switch", { name: "Completed" })).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Unobtainable" })).toBeChecked();
   });
 
   it("remembers expanded sections for the session across panel openings", async () => {
