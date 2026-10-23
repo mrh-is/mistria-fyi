@@ -2,7 +2,7 @@
   import SkillRecord from "#lib/components/skill-record.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
+  import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordKeys } from "#lib/utils/record.js";
@@ -21,8 +21,7 @@
 
 <ul class="skill-ledger" aria-label={m.skills_ledger_aria()}>
   {#each skills as skill (skill.id)}
-    {@const level = userState.state.progress.skillLevels[skill.id] ?? 0}
-    {#if level >= MAX_SKILL_LEVEL ? userState.state.showCompleted : true}
+    {#if !isSkillComplete(skill.id, userState.state.progress) || userState.state.showCompleted}
       <SkillRecord {compact} id={skill.id} {locale} name={skill.name} />
     {/if}
   {/each}

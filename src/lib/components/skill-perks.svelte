@@ -2,12 +2,14 @@
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
+  import { celebrateCategory } from "#lib/effects/celebrate.js";
+  import { isCategoryComplete } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordKeys } from "#lib/utils/record.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { SkillId } from "#lib/types/tracker-data.js";
+  import type { PerkId, SkillId } from "#lib/types/tracker-data.js";
 
   let { id, locale, name }: { id: SkillId; locale: LocaleCode; name: string } = $props();
 
@@ -34,6 +36,12 @@
     ),
   );
   let skillLevel = $derived(userState.state.progress.skillLevels[id] ?? 0);
+
+  function togglePerkWithCelebration(perkId: PerkId): void {
+    const wasDone = isCategoryComplete("skills", userState.state);
+    userState.togglePerk(perkId);
+    if (!wasDone && isCategoryComplete("skills", userState.state)) celebrateCategory();
+  }
 </script>
 
 <div class="skill-perks" data-skill-perks data-expanded={expanded}>
@@ -80,7 +88,7 @@
                     ? m.tracker_row_uncheck({ name: perk.name })
                     : m.tracker_row_check({ name: perk.name })}
                   onclick={() => {
-                    userState.togglePerk(perk.id);
+                    togglePerkWithCelebration(perk.id);
                   }}
                 />
                 <span class="skill-perks__perk-name">{perk.name}</span>

@@ -6,6 +6,7 @@
   import { celebrateCategory } from "#lib/effects/celebrate.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
+  import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -31,7 +32,7 @@
 
   const feedbackContext = getFeedbackContext();
   let level = $derived(userState.state.progress.skillLevels[id] ?? 0);
-  let maxed = $derived(level >= MAX_SKILL_LEVEL);
+  let complete = $derived(isSkillComplete(id, userState.state.progress));
   let reportable = $derived(
     feedbackContext.reportableAttachment({
       category: "skill",
@@ -51,10 +52,6 @@
       editInputRef.select();
     }
   });
-
-  function areAllSkillsMaxed(): boolean {
-    return isCategoryComplete("skills", userState.state);
-  }
 
   function commitEdit(): void {
     const value = Number(editValue);
@@ -76,9 +73,9 @@
   }
 
   function setLevelWithCelebration(newLevel: number): void {
-    const wasDone = areAllSkillsMaxed();
+    const wasDone = isCategoryComplete("skills", userState.state);
     userState.setSkillLevel(id, newLevel);
-    if (!wasDone && areAllSkillsMaxed()) celebrateCategory();
+    if (!wasDone && isCategoryComplete("skills", userState.state)) celebrateCategory();
   }
 
   function startEditing(): void {
@@ -91,11 +88,11 @@
   class="skill-record"
   data-skill-record
   data-compact={compact}
-  data-maxed={maxed}
+  data-complete={complete}
   {@attach reportable}
 >
   <span class="skill-name">
-    {#if maxed}
+    {#if complete}
       <span data-testid="skill-completion-mark">
         <IconCompletion state="completed" class="skill-completion-mark" />
       </span>
@@ -180,7 +177,7 @@
     border-radius: 0 0 var(--radius) var(--radius);
   }
 
-  .skill-record[data-maxed="true"] {
+  .skill-record[data-complete="true"] {
     color: var(--color-ink-muted);
   }
 

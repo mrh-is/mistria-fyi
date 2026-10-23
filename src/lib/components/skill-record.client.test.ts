@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import SkillRecordHarness from "#lib/components/skill-record.test-harness.svelte";
+import { perksOfSkill } from "#lib/engine/projections/skills.js";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
@@ -125,10 +126,15 @@ describe("SkillRecord", () => {
     await waitFor(() => {
       expect(view.getByRole("button", { name: "Increase Mining level" })).toBeDisabled();
     });
-    expect(view.container.querySelector("[data-skill-record]")).toHaveAttribute(
-      "data-maxed",
-      "true",
-    );
+    // Level 60 alone leaves the skill incomplete while it has perks to buy.
+    const record = view.container.querySelector("[data-skill-record]");
+    expect(record).toHaveAttribute("data-complete", "false");
+    expect(view.queryByTestId("skill-completion-mark")).toBeNull();
+
+    for (const perkId of perksOfSkill(skillId)) userState.togglePerk(perkId);
+    await waitFor(() => {
+      expect(record).toHaveAttribute("data-complete", "true");
+    });
     expect(view.getByTestId("skill-completion-mark")).toBeInTheDocument();
   });
 });

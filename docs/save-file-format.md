@@ -161,7 +161,13 @@ evidence.
 | ---------------- | ------------------------ | -------------------------------------------------------- |
 | `skill_xp`       | `Record<string, number>` | XP totals per skill (not levels; levels are in gamedata) |
 | `spells_learned` | `string[]`               | Spell IDs the player has unlocked                        |
-| `perks`          | `string[]`               | Perk IDs the player has selected                         |
+| `perks`          | `string[]`               | Perk IDs the player has bought                           |
+
+`perks` keeps a bought perk after the player switches it off in the perk menu. Switching off clears
+the perk's `stats.perks_active` flag and its `perk_unlocked_<id>` world fact, so neither records
+ownership: `perks_active` lists every perk as `true` in a fresh save, and in the late-game v1.0.8
+save nine bought perks read `false` in both. The importer reads `perks` alone, so a switched-off
+perk still counts toward its skill's completion.
 
 ### Other notable fields
 

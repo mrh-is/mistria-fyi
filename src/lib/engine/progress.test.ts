@@ -20,6 +20,7 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "./progress.js";
+import { isSkillComplete, perksOfSkill } from "./projections/skills.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
@@ -113,6 +114,7 @@ function fullyCompletedState(): ProgressState {
     renown: getMaxRenownLevel(),
     skillLevels,
     spells: new Set(recordKeys(trackerData.mines.spells)),
+    unlockedPerks: new Set(recordKeys(trackerData.skills).flatMap((id) => perksOfSkill(id))),
     villagerRelationships,
   });
 }
@@ -472,9 +474,29 @@ describe("renown progress", () => {
 });
 
 describe("skills progress", () => {
-  it("total is skill count times MAX_SKILL_LEVEL", () => {
+  it("counts each level and each perk of each skill as one step", () => {
     const progress = getCategoryProgress("skills", ctx());
-    expect(progress.total).toBe(recordKeys(trackerData.skills).length * MAX_SKILL_LEVEL);
+    const skillIds = recordKeys(trackerData.skills);
+    const perkCount = skillIds.reduce((sum, id) => sum + perksOfSkill(id).length, 0);
+    expect(perkCount).toBeGreaterThan(0);
+    expect(progress.total).toBe(skillIds.length * MAX_SKILL_LEVEL + perkCount);
+  });
+
+  it("leaves a skill at MAX_SKILL_LEVEL incomplete until every perk is bought", () => {
+    const skillId = recordKeys(trackerData.skills)[0];
+    const perkIds = perksOfSkill(skillId);
+    const skillLevels = { [skillId]: MAX_SKILL_LEVEL };
+    const maxed = makeCompletedState({ skillLevels, unlockedPerks: new Set(perkIds.slice(1)) });
+    expect(isSkillComplete(skillId, maxed)).toBe(false);
+    expect(getCategoryProgress("skills", ctx({ completed: maxed })).completed).toBe(
+      MAX_SKILL_LEVEL + perkIds.length - 1,
+    );
+
+    const complete = makeCompletedState({ skillLevels, unlockedPerks: new Set(perkIds) });
+    expect(isSkillComplete(skillId, complete)).toBe(true);
+    expect(isSkillComplete(skillId, makeCompletedState({ unlockedPerks: new Set(perkIds) }))).toBe(
+      false,
+    );
   });
 
   it("caps individual skill levels at MAX_SKILL_LEVEL", () => {
