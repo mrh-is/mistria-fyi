@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { imageError } from "#lib/attachments/image-error.js";
   import { Icon } from "#lib/components/icon/index.js";
   import TrackerPaper from "#lib/components/tracker-paper.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
@@ -13,6 +15,7 @@
   let { completed, id, name }: { completed: boolean; id: VillagerId; name: string } = $props();
 
   let level = $derived(userState.state.progress.heartLevels[id] ?? 0);
+  let imageFailed = $state(false);
 </script>
 
 <div
@@ -32,6 +35,22 @@
             ? "relationship_dateable"
             : "relationship_platonic"}
         />
+      </span>
+      <!-- The Villagers page's portrait. Search lists only known villagers, whose portraits that
+           page shows in full color, so there's no spoilered treatment to mirror. -->
+      <span class="villager-search-result__portrait" aria-hidden="true">
+        {#if !imageFailed}
+          <img
+            src={villagerSpriteUrl(id)}
+            alt=""
+            width="44"
+            height="44"
+            crossorigin="anonymous"
+            {@attach imageError(() => (imageFailed = true))}
+          />
+        {:else}
+          <span data-testid="villager-portrait-fallback">{name.charAt(0)}</span>
+        {/if}
       </span>
       <span class="villager-search-result__name">{name}</span>
       <span class="villager-search-result__level" aria-hidden="true">
@@ -78,6 +97,31 @@
     flex-shrink: 0;
     justify-content: center;
     color: var(--color-ink-muted);
+  }
+
+  /* The Villagers page's portrait frame, at the row's sprite size so the row keeps its height. */
+  .villager-search-result__portrait {
+    display: grid;
+    inline-size: var(--tracker-sprite-size);
+    block-size: var(--tracker-sprite-size);
+    flex-shrink: 0;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid
+      color-mix(in srgb, var(--color-category-villagers) 25%, var(--color-ink-hairline));
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--color-category-villagers) 11%, var(--color-paper));
+    color: var(--color-category-villagers);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-style: var(--font-display-style);
+  }
+
+  .villager-search-result__portrait img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
   }
 
   .villager-search-result__name {

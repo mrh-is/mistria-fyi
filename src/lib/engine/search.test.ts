@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
+import { CATEGORY_DEFINITIONS } from "#lib/engine/categories.js";
+import { recipeForItem, recipePlacements } from "#lib/engine/projections/recipes.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
+import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import { searchAllCategories } from "./search.js";
@@ -18,6 +21,7 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 
+import type { SearchContext, SearchResult } from "./search.js";
 import type { UserProgressionState } from "./visibility.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -664,5 +668,79 @@ describe("pet cosmetic and skin result IDs", () => {
     const results = search(getName("mount", id, "en"), { mountAppearances: new Set([id]) });
     const match = results.find((r) => r.id === `mount-appearance:${id}`);
     expect(match).toMatchObject({ category: "animals", completed: true });
+  });
+});
+
+// ─── Result sprites ───────────────────────────────────────────────
+
+/** Every result each provider can offer, with spoilers shown so no row is withheld. */
+function allResults(): SearchResult[] {
+  const context: SearchContext = {
+    locale: "en",
+    progressionState: makeProgressionState({ showSpoilers: true }),
+    projectionContext: {
+      availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
+      progress: makeCompletedState(),
+      worldState: defaultWorld,
+    },
+  };
+  return CATEGORY_DEFINITIONS.flatMap(({ search: provider }) =>
+    provider ? [...provider(context)].map((candidate) => candidate.result()) : [],
+  );
+}
+
+describe("result sprites", () => {
+  it("pictures almanac and museum results with their own item, available or not", () => {
+    const results = allResults().filter(
+      (result) => result.category === "almanac" || result.category === "museum",
+    );
+    expect(results.some((result) => !result.available)).toBe(true);
+    for (const result of results) {
+      expect(result.sprite, `${result.category} ${result.id}`).toBe(result.id);
+    }
+  });
+
+  it("pictures each recipe the Recipes page lists with an item that recipe makes", () => {
+    const listed = new Set(
+      recipePlacements().flatMap(({ recipes }) => recipes.map(({ recipeId }) => recipeId)),
+    );
+    const recipes = allResults().filter((result) => result.category === "recipes");
+    const pictured = recipes.filter((result) => listed.has(result.id as RecipeId));
+    expect(pictured.length).toBeGreaterThan(0);
+    for (const { id, sprite } of pictured) {
+      const item = sprite === undefined ? undefined : trackerData.items[sprite];
+      expect(item && recipeForItem(item), `recipe ${id}`).toBe(id);
+    }
+    for (const { id, sprite } of recipes.filter((result) => !pictured.includes(result))) {
+      expect(sprite, `unlisted recipe ${id}`).toBeUndefined();
+    }
+  });
+
+  it("pictures a recipe listed under two Recipes page sections with its one item", () => {
+    // Basic wood appears under both Fish and Materials on the Recipes page.
+    const wood = allResults().find(
+      (result) => result.category === "recipes" && result.id === "basic_wood",
+    );
+    expect(wood?.sprite).toBe("basic_wood");
+  });
+
+  it("leaves results from categories without pictures unpictured", () => {
+    const unpictured = allResults().filter(
+      (result) =>
+        result.category !== "almanac" &&
+        result.category !== "museum" &&
+        result.category !== "recipes",
+    );
+    expect(unpictured.length).toBeGreaterThan(0);
+    for (const result of unpictured) {
+      expect(result.sprite, `${result.category} ${result.id}`).toBeUndefined();
+    }
+  });
+
+  it("carries a recipe's sprite through the ranked search", () => {
+    const shortcake = search("Strawberry Shortcake").find(
+      (result) => result.category === "recipes",
+    );
+    expect(shortcake?.sprite).toBe("strawberry_shortcake");
   });
 });

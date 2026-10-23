@@ -4,19 +4,20 @@ import { projectAnimals } from "#lib/engine/projections/animals.js";
 import { projectCosmetics } from "#lib/engine/projections/cosmetics.js";
 import { projectMuseum } from "#lib/engine/projections/museum.js";
 import { projectQuests } from "#lib/engine/projections/quests.js";
-import { projectRecipes } from "#lib/engine/projections/recipes.js";
+import { projectRecipes, recipePlacements } from "#lib/engine/projections/recipes.js";
 import { projectVillagers } from "#lib/engine/projections/villagers.js";
 import { composeDescriptorName } from "#lib/utils/format.js";
 
 import type { LocalizedCategoryId } from "#lib/data/names.js";
 import type { SearchCandidate, SearchContext } from "#lib/engine/search.js";
 import type { LocaleCode } from "#lib/types/locale.js";
+import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
 
 /*
  * Each searchable category turns its own projection into candidates. Search's context projects
  * every category with default availability windows & the player's progression, so `available` &
- * `spoilered` mean the same thing in every provider; providers only decide which rows to offer and
- * how to name them.
+ * `spoilered` mean the same thing in every provider; providers only decide which rows to offer,
+ * how to name them, & which item their category page pictures (`sprite`).
  */
 /* oxlint-disable jsdoc/require-yields -- every provider shares the contract documented on CategoryDefinition.search */
 
@@ -41,6 +42,7 @@ export function* searchAlmanac({
         completed: row.completed,
         id: row.canonicalId,
         name,
+        sprite: row.canonicalId,
       }),
     };
   }
@@ -149,6 +151,7 @@ export function* searchMuseum({
         completed: row.completed,
         id: row.id,
         name,
+        sprite: row.id,
       }),
     };
   }
@@ -166,7 +169,10 @@ export function* searchQuests({
   }
 }
 
-/** Recipes are gated by recipe visibility, not item visibility. */
+/**
+ * Recipes are gated by recipe visibility, not item visibility. Each is pictured with the item its
+ * Recipes page row shows.
+ */
 export function* searchRecipes({
   locale,
   progressionState,
@@ -174,7 +180,7 @@ export function* searchRecipes({
 }: SearchContext): Iterable<SearchCandidate> {
   for (const row of projectRecipes(projectionContext, { progressionState }).rows) {
     if (row.spoilered) continue;
-    yield simple("recipes", row.id, row.completed, locale);
+    yield simple("recipes", row.id, row.completed, locale, recipeSprite(row.id));
   }
 }
 
@@ -206,17 +212,39 @@ function collectible<Chunk extends "mount" | "pets/cosmetic_sets" | "pets/skins"
   };
 }
 
+let recipeSprites: ReadonlyMap<RecipeId, ItemId> | undefined;
+
+/**
+ * The item the Recipes page pictures for `id`, from its first placement there. A recipe that page
+ * doesn't list has no picture.
+ */
+function recipeSprite(id: RecipeId): ItemId | undefined {
+  recipeSprites ??= buildRecipeSprites();
+  return recipeSprites.get(id);
+}
+
+function buildRecipeSprites(): ReadonlyMap<RecipeId, ItemId> {
+  const sprites = new Map<RecipeId, ItemId>();
+  for (const { recipes } of recipePlacements()) {
+    for (const { itemId, recipeId } of recipes) {
+      if (!sprites.has(recipeId)) sprites.set(recipeId, itemId);
+    }
+  }
+  return sprites;
+}
+
 /** A row whose category shares its name chunk & needs no detail. */
 function simple<Category extends "cosmetics" | "quests" | "recipes" | "villagers">(
   category: Category,
   id: LocalizedCategoryId[Category],
   completed: boolean,
   locale: LocaleCode,
+  sprite?: ItemId,
 ): SearchCandidate {
   const name = getName(category, id, locale);
   return {
     englishName: getName(category, id, "en"),
     localizedName: name,
-    result: () => ({ available: true, category, completed, id, name }),
+    result: () => ({ available: true, category, completed, id, name, sprite }),
   };
 }
