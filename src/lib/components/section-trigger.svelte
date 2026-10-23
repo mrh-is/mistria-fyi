@@ -1,25 +1,40 @@
 <!--
-  The header button shared by every tracker section: an expandable section's
-  disclosure, & the reveal button a spoiler-hidden section shows in its place.
-  Sharing it keeps their box, disclosure icon, hover, & focus in step.
+  The header surface shared by every tracker section: an expandable section's
+  disclosure button, & the inert header a spoiler-hidden section shows in its
+  place. Sharing it keeps their box & disclosure icon in step. Only the button
+  is a control; the inert header's spoiler mask is the reveal target, so the row
+  takes a fainter hover tint with no outline, pressed, or focused state.
 -->
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import type { HTMLButtonAttributes } from "svelte/elements";
+  import type { HTMLAttributes, HTMLButtonAttributes } from "svelte/elements";
 
-  let {
-    type = "button",
-    children,
-    class: className,
-    ...rest
-  }: HTMLButtonAttributes & {
-    children: Snippet;
-  } = $props();
+  type Props = (
+    | (HTMLAttributes<HTMLDivElement> & { element: "div" })
+    | (HTMLButtonAttributes & { element?: "button" })
+  ) & { children: Snippet };
+
+  let { children, class: className, element = "button", ...rest }: Props = $props();
 </script>
 
-<button class={["section-trigger", className]} data-section-trigger {type} {...rest}>
-  {@render children()}
-</button>
+{#if element === "div"}
+  <div
+    class={["section-trigger", "section-trigger--inert", className]}
+    data-section-trigger
+    {...rest as HTMLAttributes<HTMLDivElement>}
+  >
+    {@render children()}
+  </div>
+{:else}
+  <button
+    class={["section-trigger", className]}
+    data-section-trigger
+    type="button"
+    {...rest as HTMLButtonAttributes}
+  >
+    {@render children()}
+  </button>
+{/if}
 
 <style>
   .section-trigger {
@@ -41,17 +56,21 @@
     color: var(--color-ink-muted);
   }
 
-  .section-trigger:is(:active, :focus-visible) {
+  button.section-trigger:is(:active, :focus-visible) {
     background: color-mix(in srgb, var(--primary) 7%, transparent);
     outline: 2px solid var(--primary);
     outline-offset: -2px;
   }
 
   @media (hover: hover) {
-    .section-trigger:hover {
+    button.section-trigger:hover {
       background: color-mix(in srgb, var(--primary) 7%, transparent);
       outline: 2px solid var(--primary);
       outline-offset: -2px;
+    }
+
+    .section-trigger--inert:hover {
+      background: color-mix(in srgb, var(--primary) 3%, transparent);
     }
   }
 </style>

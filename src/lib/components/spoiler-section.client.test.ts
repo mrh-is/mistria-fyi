@@ -9,24 +9,33 @@ const children = createRawSnippet(() => ({
 }));
 
 describe("SpoilerSection", () => {
-  it("makes the whole hidden header, on the shared trigger surface, the one reveal button", () => {
+  it("makes the spoiler mask, not the header row, the one reveal button", () => {
     const view = render(SpoilerSection, { children, name: "Town Quests", spoilered: true });
 
-    const header = view.getByRole("button", { name: "Reveal spoiler" });
-    expect(header).toHaveAttribute("data-section-trigger");
-    // The mask inside is presentational, so there's no second, nested button.
+    const header = view.container.querySelector("[data-section-trigger]");
+    expect(header?.tagName).toBe("DIV");
     expect(view.getAllByRole("button")).toHaveLength(1);
-    expect(view.getByTestId("spoiler-cover-mask")).toBeInTheDocument();
+    expect(header).toContainElement(view.getByRole("button", { name: "Reveal spoiler" }));
+    expect(view.queryByTestId("revealed-section")).not.toBeInTheDocument();
+  });
+
+  it("leaves the section hidden when the row outside the mask is clicked", async () => {
+    const view = render(SpoilerSection, { children, name: "Town Quests", spoilered: true });
+
+    const header = view.container.querySelector("[data-section-trigger]");
+    expect(header).toBeInstanceOf(HTMLElement);
+    await fireEvent.click(header as HTMLElement);
+
     expect(view.queryByTestId("revealed-section")).not.toBeInTheDocument();
   });
 
   it("styles the hidden header's disclosure & name like a visible section's", () => {
     const view = render(SpoilerSection, { children, name: "Town Quests", spoilered: true });
 
-    const header = view.getByRole("button", { name: "Reveal spoiler" });
-    expect(header.querySelector(".section-disclosure")).toBeInTheDocument();
-    expect(header.querySelector(".text-muted-foreground")).toBeNull();
-    expect(header.querySelector(".font-semibold")).toBeInTheDocument();
+    const header = view.container.querySelector("[data-section-trigger]");
+    expect(header?.querySelector(".section-disclosure")).toBeInTheDocument();
+    expect(header?.querySelector(".text-muted-foreground")).toBeNull();
+    expect(header?.querySelector(".font-semibold")).toBeInTheDocument();
   });
 
   it("shows no progress on the hidden header", () => {
@@ -39,7 +48,6 @@ describe("SpoilerSection", () => {
   it("renders the section itself once the spoiler is revealed", async () => {
     const view = render(SpoilerSection, { children, name: "Town Quests", spoilered: true });
 
-    // Anywhere on the row reveals it, not only the mask.
     await fireEvent.click(view.getByRole("button", { name: "Reveal spoiler" }));
 
     expect(view.getByTestId("revealed-section")).toBeInTheDocument();

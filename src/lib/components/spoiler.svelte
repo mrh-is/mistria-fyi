@@ -8,25 +8,16 @@
 
   let {
     children,
-    interactive = true,
     onReveal,
     spoilered = true,
   }: {
     children: Snippet;
-    /** False when an enclosing control reveals the spoiler, so the cover is only the mask. */
-    interactive?: boolean;
     onReveal?: () => void;
     spoilered?: boolean;
   } = $props();
 </script>
 
-{#if spoilered && !interactive}
-  <span class="spoiler-cover" aria-hidden="true">
-    <span class="spoiler-cover__mask" data-testid="spoiler-cover-mask"
-      ><span class="spoiler-cover__content">{@render children()}</span></span
-    >
-  </span>
-{:else if spoilered}
+{#if spoilered}
   <button
     class="spoiler-cover"
     type="button"

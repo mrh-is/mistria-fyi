@@ -2,7 +2,6 @@
   import { Icon } from "#lib/components/icon/index.js";
   import SectionTrigger from "#lib/components/section-trigger.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
-  import * as m from "#lib/paraglide/messages.js";
 
   import type { Snippet } from "svelte";
 
@@ -25,17 +24,13 @@
 {:else}
   <div>
     <!--
-      Hidden sections share the visible headers' button, with no progress count or rule. The whole
-      row reveals the section, as its hover promises, so the mask inside is only a picture.
+      Hidden sections share the visible headers' surface, with no progress count or rule. Only the
+      spoiler mask reveals the section; the row itself is inert.
     -->
-    <SectionTrigger
-      class="text-base"
-      aria-label={m.spoiler_reveal_aria()}
-      onclick={() => (spoilerDismissed = true)}
-    >
+    <SectionTrigger element="div" class="text-base">
       <Icon.UI type="disclosure" class="section-disclosure size-4 shrink-0" />
       <span class="font-semibold">
-        <Spoiler interactive={false}>{name}</Spoiler>
+        <Spoiler onReveal={() => (spoilerDismissed = true)}>{name}</Spoiler>
       </span>
     </SectionTrigger>
   </div>
