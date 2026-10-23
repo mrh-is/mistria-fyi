@@ -277,7 +277,9 @@ describe("FilterPanel interactions", () => {
     await fireEvent.click(sourceTypes);
     expect(sourceTypes).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("button", { name: "About source types" })).toBeVisible();
-    expect(sourceTypes).toHaveTextContent(/^Source types$/);
+    // The summary stays mounted to fade out; CSS hides it, & drops it from the name, once faded.
+    const sourceSummary = sourceTypes.querySelector(".disclosure__summary");
+    expect(sourceSummary).toHaveClass("disclosure__summary--hidden");
     expect(sourceTypesBody).not.toHaveAttribute("inert");
     await fireEvent.click(screen.getByRole("button", { name: "Gathering" }));
     expect(whenToFindBody).toHaveAttribute("inert");
@@ -285,6 +287,7 @@ describe("FilterPanel interactions", () => {
     await fireEvent.click(sourceTypes);
     expect(sourceTypes).toHaveAttribute("aria-expanded", "false");
     expect(sourceTypes).toHaveTextContent("Source types Only stores");
+    expect(sourceSummary).not.toHaveClass("disclosure__summary--hidden");
     expect(sourceTypesBody).toHaveAttribute("inert");
   });
 

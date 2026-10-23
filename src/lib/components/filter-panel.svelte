@@ -221,9 +221,10 @@
       >
         <SectionIcon class="size-3.5 shrink-0" />
         <span class="disclosure__label">{label}</span>
-        {#if !expanded}
-          <span class="disclosure__summary">{@render summary()}</span>
-        {/if}
+        <!-- Stays mounted so it can fade; CSS hides it (& drops it from the name) once faded out. -->
+        <span class="disclosure__summary" class:disclosure__summary--hidden={expanded}
+          >{@render summary()}</span
+        >
         <IconChevronDown class="disclosure__chevron size-3.5 shrink-0" />
       </button>
     </h3>
@@ -528,20 +529,49 @@
     color: var(--color-ink-muted);
   }
 
+  /*
+   * Disclosure motion. Height leads in both directions, so a tap moves something at once; closing
+   * runs shorter than opening, & every curve decelerates, so nothing waits on a slow start.
+   */
+  .filters {
+    --disclosure-open-ms: 260ms;
+    --disclosure-close-ms: 200ms;
+    --disclosure-ease: cubic-bezier(0.2, 0.6, 0.35, 1);
+  }
+
   .disclosure :global(.disclosure__chevron) {
     margin-inline-start: auto;
-    transition: transform 180ms ease-out;
+    transition: transform var(--disclosure-close-ms) var(--disclosure-ease);
+  }
+
+  .disclosure[aria-expanded="true"] :global(.disclosure__chevron) {
+    transform: rotate(180deg);
+    transition: transform var(--disclosure-open-ms) var(--disclosure-ease);
+  }
+
+  /* The summary fades in as the body closes & out as it opens, over about the whole motion. */
+  .disclosure__summary {
+    transition: opacity var(--disclosure-close-ms) ease-out;
+  }
+
+  .disclosure__summary--hidden {
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--disclosure-open-ms) ease-out,
+      visibility 0s var(--disclosure-open-ms);
   }
 
   /*
-   * Opening grows the height, then fades the contents in; closing fades them out, then shrinks.
+   * Opening: the height grows at once & the contents fade in shortly after, overlapping it.
+   * Closing: the height shrinks at once while the contents fade out quickly underneath it.
    * The inner box's padding & matching negative margin leave room for focus outlines.
    */
   .collapsible {
     display: grid;
     grid-template-rows: 1fr;
     transition:
-      grid-template-rows 180ms ease-out,
+      grid-template-rows var(--disclosure-open-ms) var(--disclosure-ease),
       visibility 0s;
   }
 
@@ -550,24 +580,20 @@
     padding: 4px;
     margin: -4px;
     overflow: hidden;
-    transition: opacity 120ms ease-out 180ms;
+    transition: opacity 160ms ease-out 60ms;
   }
 
   .collapsible--collapsed {
     grid-template-rows: 0fr;
     visibility: hidden;
     transition:
-      grid-template-rows 180ms ease-in 120ms,
-      visibility 0s 300ms;
+      grid-template-rows var(--disclosure-close-ms) var(--disclosure-ease),
+      visibility 0s var(--disclosure-close-ms);
   }
 
   .collapsible--collapsed > .collapsible__inner {
     opacity: 0;
-    transition: opacity 120ms ease-in;
-  }
-
-  .disclosure[aria-expanded="true"] :global(.disclosure__chevron) {
-    transform: rotate(180deg);
+    transition: opacity 90ms ease-out;
   }
 
   .chip-row {
@@ -766,6 +792,7 @@
     .radio-strip__content,
     .radio-strip--weather,
     .disclosure :global(.disclosure__chevron),
+    .disclosure__summary,
     .collapsible,
     .collapsible__inner {
       transition-duration: 0.01ms !important;
