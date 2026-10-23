@@ -42,6 +42,24 @@
   let panelElement = $state<HTMLElement | null>(null);
   let panelOpener: HTMLElement | null = null;
 
+  // Keeps toasts (an Undo, say) from covering the open panel's controls. The fixed panel's
+  // `offsetTop` is viewport-relative and ignores its fly-in transform, unlike the bounding box.
+  $effect(() => {
+    const panel = panelElement;
+    if (!panel) return;
+    const measure = (): void => {
+      toolbarState.panelClearance = Math.max(0, globalThis.innerHeight - panel.offsetTop);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(panel);
+    globalThis.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      globalThis.removeEventListener("resize", measure);
+      toolbarState.panelClearance = 0;
+    };
+  });
+
   afterNavigate(({ shallow }) => {
     if (shallow) return;
     closePanel(false);

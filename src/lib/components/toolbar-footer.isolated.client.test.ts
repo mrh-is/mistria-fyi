@@ -325,7 +325,7 @@ describe("ToolbarFooter filters", () => {
     renderToolbar();
     await fireEvent.click(visibilityButton());
     const dialog = await screen.findByRole("dialog", { name: "Filters" });
-    await fireEvent.click(within(dialog).getByRole("switch", { name: "Show unobtainable?" }));
+    await fireEvent.click(within(dialog).getByRole("switch", { name: "Unobtainable" }));
     expect(toolbarState.showUnobtainable).toBe(true);
     expect(screen.getByRole("status")).toHaveTextContent("Filters applied");
     await fireEvent.click(within(dialog).getByRole("button", { name: "Reset" }));
@@ -340,7 +340,7 @@ describe("ToolbarFooter filters", () => {
     expect(within(dialog).queryByRole("button", { name: "Reset" })).toBeNull();
     expect(visibilityButton()).not.toHaveClass("floating-tool--filtered");
 
-    await fireEvent.click(within(dialog).getByRole("switch", { name: "Show completed?" }));
+    await fireEvent.click(within(dialog).getByRole("switch", { name: "Completed" }));
 
     const reset = await within(dialog).findByRole("button", { name: "Reset" });
     expect(userState.state.showCompleted).toBe(true);

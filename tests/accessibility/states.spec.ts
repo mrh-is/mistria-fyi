@@ -145,7 +145,7 @@ test.describe("stateful accessibility", () => {
     );
 
     await openVisibilityPanel(page);
-    await page.getByRole("switch", { name: "Show completed?" }).click();
+    await page.getByRole("switch", { name: "Completed" }).click();
     await expect(page.getByRole("button", { name: /^Uncheck / }).first()).toBeVisible();
     await analyzeAccessibility(
       page,

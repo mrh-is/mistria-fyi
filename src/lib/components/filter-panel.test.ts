@@ -13,6 +13,6 @@ describe("FilterPanel", () => {
     expect(queries.queryByText("When to find")).toBeNull();
     expect(queries.queryByText("Source types")).toBeNull();
     expect(queries.queryByRole("button", { name: "Reset" })).toBeNull();
-    expect(queries.getByRole("switch", { name: "Show completed?" })).toBeTruthy();
+    expect(queries.getByRole("switch", { name: "Completed" })).toBeTruthy();
   });
 });
