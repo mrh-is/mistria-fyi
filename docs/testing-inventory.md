@@ -66,7 +66,7 @@ single-component row's marks disagree with its test files.
 | `search-results-loading`         |        |     ✓      |                                                                                   |
 | `source-explainer-dialog`        |        | via parent | Open and dismiss through `filter-panel`                                           |
 | `tag-dialog`                     |        | via parent | Through `source-explainer-dialog` and `quick-settings-panel`                      |
-| `villager-search-result`         |        | via parent | Record link through `search-results`                                              |
+| `villager-search-result`         |        | via parent | Record link, portrait, & fallback through `search-results`                        |
 | `blocky-switch`                  |        | via parent | Through `filter-panel` and `quick-settings-panel`                                 |
 
 ### Tracker rows & controls

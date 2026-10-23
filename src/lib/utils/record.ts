@@ -33,15 +33,6 @@ export function recordEntries(record: Record<string, unknown>): [string, unknown
   return Object.entries(record).filter(([, value]) => value !== undefined);
 }
 
-export function recordForEach<K extends string, T>(
-  record: Record<K, T>,
-  callbackfn: (value: [K, T], index: number, record: Record<K, T>) => void,
-  thisArg?: unknown,
-): void {
-  for (const [index, key] of recordKeys(record).entries()) {
-    callbackfn.call(thisArg, [key, record[key]], index, record);
-  }
-}
 export function recordKeys<K extends string, T>(record: Record<K, T>): K[] {
   return Object.keys(record) as K[];
 }
