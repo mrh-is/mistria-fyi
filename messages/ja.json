@@ -83,6 +83,8 @@
   "undo_unmarked": "「{name}」を未完了に戻しました",
   "almanac_page_description": "Fields of Mistriaの作物、採集、釣り、昆虫、アーティファクトなどのアルマナック項目を記録します。",
   "animals_page_description": "Fields of Mistriaの農場で動物の品種、カラー、コスメを記録します。",
+  "animals_mount_appearances": "外見",
+  "animals_mount_perks": "スキルボーナス",
   "villagers_page_description": "Fields of Mistriaの町の住民との友情や恋愛を記録します。",
   "cosmetics_page_description": "Fields of Mistriaの服装と見た目の解放要素を記録します。",
   "mines_page_description": "Fields of Mistriaの鉱坑のフロア、魔法、探索の進行状況を記録します。",

@@ -11,6 +11,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
+  import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -113,29 +114,46 @@
     reportCategory="mount-appearances"
     total={scopedEntries.length}
   >
-    <TrackerRowList getKey={(entry) => `${entry.kind}:${entry.id}`} items={visibleEntries}>
-      {#snippet row(entry)}
-        {@const completed = isCompleted(entry)}
-        {@const spoilered = !isConditionVisible(entry.visibility, userState.progressionState)}
-        <TrackerRow
-          display={trackerRowDisplay({ completed, spoilered })}
-          segmentLookups={{ ...baseLookups, entityVisibility: entry.visibility }}
-          name={entry.name}
-          reportCategory={entry.kind === "appearance" ? "mount-appearance" : "mount-perk"}
-          reportEntityId={entry.id}
-          sources={entry.sources}
-          onToggle={() => {
-            if (!spoilered || completed) {
-              toggleEntry(entry);
-            } else {
-              spoilerGuard.requestGuardedAction(entry.visibility, () => {
-                toggleEntry(entry);
-              });
-            }
-          }}
-        />
-      {/snippet}
-    </TrackerRowList>
+    {#each [{ kind: "appearance", name: m.animals_mount_appearances() }, { kind: "perk", name: m.animals_mount_perks() }] as group (group.kind)}
+      {@const scopedGroupEntries = scopedEntries.filter((entry) => entry.kind === group.kind)}
+      {@const visibleGroupEntries = visibleEntries.filter((entry) => entry.kind === group.kind)}
+      {#if visibleGroupEntries.length > 0}
+        <ExpandableSection
+          {locale}
+          depth={1}
+          count={scopedGroupEntries.filter((entry) => isCompleted(entry)).length}
+          name={group.name}
+          total={scopedGroupEntries.length}
+        >
+          <TrackerRowList
+            getKey={(entry) => `${entry.kind}:${entry.id}`}
+            items={visibleGroupEntries}
+          >
+            {#snippet row(entry)}
+              {@const completed = isCompleted(entry)}
+              {@const spoilered = !isConditionVisible(entry.visibility, userState.progressionState)}
+              <TrackerRow
+                display={trackerRowDisplay({ completed, spoilered })}
+                segmentLookups={{ ...baseLookups, entityVisibility: entry.visibility }}
+                name={entry.name}
+                reportCategory={entry.kind === "appearance" ? "mount-appearance" : "mount-perk"}
+                reportEntityId={entry.id}
+                sources={entry.sources}
+                onToggle={() => {
+                  if (!spoilered || completed) {
+                    toggleEntry(entry);
+                  } else {
+                    spoilerGuard.requestGuardedAction(entry.visibility, () => {
+                      toggleEntry(entry);
+                    });
+                  }
+                }}
+              />
+            {/snippet}
+          </TrackerRowList>
+        </ExpandableSection>
+      {/if}
+    {/each}
   </ExpandableSection>
 {:else if toolbarState.isSourceFilterNarrowing}
   <TrackerEmptyState />

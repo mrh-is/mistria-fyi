@@ -22,7 +22,8 @@ own `player.perks` list mirrors. Save import, backup restore, and transfer codes
 three IDs through one `trackedPerkIds` list; the stored blob gains no field, so it needs no version
 bump. Transfer codes bind to the build and simply gain three bits in the perk bitfield.
 
-The animals page's Mount section lists the appearances, then the perks, and its count and the
+The animals page’s Mount section groups appearances & perks into separate nested disclosures, each
+with its own completion count, following the owner’s requested layout revision. Its count and the
 animals category total include both. The skills screen stays limited to skill perk tiers.
 
 ## Alternatives

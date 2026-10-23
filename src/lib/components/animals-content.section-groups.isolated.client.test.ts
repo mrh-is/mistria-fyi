@@ -38,6 +38,7 @@ it("holds a sub-section finished by a row toggle, then moves it under Completed"
 
   renderWithFeedback(AnimalsContent, { locale: "en" });
   await fireEvent.click(await screen.findByRole("button", { name: mountName }));
+  await fireEvent.click(screen.getByRole("button", { name: /^Appearances,/ }));
   const toggle = await screen.findByRole("button", {
     name: `Check ${getName("mount", lastId, "en")}`,
   });

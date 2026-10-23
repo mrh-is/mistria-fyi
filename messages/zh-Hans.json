@@ -83,6 +83,8 @@
   "undo_unmarked": "已取消标记“{name}”",
   "almanac_page_description": "追踪《Fields of Mistria》中的作物、采集、钓鱼、昆虫、文物等年鉴条目。",
   "animals_page_description": "追踪《Fields of Mistria》农场中动物的品种、颜色与装饰。",
+  "animals_mount_appearances": "外观",
+  "animals_mount_perks": "技能特长",
   "villagers_page_description": "追踪《Fields of Mistria》中与村民的友情与恋爱进度。",
   "cosmetics_page_description": "追踪《Fields of Mistria》中服装与外观的解锁进度。",
   "mines_page_description": "追踪《Fields of Mistria》中矿洞楼层、法术与探索进度。",

@@ -85,6 +85,8 @@
   "undo_unmarked": "Unmarked \"{name}\"",
   "almanac_page_description": "Track crops, forage, fish, insects, artifacts, & other almanac entries in Fields of Mistria.",
   "animals_page_description": "Track animal breeds, colors, & cosmetics on your Fields of Mistria farm.",
+  "animals_mount_appearances": "Appearances",
+  "animals_mount_perks": "Perks",
   "villagers_page_description": "Track friendship & romance with the villagers of Fields of Mistria.",
   "cosmetics_page_description": "Track wardrobe & appearance unlocks in Fields of Mistria.",
   "mines_page_description": "Track mine floors, spells, & exploration progress in Fields of Mistria.",
