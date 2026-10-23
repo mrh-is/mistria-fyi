@@ -63,7 +63,9 @@ describe("SkillRecord", () => {
     expect(segments[0].querySelector("i")).toHaveStyle("width: 100%");
     expect(segments[1].querySelector("i")).toHaveStyle("width: 46.666666666666664%");
     expect(segments[2].querySelector("i")).toHaveStyle("width: 0%");
-    expect(view.getByText("22 / 60")).toBeInTheDocument();
+    expect(
+      view.getByRole("button", { name: "Edit Mining level, currently 22 of 60" }),
+    ).toHaveTextContent("Level 22 / 60");
     expect(view.getByRole("group", { name: "Mining level, 22 of 60" })).toBeInTheDocument();
   });
 
@@ -79,19 +81,19 @@ describe("SkillRecord", () => {
     let input = view.getByRole("spinbutton", { name: "Mining level" });
     await fireEvent.input(input, { target: { value: "31" } });
     await fireEvent.keyDown(input, { key: "Enter" });
-    expect(view.getByText("31 / 60")).toBeInTheDocument();
+    expect(editButton()).toHaveTextContent("Level 31 / 60");
 
     await fireEvent.click(editButton());
     input = view.getByRole("spinbutton", { name: "Mining level" });
     await fireEvent.input(input, { target: { value: "not-a-number" } });
     await fireEvent.blur(input);
-    expect(view.getByText("31 / 60")).toBeInTheDocument();
+    expect(editButton()).toHaveTextContent("Level 31 / 60");
 
     await fireEvent.click(editButton());
     input = view.getByRole("spinbutton", { name: "Mining level" });
     await fireEvent.input(input, { target: { value: "55" } });
     await fireEvent.keyDown(input, { key: "Escape" });
-    expect(view.getByText("31 / 60")).toBeInTheDocument();
+    expect(editButton()).toHaveTextContent("Level 31 / 60");
   });
 
   it("offers the skill's perks below its level", () => {
@@ -103,7 +105,7 @@ describe("SkillRecord", () => {
 
     const record = view.container.querySelector("[data-skill-record]");
     expect(record?.querySelector("[data-skill-perks]")).not.toBeNull();
-    expect(view.getByRole("button", { name: /^Mining perks, 0 of \d+ unlocked$/ })).toHaveAttribute(
+    expect(view.getByRole("button", { name: /^Mining perks, \d+ locked$/ })).toHaveAttribute(
       "aria-expanded",
       "false",
     );

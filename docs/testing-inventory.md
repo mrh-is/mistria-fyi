@@ -82,7 +82,7 @@ single-component row's marks disagree with its test files.
 | `confirm-spoiler-dialog`                  |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |
 | `spoiler-guard-dialog`                    |        |     ✓      | Renders only while the guard holds a condition            |
 | `skill-record`                            |        |     ✓      | Level editing, perk drawer                                |
-| `skill-perks`                             |        |     ✓      | Disclosure, tier levels, perk check-off & reversal        |
+| `skill-perks`                             |        |     ✓      | Unlocked & locked counts, tiers, check-off, spoiler guard |
 | `stepper`                                 |        |     ✓      | Grouped controls                                          |
 | `dialog-close-button`                     |        |     ✓      | Localized close control, dismisses the dialog             |
 | `status-note`                             |   ✓    |            | Tone classes; alert role for errors & warnings            |

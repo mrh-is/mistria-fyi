@@ -2,6 +2,7 @@
   import { untrack } from "svelte";
 
   import SkillRecord from "#lib/components/skill-record.svelte";
+  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { setFeedbackContext } from "#lib/feedback/context.svelte.js";
 
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -23,8 +24,9 @@
   } = $props();
 
   setFeedbackContext(untrack(() => feedbackContext));
+  const spoilerGuard = createSpoilerGuard();
 </script>
 
 <ul>
-  <SkillRecord {compact} {id} {locale} {name} />
+  <SkillRecord {compact} {id} {locale} {name} {spoilerGuard} />
 </ul>

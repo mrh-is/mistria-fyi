@@ -1,12 +1,14 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import SkillPerks from "#lib/components/skill-perks.svelte";
+import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordKeys } from "#lib/utils/record.js";
 
+import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
 import type { SkillId } from "#lib/types/tracker-data.js";
 
 const skillId = "mining" as SkillId;
@@ -14,36 +16,64 @@ const tiers = trackerData.skills[skillId].perkTiers.map((tier) => recordKeys(tie
 const total = tiers.flat().length;
 const firstPerk = tiers[0][0];
 const firstPerkName = getName("perks", firstPerk, "en");
+const lockedPerk = tiers[2][0];
+const lockedPerkName = getName("perks", lockedPerk, "en");
+/** Perks in tiers 1 & 2, the ones a player at the tier-2 gate can have. */
+const reachedCount = tiers[0].length + tiers[1].length;
+const tier2Level = trackerData.perkTierLevels[1];
+
+let spoilerGuard: SpoilerGuard;
 
 function renderPerks(locale: "en" | "ja" = "en") {
-  return render(SkillPerks, { id: skillId, locale, name: "Mining" });
+  return render(SkillPerks, { id: skillId, locale, name: "Mining", spoilerGuard });
 }
 
 function toggle() {
-  return screen.getByRole("button", { name: /^Mining perks, \d+ of \d+ unlocked$/ });
+  return screen.getByRole("button", { name: /^Mining perks, / });
 }
 
 describe("SkillPerks", () => {
   beforeEach(() => {
     userState.resetAll();
+    spoilerGuard = createSpoilerGuard();
   });
   afterEach(() => {
     cleanup();
     userState.resetAll();
   });
 
-  it("starts collapsed with an unlocked count", () => {
+  it("starts collapsed, counting every perk as locked before level 1", () => {
     renderPerks();
 
-    const button = screen.getByRole("button", {
-      name: `Mining perks, 0 of ${String(total)} unlocked`,
-    });
+    const button = screen.getByRole("button", { name: `Mining perks, ${String(total)} locked` });
     expect(button).toHaveAttribute("aria-expanded", "false");
-    expect(button).toHaveTextContent(`Perks 0 / ${String(total)}`);
+    expect(button).toHaveTextContent(`Perks ${String(total)} locked`);
     expect(screen.queryByRole("button", { name: `Check ${firstPerkName}` })).toBeNull();
   });
 
-  it("lists every tier with its level requirement & localized perk names", async () => {
+  it("counts perks in reached tiers as unlockable & the rest as locked", () => {
+    userState.setSkillLevel(skillId, tier2Level);
+    userState.togglePerk(firstPerk);
+    renderPerks();
+
+    const locked = total - reachedCount;
+    expect(toggle()).toHaveAccessibleName(
+      `Mining perks, 1 of ${String(reachedCount)} unlocked, ${String(locked)} more locked`,
+    );
+    expect(toggle()).toHaveTextContent(
+      `Perks 1 / ${String(reachedCount)} unlocked ${String(locked)} more locked`,
+    );
+  });
+
+  it("drops the locked count once every tier is reached", () => {
+    userState.setSkillLevel(skillId, 60);
+    renderPerks();
+
+    expect(toggle()).toHaveAccessibleName(`Mining perks, 0 of ${String(total)} unlocked`);
+  });
+
+  it("lists every tier with its number, level & localized perk names", async () => {
+    userState.setSkillLevel(skillId, 60);
     renderPerks();
     await fireEvent.click(toggle());
 
@@ -51,9 +81,11 @@ describe("SkillPerks", () => {
     expect(toggle()).toHaveAttribute("aria-controls", expect.any(String));
     for (const [index, level] of trackerData.perkTierLevels.entries()) {
       const tier = screen.getByRole("list", {
-        name: `Mining perks at level ${String(level)}`,
+        name: `Mining perks, Tier ${String(index + 1)}, level ${String(level)}`,
       });
-      expect(tier.closest("[data-perk-tier]")).toHaveTextContent(`Level ${String(level)}`);
+      expect(tier.closest("[data-perk-tier]")).toHaveTextContent(
+        new RegExp(`^Tier ${String(index + 1)} Level ${String(level)} `),
+      );
       const names = within(tier)
         .getAllByRole("listitem")
         .map((item) => item.textContent.trim());
@@ -62,6 +94,7 @@ describe("SkillPerks", () => {
   });
 
   it("checks a perk off & unchecks it again", async () => {
+    userState.setSkillLevel(skillId, 60);
     renderPerks();
     await fireEvent.click(toggle());
 
@@ -74,23 +107,22 @@ describe("SkillPerks", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: `Uncheck ${firstPerkName}` }));
     expect(userState.state.progress.unlockedPerks.has(firstPerk)).toBe(false);
-    expect(toggle()).toHaveAccessibleName(`Mining perks, 0 of ${String(total)} unlocked`);
   });
 
-  it("collapses again & reflects perks unlocked elsewhere", async () => {
-    userState.togglePerk(firstPerk);
+  it("collapses again", async () => {
     renderPerks();
 
-    expect(toggle()).toHaveAccessibleName(`Mining perks, 1 of ${String(total)} unlocked`);
     await fireEvent.click(toggle());
-    expect(screen.getByRole("button", { name: `Uncheck ${firstPerkName}` })).toBeInTheDocument();
+    expect(screen.getAllByRole("list").length).toBeGreaterThan(0);
     await fireEvent.click(toggle());
     expect(toggle()).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("button", { name: `Uncheck ${firstPerkName}` })).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryAllByRole("list")).toHaveLength(0);
+    });
   });
 
-  it("marks tiers above the tracked skill level as not yet reached", async () => {
-    userState.setSkillLevel(skillId, trackerData.perkTierLevels[1]);
+  it("spoilers perks in unreached tiers & guards checking them", async () => {
+    userState.setSkillLevel(skillId, tier2Level);
     const view = renderPerks();
     await fireEvent.click(toggle());
 
@@ -98,9 +130,47 @@ describe("SkillPerks", () => {
       (tier) => tier.dataset.reached,
     );
     expect(reached).toEqual(["true", "true", "false", "false", "false"]);
+    expect(screen.queryByRole("button", { name: `Check ${lockedPerkName}` })).toBeNull();
+
+    const tier3 = screen.getByRole("list", { name: /Tier 3,/ });
+    await fireEvent.click(
+      within(tier3).getAllByRole("button", { name: "Check spoilered item" })[0],
+    );
+    expect(spoilerGuard.open).toBe(true);
+    expect(spoilerGuard.condition).toEqual({
+      type: "skillLevel",
+      level: trackerData.perkTierLevels[2],
+      skillId,
+    });
+    expect(userState.state.progress.unlockedPerks.has(lockedPerk)).toBe(false);
+
+    spoilerGuard.proceed();
+    expect(userState.state.progress.unlockedPerks.has(lockedPerk)).toBe(true);
+    expect(await screen.findByRole("button", { name: `Uncheck ${lockedPerkName}` })).toBeVisible();
+  });
+
+  it("reveals a spoilered name without unlocking the perk", async () => {
+    renderPerks();
+    await fireEvent.click(toggle());
+
+    await fireEvent.click(screen.getAllByRole("button", { name: "Reveal spoiler" })[0]);
+    expect(await screen.findByText(firstPerkName)).toBeInTheDocument();
+    expect(userState.state.progress.unlockedPerks.has(firstPerk)).toBe(false);
+  });
+
+  it("shows every name unguarded with spoilers on", async () => {
+    userState.toggleShowSpoilers();
+    renderPerks();
+    await fireEvent.click(toggle());
+
+    expect(screen.queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: `Check ${lockedPerkName}` }));
+    expect(spoilerGuard.open).toBe(false);
+    expect(userState.state.progress.unlockedPerks.has(lockedPerk)).toBe(true);
   });
 
   it("renders perk names in the active locale", async () => {
+    userState.setSkillLevel(skillId, 60);
     renderPerks("ja");
     await fireEvent.click(screen.getByRole("button", { expanded: false }));
 
