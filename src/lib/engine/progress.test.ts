@@ -12,6 +12,7 @@ import {
   getOverallProgress,
   isCategoryComplete,
 } from "./categories.js";
+import { trackedPerkIds } from "./perk-ids.js";
 import {
   clampRenownLevel,
   getMaxMineFloor,
@@ -114,7 +115,7 @@ function fullyCompletedState(): ProgressState {
     renown: getMaxRenownLevel(),
     skillLevels,
     spells: new Set(recordKeys(trackerData.mines.spells)),
-    unlockedPerks: new Set(recordKeys(trackerData.skills).flatMap((id) => perksOfSkill(id))),
+    unlockedPerks: new Set(trackedPerkIds(trackerData)),
     villagerRelationships,
   });
 }
@@ -528,7 +529,7 @@ describe("mines progress", () => {
 });
 
 describe("animals progress", () => {
-  it("includes variants, animal cosmetics, mount appearances, pet cosmetics, and pet skins", () => {
+  it("includes variants, animal cosmetics, the mount, pet cosmetics, and pet skins", () => {
     const progress = getCategoryProgress("animals", ctx());
     let expectedTotal = 0;
     for (const animal of recordValues(trackerData.animals)) {
@@ -538,6 +539,7 @@ describe("animals progress", () => {
       }
     }
     expectedTotal += recordKeys(trackerData.mount.appearances).length;
+    expectedTotal += recordKeys(trackerData.mount.perks).length;
     expectedTotal += recordKeys(trackerData.pets.cosmetics).length;
     expectedTotal += recordKeys(trackerData.pets.skins).length;
     expect(progress.total).toBe(expectedTotal);
@@ -576,9 +578,10 @@ describe("animal progress variant filtering matches UI predicate", () => {
       );
       const petCosmeticCount = recordKeys(trackerData.pets.cosmetics).length;
       const petSkinCount = recordKeys(trackerData.pets.skins).length;
-      const mountAppearanceCount = recordKeys(trackerData.mount.appearances).length;
-      const nonVariantFiltered =
-        cosmeticCount + mountAppearanceCount + petCosmeticCount + petSkinCount;
+      const mountCount =
+        recordKeys(trackerData.mount.appearances).length +
+        recordKeys(trackerData.mount.perks).length;
+      const nonVariantFiltered = cosmeticCount + mountCount + petCosmeticCount + petSkinCount;
 
       expect(progress.remainingInScope).toBe(expectedVariantFiltered + nonVariantFiltered);
     },

@@ -53,6 +53,7 @@ type LocalizedLookupKey =
   | "itemNames"
   | "locationNames"
   | "monsterNames"
+  | "mountNames"
   | "museumWingNames"
   | "perks"
   | "questNames"
@@ -102,6 +103,7 @@ export const SEGMENT_LOOKUP_NAME_CHUNKS = [
   "items",
   "locations",
   "mines",
+  "mount",
   "museum_wings",
   "villagers",
   "perks",
@@ -136,6 +138,7 @@ function getLocalizedBaseSegmentLookups(
     itemNames,
     locationNames: buildLocationNames(locale),
     monsterNames: buildMonsterNames(locale),
+    mountNames: getNameTable("mount", locale),
     museumWingNames: getNameTable("museum_wings", locale),
     perks: Object.fromEntries(
       recordEntries(trackerData.skills).flatMap(([skillId, skill]) =>

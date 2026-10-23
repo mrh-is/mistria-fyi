@@ -275,7 +275,7 @@ else, so a new game version surfaces immediately.
 | `dates.ts`                | `dates`                               | Date registry.                                                                                                                                              |
 | `festivals.ts`            | `festivals`                           | Festival registry.                                                                                                                                          |
 | `mines.ts`                | `dungeons`, `spells`                  | Floors, biomes, and spells. Throws without a numeric `dungeons.misc.max_floors`.                                                                            |
-| `mount.ts`                | Horse variants, `misc_local`          | Mistmare appearances: the horse variants marked `acquirable = false`, named by `misc_local/<id>`. Throws on an appearance without a reviewed unlock.        |
+| `mount.ts`                | Horse variants, `misc_local`, `perks` | Mistmare appearances (unacquirable horse variants, `misc_local` names) & perks (`skill_menu/mount.toml`). Throws on an unreviewed appearance or tier.       |
 | `museum.ts`               | Museum wings and UI ordering          | Wings and sets in UI order, falling back to object order.                                                                                                   |
 | `pets.ts`                 | `pets`, items                         | Pet cosmetic sets and pet skins.                                                                                                                            |
 | `quests.ts`               | The six tracked quest groups          | Quests by app quest type. Throws when a cooking or fetch quest has no `has_item` requirement.                                                               |
@@ -410,7 +410,9 @@ from `misc.seridia_armor`. Runtime wishing-well rewards use `misc.wishing_well.l
 prices nor outfit inventories are duplicated in reviewed tables. The crown visibility gate is Iron
 Star (renown level 40), from `Ari.gml`’s crown cooldown. Mount appearance unlocks (the Horse Statue
 or the Big Egg) & the Horse Statue’s 100-essence cost come from `obj_horse_statue.gml` &
-`AriFsm.gml`; an assets test asserts the cost against the GML.
+`AriFsm.gml`; an assets test asserts the cost against the GML. The statue's perk menu opens only
+once the player has a mount (`ARI.mount != undefined`), so each Mistmare perk's source names the
+Mistmare rather than a quest; an assets test pins that gate too.
 
 Early Access used 50. See #638 (private beta).
 

@@ -1,5 +1,6 @@
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { seasonFromOrdinal, seasonOrdinal } from "#lib/engine/domain-primitives.js";
+import { trackedPerkIds } from "#lib/engine/perk-ids.js";
 import {
   clampMineFloor,
   clampRenownLevel,
@@ -758,9 +759,7 @@ function getMountAppearanceOrder(): MountAppearanceId[] {
 }
 
 function getPerkOrder(): PerkId[] {
-  return recordValues(trackerData.skills)
-    .flatMap((skill) => skill.perkTiers.flatMap((tier) => recordKeys(tier)))
-    .toSorted();
+  return trackedPerkIds(trackerData).toSorted();
 }
 
 function getPetCosmeticOrder(): PetCosmeticSetId[] {

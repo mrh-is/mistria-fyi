@@ -11,16 +11,27 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
+  import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { recordEntries } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { MountAppearance, MountAppearanceId } from "#lib/types/tracker-data.js";
+  import type {
+    MountAppearance,
+    MountAppearanceId,
+    MountPerk,
+    PerkId,
+  } from "#lib/types/tracker-data.js";
 
-  type AppearanceEntry = MountAppearance & { id: MountAppearanceId; name: string };
+  /** The Mount section lists the Mistmare's appearances, then the perks the Horse Statue sells. */
+  type MountEntry = (
+    | (MountAppearance & { id: MountAppearanceId; kind: "appearance" })
+    | (MountPerk & { id: PerkId; kind: "perk" })
+  ) & { name: string };
 
   let {
     areAllAnimalsComplete,
@@ -34,42 +45,56 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
-  let entries: AppearanceEntry[] = $derived(
-    Object.entries(trackerData.mount.appearances)
+  let entries: MountEntry[] = $derived([
+    ...recordEntries(trackerData.mount.appearances)
       .map(([id, appearance]) => ({
         ...appearance,
-        id: id as MountAppearanceId,
-        name: getName("mount", id as MountAppearanceId, locale),
+        id,
+        kind: "appearance" as const,
+        name: getName("mount", id, locale),
       }))
       .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
-  );
+    ...recordEntries(trackerData.mount.perks)
+      .map(([id, perk]) => ({
+        ...perk,
+        id,
+        kind: "perk" as const,
+        name: getName("perks", id, locale),
+      }))
+      .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
+  ]);
 
   let scopedEntries = $derived(
     entries.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
   );
 
-  let completedCount = $derived(
-    scopedEntries.filter((entry) => userState.state.progress.mountAppearances.has(entry.id)).length,
-  );
+  let completedCount = $derived(scopedEntries.filter((entry) => isCompleted(entry)).length);
 
   let visibleEntries = $derived(
-    scopedEntries.filter((entry) =>
-      userState.state.progress.mountAppearances.has(entry.id)
-        ? userState.state.showCompleted
-        : true,
-    ),
+    scopedEntries.filter((entry) => (isCompleted(entry) ? userState.state.showCompleted : true)),
   );
 
-  function isMountComplete(): boolean {
-    return entries.every((entry) => userState.state.progress.mountAppearances.has(entry.id));
+  function isCompleted(entry: MountEntry): boolean {
+    return entry.kind === "appearance"
+      ? userState.state.progress.mountAppearances.has(entry.id)
+      : userState.state.progress.unlockedPerks.has(entry.id);
   }
 
-  function toggleAppearance(entry: AppearanceEntry): void {
+  function toggleCompleted(entry: MountEntry): void {
+    if (entry.kind === "appearance") userState.toggleMountAppearance(entry.id);
+    else userState.togglePerk(entry.id);
+  }
+
+  function isMountComplete(): boolean {
+    return entries.every((entry) => isCompleted(entry));
+  }
+
+  function toggleEntry(entry: MountEntry): void {
     sectionGroupItem?.hold();
-    userState.toggleMountAppearance(entry.id);
-    const completed = userState.state.progress.mountAppearances.has(entry.id);
+    toggleCompleted(entry);
+    const completed = isCompleted(entry);
     showUndoToast(entry.name, completed, () => {
-      userState.toggleMountAppearance(entry.id);
+      toggleCompleted(entry);
     });
     if (completed && isMountComplete() && areAllAnimalsComplete()) {
       celebrateCategory();
@@ -89,29 +114,46 @@
     reportCategory="mount-appearances"
     total={scopedEntries.length}
   >
-    <TrackerRowList getKey={(entry) => entry.id} items={visibleEntries}>
-      {#snippet row(entry)}
-        {@const completed = userState.state.progress.mountAppearances.has(entry.id)}
-        {@const spoilered = !isConditionVisible(entry.visibility, userState.progressionState)}
-        <TrackerRow
-          display={trackerRowDisplay({ completed, spoilered })}
-          segmentLookups={{ ...baseLookups, entityVisibility: entry.visibility }}
-          name={entry.name}
-          reportCategory="mount-appearance"
-          reportEntityId={entry.id}
-          sources={entry.sources}
-          onToggle={() => {
-            if (!spoilered || completed) {
-              toggleAppearance(entry);
-            } else {
-              spoilerGuard.requestGuardedAction(entry.visibility, () => {
-                toggleAppearance(entry);
-              });
-            }
-          }}
-        />
-      {/snippet}
-    </TrackerRowList>
+    {#each [{ kind: "appearance", name: m.animals_mount_appearances() }, { kind: "perk", name: m.animals_mount_perks() }] as group (group.kind)}
+      {@const scopedGroupEntries = scopedEntries.filter((entry) => entry.kind === group.kind)}
+      {@const visibleGroupEntries = visibleEntries.filter((entry) => entry.kind === group.kind)}
+      {#if visibleGroupEntries.length > 0}
+        <ExpandableSection
+          {locale}
+          depth={1}
+          count={scopedGroupEntries.filter((entry) => isCompleted(entry)).length}
+          name={group.name}
+          total={scopedGroupEntries.length}
+        >
+          <TrackerRowList
+            getKey={(entry) => `${entry.kind}:${entry.id}`}
+            items={visibleGroupEntries}
+          >
+            {#snippet row(entry)}
+              {@const completed = isCompleted(entry)}
+              {@const spoilered = !isConditionVisible(entry.visibility, userState.progressionState)}
+              <TrackerRow
+                display={trackerRowDisplay({ completed, spoilered })}
+                segmentLookups={{ ...baseLookups, entityVisibility: entry.visibility }}
+                name={entry.name}
+                reportCategory={entry.kind === "appearance" ? "mount-appearance" : "mount-perk"}
+                reportEntityId={entry.id}
+                sources={entry.sources}
+                onToggle={() => {
+                  if (!spoilered || completed) {
+                    toggleEntry(entry);
+                  } else {
+                    spoilerGuard.requestGuardedAction(entry.visibility, () => {
+                      toggleEntry(entry);
+                    });
+                  }
+                }}
+              />
+            {/snippet}
+          </TrackerRowList>
+        </ExpandableSection>
+      {/if}
+    {/each}
   </ExpandableSection>
 {:else if toolbarState.isSourceFilterNarrowing}
   <TrackerEmptyState />

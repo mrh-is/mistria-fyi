@@ -94,7 +94,7 @@ describe("validateAcquisitionSources", () => {
 
   it("accepts a Horse Statue source on a mount appearance", () => {
     const source = { type: "horse_statue", cost: 100, questId: "known_quest" };
-    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } } } };
+    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } }, perks: {} } };
     const references = AcquisitionReferenceIndex.from({
       native: { quests: ["known_quest"] },
     });
@@ -102,6 +102,47 @@ describe("validateAcquisitionSources", () => {
     expect(() => {
       validateAcquisitionSources(assembly(trackerData), references);
     }).not.toThrow();
+  });
+
+  it("accepts a Horse Statue source naming the mount a perk needs", () => {
+    const source = { type: "horse_statue", cost: 200, mountAppearanceId: "mistmare" };
+    const trackerData = {
+      mount: { appearances: {}, perks: { horsepower: { sources: [source] } } },
+    };
+    const references = AcquisitionReferenceIndex.from({
+      native: { mountAppearances: ["mistmare"] },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(assembly(trackerData), references);
+    }).not.toThrow();
+  });
+
+  it.each([
+    {
+      name: "an unknown mount appearance",
+      source: { type: "horse_statue", cost: 200, mountAppearanceId: "unknown_mount" },
+    },
+    {
+      name: "both a quest & a mount appearance",
+      source: {
+        type: "horse_statue",
+        cost: 200,
+        mountAppearanceId: "mistmare",
+        questId: "known_quest",
+      },
+    },
+  ])("rejects a mount perk's Horse Statue source with $name", ({ source }) => {
+    const trackerData = {
+      mount: { appearances: {}, perks: { horsepower: { sources: [source] } } },
+    };
+    const references = AcquisitionReferenceIndex.from({
+      native: { mountAppearances: ["mistmare"], quests: ["known_quest"] },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(assembly(trackerData), references);
+    }).toThrow(AcquisitionSourceValidationError);
   });
 
   it.each([
@@ -112,7 +153,7 @@ describe("validateAcquisitionSources", () => {
       source: { type: "horse_statue", cost: 100, questId: "unknown_quest" },
     },
   ])("rejects a Horse Statue source with $name", ({ source }) => {
-    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } } } };
+    const trackerData = { mount: { appearances: { mistmare: { sources: [source] } }, perks: {} } };
     const references = AcquisitionReferenceIndex.from({
       native: { quests: ["known_quest"] },
     });
@@ -818,7 +859,7 @@ function assembly(partial: Record<string, unknown>): AcquisitionSourceAssembly {
     cosmetics: {},
     items: {},
     mines: { biomes: [], spells: {} },
-    mount: { appearances: {} },
+    mount: { appearances: {}, perks: {} },
     museum: {},
     pets: { cosmetics: {}, skins: {} },
     quests: {},
@@ -850,6 +891,7 @@ describe("validateAcquisitionSources on assembled tracker data", () => {
     },
     native: {
       animals: ["chicken"],
+      mountAppearances: ["mistmare"],
       perks: ["mist_sight"],
       quests: ["repair_the_bridge", "the_water_tablet", "berry_quest", "tart_quest", "date_quest"],
       questTypes: ["cooking", "fetch", "heart", "story"],
@@ -1154,6 +1196,11 @@ function realShapes(): Record<string, unknown> {
       appearances: {
         mistmare: {
           sources: [{ type: "horse_statue", cost: 100, questId: "repair_the_bridge" }],
+        },
+      },
+      perks: {
+        horsepower: {
+          sources: [{ type: "horse_statue", cost: 200, mountAppearanceId: "mistmare" }],
         },
       },
     },

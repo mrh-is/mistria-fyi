@@ -14,6 +14,7 @@ import { searchAllCategories } from "./search.js";
 import type {
   ItemId,
   MountAppearanceId,
+  PerkId,
   QuestId,
   RecipeId,
   Season,
@@ -667,6 +668,15 @@ describe("pet cosmetic and skin result IDs", () => {
     const id = "giant_chicken_gold" as MountAppearanceId;
     const results = search(getName("mount", id, "en"), { mountAppearances: new Set([id]) });
     const match = results.find((r) => r.id === `mount-appearance:${id}`);
+    expect(match).toMatchObject({ category: "animals", completed: true });
+  });
+
+  it("finds the Mistmare's perks under 'mount-perk:' and marks them completed", () => {
+    const id = "horsepower" as PerkId;
+    const results = search(getName("perks", id, "en"), {
+      unlockedPerks: new Set([id]),
+    });
+    const match = results.find((r) => r.id === `mount-perk:${id}`);
     expect(match).toMatchObject({ category: "animals", completed: true });
   });
 });
