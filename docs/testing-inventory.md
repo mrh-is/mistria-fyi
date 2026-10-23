@@ -82,7 +82,8 @@ single-component row's marks disagree with its test files.
 | `tracker-paper`                           |        |            | Layout only; no interaction                               |
 | `confirm-spoiler-dialog`                  |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |
 | `spoiler-guard-dialog`                    |        |     ✓      | Renders only while the guard holds a condition            |
-| `skill-record`                            |        |     ✓      | Level editing                                             |
+| `skill-record`                            |        |     ✓      | Level editing, perk drawer                                |
+| `skill-perks`                             |        |     ✓      | Unlocked & locked counts, tiers, check-off, spoiler guard |
 | `stepper`                                 |        |     ✓      | Grouped controls                                          |
 | `dialog-close-button`                     |        |     ✓      | Localized close control, dismisses the dialog             |
 | `status-note`                             |   ✓    |            | Tone classes; alert role for errors & warnings            |
@@ -108,11 +109,12 @@ single-component row's marks disagree with its test files.
 
 ### Category content
 
-| Component                                                                                                                                        | Server | happy-dom | Notes                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | :----: | :-------: | --------------------------------------------------------------- |
-| `almanac-content`                                                                                                                                |        |     ✓     |                                                                 |
-| `animals-content`, `animal-subcategory`, `animal-*-section`, `mount-appearances-section`, `pet-collectibles-section`                             |        |           | Gap: variant/cosmetic toggles; store is tested                  |
-| `cosmetics-content`, `mines-content`, `museum-content`, `quests-content`, `recipes-content`, `renown-content`, `dates-section`, `skills-content` |        |           | Gap: page compositors; rows and dialogs are tested individually |
+| Component                                                                                                                      | Server | happy-dom | Notes                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------ | :----: | :-------: | --------------------------------------------------------------- |
+| `almanac-content`                                                                                                              |        |     ✓     |                                                                 |
+| `animals-content`, `animal-subcategory`, `animal-*-section`, `mount-appearances-section`, `pet-collectibles-section`           |        |           | Gap: variant/cosmetic toggles; store is tested                  |
+| `cosmetics-content`, `mines-content`, `museum-content`, `quests-content`, `recipes-content`, `renown-content`, `dates-section` |        |           | Gap: page compositors; rows and dialogs are tested individually |
+| `skills-content`                                                                                                               |        |     ✓     | A maxed skill stays visible until its perks are bought          |
 
 ### Data page
 
