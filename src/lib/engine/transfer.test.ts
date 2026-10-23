@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { trackedPerkIds } from "#lib/engine/perk-ids.js";
 import { MAX_HEART_LEVEL, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
@@ -179,7 +180,7 @@ function getTransferFieldOffsets(): Record<
   const perkCount = recordValues(trackerData.skills).reduce(
     (count, skill) =>
       count + skill.perkTiers.reduce((tierCount, tier) => tierCount + recordKeys(tier).length, 0),
-    0,
+    recordKeys(trackerData.mount.perks).length,
   );
   const dateableCount = recordValues(trackerData.villagers).filter(
     (villager) => villager.dateable,
@@ -493,11 +494,7 @@ describe("transfer codec", () => {
       skillLevels: Object.fromEntries(
         recordKeys(trackerData.skills).map((id) => [id, MAX_SKILL_LEVEL]),
       ),
-      unlockedPerks: new Set(
-        recordValues(trackerData.skills).flatMap((skill) =>
-          skill.perkTiers.flatMap((tier) => recordKeys(tier)),
-        ),
-      ),
+      unlockedPerks: new Set(trackedPerkIds(trackerData)),
     });
     for (const [animalId, animal] of recordEntries(trackerData.animals)) {
       completed.animalCosmetics[animalId] = new Set(recordKeys(animal.cosmetics));
@@ -536,6 +533,14 @@ describe("transfer codec", () => {
     const completed = makeCompletedState({ unlockedPerks: new Set(perkIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
+    expect(decoded.unlockedPerks).toEqual(new Set(perkIds));
+  });
+
+  it("round-trips the Mistmare's perks in unlockedPerks", async () => {
+    const perkIds = recordKeys(trackerData.mount.perks);
+    expect(perkIds.length).toBeGreaterThan(0);
+    const completed = makeCompletedState({ unlockedPerks: new Set(perkIds) });
+    const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
     expect(decoded.unlockedPerks).toEqual(new Set(perkIds));
   });
 

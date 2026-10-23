@@ -23,6 +23,7 @@ export type AcquisitionReferenceKind =
   | "letter"
   | "location"
   | "monster"
+  | "mountAppearance"
   | "perk"
   | "quest"
   | "questType"
@@ -49,6 +50,7 @@ export interface AcquisitionReferenceRegistries {
   letters?: ReferenceRegistry;
   locations?: ReferenceRegistry;
   monsters?: ReferenceRegistry;
+  mountAppearances?: ReferenceRegistry;
   perks?: ReferenceRegistry;
   quests?: ReferenceRegistry;
   questTypes?: ReferenceRegistry;
@@ -78,6 +80,7 @@ const REGISTRY_KIND = {
   letters: "letter",
   locations: "location",
   monsters: "monster",
+  mountAppearances: "mountAppearance",
   perks: "perk",
   quests: "quest",
   questTypes: "questType",
@@ -171,6 +174,7 @@ function emptyReferenceSets(): Record<AcquisitionReferenceKind, Set<string>> {
     letter: new Set(),
     location: new Set(),
     monster: new Set(),
+    mountAppearance: new Set(),
     perk: new Set(),
     quest: new Set(),
     questType: new Set(),

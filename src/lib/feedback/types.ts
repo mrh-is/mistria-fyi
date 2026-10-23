@@ -15,6 +15,7 @@ export const REPORT_CATEGORIES = [
   "mines",
   "mount-appearance",
   "mount-appearances",
+  "mount-perk",
   "museum-item",
   "museum-set",
   "museum-wing",

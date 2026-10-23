@@ -33,10 +33,12 @@ it("holds a sub-section finished by a row toggle, then moves it under Completed"
   const lastId = appearanceIds.at(-1);
   if (!lastId) throw new Error("Expected mount appearances");
   for (const id of appearanceIds.slice(0, -1)) userState.toggleMountAppearance(id);
+  for (const id of recordKeys(trackerData.mount.perks)) userState.togglePerk(id);
   const mountName = new RegExp(`^${RegExp.escape(getName("ui", "mount", "en"))},`);
 
   renderWithFeedback(AnimalsContent, { locale: "en" });
   await fireEvent.click(await screen.findByRole("button", { name: mountName }));
+  await fireEvent.click(screen.getByRole("button", { name: /^Appearances,/ }));
   const toggle = await screen.findByRole("button", {
     name: `Check ${getName("mount", lastId, "en")}`,
   });

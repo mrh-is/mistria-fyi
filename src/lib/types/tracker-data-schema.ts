@@ -127,6 +127,7 @@ export const SourceSchema = v.variant("type", [
   source("fish_trap", { baitItemIds: nonEmpty(id("ItemId")) }),
   source("forage", { locationIds: v.optional(nonEmpty(id("LocationId"))) }),
   source("horse_statue", { cost: number, questId: id("QuestId") }),
+  source("horse_statue", { cost: number, mountAppearanceId: id("MountAppearanceId") }),
   source("letter", { letterId: v.string(), trigger: v.picklist(["birthday", "condition"]) }),
   source("lost_and_found", {}),
   source("mine", { biomeId: id("MinesBiomeId") }),
@@ -255,6 +256,7 @@ export const MinesBiomeSchema = v.strictObject({
 });
 export const MountSchema = v.strictObject({
   appearances: v.record(id("MountAppearanceId"), SourcedEntitySchema),
+  perks: v.record(id("PerkId"), SourcedEntitySchema),
 });
 export const MuseumWingSetSchema = v.strictObject({ items: v.array(id("ItemId")) });
 export const MuseumWingSchema = v.strictObject({

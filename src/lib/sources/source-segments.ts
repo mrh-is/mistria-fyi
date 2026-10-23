@@ -41,6 +41,7 @@ export type SegmentLookups = BaseSegmentLookups &
     locale: LocaleCode;
     locationNames: Partial<Record<string, string>>;
     monsterNames: Partial<Record<string, string>>;
+    mountNames: NameLookup<TrackerData["mount"]["appearances"]>;
     museumWingNames: Partial<Record<string, string>>;
     questTypes: Partial<Record<QuestId, QuestType>>;
     questVillagerIds: Partial<Record<QuestId, VillagerId>>;
@@ -600,6 +601,13 @@ function buildHorseStatueSegments(
   source: Source & { type: "horse_statue" },
   lookups: SegmentLookups,
 ): Segments {
+  // A mount perk needs the mount itself; its row is hidden until that mount is revealed.
+  if ("mountAppearanceId" in source) {
+    const mount = requireEntry(lookups.mountNames, source.mountAppearanceId, "mountNames");
+    return [
+      m.source_horse_statue_perk({ cost: String(source.cost), mount }, { locale: lookups.locale }),
+    ];
+  }
   const questName = requireEntry(lookups.questNames, source.questId, "questNames");
   const questVis = source.visibility;
 

@@ -13,13 +13,6 @@ const UNTRACKED_ITEMS = new Set([
   "pet_cosmetic",
 ]);
 
-const UNTRACKED_PERKS = new Set([
-  // `perks.toml`: the Mistmare's perks, which no skill's perk tiers list.
-  "harvest_horse",
-  "horsepower",
-  "nice_ride",
-]);
-
 /** Treasure chests (`fish/misc/treasure_box_<tier>`) are tracked as tiers, not as items. */
 const TREASURE_BOX_ITEMS = new Set(
   Object.keys(trackerData.treasureChestTiers).map((tier) => `treasure_box_${tier}`),
@@ -30,9 +23,4 @@ export function isKnownItemId(id: string): boolean {
   return (
     Object.hasOwn(trackerData.items, id) || UNTRACKED_ITEMS.has(id) || TREASURE_BOX_ITEMS.has(id)
   );
-}
-
-/** Whether a save perk ID is a game perk the tracker leaves out of its skill tiers. */
-export function isUntrackedPerkId(id: string): boolean {
-  return UNTRACKED_PERKS.has(id);
 }

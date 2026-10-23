@@ -5,7 +5,7 @@ import { APP_UI_STRINGS } from "./localize/ui-strings.js";
 import { createMemoryLocalizer, makeFiddle } from "./test-helpers.js";
 
 import type { Source } from "#lib/types/acquisition.js";
-import type { ItemId, QuestId, VillagerId } from "#lib/types/tracker-data.js";
+import type { ItemId, PerkId, QuestId, VillagerId } from "#lib/types/tracker-data.js";
 
 import type { AssembleOptions } from "./assemble.js";
 
@@ -20,7 +20,7 @@ const miscLocal = Object.fromEntries(
 /**
  * The smallest fiddle that passes every extractor & validation: tables the reference index
  * requires, the villagers & quests that hard-coded visibility rules name, one almanac item, the
- * Mistmare & its Horse Statue quest, and every app UI string.
+ * Mistmare, its perk, & its Horse Statue quest, and every app UI string.
  */
 function syntheticFiddle() {
   return makeFiddle({
@@ -69,6 +69,7 @@ function syntheticFiddle() {
       },
     },
     object_prototypes: {},
+    perks: { horsepower: { name: "Horsepower" } },
     pets: { variants: {} },
     quests: {
       heart_quests: {
@@ -96,6 +97,7 @@ function syntheticFiddle() {
     ui: {
       character_customization: {},
       menus: { sub_menus: { almanac: { categories: [{ key: "crops", tags: ["crop"] }] } } },
+      skill_menu: { mount: { tier_1: [{ essence: 200, perk: "horsepower" }] } },
     },
   });
 }
@@ -152,6 +154,18 @@ describe("assembleTrackerData", () => {
       type: "villagerKnown",
       villagerId: "taliferro",
     });
+    expect(trackerData.mount.perks["horsepower" as PerkId]).toEqual({
+      sources: [
+        {
+          type: "horse_statue",
+          cost: 200,
+          mountAppearanceId: "mistmare",
+          visibility: { type: "always" },
+        },
+      ],
+      // The perk needs the Mistmare, so it shares the Mistmare's gate.
+      visibility: { type: "questAvailable", questId: "find_the_weathervane" },
+    });
     expect(iconSpritesByItemId).toEqual({ turnip: "spr_ui_item_turnip" });
     expect(Object.keys(iconSpritesByVillagerId)).toEqual(["adeline", "stillwell", "taliferro"]);
   });
@@ -183,6 +197,8 @@ describe("assembleTrackerData", () => {
       "treasure-chest-tiers",
       "locations",
     ]);
+    const perks = localeChunks.find((chunk) => chunk.category === "perks");
+    expect(perks?.byLocale.en.horsepower).toBe("Horsepower");
     const villagers = localeChunks.find((chunk) => chunk.category === "villagers");
     expect(villagers?.byLocale.ja.adeline).toBe("アデリン");
     expect(villagers?.byLocale.fr.adeline).toBe("Adeline");
