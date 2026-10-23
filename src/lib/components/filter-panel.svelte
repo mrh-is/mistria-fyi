@@ -54,7 +54,7 @@
     [
       ...userState.state.availabilityWindows.map((window) => availabilityLabels[window]),
       seasonLabel(currentSeason, page.data.locale),
-      weatherLabel(userState.state.worldState.weather, currentSeason).replace(" weather", ""),
+      weatherLabel(userState.state.worldState.weather, currentSeason),
     ].join(" · "),
   );
   let sourceSummary = $derived(
@@ -264,7 +264,7 @@
                       style:transition-duration="{transitionDuration() / 2}ms"
                     >
                       <SlotIcon class="size-3" />
-                      {weatherSlotDisplay[weather].label.replace(" weather", "")}
+                      {weatherSlotDisplay[weather].label}
                     </span>
                   </button>
                 </div>
@@ -313,7 +313,6 @@
     <div class="toggle-row">
       <div class="toggle">
         <BlockySwitch
-          label={m.visibility_show_completed()}
           checked={userState.state.showCompleted}
           onCheckedChange={() => {
             userState.toggleShowCompleted();
@@ -328,7 +327,6 @@
       {#if toolbarState.hasAlmanacFilters}
         <div class="toggle">
           <BlockySwitch
-            label={m.almanac_show_unobtainable()}
             checked={toolbarState.showUnobtainable}
             onCheckedChange={() => {
               toolbarState.showUnobtainable = !toolbarState.showUnobtainable;
@@ -588,7 +586,6 @@
     min-width: 0;
     min-height: 44px;
     flex: 1;
-    padding: 0 10px;
     border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
     background: var(--color-paper-sunken);
   }
@@ -598,6 +595,7 @@
     flex-direction: row-reverse;
     justify-content: space-between;
     gap: 8px;
+    padding: 0 10px;
   }
 
   .toggle__label {

@@ -1,5 +1,4 @@
 {
-  "almanac_show_unobtainable": "入手できないアイテムを表示？",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "コレクション、クエスト、スキルなどの進捗を記録",
@@ -206,7 +205,6 @@
   "visibility_source_types": "入手方法の種類",
   "visibility_source_types_about_aria": "入手方法の種類について",
   "visibility_source_types_summary": "{enabled}/{total}",
-  "visibility_show_completed": "完了済みを表示しますか？",
   "visibility_show_heading": "表示",
   "visibility_completed_toggle": "完了済み",
   "visibility_unobtainable_toggle": "入手不可",

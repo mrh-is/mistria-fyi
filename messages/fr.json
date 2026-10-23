@@ -1,5 +1,4 @@
 {
-  "almanac_show_unobtainable": "Afficher les objets impossibles à obtenir ?",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Suivez toutes vos collections, quêtes, compétences et plus encore",
@@ -212,7 +211,6 @@
   "visibility_source_types": "Types de source",
   "visibility_source_types_about_aria": "À propos des types de source",
   "visibility_source_types_summary": "{enabled} sur {total}",
-  "visibility_show_completed": "Afficher les éléments terminés ?",
   "visibility_show_heading": "Afficher",
   "visibility_completed_toggle": "Terminés",
   "visibility_unobtainable_toggle": "Impossibles à obtenir",

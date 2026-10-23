@@ -1,5 +1,4 @@
 {
-  "almanac_show_unobtainable": "획득할 수 없는 항목 표시?",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "수집품, 퀘스트, 스킬 등 모든 진행 상황을 기록하세요",
@@ -206,7 +205,6 @@
   "visibility_source_types": "획득 경로 유형",
   "visibility_source_types_about_aria": "획득 경로 유형 안내",
   "visibility_source_types_summary": "{total}개 중 {enabled}개",
-  "visibility_show_completed": "완료된 항목을 표시할까요?",
   "visibility_show_heading": "표시",
   "visibility_completed_toggle": "완료됨",
   "visibility_unobtainable_toggle": "획득 불가",

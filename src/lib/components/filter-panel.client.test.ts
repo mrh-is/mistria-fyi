@@ -52,17 +52,17 @@ afterEach(async () => {
 describe("FilterPanel interactions", () => {
   it("offers the unobtainable filter only while the almanac is mounted", async () => {
     render(FilterPanel, { showWorldStateFilters: true });
-    expect(screen.queryByRole("switch", { name: "Show unobtainable?" })).toBeNull();
+    expect(screen.queryByRole("switch", { name: "Unobtainable" })).toBeNull();
     toolbarState.registerSourceFilters("almanac", []);
     await tick();
-    const toggle = screen.getByRole("switch", { name: "Show unobtainable?" });
+    const toggle = screen.getByRole("switch", { name: "Unobtainable" });
     await fireEvent.click(toggle);
     expect(toolbarState.showUnobtainable).toBe(true);
     await fireEvent.click(toggle);
     expect(toolbarState.showUnobtainable).toBe(false);
     toolbarState.unregisterSourceFilters("almanac");
     await tick();
-    expect(screen.queryByRole("switch", { name: "Show unobtainable?" })).toBeNull();
+    expect(screen.queryByRole("switch", { name: "Unobtainable" })).toBeNull();
   });
 
   it("toggles availability windows as pressed chips", async () => {
@@ -212,7 +212,7 @@ describe("FilterPanel interactions", () => {
   it("toggles completed visibility from the switch", async () => {
     render(FilterPanel, { showWorldStateFilters: false });
 
-    const showCompleted = screen.getByRole("switch", { name: "Show completed?" });
+    const showCompleted = screen.getByRole("switch", { name: "Completed" });
     expect(showCompleted).not.toBeChecked();
 
     await fireEvent.click(showCompleted);
@@ -230,17 +230,15 @@ describe("FilterPanel interactions", () => {
 
     const show = screen.getByRole("region", { name: "Show" });
     expect(within(show).getAllByRole("switch")).toHaveLength(1);
-    expect(within(show).getByText("Completed")).toBeInTheDocument();
 
     toolbarState.registerSourceFilters("almanac", []);
     await tick();
 
-    expect(
-      within(show)
-        .getAllByRole("switch")
-        .map((toggle) => toggle.getAttribute("aria-label")),
-    ).toEqual(["Show completed?", "Show unobtainable?"]);
-    expect(within(show).getByText("Unobtainable")).toBeInTheDocument();
+    // The visible tile text names each switch, so voice control can target what's on screen.
+    const switches = within(show).getAllByRole("switch");
+    expect(switches).toHaveLength(2);
+    expect(switches[0]).toHaveAccessibleName("Completed");
+    expect(switches[1]).toHaveAccessibleName("Unobtainable");
   });
 
   it("keeps every section expanded without a disclosure control on wide screens", () => {

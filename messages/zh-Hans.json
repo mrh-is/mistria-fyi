@@ -1,5 +1,4 @@
 {
-  "almanac_show_unobtainable": "显示无法获取的物品？",
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "追踪所有收藏、任务、技能及更多内容",
@@ -206,7 +205,6 @@
   "visibility_source_types": "来源类型",
   "visibility_source_types_about_aria": "关于来源类型",
   "visibility_source_types_summary": "{enabled}/{total}",
-  "visibility_show_completed": "显示已完成项目吗？",
   "visibility_show_heading": "显示",
   "visibility_completed_toggle": "已完成",
   "visibility_unobtainable_toggle": "无法获取",
