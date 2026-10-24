@@ -65,7 +65,6 @@ void describe("built search metadata", { concurrency: 4, timeout: 120_000 }, () 
     assert.ok(response.ok, `${path}: HTTP ${String(response.status)}`);
     const window = new Window({
       settings: {
-        disableCSSFileLoading: true,
         disableJavaScriptFileLoading: true,
         enableJavaScriptEvaluation: false,
       },
