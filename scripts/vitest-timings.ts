@@ -26,12 +26,19 @@ export interface Budgets {
 // two-CPU wall ceiling covers a cold transform cache (105 s) above warm runs (52-79 s, #707).
 export function timingBudgets(cpus: number, coverage: boolean): Budgets {
   const stepMs = cpus < 4 ? 120_000 : 90_000;
+  // V8 coverage instrumentation slows in-process code, so four-CPU coverage runs triple the
+  // ordinary file ceiling. On commit 31c10adb, coverage slowed four-CPU files over 200 ms by a
+  // median 1.14× & up to 2.67× (names.completeness.test.ts); tracker-data-schema.test.ts, which
+  // grows with the tracker data, went from 2.1 s to 5.3 s. Two-CPU coverage hasn't been
+  // measured, so it keeps the ordinary ceiling.
+  const fourCpuFileMs = coverage ? 15_000 : 5e3;
   return {
-    fileMs: cpus < 4 ? 10_000 : 5e3,
+    fileMs: cpus < 4 ? 10_000 : fourCpuFileMs,
     // The CLI probes spawn pnpm, oxlint, & vitest subprocesses, so their time is dominated by
     // process startup rather than the code under test. On four-CPU runners they share workers
     // with the suite & measured 9.1-9.4 s (lint-ownership) & 5.2-5.6 s (vitest-projects) in
-    // #13. Two-CPU runners isolate them and keep the ordinary ceiling.
+    // #13. Two-CPU runners isolate them on noncoverage runs and keep the ordinary ceiling.
+    // Coverage leaves the probes' time unchanged (0.98-0.99×), so their ceiling doesn't scale.
     probeFileMs: cpus < 4 ? 10_000 : 15_000,
     stepMs: coverage ? 300_000 : stepMs,
   };
