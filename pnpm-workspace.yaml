@@ -13,11 +13,15 @@ allowBuilds:
   esbuild: true
   workerd: true
 
-# Wrangler's miniflare resolves undici 7.29.0 without this, which `pnpm audit`
-# flags (GHSA-2gqq-gqf2-x968 and others, patched in 7.29.1). Drop it once
-# miniflare's own range excludes the vulnerable releases.
+# Wrangler's miniflare pins undici 7.29.0 exactly, which `pnpm audit` flags
+# (GHSA-xjj6-f33q-929c and others, patched in 7.30.1). Drop it once miniflare's
+# own pin moves past 7.30.0.
 overrides:
-  "undici@7": "^7.29.1"
+  "undici@7": "^7.30.1"
+  # Vitest's jsdom allows undici ^8.10.2, so the lockfile keeps 8.11.2, which `pnpm audit` flags
+  # (GHSA-xjj6-f33q-929c and others, patched in 8.12.2). Drop it once jsdom's own range excludes
+  # the vulnerable releases.
+  "undici@8": "^8.12.2"
   # Miniflare pins sharp 0.35.4 exactly, which Dependabot flags (patched in
   # 0.35.5). Drop it once miniflare's own pin moves past 0.35.4.
   "sharp@<0.35.5": "^0.35.5"
