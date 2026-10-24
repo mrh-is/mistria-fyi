@@ -49,8 +49,8 @@ describe("Vitest timing budgets", () => {
       stepMs: 300_000,
     });
     expect(timingBudgets(2, true)).toEqual({
-      fileMs: 30_000,
-      probeFileMs: 30_000,
+      fileMs: 10_000,
+      probeFileMs: 10_000,
       stepMs: 300_000,
     });
   });
