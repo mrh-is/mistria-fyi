@@ -26,13 +26,18 @@ export interface Budgets {
 // two-CPU wall ceiling covers a cold transform cache (105 s) above warm runs (52-79 s, #707).
 export function timingBudgets(cpus: number, coverage: boolean): Budgets {
   const stepMs = cpus < 4 ? 120_000 : 90_000;
+  // V8 coverage instrumentation slows in-process code, so nightly runs triple the ordinary file
+  // ceiling. On one four-CPU commit, coverage slowed files over 200 ms by a median 1.14× & at
+  // most 2.61× (tracker-data-schema.test.ts, 2.1 s to 5.2 s, which grows with the tracker data).
+  const fileMs = (cpus < 4 ? 10_000 : 5e3) * (coverage ? 3 : 1);
   return {
-    fileMs: cpus < 4 ? 10_000 : 5e3,
+    fileMs,
     // The CLI probes spawn pnpm, oxlint, & vitest subprocesses, so their time is dominated by
     // process startup rather than the code under test. On four-CPU runners they share workers
     // with the suite & measured 9.1-9.4 s (lint-ownership) & 5.2-5.6 s (vitest-projects) in
-    // #13. Two-CPU runners isolate them and keep the ordinary ceiling.
-    probeFileMs: cpus < 4 ? 10_000 : 15_000,
+    // #13. Two-CPU runners isolate them and keep the ordinary ceiling. Coverage leaves them
+    // unchanged (0.98-0.99×), so their ceiling only rises to stay at or above `fileMs`.
+    probeFileMs: Math.max(cpus < 4 ? 10_000 : 15_000, fileMs),
     stepMs: coverage ? 300_000 : stepMs,
   };
 }
