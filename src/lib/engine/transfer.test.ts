@@ -279,7 +279,7 @@ function toBase64url(bytes: Uint8Array): string {
   return btoa(String.fromCodePoint(...bytes))
     .replaceAll("+", "-")
     .replaceAll("/", "_")
-    .replace(/=+$/, "");
+    .replace(/[=]+$/, "");
 }
 
 describe("transfer codec", () => {

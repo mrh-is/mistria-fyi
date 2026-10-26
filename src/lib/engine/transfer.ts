@@ -801,7 +801,7 @@ function toBase64url(bytes: Uint8Array): string {
   for (const byte of bytes) {
     binary += String.fromCodePoint(byte);
   }
-  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/[=]+$/, "");
 }
 
 function toBitfield(ordered: string[], completedSet: ReadonlySet<string>): Uint8Array {
