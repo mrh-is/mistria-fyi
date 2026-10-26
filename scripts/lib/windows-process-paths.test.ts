@@ -7,8 +7,7 @@ describe("Windows process paths", () => {
     expect(
       windowsProcessPaths(
         JSON.stringify({
-          CommandLine:
-            'node C:\\tools\\vite.js --config=C:\\repo\\vite.config.ts --root="C:\\My repo\\worktree"',
+          CommandLine: String.raw`node C:\tools\vite.js --config=C:\repo\vite.config.ts --root="C:\My repo\worktree"`,
         }),
       ),
     ).toStrictEqual([
@@ -23,8 +22,8 @@ describe("Windows process paths", () => {
       windowsProcessPaths(
         JSON.stringify([
           {
-            CommandLine: 'node "C:\\My repo\\node_modules\\vite\\bin\\vite.js" --port 5173',
-            ExecutablePath: "C:\\Program Files\\nodejs\\node.exe",
+            CommandLine: String.raw`node "C:\My repo\node_modules\vite\bin\vite.js" --port 5173`,
+            ExecutablePath: String.raw`C:\Program Files\nodejs\node.exe`,
           },
           { CommandLine: "C:/repo/node_modules/workerd/workerd.exe serve", ExecutablePath: null },
         ]),

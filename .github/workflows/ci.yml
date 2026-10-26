@@ -252,7 +252,7 @@ jobs:
     if: needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
       options: --ipc=host
     timeout-minutes: 30
     strategy:
@@ -328,7 +328,7 @@ jobs:
     if: needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
       options: --ipc=host
     timeout-minutes: 20
     steps:
