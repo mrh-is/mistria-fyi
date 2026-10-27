@@ -385,6 +385,27 @@ describe("FeedbackPanel", () => {
     expect(toast).toHaveBeenCalledTimes(1);
   });
 
+  it("says a preview build filed nothing, without an issue link", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ dryRun: true })));
+    const onClose = vi.fn();
+    renderWithFeedback(FeedbackPanel, { onClose, open: true });
+
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "Something is wrong" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
+    expect(toast).toHaveBeenCalledTimes(1);
+    const [notice, options] = toast.mock.calls[0] as [string, undefined | { action?: unknown }];
+    expect(notice).toContain("Preview build");
+    expect(notice).toContain("nothing was filed");
+    expect(options?.action).toBeUndefined();
+  });
+
   it("treats partial submission as final without exposing or duplicating contact details", async () => {
     const fetchMock = vi
       .fn()

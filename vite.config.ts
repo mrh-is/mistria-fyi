@@ -46,6 +46,13 @@ const spriteAssetBase = resolveSpriteAssetBase(
 const contentSecurityPolicy = cspDirectives(spriteAssetBase);
 
 /**
+ * Whether this is a Cloudflare Pages build of the production branch. Pages sets `CF_PAGES_BRANCH`
+ * in the build environment only, so it's fixed here: anything else (previews, local builds, dev, &
+ * tests) runs feedback as a dry run.
+ */
+const isProductionDeployment = process.env.CF_PAGES_BRANCH === "main";
+
+/**
  * Vite resolves `#lib/*` through the nearest package.json's `imports` field. For files under
  * `pipeline/`, that's `pipeline/package.json`, which has none, so map it explicitly (the pipeline's
  * tsconfig does the same for tsx). The plain-Node test projects don't extend this config, so they
@@ -127,6 +134,7 @@ export default defineConfig({
     },
   },
   define: {
+    __PRODUCTION_DEPLOYMENT__: JSON.stringify(isProductionDeployment),
     __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
   },
   plugins: [

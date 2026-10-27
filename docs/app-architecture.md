@@ -508,6 +508,16 @@ variables can't be set in the dashboard. Store all three settings as production 
 aren't sensitive, but a secret keeps them production-only without restating the KV binding in a
 per-environment `wrangler.toml` block.
 
+Only production files issues. `vite.config.ts` sets `isProductionDeployment`
+(`src/lib/server/deployment.ts`) at build time, true only when Cloudflare Pages builds `main`
+(`CF_PAGES_BRANCH`). Every other build (branch previews, local builds, dev, & tests) runs feedback
+as a dry run. It applies the same origin, payload, & Turnstile token checks, verifies Turnstile only
+when `TURNSTILE_SECRET_KEY` is set, then returns `{ dryRun: true }` without reading the App
+settings, calling GitHub, or storing the email. The panel says nothing was filed. No request header,
+host, or body field can switch production into a dry run. If the Pages production branch is ever
+renamed, update `vite.config.ts` in the same change, or production feedback silently becomes a dry
+run. See the [decision record](decisions/2026-10-27-feedback-preview-dry-run.md).
+
 ### Setting up the App (maintainer)
 
 1. On GitHub, open **Settings → Developer settings → GitHub Apps → New GitHub App** for the account

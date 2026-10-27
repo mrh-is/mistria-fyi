@@ -84,6 +84,11 @@ Screenshot accumulation is expensive; use a bounded checklist, not exploratory b
 5. Check relevant states: empty, loaded, error, disabled.
 6. Check browser console for errors.
 
+Note: feedback runs as a dry run everywhere except production, including branch previews & local
+servers. Submitting it checks the form & Turnstile, files no issue, & shows a “Preview build”
+notice. That notice, not a GitHub issue, is the expected result
+([Feedback credentials](app-architecture.md#8-feedback-credentials)).
+
 ### Screenshot limits
 
 - Cap at **10 screenshots** per PR. One per materially changed state, not one per interaction step.

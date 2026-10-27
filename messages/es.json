@@ -312,6 +312,7 @@
   "feedback_error_timeout": "La solicitud agotó el tiempo de espera. Inténtalo de nuevo o copia tu mensaje.",
   "feedback_error_offline": "No se pudo conectar. Inténtalo de nuevo o copia tu mensaje.",
   "feedback_toast_email_not_saved": "Tu comentario se envió, pero no se pudo guardar tu correo de contacto. Enviarlo de nuevo crearía un issue público duplicado. Envía un nuevo comentario más adelante si todavía necesitas una respuesta privada.",
+  "feedback_toast_dry_run": "Versión de prueba: tus comentarios superaron todas las comprobaciones, pero no se envió nada.",
   "feedback_toast_thanks": "¡Gracias por tu comentario!",
   "feedback_action_view_issue": "Ver issue",
   "feedback_picker_dialog_title": "Elige un elemento para reportar",
