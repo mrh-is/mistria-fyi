@@ -310,6 +310,7 @@
   "feedback_error_timeout": "Request timed out. Please try again or copy your message.",
   "feedback_error_offline": "Could not connect. Please try again or copy your message.",
   "feedback_toast_email_not_saved": "Your feedback was submitted, but your contact email could not be saved. Sending it again would create a duplicate public issue. Please submit a new report later if you still need a private reply.",
+  "feedback_toast_dry_run": "Preview build: your feedback passed every check, but nothing was filed.",
   "feedback_toast_thanks": "Thanks for your feedback!",
   "feedback_action_view_issue": "View issue",
   "feedback_picker_dialog_title": "Pick an item to report",

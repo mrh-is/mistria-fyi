@@ -322,7 +322,9 @@
         return;
       }
 
-      const data = (await response.json()) as { emailSaved?: boolean; issueUrl: string };
+      const data = (await response.json()) as
+        | { dryRun: true }
+        | { dryRun?: undefined; emailSaved?: boolean; issueUrl: string };
       if (generation !== submitGeneration) return;
 
       message = "";
@@ -336,7 +338,9 @@
       selectedElement = undefined;
       onClose();
 
-      if (data.emailSaved === false) {
+      if (data.dryRun) {
+        toast(m.feedback_toast_dry_run(), { duration: 8000 });
+      } else if (data.emailSaved === false) {
         toast.warning(m.feedback_toast_email_not_saved(), {
           action: {
             label: m.feedback_action_view_issue(),

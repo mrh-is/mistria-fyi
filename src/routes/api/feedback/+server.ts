@@ -3,6 +3,7 @@ import { error as httpError, isHttpError } from "@sveltejs/kit";
 import { env } from "cloudflare:workers";
 
 import { isReportCategory } from "#lib/feedback/types.js";
+import { isProductionDeployment } from "#lib/server/deployment.js";
 import { GitHubAppAuthError, installationTokens } from "#lib/server/github-app-auth.js";
 
 import type { ReportTarget } from "#lib/feedback/types.js";
@@ -441,6 +442,14 @@ export const POST: RequestHandler = async ({ request, url }) => {
   }
 
   const turnstileSecret = env.TURNSTILE_SECRET_KEY;
+  if (!isProductionDeployment) {
+    // Previews are public & hold no GitHub App secrets, so they check what they can & file nothing.
+    if (turnstileSecret) {
+      await verifyTurnstile(turnstileToken, turnstileSecret);
+    }
+    console.info("Feedback dry run: no issue filed");
+    return Response.json({ dryRun: true }, { headers: corsHeaders(allowedOrigin) });
+  }
   if (!turnstileSecret) {
     console.error("TURNSTILE_SECRET_KEY is not configured");
     httpError(503, "Feedback service temporarily unavailable");
