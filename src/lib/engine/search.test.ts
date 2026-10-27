@@ -699,6 +699,7 @@ function allResults(): SearchResult[] {
     projectionContext: {
       availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
       progress: makeCompletedState(),
+      progressionState: makeProgressionState({ showSpoilers: true }),
       worldState: defaultWorld,
     },
   };

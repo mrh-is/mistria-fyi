@@ -21,11 +21,7 @@ describe("OverallProgress", () => {
   });
 
   it("includes every category in the overall total", () => {
-    const progress = getAllProgress({
-      availabilityWindows: userState.state.availabilityWindows,
-      progress: userState.state.progress,
-      worldState: userState.state.worldState,
-    });
+    const progress = getAllProgress(userState.progressContext);
     const expectedTotal = Object.values(progress).reduce(
       (sum, category) => sum + category.total,
       0,
@@ -43,11 +39,7 @@ describe("OverallProgress", () => {
   it("localizes the overall progress label for Japanese", () => {
     overwriteGetLocale(() => "ja");
     page.data.locale = "ja";
-    const progress = getAllProgress({
-      availabilityWindows: userState.state.availabilityWindows,
-      progress: userState.state.progress,
-      worldState: userState.state.worldState,
-    });
+    const progress = getAllProgress(userState.progressContext);
     const expectedTotal = Object.values(progress).reduce(
       (sum, category) => sum + category.total,
       0,
@@ -65,11 +57,7 @@ describe("OverallProgress", () => {
   it("localizes the overall progress label for Russian", () => {
     overwriteGetLocale(() => "ru");
     page.data.locale = "ru";
-    const progress = getAllProgress({
-      availabilityWindows: userState.state.availabilityWindows,
-      progress: userState.state.progress,
-      worldState: userState.state.worldState,
-    });
+    const progress = getAllProgress(userState.progressContext);
     const expectedTotal = Object.values(progress).reduce(
       (sum, category) => sum + category.total,
       0,

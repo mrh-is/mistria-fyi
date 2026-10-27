@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { trackerData } from "#lib/data/index.js";
+import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
@@ -16,6 +18,7 @@ describe("renown maximum", () => {
     const progress = getCategoryProgress("renown", {
       availabilityWindows: AVAILABILITY_WINDOWS,
       progress: completedAtRenown(100),
+      progressionState: deriveProgressionState(completedAtRenown(100), trackerData, false),
       worldState: { season: "spring", weather: "calm" },
     });
 
@@ -26,6 +29,7 @@ describe("renown maximum", () => {
     const progress = getCategoryProgress("renown", {
       availabilityWindows: AVAILABILITY_WINDOWS,
       progress: completedAtRenown(120),
+      progressionState: deriveProgressionState(completedAtRenown(120), trackerData, false),
       worldState: { season: "spring", weather: "calm" },
     });
 

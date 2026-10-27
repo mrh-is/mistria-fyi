@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
+import { deriveProgressionState } from "#lib/engine/visibility.js";
+import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries } from "#lib/utils/record.js";
 
-import { getVariantSeason, isVariantInScope } from "./animal-availability.js";
+import {
+  getVariantSeason,
+  isVariantInScope as isVariantInScopeEngine,
+} from "./animal-availability.js";
 
 import type { AvailabilityWindow } from "#lib/types/availability.js";
-import type { AnimalVariant, Season } from "#lib/types/tracker-data.js";
+import type { AnimalVariant, QuestId, Season } from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 /** Window selections named for the retired availability modes, kept as test presets. */
 const WINDOW_PRESETS = {
@@ -22,6 +28,23 @@ const MODES: WindowPreset[] = ["available", "everything", "timely"];
 const AVAILABLE = [...DEFAULT_AVAILABILITY_WINDOWS];
 const EVERYTHING = [...AVAILABILITY_WINDOWS];
 const TIMELY: AvailabilityWindow[] = ["now"];
+
+const progressionState = deriveProgressionState(makeCompletedState(), trackerData, false);
+
+/** Scope for a variant of an always-visible species, in a fresh game's progression. */
+function isVariantInScope(
+  variant: AnimalVariant,
+  season: Season,
+  windows: readonly AvailabilityWindow[],
+  animalVisibility?: VisibilityCondition,
+): boolean {
+  return isVariantInScopeEngine(
+    variant,
+    animalVisibility,
+    { progressionState, worldState: { season, weather: "calm" } },
+    windows,
+  );
+}
 
 const SUMMER_BREED: AnimalVariant = {
   source: { type: "breed", availability: { type: "season", seasons: ["summer"] } },
@@ -94,6 +117,16 @@ describe("isVariantInScope", () => {
   it("timely mode includes seasonal breed only in its season", () => {
     expect(isVariantInScope(SUMMER_BREED, "summer", TIMELY)).toBe(true);
     expect(isVariantInScope(SUMMER_BREED, "spring", TIMELY)).toBe(false);
+  });
+
+  it("counts every variant of a spoiler-hidden species as later", () => {
+    const hidden: VisibilityCondition = {
+      type: "questCompleted",
+      questId: "never_completed" as QuestId,
+    };
+    expect(isVariantInScope(NONSEASONAL_BREED, "spring", AVAILABLE, hidden)).toBe(false);
+    expect(isVariantInScope(SUMMER_BREED, "summer", TIMELY, hidden)).toBe(false);
+    expect(isVariantInScope(NONSEASONAL_BREED, "spring", ["later"], hidden)).toBe(true);
   });
 
   it("also passes for real data variants", () => {

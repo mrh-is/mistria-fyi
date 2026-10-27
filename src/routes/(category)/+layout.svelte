@@ -18,13 +18,7 @@
   });
   const { color, name } = $derived(categoryForKey(key, data.locale));
 
-  let progress = $derived(
-    getCategoryProgress(key, {
-      availabilityWindows: userState.state.availabilityWindows,
-      progress: userState.state.progress,
-      worldState: userState.state.worldState,
-    }),
-  );
+  let progress = $derived(getCategoryProgress(key, userState.progressContext));
 </script>
 
 <div class="min-w-0" style="--primary: {color}">

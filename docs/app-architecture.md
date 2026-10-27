@@ -111,9 +111,10 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
     never brings one in; a progress reset keeps it and a full reset clears it. Provenance & resolved
     diffs live in `progress`, so they travel with backups.
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
-  `now`, `anytime`, & `later`, and `showSpoilers`). These are per-device conveniences: they're never
-  exported, so restoring a backup or resetting progress keeps them, and a missing or invalid field
-  falls back to its default rather than blocking anything.
+  `now`, `anytime`, & `later`, and `showSpoilers`). The UI labels `anytime` “Whenever”; the stored
+  value keeps its original name. These are per-device conveniences: they're never exported, so
+  restoring a backup or resetting progress keeps them, and a missing or invalid field falls back to
+  its default rather than blocking anything.
 
 `src/lib/stores/progress-storage.ts` owns the blob. Storage hydration & backup restore both read it
 the same way: parse it, dispatch on `version`, run the numbered `MIGRATIONS` that bring it up to
@@ -340,6 +341,14 @@ Progress calculation and UI row visibility are separate concerns.
   regardless of display filters; `src/lib/engine/progress.ts` holds its types & level rules.
 - **Visibility** is controlled by `availabilityWindows` (`now`, `anytime`, `later`),
   `showCompleted`, and `showSpoilers` at the component level.
+- **Row windows** answer “what can I act on today?”. `classifyItemAvailability` in
+  `engine/availability.ts` puts each incomplete row in one window: “Later” while the row or a source
+  is a spoiler, a progress gate the app records is unmet, or the source is out of season or weather;
+  “Now” when a season or weather restriction holds today; “Whenever” (`anytime`) otherwise. A row
+  takes its best source. Unevaluable gates count as met, & time of day is never filtered on. Every
+  projection reads the rule through `ProgressContext`, which carries the player's
+  `progressionState`, so counts, dimming, & the filter agree. See the
+  [decision record](decisions/2026-10-27-row-windows.md).
 - Hidden completed rows still contribute to progress totals. This ensures the overall percentage
   remains accurate even when the user filters out completed content.
 - **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the

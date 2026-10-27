@@ -81,9 +81,9 @@
   }
 
   function setLevelWithCelebration(newLevel: number): void {
-    const wasDone = isCategoryComplete("skills", userState.state);
+    const wasDone = isCategoryComplete("skills", userState.progressContext);
     userState.setSkillLevel(id, newLevel);
-    if (!wasDone && isCategoryComplete("skills", userState.state)) celebrateCategory();
+    if (!wasDone && isCategoryComplete("skills", userState.progressContext)) celebrateCategory();
   }
 
   function startEditing(): void {

@@ -57,7 +57,7 @@ export function projectAnimals(
         rows.push({
           animalId,
           completed,
-          inScope: isVariantInScope(variant, ctx.worldState.season, ctx.availabilityWindows),
+          inScope: isVariantInScope(variant, animal.visibility, ctx, ctx.availabilityWindows),
           kind: "variant",
           spoilered,
           variantId,

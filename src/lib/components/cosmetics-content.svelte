@@ -54,7 +54,7 @@
   }
 
   function isCosmeticsComplete(): boolean {
-    return isCategoryComplete("cosmetics", userState.state);
+    return isCategoryComplete("cosmetics", userState.progressContext);
   }
 
   function isSlotComplete(items: CosmeticEntry[]): boolean {

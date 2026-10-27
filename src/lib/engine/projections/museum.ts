@@ -39,7 +39,7 @@ export function projectMuseum(
       for (const id of set.items) {
         const item = trackerData.items[id];
         rows.push({
-          available: isItemAvailable(item.sources, ctx.worldState, ctx.availabilityWindows),
+          available: isItemAvailable(item, ctx, ctx.availabilityWindows),
           completed: ctx.progress.museum.has(id),
           id,
           obtainable: isItemObtainable(id, ctx.progress),

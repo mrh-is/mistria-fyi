@@ -40,7 +40,7 @@
   // Past this many enabled types, the sources summary names a count instead of listing them.
   const MAX_LISTED_SOURCE_TYPES = 3;
   const availabilityLabels: Record<AvailabilityWindow, string> = {
-    anytime: m.availability_anytime(),
+    anytime: m.availability_whenever(),
     later: m.availability_later(),
     now: m.availability_now(),
   };

@@ -36,7 +36,12 @@ function context() {
         .map(([id]) => [id, "platonic"]),
     ),
   });
-  return { availabilityWindows: AVAILABILITY_WINDOWS, progress, worldState };
+  return {
+    availabilityWindows: AVAILABILITY_WINDOWS,
+    progress,
+    progressionState: deriveProgressionState(progress, trackerData, false),
+    worldState,
+  };
 }
 
 describe("projectAlmanac", () => {

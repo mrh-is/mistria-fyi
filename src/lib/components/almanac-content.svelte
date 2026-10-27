@@ -60,7 +60,7 @@
   }
 
   function isAlmanacComplete(): boolean {
-    return isCategoryComplete("almanac", userState.state);
+    return isCategoryComplete("almanac", userState.progressContext);
   }
 
   let nameFilter = $derived(toolbarState.searchQuery);
@@ -69,7 +69,7 @@
 
   // Page context includes user filters and the animation's temporary completed-row retention.
   let projection = $derived(
-    projectAlmanac(userState.state, {
+    projectAlmanac(userState.progressContext, {
       hideSpoilered: Boolean(nameFilter),
       matchesEntry: (ids) =>
         getAlmanacEntryNames({ itemIds: ids }, locale).some((name) =>

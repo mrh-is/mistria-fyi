@@ -34,13 +34,7 @@
     };
   });
 
-  let progress = $derived(
-    getAllProgress({
-      availabilityWindows: userState.state.availabilityWindows,
-      progress: userState.state.progress,
-      worldState: userState.state.worldState,
-    }),
-  );
+  let progress = $derived(getAllProgress(userState.progressContext));
 
   let overallProgress = $derived(getOverallProgress(progress));
 </script>

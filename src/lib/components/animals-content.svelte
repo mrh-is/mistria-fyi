@@ -28,7 +28,7 @@
   const sectionGrouping = createSectionGrouping<(typeof SECTION_KEYS)[number]>();
 
   function areAllAnimalsComplete(): boolean {
-    return isCategoryComplete("animals", userState.state);
+    return isCategoryComplete("animals", userState.progressContext);
   }
 
   function hasCompletedCosmetic(animalId: AnimalId, cosmeticId: CosmeticId): boolean {

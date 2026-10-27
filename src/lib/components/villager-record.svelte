@@ -121,7 +121,7 @@
   }
 
   function areAllVillagersComplete(): boolean {
-    return isCategoryComplete("villagers", userState.state);
+    return isCategoryComplete("villagers", userState.progressContext);
   }
 
   function mutateWithCelebration(mutate: () => void): void {

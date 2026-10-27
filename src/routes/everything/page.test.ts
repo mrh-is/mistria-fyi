@@ -49,11 +49,7 @@ describe("/everything page", () => {
     });
 
     it("reconciles the header total with every rendered category, recipes included", () => {
-      const progress = getAllProgress({
-        availabilityWindows: userState.state.availabilityWindows,
-        progress: userState.state.progress,
-        worldState: userState.state.worldState,
-      });
+      const progress = getAllProgress(userState.progressContext);
       const overall = getOverallProgress(progress);
       expect(progress.recipes.total).toBeGreaterThan(0);
 

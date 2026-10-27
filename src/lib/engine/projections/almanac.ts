@@ -76,7 +76,8 @@ export function projectAlmanac(
       const sources = trackerIndex.getAggregatedAlmanacSources(canonicalId);
       const completed = ctx.progress.almanac.has(canonicalId);
       const obtainable = isAlmanacEntryObtainable(entry.itemIds, ctx.progress);
-      const available = isItemAvailable(sources, ctx.worldState, ctx.availabilityWindows);
+      const windowed = { sources, visibility: item.visibility };
+      const available = isItemAvailable(windowed, ctx, ctx.availabilityWindows);
       const spoilered = isSpoilered(item.visibility, options.progressionState);
       const matchesBaseFilters =
         (obtainable || options.showUnobtainable === true) &&
@@ -88,7 +89,7 @@ export function projectAlmanac(
         available,
         canonicalId,
         completed,
-        dimmed: isItemDimmed(sources, completed, ctx.worldState, ctx.availabilityWindows),
+        dimmed: isItemDimmed(windowed, completed, ctx, ctx.availabilityWindows),
         entry,
         item,
         matchesBaseFilters,

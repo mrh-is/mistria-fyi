@@ -1,8 +1,9 @@
 import { trackerData } from "#lib/data/index.js";
 import { getPartnerId } from "#lib/engine/relationships.js";
 
+import type { RowWindowContext } from "#lib/engine/availability.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
-import type { Season, VillagerId, Weather } from "#lib/types/tracker-data.js";
+import type { VillagerId } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -27,10 +28,10 @@ export interface NormalizedLevel {
   value: number;
 }
 
-export interface ProgressContext {
+/** What category projections read: progress, the selected windows, & what decides a row's window. */
+export interface ProgressContext extends RowWindowContext {
   availabilityWindows: readonly AvailabilityWindow[];
   progress: DeepReadonly<ProgressState>;
-  worldState: { season: Season; weather: Weather };
 }
 
 /**

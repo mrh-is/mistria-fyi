@@ -54,9 +54,9 @@
     return trackerRowDisplay({
       completed,
       dimmed: isItemDimmed(
-        sources,
+        { sources, visibility: trackerData.items[itemId].visibility },
         completed,
-        userState.state.worldState,
+        userState.progressContext,
         userState.state.availabilityWindows,
       ),
       leaving: recentlyCompleted.has(itemId),
@@ -72,7 +72,7 @@
   }
 
   function isMuseumComplete(): boolean {
-    return isCategoryComplete("museum", userState.state);
+    return isCategoryComplete("museum", userState.progressContext);
   }
 
   function isSetComplete(set: MuseumWingSet): boolean {
@@ -106,9 +106,9 @@
   function isItemBaseScoped(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
     return isInProgressScope(
-      trackerData.items[itemId].sources,
+      trackerData.items[itemId],
       isItemComplete(itemId),
-      userState.state.worldState,
+      userState.progressContext,
       userState.state.availabilityWindows,
     );
   }

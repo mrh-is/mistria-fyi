@@ -25,7 +25,7 @@ afterEach(() => {
 
 it("moves a section finished by a row toggle under Completed once the row has left", async () => {
   userState.toggleShowSpoilers();
-  const section = projectAlmanac(userState.state, {
+  const section = projectAlmanac(userState.progressContext, {
     progressionState: userState.progressionState,
   })
     .sections.filter(({ scopedRows, scopedTotal }) => scopedTotal >= 2 && scopedRows.length >= 2)

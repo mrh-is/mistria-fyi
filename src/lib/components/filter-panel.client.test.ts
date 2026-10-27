@@ -261,7 +261,7 @@ describe("FilterPanel interactions", () => {
     const sourceTypes = screen.getByRole("button", { name: /^Source types/ });
     expect(whenToFind).toHaveAttribute("aria-expanded", "false");
     // Season & weather show as icons, with their names for screen readers only.
-    expect(whenToFind).toHaveTextContent("When to find Now + anytime · Spring, Sun");
+    expect(whenToFind).toHaveTextContent("When to find Now + whenever · Spring, Sun");
     expect(sourceTypes).toHaveAttribute("aria-expanded", "false");
     expect(sourceTypes).toHaveTextContent("Source types All types");
 

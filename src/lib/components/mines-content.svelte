@@ -68,7 +68,7 @@
   }
 
   function isMinesComplete(): boolean {
-    return isCategoryComplete("mines", userState.state);
+    return isCategoryComplete("mines", userState.progressContext);
   }
 
   let currentBiome = $derived.by(() => {
