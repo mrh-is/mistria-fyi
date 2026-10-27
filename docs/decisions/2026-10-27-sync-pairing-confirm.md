@@ -10,12 +10,11 @@ choose.
 
 ## Decision
 
-- **The player confirms the answering device on the PC.** The PC shows “Is this your phone?” with
-  the answering device’s name & when it answered. “Yes, sync to this phone” accepts; “No, make a new
-  code” rejects, discards the offer, & issues a fresh one. When a device is already paired, the
-  prompt names the device it replaces.
+- **The player confirms the answering device on the PC.** The PC asks “Was that you?”, naming the
+  answering device. “Yep, that’s me” accepts; “Nope” rejects, discards the offer, & issues a fresh
+  one. When a device is already paired, the prompt names the device it replaces.
 - **The QR starts covered.** “Show code” reveals it & starts its expiry countdown; “Hide code”
-  covers it again. The “Don’t show this on stream” hint sits beside it.
+  covers it again. A streaming hint sits beside it.
 
 ## Alternatives
 
