@@ -74,6 +74,18 @@ describe("SearchResults progressive reveal", () => {
     expect(view.container.querySelectorAll(".search-result")).toHaveLength(120);
   });
 
+  it("starts another broad query with a screenful even after the previous reveal finishes", async () => {
+    const view = renderWithFeedback(SearchResults, { locale: "en", query: "Animal" });
+    await finishReveal();
+    expect(view.container.querySelectorAll(".search-result")).toHaveLength(120);
+
+    await view.rerender({ query: "Animal " });
+    expect(view.container.querySelectorAll(".search-result")).toHaveLength(INITIAL_ROW_BUDGET);
+    expect(view.container.querySelector("[aria-busy=true]")).not.toBeNull();
+    await finishReveal();
+    expect(view.container.querySelectorAll(".search-result")).toHaveLength(120);
+  });
+
   it("clears pending rows for an empty result and recovers on a new query", async () => {
     const view = renderWithFeedback(SearchResults, { locale: "en", query: "Animal" });
     await tick();

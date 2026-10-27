@@ -307,12 +307,11 @@ describe("complete results", () => {
     );
     const results = search("a");
     expect(expected.length).toBeGreaterThan(50);
-    for (const result of expected) {
-      expect(results).toContainEqual(result);
-    }
-    expect(new Set(results.map((result) => `${result.category}:${result.id}`)).size).toBe(
-      results.length,
+    const resultKeys = new Set(results.map((result) => `${result.category}:${result.id}`));
+    expect(expected.filter((result) => !resultKeys.has(`${result.category}:${result.id}`))).toEqual(
+      [],
     );
+    expect(resultKeys.size).toBe(results.length);
   });
 });
 

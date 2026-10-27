@@ -99,7 +99,10 @@
 
   // The same timed reveal as category lists: all matches arrive without scrolling or a button.
   // Gate the total too, so creating the controller cannot read names before their chunks load.
-  const reveal = createRowReveal(() => (namesReady ? results.length : 0));
+  const reveal = createRowReveal(
+    () => (namesReady ? results.length : 0),
+    () => `${locale}:${query}`,
+  );
   let shown = $derived(results.slice(0, reveal.count));
 
   const measureRows: Attachment<HTMLElement> = (list) => {
