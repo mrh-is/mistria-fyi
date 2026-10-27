@@ -257,7 +257,10 @@ colocated tests don’t double the length of directory listings. It also points 
 at `node_modules/.bin/node`, the pinned Node that `pnpm install` links from `devEngines.runtime`.
 Without it, the extension starts Vitest with whatever `node` is first on `PATH`, and
 `require-pinned-node` (the first import in `vite.config.ts`) exits on any other release, which the
-extension reports only as “There were errors during config load.”
+extension reports only as “There were errors during config load.” The ESLint extension gets the same
+runtime through `eslint.runtime`: it otherwise runs on VS Code’s bundled Node, and
+`eslint.config.js` loads `vite.config.ts` for the SvelteKit config, so the guard stops the ESLint
+server too (“Server process exited with code 1”).
 
 - Run `pnpm install` (or `node scripts/setup-worktree.ts` in a worktree) before opening the folder.
   Until the link exists, the extension fails to spawn `node_modules/.bin/node` (`ENOENT`).
@@ -270,7 +273,7 @@ extension reports only as “There were errors during config load.”
   because VS Code applies the workspace’s `.vscode/settings.json` over user settings. Instead, edit
   the committed file locally & keep the edit out of commits:
   1. Print the pinned runtime’s real path with `pnpm exec node -p process.execPath`.
-  2. Set `vitest.nodeExecutable` in `.vscode/settings.json` to that path.
+  2. Set `vitest.nodeExecutable` & `eslint.runtime` in `.vscode/settings.json` to that path.
   3. Run `git update-index --skip-worktree .vscode/settings.json`, so Git ignores the local edit.
      Undo it with `--no-skip-worktree` before pulling a change to that file, then reapply.
 
