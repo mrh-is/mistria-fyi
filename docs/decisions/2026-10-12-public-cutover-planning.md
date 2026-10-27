@@ -1,5 +1,8 @@
 # Public cutover planning
 
+Superseded in part by [2026-10-22-feedback-github-app.md](2026-10-22-feedback-github-app.md): the
+feedback endpoint authenticates as a GitHub App, so the token rotation below ends once it ships.
+
 ## Context
 
 The final planning interview on launch day, 2026-10-12, addressed the five open questions in the
