@@ -42,9 +42,9 @@
     return someVariant(animalId, ([variantId, variant]) => {
       const completed = hasCompletedVariant(animalId, variantId);
       if (isAnimalVisible) {
-        return isVariantVisible(variant, completed);
+        return isVariantVisible(animalId, variant, completed);
       }
-      return isVariantInScope(variant, completed);
+      return isVariantInScope(animalId, variant, completed);
     });
   }
 
@@ -68,12 +68,17 @@
     tier: number;
   }
 
-  function isVariantInScope(variant: AnimalVariant, completed: boolean): boolean {
+  function isVariantInScope(
+    animalId: AnimalId,
+    variant: AnimalVariant,
+    completed: boolean,
+  ): boolean {
     if (!toolbarState.matchesSourceFilters([variant.source])) return false;
     if (completed) return true;
     return isVariantInScopeEngine(
       variant,
-      userState.state.worldState.season,
+      trackerData.animals[animalId].visibility,
+      userState.progressContext,
       userState.state.availabilityWindows,
     );
   }
@@ -105,8 +110,12 @@
     return true;
   }
 
-  function isVariantVisible(variant: AnimalVariant, completed: boolean): boolean {
-    if (!isVariantInScope(variant, completed)) return false;
+  function isVariantVisible(
+    animalId: AnimalId,
+    variant: AnimalVariant,
+    completed: boolean,
+  ): boolean {
+    if (!isVariantInScope(animalId, variant, completed)) return false;
     return !completed || userState.state.showCompleted;
   }
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<AnimalVariantId> {
@@ -115,7 +124,7 @@
     const visibleItems: VariantRowConfig[] = [];
     forEachVariant(animalId, ([vid, variant], tier) => {
       const completed = hasCompletedVariant(animalId, vid);
-      if (!isVariantInScope(variant, completed)) return;
+      if (!isVariantInScope(animalId, variant, completed)) return;
       displayableItemCount++;
       if (completed) displayableCompletedItemCount++;
 

@@ -37,9 +37,9 @@
   }
 
   function setRenownWithCelebration(newLevel: number): void {
-    const wasDone = isCategoryComplete("renown", userState.state);
+    const wasDone = isCategoryComplete("renown", userState.progressContext);
     userState.setRenown(newLevel);
-    if (!wasDone && isCategoryComplete("renown", userState.state)) celebrateCategory();
+    if (!wasDone && isCategoryComplete("renown", userState.progressContext)) celebrateCategory();
   }
 </script>
 

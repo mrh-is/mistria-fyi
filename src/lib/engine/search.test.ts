@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
+import { CATEGORY_DEFINITIONS } from "#lib/engine/categories.js";
+import { recipeForItem, recipePlacements } from "#lib/engine/projections/recipes.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
+import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import { searchAllCategories } from "./search.js";
@@ -11,6 +14,7 @@ import { searchAllCategories } from "./search.js";
 import type {
   ItemId,
   MountAppearanceId,
+  PerkId,
   QuestId,
   RecipeId,
   Season,
@@ -18,6 +22,7 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 
+import type { SearchContext, SearchResult } from "./search.js";
 import type { UserProgressionState } from "./visibility.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -293,19 +298,27 @@ describe("result ranking", () => {
   });
 });
 
-// ─── Result cap ────────────────────────────────────────────────────
+// ─── Complete results ──────────────────────────────────────────────
 
-describe("result cap", () => {
-  it("returns at most 50 results", () => {
+describe("complete results", () => {
+  it("returns every matching row, including matches beyond the old cap", () => {
+    const expected = allResults().filter((result) =>
+      (result.fullName ?? result.name).toLowerCase().includes("a"),
+    );
     const results = search("a");
-    expect(results.length).toBeLessThanOrEqual(50);
+    expect(expected.length).toBeGreaterThan(50);
+    const resultKeys = new Set(results.map((result) => `${result.category}:${result.id}`));
+    expect(expected.filter((result) => !resultKeys.has(`${result.category}:${result.id}`))).toEqual(
+      [],
+    );
+    expect(resultKeys.size).toBe(results.length);
   });
 });
 
-// ─── Ranking before truncation ────────────────────────────────────
+// ─── Cross-category ranking ────────────────────────────────────
 
-describe("ranking before truncation", () => {
-  it("includes later-category prefix matches even when earlier categories fill the cap", () => {
+describe("cross-category ranking", () => {
+  it("includes later-category prefix matches for a broad query", () => {
     const results = searchAllCategories(
       "a",
       makeCompletedState(),
@@ -360,7 +373,7 @@ describe("ranking before truncation", () => {
     }
   });
 
-  it("collects candidates from all categories before truncating to cap", () => {
+  it("collects every category for a very broad query", () => {
     const results = searchAllCategories(
       "e",
       makeCompletedState(),
@@ -369,7 +382,7 @@ describe("ranking before truncation", () => {
       "en",
     );
 
-    expect(results.length).toBeLessThanOrEqual(50);
+    expect(results.length).toBeGreaterThan(50);
 
     const categories = new Set(results.map((r) => r.category));
     expect(
@@ -664,5 +677,89 @@ describe("pet cosmetic and skin result IDs", () => {
     const results = search(getName("mount", id, "en"), { mountAppearances: new Set([id]) });
     const match = results.find((r) => r.id === `mount-appearance:${id}`);
     expect(match).toMatchObject({ category: "animals", completed: true });
+  });
+
+  it("finds the Mistmare's perks under 'mount-perk:' and marks them completed", () => {
+    const id = "horsepower" as PerkId;
+    const results = search(getName("perks", id, "en"), {
+      unlockedPerks: new Set([id]),
+    });
+    const match = results.find((r) => r.id === `mount-perk:${id}`);
+    expect(match).toMatchObject({ category: "animals", completed: true });
+  });
+});
+
+// ─── Result sprites ───────────────────────────────────────────────
+
+/** Every result each provider can offer, with spoilers shown so no row is withheld. */
+function allResults(): SearchResult[] {
+  const context: SearchContext = {
+    locale: "en",
+    progressionState: makeProgressionState({ showSpoilers: true }),
+    projectionContext: {
+      availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
+      progress: makeCompletedState(),
+      progressionState: makeProgressionState({ showSpoilers: true }),
+      worldState: defaultWorld,
+    },
+  };
+  return CATEGORY_DEFINITIONS.flatMap(({ search: provider }) =>
+    provider ? [...provider(context)].map((candidate) => candidate.result()) : [],
+  );
+}
+
+describe("result sprites", () => {
+  it("pictures almanac and museum results with their own item, available or not", () => {
+    const results = allResults().filter(
+      (result) => result.category === "almanac" || result.category === "museum",
+    );
+    expect(results.some((result) => !result.available)).toBe(true);
+    for (const result of results) {
+      expect(result.sprite, `${result.category} ${result.id}`).toBe(result.id);
+    }
+  });
+
+  it("pictures each recipe the Recipes page lists with an item that recipe makes", () => {
+    const listed = new Set(
+      recipePlacements().flatMap(({ recipes }) => recipes.map(({ recipeId }) => recipeId)),
+    );
+    const recipes = allResults().filter((result) => result.category === "recipes");
+    const pictured = recipes.filter((result) => listed.has(result.id as RecipeId));
+    expect(pictured.length).toBeGreaterThan(0);
+    for (const { id, sprite } of pictured) {
+      const item = sprite === undefined ? undefined : trackerData.items[sprite];
+      expect(item && recipeForItem(item), `recipe ${id}`).toBe(id);
+    }
+    for (const { id, sprite } of recipes.filter((result) => !pictured.includes(result))) {
+      expect(sprite, `unlisted recipe ${id}`).toBeUndefined();
+    }
+  });
+
+  it("pictures a recipe listed under two Recipes page sections with its one item", () => {
+    // Basic wood appears under both Fish and Materials on the Recipes page.
+    const wood = allResults().find(
+      (result) => result.category === "recipes" && result.id === "basic_wood",
+    );
+    expect(wood?.sprite).toBe("basic_wood");
+  });
+
+  it("leaves results from categories without pictures unpictured", () => {
+    const unpictured = allResults().filter(
+      (result) =>
+        result.category !== "almanac" &&
+        result.category !== "museum" &&
+        result.category !== "recipes",
+    );
+    expect(unpictured.length).toBeGreaterThan(0);
+    for (const result of unpictured) {
+      expect(result.sprite, `${result.category} ${result.id}`).toBeUndefined();
+    }
+  });
+
+  it("carries a recipe's sprite through the ranked search", () => {
+    const shortcake = search("Strawberry Shortcake").find(
+      (result) => result.category === "recipes",
+    );
+    expect(shortcake?.sprite).toBe("strawberry_shortcake");
   });
 });

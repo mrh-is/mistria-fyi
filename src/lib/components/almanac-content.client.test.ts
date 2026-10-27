@@ -3,6 +3,7 @@ import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import AlmanacContent from "#lib/components/almanac-content.svelte";
+import { INITIAL_ROW_BUDGET } from "#lib/controllers/row-reveal.svelte.js";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -33,48 +34,39 @@ describe("AlmanacContent", () => {
     expect(view.queryByRole("button", { name: /^Dates,/ })).toBeNull();
   });
 
-  it("renders section rows in animation-frame batches after opening a large section", async () => {
-    const queuedFrames: FrameRequestCallback[] = [];
-    vi.stubGlobal("requestAnimationFrame", (onFrame: FrameRequestCallback) => {
-      queuedFrames.push(onFrame);
-      return queuedFrames.length;
-    });
-    vi.stubGlobal("cancelAnimationFrame", vi.fn());
-
-    const category = recordEntries(trackerData.almanac).find(([, { items }]) => items.length > 12);
-    if (!category) throw new Error("Expected an Almanac category with enough entries for batching");
-    const categoryName = getName("ui", category[0], "en");
+  it("renders every row of a long section without a show-more button", async () => {
+    // The smallest section that still needs several frames, to keep the test quick.
+    const category = recordEntries(trackerData.almanac)
+      .filter(([, { items }]) => items.length > INITIAL_ROW_BUDGET * 3)
+      .toSorted(([, a], [, b]) => a.items.length - b.items.length)
+      .at(0);
+    if (!category) throw new Error("Expected an Almanac category that needs several frames");
+    const [categoryId, { items }] = category;
+    const categoryName = getName("ui", categoryId, "en");
+    userState.toggleShowSpoilers();
 
     const view = renderWithFeedback(AlmanacContent, { locale: "en" });
     await tick();
 
     const trigger = view.getByRole("button", {
-      name: new RegExp(`^${escapeRegExp(categoryName)}`),
+      name: new RegExp(`^${escapeRegExp(categoryName)}, 0 of [\\d,]+ completed$`),
     });
+    const totalLabel = /of ([\d,]+) completed/.exec(trigger.getAttribute("aria-label") ?? "")?.[1];
+    const total = Number(totalLabel?.replaceAll(",", ""));
+    expect(total).toBeGreaterThan(INITIAL_ROW_BUDGET);
+    expect(items.length).toBeGreaterThanOrEqual(total);
     await fireEvent.click(trigger);
 
-    expect(view.container.querySelectorAll("[data-tracker-row]")).toHaveLength(0);
-    expect(view.getByText("Loading items…")).toBeInTheDocument();
-    expect(queuedFrames.length).toBeGreaterThan(0);
-
-    queuedFrames.shift()?.(0);
-    await tick();
-
-    const firstBatchCount = view.container.querySelectorAll("[data-tracker-row]").length;
-    expect(firstBatchCount).toBeGreaterThan(0);
-    expect(firstBatchCount).toBeLessThanOrEqual(12);
-
-    while (queuedFrames.length > 0) {
-      queuedFrames.shift()?.(0);
-      // oxlint-disable-next-line no-await-in-loop -- each frame must flush before the next is dequeued
-      await tick();
-    }
-
-    await waitFor(() => {
-      expect(view.container.querySelectorAll("[data-tracker-row]").length).toBeGreaterThan(
-        firstBatchCount,
-      );
-    });
+    const section = trigger.closest("[data-tracker-section]");
+    if (!section) throw new Error("Expected the trigger inside its section");
+    expect(section.querySelectorAll("[data-tracker-row]").length).toBeGreaterThan(0);
+    await waitFor(
+      () => {
+        expect(section.querySelectorAll("[data-tracker-row]")).toHaveLength(total);
+      },
+      { timeout: 5000 },
+    );
+    expect(view.queryByRole("button", { name: /^Show \d+ more/ })).toBeNull();
   });
 
   it("renders an item name from the Japanese locale chunk", async () => {

@@ -1,5 +1,6 @@
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { seasonFromOrdinal, seasonOrdinal } from "#lib/engine/domain-primitives.js";
+import { trackedPerkIds } from "#lib/engine/perk-ids.js";
 import {
   clampMineFloor,
   clampRenownLevel,
@@ -758,9 +759,7 @@ function getMountAppearanceOrder(): MountAppearanceId[] {
 }
 
 function getPerkOrder(): PerkId[] {
-  return recordValues(trackerData.skills)
-    .flatMap((skill) => skill.perkTiers.flatMap((tier) => recordKeys(tier)))
-    .toSorted();
+  return trackedPerkIds(trackerData).toSorted();
 }
 
 function getPetCosmeticOrder(): PetCosmeticSetId[] {
@@ -802,7 +801,7 @@ function toBase64url(bytes: Uint8Array): string {
   for (const byte of bytes) {
     binary += String.fromCodePoint(byte);
   }
-  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/[=]+$/, "");
 }
 
 function toBitfield(ordered: string[], completedSet: ReadonlySet<string>): Uint8Array {

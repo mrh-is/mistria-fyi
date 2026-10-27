@@ -352,8 +352,14 @@ the budgets.
 
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
-| Two CPUs (current private `ubuntu-latest`) | 10 s             | 120 s                 | 300 s                    |
-| Four or more CPUs (public `ubuntu-latest`) | 5 s              | 90 s                  | 300 s                    |
+| Two CPUs (current private `ubuntu-latest`) | 10 s             | 120 s                 | 10 s per file, 300 s     |
+| Four or more CPUs (public `ubuntu-latest`) | 5 s              | 90 s                  | 15 s per file, 300 s     |
+
+On four-CPU runners, coverage triples the ordinary per-file ceiling. On commit `31c10adb`’s four-CPU
+runs, it slowed files over 200 ms by a median 1.14× & up to 2.67× (`names.completeness.test.ts`);
+`tracker-data-schema.test.ts`, which grows with the tracker data, went from 2.1 s to 5.3 s &
+exceeded the 5 s ceiling. The CLI probes ran at 0.98–0.99× under coverage, so their 15 s ceiling
+doesn’t scale. Two-CPU coverage hasn’t been measured, so it keeps the ordinary 10 s ceiling.
 
 The two-CPU ceilings account for the measured runner class, not local Mac timings: before #689, the
 cleanup file took 5.524 s, the allocation test 9.855 s, & the coverage step 216 s on run

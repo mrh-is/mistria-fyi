@@ -55,7 +55,9 @@ describe("TrackerDataSchema", () => {
       "quests",
       { ...trackerDataJson.quests, story: { test: { sources: [], townRankLevel: "20" } } },
     ],
-    ["mount", { appearances: { test: { sources: [] } } }],
+    ["mount", { appearances: { test: { sources: [] } }, perks: {} }],
+    ["mount", { appearances: {}, perks: { test: { sources: [] } } }],
+    ["mount", { appearances: {} }],
     [
       "animals",
       {

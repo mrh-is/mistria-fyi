@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { isVariantInScope } from "#lib/engine/animal-availability.js";
+import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
@@ -12,6 +13,7 @@ import {
   getOverallProgress,
   isCategoryComplete,
 } from "./categories.js";
+import { trackedPerkIds } from "./perk-ids.js";
 import {
   clampRenownLevel,
   getMaxMineFloor,
@@ -20,6 +22,7 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "./progress.js";
+import { isSkillComplete, perksOfSkill } from "./projections/skills.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
@@ -52,9 +55,11 @@ function ctx(
     worldState: { season: Season; weather: Weather };
   }> = {},
 ) {
+  const progress = makeCompletedState(overrides.completed ?? {});
   return {
     availabilityWindows: [...WINDOW_PRESETS[overrides.windowPreset ?? "everything"]],
-    progress: makeCompletedState(overrides.completed ?? {}),
+    progress,
+    progressionState: deriveProgressionState(progress, trackerData, false),
     worldState: overrides.worldState ?? defaultWorld,
   };
 }
@@ -113,6 +118,7 @@ function fullyCompletedState(): ProgressState {
     renown: getMaxRenownLevel(),
     skillLevels,
     spells: new Set(recordKeys(trackerData.mines.spells)),
+    unlockedPerks: new Set(trackedPerkIds(trackerData)),
     villagerRelationships,
   });
 }
@@ -472,9 +478,29 @@ describe("renown progress", () => {
 });
 
 describe("skills progress", () => {
-  it("total is skill count times MAX_SKILL_LEVEL", () => {
+  it("counts each level and each perk of each skill as one step", () => {
     const progress = getCategoryProgress("skills", ctx());
-    expect(progress.total).toBe(recordKeys(trackerData.skills).length * MAX_SKILL_LEVEL);
+    const skillIds = recordKeys(trackerData.skills);
+    const perkCount = skillIds.reduce((sum, id) => sum + perksOfSkill(id).length, 0);
+    expect(perkCount).toBeGreaterThan(0);
+    expect(progress.total).toBe(skillIds.length * MAX_SKILL_LEVEL + perkCount);
+  });
+
+  it("leaves a skill at MAX_SKILL_LEVEL incomplete until every perk is bought", () => {
+    const skillId = recordKeys(trackerData.skills)[0];
+    const perkIds = perksOfSkill(skillId);
+    const skillLevels = { [skillId]: MAX_SKILL_LEVEL };
+    const maxed = makeCompletedState({ skillLevels, unlockedPerks: new Set(perkIds.slice(1)) });
+    expect(isSkillComplete(skillId, maxed)).toBe(false);
+    expect(getCategoryProgress("skills", ctx({ completed: maxed })).completed).toBe(
+      MAX_SKILL_LEVEL + perkIds.length - 1,
+    );
+
+    const complete = makeCompletedState({ skillLevels, unlockedPerks: new Set(perkIds) });
+    expect(isSkillComplete(skillId, complete)).toBe(true);
+    expect(isSkillComplete(skillId, makeCompletedState({ unlockedPerks: new Set(perkIds) }))).toBe(
+      false,
+    );
   });
 
   it("caps individual skill levels at MAX_SKILL_LEVEL", () => {
@@ -506,7 +532,7 @@ describe("mines progress", () => {
 });
 
 describe("animals progress", () => {
-  it("includes variants, animal cosmetics, mount appearances, pet cosmetics, and pet skins", () => {
+  it("includes variants, animal cosmetics, the mount, pet cosmetics, and pet skins", () => {
     const progress = getCategoryProgress("animals", ctx());
     let expectedTotal = 0;
     for (const animal of recordValues(trackerData.animals)) {
@@ -516,6 +542,7 @@ describe("animals progress", () => {
       }
     }
     expectedTotal += recordKeys(trackerData.mount.appearances).length;
+    expectedTotal += recordKeys(trackerData.mount.perks).length;
     expectedTotal += recordKeys(trackerData.pets.cosmetics).length;
     expectedTotal += recordKeys(trackerData.pets.skins).length;
     expect(progress.total).toBe(expectedTotal);
@@ -541,7 +568,7 @@ describe("animal progress variant filtering matches UI predicate", () => {
       for (const [, animal] of recordEntries(trackerData.animals)) {
         for (const tier of animal.variantTiers) {
           for (const [, variant] of recordEntries(tier)) {
-            if (isVariantInScope(variant, season, [...WINDOW_PRESETS[mode]])) {
+            if (isVariantInScope(variant, animal.visibility, c, c.availabilityWindows)) {
               expectedVariantFiltered++;
             }
           }
@@ -554,9 +581,10 @@ describe("animal progress variant filtering matches UI predicate", () => {
       );
       const petCosmeticCount = recordKeys(trackerData.pets.cosmetics).length;
       const petSkinCount = recordKeys(trackerData.pets.skins).length;
-      const mountAppearanceCount = recordKeys(trackerData.mount.appearances).length;
-      const nonVariantFiltered =
-        cosmeticCount + mountAppearanceCount + petCosmeticCount + petSkinCount;
+      const mountCount =
+        recordKeys(trackerData.mount.appearances).length +
+        recordKeys(trackerData.mount.perks).length;
+      const nonVariantFiltered = cosmeticCount + mountCount + petCosmeticCount + petSkinCount;
 
       expect(progress.remainingInScope).toBe(expectedVariantFiltered + nonVariantFiltered);
     },

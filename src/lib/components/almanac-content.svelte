@@ -1,7 +1,4 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
-  import { SvelteMap } from "svelte/reactivity";
-
   import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
@@ -18,13 +15,12 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { projectAlmanac } from "#lib/engine/projections/almanac.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
-  import { sectionRowLimit, trackerRowDisplay } from "#lib/utils/row-display.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { AlmanacRow } from "#lib/engine/projections/almanac.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -64,15 +60,8 @@
   }
 
   function isAlmanacComplete(): boolean {
-    return isCategoryComplete("almanac", userState.state);
+    return isCategoryComplete("almanac", userState.progressContext);
   }
-
-  const SECTION_BATCH_SIZE = 12;
-
-  const expandedSections = $state<Record<string, boolean>>({});
-  const openSections = $state<Record<string, boolean>>({});
-  const renderedSectionCounts = $state<Record<string, number>>({});
-  const sectionFrames = new SvelteMap<string, number>();
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
@@ -80,7 +69,7 @@
 
   // Page context includes user filters and the animation's temporary completed-row retention.
   let projection = $derived(
-    projectAlmanac(userState.state, {
+    projectAlmanac(userState.progressContext, {
       hideSpoilered: Boolean(nameFilter),
       matchesEntry: (ids) =>
         getAlmanacEntryNames({ itemIds: ids }, locale).some((name) =>
@@ -106,53 +95,6 @@
     })),
   );
 
-  onDestroy(() => {
-    for (const frame of sectionFrames.values()) {
-      cancelAnimationFrame(frame);
-    }
-    sectionFrames.clear();
-  });
-
-  function scheduleSectionRendering(sectionId: string, targetCount: number): void {
-    stopSectionRendering(sectionId);
-    renderedSectionCounts[sectionId] = 0;
-
-    if (targetCount <= 0) return;
-
-    const renderNextBatch = (): void => {
-      const nextCount = Math.min(
-        (renderedSectionCounts[sectionId] ?? 0) + SECTION_BATCH_SIZE,
-        targetCount,
-      );
-      renderedSectionCounts[sectionId] = nextCount;
-      if (nextCount < targetCount) {
-        sectionFrames.set(sectionId, requestAnimationFrame(renderNextBatch));
-      } else {
-        sectionFrames.delete(sectionId);
-      }
-    };
-
-    sectionFrames.set(sectionId, requestAnimationFrame(renderNextBatch));
-  }
-
-  function setSectionOpen(sectionId: string, open: boolean, targetCount: number): void {
-    openSections[sectionId] = open;
-    if (!open) {
-      stopSectionRendering(sectionId);
-      renderedSectionCounts[sectionId] = 0;
-      return;
-    }
-    scheduleSectionRendering(sectionId, targetCount);
-  }
-
-  function stopSectionRendering(sectionId: string): void {
-    const frame = sectionFrames.get(sectionId);
-    if (frame !== undefined) {
-      cancelAnimationFrame(frame);
-      sectionFrames.delete(sectionId);
-    }
-  }
-
   function toggleItem(
     canonicalId: ItemId,
     name: string,
@@ -177,41 +119,16 @@
 <SectionGroups getKey={(view) => view.id} grouping={sectionGrouping} items={sectionViews}>
   {#snippet section({ baseRows, canonicalIds, completedCount, id, scopedTotal, visibleRows })}
     {#if baseRows.length > 0}
-      {@const showAll = expandedSections[id] ?? false}
-      {@const isOpen = openSections[id] ?? false}
-      {@const renderTarget = sectionRowLimit(visibleRows.length, showAll)}
-      {@const shouldBypassBatching =
-        isOpen && !sectionFrames.has(id) && (renderedSectionCounts[id] ?? 0) < renderTarget}
-      {@const renderedCount =
-        nameFilter || shouldBypassBatching
-          ? renderTarget
-          : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
       <ExpandableSection
         {locale}
         count={completedCount}
         forceOpen={!!nameFilter}
         name={getName("ui", id, locale)}
-        onExpandedChange={(open: boolean) => {
-          setSectionOpen(id, open, sectionRowLimit(visibleRows.length, showAll));
-        }}
         reportCategory="almanac"
         reportEntityId={id}
         total={scopedTotal}
       >
-        <TrackerRowList
-          expanded={showAll}
-          getKey={(item) => item.canonicalId}
-          items={visibleRows}
-          limited
-          loadingMessage={nameFilter ? undefined : m.almanac_loading_items()}
-          onShowMore={() => {
-            expandedSections[id] = true;
-            if (openSections[id]) {
-              scheduleSectionRendering(id, visibleRows.length);
-            }
-          }}
-          {renderedCount}
-        >
+        <TrackerRowList getKey={(item) => item.canonicalId} items={visibleRows}>
           {#snippet row(row)}
             {@const { canonicalId, completed, item, name, sources, spoilered } = row}
             {@const itemVisibility = item.visibility}

@@ -1,5 +1,6 @@
 import { getDotPath, safeParse } from "valibot";
 
+import { skillPerkIds } from "#lib/engine/perk-ids.js";
 import { TrackerDataSchema } from "#lib/types/tracker-data-schema.js";
 /**
  * Assembles `tracker-data.json` and its locale chunks from an evaluated fiddle. Reads no files and
@@ -208,11 +209,15 @@ export function assembleTrackerData(
     fiddle.requirements as Record<string, unknown> | undefined,
     cutsceneQuestMap,
   );
-  const { localeNames: mountLocaleNames, mount } = extractMount(
-    fiddle,
-    localizer,
-    requirementContext,
-  );
+  const {
+    localeNames: mountLocaleNames,
+    mount,
+    perkLocaleNames: mountPerkLocaleNames,
+  } = extractMount(fiddle, localizer, requirementContext, new Set(skillPerkIds({ skills })));
+  const allPerkLocaleNames = recordMap(perkLocaleNames, (names, locale) => ({
+    ...names,
+    ...mountPerkLocaleNames[locale],
+  }));
 
   const itemSources = new ItemSourceAccumulator();
   const cosmeticSources = new CosmeticSourceAccumulator();
@@ -416,7 +421,7 @@ export function assembleTrackerData(
       { byLocale: dateLocaleNames, category: "dates" },
       { byLocale: festivalLocaleNames, category: "festivals" },
       { byLocale: museumLocaleNames, category: "museum_wings" },
-      { byLocale: perkLocaleNames, category: "perks" },
+      { byLocale: allPerkLocaleNames, category: "perks" },
       { byLocale: petCosmeticLocaleNames, category: "pets/cosmetic_sets" },
       { byLocale: questLocaleNames, category: "quests" },
       { byLocale: skillLocaleNames, category: "skills" },
@@ -463,7 +468,8 @@ function buildAcquisitionReferences(
       animals: trackerData.animals,
       biomes: trackerData.mines.biomes,
       festivals: trackerData.festivals,
-      perks: collectPerkIds(trackerData),
+      mountAppearances: trackerData.mount.appearances,
+      perks: skillPerkIds(trackerData),
       questTypes: Object.keys(trackerData.quests),
       skills: trackerData.skills,
       stores: trackerData.stores,
@@ -472,10 +478,4 @@ function buildAcquisitionReferences(
     },
     reviewed: REVIEWED_NON_NATIVE_REFERENCES,
   });
-}
-
-function collectPerkIds(trackerData: TrackerData): string[] {
-  return Object.values(trackerData.skills).flatMap((skill) =>
-    skill.perkTiers.flatMap((tier) => Object.keys(tier)),
-  );
 }

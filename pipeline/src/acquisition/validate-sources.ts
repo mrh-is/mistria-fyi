@@ -153,7 +153,7 @@ const SOURCE_FIELDS = {
   fish: ["waterTypes"],
   fish_trap: ["baitItemIds"],
   forage: ["locationIds"],
-  horse_statue: ["cost", "questId"],
+  horse_statue: ["cost", "mountAppearanceId", "questId"],
   letter: ["letterId", "trigger"],
   lost_and_found: [],
   mine: ["biomeId"],
@@ -1357,7 +1357,20 @@ function validateVariantFields(
       break;
     case "horse_statue":
       requiredNumbers.push("cost");
-      stringReferences.push(["questId", "quest"]);
+      // The Mistmare names the quest that repairs the statue; its perks name the Mistmare instead.
+      if ("questId" in source && "mountAppearanceId" in source) {
+        malformed(
+          diagnostics,
+          targetId,
+          fieldPath,
+          "Horse Statue sources must name either a quest or a mount appearance, not both",
+          source,
+        );
+      } else if ("mountAppearanceId" in source) {
+        stringReferences.push(["mountAppearanceId", "mountAppearance"]);
+      } else {
+        stringReferences.push(["questId", "quest"]);
+      }
       break;
     case "wishing_well":
       break;
@@ -1563,6 +1576,7 @@ function validateMount(
   const record = requireRecord(mount, "mount", "mount", diagnostics);
   if (!record) return;
   validateEntities("mount.appearances", record.appearances, references, diagnostics);
+  validateEntities("mount.perks", record.perks, references, diagnostics);
 }
 
 function validatePets(

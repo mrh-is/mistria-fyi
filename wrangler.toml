@@ -1,7 +1,7 @@
 name = "mistria-fyi"
 pages_build_output_dir = "./build"
 compatibility_flags = ["nodejs_compat"]
-compatibility_date = "2025-01-01"
+compatibility_date = "2026-10-19"
 
 # Matches the production Pages project's binding; wrangler.toml is the source of truth for bindings.
 [[kv_namespaces]]

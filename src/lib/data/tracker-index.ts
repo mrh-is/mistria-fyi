@@ -82,6 +82,9 @@ export function buildTrackerIndex(trackerData: TrackerData): TrackerIndex {
       ...Object.values(trackerData.mount.appearances).flatMap(({ sources }) =>
         sources.map(({ type }) => type),
       ),
+      ...Object.values(trackerData.mount.perks).flatMap(({ sources }) =>
+        sources.map(({ type }) => type),
+      ),
       ...Object.values(trackerData.pets.cosmetics).flatMap(({ sources }) =>
         sources.map(({ type }) => type),
       ),

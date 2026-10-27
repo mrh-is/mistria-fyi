@@ -1,4 +1,4 @@
-import { fireEvent, within } from "@testing-library/svelte";
+import { fireEvent, waitFor, within } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -54,9 +54,12 @@ describe("QuestsContent empty sections", () => {
 
     userState.toggleShowCompleted();
     await tick();
-    expect(crown.querySelectorAll("[data-tracker-row]")).toHaveLength(
-      recordKeys(trackerData.quests.crown).length,
-    );
+    // The Story section above takes the rows rendered at once; Crown's arrive over frames.
+    await waitFor(() => {
+      expect(crown.querySelectorAll("[data-tracker-row]")).toHaveLength(
+        recordKeys(trackerData.quests.crown).length,
+      );
+    });
     expect(crown.querySelector("[data-tracker-empty]")).toBeNull();
   });
 

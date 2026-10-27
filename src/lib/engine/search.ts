@@ -7,7 +7,7 @@ import type { SearchCategoryKey } from "#lib/engine/categories.js";
 import type { ProgressContext } from "#lib/engine/progress.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { Season, Weather } from "#lib/types/tracker-data.js";
+import type { ItemId, Season, Weather } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -19,9 +19,9 @@ export interface SearchResult {
   fullName?: string;
   id: string;
   name: string;
+  /** The item pictured on the result's category-page row; absent where that row has no picture. */
+  sprite?: ItemId;
 }
-
-const MAX_RESULTS = 50;
 
 /**
  * One searchable entity. `localizedName` & `englishName` are the strings matched against the
@@ -67,6 +67,7 @@ export function searchAllCategories(
     projectionContext: {
       availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
       progress: completed,
+      progressionState,
       worldState,
     },
   };
@@ -85,7 +86,7 @@ export function searchAllCategories(
     }
   }
 
-  return rankResults(results, q, locale).slice(0, MAX_RESULTS);
+  return rankResults(results, q, locale);
 }
 
 /**

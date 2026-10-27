@@ -49,6 +49,11 @@
   let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
   let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
+  // Toasts sit just above the toolbar, or above an open toolbar panel so they never cover it.
+  const toastOffset = "calc(56px + env(safe-area-inset-bottom))";
+  let toastLift = $derived(
+    toolbarState.panelClearance > 0 ? `${toolbarState.panelClearance + 8}px` : null,
+  );
 
   // The server stamps `<html lang>`/`dir` for the first paint; a client-side locale switch (the
   // picker navigates without a reload) has to keep them in step.
@@ -97,7 +102,16 @@
 
   <ToolbarFooter {metadata} bind:this={toolbarFooter} />
 
-  <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
+  <Toaster
+    position="bottom-center"
+    offset={{
+      bottom: toastLift ? `max(${toastOffset}, ${toastLift})` : toastOffset,
+      left: toastOffset,
+      right: toastOffset,
+      top: toastOffset,
+    }}
+    mobileOffset={toastLift ? { bottom: `max(16px, ${toastLift})` } : undefined}
+  />
 
   <PersistenceWarning />
   <PencilFilter />

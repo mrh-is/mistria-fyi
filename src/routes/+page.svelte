@@ -17,14 +17,17 @@
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
+  let content = $state<HTMLDivElement>();
 
-  let allProgress = $derived(
-    getAllProgress({
-      availabilityWindows: userState.state.availabilityWindows,
-      progress: userState.state.progress,
-      worldState: userState.state.worldState,
-    }),
-  );
+  // A replacement query reveals from the beginning. Keep its first screenful visible rather
+  // than preserving a deep offset over reserved space; completion & undo keep the same query.
+  $effect.pre(() => {
+    const _query = toolbarState.searchQuery;
+    const _locale = data.locale;
+    if (content) content.scrollTop = 0;
+  });
+
+  let allProgress = $derived(getAllProgress(userState.progressContext));
 
   let overall = $derived(getOverallProgress(allProgress));
   let overallPct = $derived(overall.total > 0 ? (overall.completed / overall.total) * 100 : 0);
@@ -48,7 +51,7 @@
     <span class="overall-progress-rule" aria-hidden="true"><i></i></span>
   </header>
 
-  <div class="home-content flex flex-col gap-3 px-4 pb-4">
+  <div class="home-content flex flex-col gap-3 px-4 pb-4" bind:this={content}>
     {#if toolbarState.searchQuery}
       <SearchResults locale={data.locale} query={toolbarState.searchQuery} />
     {:else}

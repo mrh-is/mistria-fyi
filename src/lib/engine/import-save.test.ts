@@ -406,6 +406,26 @@ describe("extractSaveProgress", () => {
     });
   });
 
+  it("imports the Mistmare's perks from player.perks without warning", () => {
+    const { completed, warnings } = extractSaveProgress({
+      player: { perks: ["horsepower", "harvest_horse", "nice_ride"] },
+    });
+
+    expect(completed.unlockedPerks).toEqual(new Set(["horsepower", "harvest_horse", "nice_ride"]));
+    expect(warnings).toEqual([]);
+  });
+
+  it("imports a bought perk the player has switched off", () => {
+    // Switching a perk off clears its `perks_active` flag & `perk_unlocked_*` world fact, but the
+    // game keeps it in `player.perks`, so it still counts as bought.
+    const bundle = {
+      gamedata: { t2_world_facts: { perk_unlocked_magic_design: 0 } },
+      player: { perks: ["magic_design"], stats: { perks_active: { magic_design: false } } },
+    };
+    const { completed } = extractSaveProgress(bundle);
+    expect(completed.unlockedPerks).toEqual(new Set(["magic_design"]));
+  });
+
   describe("new progression fields from save", () => {
     it("extracts hasUpperFloor from player.upper_floor", () => {
       const bundle: SaveBundle = {
@@ -1024,17 +1044,12 @@ describe("extractSave", () => {
     const { fields } = extractSave({
       player: {
         items_acquired: ["cosmetic", `treasure_box_${tier}`],
-        perks: ["horsepower"],
       },
     });
 
     expect(fields.almanac).toMatchObject({
       completeness: "complete",
       untracked: ["cosmetic", `treasure_box_${tier}`],
-    });
-    expect(fields.unlockedPerks).toMatchObject({
-      completeness: "complete",
-      untracked: ["horsepower"],
     });
 
     const renamed = extractSave({ player: { items_acquired: ["renamed_in_a_game_update"] } });

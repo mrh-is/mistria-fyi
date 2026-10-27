@@ -63,6 +63,8 @@ export type CosmeticSlot = Cosmetic["slot"];
 export type VillagerDate = SourcedEntity;
 /** The Mistmare's ride-able skins; names live in the mount locale chunk. */
 export type MountAppearance = SourcedEntity;
+/** A Mistmare perk bought at the Horse Statue; names live in the perks locale chunk. */
+export type MountPerk = SourcedEntity;
 export type PetCosmeticSet = SourcedEntity;
 export type PetSkin = SourcedEntity;
 export type QuestType = keyof TrackerData["quests"];

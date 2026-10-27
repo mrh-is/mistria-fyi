@@ -62,33 +62,37 @@ single-component row's marks disagree with its test files.
 | `quick-settings-theme-picker`    |        |            | Gap: theme selection and persistence                                              |
 | `feedback-panel`                 |        |     ✓      | Form, Turnstile, submit states                                                    |
 | `feedback-picker`                |        |     ✓      | Element picking                                                                   |
-| `search-results`                 |        |     ✓      | Toggle and undo across categories                                                 |
+| `search-results`                 |        |     ✓      | Toggle & undo across categories; progressive reveal, total, & query changes       |
 | `search-results-loading`         |        |     ✓      |                                                                                   |
 | `source-explainer-dialog`        |        | via parent | Open and dismiss through `filter-panel`                                           |
 | `tag-dialog`                     |        | via parent | Through `source-explainer-dialog` and `quick-settings-panel`                      |
-| `villager-search-result`         |        | via parent | Record link through `search-results`                                              |
+| `villager-search-result`         |        | via parent | Record link, portrait, & fallback through `search-results`                        |
 | `blocky-switch`                  |        | via parent | Through `filter-panel` and `quick-settings-panel`                                 |
 
 ### Tracker rows & controls
 
 | Component                                 | Server | happy-dom  | Notes                                                     |
 | ----------------------------------------- | :----: | :--------: | --------------------------------------------------------- |
-| `tracker-row`                             |   ✓    |     ✓      | Spoiler, completion, source papers, focus, sprite preview |
+| `tracker-row`                             |   ✓    |     ✓      | Spoiler, completion, lazy sources, focus, sprite preview  |
 | `tracker-row-stack`                       |   ✓    |            | Layout only                                               |
-| `tracker-row-list`                        |        |     ✓      | Row cap, show more, progressive count, empty note         |
+| `tracker-row-list`                        |   ✓    |     ✓      | Prerender, reveal over frames, reserve, busy, undo, empty |
+| `row-reveal` (controller)                 |        |     ✓      | Height estimate, shared frames, one frame chain           |
 | `tracker-empty-state`                     |        | via parent | Through `tracker-row-list`                                |
 | `tracker-checkbox`                        |        |     ✓      | Label, click forwarding, visual states                    |
 | `tracker-paper`                           |        |            | Layout only; no interaction                               |
 | `confirm-spoiler-dialog`                  |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |
 | `spoiler-guard-dialog`                    |        |     ✓      | Renders only while the guard holds a condition            |
-| `skill-record`                            |        |     ✓      | Level editing                                             |
+| `skill-record`                            |        |     ✓      | Level editing, perk drawer                                |
+| `skill-perks`                             |        |     ✓      | Unlocked & locked counts, tiers, check-off, spoiler guard |
 | `stepper`                                 |        |     ✓      | Grouped controls                                          |
 | `dialog-close-button`                     |        |     ✓      | Localized close control, dismisses the dialog             |
 | `status-note`                             |   ✓    |            | Tone classes; alert role for errors & warnings            |
 | `expandable-section`                      |        |     ✓      | Disclosure, IDs, nesting, reporting                       |
 | `section-groups`                          |        |     ✓      | Completed grouping, toggle hold window, kept expansion    |
 | `section-group-item`, `completed-heading` |        | via parent | Through `section-groups`                                  |
-| `spoiler`, `spoiler-section`              |        | via parent | Through `tracker-row`                                     |
+| `spoiler`                                 |        | via parent | Through `tracker-row` & `spoiler-section`                 |
+| `spoiler-section`                         |        |     ✓      | Mask-only reveal, inert row, shared styling, no progress  |
+| `section-trigger`                         |        | via parent | Through `expandable-section` & `spoiler-section`          |
 | `sprite-preview-button`                   |        | via parent | Through `tracker-row`                                     |
 | `sprite-slot`                             |        | via parent | Through `tracker-row`                                     |
 | `source-card`                             |   ✓    |            | Static rendering                                          |
@@ -105,11 +109,13 @@ single-component row's marks disagree with its test files.
 
 ### Category content
 
-| Component                                                                                                                                        | Server | happy-dom | Notes                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | :----: | :-------: | --------------------------------------------------------------- |
-| `almanac-content`                                                                                                                                |        |     ✓     |                                                                 |
-| `animals-content`, `animal-subcategory`, `animal-*-section`, `mount-appearances-section`, `pet-collectibles-section`                             |        |           | Gap: variant/cosmetic toggles; store is tested                  |
-| `cosmetics-content`, `mines-content`, `museum-content`, `quests-content`, `recipes-content`, `renown-content`, `dates-section`, `skills-content` |        |           | Gap: page compositors; rows and dialogs are tested individually |
+| Component                                                                                                                      | Server | happy-dom | Notes                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------ | :----: | :-------: | --------------------------------------------------------------- |
+| `almanac-content`                                                                                                              |        |     ✓     |                                                                 |
+| `animals-content`, `animal-subcategory`, `animal-*-section`, `pet-collectibles-section`                                        |        |           | Gap: variant/cosmetic toggles; store is tested                  |
+| `mount-appearances-section`                                                                                                    |        |     ✓     | Appearances & Mistmare perks; perk check-off & reversal         |
+| `cosmetics-content`, `mines-content`, `museum-content`, `quests-content`, `recipes-content`, `renown-content`, `dates-section` |        |           | Gap: page compositors; rows and dialogs are tested individually |
+| `skills-content`                                                                                                               |        |     ✓     | A maxed skill stays visible until its perks are bought          |
 
 ### Data page
 

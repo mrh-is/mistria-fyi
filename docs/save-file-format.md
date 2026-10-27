@@ -43,6 +43,32 @@ The checked-in fixture is exactly 298,271 bytes compressed and 3,216,869 bytes d
 browser importer caps input at 8 MiB and expanded output at 64 MiB, leaving more than 20x headroom
 over this measured late-game save while bounding memory use on constrained devices.
 
+### Field presence, early vs. late game (v1.0.8)
+
+Compared on 2026-10-22 between two local v1.0.8 autosaves: an early-game farm created in 1.0.8 (107
+KB compressed, 1.2 MB decompressed, 34 entries) & a late-game farm created in 0.11.7 & last written
+by 1.0.8 (333 KB compressed, 3.7 MB decompressed, 42 entries).
+
+- **Entries.** Both saves hold every global state entry the importer reads: `player`, `gamedata`,
+  `quests`, `header`, & `info`. Per-villager state lives in an `npcs` entry, which the importer
+  doesn’t read. Neither save has a `villagers` entry, & nor do the v1.0.2 & v1.0.4 autosaves under
+  `pipeline/input/`, which carry `npcs` too. The late-game save’s extra entries are all
+  `DynamicGrid_*` scene grids.
+- **Keys.** `player` (68 keys), `gamedata` (27), `quests` (7), `header` (8), & `info` (3) carry the
+  same key set in both saves; no key the importer reads is absent early. Early-game progress shows
+  up as empty arrays & objects rather than missing keys: for example `perks`, `spells_learned`,
+  `museum_progress`, `completed_quests`, & `pet_skin_unlocks` are all `[]`. Note: `game_stats` is
+  the one compared entry whose key set differs (`progressions` appears only late), but the importer
+  doesn’t read it & sync prunes it.
+- **Null until reached.** Six keys are `null` early & populated late: `player.mount`,
+  `player.pinned_spell`, `player.crown_cooldown`, `player.proposal_date`, `player.wedding_date`, &
+  `gamedata.active_mist_sight`. The importer reads none of them.
+- **World facts.** `gamedata.t2_world_facts` grows from about 6,600 to 9,300 entries, &
+  `t2_world_facts.renown` (the fact the importer reads) is present in both.
+
+`import-save.assets.test.ts` runs both saves through the importer: neither reports an unrecognized
+ID, & every field the save fully records extracts as complete.
+
 ## Entries
 
 A save contains a mix of **global state entries** and **per-location entries**. The importer only
@@ -61,7 +87,7 @@ These are the entries relevant to progress tracking:
 | `header`     | Summary metadata: player name, farm name, playtime, appearance      |
 | `info`       | Save format version (`creation_version`, `version`)                 |
 | `game_stats` | Detailed gameplay statistics (largest entry; not used by tracker)   |
-| `villagers`  | Per-Villager state: schedules, gift history, dialogue flags         |
+| `npcs`       | Per-Villager state: schedules, gift history, dialogue flags         |
 
 ### Per-location entries
 
@@ -161,7 +187,13 @@ evidence.
 | ---------------- | ------------------------ | -------------------------------------------------------- |
 | `skill_xp`       | `Record<string, number>` | XP totals per skill (not levels; levels are in gamedata) |
 | `spells_learned` | `string[]`               | Spell IDs the player has unlocked                        |
-| `perks`          | `string[]`               | Perk IDs the player has selected                         |
+| `perks`          | `string[]`               | Perk IDs the player has bought                           |
+
+`perks` keeps a bought perk after the player switches it off in the perk menu. Switching off clears
+the perk's `stats.perks_active` flag and its `perk_unlocked_<id>` world fact, so neither records
+ownership: `perks_active` lists every perk as `true` in a fresh save, and in the late-game v1.0.8
+save nine bought perks read `false` in both. The importer reads `perks` alone, so a switched-off
+perk still counts toward its skill's completion.
 
 ### Other notable fields
 
@@ -328,9 +360,10 @@ versions, though new items, recipes, and quests are added in content updates.
    the save is incomplete for that field, not that the level is zero.
 7. Saves list game IDs the tracker deliberately doesn't track: items outside the almanac, the
    cosmetic token items (`cosmetic`, `animal_cosmetic`, `pet_cosmetic`), treasure chests
-   (`treasure_box_<tier>`, tracked as chest tiers), and the Mistmare's perks (`horsepower`,
-   `harvest_horse`, `nice_ride`). The importer counts these as known-but-untracked; anything else it
-   doesn't recognize marks its field incomplete.
+   (`treasure_box_<tier>`, tracked as chest tiers). The importer counts these as
+   known-but-untracked; anything else it doesn't recognize marks its field incomplete. The
+   Mistmare's perks (`horsepower`, `harvest_horse`, `nice_ride`) share `perks` with the skill perks
+   and import into the same `unlockedPerks` set.
 8. A farm's identity is the number in `game-<number>-<autosave or slot>.sav` plus
    `info.creation_version`. Both are optional when importing: renamed files, extracted JSON, & old
    saves may omit them. `header.playtime` only grows as the save is played. The manual importer also
