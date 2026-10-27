@@ -1,10 +1,11 @@
 # Sync setup & pairing
 
-tl;dr: Every browser gets an explicit role. A **tracker** is where you check things off; a **relay**
-is the PC browser that watches the game’s save and sends it to one paired tracker. A first-look
-chooser asks where you’ll look at the tracker while you play, and that one answer picks import,
-sync, or manual tracking. This document is the journey & decision flow for #131; the protocol is in
-[sync.md](sync.md). UI & copy wait until the flow is settled.
+tl;dr: The app detects what it can (device kind, iPhone browser vs. installed app, whether the
+browser can watch a file) and asks only what it can’t: on a PC, whether you’ll use the tracker here
+or on another device; on a phone, whether to sync or check things off by hand. Each browser ends up
+in one role: a **tracker**, a **self-updating tracker**, or a **relay**. This document is the
+journey & decision flow for #131; the protocol is in [sync.md](sync.md). UI & copy wait until the
+flow is settled.
 
 Status: flow in review on #131. The
 [design canvas](https://claude.ai/artifact/UhDfkQVf4Csu7eN9RcBStx) is paused at an earlier flow; its
@@ -24,13 +25,16 @@ on the device where it was checked off.
 
 ## Roles
 
-| Role              | Where                   | Checks things off          | Gets progress from                           |
-| ----------------- | ----------------------- | -------------------------- | -------------------------------------------- |
-| Tracker (default) | Any device              | Yes                        | Manual import, sync, or by hand              |
-| Relay             | The PC running the game | No; the guide is read-only | Its own watched save, mirrored for reference |
+| Role                  | Where                   | Checks things off          | Gets progress from                           |
+| --------------------- | ----------------------- | -------------------------- | -------------------------------------------- |
+| Tracker (default)     | Any device              | Yes                        | Sync, a one-time import, or by hand          |
+| Self-updating tracker | The PC running the game | Yes                        | Its own watched save                         |
+| Relay                 | The PC running the game | No; the guide is read-only | Its own watched save, mirrored for reference |
 
-- A browser is a tracker until it’s set up as a relay. Turning the relay off makes it a tracker
+- A browser is a tracker until setup makes it something else. Turning a relay off makes it a tracker
   again, with whatever progress it had before.
+- **A self-updating tracker** watches the save the same way a relay does but applies it locally,
+  with no phone & no network. Check-offs are safe there, because nothing leaves the browser.
 - **Why a relay doesn’t track.** If the PC tab took check-offs while relaying, they’d silently fail
   to reach the phone, which contradicts the mental model. A read-only mirror of the latest save
   keeps the guide useful on the PC without that trap. The relay already parses each save, so the
@@ -39,37 +43,60 @@ on the device where it was checked off.
   phone, which save, when it last sent. Browsing the guide is a side trip from there. Trouble takes
   over that view and stays until dismissed, so a broken relay is hard to miss.
 
-## First look: the chooser
+## First look: the decision tree
 
-One question, on first run (onboarding) & at the top of Data, decides the path:
+The tree runs on first run (onboarding) & from Data. Diamonds are questions the player answers;
+hexagons are checks the app makes itself and never asks.
 
 ```mermaid
 flowchart TD
-    Q{"Where will you look at the tracker<br/>while you play?"}
-    Q -->|"On this PC"| PC{"Want it to update<br/>on its own?"}
-    Q -->|"On my phone or tablet"| DEV{"Which device are you on now?"}
-    Q -->|"I’ll check things off by hand"| MAN["Manual tracking"]
+    classDef detected fill:#eeedea,stroke:#948a7c,stroke-dasharray:4 3
+    classDef asked fill:#e1f5ee,stroke:#0f6e56
+    classDef outcome fill:#eeedfe,stroke:#534ab7
 
-    PC -->|"No, I’ll re-import now & then"| IMP["Import from save file<br/>(this browser stays a tracker)"]
-    PC -->|"Yes"| AUTO["Watch my save here<br/>(proposed; see open question 1)"]
+    START([Player starts setup]) --> DEVICE{{What device is this?}}:::detected
+    DEVICE -->|PC| WHERE{Use the tracker here,<br/>or on another device?}:::asked
+    DEVICE -->|iPhone, in a browser| NUDGE[Suggest installing to the home screen<br/>dismissible]:::outcome
+    DEVICE -->|Phone app, or Android| PHONE{Sync from your PC,<br/>or check off by hand?}:::asked
+    NUDGE --> PHONE
 
-    DEV -->|"The PC with the game"| RELAY["Set up this PC as the relay"]
-    DEV -->|"The phone or tablet"| TRK["Pair this device as the tracker"]
+    WHERE -->|Here| HOW{Import, or check off by hand?}:::asked
+    HOW -->|By hand| MANUAL[Manual tracking<br/>no more setup]:::outcome
+    HOW -->|Import| WATCH1{{Can this browser watch a file?}}:::detected
+    WATCH1 -->|Yes| SELF[Self-updating tracker]:::outcome
+    WATCH1 -->|No| ONCE[Import once<br/>+ “Chrome or Edge can do this automatically”]:::outcome
 
-    RELAY --> BROWSER{"Chrome or Edge?"}
-    BROWSER -->|"Yes"| SETUP["Sync setup"]
-    BROWSER -->|"No"| FALLBACK["Import from save file instead,<br/>or switch browsers"]
-    TRK --> IOS{"iPhone in Safari?"}
-    IOS -->|"Yes"| HOME["Add to home screen first,<br/>then pair from there"]
-    IOS -->|"No"| SETUP
-    HOME --> SETUP
+    WHERE -->|Another device| WATCH2{{Can this browser watch a file?}}:::detected
+    WATCH2 -->|Yes| RELAY[Relay: pair a phone, then connect the save]:::outcome
+    WATCH2 -->|No| REDROP[Relay that re-drops the save each time<br/>+ “Chrome or Edge can do this automatically”]:::outcome
+
+    PHONE -->|Sync| PAIR[Pair with your PC<br/>then the PC continues as a relay]:::outcome
+    PHONE -->|By hand| MANUAL2[Manual tracking<br/>no more setup]:::outcome
 ```
 
-- “How it works” (the mental model) sits beside the chooser, collapsed but clearly labeled. Curious
-  players open it; ready players skip it.
-- The answer is remembered, and Data leads with the chosen path. The others stay one tap away.
-- Manual import moves under a “Just this once” heading, so players can tell it won’t update on its
-  own.
+- **Import defaults to self-updating.** A player who picks “import” on a PC that can watch files
+  gets the self-updating tracker without being asked; the one-time import is the fallback.
+- **The installed-app nudge is dismissible.** A player can keep using the tracker in the browser;
+  the nudge only explains that the browser & the home screen app don’t share data.
+- **“How it works”** (the mental model) sits beside the first question, collapsed but clearly
+  labeled. Curious players open it; ready players skip it.
+- **The choice is remembered,** and Data leads with it. The other paths stay one tap away.
+- **One-time import moves under “Just this once”,** so players can tell it won’t update on its own.
+
+### What the app can detect
+
+| Check                     | How                                                                                                                         | Confidence                         |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| PC or phone               | User-Agent Client Hints `mobile`, a coarse pointer, & screen size; onboarding already has an override (“I’m on a computer”) | Heuristic; keep the override       |
+| Installed or in a browser | `matchMedia("(display-mode: standalone)")`; `navigator.standalone` on iOS                                                   | Reliable on iOS & Android          |
+| iPhone browser            | iOS user agent & not standalone                                                                                             | Reliable                           |
+| Can watch a file          | Feature checks for `FileSystemObserver` & drag-and-drop file handles                                                        | Reliable; Firefox & Safari fail it |
+
+- **Every iOS browser behaves like Safari here.** All iOS browsers, Firefox included, run on WebKit,
+  and a home screen web app keeps its own storage apart from the browser that added it. Confirm on
+  Firefox for iPhone during #130.
+- **Android needs no nudge.** An app installed from Chrome shares its storage with Chrome, so the
+  data is already there. Installing stays optional.
 
 ## Sync setup journey
 
@@ -84,7 +111,7 @@ sequenceDiagram
     participant T as Phone (tracker)
     participant G as Game
 
-    P->>R: Chooses “the PC with the game”
+    P->>R: On the PC, picks “another device”
     R->>P: Pair first. Shows a covered code
     P->>T: Opens mistria.fyi/sync, taps “Scan the code”
     P->>R: Shows the code
@@ -120,17 +147,14 @@ connecting the save, progress lands on the phone, which demonstrates the whole s
 
 ## Open questions
 
-1. **Watch my save on the same PC.** The relay already watches & parses the save, so a single-device
-   player could get automatic updates in the same browser, with no phone & no network. It answers
-   “sync or import?” cleanly for PC-only players, but it’s new scope for the epic (#123) & blurs the
-   tracker/relay split (this browser would be both, with no check-off trap since nothing leaves it).
-   Recommendation: include it as a third role, “self-updating tracker”, after phone sync ships.
-2. **Relay read-only mirror.** Recommendation above: yes. The alternative is hiding the guide in
+1. **Relay read-only mirror.** Recommendation above: yes. The alternative is hiding the guide in
    relay mode, which is simpler but makes the PC tab less useful.
-3. **Can a relay serve more than one tracker?** sync.md fixes one phone per PC. The chooser assumes
-   that; a tablet & phone together would need a protocol change.
-4. **Steam Deck & Firefox.** Both paths depend on #130’s hardware checks; the chooser routes them to
-   import until those land.
+2. **Can a relay serve more than one tracker?** sync.md fixes one phone per PC. A tablet & a phone
+   together would need a protocol change.
+3. **Steam Deck.** It’s a PC running Linux, often with touch, so device detection may call it a
+   phone. The override covers it until #130 says how its browsers behave.
+4. **The self-updating tracker is new scope** for the epic (#123). It reuses the relay’s watching &
+   the importer, with no network; it needs its own issue once this flow is approved.
 
 ## Voice
 
