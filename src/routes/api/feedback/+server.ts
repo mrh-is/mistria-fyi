@@ -160,8 +160,8 @@ async function getGitHubFailureDiagnostics(response: Response): Promise<GitHubFa
 }
 
 /**
- * Exchanges App credentials for an installation token. Logs
- * only fixed messages, statuses, & request IDs: never key material, JWTs, or tokens.
+ * Exchanges App credentials for an installation token. Logs only fixed messages, statuses, & request
+ * IDs: never key material, JWTs, or tokens.
  */
 async function getGitHubToken(credentials: GitHubAppCredentials): Promise<string> {
   try {

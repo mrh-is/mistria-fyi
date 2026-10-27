@@ -5,8 +5,10 @@
 PR #226 merged the GitHub App authentication path. The owner then requested removal of the temporary
 personal access token fallback. The
 [earlier decision record](2026-10-22-feedback-github-app.md#revisit-if) permits removal after the
-App cutover; the owner’s request authorizes this follow-up. Production credential deployment & token
-revocation were not independently verified.
+App cutover; the owner’s request authorizes this follow-up.
+[Issue #242](https://github.com/mrh-is/mistria-fyi/issues/242), filed by the feedback App on October
+27, 2026, confirms that the App files issues in production. Personal token revocation remains
+unverified.
 
 ## Decision
 
