@@ -11,7 +11,8 @@ test.beforeEach(async ({ page }) => {
 test("replacing a deeply scrolled home query shows the new first screenful", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
   await gotoApplication(page, "/");
-  await openSearch(page, "a");
+  // A smaller scrollable query keeps setup independent of the full broad-query reveal time.
+  await openSearch(page, "bed");
   // oxlint-disable-next-line playwright/no-raw-locators -- The busy list & scroll container have no distinct roles.
   const results = page.locator(".search-results__rows");
   await expect(results).toHaveAttribute("aria-busy", "false");
