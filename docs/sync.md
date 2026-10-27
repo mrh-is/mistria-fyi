@@ -41,9 +41,10 @@ importer reads is present in both, with early progress as empty lists.
 
 ## Shape
 
-1. **Setup** (flow still to be designed, #131). Drag your save onto the tracker once. The page shows
-   the save folder’s path as copyable text for Explorer. It encourages installing the app & keeping
-   its window open, but requires neither. The feature is named for what it does, “Sync from game”.
+1. **Setup** (designed in [sync-setup.md](sync-setup.md), #131). Drag your save onto the tracker
+   once. The page shows the save folder’s path as copyable text for Explorer. It encourages
+   installing the app & keeping its window open, but requires neither. The feature is named for what
+   it does, “Sync from game”.
 2. **The PC tab is a courier.** It watches the save, prunes it, encrypts it, & writes it to the
    relay.
 3. **The relay holds one encrypted bundle per pairing** until the phone confirms it.
@@ -126,9 +127,9 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
 
 ## Pairing
 
-Built in #133. Planned location (not yet created): src/lib/sync/pairing.ts. The UI is from #131.
-Exactly one device pairs per PC; pairing a new device replaces the old one & names the device it
-replaces.
+Built in #133. Planned location (not yet created): src/lib/sync/pairing.ts. The UI is in
+[sync-setup.md](sync-setup.md) (#131). Exactly one device pairs per PC; pairing a new device
+replaces the old one & names the device it replaces.
 
 ### The offer
 
