@@ -69,6 +69,7 @@ export function searchAllCategories(
     projectionContext: {
       availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
       progress: completed,
+      progressionState,
       worldState,
     },
   };

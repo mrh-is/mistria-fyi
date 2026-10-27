@@ -110,7 +110,7 @@
       userState.undoQuestWithRecipes(questId, completion);
     });
     if (newState !== "completed") return;
-    if (isCategoryComplete("quests", userState.state)) {
+    if (isCategoryComplete("quests", userState.progressContext)) {
       celebrateCategory();
     } else if (section.rows.every((row) => getQuestState(row.id) === "completed")) {
       celebrate();
@@ -189,4 +189,4 @@
   {/snippet}
 </SectionGroups>
 
-<AllCompleted isAllCompleted={isCategoryComplete("quests", userState.state)} />
+<AllCompleted isAllCompleted={isCategoryComplete("quests", userState.progressContext)} />

@@ -18,13 +18,7 @@
 
   let { data }: PageProps = $props();
 
-  let allProgress = $derived(
-    getAllProgress({
-      availabilityWindows: userState.state.availabilityWindows,
-      progress: userState.state.progress,
-      worldState: userState.state.worldState,
-    }),
-  );
+  let allProgress = $derived(getAllProgress(userState.progressContext));
 
   let overall = $derived(getOverallProgress(allProgress));
   let overallPct = $derived(overall.total > 0 ? (overall.completed / overall.total) * 100 : 0);

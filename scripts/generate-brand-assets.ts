@@ -9,6 +9,7 @@ import sharp from "sharp";
 
 import { trackerData } from "../src/lib/data/index.js";
 import { getAllProgress } from "../src/lib/engine/categories.js";
+import { deriveProgressionState } from "../src/lib/engine/visibility.js";
 
 import type { ProgressState } from "../src/lib/types/user-progress.js";
 
@@ -113,12 +114,14 @@ function emptyCompletedState(): ProgressState {
 }
 
 function grandTotal(): number {
-  const progress = getAllProgress({
+  const progress = emptyCompletedState();
+  const allProgress = getAllProgress({
     availabilityWindows: ["now", "anytime", "later"],
-    progress: emptyCompletedState(),
+    progress,
+    progressionState: deriveProgressionState(progress, trackerData, false),
     worldState: { season: "spring", weather: "calm" },
   });
-  return Object.values(progress).reduce((total, category) => total + category.total, 0);
+  return Object.values(allProgress).reduce((total, category) => total + category.total, 0);
 }
 
 async function main(): Promise<void> {
