@@ -59,9 +59,11 @@ export function classifySourceAvailability(
 ): AvailabilityWindow {
   if (!isConditionVisible(getSourceVisibility(source), ctx.progressionState)) return "later";
 
-  const availability = getAvailabilityCondition(source);
-  if (!availability) return "anytime";
+  const condition = getAvailabilityCondition(source);
+  if (!condition) return "anytime";
 
+  // Once ignored leaves read as met, only today's season & weather can leave the result unknown.
+  const availability = assumeIgnoredLeavesMet(condition, false);
   const progress = progressContext(ctx.progressionState);
   if (evaluateAvailabilityCondition(availability, { ...progress, ...ctx.worldState }) === false) {
     return "later";
@@ -148,6 +150,45 @@ export function isInProgressScope(
 ): boolean {
   if (isCompleted) return true;
   return isItemAvailable(row, ctx, windows);
+}
+
+/**
+ * Rewrites the leaves the row rule ignores (time of day, & gates the app can't evaluate) so they
+ * read as met: "always" where they appear plainly, & "never" under an odd number of negations.
+ */
+function assumeIgnoredLeavesMet(
+  condition: AvailabilityCondition,
+  negated: boolean,
+): AvailabilityCondition {
+  switch (condition.type) {
+    case "all":
+    case "any":
+      return {
+        type: condition.type,
+        conditions: condition.conditions.map((child) => assumeIgnoredLeavesMet(child, negated)) as [
+          AvailabilityCondition,
+          ...AvailabilityCondition[],
+        ],
+      };
+    case "dateUnlocked":
+    case "gamePredicate":
+    case "time":
+      return negated ? { type: "not", condition: { type: "always" } } : { type: "always" };
+    case "always":
+    case "hasUpperFloor":
+    case "heartLevel":
+    case "isDating":
+    case "mineFloor":
+    case "perkUnlocked":
+    case "quest":
+    case "reachedSeason":
+    case "season":
+    case "skillLevel":
+    case "weather":
+      return condition;
+    case "not":
+      return { type: "not", condition: assumeIgnoredLeavesMet(condition.condition, !negated) };
+  }
 }
 
 /**

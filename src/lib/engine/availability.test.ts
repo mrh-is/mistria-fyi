@@ -190,6 +190,27 @@ describe("classifySourceAvailability", () => {
     });
   });
 
+  describe("ignored leaves never hide a met alternative to a season", () => {
+    const springOrFloor: AvailabilityCondition = {
+      type: "any",
+      conditions: [seasonCondition(["spring"]), { type: "mineFloor", floor: 20 }],
+    };
+    const ignored: AvailabilityCondition[] = [
+      timeCondition(1800, 2400),
+      { type: "gamePredicate", predicate: "baby_is_due", value: true },
+      { type: "dateUnlocked" },
+    ];
+
+    it.each(ignored)("classifies a met alternative alongside %o as anytime", (leaf) => {
+      const condition: AvailabilityCondition = { type: "all", conditions: [springOrFloor, leaf] };
+      expect(classifySourceAvailability(src(condition), context("winter", { mineFloor: 20 }))).toBe(
+        "anytime",
+      );
+      expect(classifySourceAvailability(src(condition), spring)).toBe("now");
+      expect(classifySourceAvailability(src(condition), context("winter"))).toBe("later");
+    });
+  });
+
   describe("gates the app can't evaluate count as met", () => {
     const unknowable: AvailabilityCondition[] = [
       { type: "gamePredicate", predicate: "baby_is_due", value: true },
