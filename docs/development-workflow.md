@@ -253,7 +253,29 @@ Tests sit next to the module they cover, so moving or deleting a module takes it
   builder or stub. [The testing inventory](testing-inventory.md#shared-helpers) lists them.
 
 The committed `.vscode/settings.json` nests each test under its source in the VS Code explorer, so
-colocated tests don’t double the length of directory listings.
+colocated tests don’t double the length of directory listings. It also points the Vitest extension
+at `node_modules/.bin/node`, the pinned Node that `pnpm install` links from `devEngines.runtime`.
+Without it, the extension starts Vitest with whatever `node` is first on `PATH`, and
+`require-pinned-node` (the first import in `vite.config.ts`) exits on any other release, which the
+extension reports only as “There were errors during config load.” The ESLint extension gets the same
+runtime through `eslint.runtime`: it otherwise runs on VS Code’s bundled Node, and
+`eslint.config.js` loads `vite.config.ts` for the SvelteKit config, so the guard stops the ESLint
+server too (“Server process exited with code 1”).
+
+- Run `pnpm install` (or `node scripts/setup-worktree.ts` in a worktree) before opening the folder.
+  Until the link exists, the extension fails to spawn `node_modules/.bin/node` (`ENOENT`).
+- The extension honors `vitest.nodeExecutable` only with its default `vitest.shellType`,
+  `child_process`. With `"vitest.shellType": "terminal"` in your user settings, it runs the
+  terminal’s `PATH` node instead and fails the same way.
+- On Windows, pnpm usually links the runtime in `node_modules\.bin` as shims (`node.cmd`,
+  `node.ps1`, and an extensionless shell script), which the extension can’t spawn without a shell,
+  so the committed value likely fails there. A user-level `vitest.nodeExecutable` can’t fix it,
+  because VS Code applies the workspace’s `.vscode/settings.json` over user settings. Instead, edit
+  the committed file locally & keep the edit out of commits:
+  1. Print the pinned runtime’s real path with `pnpm exec node -p process.execPath`.
+  2. Set `vitest.nodeExecutable` & `eslint.runtime` in `.vscode/settings.json` to that path.
+  3. Run `git update-index --skip-worktree .vscode/settings.json`, so Git ignores the local edit.
+     Undo it with `--no-skip-worktree` before pulling a change to that file, then reapply.
 
 ### Executing Tests
 

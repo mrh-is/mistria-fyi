@@ -12,5 +12,7 @@
   "json.schemaDownload.trustedDomains": {
     "https://shadcn-svelte.com/schema.json": true
   },
-  "npm.exclude": ["**/.claude/worktrees/**", "**/.pnpm-store/**", "**/.worktrees/**"]
+  "npm.exclude": ["**/.claude/worktrees/**", "**/.pnpm-store/**", "**/.worktrees/**"],
+  "eslint.runtime": "node_modules/.bin/node",
+  "vitest.nodeExecutable": "node_modules/.bin/node"
 }
