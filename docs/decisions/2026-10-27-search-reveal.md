@@ -12,6 +12,10 @@ without requiring scrolling or another action. Home search retains its ranked cr
 category tags; category filters retain their section layout. Both keep the existing 200 ms input
 debounce.
 
+Home starts each replacement query or locale at the top of its scroll container so the new first
+screenful stays visible; completion & undo preserve the scroll position. Home also defers offscreen
+layout & paint through the browser while retaining every revealed result in the DOM.
+
 Source papers mount their card content on first expansion & retain it afterward, preserving closing
 animations & subsequent opens while avoiding the initial cost for unvisited disclosures. The
 disclosure panel & its stable accessibility ID remain mounted throughout.
