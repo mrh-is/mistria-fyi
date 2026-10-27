@@ -39,7 +39,7 @@ on the device where it was checked off.
   to reach the phone, which contradicts the mental model. A read-only mirror of the latest save
   keeps the guide useful on the PC without that trap. The relay already parses each save, so the
   mirror costs little.
-- **The relay is a station, not a page.** In relay mode the app opens on a relay status view: which
+- **The relay is a dashboard first.** In relay mode the app opens on a status dashboard: which
   phone, which save, when it last sent. Browsing the guide is a side trip from there. Trouble takes
   over that view and stays until dismissed, so a broken relay is hard to miss.
 
@@ -98,63 +98,74 @@ flowchart TD
 - **Android needs no nudge.** An app installed from Chrome shares its storage with Chrome, so the
   data is already there. Installing stays optional.
 
+## Any time, not just first run
+
+New players meet the tree in onboarding, and every path stays reachable from Data later, so a player
+who starts by hand and comes back for sync goes through the same tree. Changing roles later:
+
+- **Tracker → relay.** Progress already on the PC is kept but set aside while it’s a relay, and
+  comes back if the relay is turned off. Things checked off by hand don’t come along in the save, so
+  setup first offers to move them: export a backup on the PC, restore it on the phone, then pair.
+- **Tracker → self-updating tracker.** The first watched save applies through the apply rules
+  (#129), like any sync, so earlier check-offs aren’t overwritten blindly.
+- **Phone with progress → paired.** The first save asks “Is this the farm you’ve been tracking?” and
+  merges through the apply rules (#135).
+- **Any role → tracker.** Turning sync off keeps everything already on the device.
+
 ## Sync setup journey
 
-Setup starts on whichever device the player is holding, and both paths converge on the same order:
-pair first, then connect the save. `mistria.fyi/sync` is the address either device names for the
-other.
+Setup starts on whichever device the player is holding. Starting on the phone, it says to open
+`mistria.fyi/sync` on the PC; arriving there implies “another device”, so the PC skips that
+question. Either way, pairing comes first, then the save.
 
-```mermaid
-sequenceDiagram
-    actor P as Player
-    participant R as PC browser (relay)
-    participant T as Phone (tracker)
-    participant G as Game
+| Step | On the PC                                                 | On the phone                                    |
+| ---- | --------------------------------------------------------- | ----------------------------------------------- |
+| 1    | Picks “another device” (or arrives at `mistria.fyi/sync`) |                                                 |
+| 2    | Shows a covered pairing code, then “Show code”            | Opens `mistria.fyi/sync`, taps “Scan the code”  |
+| 3    |                                                           | Scans the code, then says to check the PC       |
+| 4    | Asks “Was that you?”; the player says yes                 | “You’re paired!” & waits for the first save     |
+| 5    | Connect the save: copy the folder path, drag the file in  |                                                 |
+| 6    | Sends the save                                            | “It worked!”: progress appears                  |
+| 7    | Stays on the relay dashboard while the player plays       | Updates each time the player sleeps in the game |
 
-    P->>R: On the PC, picks “another device”
-    R->>P: Pair first. Shows a covered code
-    P->>T: Opens mistria.fyi/sync, taps “Scan the code”
-    P->>R: Shows the code
-    T->>R: Answers the code
-    R->>P: “Was that you?”
-    P->>R: Yes
-    R-->>T: Paired. Phone: “Waiting for your first save”
-    R->>P: Now connect the save (copy path, drag the file in)
-    R->>T: Sends the current save
-    T->>P: “It worked!” Progress appears
-    loop While playing
-        G->>R: Writes a save on sleep
-        R->>T: Sends it
-    end
-```
+Why pair first: the player sees success on the phone right away, and finishing step 5 makes progress
+appear on the phone moments later, which demonstrates the whole system once.
 
-Why pair first: the player sees success on the phone immediately, and the moment they finish
-connecting the save, progress lands on the phone, which demonstrates the whole system once.
+## The relay dashboard
+
+- The relay opens on its dashboard: which phone, which save, when it last sent. Trouble takes over
+  the dashboard until dismissed.
+- “Browse the guide” opens the full guide, read-only, mirroring the latest save.
+- Trying to check something off there shows a toast instead: “This PC is the relay. Check things off
+  on your {device}.”
+- Start here and watch real use. If the read-only guide goes unused or only confuses, remove it and
+  keep the dashboard alone.
+
+## Moving to the installed app on iPhone
+
+iOS keeps a browser’s data apart from the home screen app, so the app can’t move it.
+
+- **Before installing.** The install nudge in an iPhone browser, when that browser holds progress,
+  offers “Export a backup first” ahead of the install steps.
+- **First launch of the installed app.** With no progress yet, the app asks whether the player was
+  using the tracker in Safari or another browser, and if so walks them through exporting a backup
+  there & restoring it here. Dismissible.
+- Restore (not import) is right here, since the app is empty: it carries manual check-offs &
+  provenance intact.
 
 ## Living with it
 
 | Stage           | Relay (PC)                                                          | Tracker (phone)                                                            |
 | --------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Playing         | Station view open; nothing to do                                    | “Updated from your PC {time ago}” stamp                                    |
-| Away for days   | Pairing lapses after 14 days unseen; station says to re-pair        | Toast on open after an unusually long gap: is the relay still open?        |
+| Playing         | Dashboard open; nothing to do                                       | “Updated from your PC {time ago}” stamp                                    |
+| Away for days   | Pairing lapses after 14 days unseen; dashboard says to re-pair      | Toast on open after an unusually long gap: is the relay still open?        |
 | Browser restart | Asks to re-allow reading the save (one click; “every visit” sticks) | Nothing                                                                    |
-| Game update     | Can’t read the save: takes over the station view                    | Keeps its last good progress; stamp ages                                   |
+| Game update     | Can’t read the save: takes over the dashboard                       | Keeps its last good progress; stamp ages                                   |
 | App update      | Reloads itself at a safe moment                                     | Same; a version mismatch names the device that’s behind                    |
 | New phone       | Pair again; the old phone stops receiving                           | Old phone keeps its progress; new one gets the next save                   |
 | New farm        | Drop the new save                                                   | Asks “Is this the farm you’ve been tracking?”; backs up the old one (#135) |
 | Kill switch     | “Sync is taking a break”                                            | Same; tracking by hand still works                                         |
 | Stop syncing    | “Turn off sync”: back to a tracker                                  | Unpaired; keeps everything                                                 |
-
-## Open questions
-
-1. **Relay read-only mirror.** Recommendation above: yes. The alternative is hiding the guide in
-   relay mode, which is simpler but makes the PC tab less useful.
-2. **Can a relay serve more than one tracker?** sync.md fixes one phone per PC. A tablet & a phone
-   together would need a protocol change.
-3. **Steam Deck.** It’s a PC running Linux, often with touch, so device detection may call it a
-   phone. The override covers it until #130 says how its browsers behave.
-4. **The self-updating tracker is new scope** for the epic (#123). It reuses the relay’s watching &
-   the importer, with no network; it needs its own issue once this flow is approved.
 
 ## Voice
 
@@ -169,6 +180,16 @@ When UI & copy resume, write like a chill, non-judgmental friend helping with a 
 
 ## Decisions so far
 
+- The app detects what it can and asks only the rest; the flowchart marks which is which.
+- Every path is available on first run & any time later from Data.
+- A relay defaults to its dashboard, with a read-only guide behind it and a toast on check-off
+  attempts; the guide gets removed if real use shows it isn’t useful.
+- One phone per relay. Several trackers wouldn’t sync with each other, and supporting that would be
+  a major revision of the protocol.
+- The self-updating tracker gets its own issue (#252), as new scope for #123.
+- Steam Deck is unresearched; the PC/phone override covers it until #130 looks at its browsers.
+- On iPhone, moving from a browser to the installed app goes through backup export & restore,
+  offered before installing and on the app’s first launch.
 - The PC confirms whoever scans the code, so a leaked code can’t silently redirect sync. See
   [the decision record](decisions/2026-10-27-sync-pairing-confirm.md).
 - The pairing code starts covered; showing it is deliberate.
