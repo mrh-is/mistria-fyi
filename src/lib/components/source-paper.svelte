@@ -22,6 +22,13 @@
     sources: Source[];
     sourceSegments: SourceSegment[][];
   } = $props();
+
+  // Most rows are never opened. Keep their source cards out of the initial render, but retain
+  // a visited card so the closing animation & subsequent opens reuse the same content.
+  let hasExpanded = $state(false);
+  $effect.pre(() => {
+    if (expanded) hasExpanded = true;
+  });
 </script>
 
 <div class="source-paper" class:source-paper--open={expanded} data-source-paper>
@@ -36,7 +43,9 @@
   >
     <div class="source-paper__clip">
       <div class="source-paper__content">
-        <SourceCard {sources} {sourceSegments} {sourceBadges} />
+        {#if expanded || hasExpanded}
+          <SourceCard {sources} {sourceSegments} {sourceBadges} />
+        {/if}
       </div>
     </div>
   </div>

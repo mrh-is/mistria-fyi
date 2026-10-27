@@ -94,9 +94,14 @@ function dequeue(list: PendingList): void {
 /**
  * Renders a long list's rows progressively: an initial screenful at once, then the rest over
  * animation frames within a shared time budget, without the player doing anything. Every row ends
- * up rendered, so find-in-page keeps working. Call during component initialisation.
+ * up rendered, so find-in-page keeps working. Call during component initialisation. An optional
+ * identity starts a fresh reveal when the displayed collection changes, even at the same length.
  */
-export function createRowReveal(getTotal: () => number): RowReveal {
+export function createRowReveal(
+  getTotal: () => number,
+  getIdentity: () => unknown = () => undefined,
+): RowReveal {
+  let identity = untrack(getIdentity);
   let revealed = $state(claimInitialRows(untrack(getTotal)));
   let rowHeight = $state<number | undefined>(undefined);
   let count = $derived(Math.min(getTotal(), revealed));
@@ -112,7 +117,12 @@ export function createRowReveal(getTotal: () => number): RowReveal {
   // Before the list renders, so a change in its length is settled in the same update.
   $effect.pre(() => {
     const total = getTotal();
+    const nextIdentity = getIdentity();
     untrack(() => {
+      if (!Object.is(identity, nextIdentity)) {
+        identity = nextIdentity;
+        revealed = claimInitialRows(total);
+      }
       // A narrowed list keeps some headroom, so a row coming back (an undo) renders in place; a
       // list that grows past it renders what the shared budget allows now & the rest over frames.
       if (revealed > total + RESTORE_SLACK) revealed = total + RESTORE_SLACK;

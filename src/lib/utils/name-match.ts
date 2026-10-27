@@ -13,6 +13,10 @@ const KATAKANA_TO_HIRAGANA_OFFSET = 0x60;
  * costs a glance, while one that misses a name hides it.
  */
 export function foldName(text: string, locale: LocaleCode): string {
+  // Printable ASCII needs no normalization, mark removal, or kana conversion. All supported locales use
+  // the same ASCII case mapping, so avoid the Unicode pipeline for these common names & queries.
+  if (/^[\u0020-\u007E]*$/.test(text)) return text.toLowerCase();
+
   return text
     .normalize("NFKC")
     .toLocaleLowerCase(locale)
