@@ -769,6 +769,10 @@
     background: color-mix(in srgb, var(--primary) 48%, var(--color-paper-sunken));
   }
 
+  .feedback-form__send:only-child {
+    grid-column: 1 / -1;
+  }
+
   .feedback-form__send:is(:hover, :focus-visible) {
     background: color-mix(in srgb, var(--primary) 64%, var(--color-paper-sunken));
     outline: 2px solid var(--primary);
