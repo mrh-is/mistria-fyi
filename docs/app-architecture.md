@@ -482,17 +482,16 @@ so a permission or repository later added to the App never reaches these tokens.
 a settled token, never a pending exchange: a Worker's pending I/O belongs to the request that
 started it, so concurrent requests with no fresh cached token each run their own exchange. A `401`
 on the issue request drops the cached token only if it is the one GitHub rejected. The endpoint
-reads three settings, & uses the App only once all three exist:
+requires all three App settings:
 
 - `GITHUB_APP_ID`: the App ID (or client ID), the JWT issuer. Not secret.
 - `GITHUB_APP_INSTALLATION_ID`: the App's installation on this repository. Not secret.
 - `GITHUB_APP_PRIVATE_KEY`: the App's private key as a PKCS#8 PEM (`BEGIN PRIVATE KEY`). Secret,
   production only.
 
-Until then the endpoint falls back to the legacy fine-grained `GITHUB_FEEDBACK_TOKEN`, & with
-neither it returns `503` & logs only the missing variable names. A failed exchange returns the same
-`503` as a failed issue request & logs only GitHub's status & request ID, never the key, the JWT, or
-a token. App credentials that fail never fall back to the legacy token.
+Missing or blank App settings return `503` & log only the missing variable names. A failed exchange
+returns the same `503` as a failed issue request & logs only GitHub’s status & request ID, never the
+key, the JWT, or a token. Personal access tokens are no longer supported.
 
 `wrangler.toml` is the source of truth for the Pages project's configuration, so plain-text
 variables can't be set in the dashboard. Store all three settings as production **secrets**: the IDs
@@ -532,8 +531,8 @@ per-environment `wrangler.toml` block.
    `pnpm exec wrangler pages secret delete GITHUB_FEEDBACK_TOKEN --project-name mistria-fyi`. That
    command takes no environment flag, so confirm in the dashboard (**Settings → Variables and
    Secrets**) that `GITHUB_FEEDBACK_TOKEN` is gone from both **Production** & **Preview**, and
-   delete any copy that remains. A preview still holding it keeps filing issues with it until the
-   revocation, then returns `503` with a misleading “missing `GITHUB_APP_*`” log.
+   delete any copy that remains. The endpoint ignores this obsolete binding; previews without App
+   credentials return `503`.
 
 The App key doesn't expire, so there is no rotation schedule. To replace it, generate a second key,
 store it as above, redeploy, then delete the old key in the App's settings. If the key leaks, delete
