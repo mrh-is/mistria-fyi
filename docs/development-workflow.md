@@ -760,9 +760,10 @@ worktree alone.
 
 Before checking branches, it prunes unlocked worktree registrations whose directory no longer exists
 (such as Codex worktrees under a cleared `/tmp`), so their branches get the same checks as any
-other. A tip that GitHub has never received is unpushed work and stays, unless it is a conflict-free
-two-parent merge (typically `origin/main` merged into a PR head for a local check) whose parents
-both count as merged.
+other. If a stale registration's parent directory is also missing, as on an unmounted volume, it
+prunes nothing and says so; lock that worktree or prune by hand. A tip that GitHub has never
+received is unpushed work and stays, unless it is a conflict-free two-parent merge (typically
+`origin/main` merged into a PR head for a local check) whose parents both count as merged.
 
 It also keeps any worktree in use: one that a running process (an agent session or its shell) has as
 its working directory, or, with `--idle-minutes <n>`, one whose `HEAD` changed in the last `n`
