@@ -24,8 +24,15 @@ function browserName() {
     (entry) => !/chromium|not.a.brand/i.test(entry.brand),
   );
   if (brand) return `${brand.brand} ${brand.version}`;
-  const firefox = /Firefox\/(\d+)/.exec(navigator.userAgent);
-  if (firefox) return `Firefox ${firefox[1]}`;
+  for (const [name, pattern] of [
+    ["Firefox", /Firefox\/(\d+)/],
+    ["Edge", /Edg[A]?\/(\d+)/],
+    ["Chrome", /Chrome\/(\d+)/],
+    ["Safari", /Version\/(\d+).*Safari/],
+  ]) {
+    const match = pattern.exec(navigator.userAgent);
+    if (match) return `${name} ${match[1]}`;
+  }
   return "unknown browser";
 }
 
