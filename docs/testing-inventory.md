@@ -62,7 +62,7 @@ single-component row's marks disagree with its test files.
 | `quick-settings-theme-picker`    |        |            | Gap: theme selection and persistence                                              |
 | `feedback-panel`                 |        |     ✓      | Form, Turnstile, submit states                                                    |
 | `feedback-picker`                |        |     ✓      | Element picking                                                                   |
-| `search-results`                 |        |     ✓      | Toggle and undo across categories                                                 |
+| `search-results`                 |        |     ✓      | Toggle & undo across categories; progressive reveal, total, & query changes       |
 | `search-results-loading`         |        |     ✓      |                                                                                   |
 | `source-explainer-dialog`        |        | via parent | Open and dismiss through `filter-panel`                                           |
 | `tag-dialog`                     |        | via parent | Through `source-explainer-dialog` and `quick-settings-panel`                      |
@@ -73,7 +73,7 @@ single-component row's marks disagree with its test files.
 
 | Component                                 | Server | happy-dom  | Notes                                                     |
 | ----------------------------------------- | :----: | :--------: | --------------------------------------------------------- |
-| `tracker-row`                             |   ✓    |     ✓      | Spoiler, completion, source papers, focus, sprite preview |
+| `tracker-row`                             |   ✓    |     ✓      | Spoiler, completion, lazy sources, focus, sprite preview  |
 | `tracker-row-stack`                       |   ✓    |            | Layout only                                               |
 | `tracker-row-list`                        |   ✓    |     ✓      | Prerender, reveal over frames, reserve, busy, undo, empty |
 | `row-reveal` (controller)                 |        |     ✓      | Height estimate, shared frames, one frame chain           |

@@ -23,8 +23,6 @@ export interface SearchResult {
   sprite?: ItemId;
 }
 
-const MAX_RESULTS = 50;
-
 /**
  * One searchable entity. `localizedName` & `englishName` are the strings matched against the
  * query, so an English query still finds an entity while browsing another locale; `result` builds
@@ -87,7 +85,7 @@ export function searchAllCategories(
     }
   }
 
-  return rankResults(results, q, locale).slice(0, MAX_RESULTS);
+  return rankResults(results, q, locale);
 }
 
 /**

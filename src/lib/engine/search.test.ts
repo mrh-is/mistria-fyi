@@ -298,19 +298,28 @@ describe("result ranking", () => {
   });
 });
 
-// ─── Result cap ────────────────────────────────────────────────────
+// ─── Complete results ──────────────────────────────────────────────
 
-describe("result cap", () => {
-  it("returns at most 50 results", () => {
+describe("complete results", () => {
+  it("returns every matching row, including matches beyond the old cap", () => {
+    const expected = allResults().filter((result) =>
+      (result.fullName ?? result.name).toLowerCase().includes("a"),
+    );
     const results = search("a");
-    expect(results.length).toBeLessThanOrEqual(50);
+    expect(expected.length).toBeGreaterThan(50);
+    for (const result of expected) {
+      expect(results).toContainEqual(result);
+    }
+    expect(new Set(results.map((result) => `${result.category}:${result.id}`)).size).toBe(
+      results.length,
+    );
   });
 });
 
-// ─── Ranking before truncation ────────────────────────────────────
+// ─── Cross-category ranking ────────────────────────────────────
 
-describe("ranking before truncation", () => {
-  it("includes later-category prefix matches even when earlier categories fill the cap", () => {
+describe("cross-category ranking", () => {
+  it("includes later-category prefix matches for a broad query", () => {
     const results = searchAllCategories(
       "a",
       makeCompletedState(),
@@ -365,7 +374,7 @@ describe("ranking before truncation", () => {
     }
   });
 
-  it("collects candidates from all categories before truncating to cap", () => {
+  it("collects every category for a very broad query", () => {
     const results = searchAllCategories(
       "e",
       makeCompletedState(),
@@ -374,7 +383,7 @@ describe("ranking before truncation", () => {
       "en",
     );
 
-    expect(results.length).toBeLessThanOrEqual(50);
+    expect(results.length).toBeGreaterThan(50);
 
     const categories = new Set(results.map((r) => r.category));
     expect(
