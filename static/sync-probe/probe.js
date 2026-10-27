@@ -338,8 +338,11 @@ async function start() {
     log(
       `opened from scan link ${query.get("scan")}: fragment ${fragment}, referrer ${document.referrer || "none"}`,
     );
-    history.replaceState(null, "", location.pathname);
-    log("stripped the scan link from the address");
+    // The PC keeps the link in its address bar, so the browser's “Create QR code” includes it.
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      history.replaceState(null, "", location.pathname);
+      log("stripped the scan link from the address");
+    }
   } else {
     log("page opened");
   }
