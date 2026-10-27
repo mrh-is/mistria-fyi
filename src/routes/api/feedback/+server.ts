@@ -43,10 +43,6 @@ interface GitHubFailureDiagnostics {
   status: number;
 }
 
-type GitHubAuth =
-  | { credentials: GitHubAppCredentials; kind: "app" }
-  | { kind: "token"; token: string };
-
 const GITHUB_APP_VARIABLES = [
   "GITHUB_APP_ID",
   "GITHUB_APP_INSTALLATION_ID",
@@ -165,14 +161,12 @@ async function getGitHubFailureDiagnostics(response: Response): Promise<GitHubFa
 }
 
 /**
- * Exchanges App credentials for an installation token, or passes the fallback token through. Logs
- * only fixed messages, statuses, & request IDs: never key material, JWTs, or tokens.
+ * Exchanges App credentials for an installation token. Logs only fixed messages, statuses, & request
+ * IDs: never key material, JWTs, or tokens.
  */
-async function getGitHubToken(auth: GitHubAuth): Promise<string> {
-  if (auth.kind === "token") return auth.token;
-
+async function getGitHubToken(credentials: GitHubAppCredentials): Promise<string> {
   try {
-    return await installationTokens.getToken(auth.credentials);
+    return await installationTokens.getToken(credentials);
   } catch (error) {
     if (error instanceof GitHubAppAuthError) {
       if (error.diagnostics) {
@@ -189,32 +183,17 @@ async function getGitHubToken(auth: GitHubAuth): Promise<string> {
   }
 }
 
-/**
- * Prefers the GitHub App once all three of its settings exist, then the legacy fine-grained token,
- * which keeps production filing issues until the App is configured (#114).
- */
-function resolveGitHubAuth(): GitHubAuth {
+/** Requires all three GitHub App settings; logs only missing variable names. */
+function resolveGitHubCredentials(): GitHubAppCredentials {
   const appId = env.GITHUB_APP_ID?.trim();
   const installationId = env.GITHUB_APP_INSTALLATION_ID?.trim();
   const privateKeyPem = env.GITHUB_APP_PRIVATE_KEY?.trim();
   if (appId && installationId && privateKeyPem) {
-    return { credentials: { appId, installationId, privateKeyPem }, kind: "app" };
+    return { appId, installationId, privateKeyPem };
   }
 
   const missingAppVariables = GITHUB_APP_VARIABLES.filter((name) => !env[name]?.trim());
-  const token = env.GITHUB_FEEDBACK_TOKEN;
-  if (token) {
-    if (missingAppVariables.length < GITHUB_APP_VARIABLES.length) {
-      console.warn(
-        `GitHub App is partly configured (missing ${missingAppVariables.join(", ")}); using GITHUB_FEEDBACK_TOKEN`,
-      );
-    }
-    return { kind: "token", token };
-  }
-
-  console.error(
-    `GitHub credentials are not configured: missing ${[...missingAppVariables, "GITHUB_FEEDBACK_TOKEN"].join(", ")}`,
-  );
+  console.error(`GitHub credentials are not configured: missing ${missingAppVariables.join(", ")}`);
   httpError(503, "Feedback service temporarily unavailable");
 }
 
@@ -456,8 +435,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
   }
   await verifyTurnstile(turnstileToken, turnstileSecret);
 
-  const auth = resolveGitHubAuth();
-  const token = await getGitHubToken(auth);
+  const token = await getGitHubToken(resolveGitHubCredentials());
 
   const title = deriveTitle(payload);
   const body = buildIssueBody(payload);
@@ -488,7 +466,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
     });
 
     if (!response.ok) {
-      if (auth.kind === "app" && response.status === 401) {
+      if (response.status === 401) {
         // GitHub no longer accepts this installation token, so the next request fetches one, unless
         // another request has already cached a newer token.
         installationTokens.clear(token);
