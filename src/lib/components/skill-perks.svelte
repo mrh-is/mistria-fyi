@@ -71,9 +71,9 @@
 
   function togglePerk(perk: (typeof perks)[number]): void {
     const toggle = (): void => {
-      const wasDone = isCategoryComplete("skills", userState.state);
+      const wasDone = isCategoryComplete("skills", userState.progressContext);
       userState.togglePerk(perk.id);
-      if (!wasDone && isCategoryComplete("skills", userState.state)) celebrateCategory();
+      if (!wasDone && isCategoryComplete("skills", userState.progressContext)) celebrateCategory();
     };
     if (perk.spoilered) spoilerGuard.requestGuardedAction(perk.tier.condition, toggle);
     else toggle();

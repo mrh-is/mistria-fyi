@@ -8,7 +8,7 @@ import "#scripts/lib/require-pinned-node";
 
 import { spawnSync } from "node:child_process";
 import { existsSync, realpathSync, rmSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { isInside } from "#scripts/lib/paths";
@@ -24,6 +24,10 @@ Without --apply, the script only reports what it would remove. It never removes 
 open pull request, branches with local commits after the merged pull request, dirty worktrees, or
 worktrees that Git refuses to remove. The invoking and primary worktrees are always preserved.
 If refreshing the default branch fails, only GitHub PR evidence is used.
+
+Unlocked registrations whose worktree directory no longer exists are pruned first, so their
+branches get the same checks as any other. A detached or branch tip that is a conflict-free merge
+of two commits counts as merged when both of its parents do.
 
 A worktree is in use when a running process's working directory is inside it (via lsof), or
 on Windows when an executable or command-line path references it, or, with --idle-minutes,
@@ -41,6 +45,8 @@ export interface CommandResult {
   stderr: string;
   stdout: string;
 }
+
+const failed: CommandResult = { ok: false, stderr: "", stdout: "" };
 
 /** Side effects, injectable for tests. */
 export interface CleanupIo {
@@ -63,6 +69,7 @@ interface WorktreeEntry {
   head?: string;
   locked?: string;
   path: string;
+  prunable?: boolean;
 }
 
 interface AssociatedPr {
@@ -75,7 +82,8 @@ type MergedPrLookup =
   | { kind: "failed" }
   | { kind: "merged"; number: string }
   | { kind: "none" }
-  | { kind: "protected" };
+  | { kind: "protected" }
+  | { kind: "unpushed" };
 
 const ASSOCIATED_PRS_JQ =
   '.[] | [.number, (if .merged_at != null then "merged" else .state end), .head.ref] | @tsv';
@@ -120,9 +128,16 @@ export function parseWorktrees(porcelain: string): WorktreeEntry[] {
       entry.detached = true;
     } else if (line.startsWith("locked")) {
       entry.locked = line;
+    } else if (line.startsWith("prunable")) {
+      entry.prunable = true;
     }
   }
   return entries;
+}
+
+/** An unlocked registration whose directory is gone, which `git worktree prune` removes. */
+function isStale(entry: WorktreeEntry): boolean {
+  return entry.prunable === true && !entry.locked;
 }
 
 function parseAssociatedPrs(output: string): AssociatedPr[] {
@@ -151,7 +166,13 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
   const currentBranch = text(["branch", "--show-current"]);
   const defaultRef = io.git(["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]);
   const defaultBranch = defaultRef.ok ? defaultRef.stdout.trim().replace(/^origin\//u, "") : "";
-  const listWorktrees = () => parseWorktrees(io.git(["worktree", "list", "--porcelain"]).stdout);
+  // A preview treats stale registrations as already pruned, so it reports what --apply would do.
+  // After a real prune, the listing itself shows whatever Git kept.
+  let previewHidesStale = false;
+  const listWorktrees = () =>
+    parseWorktrees(io.git(["worktree", "list", "--porcelain"]).stdout).filter(
+      (entry) => !previewHidesStale || !isStale(entry),
+    );
   const primaryWorktree = listWorktrees()[0]?.path;
   let ancestryAvailable = false;
   if (defaultBranch) {
@@ -162,6 +183,35 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
       io.logError(
         `Warning: could not refresh origin/${defaultBranch}; using only confirmed PR evidence.`,
       );
+    }
+  }
+
+  // Git prunes every unlocked registration whose directory is gone; branches stay for the checks
+  // below. A missing parent directory suggests an unmounted volume whose worktree may still hold
+  // uncommitted work, and prune can't spare one entry, so such an entry blocks pruning entirely.
+  const stale = listWorktrees().filter((entry) => isStale(entry));
+  const unreachable = stale.filter((entry) => io.realpath(dirname(entry.path)) === undefined);
+  if (unreachable.length > 0) {
+    for (const entry of unreachable) {
+      io.logError(
+        `Not pruning worktree registrations: ${entry.path}'s parent directory is missing, so it ` +
+          "may be on an unmounted volume. Lock it with `git worktree lock`, or prune by hand.",
+      );
+    }
+  } else if (stale.length > 0 && !options.apply) {
+    for (const entry of stale) {
+      io.log(`Would prune worktree registration ${entry.path}: its directory is gone.`);
+    }
+    previewHidesStale = true;
+  } else if (stale.length > 0) {
+    if (!io.git(["worktree", "prune"]).ok) {
+      io.logError("Warning: git worktree prune failed; stale registrations remain.");
+    }
+    const remaining = new Set(listWorktrees().map((entry) => entry.path));
+    for (const entry of stale) {
+      if (!remaining.has(entry.path)) {
+        io.log(`Pruned worktree registration ${entry.path}: its directory was gone.`);
+      }
     }
   }
 
@@ -234,7 +284,8 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
     ancestryAvailable &&
     io.git(["merge-base", "--is-ancestor", commit, `refs/remotes/origin/${defaultBranch}`]).ok;
 
-  const associatedPrs = (commit: string): AssociatedPr[] | undefined => {
+  /** PRs associated with `commit`, `"unpushed"` if GitHub lacks it, or `undefined` on failure. */
+  const associatedPrs = (commit: string): "unpushed" | AssociatedPr[] | undefined => {
     const result = io.gh([
       "api",
       `repos/{owner}/{repo}/commits/${commit}/pulls`,
@@ -242,7 +293,11 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
       "--jq",
       ASSOCIATED_PRS_JQ,
     ]);
-    return result.ok ? parseAssociatedPrs(result.stdout) : undefined;
+    if (result.ok) {
+      return parseAssociatedPrs(result.stdout);
+    }
+    // GitHub answers HTTP 422 for a commit it has never received.
+    return /No commit found/u.test(result.stderr + result.stdout) ? "unpushed" : undefined;
   };
 
   /** The open PR number for a head branch, `""` for none, or `undefined` if GitHub failed. */
@@ -269,6 +324,9 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
     if (!prs) {
       io.logError(`Skipping ${label}: GitHub could not confirm its open pull requests.`);
       return false;
+    }
+    if (prs === "unpushed") {
+      return true;
     }
     for (const pr of prs) {
       if (pr.state === "open") {
@@ -301,6 +359,9 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
     const prs = associatedPrs(commit);
     if (!prs) {
       return { kind: "failed" };
+    }
+    if (prs === "unpushed") {
+      return { kind: "unpushed" };
     }
     const open = prs.find((pr) => pr.state === "open");
     if (open) {
@@ -378,7 +439,34 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
         return undefined;
       case "protected":
         return undefined;
+      case "unpushed":
+        return mergeOfMergedParents(commit, label);
     }
+  };
+
+  /**
+   * Accepts a local merge (often of the default branch into a PR head) when Git can recreate its
+   * tree without conflicts, so it adds nothing beyond its parents, and both parents count as merged.
+   */
+  const mergeOfMergedParents = (commit: string, label: string): string | undefined => {
+    const parents = text(["rev-list", "--parents", "--max-count=1", commit]).split(" ").slice(1);
+    const [first, second] = parents;
+    const recreated =
+      first && second ? io.git(["merge-tree", "--write-tree", first, second]) : failed;
+    const tree = text(["rev-parse", `${commit}^{tree}`]);
+    if (parents.length !== 2 || !recreated.ok || recreated.stdout.split(/\r?\n/u)[0] !== tree) {
+      io.log(`Keeping ${label}: its current commit isn't on GitHub, so it holds unpushed work.`);
+      return undefined;
+    }
+    const reasons: string[] = [];
+    for (const parent of parents) {
+      const reason = mergedReason(parent, label);
+      if (!reason) {
+        return undefined;
+      }
+      reasons.push(reason);
+    }
+    return `conflict-free merge of parents ${reasons.join(" & ")}`;
   };
 
   /** Removes a worktree, then deletes the links Git for Windows leaves behind. */

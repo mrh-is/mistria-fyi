@@ -19,6 +19,11 @@ const cloudflarePlatform = vi.hoisted(() => {
   return platform;
 });
 
+/** The build-time deployment flag; tests run as production unless they opt into a preview build. */
+const deployment = vi.hoisted(() => ({ isProductionDeployment: true }));
+
+vi.mock("#lib/server/deployment.js", () => deployment);
+
 function makeRequest(
   body: unknown,
   { origin = "https://mistria.fyi" }: { origin?: string } = {},
@@ -90,6 +95,7 @@ beforeAll(async () => {
 beforeEach(() => {
   // The installation token cache is isolate-wide, so one test's token must not leak into the next.
   installationTokens.clear();
+  deployment.isProductionDeployment = true;
 });
 
 /** Every argument passed to the spied console methods, flattened for secret scanning. */
@@ -790,6 +796,113 @@ describe("POST /api/feedback GitHub credentials", () => {
     ).rejects.toMatchObject({ status: 503 });
     expect(consoleError).toHaveBeenCalledWith("GitHub App token exchange request failed");
     expectNoSecrets(consoleOutput(consoleError));
+  });
+});
+
+describe("POST /api/feedback on a preview build", () => {
+  beforeEach(() => {
+    deployment.isProductionDeployment = false;
+  });
+
+  it("verifies Turnstile, then returns a dry run without filing an issue or storing the email", async () => {
+    const consoleInfo = vi.spyOn(console, "info").mockReturnValue(undefined);
+    const fetchMock = routingFetchMock();
+    const platform = mockPlatform();
+    const response = await callPost(makeRequest({ ...validPayload, email: "user@example.com" }), {
+      fetchMock,
+      platform,
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ dryRun: true });
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://mistria.fyi");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("turnstile");
+    expect(platform.env.FEEDBACK_EMAIL_STORE?.put).not.toHaveBeenCalled();
+    expect(consoleInfo).toHaveBeenCalledWith("Feedback dry run: no issue filed");
+    expect(consoleOutput(consoleInfo)).not.toContain("user@example.com");
+  });
+
+  it("skips Turnstile verification when the preview has no secret", async () => {
+    vi.spyOn(console, "info").mockReturnValue(undefined);
+    const fetchMock = routingFetchMock();
+    const response = await callPost(makeRequest(validPayload), {
+      fetchMock,
+      platform: mockPlatform({
+        env: {
+          GITHUB_APP_ID: undefined,
+          GITHUB_APP_INSTALLATION_ID: undefined,
+          GITHUB_APP_PRIVATE_KEY: undefined,
+        },
+        turnstileSecretMissing: true,
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ dryRun: true });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("still rejects a failed Turnstile check", async () => {
+    const fetchMock = routingFetchMock({ turnstile: turnstileFailureResponse() });
+
+    await expect(
+      callPost(makeRequest(validPayload), { fetchMock, platform: mockPlatform() }),
+    ).rejects.toMatchObject({ status: 403 });
+    expect(countCalls(fetchMock, (url) => new URL(url).host === "api.github.com")).toBe(0);
+  });
+
+  it("still validates the payload & Turnstile token", async () => {
+    const fetchMock = routingFetchMock();
+
+    await expect(
+      callPost(makeRequest({ ...validPayload, message: "" }), { fetchMock }),
+    ).rejects.toMatchObject({ status: 400 });
+    await expect(
+      callPost(makeRequest({ ...validPayload, turnstileToken: "" }), { fetchMock }),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("still rejects cross-origin requests", async () => {
+    await expect(
+      callPost(makeRequest(validPayload, { origin: "https://evil.com" }), {
+        fetchMock: routingFetchMock(),
+      }),
+    ).rejects.toMatchObject({ status: 403 });
+  });
+});
+
+describe("POST /api/feedback on a production build", () => {
+  it("files the issue even when the request asks for a dry run or comes from a preview host", async () => {
+    const fetchMock = routingFetchMock();
+    const request = new Request("https://preview.mistria-fyi.pages.dev/api/feedback", {
+      body: JSON.stringify({ ...validPayload, dryRun: true }),
+      headers: {
+        "CF-Pages-Branch": "preview",
+        "Content-Type": "application/json",
+        Origin: "https://preview.mistria-fyi.pages.dev",
+        "X-Dry-Run": "1",
+      },
+      method: "POST",
+    });
+    cloudflarePlatform.env = mockPlatform().env;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = fetchMock as typeof globalThis.fetch;
+
+    let response: Response;
+    try {
+      response = await handlePost({
+        request,
+        url: new URL(request.url),
+      } as Parameters<typeof handlePost>[0]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ issueUrl: "PR 99 (private beta)" });
+    expect(countCalls(fetchMock, isIssue)).toBe(1);
   });
 });
 

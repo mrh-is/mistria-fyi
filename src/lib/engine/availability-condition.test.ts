@@ -104,6 +104,29 @@ describe("evaluateAvailabilityCondition", () => {
     expect(evaluateAvailabilityCondition(window, {})).toBe("unknown");
   });
 
+  it("evaluates reached-season, upper-floor, & dating gates from supplied progress", () => {
+    const reachedSummer: AvailabilityCondition = { type: "reachedSeason", season: "summer" };
+    expect(evaluateAvailabilityCondition(reachedSummer, {})).toBe("unknown");
+    expect(evaluateAvailabilityCondition(reachedSummer, { reachedSeason: "spring" })).toBe(false);
+    expect(evaluateAvailabilityCondition(reachedSummer, { reachedSeason: "summer" })).toBe(true);
+    expect(evaluateAvailabilityCondition(reachedSummer, { reachedSeason: "winter" })).toBe(true);
+
+    for (const type of ["hasUpperFloor", "isDating"] as const) {
+      expect(evaluateAvailabilityCondition({ type }, {})).toBe("unknown");
+      expect(evaluateAvailabilityCondition({ type }, { [type]: false })).toBe(false);
+      expect(evaluateAvailabilityCondition({ type }, { [type]: true })).toBe(true);
+    }
+  });
+
+  it("treats an unavailable quest as an unmet quest gate", () => {
+    expect(
+      evaluateAvailabilityCondition(
+        { type: "quest", questId: "main_quest" as QuestId, state: "completed" },
+        { questStates: new Map([["main_quest" as QuestId, "unavailable"]]) },
+      ),
+    ).toBe(false);
+  });
+
   it("returns unknown when a supplied quest-state map lacks the quest", () => {
     expect(
       evaluateAvailabilityCondition(

@@ -58,7 +58,9 @@ setup itself, require agents to stop & report them; see “Tooling failures” i
 6. **Dependencies**: `pnpm install --frozen-lockfile`, or `node scripts/setup-worktree.ts` inside a
    worktree. Every other `pnpm run` or `pnpm exec` command fails with
    `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN` until dependencies match the lockfile, rather than installing
-   them implicitly.
+   them implicitly. The install also links the pinned Node at `node_modules/.bin/node`, which the
+   committed VS Code settings point the Vitest extension at; Windows needs a local override (see
+   [test file placement](development-workflow.md#test-file-placement)).
 7. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
    `gpg.ssh.program = ssh-keygen`, per [git identity](agent-workflow.md#git-identity). The doctor
    lists this as a todo, never a failure, because cloud sandboxes legitimately skip it. If

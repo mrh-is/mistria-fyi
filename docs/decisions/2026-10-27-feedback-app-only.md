@@ -12,10 +12,13 @@ unverified.
 
 ## Decision
 
-The feedback endpoint requires all three GitHub App settings. Missing or blank settings return
-`503`, with only the missing variable names logged. Remove the legacy token binding from the runtime
+Production feedback requires all three GitHub App settings. Missing or blank settings return `503`,
+with only the missing variable names logged. Remove the legacy token binding from the runtime
 contract & environment example; retain the App token cache, rejection invalidation, & safe error
 handling.
+
+Preview builds retain the [dry-run behavior](2026-10-27-feedback-preview-dry-run.md) added on main:
+they do not require App settings, file GitHub issues, or persist contact emails.
 
 ## Alternatives
 

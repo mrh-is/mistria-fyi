@@ -27,6 +27,7 @@ function progressContext(): ProgressContext {
   return {
     availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
     progress: makeCompletedState(),
+    progressionState: deriveProgressionState(makeCompletedState(), trackerData, false),
     worldState,
   };
 }

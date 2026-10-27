@@ -81,7 +81,7 @@
   }
 
   function isAllComplete(): boolean {
-    return isCategoryComplete("recipes", userState.state);
+    return isCategoryComplete("recipes", userState.progressContext);
   }
 
   function matchesFilter(entry: RecipeEntry): boolean {

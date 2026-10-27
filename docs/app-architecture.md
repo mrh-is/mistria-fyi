@@ -111,9 +111,10 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
     never brings one in; a progress reset keeps it and a full reset clears it. Provenance & resolved
     diffs live in `progress`, so they travel with backups.
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
-  `now`, `anytime`, & `later`, and `showSpoilers`). These are per-device conveniences: they're never
-  exported, so restoring a backup or resetting progress keeps them, and a missing or invalid field
-  falls back to its default rather than blocking anything.
+  `now`, `anytime`, & `later`, and `showSpoilers`). The UI labels `anytime` “Whenever”; the stored
+  value keeps its original name. These are per-device conveniences: they're never exported, so
+  restoring a backup or resetting progress keeps them, and a missing or invalid field falls back to
+  its default rather than blocking anything.
 
 `src/lib/stores/progress-storage.ts` owns the blob. Storage hydration & backup restore both read it
 the same way: parse it, dispatch on `version`, run the numbered `MIGRATIONS` that bring it up to
@@ -340,6 +341,14 @@ Progress calculation and UI row visibility are separate concerns.
   regardless of display filters; `src/lib/engine/progress.ts` holds its types & level rules.
 - **Visibility** is controlled by `availabilityWindows` (`now`, `anytime`, `later`),
   `showCompleted`, and `showSpoilers` at the component level.
+- **Row windows** answer “what can I act on today?”. `classifyItemAvailability` in
+  `engine/availability.ts` puts each incomplete row in one window: “Later” while the row or a source
+  is a spoiler, a progress gate the app records is unmet, or the source is out of season or weather;
+  “Now” when a season or weather restriction holds today; “Whenever” (`anytime`) otherwise. A row
+  takes its best source. Unevaluable gates count as met, & time of day is never filtered on. Every
+  projection reads the rule through `ProgressContext`, which carries the player's
+  `progressionState`, so counts, dimming, & the filter agree. See the
+  [decision record](decisions/2026-10-27-row-windows.md).
 - Hidden completed rows still contribute to progress totals. This ensures the overall percentage
   remains accurate even when the user filters out completed content.
 - **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the
@@ -489,14 +498,24 @@ requires all three App settings:
 - `GITHUB_APP_PRIVATE_KEY`: the App's private key as a PKCS#8 PEM (`BEGIN PRIVATE KEY`). Secret,
   production only.
 
-Missing or blank App settings return `503` & log only the missing variable names. A failed exchange
-returns the same `503` as a failed issue request & logs only GitHub’s status & request ID, never the
-key, the JWT, or a token. Personal access tokens are no longer supported.
+In production, missing or blank App settings return `503` & log only the missing variable names. A
+failed exchange returns the same `503` as a failed issue request & logs only GitHub’s status &
+request ID, never the key, the JWT, or a token. Personal access tokens are no longer supported.
 
 `wrangler.toml` is the source of truth for the Pages project's configuration, so plain-text
 variables can't be set in the dashboard. Store all three settings as production **secrets**: the IDs
 aren't sensitive, but a secret keeps them production-only without restating the KV binding in a
 per-environment `wrangler.toml` block.
+
+Only production files issues. `vite.config.ts` sets `isProductionDeployment`
+(`src/lib/server/deployment.ts`) at build time, true only when Cloudflare Pages builds `main`
+(`CF_PAGES_BRANCH`). Every other build (branch previews, local builds, dev, & tests) runs feedback
+as a dry run. It applies the same origin, payload, & Turnstile token checks, verifies Turnstile only
+when `TURNSTILE_SECRET_KEY` is set, then returns `{ dryRun: true }` without reading the App
+settings, calling GitHub, or storing the email. The panel says nothing was filed. No request header,
+host, or body field can switch production into a dry run. If the Pages production branch is ever
+renamed, update `vite.config.ts` in the same change, or production feedback silently becomes a dry
+run. See the [decision record](decisions/2026-10-27-feedback-preview-dry-run.md).
 
 ### Setting up the App (maintainer)
 
@@ -531,8 +550,8 @@ per-environment `wrangler.toml` block.
    `pnpm exec wrangler pages secret delete GITHUB_FEEDBACK_TOKEN --project-name mistria-fyi`. That
    command takes no environment flag, so confirm in the dashboard (**Settings → Variables and
    Secrets**) that `GITHUB_FEEDBACK_TOKEN` is gone from both **Production** & **Preview**, and
-   delete any copy that remains. The endpoint ignores this obsolete binding; previews without App
-   credentials return `503`.
+   delete any copy that remains. The endpoint ignores this obsolete binding; preview builds run
+   feedback as a dry run without App credentials.
 
 The App key doesn't expire, so there is no rotation schedule. To replace it, generate a second key,
 store it as above, redeploy, then delete the old key in the App's settings. If the key leaks, delete
