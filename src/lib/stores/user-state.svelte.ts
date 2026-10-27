@@ -40,6 +40,7 @@ import {
   QUARANTINE_STORAGE_KEY,
 } from "./storage-keys.js";
 
+import type { ProgressContext } from "#lib/engine/progress.js";
 import type {
   FactProvenance,
   ProgressHistory,
@@ -580,6 +581,12 @@ function createUserState() {
   const progressionState = $derived(
     deriveProgressionState(state.progress, trackerData, state.showSpoilers),
   );
+  const progressContext: ProgressContext = $derived({
+    availabilityWindows: state.availabilityWindows,
+    progress: state.progress,
+    progressionState,
+    worldState: state.worldState,
+  });
 
   // Auto-save to localStorage (debounced)
   if ("window" in globalThis) {
@@ -793,6 +800,10 @@ function createUserState() {
     },
     get persistenceFailureKind(): PersistenceFailureKind {
       return _persistenceFailureKind;
+    },
+    /** What category projections read, so every page counts, dims, & filters rows alike. */
+    get progressContext(): ProgressContext {
+      return progressContext;
     },
     get progressionState(): UserProgressionState {
       return progressionState;

@@ -1,51 +1,79 @@
-import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
-
 import {
   evaluateAvailabilityCondition,
   extractDisplayBadges,
   hasSelectiveSeasonCondition,
 } from "./availability-condition.js";
+import { isConditionVisible } from "./visibility.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { ItemId, Season, Weather } from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
-import type { DisplayBadges } from "./availability-condition.js";
+import type { AvailabilityContext, DisplayBadges } from "./availability-condition.js";
+import type { UserProgressionState } from "./visibility.js";
 
-interface WorldState {
-  season: Season;
-  weather: Weather;
+/** What a row's window depends on: today's season & weather, & the player's recorded progress. */
+export interface RowWindowContext {
+  progressionState: UserProgressionState;
+  worldState: { season: Season; weather: Weather };
 }
 
-/** Assign an item to exactly one independently selectable availability window. */
-export function classifyItemAvailability(
-  sources: Source[],
-  worldState: WorldState,
-): AvailabilityWindow {
-  if (sources.length === 0) return "anytime";
+/** A row whose window is decided by its sources & its own spoiler gate. */
+export interface WindowedRow {
+  sources: readonly Source[];
+  visibility?: VisibilityCondition;
+}
 
-  const sourceWindows = new Set(
-    sources.map((source) => classifySourceAvailability(source, worldState)),
-  );
-  if (sourceWindows.has("anytime")) return "anytime";
-  if (sourceWindows.has("now")) return "now";
-  return "later";
+/**
+ * Assign a row to exactly one independently selectable availability window, answering "what can I
+ * act on today?". A spoiler-hidden row is "later"; otherwise the row takes the best window among
+ * its sources: "now", then "anytime" (shown as “Whenever”), then "later". A row without sources is
+ * "anytime".
+ */
+export function classifyItemAvailability(
+  row: WindowedRow,
+  ctx: RowWindowContext,
+): AvailabilityWindow {
+  if (!isConditionVisible(row.visibility, ctx.progressionState)) return "later";
+  if (row.sources.length === 0) return "anytime";
+
+  let best: AvailabilityWindow = "later";
+  for (const source of row.sources) {
+    const window = classifySourceAvailability(source, ctx);
+    if (window === "now") return "now";
+    if (window === "anytime") best = "anytime";
+  }
+  return best;
+}
+
+/**
+ * One source's window. It is "later" while the source is a spoiler, while a progress gate the app
+ * records is unmet, or out of the current season or weather. Otherwise it is "now" when a season
+ * or weather restriction holds today, & "anytime" when nothing restricts it. Gates the app can't
+ * evaluate (game predicates, date unlocks) count as met, & time of day is never filtered on.
+ */
+export function classifySourceAvailability(
+  source: Source,
+  ctx: RowWindowContext,
+): AvailabilityWindow {
+  if (!isConditionVisible(getSourceVisibility(source), ctx.progressionState)) return "later";
+
+  const condition = getAvailabilityCondition(source);
+  if (!condition) return "anytime";
+
+  // Once ignored leaves read as met, only today's season & weather can leave the result unknown.
+  const availability = assumeIgnoredLeavesMet(condition, false);
+  const progress = progressContext(ctx.progressionState);
+  if (evaluateAvailabilityCondition(availability, { ...progress, ...ctx.worldState }) === false) {
+    return "later";
+  }
+  // Met whatever today's season & weather, such as a gate that only offers an alternative to one.
+  if (evaluateAvailabilityCondition(availability, progress) === true) return "anytime";
+  return hasWindowRestriction(availability) ? "now" : "anytime";
 }
 
 // ─── Source-level availability ──────────────────────────────────────
-
-/**
- * Filter a list of item IDs to only those passing availability check.
- */
-export function filterAvailableItems(
-  itemIds: ItemId[],
-  sourceLookup: (id: ItemId) => Source[],
-  worldState: WorldState,
-  windows: readonly AvailabilityWindow[],
-): ItemId[] {
-  if (AVAILABILITY_WINDOWS.every((window) => windows.includes(window))) return itemIds;
-  return itemIds.filter((id) => isItemAvailable(sourceLookup(id), worldState, windows));
-}
 
 /**
  * Get a merged, deduplicated set of display badges from a list of sources.
@@ -66,32 +94,32 @@ export function getDisplayBadges(sources: Source[]): DisplayBadges {
 // ─── Item-level availability ────────────────────────────────────────
 
 /**
- * Check if an item is available: ANY source must pass (OR logic).
- * Items with no sources classify as "anytime", so they pass whenever "anytime" is selected.
+ * Whether a row's window is among the selected ones. Rows with no sources classify as "anytime",
+ * so they pass whenever "anytime" is selected.
  */
 export function isItemAvailable(
-  sources: Source[],
-  worldState: WorldState,
+  row: WindowedRow,
+  ctx: RowWindowContext,
   windows: readonly AvailabilityWindow[],
 ): boolean {
-  return windows.includes(classifyItemAvailability(sources, worldState));
+  return windows.includes(classifyItemAvailability(row, ctx));
 }
 
 // ─── Composite display helpers ───────────────────────────────────────
 
 /**
- * Whether an item row should be visually dimmed — incomplete but unavailable
- * in the current season/weather while "later" is selected alongside another window.
+ * Whether an item row should be visually dimmed: incomplete & "later" while "later" is selected
+ * alongside another window.
  */
 export function isItemDimmed(
-  sources: Source[],
+  row: WindowedRow,
   isCompleted: boolean,
-  worldState: WorldState,
+  ctx: RowWindowContext,
   windows: readonly AvailabilityWindow[],
 ): boolean {
   if (isCompleted) return false;
   if (!windows.includes("later") || !windows.some((window) => window !== "later")) return false;
-  return classifyItemAvailability(sources, worldState) === "later";
+  return classifyItemAvailability(row, ctx) === "later";
 }
 
 /**
@@ -110,40 +138,57 @@ export function isRowVisible<Id extends string = ItemId>(
 }
 
 /**
- * Check if a single source is available given world state and mode.
- */
-export function isSourceAvailable(
-  source: Source,
-  worldState: WorldState,
-  windows: readonly AvailabilityWindow[],
-): boolean {
-  return windows.includes(classifySourceAvailability(source, worldState));
-}
-
-/**
  * Whether an item falls within the scoped set used for progress counters.
  * Completed items are always in scope; incomplete items must pass availability.
  * Ignores showCompleted and recentlyCompleted — those affect rendering only.
  */
 export function isInProgressScope(
-  sources: Source[],
+  row: WindowedRow,
   isCompleted: boolean,
-  worldState: WorldState,
+  ctx: RowWindowContext,
   windows: readonly AvailabilityWindow[],
 ): boolean {
   if (isCompleted) return true;
-  return isItemAvailable(sources, worldState, windows);
+  return isItemAvailable(row, ctx, windows);
 }
 
-function classifySourceAvailability(source: Source, worldState: WorldState): AvailabilityWindow {
-  const availability = getAvailabilityCondition(source);
-  if (!availability || !hasWindowRestriction(availability)) return "anytime";
-
-  const result = evaluateAvailabilityCondition(availability, {
-    season: worldState.season,
-    weather: worldState.weather,
-  });
-  return result === false ? "later" : "now";
+/**
+ * Rewrites the leaves the row rule ignores (time of day, & gates the app can't evaluate) so they
+ * read as met: "always" where they appear plainly, & "never" under an odd number of negations.
+ */
+function assumeIgnoredLeavesMet(
+  condition: AvailabilityCondition,
+  negated: boolean,
+): AvailabilityCondition {
+  switch (condition.type) {
+    case "all":
+    case "any":
+      return {
+        type: condition.type,
+        conditions: condition.conditions.map((child) => assumeIgnoredLeavesMet(child, negated)) as [
+          AvailabilityCondition,
+          ...AvailabilityCondition[],
+        ],
+      };
+    case "dateUnlocked":
+    case "gamePredicate":
+    case "time":
+      return negated ? { type: "not", condition: { type: "always" } } : { type: "always" };
+    case "always":
+    case "hasUpperFloor":
+    case "heartLevel":
+    case "isDating":
+    case "mineFloor":
+    case "perkUnlocked":
+    case "quest":
+    case "reachedSeason":
+    case "season":
+    case "skillLevel":
+    case "weather":
+      return condition;
+    case "not":
+      return { type: "not", condition: assumeIgnoredLeavesMet(condition.condition, !negated) };
+  }
 }
 
 /**
@@ -154,6 +199,11 @@ function getAvailabilityCondition(source: Source): AvailabilityCondition | undef
   return "availability" in source ? source.availability : undefined;
 }
 
+function getSourceVisibility(source: Source): undefined | VisibilityCondition {
+  return "visibility" in source ? source.visibility : undefined;
+}
+
+/** Whether a season or weather restriction applies. Time of day is a badge, not a window. */
 function hasWindowRestriction(condition: AvailabilityCondition): boolean {
   switch (condition.type) {
     case "all":
@@ -170,13 +220,30 @@ function hasWindowRestriction(condition: AvailabilityCondition): boolean {
     case "quest":
     case "reachedSeason":
     case "skillLevel":
+    case "time":
       return false;
     case "not":
       return hasWindowRestriction(condition.condition);
     case "season":
       return hasSelectiveSeasonCondition(condition);
-    case "time":
     case "weather":
       return true;
   }
+}
+
+/**
+ * The progress facts the app records, as evaluator lookups. Unrecorded levels are zero & quests
+ * outside the player's reach are "unavailable", so neither reads as an unknown, met gate.
+ */
+function progressContext(state: UserProgressionState): AvailabilityContext {
+  return {
+    hasUpperFloor: state.hasUpperFloor,
+    heartLevels: { get: (villagerId) => state.heartLevels[villagerId] ?? 0 },
+    isDating: state.isDating,
+    mineFloor: state.mineFloor,
+    questStates: { get: (questId) => state.questVisibility[questId] },
+    reachedSeason: state.reachedSeason,
+    skillLevels: { get: (skillId) => state.skillLevels[skillId] ?? 0 },
+    unlockedPerks: state.unlockedPerks,
+  };
 }

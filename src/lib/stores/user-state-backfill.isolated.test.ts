@@ -198,6 +198,7 @@ describe("downstream consumers after backfill", () => {
       getAllProgress({
         availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
         progress: completed,
+        progressionState: deriveProgressionState(completed, trackerData, false),
         worldState: { season: "spring", weather: "calm" },
       }),
     ).not.toThrow();
