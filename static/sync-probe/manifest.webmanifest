@@ -1,0 +1,16 @@
+{
+  "id": "/sync-probe/",
+  "lang": "en",
+  "name": "Sync probe",
+  "short_name": "Sync probe",
+  "description": "Throwaway hardware probe for save-driven sync (#130)",
+  "start_url": "/sync-probe/",
+  "scope": "/sync-probe/",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#8a3b12",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
