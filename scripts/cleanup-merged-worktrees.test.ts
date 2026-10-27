@@ -44,6 +44,9 @@ interface FixtureOptions {
   openBranch?: boolean;
   openFailure?: boolean;
   prunable?: boolean;
+  /** `git worktree prune` succeeds but keeps the registration, as an expiry setting can. */
+  pruneKeeps?: boolean;
+  unmounted?: boolean;
   unpushed?: boolean;
 }
 
@@ -157,7 +160,7 @@ function fixture(options: FixtureOptions = {}) {
         return ok(listing);
       }
       case "worktree prune":
-        state.worktreeRemoved = !options.locked;
+        state.worktreeRemoved = !options.locked && !options.pruneKeeps;
         return ok();
       case "rev-list --parents --max-count=1 tip":
         return ok(options.merge ? "tip main-parent pr-parent\n" : "tip parent\n");
@@ -195,7 +198,8 @@ function fixture(options: FixtureOptions = {}) {
     git,
     modifiedWithin: () => true,
     processDirectories: () => (options.inUse ? [`${worktree}/src`] : []),
-    realpath: () => undefined,
+    // Only the worktree's parent resolves, unless the fixture's volume is unmounted.
+    realpath: (path) => (path === "/virtual" && !options.unmounted ? path : undefined),
     removeLeftovers: (path) => {
       state.leftoversRemoved = path;
     },
@@ -369,6 +373,17 @@ describe("stale worktree registrations", () => {
     expect(result.stdout).toContain("Removed branch worktree-agent-test (merged PR #42)");
     expect(state).toMatchObject({ branchRemoved: true, leftoversRemoved: "" });
   });
+
+  it.each([{ pruneKeeps: true }, { unmounted: true }])(
+    "keeps the branch when the registration survives: %j",
+    (options) => {
+      const { run, state } = fixture({ ...options, prunable: true });
+      const result = run(apply);
+      expect(result.stdout).not.toContain("Pruned");
+      expect(result.stdout + result.stderr).toContain("could not inspect its status");
+      expect(state.branchRemoved).toBe(false);
+    },
+  );
 
   it("leaves a locked stale registration alone", () => {
     const { run, state } = fixture({ locked: true, prunable: true });

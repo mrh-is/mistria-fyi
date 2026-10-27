@@ -8,7 +8,7 @@ import "#scripts/lib/require-pinned-node";
 
 import { spawnSync } from "node:child_process";
 import { existsSync, realpathSync, rmSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { isInside } from "#scripts/lib/paths";
@@ -167,10 +167,11 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
   const defaultRef = io.git(["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]);
   const defaultBranch = defaultRef.ok ? defaultRef.stdout.trim().replace(/^origin\//u, "") : "";
   // A preview treats stale registrations as already pruned, so it reports what --apply would do.
-  let staleHidden = false;
+  // After a real prune, the listing itself shows whatever Git kept.
+  let previewHidesStale = false;
   const listWorktrees = () =>
     parseWorktrees(io.git(["worktree", "list", "--porcelain"]).stdout).filter(
-      (entry) => !staleHidden || !isStale(entry),
+      (entry) => !previewHidesStale || !isStale(entry),
     );
   const primaryWorktree = listWorktrees()[0]?.path;
   let ancestryAvailable = false;
@@ -185,21 +186,32 @@ export function cleanup(options: CleanupOptions, io: CleanupIo): number {
     }
   }
 
-  // Git prunes only unlocked registrations whose directory is gone; branches stay for the checks below.
+  // Git prunes every unlocked registration whose directory is gone; branches stay for the checks
+  // below. A missing parent directory suggests an unmounted volume whose worktree may still hold
+  // uncommitted work, and prune can't spare one entry, so such an entry blocks pruning entirely.
   const stale = listWorktrees().filter((entry) => isStale(entry));
-  if (stale.length > 0) {
-    if (!options.apply) {
-      for (const entry of stale) {
-        io.log(`Would prune worktree registration ${entry.path}: its directory is gone.`);
-      }
-      staleHidden = true;
-    } else if (io.git(["worktree", "prune"]).ok) {
-      for (const entry of stale) {
+  const unreachable = stale.filter((entry) => io.realpath(dirname(entry.path)) === undefined);
+  if (unreachable.length > 0) {
+    for (const entry of unreachable) {
+      io.logError(
+        `Not pruning worktree registrations: ${entry.path}'s parent directory is missing, so it ` +
+          "may be on an unmounted volume. Lock it with `git worktree lock`, or prune by hand.",
+      );
+    }
+  } else if (stale.length > 0 && !options.apply) {
+    for (const entry of stale) {
+      io.log(`Would prune worktree registration ${entry.path}: its directory is gone.`);
+    }
+    previewHidesStale = true;
+  } else if (stale.length > 0) {
+    if (!io.git(["worktree", "prune"]).ok) {
+      io.logError("Warning: git worktree prune failed; stale registrations remain.");
+    }
+    const remaining = new Set(listWorktrees().map((entry) => entry.path));
+    for (const entry of stale) {
+      if (!remaining.has(entry.path)) {
         io.log(`Pruned worktree registration ${entry.path}: its directory was gone.`);
       }
-      staleHidden = true;
-    } else {
-      io.logError("Warning: git worktree prune failed; stale registrations remain.");
     }
   }
 
