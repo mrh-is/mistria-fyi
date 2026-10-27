@@ -37,14 +37,26 @@ interface FixtureOptions {
   inUse?: boolean;
   localCommit?: boolean;
   locked?: boolean;
+  /** The tip is an unpushed merge of `main-parent` (in main) & `pr-parent` (in merged PR #42). */
+  merge?: "clean" | "conflicted";
   open?: boolean;
   openAssociation?: boolean;
   openBranch?: boolean;
   openFailure?: boolean;
+  prunable?: boolean;
+  /** `git worktree prune` succeeds but keeps the registration, as an expiry setting can. */
+  pruneKeeps?: boolean;
+  unmounted?: boolean;
+  unpushed?: boolean;
 }
 
 const ok = (stdout = ""): CommandResult => ({ ok: true, stderr: "", stdout });
 const failed: CommandResult = { ok: false, stderr: "failed", stdout: "" };
+const unknownCommit: CommandResult = {
+  ok: false,
+  stderr: "gh: No commit found for SHA: tip (HTTP 422)",
+  stdout: "",
+};
 
 /** Answers `gh` the way GitHub would for the fixture's merged parent PR #42. */
 function fakeGh(options: FixtureOptions, mergedTip: string) {
@@ -64,6 +76,12 @@ function fakeGh(options: FixtureOptions, mergedTip: string) {
         return failed;
       }
       return ok(options.openBranch ? "43\n" : "");
+    }
+    if (
+      call.startsWith("api repos/{owner}/{repo}/commits/tip/") &&
+      (options.unpushed || options.merge)
+    ) {
+      return unknownCommit;
     }
     if (call.startsWith("api repos/{owner}/{repo}/commits/")) {
       if (options.failure) {
@@ -135,14 +153,33 @@ function fixture(options: FixtureOptions = {}) {
           listing += `worktree ${worktree}\nHEAD tip\n`;
           listing += options.detached ? "detached\n" : "branch refs/heads/worktree-agent-test\n";
           listing += options.locked ? "locked\n" : "";
+          listing += options.prunable
+            ? "prunable gitdir file points to non-existent location\n"
+            : "";
         }
         return ok(listing);
       }
+      case "worktree prune":
+        state.worktreeRemoved = !options.locked && !options.pruneKeeps;
+        return ok();
+      case "rev-list --parents --max-count=1 tip":
+        return ok(options.merge ? "tip main-parent pr-parent\n" : "tip parent\n");
+      case "merge-base --is-ancestor main-parent refs/remotes/origin/main":
+        return ok();
+      case "merge-base --is-ancestor pr-parent refs/remotes/origin/main":
+        return failed;
+      case "merge-tree --write-tree main-parent pr-parent":
+        return options.merge === "clean" ? ok("tree\n") : failed;
+      case "rev-parse tip^{tree}":
+        return ok("tree\n");
       case "rev-parse worktree-agent-test":
         return ok("tip\n");
       case "merge-base --is-ancestor tip refs/remotes/origin/main":
         return options.ancestor ? ok() : failed;
       case `-C ${worktree} status --porcelain`:
+        if (options.prunable) {
+          return failed;
+        }
         return ok(options.dirty ? " M file\n" : "");
       case `-C ${worktree} rev-parse --absolute-git-dir`:
         return ok("/virtual/git\n");
@@ -157,11 +194,12 @@ function fixture(options: FixtureOptions = {}) {
     }
   };
   const run = capture({
-    gh: fakeGh(options, "tip"),
+    gh: fakeGh(options, options.merge ? "pr-parent" : "tip"),
     git,
     modifiedWithin: () => true,
     processDirectories: () => (options.inUse ? [`${worktree}/src`] : []),
-    realpath: () => undefined,
+    // Only the worktree's parent resolves, unless the fixture's volume is unmounted.
+    realpath: (path) => (path === "/virtual" && !options.unmounted ? path : undefined),
     removeLeftovers: (path) => {
       state.leftoversRemoved = path;
     },
@@ -308,11 +346,50 @@ describe("merged-worktree cleanup", () => {
     [{ openAssociation: true }, "open pull request"],
     [{ failure: true }, "could not confirm"],
     [{ exactFailure: true }, "could not confirm its merge status"],
+    [{ unpushed: true }, "isn't on GitHub, so it holds unpushed work"],
   ] as const)("keeps an unconfirmed or protected branch: %j", (options, message) => {
     const { run, state } = fixture(options);
     const result = run(apply);
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout + result.stderr).toContain(message);
+    expect(state.branchRemoved).toBe(false);
+  });
+});
+
+describe("stale worktree registrations", () => {
+  it("previews pruning and evaluates the branch as if its worktree were gone", () => {
+    const { run, state, worktree } = fixture({ prunable: true });
+    const result = run();
+    expect(result.stdout).toContain(`Would prune worktree registration ${worktree}`);
+    expect(result.stdout).toContain("Would delete branch worktree-agent-test (merged PR #42)");
+    expect(state.worktreeRemoved).toBe(false);
+  });
+
+  it("prunes the registration, then deletes the merged branch", () => {
+    const { run, state, worktree } = fixture({ prunable: true });
+    const result = run(apply);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain(`Pruned worktree registration ${worktree}`);
+    expect(result.stdout).toContain("Removed branch worktree-agent-test (merged PR #42)");
+    expect(state).toMatchObject({ branchRemoved: true, leftoversRemoved: "" });
+  });
+
+  it.each([{ pruneKeeps: true }, { unmounted: true }])(
+    "keeps the branch when the registration survives: %j",
+    (options) => {
+      const { run, state } = fixture({ ...options, prunable: true });
+      const result = run(apply);
+      expect(result.stdout).not.toContain("Pruned");
+      expect(result.stdout + result.stderr).toContain("could not inspect its status");
+      expect(state.branchRemoved).toBe(false);
+    },
+  );
+
+  it("leaves a locked stale registration alone", () => {
+    const { run, state } = fixture({ locked: true, prunable: true });
+    const result = run(apply);
+    expect(result.stdout).not.toContain("Pruned");
+    expect(result.stdout).toContain("locked");
     expect(state.branchRemoved).toBe(false);
   });
 });
@@ -386,6 +463,26 @@ describe("detached worktree cleanup", () => {
       expect(state.worktreeRemoved).toBe(false);
     },
   );
+
+  it("removes a conflict-free local merge whose parents are both merged", () => {
+    const { run, state } = fixture({ detached: true, merge: "clean" });
+    expect(run().stdout).toContain(
+      "conflict-free merge of parents reachable from origin/main & merged PR #42",
+    );
+    expect(run(apply).status).toBe(0);
+    expect(state.worktreeRemoved).toBe(true);
+  });
+
+  it.each([
+    [{ merge: "conflicted" }, "unpushed work"],
+    [{ merge: "clean", open: true }, "open pull request"],
+    [{ localCommit: true, merge: "clean" }, "no merged pull request"],
+  ] as const)("protects a local merge: %j", (options, message) => {
+    const { run, state } = fixture({ ...options, detached: true });
+    const result = run(apply);
+    expect(result.stdout + result.stderr).toContain(message);
+    expect(state.worktreeRemoved).toBe(false);
+  });
 
   it("preserves the invoking detached worktree", () => {
     const { runAt, state, worktree } = fixture({ ancestor: true, detached: true });
