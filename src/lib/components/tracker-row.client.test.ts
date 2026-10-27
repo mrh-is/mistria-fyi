@@ -71,6 +71,7 @@ describe("TrackerRow reportable metadata", () => {
     const contentId = sourceButton.getAttribute("aria-controls");
 
     expect(sourcePaper).toBeTruthy();
+    expect(view.container.querySelector(".source-card")).toBeNull();
     expect(row?.dataset.sourceState).toBe("closed");
     expect(sourceButton.getAttribute("aria-expanded")).toBe("false");
     expect(contentId).toBeTruthy();
@@ -82,7 +83,8 @@ describe("TrackerRow reportable metadata", () => {
     await fireEvent.click(sourceButton);
     expect(sourceButton.getAttribute("aria-expanded")).toBe("true");
     expect(row?.dataset.sourceState).toBe("open");
-    expect(view.container.querySelector(".source-card")).toBeTruthy();
+    const sourceCard = view.container.querySelector(".source-card");
+    expect(sourceCard).toBeTruthy();
     expect(view.container.querySelector(".source-paper__panel")?.getAttribute("aria-hidden")).toBe(
       "false",
     );
@@ -103,6 +105,10 @@ describe("TrackerRow reportable metadata", () => {
     );
     expect(view.container.querySelector("[data-source-paper]")).toBe(sourcePaper);
     expect(view.container.querySelector("[data-source-paper-stationary-control]")).toBeNull();
+    expect(view.container.querySelector(".source-card")).toBe(sourceCard);
+    await fireEvent.click(sourceButton);
+    expect(sourceButton.getAttribute("aria-expanded")).toBe("true");
+    expect(view.container.querySelector(".source-card")).toBe(sourceCard);
   });
 
   it("keeps multiple source papers expanded independently", async () => {
