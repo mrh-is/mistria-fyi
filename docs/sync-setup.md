@@ -295,7 +295,7 @@ Every path stays reachable from Data, which links to the same setup page. Changi
 - **Self-updating tracker → tracker.** “Stop updating” in Data forgets the save & keeps progress as
   it is.
 - **Relay → tracker, by lapse.** A pairing that lapses ends the relay role, as unpairing does; the
-  takeover offers “Pair again” & “Fill in from your latest save”.
+  PC’s Home note offers “Pair again” & “Fill in from your latest save”.
 - **An interrupted switch to relay** keeps the page read-only, saying “Finishing setup…”, until sync
   gives a definite answer; another tab’s check-off that lands after the switch says “That change
   didn’t save: this PC is the relay now.”.
@@ -481,7 +481,7 @@ Write like a chill, non-judgmental friend helping with a tech setup.
 
 ## Screens
 
-One sheet per canvas row, rendered from canvas version 51 & kept in the
+One sheet per canvas row, rendered from canvas version 53 & kept in the
 [design package](design/sync-setup/README.md). PC boards are cropped to the 512 px column.
 
 ### First look

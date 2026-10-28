@@ -405,7 +405,7 @@ learn of a change through a `BroadcastChannel` & re-read it on focus.
   first, & on a self-updating tracker to stop updating first, so a PC that watches a save never
   becomes the receiving side too.
 - **A lapse ends the relay role.** When the relay reports the pairing lapsed, the PC records the
-  tracker role, as for “Unpair”, & its takeover offers “Pair again” & “Fill in from your latest
+  tracker role, as for “Unpair”, & its Home note offers “Pair again” & “Fill in from your latest
   save”.
 
 Tests cover a transition interrupted before acceptance, one interrupted between the relay’s

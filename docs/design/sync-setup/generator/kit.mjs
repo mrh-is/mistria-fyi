@@ -237,7 +237,7 @@ export const howDialog = () => {
     `<li style="display:flex;gap:10px;align-items:flex-start">${ti(ic, 18, C.tagAccent, "margin-top:2px")}<div><p style="margin:0;${BODY};font-size:15px;font-weight:600;color:${C.tagInk}">${t}</p><p style="margin:0;${ANNOT};font-size:13px;line-height:1.4;color:${C.tagMuted}">${d}</p></div></li>`;
   return tagDialog({
     title: "How it works",
-    body: `<ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px">${part("device-floppy", "The game saves", "Fields of Mistria writes a save on your PC every time you sleep.")}${part("device-desktop", "The relay passes it on", "A tab like this one, open on that PC, spots each new save and sends it to your phone, locked so only your phone can read it.")}${part("device-mobile", "The tracker catches up", "Your phone updates your progress. Anything you check off by hand stays on the device where you checked it off.")}</ol>`,
+    body: `<ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px">${part("device-floppy", "The game saves", "Fields of Mistria writes a save on your PC every time you sleep.")}${part("device-desktop", "The relay passes it on", "A tab like this one, open on that PC, spots each new save and sends it to your phone, locked so only your phone can read it.")}${part("device-mobile", "The tracker catches up", "Your phone updates your progress. Anything you check off by hand stays on the device where you checked it off, unless your PC sends its progress when you pair.")}</ol>`,
     actions: [["Got it", true]],
   });
 };

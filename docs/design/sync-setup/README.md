@@ -7,7 +7,7 @@ docs, decision records, & review rounds. The design itself lives in
 protocol); this folder holds the evidence behind them.
 
 Status: in review on PR #251. Three adversarial review rounds are resolved; whether to run a fourth
-is the maintainer’s call. The sheets match canvas version 51.
+is the maintainer’s call. The sheets match canvas version 53.
 
 ## What’s here
 

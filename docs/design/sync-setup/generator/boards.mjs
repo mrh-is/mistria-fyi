@@ -322,7 +322,7 @@ const pcFarmDialog = () =>
       )
       .join(
         "",
-      )}</div><p style="margin:0;font-family:Satoshi,system-ui,sans-serif;font-size:13px;color:${C().tagMuted}">If it’s a different farm, this PC’s progress stays here, and your phone starts from the save.</p>`,
+      )}</div><p style="margin:0;font-family:Satoshi,system-ui,sans-serif;font-size:13px;color:${C().tagMuted}">If it’s a different farm, this PC’s progress stays here, and your phone keeps what it has and gets the save.</p>`,
     actions: [["No, it’s a new farm"], ["Yes, same farm", true]],
   });
 
@@ -607,10 +607,7 @@ export const rows = [
             "Set up sync",
             RELAY_LEAD,
             waiting("Finishing setup…") +
-              note(
-                "This page is read-only until your PC hears back. That change didn’t save: this PC is the relay now.",
-                13,
-              ),
+              note("This page is read-only until sync confirms the pairing.", 13),
             { h: 760 },
           ),
       },
@@ -628,7 +625,7 @@ export const rows = [
               fieldNote({
                 icon: "info-circle",
                 title: "This PC’s progress stays here",
-                body: "It’s for Applewood Farm, and you’re playing Moonberry Farm, so your phone starts from the save.",
+                body: "It’s for Applewood Farm, and you’re playing Moonberry Farm, so it stays on this PC. Your phone keeps what it has and gets the save.",
               }) +
               waiting("Sending your save to your Pixel 8…"),
             { h: 760 },
@@ -903,7 +900,7 @@ export const rows = [
                   tone: C().amber,
                   icon: "alert-circle",
                   title: "Your PC’s progress couldn’t be saved here",
-                  body: "This phone kept its own, and new saves still come in. Check that it has storage space to try again later.",
+                  body: "This phone kept its own, and new saves still come in. To bring your PC’s over later, export a backup on your PC and restore it here.",
                 }) + waiting("Waiting for your first save…"),
               ),
           ),
@@ -919,7 +916,7 @@ export const rows = [
             phStepPair(
               "current",
               p("Pair with your PC?") +
-                note("Tap to pair, then check the code on your PC.", 13) +
+                note("Pair, then check the code on your PC.", 13) +
                 btn("Pair", { kind: "default", full: true }),
             ) + phStepSave(),
           ),
@@ -1177,7 +1174,7 @@ export const rows = [
                 tone: C().amber,
                 icon: "clock",
                 title: "That code’s expired",
-                body: "On your PC, click “New code”, then scan or paste again.",
+                body: "On your PC, show a new code, then scan or paste again.",
                 actions: [["Scan again", true]],
               }),
             ) + phStepSave(),
@@ -1393,7 +1390,9 @@ export const rows = [
                     icon: "alert-triangle",
                     title: "Hmm, that’s not a save file",
                     body: "Look for one ending in -autosave.sav.",
-                  }) + dropZone({ error: true, browse: false }),
+                  }) +
+                    dropZone({ error: true, browse: false }) +
+                    noDrag(),
                 ),
               ),
           ),
@@ -1868,21 +1867,18 @@ export const rows = [
       },
       {
         file: "PC-Lapsed.dc.html",
-        title: "Relay · Pairing lapsed after 90 days",
+        title: "PC · Pairing lapsed: back to a tracker",
         ...PC,
         render: () =>
-          takeover({
-            icon: "clock",
-            overline: "Sync stopped",
-            title: "Your pairing with Pixel 8 expired",
-            body: note(
-              "Your PC and Pixel 8 haven’t synced in over three months. Pair again to pick up where you left off.",
-            ),
-            actions: noteActions([
-              ["Pair again", "qrcode", true],
-              ["Fill in from your latest save", "file-import"],
-            ]),
-          }),
+          home(
+            fieldNote({
+              tone: C().amber,
+              icon: "clock",
+              title: "Your pairing with Pixel 8 expired",
+              body: "Your PC and Pixel 8 haven’t synced in over three months. Pair again to pick up where you left off.",
+              actions: [["Pair again", true], ["Fill in from your latest save"]],
+            }),
+          ),
       },
       {
         file: "PC-Paused.dc.html",
@@ -1926,7 +1922,7 @@ export const rows = [
                       tone: C().amber,
                       icon: "clock",
                       title: "No word from your Pixel 8 since October 12",
-                      body: "Your saves wait here until it’s back. Open the tracker there to catch up.",
+                      body: "Your latest save waits here until it’s back. Open the tracker there to catch up.",
                       tilt: 0.3,
                     }),
                     fieldNote({
@@ -1950,7 +1946,7 @@ export const rows = [
                     fieldNote({
                       icon: "clock",
                       title: "Sync’s full for today",
-                      body: "Your latest save goes out as soon as there’s room, by tomorrow at the latest. Nothing’s lost.",
+                      body: "Your latest save goes out tomorrow, when sync resets. Nothing’s lost.",
                     }),
                     fieldNote({
                       tone: C().amber,
