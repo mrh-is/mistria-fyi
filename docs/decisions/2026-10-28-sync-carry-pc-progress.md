@@ -23,15 +23,18 @@ devices for the same farm) who has other workarounds, so the merge was cut (chan
   which checks it. The PC sends its stored progress once, as the pairing’s first bundle, in the
   restorable backup format, encrypted like any save bundle.
 - **The phone takes it whole or not at all.** An empty phone takes it without asking. A phone with
-  progress asks right after pairing: “Use my PC’s” replaces its progress & keeps it as the
-  farm-switch backup; “Keep this phone’s” declines the transfer. Nothing merges.
+  progress asks right after pairing, or when the progress arrives if it gained progress since: “Use
+  my PC’s” replaces its progress & keeps it as the farm-switch backup; “Keep this phone’s” declines
+  the transfer. Nothing merges.
 - **The PC checks the farm first.** It sends its progress only after the save is connected, & only
   when its stored farm matches the save’s; unidentified progress asks on the PC, & a different farm
   stays behind. Carried progress is therefore always the farm being played, so a setup switches
   farms at most once.
-- **One terminal state per transfer.** The relay records claimed, declined, or skipped, first come
-  first served; the phone claims before applying, & records the transfer ID as applied in the same
-  write as the progress, so a transfer applies exactly once.
+- **One state machine per transfer.** The relay records announced, uploaded, claimed, applied,
+  declined, or skipped by transfer ID, & the first move wins within a state; the phone claims only
+  after decrypting & dry-running the write, decides whether it’s empty at the write, & records the
+  transfer ID as applied in the same write as the progress, so a transfer applies exactly once (see
+  [sync.md](../sync.md#the-transfers-states); changed after round three).
 - **This narrows the original sync decision.** The
   [save-driven sync record](2026-10-20-save-driven-sync.md) says manual check-offs never travel
   between devices; the PC’s stored progress now travels once, at pairing, & check-offs made on the

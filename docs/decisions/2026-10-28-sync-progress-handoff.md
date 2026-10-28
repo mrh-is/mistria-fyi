@@ -22,8 +22,9 @@ own “Revisit if” named that last condition: the receiver merge proving unsaf
 ## Decision
 
 - **Backup & restore moves progress to a new device in v1.** In both cases the handoff served, the
-  receiving copy is empty, so a restore replaces nothing: a new phone restores the old phone’s
-  backup, & the installed iPhone app restores the browser’s. Then the new copy pairs.
+  receiving copy is usually empty; when it isn’t, restore asks “Replace what’s on this phone?” &
+  keeps a backup first: a new phone restores the old phone’s backup, & the installed iPhone app
+  restores the browser’s. Then the new copy pairs.
 - **“Pair a different phone” still starts with your progress,** pointing to those steps, with “My
   old phone’s gone” as the way out: it pairs with “Send this PC’s progress too” checked, carrying
   the PC’s progress from before it started relaying.

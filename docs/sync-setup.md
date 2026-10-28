@@ -296,11 +296,11 @@ Every path stays reachable from Data, which links to the same setup page. Changi
   it is.
 - **Relay → tracker, by lapse.** A pairing that lapses ends the relay role, as unpairing does; the
   takeover offers “Pair again” & “Fill in from your latest save”.
-- **An interrupted switch to relay** keeps the page read-only, saying “Finishing setup…”, until the
-  relay gives a definite answer; another tab’s check-off that lands after the switch says “That
-  change didn’t save: this PC is the relay now.”
-- **Phone with progress → paired.** The first save asks “Is this the farm you’ve been tracking?” and
-  applies through the apply rules (#135).
+- **An interrupted switch to relay** keeps the page read-only, saying “Finishing setup…”, until sync
+  gives a definite answer; another tab’s check-off that lands after the switch says “That change
+  didn’t save: this PC is the relay now.”.
+- **Phone with progress → paired.** The first save applies through the apply rules (#135), asking
+  “Is this the farm you’ve been tracking?” only when the phone’s progress has no farm on record.
 - **Relay → tracker.** Unpairing discards the mirror and shows the stored progress exactly as it was
   left.
 - **Relay → self-updating tracker.** Unpair first, then pick “On this PC”; the first watched save
@@ -414,24 +414,25 @@ iOS keeps a browser’s data apart from the home screen app, so the app can’t 
 
 ## Living with it
 
-| Stage           | Relay (PC)                                                                                                                                         | Tracker (phone)                                                                                                                                                              |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Playing         | Dashboard open; nothing to do                                                                                                                      | Quiet sync button; its panel says when the last save came                                                                                                                    |
-| Away for days   | After 14 days without the phone, stops uploading & says so; the pairing lapses 90 days after the phone last checked in, & the PC becomes a tracker | Slip after an unusually long gap; after the lapse, a field note to re-pair                                                                                                   |
-| Browser restart | Asks to re-allow reading the save (one click; “every visit” sticks)                                                                                | Nothing                                                                                                                                                                      |
-| Game update     | Can’t read the save: takes over the dashboard                                                                                                      | Keeps its last good progress; the panel’s date ages                                                                                                                          |
-| App update      | Reloads itself at a safe moment; “Your {device} needs a tracker update”                                                                            | Same; “Update the tracker on your PC” or “Update this phone”, naming the side that’s behind                                                                                  |
-| New phone       | Points to backing up the old phone, then pairs the new one                                                                                         | The new phone restores the old one’s backup; the old one keeps its progress & stops getting saves                                                                            |
-| New farm        | Drop the new save                                                                                                                                  | Switches to the new farm & backs up the old one (“Switched to {newFarm}”); asks “Is this the farm you’ve been tracking?” only when its progress has no farm on record (#135) |
-| Blocked store   | “Your {device} needs a look in Data”                                                                                                               | “New saves are waiting”, a field note pointing to Data                                                                                                                       |
-| Kill switch     | “Sync is taking a break”, hairline                                                                                                                 | Hairline dot & slip; tracking by hand still works                                                                                                                            |
-| Stop syncing    | “Unpair”: back to a tracker                                                                                                                        | Unpaired; keeps everything                                                                                                                                                   |
-| Non-Chrome PC   | Re-drop the save after each session to send it                                                                                                     | Updates whenever a save is re-dropped                                                                                                                                        |
+| Stage           | Relay (PC)                                                                                                                                         | Tracker (phone)                                                                                                                                                                                                                                           |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Playing         | Dashboard open; nothing to do                                                                                                                      | Quiet sync button; its panel says when the last save came                                                                                                                                                                                                 |
+| Away for days   | After 14 days without the phone, stops uploading & says so; the pairing lapses 90 days after the phone last checked in, & the PC becomes a tracker | Slip after an unusually long gap; after the lapse, a field note to re-pair                                                                                                                                                                                |
+| Browser restart | Asks to re-allow reading the save (one click; “every visit” sticks)                                                                                | Nothing                                                                                                                                                                                                                                                   |
+| Game update     | Can’t read the save: takes over the dashboard                                                                                                      | Keeps its last good progress; the panel’s date ages                                                                                                                                                                                                       |
+| App update      | Reloads itself at a safe moment; “Your {device} needs a tracker update”                                                                            | Same; “Update the tracker on your PC” or “Update this phone”, naming the side that’s behind                                                                                                                                                               |
+| New phone       | Points to backing up the old phone, then pairs the new one                                                                                         | The new phone restores the old one’s backup; the old one keeps its progress & stops getting saves                                                                                                                                                         |
+| New farm        | Drop the new save                                                                                                                                  | Switches to the new farm & backs up the old one (“Switched to {newFarm}”); asks “Is this the farm you’ve been tracking?” only when its progress has no farm on record; a switch that would replace an earlier backup asks first (#135 owns that question) |
+| Blocked store   | “Your {device} needs a look in Data”                                                                                                               | “New saves are waiting”, a field note pointing to Data                                                                                                                                                                                                    |
+| Kill switch     | “Sync is taking a break”, hairline                                                                                                                 | Hairline dot & slip; tracking by hand still works                                                                                                                                                                                                         |
+| Stop syncing    | “Unpair”: back to a tracker                                                                                                                        | Unpaired; keeps everything                                                                                                                                                                                                                                |
+| Non-Chrome PC   | Re-drop the save after each session to send it                                                                                                     | Updates whenever a save is re-dropped                                                                                                                                                                                                                     |
 
 The self-updating tracker lives with the same stages on one device: a browser restart asks to
 re-allow reading the save, a game update shows the error in place of progress updates, & a new farm
 switches with a backup, asking “Is this the farm you’ve been tracking?” only when the stored
-progress has no farm on record.
+progress has no farm on record, & asking first when the switch would replace an earlier backup (#135
+owns that question).
 
 ## Accessibility
 
@@ -544,7 +545,8 @@ two in `<code>`. Device names are short model names where the browser allows (�
 “Safari on iPhone” for an iOS browser), so “your {device}” reads naturally; translators may
 restructure those sentences around a label. The welcome card keeps `onboarding_overline` &
 `onboarding_title`; the other `onboarding_*` descriptions & actions retire. The drop box reuses the
-import card’s strings. Error & notice copy is a first draft.
+import card’s strings. Mode variants (`_redrop`) are text-only; their boards show the watched mode.
+Error & notice copy is a first draft.
 
 ### Home & the setup page
 
@@ -638,7 +640,7 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_waiting_on_device`           | Waiting on your {device}…                                                                                                    |
 | `sync_waiting_on_device_hint`      | Your saves go out as soon as your phone has this. Phone in a pocket? Open the tracker there.                                 |
 | `sync_skip_progress`               | Skip it                                                                                                                      |
-| `sync_skip_refused`                | Your {device} is already using it.                                                                                           |
+| `sync_skip_refused`                | Your {device} is already using it                                                                                            |
 | `sync_skip_refused_body`           | Your saves go out as soon as it’s done.                                                                                      |
 | `sync_pc_farm_note`                | If it’s a different farm, this PC’s progress stays here, and your phone keeps what it has and gets the save.                 |
 | `sync_progress_stays_title`        | This PC’s progress stays here                                                                                                |
@@ -648,6 +650,7 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_device_kept_own_body`        | So this PC’s progress stays here, and your saves go out as usual.                                                            |
 | `sync_fenced_write`                | That change didn’t save: this PC is the relay now.                                                                           |
 | `sync_finishing_setup`             | Finishing setup…                                                                                                             |
+| `sync_finishing_setup_body`        | This page is read-only until sync confirms the pairing.                                                                      |
 | `sync_tip_overline`                | Field tip                                                                                                                    |
 | `sync_tip_title`                   | Let Chrome do this for you                                                                                                   |
 | `sync_tip_body`                    | This browser can’t keep watching a file. In Chrome or Edge, each save goes out the moment you sleep, with no dropping files. |
@@ -665,6 +668,7 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_install_add`              | Tap “Add to Home Screen”.                                                                                                            |
 | `sync_install_open`             | Open the tracker from there to keep going.                                                                                           |
 | `sync_install_backup_first`     | Already using the tracker here? Export a backup first.                                                                               |
+| `sync_install_open_restore`     | Open the tracker from there, and restore the backup in Data.                                                                         |
 | `sync_install_skip`             | Skip, keep using {browser}                                                                                                           |
 | `sync_install_skipped`          | Skipped. Add it any time.                                                                                                            |
 | `sync_install_show`             | Show me                                                                                                                              |
@@ -686,14 +690,15 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_carry_body`               | This phone has progress too. Use your PC’s, and we’ll keep a backup of what’s here. Or keep this phone’s, and your PC’s stays there. |
 | `sync_carry_from_pc`            | From your PC                                                                                                                         |
 | `sync_carry_on_phone`           | On this phone                                                                                                                        |
-| `sync_carry_replaces_backup`    | This replaces your backup of {farm}, from {calendarDate}.                                                                            |
+| `sync_replaces_backup`          | This replaces your backup of {farm}, from {calendarDate}.                                                                            |
+| `sync_replaces_backup_unnamed`  | This replaces your earlier backup, from {calendarDate}.                                                                              |
 | `sync_carry_use`                | Use my PC’s                                                                                                                          |
 | `sync_carry_keep`               | Keep this phone’s                                                                                                                    |
 | `sync_carry_skipped_title`      | Your PC didn’t send its progress                                                                                                     |
 | `sync_carry_skipped_body`       | This phone kept its own, and new saves still come in.                                                                                |
 | `sync_carry_skipped_body_empty` | This phone starts from your save, and new saves still come in.                                                                       |
 | `sync_carry_failed_title`       | Your PC’s progress couldn’t be saved here                                                                                            |
-| `sync_carry_failed_body`        | This phone kept its own, and new saves still come in. Check that it has storage space to try again later.                            |
+| `sync_carry_failed_body`        | This phone kept its own, and new saves still come in. To bring your PC’s over later, export a backup on your PC and restore it here. |
 | `sync_progress_coming`          | Your PC’s progress is on its way…                                                                                                    |
 | `sync_progress_keep_open`       | It comes over once your PC connects its save.                                                                                        |
 | `sync_waiting_save`             | Waiting for your first save…                                                                                                         |
@@ -710,7 +715,7 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_link_open`                | Open it here, or paste it below.                                                                                                     |
 | `sync_link_placeholder`         | Paste the link here                                                                                                                  |
 | `sync_link_confirm_title`       | Pair with your PC?                                                                                                                   |
-| `sync_link_confirm_body`        | Tap to pair, then check the code on your PC.                                                                                         |
+| `sync_link_confirm_body`        | Pair, then check the code on your PC.                                                                                                |
 | `sync_link_confirm_action`      | Pair                                                                                                                                 |
 | `sync_link_pair`                | Pair                                                                                                                                 |
 | `sync_link_camera`              | Scan with this computer’s camera instead                                                                                             |
@@ -815,6 +820,8 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_new_phone_files`           | On iPhone, save the backup to Files.                                                                                                            |
 | `sync_restore_replace_title`     | Replace what’s on this phone?                                                                                                                   |
 | `sync_restore_replace_body`      | We’ll keep a backup of what’s here first.                                                                                                       |
+| `sync_restore_replace_action`    | Replace                                                                                                                                         |
+| `sync_restore_replace_cancel`    | Never mind                                                                                                                                      |
 | `sync_new_phone_next`            | Done, next step                                                                                                                                 |
 | `sync_new_phone_pair`            | Pair your new phone                                                                                                                             |
 | `sync_new_phone_pair_hint`       | Your {device} keeps its progress but stops getting saves.                                                                                       |
@@ -824,30 +831,30 @@ import card’s strings. Error & notice copy is a first draft.
 
 ### The relay
 
-| Key                          | English                                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------------------------- |
-| `sync_relay_overline`        | Relay                                                                                         |
-| `sync_relay_heading`         | Sending your saves to your {device}                                                           |
-| `sync_relay_body`            | Keep this tab open while you play. That’s it.                                                 |
-| `sync_pairing_settings`      | Pairing settings                                                                              |
-| `sync_browse_guide`          | Browse the guide                                                                              |
-| `sync_read_only`             | read-only                                                                                     |
-| `sync_guide_read_only`       | Read-only on the relay. From your {device}’s save at {time}.                                  |
-| `sync_relay_toast`           | This PC is the relay. Check things off on your {device}.                                      |
-| `sync_no_save_title`         | Almost there: connect your save                                                               |
-| `sync_no_save_body`          | Your {device} is paired, but there’s no save to send yet.                                     |
-| `sync_device_unpaired_title` | Your {device} unpaired                                                                        |
-| `sync_device_unpaired_body`  | This PC is back to being a regular tracker, with your progress just how you left it.          |
-| `sync_fill_from_save`        | Fill in from your latest save                                                                 |
-| `sync_redrop_title`          | Done playing? Send your save.                                                                 |
-| `sync_redrop_sleep`          | Sleep in the game so it saves.                                                                |
-| `sync_redrop_drop`           | Drop the newest {suffix} here.                                                                |
-| `sync_redrop_last`           | Last save sent {time}.                                                                        |
-| `sync_quiet_title`           | No word from your {device} since {calendarDate}                                               |
-| `sync_quiet_body`            | Your saves wait here until it’s back. Open the tracker there to catch up.                     |
-| `sync_full_title`            | Sync’s full for today                                                                         |
-| `sync_full_body`             | Your latest save goes out as soon as there’s room, by tomorrow at the latest. Nothing’s lost. |
-| `sync_hide_for_now`          | Hide this for now                                                                             |
+| Key                          | English                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| `sync_relay_overline`        | Relay                                                                                |
+| `sync_relay_heading`         | Sending your saves to your {device}                                                  |
+| `sync_relay_body`            | Keep this tab open while you play. That’s it.                                        |
+| `sync_pairing_settings`      | Pairing settings                                                                     |
+| `sync_browse_guide`          | Browse the guide                                                                     |
+| `sync_read_only`             | read-only                                                                            |
+| `sync_guide_read_only`       | Read-only on the relay. From your {device}’s save at {time}.                         |
+| `sync_relay_toast`           | This PC is the relay. Check things off on your {device}.                             |
+| `sync_no_save_title`         | Almost there: connect your save                                                      |
+| `sync_no_save_body`          | Your {device} is paired, but there’s no save to send yet.                            |
+| `sync_device_unpaired_title` | Your {device} unpaired                                                               |
+| `sync_device_unpaired_body`  | This PC is back to being a regular tracker, with your progress just how you left it. |
+| `sync_fill_from_save`        | Fill in from your latest save                                                        |
+| `sync_redrop_title`          | Done playing? Send your save.                                                        |
+| `sync_redrop_sleep`          | Sleep in the game so it saves.                                                       |
+| `sync_redrop_drop`           | Drop the newest {suffix} here.                                                       |
+| `sync_redrop_last`           | Last save sent {time}.                                                               |
+| `sync_quiet_title`           | No word from your {device} since {calendarDate}                                      |
+| `sync_quiet_body`            | Your latest save waits here until it’s back. Open the tracker there to catch up.     |
+| `sync_full_title`            | Sync’s full for today                                                                |
+| `sync_full_body`             | Your latest save goes out tomorrow, when sync resets. Nothing’s lost.                |
+| `sync_hide_for_now`          | Hide this for now                                                                    |
 
 ### Trouble & notices
 
@@ -970,9 +977,9 @@ import card’s strings. Error & notice copy is a first draft.
   whole or keeps its own; nothing merges (changed after round two). See
   [the decision record](decisions/2026-10-28-sync-carry-pc-progress.md).
 - A new phone, or the iPhone app, gets its progress from the old copy by backup & restore, since the
-  receiving copy is empty; “Pair a different phone” starts there, with “My old phone’s gone” as the
-  way out. A handoff code is deferred to #269. See
-  [the decision record](decisions/2026-10-28-sync-progress-handoff.md).
+  receiving copy is usually empty, & restore asks before replacing anything; “Pair a different
+  phone” starts there, with “My old phone’s gone” as the way out. A handoff code is deferred to
+  #269. See [the decision record](decisions/2026-10-28-sync-progress-handoff.md).
 - On iPhone, installing is optional step i of setup, recommended for Safari’s storage limits, &
   folds when skipped. The installed app’s first launch leads with sync setup, with bringing the
   browser’s progress over (by backup & restore) as a secondary link.

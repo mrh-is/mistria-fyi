@@ -27,7 +27,7 @@ Knip skip `docs/design/*/generator/`, so it doesn’t follow the app’s code co
 
 - **Docs:** [sync-setup.md](../../sync-setup.md) & [sync.md](../../sync.md).
 - **Decision records:** [pairing confirmation](../../decisions/2026-10-27-sync-pairing-confirm.md),
-  [carrying the PC’s progress](../../decisions/2026-10-28-sync-carry-pc-progress.md), &
+  [carrying the PC’s progress](../../decisions/2026-10-28-sync-carry-pc-progress.md),
   [handing off between trackers](../../decisions/2026-10-28-sync-progress-handoff.md) (deferred), &
   [staying account-less](../../decisions/2026-10-28-sync-stay-account-less.md).
 - **Canvas:** the private design canvas, https://claude.ai/artifact/UhDfkQVf4Csu7eN9RcBStx. The

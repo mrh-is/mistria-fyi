@@ -121,12 +121,12 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
   at about 50 a day by a singleton object, & each offer holds a reservation against that cap for as
   long as it can still be accepted:
 
-  | Offer stage | Reservation                       | Ends when                                                        |
-  | ----------- | --------------------------------- | ---------------------------------------------------------------- |
-  | Offered     | Held                              | The QR’s couple of minutes pass, or 10 minutes after “Copy link” |
-  | Answered    | Held                              | The confirmation deadline, two minutes after the answer          |
-  | Accepted    | Becomes one of the day’s pairings | Never; it counts                                                 |
-  | Rejected    | Released                          | “No, it doesn’t”, or the deadline passing                        |
+  | Offer stage | Reservation                       | Ends when                                                               |
+  | ----------- | --------------------------------- | ----------------------------------------------------------------------- |
+  | Offered     | Held                              | The QR’s couple of minutes pass, or 10 minutes after “Copy link”        |
+  | Answered    | Held                              | The confirmation deadline, two minutes after the answer                 |
+  | Accepted    | Becomes one of the day’s pairings | Never; it counts                                                        |
+  | Rejected    | Released                          | “No, it doesn’t”, or the QR’s, link’s, or confirmation’s window passing |
 
   Minting fails as “Pairing is full for today” once accepted pairings & reservations reach the cap.
   A reservation counts against the day it was minted, so an acceptance just after midnight UTC
@@ -153,8 +153,9 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
 - **The phone keeps what it has received.** A phone that reports a bundle as received (a question, a
   blocked store, or a tracker update waiting) keeps that ciphertext in device state, outside
   progress & backups, until it applies or a newer save replaces it, so the slot’s expiry never
-  strands a waiting question. A question’s ID is derived from the decrypted save’s content hash, not
-  the sequence, so the same save re-uploaded at a later sequence still matches its open question.
+  strands a waiting question. A question’s ID is derived from the decrypted save’s content hash &
+  the changes it covers, never the sequence, so the same save re-uploaded at a later sequence still
+  matches its open question.
 - **Quiet phones stop uploads.** Once the phone hasn’t checked in for 14 days, the courier stops
   uploading altogether, fresh saves as well as retries, keeps only the latest save locally, & shows
   “No word from your {device} since {calendarDate}”. It sends that save when the phone next checks
@@ -172,7 +173,9 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
 
 - **Kill switch.** A flag in the singleton object, flipped by an authenticated admin request (a
   dashboard variable would be dropped by the next deploy). “Sync is taking a break” applies on the
-  next request, while confirmations, unpairing, & cleanup still go through. Manual tracking still
+  next request, while everything the write budget reserves for finishing what’s started still goes
+  through: accepting an offer already minted, claiming, declining, skipping, & confirming a
+  transfer, the carry’s first upload, confirmations, unpairing, & cleanup. Manual tracking still
   works. During setup, a paused relay refuses new offers & answers, & both devices show “Sync is
   taking a break” in place of the code. A relay that can’t be reached, or answers with a server
   error, shows “We couldn’t reach sync” with “Try again”.
@@ -228,9 +231,9 @@ Version 1 pins the suite, with no negotiation:
 ### Stages & generations
 
 - The relay records each offer’s stage (offered, answered, accepted), so either side can retrieve it
-  again within that stage’s window: an unanswered offer until the QR expires, an answered offer
-  until its confirmation deadline, & an accepted result for the pairing’s life. The phone shows
-  “Paired” only once the PC accepts.
+  again within that stage’s window: an unanswered offer until the QR expires (or 10 minutes after
+  “Copy link”), an answered offer until its confirmation deadline, & an accepted result for the
+  pairing’s life. The phone shows “Paired” only once the PC accepts.
 - **Accepting takes a person.** Once a device answers, the PC & that device each show the same
   six-digit code derived from the handshake transcript, & the player confirms the match on the PC.
   “No, it doesn’t” discards the offer & shows a new covered code; revealing it mints a fresh offer.
@@ -268,8 +271,9 @@ nothing merges.
   you’ve been tracking?”. A different farm, or “No”, skips the transfer & says “This PC’s progress
   stays here”. The PC stamps the identity it checked into the envelope, bound to the transfer ID, &
   the phone stores it with the progress, so the first save doesn’t ask again. If a newer save for a
-  different farm arrives while the barrier holds, the PC checks again & skips. So carried progress
-  is always the farm the game is playing, & a setup switches farms at most once.
+  different farm arrives while the barrier holds, the PC checks again & skips; once the transfer is
+  claimed, the PC waits for it to end. So carried progress is always the farm the game is playing, &
+  a setup switches farms at most once.
 - **The barrier.** The carry is the pairing’s first bundle, & the courier holds saves until the
   transfer ends, keeping only the latest save & uploading it once the barrier lifts, within the
   one-a-minute cap. The PC shows the barrier (“Sending your progress”, then “Waiting on your
@@ -282,7 +286,7 @@ The relay records each transfer’s state by its ID. Within a state, the first m
 | State     | Entered when                                                        | Next                                                                                                    |
 | --------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Announced | The PC accepts the match with the box checked                       | Uploaded (the save is connected & the farm matches), declined, or skipped (a different farm, “Skip it”) |
-| Uploaded  | The PC uploads the frozen payload                                   | Claimed, declined, or skipped (“Skip it”, a phone that can’t read it)                                   |
+| Uploaded  | The PC uploads the frozen payload                                   | Claimed, declined, or skipped (“Skip it”, a different-farm save, a phone that can’t decrypt it)         |
 | Claimed   | The phone has decrypted it, checked its format, & dry-run the write | Applied, or skipped (the phone releases it, or “Skip it” after 48 hours unconfirmed)                    |
 | Applied   | The phone confirms by transfer ID                                   | None                                                                                                    |
 | Declined  | “Keep this phone’s”                                                 | None                                                                                                    |
@@ -384,7 +388,7 @@ learn of a change through a `BroadcastChannel` & re-read it on focus.
 - **Fencing other tabs.** The one write path checks the role inside its Web Lock, so a write another
   tab queued before the switch, & runs after it, is refused instead of landing in the relay’s frozen
   progress. That tab learns the new role, reloads read-only, & says “That change didn’t save: this
-  PC is the relay now.”
+  PC is the relay now.”.
 - **Self-updating tracker → tracker** (“Stop updating”). The watcher releases the lock & forgets the
   file handle; stored progress stays as it is.
 - **Relay → tracker** (“Unpair”). The PC stops sending, records the tracker role, & shows its stored
@@ -544,8 +548,8 @@ plus `info.creation_version`, parsed tolerantly (#128).
 - Manual save slots exist. The courier watches the autosave, & loading a manual save shows up as an
   older save.
 - The first bundle onto unidentified progress asks once: “Is this the farm you’ve been tracking?”,
-  showing the save’s farm beside “No farm on record”. A known different farm never asks; it
-  switches.
+  showing the save’s farm beside “No farm on record”. A known different farm switches without
+  asking, unless the switch would replace an existing backup (below).
 - Switching farms automatically keeps a backup of the outgoing farm on the phone beside progress, in
   the same write as the switch, & says “Switched to {newFarm}”, naming the backed-up farm (or “your
   earlier progress” when it had no name, since `farmName` can be null). There is one backup, never
