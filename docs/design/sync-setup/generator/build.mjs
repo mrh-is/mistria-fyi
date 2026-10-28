@@ -34,7 +34,7 @@ function balanced(html, file) {
   let body = html;
   for (let prev = ""; prev !== body;) {
     prev = body;
-    body = body.replace(/<script\b[\s\S]*?<\/script\s*>/gi, "");
+    body = body.replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, "");
   }
   for (const m of body.matchAll(re)) {
     const tag = m[1].toLowerCase();
