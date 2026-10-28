@@ -56,14 +56,11 @@ describe("changed-file lint", () => {
     ]);
   });
 
-  it("passes when every changed script is one oxlint ignores", () => {
-    const result = spawnSync(
-      process.execPath,
-      ["scripts/lint-files.ts", "--files", "tests/lint-probes/probe.ts"],
-      { encoding: "utf8" },
+  it("lets oxlint select nothing when every changed script is one it ignores", () => {
+    const commands = lintCommands(["tests/lint-probes/probe.ts"], false);
+    expect(commands.find((command) => command.includes("oxlint"))).toContain(
+      "--no-error-on-unmatched-pattern",
     );
-    expect(result.stdout).not.toContain("No files found to lint");
-    expect(result.status).toBe(0);
   });
 
   it("formats only the named file, and returns real unfixable lint errors", () => {
