@@ -75,16 +75,27 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
   Node’s `zlib.deflateSync` at the default level. Confirm the figures on the courier’s own pruned
   container, before encryption; the relay’s 256 KB envelope cap sits above them, with less headroom
   for a late-game farm than the epic’s figure suggests.
-- **Envelope.** The file name, modification time, `playtime`, & a counter that rises with each
-  upload travel inside the ciphertext, never beside it. The protocol version travels beside it & is
-  authenticated with the mailbox ID (see [The follow link](#the-follow-link)).
-- **Uploading.** Sharing starts when the player first taps “Show code” or “Copy link”: that creates
-  the link’s mailbox & uploads the latest save, & each new save uploads after it. A wrong file, or
-  “No thanks, I’ll track here”, creates nothing; the PC’s tracker still applies its saves locally.
-  Nothing waits for a follower, so a device that follows later gets the latest save straight away.
+- **Envelope.** The file name, modification time, & `playtime` travel inside the ciphertext, never
+  beside it. The protocol version & a counter travel beside it as authenticated data with the
+  mailbox ID (see [The follow link](#the-follow-link)), so the relay can order uploads. The counter
+  rises with each upload & never resets, even across new codes.
+- **Sharing starts with the code.** The first “Show code” or “Copy link” creates the link’s mailbox,
+  & the code appears only once creation succeeds, so nobody can hold a code whose mailbox someone
+  else could claim. A create on an ID that already exists under the same token counts as success,
+  which covers a lost response. One under another token means the PC silently makes a fresh key,
+  since nobody has seen the code yet. A failed create keeps the code hidden & says why
+  (`sync_unreachable`, `sync_paused`, `sync_too_many`). A wrong file, or “No thanks, I’ll track
+  here”, creates nothing.
+- **Uploading.** Once sharing, the courier uploads every save it reads & can prune, whatever its own
+  tracker does with it: a question waiting behind the fullscreen game, a quarantined or newer-data
+  store, or an apply that failed never holds an upload back. A save it can’t prune uploads nothing &
+  shows the PC’s error. It also reads the current save when it starts & when it shows the code, &
+  uploads it if its hash differs from the last upload, so an expired envelope fills again & a
+  tracker update after a game update catches up without waiting for the game to save. Nothing waits
+  for a follower, so a device that follows later gets the latest save straight away.
 - **Applying here.** The PC’s own tracker applies each save the courier reads, through the same
-  receiver path as a follower (see [Followers](#followers)) but without the relay. Check-offs on the
-  PC stay on the PC, like any device’s.
+  receiver path as a follower (see [Followers](#followers)) but without the relay, skipping a save
+  whose hash matches its receipt. Check-offs on the PC stay on the PC, like any device’s.
 - **One courier per profile.** Web Locks allow a single courier per browser profile; a second window
   says “Your save file is already syncing in another window”.
 - **Errors.** A parse failure after a game update shows an error on the PC.
@@ -109,8 +120,9 @@ the key derives two values:
 - **The mailbox ID** (128 bits, info `mistria-follow v1 id`), the only part the relay sees.
 - **The sealing key** (256 bits, info `mistria-follow v1 seal`), for AES-GCM.
 
-The PC also makes a random 256-bit write token. The key & token stay on the PC in device state,
-outside stored progress & backups. The link alone can read; only the token writes.
+The PC also makes a random 256-bit write token. The key & token stay on the PC in the progress key’s
+device-only `local` section, which exports & restores leave out. The link alone can read; only the
+token writes.
 
 Version 1 pins HKDF-SHA-256 & AES-GCM, with a random 96-bit nonce per envelope & the protocol
 version & mailbox ID as authenticated data, with no negotiation. A different suite means a new
@@ -120,17 +132,24 @@ protocol version.
 
 One Durable Object per mailbox ID.
 
-- **Create.** The first upload to an unknown ID creates its mailbox with the write token’s hash. It
-  redeems a Turnstile token (server-side Siteverify), run invisibly on the PC.
-- **Upload.** Replaces the stored envelope & pushes it to subscribers; needs the write token.
+- **Create.** Creates the mailbox with the write token’s hash, redeeming a Turnstile token
+  (server-side Siteverify), run invisibly on the PC. Creating an existing ID succeeds when the token
+  hash matches & fails otherwise; a tombstone never accepts a create.
+- **Upload.** Needs the write token. The mailbox keeps a high-water counter: a higher counter
+  replaces the stored envelope & is pushed to subscribers, an identical retry succeeds without
+  replacing anything, & a lower counter is refused, so a late retry never replaces a newer save.
 - **Read.** Anyone with the ID gets the latest envelope (with an ETag), or subscribes over a
-  hibernating WebSocket. Reads need no token & write nothing. Persisted state survives eviction &
-  deploys.
-- **Retire.** “Make a new code” & “Stop syncing” delete the envelope with the write token & leave a
-  tombstone, so the ID can never be created again. Every follower holds the sealing key, so a
-  follower that could recreate a retired ID with its own token could write saves to the others.
-- **Nothing else.** No confirmations, delivery states, or ordering checks at the relay. A follower
-  that misses a save loses nothing, since the next one is a full snapshot.
+  hibernating WebSocket. A live mailbox with no envelope (expired, or nothing uploaded yet) answers
+  “empty”, distinct from a tombstone’s “retired”. Reads need no token & write nothing. Persisted
+  state survives eviction & deploys.
+- **Retire.** Deletes the envelope with the write token & leaves a tombstone, so the ID can never be
+  created again. “Make a new code” creates & shows the new code first & retires the old one after;
+  if creation fails, the old code keeps working & the PC says so (`sync_new_code_failed`). A retire
+  the relay hasn’t confirmed stays pending in `local` (the mailbox ID & token) & retries like an
+  upload, through “Stop syncing” & its erase. Every follower holds the sealing key, so a follower
+  that could recreate a retired ID with its own token could write saves to the others.
+- **Nothing else.** No confirmations or delivery states; the high-water counter is the relay’s only
+  ordering. A follower that misses a save loses nothing, since the next one is a full snapshot.
 
 ### Caps & expiry
 
@@ -145,7 +164,8 @@ One Durable Object per mailbox ID.
   usage approaches the limit.
 - **Expiry.** An envelope is deleted 30 days after it was uploaded. A mailbox with no upload for a
   year becomes a tombstone, like a retired one, & tombstones are never deleted, since each is a few
-  bytes; the PC’s next upload then makes a new link & says so (`sync_link_expired`).
+  bytes; the PC’s next upload, finding its own code retired, makes a new code & says so
+  (`sync_link_expired`). That copy is only for this one-year case.
 
 ### Operations
 
@@ -166,25 +186,32 @@ Built in #133. Planned location (not yet created): src/lib/sync/follow.ts. The U
 [sync-setup.md](sync-setup.md) (#131). See
 [the decision record](decisions/2026-10-28-sync-follow-the-save.md).
 
-- **Lanes.** Each device is in exactly one lane, recorded in device state: its save is on this
-  computer (the courier), its save is on another device (a follower), or it tracks by hand, the
-  default. Switching lanes erases the device’s progress, & a following lane starts only on empty
-  progress: the erase lands in the same write as the first applied save, so a setup abandoned midway
-  changes nothing. Restoring a backup & a new farm stay inside a lane. See
+- **Lanes.** Each device is in exactly one lane: its save is on this computer (the courier), its
+  save is on another device (a follower), or it tracks by hand, the default. The lane & the follow
+  key live in the progress key’s device-only `local` section, so the lane change & the erase are one
+  write. A following lane is recorded only in the write that erases progress & applies the first
+  save; until then the key lives only in the page, so a setup that fails, finds no save, or is
+  abandoned leaves nothing behind. The computer lane is recorded at “Yep!”, in the write that
+  applies its first save. Leaving the computer lane retires its code only after that leaving write
+  lands, never at a confirmation.
+- **The erase.** Switching lanes, “Stop syncing”, & Data’s reset in a syncing lane all write fresh
+  progress & history & remove the receipt, the lane, & the key. They keep `farmSwitchBackup`, which
+  no export carries, & any pending retire. Restoring a backup & a new farm stay inside a lane. See
   [sync-setup.md](sync-setup.md#lanes).
 - **Opening a link.** A device opens the link, scans its QR code with the tracker’s own scanner (the
   one the transfer card uses), or pastes it. The page strips the fragment from its address bar,
-  stores the key in device state, outside stored progress & backups, & fetches the latest envelope.
+  holds the key in the page (see Lanes), & fetches the latest envelope. An “empty” mailbox shows
+  `sync_waiting` & changes nothing; a “retired” one shows `sync_retired`.
 - **Nothing is spent.** Opening a link only reads, so a chat app’s link preview or a stream viewer
   can’t take anything from the player. A leaked link can read saves until the PC makes a new one;
   that’s accepted, since a save holds nothing close to personal data.
-- **One link per device.** A follower follows one link at a time; opening another asks first, & the
-  next save applies with the usual rules. “Stop syncing” erases the device & returns it to tracking
-  by hand. A retired or missing link says the PC isn’t sharing on it anymore & keeps all progress
-  until the player stops following.
+- **One link per device.** A follower follows one link at a time; opening another asks first,
+  offering a backup, since a farm switch replaces the one farm-switch backup; the next save applies
+  with the usual rules. “Stop syncing” erases the device & returns it to tracking by hand. A retired
+  code says the PC isn’t sharing on it anymore & keeps all progress until the player stops syncing.
 - **The courier’s computer has no link to open.** Its tracker already applies its own saves (see
   [The courier](#the-courier)); a link opened there says the save is already on this computer.
-  Stopping there also retires the link.
+  Leaving the lane there also retires its code (see Lanes).
 - **iOS & iPadOS.** Links, including Camera scans, open in the default browser, never in the home
   screen app, & that browser follows like any other device. Following in the home screen app means
   opening the link there; check-offs made in the browser move by backup & restore, since their
@@ -192,8 +219,10 @@ Built in #133. Planned location (not yet created): src/lib/sync/follow.ts. The U
 - **“One PC” means one browser profile.** Two profiles make two links, & a device follows one.
 
 Tests cover the HKDF derivation against fixed vectors, a tampered envelope, an envelope replayed
-under another mailbox ID, an upload without the write token, recreating a retired ID, & an older
-envelope served again.
+under another mailbox ID, an upload without the write token, recreating a retired ID, a create on an
+existing ID under another token, a lower counter after a higher one, an older envelope served again,
+an empty mailbox, “Make a new code” during the kill switch, a retire that lands only after a retry,
+& a following setup whose first fetch fails before any write.
 
 ## Followers
 
@@ -203,23 +232,28 @@ every follower.
 
 - **One tab leads** (Web Locks).
 - **It never applies** while its store is quarantined or in the “newer data” state, & never uses
-  manual import’s unlock path. In the newer-data state, “Export backup” returns the stored blob
-  verbatim (the choice in PR #158 for #106, provisional until it merges), so a blocked device still
-  gives the player a copy.
+  manual import’s unlock path; on the sharing PC the courier still uploads. In the newer-data state,
+  “Export backup” returns the stored blob verbatim (the choice in PR #158 for #106, provisional
+  until it merges), so a blocked device still gives the player a copy.
 - **One write path.** Progress, provenance, resolved diffs, the farm-switch backup, & a “last
-  applied” receipt (the mailbox ID, the envelope’s counter, & the save’s hash) share one storage
-  key. Every writer (auto-save, sync, restore, reset, migration) goes through one function (#127),
-  serialized by a Web Lock that re-reads & validates before writing. The pagehide flush keeps
-  today’s compare-before-write. The receipt never goes into exports or restores.
+  applied” receipt (the mailbox ID, the envelope’s counter, & the save’s hash), plus the lane & the
+  follow key, share one storage key. Every writer (auto-save, sync, restore, reset, migration) goes
+  through one function (#127), serialized by a Web Lock that re-reads & validates before writing.
+  The pagehide flush keeps today’s compare-before-write. The receipt never goes into exports or
+  restores.
 - **Each apply is one immediate write** through that function, & the receipt advances only through
   that write.
-- **The latest save wins.** An envelope whose counter isn’t above the receipt’s is skipped, so a
-  repeated or replayed envelope changes nothing. A newer envelope that arrives while a question
-  waits replaces the save the question was about.
+- **The latest save wins.** An envelope is skipped only when its mailbox ID matches the receipt’s &
+  its counter isn’t above the receipt’s, so a new code’s envelopes always apply; the PC’s own
+  applies skip by the save’s hash. Either way, so a repeated or replayed save changes nothing. A
+  newer envelope that arrives while a question waits replaces the save the question was about.
 - **Recomputed questions.** If progress or the save changed while a question waited, the diff is
   recomputed & the question asked again where its effect changed.
 - **Crashes.** A crash before the write applies the latest envelope again on the next open; one
   after it skips that envelope by the receipt.
+- **A save it can’t read** (after a game update, the computer can’t read it either) shows
+  `sync_unreadable_away_title` here & keeps progress as it is; followers get no other notice from
+  the PC, only the freshness slip.
 - **Extraction** returns values, per-field completeness, & diagnostics together, telling
   known-but-untracked IDs from unknown ones (#125).
 

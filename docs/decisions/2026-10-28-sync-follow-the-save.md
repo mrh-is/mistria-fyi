@@ -40,9 +40,10 @@ made on.
 - **Any number of followers.** One device per PC kept manual edits from needing conflict rules
   between devices. Followers never exchange edits, so a new phone, a second phone, or the iPhone app
   just opens the link again.
-- **The relay is a mailbox.** It keeps the latest envelope per link, overwritten by each upload &
-  deleted 30 days after it was sent. There are no confirmations, delivery states, or lapses. Only
-  the PC’s write token writes; followers never authenticate.
+- **The relay is a mailbox.** It keeps the latest envelope per link, overwritten by each newer
+  upload (a high-water counter refuses older ones) & deleted 30 days after it was sent. There are no
+  confirmations, delivery states, or lapses. Only the PC’s write token writes; followers never
+  authenticate.
 - **Three lanes, one per device.** A device’s save is on this computer, its save is on another
   device, or it tracks by hand. The computer with the save shares it, & its own tracker updates from
   the same save, applied locally, without being told it “follows itself”. Nothing is read-only.
@@ -52,7 +53,8 @@ made on.
   (2026-10-28).
 - **A leaked link is accepted.** Anyone holding it can read saves until the PC makes a new link,
   which retires the old one for every follower. A save holds progress & the player’s & farm’s names,
-  nothing close to personal data, so perfect secrecy isn’t a goal. A follower can’t write.
+  nothing close to personal data, so perfect secrecy isn’t a goal. A follower can’t write: the code
+  appears only after its mailbox exists under the PC’s token.
 
 ## Alternatives
 
