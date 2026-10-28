@@ -1,3 +1,16 @@
+---
+id: 2026-10-20-save-driven-sync
+status: needs-review
+summary: >-
+  Historical scope: Save-driven sync. Current applicability is unverified.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-20-save-driven-sync.md#decision
+relationships: []
+---
+
 # Save-driven sync
 
 ## Context

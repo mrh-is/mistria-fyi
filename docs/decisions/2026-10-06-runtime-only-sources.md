@@ -1,12 +1,27 @@
+---
+id: 2026-10-06-runtime-only-sources
+status: needs-review
+summary: >-
+  Model each grant as what the game does, not as a named pseudo-quest:
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-06-runtime-only-sources.md#decision
+relationships: []
+---
+
 # Runtime-only sources get their real mechanism
 
 ## Context
 
-#471: 12 source IDs had no name in any locale. Eleven were story quests the reviewed overrides
-invented for runtime-only grants, and one was the `abyss` treasure-chest tier, which has no
-`treasure_box_abyss` item. #389 pinned them in an `UNNAMED_SOURCE_IDS` allowlist that rendered
-title-cased IDs (“Great Bird 0”). Tracing `seals.toml`, `cutscenes.toml`, and the decompiled GML
-showed that none of them is a quest, and most have a precise mechanism the contract can express.
+[mrh-is/mistria-fyi-private#471](https://github.com/mrh-is/mistria-fyi-private/issues/471): 12
+source IDs had no name in any locale. Eleven were story quests the reviewed overrides invented for
+runtime-only grants, and one was the `abyss` treasure-chest tier, which has no `treasure_box_abyss`
+item. [mrh-is/mistria-fyi-private#389](https://github.com/mrh-is/mistria-fyi-private/issues/389)
+pinned them in an `UNNAMED_SOURCE_IDS` allowlist that rendered title-cased IDs (“Great Bird 0”).
+Tracing `seals.toml`, `cutscenes.toml`, and the decompiled GML showed that none of them is a quest,
+and most have a precise mechanism the contract can express.
 
 ## Decision
 
@@ -30,7 +45,9 @@ Model each grant as what the game does, not as a named pseudo-quest:
 
 `UNNAMED_SOURCE_IDS` is deleted; every source name now resolves or throws.
 
-The same PR (#417) moves the English definite article for stores out of the tracker contract into
+The same PR
+([mrh-is/mistria-fyi-private#417](https://github.com/mrh-is/mistria-fyi-private/issues/417)) moves
+the English definite article for stores out of the tracker contract into
 `src/lib/utils/en-grammar.ts`.
 
 ## Alternatives

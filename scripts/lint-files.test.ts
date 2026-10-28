@@ -9,6 +9,8 @@ describe("changed-file lint", () => {
   it("preserves the full script scopes & zero-warning checks", () => {
     const commands = lintCommands(undefined, false);
     expect(commands).toContainEqual(["run", "lint:shell"]);
+    expect(commands).toContainEqual(["run", "decisions"]);
+    expect(lintCommands(undefined, true)).not.toContainEqual(["run", "decisions"]);
     expect(commands).toContainEqual(["exec", "node", "scripts/check-lint-directives.ts"]);
     expect(lintCommands(undefined, true)).not.toContainEqual([
       "exec",
@@ -70,6 +72,26 @@ describe("changed-file lint", () => {
     expect(lintCommands([], true)).toEqual([]);
     expect(lintCommands(["README.md"], true)).toEqual([
       ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "README.md"],
+    ]);
+  });
+
+  it("validates the entire decision graph when a relevant file changes", () => {
+    const relevant = [
+      "docs/decisions/new.md",
+      "docs/decision-index.md",
+      "docs/decision-metadata.md",
+      "scripts/decision-index.ts",
+      "scripts/decision-index.test.ts",
+    ];
+    expect(relevant).toHaveLength(5);
+    for (const file of relevant) {
+      expect(lintCommands([file], false)).toContainEqual(["run", "decisions"]);
+      expect(lintCommands([file], true)).not.toContainEqual(["run", "decisions"]);
+    }
+    expect(lintCommands(["docs/unrelated.md"], false)).not.toContainEqual(["run", "decisions"]);
+    expect(lintCommands([String.raw`docs\decisions\new.md`], false)).toContainEqual([
+      "run",
+      "decisions",
     ]);
   });
 

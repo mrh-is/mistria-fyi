@@ -1,3 +1,16 @@
+---
+id: 2026-10-21-sync-apply-rules
+status: needs-review
+summary: >-
+  Historical scope: Sync apply rules. Current applicability is unverified.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-21-sync-apply-rules.md#decision
+relationships: []
+---
+
 # Sync apply rules
 
 ## Context

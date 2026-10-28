@@ -1,3 +1,13 @@
+---
+id: 2026-10-20-preauthorize-worktree-setup
+status: current
+summary: >-
+  Standard isolated worktree setup is preauthorized; setup failures still require stop & report.
+evidence:
+  - AGENTS.md
+relationships: []
+---
+
 # Preauthorize standard worktree setup
 
 ## Context

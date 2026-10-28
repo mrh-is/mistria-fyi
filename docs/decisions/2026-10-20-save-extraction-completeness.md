@@ -1,3 +1,27 @@
+---
+id: 2026-10-20-save-extraction-completeness
+status: amended
+summary: >-
+  Mistmare perks are now tracked instead of known-but-untracked. The completeness policy retains its
+  scope.
+review: >-
+  Other extraction details have not been re-audited against current save logic in this documentation
+  change.
+evidence:
+  - docs/decisions/2026-10-22-mistmare-perks.md
+  - src/lib/engine/untracked-save-ids.ts
+relationships:
+  - type: amended-by
+    target: 2026-10-22-mistmare-perks
+    scope: partial
+    portion: >-
+      Only the Mistmare perk example in Three classes of ID. The complete/unknown distinction &
+      conservative removal rules are not replaced.
+    evidence:
+      - docs/decisions/2026-10-22-mistmare-perks.md
+      - src/lib/engine/untracked-save-ids.ts
+---
+
 # Save extraction completeness
 
 ## Context

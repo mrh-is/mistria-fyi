@@ -1,3 +1,18 @@
+---
+id: 2026-10-22-perks-count-toward-completion
+status: needs-review
+summary: >-
+  Every perk is a completion step. A skill is complete at level 60 with every perk in its tiers
+  bought; the skills total counts each level and each perk as one step. The Mistmare's perks count
+  toward the animals total and the Mount section the same way.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-22-perks-count-toward-completion.md#decision
+relationships: []
+---
+
 # Perks count toward completion
 
 ## Context

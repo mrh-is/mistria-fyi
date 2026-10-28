@@ -1,3 +1,16 @@
+---
+id: 2026-10-12-pnpm-managed-node-runtime
+status: needs-review
+summary: >-
+  Historical scope: pnpm-managed Node runtime. Current applicability is unverified.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-12-pnpm-managed-node-runtime.md#decision
+relationships: []
+---
+
 # pnpm-managed Node runtime
 
 ## Context
