@@ -9,8 +9,8 @@ you check things off on this PC or on your phone? Each browser ends up in one ro
 
 Status: screens & copy in review on #131. Every state has a mockup on the
 [design canvas](https://claude.ai/artifact/UhDfkQVf4Csu7eN9RcBStx); [Screens](#screens) embeds a
-sheet per canvas row, all rendered after round two of the design review. The happy path is approved;
-error & notice screens are first drafts.
+sheet per canvas row, from the [design package](design/sync-setup/README.md), which also holds the
+generator & the review history. The happy path is approved; error & notice screens are first drafts.
 
 ## Mental model
 
@@ -456,56 +456,56 @@ Write like a chill, non-judgmental friend helping with a tech setup.
 
 ## Screens
 
-One sheet per canvas row, rendered from version 45, some sheets from 44. PC boards are cropped to
-the 512 px column.
+One sheet per canvas row, rendered from canvas version 49 & kept in the
+[design package](design/sync-setup/README.md). PC boards are cropped to the 512 px column.
 
 ### First look
 
-![The Home card on a PC & a phone, the setup page’s two paths, & “How it works”](https://github.com/user-attachments/assets/932814fc-2601-430c-94c3-b4b0a0055f9c)
+![The Home card on a PC & a phone, the setup page’s two paths, & “How it works”](design/sync-setup/sheets/01-first.png)
 
 ### Setup on the PC
 
-![Self-updating & import setup, the pairing code with “Send this PC’s progress too”, the copied link’s longer window, the match step, connecting the save, the PC’s farm check, sending this PC’s progress, a refused skip, the different-farm note, & sending the save](https://github.com/user-attachments/assets/9a09c8fc-663e-4bde-a15c-0a43aa0fad40)
+![Self-updating & import setup, the pairing code with “Send this PC’s progress too”, the copied link’s longer window, the match step, connecting the save, the PC’s farm check, sending this PC’s progress, a refused skip, the different-farm note, & sending the save](design/sync-setup/sheets/02-pc-setup.png)
 
 ### Setup on the phone
 
-![The install step & its skipped fold, pairing, the scanner, the Camera dialog, the match code, the PC’s-progress question & its endings, & success](https://github.com/user-attachments/assets/90581a5a-1eb0-42b4-8837-8a3f7e0b9b9b)
+![The install step & its skipped fold, pairing, the scanner, the Camera dialog, the match code, the PC’s-progress question & its endings, & success](design/sync-setup/sheets/03-phone-setup.png)
 
 ### Mac & Linux
 
-![A Mac’s setup page, pairing by link, the Proton save folder, & CrossOver](https://github.com/user-attachments/assets/3d8f1386-4513-4a4f-97c6-6f76146bf576)
+![A Mac’s setup page, pairing by link, the Proton save folder, & CrossOver](design/sync-setup/sheets/04-desktops.png)
 
 ### Setup hiccups
 
-![An expired code, a rejected match, a code scanned first by someone else, a slow confirmation, a blocked camera, a spent code, a link that doesn’t parse, offline, the robot check, too many codes, sync unreachable or paused on either device, a pairing link opened on a relay, pairing full, a phone that can’t pair yet, & the wrong file](https://github.com/user-attachments/assets/d68f1934-590a-402a-bb21-bb17e9fac948)
+![An expired code, a rejected match, a code scanned first by someone else, a slow confirmation, a blocked camera, a spent code, a link that doesn’t parse, offline, the robot check, too many codes, sync unreachable or paused on either device, a pairing link opened on a relay, pairing full, a phone that can’t pair yet, & the wrong file](design/sync-setup/sheets/05-hiccups.png)
 
 ### Data management
 
-![Data regrouped into Pairing & Data, the paired settings, the self-updating import card, a drag-only “Use a different save”, the unpair dialog, & the phone’s paired settings](https://github.com/user-attachments/assets/a854ebac-b4ad-42c5-953d-d67074d940c0)
+![Data regrouped into Pairing & Data, the paired settings, the self-updating import card, a drag-only “Use a different save”, the unpair dialog, & the phone’s paired settings](design/sync-setup/sheets/06-data.png)
 
 ### A new phone
 
-![The PC’s “bring your progress first” dialog, the back-up, restore, & pair steps, & “My old phone’s gone”](https://github.com/user-attachments/assets/2b6ffa21-6d0b-463f-9646-ae7e1ff11a79)
+![The PC’s “bring your progress first” dialog, the back-up, restore, & pair steps, & “My old phone’s gone”](design/sync-setup/sheets/07-new-phone.png)
 
 ### The relay dashboard
 
-![The centered relay card, no save yet, the delivery states, carried progress pending, the phone unpaired, the read-only guide & its toast, dark mode, & the re-drop dashboard](https://github.com/user-attachments/assets/5d6c1097-393e-4cba-a927-3a3d14e666f7)
+![The centered relay card, no save yet, the delivery states, carried progress pending, the phone unpaired, the read-only guide & its toast, dark mode, & the re-drop dashboard](design/sync-setup/sheets/08-dash.png)
 
 ### When the relay needs you
 
-![Takeovers for an unreadable save, a browser restart, a lapsed pairing, & a pause, plus the field notes](https://github.com/user-attachments/assets/3817add4-6f9f-4db5-bd45-6ed2a7f217b0)
+![Takeovers for an unreadable save, a browser restart, a lapsed pairing, & a pause, plus the field notes](design/sync-setup/sheets/09-trouble.png)
 
 ### Living with it on the phone
 
-![The quiet sync button, its panel, the slips, the field notes, & the farm question](https://github.com/user-attachments/assets/26246f36-c526-428a-b375-46f642588dcf)
+![The quiet sync button, its panel, the slips, the field notes, the PC’s progress with its backup, saves waiting on a blocked store, & the farm question](design/sync-setup/sheets/10-phone.png)
 
 ### Moving to the iPhone app
 
-![The app’s first launch, bringing progress over, the PC’s replace note, & the browser after the move](https://github.com/user-attachments/assets/5e50e9f3-a588-4079-9710-b83632e794ac)
+![The app’s first launch, bringing progress over, the PC’s replace note, & the browser after the move](design/sync-setup/sheets/11-iphone.png)
 
 ### The self-updating tracker
 
-![The self-updating PC’s sync panel, its restart & error notes, & the farm question](https://github.com/user-attachments/assets/59a7349a-71ce-496e-81e3-0b8122b41d7b)
+![The self-updating PC’s sync panel, its restart & error notes, & the farm question](design/sync-setup/sheets/12-self.png)
 
 ## Copy
 
