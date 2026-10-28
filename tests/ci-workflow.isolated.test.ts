@@ -11,6 +11,7 @@ import { STEPS } from "../scripts/verify.js";
 
 interface Workflow {
   concurrency?: { "cancel-in-progress"?: boolean; group?: string };
+  env?: Record<string, string>;
   jobs?: Record<string, WorkflowJob>;
   on?: {
     pull_request?: null | { paths?: string[] };
@@ -26,6 +27,7 @@ interface Workflow {
 interface WorkflowJob {
   concurrency?: Workflow["concurrency"];
   container?: string | { image?: string; options?: string };
+  env?: Record<string, string>;
   if?: string;
   needs?: string | string[];
   outputs?: Record<string, string>;
@@ -315,6 +317,30 @@ describe("CI workflow jobs", () => {
       const nodeIndex = steps.findIndex((entry) => entry.uses?.startsWith("actions/setup-node@"));
       expect(nodeIndex).toBeGreaterThan(-1);
       expect(steps[nodeIndex].with?.["node-version-file"]).toBe(".node-version");
+    }
+  });
+
+  it("restores the store that holds the pnpm-managed Node in every pnpm/setup job", () => {
+    // The cache archive's paths are relative to the workspace, which the container mounts
+    // elsewhere, so container jobs keep a store of their own that one of them saves.
+    const savers: Record<string, string> = { build: "host", pwa: "container" };
+    const mainPush = "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}";
+    const setupJobs = Object.entries(jobs).filter(([, job]) =>
+      job.steps?.some((step) => step.uses?.startsWith("pnpm/setup@")),
+    );
+    expect(setupJobs.map(([name]) => name)).toEqual(
+      expect.arrayContaining(["audit", ...installJobs]),
+    );
+    expect(workflow.env?.pnpm_config_store_dir).toBeUndefined();
+    for (const [name, job] of setupJobs) {
+      const inContainer = job.container !== undefined;
+      expect(job.env?.pnpm_config_store_dir).toBe(inContainer ? "/__w/.pnpm-store" : undefined);
+      const setup = job.steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
+      expect(setup?.with?.cache).toBe(true);
+      expect(setup?.with?.["save-cache"]).toBe(name in savers ? mainPush : false);
+    }
+    for (const [name, kind] of Object.entries(savers)) {
+      expect(jobs[name].container !== undefined).toBe(kind === "container");
     }
   });
 
