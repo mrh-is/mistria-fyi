@@ -11,6 +11,7 @@ prefix_rule(
             "check:routes",
             "check:built",
             "data:diff",
+            "decisions",
             "dev",
             "fonts:check",
             "fonts:lint",
