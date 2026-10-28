@@ -42,9 +42,9 @@ importer reads is present in both, with early progress as empty lists.
 ## Shape
 
 1. **Setup** (designed in [sync-setup.md](sync-setup.md), #131). Drag your save onto the tracker
-   once. The page shows the save folder’s path as copyable text for Explorer. It encourages
-   installing the app & keeping its window open, but requires neither. The feature is named for what
-   it does, “Sync from game”.
+   once. The page shows the save folder’s path as copyable text for Explorer (or the platform’s file
+   manager). It encourages installing the app & keeping its window open, but requires neither. Home
+   invites with “Get set up” on a PC & “Sync from my PC” on a phone.
 2. **The PC tab is a courier.** It watches the save, prunes it, encrypts it, & writes it to the
    relay.
 3. **The relay holds one encrypted bundle per pairing** until the phone confirms it.
@@ -139,6 +139,11 @@ player reveals it, so a covered code never counts against the pairing cap. Hidin
 keeps the same offer & countdown. The offer expires after a couple of minutes & disappears once
 paired. The phone strips the offer from its address bar.
 
+A revealed code also offers “Copy link”, the same URL as text, for a computer with no camera to aim
+(#131). The player carries it across however they like & opens or pastes it there. It is answered
+like a Camera-opened URL, & the six-digit match guards it the same way, so a link that leaks in a
+chat log is no worse than a QR shown on stream.
+
 ### Handshake
 
 The phone answers through the relay. Both sides mix the secret into the key derivation, & the reply
@@ -169,6 +174,28 @@ Version 1 pins the suite, with no negotiation:
   stays retrievable for the pairing’s life.
 - Every pairing has a generation. Tokens, counters, confirmations, & unpairing carry it, so messages
   from an old pairing are ignored.
+
+### Carrying the PC’s progress
+
+A PC that already holds progress can send it once when it pairs, so a phone starts with everything
+the player checked off on the PC, not only what the save contains (#131,
+[the decision record](decisions/2026-10-28-sync-carry-pc-progress.md)). “Send this PC’s progress
+too” is checked by default whenever the PC holds progress.
+
+- **Payload.** The PC’s stored progress in the restorable backup format, with provenance &
+  resolutions, encrypted like any bundle & marked as progress inside the ciphertext. The backup
+  format is versioned & migrates forward, so a phone on a newer build reads an older PC’s progress;
+  a phone on an older build says which device is behind, as for a save.
+- **Order.** It is the pairing’s first bundle. The courier holds the first save until the phone
+  confirms the progress bundle, since the slot keeps one bundle & a higher sequence replaces it.
+- **Apply.** The phone merges it additively, the way a transfer code merges today: anything checked
+  off on either side stays checked off, & manual provenance stays manual. It never replaces, so it
+  can’t wipe the phone. A phone with progress has already asked “Keep what I have” or “Start fresh”
+  before scanning; starting fresh erases the phone first, through the one write path.
+- **Once.** Re-pairing doesn’t resend unless the player checks the box again. The PC’s own stored
+  progress stays untouched while it relays.
+- **Size.** Progress is far smaller than a pruned save, so the 256 KB bundle cap holds; confirm on a
+  late-game backup.
 
 ### Device state & copy
 
@@ -215,9 +242,10 @@ apply rules (#129) & the single write path (#127).
 
 ### Freshness
 
-The phone shows “Last synced from game {time ago}” & learns the typical gap between syncs. When it
-opens after an abnormally long gap, a toast says so. There are no push notifications. Describe sync
-as best effort until real sessions prove it.
+The phone’s toolbar sync button opens a panel saying when the last save came, & the phone learns the
+typical gap between syncs. When it opens after an abnormally long gap, the button gets a dot & a
+slip (“No saves in 5 days”). There are no push notifications. Describe sync as best effort until
+real sessions prove it.
 
 ## Applying a bundle
 
