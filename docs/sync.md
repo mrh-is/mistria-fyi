@@ -17,7 +17,8 @@ second screen on a phone. Progress has to cross from the gaming PC to the phone 
 no server that can read it. Sync moves saves from the game to one device. The only other thing it
 carries is the PC’s stored progress, once, when a phone pairs (see
 [Carrying the PC’s progress](#carrying-the-pcs-progress)); check-offs made on the phone never travel
-back.
+back. Accounts were reconsidered after the setup design review & kept out of v1
+([the decision record](decisions/2026-10-28-sync-stay-account-less.md)).
 
 ## What the probe found
 
