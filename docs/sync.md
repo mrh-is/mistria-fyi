@@ -48,9 +48,9 @@ importer reads is present in both, with early progress as empty lists.
 
 1. **Setup** (#131, [sync-setup.md](sync-setup.md)). Drag your save onto the tracker on the PC once.
    The page shows the save folder’s path as copyable text for Explorer, uploads the save at once, &
-   shows the PC’s follow link as a covered QR code & “Copy link”. Opening the link on another device
-   follows the save. The page encourages installing the app & keeping its window open, but requires
-   neither.
+   shows the PC’s follow link as a covered QR code (player copy calls it a code) & “Copy link”.
+   Opening the link on another device follows the save. The page encourages installing the app &
+   keeping its window open, but requires neither.
 2. **The PC is a courier & a tracker.** It watches the save, prunes it, encrypts it, & uploads it, &
    its own tracker applies the same save locally.
 3. **The relay holds the latest encrypted save per link,** for any number of followers.
@@ -85,7 +85,7 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
   receiver path as a follower (see [Followers](#followers)) but without the relay. Check-offs on the
   PC stay on the PC, like any device’s.
 - **One courier per profile.** Web Locks allow a single courier per browser profile; a second window
-  says “Already sharing in another window”.
+  says “Your save file is already syncing in another window”.
 - **Errors.** A parse failure after a game update shows an error on the PC.
 - **App updates.** A waiting update reloads the courier at its own safe moment, for example right
   after an upload (see [App updates](#app-updates)).
@@ -101,8 +101,8 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
 
 ### The follow link
 
-The link is `https://mistria.fyi/follow#<key>`, where the key is 32 random bytes in base64url, made
-by the PC when the player first drops a save. The fragment never reaches a server. HKDF-SHA-256 over
+The link is `https://mistria.fyi/sync#<key>`, where the key is 32 random bytes in base64url, made by
+the PC when the player first drops a save. The fragment never reaches a server. HKDF-SHA-256 over
 the key derives two values:
 
 - **The mailbox ID** (128 bits, info `mistria-follow v1 id`), the only part the relay sees.
@@ -125,7 +125,7 @@ One Durable Object per mailbox ID.
 - **Read.** Anyone with the ID gets the latest envelope (with an ETag), or subscribes over a
   hibernating WebSocket. Reads need no token & write nothing. Persisted state survives eviction &
   deploys.
-- **Retire.** “Make a new link” & “Stop sharing” delete the envelope with the write token & leave a
+- **Retire.** “Make a new code” & “Stop syncing” delete the envelope with the write token & leave a
   tombstone, so the ID can never be created again. Every follower holds the sealing key, so a
   follower that could recreate a retired ID with its own token could write saves to the others.
 - **Nothing else.** No confirmations, delivery states, or ordering checks at the relay. A follower
@@ -148,9 +148,9 @@ One Durable Object per mailbox ID.
 ### Operations
 
 - **Kill switch.** A flag in the singleton object, flipped by an authenticated admin request (a
-  dashboard variable would be dropped by the next deploy). “Sync is taking a break” applies to
-  uploads & creation on the next request, while reads & retiring still go through. Manual tracking
-  still works.
+  dashboard variable would be dropped by the next deploy). “Sync’s taking a nap” applies to uploads
+  & creation on the next request, while reads & retiring still go through. Manual tracking still
+  works.
 - **Logging.** Request logging stays off.
 - **Takedown.** [takedown.md](takedown.md) gains a relay section.
 - **Tests** run the Durable Object in Miniflare. Deploying needs the maintainer’s Cloudflare login.
@@ -177,9 +177,9 @@ Built in #133. Planned location (not yet created): src/lib/sync/follow.ts. The U
   can’t take anything from the player. A leaked link can read saves until the PC makes a new one;
   that’s accepted, since a save holds nothing close to personal data.
 - **One link per device.** A follower follows one link at a time; opening another asks first, & the
-  next save applies with the usual rules. “Stop following” erases the device & returns it to
-  tracking by hand. A retired or missing link says the PC isn’t sharing on it anymore & keeps all
-  progress until the player stops following.
+  next save applies with the usual rules. “Stop syncing” erases the device & returns it to tracking
+  by hand. A retired or missing link says the PC isn’t sharing on it anymore & keeps all progress
+  until the player stops following.
 - **The courier’s computer has no link to open.** Its tracker already applies its own saves (see
   [The courier](#the-courier)); a link opened there says the save is already on this computer.
   Stopping there also retires the link.
@@ -223,9 +223,9 @@ every follower.
 
 ### Freshness
 
-A follower shows “Last save from your game {time ago}” & learns the typical gap between saves. When
-it opens after an abnormally long gap, a toast says so. There are no push notifications. Describe
-sync as best effort until real sessions prove it.
+A follower shows “Last save file from your game: {time}” & learns the typical gap between saves.
+When it opens after an abnormally long gap, a toast says so. There are no push notifications.
+Describe sync as best effort until real sessions prove it.
 
 ## Applying a bundle
 
@@ -335,9 +335,10 @@ plus `info.creation_version`, parsed tolerantly (#128).
 ## Versions
 
 The envelope carries a protocol version, & both sides are strict: a follower accepts only its own
-version. An older envelope shows “Update the tracker on your PC”, & a newer one “Update this
-tracker”; a reload fixes either. App builds do not matter. (Transfer QR codes, by contrast, bind to
-the exact app build; see [transfer-format.md](transfer-format.md).)
+version. An older envelope says the tracker on the computer needs a refresh, & a newer one that this
+tracker does (`sync_update_computer` & `sync_update_here` in [sync-setup.md](sync-setup.md#copy)); a
+reload fixes either. App builds do not matter. (Transfer QR codes, by contrast, bind to the exact
+app build; see [transfer-format.md](transfer-format.md).)
 
 ## App updates
 
