@@ -134,7 +134,9 @@ replaces the old one & names the device it replaces.
 ### The offer
 
 The QR is a URL whose fragment carries a single-use offer: a one-time ID, the PC’s ephemeral P-256
-public key, & a random 128-bit secret. The QR expires after a couple of minutes & disappears once
+public key, & a random 128-bit secret. The QR starts covered; the PC mints the offer only when the
+player reveals it, so a covered code never counts against the pairing cap. Hiding & showing it again
+keeps the same offer & countdown. The offer expires after a couple of minutes & disappears once
 paired. The phone strips the offer from its address bar.
 
 ### Handshake
@@ -154,7 +156,15 @@ Version 1 pins the suite, with no negotiation:
 
 - The relay records each offer’s stage (offered, answered, accepted), so either side can retrieve it
   again until the QR expires. The phone shows “Paired” only once the PC accepts.
-- Expiry blocks new answers, but an accepted result stays retrievable for the pairing’s life.
+- **Accepting takes a person.** Once a device answers, the PC & that device each show the same
+  six-digit code derived from the handshake transcript, & the player confirms the match on the PC.
+  “No match” discards the offer & mints a fresh one. See
+  [the decision record](decisions/2026-10-27-sync-pairing-confirm.md).
+- **A spent offer says so.** A device that answers an offer someone else already answered gets
+  “Someone else scanned this code first”, & no code to match, so the player rejects on the PC.
+- **Expiry** blocks new answers. An answered offer stays confirmable for two minutes after the
+  answer, even past the QR’s own expiry; after that both sides say to start over. An accepted result
+  stays retrievable for the pairing’s life.
 - Every pairing has a generation. Tokens, counters, confirmations, & unpairing carry it, so messages
   from an old pairing are ignored.
 
@@ -163,12 +173,14 @@ Version 1 pins the suite, with no negotiation:
 - Pairing keys & counters stay on each device, outside stored progress & backups.
 - A “Paired with {device}” toast, “Unpair” on both sides, & a “Don’t show this on stream” hint
   complete the flow.
-- On iOS outside the installed app, the page says “Scan this from the tracker app” instead of
-  pairing, because Safari’s storage is separate.
+- On iOS & iPadOS outside the installed app, the page says to scan from the tracker app instead of
+  pairing, because every browser there keeps storage apart from the app. The scan has to use the
+  app’s own scanner: the system Camera app opens codes in Safari.
 - “One PC” means one browser profile. Two profiles are two couriers, & pairing either replaces the
   phone’s pairing; the setup copy says so, & nothing enforces it.
 
-Tests cover a substituted relay key, a replayed offer, & a reply lost across a relay restart.
+Tests cover a substituted relay key, a replayed offer, a spent offer answered again, a mismatched
+confirmation code, & a reply lost across a relay restart.
 
 ## The phone
 

@@ -31,8 +31,11 @@ on the device where it was checked off.
 | Self-updating tracker | The PC running the game | Yes                        | Its own watched save                         |
 | Relay                 | The PC running the game | No; the guide is read-only | Its own watched save, mirrored for reference |
 
-- A browser is a tracker until setup makes it something else. Turning a relay off makes it a tracker
-  again, with whatever progress it had before.
+- A browser is a tracker until setup makes it something else.
+- **A relay never touches stored progress.** Whatever the browser had tracked stays in storage,
+  untouched & hidden, while it relays. The read-only mirror lives in its own storage, outside stored
+  progress & backups, and is discarded when the relay is turned off. Turning it off shows the stored
+  progress again exactly as it was left.
 - **A self-updating tracker** watches the save the same way a relay does but applies it locally,
   with no phone & no network. Check-offs are safe there, because nothing leaves the browser.
 - **Why a relay doesn’t track.** If the PC tab took check-offs while relaying, they’d silently fail
@@ -56,9 +59,11 @@ flowchart TD
 
     START([Player starts setup]) --> DEVICE{{What device is this?}}:::detected
     DEVICE -->|PC| WHERE{Use the tracker here,<br/>or on another device?}:::asked
-    DEVICE -->|iPhone, in a browser| NUDGE[Suggest installing to the home screen<br/>dismissible]:::outcome
+    DEVICE -->|iPhone or iPad, in a browser| NUDGE[Suggest installing to the home screen<br/>dismissible]:::outcome
     DEVICE -->|Phone app, or Android| PHONE{Sync from your PC,<br/>or check off by hand?}:::asked
-    NUDGE --> PHONE
+    NUDGE --> IOSQ{Sync from your PC,<br/>or check off by hand?}:::asked
+    IOSQ -->|Sync| INSTALL[Install first: move progress,<br/>then pair from the app]:::outcome
+    IOSQ -->|By hand| MANUAL3[Manual tracking in the browser]:::outcome
 
     WHERE -->|Here| HOW{Import, or check off by hand?}:::asked
     HOW -->|By hand| MANUAL[Manual tracking<br/>no more setup]:::outcome
@@ -71,13 +76,16 @@ flowchart TD
     WATCH2 -->|No| REDROP[Relay that re-drops the save each time<br/>+ “Chrome or Edge can do this automatically”]:::outcome
 
     PHONE -->|Sync| PAIR[Pair with your PC<br/>then the PC continues as a relay]:::outcome
+    WHERE -.->|PC has progress| MOVE[Offer to move it first]:::outcome
     PHONE -->|By hand| MANUAL2[Manual tracking<br/>no more setup]:::outcome
 ```
 
 - **Import defaults to self-updating.** A player who picks “import” on a PC that can watch files
   gets the self-updating tracker without being asked; the one-time import is the fallback.
-- **The installed-app nudge is dismissible.** A player can keep using the tracker in the browser;
-  the nudge only explains that the browser & the home screen app don’t share data.
+- **The installed-app nudge is dismissible, but sync isn’t available without the app.** A player can
+  keep checking things off in an iOS browser. Choosing sync there leads only to installing (see
+  [Moving to the installed app](#moving-to-the-installed-app-on-iphone)); the browser never pairs,
+  because pairing keys don’t travel in backups and would stay stuck in the browser.
 - **“How it works”** (the mental model) sits beside the first question, collapsed but clearly
   labeled. Curious players open it; ready players skip it.
 - **The choice is remembered,** and Data leads with it. The other paths stay one tap away.
@@ -85,16 +93,18 @@ flowchart TD
 
 ### What the app can detect
 
-| Check                     | How                                                                                                                         | Confidence                         |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| PC or phone               | User-Agent Client Hints `mobile`, a coarse pointer, & screen size; onboarding already has an override (“I’m on a computer”) | Heuristic; keep the override       |
-| Installed or in a browser | `matchMedia("(display-mode: standalone)")`; `navigator.standalone` on iOS                                                   | Reliable on iOS & Android          |
-| iPhone browser            | iOS user agent & not standalone                                                                                             | Reliable                           |
-| Can watch a file          | Feature checks for `FileSystemObserver` & drag-and-drop file handles                                                        | Reliable; Firefox & Safari fail it |
+| Check                     | How                                                                                                                                              | Confidence                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| PC or phone               | User-Agent Client Hints `mobile` (Chrome & Edge only), plus a coarse pointer & screen size everywhere; onboarding’s “I’m on a computer” override | Heuristic; keep the override              |
+| Installed or in a browser | `matchMedia("(display-mode: standalone)")`; `navigator.standalone` on iOS                                                                        | Reliable on iOS & Android                 |
+| iPhone or iPad browser    | iOS user agent, or `Macintosh` with `navigator.maxTouchPoints > 1` (iPad Safari reports a Mac), & not standalone                                 | Reliable for iPhone; heuristic for iPad   |
+| Can watch a file          | Feature checks for `FileSystemObserver` & drag-and-drop file handles                                                                             | Shows support only; behavior pending #130 |
 
-- **Every iOS browser behaves like Safari here.** All iOS browsers, Firefox included, run on WebKit,
-  and a home screen web app keeps its own storage apart from the browser that added it. Confirm on
-  Firefox for iPhone during #130.
+- **Every iOS & iPadOS browser behaves like Safari here.** All of them, Firefox included, run on
+  WebKit, and a home screen web app keeps its own storage apart from the browser that added it.
+  Confirm on Firefox for iPhone during #130.
+- **File watching is a capability check, not a promise.** A browser can have `FileSystemObserver`
+  and still lose the file when the game replaces it instead of rewriting it; #130 checks that.
 - **Android needs no nudge.** An app installed from Chrome shares its storage with Chrome, so the
   data is already there. Installing stays optional.
 
@@ -103,27 +113,36 @@ flowchart TD
 New players meet the tree in onboarding, and every path stays reachable from Data later, so a player
 who starts by hand and comes back for sync goes through the same tree. Changing roles later:
 
-- **Tracker → relay.** Progress already on the PC is kept but set aside while it’s a relay, and
-  comes back if the relay is turned off. Things checked off by hand don’t come along in the save, so
-  setup first offers to move them: export a backup on the PC, restore it on the phone, then pair.
+- **Tracker or self-updating tracker → relay.** Whenever the PC already holds progress, however
+  setup was reached (the tree, Data, or `mistria.fyi/sync`), setup first offers to move it, since
+  things checked off by hand don’t come along in the save. The offer depends on the phone:
+  - **Empty phone:** export a backup on the PC & restore it on the phone, then pair.
+  - **Phone with progress:** restore would replace the phone’s progress, so the player chooses which
+    side to keep. Keeping the PC’s makes the phone export its own backup first, then restores. There
+    is no additive transfer of a backup; the first save’s questions (#135) handle the rest.
+  - Either way the PC’s stored progress stays where it is, untouched, while it relays.
 - **Tracker → self-updating tracker.** The first watched save applies through the apply rules
   (#129), like any sync, so earlier check-offs aren’t overwritten blindly.
 - **Phone with progress → paired.** The first save asks “Is this the farm you’ve been tracking?” and
   merges through the apply rules (#135).
-- **Any role → tracker.** Turning sync off keeps everything already on the device.
+- **Relay → tracker.** Turning the relay off discards the mirror and shows the stored progress
+  exactly as it was left.
+- **Paired phone → unpaired.** Turning sync off keeps everything already on the phone.
 
 ## Sync setup journey
 
 Setup starts on whichever device the player is holding. Starting on the phone, it says to open
 `mistria.fyi/sync` on the PC; arriving there implies “another device”, so the PC skips that
-question. Either way, pairing comes first, then the save.
+question, but still makes the move offer when it holds progress. Either way, pairing comes first,
+then the save. The phone scans with the app’s own scanner; on iPhone, the Camera app would open the
+code in Safari, which shows the “scan from the tracker app” page instead.
 
 | Step | On the PC                                                 | On the phone                                    |
 | ---- | --------------------------------------------------------- | ----------------------------------------------- |
 | 1    | Picks “another device” (or arrives at `mistria.fyi/sync`) |                                                 |
 | 2    | Shows a covered pairing code, then “Show code”            | Opens `mistria.fyi/sync`, taps “Scan the code”  |
 | 3    |                                                           | Scans the code, then says to check the PC       |
-| 4    | Asks “Was that you?”; the player says yes                 | “You’re paired!” & waits for the first save     |
+| 4    | Shows a six-digit code; the player confirms it matches    | Shows the same code, then “You’re paired!”      |
 | 5    | Connect the save: copy the folder path, drag the file in  |                                                 |
 | 6    | Sends the save                                            | “It worked!”: progress appears                  |
 | 7    | Stays on the relay dashboard while the player plays       | Updates each time the player sleeps in the game |
@@ -152,13 +171,15 @@ iOS keeps a browser’s data apart from the home screen app, so the app can’t 
   there & restoring it here. Dismissible.
 - Restore (not import) is right here, since the app is empty: it carries manual check-offs &
   provenance intact.
+- **Then pair from the app.** Only the installed app pairs; a browser that already has progress
+  keeps it for manual tracking, & never pairs.
 
 ## Living with it
 
 | Stage           | Relay (PC)                                                          | Tracker (phone)                                                            |
 | --------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | Playing         | Dashboard open; nothing to do                                       | “Updated from your PC {time ago}” stamp                                    |
-| Away for days   | Pairing lapses after 14 days unseen; dashboard says to re-pair      | Toast on open after an unusually long gap: is the relay still open?        |
+| Away for days   | Pairing lapses after 14 days unseen; dashboard says to re-pair      | Toast after an unusually long gap; after the lapse, says to pair again     |
 | Browser restart | Asks to re-allow reading the save (one click; “every visit” sticks) | Nothing                                                                    |
 | Game update     | Can’t read the save: takes over the dashboard                       | Keeps its last good progress; stamp ages                                   |
 | App update      | Reloads itself at a safe moment                                     | Same; a version mismatch names the device that’s behind                    |
@@ -166,6 +187,11 @@ iOS keeps a browser’s data apart from the home screen app, so the app can’t 
 | New farm        | Drop the new save                                                   | Asks “Is this the farm you’ve been tracking?”; backs up the old one (#135) |
 | Kill switch     | “Sync is taking a break”                                            | Same; tracking by hand still works                                         |
 | Stop syncing    | “Turn off sync”: back to a tracker                                  | Unpaired; keeps everything                                                 |
+| Non-Chrome PC   | Re-drop the save after each session to send it                      | Updates whenever a save is re-dropped                                      |
+
+The self-updating tracker lives with the same stages on one device: a browser restart asks to
+re-allow reading the save, a game update shows the error in place of progress updates, & a new farm
+asks “Is this the farm you’ve been tracking?” through the apply rules.
 
 ## Voice
 
@@ -190,7 +216,13 @@ When UI & copy resume, write like a chill, non-judgmental friend helping with a 
 - Steam Deck is unresearched; the PC/phone override covers it until #130 looks at its browsers.
 - On iPhone, moving from a browser to the installed app goes through backup export & restore,
   offered before installing and on the app’s first launch.
-- The PC confirms whoever scans the code, so a leaked code can’t silently redirect sync. See
+- Pairing is confirmed by matching a six-digit code shown on both devices, derived from the
+  handshake, so a leaked code can’t silently redirect sync. See
   [the decision record](decisions/2026-10-27-sync-pairing-confirm.md).
-- The pairing code starts covered; showing it is deliberate.
-- Device names derive locally from the browser; renaming is out of scope for v1.
+- The pairing code starts covered; showing it mints the offer, & hiding it doesn’t restart it.
+- Device names derive locally from the browser and only label a pairing; they never decide anything.
+  Renaming is out of scope for v1.
+- An iOS or iPadOS browser never pairs; sync there means installing the app first.
+- Moving PC progress to a phone that already has some asks which side to keep, & backs up the phone
+  first.
+- A relay leaves stored progress untouched; its mirror lives apart & is discarded on turn-off.
