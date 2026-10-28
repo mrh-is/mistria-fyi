@@ -159,31 +159,43 @@ describe("createInstallationTokenProvider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("gives each concurrent caller its own exchange when nothing is cached", async () => {
-    // Workers can't share pending I/O across request contexts, so concurrent callers never await
-    // one shared exchange; only a settled token is shared.
-    const resolvers: ((response: Response) => void)[] = [];
-    const fetchMock = vi.fn(
-      () =>
-        new Promise<Response>((resolve) => {
-          resolvers.push(resolve);
-        }),
-    );
-    const provider = createInstallationTokenProvider({ fetch: fetchMock, now: () => NOW_MS });
+  it.each([
+    [0, 1],
+    [1, 0],
+  ])(
+    "gives each concurrent caller its own exchange (fetch %i settles before fetch %i)",
+    async (firstSettled, lastSettled) => {
+      // Workers can't share pending I/O across request contexts, so concurrent callers never await
+      // one shared exchange; only a settled token is shared.
+      const resolvers: ((response: Response) => void)[] = [];
+      const fetchMock = vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolvers.push(resolve);
+          }),
+      );
+      const provider = createInstallationTokenProvider({ fetch: fetchMock, now: () => NOW_MS });
 
-    const first = provider.getToken(credentials());
-    const second = provider.getToken(credentials());
-    await vi.waitFor(() => {
+      const first = provider.getToken(credentials());
+      const second = provider.getToken(credentials());
+      await vi.waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      });
+      const expiresAt = new Date(NOW_MS + 60 * 60 * 1000);
+      const tokens = ["ghs_exchange_0", "ghs_exchange_1"];
+      // JWT signing can reorder fetch arrival, so identify exchanges by fetch order, not caller order.
+      resolvers[firstSettled]?.(tokenResponse(tokens[firstSettled], expiresAt));
+      await expect(Promise.race([first, second])).resolves.toBe(tokens[firstSettled]);
+      await expect(provider.getToken(credentials())).resolves.toBe(tokens[firstSettled]);
+
+      resolvers[lastSettled]?.(tokenResponse(tokens[lastSettled], expiresAt));
+
+      const results = await Promise.all([first, second]);
+      expect(results.toSorted()).toEqual(tokens);
+      await expect(provider.getToken(credentials())).resolves.toBe(tokens[lastSettled]);
       expect(fetchMock).toHaveBeenCalledTimes(2);
-    });
-    const expiresAt = new Date(NOW_MS + 60 * 60 * 1000);
-    resolvers[0]?.(tokenResponse("ghs_first", expiresAt));
-    resolvers[1]?.(tokenResponse("ghs_second", expiresAt));
-
-    await expect(Promise.all([first, second])).resolves.toEqual(["ghs_first", "ghs_second"]);
-    await expect(provider.getToken(credentials())).resolves.toBe("ghs_second");
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
+    },
+  );
 
   it("does not reuse a token cached for another installation", async () => {
     const expiresAt = new Date(NOW_MS + 60 * 60 * 1000);
