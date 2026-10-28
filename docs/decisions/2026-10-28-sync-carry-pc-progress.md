@@ -14,11 +14,18 @@ restore replaces whatever the phone already had, & the transfer QR is deprecated
 - **Pairing carries it.** When the PC holds progress, pairing shows “Send this PC’s progress too”,
   checked. After the phone confirms the pairing, the PC sends its stored progress once, as the
   pairing’s first bundle, in the restorable backup format, encrypted like any save bundle.
-- **The phone merges it additively,** keeping manual provenance, before the first save applies. It
-  never replaces. The courier holds the first save until the phone confirms the progress bundle.
+- **The phone checks the farm, then merges additively,** through a new `mergeProgress` with a rule
+  per fact kind, keeping each fact’s provenance, before the first save applies. A different farm is
+  a farm switch, with the phone’s own farm backed up. The courier holds saves until the relay
+  records the progress bundle as applied, & the PC can skip the progress if the phone can’t take it.
 - **The phone decides about its own progress** before scanning: keep it (the PC’s adds on top) or
-  start fresh (erase this phone first). The PC can’t see the phone’s data before pairing, so it
-  doesn’t ask.
+  start fresh. Starting fresh replaces the phone’s progress only in the write that applies the first
+  incoming bundle, & keeps the outgoing state as a backup. The PC can’t see the phone’s data before
+  pairing, so it doesn’t ask.
+- **This narrows the original sync decision.** The
+  [save-driven sync record](2026-10-20-save-driven-sync.md) says manual check-offs never travel
+  between devices; the PC’s stored progress now travels once, at pairing, & check-offs made on the
+  phone still never travel back.
 - **The PC’s stored progress stays untouched** while it relays.
 
 ## Alternatives

@@ -14,8 +14,10 @@ in the decision record.
 
 Tabbing between a fullscreen game & a browser on the same PC is not workable, so the tracker is a
 second screen on a phone. Progress has to cross from the gaming PC to the phone with no accounts &
-no server that can read it. Sync only ever moves a save from the game to one device. Manual ticks
-never travel between devices.
+no server that can read it. Sync moves saves from the game to one device. The only other thing it
+carries is the PC’s stored progress, once, when a phone pairs (see
+[Carrying the PC’s progress](#carrying-the-pcs-progress)); check-offs made on the phone never travel
+back.
 
 ## What the probe found
 
@@ -71,8 +73,9 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
   for a late-game farm than the epic’s figure suggests.
 - **Envelope.** The file name, modification time, & `playtime` travel inside the ciphertext, never
   beside it.
-- **One courier per profile.** Web Locks allow a single courier per browser profile; a second window
-  says “Already syncing in another window”.
+- **One courier per profile.** Web Locks allow a single courier per browser profile; a second tab
+  says “Another tab’s already the relay”. A self-updating tracker holds the same lock, so its local
+  writer & a relay never run at once (see [Roles & transitions](#roles--transitions)).
 - **Errors.** A parse failure after a game update shows an error on the PC.
 - **App updates.** A waiting update reloads the courier at its own safe moment, for example right
   after a send (see [App updates](#app-updates)).
@@ -96,20 +99,33 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
 - The relay keeps its high-water mark after the slot empties. The phone also rejects any bundle
   whose sequence does not increase.
 - `playtime` is not checked at the relay, because new games & older saves legitimately lower it.
+- **Delivery has three states,** & the PC’s copy names the one it knows. _Uploaded_ is a bundle in
+  the slot. _Received_ is the phone reporting that it holds that sequence & is waiting on the
+  player: a question, or a blocked store. _Applied_ is the confirmation, which the relay records as
+  the last applied sequence before it empties the slot. So an empty slot tells an applied bundle
+  from an expired one, & “Last sent” never claims more than the PC knows.
 
 ### Caps & expiry
 
-- Pairing creation is gated by Turnstile (server-side Siteverify) & capped account-wide (about 50 a
-  day) by a singleton object.
+- **Offers & pairings are capped separately,** because the PC mints an offer each time the player
+  reveals a code, & “No, it doesn’t” or a stream viewer racing codes spends more. Turnstile
+  (server-side Siteverify) runs invisibly when pairing setup opens, & the token is redeemed when the
+  first offer is minted. Each client may mint a few offers in 10 minutes, & minting is capped
+  account-wide at about 500 a day. Accepted pairings, the expensive part, are capped account-wide at
+  about 50 a day by a singleton object. A failed challenge & a full day are states of their own on
+  the PC, with no code shown.
 - Each pairing caps its own writes (about one a minute, 60 a day). The caps are sized so the worst
   case (about 3,000 uploads & 9,000 Durable Object row writes a day, an estimate) fits Workers
   Free’s 100,000 row writes with room to spare, so no separate budget check exists. Raise the caps
   if usage ever warrants it.
 - Bundles are capped at 256 KB.
 - The slot empties once the phone confirms, with a 48-hour expiry as the backstop. An expired bundle
-  is never served, & its deletion retries.
-- A pairing record unseen for 14 days is dropped, & the PC shows “last seen”. “Unpair” on either
-  side tells the relay, queued if offline.
+  is never served, & its deletion retries. A courier that sees its bundle expired unapplied
+  re-uploads its latest one, & the game writes a save on loading anyway, so the next session
+  resends.
+- A pairing record unseen by either device for 90 days is dropped, & any request from either device
+  renews it. The PC shows “last seen”. A record is a few hundred bytes, so a long holiday doesn’t
+  force a re-pair. “Unpair” on either side tells the relay, queued if offline.
 - The phone receives bundles over a hibernating WebSocket instead of polling. Persisted state
   survives eviction & deploys.
 
@@ -165,10 +181,10 @@ Version 1 pins the suite, with no negotiation:
   “Paired” only once the PC accepts.
 - **Accepting takes a person.** Once a device answers, the PC & that device each show the same
   six-digit code derived from the handshake transcript, & the player confirms the match on the PC.
-  “No match” discards the offer & mints a fresh one. See
+  “No, it doesn’t” discards the offer & mints a fresh one. See
   [the decision record](decisions/2026-10-27-sync-pairing-confirm.md).
 - **A spent offer says so.** A device that answers an offer someone else already answered gets
-  “Someone else scanned this code first”, & no code to match, so the player rejects on the PC.
+  “Someone else got to this code first”, & no code to match, so the player rejects on the PC.
 - **Expiry** blocks new answers. An answered offer stays confirmable for two minutes after the
   answer, even past the QR’s own expiry; after that both sides say to start over. An accepted result
   stays retrievable for the pairing’s life.
@@ -180,28 +196,60 @@ Version 1 pins the suite, with no negotiation:
 A PC that already holds progress can send it once when it pairs, so a phone starts with everything
 the player checked off on the PC, not only what the save contains (#131,
 [the decision record](decisions/2026-10-28-sync-carry-pc-progress.md)). “Send this PC’s progress
-too” is checked by default whenever the PC holds progress.
+too” is checked by default on the PC’s first pairing & unchecked when it re-pairs, since a relay’s
+stored progress stops changing once it relays.
 
-- **Payload.** The PC’s stored progress in the restorable backup format, with provenance &
-  resolutions, encrypted like any bundle & marked as progress inside the ciphertext. The backup
-  format is versioned & migrates forward, so a phone on a newer build reads an older PC’s progress;
-  a phone on an older build says which device is behind, as for a save.
-- **Order.** It is the pairing’s first bundle. The courier holds the first save until the phone
-  confirms the progress bundle, since the slot keeps one bundle & a higher sequence replaces it.
-- **Apply.** The phone merges it additively, the way a transfer code merges today: anything checked
-  off on either side stays checked off, & manual provenance stays manual. It never replaces, so it
-  can’t wipe the phone. A phone with progress has already asked “Keep what I have” or “Start fresh”
-  before scanning; starting fresh erases the phone first, through the one write path.
-- **Once.** Re-pairing doesn’t resend unless the player checks the box again. The PC’s own stored
-  progress stays untouched while it relays.
-- **Size.** Progress is far smaller than a pruned save, so the 256 KB bundle cap holds; confirm on a
-  late-game backup.
+- **Payload.** The PC’s stored progress in the restorable backup format, with provenance,
+  resolutions, & farm identity, compressed, then encrypted like any bundle & marked as progress
+  inside the ciphertext. The farm-switch backup stays behind.
+- **Announced.** The PC’s accept message says whether progress follows & names it with a transfer
+  ID, so the phone shows “Your PC’s progress is on its way” rather than waiting on a save, & both
+  devices persist the ID across reloads.
+- **Order.** It is the pairing’s first bundle, & the courier holds saves until the relay records it
+  as applied (see [Slots & sequences](#slots--sequences)); the slot keeps one bundle, & a higher
+  sequence would replace it. Meanwhile the courier keeps only the latest save & uploads it once the
+  barrier lifts, within the one-a-minute cap. If the progress bundle expires unapplied, the PC
+  re-uploads it under the same transfer ID. The PC shows the barrier (“Sending your progress” or
+  “Waiting on your phone”) with “Skip it”, which drops the progress & lifts the barrier; a phone
+  that can’t read the bundle reports that, & the PC offers the same skip.
+- **Farm first.** The phone compares the bundle’s farm with its own through `compareFarms` before
+  merging anything. The same farm merges. Unidentified progress on either side asks “Is this the
+  farm you’ve been tracking?” first. A different farm is a farm switch (see
+  [Farm identity](#farm-identity)): the phone backs up its own farm & takes the PC’s.
+- **Merge.** `mergeProgress` (#135, in `src/lib/engine/`) combines stored progress with carried
+  progress per fact kind & never removes anything. It differs from `mergeFromSave`, which records
+  `unknown` provenance because a transfer carries none.
+
+  | Fact kind               | Rule                                                                                 |
+  | ----------------------- | ------------------------------------------------------------------------------------ |
+  | Check-off               | Checked on either side stays checked; a PC uncheck never unchecks the phone          |
+  | Level                   | The higher one wins                                                                  |
+  | Quest                   | The further state wins                                                               |
+  | Household               | `mergeHousehold`, as for a manual import                                             |
+  | Provenance & `playtime` | Each fact keeps the stamp of the side its value came from; a tie keeps the phone’s   |
+  | Resolutions             | The phone keeps its own & gains the PC’s for facts whose value came from the PC      |
+  | Save baseline           | The higher `playtime`, so a later save still orders against both sides’ manual facts |
+
+  Property tests cover idempotence (merging twice changes nothing), that nothing checked is lost, &
+  that provenance follows the winning value.
+
+- **Start fresh.** A phone with progress asks before scanning: “Keep what I have” or “Start fresh”.
+  “Start fresh” only records the choice. The phone replaces its progress in the same write that
+  applies the first incoming bundle, progress or save, & keeps the outgoing state as the farm-switch
+  backup, so an abandoned or failed setup erases nothing.
+- **Versions.** The backup format migrates forward, so a newer phone reads an older PC’s progress.
+  An older phone that can’t read it says “Update this phone” (see [Versions](#versions)).
+- **Once.** It travels only when the box is checked. The PC’s own stored progress stays untouched
+  while it relays.
+- **Size.** A backup is mostly ID lists, so it compresses well below the 256 KB cap. Measuring a
+  compressed late-game backup is a #133 acceptance criterion; if one nears the cap, the bundle
+  splits under the same transfer ID.
 
 ### Device state & copy
 
 - Pairing keys & counters stay on each device, outside stored progress & backups.
-- A “Paired with {device}” toast, “Unpair” on both sides, & a “Don’t show this on stream” hint
-  complete the flow.
+- A “Paired with your {device}” summary, “Unpair” on both sides, & a “Streaming? Keep this off
+  screen.” hint complete the flow.
 - On iOS & iPadOS, a browser pairs like any phone, even though its storage is apart from the
   installed app. Moving to the app later restores a backup & pairs again from the app, replacing the
   browser’s pairing (#131, [sync-setup.md](sync-setup.md#moving-to-the-installed-app-on-iphone)).
@@ -215,6 +263,28 @@ Tests cover a substituted relay key, a replayed offer, a spent offer answered ag
 confirmation code, a reply lost across a relay restart, & a reload just after answering that spans
 the QR’s expiry.
 
+## Roles & transitions
+
+A PC browser is a tracker, a self-updating tracker, or a relay (the UX is in
+[sync-setup.md](sync-setup.md)). The role lives in device state, outside progress & backups, & tabs
+learn of a change through a `BroadcastChannel` & re-read it on focus.
+
+- **One writer.** The self-updating tracker & the relay both hold the courier’s Web Lock, so only
+  one tab watches the save. Other tabs of a relay are read-only, like the relay itself.
+- **Tracker or self-updating tracker → relay.** The commit point is the PC’s acceptance of the
+  match. Until then nothing changes, & Back, a reload, or a closed tab leaves the old role in place.
+  At acceptance the lock holder stops its local writer, flushes any pending write through the one
+  write path, & only then records the relay role & starts sending.
+- **Relay → tracker** (“Unpair”). The PC stops sending, records the tracker role, & shows its stored
+  progress as it was before relaying, which may be months old. It offers “Fill in from your latest
+  save”, a manual import of the watched save through the normal flow.
+- **What a relay hides.** Restore, import, reset, & the Danger Zone act on stored progress the relay
+  doesn’t show, so Data hides them while relaying & says to unpair first. “Export backup” stays &
+  says it holds the progress from before relaying.
+
+Tests cover a transition interrupted before acceptance, a second tab writing while the first becomes
+the relay, & unpairing with a pending mirror.
+
 ## The phone
 
 Built in #135. Planned location (not yet created): src/lib/sync/receiver.ts. It sits on top of the
@@ -224,7 +294,13 @@ apply rules (#129) & the single write path (#127).
 - **It never applies or confirms** while its store is quarantined or in the “newer data” state, &
   never uses manual import’s unlock path. In the newer-data state, “Export backup” returns the
   stored blob verbatim (the choice in PR #158 for #106, provisional until it merges), so a blocked
-  phone still gives the player a copy.
+  phone still gives the player a copy. A phone in either state doesn’t answer an offer: setup shows
+  the state & sends the player to Data before pairing, so a pairing never starts against a store
+  that can’t take its first bundle.
+- **Questions during setup** use the same tag dialog as any later sync. While one waits, the phone
+  reports the bundle as received (see [Slots & sequences](#slots--sequences)), & the PC says
+  “Waiting on your phone” instead of claiming success. Cancelling a question leaves the bundle
+  unapplied in the slot until the player answers or a newer save replaces it.
 - **One write path.** Progress, provenance, resolved diffs, the farm-switch backup, & a “last
   applied” receipt share one storage key. Every writer (auto-save, sync, restore, reset, migration)
   goes through one function (#127), serialized by a Web Lock that re-reads & validates before
@@ -354,10 +430,17 @@ plus `info.creation_version`, parsed tolerantly (#128).
 
 ## Versions
 
-The envelope carries a protocol version, & both sides are strict: the phone accepts only its own
-version & otherwise shows “Update the tracker on your PC”, which a reload fixes. App builds do not
-matter. (Transfer QR codes, by contrast, bind to the exact app build; see
-[transfer-format.md](transfer-format.md).)
+The envelope carries a protocol version, & both sides are strict: each accepts only its own. App
+builds do not matter. Two versions can disagree, & the message names whichever side is behind:
+
+- **Protocol.** The offer carries the PC’s protocol version. A phone with a different one doesn’t
+  answer, so a working pairing is never replaced by one that can’t sync. A lower PC version shows
+  “Update the tracker on your PC”; a lower phone version shows “Update this phone”. Each is a
+  reload.
+- **Backup format,** for carried progress only. Older formats migrate forward on the phone; a format
+  newer than the phone knows says “Update this phone” & reports back, so the PC offers to skip the
+  progress. (Transfer QR codes, by contrast, bind to the exact app build; see
+  [transfer-format.md](transfer-format.md).)
 
 ## App updates
 
