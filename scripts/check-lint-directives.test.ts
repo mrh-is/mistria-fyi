@@ -8,6 +8,7 @@ describe("unjustifiedDirectives", () => {
       "// oxlint-disable-next-line no-await-in-loop -- Steps run in order.",
       "  /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Runtime JSON. */",
       "<!-- eslint-disable-next-line svelte/no-at-html-tags -- Sanitized upstream. -->",
+      "<!-- eslint-disable-next-line svelte/no-at-html-tags -- Sanitized upstream. --!>",
       "const x = 1; // eslint-disable-line no-console -- Debug output.",
     ].join("\n");
     expect(unjustifiedDirectives(text)).toEqual([]);
@@ -19,8 +20,9 @@ describe("unjustifiedDirectives", () => {
       "/* eslint-disable */",
       "<!-- eslint-disable-next-line svelte/no-at-html-tags -->",
       "// eslint-disable-next-line no-console --",
+      "<!-- eslint-disable-next-line svelte/no-at-html-tags --!>",
     ].join("\n");
-    expect(unjustifiedDirectives(text)).toEqual([1, 2, 3, 4]);
+    expect(unjustifiedDirectives(text)).toEqual([1, 2, 3, 4, 5]);
   });
 
   it("ignores enable directives & prose that mentions a directive", () => {

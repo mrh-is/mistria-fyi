@@ -22,7 +22,7 @@ export function unjustifiedDirectives(text: string): number[] {
     if (match === null) {
       return [];
     }
-    const rest = (match[1] ?? match[2] ?? "").replace(/\s*(?:\*\/|-->)\s*$/, "");
+    const rest = (match[1] ?? match[2] ?? "").replace(/\s*(?:\*\/|--!?>)\s*$/, "");
     return REASON.test(rest) ? [] : [index + 1];
   });
 }
