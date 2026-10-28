@@ -8,7 +8,7 @@ you check things off on this PC or on your phone? Each browser ends up in one ro
 #131; the protocol is in [sync.md](sync.md).
 
 Status: screens & copy in review on #131. Every state has a mockup on the
-[design canvas](https://claude.ai/artifact/UhDfkQVf4Csu7eN9RcBStx) (version 45); [Screens](#screens)
+[design canvas](https://claude.ai/artifact/UhDfkQVf4Csu7eN9RcBStx) (version 46); [Screens](#screens)
 embeds a sheet per section. The happy path is approved; error & notice screens are first drafts.
 
 ## Mental model
@@ -273,6 +273,13 @@ with “Let’s do it” & a quieter “Skip, start the new phone fresh”.
 2. **Pair the new phone** with the PC, as usual. The old phone keeps its progress & stops getting
    saves.
 
+The old phone confirms the match, then shows “Waiting on your {device}…” while a question is open
+there, & “Sent!” only once the new phone has applied the progress. A new phone that already has
+progress gets the same “Keep what I have” or “Start fresh” choice, with the replace deferred. A
+relay can’t send a handoff; its Data has no “Move to Another Device”. See
+[sync.md](sync.md#handing-off-between-trackers) for the protocol, including the 10-minute window
+after acceptance.
+
 The handoff reuses pairing’s offer, handshake, & match code, & sends one progress bundle, the same
 payload as [Carrying the PC’s progress](#carrying-the-pcs-progress); see
 [sync.md](sync.md#carrying-the-pcs-progress). An empty receiver takes it whole, so this path needs
@@ -421,7 +428,7 @@ the 512 px column.
 
 ### A new phone
 
-![The PC’s “bring your progress first” dialog, its two steps, the old phone’s handoff code & match, & the new phone continuing to pairing](https://github.com/user-attachments/assets/9ee74194-0d4f-40a0-b294-827dcbcd32b9)
+![The PC’s “bring your progress first” dialog, its two steps, the old phone’s handoff code & match, & the new phone continuing to pairing](https://github.com/user-attachments/assets/2b6ffa21-6d0b-463f-9646-ae7e1ff11a79)
 
 ### The relay dashboard
 
@@ -684,6 +691,10 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_handoff_lead`             | Sends what’s on this phone, once. This phone keeps it too.                                                                     |
 | `sync_handoff_step`             | Scan this from your new phone                                                                                                  |
 | `sync_handoff_match`            | Does your new phone show this code?                                                                                            |
+| `sync_handoff_matched`          | Matched with your {device}                                                                                                     |
+| `sync_handoff_waiting_hint`     | It’s asking a question there. Answer it, and you’re done.                                                                      |
+| `sync_handoff_sent_title`       | Sent!                                                                                                                          |
+| `sync_handoff_sent_body`        | Your {device} has your progress, and this phone keeps it too. Now pair your {device} with your PC.                             |
 | `sync_handoff_received_title`   | Your progress is here                                                                                                          |
 | `sync_handoff_received_body`    | Everything from your {device} came over. Now pair this phone with your PC.                                                     |
 | `sync_unpair_title`             | Unpair your {device}?                                                                                                          |
