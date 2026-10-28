@@ -4,6 +4,9 @@ Read the relevant heading before implementation, dependency changes, asset work,
 configuration. Architecture, localization, styling, save formats, wiki APIs, & cloud setup retain
 their own canonical guides.
 
+Decision applicability & replacement links live in the [decision index](decision-index.md),
+generated from each record’s [metadata header](decision-metadata.md).
+
 ## Worktree mechanics
 
 Worktrees are optional; use them when several sessions work at once. Harness-created worktrees and

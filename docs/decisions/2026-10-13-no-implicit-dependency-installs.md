@@ -1,3 +1,20 @@
+---
+id: 2026-10-13-no-implicit-dependency-installs
+status: needs-review
+summary: >-
+  `pnpm-workspace.yaml` sets `verifyDepsBeforeRun: error`: `pnpm run` & `pnpm exec` fail on absent
+  or stale dependencies instead of installing them. Installation happens only through `pnpm install
+  --frozen-lockfile` or `node scripts/setup-worktree.ts`. The commands that must run before
+  dependencies exist, the machine doctor & worktree setup, lose their pnpm scripts and are invoked
+  with `node` directly, which also makes the doctor check the shell's real runtime.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-13-no-implicit-dependency-installs.md#decision
+relationships: []
+---
+
 # No implicit dependency installs
 
 ## Context

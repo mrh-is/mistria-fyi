@@ -1,3 +1,16 @@
+---
+id: 2026-10-19-squash-merge-only
+status: needs-review
+summary: >-
+  Pull requests merge by squash only. Tooling enforces this rather than prose, at two layers:
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-19-squash-merge-only.md#decision
+relationships: []
+---
+
 # Squash merge only
 
 ## Context

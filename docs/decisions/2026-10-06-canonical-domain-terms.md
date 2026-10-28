@@ -1,3 +1,25 @@
+---
+id: 2026-10-06-canonical-domain-terms
+status: amended
+summary: >-
+  The no-users premise & compatibility rationale were replaced by an explicit one-time-break
+  decision.
+review: >-
+  The remaining naming choices were not all revalidated against current code. The pre-launch break
+  does not authorize future schema breaks.
+evidence:
+  - docs/decisions/2026-10-07-no-pre-rename-migration.md
+relationships:
+  - type: superseded-by
+    target: 2026-10-07-no-pre-rename-migration
+    scope: partial
+    portion: >-
+      Only the No compatibility layer rationale based on there being no users. The replacement
+      acknowledges real progress & accepts the specific pre-rename break.
+    evidence:
+      - docs/decisions/2026-10-07-no-pre-rename-migration.md
+---
+
 # Canonical domain terms
 
 Superseded in part by
@@ -5,11 +27,12 @@ Superseded in part by
 
 ## Context
 
-Issue #633 (part of #373) found three concepts with several names each. Spoiler state read as
-`spoilered`, `hidden`, `redacted`, `known`, `revealed`, & `nameVisible`. Mine progress read as
-`minesLevel` (a generated condition type), `mines.floor`, `minesFloor`, & `mineFloor`. A villager's
-relationship level was `villagerLevels` in persisted state but `heartLevel` / `heartLevels` in
-conditions & contexts.
+Issue [mrh-is/mistria-fyi-private#633](https://github.com/mrh-is/mistria-fyi-private/issues/633)
+(part of [mrh-is/mistria-fyi-private#373](https://github.com/mrh-is/mistria-fyi-private/issues/373))
+found three concepts with several names each. Spoiler state read as `spoilered`, `hidden`,
+`redacted`, `known`, `revealed`, & `nameVisible`. Mine progress read as `minesLevel` (a generated
+condition type), `mines.floor`, `minesFloor`, & `mineFloor`. A villager's relationship level was
+`villagerLevels` in persisted state but `heartLevel` / `heartLevels` in conditions & contexts.
 
 ## Decision
 

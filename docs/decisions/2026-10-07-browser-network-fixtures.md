@@ -1,10 +1,29 @@
+---
+id: 2026-10-07-browser-network-fixtures
+status: needs-review
+summary: >-
+  Accessibility & PWA specs import one shared Playwright fixture. Browser-context routes fulfill
+  known sprite requests from four synthetic WebP icons, using a manifest of production dimensions &
+  missing assets. The fixture serves a local Turnstile UI stub, aborts known remote fonts to
+  exercise system-font fallback, & fails unhandled external requests. An independent request
+  observer detects page-route overrides; service-worker network fetches remain guarded while cached
+  responses remain usable.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-07-browser-network-fixtures.md#decision
+relationships: []
+---
+
 # Browser network fixtures
 
 ## Context
 
-Issue #692 requires browser suites to run without internet dependencies. Production builds contain
-CDN sprite & font URLs, & the feedback panel loads Turnstile. PWA tests must retain real
-service-worker registration, caching, & offline navigation.
+Issue [mrh-is/mistria-fyi-private#692](https://github.com/mrh-is/mistria-fyi-private/issues/692)
+requires browser suites to run without internet dependencies. Production builds contain CDN sprite &
+font URLs, & the feedback panel loads Turnstile. PWA tests must retain real service-worker
+registration, caching, & offline navigation.
 
 ## Decision
 

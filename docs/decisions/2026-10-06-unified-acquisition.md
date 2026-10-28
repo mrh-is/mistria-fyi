@@ -1,12 +1,30 @@
+---
+id: 2026-10-06-unified-acquisition
+status: needs-review
+summary: >-
+  One collector walk per native acquisition table emits item and recipe sources. `extractRecipes`
+  owns recipe identity, names, and native defaults; the acquisition layer owns acquired sources. A
+  scroll target resolves through the product-item map or an existing recipe ID, and an unresolved
+  target is a diagnostic. Assembly shares one requirement context and one stock requirement
+  projection across target kinds. Standalone recipe extraction invokes the same collectors.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-06-unified-acquisition.md#decision
+relationships: []
+---
+
 # Unified acquisition sources
 
 ## Context
 
 Recipe extraction and item acquisition each walked the same reward, store, and exploration tables,
-with different trigger, requirement, and deduplication rules (#413). Recipe scrolls could leak into
-item sources as raw IDs, while item letters could acquire a fabricated Spring 1 date. The v1.0.5
-birthday letters also contain real item rewards whose birthday, heart, and world-fact requirements
-need a truthful source.
+with different trigger, requirement, and deduplication rules
+([mrh-is/mistria-fyi-private#413](https://github.com/mrh-is/mistria-fyi-private/issues/413)). Recipe
+scrolls could leak into item sources as raw IDs, while item letters could acquire a fabricated
+Spring 1 date. The v1.0.5 birthday letters also contain real item rewards whose birthday, heart, and
+world-fact requirements need a truthful source.
 
 ## Decision
 

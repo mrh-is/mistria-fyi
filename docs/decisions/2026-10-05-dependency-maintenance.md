@@ -1,9 +1,26 @@
+---
+id: 2026-10-05-dependency-maintenance
+status: needs-review
+summary: >-
+  Disable routine Dependabot version-update PRs for npm & GitHub Actions; retain security alerts &
+  security-update PRs. Batch routine upgrades with compatibility checks. Refresh the intended
+  starting branch before creating agent worktrees, defaulting to `main`; fetch its remote tip
+  without modifying the shared checkout.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - https://github.com/dependabot/dependabot-core/issues/15904
+relationships: []
+---
+
 # Dependency maintenance
 
 ## Context
 
-Bulk dependency maintenance supersedes Dependabot PR #561. Agents also need a current starting
-branch before they begin work.
+Bulk dependency maintenance supersedes Dependabot PR
+[mrh-is/mistria-fyi-private#561](https://github.com/mrh-is/mistria-fyi-private/pull/561). Agents
+also need a current starting branch before they begin work.
 
 ## Decision
 

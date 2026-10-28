@@ -1,3 +1,16 @@
+---
+id: 2026-10-20-own-ui-components
+status: needs-review
+summary: >-
+  Historical scope: Own the ui components. Current applicability is unverified.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-20-own-ui-components.md#decision
+relationships: []
+---
+
 # Own the ui components
 
 ## Context

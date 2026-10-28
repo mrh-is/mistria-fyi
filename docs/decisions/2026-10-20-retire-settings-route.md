@@ -1,3 +1,17 @@
+---
+id: 2026-10-20-retire-settings-route
+status: needs-review
+summary: >-
+  Remove `/settings`, its prerender entries, & its redirect tests. Requests receive the normal
+  not-found page. `/data?section=import|transfer` remains the supported data-management entry point.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-20-retire-settings-route.md#decision
+relationships: []
+---
+
 # Retire the settings route
 
 ## Context

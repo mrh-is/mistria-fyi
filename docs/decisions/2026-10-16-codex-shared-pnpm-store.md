@@ -1,3 +1,20 @@
+---
+id: 2026-10-16-codex-shared-pnpm-store
+status: needs-review
+summary: >-
+  Use the machine’s shared global pnpm store across agents, shells, & worktrees. Set
+  `shell_environment_policy.set.pnpm_config_store_dir` & `sandbox_workspace_write.writable_roots` in
+  the user-level Codex config, with pnpm’s home as the writable root to cover the store & version
+  manager. Worktree setup requires the configured store; the doctor checks its location, effective
+  configuration, & writability.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-16-codex-shared-pnpm-store.md#decision
+relationships: []
+---
+
 # Codex shared pnpm store
 
 ## Context

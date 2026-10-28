@@ -1,3 +1,19 @@
+---
+id: 2026-10-27-search-reveal
+status: needs-review
+summary: >-
+  Both searches reveal every matching row automatically through the shared row-reveal controller,
+  without requiring scrolling or another action. Home search retains its ranked cross-category list
+  & category tags; category filters retain their section layout. Both keep the existing 200 ms input
+  debounce.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-27-search-reveal.md#decision
+relationships: []
+---
+
 # Search result reveal
 
 ## Context

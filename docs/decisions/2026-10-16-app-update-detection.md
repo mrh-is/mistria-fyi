@@ -1,3 +1,30 @@
+---
+id: 2026-10-16-app-update-detection
+status: amended
+summary: >-
+  Consent-based activation was replaced by updates at each page’s safe moment. Detection & retry
+  reasoning retain their scope.
+evidence:
+  - docs/decisions/2026-10-20-automatic-app-updates.md
+  - https://github.com/mrh-is/mistria-fyi/issues/111
+relationships:
+  - type: superseded-by
+    target: 2026-10-20-automatic-app-updates
+    scope: partial
+    portion: >-
+      Only waiting-worker consent, the Refresh prompt, & cross-tab activation/reload policy;
+      detection is unchanged.
+    evidence:
+      - docs/decisions/2026-10-20-automatic-app-updates.md
+      - https://github.com/mrh-is/mistria-fyi/issues/111
+    revisit:
+      condition:
+        Reloading other tabs without a prompt becomes acceptable, with each page waiting for its own
+        safe moment.
+      evidence: https://github.com/mrh-is/mistria-fyi/issues/111
+      authorization: https://github.com/mrh-is/mistria-fyi/issues/111
+---
+
 # App update detection
 
 Superseded by [2026-10-20-automatic-app-updates.md](2026-10-20-automatic-app-updates.md): updates

@@ -1,3 +1,20 @@
+---
+id: 2026-10-27-row-windows
+status: needs-review
+summary: >-
+  A source is “Later” while it or its row is a spoiler, while a progress gate the app already
+  records is unmet (`reachedSeason`, `quest`, `heartLevel`, `skillLevel`, `mineFloor`,
+  `perkUnlocked`, `hasUpperFloor`, `isDating`), or while it is out of season or weather. Otherwise
+  it is “Now” when a season or weather restriction holds today, & “Whenever” when nothing restricts
+  it. A row takes its best source: Now, then Whenever, then Later.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-27-row-windows.md#decision
+relationships: []
+---
+
 # Row windows follow progress & spoilers
 
 ## Context

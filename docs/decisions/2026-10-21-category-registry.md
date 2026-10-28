@@ -1,3 +1,22 @@
+---
+id: 2026-10-21-category-registry
+status: needs-review
+summary: >-
+  `engine/categories.ts` holds one entry per category. Every entry has a projection, which returns
+  the category's rows and the progress `totals` they add up to; a route and search are optional
+  capabilities. Progress, the completion predicate, & the overall total read projections' totals.
+  Search providers take search's own context (default availability windows, the player's
+  progression) and read their category's projection, so availability, applicability, & spoiler flags
+  come from the same rows progress counts. `CategoryKey` and `SearchCategoryKey` derive from the
+  registry.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-21-category-registry.md#decision
+relationships: []
+---
+
 # Categories are one registry of capabilities
 
 ## Context

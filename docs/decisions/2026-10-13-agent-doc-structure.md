@@ -1,3 +1,16 @@
+---
+id: 2026-10-13-agent-doc-structure
+status: current
+summary: >-
+  The root routes agents to workflow, verification, & technical references on demand.
+evidence:
+  - AGENTS.md
+  - docs/agent-reference.md
+  - docs/agent-verification.md
+  - docs/agent-workflow.md
+relationships: []
+---
+
 # Agent docs: lean root, on-demand guides
 
 ## Context

@@ -1,9 +1,21 @@
+---
+id: 2026-10-07-clear-acceptance-criteria
+status: current
+summary: >-
+  Clear existing issue criteria authorize implementation without a second approval checklist.
+evidence:
+  - AGENTS.md
+  - docs/agent-workflow.md
+relationships: []
+---
+
 # Clear acceptance criteria authorize implementation
 
 ## Context
 
 The agent workflow required another checklist approval even when an issue already supplied clear
-acceptance criteria. The maintainer requested removal of that duplicate gate while authorizing #689.
+acceptance criteria. The maintainer requested removal of that duplicate gate while authorizing
+[mrh-is/mistria-fyi-private#689](https://github.com/mrh-is/mistria-fyi-private/issues/689).
 
 ## Decision
 

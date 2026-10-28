@@ -1,3 +1,14 @@
+---
+id: 2026-10-20-playwright-browser-setup
+status: current
+summary: >-
+  Required missing Playwright components may be installed with the workspace version & external
+  cache.
+evidence:
+  - AGENTS.md
+relationships: []
+---
+
 # Installing missing Playwright browsers
 
 ## Context

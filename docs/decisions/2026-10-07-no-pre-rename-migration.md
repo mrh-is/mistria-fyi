@@ -1,3 +1,16 @@
+---
+id: 2026-10-07-no-pre-rename-migration
+status: needs-review
+summary: >-
+  Historical scope: No migration for pre-rename progress. Current applicability is unverified.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-07-no-pre-rename-migration.md#decision
+relationships: []
+---
+
 # No migration for pre-rename progress
 
 ## Context
@@ -5,9 +18,11 @@
 [The canonical domain terms decision](2026-10-06-canonical-domain-terms.md) renamed persisted keys
 (`completed.mines` → `completed.mineFloor` & `completed.spells`, `completed.villagerLevels` →
 `completed.heartLevels`) without a compatibility layer, on the premise that there were no users.
-Issue #643 found that premise false: #351 came from a returning player with real progress, and
-production quarantines any blob written before the rename. That record's “Revisit if” condition (the
-app gains users with saved state) now holds.
+Issue [mrh-is/mistria-fyi-private#643](https://github.com/mrh-is/mistria-fyi-private/issues/643)
+found that premise false:
+[mrh-is/mistria-fyi-private#351](https://github.com/mrh-is/mistria-fyi-private/issues/351) came from
+a returning player with real progress, and production quarantines any blob written before the
+rename. That record's “Revisit if” condition (the app gains users with saved state) now holds.
 
 ## Decision
 

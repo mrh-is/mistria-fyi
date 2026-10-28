@@ -1,3 +1,14 @@
+---
+id: 2026-10-28-review-record-format
+status: current
+summary: >-
+  Shared review IDs & dispositions are repository guidance; aggregation tooling remains deferred.
+evidence:
+  - docs/agent-verification.md
+  - https://github.com/mrh-is/mistria-fyi/pull/273
+relationships: []
+---
+
 # Review record format
 
 ## Context

@@ -1,11 +1,25 @@
+---
+id: 2026-10-05-visibility-condition-contexts
+status: needs-review
+summary: >-
+  Use one condition evaluator with explicit context adapters, preserving the existing semantics:
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-05-visibility-condition-contexts.md#decision
+relationships: []
+---
+
 # Visibility condition contexts
 
 ## Context
 
-Issue #432 consolidates the condition switches in `visibility.ts`. The switches previously read
-different facts: ordered quest category gates checked recorded acquisition & raw heart levels, while
-public visibility checked derived quest availability & effective heart levels. Combining those facts
-would change existing gates during a refactor.
+Issue [mrh-is/mistria-fyi-private#432](https://github.com/mrh-is/mistria-fyi-private/issues/432)
+consolidates the condition switches in `visibility.ts`. The switches previously read different
+facts: ordered quest category gates checked recorded acquisition & raw heart levels, while public
+visibility checked derived quest availability & effective heart levels. Combining those facts would
+change existing gates during a refactor.
 
 ## Decision
 

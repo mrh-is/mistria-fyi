@@ -1,9 +1,31 @@
+---
+id: 2026-10-06-source-name-gaps
+status: amended
+summary: >-
+  PR #41 removed the English monster chunk. Every locale now composes family & qualifier; the
+  location & water-name policies are retained.
+evidence:
+  - https://github.com/mrh-is/mistria-fyi/pull/41#issuecomment-6144929351
+  - src/lib/sources/source-names.ts
+relationships:
+  - type: superseded-by
+    target: 2026-10-28-composed-monster-names
+    scope: partial
+    portion: >-
+      Only monster naming & the English-filled monsters chunk. Location translations & unnamed
+      location/water messages retain their original scope.
+    evidence:
+      - https://github.com/mrh-is/mistria-fyi/pull/41#issuecomment-6144929351
+      - src/lib/sources/source-names.ts
+---
+
 # Source names the game doesn't translate
 
 ## Context
 
-#356 set out to replace interim machine-translated source names (locations, water types, & monster
-variants) with the game's own translations. The game assets only partly cover them:
+[mrh-is/mistria-fyi-private#356](https://github.com/mrh-is/mistria-fyi-private/issues/356) set out
+to replace interim machine-translated source names (locations, water types, & monster variants) with
+the game's own translations. The game assets only partly cover them:
 
 - Six source locations have translated `locations/<id>/name` keys. `farm`, `mines`, & `dungeon` have
   none.

@@ -1,3 +1,15 @@
+---
+id: 2026-10-20-farm-planner-geometry
+status: current
+summary: >-
+  The geometry amendment defines a coarse, lazy, independently removable pack; it does not claim the
+  planner is implemented.
+evidence:
+  - docs/takedown.md
+  - docs/decisions/2026-10-07-public-launch-posture.md
+relationships: []
+---
+
 # Farm planner geometry
 
 Amends [the public launch posture](2026-10-07-public-launch-posture.md).

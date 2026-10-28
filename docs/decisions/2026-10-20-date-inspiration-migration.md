@@ -1,3 +1,16 @@
+---
+id: 2026-10-20-date-inspiration-migration
+status: needs-review
+summary: >-
+  Historical scope: Duplicate Dates checklist removal. Current applicability is unverified.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-20-date-inspiration-migration.md#decision
+relationships: []
+---
+
 # Duplicate Dates checklist removal
 
 ## Context

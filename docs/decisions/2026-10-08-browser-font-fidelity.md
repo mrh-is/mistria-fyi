@@ -1,12 +1,33 @@
+---
+id: 2026-10-08-browser-font-fidelity
+status: needs-review
+summary: >-
+  CI fetches `https://assets.mistria.fyi/fonts/satoshi-regular.woff2` before the accessibility suite
+  with `scripts/playwright-satoshi.ts`, which verifies a pinned SHA-256 and writes it to the
+  gitignored `tests/browser/fixtures/local/`. `actions/cache` keys the file on that script’s hash,
+  so changing the pinned hash refetches it. The shared fixture serves the file when present & aborts
+  the request otherwise. A geometry test asserts `document.fonts.check("1em Satoshi")` after
+  loading; it fails in CI and skips with a warning locally. Local runs fetch only when a developer
+  runs the script.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-08-browser-font-fidelity.md#decision
+relationships: []
+---
+
 # Browser font fidelity
 
 ## Context
 
-#703 made the browser suites hermetic (see `2026-10-07-browser-network-fixtures.md`) by aborting
-Satoshi & the locale fonts, so `geometry.spec.ts` measured system fallback fonts instead of the
-production layout. #687 rules out weakening coverage. Satoshi’s ITF Free Font License v2.0 permits
-self-hosting & backup copies on our own infrastructure but prohibits redistribution & derivative
-works (#708).
+[mrh-is/mistria-fyi-private#703](https://github.com/mrh-is/mistria-fyi-private/issues/703) made the
+browser suites hermetic (see `2026-10-07-browser-network-fixtures.md`) by aborting Satoshi & the
+locale fonts, so `geometry.spec.ts` measured system fallback fonts instead of the production layout.
+[mrh-is/mistria-fyi-private#687](https://github.com/mrh-is/mistria-fyi-private/issues/687) rules out
+weakening coverage. Satoshi’s ITF Free Font License v2.0 permits self-hosting & backup copies on our
+own infrastructure but prohibits redistribution & derivative works
+([mrh-is/mistria-fyi-private#708](https://github.com/mrh-is/mistria-fyi-private/issues/708)).
 
 ## Decision
 
@@ -21,7 +42,7 @@ script.
 ## Alternatives
 
 - **Base64 Actions secret:** no network, but fork PRs get no secrets once the repository is public
-  (#671).
+  ([mrh-is/mistria-fyi-private#671](https://github.com/mrh-is/mistria-fyi-private/issues/671)).
 - **Metric-compatible substitute:** none exists, and deriving one from Satoshi needs ITF’s consent.
 - **Accept fallback fonts:** geometry would stop proving the production layout.
 

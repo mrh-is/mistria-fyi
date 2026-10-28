@@ -1,3 +1,20 @@
+---
+id: 2026-10-13-windows-worktree-processes
+status: needs-review
+summary: >-
+  Query `Win32_Process` through noninteractive PowerShell & conservatively preserve worktrees
+  referenced by absolute executable or command-line argument paths. Reuse the existing containment
+  check, using platform path APIs. Retain the idle-window guard for processes whose working
+  directory is their only connection to a worktree, inaccessible process records, & unavailable
+  enumeration.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-13-windows-worktree-processes.md#decision
+relationships: []
+---
+
 # Windows worktree protection
 
 ## Context

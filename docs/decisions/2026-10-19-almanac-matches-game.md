@@ -1,3 +1,20 @@
+---
+id: 2026-10-19-almanac-matches-game
+status: needs-review
+summary: >-
+  The game's own almanac code is the authority for almanac membership and completion. An entry is
+  one `recipe_key` group within a category's tags (`AlmanacMenu.gml`), where `recipe_key` defaults
+  to the item's ID, and completion comes from `items_acquired` alone. Acquiring any member marks the
+  whole group (`mark_item_as_acquired` in `Ari.gml`), which canonical-ID normalization already
+  mirrors.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-19-almanac-matches-game.md#decision
+relationships: []
+---
+
 # Almanac follows the game's own rules
 
 ## Context

@@ -1,3 +1,21 @@
+---
+id: 2026-10-27-feedback-preview-dry-run
+status: needs-review
+summary: >-
+  A Cloudflare Pages build of `main` is production; every other build runs feedback as a dry run.
+  `vite.config.ts` reads `CF_PAGES_BRANCH` at build time & defines `__PRODUCTION_DEPLOYMENT__`,
+  which `src/lib/server/deployment.ts` exports. The dry run keeps the origin, payload, & Turnstile
+  token checks, verifies Turnstile when its secret is set, & returns `{ dryRun: true }` without
+  touching GitHub or the email store. The panel shows a localized “Preview build” notice with no
+  issue link.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-27-feedback-preview-dry-run.md#decision
+relationships: []
+---
+
 # Dry-run feedback outside production
 
 ## Context
