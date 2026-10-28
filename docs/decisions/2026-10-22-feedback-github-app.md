@@ -1,3 +1,27 @@
+---
+id: 2026-10-22-feedback-github-app
+status: amended
+summary: >-
+  PR #243 ended the temporary personal-token transition. App JWTs, installation tokens, caching,
+  permissions, & safe logging retain their scope.
+review: >-
+  Personal token revocation remains unverified. Issue #242 proves production App use; the owner
+  authorized removal without claiming revocation.
+evidence:
+  - https://github.com/mrh-is/mistria-fyi/pull/243
+  - src/routes/api/feedback/+server.ts
+relationships:
+  - type: superseded-by
+    target: 2026-10-27-feedback-app-only
+    scope: partial
+    portion: >-
+      Only the Transition fallback & the alternative rejecting an immediate App-only switch.
+      Production now requires all three App settings.
+    evidence:
+      - https://github.com/mrh-is/mistria-fyi/pull/243
+      - src/routes/api/feedback/+server.ts
+---
+
 # Feedback GitHub App
 
 Supersedes the **Feedback** bullet of

@@ -1,3 +1,15 @@
+---
+id: 2026-10-27-feedback-app-only
+status: current
+summary: >-
+  Production requires three App settings; previews retain dry runs. Personal token revocation is not
+  claimed.
+evidence:
+  - https://github.com/mrh-is/mistria-fyi/pull/243
+  - src/routes/api/feedback/+server.ts
+relationships: []
+---
+
 # App-only feedback authentication
 
 ## Context

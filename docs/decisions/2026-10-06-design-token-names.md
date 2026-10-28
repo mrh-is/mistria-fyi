@@ -1,9 +1,23 @@
+---
+id: 2026-10-06-design-token-names
+status: needs-review
+summary: >-
+  Historical scope: Design token names. Current applicability is unverified.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-06-design-token-names.md#decision
+relationships: []
+---
+
 # Design token names
 
 ## Context
 
-Issue #579: many tokens in `src/app.css` didn't say what kind of value they held or what they were
-for. `--cat-*` read as "cat", `--fg-green` named a hue rather than a use, and `--ink`, `--paper`, &
+Issue [mrh-is/mistria-fyi-private#579](https://github.com/mrh-is/mistria-fyi-private/issues/579):
+many tokens in `src/app.css` didn't say what kind of value they held or what they were for.
+`--cat-*` read as "cat", `--fg-green` named a hue rather than a use, and `--ink`, `--paper`, &
 `--hairline` weren't recognizably colors. Category colors also had two names each (`--cat-museum` in
 `:root` & `--color-cat-museum` in `@theme`).
 

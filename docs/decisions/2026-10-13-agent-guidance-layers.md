@@ -1,3 +1,23 @@
+---
+id: 2026-10-13-agent-guidance-layers
+status: amended
+summary: >-
+  Shared review finding IDs & resolution semantics now live in the repository verification guide.
+evidence:
+  - docs/decisions/2026-10-28-review-record-format.md
+  - docs/agent-verification.md
+relationships:
+  - type: amended-by
+    target: 2026-10-28-review-record-format
+    scope: partial
+    portion: >-
+      Only the statement that review records leave the repository. Shared record semantics are now
+      repository guidance; posting & routing stay personal.
+    evidence:
+      - docs/decisions/2026-10-28-review-record-format.md
+      - docs/agent-verification.md
+---
+
 # Agent guidance layers
 
 ## Context
