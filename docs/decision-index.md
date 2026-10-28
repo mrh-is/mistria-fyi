@@ -136,6 +136,16 @@ Shared review IDs & dispositions are repository guidance; aggregation tooling re
 Evidence: [docs/agent-verification.md](../docs/agent-verification.md),
 [https://github.com/mrh-is/mistria-fyi/pull/273](https://github.com/mrh-is/mistria-fyi/pull/273).
 
+### [Follow the save, not a pairing](decisions/2026-10-28-sync-follow-the-save.md)
+
+ID: 2026-10-28-sync-follow-the-save. Status: Current.
+
+Devices follow the PC’s save through one long-lived link; only the save travels, so pairing, PC
+roles, & carried progress are gone.
+
+Evidence: [docs/sync.md](../docs/sync.md), [docs/sync-setup.md](../docs/sync-setup.md),
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)
@@ -348,6 +358,29 @@ They are now tracked beside appearances.
 
 Relationship evidence:
 [docs/decisions/2026-10-22-mistmare-perks.md](../docs/decisions/2026-10-22-mistmare-perks.md).
+
+### [Save-driven sync](decisions/2026-10-20-save-driven-sync.md)
+
+ID: 2026-10-20-save-driven-sync. Status: Partially superseded/amended.
+
+Following a link replaced pairing, one device per profile, & holding bundles until the phone
+confirms. The courier, end-to-end encryption, the strict protocol version, the kill switch, & the
+no-login constraint keep their scope.
+
+Evidence:
+[docs/decisions/2026-10-28-sync-follow-the-save.md](../docs/decisions/2026-10-28-sync-follow-the-save.md),
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
+
+Superseded by [Follow the save, not a pairing](decisions/2026-10-28-sync-follow-the-save.md).
+Affected portion: One device per browser profile, the pairing handshake (ECDH & its MAC),
+pairing-creation caps, & the relay holding each bundle until the phone confirms.
+
+Relationship evidence:
+[docs/decisions/2026-10-28-sync-follow-the-save.md](../docs/decisions/2026-10-28-sync-follow-the-save.md),
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
+
+Unresolved applicability: Do the remaining portions (the update-lock & cap reasoning) still apply
+unchanged? They were not revalidated while seeding issue #268.
 
 ### [Save extraction completeness](decisions/2026-10-20-save-extraction-completeness.md)
 
@@ -927,18 +960,6 @@ not-found page. `/data?section=import|transfer` remains the supported data-manag
 
 Evidence:
 [docs/decisions/2026-10-20-retire-settings-route.md#decision](../docs/decisions/2026-10-20-retire-settings-route.md#decision).
-
-Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
-later resolutions were not revalidated while seeding issue #268.
-
-### [Save-driven sync](decisions/2026-10-20-save-driven-sync.md)
-
-ID: 2026-10-20-save-driven-sync. Status: Needs review.
-
-Historical scope: Save-driven sync. Current applicability is unverified.
-
-Evidence:
-[docs/decisions/2026-10-20-save-driven-sync.md#decision](../docs/decisions/2026-10-20-save-driven-sync.md#decision).
 
 Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
 later resolutions were not revalidated while seeding issue #268.
