@@ -321,18 +321,26 @@ describe("CI workflow jobs", () => {
   });
 
   it("restores the store that holds the pnpm-managed Node in every pnpm/setup job", () => {
-    // Host & container jobs must share one literal store path; the cache key includes it.
-    expect(workflow.env?.pnpm_config_store_dir).toBe("/home/runner/setup-pnpm/store");
+    // The cache archive's paths are relative to the workspace, which the container mounts
+    // elsewhere, so container jobs keep a store of their own that one of them saves.
+    const savers: Record<string, string> = { build: "host", pwa: "container" };
+    const mainPush = "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}";
     const setupJobs = Object.entries(jobs).filter(([, job]) =>
       job.steps?.some((step) => step.uses?.startsWith("pnpm/setup@")),
     );
     expect(setupJobs.map(([name]) => name)).toEqual(
       expect.arrayContaining(["audit", ...installJobs]),
     );
-    for (const [, job] of setupJobs) {
-      expect(job.env?.pnpm_config_store_dir).toBeUndefined();
+    expect(workflow.env?.pnpm_config_store_dir).toBeUndefined();
+    for (const [name, job] of setupJobs) {
+      const inContainer = job.container !== undefined;
+      expect(job.env?.pnpm_config_store_dir).toBe(inContainer ? "/__w/.pnpm-store" : undefined);
       const setup = job.steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
       expect(setup?.with?.cache).toBe(true);
+      expect(setup?.with?.["save-cache"]).toBe(name in savers ? mainPush : false);
+    }
+    for (const [name, kind] of Object.entries(savers)) {
+      expect(jobs[name].container !== undefined).toBe(kind === "container");
     }
   });
 
