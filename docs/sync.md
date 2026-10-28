@@ -173,9 +173,10 @@ Version 1 pins the suite, with no negotiation:
 - Pairing keys & counters stay on each device, outside stored progress & backups.
 - A “Paired with {device}” toast, “Unpair” on both sides, & a “Don’t show this on stream” hint
   complete the flow.
-- On iOS & iPadOS outside the installed app, the page says to scan from the tracker app instead of
-  pairing, because every browser there keeps storage apart from the app. The scan has to use the
-  app’s own scanner: the system Camera app opens codes in Safari.
+- On iOS & iPadOS, a browser pairs like any phone, even though its storage is apart from the
+  installed app. Moving to the app later restores a backup & pairs again from the app, replacing the
+  browser’s pairing (#131, [sync-setup.md](sync-setup.md#moving-to-the-installed-app-on-iphone)).
+  Scans should use the tracker’s own scanner: the system Camera app opens codes in Safari.
 - “One PC” means one browser profile. Two profiles are two couriers, & pairing either replaces the
   phone’s pairing; the setup copy says so, & nothing enforces it.
 

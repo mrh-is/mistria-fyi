@@ -61,9 +61,7 @@ flowchart TD
     DEVICE -->|PC| WHERE{Use the tracker here,<br/>or on another device?}:::asked
     DEVICE -->|iPhone or iPad, in a browser| NUDGE[Suggest installing to the home screen<br/>dismissible]:::outcome
     DEVICE -->|Phone app, or Android| PHONE{Sync from your PC,<br/>or check off by hand?}:::asked
-    NUDGE --> IOSQ{Sync from your PC,<br/>or check off by hand?}:::asked
-    IOSQ -->|Sync| INSTALL[Install first: move progress,<br/>then pair from the app]:::outcome
-    IOSQ -->|By hand| MANUAL3[Manual tracking in the browser]:::outcome
+    NUDGE --> PHONE
 
     WHERE -->|Here| HOW{Import, or check off by hand?}:::asked
     HOW -->|By hand| MANUAL[Manual tracking<br/>no more setup]:::outcome
@@ -82,10 +80,10 @@ flowchart TD
 
 - **Import defaults to self-updating.** A player who picks “import” on a PC that can watch files
   gets the self-updating tracker without being asked; the one-time import is the fallback.
-- **The installed-app nudge is dismissible, but sync isn’t available without the app.** A player can
-  keep checking things off in an iOS browser. Choosing sync there leads only to installing (see
-  [Moving to the installed app](#moving-to-the-installed-app-on-iphone)); the browser never pairs,
-  because pairing keys don’t travel in backups and would stay stuck in the browser.
+- **The installed-app nudge is dismissible.** A player can keep using the tracker in an iOS browser,
+  sync included: the browser pairs like any phone. Moving to the installed app later means
+  re-pairing from the app (see
+  [Moving to the installed app](#moving-to-the-installed-app-on-iphone)), which is quick & rare.
 - **“How it works”** (the mental model) sits beside the first question, collapsed but clearly
   labeled. Curious players open it; ready players skip it.
 - **The choice is remembered,** and Data leads with it. The other paths stay one tap away.
@@ -134,8 +132,10 @@ who starts by hand and comes back for sync goes through the same tree. Changing 
 Setup starts on whichever device the player is holding. Starting on the phone, it says to open
 `mistria.fyi/sync` on the PC; arriving there implies “another device”, so the PC skips that
 question, but still makes the move offer when it holds progress. Either way, pairing comes first,
-then the save. The phone scans with the app’s own scanner; on iPhone, the Camera app would open the
-code in Safari, which shows the “scan from the tracker app” page instead.
+then the save. The phone scans with the tracker’s own scanner, so the pairing lands in whichever
+copy the player is using. On iPhone, the Camera app always opens codes in Safari; a player using the
+installed app who scans with the Camera would pair Safari instead, so the PC’s instructions say to
+scan from inside the tracker.
 
 | Step | On the PC                                                 | On the phone                                    |
 | ---- | --------------------------------------------------------- | ----------------------------------------------- |
@@ -171,8 +171,9 @@ iOS keeps a browser’s data apart from the home screen app, so the app can’t 
   there & restoring it here. Dismissible.
 - Restore (not import) is right here, since the app is empty: it carries manual check-offs &
   provenance intact.
-- **Then pair from the app.** Only the installed app pairs; a browser that already has progress
-  keeps it for manual tracking, & never pairs.
+- **Then pair again from the app.** Pairing keys stay on each device & never travel in backups, so
+  the app pairs fresh. With one phone per PC, the new pairing replaces the browser’s, which stops
+  receiving & keeps what it has.
 
 ## Living with it
 
@@ -222,7 +223,8 @@ When UI & copy resume, write like a chill, non-judgmental friend helping with a 
 - The pairing code starts covered; showing it mints the offer, & hiding it doesn’t restart it.
 - Device names derive locally from the browser and only label a pairing; they never decide anything.
   Renaming is out of scope for v1.
-- An iOS or iPadOS browser never pairs; sync there means installing the app first.
+- An iOS or iPadOS browser can pair like any phone; moving to the installed app re-pairs from the
+  app, as part of the migration.
 - Moving PC progress to a phone that already has some asks which side to keep, & backs up the phone
   first.
 - A relay leaves stored progress untouched; its mirror lives apart & is discarded on turn-off.
