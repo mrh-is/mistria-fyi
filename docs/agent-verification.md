@@ -14,6 +14,18 @@ require an exception.
   narrowest possible disable with a justification.
 - Documentation-only changes: `pnpm run lint:fix && pnpm run lint` only.
 
+### Oracle checks
+
+For tests that claim selection or enforcement, assert a nonempty or exact target set before checking
+its members, & exercise the existing gate’s failure path. An ordering comparison alone can pass when
+`indexOf` returns `-1`. Derive expected projections from a small semantic fixture or an independent
+input, rather than the helper under test; keep module-mocking fixtures in an isolated test file.
+Pipeline drift fixtures must use an encoding the production collector reads & establish the
+collected source before expecting exclusion rejection. For each repaired gap, temporarily remove the
+guard or introduce the faulty input, confirm the regression fails for the intended reason, & restore
+it before delivery. Record these probes with their verification scope; a Node process test does not
+establish workerd, physical-device, or installed-PWA behavior.
+
 ## CI coverage
 
 The steps CI runs are listed in one place, `STEPS` in [scripts/verify.ts](../scripts/verify.ts):
