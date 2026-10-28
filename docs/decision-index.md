@@ -170,6 +170,17 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/269](https://github.com/mrh-is/mistria-fyi/issues/269),
 [docs/sync.md#new-devices](../docs/sync.md#new-devices).
 
+### [Budget the relay’s daily writes](decisions/2026-10-28-sync-relay-write-budget.md)
+
+ID: 2026-10-28-sync-relay-write-budget. Status: Current.
+
+The relay keeps a daily write budget in its singleton, granting typed allowances before writes &
+reserving the last 20% for operations that finish what’s started.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251),
+[docs/sync.md#caps--expiry](../docs/sync.md#caps--expiry).
+
 ### [Keep sync account-less](decisions/2026-10-28-sync-stay-account-less.md)
 
 ID: 2026-10-28-sync-stay-account-less. Status: Current.
@@ -398,7 +409,8 @@ Relationship evidence:
 
 ID: 2026-10-20-save-driven-sync. Status: Partially superseded/amended.
 
-Historical scope: Save-driven sync. Current applicability is unverified.
+Sync moves the game’s save from a PC browser tab to one paired phone through an end-to-end
+encrypted, account-less relay, with a strict protocol version & no global update lock.
 
 Evidence:
 [docs/decisions/2026-10-20-save-driven-sync.md#decision](../docs/decisions/2026-10-20-save-driven-sync.md#decision).
@@ -406,6 +418,13 @@ Evidence:
 Amended by [Carry the PC’s progress over sync](decisions/2026-10-28-sync-carry-pc-progress.md).
 Affected portion: Manual check-offs never travel between devices; the PC’s stored progress now
 travels once, at pairing.
+
+Relationship evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
+
+Amended by [Budget the relay’s daily writes](decisions/2026-10-28-sync-relay-write-budget.md).
+Affected portion: The relay keeps a runtime write budget; the daily pairing cap doesn’t bound live
+pairings, so fixed caps alone don’t fit Workers Free.
 
 Relationship evidence:
 [https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).

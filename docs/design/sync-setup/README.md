@@ -6,14 +6,14 @@ docs, decision records, & review rounds. The design itself lives in
 [sync-setup.md](../../sync-setup.md) (journey, screens, & copy) & [sync.md](../../sync.md) (the
 protocol); this folder holds the evidence behind them.
 
-Status: in review on PR #251. Three adversarial review rounds are resolved; whether to run a fourth
-is the maintainer’s call. The sheets match canvas version 53.
+Status: in review on PR #251. Three adversarial review rounds & a half fourth round (without Codex)
+are resolved; a full fourth round with Codex is next. The sheets match canvas version 54.
 
 ## What’s here
 
 | Path                    | What it is                                                                       |
 | ----------------------- | -------------------------------------------------------------------------------- |
-| `sheets/`               | One PNG per canvas row, PC boards cropped to the 512 px column                   |
+| `sheets/`               | One PNG per canvas row, PC boards cropped to a 600 px strip around the column    |
 | `generator/kit.mjs`     | The app’s pieces (column, header, cards, dialogs, toolbar), transcribed from src |
 | `generator/boards.mjs`  | Every board, by row, & the canvas notes                                          |
 | `generator/build.mjs`   | Writes the canvas’s `project/` files & `canvas.json` from `boards.mjs`           |
@@ -28,8 +28,9 @@ Knip skip `docs/design/*/generator/`, so it doesn’t follow the app’s code co
 - **Docs:** [sync-setup.md](../../sync-setup.md) & [sync.md](../../sync.md).
 - **Decision records:** [pairing confirmation](../../decisions/2026-10-27-sync-pairing-confirm.md),
   [carrying the PC’s progress](../../decisions/2026-10-28-sync-carry-pc-progress.md),
-  [handing off between trackers](../../decisions/2026-10-28-sync-progress-handoff.md) (deferred), &
-  [staying account-less](../../decisions/2026-10-28-sync-stay-account-less.md).
+  [handing off between trackers](../../decisions/2026-10-28-sync-progress-handoff.md) (deferred),
+  [staying account-less](../../decisions/2026-10-28-sync-stay-account-less.md), &
+  [budgeting the relay’s writes](../../decisions/2026-10-28-sync-relay-write-budget.md).
 - **Canvas:** the private design canvas, https://claude.ai/artifact/UhDfkQVf4Csu7eN9RcBStx. The
   generator is its source of truth; hand edits on the canvas would be lost on the next build.
 - **Issues:** the epic #123, this design #131, & the follow-ups it routed: #269 (the deferred
@@ -56,6 +57,10 @@ All on PR #251, each round’s findings followed by its resolutions:
    [findings](https://github.com/mrh-is/mistria-fyi/pull/251#pullrequestreview-5686381834), with the
    resolutions in the PR comment that follows it. The protocol & setup stayed in one PR, since
    they’re too interwoven to split.
+5. **Adversarial round four, half** (Claude Opus & a Sonnet consistency pass; Codex was out of
+   usage): [findings](https://github.com/mrh-is/mistria-fyi/pull/251#pullrequestreview-5688867834),
+   with the resolutions in the PR comment that follows it. The relay’s write budget got its own
+   [decision record](../../decisions/2026-10-28-sync-relay-write-budget.md).
 
 What the rounds taught, for the next one: most findings came from material added to answer the
 previous round, & from drift between the docs, the copy tables, & the sheets. Run a consistency pass

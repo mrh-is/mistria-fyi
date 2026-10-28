@@ -56,7 +56,8 @@ const home = (
   { device = "pc", h, overlay, list = true, toolbar = true, empty = false } = {},
 ) =>
   screen(
-    homeHeader(empty ? { right: "" } : {}) + content((top ?? "") + (list ? indexList() : "")),
+    homeHeader(empty ? { right: "" } : {}) +
+      content((top ?? "") + (list ? indexList({ empty }) : "")),
     {
       device,
       h,
@@ -168,7 +169,7 @@ const dl = (pairs) =>
   `<dl style="margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px">${pairs
     .map(
       ([t, d]) =>
-        `<dt style="font-family:'Fragment Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:${C().muted};padding-top:4px">${t}</dt><dd style="margin:0;font-family:Petrona,Georgia,serif;font-size:14px;color:${C().ink}">${d}</dd>`,
+        `<dt style="font-family:'Fragment Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:${C().muted};padding-top:4px">${t}</dt><dd style="margin:0;font-family:Petrona,Georgia,serif;font-size:14px;color:${C().ink}">${d}</dd>`,
     )
     .join("")}</dl>`;
 
@@ -301,7 +302,7 @@ const farmDialog = () =>
     ]
       .map(
         ([t, n, d]) =>
-          `<div style="border:1px dashed ${`color-mix(in srgb, ${C().tagInk} 35%, transparent)`};padding:8px 10px"><p style="margin:0 0 4px;font-family:'Fragment Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:${C().tagMuted}">${t}</p><p style="margin:0;font-family:Petrona,Georgia,serif;font-size:15px;font-weight:600;color:${C().tagInk}">${n}</p><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:12px;color:${C().tagMuted}">${d}</p></div>`,
+          `<div style="border:1px dashed ${`color-mix(in srgb, ${C().tagInk} 35%, transparent)`};padding:8px 10px"><p style="margin:0 0 4px;font-family:'Fragment Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:${C().tagMuted}">${t}</p><p style="margin:0;font-family:Petrona,Georgia,serif;font-size:15px;font-weight:600;color:${C().tagInk}">${n}</p><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:12px;color:${C().tagMuted}">${d}</p></div>`,
       )
       .join(
         "",
@@ -318,7 +319,7 @@ const pcFarmDialog = () =>
     ]
       .map(
         ([t, n, d]) =>
-          `<div style="border:1px dashed ${`color-mix(in srgb, ${C().tagInk} 35%, transparent)`};padding:8px 10px"><p style="margin:0 0 4px;font-family:'Fragment Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:${C().tagMuted}">${t}</p><p style="margin:0;font-family:Petrona,Georgia,serif;font-size:15px;font-weight:600;color:${C().tagInk}">${n}</p><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:12px;color:${C().tagMuted}">${d}</p></div>`,
+          `<div style="border:1px dashed ${`color-mix(in srgb, ${C().tagInk} 35%, transparent)`};padding:8px 10px"><p style="margin:0 0 4px;font-family:'Fragment Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:${C().tagMuted}">${t}</p><p style="margin:0;font-family:Petrona,Georgia,serif;font-size:15px;font-weight:600;color:${C().tagInk}">${n}</p><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:12px;color:${C().tagMuted}">${d}</p></div>`,
       )
       .join(
         "",
@@ -612,6 +613,23 @@ export const rows = [
           ),
       },
       {
+        file: "PC-Fenced-Write.dc.html",
+        title: "PC · Another tab’s check-off during the switch",
+        ...PC,
+        render: () =>
+          screen(
+            pageHeader("Museum", { category: "museum" }) +
+              content(
+                syncLine(
+                  "Finishing setup… This page is read-only until sync confirms the pairing.",
+                  "loader-2",
+                ) +
+                  trackerRows({ readOnly: true }) +
+                  `<div style="position:absolute;left:16px;right:16px;bottom:72px;z-index:4">${toast("That change didn’t save: this PC is the relay now.")}</div>`,
+              ),
+          ),
+      },
+      {
         file: "PC-Progress-Stays.dc.html",
         title: "PC · A different farm: this PC’s progress stays",
         ...PC,
@@ -816,12 +834,12 @@ export const rows = [
                 desc: "This phone has progress too. Use your PC’s, and we’ll keep a backup of what’s here. Or keep this phone’s, and your PC’s stays there.",
                 body:
                   `<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">${[
-                    ["From your PC", "Moonberry Farm", "Summer 12, Year 2"],
-                    ["On this phone", "Moonberry Farm", "Spring 20, Year 1"],
+                    ["From your PC", "Moonberry Farm"],
+                    ["On this phone", "Moonberry Farm"],
                   ]
                     .map(
-                      ([t, n, d]) =>
-                        `<div style="border:1px dashed color-mix(in srgb, ${C().tagInk} 35%, transparent);padding:8px 10px"><p style="margin:0 0 4px;font-family:'Fragment Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:${C().tagMuted}">${t}</p><p style="margin:0;font-family:Petrona,Georgia,serif;font-size:15px;font-weight:600;color:${C().tagInk}">${n}</p><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:12px;color:${C().tagMuted}">${d}</p></div>`,
+                      ([t, n]) =>
+                        `<div style="border:1px dashed color-mix(in srgb, ${C().tagInk} 35%, transparent);padding:8px 10px"><p style="margin:0 0 4px;font-family:'Fragment Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:${C().tagMuted}">${t}</p><p style="margin:0;font-family:Petrona,Georgia,serif;font-size:15px;font-weight:600;color:${C().tagInk}">${n}</p></div>`,
                     )
                     .join("")}</div>` +
                   `<p style="margin:0;font-family:Satoshi,system-ui,sans-serif;font-size:13px;color:${C().tagMuted}">This replaces your backup of Applewood Farm, from October 3.</p>`,
@@ -862,7 +880,7 @@ export const rows = [
                   icon: "circle-check",
                   title: "You’re paired!",
                   body: "Now connect your save on your PC. Your PC’s progress comes over first, then each new save.",
-                }) + waiting("Waiting for your PC…"),
+                }) + waiting("Your PC’s progress is on its way…"),
               ),
           ),
       },
@@ -899,7 +917,7 @@ export const rows = [
                 fieldNote({
                   tone: C().amber,
                   icon: "alert-circle",
-                  title: "Your PC’s progress couldn’t be saved here",
+                  title: "Your PC’s progress couldn’t come over",
                   body: "This phone kept its own, and new saves still come in. To bring your PC’s over later, export a backup on your PC and restore it here.",
                 }) + waiting("Waiting for your first save…"),
               ),
@@ -1230,8 +1248,13 @@ export const rows = [
                 tone: C().amber,
                 icon: "alert-circle",
                 title: "We couldn’t check you’re not a robot",
-                body: "That happens sometimes. Try again, and if it keeps failing, reload the page.",
-                actions: [["Try again", true]],
+                body: "That happens sometimes. Do the quick check below, and your code shows up.",
+                extra:
+                  `<div style="display:flex;align-items:center;gap:10px;min-height:56px;margin-top:6px;padding:8px 12px;border:1px dashed ${C().hair};font-family:'IBM Plex Mono',monospace;font-size:12px;color:${C().muted}"><span aria-hidden="true" style="width:22px;height:22px;border:2px solid ${C().muted}"></span>Turnstile’s own check</div>` +
+                  note(
+                    "Still stuck? A VPN or strict privacy settings can block it. Try turning one off, or use another browser.",
+                    12,
+                  ),
               }),
             ) + saveTodo(),
           ),
@@ -1531,7 +1554,7 @@ export const rows = [
               pairSummary: "Get each new save from your PC as you play.",
               pairBody:
                 dl([
-                  ["PC", "Chrome on Windows"],
+                  ["PC", "Windows"],
                   ["Last save", "9:41 pm · Summer 12"],
                 ]) +
                 btn("Unpair", { full: true }) +
@@ -2016,7 +2039,29 @@ export const rows = [
         render: () =>
           home("", {
             device: "phone",
-            toolbar: { sync: { tone: C().hair, slip: "Waiting for your first save" } },
+            toolbar: {
+              sync: {
+                tone: C().hair,
+                slip: "Waiting for your first save",
+                status: "waiting for your first save",
+              },
+            },
+          }),
+      },
+      {
+        file: "Phone-Question-Waiting.dc.html",
+        title: "Phone · A question’s waiting",
+        ...PH,
+        render: () =>
+          home("", {
+            device: "phone",
+            toolbar: {
+              sync: {
+                tone: C().amber,
+                slip: "A question’s waiting",
+                status: "a question’s waiting",
+              },
+            },
           }),
       },
       {
@@ -2157,6 +2202,7 @@ export const rows = [
                 narrow: true,
                 title: "Replace what’s on this phone?",
                 desc: "We’ll keep a backup of what’s here first.",
+                body: `<p style="margin:0;font-family:Satoshi,system-ui,sans-serif;font-size:13px;color:${C().tagMuted}">This replaces your backup of Applewood Farm, from October 3.</p>`,
                 actions: [["Never mind"], ["Replace", true]],
               }),
             },
@@ -2342,7 +2388,7 @@ export const rows = [
 export const notes = {
   n_first: {
     row: "first",
-    text: "One “Get set up” on every platform; mistria.fyi/sync then asks where, as two exclusive paths. “How it works” sits with the phone path it explains. “By hand” dismisses the card, as today. The redesign drops WelcomeCard’s corner ring (until #10 settles marginalia) and its accent wash.",
+    text: "A PC gets “Get set up” & a phone gets “Sync from my PC”; on a PC, mistria.fyi/sync then asks where, as two exclusive paths. “How it works” sits with the phone path it explains. “By hand” dismisses the card, as today. The redesign drops WelcomeCard’s corner ring (until #10 settles marginalia) and its accent wash.",
     fill: "green",
   },
   n_desk: {
@@ -2367,12 +2413,12 @@ export const notes = {
   },
   n_new: {
     row: "new_phone",
-    text: "Manual check-offs live on the old phone, not the relay, so a new phone starts with backup & restore; the new phone is empty, so restore replaces nothing. A handoff code is deferred to #269.",
+    text: "Manual check-offs live on the old phone, not the relay, so a new phone starts with backup & restore; a new phone is usually empty, & restore asks before replacing anything it holds. A handoff code is deferred to #269.",
     fill: "green",
   },
   n_data: {
     row: "data",
-    text: "Shown after sync ships, when #138 retires “Transfer to Another Device”. Pairing keeps a phone up to date; Backup & Restore keeps a copy & moves progress to a new device. The relay’s save lives in the Import card, not the pairing.",
+    text: "Shown once sync ships; “Transfer to Another Device” stays until #138 removes it. Pairing keeps a phone up to date; Backup & Restore keeps a copy & moves progress to a new device. The relay’s save lives in the Import card, not the pairing.",
     fill: "blue",
   },
   n_tone: {

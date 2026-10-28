@@ -30,9 +30,10 @@ viewer’s.
   handshake can show it.
 - **A stranger who answers first can’t produce a match.** The offer is single-use, so the player’s
   own phone, scanning second, shows “Someone else got to this code first” instead of a code. The
-  player picks “No, it doesn’t”, which discards the offer & shows a fresh one.
-- **Device names stay descriptive only.** They label the pairing afterwards (“Paired with your
-  Android phone”) and never decide anything.
+  player picks “No, it doesn’t”, which discards the offer & shows a new covered code; revealing it
+  mints a fresh offer.
+- **Device names stay descriptive only.** They label the pairing afterwards (“Paired with your Pixel
+  8”) and never decide anything.
 - **The QR starts covered.** “Show code” mints the offer & starts its countdown; “Hide code” covers
   the same offer without restarting it.
 

@@ -2,7 +2,8 @@
 id: 2026-10-20-save-driven-sync
 status: amended
 summary: >-
-  Historical scope: Save-driven sync. Current applicability is unverified.
+  Sync moves the game’s save from a PC browser tab to one paired phone through an end-to-end
+  encrypted, account-less relay, with a strict protocol version & no global update lock.
 review: >-
   Does this decision still apply unchanged? Its owning implementation & later resolutions were not
   revalidated while seeding issue #268.
@@ -15,6 +16,14 @@ relationships:
     portion: >-
       Manual check-offs never travel between devices; the PC’s stored progress now travels once, at
       pairing.
+    evidence:
+      - https://github.com/mrh-is/mistria-fyi/pull/251
+  - type: amended-by
+    target: 2026-10-28-sync-relay-write-budget
+    scope: partial
+    portion: >-
+      The relay keeps a runtime write budget; the daily pairing cap doesn’t bound live pairings, so
+      fixed caps alone don’t fit Workers Free.
     evidence:
       - https://github.com/mrh-is/mistria-fyi/pull/251
 ---

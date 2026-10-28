@@ -116,7 +116,10 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
   address by its /64) under a secret that rotates daily, so the key can’t be reversed or followed
   across days; the relay reads the address only to compute the key & never logs or stores it.
   Minting is capped account-wide at about 2,000 a day. A failed challenge, a client over its rate
-  (“That’s a lot of codes”), & a full day are PC states of their own, with no code shown.
+  (“That’s a lot of codes”), & a full day are PC states of their own, with no code shown. An
+  invisible challenge that fails once falls back to Turnstile’s managed widget in place of the code,
+  so a visitor it can’t pass silently (strict privacy settings, some VPNs) gets a challenge to solve
+  instead of the same failure again.
 - **An offer reserves its pairing.** Accepted pairings, the expensive part, are capped account-wide
   at about 50 a day by a singleton object, & each offer holds a reservation against that cap for as
   long as it can still be accepted:
@@ -135,16 +138,26 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
 - **A daily write budget bounds the rest,** since the daily cap doesn’t bound live pairings. A
   pairing object asks the singleton for an allowance of 30 Durable Object row writes before it
   spends them, & the singleton counts every granted allowance as spent, along with its own writes.
-  Unused allowances lapse at midnight UTC. Past 80% of Workers Free’s 100,000 row writes, the
-  singleton grants no allowances for new uploads or new offers: the PC says “Sync’s full for today”
-  & retries after the reset, & setup says “Pairing is full for today”. The remaining 20% is reserved
-  for operations that finish something already started: accepting an offer already minted, claiming,
-  declining, skipping, & confirming a transfer, the carry’s first upload, confirmations, unpairing,
-  & cleanup.
+  Unused allowances lapse at midnight UTC. Allowances are typed: an ordinary one pays for uploads,
+  offers, & check-ins, & a reserve one pays only for the finishing operations below, so a reserve
+  grant can’t fund an upload. Past 80% of Workers Free’s 100,000 row writes, the singleton grants
+  only reserve allowances: the PC says “Sync’s full for today” & retries after the reset, & setup
+  says “Pairing is full for today”. The remaining 20% is reserved for operations that finish
+  something already started: accepting an offer already minted, claiming, declining, skipping, &
+  confirming a transfer, the carry’s first upload, confirmations, the phone’s check-ins (which keep
+  the lapse clock), unpairing, & cleanup.
+- **Requests can bind first.** Workers Free also caps Worker requests & Durable Object requests at
+  100,000 a day each, & incoming WebSocket messages count toward the latter at 20 to 1. Each pairing
+  object counts the requests it serves against its allowance, at one row write per request, so the
+  singleton’s count covers both. A day whose Worker requests run out fails every request, the
+  reserved ones included; nothing is lost, since bundles wait in the courier & receipts make every
+  confirmation safe to retry, but setup & delivery stop until the reset.
 - Each pairing also caps its own writes: about one upload a minute & 60 a day, at about three row
-  writes each. A typical pairing sends far less (a save per in-game day, a few sessions a week), so
-  the budget covers roughly 2,000 active pairings (an estimate). Move to Workers Paid or raise the
-  caps if usage approaches it.
+  writes each. Every active pairing spends at least one allowance a day (31 row writes with the
+  singleton’s own), so allowance overhead alone reaches the 80% line near 2,500 active pairings; a
+  typical pairing sends a save per in-game day, a few sessions a week, & fits within that one
+  allowance. So the budget covers roughly 2,000 active pairings (an estimate). Move to Workers Paid
+  or raise the caps once either rows or requests pass half their daily limit on a typical day.
 - Bundles are capped at 256 KB.
 - The slot empties once the phone confirms, with a 48-hour expiry as the backstop. An expired bundle
   is never served, & its deletion retries. A courier that sees its latest bundle expired unapplied
@@ -153,13 +166,13 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
 - **The phone keeps what it has received.** A phone that reports a bundle as received (a question, a
   blocked store, or a tracker update waiting) keeps that ciphertext in device state, outside
   progress & backups, until it applies or a newer save replaces it, so the slot’s expiry never
-  strands a waiting question. A question’s ID is derived from the decrypted save’s content hash &
-  the changes it covers, never the sequence, so the same save re-uploaded at a later sequence still
-  matches its open question.
+  strands a waiting question. Questions keep `applySync`’s own IDs (see [Questions](#questions)),
+  which name the farm & the changes a question covers & never the sequence, so the same save
+  re-uploaded at a later sequence still matches its open question.
 - **Quiet phones stop uploads.** Once the phone hasn’t checked in for 14 days, the courier stops
   uploading altogether, fresh saves as well as retries, keeps only the latest save locally, & shows
   “No word from your {device} since {calendarDate}”. It sends that save when the phone next checks
-  in.
+  in; during a carry’s barrier, the carry resumes first & the save waits for the barrier to lift.
 - A pairing lapses 90 days after the phone last checked in. Only the phone’s requests count, so a
   relay left running can’t keep a pairing alive by itself, & the relay holds no ciphertext for a
   phone that’s gone. A record is a few hundred bytes, so a long holiday doesn’t force a re-pair. The
@@ -230,10 +243,10 @@ Version 1 pins the suite, with no negotiation:
 
 ### Stages & generations
 
-- The relay records each offer’s stage (offered, answered, accepted), so either side can retrieve it
-  again within that stage’s window: an unanswered offer until the QR expires (or 10 minutes after
-  “Copy link”), an answered offer until its confirmation deadline, & an accepted result for the
-  pairing’s life. The phone shows “Paired” only once the PC accepts.
+- The relay records each offer’s stage (offered, answered, accepted, rejected), so either side can
+  retrieve it again within that stage’s window: an unanswered offer until the QR expires (or 10
+  minutes after “Copy link”), an answered offer until its confirmation deadline, & an accepted
+  result for the pairing’s life. The phone shows “Paired” only once the PC accepts.
 - **Accepting takes a person.** Once a device answers, the PC & that device each show the same
   six-digit code derived from the handshake transcript, & the player confirms the match on the PC.
   “No, it doesn’t” discards the offer & shows a new covered code; revealing it mints a fresh offer.
@@ -262,8 +275,9 @@ nothing merges.
   match (see [Roles & transitions](#roles--transitions)) & keeps it until the transfer ends, so
   every upload carries the same progress.
 - **Announced.** The PC’s accept message says whether progress may follow & names it with a transfer
-  ID, along with the stored farm’s name & last in-game date when it has them, so the phone’s
-  question can name both farms. Both devices persist the ID across reloads.
+  ID, along with the stored farm’s name when it has one, so the phone’s question can name both
+  farms. Stored progress holds no in-game date, so the question shows names only. Both devices
+  persist the ID across reloads.
 - **Farm first, on the PC.** Before uploading, the PC reads the transfer’s state; a declined
   transfer skips the farm check & says “Your {device} kept its own progress”. Otherwise the PC sends
   its progress only after the player connects the save, & only when its stored farm matches the
@@ -272,8 +286,9 @@ nothing merges.
   stays here”. The PC stamps the identity it checked into the envelope, bound to the transfer ID, &
   the phone stores it with the progress, so the first save doesn’t ask again. If a newer save for a
   different farm arrives while the barrier holds, the PC checks again & skips; once the transfer is
-  claimed, the PC waits for it to end. So carried progress is always the farm the game is playing, &
-  a setup switches farms at most once.
+  claimed, the PC waits for it to end, & the held save then goes through the usual farm rules on the
+  phone. So carried progress is always the farm the game is playing, & a setup switches farms at
+  most once before the carry lands.
 - **The barrier.** The carry is the pairing’s first bundle, & the courier holds saves until the
   transfer ends, keeping only the latest save & uploading it once the barrier lifts, within the
   one-a-minute cap. The PC shows the barrier (“Sending your progress”, then “Waiting on your
@@ -283,43 +298,59 @@ nothing merges.
 
 The relay records each transfer’s state by its ID. Within a state, the first move to arrive wins.
 
-| State     | Entered when                                                        | Next                                                                                                    |
-| --------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Announced | The PC accepts the match with the box checked                       | Uploaded (the save is connected & the farm matches), declined, or skipped (a different farm, “Skip it”) |
-| Uploaded  | The PC uploads the frozen payload                                   | Claimed, declined, or skipped (“Skip it”, a different-farm save, a phone that can’t decrypt it)         |
-| Claimed   | The phone has decrypted it, checked its format, & dry-run the write | Applied, or skipped (the phone releases it, or “Skip it” after 48 hours unconfirmed)                    |
-| Applied   | The phone confirms by transfer ID                                   | None                                                                                                    |
-| Declined  | “Keep this phone’s”                                                 | None                                                                                                    |
-| Skipped   | “Skip it”, a farm the PC keeps back, or a released or stale claim   | Applied, only if the phone’s receipt proves it already wrote the progress                               |
+| State     | Entered when                                                                                     | Next                                                                                                                   |
+| --------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Announced | The PC accepts the match with the box checked                                                    | Uploaded (the save is connected & the farm matches), declined, or skipped (a different farm, “Skip it”)                |
+| Uploaded  | The PC uploads the frozen payload, or the phone unclaims it                                      | Claimed, declined, or skipped (“Skip it”, a different-farm save, a phone that can’t decrypt it)                        |
+| Claimed   | The phone has decided to apply & built the write, inside its apply lock                          | Applied, uploaded (the phone unclaims before writing), or skipped (a release, or “Skip it” after 48 hours unconfirmed) |
+| Applied   | The phone confirms by transfer ID                                                                | None                                                                                                                   |
+| Declined  | “Keep this phone’s”                                                                              | None                                                                                                                   |
+| Skipped   | “Skip it”, a farm the PC keeps back, a phone that can’t decrypt it, or a released or stale claim | Applied, only if the phone’s receipt proves it already wrote the progress                                              |
 
-- **The phone claims late.** It claims only after decrypting, checking the backup format, & building
-  the replacement & its backup in memory (`serializeFarmSwitch` returning a document, the store not
-  blocked). A phone on an older format claims nothing: it reports the bundle as received & needing a
-  tracker update, the PC shows “Your {device} needs a tracker update” with “Skip it” still
-  available, & the phone claims after its reload.
-- **Emptiness is decided at the write.** Inside the apply lock, the phone checks `tracksProgress`
-  (`sync-apply.ts`) against its fresh state. An empty phone applies. A phone with progress applies
-  only with a stored “Use my PC’s” for this transfer. A phone that has gained progress since it
-  paired, with no answer stored, reports the bundle as received & asks the question then.
+- **The phone applies in a fixed order,** all inside its apply lock:
+  1. Re-read stored progress.
+  2. Decide. An empty phone (`tracksProgress` in `sync-apply.ts`, false) applies. A phone with
+     progress applies only with a current “Use my PC’s” for this transfer, & declines with “Keep
+     this phone’s”. With no current answer, it reports the bundle as received, releases the lock, &
+     asks.
+  3. Build the write in memory, after decrypting & checking the backup format. An empty phone writes
+     the progress as is, with no backup, & leaves the farm-switch slot untouched. A phone with
+     progress builds the replacement & its backup through `serializeFarmSwitch`, which must return a
+     document, with the store not blocked.
+  4. Claim, waiting at most 10 seconds. A timeout or network error releases the lock & retries the
+     whole order later; a claim is idempotent for the phone & the transfer ID, so one that landed
+     unseen is found on retry. A retry that now decides to ask or decline unclaims first, so the
+     transfer goes back to uploaded.
+  5. Write, with the receipt, then release the lock & confirm.
+- **An older phone claims nothing.** A phone on an older backup format reports the bundle as
+  received & needing a tracker update, the PC shows “Your {device} needs a tracker update” with
+  “Skip it” still available, & the phone runs the order again after its reload.
+- **An answer is current until progress changes.** The phone stores “Use my PC’s” with the transfer
+  ID & a hash of its stored progress at the moment of answering. Any write since then (a check-off,
+  a save, a restore) makes the answer stale, so a carry that arrives days later asks again instead
+  of replacing what the player added in between. “Keep this phone’s” declines at once & needs no
+  hash.
 - **Replacing always keeps a backup.** Whenever the carry replaces progress, the outgoing state goes
   into the farm-switch backup slot in the same write. When that slot already holds a backup, the
   question says it will be replaced (see [Farm identity](#farm-identity)).
 - **The claimant can release.** A write that fails after the claim (storage refuses it, the store
-  turns blocked) releases the claim, so the transfer becomes skipped, the barrier lifts, & the phone
-  says “Your PC’s progress couldn’t be saved here”.
+  turns blocked) releases the claim, so the transfer becomes skipped & the barrier lifts. The phone
+  says “Your PC’s progress couldn’t come over”, or, for a store that turned blocked, “New saves are
+  waiting”, since a blocked phone takes no saves either. A phone that can’t decrypt the carry skips
+  it with the same “couldn’t come over” note.
 - **Confirmation needs no bundle.** The phone records the transfer ID as applied in the same write
   as the progress, in the “last applied” receipt (see [The phone](#the-phone)), & confirms by that
   ID, so a confirmation lost to a crash or an expired slot still lands later. A later envelope
-  naming an applied ID is confirmed without applying, & the receipt survives a full reset (see
+  naming an applied ID is confirmed without applying, & the receipt survives a progress reset (see
   [The phone](#the-phone)).
 - **Expiry re-uploads.** A bundle that expires while the transfer is uploaded or claimed is
   re-uploaded from the frozen payload as a fresh encryption at the next sequence, under the same ID;
   a claim survives the re-upload.
 - **A stale claim can be skipped.** Once a claim has gone 48 hours without confirming, “Skip it”
   works again. Before that, the PC says “Your {device} is already using it”.
-- **Every ending says which.** A phone waiting on a transfer that ends declined or skipped keeps
-  what it has & says “Your PC didn’t send its progress”. The barrier lifts when the transfer is
-  applied, declined, or skipped.
+- **Every ending says which.** A phone waiting on a transfer that the PC skips keeps what it has &
+  says “Your PC didn’t send its progress”; a phone that declined needs no note. The barrier lifts
+  when the transfer is applied, declined, or skipped.
 - **Once.** It travels only when the box is checked. The PC’s own stored progress stays untouched
   while it relays.
 - **Size.** A backup is mostly ID lists, so it compresses well below the 256 KB cap. Measuring a
@@ -327,8 +358,10 @@ The relay records each transfer’s state by its ID. Within a state, the first m
   splits under the same transfer ID.
 
 Tests cover every row of the state table & each first-wins race in it, an empty phone that gains
-progress before the carry arrives, a write that fails after the claim, a crash between the write &
-the confirmation that spans the slot’s expiry, a stale claim skipped after 48 hours, a full reset
+progress before the carry arrives, a stored answer gone stale after a check-off, a claim that times
+out & is found on retry, an unclaim after the phone’s state changed, an empty phone leaving an
+existing slot backup untouched, a write that fails after the claim, a crash between the write & the
+confirmation that spans the slot’s expiry, a stale claim skipped after 48 hours, a progress reset
 after an applied carry, an older phone that updates & then claims, a declined transfer seen by the
 PC, unidentified & different stored farms on the PC, & a different-farm save arriving during the
 barrier.
@@ -377,18 +410,25 @@ learn of a change through a `BroadcastChannel` & re-read it on focus.
 - **Tracker or self-updating tracker → relay.** The commit point is the PC’s acceptance of the
   match. Until then nothing changes, & Back, a reload, or a closed tab leaves the old role in place.
   The switch runs in this order: take the courier lock, stop the local writer, drain writes other
-  tabs queued, flush through the one write path, freeze the carried payload, record the pending
-  switch, send the acceptance, & on success record the relay role & start sending.
+  tabs queued, then, holding the write path’s lock, flush, freeze the carried payload, & record the
+  pending switch, so no write lands between the freeze & the record. Then it broadcasts the pending
+  switch, sends the acceptance, & on success records the relay role & starts sending.
 - **Recovering an interrupted switch.** The pending switch holds the offer ID, the new role, the
   transfer ID, & the frozen payload, in device state. On load, the PC asks the relay for the offer’s
   stage. Accepted finishes the switch; rejected or expired clears it & keeps the old role; anything
   else (answered, an acceptance still in flight, a network error, a timeout) keeps it pending &
-  retries, with the page read-only & saying “Finishing setup…”. Only a definitive answer ends a
+  retries, with every tab read-only & saying “Finishing setup…”. Only a definitive answer ends a
   pending switch.
-- **Fencing other tabs.** The one write path checks the role inside its Web Lock, so a write another
-  tab queued before the switch, & runs after it, is refused instead of landing in the relay’s frozen
-  progress. That tab learns the new role, reloads read-only, & says “That change didn’t save: this
-  PC is the relay now.”.
+- **Fencing other tabs.** The one write path checks, inside its Web Lock, for a pending switch as
+  well as the relay role, so from the moment the pending switch is recorded, a write another tab
+  queued is refused instead of landing after the freeze. The broadcast turns every other tab
+  read-only (“Finishing setup…”) at the same moment, & a tab whose write was refused says “That
+  change didn’t save: this PC is the relay now.”. A rejected or expired switch lifts the fence.
+- **Relay → relay** (“Pair a different phone”, “My old phone’s gone”). The commit point is again the
+  PC’s acceptance, & the old pairing keeps sending until then. The relay’s stored progress doesn’t
+  change while it relays, so a carried payload freezes from it as is. The pending switch records the
+  new offer, the transfer ID, & the payload, & recovers the same way: accepted retires the old
+  generation & starts sending under the new one; rejected or expired keeps the old pairing.
 - **Self-updating tracker → tracker** (“Stop updating”). The watcher releases the lock & forgets the
   file handle; stored progress stays as it is.
 - **Relay → tracker** (“Unpair”). The PC stops sending, records the tracker role, & shows its stored
@@ -397,10 +437,10 @@ learn of a change through a `BroadcastChannel` & re-read it on focus.
 - **Relay → self-updating tracker** goes through unpairing: the PC becomes a tracker, then “On this
   PC” makes it self-updating, & the first watched save applies onto the progress from before
   relaying through the apply rules, as for any tracker.
-- **What a relay hides.** Restore, manual import, reset, & the Danger Zone act on stored progress
-  the relay doesn’t show, so Data hides them while relaying & says to unpair first; the Import card
-  shows only the relay’s save. “Export backup” stays & says it holds the progress from before
-  relaying.
+- **What a relay hides.** Restore, manual import, reset, the Danger Zone, & “Transfer to Another
+  Device” act on stored progress the relay doesn’t show, so Data hides them while relaying & says to
+  unpair first; the Import card shows only the relay’s save. “Export backup” stays & says it holds
+  the progress from before relaying.
 - **Only a tracker answers offers.** A pairing link opened or pasted on a relay says to unpair
   first, & on a self-updating tracker to stop updating first, so a PC that watches a save never
   becomes the receiving side too.
@@ -410,8 +450,9 @@ learn of a change through a `BroadcastChannel` & re-read it on focus.
 
 Tests cover a transition interrupted before acceptance, one interrupted between the relay’s
 acceptance & the local role write, one whose recovery meets a network error or an acceptance in
-flight, a lapse, a second tab writing while the first becomes the relay, “Stop updating”, a relay or
-a self-updating tracker opening a pairing link, & unpairing with a pending mirror.
+flight, a lapse, a second tab writing while the first becomes the relay (including while the switch
+is pending), a relay re-pairing that’s interrupted before & after acceptance, “Stop updating”, a
+relay or a self-updating tracker opening a pairing link, & unpairing with a pending mirror.
 
 ## The phone
 
@@ -437,9 +478,11 @@ apply rules (#129) & the single write path (#127).
   applied” receipt (which also lists applied transfer IDs) share one storage key. Every writer
   (auto-save, sync, restore, reset, migration) goes through one function (#127), serialized by a Web
   Lock that re-reads & validates before writing. The pagehide flush keeps today’s
-  compare-before-write. The receipt never goes into exports or restores, & a full reset keeps it
-  while the pairing’s generation lives: reset clears progress, not the evidence of what was applied.
-  Unpairing, a replaced pairing, or a lapse retires the generation, & its receipt with it.
+  compare-before-write. The receipt never goes into exports or restores, & a progress reset (the
+  Danger Zone’s `resetProgress`, which keeps `local`) keeps it while the pairing’s generation lives:
+  reset clears progress, not the evidence of what was applied. `resetAll`, which clears `local`, has
+  no caller in the app; one added later unpairs first, retiring the generation. Unpairing, a
+  replaced pairing, or a lapse retires the generation, & its receipt with it.
 - **Each apply is one immediate write** through that function. The replay counter advances only
   through that write, & the phone confirms only after reading back exactly what it meant to write.
 - **Recomputed questions.** If progress changed while a question waited, the diff is recomputed &
@@ -567,6 +610,11 @@ plus `info.creation_version`, parsed tolerantly (#128).
   {farm}, from {calendarDate}”), & an automatic switch that would replace one asks instead of
   switching. Backup & Restore in Data offers the slot by name (“Backup of {farm}, from
   {calendarDate}”); #135 builds the restore entry.
+- **The slot gains a date.** `{ backup, farmName }` records no time, so #135 adds `savedAt`, when
+  the backup was written. `local` is part of stored progress, so this is a storage schema change: a
+  storage version bump, a migration that leaves an existing slot without a date, & compatibility
+  tests. Copy for a slot with no date leaves the date out (the `_undated` variants), & never shows a
+  placeholder.
 - Switching back is a restore. Multi-farm profiles stay later.
 - Manual import stores the same identity & shows “last imported {time ago}”. Player & farm names
   stay out of the feedback snapshot.

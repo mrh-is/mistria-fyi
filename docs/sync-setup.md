@@ -244,10 +244,11 @@ before the first save. This replaces exporting a backup on the PC & restoring it
 - **The phone takes it whole or not at all.** An empty phone takes it without asking. A phone with
   progress asks right after “You’re paired!”, as a tag dialog: “Use my PC’s” (this phone’s progress
   is kept as a backup) or “Keep this phone’s”, with both farms side by side (“From your PC” & “On
-  this phone”, by name & last in-game date, or “No farm on record”). When the backup slot already
-  holds one, the dialog says it will be replaced. The PC can’t see the phone’s data before pairing,
-  so it doesn’t ask. A phone that was empty at pairing but has gained progress by the time the carry
-  arrives asks then.
+  this phone”, by name, or “No farm on record”; stored progress holds no in-game date to show). When
+  the backup slot already holds one, the dialog says it will be replaced. The PC can’t see the
+  phone’s data before pairing, so it doesn’t ask. A phone that was empty at pairing but has gained
+  progress by the time the carry arrives asks then, & so does one whose progress has changed since
+  it chose “Use my PC’s”.
 - **The PC checks the farm first.** Once the save is connected, the PC compares it with its stored
   progress. Unidentified progress asks “Is this the farm you’ve been tracking?” on the PC; a
   different farm, or “No”, keeps the PC’s progress where it is & says “This PC’s progress stays
@@ -263,16 +264,18 @@ before the first save. This replaces exporting a backup on the PC & restoring it
   here” & names the backup in Data; an empty phone goes straight to “It worked!”, with no backup to
   name. A skip, or a farm the PC kept back, says “Your PC didn’t send its progress” & that the phone
   kept its own. A skip after the phone has started using it is refused on the PC (“Your {device} is
-  already using it”) until 48 hours pass unconfirmed. A phone that can’t save the progress after
-  claiming it says “Your PC’s progress couldn’t be saved here” & keeps its own; one on an older
-  tracker asks to update & then takes it, while the PC says “Your {device} needs a tracker update”.
+  already using it”) until 48 hours pass unconfirmed. A phone that can’t read the progress, or can’t
+  save it after claiming it, says “Your PC’s progress couldn’t come over” & keeps its own; one whose
+  store turned blocked shows “New saves are waiting” instead. One on an older tracker asks to update
+  & then takes it, while the PC says “Your {device} needs a tracker update”.
 - **The PC’s stored progress stays where it is,** untouched, while it relays.
 
 ### When pairing can’t start
 
 - **The robot check.** Turnstile runs invisibly each time the player reveals a code or asks for a
-  new one. If it fails, the step shows “We couldn’t check you’re not a robot” with “Try again”, & no
-  code.
+  new one. If it fails, the step shows “We couldn’t check you’re not a robot” & Turnstile’s own
+  check in place of the code, so a player it can’t pass silently can solve it; passing it shows the
+  code. Under it, “Still stuck?” names what usually causes a check to keep failing.
 - **Too many codes.** A PC that mints codes faster than the rate limit allows says “That’s a lot of
   codes” & to wait a few minutes.
 - **Pairing is full today.** New pairings have a daily cap to keep sync free; the step says so,
@@ -296,9 +299,9 @@ Every path stays reachable from Data, which links to the same setup page. Changi
   it is.
 - **Relay → tracker, by lapse.** A pairing that lapses ends the relay role, as unpairing does; the
   PC’s Home note offers “Pair again” & “Fill in from your latest save”.
-- **An interrupted switch to relay** keeps the page read-only, saying “Finishing setup…”, until sync
-  gives a definite answer; another tab’s check-off that lands after the switch says “That change
-  didn’t save: this PC is the relay now.”.
+- **An interrupted switch to relay** keeps every tab read-only, saying “Finishing setup…”, until
+  sync gives a definite answer; another tab’s check-off that lands after the switch starts says
+  “That change didn’t save: this PC is the relay now.”.
 - **Phone with progress → paired.** The first save applies through the apply rules (#135), asking
   “Is this the farm you’ve been tracking?” only when the phone’s progress has no farm on record.
 - **Relay → tracker.** Unpairing discards the mirror and shows the stored progress exactly as it was
@@ -328,10 +331,11 @@ with “Show me how” & a quieter “My old phone’s gone”.
    saves.
 
 The new phone is usually empty, but restore doesn’t assume it: when it already tracks progress,
-restore asks “Replace what’s on this phone?” & keeps that progress as a backup first. “My old
-phone’s gone” skips to pairing with “Send this PC’s progress too” checked & a note that it’s the
-PC’s progress from before it started relaying, on {calendarDate}; a PC with no stored progress pairs
-as usual, with no box. A one-time handoff code that skips the file is deferred to #269 (see
+restore asks “Replace what’s on this phone?” & keeps that progress as a backup first, saying when
+that replaces an earlier backup (`sync_replaces_backup`). “My old phone’s gone” skips to pairing
+with “Send this PC’s progress too” checked & a note that it’s the PC’s progress from before it
+started relaying, on {calendarDate}; a PC with no stored progress pairs as usual, with no box. A
+one-time handoff code that skips the file is deferred to #269 (see
 [the decision record](decisions/2026-10-28-sync-progress-handoff.md)).
 
 ## Data management
@@ -361,8 +365,9 @@ progress to a new device. Card titles stay in title case to match their siblings
   “this is all there is, & it’s working”. It names the phone, the last save, & where that save is:
   uploaded (“Your {device} hasn’t picked it up yet”), received & waiting on a question (“On your
   {device}, waiting on a question there”), received but blocked (“Your {device} needs a look in
-  Data”), or applied (“Applied on your {device}”), with “Pairing settings”. “Up to date” names the
-  last applied in-game date, never the last upload.
+  Data”), received but needing a tracker update (“Your {device} needs a tracker update”, the
+  notice’s title, as `sync_status_update`), or applied (“Applied on your {device}”), with “Pairing
+  settings”. “Up to date” names the last applied in-game date, never the last upload.
 - While carried progress is pending, the status reads “Sending your progress” or “Waiting on your
   {device}…”, with “Skip it”.
 - The header’s progress counts come from the mirror, so a relay with no save yet shows none.
@@ -440,7 +445,8 @@ owns that question).
   (`tabindex="-1"`); a step that fails keeps focus on its own title, with the error inside it.
   Opening a tag dialog focuses its title, & closing it returns focus to the control that opened it,
   or to the current step’s title for a dialog that opened by itself (the carry & Camera questions,
-  the farm question).
+  the farm question). Outside setup, where there are no steps (the carry question on Home days
+  later, the farm question during a sync), it returns to the sync button.
 - **Two live regions.** Setup has a polite region for step changes, the match code’s arrival, &
   results (“You’re paired!”, “It worked!”), & an assertive one for an error that blocks a step,
   announced once. Field notes already on a page when it loads are plain content, with no live role,
@@ -450,7 +456,8 @@ owns that question).
   “waiting for your first save”, “a question’s waiting”, “no saves in a while”, “paused”, or “needs
   a look”), so the dot & slip aren’t the only signal.
 - **Targets.** Controls are at least 44 px tall on phones & 24 px elsewhere, with labels of 12 px or
-  more; text links in step bodies sit in a 44 px row.
+  more; text links in step bodies sit in a 44 px row. Text that isn’t a control (overlines,
+  eyebrows, sub-lines, & slips) is at least the app’s `--text-2xs`, 11 px.
 - **Read-only on the relay.** The guide’s checkboxes are `aria-disabled="true"`, drawn dashed &
   muted, & described by the read-only note. Activating one shows the toast, which is announced.
 - **Codes.** The match code is labeled digit by digit, so a screen reader doesn’t read it as a
@@ -462,7 +469,9 @@ owns that question).
 The screens use the app’s own pieces (the 512 px column, the Home header, DataCard, the tag dialog,
 the toolbar & its panels, ui/button) so sync reads as part of the Field Guide, not a bolt-on.
 
-- **Lowercase roman numerals** number steps, in the display face & home accent.
+- **Lowercase roman numerals** number steps, in the display face & home accent. The PC’s “Sending
+  your progress” step takes an asterisk (✱) instead, since it appears only when progress is carried
+  & shouldn’t shift the numbers around it.
 - **Photo-mount corners** frame what you hand over: the pairing code, the match code, & the drop
   box.
 - **The tag dialog** carries every question & confirmation; **field notes** carry notices; the
@@ -481,8 +490,9 @@ Write like a chill, non-judgmental friend helping with a tech setup.
 
 ## Screens
 
-One sheet per canvas row, rendered from canvas version 53 & kept in the
-[design package](design/sync-setup/README.md). PC boards are cropped to the 512 px column.
+One sheet per canvas row, rendered from canvas version 54 & kept in the
+[design package](design/sync-setup/README.md). PC boards are cropped to a 600 px strip around the
+512 px column.
 
 ### First look
 
@@ -490,7 +500,7 @@ One sheet per canvas row, rendered from canvas version 53 & kept in the
 
 ### Setup on the PC
 
-![Self-updating & import setup, the pairing code with “Send this PC’s progress too”, the copied link’s longer window, the match step, connecting the save, the PC’s farm check, sending this PC’s progress, a refused skip, the phone keeping its own, a phone needing an update, an interrupted switch finishing, the different-farm note, & sending the save](design/sync-setup/sheets/02-pc-setup.png)
+![Self-updating & import setup, the pairing code with “Send this PC’s progress too”, the copied link’s longer window, the match step, connecting the save, the PC’s farm check, sending this PC’s progress, a refused skip, the phone keeping its own, a phone needing an update, an interrupted switch finishing, another tab’s check-off refused during it, the different-farm note, & sending the save](design/sync-setup/sheets/02-pc-setup.png)
 
 ### Setup on the phone
 
@@ -502,7 +512,7 @@ One sheet per canvas row, rendered from canvas version 53 & kept in the
 
 ### Setup hiccups
 
-![An expired code, a rejected match, a code scanned first by someone else, a slow confirmation, a blocked camera, a spent code, a link that doesn’t parse, offline, the robot check, too many codes, sync unreachable or paused on either device, a pairing link opened on a relay or a self-updating PC, pairing full, a phone that can’t pair yet, & the wrong file](design/sync-setup/sheets/05-hiccups.png)
+![An expired code, a rejected match, a code scanned first by someone else, a slow confirmation, a blocked camera, a spent code, a link that doesn’t parse, offline, the robot check with Turnstile’s own check, too many codes, sync unreachable or paused on either device, a pairing link opened on a relay or a self-updating PC, pairing full, a phone that can’t pair yet, & the wrong file](design/sync-setup/sheets/05-hiccups.png)
 
 ### Data management
 
@@ -522,7 +532,7 @@ One sheet per canvas row, rendered from canvas version 53 & kept in the
 
 ### Living with it on the phone
 
-![The quiet sync button, its panel, the slips, the field notes, the PC’s progress with its backup, saves waiting on a blocked store, a new farm switched with a backup, a restore that asks before replacing, & the farm question for progress with no farm on record](design/sync-setup/sheets/10-phone.png)
+![The quiet sync button, its panel, the slips (including a question waiting), the field notes, the PC’s progress with its backup, saves waiting on a blocked store, a new farm switched with a backup, a restore that asks before replacing, & the farm question for progress with no farm on record](design/sync-setup/sheets/10-phone.png)
 
 ### Moving to the iPhone app
 
@@ -545,8 +555,9 @@ two in `<code>`. Device names are short model names where the browser allows (�
 “Safari on iPhone” for an iOS browser), so “your {device}” reads naturally; translators may
 restructure those sentences around a label. The welcome card keeps `onboarding_overline` &
 `onboarding_title`; the other `onboarding_*` descriptions & actions retire. The drop box reuses the
-import card’s strings. Mode variants (`_redrop`) are text-only; their boards show the watched mode.
-Error & notice copy is a first draft.
+import card’s strings. Mode variants (`_redrop`, `_import`) are text-only; their boards show the
+watched mode. So are the `_undated` slot variants & `sync_status_update`, which share their boards’
+layout. Error & notice copy is a first draft.
 
 ### Home & the setup page
 
@@ -659,68 +670,70 @@ Error & notice copy is a first draft.
 
 ### Setup on the phone & other computers
 
-| Key                             | English                                                                                                                              |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `sync_phone_lead`               | Two steps: one here, one on your PC.                                                                                                 |
-| `sync_phone_lead_ios`           | Three steps: two here, one on your PC.                                                                                               |
-| `sync_step_install`             | Add it to your home screen                                                                                                           |
-| `sync_install_share`            | Tap Share. In Safari, it may be under •••.                                                                                           |
-| `sync_install_add`              | Tap “Add to Home Screen”.                                                                                                            |
-| `sync_install_open`             | Open the tracker from there to keep going.                                                                                           |
-| `sync_install_backup_first`     | Already using the tracker here? Export a backup first.                                                                               |
-| `sync_install_open_restore`     | Open the tracker from there, and restore the backup in Data.                                                                         |
-| `sync_install_skip`             | Skip, keep using {browser}                                                                                                           |
-| `sync_install_skipped`          | Skipped. Add it any time.                                                                                                            |
-| `sync_install_show`             | Show me                                                                                                                              |
-| `sync_step_pair_pc`             | Pair with your PC                                                                                                                    |
-| `sync_step_pair_pc_summary`     | Scan a code from your PC.                                                                                                            |
-| `sync_pc_open`                  | On your PC, open {url} in Chrome or Edge, pick “On my phone”, and click “Show code”.                                                 |
-| `sync_scan_action`              | Scan the code                                                                                                                        |
-| `sync_paste_link`               | Or paste a link                                                                                                                      |
-| `sync_step_save_on_pc`          | Connect your save, on your PC                                                                                                        |
-| `sync_step_save_on_pc_hint`     | Your PC walks you through it.                                                                                                        |
-| `sync_check_pc`                 | Check your PC. It should show this code:                                                                                             |
-| `sync_confirm_there`            | Confirm it there, and you’re paired.                                                                                                 |
-| `sync_waiting_pc`               | Waiting for your PC…                                                                                                                 |
-| `sync_paired_with_pc`           | Paired with your PC                                                                                                                  |
-| `sync_paired_title`             | You’re paired!                                                                                                                       |
-| `sync_paired_body`              | Now connect your save on your PC. Your progress shows up here as soon as it’s done.                                                  |
-| `sync_paired_progress_body`     | Now connect your save on your PC. Your PC’s progress comes over first, then each new save.                                           |
-| `sync_carry_title`              | Your PC has progress to send                                                                                                         |
-| `sync_carry_body`               | This phone has progress too. Use your PC’s, and we’ll keep a backup of what’s here. Or keep this phone’s, and your PC’s stays there. |
-| `sync_carry_from_pc`            | From your PC                                                                                                                         |
-| `sync_carry_on_phone`           | On this phone                                                                                                                        |
-| `sync_replaces_backup`          | This replaces your backup of {farm}, from {calendarDate}.                                                                            |
-| `sync_replaces_backup_unnamed`  | This replaces your earlier backup, from {calendarDate}.                                                                              |
-| `sync_carry_use`                | Use my PC’s                                                                                                                          |
-| `sync_carry_keep`               | Keep this phone’s                                                                                                                    |
-| `sync_carry_skipped_title`      | Your PC didn’t send its progress                                                                                                     |
-| `sync_carry_skipped_body`       | This phone kept its own, and new saves still come in.                                                                                |
-| `sync_carry_skipped_body_empty` | This phone starts from your save, and new saves still come in.                                                                       |
-| `sync_carry_failed_title`       | Your PC’s progress couldn’t be saved here                                                                                            |
-| `sync_carry_failed_body`        | This phone kept its own, and new saves still come in. To bring your PC’s over later, export a backup on your PC and restore it here. |
-| `sync_progress_coming`          | Your PC’s progress is on its way…                                                                                                    |
-| `sync_progress_keep_open`       | It comes over once your PC connects its save.                                                                                        |
-| `sync_waiting_save`             | Waiting for your first save…                                                                                                         |
-| `sync_worked_title`             | It worked!                                                                                                                           |
-| `sync_worked_body`              | Your progress is here, and it updates every time you sleep in the game.                                                              |
-| `sync_worked_body_redrop`       | Your progress is here, and it updates whenever your PC sends a new save.                                                             |
-| `sync_worked_action`            | Take a look                                                                                                                          |
-| `sync_camera_title`             | Pair this browser, or the app?                                                                                                       |
-| `sync_camera_body`              | Your camera opened this code in {browser}. Using the tracker from your home screen? Open it there and tap “Scan the code” instead.   |
-| `sync_camera_pair`              | Pair {browser}                                                                                                                       |
-| `sync_camera_app`               | I’ll use the app                                                                                                                     |
-| `sync_link_copy`                | On your PC, open {url}, pick “On my phone”, click “Show code”, then “Copy link”.                                                     |
-| `sync_link_send`                | Send the link to this computer, like in a message to yourself.                                                                       |
-| `sync_link_open`                | Open it here, or paste it below.                                                                                                     |
-| `sync_link_placeholder`         | Paste the link here                                                                                                                  |
-| `sync_link_confirm_title`       | Pair with your PC?                                                                                                                   |
-| `sync_link_confirm_body`        | Pair, then check the code on your PC.                                                                                                |
-| `sync_link_confirm_action`      | Pair                                                                                                                                 |
-| `sync_link_pair`                | Pair                                                                                                                                 |
-| `sync_link_camera`              | Scan with this computer’s camera instead                                                                                             |
-| `sync_bad_link_title`           | That link doesn’t look right                                                                                                         |
-| `sync_bad_link_body`            | It may have been cut off. Copy it again on your PC, or scan the code instead.                                                        |
+| Key                                    | English                                                                                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `sync_phone_lead`                      | Two steps: one here, one on your PC.                                                                                                 |
+| `sync_phone_lead_ios`                  | Three steps: two here, one on your PC.                                                                                               |
+| `sync_step_install`                    | Add it to your home screen                                                                                                           |
+| `sync_install_share`                   | Tap Share. In Safari, it may be under •••.                                                                                           |
+| `sync_install_add`                     | Tap “Add to Home Screen”.                                                                                                            |
+| `sync_install_open`                    | Open the tracker from there to keep going.                                                                                           |
+| `sync_install_backup_first`            | Already using the tracker here? Export a backup first.                                                                               |
+| `sync_install_open_restore`            | Open the tracker from there, and restore the backup in Data.                                                                         |
+| `sync_install_skip`                    | Skip, keep using {browser}                                                                                                           |
+| `sync_install_skipped`                 | Skipped. Add it any time.                                                                                                            |
+| `sync_install_show`                    | Show me                                                                                                                              |
+| `sync_step_pair_pc`                    | Pair with your PC                                                                                                                    |
+| `sync_step_pair_pc_summary`            | Scan a code from your PC.                                                                                                            |
+| `sync_pc_open`                         | On your PC, open {url} in Chrome or Edge, pick “On my phone”, and click “Show code”.                                                 |
+| `sync_scan_action`                     | Scan the code                                                                                                                        |
+| `sync_paste_link`                      | Or paste a link                                                                                                                      |
+| `sync_step_save_on_pc`                 | Connect your save, on your PC                                                                                                        |
+| `sync_step_save_on_pc_hint`            | Your PC walks you through it.                                                                                                        |
+| `sync_check_pc`                        | Check your PC. It should show this code:                                                                                             |
+| `sync_confirm_there`                   | Confirm it there, and you’re paired.                                                                                                 |
+| `sync_waiting_pc`                      | Waiting for your PC…                                                                                                                 |
+| `sync_paired_with_pc`                  | Paired with your PC                                                                                                                  |
+| `sync_paired_title`                    | You’re paired!                                                                                                                       |
+| `sync_paired_body`                     | Now connect your save on your PC. Your progress shows up here as soon as it’s done.                                                  |
+| `sync_paired_progress_body`            | Now connect your save on your PC. Your PC’s progress comes over first, then each new save.                                           |
+| `sync_carry_title`                     | Your PC has progress to send                                                                                                         |
+| `sync_carry_body`                      | This phone has progress too. Use your PC’s, and we’ll keep a backup of what’s here. Or keep this phone’s, and your PC’s stays there. |
+| `sync_carry_from_pc`                   | From your PC                                                                                                                         |
+| `sync_carry_on_phone`                  | On this phone                                                                                                                        |
+| `sync_replaces_backup`                 | This replaces your backup of {farm}, from {calendarDate}.                                                                            |
+| `sync_replaces_backup_unnamed`         | This replaces your earlier backup, from {calendarDate}.                                                                              |
+| `sync_replaces_backup_undated`         | This replaces your backup of {farm}.                                                                                                 |
+| `sync_replaces_backup_unnamed_undated` | This replaces your earlier backup.                                                                                                   |
+| `sync_carry_use`                       | Use my PC’s                                                                                                                          |
+| `sync_carry_keep`                      | Keep this phone’s                                                                                                                    |
+| `sync_carry_skipped_title`             | Your PC didn’t send its progress                                                                                                     |
+| `sync_carry_skipped_body`              | This phone kept its own, and new saves still come in.                                                                                |
+| `sync_carry_skipped_body_empty`        | This phone starts from your save, and new saves still come in.                                                                       |
+| `sync_carry_failed_title`              | Your PC’s progress couldn’t come over                                                                                                |
+| `sync_carry_failed_body`               | This phone kept its own, and new saves still come in. To bring your PC’s over later, export a backup on your PC and restore it here. |
+| `sync_progress_coming`                 | Your PC’s progress is on its way…                                                                                                    |
+| `sync_progress_keep_open`              | It comes over once your PC connects its save.                                                                                        |
+| `sync_waiting_save`                    | Waiting for your first save…                                                                                                         |
+| `sync_worked_title`                    | It worked!                                                                                                                           |
+| `sync_worked_body`                     | Your progress is here, and it updates every time you sleep in the game.                                                              |
+| `sync_worked_body_redrop`              | Your progress is here, and it updates whenever your PC sends a new save.                                                             |
+| `sync_worked_action`                   | Take a look                                                                                                                          |
+| `sync_camera_title`                    | Pair this browser, or the app?                                                                                                       |
+| `sync_camera_body`                     | Your camera opened this code in {browser}. Using the tracker from your home screen? Open it there and tap “Scan the code” instead.   |
+| `sync_camera_pair`                     | Pair {browser}                                                                                                                       |
+| `sync_camera_app`                      | I’ll use the app                                                                                                                     |
+| `sync_link_copy`                       | On your PC, open {url}, pick “On my phone”, click “Show code”, then “Copy link”.                                                     |
+| `sync_link_send`                       | Send the link to this computer, like in a message to yourself.                                                                       |
+| `sync_link_open`                       | Open it here, or paste it below.                                                                                                     |
+| `sync_link_placeholder`                | Paste the link here                                                                                                                  |
+| `sync_link_confirm_title`              | Pair with your PC?                                                                                                                   |
+| `sync_link_confirm_body`               | Pair, then check the code on your PC.                                                                                                |
+| `sync_link_confirm_action`             | Pair                                                                                                                                 |
+| `sync_link_pair`                       | Pair                                                                                                                                 |
+| `sync_link_camera`                     | Scan with this computer’s camera instead                                                                                             |
+| `sync_bad_link_title`                  | That link doesn’t look right                                                                                                         |
+| `sync_bad_link_body`                   | It may have been cut off. Copy it again on your PC, or scan the code instead.                                                        |
 
 ### Setup hiccups
 
@@ -745,7 +758,8 @@ Error & notice copy is a first draft.
 | `sync_offline_setup_title`   | You’re offline                                                                                                  |
 | `sync_offline_setup_body`    | Pairing needs the internet. We’ll pick up where you left off once you’re back.                                  |
 | `sync_check_failed_title`    | We couldn’t check you’re not a robot                                                                            |
-| `sync_check_failed_body`     | That happens sometimes. Try again, and if it keeps failing, reload the page.                                    |
+| `sync_check_failed_body`     | That happens sometimes. Do the quick check below, and your code shows up.                                       |
+| `sync_check_failed_still`    | Still stuck? A VPN or strict privacy settings can block it. Try turning one off, or use another browser.        |
 | `sync_try_again`             | Try again                                                                                                       |
 | `sync_too_many_codes_title`  | That’s a lot of codes                                                                                           |
 | `sync_too_many_codes_body`   | Give it a few minutes, then show a new code.                                                                    |
@@ -786,6 +800,7 @@ Error & notice copy is a first draft.
 | `sync_status_uploaded`           | Your {device} hasn’t picked it up yet                                                                                                           |
 | `sync_status_question`           | On your {device}, waiting on a question there                                                                                                   |
 | `sync_status_blocked`            | Your {device} needs a look in Data                                                                                                              |
+| `sync_status_update`             | Your {device} needs a tracker update                                                                                                            |
 | `sync_label_sending`             | Sending                                                                                                                                         |
 | `sync_sending_pc_progress`       | This PC’s progress                                                                                                                              |
 | `sync_save_held`                 | {gameDate} (held)                                                                                                                               |
@@ -909,6 +924,7 @@ Error & notice copy is a first draft.
 | `sync_slip_gap`                   | Plural on `{days}`: one “No saves in {days} day”, other “No saves in {days} days”                                              |
 | `sync_slip_break`                 | Sync’s taking a break                                                                                                          |
 | `sync_slip_waiting`               | Waiting for your first save                                                                                                    |
+| `sync_slip_question`              | A question’s waiting                                                                                                           |
 | `sync_phone_lapsed_title`         | Your pairing expired                                                                                                           |
 | `sync_phone_lapsed_body`          | Your PC and this phone haven’t synced in over three months. Pair again to keep going.                                          |
 | `sync_pc_behind_title`            | Update the tracker on your PC                                                                                                  |
