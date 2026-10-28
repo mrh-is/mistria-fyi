@@ -14,6 +14,18 @@ require an exception.
   narrowest possible disable with a justification.
 - Documentation-only changes: `pnpm run lint:fix && pnpm run lint` only.
 
+### Oracle checks
+
+For tests that claim selection or enforcement, assert a nonempty or exact target set before checking
+its members, & exercise the existing gate’s failure path. An ordering comparison alone can pass when
+`indexOf` returns `-1`. Derive expected projections from a small semantic fixture or an independent
+input, rather than the helper under test; keep module-mocking fixtures in an isolated test file.
+Pipeline drift fixtures must use an encoding the production collector reads & establish the
+collected source before expecting exclusion rejection. For each repaired gap, temporarily remove the
+guard or introduce the faulty input, confirm the regression fails for the intended reason, & restore
+it before delivery. Record these probes with their verification scope; a Node process test does not
+establish workerd, physical-device, or installed-PWA behavior.
+
 ## CI coverage
 
 The steps CI runs are listed in one place, `STEPS` in [scripts/verify.ts](../scripts/verify.ts):
@@ -117,9 +129,40 @@ what reviews (another agent, another model, a human) is the contributor’s choi
 - Authentication, abuse controls, or security boundaries
 - Changes spanning 5+ files with cross-cutting concerns
 
+For persistence, sync-apply, & PWA/update changes, select the relevant sequences below; reuse tests
+that already prove them, and give new or strengthened regressions a controlled failure witness:
+
+- Failed storage read versus an absent key, followed by edits & a fresh load
+- Queued auto-save versus an explicit restore, including durable storage & a fresh load
+- Another tab’s write with its storage event withheld
+- Successive sync bundles whose incoming value returns to its default between disagreements
+- Cancellation or failed recovery followed by reload/readback, preserving the last recoverable data
+- An update waiting through asynchronous transfer decoding & merge, until completion or cancellation
+
 Use one review pass with a deterministic target (the merge-base diff). Do not run spec reviews, plan
 reviews, and implementation reviews as separate passes. If the review finds high-severity issues
 that require substantial changes, one re-review is justified; otherwise, fix and move on.
+
+### Review records
+
+Keep findings & resolutions in the existing PR review threads (or issue comments when there is no
+PR), preserving original text. This is a record format, not an additional review or approval gate.
+
+- Give each finding a PR-local ID, such as `F1`, preserved across reposts & re-reviews; never reuse
+  an ID for a different finding. Include severity, affected invariant/location, impact, proposed
+  repair, & reproduction or source-trace evidence. Identify the reviewed base & head commits.
+- Reply in the finding’s existing thread using its ID & one disposition: **fixed**, with a commit
+  link & verification; **refuted**, with evidence; **accepted risk**, with a link to explicit owner
+  authorization; or **deferred**, with a follow-up issue & owner. Until supported by such a reply,
+  the finding remains **unresolved**; missing resolution text never implies a fix.
+- A no-finding review states its scope & limits without creating a finding ID. Reposts reference the
+  existing ID & source record instead of creating another discovery. Leave legacy prose unclassified
+  unless an explicit, evidence-backed mapping is appended.
+- Keep the final `Agent:` attribution line required by
+  [agent-workflow.md](agent-workflow.md#agent-attribution) on reviews & resolution replies.
+
+Collector tooling is [deferred](decisions/2026-10-28-review-record-format.md) until a second survey
+demonstrates that this format is insufficient for aggregation.
 
 ### Review prompts
 

@@ -18,6 +18,8 @@ import { pathToFileURL } from "node:url";
  *   canonical agent trailer on a commit. An agent-authored PR must end its body with an
  *   `Agent: <slug>` line & carry exactly one `agent:*` label, matching the slug for known agents.
  * - A PR with none of those signals (human-only) passes with no trailer, line, or label.
+ * - An agent-authored PR's body must carry a `Preview:` line with its branch's preview URL (see
+ *   `previewSlug`) when the head branch is known.
  * - No PR body may carry the harness's "Generated with Claude Code" footer.
  */
 
@@ -45,7 +47,22 @@ export interface PullRequest {
   /** The PR's real commit count (`pull_request.commits`), to detect a truncated listing. */
   commitCount?: number;
   commits: Commit[];
+  /** The head branch name, which determines the Cloudflare Pages preview URL. */
+  headRef?: string;
   labels: string[];
+}
+
+/** Cloudflare Pages' branch alias, which becomes a DNS label: 28 characters, no trailing hyphen. */
+export function previewSlug(branch: string): string {
+  return branch
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]/g, "-")
+    .slice(0, 28)
+    .replace(/-+$/, "");
+}
+
+export function previewUrl(branch: string): string {
+  return `https://${previewSlug(branch)}.mistria-fyi.pages.dev`;
 }
 
 const TRAILER = /^co-authored-by:\s*(.*?)\s*<([^>]*)>\s*$/gim;
@@ -90,7 +107,13 @@ export function checkCommitMessage(message: string): { agent: boolean; problems:
   return { agent, problems };
 }
 
-export function checkPullRequest({ body, commitCount, commits, labels }: PullRequest): string[] {
+export function checkPullRequest({
+  body,
+  commitCount,
+  commits,
+  headRef,
+  labels,
+}: PullRequest): string[] {
   const problems: string[] = [];
   if (
     commitCount !== undefined &&
@@ -141,6 +164,9 @@ export function checkPullRequest({ body, commitCount, commits, labels }: PullReq
   if (known !== undefined && agentLabels.length === 1 && agentLabels[0] !== known.label) {
     problems.push(`"Agent: ${slug}" needs the "${known.label}" label, not "${agentLabels[0]}".`);
   }
+  if (headRef !== undefined && !bodyLines.includes(`Preview: ${previewUrl(headRef)}`)) {
+    problems.push(`An agent-authored PR body needs the line "Preview: ${previewUrl(headRef)}".`);
+  }
   return problems;
 }
 
@@ -157,7 +183,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     // Local commit-msg hook: only the trailer rule applies before a PR exists.
     report(checkCommitMessage(readFileSync(path, "utf8")).problems);
   } else {
-    // CI: PR_BODY & PR_LABELS (JSON array) from the event, PR_COMMITS as one JSON object per line.
+    // CI: PR_BODY, PR_HEAD_REF (empty for forks), & PR_LABELS (JSON array) from the event,
+    // PR_COMMITS as one JSON object per line.
     report(
       checkPullRequest({
         body: process.env.PR_BODY ?? "",
@@ -169,6 +196,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
           .split("\n")
           .filter((line) => line.trim() !== "")
           .map((line) => JSON.parse(line) as Commit),
+        headRef: process.env.PR_HEAD_REF === "" ? undefined : process.env.PR_HEAD_REF,
         labels: JSON.parse(process.env.PR_LABELS ?? "[]") as string[],
       }),
     );
