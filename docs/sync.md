@@ -108,32 +108,50 @@ Workers Free until usage says otherwise. It is reachable under the site’s orig
 ### Caps & expiry
 
 - **Offers & pairings are capped separately,** because the PC mints an offer each time the player
-  reveals a code, & “No, it doesn’t” or a stream viewer racing codes spends more. Turnstile
-  (server-side Siteverify) runs invisibly when pairing setup opens, & the token is redeemed when the
-  first offer is minted. Each client may mint a few offers in 10 minutes, & minting is capped
-  account-wide at about 500 a day. Accepted pairings, the expensive part, are capped account-wide at
-  about 50 a day by a singleton object. A failed challenge & a full day are states of their own on
-  the PC, with no code shown.
-- Each pairing caps its own writes (about one a minute, 60 a day). The caps are sized so the worst
-  case (about 3,000 uploads & 9,000 Durable Object row writes a day, an estimate) fits Workers
-  Free’s 100,000 row writes with room to spare, so no separate budget check exists. Raise the caps
-  if usage ever warrants it.
+  reveals a code, & “No, it doesn’t” or a stream viewer racing codes spends more. Each mint redeems
+  its own Turnstile token (server-side Siteverify), run invisibly when the player reveals a code or
+  asks for a new one, so no token ages past its five-minute validity. A Cloudflare rate-limiting
+  rule allows a few mints per IP address in 10 minutes; Cloudflare applies it at its edge, & the
+  relay never sees, logs, or stores the address. Minting is capped account-wide at about 2,000 a
+  day. A failed challenge, a client over its rate (“That’s a lot of codes”), & a full day are PC
+  states of their own, with no code shown.
+- **An offer reserves its pairing.** Accepted pairings, the expensive part, are capped account-wide
+  at about 50 a day by a singleton object. Each unexpired offer holds a reservation against that
+  cap, so an offer that minted can always be accepted, & the reservation lapses with the offer.
+  Minting fails as “Pairing is full for today” once accepted pairings & reservations reach the cap.
+- **A daily write budget bounds the rest.** The daily cap doesn’t bound live pairings, since a
+  pairing lives until it lapses. Each pairing object reports its Durable Object row writes to the
+  singleton in batches (every 20 writes, or when it hibernates), & the singleton keeps the day’s
+  approximate total. Past 80% of Workers Free’s 100,000 row writes, pairing objects refuse new
+  uploads with a retry hint, & the PC shows “Sync’s full for today” & retries as the hint says.
+  Confirmations, unpairing, accepting offers already minted, & cleanup keep the remaining 20%.
+- Each pairing also caps its own writes: about one upload a minute & 60 a day, at about three row
+  writes each. A typical pairing sends far less (a save per in-game day, a few sessions a week), so
+  the budget covers roughly 2,000 active pairings (an estimate). Move to Workers Paid or raise the
+  caps if usage approaches it.
 - Bundles are capped at 256 KB.
 - The slot empties once the phone confirms, with a 48-hour expiry as the backstop. An expired bundle
-  is never served, & its deletion retries. A courier that sees its bundle expired unapplied
-  re-uploads its latest one, & the game writes a save on loading anyway, so the next session
-  resends.
-- A pairing record unseen by either device for 90 days is dropped, & any request from either device
-  renews it. The PC shows “last seen”. A record is a few hundred bytes, so a long holiday doesn’t
-  force a re-pair. “Unpair” on either side tells the relay, queued if offline.
+  is never served, & its deletion retries. A courier that sees its latest bundle expired unapplied
+  re-uploads it as a fresh encryption at the next sequence, while the phone has checked in within
+  the last 14 days. After that it stops re-uploading & shows “No word from your {device} since
+  {calendarDate}”, & resumes when the phone checks in. The game writes a save on loading anyway, so
+  the next session resends.
+- A pairing lapses 90 days after the phone last checked in. Only the phone’s requests count, so a
+  relay left running can’t keep a pairing alive by itself, & the relay holds no ciphertext for a
+  phone that’s gone. A record is a few hundred bytes, so a long holiday doesn’t force a re-pair. The
+  PC shows when the phone last checked in. “Unpair” on either side tells the relay, queued if
+  offline.
 - The phone receives bundles over a hibernating WebSocket instead of polling. Persisted state
   survives eviction & deploys.
 
 ### Operations
 
 - **Kill switch.** A flag in the singleton object, flipped by an authenticated admin request (a
-  dashboard variable would be dropped by the next deploy). “Sync is paused” applies on the next
-  request, while confirmations, unpairing, & cleanup still go through. Manual tracking still works.
+  dashboard variable would be dropped by the next deploy). “Sync is taking a break” applies on the
+  next request, while confirmations, unpairing, & cleanup still go through. Manual tracking still
+  works. During setup, a paused relay refuses new offers & answers, & both devices show “Sync is
+  taking a break” in place of the code. A relay that can’t be reached, or answers with a server
+  error, shows “We couldn’t reach sync” with “Try again”.
 - **Logging.** Request logging stays off.
 - **Takedown.** [takedown.md](takedown.md) gains a relay section.
 - **Tests** run the Durable Object in Miniflare. Deploying needs the maintainer’s Cloudflare login.
@@ -153,12 +171,17 @@ The QR is a URL whose fragment carries a single-use offer: a one-time ID, the PC
 public key, & a random 128-bit secret. The QR starts covered; the PC mints the offer only when the
 player reveals it, so a covered code never counts against the pairing cap. Hiding & showing it again
 keeps the same offer & countdown. The offer expires after a couple of minutes & disappears once
-paired. The phone strips the offer from its address bar.
+paired. The phone strips the offer from its address bar. A receiver that can’t parse an offer (a
+truncated or mangled link) contacts nothing & says “That link doesn’t look right”, with scanning &
+pasting still offered.
 
 A revealed code also offers “Copy link”, the same URL as text, for a computer with no camera to aim
 (#131). The player carries it across however they like & opens or pastes it there. It is answered
 like a Camera-opened URL, & the six-digit match guards it the same way, so a link that leaks in a
-chat log is no worse than a QR shown on stream.
+chat log is no worse than a QR shown on stream. Copying the link extends the unanswered offer to 10
+minutes, since carrying a link takes longer than aiming a camera, & the countdown beside “Copy link”
+shows the new time. The QR on screen is the same offer, so the longer window is guarded by the same
+match.
 
 ### Handshake
 
@@ -181,8 +204,8 @@ Version 1 pins the suite, with no negotiation:
   “Paired” only once the PC accepts.
 - **Accepting takes a person.** Once a device answers, the PC & that device each show the same
   six-digit code derived from the handshake transcript, & the player confirms the match on the PC.
-  “No, it doesn’t” discards the offer & mints a fresh one. See
-  [the decision record](decisions/2026-10-27-sync-pairing-confirm.md).
+  “No, it doesn’t” discards the offer & shows a new covered code; revealing it mints a fresh offer.
+  See [the decision record](decisions/2026-10-27-sync-pairing-confirm.md).
 - **A spent offer says so.** A device that answers an offer someone else already answered gets
   “Someone else got to this code first”, & no code to match, so the player rejects on the PC.
 - **Expiry** blocks new answers. An answered offer stays confirmable for two minutes after the
@@ -196,85 +219,69 @@ Version 1 pins the suite, with no negotiation:
 A PC that already holds progress can send it once when it pairs, so a phone starts with everything
 the player checked off on the PC, not only what the save contains (#131,
 [the decision record](decisions/2026-10-28-sync-carry-pc-progress.md)). “Send this PC’s progress
-too” is checked by default on the PC’s first pairing & unchecked when it re-pairs, since a relay’s
-stored progress stops changing once it relays.
+too” is checked by default on the PC’s first pairing & unchecked when it re-pairs (except after “My
+old phone’s gone”, which checks it), since a relay’s stored progress stops changing once it relays.
+The phone takes the progress whole or not at all; nothing merges.
 
 - **Payload.** The PC’s stored progress in the restorable backup format, with provenance,
   resolutions, & farm identity, compressed, then encrypted like any bundle & marked as progress
-  inside the ciphertext. The farm-switch backup stays behind.
-- **Announced.** The PC’s accept message says whether progress follows & names it with a transfer
-  ID, so the phone shows “Your PC’s progress is on its way” rather than waiting on a save, & both
-  devices persist the ID across reloads.
-- **Order.** It is the pairing’s first bundle, & the courier holds saves until the relay records it
-  as applied (see [Slots & sequences](#slots--sequences)); the slot keeps one bundle, & a higher
-  sequence would replace it. Meanwhile the courier keeps only the latest save & uploads it once the
-  barrier lifts, within the one-a-minute cap. If the progress bundle expires unapplied, the PC
-  re-uploads it under the same transfer ID. The PC shows the barrier (“Sending your progress” or
-  “Waiting on your phone”) with “Skip it”, which drops the progress & lifts the barrier; a phone
-  that can’t read the bundle reports that, & the PC offers the same skip.
-- **Farm first.** The phone compares the bundle’s farm with its own through `compareFarms` before
-  merging anything. The same farm merges. Unidentified progress on either side asks “Is this the
-  farm you’ve been tracking?” first. A different farm is a farm switch (see
-  [Farm identity](#farm-identity)): the phone backs up its own farm & takes the PC’s.
-- **Merge.** `mergeProgress` (#135, in `src/lib/engine/`) combines stored progress with carried
-  progress per fact kind & never removes anything. It differs from `mergeFromSave`, which records
-  `unknown` provenance because a transfer carries none.
-
-  | Fact kind               | Rule                                                                                 |
-  | ----------------------- | ------------------------------------------------------------------------------------ |
-  | Check-off               | Checked on either side stays checked; a PC uncheck never unchecks the phone          |
-  | Level                   | The higher one wins                                                                  |
-  | Quest                   | The further state wins                                                               |
-  | Household               | `mergeHousehold`, as for a manual import                                             |
-  | Provenance & `playtime` | Each fact keeps the stamp of the side its value came from; a tie keeps the phone’s   |
-  | Resolutions             | The phone keeps its own & gains the PC’s for facts whose value came from the PC      |
-  | Save baseline           | The higher `playtime`, so a later save still orders against both sides’ manual facts |
-
-  Property tests cover idempotence (merging twice changes nothing), that nothing checked is lost, &
-  that provenance follows the winning value.
-
-- **Start fresh.** A phone with progress asks before scanning: “Keep what I have” or “Start fresh”.
-  “Start fresh” only records the choice. The phone replaces its progress in the same write that
-  applies the first incoming bundle, progress or save, & keeps the outgoing state as the farm-switch
-  backup, so an abandoned or failed setup erases nothing.
+  inside the ciphertext. The farm-switch backup stays behind. The PC freezes the payload when it
+  accepts the match & keeps it until the transfer ends, so every upload carries the same progress.
+- **Announced.** The PC’s accept message says whether progress may follow & names it with a transfer
+  ID, & both devices persist the ID across reloads.
+- **The phone chooses at pairing.** An empty phone takes the progress without asking. A phone with
+  progress asks right after “You’re paired!”, while the player is holding it: “Use my PC’s”, which
+  replaces this phone’s progress & keeps it as the farm-switch backup, or “Keep this phone’s”, which
+  declines the transfer. The answer is stored with the transfer ID & applies to nothing else. A
+  quarantined or newer-data phone never gets this far (see [The phone](#the-phone)).
+- **Farm first, on the PC.** The PC sends its progress only after the player connects the save, &
+  only when its stored farm matches the save’s, through `compareFarms`. Unidentified stored progress
+  asks on the PC, “Is this the farm you’ve been tracking?”, with both farms side by side. A
+  different farm, or “No”, skips the transfer, sends nothing, & says “This PC’s progress stays
+  here”. So carried progress is always the farm the game is playing, & the first save after a carry
+  never switches farms.
+- **Order.** It is the pairing’s first bundle, & the courier holds saves until the transfer ends
+  (see [Slots & sequences](#slots--sequences)). Meanwhile it keeps only the latest save & uploads it
+  once the barrier lifts, within the one-a-minute cap. The PC shows the barrier (“Sending your
+  progress”, then “Waiting on your {device}…”) with “Skip it”, & so does the relay dashboard once
+  setup closes.
+- **Ending the transfer.** The relay records one terminal state per transfer ID, whichever comes
+  first: _claimed_, _declined_, or _skipped_. The phone claims the transfer before applying the
+  bundle & applies only if the claim succeeds; “Keep this phone’s” declines it; “Skip it”, a farm
+  the PC keeps back, or a phone reporting it can’t read the bundle, skips it. Once a transfer is
+  claimed, “Skip it” is refused & the PC says “Your {device} is already using it”. Once it is
+  declined or skipped, the slot empties, a later claim is refused, & a phone waiting on it (empty,
+  or one that chose “Use my PC’s”) keeps what it has & says “Your PC didn’t send its progress”. The
+  barrier lifts when the transfer is declined, skipped, or applied.
+- **Exactly once.** The phone records the transfer ID as applied in the same write as the progress,
+  in the “last applied” receipt (see [The phone](#the-phone)). A later envelope naming an applied
+  transfer ID is confirmed without applying. A crash after the claim fetches the bundle again, since
+  a claim lets that pairing fetch until it confirms. If the bundle expires unclaimed, the PC
+  re-uploads the frozen payload as a fresh encryption at the next sequence, under the same transfer
+  ID.
 - **Versions.** The backup format migrates forward, so a newer phone reads an older PC’s progress.
-  An older phone that can’t read it says “Update this phone” (see [Versions](#versions)).
+  An older phone that can’t read it says “Update this phone” & skips the transfer, so the PC’s
+  barrier lifts (see [Versions](#versions)).
 - **Once.** It travels only when the box is checked. The PC’s own stored progress stays untouched
   while it relays.
 - **Size.** A backup is mostly ID lists, so it compresses well below the 256 KB cap. Measuring a
   compressed late-game backup is a #133 acceptance criterion; if one nears the cap, the bundle
   splits under the same transfer ID.
 
-### Handing off between trackers
+Tests cover an empty phone, a phone that declines, a phone that uses the PC’s progress, a skip that
+races a claim in both orders, a crash between claim & confirm, a re-upload after expiry that must
+not apply twice, unidentified & different stored farms on the PC, & a phone on an older backup
+format.
 
-A one-time handoff moves stored progress from one tracker to another (#131,
-[the decision record](decisions/2026-10-28-sync-progress-handoff.md)). It serves a new phone (“Pair
-a different phone” starts there) & the move from an iOS browser to the installed app, and replaces
-the transfer QR (#138). Either side can be any tracker; a relay can’t send, since its stored
-progress is stale.
+### New devices
 
-- **Offer.** The sender mints an offer like pairing’s, marked as a handoff inside the fragment, with
-  the same covered QR, “Copy link”, expiry, & per-client & daily offer caps. It never counts as a
-  pairing. On iOS the browser’s link opens in the browser, so the move to the app copies the link in
-  the browser & pastes it in the app.
-- **Handshake & match.** Pairing’s handshake & six-digit match, unchanged. The sender accepts the
-  match, since it is the device whose progress leaves.
-- **Bundle.** One progress bundle, the same payload as
-  [carried progress](#carrying-the-pcs-progress), in a slot keyed by the offer. It expires 10
-  minutes after acceptance, since both devices are at hand, & the slot & offer are deleted once the
-  receiver confirms. Nothing persists afterward: no write token, generation, or pairing on either
-  side, & no change to either side’s existing pairing or role.
-- **Receiving.** A quarantined or newer-data receiver doesn’t answer, as for pairing. Versions
-  follow [Versions](#versions). The receiver checks the farm as for carried progress. An empty
-  receiver takes the progress whole, through the one write path as a restore would; one with
-  progress merges with `mergeProgress`, after “Keep what I have” or “Start fresh”, with the same
-  deferred replace.
-- **The sender keeps its copy.** It shows “Sent” only once the relay records the bundle as applied,
-  & “Waiting on your {device}” while the receiver has it but a question is open.
-
-Tests cover a handoff into an empty receiver & one with progress, a different farm, a receiver on an
-older backup format, an expired bundle, & a handoff while the receiver is paired, which keeps the
-pairing.
+A new phone, or the move from an iOS browser to the installed app, carries progress by backup &
+restore: export a backup on the old copy & restore it on the new one, which is empty, so restore
+replaces nothing (#131, [sync-setup.md](sync-setup.md#a-new-phone)). Then the new copy pairs,
+replacing the old pairing. A player whose old phone is gone pairs with “Send this PC’s progress too”
+checked, which carries the PC’s progress from before it started relaying. A one-time handoff over
+the relay is deferred to #269
+([the decision record](decisions/2026-10-28-sync-progress-handoff.md)).
 
 ### Device state & copy
 
@@ -284,9 +291,12 @@ pairing.
 - On iOS & iPadOS, a browser pairs like any phone, even though its storage is apart from the
   installed app. Moving to the app later restores a backup & pairs again from the app, replacing the
   browser’s pairing (#131, [sync-setup.md](sync-setup.md#moving-to-the-installed-app-on-iphone)).
-  The system Camera app opens codes in Safari, so an offer that arrives by URL in an iOS browser
-  asks before answering: pair this browser, or open the installed tracker & scan there. Pairing the
-  browser stays a deliberate choice.
+  The system Camera app opens codes in the default browser, never the installed app, so an offer
+  that arrives by URL in an iOS browser asks before answering: pair this browser, or open the
+  installed tracker & scan there. Pairing the browser stays a deliberate choice.
+- Device labels derive locally: a short model name where the browser reports one (“Pixel 8”), else
+  the platform (“iPhone”), & on iOS & iPadOS a browser adds its name (“Safari on iPhone”), so the PC
+  can tell a browser’s pairing from the installed app’s.
 - “One PC” means one browser profile. Two profiles are two couriers, & pairing either replaces the
   phone’s pairing; the setup copy says so, & nothing enforces it.
 
@@ -306,15 +316,30 @@ learn of a change through a `BroadcastChannel` & re-read it on focus.
   match. Until then nothing changes, & Back, a reload, or a closed tab leaves the old role in place.
   At acceptance the lock holder stops its local writer, flushes any pending write through the one
   write path, & only then records the relay role & starts sending.
+- **Recovering an interrupted switch.** Before accepting, the PC records the pending switch (the
+  offer ID & the new role) in device state. On load, a pending switch whose offer the relay reports
+  accepted finishes the steps above; any other answer clears it & keeps the old role.
+- **Fencing other tabs.** The one write path checks the role inside its Web Lock, so a write another
+  tab queued before the switch, & runs after it, is refused instead of landing in the relay’s frozen
+  progress. That tab learns the new role & reloads read-only.
+- **Self-updating tracker → tracker** (“Stop updating”). The watcher releases the lock & forgets the
+  file handle; stored progress stays as it is.
 - **Relay → tracker** (“Unpair”). The PC stops sending, records the tracker role, & shows its stored
   progress as it was before relaying, which may be months old. It offers “Fill in from your latest
   save”, a manual import of the watched save through the normal flow.
-- **What a relay hides.** Restore, import, reset, & the Danger Zone act on stored progress the relay
-  doesn’t show, so Data hides them while relaying & says to unpair first. “Export backup” stays &
-  says it holds the progress from before relaying.
+- **Relay → self-updating tracker** goes through unpairing: the PC becomes a tracker, then “On this
+  PC” makes it self-updating, & the first watched save applies onto the progress from before
+  relaying through the apply rules, as for any tracker.
+- **What a relay hides.** Restore, manual import, reset, & the Danger Zone act on stored progress
+  the relay doesn’t show, so Data hides them while relaying & says to unpair first; the Import card
+  shows only the relay’s save. “Export backup” stays & says it holds the progress from before
+  relaying.
+- **A relay doesn’t answer offers.** A pairing link opened or pasted on a relay says to unpair
+  first, so a relay never becomes the receiving side.
 
-Tests cover a transition interrupted before acceptance, a second tab writing while the first becomes
-the relay, & unpairing with a pending mirror.
+Tests cover a transition interrupted before acceptance & one interrupted between the relay’s
+acceptance & the local role write, a second tab writing while the first becomes the relay, “Stop
+updating”, a relay opening a pairing link, & unpairing with a pending mirror.
 
 ## The phone
 
@@ -327,16 +352,19 @@ apply rules (#129) & the single write path (#127).
   stored blob verbatim (the choice in PR #158 for #106, provisional until it merges), so a blocked
   phone still gives the player a copy. A phone in either state doesn’t answer an offer: setup shows
   the state & sends the player to Data before pairing, so a pairing never starts against a store
-  that can’t take its first bundle.
-- **Questions during setup** use the same tag dialog as any later sync. While one waits, the phone
-  reports the bundle as received (see [Slots & sequences](#slots--sequences)), & the PC says
-  “Waiting on your phone” instead of claiming success. Cancelling a question leaves the bundle
-  unapplied in the slot until the player answers or a newer save replaces it.
+  that can’t take its first bundle. A paired phone whose store becomes blocked later reports each
+  bundle as received but blocked, so the PC says “Your {device} needs a look in Data”, & the phone
+  shows a field note sending the player there.
+- **Questions** use the same tag dialog during setup as in any later sync. While one waits, the
+  phone reports the bundle as received (see [Slots & sequences](#slots--sequences)), & the PC says
+  “Waiting on your {device}…” instead of claiming success. Cancelling a question leaves the bundle
+  unapplied in the slot until the player answers or a newer save replaces it; the sync button keeps
+  its dot, & the question opens again the next time the tracker does.
 - **One write path.** Progress, provenance, resolved diffs, the farm-switch backup, & a “last
-  applied” receipt share one storage key. Every writer (auto-save, sync, restore, reset, migration)
-  goes through one function (#127), serialized by a Web Lock that re-reads & validates before
-  writing. The pagehide flush keeps today’s compare-before-write. The receipt never goes into
-  exports or restores.
+  applied” receipt (which also lists applied transfer IDs) share one storage key. Every writer
+  (auto-save, sync, restore, reset, migration) goes through one function (#127), serialized by a Web
+  Lock that re-reads & validates before writing. The pagehide flush keeps today’s
+  compare-before-write. The receipt never goes into exports or restores.
 - **Each apply is one immediate write** through that function. The replay counter advances only
   through that write, & the phone confirms only after reading back exactly what it meant to write.
 - **Recomputed questions.** If progress changed while a question waited, the diff is recomputed &
@@ -455,7 +483,9 @@ plus `info.creation_version`, parsed tolerantly (#128).
   one stored document, the backup under `local.farmSwitchBackup` as `{ backup, farmName }` in the
   restorable backup format, replacing any earlier one; it returns `null` when the backup wouldn’t
   restore, & the switch doesn’t happen.
-- Switching back is a restore. Multi-farm profiles stay later.
+- Switching back is a restore. Backup & Restore in Data offers the farm-switch backup by name
+  (“Backup of {farm}, from {calendarDate}”), & a switch that would replace an existing backup says
+  so first; #135 designs & builds both. Multi-farm profiles stay later.
 - Manual import stores the same identity & shows “last imported {time ago}”. Player & farm names
   stay out of the feedback snapshot.
 
@@ -469,8 +499,8 @@ builds do not matter. Two versions can disagree, & the message names whichever s
   “Update the tracker on your PC”; a lower phone version shows “Update this phone”. Each is a
   reload.
 - **Backup format,** for carried progress only. Older formats migrate forward on the phone; a format
-  newer than the phone knows says “Update this phone” & reports back, so the PC offers to skip the
-  progress. (Transfer QR codes, by contrast, bind to the exact app build; see
+  newer than the phone knows says “Update this phone” & skips the transfer, so the PC’s barrier
+  lifts. (Transfer QR codes, by contrast, bind to the exact app build; see
   [transfer-format.md](transfer-format.md).)
 
 ## App updates
@@ -502,7 +532,9 @@ The privacy page splits into “Without sync” (unchanged) & “With sync” (#
 that it is opt-in; end-to-end encrypted, including against the relay; held until the phone confirms,
 or deleted after 48 hours with retries; that Cloudflare processes IP addresses to deliver it & the
 app does not log them; that there is no account; & the provider’s 30-day storage recovery, plainly.
-Limits stay per pairing, not per IP. The rewrite ships before or with sync, in all locales.
+Limits are per pairing, plus one Cloudflare rate-limiting rule on minting pairing codes, which
+counts by IP address at Cloudflare’s edge; the relay never sees, logs, or stores the address. The
+rewrite ships before or with sync, in all locales.
 
 ## Fallbacks
 

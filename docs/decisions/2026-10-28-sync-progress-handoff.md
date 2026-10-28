@@ -1,5 +1,8 @@
 # Hand off progress between trackers
 
+Status: deferred to #269 (changed after review). v1 moves progress to a new device by backup &
+restore.
+
 ## Context
 
 Things checked off by hand live on the tracker where they were checked off. Once a PC becomes a
@@ -9,36 +12,39 @@ an iOS browser to the installed app relied on exporting & restoring a backup fil
 QR that once moved progress between devices binds to the exact build, drops provenance, & leaves
 with #138.
 
+The first version of this decision answered with a one-time handoff code over the relay. Round two
+of the design review found that the handoff needed a protocol of its own: a slot a stream viewer
+could read or confirm through the offer ID the QR exposes, no proof of completion after a lost
+notification, a shared offer budget that abuse could exhaust for pairing too, pairing-specific
+failure copy, & a receiver merge that the carry decision has since dropped as unsafe. The record’s
+own “Revisit if” named that last condition: the receiver merge proving unsafe.
+
 ## Decision
 
-- **A one-time handoff code moves progress between trackers.** The sender shows a code (or “Copy
-  link”), the receiver scans or pastes it, both show the same six-digit match code, & the sender
-  sends its progress once, encrypted, & keeps its own copy. It reuses pairing’s offer, handshake, &
-  match, & the progress bundle from
-  [carrying the PC’s progress](2026-10-28-sync-carry-pc-progress.md).
-- **A new phone starts with it.** “Pair a different phone” opens with “New phone? Bring your
-  progress first”, then moves progress from the old phone before pairing the new one, with a quieter
-  skip.
-- **The iPhone app uses it too,** by link, since both copies are on one device. The app’s first
-  launch leads with sync setup; bringing Safari’s progress over is a secondary link.
-- **“Move to Another Device” replaces “Transfer to Another Device”** in Data, in the same place.
+- **Backup & restore moves progress to a new device in v1.** In both cases the handoff served, the
+  receiving copy is empty, so a restore replaces nothing: a new phone restores the old phone’s
+  backup, & the installed iPhone app restores the browser’s. Then the new copy pairs.
+- **“Pair a different phone” still starts with your progress,** pointing to those steps, with “My
+  old phone’s gone” as the way out: it pairs with “Send this PC’s progress too” checked, carrying
+  the PC’s progress from before it started relaying.
+- **The installed app’s first launch still leads with sync,** with “Used the tracker in your
+  browser? Bring it over” linking to the restore steps.
+- **“Transfer to Another Device” stays** until #138 removes it; nothing replaces it in Data.
 - **A relay’s re-pairing shows “Send this PC’s progress too” unchecked,** since that progress is
   stale.
+- **The handoff is deferred to #269,** which starts from the round-two findings above.
 
 ## Alternatives
 
-- **Backup export & restore.** Works today, but carries a file between devices or apps, & restore
-  replaces whatever the receiver had.
+- **The handoff code** (the first version). No file to carry, but a second offer-and-slot protocol
+  with its own security, capacity, & copy surfaces, for a once-per-device move.
 - **Keep the transfer QR.** Familiar & no file, but build-bound, without provenance, & already
   slated for removal once sync ships.
 - **Send the relay’s stored progress to the new phone.** Simple, but stale: it misses everything
-  checked off on the old phone since pairing.
+  checked off on the old phone since pairing. It remains the fallback when the old phone is gone.
 
 ## Revisit if
 
+- Players report backup & restore as a real chore when moving devices.
 - Several trackers per relay arrive, which would need ongoing sync between trackers, not a one-time
-  handoff.
-- Players report the handoff as more work than the progress it saves, for example because most have
-  little manual progress on their phones.
-- The receiver merge from the carry decision proves unsafe, which would limit handoffs to empty
-  receivers.
+  move.
