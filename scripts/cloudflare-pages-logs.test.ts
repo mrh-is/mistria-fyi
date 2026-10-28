@@ -1,10 +1,27 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  deploymentIdFromArgs,
   fetchPagesDeploymentLogs,
   formatPagesDeploymentLogs,
   pagesDeploymentLogsUrl,
 } from "./cloudflare-pages-logs.js";
+
+describe("deploymentIdFromArgs", () => {
+  it("skips the `--` separator that `pnpm run cloudflare:logs -- <id>` passes through", () => {
+    expect(deploymentIdFromArgs(["--", "deployment-id"])).toBe("deployment-id");
+  });
+
+  it("accepts the ID without a separator", () => {
+    expect(deploymentIdFromArgs(["deployment-id"])).toBe("deployment-id");
+  });
+
+  it("requires exactly one deployment ID", () => {
+    expect(() => deploymentIdFromArgs([])).toThrow("Usage:");
+    expect(() => deploymentIdFromArgs(["--"])).toThrow("Usage:");
+    expect(() => deploymentIdFromArgs(["one", "two"])).toThrow("Usage:");
+  });
+});
 
 describe("pagesDeploymentLogsUrl", () => {
   it("targets the configured account, project, and deployment", () => {

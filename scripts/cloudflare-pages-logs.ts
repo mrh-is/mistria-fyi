@@ -1,6 +1,7 @@
 import "#scripts/lib/require-pinned-node";
 
 import { pathToFileURL } from "node:url";
+import { parseArgs } from "node:util";
 
 interface BuildLogEntry {
   line: string;
@@ -33,6 +34,16 @@ export async function fetchPagesDeploymentLogs(
   return (await response.json()) as BuildLogResponse;
 }
 
+/** `pnpm run cloudflare:logs -- <id>` passes the `--` through, so parse it as a separator. */
+export function deploymentIdFromArgs(args: string[]): string {
+  const { positionals } = parseArgs({ allowPositionals: true, args });
+  const [deploymentId] = positionals;
+  if (positionals.length !== 1 || !deploymentId) {
+    throw new Error("Usage: pnpm run cloudflare:logs -- <deployment-id>");
+  }
+  return deploymentId;
+}
+
 export function formatPagesDeploymentLogs(response: BuildLogResponse): string {
   return response.result.data.map(({ line, ts }) => `${ts} ${line}`).join("\n");
 }
@@ -49,13 +60,10 @@ export function pagesDeploymentLogsUrl(
 }
 
 async function main(): Promise<void> {
-  const deploymentId = process.argv[2];
+  const deploymentId = deploymentIdFromArgs(process.argv.slice(2));
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const projectName = process.env.CLOUDFLARE_PAGES_PROJECT ?? "mistria-fyi";
 
-  if (!deploymentId) {
-    throw new Error("Usage: pnpm run cloudflare:logs -- <deployment-id>");
-  }
   if (!accountId) {
     throw new Error("CLOUDFLARE_ACCOUNT_ID is not configured");
   }
