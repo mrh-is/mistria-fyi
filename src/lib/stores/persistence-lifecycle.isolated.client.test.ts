@@ -661,7 +661,18 @@ describe("persistence lifecycle", () => {
     await vi.runAllTimersAsync();
 
     expect(storage.getItem("mistria-fyi:progress")).toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress-quarantine")).toBeNull();
     expect(userState.persistenceFailed).toBe(true);
+
+    vi.resetModules();
+    const reloaded = await import("#lib/stores/user-state.svelte.js");
+    reloaded.userState.loadFromStorage();
+    await vi.runAllTimersAsync();
+
+    expect(reloaded.userState.state.progress.renown).toBe(0);
+    expect(reloaded.userState.persistenceFailureKind).toBe("unreadable");
+    expect(reloaded.userState.unreadableData).toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(invalid);
   });
 
   it("keeps warning state active when blocked persistence is dismissed", async () => {
@@ -680,24 +691,43 @@ describe("persistence lifecycle", () => {
     expect(userState.persistenceFailureGeneration).toBeGreaterThan(generation);
   });
 
-  it("keeps persistence gated when reading storage fails", async () => {
-    vi.useFakeTimers();
-    vi.stubGlobal("window", makeWindow());
-    const stored = buildMinimalState(25);
-    const storage = transientReadFailureStorage({ "mistria-fyi:progress": stored });
-    vi.stubGlobal("localStorage", storage);
-    vi.resetModules();
+  it.each(["a failed read", "an absent key"])(
+    "distinguishes %s across edits & a fresh load",
+    async (read) => {
+      vi.useFakeTimers();
+      vi.stubGlobal("window", makeWindow());
+      const stored = buildMinimalState(25);
+      const failed = read === "a failed read";
+      const storage = failed
+        ? transientReadFailureStorage({ "mistria-fyi:progress": stored })
+        : makeStorage({});
+      vi.stubGlobal("localStorage", storage);
+      vi.resetModules();
 
-    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.loadFromStorage();
+      const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
+      userState.loadFromStorage();
+      userState.setRenown(9);
 
-    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
-    await vi.runAllTimersAsync();
+      vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
+      await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi:progress")).toBe(stored);
-    expect(userState.state.progress.renown).toBe(0);
-    expect(userState.persistenceFailed).toBe(true);
-  });
+      expect(storage.getItem("mistria-fyi:progress")).toBe(
+        failed ? stored : userState.exportBackup(),
+      );
+      expect(JSON.parse(storage.getItem("mistria-fyi:progress") ?? "null")).toMatchObject({
+        progress: { renown: failed ? 25 : 9 },
+      });
+      expect(userState.persistenceFailed).toBe(failed);
+      expect(userState.persistenceFailureKind).toBe("unavailable");
+      expect(storage.getItem("mistria-fyi:progress-quarantine")).toBeNull();
+
+      vi.resetModules();
+      const reloaded = await import("#lib/stores/user-state.svelte.js");
+      reloaded.userState.loadFromStorage();
+      expect(reloaded.userState.state.progress.renown).toBe(failed ? 25 : 9);
+      expect(reloaded.userState.persistenceFailed).toBe(false);
+    },
+  );
 
   it("increments on each failed write so the effect reruns", async () => {
     vi.useFakeTimers();

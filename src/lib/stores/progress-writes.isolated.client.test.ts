@@ -551,6 +551,9 @@ describe("serialized progress writes", () => {
     expect(storedRenown(storage)).toBe(20);
     expect(writes.map(({ value }) => storedRenownOf(value))).toEqual([20]);
     expect(stale.userState.state.progress.renown).toBe(20);
+
+    const reloaded = await openTab();
+    expect(reloaded.userState.state.progress.renown).toBe(20);
   });
 
   it("lets a restore win over the same tab's pending auto-save", async () => {
@@ -560,13 +563,30 @@ describe("serialized progress writes", () => {
     vi.stubGlobal("navigator", { locks });
 
     const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
     tab.userState.setRenown(5);
-    await vi.advanceTimersByTimeAsync(0);
+    // Let the debounce expire while a different operation holds the lock. The auto-save is
+    // already queued when the player confirms the restore, rather than merely scheduled.
+    await vi.advanceTimersByTimeAsync(tab.PERSIST_DEBOUNCE_MS);
+    expect(state.requests).toEqual([WRITE_LOCK, WRITE_LOCK]);
     expect(tab.userState.restoreBackup(buildState(20))).toEqual({ ok: true });
+    expect(state.requests).toEqual([WRITE_LOCK, WRITE_LOCK, WRITE_LOCK]);
+    expect(writes).toEqual([]);
+    expect(tab.userState.state.progress.renown).toBe(20);
+    // A later edit must follow the captured restore, never leak through the superseded write.
+    tab.userState.setRenown(21);
+    gate.resolve(undefined);
+    await held;
     await settle(tab.PERSIST_DEBOUNCE_MS);
 
-    expect(writes.map(({ value }) => storedRenownOf(value))).toEqual([20]);
-    expect(tab.userState.state.progress.renown).toBe(20);
+    expect(writes.map(({ value }) => storedRenownOf(value))).toEqual([20, 21]);
+    expect(storedRenown(storage)).toBe(21);
+    expect(tab.userState.state.progress.renown).toBe(21);
+
+    const reloaded = await openTab();
+    expect(reloaded.userState.state.progress.renown).toBe(21);
   });
 
   it("refuses to replace a newer build's data that another tab wrote meanwhile", async () => {
