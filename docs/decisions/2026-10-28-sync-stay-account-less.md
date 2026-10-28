@@ -1,3 +1,15 @@
+---
+id: 2026-10-28-sync-stay-account-less
+status: current
+summary: >-
+  Sync stays account-less for v1; an account-less sync key is the first fallback if the revisit
+  conditions hold.
+evidence:
+  - https://github.com/mrh-is/mistria-fyi/pull/251
+  - docs/sync.md#why-sync
+relationships: []
+---
+
 # Keep sync account-less
 
 ## Context

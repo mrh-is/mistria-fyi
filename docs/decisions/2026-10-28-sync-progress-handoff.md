@@ -1,3 +1,16 @@
+---
+id: 2026-10-28-sync-progress-handoff
+status: current
+summary: >-
+  v1 moves progress to a new device by backup & restore; the tracker-to-tracker handoff is deferred
+  to #269.
+evidence:
+  - https://github.com/mrh-is/mistria-fyi/pull/251
+  - https://github.com/mrh-is/mistria-fyi/issues/269
+  - docs/sync.md#new-devices
+relationships: []
+---
+
 # Hand off progress between trackers
 
 Status: deferred to #269 (changed after review). v1 moves progress to a new device by backup &

@@ -1,3 +1,15 @@
+---
+id: 2026-10-28-sync-carry-pc-progress
+status: current
+summary: >-
+  A PC with progress sends it once over the sync channel, after the save is connected & only for
+  that farm; the phone takes it whole or keeps its own, with no merge.
+evidence:
+  - https://github.com/mrh-is/mistria-fyi/pull/251
+  - docs/sync.md#carrying-the-pcs-progress
+relationships: []
+---
+
 # Carry the PC’s progress over sync
 
 ## Context

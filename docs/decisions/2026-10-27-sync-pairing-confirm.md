@@ -1,3 +1,15 @@
+---
+id: 2026-10-27-sync-pairing-confirm
+status: current
+summary: >-
+  Pairing is confirmed by matching a six-digit, handshake-derived code on both devices; device names
+  only label a pairing.
+evidence:
+  - https://github.com/mrh-is/mistria-fyi/pull/251
+  - docs/sync.md#stages--generations
+relationships: []
+---
+
 # Sync pairing confirmation
 
 ## Context

@@ -95,6 +95,17 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/pull/243](https://github.com/mrh-is/mistria-fyi/pull/243),
 [src/routes/api/feedback/+server.ts](../src/routes/api/feedback/+server.ts).
 
+### [Sync pairing confirmation](decisions/2026-10-27-sync-pairing-confirm.md)
+
+ID: 2026-10-27-sync-pairing-confirm. Status: Current.
+
+Pairing is confirmed by matching a six-digit, handshake-derived code on both devices; device names
+only label a pairing.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251),
+[docs/sync.md#stages--generations](../docs/sync.md#stages--generations).
+
 ### [Compose every monster name](decisions/2026-10-28-composed-monster-names.md)
 
 ID: 2026-10-28-composed-monster-names. Status: Current.
@@ -135,6 +146,40 @@ Shared review IDs & dispositions are repository guidance; aggregation tooling re
 
 Evidence: [docs/agent-verification.md](../docs/agent-verification.md),
 [https://github.com/mrh-is/mistria-fyi/pull/273](https://github.com/mrh-is/mistria-fyi/pull/273).
+
+### [Carry the PC’s progress over sync](decisions/2026-10-28-sync-carry-pc-progress.md)
+
+ID: 2026-10-28-sync-carry-pc-progress. Status: Current.
+
+A PC with progress sends it once over the sync channel, after the save is connected & only for that
+farm; the phone takes it whole or keeps its own, with no merge.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251),
+[docs/sync.md#carrying-the-pcs-progress](../docs/sync.md#carrying-the-pcs-progress).
+
+### [Hand off progress between trackers](decisions/2026-10-28-sync-progress-handoff.md)
+
+ID: 2026-10-28-sync-progress-handoff. Status: Current.
+
+v1 moves progress to a new device by backup & restore; the tracker-to-tracker handoff is deferred to
+#269.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251),
+[https://github.com/mrh-is/mistria-fyi/issues/269](https://github.com/mrh-is/mistria-fyi/issues/269),
+[docs/sync.md#new-devices](../docs/sync.md#new-devices).
+
+### [Keep sync account-less](decisions/2026-10-28-sync-stay-account-less.md)
+
+ID: 2026-10-28-sync-stay-account-less. Status: Current.
+
+Sync stays account-less for v1; an account-less sync key is the first fallback if the revisit
+conditions hold.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251),
+[docs/sync.md#why-sync](../docs/sync.md#why-sync).
 
 ## Partially superseded/amended
 
@@ -348,6 +393,25 @@ They are now tracked beside appearances.
 
 Relationship evidence:
 [docs/decisions/2026-10-22-mistmare-perks.md](../docs/decisions/2026-10-22-mistmare-perks.md).
+
+### [Save-driven sync](decisions/2026-10-20-save-driven-sync.md)
+
+ID: 2026-10-20-save-driven-sync. Status: Partially superseded/amended.
+
+Historical scope: Save-driven sync. Current applicability is unverified.
+
+Evidence:
+[docs/decisions/2026-10-20-save-driven-sync.md#decision](../docs/decisions/2026-10-20-save-driven-sync.md#decision).
+
+Amended by [Carry the PC’s progress over sync](decisions/2026-10-28-sync-carry-pc-progress.md).
+Affected portion: Manual check-offs never travel between devices; the PC’s stored progress now
+travels once, at pairing.
+
+Relationship evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
+
+Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
+later resolutions were not revalidated while seeding issue #268.
 
 ### [Save extraction completeness](decisions/2026-10-20-save-extraction-completeness.md)
 
@@ -927,18 +991,6 @@ not-found page. `/data?section=import|transfer` remains the supported data-manag
 
 Evidence:
 [docs/decisions/2026-10-20-retire-settings-route.md#decision](../docs/decisions/2026-10-20-retire-settings-route.md#decision).
-
-Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
-later resolutions were not revalidated while seeding issue #268.
-
-### [Save-driven sync](decisions/2026-10-20-save-driven-sync.md)
-
-ID: 2026-10-20-save-driven-sync. Status: Needs review.
-
-Historical scope: Save-driven sync. Current applicability is unverified.
-
-Evidence:
-[docs/decisions/2026-10-20-save-driven-sync.md#decision](../docs/decisions/2026-10-20-save-driven-sync.md#decision).
 
 Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
 later resolutions were not revalidated while seeding issue #268.

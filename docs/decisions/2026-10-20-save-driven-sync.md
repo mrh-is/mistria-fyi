@@ -1,6 +1,6 @@
 ---
 id: 2026-10-20-save-driven-sync
-status: needs-review
+status: amended
 summary: >-
   Historical scope: Save-driven sync. Current applicability is unverified.
 review: >-
@@ -8,7 +8,15 @@ review: >-
   revalidated while seeding issue #268.
 evidence:
   - docs/decisions/2026-10-20-save-driven-sync.md#decision
-relationships: []
+relationships:
+  - type: amended-by
+    target: 2026-10-28-sync-carry-pc-progress
+    scope: partial
+    portion: >-
+      Manual check-offs never travel between devices; the PC’s stored progress now travels once, at
+      pairing.
+    evidence:
+      - https://github.com/mrh-is/mistria-fyi/pull/251
 ---
 
 # Save-driven sync
