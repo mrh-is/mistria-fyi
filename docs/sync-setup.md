@@ -9,8 +9,10 @@ starts fresh. This document is the journey, the screens, & the copy for #131; th
 [sync.md](sync.md), & the reasons are in
 [the decision record](decisions/2026-10-28-sync-follow-the-save.md).
 
-Status: journey & copy rewritten in the maintainer’s voice on #131; mockups are still to come. This
-replaces the pairing design explored on #251.
+Status: journey, copy, & mockups in review on #131 (PR #275). Every state has a board on the
+[design canvas](https://claude.ai/artifact/5MG6rDBdx4HqjGmQyBbjrD); [Screens](#screens) embeds a
+sheet per row from the [design package](design/sync-setup/README.md). This replaces the pairing
+design explored on #251.
 
 ## Mental model
 
@@ -238,6 +240,35 @@ tracking by hand, offering a backup first.
 - **Too many new codes:** a friendly “slow down” on the gaming computer.
 - **Another window is already syncing** on the gaming computer: says so & points to the other
   window.
+
+## Screens
+
+One sheet per canvas row; computer boards are cropped to the 512 px column. The generator in
+[design/sync-setup/](design/sync-setup/README.md) draws both the canvas & these sheets.
+
+### Getting started
+
+![Home & “Where’s your save file?”](design/sync-setup/sheets/01-start.png)
+
+### On the gaming computer
+
+![Finding the save file, the farm check, & the code](design/sync-setup/sheets/02-computer.png)
+
+### On another device
+
+![Scanning, waiting, & the iPhone question](design/sync-setup/sheets/03-phone-setup.png)
+
+### Living with it
+
+![The quiet sync button, the panel, & notices](design/sync-setup/sheets/04-living.png)
+
+### Trouble on the gaming computer
+
+![Read errors, re-allowing, a moved file, & pauses](design/sync-setup/sheets/05-trouble.png)
+
+### Data & leaving a lane
+
+![The sync card, new codes, & stopping](design/sync-setup/sheets/06-data.png)
 
 ## Accessibility
 
