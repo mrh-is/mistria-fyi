@@ -155,7 +155,9 @@ Version 1 pins the suite, with no negotiation:
 ### Stages & generations
 
 - The relay records each offer’s stage (offered, answered, accepted), so either side can retrieve it
-  again until the QR expires. The phone shows “Paired” only once the PC accepts.
+  again within that stage’s window: an unanswered offer until the QR expires, an answered offer
+  until its confirmation deadline, & an accepted result for the pairing’s life. The phone shows
+  “Paired” only once the PC accepts.
 - **Accepting takes a person.** Once a device answers, the PC & that device each show the same
   six-digit code derived from the handshake transcript, & the player confirms the match on the PC.
   “No match” discards the offer & mints a fresh one. See
@@ -176,12 +178,15 @@ Version 1 pins the suite, with no negotiation:
 - On iOS & iPadOS, a browser pairs like any phone, even though its storage is apart from the
   installed app. Moving to the app later restores a backup & pairs again from the app, replacing the
   browser’s pairing (#131, [sync-setup.md](sync-setup.md#moving-to-the-installed-app-on-iphone)).
-  Scans should use the tracker’s own scanner: the system Camera app opens codes in Safari.
+  The system Camera app opens codes in Safari, so an offer that arrives by URL in an iOS browser
+  asks before answering: pair this browser, or open the installed tracker & scan there. Pairing the
+  browser stays a deliberate choice.
 - “One PC” means one browser profile. Two profiles are two couriers, & pairing either replaces the
   phone’s pairing; the setup copy says so, & nothing enforces it.
 
 Tests cover a substituted relay key, a replayed offer, a spent offer answered again, a mismatched
-confirmation code, & a reply lost across a relay restart.
+confirmation code, a reply lost across a relay restart, & a reload just after answering that spans
+the QR’s expiry.
 
 ## The phone
 

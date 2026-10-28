@@ -133,9 +133,9 @@ Setup starts on whichever device the player is holding. Starting on the phone, i
 `mistria.fyi/sync` on the PC; arriving there implies “another device”, so the PC skips that
 question, but still makes the move offer when it holds progress. Either way, pairing comes first,
 then the save. The phone scans with the tracker’s own scanner, so the pairing lands in whichever
-copy the player is using. On iPhone, the Camera app always opens codes in Safari; a player using the
-installed app who scans with the Camera would pair Safari instead, so the PC’s instructions say to
-scan from inside the tracker.
+copy the player is using. On iPhone, the Camera app always opens codes in Safari, so a code that
+arrives that way asks first: pair this browser, or open the tracker app & scan there. A player who
+uses the installed app can’t pair Safari by accident.
 
 | Step | On the PC                                                 | On the phone                                    |
 | ---- | --------------------------------------------------------- | ----------------------------------------------- |
@@ -224,7 +224,7 @@ When UI & copy resume, write like a chill, non-judgmental friend helping with a 
 - Device names derive locally from the browser and only label a pairing; they never decide anything.
   Renaming is out of scope for v1.
 - An iOS or iPadOS browser can pair like any phone; moving to the installed app re-pairs from the
-  app, as part of the migration.
+  app, as part of the migration. A code opened from the Camera asks which copy to pair.
 - Moving PC progress to a phone that already has some asks which side to keep, & backs up the phone
   first.
 - A relay leaves stored progress untouched; its mirror lives apart & is discarded on turn-off.
