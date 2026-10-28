@@ -140,6 +140,9 @@ describe("CI workflow jobs", () => {
     // runs also collect coverage.
     const testCommands = runCommands(jobs.test);
     expect(testCommands).not.toContain(verifyCommand("test"));
+    expect(testCommands.filter((command) => command === verifyCommand("test:budgets"))).toEqual([
+      verifyCommand("test:budgets"),
+    ]);
     expect(testCommands.indexOf(verifyCommand("test:budgets"))).toBeLessThan(
       testCommands.indexOf('node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"'),
     );
@@ -624,11 +627,40 @@ describe("CI workflow gate", () => {
     expect(jobs["ci-passed"].needs).toEqual(
       Object.keys(jobs).filter((jobName) => jobName !== "issue-sync" && jobName !== "ci-passed"),
     );
+    expect(jobs["ci-passed"].needs).toEqual([
+      "changes",
+      "lint",
+      "locale-sync",
+      "audit",
+      "check",
+      "test",
+      "build",
+      "accessibility",
+      "pwa",
+    ]);
     const check = jobs["ci-passed"].steps?.at(-1);
+    expect(check?.if).toBeUndefined();
+    expect(check?.["continue-on-error"]).toBeUndefined();
     expect(check?.env?.RESULTS).toBe("${{ join(needs.*.result, ' ') }}");
     // Skipped browser jobs pass; failures and cancellations do not.
     expect(check?.run).toContain("success | skipped) ;;");
     expect(check?.run).toContain("*) exit 1 ;;");
+  });
+
+  it.each([
+    ["success success skipped", 0],
+    ["success failure skipped", 1],
+    ["success cancelled skipped", 1],
+  ])("executes the actual aggregate gate for %s", (results, status) => {
+    const command = jobs["ci-passed"].steps?.at(-1)?.run;
+    expect(command).toBeTypeOf("string");
+    if (command === undefined) throw new Error("Missing aggregate gate command");
+    const result = spawnSync("bash", ["-e", "-c", command], {
+      encoding: "utf8",
+      env: { ...process.env, RESULTS: results },
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(status);
   });
 });
 
