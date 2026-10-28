@@ -2,7 +2,7 @@ Closes #
 
 Preview: https://<branch-slug>.mistria-fyi.pages.dev
 
-<!-- branch-slug: lowercase, each non-alphanumeric character to "-", first 28 characters, no trailing "-" (docs/agent-workflow.md, task sequence step 9) -->
+<!-- branch-slug: lowercase, each non-alphanumeric character to "-", first 28 characters, no trailing "-" (previewSlug in scripts/check-attribution.ts) -->
 
 ## What changed
 

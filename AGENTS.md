@@ -137,17 +137,18 @@ not here.
   especially careful review: engine/state-machine/transfer logic, pipeline extractors or schemas,
   persistence or save/import/export flows, auth/abuse/security boundaries, & changes spanning five
   or more files with cross-cutting concerns.
-- Review the merge-base diff. Reviewing does not authorize fixes; address findings only when asked.
+- Review the merge-base diff in one pass; re-review once only after substantial high-severity fixes.
+  Reviewing does not authorize fixes; address findings only when asked.
 
 ## Delivery gates
 
 - Preserve the owner’s commit identity & existing attribution. Every materially agent-authored
   commit needs the stable product `Co-Authored-By` trailer; every issue/PR body & substantive GitHub
   comment ends with `Agent: <agent-id>`. Agent-authored PRs get exactly one matching established
-  `agent:*` label. The “Attribution” check enforces these; read the full rules before creating or
-  editing these artifacts.
-- Commit, push, & open an attributed PR with `Closes #N` & the derived branch-preview URL. Read
-  agent-workflow.md for exact slug derivation, multiline bodies, screenshot attachments, & labels.
+  `agent:*` label. The “Attribution” check covers commits, PR bodies (including the preview URL), &
+  labels, not issues or comments.
+- Commit, push, & open an attributed PR with `Closes #N` & the branch-preview URL. Pass multiline
+  bodies with `--body-file`, never escaped `\n`, & re-read the result.
 - An open PR’s state is a merge recommendation. Open as draft while any manual step, question, gap,
   or review remains. Mark ready only when you would merge it yourself; return to draft if that
   changes. Monitor CI & fix failures on the branch; do not merge around failing CI. If “CI” never

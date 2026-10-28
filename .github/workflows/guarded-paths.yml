@@ -1,12 +1,13 @@
 name: Guarded paths
 
 # Generated files change only in PRs that say so: `generated-data` for
-# src/lib/data/tracker-data.json (AGENTS.md, architecture boundaries).
-# scripts/check-guarded-paths.ts holds the rules, including renames out of a guarded path.
+# src/lib/data/tracker-data.json (AGENTS.md, architecture boundaries), plus `pnpm run data:diff`
+# output in the PR body. scripts/check-guarded-paths.ts holds the rules, including renames out of
+# a guarded path.
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
 
 permissions:
   contents: read
@@ -33,8 +34,10 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          # Read the live PR labels, not the event snapshot, so a rerun sees current labels.
-          PR_LABELS=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" --jq '[.labels[].name]')
-          export PR_LABELS
+          # Read the live PR, not the event snapshot, so a rerun sees current labels & body.
+          PR=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")
+          PR_BODY=$(jq -r '.body // ""' <<< "$PR")
+          PR_LABELS=$(jq -c '[.labels[].name]' <<< "$PR")
+          export PR_BODY PR_LABELS
           gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[]' | jq -s . > "$RUNNER_TEMP/files.json"
           node scripts/check-guarded-paths.ts "$RUNNER_TEMP/files.json"
