@@ -9,6 +9,12 @@ describe("changed-file lint", () => {
   it("preserves the full script scopes & zero-warning checks", () => {
     const commands = lintCommands(undefined, false);
     expect(commands).toContainEqual(["run", "lint:shell"]);
+    expect(commands).toContainEqual(["exec", "node", "scripts/check-lint-directives.ts"]);
+    expect(lintCommands(undefined, true)).not.toContainEqual([
+      "exec",
+      "node",
+      "scripts/check-lint-directives.ts",
+    ]);
     expect(commands.find((command) => command.includes("eslint"))).toContain("**/*.svelte.{js,ts}");
     expect(commands.find((command) => command.includes("oxlint"))).toContain("--deny-warnings");
     expect(commands.find((command) => command.includes("stylelint"))).toContain(
@@ -45,6 +51,17 @@ describe("changed-file lint", () => {
       "--",
       "src/a.svelte",
       "src/theme.css",
+    ]);
+    expect(
+      commands.find((command) => command.includes("scripts/check-lint-directives.ts")),
+    ).toEqual([
+      "exec",
+      "node",
+      "scripts/check-lint-directives.ts",
+      "--",
+      "scripts/a.ts",
+      "src/a.svelte",
+      "src/store.svelte.ts",
     ]);
     expect(commands).toContainEqual(["run", "lint:shell"]);
   });

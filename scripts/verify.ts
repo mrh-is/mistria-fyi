@@ -204,7 +204,7 @@ async function main(args: string[]): Promise<number> {
   for (const step of steps) {
     console.log(`\n--- ${step.name} ---`);
     // Steps run in order & stop at the first failure; later steps reuse earlier output (the build).
-    // oxlint-disable-next-line no-await-in-loop
+    // oxlint-disable-next-line no-await-in-loop -- Steps share output, so they run in sequence.
     const status = await runStep(step);
     if (status !== 0) {
       console.log(`✗ ${step.name} (exit ${String(status)})`);

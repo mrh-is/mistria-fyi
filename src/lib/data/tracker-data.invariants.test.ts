@@ -131,9 +131,9 @@ describe("localized structural contracts", () => {
 });
 
 // ─── Source integrity ──────────────────────────────────────────────
-// These tests validate runtime JSON, which is cast via `as unknown as TrackerData`.
-// The type system says sources is always present, but these guards catch pipeline regressions.
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition -- These tests validate runtime JSON,
+   which is cast via `as unknown as TrackerData`. The type system says sources is always present,
+   but these guards catch pipeline regressions. */
 
 describe("source integrity", () => {
   it("uses the reviewed Void Herb source in generated data", () => {
@@ -257,9 +257,9 @@ describe("reference integrity", () => {
     expect(invalid, `Invalid Villager refs in item sources: ${invalid.join(", ")}`).toEqual([]);
   });
 
-  // Runtime JSON is cast via `as unknown as TrackerData` — the type system says these lookups
-  // always succeed, but these guards catch pipeline regressions where a foreign key is stale.
-  /* eslint-disable @typescript-eslint/no-unnecessary-condition */
+  /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Runtime JSON is cast via
+     `as unknown as TrackerData`; the type system says these lookups always succeed, but these
+     guards catch pipeline regressions where a foreign key is stale. */
   it("every fetch quest references a valid item", () => {
     const invalid: string[] = [];
     for (const [id, quest] of recordEntries(trackerData.quests.fetch)) {

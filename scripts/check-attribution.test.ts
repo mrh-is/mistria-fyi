@@ -4,7 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { checkCommitMessage, checkPullRequest, trailerBlock } from "./check-attribution.js";
+import {
+  checkCommitMessage,
+  checkPullRequest,
+  previewSlug,
+  trailerBlock,
+} from "./check-attribution.js";
 
 const claudeCommit = {
   message: "feat: x\n\nCo-Authored-By: Claude Code <noreply@anthropic.com>",
@@ -82,6 +87,55 @@ describe("commit count cap", () => {
         labels: [],
       }),
     ).toHaveLength(1);
+  });
+});
+
+describe("previewSlug", () => {
+  it("lowercases & replaces each non-alphanumeric character without collapsing runs", () => {
+    expect(previewSlug("Claude/Fix_x")).toBe("claude-fix-x");
+    expect(previewSlug("a/_b")).toBe("a--b");
+  });
+
+  it("keeps 28 characters, then drops trailing hyphens", () => {
+    expect(previewSlug("worktree-agent-ac94622f1a9ec4708")).toBe("worktree-agent-ac94622f1a9ec");
+    expect(previewSlug("claude/quizzical-lewin-d69b1a")).toBe("claude-quizzical-lewin-d69b1");
+    expect(previewSlug("abcdefghijklmnopqrstuvwxyz--more")).toBe("abcdefghijklmnopqrstuvwxyz");
+  });
+});
+
+function agentPullRequest(body: string) {
+  return { body, commits: [claudeCommit], headRef: "claude/fix-x", labels: ["agent: claude"] };
+}
+
+describe("preview line", () => {
+  const preview = "Preview: https://claude-fix-x.mistria-fyi.pages.dev";
+
+  it("passes an agent PR with its branch's preview URL", () => {
+    expect(checkPullRequest(agentPullRequest(`${preview}\n\n${goodBody}`))).toEqual([]);
+  });
+
+  it("rejects a missing, placeholder, or wrong preview URL on an agent PR", () => {
+    for (const body of [
+      goodBody,
+      `Preview: https://<branch-slug>.mistria-fyi.pages.dev\n\n${goodBody}`,
+      `Preview: https://claude-other.mistria-fyi.pages.dev\n\n${goodBody}`,
+    ]) {
+      const problems = checkPullRequest(agentPullRequest(body));
+      expect(problems).toEqual([
+        expect.stringContaining("https://claude-fix-x.mistria-fyi.pages.dev"),
+      ]);
+    }
+  });
+
+  it("does not require a preview URL on a human-only PR", () => {
+    expect(
+      checkPullRequest({
+        body: "Fixes typo.",
+        commits: [{ message: "fix: typo" }],
+        headRef: "fix-typo",
+        labels: [],
+      }),
+    ).toEqual([]);
   });
 });
 

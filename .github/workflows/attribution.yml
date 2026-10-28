@@ -38,7 +38,9 @@ jobs:
           PR_BODY=$(jq -r '.body // ""' <<< "$PR")
           PR_COMMIT_COUNT=$(jq -r '.commits' <<< "$PR")
           PR_LABELS=$(jq -c '[.labels[].name]' <<< "$PR")
-          export PR_BODY PR_COMMIT_COUNT PR_LABELS
+          # Cloudflare Pages builds same-repository branches only, so forks get no preview URL.
+          PR_HEAD_REF=$(jq -r 'if .head.repo.full_name == .base.repo.full_name then .head.ref else "" end' <<< "$PR")
+          export PR_BODY PR_COMMIT_COUNT PR_HEAD_REF PR_LABELS
           PR_COMMITS=$(gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/commits" \
             --jq '.[] | {message: .commit.message, parents: (.parents | length), sha: .sha}')
           export PR_COMMITS
