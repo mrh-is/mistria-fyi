@@ -244,6 +244,13 @@ stored progress stops changing once it relays.
 - **Size.** A backup is mostly ID lists, so it compresses well below the 256 KB cap. Measuring a
   compressed late-game backup is a #133 acceptance criterion; if one nears the cap, the bundle
   splits under the same transfer ID.
+- **Handoff between trackers (#131, spec pending).** The same progress bundle moves from one tracker
+  to another over a one-time offer: the sender shows the code (or “Copy link”), the receiver
+  answers, both match the six-digit code, & the sender sends once & keeps its copy. It needs no
+  relay pairing afterward. It serves a new phone (“Pair a different phone” starts there) & moving
+  from an iOS browser to the installed app, & replaces the transfer QR (#138). An empty receiver
+  takes the progress whole, so it needs no merge; a receiver with progress uses `mergeProgress` &
+  the farm check above.
 
 ### Device state & copy
 

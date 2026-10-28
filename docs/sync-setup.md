@@ -8,7 +8,7 @@ you check things off on this PC or on your phone? Each browser ends up in one ro
 #131; the protocol is in [sync.md](sync.md).
 
 Status: screens & copy in review on #131. Every state has a mockup on the
-[design canvas](https://claude.ai/artifact/UhDfkQVf4Csu7eN9RcBStx) (version 43); [Screens](#screens)
+[design canvas](https://claude.ai/artifact/UhDfkQVf4Csu7eN9RcBStx) (version 44); [Screens](#screens)
 embeds a sheet per section. The happy path is approved; error & notice screens are first drafts.
 
 ## Mental model
@@ -156,16 +156,16 @@ Setup starts on whichever device the player is holding. Starting on the phone, i
 still asks its one question. Either way, pairing comes first, then the save. The phone scans with
 the tracker’s own scanner, so the pairing lands in whichever copy the player is using.
 
-| Step | On the PC                                                       | On the phone                                            |
-| ---- | --------------------------------------------------------------- | ------------------------------------------------------- |
-| 1    | Picks “On my phone” on `mistria.fyi/sync`                       | iPhone browser only: add to home screen, or skip        |
-| 2    | Shows a covered code; “Show code” reveals it & “Copy link”      | With progress, asks “Keep what I have” or “Start fresh” |
-| 3    |                                                                 | Taps “Scan the code” & scans                            |
-| 4    | Shows a six-digit code; the player confirms it matches          | Shows the same code, then “You’re paired!”              |
-| 5    | Sends this PC’s progress, if checked                            | “Your PC’s progress is here too”                        |
-| 6    | Connect the save: copy the folder path, drag the newest file in | Waits for the first save                                |
-| 7    | Sends the save                                                  | “It worked!”: progress appears                          |
-| 8    | Opens on the relay dashboard while the player plays             | Updates each time the player sleeps in the game         |
+| Step | On the PC                                                                                                       | On the phone                                                        |
+| ---- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1    | Picks “On my phone” on `mistria.fyi/sync`                                                                       | iPhone browser only: add to home screen, or skip                    |
+| 2    | Shows a covered code; “Show code” reveals it & “Copy link”                                                      | With progress, asks “Keep what I have” or “Start fresh” (confirmed) |
+| 3    |                                                                                                                 | Taps “Scan the code” & scans, or “Or paste a link”                  |
+| 4    | Shows a six-digit code; the player confirms it matches (equal-weight buttons, “Haven’t scanned yet? Choose No”) | Shows the same code, then “You’re paired!”                          |
+| 5    | Sends this PC’s progress, if checked                                                                            | “Your PC’s progress is here too”                                    |
+| 6    | Connect the save: copy the folder path, drag the newest file in                                                 | Waits for the first save                                            |
+| 7    | Sends the save                                                                                                  | “It worked!”: progress appears                                      |
+| 8    | Opens on the relay dashboard while the player plays                                                             | Updates each time the player sleeps in the game                     |
 
 Why pair first: the player sees success on the phone right away, and finishing the save step makes
 progress appear on the phone moments later, which demonstrates the whole system once.
@@ -174,20 +174,40 @@ progress appear on the phone moments later, which demonstrates the whole system 
   with a green rule & check; later steps fold & fade. A skipped step folds to “Skipped. Add it any
   time.” with “Show me”, so it never vanishes. Steps that don’t apply (installing, off iPhone) are
   absent.
-- **The Chrome tip.** In a browser that can’t watch a file, a “Field tip” shipping tag sits above
-  the steps: “Let Chrome do this for you”, with “Copy this page’s link”. Headlines say Chrome; body
-  text says “Chrome or Edge”. It can’t be dismissed.
-- **The Camera path on iPhone.** The Camera app opens codes in Safari, so a code that arrives that
-  way asks “Pair Safari, or the app?” as a tag dialog. The page can’t open the home screen app, so
-  “Got it” closes the dialog, & its text says to open the app & tap “Scan the code”.
+- **The Chrome tip.** In a browser that can’t watch a file & isn’t Chrome or Edge, a “Field tip”
+  shipping tag sits above the steps: “Let Chrome do this for you”, with “Copy this page’s link”.
+  Headlines say Chrome; body text says “Chrome or Edge”. It can’t be dismissed. A Chrome or Edge
+  that fails the check gets no tip, only the import-once copy.
+- **Copy follows the mode.** Promises of updates “every time you sleep” appear only where the save
+  is watched; the import-once & re-drop paths say “whenever you drop it in” instead, on the PC & in
+  the phone’s success note.
+- **Drag only, where the save is watched.** Windows refuses the file picker under `%LOCALAPPDATA%`,
+  & a picked file gives no handle to watch, so the watched drop box has no “browse files”.
+  Import-once & re-drop keep it. A keyboard path to a watched handle is a #130 check.
+- **Every receiver can scan or paste.** “Scan the code” has “Or paste a link” under it, & a phone
+  that can’t use its camera says so & shows the paste field.
+- **Instructions name the PC’s question:** “open mistria.fyi/sync, pick “On my phone”, & click “Show
+  code””.
+- **The match step resists a reflex “Yes”.** Both buttons have equal weight, with “Haven’t scanned
+  yet? Choose “No”.” under them; once the other device answers, the PC’s copy names it (“Does your
+  Mac show this code?”).
+- **The Camera path on iPhone.** The Camera opens codes in the default browser, so a code that
+  arrives that way asks “Pair this browser, or the app?” as a tag dialog, naming the browser it
+  detects. “Pair Safari” is primary, since most players have no app yet; “I’ll use the app” closes
+  the dialog, which says to open the app & tap “Scan the code”, since a page can’t open it.
+- **The install step names no browser.** “Tap Share. In Safari, it may be under •••.” covers
+  Safari’s compact layout (iOS 26) & the other iOS browsers’ own Share menus.
 
 ### Pairing a computer
 
 A Mac or a second PC has no camera aimed at the screen. With the code showing, the PC also offers
 “Copy link”: the same offer URL the QR holds. The player sends it to the other computer however’s
 easiest (“like a message to yourself”) & opens it there, or pastes it into the setup page. It
-arrives like a Camera-opened code, & the match code guards it the same way. “Scan with this Mac’s
-camera instead” stays as a fallback. The offer still expires after a couple of minutes.
+arrives like a Camera-opened code, & the match code guards it the same way. “Scan with this
+computer’s camera instead” stays as a fallback. The offer still expires after a couple of minutes;
+the PC shows the time left beside “Copy link”, & whether copying should restart the window is a
+protocol question for `sync.md`. The PC’s choice reads “On my phone” with “Or another computer, like
+a Mac.” under it, and its copy names the device once one answers.
 
 ### Carrying the PC’s progress
 
@@ -199,8 +219,13 @@ See [sync.md](sync.md#carrying-the-pcs-progress) &
 [the decision record](decisions/2026-10-28-sync-carry-pc-progress.md).
 
 - **The phone decides about its own progress.** The PC can’t see the phone’s data before pairing, so
-  a phone with progress asks before scanning: “Keep what I have” (the PC’s progress adds on top) or
-  “Start fresh” (erases what’s on this phone first).
+  a phone with progress asks: “Keep what I have” (the PC’s progress adds on top) or “Start fresh”. A
+  code that arrives by Camera or link asks right after answering, which holds the offer open.
+- **“Start fresh” changes nothing yet.** It asks first (“Start fresh on this phone?”), & the phone
+  replaces its progress only when the first incoming bundle arrives, keeping a backup of what was
+  there, like a farm switch. Abandoning setup leaves the phone as it was.
+- **Re-pairing shows it unchecked.** A relay’s stored progress is stale; a new phone gets its
+  progress from the old phone instead (see [A new phone](#a-new-phone)).
 - **The PC’s stored progress stays where it is,** untouched, while it relays.
 
 ## Any time, not just first run
@@ -214,7 +239,30 @@ Every path stays reachable from Data, which links to the same setup page. Changi
   merges through the apply rules (#135).
 - **Relay → tracker.** Unpairing discards the mirror and shows the stored progress exactly as it was
   left.
-- **Paired phone → unpaired.** Unpairing keeps everything already on the phone.
+- **Paired phone → unpaired.** Unpairing keeps everything already on the phone, which says “Your PC
+  unpaired this phone”; a PC whose phone unpaired says “Your {device} unpaired” & offers “Fill in
+  from your latest save”.
+- **Paired, but no save yet.** A relay abandoned after pairing shows “Almost there: connect your
+  save”; the phone’s sync button shows a hairline slip, “Waiting for your first save”.
+
+## A new phone
+
+Manual check-offs live on the phone, not on the relay, so pairing a new phone from the PC alone
+would leave them behind. “Pair a different phone” therefore opens a tag dialog first: “New phone?
+Bring your progress first. Things you checked off by hand live on your {device}, not on this PC.”
+with “Let’s do it” & a quieter “Skip, start the new phone fresh”.
+
+1. **Move your progress from the old phone.** On the old phone, Data › “Move to Another Device”
+   shows a one-time handoff code (with “Copy link”); the new phone scans it from `mistria.fyi/sync`,
+   & both show a match code, confirmed on the old phone. The old phone sends its progress once &
+   keeps it too. The new phone says “Your progress is here” & continues to pairing.
+2. **Pair the new phone** with the PC, as usual. The old phone keeps its progress & stops getting
+   saves.
+
+The handoff reuses pairing’s offer, handshake, & match code, & sends one progress bundle, the same
+payload as [Carrying the PC’s progress](#carrying-the-pcs-progress); see
+[sync.md](sync.md#carrying-the-pcs-progress). An empty receiver takes it whole, so this path needs
+no merge. The same handoff moves Safari’s progress into the iPhone app, by link.
 
 ## Data management
 
@@ -226,13 +274,15 @@ progress.” It regroups into two sections:
   “Pair with Your PC” on a phone (“Get each new save from your PC as you play.”). Open, it shows the
   device & last send, “Pair a different phone”, & “Unpair”. Its setup button opens the setup page.
 - **Data:** “Import from Save File” (which also hosts the self-updating state & the relay’s save,
-  with “Use a different save”), “Backup & Restore” (“Keep a copy of your progress, or move it to a
-  new device once.”), & “Danger Zone”.
+  with “Use a different save”), “Move to Another Device” (“Send your progress to a new phone or the
+  app, once.”), “Backup & Restore” (“Keep a copy of your progress, or restore one.”), & “Danger
+  Zone”.
 
-“Transfer to Another Device” leaves with #138, once sync ships. That also removes the question of
-pairing vs. transfer: pairing keeps a phone up to date, & Backup & Restore is the one-time move.
-Card titles stay in title case to match their siblings. Confirmations (“Pair a different phone?”,
-“Unpair your {device}?”) use the tag dialog.
+“Move to Another Device” replaces “Transfer to Another Device”, which leaves with #138: the same
+place & job, on the handoff code instead of the build-bound transfer codec. Each card says why you’d
+pick it: pairing keeps a phone up to date, moving sends progress once, & a backup keeps a copy. Card
+titles stay in title case to match their siblings. Confirmations (“Pair a different phone?”, “Unpair
+your {device}?”) use the tag dialog.
 
 ## The relay dashboard
 
@@ -243,8 +293,9 @@ Card titles stay in title case to match their siblings. Confirmations (“Pair a
   “Read-only on the relay. From your {device}’s save at {time}.”
 - Trying to check something off there shows a toast: “This PC is the relay. Check things off on your
   {device}.”
-- Trouble takes over the card in amber (red for errors) until dismissed; a pause on our side is
-  hairline, since there’s nothing to do.
+- Trouble takes over the card in amber, or red for errors (an unreadable save), until dismissed; a
+  pause on our side is hairline, since there’s nothing to do. Red is the `--destructive` tone
+  StatusNote already uses for errors.
 - Start here and watch real use. If the read-only guide goes unused or only confuses, remove it and
   keep the dashboard alone.
 
@@ -269,32 +320,30 @@ button. Notices that need more than a slip are field notes on Home (below).
 
 iOS keeps a browser’s data apart from the home screen app, so the app can’t move it.
 
-- **Before installing.** When an iPhone browser holds progress, the install step offers “Export a
-  backup first” ahead of its instructions.
-- **First launch of the installed app.** With no progress yet, the app asks whether the player was
-  using the tracker in Safari or another browser (“Yes, bring it over”, “3 quick steps”), and walks
-  them through exporting a backup there, restoring it here, & pairing again. “No, I’m new here”
-  dismisses it.
-- Restore (not import) is right here, since the app is empty: it carries manual check-offs &
-  provenance intact.
-- **Then pair again from the app.** Pairing keys stay on each device & never travel in backups, so
-  the app pairs fresh. With one phone per PC, the PC’s match step notes “This replaces Safari on
-  your iPhone”, & Safari shows “Sync moved to the home screen app” & keeps what it has.
+- **First launch of the installed app leads with sync.** It opens on the phone welcome card (“Sync
+  from my PC”), since most players install mid-setup & have nothing in Safari. “Used the tracker in
+  Safari? Bring it over” is a secondary link.
+- **Bringing it over uses the handoff, by link.** In Safari, Data › “Move to Another Device” › “Copy
+  link”; back in the app, paste it & check the codes match. The app is empty, so it takes the
+  progress whole, provenance included.
+- **Then pair again from the app.** Pairing keys stay with each copy, so the app pairs fresh. With
+  one phone per PC, the PC’s match step notes “This replaces Safari on your iPhone”, & Safari shows
+  the ordinary “Your PC paired with another device” note & keeps what it has.
 
 ## Living with it
 
-| Stage           | Relay (PC)                                                          | Tracker (phone)                                                            |
-| --------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Playing         | Dashboard open; nothing to do                                       | Quiet sync button; its panel says when the last save came                  |
-| Away for days   | Pairing lapses after 14 days unseen; dashboard says to re-pair      | Slip after an unusually long gap; after the lapse, a field note to re-pair |
-| Browser restart | Asks to re-allow reading the save (one click; “every visit” sticks) | Nothing                                                                    |
-| Game update     | Can’t read the save: takes over the dashboard                       | Keeps its last good progress; the panel’s date ages                        |
-| App update      | Reloads itself at a safe moment                                     | Same; a version mismatch names the device that’s behind                    |
-| New phone       | Pair again; the old phone stops receiving                           | Old phone keeps its progress & says so; new one gets the next save         |
-| New farm        | Drop the new save                                                   | Asks “Is this the farm you’ve been tracking?”; backs up the old one (#135) |
-| Kill switch     | “Sync is taking a break”, hairline                                  | Hairline dot & slip; tracking by hand still works                          |
-| Stop syncing    | “Unpair”: back to a tracker                                         | Unpaired; keeps everything                                                 |
-| Non-Chrome PC   | Re-drop the save after each session to send it                      | Updates whenever a save is re-dropped                                      |
+| Stage           | Relay (PC)                                                           | Tracker (phone)                                                            |
+| --------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Playing         | Dashboard open; nothing to do                                        | Quiet sync button; its panel says when the last save came                  |
+| Away for days   | Pairing lapses after 90 days unseen; dashboard says to re-pair       | Slip after an unusually long gap; after the lapse, a field note to re-pair |
+| Browser restart | Asks to re-allow reading the save (one click; “every visit” sticks)  | Nothing                                                                    |
+| Game update     | Can’t read the save: takes over the dashboard                        | Keeps its last good progress; the panel’s date ages                        |
+| App update      | Reloads itself at a safe moment                                      | Same; a version mismatch names the device that’s behind                    |
+| New phone       | Starts by moving progress from the old phone, then pairs the new one | Old phone hands off its progress, keeps it, & stops getting saves          |
+| New farm        | Drop the new save                                                    | Asks “Is this the farm you’ve been tracking?”; backs up the old one (#135) |
+| Kill switch     | “Sync is taking a break”, hairline                                   | Hairline dot & slip; tracking by hand still works                          |
+| Stop syncing    | “Unpair”: back to a tracker                                          | Unpaired; keeps everything                                                 |
+| Non-Chrome PC   | Re-drop the save after each session to send it                       | Updates whenever a save is re-dropped                                      |
 
 The self-updating tracker lives with the same stages on one device: a browser restart asks to
 re-allow reading the save, a game update shows the error in place of progress updates, & a new farm
@@ -324,92 +373,100 @@ Write like a chill, non-judgmental friend helping with a tech setup.
 
 ## Screens
 
-One sheet per canvas row, rendered from version 43. PC boards are cropped to the 512 px column.
+One sheet per canvas row, rendered from version 44. PC boards are cropped to the 512 px column.
 
 ### First look
 
-![The Home card on a PC & a phone, the setup page’s two paths, & “How it works”](https://github.com/user-attachments/assets/7a8b6ec3-50c8-49fe-b280-3b72368a96ad)
+![The Home card on a PC & a phone, the setup page’s two paths, & “How it works”](https://github.com/user-attachments/assets/932814fc-2601-430c-94c3-b4b0a0055f9c)
 
 ### Setup on the PC
 
-![Self-updating & import setup, the pairing code with “Send this PC’s progress too”, the match step, connecting the save, & sending](https://github.com/user-attachments/assets/4654bd3e-b7e6-425b-9caf-face6844aa51)
+![Self-updating & import setup, the pairing code with “Send this PC’s progress too”, the match step, connecting the save, & sending](https://github.com/user-attachments/assets/827d89e2-1e59-44f7-a5e4-4b15de628eea)
 
 ### Setup on the phone
 
-![The install step & its skipped fold, pairing, keep or start fresh, the scanner, the Camera dialog, the match code, & success](https://github.com/user-attachments/assets/a37e3834-3119-4212-a7c1-bd79cd33677b)
+![The install step & its skipped fold, pairing, keep or start fresh, the scanner, the Camera dialog, the match code, & success](https://github.com/user-attachments/assets/526f615e-1a77-4466-a048-1763d73f59a4)
 
 ### Mac & Linux
 
-![A Mac’s setup page, pairing by link, the Proton save folder, & CrossOver](https://github.com/user-attachments/assets/2c3da5ef-cf62-4713-b1b9-019866fb864c)
+![A Mac’s setup page, pairing by link, the Proton save folder, & CrossOver](https://github.com/user-attachments/assets/3d8f1386-4513-4a4f-97c6-6f76146bf576)
 
 ### Setup hiccups
 
-![An expired code, a rejected match, a code scanned first by someone else, a slow confirmation, & the wrong file](https://github.com/user-attachments/assets/46531314-9d0f-48b4-91ca-34782d9cabe7)
+![An expired code, a rejected match, a code scanned first by someone else, a slow confirmation, & the wrong file](https://github.com/user-attachments/assets/5f066968-7c22-49bf-9641-29018eb4f926)
 
 ### Data management
 
-![Data regrouped into Pairing & Data, the paired settings, the self-updating import card, & the unpair dialogs](https://github.com/user-attachments/assets/6dfdc2c9-3835-4cc9-b9ce-a28850b3f22c)
+![Data regrouped into Pairing & Data, the paired settings, the self-updating import card, & the unpair dialogs](https://github.com/user-attachments/assets/3669570a-7808-448c-b316-ec5ac30fb9c5)
+
+### A new phone
+
+![The PC’s “bring your progress first” dialog, its two steps, the old phone’s handoff code & match, & the new phone continuing to pairing](https://github.com/user-attachments/assets/04dcbdf1-9a4f-4b70-9887-3dbe06316a90)
 
 ### The relay dashboard
 
-![The centered relay card, the read-only guide & its toast, dark mode, & the re-drop dashboard](https://github.com/user-attachments/assets/5147c8eb-b1b9-4a97-bb86-205d218a52b7)
+![The centered relay card, the read-only guide & its toast, dark mode, & the re-drop dashboard](https://github.com/user-attachments/assets/6adcfc4c-c10c-4097-9831-913ea57f357c)
 
 ### When the relay needs you
 
-![Takeovers for an unreadable save, a browser restart, a lapsed pairing, & a pause, plus the field notes](https://github.com/user-attachments/assets/b1a485c0-57e8-448c-9ba7-2c1d631c82db)
+![Takeovers for an unreadable save, a browser restart, a lapsed pairing, & a pause, plus the field notes](https://github.com/user-attachments/assets/1fe7de5a-9890-47bc-9006-0ed89490a901)
 
 ### Living with it on the phone
 
-![The quiet sync button, its panel, the slips, the field notes, & the farm question](https://github.com/user-attachments/assets/15e9aa66-3f99-475e-903c-600280f6f4dc)
+![The quiet sync button, its panel, the slips, the field notes, & the farm question](https://github.com/user-attachments/assets/1dba83af-0134-4d83-ab23-a177b15d796a)
 
 ### Moving to the iPhone app
 
-![The app’s first launch, bringing progress over, the PC’s replace note, & Safari after the move](https://github.com/user-attachments/assets/f55aac0a-c6b0-4760-9561-a6da60383e0e)
+![The app’s first launch, bringing progress over, the PC’s replace note, & Safari after the move](https://github.com/user-attachments/assets/5e50e9f3-a588-4079-9710-b83632e794ac)
 
 ### The self-updating tracker
 
-![The self-updating PC’s sync panel, its restart & error notes, & the farm question](https://github.com/user-attachments/assets/548c0272-dadb-4d7e-a952-dfd9b736bfe2)
+![The self-updating PC’s sync panel, its restart & error notes, & the farm question](https://github.com/user-attachments/assets/59a7349a-71ce-496e-81e3-0b8122b41d7b)
 
 ## Copy
 
 Keys follow [localization.md](localization.md#adding-a-new-ui-string-agents--humans): snake_case,
 `sync_` for sync, in `messages/en.json` & every other locale. `{device}` is the paired device’s
-derived name (“Pixel 8”), `{time}` a relative or clock time, `{date}` an in-game date, `{farm}` the
-farm’s name, `{days}` a count, `{url}` the setup address, & `{suffix}` the save file’s ending
-(`-autosave.sav`), the last three in `<code>`. The welcome card keeps `onboarding_overline` &
+derived name (“Pixel 8”), `{time}` a relative or clock time, `{gameDate}` an in-game date,
+`{calendarDate}` a real one, `{farm}` the farm’s name, `{days}` a count (with plural variants),
+`{browser}` the detected browser (“Safari”), `{url}` the setup address, & `{suffix}` the save file’s
+ending (`-autosave.sav`), the last two in `<code>`. Device names are short model names where the
+browser allows (“Pixel 8”, “iPhone”), so “your {device}” reads naturally; translators may
+restructure those sentences around a label. The welcome card keeps `onboarding_overline` &
 `onboarding_title`; the other `onboarding_*` descriptions & actions retire. The drop box reuses the
 import card’s strings. Error & notice copy is a first draft.
 
 ### Home & the setup page
 
-| Key                           | English                                                                           |
-| ----------------------------- | --------------------------------------------------------------------------------- |
-| `sync_welcome_lead`           | Let your game save fill in your progress for you.                                 |
-| `sync_welcome_feature_import` | Import your progress from your save                                               |
-| `sync_welcome_feature_update` | Keep it up to date as you play                                                    |
-| `sync_welcome_feature_phone`  | Sync it to your phone                                                             |
-| `sync_welcome_setup_action`   | Get set up                                                                        |
-| `sync_welcome_setup_time`     | About two minutes                                                                 |
-| `sync_welcome_manual_action`  | I’ll check things off by hand                                                     |
-| `sync_welcome_phone_lead`     | Fill in your progress from the game save on your PC, and it keeps up as you play. |
-| `sync_welcome_phone_action`   | Sync from my PC                                                                   |
-| `sync_steps_two`              | 2 steps, about two minutes                                                        |
-| `sync_steps_three`            | 3 quick steps                                                                     |
-| `sync_how_it_works`           | How it works                                                                      |
-| `sync_switch_to_phone`        | I’m on a phone                                                                    |
-| `sync_switch_to_computer`     | I’m on a computer                                                                 |
-| `sync_setup_title`            | Get set up                                                                        |
-| `sync_choose_lead`            | Pick where you’ll check things off. You can switch later.                         |
-| `sync_choice_here_title`      | On this PC                                                                        |
-| `sync_choice_here_steps`      | 1 step                                                                            |
-| `sync_choice_here_body`       | This tab updates from your save every time you sleep in the game.                 |
-| `sync_choice_or`              | or                                                                                |
-| `sync_choice_phone_title`     | On my phone                                                                       |
-| `sync_choice_phone_steps`     | 2 steps · about two minutes                                                       |
-| `sync_choice_phone_body`      | This PC sends each new save to your phone as you play.                            |
-| `sync_mac_lead`               | Fields of Mistria doesn’t run on Mac, so this Mac syncs from the PC you play on.  |
-| `sync_mac_choice_body`        | Your PC sends each new save to this Mac as you play.                              |
-| `sync_mac_game_here`          | The game’s on this Mac (CrossOver, Whisky)                                        |
+| Key                            | English                                                                                 |
+| ------------------------------ | --------------------------------------------------------------------------------------- |
+| `sync_welcome_lead`            | Let your game save fill in your progress for you.                                       |
+| `sync_welcome_feature_import`  | Import your progress from your save                                                     |
+| `sync_welcome_feature_update`  | Keep it up to date as you play                                                          |
+| `sync_welcome_feature_phone`   | Sync it to your phone                                                                   |
+| `sync_welcome_setup_action`    | Get set up                                                                              |
+| `sync_welcome_setup_time`      | About two minutes                                                                       |
+| `sync_welcome_manual_action`   | I’ll check things off by hand                                                           |
+| `sync_welcome_phone_lead`      | Fill in your progress from the game save on your PC, and it keeps up as you play.       |
+| `sync_welcome_phone_action`    | Sync from my PC                                                                         |
+| `sync_steps_two`               | 2 steps, about two minutes                                                              |
+| `sync_steps_three`             | 3 quick steps                                                                           |
+| `sync_how_it_works`            | How it works                                                                            |
+| `sync_switch_to_phone`         | I’m on a phone                                                                          |
+| `sync_switch_to_computer`      | I’m on a computer                                                                       |
+| `sync_setup_title`             | Get set up                                                                              |
+| `sync_choose_lead`             | Pick where you’ll check things off. You can switch later.                               |
+| `sync_choice_here_title`       | On this PC                                                                              |
+| `sync_choice_here_steps`       | 1 step                                                                                  |
+| `sync_choice_here_body`        | This tab updates from your save every time you sleep in the game.                       |
+| `sync_choice_here_body_import` | Import your save, and drop it in again whenever you want to catch up.                   |
+| `sync_choice_or`               | or                                                                                      |
+| `sync_choice_phone_title`      | On my phone                                                                             |
+| `sync_choice_phone_steps`      | 2 steps, about two minutes                                                              |
+| `sync_choice_phone_body`       | This PC sends each new save to your phone as you play. Or another computer, like a Mac. |
+| `sync_mac_lead`                | Fields of Mistria doesn’t run on Mac, so this Mac syncs from the PC you play on.        |
+| `sync_mac_choice_body`         | Your PC sends each new save to this Mac as you play.                                    |
+| `sync_mac_game_here`           | The game’s on this Mac (CrossOver, Whisky)                                              |
 
 ### How it works
 
@@ -443,9 +500,10 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_copy_link_hint`     | Pairing a computer? Copy the link and open it there.                                                                         |
 | `sync_send_progress`      | Send this PC’s progress too                                                                                                  |
 | `sync_send_progress_hint` | It adds to what’s on your phone, including things you checked off by hand.                                                   |
-| `sync_match_question`     | Does your phone show this code?                                                                                              |
+| `sync_match_question`     | Does your {device} show this code?                                                                                           |
 | `sync_match_yes`          | Yes, it matches                                                                                                              |
 | `sync_match_no`           | No, it doesn’t                                                                                                               |
+| `sync_match_not_yet`      | Haven’t scanned yet? Choose “No”.                                                                                            |
 | `sync_match_replaces`     | This replaces {device}. It keeps what it has but stops getting saves.                                                        |
 | `sync_paired_summary`     | Paired with your {device}. Nice!                                                                                             |
 | `sync_step_save`          | Connect your save                                                                                                            |
@@ -466,47 +524,52 @@ import card’s strings. Error & notice copy is a first draft.
 
 ### Setup on the phone & other computers
 
-| Key                         | English                                                                                                                 |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `sync_phone_lead`           | Two steps: one here, one on your PC.                                                                                    |
-| `sync_phone_lead_ios`       | Three quick steps.                                                                                                      |
-| `sync_step_install`         | Add it to your home screen                                                                                              |
-| `sync_install_share`        | Tap Share in Safari.                                                                                                    |
-| `sync_install_add`          | Tap “Add to Home Screen”.                                                                                               |
-| `sync_install_open`         | Open the tracker from there to keep going.                                                                              |
-| `sync_install_skip`         | Skip, keep using Safari                                                                                                 |
-| `sync_install_skipped`      | Skipped. Add it any time.                                                                                               |
-| `sync_install_show`         | Show me                                                                                                                 |
-| `sync_step_pair_pc`         | Pair with your PC                                                                                                       |
-| `sync_pc_open`              | On your PC, open {url} in Chrome or Edge and click “Show code”.                                                         |
-| `sync_scan_action`          | Scan the code                                                                                                           |
-| `sync_step_save_on_pc`      | Connect your save, on your PC                                                                                           |
-| `sync_step_save_on_pc_hint` | Your PC walks you through it.                                                                                           |
-| `sync_has_progress_title`   | This phone already has progress                                                                                         |
-| `sync_has_progress_body`    | Keep it, and what comes from your PC adds on top. Or start fresh, which erases what’s on this phone.                    |
-| `sync_has_progress_keep`    | Keep what I have                                                                                                        |
-| `sync_has_progress_fresh`   | Start fresh                                                                                                             |
-| `sync_check_pc`             | Check your PC. It should show this code:                                                                                |
-| `sync_confirm_there`        | Confirm it there, and you’re paired.                                                                                    |
-| `sync_waiting_pc`           | Waiting for your PC…                                                                                                    |
-| `sync_paired_with_pc`       | Paired with your PC                                                                                                     |
-| `sync_paired_title`         | You’re paired!                                                                                                          |
-| `sync_paired_body`          | Now connect your save on your PC. Your progress shows up here as soon as it’s done.                                     |
-| `sync_paired_progress_body` | Your PC’s progress is here too. Now connect your save on your PC, and new saves show up as soon as it’s done.           |
-| `sync_waiting_save`         | Waiting for your first save…                                                                                            |
-| `sync_worked_title`         | It worked!                                                                                                              |
-| `sync_worked_body`          | Your progress is here, and it updates every time you sleep in the game.                                                 |
-| `sync_worked_action`        | Take a look                                                                                                             |
-| `sync_camera_title`         | Pair Safari, or the app?                                                                                                |
-| `sync_camera_body`          | Your camera opened this code in Safari. Using the tracker from your home screen? Open it there and tap “Scan the code”. |
-| `sync_camera_pair`          | Pair Safari                                                                                                             |
-| `sync_camera_ok`            | Got it                                                                                                                  |
-| `sync_link_copy`            | On your PC, open {url}, click “Show code”, then “Copy link”.                                                            |
-| `sync_link_send`            | Send the link to this Mac, like in a message to yourself.                                                               |
-| `sync_link_open`            | Open it here, or paste it below.                                                                                        |
-| `sync_link_placeholder`     | Paste the link here                                                                                                     |
-| `sync_link_pair`            | Pair                                                                                                                    |
-| `sync_link_camera`          | Scan with this Mac’s camera instead                                                                                     |
+| Key                         | English                                                                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `sync_phone_lead`           | Two steps: one here, one on your PC.                                                                                               |
+| `sync_phone_lead_ios`       | Three quick steps.                                                                                                                 |
+| `sync_step_install`         | Add it to your home screen                                                                                                         |
+| `sync_install_share`        | Tap Share. In Safari, it may be under •••.                                                                                         |
+| `sync_install_add`          | Tap “Add to Home Screen”.                                                                                                          |
+| `sync_install_open`         | Open the tracker from there to keep going.                                                                                         |
+| `sync_install_skip`         | Skip, keep using {browser}                                                                                                         |
+| `sync_install_skipped`      | Skipped. Add it any time.                                                                                                          |
+| `sync_install_show`         | Show me                                                                                                                            |
+| `sync_step_pair_pc`         | Pair with your PC                                                                                                                  |
+| `sync_pc_open`              | On your PC, open {url} in Chrome or Edge, pick “On my phone”, and click “Show code”.                                               |
+| `sync_scan_action`          | Scan the code                                                                                                                      |
+| `sync_paste_link`           | Or paste a link                                                                                                                    |
+| `sync_step_save_on_pc`      | Connect your save, on your PC                                                                                                      |
+| `sync_step_save_on_pc_hint` | Your PC walks you through it.                                                                                                      |
+| `sync_has_progress_title`   | This phone already has progress                                                                                                    |
+| `sync_has_progress_body`    | Keep it, and what comes from your PC adds on top. Or start fresh, which erases what’s on this phone.                               |
+| `sync_has_progress_keep`    | Keep what I have                                                                                                                   |
+| `sync_has_progress_fresh`   | Start fresh                                                                                                                        |
+| `sync_fresh_title`          | Start fresh on this phone?                                                                                                         |
+| `sync_fresh_body`           | Nothing changes until your PC’s first save arrives. Then it replaces what’s here, and we keep a backup of this phone’s progress.   |
+| `sync_fresh_cancel`         | Never mind                                                                                                                         |
+| `sync_check_pc`             | Check your PC. It should show this code:                                                                                           |
+| `sync_confirm_there`        | Confirm it there, and you’re paired.                                                                                               |
+| `sync_waiting_pc`           | Waiting for your PC…                                                                                                               |
+| `sync_paired_with_pc`       | Paired with your PC                                                                                                                |
+| `sync_paired_title`         | You’re paired!                                                                                                                     |
+| `sync_paired_body`          | Now connect your save on your PC. Your progress shows up here as soon as it’s done.                                                |
+| `sync_paired_progress_body` | Your PC’s progress is here too. Now connect your save on your PC, and new saves show up as soon as it’s done.                      |
+| `sync_waiting_save`         | Waiting for your first save…                                                                                                       |
+| `sync_worked_title`         | It worked!                                                                                                                         |
+| `sync_worked_body`          | Your progress is here, and it updates every time you sleep in the game.                                                            |
+| `sync_worked_body_redrop`   | Your progress is here, and it updates whenever your PC sends a new save.                                                           |
+| `sync_worked_action`        | Take a look                                                                                                                        |
+| `sync_camera_title`         | Pair this browser, or the app?                                                                                                     |
+| `sync_camera_body`          | Your camera opened this code in {browser}. Using the tracker from your home screen? Open it there and tap “Scan the code” instead. |
+| `sync_camera_pair`          | Pair {browser}                                                                                                                     |
+| `sync_camera_app`           | I’ll use the app                                                                                                                   |
+| `sync_link_copy`            | On your PC, open {url}, pick “On my phone”, click “Show code”, then “Copy link”.                                                   |
+| `sync_link_send`            | Send the link to this computer, like in a message to yourself.                                                                     |
+| `sync_link_open`            | Open it here, or paste it below.                                                                                                   |
+| `sync_link_placeholder`     | Paste the link here                                                                                                                |
+| `sync_link_pair`            | Pair                                                                                                                               |
+| `sync_link_camera`          | Scan with this computer’s camera instead                                                                                           |
 
 ### Setup hiccups
 
@@ -524,6 +587,12 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_too_slow_body`       | The code expired before your PC confirmed it, so nobody’s paired. Show a new code on your PC and scan it again. |
 | `sync_wrong_file_title`    | Hmm, that’s not a save file                                                                                     |
 | `sync_wrong_file_body`     | Look for one ending in {suffix}.                                                                                |
+| `sync_camera_denied_title` | We can’t use your camera                                                                                        |
+| `sync_camera_denied_body`  | Allow camera access in your browser’s settings, or copy the link from your PC and paste it here.                |
+| `sync_code_spent_title`    | That code’s expired                                                                                             |
+| `sync_code_spent_body`     | On your PC, click “New code”, then scan or paste again.                                                         |
+| `sync_offline_setup_title` | You’re offline                                                                                                  |
+| `sync_offline_setup_body`  | Pairing needs the internet. We’ll pick up where you left off once you’re back.                                  |
 
 ### Data management
 
@@ -553,32 +622,55 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_import_updating`          | Updating from your save · {time}                                                                                               |
 | `sync_use_different_save`       | Use a different save                                                                                                           |
 | `sync_stop_updating`            | Stop updating                                                                                                                  |
-| `backup_card_summary` (changed) | Keep a copy of your progress, or move it to a new device once.                                                                 |
-| `sync_new_phone_title`          | Pair a different phone?                                                                                                        |
-| `sync_new_phone_body`           | Your {device} keeps its progress but stops getting saves.                                                                      |
+| `backup_card_summary` (changed) | Keep a copy of your progress, or restore one.                                                                                  |
+| `sync_move_card_title`          | Move to Another Device                                                                                                         |
+| `sync_move_card_summary`        | Send your progress to a new phone or the app, once.                                                                            |
+| `sync_new_phone_title`          | New phone? Bring your progress first                                                                                           |
+| `sync_new_phone_body`           | Things you checked off by hand live on your {device}, not on this PC. Move them to your new phone, then pair it here.          |
 | `sync_new_phone_cancel`         | Never mind                                                                                                                     |
-| `sync_new_phone_confirm`        | Pair a new phone                                                                                                               |
+| `sync_new_phone_confirm`        | Let’s do it                                                                                                                    |
+| `sync_new_phone_skip`           | Skip, start the new phone fresh                                                                                                |
+| `sync_new_phone_steps_title`    | Set up your new phone                                                                                                          |
+| `sync_new_phone_steps_lead`     | Two steps, about three minutes.                                                                                                |
+| `sync_new_phone_move`           | Move your progress from your {device}                                                                                          |
+| `sync_new_phone_move_open`      | On your {device}, open Data and tap “Move to Another Device”.                                                                  |
+| `sync_new_phone_move_scan`      | On your new phone, open {url} and tap “Scan the code”.                                                                         |
+| `sync_new_phone_move_match`     | Check both phones show the same code, and confirm on your {device}.                                                            |
+| `sync_new_phone_next`           | Done, next step                                                                                                                |
+| `sync_new_phone_pair`           | Pair your new phone                                                                                                            |
+| `sync_new_phone_pair_hint`      | Your {device} keeps its progress but stops getting saves.                                                                      |
+| `sync_handoff_title`            | Move to another device                                                                                                         |
+| `sync_handoff_lead`             | Sends what’s on this phone, once. This phone keeps it too.                                                                     |
+| `sync_handoff_step`             | Scan this from your new phone                                                                                                  |
+| `sync_handoff_match`            | Does your new phone show this code?                                                                                            |
+| `sync_handoff_received_title`   | Your progress is here                                                                                                          |
+| `sync_handoff_received_body`    | Everything from your {device} came over. Now pair this phone with your PC.                                                     |
 | `sync_unpair_title`             | Unpair your {device}?                                                                                                          |
 | `sync_unpair_body`              | This tab goes back to being a regular tracker, with your progress just how you left it. Your {device} keeps everything it has. |
 | `sync_unpair_cancel`            | Keep syncing                                                                                                                   |
 
 ### The relay
 
-| Key                     | English                                                      |
-| ----------------------- | ------------------------------------------------------------ |
-| `sync_relay_overline`   | Relay                                                        |
-| `sync_relay_heading`    | Sending your saves to your {device}                          |
-| `sync_relay_body`       | Keep this tab open while you play. That’s it.                |
-| `sync_pairing_settings` | Pairing settings                                             |
-| `sync_browse_guide`     | Browse the guide                                             |
-| `sync_read_only`        | read-only                                                    |
-| `sync_guide_read_only`  | Read-only on the relay. From your {device}’s save at {time}. |
-| `sync_relay_toast`      | This PC is the relay. Check things off on your {device}.     |
-| `sync_redrop_title`     | Done playing? Send your save.                                |
-| `sync_redrop_sleep`     | Sleep in the game so it saves.                               |
-| `sync_redrop_drop`      | Drop the newest {suffix} here.                               |
-| `sync_redrop_last`      | Last sent {time}, to your {device}.                          |
-| `sync_hide_for_now`     | Hide this for now                                            |
+| Key                          | English                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| `sync_relay_overline`        | Relay                                                                                |
+| `sync_relay_heading`         | Sending your saves to your {device}                                                  |
+| `sync_relay_body`            | Keep this tab open while you play. That’s it.                                        |
+| `sync_pairing_settings`      | Pairing settings                                                                     |
+| `sync_browse_guide`          | Browse the guide                                                                     |
+| `sync_read_only`             | read-only                                                                            |
+| `sync_guide_read_only`       | Read-only on the relay. From your {device}’s save at {time}.                         |
+| `sync_relay_toast`           | This PC is the relay. Check things off on your {device}.                             |
+| `sync_no_save_title`         | Almost there: connect your save                                                      |
+| `sync_no_save_body`          | Your {device} is paired, but there’s no save to send yet.                            |
+| `sync_device_unpaired_title` | Your {device} unpaired                                                               |
+| `sync_device_unpaired_body`  | This PC is back to being a regular tracker, with your progress just how you left it. |
+| `sync_fill_from_save`        | Fill in from your latest save                                                        |
+| `sync_redrop_title`          | Done playing? Send your save.                                                        |
+| `sync_redrop_sleep`          | Sleep in the game so it saves.                                                       |
+| `sync_redrop_drop`           | Drop the newest {suffix} here.                                                       |
+| `sync_redrop_last`           | Last sent {time}, to your {device}.                                                  |
+| `sync_hide_for_now`          | Hide this for now                                                                    |
 
 ### Trouble & notices
 
@@ -587,8 +679,8 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_stopped_overline`     | Sync stopped                                                                                                                      |
 | `sync_paused_overline`      | Sync paused                                                                                                                       |
 | `sync_unreadable_title`     | We couldn’t read your latest save                                                                                                 |
-| `sync_unreadable_body`      | The game probably just updated, and the tracker needs to catch up. Your {device} has everything up to {date}.                     |
-| `sync_unreadable_self_body` | The game probably just updated. Your progress here is from {date} until the tracker catches up.                                   |
+| `sync_unreadable_body`      | The game probably just updated, and the tracker needs to catch up. Your {device} has everything up to {gameDate}.                 |
+| `sync_unreadable_self_body` | The game probably just updated. Your progress here is from {gameDate} until the tracker catches up.                               |
 | `sync_unreadable_update`    | Check for a tracker update.                                                                                                       |
 | `sync_unreadable_log`       | Still stuck? Send us a sync log so we can fix it.                                                                                 |
 | `sync_check_update`         | Check for an update                                                                                                               |
@@ -598,8 +690,8 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_reallow_click`        | Click “Allow access”.                                                                                                             |
 | `sync_reallow_every_visit`  | Pick “Allow on every visit”, and it won’t ask again.                                                                              |
 | `sync_reallow_action`       | Allow access                                                                                                                      |
-| `sync_lapsed_title`         | Your {device} hasn’t checked in since {date}                                                                                      |
-| `sync_lapsed_body`          | Pairings expire after two weeks away. Pair again to pick up where you left off.                                                   |
+| `sync_lapsed_title`         | Your {device} hasn’t checked in since {calendarDate}                                                                              |
+| `sync_lapsed_body`          | Pairings expire after three months away. Pair again to pick up where you left off.                                                |
 | `sync_pair_again`           | Pair again                                                                                                                        |
 | `sync_break_title`          | Sync is taking a break                                                                                                            |
 | `sync_break_body`           | We’ve paused it for everyone while we fix something. Nothing’s lost, and you can still check things off by hand on your {device}. |
@@ -612,53 +704,52 @@ import card’s strings. Error & notice copy is a first draft.
 | `sync_offline_title`        | Waiting for the internet                                                                                                          |
 | `sync_offline_body`         | Your latest save goes out as soon as this PC is back online.                                                                      |
 | `sync_daily_cap_title`      | That’s a lot of saves for one day!                                                                                                |
-| `sync_daily_cap_body`       | Your {device} has everything up to {date}, and sync picks back up tomorrow.                                                       |
+| `sync_daily_cap_body`       | Your {device} has everything up to {gameDate}, and sync picks back up tomorrow.                                                   |
 | `sync_device_behind_title`  | Your {device} needs a tracker update                                                                                              |
 | `sync_device_behind_body`   | Open the tracker there and it’ll update itself.                                                                                   |
 
 ### Status on the phone
 
-| Key                       | English                                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `sync_toolbar_label`      | Sync                                                                                                                           |
-| `sync_panel_from_pc`      | From your PC                                                                                                                   |
-| `sync_panel_from_save`    | From your save                                                                                                                 |
-| `sync_panel_settings`     | Pairing & data settings                                                                                                        |
-| `sync_slip_gap`           | No saves in {days} days                                                                                                        |
-| `sync_slip_break`         | Sync’s taking a break                                                                                                          |
-| `sync_phone_lapsed_title` | Your pairing expired                                                                                                           |
-| `sync_phone_lapsed_body`  | Your PC hasn’t heard from this phone in over two weeks. Pair again to keep syncing.                                            |
-| `sync_pc_behind_title`    | Update the tracker on your PC                                                                                                  |
-| `sync_pc_behind_body`     | Reload the sync tab there, and you’re good.                                                                                    |
-| `sync_replaced_title`     | Your PC paired with another device                                                                                             |
-| `sync_replaced_body`      | This phone keeps its progress but won’t get new saves.                                                                         |
-| `sync_replaced_action`    | Pair this phone again                                                                                                          |
-| `sync_farm_title`         | Is this the farm you’ve been tracking?                                                                                         |
-| `sync_farm_this_save`     | This save                                                                                                                      |
-| `sync_farm_tracking`      | Tracking now                                                                                                                   |
-| `sync_farm_note`          | A new farm backs up {farm} first, then starts fresh.                                                                           |
-| `sync_farm_new`           | No, it’s a new farm                                                                                                            |
-| `sync_farm_same`          | Yes, same farm                                                                                                                 |
-| `sync_self_reallow_body`  | Browsers forget file access when they restart. Click “Allow access”, then pick “Allow on every visit”, and it won’t ask again. |
+| Key                         | English                                                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `sync_toolbar_label`        | Sync                                                                                                                           |
+| `sync_panel_from_pc`        | From your PC                                                                                                                   |
+| `sync_panel_from_save`      | From your save                                                                                                                 |
+| `sync_panel_settings`       | Pairing & data settings                                                                                                        |
+| `sync_slip_gap`             | {days, plural, one {No saves in # day} other {No saves in # days}}                                                             |
+| `sync_slip_break`           | Sync’s taking a break                                                                                                          |
+| `sync_slip_waiting`         | Waiting for your first save                                                                                                    |
+| `sync_phone_lapsed_title`   | Your pairing expired                                                                                                           |
+| `sync_phone_lapsed_body`    | Your PC and this phone haven’t synced in over three months. Pair again to keep going.                                          |
+| `sync_pc_behind_title`      | Update the tracker on your PC                                                                                                  |
+| `sync_pc_behind_body`       | Reload the sync tab there, and you’re good.                                                                                    |
+| `sync_replaced_title`       | Your PC paired with another device                                                                                             |
+| `sync_replaced_body`        | This phone keeps its progress but won’t get new saves.                                                                         |
+| `sync_replaced_action`      | Pair this phone again                                                                                                          |
+| `sync_unpaired_by_pc_title` | Your PC unpaired this phone                                                                                                    |
+| `sync_unpaired_by_pc_body`  | Everything here stays. Pair again any time from Data.                                                                          |
+| `sync_farm_title`           | Is this the farm you’ve been tracking?                                                                                         |
+| `sync_farm_this_save`       | This save                                                                                                                      |
+| `sync_farm_tracking`        | Tracking now                                                                                                                   |
+| `sync_farm_note`            | A new farm backs up {farm} first, then starts fresh.                                                                           |
+| `sync_farm_new`             | No, it’s a new farm                                                                                                            |
+| `sync_farm_same`            | Yes, same farm                                                                                                                 |
+| `sync_self_reallow_body`    | Browsers forget file access when they restart. Click “Allow access”, then pick “Allow on every visit”, and it won’t ask again. |
 
 ### Moving to the iPhone app
 
-| Key                       | English                                                                                                       |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `sync_app_welcome_body`   | Were you using the tracker in Safari or another browser? The app can’t see that data, so let’s bring it over. |
-| `sync_app_bring`          | Yes, bring it over                                                                                            |
-| `sync_app_new`            | No, I’m new here                                                                                              |
-| `sync_move_title`         | Bring your progress over                                                                                      |
-| `sync_move_export`        | Export a backup from your browser                                                                             |
-| `sync_move_export_open`   | Open {url} in the browser you used.                                                                           |
-| `sync_move_export_steps`  | Go to Data, open “Backup & Restore”, and tap “Export backup”.                                                 |
-| `sync_move_come_back`     | Come back here.                                                                                               |
-| `sync_move_restore`       | Restore it here                                                                                               |
-| `sync_move_restore_hint`  | Pick the backup you just saved.                                                                               |
-| `sync_move_pair`          | Pair with your PC again                                                                                       |
-| `sync_move_pair_hint`     | Pairings don’t come along in backups.                                                                         |
-| `sync_safari_moved_title` | Sync moved to the home screen app                                                                             |
-| `sync_safari_moved_body`  | This copy keeps what it has but won’t get new saves.                                                          |
+| Key                    | English                                                              |
+| ---------------------- | -------------------------------------------------------------------- |
+| `sync_move_title`      | Bring your progress over                                             |
+| `sync_app_bring_link`  | Used the tracker in Safari? Bring it over                            |
+| `sync_move_lead`       | Two quick steps, then pair.                                          |
+| `sync_move_copy`       | Copy a link in Safari                                                |
+| `sync_move_copy_open`  | In Safari, open {url}, go to Data, and tap “Move to Another Device”. |
+| `sync_move_copy_link`  | Tap “Copy link”, then come back here.                                |
+| `sync_move_paste`      | Paste it here                                                        |
+| `sync_move_paste_hint` | Then check both show the same code.                                  |
+| `sync_move_pair`       | Pair with your PC again                                              |
+| `sync_move_pair_hint`  | Pairings stay with each copy.                                        |
 
 ## Decisions so far
 
@@ -677,11 +768,15 @@ import card’s strings. Error & notice copy is a first draft.
   pairs like a phone, by link. The switch links override.
 - A shown pairing code also offers “Copy link”, the same offer URL, for computers without a camera.
 - A PC with progress carries it over the sync channel once after pairing, checked by default; the
-  phone decides about its own progress before scanning. See
+  phone decides about its own progress, & “Start fresh” waits for the first bundle & keeps a backup.
+  Re-pairing shows it unchecked. See
   [the decision record](decisions/2026-10-28-sync-carry-pc-progress.md).
+- A new phone, or the iPhone app, gets its progress from the old copy by a one-time handoff code
+  that reuses pairing; “Pair a different phone” starts there, & “Move to Another Device” replaces
+  the transfer card. See [the decision record](decisions/2026-10-28-sync-progress-handoff.md).
 - On iPhone, installing is optional step i of setup, recommended for Safari’s storage limits, &
-  folds when skipped. Moving from a browser to the installed app goes through backup export &
-  restore, offered before installing and on the app’s first launch.
+  folds when skipped. The installed app’s first launch leads with sync setup, with bringing Safari’s
+  progress over (by handoff link) as a secondary link.
 - Pairing is confirmed by matching a six-digit code shown on both devices, derived from the
   handshake, so a leaked code can’t silently redirect sync. See
   [the decision record](decisions/2026-10-27-sync-pairing-confirm.md).
