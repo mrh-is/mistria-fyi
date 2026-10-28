@@ -16,6 +16,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+# pnpm/setup restores the pnpm store, which also holds the devEngines Node runtime, so a warm cache
+# never downloads Node from nodejs.org. The cache key includes the store path, and container jobs
+# would otherwise fall back to a store beside the workspace mount, so every job names the host's
+# default store explicitly.
+env:
+  pnpm_config_store_dir: /home/runner/setup-pnpm/store
+
 jobs:
   changes:
     name: Detect test-relevant changes
@@ -141,8 +148,11 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .node-version
+      # The store holds nothing this job runs except Node, which pnpm/setup installs from it.
       - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
+          cache: true
+          save-cache: false
           install: false
       # This job installs nothing, so it starts the step runner with `node` instead of `pnpm run`,
       # which refuses to run until dependencies are installed.

@@ -11,6 +11,7 @@ import { STEPS } from "../scripts/verify.js";
 
 interface Workflow {
   concurrency?: { "cancel-in-progress"?: boolean; group?: string };
+  env?: Record<string, string>;
   jobs?: Record<string, WorkflowJob>;
   on?: {
     pull_request?: null | { paths?: string[] };
@@ -26,6 +27,7 @@ interface Workflow {
 interface WorkflowJob {
   concurrency?: Workflow["concurrency"];
   container?: string | { image?: string; options?: string };
+  env?: Record<string, string>;
   if?: string;
   needs?: string | string[];
   outputs?: Record<string, string>;
@@ -315,6 +317,22 @@ describe("CI workflow jobs", () => {
       const nodeIndex = steps.findIndex((entry) => entry.uses?.startsWith("actions/setup-node@"));
       expect(nodeIndex).toBeGreaterThan(-1);
       expect(steps[nodeIndex].with?.["node-version-file"]).toBe(".node-version");
+    }
+  });
+
+  it("restores the store that holds the pnpm-managed Node in every pnpm/setup job", () => {
+    // Host & container jobs must share one literal store path; the cache key includes it.
+    expect(workflow.env?.pnpm_config_store_dir).toBe("/home/runner/setup-pnpm/store");
+    const setupJobs = Object.entries(jobs).filter(([, job]) =>
+      job.steps?.some((step) => step.uses?.startsWith("pnpm/setup@")),
+    );
+    expect(setupJobs.map(([name]) => name)).toEqual(
+      expect.arrayContaining(["audit", ...installJobs]),
+    );
+    for (const [, job] of setupJobs) {
+      expect(job.env?.pnpm_config_store_dir).toBeUndefined();
+      const setup = job.steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
+      expect(setup?.with?.cache).toBe(true);
     }
   });
 
