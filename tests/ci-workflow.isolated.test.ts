@@ -266,13 +266,17 @@ describe("CI workflow jobs", () => {
   });
 
   it("fails a stalled pnpm/setup quickly instead of waiting out the job timeout", () => {
+    const setupJobs: string[] = [];
     for (const [jobName, job] of Object.entries(jobs)) {
       for (const step of job.steps?.filter((entry) => entry.uses?.startsWith("pnpm/setup@")) ??
         []) {
+        setupJobs.push(jobName);
         expect(step["timeout-minutes"], jobName).toBe(3);
         expect(step["timeout-minutes"], jobName).toBeLessThan(job["timeout-minutes"] ?? 0);
       }
     }
+    // Pinning the jobs keeps a renamed or relocated action from passing vacuously.
+    expect(setupJobs.toSorted()).toEqual([...installJobs, "audit", "locale-sync"].toSorted());
   });
 
   it("restores Vitest's module cache before running the tests", () => {
