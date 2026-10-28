@@ -265,6 +265,16 @@ describe("CI workflow jobs", () => {
     }
   });
 
+  it("fails a stalled pnpm/setup quickly instead of waiting out the job timeout", () => {
+    for (const [jobName, job] of Object.entries(jobs)) {
+      for (const step of job.steps?.filter((entry) => entry.uses?.startsWith("pnpm/setup@")) ??
+        []) {
+        expect(step["timeout-minutes"], jobName).toBe(3);
+        expect(step["timeout-minutes"], jobName).toBeLessThan(job["timeout-minutes"] ?? 0);
+      }
+    }
+  });
+
   it("restores Vitest's module cache before running the tests", () => {
     const steps = jobs.test.steps ?? [];
     const cacheIndex = steps.findIndex((step) => step.uses?.startsWith("actions/cache@"));
