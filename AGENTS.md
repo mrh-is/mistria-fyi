@@ -15,7 +15,8 @@ not here.
   during development; CI runs the complete matrix on each PR. Do not default to `pnpm run test`,
   coverage, builds, browser matrices, or `pnpm run verify`.
 - Hooks format edits & fix/check changed files at stop; on failure, fix or report it, and run
-  `pnpm run lint:fix` directly before committing (zero errors & warnings).
+  `pnpm run lint:fix` directly before committing (zero errors & warnings). A needed lint disable
+  comment is the narrowest possible & states why.
 - Run `pnpm run check` after a TypeScript or Svelte contract edit.
 - Documentation-only changes require `pnpm run lint:fix && pnpm run lint` only, with no tests or
   build. Hooks are conveniences, not verification evidence; run commands directly & confirm zero
@@ -137,17 +138,19 @@ not here.
   especially careful review: engine/state-machine/transfer logic, pipeline extractors or schemas,
   persistence or save/import/export flows, auth/abuse/security boundaries, & changes spanning five
   or more files with cross-cutting concerns.
-- Review the merge-base diff. Reviewing does not authorize fixes; address findings only when asked.
+- Review the merge-base diff in one pass; re-review once only after substantial high-severity fixes.
+  Reviewing does not authorize fixes; address findings only when asked.
 
 ## Delivery gates
 
 - Preserve the owner’s commit identity & existing attribution. Every materially agent-authored
   commit needs the stable product `Co-Authored-By` trailer; every issue/PR body & substantive GitHub
   comment ends with `Agent: <agent-id>`. Agent-authored PRs get exactly one matching established
-  `agent:*` label. The “Attribution” check enforces these; read the full rules before creating or
-  editing these artifacts.
-- Commit, push, & open an attributed PR with `Closes #N` & the derived branch-preview URL. Read
-  agent-workflow.md for exact slug derivation, multiline bodies, screenshot attachments, & labels.
+  `agent:*` label. The “Attribution” check covers commits, PR bodies, & labels, not issues or
+  comments.
+- Commit, push, & open an attributed PR with `Closes #N` & the branch-preview URL (slug rule in the
+  PR template). Pass multiline bodies with `--body-file`, never escaped `\n`, & re-read the result.
+  A PR that regenerates tracker data includes `pnpm run data:diff` output.
 - An open PR’s state is a merge recommendation. Open as draft while any manual step, question, gap,
   or review remains. Mark ready only when you would merge it yourself; return to draft if that
   changes. Monitor CI & fix failures on the branch; do not merge around failing CI. If “CI” never
