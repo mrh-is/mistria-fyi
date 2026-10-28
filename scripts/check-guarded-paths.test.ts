@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { missingLabels } from "./check-guarded-paths.js";
+import { missingDataDiff, missingLabels } from "./check-guarded-paths.js";
 
 const data = "src/lib/data/tracker-data.json";
 
@@ -46,5 +46,25 @@ describe("missingLabels", () => {
         [],
       ),
     ).toEqual([]);
+  });
+});
+
+describe("missingDataDiff", () => {
+  const summary =
+    "Tracker data changes from origin/main to the working copy:\n3 added, 0 removed, 1 changed";
+
+  it("requires data:diff output when the tracker data changes", () => {
+    expect(missingDataDiff([{ filename: data }], "Closes #1")).toHaveLength(1);
+  });
+
+  it("accepts the data:diff summary line, inside a details block or not", () => {
+    expect(missingDataDiff([{ filename: data }], summary)).toEqual([]);
+    expect(
+      missingDataDiff([{ filename: data }], `<details>\n\n\`\`\`\n${summary}\n\`\`\`\n</details>`),
+    ).toEqual([]);
+  });
+
+  it("ignores PRs that leave the tracker data alone", () => {
+    expect(missingDataDiff([{ filename: "src/app.css" }], "")).toEqual([]);
   });
 });

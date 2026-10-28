@@ -35,12 +35,10 @@ export async function openVisibilityPanel(page: Page): Promise<void> {
 
 /** A villager's record card; the page anchors it by id, which has no role or accessible name. */
 export function villagerRecord(page: Page, villagerId: string): Locator {
-  // oxlint-disable-next-line playwright/no-raw-locators -- the record is only addressable by its anchor id
   return page.locator(`#villager-${villagerId}`);
 }
 
 /** The villager record card whose id starts with `prefix` and currently holds focus. */
 export function focusedVillagerRecord(page: Page, prefix: string): Locator {
-  // oxlint-disable-next-line playwright/no-raw-locators -- focus is asserted on the anchored record itself
   return page.locator(`[id^="villager-${prefix}"]:focus`);
 }
