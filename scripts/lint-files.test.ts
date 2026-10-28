@@ -56,6 +56,16 @@ describe("changed-file lint", () => {
     ]);
   });
 
+  it("passes when every changed script is one oxlint ignores", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/lint-files.ts", "--files", "tests/lint-probes/probe.ts"],
+      { encoding: "utf8" },
+    );
+    expect(result.stdout).not.toContain("No files found to lint");
+    expect(result.status).toBe(0);
+  });
+
   it("formats only the named file, and returns real unfixable lint errors", () => {
     const root = mkdtempSync(join(process.cwd(), "agent-lint-probe-"));
     try {
