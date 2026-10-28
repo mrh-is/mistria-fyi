@@ -1,3 +1,13 @@
+---
+id: 2026-10-20-frozen-dependency-installs
+status: current
+summary: >-
+  Frozen restoration of locked dependencies is preauthorized, using the external store.
+evidence:
+  - AGENTS.md
+relationships: []
+---
+
 # Frozen dependency installs
 
 ## Context

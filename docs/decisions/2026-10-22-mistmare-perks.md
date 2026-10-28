@@ -1,3 +1,22 @@
+---
+id: 2026-10-22-mistmare-perks
+status: needs-review
+summary: >-
+  Tracker data has a `mount.perks` registry beside `mount.appearances`, extracted from the mount
+  menu's one tier. Each perk has a `horse_statue` source carrying that perk's own essence cost and
+  the mount it needs (`mountAppearanceId: "mistmare"`): `obj_horse_statue.gml` opens the perk menu
+  only once `ARI.mount` is set, so a player buys perks only after paying for the Mistmare. The perk
+  shares the Mistmare's visibility and renders its own `source_horse_statue_perk` message (“Buy at
+  the Horse Statue (200 essence) once you have the Mistmare”). Names come from `perks/<id>/name` and
+  join the skill perks in the `perks` locale chunk.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-22-mistmare-perks.md#decision
+relationships: []
+---
+
 # The Mistmare's perks live in the Mount section
 
 ## Context

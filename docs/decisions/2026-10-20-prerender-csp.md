@@ -1,3 +1,17 @@
+---
+id: 2026-10-20-prerender-csp
+status: needs-review
+summary: >-
+  Historical scope: Prerendered pages get a per-route CSP header with script hashes. Current
+  applicability is unverified.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-20-prerender-csp.md#decision
+relationships: []
+---
+
 # Prerendered pages get a per-route CSP header with script hashes
 
 ## Context

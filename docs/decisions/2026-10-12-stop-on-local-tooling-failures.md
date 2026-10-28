@@ -1,3 +1,38 @@
+---
+id: 2026-10-12-stop-on-local-tooling-failures
+status: amended
+summary: >-
+  Stop & report remains the default; later owner-authorized exceptions cover worktree setup, frozen
+  installs, & missing Playwright components.
+evidence:
+  - AGENTS.md
+relationships:
+  - type: amended-by
+    target: 2026-10-20-preauthorize-worktree-setup
+    scope: partial
+    portion: >-
+      Standard isolated worktree initialization.
+    evidence:
+      - docs/decisions/2026-10-20-preauthorize-worktree-setup.md
+      - AGENTS.md
+  - type: amended-by
+    target: 2026-10-20-frozen-dependency-installs
+    scope: partial
+    portion: >-
+      Restoring locked dependencies through a frozen install.
+    evidence:
+      - docs/decisions/2026-10-20-frozen-dependency-installs.md
+      - AGENTS.md
+  - type: amended-by
+    target: 2026-10-20-playwright-browser-setup
+    scope: partial
+    portion: >-
+      Installing a missing workspace-pinned browser component for a required check.
+    evidence:
+      - docs/decisions/2026-10-20-playwright-browser-setup.md
+      - AGENTS.md
+---
+
 # Stop & report local tooling failures
 
 ## Context

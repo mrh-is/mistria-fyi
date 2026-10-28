@@ -1,10 +1,25 @@
+---
+id: 2026-10-07-system-shellcheck
+status: needs-review
+summary: >-
+  Use the system ShellCheck binary for shell linting, provisioned through the platform package
+  manager. The historical shell-script entry point is not a current implementation assertion.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-07-system-shellcheck.md#decision
+relationships: []
+---
+
 # System ShellCheck over the npm wrapper
 
 ## Context
 
-#674 added the `shellcheck` npm package so local, cloud, & CI runs shared one ShellCheck version.
-That wrapper pulls in `decompress@4`, old `file-type` releases, & `sprintf-js@1.1.3`, which carry
-seven Dependabot alerts (two critical). `decompress` & `sprintf-js` have no patched release, and
+[mrh-is/mistria-fyi-private#674](https://github.com/mrh-is/mistria-fyi-private/issues/674) added the
+`shellcheck` npm package so local, cloud, & CI runs shared one ShellCheck version. That wrapper
+pulls in `decompress@4`, old `file-type` releases, & `sprintf-js@1.1.3`, which carry seven
+Dependabot alerts (two critical). `decompress` & `sprintf-js` have no patched release, and
 `file-type` can't be overridden without breaking `decompress@4`. The package's npm page also links
 to a GitHub repository that doesn't exist.
 

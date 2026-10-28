@@ -1,10 +1,27 @@
+---
+id: 2026-10-06-pipeline-diagnostics
+status: needs-review
+summary: >-
+  Pass one run-scoped diagnostic collector through affected extractors & collectors, then validate
+  it before serialization or publication. Standalone callers validate a private collector before
+  returning. Every exception matches the full diagnostic kind, field path, target ID, & message,
+  with an explicit reason & real-asset evidence. Missing reviewed targets & obsolete overrides
+  cannot be allowlisted; exceptions no longer observed fail as obsolete.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-06-pipeline-diagnostics.md#decision
+relationships: []
+---
+
 # Pipeline diagnostic policy
 
 ## Context
 
 Pipeline extraction warnings could silently omit recipe sources, almanac data, or acquisition
 mappings after game updates. Reviewed overrides could also lose their target without failing the run
-(#407).
+([mrh-is/mistria-fyi-private#407](https://github.com/mrh-is/mistria-fyi-private/issues/407)).
 
 ## Decision
 

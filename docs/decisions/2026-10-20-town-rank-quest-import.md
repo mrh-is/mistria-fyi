@@ -1,3 +1,20 @@
+---
+id: 2026-10-20-town-rank-quest-import
+status: needs-review
+summary: >-
+  Derive each native rank quest’s threshold from its single `reached_renown_level` stage
+  requirement, validate it against the extracted town-rank boundaries, and store it on
+  `StoryQuest.townRankLevel`. Save import credits reached targets while retaining explicit
+  completion evidence. The native rank quest ID family identifies which records require validation;
+  display names supply no mapping.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-20-town-rank-quest-import.md#decision
+relationships: []
+---
+
 # Imported rank quests
 
 ## Context
