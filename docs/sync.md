@@ -244,13 +244,37 @@ stored progress stops changing once it relays.
 - **Size.** A backup is mostly ID lists, so it compresses well below the 256 KB cap. Measuring a
   compressed late-game backup is a #133 acceptance criterion; if one nears the cap, the bundle
   splits under the same transfer ID.
-- **Handoff between trackers (#131, spec pending).** The same progress bundle moves from one tracker
-  to another over a one-time offer: the sender shows the code (or “Copy link”), the receiver
-  answers, both match the six-digit code, & the sender sends once & keeps its copy. It needs no
-  relay pairing afterward. It serves a new phone (“Pair a different phone” starts there) & moving
-  from an iOS browser to the installed app, & replaces the transfer QR (#138). An empty receiver
-  takes the progress whole, so it needs no merge; a receiver with progress uses `mergeProgress` &
-  the farm check above.
+
+### Handing off between trackers
+
+A one-time handoff moves stored progress from one tracker to another (#131,
+[the decision record](decisions/2026-10-28-sync-progress-handoff.md)). It serves a new phone (“Pair
+a different phone” starts there) & the move from an iOS browser to the installed app, and replaces
+the transfer QR (#138). Either side can be any tracker; a relay can’t send, since its stored
+progress is stale.
+
+- **Offer.** The sender mints an offer like pairing’s, marked as a handoff inside the fragment, with
+  the same covered QR, “Copy link”, expiry, & per-client & daily offer caps. It never counts as a
+  pairing. On iOS the browser’s link opens in the browser, so the move to the app copies the link in
+  the browser & pastes it in the app.
+- **Handshake & match.** Pairing’s handshake & six-digit match, unchanged. The sender accepts the
+  match, since it is the device whose progress leaves.
+- **Bundle.** One progress bundle, the same payload as
+  [carried progress](#carrying-the-pcs-progress), in a slot keyed by the offer. It expires 10
+  minutes after acceptance, since both devices are at hand, & the slot & offer are deleted once the
+  receiver confirms. Nothing persists afterward: no write token, generation, or pairing on either
+  side, & no change to either side’s existing pairing or role.
+- **Receiving.** A quarantined or newer-data receiver doesn’t answer, as for pairing. Versions
+  follow [Versions](#versions). The receiver checks the farm as for carried progress. An empty
+  receiver takes the progress whole, through the one write path as a restore would; one with
+  progress merges with `mergeProgress`, after “Keep what I have” or “Start fresh”, with the same
+  deferred replace.
+- **The sender keeps its copy.** It shows “Sent” only once the relay records the bundle as applied,
+  & “Waiting on your {device}” while the receiver has it but a question is open.
+
+Tests cover a handoff into an empty receiver & one with progress, a different farm, a receiver on an
+older backup format, an expired bundle, & a handoff while the receiver is paired, which keeps the
+pairing.
 
 ### Device state & copy
 
