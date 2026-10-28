@@ -274,6 +274,8 @@ describe("CI workflow jobs", () => {
       for (const step of job.steps?.filter((entry) => entry.uses?.startsWith("pnpm/setup@")) ??
         []) {
         setupJobs.push(jobName);
+        // v3.1.2 bundles get-pnpm’s no-progress watchdog & retry fix (get.pnpm.io#73).
+        expect(step.uses, jobName).toBe("pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e");
         expect(step["timeout-minutes"], jobName).toBe(3);
         expect(step["timeout-minutes"], jobName).toBeLessThan(job["timeout-minutes"] ?? 0);
       }
