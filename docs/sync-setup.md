@@ -33,14 +33,15 @@ For sync in particular:
 
 - **Speak as “we”,** & talk to the player directly. Contractions & loose spellings are fine
   (“gonna”, “wanna”).
-- **Be honest about effort, then reassure.** “Gonna be honest, this is the trickiest part. But once
-  you’re done here, it’s smooth sailing!”
+- **Be honest about effort, then reassure.** “Gonna be honest, this is the weirdest part of the
+  setup. But once you’re done here, it’s smooth sailing!”
 - **Explain the why** in a sentence when it helps. Longer & kinder beats terse & cryptic.
 - **Playful asides** belong in parentheses & button subtitles (“the way my ancestors did it”).
 - **Use the player’s world:** their farmer, their farm, _Fields of Mistria_.
-- **“Sync” always travels with “save file”** (“sync your save file”, “only the game’s save file gets
-  synced”), so every mention reinforces what syncs & what doesn’t. Never “pair”, “relay”, “follow”,
-  or “link” in player copy, except “Copy link” for computers with no camera.
+- **“Sync” travels with “save file”** wherever copy explains what happens (“sync your save file”,
+  “only the game’s save file gets synced”), so it keeps reinforcing what syncs & what doesn’t. Short
+  labels on a screen that already said it, like “Stop syncing”, can stand alone. Never “pair”,
+  “relay”, or “follow” in player copy, & “link” only where the player copies, pastes, or opens one.
 - **Reassure on errors in this order:** nothing is lost, it isn’t your fault, here’s what happens
   next. Never promise a precise time.
 - **Remind the gaming computer to stay open,** often: at success, in its status, & on its errors.
@@ -73,9 +74,9 @@ For sync in particular:
 The save file fills every category the tracker has. A few things it can’t settle, so syncing never
 removes them, & the player sets them by hand:
 
-- Household choices: relationship changes like a break-up, the break-ups setting, & choosing not to
-  have children (only wanting them leaves evidence). Sync doesn’t compare household facts yet
-  ([sync.md](sync.md#completeness)).
+- Household choices: relationship changes like a break-up, & choosing not to have children (only
+  wanting them leaves evidence). The save does record the break-ups setting, but sync doesn’t
+  compare it yet. Sync doesn’t compare household facts yet ([sync.md](sync.md#completeness)).
 - The Mistmare’s appearance, which the save shows only through one cutscene.
 
 The erase dialog & the “only the save file syncs” notes can say “nearly everything” honestly.
@@ -116,7 +117,7 @@ at the bottom.
 
 ## On the gaming computer
 
-1. **Find your save file.** The step admits it’s the trickiest part & promises smooth sailing after.
+1. **Find your save file.** The step admits it’s the weirdest part & promises smooth sailing after.
    - **Copy the folder.** The path (Windows by default; “On Linux, Steam Deck, or a Mac?” shows the
      others) with a Copy button. The drop box below looks inactive until the path is copied, by the
      button or by a manual copy (a `copy` event whose selection is inside the path). The gate is
@@ -136,7 +137,9 @@ at the bottom.
    own variants, never filler text. “Yep!” applies the save file here.
 3. **Wanna track this on your phone?** The default next step. “Show code” reveals the QR code (it
    starts covered, with the stream note), & “Copy link” covers a computer with no camera. “No
-   thanks, I’ll track here” is the quieter choice & finishes setup.
+   thanks, I’ll track here” is the quieter choice & finishes setup. Nothing is shared until the
+   first “Show code” or “Copy link”, which creates the code; “No thanks” & a wrong file create
+   nothing.
 
 - **Success says to keep the tab open:** “While this tab’s open, we’ll sync your save file every
   time you sleep.” A browser that can’t watch files says to drop it in again after playing instead.
@@ -185,18 +188,18 @@ file comes from & when the last one came, with “Show code” on the gaming com
 keep the tab open there. It speaks up with a dot & a short slip only when something is late or
 wrong. Its accessible name is “Save file sync: {status}”.
 
-| Stage            | The gaming computer                             | Another device                                                       |
-| ---------------- | ----------------------------------------------- | -------------------------------------------------------------------- |
-| Playing          | Syncs each time you sleep, while the tab’s open | Updates a moment later                                               |
-| Away for a while | Nothing                                         | A slip after an unusually long gap                                   |
-| Browser restart  | Asks to read the save file again (one click)    | Nothing                                                              |
-| Game update      | Can’t read the save file: the notice below      | “Your computer is having trouble reading your save file”             |
-| App update       | Reloads itself at a safe moment                 | Same; “Update the tracker on your computer” or “Update this tracker” |
-| New farm         | Drop the new save file in                       | Switches to the new farm & backs up the old one                      |
-| New phone        | Show the code again                             | The new phone scans it; the old one keeps syncing until it stops     |
-| Non-Chrome       | Drop the save file in again after each session  | Updates whenever it’s dropped in                                     |
-| New code         | “Make a new code” in Data                       | “Your computer stopped sharing this save file”; scan the new code    |
-| Paused           | “Sync’s taking a nap”, hairline                 | Same; checking off by hand still works                               |
+| Stage            | The gaming computer                             | Another device                                                    |
+| ---------------- | ----------------------------------------------- | ----------------------------------------------------------------- |
+| Playing          | Syncs each time you sleep, while the tab’s open | Updates a moment later                                            |
+| Away for a while | Nothing                                         | A slip after an unusually long gap                                |
+| Browser restart  | Asks to read the save file again (one click)    | Nothing                                                           |
+| Game update      | Can’t read the save file: the notice below      | “Your computer is having trouble reading your save file”          |
+| App update       | Reloads itself at a safe moment                 | Same; `sync_update_computer` or `sync_update_here`                |
+| New farm         | Drop the new save file in                       | Switches to the new farm & backs up the old one                   |
+| New phone        | Show the code again                             | The new phone scans it; the old one keeps syncing until it stops  |
+| Non-Chrome       | Drop the save file in again after each session  | Updates whenever it’s dropped in                                  |
+| New code         | “Make a new code” in Data                       | “Your computer stopped sharing this save file”; scan the new code |
+| Paused           | “Sync’s taking a nap”, hairline                 | Same; checking off by hand still works                            |
 
 Check-offs made by hand on a phone stay on that phone, so a new phone starts with only what’s in the
 save file. A player who wants them moves them with backup & restore, which stays in the lane.
@@ -206,8 +209,8 @@ save file. A player who wants them moves them with backup & restore, which stays
 Data’s sync card has “Stop syncing”, which opens a tag dialog that erases the device & returns it to
 tracking by hand, offering a backup first.
 
-- **On the gaming computer,** stopping also retires the code, so other devices say the computer
-  stopped sharing & keep what they have until they stop too.
+- **On the gaming computer,** leaving the lane, by “Stop syncing” or any switch, also retires the
+  code, so other devices say the computer stopped sharing & keep what they have until they stop too.
 - **“Make a new code”** stays in the lane: it retires the old code & shows a new one, for when the
   old one ended up on stream.
 - **A device that can’t sync** (its stored progress is quarantined or from a newer build) can’t
@@ -219,11 +222,12 @@ tracking by hand, offering a backup first.
   nothing is lost, it isn’t your fault, we’re on it, & the next read applies everything since, so
   keep the tab open. Other devices get a short version pointing back to the computer.
 - **The save file moved or access lapsed:** an amber field note with the drop box & folder again.
-- **Sync can’t be reached:** “We can’t reach the sync service right now” with “Try again”, on either
-  side. Uploads retry by themselves.
+- **Sync can’t be reached:** `sync_unreachable` with “Try again”, on either side. Uploads retry by
+  themselves.
 - **Taking a nap** (the kill switch): a hairline note on both sides; nothing to do.
 - **Too many new codes:** a friendly “slow down” on the gaming computer.
-- **Another tab is already syncing** on the gaming computer: says so & points to the other window.
+- **Another window is already syncing** on the gaming computer: says so & points to the other
+  window.
 
 ## Accessibility
 
@@ -232,8 +236,8 @@ tracking by hand, offering a backup first.
   returns focus to the control that opened it.
 - **One polite live region** announces step results, & an assertive one an error that blocks a step,
   once. Field notes already on a page at load are plain content.
-- **The copy gate** is announced: the drop box has `aria-disabled` & a description (“Copy the folder
-  first”) until the path is copied, & dropping or choosing a file still works.
+- **The copy gate** is announced: the drop box has `aria-disabled` & a description
+  (`sync_find_drop_locked`) until the path is copied, & dropping or choosing a file still works.
 - **Targets** are at least 44 px tall on phones & 24 px elsewhere. The drop box has the keyboard
   path described above.
 
@@ -246,9 +250,10 @@ of most of these pieces to borrow from.
 
 ## Copy
 
-Keys are new inlang messages. `{farmer}`, `{farm}`, `{time}`, `{days}`, & `{browser}` are
-parameters; `_device` variants use inlang’s `match` on computer or phone. Text in parentheses after
-a button is its subtitle. Line breaks in a body are paragraphs.
+Keys are new inlang messages. `{farmer}`, `{farm}`, `{time}`, `{days}`, `{browser}`, `{status}`, &
+`{url}` are parameters; `_device` variants use inlang’s `match` on computer or phone. Text in
+parentheses after a button is its subtitle. Line breaks in a body are paragraphs. Apply-time copy
+(the farm question, “We saved a backup of {old farm}”) belongs to #135.
 
 ### Getting started
 
@@ -262,7 +267,7 @@ a button is its subtitle. Line breaks in a body are paragraphs.
 | `sync_home_hand_sub`        | the way my ancestors did it                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `sync_where_title`          | Where’s your save file?                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `sync_where_other`          | My save file is on another device                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `sync_where_other_sub`      | like my gaming PC                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `sync_where_other_sub`      | like my gaming computer                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `sync_where_here`           | My save file is on this computer                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `sync_where_here_sub`       | I play right here                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `sync_where_here_mac`       | The game runs on this Mac                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -286,6 +291,7 @@ a button is its subtitle. Line breaks in a body are paragraphs.
 | `sync_find_copy`           | Copy                                                                                                                                                                                        |
 | `sync_find_copied`         | Copied!                                                                                                                                                                                     |
 | `sync_find_other_os`       | On Linux, Steam Deck, or a Mac?                                                                                                                                                             |
+| `sync_find_linux_hint`     | Not there? Look in your Steam library’s steamapps/compatdata/2142790 folder.                                                                                                                |
 | `sync_find_open`           | Now open File Explorer and paste that into the address bar at the top. It should take you to a folder with files like `game-[numbers]-autosave.sav`. Drag that autosave file into this box: |
 | `sync_find_drop`           | Drop your autosave here                                                                                                                                                                     |
 | `sync_find_drop_locked`    | Copy the folder first, and this box will wake up.                                                                                                                                           |
@@ -314,22 +320,22 @@ a button is its subtitle. Line breaks in a body are paragraphs.
 
 ### On another device
 
-| Key                  | Text                                                                                                              |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `sync_scan_title`    | Scan the code from your gaming computer                                                                           |
-| `sync_scan_body`     | On your gaming computer, open {url} in Chrome or Edge and follow along there. When it shows a code, scan it here. |
-| `sync_scan`          | Scan the code                                                                                                     |
-| `sync_scan_paste`    | Or paste a link                                                                                                   |
-| `sync_scan_bad`      | Hmm, that link doesn’t look quite right. Try scanning the code instead?                                           |
-| `sync_got_it_title`  | Got it!                                                                                                           |
-| `sync_got_it_body`   | Your farm as of {time}. We’ll keep up from here.                                                                  |
-| `sync_ios_title`     | Quick question: here, or the home screen app?                                                                     |
-| `sync_ios_body`      | Safari can clear a site’s data if you don’t visit for a week. The home screen app hangs on to it.                 |
-| `sync_ios_here`      | Sync in {browser}                                                                                                 |
-| `sync_ios_app`       | I’ll use the app                                                                                                  |
-| `sync_ios_app_steps` | Tap Share, then “Add to Home Screen”. Open the tracker from your home screen and tap “Scan the code” there.       |
-| `sync_switch_title`  | Sync this save file instead?                                                                                      |
-| `sync_already_here`  | Your save file is already on this computer.                                                                       |
+| Key                  | Text                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `sync_scan_title`    | Scan the code from your gaming computer                                                                                   |
+| `sync_scan_body`     | On your gaming computer, open {url} in Chrome or Edge and go through the steps there. When it shows a code, scan it here. |
+| `sync_scan`          | Scan the code                                                                                                             |
+| `sync_scan_paste`    | Or paste a link                                                                                                           |
+| `sync_scan_bad`      | Hmm, that link doesn’t look quite right. Try scanning the code instead?                                                   |
+| `sync_got_it_title`  | Got it!                                                                                                                   |
+| `sync_got_it_body`   | Your farm as of {time}. We’ll keep up from here.                                                                          |
+| `sync_ios_title`     | Quick question: here, or the home screen app?                                                                             |
+| `sync_ios_body`      | Safari can clear a site’s data if you don’t visit for a week. The home screen app hangs on to it.                         |
+| `sync_ios_here`      | Sync in {browser}                                                                                                         |
+| `sync_ios_app`       | I’ll use the app                                                                                                          |
+| `sync_ios_app_steps` | Tap Share, then “Add to Home Screen”. Open the tracker from your home screen and tap “Scan the code” there.               |
+| `sync_switch_title`  | Sync this save file instead?                                                                                              |
+| `sync_already_here`  | Your save file is already on this computer.                                                                               |
 
 ### Living with it
 
@@ -338,16 +344,23 @@ a button is its subtitle. Line breaks in a body are paragraphs.
 | `sync_status_ok`        | Last save file from your game: {time}                                                                                |
 | `sync_status_keep_open` | Keep this tab open while you play so we can sync your save file.                                                     |
 | `sync_status_gap`       | Haven’t heard from your game in {days} days                                                                          |
+| `sync_status_name`      | Save file sync: {status}                                                                                             |
 | `sync_stop`             | Stop syncing                                                                                                         |
 | `sync_stop_title`       | Stop syncing and start over?                                                                                         |
 | `sync_stop_body`        | This clears everything on this device, including anything you checked off by hand. Wanna make a quick backup first?  |
 | `sync_stop_confirm`     | Clear it and stop                                                                                                    |
+| `sync_stop_backup`      | Make a backup (the same text as `sync_fresh_backup`)                                                                 |
+| `sync_stop_cancel`      | Cancel                                                                                                               |
 | `sync_new_code`         | Make a new code                                                                                                      |
 | `sync_new_code_body`    | Showed your code on stream? No problem. A new code stops the old one, so your other devices will need to scan again. |
+| `sync_new_code_confirm` | Make a new code                                                                                                      |
+| `sync_new_code_cancel`  | Never mind                                                                                                           |
 | `sync_retired`          | Your computer stopped sharing this save file. Scan its new code to keep syncing.                                     |
+| `sync_link_expired`     | It’s been a while! We made a new code for your save file. Scan it on your other devices to keep syncing.             |
 | `sync_reallow`          | Mind letting us read your save file again? Your browser asks after a restart.                                        |
 | `sync_moved`            | We lost track of your save file. Drop it in again and we’re back in business.                                        |
-| `sync_unreachable`      | We can’t reach the sync service right now. We’ll keep trying, or you can try again.                                  |
+| `sync_unreachable`      | We can’t connect right now. We’ll keep trying, or you can try again.                                                 |
+| `sync_try_again`        | Try again                                                                                                            |
 | `sync_paused`           | Sync’s taking a nap. Checking things off by hand still works.                                                        |
 | `sync_too_many`         | Whoa, that’s a lot of new codes! Give it a few minutes and try again.                                                |
 | `sync_other_window`     | Your save file is already syncing in another window.                                                                 |
@@ -393,3 +406,6 @@ On other devices:
   since Run is a common scam vector (maintainer).
 - “Shortly” stays in the unreadable-save notice; it’s a soft promise, & a fix takes about an hour
   once the maintainer reaches the gaming computer (maintainer).
+- Sharing, & the code’s mailbox, start at the first “Show code” or “Copy link”, so a wrong file or
+  “No thanks” creates nothing on the relay.
+- Tombstones are never deleted, so no retired or expired code can be recreated by a follower.

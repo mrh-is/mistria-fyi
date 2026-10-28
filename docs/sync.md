@@ -47,10 +47,10 @@ importer reads is present in both, with early progress as empty lists.
 ## Shape
 
 1. **Setup** (#131, [sync-setup.md](sync-setup.md)). Drag your save onto the tracker on the PC once.
-   The page shows the save folder’s path as copyable text for Explorer, uploads the save at once, &
-   shows the PC’s follow link as a covered QR code (player copy calls it a code) & “Copy link”.
-   Opening the link on another device follows the save. The page encourages installing the app &
-   keeping its window open, but requires neither.
+   The page shows the save folder’s path as copyable text for Explorer, applies the save to the PC’s
+   own tracker, & offers to share it: “Show code” reveals the follow link as a QR code (player copy
+   calls it a code), & “Copy link” copies it. Opening the link on another device follows the save.
+   The page encourages installing the app & keeping its window open, but requires neither.
 2. **The PC is a courier & a tracker.** It watches the save, prunes it, encrypts it, & uploads it, &
    its own tracker applies the same save locally.
 3. **The relay holds the latest encrypted save per link,** for any number of followers.
@@ -78,9 +78,10 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 - **Envelope.** The file name, modification time, `playtime`, & a counter that rises with each
   upload travel inside the ciphertext, never beside it. The protocol version travels beside it & is
   authenticated with the mailbox ID (see [The follow link](#the-follow-link)).
-- **Uploading.** The courier uploads the dropped save at once & then each new save. The first upload
-  creates the link’s mailbox. Nothing waits for a follower, so a device that follows later gets the
-  latest save straight away.
+- **Uploading.** Sharing starts when the player first taps “Show code” or “Copy link”: that creates
+  the link’s mailbox & uploads the latest save, & each new save uploads after it. A wrong file, or
+  “No thanks, I’ll track here”, creates nothing; the PC’s tracker still applies its saves locally.
+  Nothing waits for a follower, so a device that follows later gets the latest save straight away.
 - **Applying here.** The PC’s own tracker applies each save the courier reads, through the same
   receiver path as a follower (see [Followers](#followers)) but without the relay. Check-offs on the
   PC stay on the PC, like any device’s.
@@ -143,7 +144,8 @@ One Durable Object per mailbox ID.
   budget check; the kill switch covers abuse, & tighter caps or Workers Paid come first if real
   usage approaches the limit.
 - **Expiry.** An envelope is deleted 30 days after it was uploaded. A mailbox with no upload for a
-  year is deleted, tombstones included; the PC’s next upload then makes a new link & says so.
+  year becomes a tombstone, like a retired one, & tombstones are never deleted, since each is a few
+  bytes; the PC’s next upload then makes a new link & says so (`sync_link_expired`).
 
 ### Operations
 
@@ -224,8 +226,8 @@ every follower.
 ### Freshness
 
 A follower shows “Last save file from your game: {time}” & learns the typical gap between saves.
-When it opens after an abnormally long gap, a toast says so. There are no push notifications.
-Describe sync as best effort until real sessions prove it.
+When it opens after an abnormally long gap, a slip says so (`sync_status_gap`). There are no push
+notifications. Describe sync as best effort until real sessions prove it.
 
 ## Applying a bundle
 
@@ -318,6 +320,9 @@ plus `info.creation_version`, parsed tolerantly (#128).
 - Manual save slots exist. The courier watches the autosave, & loading a manual save shows up as an
   older save.
 - The first bundle onto unidentified progress asks once: “Is this the farm you’ve been tracking?”
+  With lanes, that happens only after restoring an older backup inside a syncing lane, since a lane
+  starts on empty progress. This & “We saved a backup of {old farm}” are apply-time copy owned by
+  #135.
 - Switching farms automatically keeps a backup of the outgoing farm (“We saved a backup of {old
   farm}”) on the device beside progress, in the same write as the switch. There is one backup, never
   nested. If the backup cannot be written, the switch does not happen & the device says why.

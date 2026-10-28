@@ -102,14 +102,16 @@ Offer the risky route only after the safe ones.
 
 ## Words
 
-- **“Sync” always travels with “save file”:** “sync your save file”, “only the game’s save file gets
-  synced”. It reinforces what syncs & what doesn’t.
+- **“Sync” travels with “save file”** wherever copy explains what happens: “sync your save file”,
+  “only the game’s save file gets synced”. It reinforces what syncs & what doesn’t. Short labels on
+  a screen that already said it (“Stop syncing”, “Sync’s taking a nap”) & the Home card’s invitation
+  can say “sync” alone.
 - **“Check off”, not “tick”;** “by hand” for manual tracking.
 - **Devices:** “your gaming computer”, “your phone”, “this device”, “this computer”. Not “PC” in
   player copy unless the context is only Windows.
 - **Avoid the machinery:** no “pair”, “relay”, “follow”, “upload”, “parse”, “handle”, “token”, or
-  “sync service” jargon beyond what the player must act on. “Copy link” is fine where it’s the
-  action.
+  “sync service” jargon beyond what the player must act on. “Link” is fine where the player copies,
+  pastes, or opens one (“Copy link”, “Or paste a link”).
 - **Name the game** as _Fields of Mistria_ in italics, & the app as Mistria Field Guide.
 
 ## Mechanics

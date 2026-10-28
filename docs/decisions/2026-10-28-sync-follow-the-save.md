@@ -46,9 +46,10 @@ made on.
 - **Three lanes, one per device.** A device’s save is on this computer, its save is on another
   device, or it tracks by hand. The computer with the save shares it, & its own tracker updates from
   the same save, applied locally, without being told it “follows itself”. Nothing is read-only.
-- **Switching lanes erases.** A following lane starts only on empty progress, with an export offered
-  first, so following never merges into existing progress & never asks which farm it is. For v1
-  that’s simpler than any carry or merge, & the maintainer accepted the cost (2026-10-28).
+- **Switching lanes erases.** A following lane starts only on empty progress, with a backup offered
+  first, so following never merges into existing progress & doesn’t ask which farm it is on a fresh
+  start. For v1 that’s simpler than any carry or merge, & the maintainer accepted the cost
+  (2026-10-28).
 - **A leaked link is accepted.** Anyone holding it can read saves until the PC makes a new link,
   which retires the old one for every follower. A save holds progress & the player’s & farm’s names,
   nothing close to personal data, so perfect secrecy isn’t a goal. A follower can’t write.
