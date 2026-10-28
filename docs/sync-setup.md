@@ -194,6 +194,13 @@ dialog, field notes, the toolbar & its panels, & ui/button. Steps are cards numb
 roman numerals; photo-mount corners frame the code & the drop box. #251’s canvas has drawn versions
 of most of these pieces to borrow from.
 
+## Voice
+
+A chill friend helping with a two-minute job: casual, short, a little playful, & never technical.
+The app speaks as “we” (“we’ll keep up”). Most players upload one file & maybe scan a code, so no
+screen should feel like a technical journey. Chosen in a copy workshop on #131 (option B of three);
+the table below is still being rewritten to match.
+
 ## Copy
 
 First draft, pending the tone workshop on #131: the voice should be chiller & friendlier than this.
@@ -273,3 +280,4 @@ Keys are new inlang messages; `{browser}`, `{time}`, & `{days}` are parameters.
 - Detection only shows, hides, or words options, with overrides, & never picks a lane.
 - The erase lands in the same write as the first save, so an abandoned setup loses nothing.
 - Restore & a new farm stay inside a lane; only switching lanes erases.
+- The voice is a chill friend that speaks as “we” (maintainer, 2026-10-28).
