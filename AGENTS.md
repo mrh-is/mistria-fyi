@@ -118,8 +118,8 @@ not here.
 - Before implementation, read [agent-reference.md](docs/agent-reference.md#code-conventions), which
   preserves all naming, imports, path-handling, Svelte, lint, formatting, & colocated-test
   conventions. Read [app-architecture.md](docs/app-architecture.md) for app boundaries,
-  [styling.md](docs/styling.md) for UI/CSS & visual direction,
-  [localization.md](docs/localization.md) for user-facing text,
+  [styling.md](docs/styling.md) for UI/CSS & visual direction, [voice.md](docs/voice.md) for English
+  copy & its voice, [localization.md](docs/localization.md) for user-facing text,
   [save-file-format.md](docs/save-file-format.md) for saves, [sync.md](docs/sync.md) for save-driven
   sync (the courier, relay, following, & apply rules),
   [mistria-wiki-api.md](docs/mistria-wiki-api.md) for wiki integration, &

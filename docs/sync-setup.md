@@ -28,7 +28,8 @@ the phone), & let the gaming computer just read the save file.
 
 A chill friend helping with a two-minute job: casual, warm, a little goofy, & never technical. Most
 players upload one file & maybe scan a code, so no screen should feel like a technical journey. The
-maintainer’s samples on #131 set the tone:
+maintainer’s samples on #131 set the tone, & [voice.md](voice.md) now holds it for the whole app.
+For sync in particular:
 
 - **Speak as “we”,** & talk to the player directly. Contractions & loose spellings are fine
   (“gonna”, “wanna”).
@@ -78,7 +79,7 @@ removes them, & the player sets them by hand:
 - The Mistmare’s appearance, which the save shows only through one cutscene.
 
 The erase dialog & the “only the save file syncs” notes can say “nearly everything” honestly.
-Improving the reader for these is separate work.
+Improving the reader for these is #277.
 
 ## What the app detects
 
@@ -128,9 +129,7 @@ at the bottom.
    - **Can’t find it?** A collapsed section, safest first: check the path was pasted into the
      address bar, not the search box; on Linux & Steam Deck, the Steam library fallback; then
      Windows key + R with the same path, noting it’s safe here because it only opens a folder, &
-     never to paste anything else into Run. A save file downloaded from the
-     [Steam Cloud manager](https://store.steampowered.com/account/remotestorageapp/?appid=2142790)
-     is a copy that can’t be watched, so it’s offered only for dropping in again.
+     never to paste anything else into Run.
 2. **Is this your farm?** After the save file reads: “Perfect! Looks like that save file is for
    {farmer} on {farm}, is that right?” with “Yep!” & “Hmm, no, try that again”, which goes back to
    the drop box & mentions picking the file ending in `autosave`. Unnamed farmers & farms get their
@@ -156,6 +155,11 @@ at the bottom.
 Fields of Mistria’s Steam app ID is 2142790. The Proton & CrossOver paths, Steam Deck’s browser, an
 SD card’s library, & Flatpak Steam are unverified; #130 checks them. The Linux row adds “Not there?
 Look in your Steam library’s steamapps/compatdata/2142790 folder.”
+
+Note: the
+[Steam Cloud manager](https://store.steampowered.com/account/remotestorageapp/?appid=2142790) also
+lets a player download a save file. Setup doesn’t offer it, since a downloaded copy can’t be
+watched, but it’s a handy way to grab a save file for development.
 
 ## On another device
 
@@ -289,7 +293,6 @@ a button is its subtitle. Line breaks in a body are paragraphs.
 | `sync_find_help`           | Can’t find it?                                                                                                                                                                              |
 | `sync_find_help_bar`       | Make sure you pasted it into the address bar at the very top of File Explorer, not the search box.                                                                                          |
 | `sync_find_help_run`       | Still nothing? Press the Windows key + R, paste the same folder location, and press Enter. (That only opens a folder. Never paste anything else into that box, from us or anyone.)          |
-| `sync_find_help_cloud`     | No luck at all? You can download your save file from Steam Cloud and drop it in here. We can’t watch a downloaded copy, though, so you’ll need to drop it in again after you play.          |
 | `sync_farm_title`          | Perfect! Looks like that save file is for {farmer} on {farm}, is that right?                                                                                                                |
 | `sync_farm_title_unnamed`  | Perfect! We found a farm in that save file. Is it yours?                                                                                                                                    |
 | `sync_farm_yes`            | Yep!                                                                                                                                                                                        |
