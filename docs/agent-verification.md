@@ -117,6 +117,16 @@ what reviews (another agent, another model, a human) is the contributor’s choi
 - Authentication, abuse controls, or security boundaries
 - Changes spanning 5+ files with cross-cutting concerns
 
+For persistence, sync-apply, & PWA/update changes, select the relevant sequences below; reuse tests
+that already prove them, and give new or strengthened regressions a controlled failure witness:
+
+- Failed storage read versus an absent key, followed by edits & a fresh load
+- Queued auto-save versus an explicit restore, including durable storage & a fresh load
+- Another tab’s write with its storage event withheld
+- Successive sync bundles whose incoming value returns to its default between disagreements
+- Cancellation or failed recovery followed by reload/readback, preserving the last recoverable data
+- An update waiting through asynchronous transfer decoding & merge, until completion or cancellation
+
 Use one review pass with a deterministic target (the merge-base diff). Do not run spec reviews, plan
 reviews, and implementation reviews as separate passes. If the review finds high-severity issues
 that require substantial changes, one re-review is justified; otherwise, fix and move on.
