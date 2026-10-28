@@ -6,8 +6,8 @@ docs, decision records, & review rounds. The design itself lives in
 [sync-setup.md](../../sync-setup.md) (journey, screens, & copy) & [sync.md](../../sync.md) (the
 protocol); this folder holds the evidence behind them.
 
-Status: in review on PR #251. Two adversarial review rounds are resolved; a third is pending the
-maintainer’s go-ahead. The sheets match canvas version 49.
+Status: in review on PR #251. Three adversarial review rounds are resolved; whether to run a fourth
+is the maintainer’s call. The sheets match canvas version 51.
 
 ## What’s here
 
@@ -52,10 +52,15 @@ All on PR #251, each round’s findings followed by its resolutions:
    [findings](https://github.com/mrh-is/mistria-fyi/pull/251#pullrequestreview-5678643305),
    [resolutions](https://github.com/mrh-is/mistria-fyi/pull/251#issuecomment-6473159660). Two scope
    cuts came out of it: carried progress no longer merges, & the handoff is deferred to #269.
+4. **Adversarial round three:**
+   [findings](https://github.com/mrh-is/mistria-fyi/pull/251#pullrequestreview-5686381834), with the
+   resolutions in the PR comment that follows it. The protocol & setup stayed in one PR, since
+   they’re too interwoven to split.
 
 What the rounds taught, for the next one: most findings came from material added to answer the
 previous round, & from drift between the docs, the copy tables, & the sheets. Run a consistency pass
-across all of them before each review.
+across all of them before each review. Round three added a second lesson: lifecycles written as
+prose bullets kept hiding races, so `sync.md` now states them as tables of states & transitions.
 
 ## Sheets
 

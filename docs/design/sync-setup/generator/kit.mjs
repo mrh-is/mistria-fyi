@@ -136,9 +136,9 @@ export const btn = (t, { kind = "outline", icon, full = false, size = "default" 
   return `<button type="button" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:${h}px;padding:0 ${size === "sm" ? 12 : 16}px;${full ? "width:100%;" : ""}${k};border-radius:2px;${BODY};font-size:14px;font-weight:500;cursor:pointer">${icon ? ti(icon, 16) : ""}${t}</button>`;
 };
 export const textLink = (t, extra = "") =>
-  `<button type="button" style="background:none;border:0;padding:0;min-height:32px;${BODY};font-size:14px;font-weight:500;color:${C.primary};text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer;${extra}">${t}</button>`;
+  `<button type="button" style="background:none;border:0;padding:0;min-height:44px;${BODY};font-size:14px;font-weight:500;color:${C.primary};text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer;${extra}">${t}</button>`;
 export const switchLink = (t) =>
-  `<button type="button" style="display:flex;align-items:center;gap:5px;width:fit-content;min-height:32px;background:none;border:0;padding:0;${ANNOT};font-size:11px;color:${C.muted};text-decoration:underline dotted;text-decoration-color:${mix("currentColor", 42)};text-underline-offset:3px;cursor:pointer">${t}<span aria-hidden="true">→</span></button>`;
+  `<button type="button" style="display:flex;align-items:center;gap:5px;width:fit-content;min-height:44px;background:none;border:0;padding:0;${ANNOT};font-size:12px;color:${C.muted};text-decoration:underline dotted;text-decoration-color:${mix("currentColor", 42)};text-underline-offset:3px;cursor:pointer">${t}<span aria-hidden="true">→</span></button>`;
 
 // StatusNote: tinted, radius 2px.
 export const status = (tone, inner, extra = "") => {
@@ -227,7 +227,7 @@ export const tagDialog = ({ title, desc = "", body = "", actions = [], narrow = 
   `<div role="dialog" aria-modal="true" style="position:absolute;inset:0;z-index:6;background:${mix(C.paper, 72)};display:flex;align-items:center;justify-content:center;padding:16px"><div style="position:relative;width:100%;max-width:${narrow ? 360 : 430}px;filter:drop-shadow(1px -2px 6px rgb(31 23 15 / 18%)) drop-shadow(3px 8px 16px rgb(31 23 15 / 28%));transform:rotate(-0.35deg)"><svg aria-hidden="true" viewBox="0 0 120 70" style="position:absolute;top:-28px;left:calc(50% - 60px);z-index:3;width:120px;height:70px;overflow:visible;fill:none;stroke:${mix(C.tagInk, 35, "#fff")};stroke-linecap:round;stroke-width:2.2"><path d="M117 3 C89 2 82 27 60 59"></path></svg><div style="display:flex;flex-direction:column;color:${C.tagInk};background:${C.tagPaper};clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%,0 14px);-webkit-mask:radial-gradient(circle at 50% 31px,transparent 0 7px,#000 7.5px);mask:radial-gradient(circle at 50% 31px,transparent 0 7px,#000 7.5px)"><div style="display:flex;min-height:62px;align-items:center;justify-content:center;border-bottom:1px dashed ${mix(C.tagInk, 35)}"><span style="width:34px;height:34px;box-sizing:border-box;border:8px solid ${C.tagAccent};border-radius:50%"></span></div><div style="padding:15px 16px 0;display:flex;flex-direction:column;gap:10px"><h2 style="margin:0;${DISPLAY};font-size:24px;line-height:1;color:${C.tagInk}">${title}</h2>${desc ? `<p style="margin:0;${ANNOT};font-size:14px;line-height:1.4;color:${C.tagMuted}">${desc}</p>` : ""}${body}</div><div style="display:flex;gap:8px;padding:14px 16px 16px">${actions
     .map(
       ([t, confirm]) =>
-        `<button type="button" style="flex:1;min-height:40px;border:1px solid ${confirm ? C.tagAccent : mix(C.tagInk, 42)};background:${confirm ? C.tagAccent : "transparent"};color:${confirm ? C.tagHi : C.tagInk};${CONTROLS};font-size:10px;cursor:pointer">${t}</button>`,
+        `<button type="button" style="flex:1;min-height:44px;border:1px solid ${confirm ? C.tagAccent : mix(C.tagInk, 42)};background:${confirm ? C.tagAccent : "transparent"};color:${confirm ? C.tagHi : C.tagInk};${CONTROLS};font-size:12px;cursor:pointer">${t}</button>`,
     )
     .join("")}</div></div></div></div>`;
 
@@ -259,7 +259,7 @@ export const fieldNote = ({
       ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">${actions
           .map(
             ([t, primary]) =>
-              `<button type="button" style="min-height:40px;padding:6px 12px;border:1px solid ${c === C.hair ? hairline(80) : c};${CONTROLS};font-size:11px;font-weight:600;cursor:pointer;${primary ? `color:${C.accentFg};background:${c}` : `color:${C.ink};background:${mix(C.raised, 92, c)}`}">${t}</button>`,
+              `<button type="button" style="min-height:44px;padding:6px 12px;border:1px solid ${c === C.hair ? hairline(80) : c};${CONTROLS};font-size:12px;font-weight:600;cursor:pointer;${primary ? `color:${C.accentFg};background:${c}` : `color:${C.ink};background:${mix(C.raised, 92, c)}`}">${t}</button>`,
           )
           .join("")}</div>`
       : ""
@@ -330,7 +330,7 @@ export const options = (list) =>
 export const secondary = (t, ic = "pencil") =>
   `<button type="button" style="position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 12px;border:1px solid ${mix(C.accent, 55)};background:${mix(C.raised, 92, C.accent)};color:${C.ink};${CONTROLS};font-size:12px;font-weight:600;cursor:pointer">${ti(ic, 17)}${t}</button>`;
 export const cardLinks = (links) =>
-  `<div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:4px 18px;margin:-4px 0 -7px">${links.map((t) => `<button type="button" style="display:flex;align-items:center;gap:5px;min-height:32px;background:none;border:0;padding:0;${ANNOT};font-size:11px;color:${C.muted};text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer">${t}</button>`).join("")}</div>`;
+  `<div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:4px 18px;margin:-4px 0 -7px">${links.map((t) => `<button type="button" style="display:flex;align-items:center;gap:5px;min-height:44px;background:none;border:0;padding:0;${ANNOT};font-size:12px;color:${C.muted};text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer">${t}</button>`).join("")}</div>`;
 export const preview = (list) =>
   `<ol style="margin:4px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px">${list
     .map(

@@ -51,13 +51,19 @@ const {
 const C = () => k.C;
 
 // ── Home ──
-const home = (top, { device = "pc", h, overlay, list = true, toolbar = true } = {}) =>
-  screen(homeHeader() + content((top ?? "") + (list ? indexList() : "")), {
-    device,
-    h,
-    overlay,
-    toolbar,
-  });
+const home = (
+  top,
+  { device = "pc", h, overlay, list = true, toolbar = true, empty = false } = {},
+) =>
+  screen(
+    homeHeader(empty ? { right: "" } : {}) + content((top ?? "") + (list ? indexList() : "")),
+    {
+      device,
+      h,
+      overlay,
+      toolbar,
+    },
+  );
 const PAIRED = { sync: {} };
 
 // A: one general invitation; the setup page asks where.
@@ -106,8 +112,8 @@ const PHONE_PATH = pathChoice({
   icon: "device-mobile",
   title: "On my phone",
   sub: "2 steps · about two minutes",
-  body: "This PC sends each new save to your phone as you play. Or another computer, like a Mac.",
-  extra: howLink(),
+  body: "This PC sends each new save to your phone as you play.",
+  extra: note("Or another computer, like a Mac.", 13) + howLink(),
 });
 const CHOOSE_LEAD = "Pick where you’ll check things off. You can switch later.";
 const chooser = (opt = {}) =>
@@ -183,7 +189,8 @@ const saveBody = (zone) =>
   p("Copy this path, paste it into File Explorer’s address bar, and press Enter.") +
   pathCopy() +
   p(`Drag the newest file ending in ${code("-autosave.sav")} here.`) +
-  (zone ?? dropZone({ browse: false }));
+  (zone ?? dropZone({ browse: false }) + noDrag());
+const noDrag = () => `<div>${textLink("Can’t drag? Import it instead", "font-size:13px")}</div>`;
 const pairDone = () =>
   stepCard("i", "Pair your phone", { state: "done", summary: "Paired with your Pixel 8. Nice!" });
 const pairNow = (body) => stepCard("i", "Pair your phone", { state: "current", body });
@@ -290,7 +297,7 @@ const farmDialog = () =>
     title: "Is this the farm you’ve been tracking?",
     body: `<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">${[
       ["This save", "Applewood Farm", "Spring 3, Year 1"],
-      ["Tracking now", "Moonberry Farm", "Summer 12, Year 2"],
+      ["Tracking now", "No farm on record", "Checked off by hand"],
     ]
       .map(
         ([t, n, d]) =>
@@ -298,7 +305,7 @@ const farmDialog = () =>
       )
       .join(
         "",
-      )}</div><p style="margin:0;font-family:Satoshi,system-ui,sans-serif;font-size:13px;color:${C().tagMuted}">A new farm backs up Moonberry Farm first, then starts fresh.</p>`,
+      )}</div><p style="margin:0;font-family:Satoshi,system-ui,sans-serif;font-size:13px;color:${C().tagMuted}">A new farm backs up what’s here first, then starts fresh.</p>`,
     actions: [["No, it’s a new farm"], ["Yes, same farm", true]],
   });
 
@@ -434,7 +441,7 @@ export const rows = [
       },
       {
         file: "PC-Link-Copied.dc.html",
-        title: "PC i · Link copied: the offer runs 10 minutes",
+        title: "PC i · Link copied: the offer runs 10 minutes & the code covers itself",
         ...PC,
         qr: true,
         render: () =>
@@ -443,8 +450,8 @@ export const rows = [
             RELAY_LEAD,
             pairNow(
               scanIntro +
-                qrBand("shown", "Link good for 9:58") +
-                `<div style="display:flex;justify-content:center;gap:8px">${btn("Hide code", { size: "sm" })}${btn("Copied", { size: "sm", icon: "check" })}</div>` +
+                qrBand("covered", "Link good for 9:58") +
+                `<div style="display:flex;justify-content:center;gap:8px">${btn("Copied", { size: "sm", icon: "check" })}</div>` +
                 note("Pairing a computer? Copy the link and open it there.", 13),
             ) + saveTodo(),
           ),
@@ -547,6 +554,67 @@ export const rows = [
           ),
       },
       {
+        file: "PC-Kept-Own.dc.html",
+        title: "PC · The phone kept its own progress",
+        ...PC,
+        h: 760,
+        render: () =>
+          pcSetup(
+            "Set up sync",
+            RELAY_LEAD,
+            pairDone() +
+              saveDone() +
+              fieldNote({
+                icon: "info-circle",
+                title: "Your Pixel 8 kept its own progress",
+                body: "So this PC’s progress stays here, and your saves go out as usual.",
+              }) +
+              waiting("Sending your save to your Pixel 8…"),
+            { h: 760 },
+          ),
+      },
+      {
+        file: "PC-Needs-Update.dc.html",
+        title: "PC · The phone needs an update before it takes it",
+        ...PC,
+        h: 760,
+        render: () =>
+          pcSetup(
+            "Set up sync",
+            RELAY_LEAD,
+            pairDone() +
+              saveDone() +
+              stepCard("✱", "Sending your progress", {
+                state: "current",
+                body:
+                  fieldNote({
+                    tone: C().amber,
+                    icon: "refresh-alert",
+                    title: "Your Pixel 8 needs a tracker update",
+                    body: "Open the tracker there and it’ll update itself.",
+                  }) + `<div>${btn("Skip it", { size: "sm" })}</div>`,
+              }),
+            { h: 760 },
+          ),
+      },
+      {
+        file: "PC-Finishing-Setup.dc.html",
+        title: "PC · An interrupted switch, finishing",
+        ...PC,
+        h: 760,
+        render: () =>
+          pcSetup(
+            "Set up sync",
+            RELAY_LEAD,
+            waiting("Finishing setup…") +
+              note(
+                "This page is read-only until your PC hears back. That change didn’t save: this PC is the relay now.",
+                13,
+              ),
+            { h: 760 },
+          ),
+      },
+      {
         file: "PC-Progress-Stays.dc.html",
         title: "PC · A different farm: this PC’s progress stays",
         ...PC,
@@ -609,6 +677,34 @@ export const rows = [
                   ],
                   { size: 18, gap: 6 },
                 ) + btn("Skip, keep using Safari", { full: true }),
+            }) +
+              stepCard("ii", "Pair with your PC", { summary: "Scan a code from your PC." }) +
+              stepCard("iii", "Connect your save, on your PC", {
+                summary: "Your PC walks you through it.",
+              }),
+          ),
+      },
+      {
+        file: "Phone-Setup-iOS-Backup.dc.html",
+        title: "iPhone browser · Has progress: back up before installing",
+        ...PH,
+        render: () =>
+          phoneSetup(
+            "Set up sync",
+            "Three steps: two here, one on your PC.",
+            stepCard("i", "Add it to your home screen", {
+              state: "current",
+              body:
+                p("Already using the tracker here? Export a backup first.") +
+                btn("Export backup", { icon: "file-download", full: true }) +
+                steps(
+                  [
+                    ["a", p("Tap Share. In Safari, it may be under •••.")],
+                    ["b", p("Tap “Add to Home Screen”.")],
+                    ["c", p("Open the tracker from there, and restore the backup in Data.")],
+                  ],
+                  { size: 18, gap: 6 },
+                ),
             }) +
               stepCard("ii", "Pair with your PC", { summary: "Scan a code from your PC." }) +
               stepCard("iii", "Connect your save, on your PC", {
@@ -721,6 +817,17 @@ export const rows = [
                 narrow: true,
                 title: "Your PC has progress to send",
                 desc: "This phone has progress too. Use your PC’s, and we’ll keep a backup of what’s here. Or keep this phone’s, and your PC’s stays there.",
+                body:
+                  `<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">${[
+                    ["From your PC", "Moonberry Farm", "Summer 12, Year 2"],
+                    ["On this phone", "Moonberry Farm", "Spring 20, Year 1"],
+                  ]
+                    .map(
+                      ([t, n, d]) =>
+                        `<div style="border:1px dashed color-mix(in srgb, ${C().tagInk} 35%, transparent);padding:8px 10px"><p style="margin:0 0 4px;font-family:'Fragment Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:${C().tagMuted}">${t}</p><p style="margin:0;font-family:Petrona,Georgia,serif;font-size:15px;font-weight:600;color:${C().tagInk}">${n}</p><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:12px;color:${C().tagMuted}">${d}</p></div>`,
+                    )
+                    .join("")}</div>` +
+                  `<p style="margin:0;font-family:Satoshi,system-ui,sans-serif;font-size:13px;color:${C().tagMuted}">This replaces your backup of Applewood Farm, from October 3.</p>`,
                 actions: [["Keep this phone’s"], ["Use my PC’s", true]],
               }),
             },
@@ -738,7 +845,7 @@ export const rows = [
               phStepSave(
                 "current",
                 waiting("Your PC’s progress is on its way…") +
-                  note("Keep this open for a moment.", 13),
+                  note("It comes over once your PC connects its save.", 13),
               ),
           ),
       },
@@ -779,6 +886,42 @@ export const rows = [
                   body: "This phone kept its own, and new saves still come in.",
                 }) + waiting("Waiting for your first save…"),
               ),
+          ),
+      },
+      {
+        file: "Phone-Carry-Failed.dc.html",
+        title: "Phone · Claimed, but couldn’t save it",
+        ...PH,
+        render: () =>
+          phoneSetup(
+            "Set up sync",
+            PHONE_LEAD,
+            phStepPair("done", "", "Paired with your PC") +
+              phStepSave(
+                "current",
+                fieldNote({
+                  tone: C().amber,
+                  icon: "alert-circle",
+                  title: "Your PC’s progress couldn’t be saved here",
+                  body: "This phone kept its own, and new saves still come in. Check that it has storage space to try again later.",
+                }) + waiting("Waiting for your first save…"),
+              ),
+          ),
+      },
+      {
+        file: "Phone-Link-Confirm.dc.html",
+        title: "Phone · A link waits for a tap",
+        ...PH,
+        render: () =>
+          phoneSetup(
+            "Set up sync",
+            PHONE_LEAD,
+            phStepPair(
+              "current",
+              p("Pair with your PC?") +
+                note("Tap to pair, then check the code on your PC.", 13) +
+                btn("Pair", { kind: "default", full: true }),
+            ) + phStepSave(),
           ),
       },
       {
@@ -887,7 +1030,8 @@ export const rows = [
                     13,
                   ) +
                   p(`Drag the newest file ending in ${code("-autosave.sav")} here.`) +
-                  dropZone({ browse: false }),
+                  dropZone({ browse: false }) +
+                  noDrag(),
               ),
           ),
       },
@@ -911,7 +1055,8 @@ export const rows = [
                     13,
                   ) +
                   p(`Drag the newest file ending in ${code("-autosave.sav")} here.`) +
-                  dropZone({ browse: false }),
+                  dropZone({ browse: false }) +
+                  noDrag(),
               ),
             { h: 900 },
           ),
@@ -1159,6 +1304,23 @@ export const rows = [
           ),
       },
       {
+        file: "Self-No-Answer.dc.html",
+        title: "Self-updating · A pairing link opened here",
+        ...PC,
+        render: () =>
+          pcSetup(
+            "Set up sync",
+            "",
+            fieldNote({
+              tone: C().amber,
+              icon: "refresh",
+              title: "This PC updates itself from your save",
+              body: "Stop updating in Data first to pair it with another device.",
+              actions: [["Open Data", true]],
+            }),
+          ),
+      },
+      {
         file: "Phone-Setup-Paused.dc.html",
         title: "Phone · Sync is taking a break during setup",
         ...PH,
@@ -1331,6 +1493,7 @@ export const rows = [
                 p(`Drag the newest file ending in ${code("-autosave.sav")} here.`) +
                 pathCopy() +
                 dropZone({ browse: false }) +
+                noDrag() +
                 btn("Cancel", { size: "sm" }),
             },
             { h: 1100 },
@@ -1438,7 +1601,7 @@ export const rows = [
                 summary: "Your Pixel 8 keeps its progress but stops getting saves.",
               }) +
               note(
-                "New phone’s an iPhone? Add the tracker to your home screen first, and restore there.",
+                "New phone’s an iPhone? Add the tracker to your home screen first, and restore there. On iPhone, save the backup to Files.",
                 13,
               ),
             { h: 860 },
@@ -1715,7 +1878,10 @@ export const rows = [
             body: note(
               "Your PC and Pixel 8 haven’t synced in over three months. Pair again to pick up where you left off.",
             ),
-            actions: noteActions([["Pair again", "qrcode", true]]),
+            actions: noteActions([
+              ["Pair again", "qrcode", true],
+              ["Fill in from your latest save", "file-import"],
+            ]),
           }),
       },
       {
@@ -1750,7 +1916,11 @@ export const rows = [
                       icon: "alert-circle",
                       title: "Your save file moved",
                       body: "It was renamed, moved, or deleted, so we lost track of it. Drag the newest one here again.",
-                      extra: col([pathCopy(), dropZone({ browse: false })], 8, "margin-top:8px"),
+                      extra: col(
+                        [pathCopy(), dropZone({ browse: false }), noDrag()],
+                        8,
+                        "margin-top:8px",
+                      ),
                     }),
                     fieldNote({
                       tone: C().amber,
@@ -1960,8 +2130,45 @@ export const rows = [
           ),
       },
       {
+        file: "Phone-Switched.dc.html",
+        title: "Phone · A new farm: switched, with a backup",
+        ...PH,
+        render: () =>
+          home(
+            fieldNote({
+              tone: C().green,
+              icon: "circle-check",
+              title: "Switched to Applewood Farm",
+              body: "We saved a backup of Moonberry Farm. Restore it any time from Data.",
+            }),
+            { device: "phone", toolbar: PAIRED },
+          ),
+      },
+      {
+        file: "Phone-Restore-Replace.dc.html",
+        title: "Phone · Restoring onto progress asks first",
+        ...PH,
+        render: () =>
+          screen(
+            dataSections({
+              pair: PHONE_PAIR,
+              pairSummary: "Get each new save from your PC as you play.",
+            }),
+            {
+              device: "phone",
+              toolbar: false,
+              overlay: tagDialog({
+                narrow: true,
+                title: "Replace what’s on this phone?",
+                desc: "We’ll keep a backup of what’s here first.",
+                actions: [["Never mind"], ["Replace", true]],
+              }),
+            },
+          ),
+      },
+      {
         file: "Phone-Same-Farm.dc.html",
-        title: "Phone · New farm, or a first save onto progress",
+        title: "Phone · A first save onto progress with no farm on record",
         ...PH,
         render: () => home("", { device: "phone", toolbar: PAIRED, overlay: farmDialog() }),
       },
@@ -1984,7 +2191,7 @@ export const rows = [
     boards: [
       {
         file: "iPhone-App-Welcome.dc.html",
-        title: "iPhone app · First launch leads with sync",
+        title: "iPhone app · First launch leads with sync (empty)",
         ...PH,
         h: 900,
         render: () =>
@@ -2001,7 +2208,7 @@ export const rows = [
                 secondary("I’ll check things off by hand") +
                 cardLinks(["Used the tracker in your browser? Bring it over →"]),
             }),
-            { device: "phone", h: 900 },
+            { device: "phone", h: 900, empty: true },
           ),
       },
       {
@@ -2128,7 +2335,7 @@ export const rows = [
       },
       {
         file: "Self-New-Farm.dc.html",
-        title: "Self-updating · New farm",
+        title: "Self-updating · Progress with no farm on record",
         ...PC,
         render: () => home("", { toolbar: PAIRED, overlay: farmDialog() }),
       },
