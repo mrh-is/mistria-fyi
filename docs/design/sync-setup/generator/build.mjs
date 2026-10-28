@@ -30,7 +30,12 @@ const VOID = new Set(["meta", "link", "br", "img", "input", "hr"]);
 function balanced(html, file) {
   const stack = [];
   const re = /<\/?([a-zA-Z][\w-]*)[^>]*?>/g;
-  const body = html.replace(/<script[\s\S]*?<\/script>/g, "");
+  // Not a sanitizer: scripts are dropped so their markup doesn't count toward the tag balance.
+  let body = html;
+  for (let prev = ""; prev !== body;) {
+    prev = body;
+    body = body.replace(/<script\b[\s\S]*?<\/script\s*>/gi, "");
+  }
   for (const m of body.matchAll(re)) {
     const tag = m[1].toLowerCase();
     if (VOID.has(tag) || m[0].startsWith("<!")) continue;
