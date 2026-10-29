@@ -280,13 +280,13 @@ These rules apply to every locale:
 - **Game terminology wins.** Before writing or translating a noun the game also uses, in any locale
   including `en` (pet skins, mines, renown, perks), check the game's term in
   `src/lib/data/locales/<locale>/` and reuse it. The game calls pet skins 寵物外觀, so MFG does too.
-- **Carry the voice, not the orthography.** The English is direct, dry, and conversational: it
-  addresses the reader as "you", states things plainly, and allows a little wit ("Oops, forgot to
-  put in your email!"). Keep that register in every locale within that language's own UI conventions
-  (tú in `es`, vous in `fr`, 你 in Chinese). Don't carry over marks that are only English house
-  style: `en.json` uses `&` for close pairs ("Questions & requests"), but other locales write their
-  own conjunction (y, et, and so on). In Spanish, y becomes e before an i sound ("datos e
-  imágenes").
+- **Carry the voice, not the orthography.** The English talks like a chill, helpful friend: it
+  addresses the reader as "you", speaks as "we", reassures, and allows a little goofiness ("Oops,
+  forgot to put in your email!"); [voice.md](voice.md) defines it. Keep that register in every
+  locale within that language's own UI conventions (tú in `es`, vous in `fr`, 你 in Chinese). Don't
+  carry over marks that are only English house style: `en.json` uses `&` for close pairs ("Questions
+  & requests"), but other locales write their own conjunction (y, et, and so on). In Spanish, y
+  becomes e before an i sound ("datos e imágenes").
 - **Native punctuation.** `zh-Hans` and `zh-Hant` use full-width punctuation (`，：（）！`) and `…`,
   not ASCII `, : ( ) !` or `...`.
 

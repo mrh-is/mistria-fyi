@@ -75,6 +75,13 @@ describe("changed-file lint", () => {
     ]);
   });
 
+  it("lets oxlint select nothing when every changed script is one it ignores", () => {
+    const commands = lintCommands(["tests/lint-probes/probe.ts"], false);
+    expect(commands.find((command) => command.includes("oxlint"))).toContain(
+      "--no-error-on-unmatched-pattern",
+    );
+  });
+
   it("validates the entire decision graph when a relevant file changes", () => {
     const relevant = [
       "docs/decisions/new.md",

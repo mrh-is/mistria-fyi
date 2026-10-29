@@ -42,7 +42,10 @@ export function lintCommands(files: string[] | undefined, fix: boolean): string[
   const styleFiles = files.filter((file) => /^src[/\\].*\.(?:css|svelte)$/.test(file));
   return [
     [...format, "--no-error-on-unmatched-pattern", "--", ...files],
-    ...(scriptFiles.length > 0 ? [[...oxlint, "--", ...scriptFiles]] : []),
+    // A changed file that oxlint ignores (a lint probe, a design generator) selects nothing.
+    ...(scriptFiles.length > 0
+      ? [[...oxlint, "--no-error-on-unmatched-pattern", "--", ...scriptFiles]]
+      : []),
     ...(svelteFiles.length > 0 ? [[...eslint, "--", ...svelteFiles]] : []),
     ...(styleFiles.length > 0 ? [[...stylelint, "--", ...styleFiles]] : []),
     ...(!fix && scriptFiles.length > 0 ? [[...directives, "--", ...scriptFiles]] : []),

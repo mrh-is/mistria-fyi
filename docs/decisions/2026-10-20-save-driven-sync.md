@@ -1,17 +1,32 @@
 ---
 id: 2026-10-20-save-driven-sync
-status: needs-review
+status: amended
 summary: >-
-  Historical scope: Save-driven sync. Current applicability is unverified.
+  Following a link replaced pairing, one device per profile, & holding bundles until the phone
+  confirms. The courier, end-to-end encryption, the strict protocol version, the kill switch, & the
+  no-login constraint keep their scope.
 review: >-
-  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  Do the remaining portions (the update-lock & cap reasoning) still apply unchanged? They were not
   revalidated while seeding issue #268.
 evidence:
-  - docs/decisions/2026-10-20-save-driven-sync.md#decision
-relationships: []
+  - docs/decisions/2026-10-28-sync-follow-the-save.md
+  - https://github.com/mrh-is/mistria-fyi/pull/251
+relationships:
+  - type: superseded-by
+    target: 2026-10-28-sync-follow-the-save
+    scope: partial
+    portion: >-
+      One device per browser profile, the pairing handshake (ECDH & its MAC), pairing-creation caps,
+      & the relay holding each bundle until the phone confirms.
+    evidence:
+      - docs/decisions/2026-10-28-sync-follow-the-save.md
+      - https://github.com/mrh-is/mistria-fyi/pull/251
 ---
 
 # Save-driven sync
+
+Amended by [Follow the save, not a pairing](2026-10-28-sync-follow-the-save.md): devices follow the
+save through a link instead of pairing.
 
 ## Context
 
