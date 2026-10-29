@@ -129,9 +129,11 @@ at the bottom.
 
 1. **Find your save file.** The step admits it’s the weirdest part & promises smooth sailing after.
    It has two halves, copying the folder & dragging the file in, both always visible but only one
-   active at a time, marked by an accent rule beside it; the other half keeps a hairline rule.
-   Nothing is dimmed or disabled except the drop box itself before the copy, so help, the platform
-   switch, & the instructions stay readable & usable, & the next step is still obvious at a glance.
+   active at a time, marked by an accent rule beside it; the other half keeps a hairline rule & its
+   text & controls dim, so the next step is obvious at a glance. Dimmed isn’t disabled: everything
+   in the other half stays usable & is announced normally, & only the drop box itself is disabled
+   before the copy. The dimmed text falls below 4.5:1 on purpose, since emphasis is its job; the
+   active half carries every instruction at full contrast (maintainer’s choice).
    - **Copy the folder.** The path (Windows by default; “On Linux, Steam Deck, or a Mac?” shows the
      others) with a Copy button. The drop box below looks inactive until the path is copied (a
      hairline border & muted icon, its label still at full contrast, & `aria-disabled` on the box
@@ -216,7 +218,8 @@ watched, but it’s a handy way to grab a save file for development.
   file applies with the usual rules.
 - **The gaming computer** that scans or opens its own code says “Your save file is already on this
   computer.” & stays as it is.
-- **A code that doesn’t parse** says so & keeps scanning & pasting.
+- **A code that doesn’t parse** says so right under the paste field (`sync_scan_bad`), which gets a
+  red border, `aria-invalid`, & the error as its description; scanning stays available.
 
 ## Living with it
 
@@ -447,6 +450,8 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_panel_file`         | Save file                                                                                                                                                                                        |
 | `sync_panel_last`         | Last save file                                                                                                                                                                                   |
 | `sync_panel_date`         | In-game date                                                                                                                                                                                     |
+| `sync_panel_farmer`       | Farmer                                                                                                                                                                                           |
+| `sync_panel_farm`         | Farm                                                                                                                                                                                             |
 | `sync_panel_code`         | Your code                                                                                                                                                                                        |
 | `sync_data_intro`         | Sync your save file, or import, back up, or reset your Field Guide progress.                                                                                                                     |
 | `sync_status_keep_open`   | Keep this tab open while you play so we can sync your save file.                                                                                                                                 |
@@ -542,3 +547,6 @@ On other devices:
 - After review round two: once a code exists, setup finishes with “Go to my field guide”; the
   retired-code notice is neutral & offers “Stop syncing”; Data’s sync card holds the ongoing drop
   box; only the drop box is ever disabled; Data’s reset stays in the lane (maintainer).
+- After the second mockup pass: the inactive half of “Find your save file” dims its text & controls;
+  field-note highlighters run under each line at that line’s length; a bad link’s error sits under
+  the paste field; Data shows the farmer & farm on separate lines (maintainer).

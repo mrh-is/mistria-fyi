@@ -59,9 +59,9 @@ const syncPage = (lead, inner, { device = "pc", h, overlay } = {}) =>
 const dataScreen = (inner, { device = "pc", h, overlay } = {}) =>
   screen(dataPage(inner), { device, h, overlay, toolbar: false });
 const small = (t, icon) => btn(t, { size: "sm", icon });
-// One half of a step: the active half gets an accent rule, the other a hairline. Nothing dims.
+// One half of a step: the active half gets an accent rule; the other a hairline, & its content dims.
 const half = (inner, on) =>
-  `<div style="display:flex;flex-direction:column;gap:10px;padding-left:12px;border-left:3px solid ${on ? C().accent : hairline(40)}">${inner}</div>`;
+  `<div style="padding-left:12px;border-left:3px solid ${on ? C().accent : hairline(40)}"><div style="display:flex;flex-direction:column;gap:10px${on ? "" : ";opacity:.55"}">${inner}</div></div>`;
 // The drop box before the folder is copied: the only disabled thing, its label still readable.
 const lockedDrop = () =>
   `<div aria-disabled="true" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 16px;text-align:center;border:2px dashed ${hairline(40)};border-radius:4px">${ti("upload", 24, hairline(80))}<p style="margin:0;${SERIF};font-size:14px;color:${C().muted}">Copy the folder first, and this box will wake up.</p></div>`;
@@ -223,7 +223,7 @@ const REDROP =
   `<div>${textLink("Can’t drag?", "font-size:13px")}</div>`;
 
 // Phone pieces
-const scanStep = () =>
+const scanStep = (error = "") =>
   stepCard("i", "Scan the code from your gaming computer", {
     state: "current",
     body:
@@ -232,12 +232,12 @@ const scanStep = () =>
       ) +
       btn("Scan the code", { kind: "default", icon: "camera", full: true }) +
       note("Or paste a link") +
-      pasteField(),
+      pasteField(error ? "mistria.fyi/sync#k3Xq9" : "", error),
   });
-const phoneScan = (overlay, extra = "") =>
+const phoneScan = (overlay, extra = "", error = "") =>
   syncPage(
     "",
-    scanStep() +
+    scanStep(error) +
       extra +
       headsUp("phone") +
       row([
@@ -278,7 +278,8 @@ const syncCard = (pc, extra = "", redrop = false) =>
       ? dl([
           ["Save file", FILE],
           ["Last save file", "Today, 7:42 PM"],
-          ["Farm", "Robin on Sunny Meadow Farm"],
+          ["Farmer", "Robin"],
+          ["Farm", "Sunny Meadow Farm"],
         ]) +
         (redrop
           ? REDROP
@@ -304,7 +305,8 @@ const syncCard = (pc, extra = "", redrop = false) =>
       : dl([
           ["Save file from", "Your gaming computer"],
           ["Last save file", "Today, 7:42 PM"],
-          ["Farm", "Robin on Sunny Meadow Farm"],
+          ["Farmer", "Robin"],
+          ["Farm", "Sunny Meadow Farm"],
         ]) +
         extra +
         col(
@@ -585,14 +587,8 @@ export const rows = [
         render: () =>
           phoneScan(
             "",
-            k.status(
-              "warning",
-              p(
-                "Hmm, that link doesn’t look quite right. Try scanning the code instead?",
-                14,
-                "inherit",
-              ),
-            ),
+            "",
+            "Hmm, that link doesn’t look quite right. Try scanning the code instead?",
           ),
       },
     ],
