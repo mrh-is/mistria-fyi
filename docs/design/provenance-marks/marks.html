@@ -1,0 +1,970 @@
+<!doctype html>
+<!--
+  Provenance marks (#276): one checked-box mark per provenance source, with variants, at real
+  size & enlarged, and in context on tracker rows. Open it straight from the checkout; add
+  `?theme=dark` for the dark theme. Tokens are copied from src/app.css (light `:root` & `.dark`),
+  fonts load from static/fonts/, and the box geometry is tracker-checkbox.svelte's.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Provenance marks</title>
+    <script>
+      if (new URLSearchParams(location.search).get("theme") === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+    <style>
+      @font-face {
+        font-family: "Instrument Serif";
+        font-style: italic;
+        font-weight: 400;
+        src: url("../../../static/fonts/instrument-serif-italic.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Petrona";
+        font-style: normal;
+        font-weight: 400 600;
+        src: url("../../../static/fonts/petrona-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Petrona";
+        font-style: italic;
+        font-weight: 400 600;
+        src: url("../../../static/fonts/petrona-italic-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Fragment Mono";
+        font-style: normal;
+        font-weight: 400;
+        src: url("../../../static/fonts/fragment-mono-regular.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        font-weight: 400;
+        src: url("../../../static/fonts/ibm-plex-mono-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Satoshi";
+        font-style: normal;
+        font-weight: 400;
+        src: url("https://assets.mistria.fyi/fonts/satoshi-regular.woff2") format("woff2");
+      }
+
+      /* src/app.css, light */
+      :root {
+        --radius: 2px;
+        --font-display: "Instrument Serif", "Georgia", serif;
+        --font-body: "Petrona", "Georgia", serif;
+        --font-controls: "Fragment Mono", "Courier New", monospace;
+        --font-annotation: "Satoshi", system-ui, sans-serif;
+        --font-data: "IBM Plex Mono", "Courier New", monospace;
+        --text-2xs: 0.6875rem;
+        --color-paper: #f7f5f0;
+        --color-paper-raised: #fdfcf9;
+        --color-paper-sunken: #eeedea;
+        --color-ink: #2e2a22;
+        --color-ink-muted: #6a6460;
+        --color-ink-hairline: #948a7c;
+        --shadow-small: 0 1px 1px rgb(46 42 34 / 12%);
+        --color-hue-green: #1a7a3a;
+        --color-hue-amber: #a85a0e;
+        --color-tracker-checked: var(--color-hue-green);
+        --color-tracker-obtained: var(--color-hue-amber);
+        --color-tracker-active: var(--color-hue-amber);
+        --color-category-museum: #2e8a30;
+        --color-category-quests: #1878b8;
+        --tracker-paper-line: color-mix(in srgb, var(--color-ink-hairline) 42%, transparent);
+        --tracker-row-gap: 7px;
+        --tracker-sheet-gap: 6px;
+
+        /* Proposed roles (would join src/app.css): what each provenance's mark is drawn in. */
+        --color-tracker-mark-manual: var(--color-tracker-checked);
+        --color-tracker-mark-save: var(--color-tracker-checked);
+        --color-tracker-mark-inferred: var(--color-ink-muted);
+        --color-tracker-mark-unknown: var(--color-tracker-checked);
+      }
+
+      /* src/app.css, .dark ("oil lamp") */
+      .dark {
+        --color-paper: #222226;
+        --color-paper-raised: #28282c;
+        --color-paper-sunken: #2e2e32;
+        --color-ink: #e4dfd8;
+        --color-ink-muted: #a8a098;
+        --color-ink-hairline: #746c64;
+        --shadow-small: 0 1px 1px rgb(0 0 0 / 30%);
+        --color-hue-green: #38984e;
+        --color-hue-amber: #c88030;
+        --color-category-museum: #38902e;
+        --color-category-quests: #2e82b8;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        background: var(--color-paper);
+        color: var(--color-ink);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.45;
+        padding: 12px 20px 32px 20px;
+        width: 1280px;
+      }
+
+      h1,
+      h2 {
+        font-family: var(--font-display);
+        font-style: italic;
+        font-weight: 400;
+      }
+
+      h1 {
+        font-size: 44px;
+        line-height: 1;
+        margin-bottom: 10px;
+      }
+
+      h2 {
+        font-size: 28px;
+        line-height: 1.1;
+        margin: 0 0 4px;
+      }
+
+      .lede {
+        max-width: 62ch;
+        color: var(--color-ink-muted);
+      }
+
+      .note {
+        font-family: var(--font-annotation);
+        font-size: 13px;
+        color: var(--color-ink-muted);
+        line-height: 1.4;
+      }
+
+      .sheet {
+        padding: 28px 28px 20px;
+      }
+
+      .sheet + .sheet {
+        border-top: 1px dashed var(--tracker-paper-line);
+        margin-top: 24px;
+      }
+
+      .sheet-head {
+        display: flex;
+        align-items: baseline;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+
+      .sheet-head .note {
+        max-width: 70ch;
+      }
+
+      /* The key, laid out like a specimen ledger: tool, mark at size, mark enlarged, words. */
+      .ledger {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      .ledger th {
+        font-family: var(--font-data);
+        font-size: var(--text-2xs);
+        font-weight: 400;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-ink-muted);
+        text-align: left;
+        padding: 0 14px 6px 0;
+        border-bottom: 1px solid var(--color-ink-hairline);
+      }
+
+      .ledger td {
+        padding: 14px 14px 14px 0;
+        border-bottom: 1px solid var(--tracker-paper-line);
+        vertical-align: middle;
+      }
+
+      .ledger .source {
+        font-family: var(--font-controls);
+        font-size: 14px;
+      }
+
+      .ledger .tool {
+        font-style: italic;
+      }
+
+      .ledger .tool small {
+        display: block;
+        font-style: normal;
+        font-family: var(--font-annotation);
+        font-size: 13px;
+        color: var(--color-ink-muted);
+        max-width: 30ch;
+      }
+
+      .ledger code,
+      .variants code {
+        font-family: var(--font-data);
+        font-size: 12px;
+        color: var(--color-ink-muted);
+      }
+
+      .ledger .words q {
+        quotes: "\201C" "\201D";
+      }
+
+      .at-size {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: var(--color-paper-raised);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-small);
+      }
+
+      .at-size svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .enlarged {
+        display: inline-block;
+        background: var(--color-paper-raised);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-small);
+        padding: 4px;
+        line-height: 0;
+      }
+
+      .enlarged svg {
+        width: 104px;
+        height: 104px;
+      }
+
+      /* Variants: one strip per provenance, the pick marked in the margin like a proofreader. */
+      .variants {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        row-gap: 22px;
+        column-gap: 18px;
+      }
+
+      .variants > .label {
+        font-family: var(--font-controls);
+        font-size: 14px;
+        padding-top: 6px;
+      }
+
+      .variants > .label small {
+        display: block;
+        font-family: var(--font-annotation);
+        font-size: 13px;
+        color: var(--color-ink-muted);
+      }
+
+      .strip {
+        display: flex;
+        gap: 26px;
+        align-items: flex-start;
+      }
+
+      .variant {
+        position: relative;
+        display: grid;
+        grid-template-columns: auto auto;
+        grid-template-rows: auto 1fr;
+        column-gap: 12px;
+        width: 330px;
+      }
+
+      .variant .enlarged svg {
+        width: 80px;
+        height: 80px;
+      }
+
+      .variant .enlarged {
+        grid-row: 1 / 3;
+      }
+
+      .variant .at-size {
+        align-self: start;
+      }
+
+      .variant .text {
+        grid-column: 2;
+      }
+
+      .variant h3 {
+        font-family: var(--font-body);
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.25;
+        margin: 6px 0 2px;
+      }
+
+      .variant .text {
+        font-size: 13.5px;
+        line-height: 1.35;
+        color: var(--color-ink-muted);
+      }
+
+      .variant-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .pick {
+        position: absolute;
+        left: -14px;
+        top: -10px;
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: 19px;
+        color: var(--color-hue-amber);
+        transform: rotate(-7deg);
+        pointer-events: none;
+      }
+
+      .variant.is-pick .enlarged {
+        outline: 1.5px solid color-mix(in srgb, var(--color-hue-amber) 70%, transparent);
+        outline-offset: 3px;
+      }
+
+      /* Tracker rows, transcribed from tracker-row.svelte & tracker-paper.svelte. */
+      .context {
+        display: flex;
+        gap: 48px;
+        align-items: flex-start;
+      }
+
+      .column {
+        width: 390px;
+      }
+
+      .column.fine {
+        --tracker-target-size: 32px;
+        --tracker-row-min-size: 40px;
+      }
+
+      .column.coarse {
+        --tracker-target-size: 44px;
+        --tracker-row-min-size: 48px;
+      }
+
+      .column-title {
+        font-family: var(--font-data);
+        font-size: var(--text-2xs);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-ink-muted);
+        margin-bottom: 8px;
+      }
+
+      .section-name {
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: 22px;
+        margin: 14px 0 6px;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+
+      .section-name .count {
+        font-family: var(--font-data);
+        font-style: normal;
+        font-size: 12px;
+        color: var(--color-ink-muted);
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--tracker-sheet-gap);
+      }
+
+      .row {
+        filter: drop-shadow(var(--shadow-small));
+      }
+
+      .row .surface {
+        display: flex;
+        min-block-size: var(--tracker-row-min-size);
+        align-items: center;
+        gap: var(--tracker-row-gap);
+        padding: 4px 12px 4px 0;
+        background: var(--color-paper-raised);
+        border: 1px solid var(--tracker-paper-line);
+        border-radius: var(--radius);
+      }
+
+      .row .box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--tracker-target-size);
+        min-height: var(--tracker-target-size);
+        flex-shrink: 0;
+        color: var(--color-ink-muted);
+      }
+
+      .row .box svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .row .label {
+        flex: 1;
+        font-size: 16px;
+        line-height: 1.3;
+      }
+
+      .row.completed .label {
+        color: var(--color-ink-muted);
+        text-decoration: line-through;
+      }
+
+      .row .badge {
+        font-family: var(--font-data);
+        font-size: var(--text-2xs);
+        font-weight: 600;
+        color: var(--color-tracker-active);
+      }
+
+      .row .whisper {
+        font-family: var(--font-annotation);
+        font-size: 12px;
+        color: var(--color-ink-muted);
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .callouts {
+        width: 360px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding-top: 30px;
+      }
+
+      .callouts p {
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .callouts strong {
+        font-weight: 600;
+      }
+
+      .sr {
+        font-family: var(--font-data);
+        font-size: 12px;
+        background: var(--color-paper-sunken);
+        border-radius: var(--radius);
+        padding: 8px 10px;
+        line-height: 1.5;
+        color: var(--color-ink);
+      }
+
+      .sr b {
+        font-weight: 400;
+        color: var(--color-ink-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Filters: pencil-sm is src/lib/components/pencil-filter.svelte's; the rest are proposed. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <filter id="pencil-sm" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence
+            type="turbulence"
+            baseFrequency="0.04"
+            numOctaves="4"
+            seed="2"
+            result="noise"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="noise"
+            scale="1"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+        <!-- Graphite: a grainy, slightly broken line. -->
+        <filter id="graphite" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="1.6"
+            numOctaves="2"
+            seed="11"
+            result="grain"
+          />
+          <feColorMatrix
+            in="grain"
+            type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -2.5 0 0 0 2.6"
+            result="tooth"
+          />
+          <feComposite in="SourceGraphic" in2="tooth" operator="in" result="grained" />
+          <feTurbulence
+            type="turbulence"
+            baseFrequency="0.05"
+            numOctaves="3"
+            seed="4"
+            result="wobble"
+          />
+          <feDisplacementMap
+            in="grained"
+            in2="wobble"
+            scale="0.9"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+        <!-- Rubber stamp: crisp edges, ink that misses a few specks of the paper's tooth. -->
+        <filter id="stamp" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="1.1"
+            numOctaves="2"
+            seed="5"
+            result="grain"
+          />
+          <feColorMatrix
+            in="grain"
+            type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -6 0 0 0 4.9"
+            result="speck"
+          />
+          <feComposite in="SourceGraphic" in2="speck" operator="in" />
+        </filter>
+        <!-- Typewriter ribbon: a struck glyph, a touch of spread, uneven ink. -->
+        <filter id="ribbon" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.18" result="spread" />
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.9"
+            numOctaves="2"
+            seed="8"
+            result="grain"
+          />
+          <feColorMatrix
+            in="grain"
+            type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -3 0 0 0 2.9"
+            result="ink"
+          />
+          <feComposite in="spread" in2="ink" operator="in" />
+        </filter>
+        <!-- Carbon copy: soft, a little smudged. -->
+        <filter id="carbon" x="-15%" y="-15%" width="130%" height="130%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.45" />
+        </filter>
+      </defs>
+    </svg>
+
+    <header>
+      <h1>Provenance marks</h1>
+      <p class="lede">
+        Each checked box says who made the mark by what made it. The player inks it, the save stamps
+        it, we pencil it in, and the old records were typed. Ink & pencil are hands, so they wander
+        and can break the box; the stamp & the typewriter are machines, so they land square inside
+        it.
+      </p>
+    </header>
+
+    <section class="sheet" id="sheet-key">
+      <div class="sheet-head">
+        <h2>The recommended set</h2>
+        <p class="note">
+          Real size is the app’s 24 px icon in a 32 px target. Enlarged is 4×. Words are the
+          proposed accessible descriptions, read after the checkbox’s name.
+        </p>
+      </div>
+      <table class="ledger">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Tool</th>
+            <th>Real size</th>
+            <th>Enlarged</th>
+            <th>Description & key</th>
+          </tr>
+        </thead>
+        <tbody id="ledger-body"></tbody>
+      </table>
+    </section>
+
+    <section class="sheet" id="sheet-variants">
+      <div class="sheet-head">
+        <h2>Variants</h2>
+        <p class="note">
+          Two or three per source. The one marked “pick” is the recommendation. Every pick differs
+          from the other three in shape, and none reuses the lone slash that already means
+          “obtained”.
+        </p>
+      </div>
+      <div class="variants" id="variants"></div>
+    </section>
+
+    <section class="sheet" id="sheet-context">
+      <div class="sheet-head">
+        <h2>On the page</h2>
+        <p class="note">
+          Recommended marks on tracker rows, transcribed from tracker-row.svelte. Row text &
+          struck-through state are unchanged; only the mark varies.
+        </p>
+      </div>
+      <div class="context">
+        <div class="column fine" id="col-fine"></div>
+        <div class="column coarse" id="col-coarse"></div>
+        <div class="callouts">
+          <p>
+            <strong>No legend on the page.</strong> The marks are texture, not a status system. A
+            player who wonders learns the vocabulary once, from the description or a line in the
+            help, and then reads it at a glance.
+          </p>
+          <p>
+            <strong>Obtained keeps its slash.</strong> The amber single stroke (Active quests, here)
+            is unchanged and collides with none of the four.
+          </p>
+          <p><strong>What a screen reader hears</strong>, for the stamped row:</p>
+          <p class="sr">
+            <b>name</b> Uncheck Sardine<br /><b>role</b> button<br /><b>description</b> Filled in
+            from your save
+          </p>
+          <p>
+            <strong>Only the ink stroke animates.</strong> It’s the only mark the player draws, so
+            it keeps today’s drawn second stroke. The others arrive already made.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const BOX =
+        '<rect x="3.5" y="3.5" width="21" height="21" rx="1" stroke="var(--color-ink-hairline)" stroke-width="1.5" fill="none"/>';
+
+      // Each mark is drawn in tracker-checkbox.svelte's 28-unit viewBox, inside its 21-unit box.
+      const MARKS = {
+        // Manual
+        "manual-today": {
+          ink: "manual",
+          svg: `<path d="M9.5 20L18.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M18.5 20L9.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>`,
+        },
+        "manual-inked-x": {
+          ink: "manual",
+          svg: `<g filter="url(#pencil-sm)" fill="none" stroke="currentColor" stroke-linecap="round">
+                  <path d="M7.4 7.6 C11.2 11.6 16.4 17 25.6 24.1" stroke-width="2.3"/>
+                  <path d="M21.9 3.1 C17.6 9.4 12.8 15.2 6.6 21.7" stroke-width="2.6"/>
+                  <circle cx="7.3" cy="7.5" r="1.45" fill="currentColor" stroke="none"/>
+                  <circle cx="21.9" cy="3.2" r="1.35" fill="currentColor" stroke="none"/>
+                </g>`,
+        },
+        "manual-inked-tick": {
+          ink: "manual",
+          svg: `<g filter="url(#pencil-sm)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7.2 14.6 C8.9 15.9 10.3 17.9 11.4 21 C14.4 13.6 19 7.6 25.7 2.9" stroke-width="2.5"/>
+                  <circle cx="7.2" cy="14.6" r="1.4" fill="currentColor" stroke="none"/>
+                </g>`,
+        },
+        // Save
+        "save-stamp": {
+          ink: "save",
+          svg: `<g filter="url(#stamp)" transform="rotate(-4 14 14)">
+                  <path d="M6.6 14.3 L9.1 11.8 L12 14.7 L19.3 7.4 L21.8 9.9 L12 19.7 Z" fill="currentColor"/>
+                </g>`,
+        },
+        "save-dot-matrix": {
+          ink: "save",
+          svg: `<g fill="currentColor">${[
+            [7.2, 13.4],
+            [9.4, 15.6],
+            [11.6, 17.8],
+            [13.8, 15.6],
+            [16, 13.4],
+            [18.2, 11.2],
+            [20.4, 9],
+            [22.6, 6.8],
+          ]
+            .map(([x, y]) => `<rect x="${x - 1}" y="${y - 1}" width="2" height="2"/>`)
+            .join("")}</g>`,
+        },
+        "save-printed": {
+          ink: "save",
+          svg: `<path d="M8 14.6 L12.2 18.8 L20.6 8.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="butt" stroke-linejoin="miter" transform="translate(0.7 -0.6)"/>`,
+        },
+        // Inferred
+        "inferred-ditto": {
+          ink: "inferred",
+          svg: `<g filter="url(#graphite)" fill="none" stroke="currentColor" stroke-linecap="round">
+                  <path d="M12.9 9.2 C12.5 12.4 11.8 15.3 10.4 18.4" stroke-width="2"/>
+                  <path d="M18.6 9.2 C18.2 12.4 17.5 15.3 16.1 18.4" stroke-width="2"/>
+                  <path d="M13.2 9.6 C12.8 12.6 12.1 15.4 10.8 18.1" stroke-width="1" opacity=".6"/>
+                  <path d="M18.9 9.6 C18.5 12.6 17.8 15.4 16.5 18.1" stroke-width="1" opacity=".6"/>
+                </g>`,
+        },
+        "inferred-tick": {
+          ink: "inferred",
+          svg: `<g filter="url(#graphite)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7.8 14.8 C9.2 16 10.5 17.6 11.8 19.9 C14.3 14.2 17.5 10.1 21.4 7.2" stroke-width="1.7"/>
+                  <path d="M8.3 15.6 C9.6 16.6 10.8 18.1 12 20.2 C14.5 14.8 17.6 10.8 21.2 8.2" stroke-width="1" opacity=".55"/>
+                </g>`,
+        },
+        "inferred-hatch": {
+          ink: "inferred",
+          svg: `<g filter="url(#graphite)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6">
+                  <path d="M8.6 12.4 L12.4 8.6"/>
+                  <path d="M8.4 16.6 L16.6 8.4"/>
+                  <path d="M9.4 19.6 L19.6 9.4"/>
+                  <path d="M12.6 19.4 L19.4 12.6"/>
+                  <path d="M16.4 19.6 L19.6 16.4"/>
+                </g>`,
+        },
+        // Unknown
+        "unknown-typed-x": {
+          ink: "unknown",
+          svg: `<g filter="url(#ribbon)" transform="rotate(2 14 14) translate(0.3 0.5)" fill="none" stroke="currentColor">
+                  <path d="M10.7 10.4 L17.5 18.4 M17.5 10.4 L10.7 18.4" stroke-width="1.75"/>
+                  <path d="M9.2 10.4 H12.3 M15.9 10.4 H19 M9.2 18.4 H12.3 M15.9 18.4 H19" stroke-width="1.25"/>
+                </g>`,
+        },
+        "unknown-overstruck-x": {
+          ink: "unknown",
+          svg: `<g filter="url(#ribbon)" fill="none" stroke="currentColor">
+                  <g transform="rotate(-1.5 14 14)">
+                    <path d="M9.6 8.4 L18.4 19.6 M18.4 8.4 L9.6 19.6" stroke-width="1.6"/>
+                    <path d="M8.2 8.4 H11.2 M16.8 8.4 H19.8 M8.2 19.6 H11.2 M16.8 19.6 H19.8" stroke-width="1.15"/>
+                  </g>
+                  <g transform="translate(0.9 0.4) rotate(-1.5 14 14)" opacity=".7">
+                    <path d="M9.6 8.4 L18.4 19.6 M18.4 8.4 L9.6 19.6" stroke-width="1.4"/>
+                  </g>
+                </g>`,
+        },
+        "unknown-carbon-x": {
+          ink: "carbon",
+          svg: `<g filter="url(#carbon)" transform="rotate(2 14 14) translate(0.3 0.5)" fill="none" stroke="currentColor">
+                  <path d="M10.7 10.4 L17.5 18.4 M17.5 10.4 L10.7 18.4" stroke-width="1.9"/>
+                  <path d="M9.2 10.4 H12.3 M15.9 10.4 H19 M9.2 18.4 H12.3 M15.9 18.4 H19" stroke-width="1.35"/>
+                </g>`,
+        },
+        // The existing obtained state, for collision checks.
+        obtained: {
+          ink: "obtained",
+          svg: `<path d="M9.5 20L18.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>`,
+        },
+        empty: { ink: "empty", svg: "" },
+      };
+
+      const INK = {
+        manual: "var(--color-tracker-mark-manual)",
+        save: "var(--color-tracker-mark-save)",
+        inferred: "var(--color-tracker-mark-inferred)",
+        unknown: "var(--color-tracker-mark-unknown)",
+        carbon: "color-mix(in srgb, var(--color-hue-green) 55%, var(--color-ink-muted))",
+        obtained: "var(--color-tracker-obtained)",
+        empty: "var(--color-ink-muted)",
+      };
+
+      const svg = (id) => {
+        const mark = MARKS[id];
+        return `<svg viewBox="0 0 28 28" fill="none" style="color:${INK[mark.ink]}" aria-hidden="true">${BOX}${mark.svg}</svg>`;
+      };
+
+      const RECOMMENDED = [
+        {
+          source: "manual",
+          mark: "manual-inked-x",
+          tool: "Pen",
+          why: "The player’s own hand. Today’s X, loosened: a nib’s landing blot, strokes that overrun the box.",
+          words: "You checked this off by hand",
+          key: "tracker_row_provenance_manual",
+        },
+        {
+          source: "save",
+          mark: "save-stamp",
+          tool: "Rubber stamp",
+          why: "A clerk’s stamp: one solid, square-ended check, set a few degrees off, with specks the ink missed.",
+          words: "Filled in from your save",
+          key: "tracker_row_provenance_save",
+        },
+        {
+          source: "inferred",
+          mark: "inferred-ditto",
+          tool: "Pencil",
+          why: "A pencilled ditto: “same as the entry it follows from”. Graphite, so it reads as our note, not yours.",
+          words: "We filled this in for you",
+          key: "tracker_row_provenance_inferred",
+        },
+        {
+          source: "unknown",
+          mark: "unknown-typed-x",
+          tool: "Typewriter",
+          why: "A typed x, as on old forms: small, serifed, struck a hair off level, and it never touches the box.",
+          words: "From your older records",
+          key: "tracker_row_provenance_unknown",
+        },
+      ];
+
+      document.querySelector("#ledger-body").innerHTML = RECOMMENDED.map(
+        (r) => `<tr>
+          <td class="source">${r.source}</td>
+          <td class="tool">${r.tool}<small>${r.why}</small></td>
+          <td><span class="at-size">${svg(r.mark)}</span></td>
+          <td><span class="enlarged">${svg(r.mark)}</span></td>
+          <td class="words"><q>${r.words}</q><br /><code>${r.key}</code></td>
+        </tr>`,
+      ).join("");
+
+      const VARIANTS = [
+        {
+          source: "manual",
+          tool: "Pen",
+          options: [
+            {
+              mark: "manual-inked-x",
+              pick: true,
+              title: "Inked X",
+              text: "Today’s X, hand-loosened. Overrunning the box is the one trait no machine mark shares.",
+            },
+            {
+              mark: "manual-today",
+              title: "Today’s X, as is",
+              text: "No change for the common case, but it sits as square as a machine mark, so it’s nearer the typed x.",
+            },
+            {
+              mark: "manual-inked-tick",
+              title: "Inked tick",
+              text: "A teacher’s tick. Reads fast, but it shares a silhouette with the stamp, and it drops the X players know.",
+            },
+          ],
+        },
+        {
+          source: "save",
+          tool: "Machine",
+          options: [
+            {
+              mark: "save-stamp",
+              pick: true,
+              title: "Rubber stamp",
+              text: "The only filled mark of the four, so it holds its shape at 24 px and under low vision.",
+            },
+            {
+              mark: "save-dot-matrix",
+              title: "Dot-matrix check",
+              text: "Printed by the computer, literally. Charming, but dotted lines read as tentative.",
+            },
+            {
+              mark: "save-printed",
+              title: "Machine-printed check",
+              text: "A uniform, mitered stroke, a hair off register. Crisp, but near a generic UI check.",
+            },
+          ],
+        },
+        {
+          source: "inferred",
+          tool: "Pencil",
+          options: [
+            {
+              mark: "inferred-ditto",
+              pick: true,
+              title: "Pencil ditto",
+              text: "Ledger shorthand for “carried from another entry”, which is what inferred means.",
+            },
+            {
+              mark: "inferred-tick",
+              title: "Pencil tick",
+              text: "Reads as done instantly, but it’s a light twin of the stamp’s silhouette.",
+            },
+            {
+              mark: "inferred-hatch",
+              title: "Pencil hatching",
+              text: "Shaded in, provisionally. Distinct, but at 24 px it can blur into a grey fill.",
+            },
+          ],
+        },
+        {
+          source: "unknown",
+          tool: "Typewriter",
+          options: [
+            {
+              mark: "unknown-typed-x",
+              pick: true,
+              title: "Typed x",
+              text: "The maintainer’s idea. Small & inside the box, so it never reads as the inked X.",
+            },
+            {
+              mark: "unknown-overstruck-x",
+              title: "Overstruck X",
+              text: "Typed twice to make it darker. More ink, but taller, so closer to the hand X.",
+            },
+            {
+              mark: "unknown-carbon-x",
+              title: "Carbon copy",
+              text: "The typed x as a soft carbon, for facts carried in by a transfer. Texture only, so the same shape as the pick.",
+            },
+          ],
+        },
+      ];
+
+      document.querySelector("#variants").innerHTML = VARIANTS.map(
+        (v) => `<div class="label">${v.source}<small>${v.tool}</small></div>
+          <div class="strip">${v.options
+            .map(
+              (o) => `<div class="variant${o.pick ? " is-pick" : ""}">
+                ${o.pick ? '<span class="pick">pick</span>' : ""}
+                <span class="enlarged">${svg(o.mark)}</span>
+                <div class="variant-body text">
+                  <span class="at-size">${svg(o.mark)}</span>
+                  <div><h3>${o.title}</h3>${o.text}</div>
+                </div>
+              </div>`,
+            )
+            .join("")}</div>`,
+      ).join("");
+
+      const row = (name, mark, extra = "") => {
+        const completed = mark !== "empty" && mark !== "obtained";
+        return `<div class="row${completed ? " completed" : ""}"><div class="surface">
+          <span class="box">${svg(mark)}</span>
+          <span class="label">${name}</span>${extra}
+        </div></div>`;
+      };
+
+      const column = (title) => `<div class="column-title">${title}</div>
+        <div class="section-name">Fish <span class="count">4 / 7</span></div>
+        <div class="stack">
+          ${row("Brown Trout", "manual-inked-x")}
+          ${row("Sardine", "save-stamp")}
+          ${row("Catfish", "unknown-typed-x")}
+          ${row("Lake Trout", "empty")}
+          ${row("Crucian Carp", "inferred-ditto")}
+          ${row("Tuna", "empty")}
+        </div>
+        <div class="section-name">Requests <span class="count">2 / 4</span></div>
+        <div class="stack">
+          ${row("Request for an Apple", "save-stamp")}
+          ${row("Request for Armored Bass", "obtained", '<span class="badge">Active</span>')}
+          ${row("Request for Bait", "manual-inked-x")}
+          ${row("Request for a Beet", "empty")}
+        </div>`;
+
+      document.querySelector("#col-fine").innerHTML = column("Computer · 32 px target");
+      document.querySelector("#col-coarse").innerHTML = column("Phone · 44 px target");
+    </script>
+  </body>
+</html>
