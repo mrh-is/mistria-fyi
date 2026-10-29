@@ -45,9 +45,35 @@ links absent `pipeline/input/` & `.worktreeinclude` entries; in any checkout, in
 one, it runs the frozen install & `prepare` when dependencies are absent or stale, which it detects
 with pnpm’s own `verifyDepsBeforeRun` check. A current checkout is left alone. Install output goes
 to the hook’s stderr, and the outcome arrives as session context. A failed setup never blocks the
-session; its context message is a tooling failure to report under AGENTS.md. Dependencies that go
-stale mid-session (a merge that changes the lockfile) need `pnpm install --frozen-lockfile`, which
-agents run without asking.
+session; its context message is a tooling failure to report under AGENTS.md.
+
+**Mid-session upkeep (Claude Code only):** two more hooks in `.claude/settings.json` run the same
+script, so a session stays current after it starts.
+
+- `FileChanged` with matcher `pnpm-lock.yaml|package.json|pnpm-workspace.yaml` runs
+  `setup-worktree.ts --file-changed`. Claude Code’s file watcher fires it for any writer (a merge, a
+  pull, or an external process), so a lockfile change is repaired before the next pnpm command. The
+  matcher is also the watch list (literal names in the working directory). The script acts only on a
+  manifest at the root of a checkout of this repository, skips deletions, waits three seconds
+  (`MISTRIA_SETUP_SETTLE_MS`) for a burst of manifest writes such as `pnpm add` to finish, then runs
+  the session-start probe: a frozen install & `prepare` only when pnpm reports stale dependencies.
+- `CwdChanged` runs `setup-worktree.ts --cwd-changed` with `new_cwd` & `old_cwd`. When the move
+  crosses into a different checkout of this repository, it links & installs as at session start. It
+  always returns `watchPaths` (both top-level & under `hookSpecificOutput`, since the docs don’t say
+  which nesting applies) for the new checkout’s manifests (`[]` outside this repository), so the
+  `FileChanged` watch follows the session. Per the docs it fires for shell `cd` in the main
+  conversation; whether the harness’s own move into a worktree fires it is unconfirmed.
+
+Neither event can add context for the agent or block anything. The hooks always exit 0, & an install
+or failure reaches the user as a `systemMessage` terminal notification. The agent learns of a
+failure from the next pnpm command’s `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN` error; the frozen install is
+preauthorized, & AGENTS.md’s stop & report rule still applies to a failed setup. Setups of one
+checkout (session start, file change, directory change) serialize on a `mistria-setup.lock`
+directory in that checkout’s git directory, & a waiter re-probes after acquiring it. The lock does
+not hold back the agent’s own pnpm command, which can start during an install & fail with the same
+stale-dependency error; retry it once the install ends. Codex has no equivalent events, so it keeps
+session-start setup plus the preauthorized `pnpm install --frozen-lockfile`; a synchronous
+`PreToolUse` check for Codex is tracked as a follow-up in #199’s Codex comment.
 
 **No shared dependencies:** a worktree never links `node_modules` from another checkout. pnpm
 records each install’s workspace layout, so `verifyDepsBeforeRun` refuses a linked directory with
@@ -136,7 +162,8 @@ reason it was reviewed, rather than weakening the check.
   `SessionStart` command hooks in `.claude/settings.json` & `.codex/hooks.json`. The post-tool
   formatter skips files with unresolved index stages, so it never rewrites conflict markers; they
   format once resolved & staged. Codex skips new or changed hooks until they are re-trusted in its
-  hook review (`/hooks`); review & trust them before relying on enforcement.
+  hook review (`/hooks`); review & trust them before relying on enforcement. `FileChanged` &
+  `CwdChanged` setup hooks exist in `.claude/settings.json` only (see Mid-session upkeep above).
 - Hook changes take effect next session. Claude Code runs each hook from `$CLAUDE_PROJECT_DIR`,
   fixed at session start to the session’s original checkout, so an edit to a hook script or its
   settings in a worktree (including a subagent’s) does not change the hooks guarding that session.

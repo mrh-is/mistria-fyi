@@ -6,7 +6,14 @@ import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 export interface HookInput {
   cwd?: string;
+  /** `FileChanged`: `"change"`, `"add"`, or `"unlink"`. */
+  event?: string;
+  /** `FileChanged`: absolute path of the changed file. */
+  file_path?: string;
   hook_event_name?: string;
+  /** `CwdChanged`: the directories before & after the move. */
+  new_cwd?: string;
+  old_cwd?: string;
   stop_hook_active?: boolean;
   tool_input?:
     | string

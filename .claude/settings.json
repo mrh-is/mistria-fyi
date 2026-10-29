@@ -120,6 +120,29 @@
         ]
       }
     ],
+    "FileChanged": [
+      {
+        "matcher": "pnpm-lock.yaml|package.json|pnpm-workspace.yaml",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/setup-worktree.ts\" --file-changed",
+            "timeout": 600
+          }
+        ]
+      }
+    ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/setup-worktree.ts\" --cwd-changed",
+            "timeout": 600
+          }
+        ]
+      }
+    ],
     "SubagentStart": [
       {
         "hooks": [
