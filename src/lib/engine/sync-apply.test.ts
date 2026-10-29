@@ -561,10 +561,14 @@ describe("applySync: quests & household facts", () => {
     });
     const questions = asked(applySync(state, incoming, { fresh: FRESH }));
     expect(questions).toHaveLength(1);
+    expect(questions[0]).toMatchObject({
+      field: "household",
+      kind: "facts",
+      reason: "local-disagrees",
+    });
     expect(settle(state, incoming, () => "keep").state.progress).toEqual(state.progress);
     const result = settle(state, incoming, () => "accept");
     expect(result.state.progress.villagerRelationships).toEqual({
-      [BALOR]: "undecided",
       [CELINE]: "married",
     });
     expect(result.state.progress.childChoice).toBe("yes");
@@ -598,7 +602,6 @@ describe("applySync: quests & household facts", () => {
     const changed = bundle({ childChoice: "yes", villagerRelationships: { [CELINE]: "married" } });
     const result = settle(first.state, changed, () => "accept");
     expect(result.state.progress.villagerRelationships).toEqual({
-      [BALOR]: "undecided",
       [CELINE]: "married",
     });
     expect(result.state.progress.childChoice).toBe("yes");

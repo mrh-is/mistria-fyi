@@ -35,6 +35,12 @@ differences together under the strictest dependent policy, preserving manual fac
 constructing competing partners or applying an unreported engagement cascade. A kept household
 difference reopens when any dependent save value changes.
 
+Represent this atomic decision as one fact question with `field: "household"`; each difference
+retains its actual field. Preserve the strongest dependent reason, with `many-removals` taking
+precedence over `local-disagrees`, in both the question & its differences. Include that reason in
+the question ID so an answer cannot silently accept a newly triggered guardrail. This extends the
+question field identity without changing the answer or resolution formats the receiver uses.
+
 A childless save cannot declare a permanent refusal. Only readable positive evidence makes child
 choice complete. Manual import remains additive, and backup restore remains replacement. Keep
 serialization version five because all progress fields, provenance keys, & resolution values already
@@ -47,6 +53,10 @@ An entire scene catalog would add pipeline & shared-contract scope without impro
 reveal fact. Independent household answers could combine incompatible spouses or apply a child
 choice to the wrong household. Running the additive import merge during sync would bypass
 provenance, removals, & kept resolutions.
+
+Per-field household questions would need coordinated answers to preserve the same atomic decision.
+Labeling a cross-field question with its first difference’s field misidentifies its scope; replacing
+every reason with `local-disagrees` hides the renamed-ID guardrail.
 
 ## Revisit if
 

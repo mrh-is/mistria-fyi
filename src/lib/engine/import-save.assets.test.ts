@@ -4,15 +4,18 @@ import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
+import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import { extractSave, extractSaveProgress } from "./import-save.js";
 import { parseSavArchive } from "./parse-sav.js";
 import { readSaveIdentity } from "./save-identity.js";
+import { applySync } from "./sync-apply.js";
 
 import type { VillagerId } from "#lib/types/tracker-data.js";
 
 import type { SaveBundle, SaveExtraction } from "./import-save.js";
+import type { SyncState } from "./sync-apply.js";
 
 // Real saves for the committed tracker data's game version, read locally & never committed.
 const SAVE_DIR = path.join(
@@ -157,6 +160,65 @@ it("reads Ryis as the spouse in the reported married save, over its other dating
     Object.values(completed.villagerRelationships ?? {}).filter((rel) => rel === "romantic"),
   ).toHaveLength(7);
   expect(completed.childChoice).toBe("undeclared");
+});
+
+it("keeps the many-removals household warning for a late save over pre-provenance progress", async () => {
+  const bundle = await readSave("game-1315159680-autosave.sav");
+  const partners = ["adeline", "balor", "eiland", "hayden", "juniper", "march", "reina"];
+  const fresh: SyncState = {
+    farm: null,
+    history: { provenance: {}, resolutions: {} },
+    progress: makeCompletedState(),
+  };
+  const state: SyncState = {
+    farm: readSaveIdentity(bundle).identity,
+    history: {
+      provenance: {
+        "villagerRelationships/ryis": { source: "unknown" },
+        ...Object.fromEntries(
+          partners.map((id) => [`villagerRelationships/${id}`, { source: "inferred" as const }]),
+        ),
+      },
+      resolutions: {},
+    },
+    progress: makeCompletedState({
+      villagerRelationships: {
+        ...Object.fromEntries(partners.map((id) => [id, "platonic" as const])),
+        ["ryis" as VillagerId]: "married",
+      },
+    }),
+  };
+  const incoming = { extraction: extractSave(bundle), farm: readSaveIdentity(bundle).identity };
+  const outcome = applySync(state, incoming, { fresh });
+  expect(outcome.kind).toBe("ask");
+  if (outcome.kind !== "ask") throw new Error("Expected the many-removals warning");
+  expect(outcome.questions).toHaveLength(1);
+  const [question] = outcome.questions;
+  expect(question).toMatchObject({ field: "household", kind: "facts", reason: "many-removals" });
+  if (question.kind !== "facts") throw new Error("Expected a household fact question");
+  // Seven inferred friendships change laterally, four friendships are added, & break-ups change.
+  expect(question.differences).toHaveLength(12);
+  expect(
+    question.differences
+      .filter(({ direction }) => direction === "backward")
+      .map(({ key }) => key)
+      .toSorted(),
+  ).toEqual(partners.map((id) => `villagerRelationships/${id}`).toSorted());
+  expect(new Set(question.differences.map(({ field }) => field))).toEqual(
+    new Set(["villagerRelationships", "breakUpsDisabled"]),
+  );
+  expect(question.differences.every(({ reason }) => reason === "many-removals")).toBe(true);
+  for (const answer of ["keep", "accept"] as const) {
+    const settled = applySync(state, incoming, { answers: { [question.id]: answer }, fresh });
+    expect(settled.kind).toBe("applied");
+    if (settled.kind !== "applied") throw new Error("The household answer did not settle");
+    expect(settled.result.state.progress.villagerRelationships).toEqual(
+      answer === "keep"
+        ? state.progress.villagerRelationships
+        : incoming.extraction.fields.villagerRelationships.value,
+    );
+    expect(settled.result.state.progress.breakUpsDisabled).toBe(answer === "accept");
+  }
 });
 
 describe("fields mutated from a real save", () => {

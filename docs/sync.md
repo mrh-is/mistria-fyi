@@ -291,6 +291,13 @@ a question covers changes until all are answered. Fact questions are grouped by 
 changes it covers, so a question whose effect changed while it waited is asked again. “Keep mine”
 records a resolution per fact; an answer that doesn’t fit its question counts as unanswered.
 
+Dependent household differences are the exception to per-field grouping: one fact question uses
+`field: "household"`, while each difference retains its actual field. This keeps one answer atomic
+across relationships, the break-ups setting, child choice, & pregnancy quests. The question & all
+its differences use the strongest dependent reason: `many-removals` takes precedence over
+`local-disagrees`, so the renamed-ID warning survives grouping. Its ID includes that reason & every
+dependent difference; a changed reason or effect requires a new answer.
+
 ### The table
 
 - A save or inference is superseded by the save: an addition applies silently, a removal applies &

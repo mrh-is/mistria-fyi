@@ -70,6 +70,37 @@ describe("household save facts", () => {
     },
   );
 
+  it.each([
+    [null, undefined],
+    ["best_friend", "platonic"],
+    ["dating", "romantic"],
+    ["fiance", "proposed"],
+  ])("preserves explicit status %s when a pregnancy quest contradicts it", (status, expected) => {
+    const [villagerId, questId] = recordEntries(trackerData.pregnancyQuestByVillager)[0];
+    const { fields } = extractSave({
+      gamedata: { t2_world_facts: { ...statuses, [`${villagerId}_status`]: status } },
+      quests: { active_quests: [], completed_quests: [questId] },
+    });
+    expect(fields.villagerRelationships.value?.[villagerId]).toBe(expected);
+    expect(fields.villagerRelationships.completeness).toBe("unknown");
+    expect(fields.villagerRelationships.diagnostics).toContainEqual({
+      code: "invalid-value",
+      path: `gamedata.t2_world_facts.${villagerId}_status`,
+    });
+  });
+
+  it("keeps an explicit spouse complete when a pregnancy quest agrees", () => {
+    const [villagerId, questId] = recordEntries(trackerData.pregnancyQuestByVillager)[0];
+    const { fields } = extractSave({
+      gamedata: { t2_world_facts: { ...statuses, [`${villagerId}_status`]: "spouse" } },
+      quests: { active_quests: [], completed_quests: [questId] },
+    });
+    expect(fields.villagerRelationships).toMatchObject({
+      completeness: "complete",
+      value: { [villagerId]: "married" },
+    });
+  });
+
   it("does not manufacture child evidence from malformed values", () => {
     for (const pending_child of [false, 0, "soon", [], {}]) {
       const { fields } = extractSave({

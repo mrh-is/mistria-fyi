@@ -294,9 +294,11 @@ world state. Keys follow naming conventions:
   present `null` establishes undecided. Every dateable villager’s status must be present &
   recognized for relationships to be complete. A missing or unrecognized status leaves the field
   unknown; readable legacy flags can still add evidence, with a spouse taking precedence over
-  dating. Explicit statuses take precedence over stale flags. Other dating relationships remain as
-  stored; the v1.0.8 married save has break-ups disabled and retains seven other partners. No v1.0.8
-  script writes `ari_is_married` or `ari_is_engaged`, so the importer ignores them.
+  dating. Explicit statuses take precedence over stale flags & pregnancy-quest inference. A
+  pregnancy quest that contradicts an explicit status leaves that status untouched & relationships
+  unknown, with an `invalid-value` diagnostic. Other dating relationships remain as stored; the
+  v1.0.8 married save has break-ups disabled and retains seven other partners. No v1.0.8 script
+  writes `ari_is_married` or `ari_is_engaged`, so the importer ignores them.
 - **Various flags** → `boolean | number | string`: quest triggers, event flags, world unlocks
 
 ### Other `gamedata` fields

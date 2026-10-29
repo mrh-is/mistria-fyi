@@ -642,7 +642,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
 
   // ── Villager relationships (from gamedata.json → t2_world_facts → {villager}_status) ──
   // Explicit statuses include null for undecided. Legacy flags still add partial evidence, with
-  // a spouse beating dating. A pregnancy quest names the spouse when no status does.
+  // a spouse beating dating. A pregnancy quest can name the spouse only without an explicit status.
   const pregnancyVillagerId = recordEntries(trackerData.pregnancyQuestByVillager).find(
     ([, questId]) => Object.hasOwn(foundQuests, questId),
   )?.[0];
@@ -671,8 +671,17 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
       });
       if (status) villagerRelationships[villagerId] = status[1];
     }
-    if (pregnancyVillagerId && getSpouseId(villagerRelationships) === null) {
-      villagerRelationships[pregnancyVillagerId] = "married";
+    if (pregnancyVillagerId) {
+      const key = `${pregnancyVillagerId}_status`;
+      const raw = facts?.[key];
+      const explicit = raw === null || RELATIONSHIP_FACTS.some(([suffix]) => suffix === raw);
+      if (explicit && raw !== "spouse") {
+        collector.report({ code: "invalid-value", path: `gamedata.t2_world_facts.${key}` }, [
+          "villagerRelationships",
+        ]);
+      } else if (!explicit && getSpouseId(villagerRelationships) === null) {
+        villagerRelationships[pregnancyVillagerId] = "married";
+      }
     }
   }
 

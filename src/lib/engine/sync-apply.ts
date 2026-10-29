@@ -93,8 +93,10 @@ export interface SyncDifference {
  *   `same-farm` or `new-farm`.
  * - `older-save`: the save has less playtime than the last one applied (a manual save was loaded).
  *   Answer `accept` to roll back to it, or `keep`.
- * - `facts`: one field's differences for one {@link AskReason}. Answer `accept` to take the save's
- *   values, or `keep` to keep stored ones until the save reports something else.
+ * - `facts`: one field's differences for one {@link AskReason}, or the dependent household's
+ *   differences with `field: "household"` & its strongest reason (`many-removals` takes precedence
+ *   over `local-disagrees`). Answer `accept` to take the save's values, or `keep` to keep stored
+ *   ones until the save reports something else.
  */
 export type SyncQuestion =
   | FactsQuestion
@@ -103,7 +105,8 @@ export type SyncQuestion =
 
 export interface FactsQuestion {
   differences: SyncDifference[];
-  field: SyncField;
+  /** `household` covers dependent facts across fields; each difference keeps its actual field. */
+  field: "household" | SyncField;
   id: string;
   kind: "facts";
   reason: AskReason;
@@ -494,12 +497,15 @@ function settleHousehold(base: SyncState, differences: SyncDifference[]): void {
   const keep = inconsistent || household.some(({ policy }) => policy === "keep-local-and-tell");
   const ask = household.some(({ policy }) => policy === "ask-first");
   if (!keep && !ask) return;
+  const reason = household.some((difference) => difference.reason === "many-removals")
+    ? "many-removals"
+    : "local-disagrees";
   for (const difference of household) {
     difference.policy = keep ? "keep-local-and-tell" : "ask-first";
     if (keep) {
       delete difference.reason;
     } else {
-      difference.reason = "local-disagrees";
+      difference.reason = reason;
     }
   }
 }
@@ -525,20 +531,20 @@ function questReplaceable(field: SyncField, id: string | undefined): boolean {
   return kind !== undefined && QUEST_KINDS_LISTED_AS_COMPLETED[kind];
 }
 
-/** One question per field & reason, naming every difference it covers. */
+/** One question per field & reason; the dependent household has its own field identity. */
 function factQuestions(differences: readonly SyncDifference[]): FactsQuestion[] {
   const groups = new Map<string, SyncDifference[]>();
   for (const difference of differences) {
     if (difference.policy !== "ask-first" || !difference.reason) continue;
     const household = isHouseholdFact(difference.field, difference.key.split("/")[1]);
-    const group = household
-      ? "household:local-disagrees"
-      : `${difference.field}:${difference.reason}`;
+    const group = `${household ? "household" : difference.field}:${difference.reason}`;
     groups.set(group, [...(groups.get(group) ?? []), difference]);
   }
   return [...groups].map(([group, grouped]) => ({
     differences: grouped,
-    field: grouped[0].field,
+    field: isHouseholdFact(grouped[0].field, grouped[0].key.split("/")[1])
+      ? "household"
+      : grouped[0].field,
     id: `facts:${group}:${grouped
       .map(({ key, local, save }) => `${key}=${local ?? ""}>${save ?? ""}`)
       .toSorted()
@@ -637,8 +643,12 @@ function writeFact(progress: ProgressState, key: string, value: string | undefin
       progress.childChoice = (value ?? "undeclared") as ChildChoice;
       return;
     case "villagerRelationships":
-      (progress.villagerRelationships as Record<string, VillagerRelationship>)[id] = (value ??
-        "undecided") as VillagerRelationship;
+      if (value === undefined) {
+        progress.villagerRelationships = withoutKey(progress.villagerRelationships, id);
+      } else {
+        (progress.villagerRelationships as Record<string, VillagerRelationship>)[id] =
+          value as VillagerRelationship;
+      }
       return;
     case "heartLevels":
     case "skillLevels":
