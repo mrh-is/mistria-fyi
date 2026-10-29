@@ -18,7 +18,10 @@ function nonBlockingReason(link: {
   getAttribute: (name: string) => null | string;
   hasAttribute: (name: string) => boolean;
 }): string | undefined {
-  if (link.hasAttribute("media")) return "has a media attribute";
+  const media = link.getAttribute("media");
+  if (media !== null && !["", "all", "screen"].includes(media.trim())) {
+    return "has a media attribute";
+  }
   if (link.hasAttribute("disabled")) return "is disabled";
   if (link.hasAttribute("blocking") && link.getAttribute("blocking") !== "render") {
     return "is not render-blocking";
@@ -27,23 +30,25 @@ function nonBlockingReason(link: {
 }
 
 /** Why the page’s first paint can precede its CSS, one message per problem. */
-function firstPaintProblems(html: string): string[] {
+function firstPaintProblems(html: string): { hrefs: string[]; problems: string[] } {
   const window = new Window({
     settings: { disableJavaScriptFileLoading: true, enableJavaScriptEvaluation: false },
   });
-  window.document.write(html);
   try {
+    window.document.write(html);
     const { document } = window;
     const problems: string[] = [];
+    const hrefs: string[] = [];
     const sheets = [...document.querySelectorAll('link[rel~="stylesheet"]')];
     if (sheets.length === 0) problems.push("no stylesheet link");
     for (const sheet of sheets) {
       const href = sheet.getAttribute("href") ?? "(no href)";
+      hrefs.push(href);
       if (!document.head.contains(sheet)) problems.push(`${href} is outside <head>`);
       const reason = nonBlockingReason(sheet);
       if (reason !== undefined) problems.push(`${href} ${reason}`);
     }
-    return problems;
+    return { hrefs, problems };
   } finally {
     void window.happyDOM.close();
   }
@@ -52,21 +57,25 @@ function firstPaintProblems(html: string): string[] {
 const htmlPage = (head: string, body = "<p>hi</p>"): string =>
   `<!doctype html><html><head>${head}</head><body>${body}</body></html>`;
 
+const problemsOf = (html: string): string[] => firstPaintProblems(html).problems;
+
 void describe("first-paint detector", () => {
-  void test("accepts render-blocking head stylesheets", () => {
+  void test("accepts render-blocking head stylesheets & collects their hrefs", () => {
     assert.deepEqual(
-      firstPaintProblems(htmlPage('<link href="./a.css" rel="stylesheet"><script>1</script>')),
-      [],
+      firstPaintProblems(
+        htmlPage('<link href="./a.css" rel="stylesheet" media="all"><script>1</script>'),
+      ),
+      { hrefs: ["./a.css"], problems: [] },
     );
   });
 
   void test("rejects a page with no stylesheet", () => {
-    assert.deepEqual(firstPaintProblems(htmlPage("<title>x</title>")), ["no stylesheet link"]);
+    assert.deepEqual(problemsOf(htmlPage("<title>x</title>")), ["no stylesheet link"]);
   });
 
   void test("rejects a stylesheet placed in the body", () => {
     assert.deepEqual(
-      firstPaintProblems(
+      problemsOf(
         htmlPage(
           '<link href="./a.css" rel="stylesheet">',
           '<link href="./b.css" rel="stylesheet">',
@@ -77,10 +86,9 @@ void describe("first-paint detector", () => {
   });
 
   void test("rejects a stylesheet deferred with a print media swap", () => {
-    assert.deepEqual(
-      firstPaintProblems(htmlPage('<link href="./a.css" rel="stylesheet" media="print">')),
-      ["./a.css has a media attribute"],
-    );
+    assert.deepEqual(problemsOf(htmlPage('<link href="./a.css" rel="stylesheet" media="print">')), [
+      "./a.css has a media attribute",
+    ]);
   });
 });
 
@@ -124,10 +132,12 @@ void describe("built first paint", { timeout: 120_000 }, () => {
       });
       assert.ok(response.ok, `${path}: HTTP ${String(response.status)}`);
       const html = await response.text();
-      for (const problem of firstPaintProblems(html)) failures.push(`${path}: ${problem}`);
+      const { hrefs, problems } = firstPaintProblems(html);
+      for (const problem of problems) failures.push(`${path}: ${problem}`);
+      assert.ok(hrefs.length > 0, `${path}: no stylesheet to fetch`);
       // Each href is relative to the page, so a trailing-slash or nesting mistake breaks it here.
-      for (const [, href] of html.matchAll(/<link[^>]*href="([^"]+)"[^>]*rel="stylesheet"/g)) {
-        const sheet = await fetch(new URL(href, `${origin}${path}`), {
+      for (const href of hrefs) {
+        const sheet = await fetch(new URL(href, response.url), {
           signal: AbortSignal.timeout(10_000),
         });
         if (!sheet.ok || !(sheet.headers.get("content-type") ?? "").includes("text/css")) {
