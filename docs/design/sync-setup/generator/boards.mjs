@@ -17,7 +17,6 @@ const {
   welcome,
   tagDialog,
   fieldNote,
-  tip,
   stepCard,
   homeHeader,
   indexList,
@@ -40,6 +39,7 @@ const mix = (color, pct, base) => `color-mix(in srgb, ${color} ${pct}%, ${base ?
 const MONO = "font-family:'Fragment Mono','Courier New',monospace";
 const ANNOT = "font-family:Satoshi,system-ui,sans-serif";
 const DATA = "font-family:'IBM Plex Mono','Courier New',monospace";
+const SERIF = "font-family:Petrona,Georgia,serif";
 
 const PC = { w: 1280, h: 800 };
 const PH = { w: 390, h: 844 };
@@ -58,6 +58,9 @@ const syncPage = (lead, inner, { device = "pc", h, overlay } = {}) =>
   screen(setupPage("Sync your save file", lead, inner), { device, h, overlay, toolbar: false });
 const dataScreen = (inner, { device = "pc", h, overlay } = {}) =>
   screen(dataPage(inner), { device, h, overlay, toolbar: false });
+const small = (t, icon) => btn(t, { size: "sm", icon });
+const dim = (inner, on) =>
+  `<div ${on ? "" : 'aria-disabled="true" '}style="display:flex;flex-direction:column;gap:10px${on ? "" : ";opacity:.42"}">${inner}</div>`;
 
 // Home’s two whole-card choices, each with its subtitle.
 const bigChoice = (t, sub, ic, primary) =>
@@ -75,12 +78,12 @@ const welcomeCard = (device) =>
         bigChoice(
           "Sync from my farm automagically",
           device === "pc"
-            ? "set up in 2 minutes, plus phone sync"
-            : "set up in 2 minutes from your gaming computer",
+            ? "Set up in 2 minutes, plus phone sync"
+            : "Set up in 2 minutes from your gaming computer",
           "sparkles",
           true,
         ),
-        bigChoice("I’ll track it all by hand", "the way my ancestors did it", "pencil", false),
+        bigChoice("I’ll track it all by hand", "The way my ancestors did it", "pencil", false),
       ],
       8,
     ),
@@ -100,7 +103,7 @@ const headsUp = (device) =>
 const OTHER = pathChoice({
   icon: "device-mobile",
   title: "My save file is on another device",
-  sub: "like my gaming computer",
+  sub: "Like my gaming computer",
   body: "Scan a code from the computer that runs the game.",
 });
 const HERE = pathChoice({
@@ -112,7 +115,7 @@ const HERE = pathChoice({
 const HAND = pathChoice({
   icon: "pencil",
   title: "I’ll track it all by hand",
-  sub: "no save file",
+  sub: "No save file",
   body: "Check things off yourself. You can still import a save file now and then.",
 });
 const where = (inner) =>
@@ -121,11 +124,16 @@ const chooser = ({ mac = false, overlay } = {}) =>
   syncPage(
     "",
     where(
-      mac ? OTHER + orRule() + HAND + switchLink("The game runs on this Mac") : OTHER + HERE + HAND,
+      mac
+        ? OTHER +
+            orRule() +
+            HAND +
+            `<div>${small("The game runs on this Mac", "device-laptop")}</div>`
+        : OTHER + HERE + HAND,
     ) +
       headsUp("pc") +
-      row([switchLink("On a phone?")], 18),
-    { overlay, h: mac ? 800 : 900 },
+      row([small("On a phone?", "device-mobile")]),
+    { overlay, h: mac ? 860 : 900 },
   );
 
 const freshDialog = (narrow) =>
@@ -139,25 +147,35 @@ const freshDialog = (narrow) =>
 // The folder to copy; the drop box wakes up once it’s copied.
 const pathRow = (copied) =>
   `<div style="display:flex;align-items:center;gap:8px;border:1px solid ${copied ? C().green : hairline(60)};background:${C().sunken};border-radius:2px;padding:6px 6px 6px 12px"><code style="flex:1;${DATA};font-size:12px;word-break:break-all;color:${C().ink}">${PATH}</code><button type="button" style="display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid ${copied ? C().green : hairline(60)};background:${copied ? mix(C().green, 12, C().raised) : C().paper};color:${copied ? C().green : C().ink};${MONO};font-size:12px;cursor:pointer">${ti(copied ? "check" : "copy", 15)}${copied ? "Copied!" : "Copy"}</button></div>`;
-const lockedDrop = () =>
-  `<div aria-disabled="true" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 16px;text-align:center;border:2px dashed ${hairline(40)};border-radius:4px;opacity:.55">${ti("upload", 24, C().muted)}<p style="margin:0;font-family:Petrona,Georgia,serif;font-size:14px;color:${C().muted}">Copy the folder first, and this box will wake up.</p></div>`;
 const helpToggle = (open) =>
-  `<button type="button" aria-expanded="${open}" style="display:flex;align-items:center;gap:6px;min-height:44px;padding:0;background:none;border:0;font-family:Petrona,Georgia,serif;font-size:14px;font-weight:600;color:${C().ink};cursor:pointer">${ti("chevron-right", 16, C().muted, open ? "transform:rotate(90deg)" : "")}Can’t find it?</button>`;
+  `<button type="button" aria-expanded="${open}" style="display:flex;align-items:center;gap:6px;min-height:44px;padding:0;background:none;border:0;${SERIF};font-size:14px;font-weight:600;color:${C().ink};cursor:pointer">${ti("chevron-right", 16, C().muted, open ? "transform:rotate(90deg)" : "")}Can’t find it?</button>`;
 const HELP = `<div style="display:flex;flex-direction:column;gap:10px;padding:2px 0 4px 22px;border-left:2px solid ${hairline(40)}">${p("Make sure you pasted it into the address bar at the very top of File Explorer, not the search box.", 13)}${p(`Still nothing? Press the Windows key + R, paste the same folder location, and press Enter. <span style="color:${C().muted}">(That only opens a folder. Never paste anything else into that box, from us or anyone.)</span>`, 13)}</div>`;
+// Two halves, both visible, one active: copy the folder, then drag the file in.
 const findBody = ({ copied = false, help = false } = {}) =>
   p(
     "Gonna be honest, this is the weirdest part of the setup. But once you’re done here, it’s smooth sailing!",
   ) +
-  p("First, copy this folder location:") +
-  pathRow(copied) +
-  switchLink("On Linux, Steam Deck, or a Mac?") +
-  p(
-    `Now open File Explorer and paste that into the address bar at the top. It should take you to a folder with files like ${code("game-[numbers]-autosave.sav")}. Drag that autosave file into this box:`,
+  dim(
+    p("First, copy this folder location:") +
+      pathRow(copied) +
+      switchLink("On Linux, Steam Deck, or a Mac?"),
+    !copied,
   ) +
-  (copied ? dropZone({ label: "Drop your autosave here", browse: false }) : lockedDrop()) +
-  `<div>${textLink("Can’t drag? Choose the file instead", "font-size:13px")}</div>` +
-  helpToggle(help) +
-  (help ? HELP : "");
+  dim(
+    p(
+      `Now open File Explorer and paste that into the address bar at the top. It should take you to a folder with files like ${code("game-[numbers]-autosave.sav")}. Drag that autosave file into this box:`,
+    ) +
+      dropZone({
+        label: copied
+          ? "Drop your autosave here"
+          : "Copy the folder first, and this box will wake up.",
+        browse: false,
+      }) +
+      `<div>${textLink("Can’t drag? Choose the file instead", "font-size:13px")}</div>` +
+      helpToggle(help) +
+      (help ? HELP : ""),
+    copied,
+  );
 const step1 = (o) => stepCard("i", "Find your save file", { state: "current", body: findBody(o) });
 const step1Done = () => stepCard("i", "Find your save file", { state: "done", summary: FILE });
 const step2Todo = () => stepCard("ii", "Is this your farm?", { state: "todo" });
@@ -171,44 +189,44 @@ const farmBody = (unnamed) =>
       : `Perfect! Looks like that save file is for ${b("Robin")} on ${b("Sunny Meadow Farm")}, is that right?`,
     15,
   ) + row([btn("Yep!", { kind: "default", icon: "check" }), btn("Hmm, no, try that again")]);
-const shareBody = (state) => {
-  const band =
-    state === "making"
-      ? `<div style="margin:0 -14px;padding:16px 0;border-top:1px solid ${hairline(60)};border-bottom:1px solid ${hairline(60)};display:flex;justify-content:center">${waiting("Making your code…")}</div>`
-      : state === "failed"
-        ? k.status(
-            "warning",
-            p(
-              "Sync’s taking a nap. Checking things off by hand still works, and you can make your code later from Data.",
-              14,
-              "inherit",
-            ),
-          )
-        : qrBand(state, "Live on stream? Maybe don’t show this bit.");
-  return (
-    p(
-      "Or another device. Scan this code with it, and it’ll sync your save file from here on out.",
-    ) +
-    band +
-    (state === "failed"
-      ? ""
-      : row(
-          [
-            btn("Copy link", { icon: "link" }),
-            `<span style="${ANNOT};font-size:12px;color:${C().muted}">for a computer with no camera</span>`,
-          ],
-          8,
-          state === "making" ? "opacity:.5" : "",
-        )) +
-    `<div>${textLink("No thanks, I’ll track here")}</div>`
-  );
-};
+// The code area holds the code’s whole life; the footer holds the way out.
+const copyLink = (state) =>
+  state === "paused"
+    ? ""
+    : `<div style="display:flex;flex-direction:column;align-items:center;gap:2px${state === "generating" ? ";opacity:.45" : ""}">${small("Copy link", "link")}<span style="${ANNOT};font-size:11px;color:${C().muted}">For a computer with no camera</span></div>`;
+const shareBody = (state) =>
+  p("Or another device. Scan this code with it, and it’ll sync your save file from here on out.") +
+  qrBand(
+    state,
+    state === "paused" ? "" : "Live on stream? Maybe don’t show this bit.",
+    copyLink(state),
+  ) +
+  `<div style="display:flex;justify-content:flex-end;margin:0 -14px -16px;padding:10px 14px;border-top:1px dashed ${hairline()}">${
+    state === "paused"
+      ? btn("Okay, I’ll set it up later", { kind: "default" })
+      : btn("No thanks, I’ll track here", { kind: "ghost" })
+  }</div>`;
+const share = (state) =>
+  stepCard("iii", "Wanna track this on your phone?", { state: "current", body: shareBody(state) });
 const pcSetup = (inner, h = 800, overlay) => syncPage("", inner, { h, overlay });
 
 const DONE = k.status(
   "success",
-  `<strong style="font-size:16px">Nice, you’re all set!</strong>${p("While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!", 14, "inherit")}`,
+  `<strong style="font-size:16px">Nice, you’re all set!</strong>${p("While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!", 14, "inherit")}<div style="margin-top:4px">${btn("Go to my field guide", { kind: "default", icon: "arrow-right" })}</div>`,
 );
+
+const redropStep = () =>
+  stepCard("i", "Find your save file", {
+    state: "current",
+    body:
+      dim(p("First, copy this folder location:") + pathRow(true), false) +
+      dim(
+        p("Open it in File Explorer and drag your newest autosave in.") +
+          dropZone({ label: "Drop your autosave here" }) +
+          note("Whenever you’re done playing, drop your save file in again and we’ll sync it."),
+        true,
+      ),
+  });
 
 // Phone pieces
 const scanStep = () =>
@@ -228,11 +246,11 @@ const phoneScan = (overlay, extra = "") =>
     scanStep() +
       extra +
       headsUp("phone") +
-      row([switchLink("I’ll track it all by hand"), switchLink("On a computer?")], 18),
-    {
-      device: "phone",
-      overlay,
-    },
+      row([
+        small("I’ll track it all by hand", "pencil"),
+        small("On a computer?", "device-desktop"),
+      ]),
+    { device: "phone", overlay },
   );
 
 const PANEL = [
@@ -241,7 +259,7 @@ const PANEL = [
   ["In-game date", "Summer 14, Year 2"],
 ];
 const PC_PANEL = [
-  ["Save file", "…159680-autosave.sav"],
+  ["Save file", FILE],
   ["Last save file", "7:42 PM"],
   ["Your code", "Show code"],
 ];
@@ -251,30 +269,61 @@ const dl = (pairs) =>
   `<dl style="margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px">${pairs
     .map(
       ([t, d]) =>
-        `<dt style="${ANNOT};font-size:12px;color:${C().muted}">${t}</dt><dd style="margin:0;font-family:Petrona,Georgia,serif;font-size:14px;color:${C().ink};word-break:break-all">${d}</dd>`,
+        `<dt style="${ANNOT};font-size:12px;color:${C().muted}">${t}</dt><dd style="margin:0;${SERIF};font-size:14px;color:${C().ink};word-break:break-all">${d}</dd>`,
     )
     .join("")}</dl>`;
+// Each action says what it’s for.
+const action = (button, why) =>
+  `<div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;align-items:center">${button}<span style="${ANNOT};font-size:12px;line-height:1.4;color:${C().muted}">${why}</span></div>`;
+const actionPhone = (button, why) =>
+  `<div style="display:flex;flex-direction:column;gap:4px">${button}<span style="${ANNOT};font-size:12px;line-height:1.4;color:${C().muted}">${why}</span></div>`;
 const syncCard = (pc, extra = "") =>
   dataCard("Save File Sync", "", {
     open: true,
-    body:
-      (pc
-        ? dl([
-            ["Save file", FILE],
-            ["Last save file", "Today, 7:42 PM"],
-            ["Farm", "Robin on Sunny Meadow Farm"],
-          ]) +
-          note("Keep this tab open while you play so we can sync your save file.") +
-          extra +
-          row([btn("Show code", { icon: "qrcode" }), btn("Make a new code", { icon: "refresh" })])
-        : dl([
-            ["Save file from", "Your gaming computer"],
-            ["Last save file", "Today, 7:42 PM"],
-            ["Farm", "Robin on Sunny Meadow Farm"],
-          ]) +
-          extra +
-          row([btn("Scan a different code", { icon: "camera" })])) +
-      `<div>${btn("Stop syncing", { kind: "destructive", size: "sm" })}</div>`,
+    body: pc
+      ? dl([
+          ["Save file", FILE],
+          ["Last save file", "Today, 7:42 PM"],
+          ["Farm", "Robin on Sunny Meadow Farm"],
+        ]) +
+        note("Keep this tab open while you play so we can sync your save file.") +
+        extra +
+        col(
+          [
+            action(
+              btn("Show code", { icon: "qrcode", full: true }),
+              "Add your phone or another device.",
+            ),
+            action(
+              btn("Make a new code", { icon: "refresh", full: true }),
+              "Stops the old code, in case it ended up on stream or somewhere you didn’t mean.",
+            ),
+            action(
+              btn("Stop syncing", { icon: "player-pause", full: true }),
+              "Go back to checking things off by hand. Your progress stays.",
+            ),
+          ],
+          8,
+        )
+      : dl([
+          ["Save file from", "Your gaming computer"],
+          ["Last save file", "Today, 7:42 PM"],
+          ["Farm", "Robin on Sunny Meadow Farm"],
+        ]) +
+        extra +
+        col(
+          [
+            actionPhone(
+              btn("Scan a different code", { icon: "camera", full: true }),
+              "Sync a save file from a different computer.",
+            ),
+            actionPhone(
+              btn("Stop syncing", { icon: "player-pause", full: true }),
+              "Go back to checking things off by hand. Your progress stays.",
+            ),
+          ],
+          10,
+        ),
   });
 const dataRest = () =>
   section(
@@ -282,10 +331,19 @@ const dataRest = () =>
     dataCard("Backup & Restore", "Keep a copy of your progress, or restore one.") +
       dataCard("Danger Zone", "Reset your progress.", { tone: "danger" }),
   );
-const dataBoard = (pc, { extra = "", overlay } = {}) =>
+const dataBoard = (pc, { extra = "", overlay, h } = {}) =>
   dataScreen(section("Save file sync", syncCard(pc, extra)) + dataRest(), {
     device: pc ? "pc" : "phone",
     overlay,
+    h,
+  });
+
+const gotIt = () =>
+  fieldNote({
+    tone: C().green,
+    icon: "circle-check",
+    title: "Got it!",
+    body: "Your farm as of 7:42 PM. We’ll keep up from here. Anything you check off by hand on this phone stays here.",
   });
 
 // ── Rows ──
@@ -323,13 +381,14 @@ export const rows = [
       },
       {
         file: "Where-Mac.dc.html",
-        title: "Mac · “On this computer” becomes a quiet link",
+        title: "Mac · “On this computer” becomes a small button",
         ...PC,
+        h: 860,
         render: () => chooser({ mac: true }),
       },
       {
         file: "Fresh-Start.dc.html",
-        title: "Computer · A device with progress: fresh start",
+        title: "Computer · Starting to sync with progress: a fresh start",
         ...PC,
         h: 900,
         render: () => chooser({ overlay: freshDialog(false) }),
@@ -342,14 +401,14 @@ export const rows = [
     boards: [
       {
         file: "Find-Locked.dc.html",
-        title: "i · Find your save file: the box waits for the copy",
+        title: "i · First half: copy the folder",
         ...PC,
         h: 1000,
         render: () => pcSetup(step1() + step2Todo() + step3Todo(), 1000),
       },
       {
         file: "Find-Copied.dc.html",
-        title: "i · Copied: the drop box wakes up",
+        title: "i · Second half: drag the file in",
         ...PC,
         h: 1000,
         render: () => pcSetup(step1({ copied: true }) + step2Todo() + step3Todo(), 1000),
@@ -388,66 +447,33 @@ export const rows = [
         file: "Share.dc.html",
         title: "iii · Phone too? The default, with “No thanks”",
         ...PC,
-        h: 900,
-        render: () =>
-          pcSetup(
-            step1Done() +
-              step2Done() +
-              stepCard("iii", "Wanna track this on your phone?", {
-                state: "current",
-                body: shareBody("covered"),
-              }),
-            900,
-          ),
+        h: 940,
+        render: () => pcSetup(step1Done() + step2Done() + share("covered"), 940),
       },
       {
         file: "Share-Making.dc.html",
-        title: "iii · Making the code before it shows",
+        title: "iii · Generating the code, in place",
         ...PC,
-        render: () =>
-          pcSetup(
-            step1Done() +
-              step2Done() +
-              stepCard("iii", "Wanna track this on your phone?", {
-                state: "current",
-                body: shareBody("making"),
-              }),
-          ),
+        h: 940,
+        render: () => pcSetup(step1Done() + step2Done() + share("generating"), 940),
       },
       {
         file: "Share-Shown.dc.html",
         title: "iii · The code, once its mailbox exists",
         ...PC,
-        h: 900,
+        h: 940,
         qr: true,
-        render: () =>
-          pcSetup(
-            step1Done() +
-              step2Done() +
-              stepCard("iii", "Wanna track this on your phone?", {
-                state: "current",
-                body: shareBody("shown"),
-              }),
-            900,
-          ),
+        render: () => pcSetup(step1Done() + step2Done() + share("shown"), 940),
       },
       {
         file: "Share-Failed.dc.html",
-        title: "iii · Can’t make a code: it stays hidden",
+        title: "iii · Sync is paused: setting up later is the way out",
         ...PC,
-        render: () =>
-          pcSetup(
-            step1Done() +
-              step2Done() +
-              stepCard("iii", "Wanna track this on your phone?", {
-                state: "current",
-                body: shareBody("failed"),
-              }),
-          ),
+        render: () => pcSetup(step1Done() + step2Done() + share("paused")),
       },
       {
         file: "Done.dc.html",
-        title: "Done: keep the tab open",
+        title: "Done: keep the tab open, then go to the field guide",
         ...PC,
         render: () =>
           pcSetup(
@@ -462,32 +488,27 @@ export const rows = [
       },
       {
         file: "Redrop.dc.html",
-        title: "Another browser: drop it in again, with the Chrome tip",
+        title: "Another browser: the Chrome tip, dismissible",
         ...PC,
-        h: 980,
+        h: 900,
         render: () =>
           pcSetup(
-            tip({
+            redropStep() + step2Todo() + step3Todo(),
+            900,
+            tagDialog({
               title: "Let Chrome do this for you",
-              body: "In Chrome or Edge, we can sync your save file every time you sleep, no dropping it in again.",
-              action: "Copy this page’s link",
-              after: "Then paste it into Chrome or Edge.",
-            }) +
-              stepCard("i", "Find your save file", {
-                state: "current",
-                body:
-                  p("First, copy this folder location:") +
-                  pathRow(true) +
-                  p("Open it in File Explorer and drag your newest autosave in.") +
-                  dropZone({ label: "Drop your autosave here" }) +
-                  note(
-                    "Whenever you’re done playing, drop your save file in again and we’ll sync it.",
-                  ),
-              }) +
-              step2Todo() +
-              step3Todo(),
-            980,
+              desc: "In Chrome or Edge, we can sync your save file every time you sleep, no dropping it in again.",
+              body: note("Copy this page’s link, then paste it into Chrome or Edge."),
+              actions: [["I’ll stick with this browser"], ["Copy this page’s link", true]],
+            }),
           ),
+      },
+      {
+        file: "Redrop-Page.dc.html",
+        title: "Another browser: drop it in again after you play",
+        ...PC,
+        h: 900,
+        render: () => pcSetup(redropStep() + step2Todo() + step3Todo(), 900),
       },
     ],
   },
@@ -506,16 +527,7 @@ export const rows = [
         title: "Phone · Got it!",
         ...PH,
         h: 900,
-        render: () =>
-          home(
-            fieldNote({
-              tone: C().green,
-              icon: "circle-check",
-              title: "Got it!",
-              body: "Your farm as of 7:42 PM. We’ll keep up from here. Anything you check off by hand on this phone stays here.",
-            }),
-            { device: "phone", h: 900, toolbar: { sync: {} } },
-          ),
+        render: () => home(gotIt(), { device: "phone", h: 900, toolbar: { sync: {} } }),
       },
       {
         file: "Phone-Got-It-Dark.dc.html",
@@ -523,16 +535,7 @@ export const rows = [
         ...PH,
         h: 900,
         dark: true,
-        render: () =>
-          home(
-            fieldNote({
-              tone: C().green,
-              icon: "circle-check",
-              title: "Got it!",
-              body: "Your farm as of 7:42 PM. We’ll keep up from here. Anything you check off by hand on this phone stays here.",
-            }),
-            { device: "phone", h: 900, toolbar: { sync: {} } },
-          ),
+        render: () => home(gotIt(), { device: "phone", h: 900, toolbar: { sync: {} } }),
       },
       {
         file: "Phone-Waiting.dc.html",
@@ -552,7 +555,7 @@ export const rows = [
       },
       {
         file: "Phone-iOS.dc.html",
-        title: "iPhone browser · Here, or the home screen app?",
+        title: "iPhone browser · During setup, before syncing: here, or the app?",
         ...PH,
         render: () =>
           phoneScan(
@@ -566,7 +569,7 @@ export const rows = [
       },
       {
         file: "Phone-Switch.dc.html",
-        title: "Phone · Already syncing: a different code",
+        title: "Phone · Already syncing, opens another computer’s code",
         ...PH,
         render: () =>
           home("", {
@@ -582,7 +585,7 @@ export const rows = [
       },
       {
         file: "Phone-Fresh.dc.html",
-        title: "Phone · A phone with progress: fresh start",
+        title: "Phone · Starting to sync with progress: a fresh start",
         ...PH,
         render: () => phoneScan(freshDialog(true)),
       },
@@ -675,9 +678,7 @@ export const rows = [
         render: () =>
           home(
             syncLine("Keep this tab open while you play so we can sync your save file.", "clock"),
-            {
-              toolbar: { sync: {}, panel: PC_PANEL },
-            },
+            { toolbar: { sync: {}, panel: PC_PANEL } },
           ),
       },
     ],
@@ -752,15 +753,15 @@ export const rows = [
           ),
       },
       {
-        file: "PC-Nap.dc.html",
-        title: "Computer · Sync’s taking a nap",
+        file: "PC-Paused.dc.html",
+        title: "Computer · Sync is paused, & comes back by itself",
         ...PC,
         render: () =>
           home(
             fieldNote({
               icon: "player-pause",
-              title: "Sync’s taking a nap",
-              body: "Checking things off by hand still works.",
+              title: "Sync is paused for now",
+              body: "We’ve paused syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow, and catch up then. Checking things off by hand still works.",
             }),
             { toolbar: { sync: { tone: C().hair, status: "paused" } } },
           ),
@@ -790,22 +791,21 @@ export const rows = [
               icon: "info-circle",
               title: "Your save file is already syncing in another window.",
             }),
-            {
-              toolbar: { sync: {} },
-            },
+            { toolbar: { sync: {} } },
           ),
       },
     ],
   },
   {
     id: "data",
-    title: "Data: new codes & leaving a lane",
+    title: "Data: what each action is for",
     boards: [
       {
         file: "Data-PC.dc.html",
         title: "Computer · Data: save file sync",
         ...PC,
-        render: () => dataBoard(true),
+        h: 860,
+        render: () => dataBoard(true, { h: 860 }),
       },
       {
         file: "Data-Phone.dc.html",
@@ -817,8 +817,10 @@ export const rows = [
         file: "Data-New-Code.dc.html",
         title: "Computer · Make a new code",
         ...PC,
+        h: 860,
         render: () =>
           dataBoard(true, {
+            h: 860,
             overlay: tagDialog({
               title: "Make a new code",
               desc: "Showed your code on stream? No problem. A new code stops the old one, so your other devices will need to scan again.",
@@ -830,8 +832,10 @@ export const rows = [
         file: "Data-New-Code-Failed.dc.html",
         title: "Computer · Couldn’t make a new code",
         ...PC,
+        h: 940,
         render: () =>
           dataBoard(true, {
+            h: 940,
             extra: k.status(
               "warning",
               p(
@@ -844,14 +848,14 @@ export const rows = [
       },
       {
         file: "Data-Stop.dc.html",
-        title: "Phone · Stop syncing & start over",
+        title: "Phone · Stop syncing: progress stays",
         ...PH,
         render: () =>
           dataBoard(false, {
             overlay: tagDialog({
-              title: "Stop syncing and start over?",
-              desc: "This clears everything on this device, including anything you checked off by hand. Wanna make a quick backup first?",
-              actions: [["Make a backup"], ["Clear it and stop", true], ["Cancel"]],
+              title: "Stop syncing?",
+              desc: "Your progress stays right here, and you’ll check things off by hand from now on. If you turn syncing back on later, it’ll start fresh.",
+              actions: [["Cancel"], ["Stop syncing", true]],
               narrow: true,
             }),
           }),
@@ -863,22 +867,22 @@ export const rows = [
 export const notes = {
   n_start: {
     row: "start",
-    text: "Home asks how you want to work; “Sync” opens mistria.fyi/sync, which asks where the save file is. “On this computer” shows only on a computer, & on a Mac it’s a quiet link. A device with progress confirms a fresh start; the erase lands with the first save file, so backing out changes nothing.",
+    text: "Home asks how you want to work; “Sync” opens mistria.fyi/sync, which asks where the save file is. “On this computer” shows only on a computer, & on a Mac it’s a small button. Starting to sync with progress confirms a fresh start; the erase lands with the first save file, so backing out changes nothing.",
     fill: "green",
   },
   n_lanes: {
     row: "start",
-    text: "Three lanes, one per device: save file on this computer, save file on another device, or by hand. Switching lanes erases the device, with a backup offered every time.",
+    text: "Three lanes, one per device: save file on this computer, save file on another device, or by hand. Starting to sync erases the device, with a backup offered every time; stopping keeps everything.",
     fill: "blue",
   },
   n_computer: {
     row: "computer",
-    text: "The drop box looks asleep until the folder is copied (button or a manual copy), but a dropped file still works. The code appears only once its mailbox exists; “No thanks” & a wrong file create nothing. Windows key + R comes after the safe steps, with a warning.",
+    text: "One active half at a time: copy the folder, then drag the file in. The code area holds the code’s whole life (covered, generating, shown, paused), so the card keeps its height. “No thanks” & a wrong file create nothing. Windows key + R comes after the safe steps, with a warning.",
     fill: "blue",
   },
   n_phone: {
     row: "phone_setup",
-    text: "The computer already shared a save file, so scanning shows progress at once. A code with no save file waiting changes nothing until one arrives. iOS browsers ask once whether to use the home screen app.",
+    text: "The computer already shared a save file, so scanning shows progress at once. The iPhone question comes during setup, before syncing starts; “Sync this save file instead?” only on a device that’s already syncing & opens another computer’s code.",
     fill: "blue",
   },
   n_living: {
@@ -888,7 +892,7 @@ export const notes = {
   },
   n_data: {
     row: "data",
-    text: "A syncing lane hides Import & the transfer card. “Make a new code” makes the new code before retiring the old; if it can’t, the old one keeps working. Stopping erases the device but keeps the farm-switch backup.",
+    text: "Each action says what it’s for. A syncing lane hides Import & the transfer card. “Make a new code” makes the new code before retiring the old; if it can’t, the old one keeps working. Stopping keeps all progress.",
     fill: "blue",
   },
 };

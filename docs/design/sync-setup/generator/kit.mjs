@@ -167,13 +167,19 @@ export const corners = (s = 12, o = -4, all = false) => {
   );
 };
 
-// The transfer card's full-bleed QR band, with corners on the code.
-export const qrBand = (state, caption) => {
+// The code area: a full-bleed band holding the code through its whole life (covered, generating,
+// shown, or paused), its caption, & whatever goes under it, so the card keeps its height.
+export const qrBand = (state, caption, after = "") => {
+  const frame = `border:1px solid ${hairline(70)};box-shadow:0 1px 3px ${C.shadow}`;
   const box =
     state === "shown"
-      ? `<div style="position:relative;width:184px;height:184px;background:#fff;padding:10px;box-sizing:border-box"><div role="img" aria-label="Sync code" style="display:grid;grid-template-columns:repeat(21,minmax(0,1fr));width:164px;height:164px"><sc-for list="{{cells}}" as="c" hint-placeholder-count="441"><div style="background:{{c.fill}}"></div></sc-for></div>${corners()}</div>`
-      : `<div style="position:relative;width:184px;height:184px;background:${C.sunken};display:flex;align-items:center;justify-content:center">${btn("Show code", { icon: "eye" })}${corners()}</div>`;
-  return `<div style="margin:0 -14px;padding:16px 0;border-top:1px solid ${hairline(60)};border-bottom:1px solid ${hairline(60)};display:flex;flex-direction:column;align-items:center;gap:10px">${box}${caption ? `<p style="margin:0;padding:0 16px;text-align:center;${BODY};font-size:14px;color:${C.muted}">${caption}</p>` : ""}</div>`;
+      ? `<div style="position:relative;width:184px;height:184px;background:#fff;padding:10px;box-sizing:border-box;${frame}"><div role="img" aria-label="Sync code" style="display:grid;grid-template-columns:repeat(21,minmax(0,1fr));width:162px;height:162px"><sc-for list="{{cells}}" as="c" hint-placeholder-count="441"><div style="background:{{c.fill}}"></div></sc-for></div>${corners()}</div>`
+      : state === "generating"
+        ? `<div role="status" style="position:relative;width:184px;height:184px;box-sizing:border-box;background:${C.sunken};${frame};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;text-align:center">${ti("loader-2", 22, C.muted)}<span style="${BODY};font-size:14px;color:${C.muted}">Generating the code…</span>${corners()}</div>`
+        : state === "paused"
+          ? `<div role="status" style="position:relative;width:calc(100% - 32px);box-sizing:border-box;background:${C.sunken};${frame};display:flex;gap:10px;padding:14px 16px">${ti("player-pause", 18, C.muted, "margin-top:2px")}<div style="display:flex;flex-direction:column;gap:4px"><strong style="${BODY};font-size:15px;color:${C.ink}">Sync is paused for now</strong><span style="${ANNOT};font-size:13px;line-height:1.45;color:${C.muted}">We’ve paused syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow. You can make your code later from Data.</span></div></div>`
+          : `<div style="position:relative;width:184px;height:184px;box-sizing:border-box;background:${C.sunken};${frame};display:flex;align-items:center;justify-content:center">${btn("Show code", { icon: "eye" })}${corners()}</div>`;
+  return `<div style="margin:0 -14px;padding:18px 0 16px;border-top:1px solid ${hairline(60)};border-bottom:1px solid ${hairline(60)};background:${mix(C.sunken, 45, C.raised)};display:flex;flex-direction:column;align-items:center;gap:10px">${box}${caption ? `<p style="margin:0;padding:0 16px;text-align:center;${ANNOT};font-size:12px;color:${C.muted}">${caption}</p>` : ""}${after}</div>`;
 };
 
 export const matchCode = (digits = "482 913") =>
@@ -254,7 +260,7 @@ export const fieldNote = ({
   tilt = -0.4,
 }) => {
   const c = tone ?? C.hair;
-  return `<div style="position:relative;display:flex;gap:12px;padding:16px 16px 14px;background:${C.raised};border:1px solid ${hairline(38)};box-shadow:0 2px 6px ${C.shadow};transform:rotate(${tilt}deg)"><span aria-hidden="true" style="position:absolute;top:-8px;left:26px;width:58px;height:16px;background:${mix(c, 24, C.raised)};border:1px solid ${mix(c, 30)};opacity:.9;transform:rotate(-3deg)"></span><span aria-hidden="true" style="flex:none;display:grid;place-items:center;width:28px;height:28px;color:${c};background:${mix(c, 10, C.raised)};border-radius:50%;transform:rotate(5deg)">${ti(icon, 16)}</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px"><strong style="position:relative;isolation:isolate;display:block;width:fit-content;${BODY};font-size:15px;font-weight:600;line-height:1.3;color:${C.ink}">${title}<span aria-hidden="true" style="position:absolute;left:-4px;right:-6px;bottom:1px;height:45%;z-index:-1;background:${mix(c, 20)};transform:rotate(-0.7deg)"></span></strong>${body ? `<p style="margin:0;${ANNOT};font-size:12px;line-height:1.45;color:${C.muted}">${body}</p>` : ""}${extra}${
+  return `<div style="position:relative;display:flex;gap:12px;padding:16px 16px 14px;background:${C.raised};border:1px solid ${hairline(38)};box-shadow:0 2px 6px ${C.shadow};transform:rotate(${tilt}deg)"><span aria-hidden="true" style="position:absolute;top:-8px;left:26px;width:58px;height:16px;background:${mix(c, 24, C.raised)};border:1px solid ${mix(c, 30)};opacity:.9;transform:rotate(-3deg)"></span><span aria-hidden="true" style="flex:none;display:grid;place-items:center;width:28px;height:28px;color:${c};background:${mix(c, 10, C.raised)};border-radius:50%;transform:rotate(5deg)">${ti(icon, 16)}</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;container-type:inline-size"><strong style="position:relative;isolation:isolate;display:block;width:fit-content;${BODY};font-size:15px;font-weight:600;line-height:1.3;color:${C.ink}">${title}<span aria-hidden="true" style="position:absolute;left:-4px;bottom:1px;width:calc(100% + 10px);max-width:50cqi;height:9px;z-index:-1;background:${mix(c, 20)};transform:rotate(-0.7deg)"></span></strong>${body ? `<p style="margin:0;${ANNOT};font-size:12px;line-height:1.45;color:${C.muted}">${body}</p>` : ""}${extra}${
     actions.length
       ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">${actions
           .map(
@@ -316,7 +322,7 @@ const toolbar = ({ sync, panel } = {}) => {
           "",
         )}<div style="display:flex;min-height:44px;align-items:center;gap:8px;margin-top:4px;padding:0 14px;border-top:1px solid ${hairline(24)};${CONTROLS};font-size:12px;color:${C.muted}">${ti("settings", 16)}Sync &amp; data settings</div></div>`
     : "";
-  return `${fold}<div style="position:absolute;left:12px;right:12px;bottom:12px;z-index:3;display:flex;justify-content:space-between;pointer-events:none"><div style="display:flex;gap:6px">${b("settings", "Settings")}${b("message-report", "Feedback")}${syncBtn}</div><div style="display:flex;gap:6px">${b("search", "Search")}${b("filter", "Filters", true)}</div></div>`;
+  return `${fold}<div style="position:absolute;left:12px;right:12px;bottom:12px;z-index:3;display:flex;justify-content:space-between;pointer-events:none"><div style="display:flex;gap:6px">${b("settings", "Settings")}${b("message-report", "Feedback")}${syncBtn}</div><div style="display:flex;gap:6px">${b("search", "Search")}${b("filter", "Filters")}</div></div>`;
 };
 
 // The welcome card’s choices: equal filled options, each with its step count.
@@ -434,7 +440,7 @@ export const pasteField = (value = "") =>
 // A path on the setup page: the whole card is the button. `extra` sits under it, outside the
 // button, for a control of its own (“How it works”).
 export const pathChoice = ({ icon, title, sub, body, extra = "" }) =>
-  `<div style="border:1px solid ${hairline()};border-left:3px solid ${C.accent};background:${C.raised};box-shadow:0 1px 1px ${C.shadow}"><button type="button" style="display:flex;width:100%;align-items:center;gap:12px;padding:14px 14px 14px 14px;background:none;border:0;text-align:left;cursor:pointer;color:${C.ink}">${ti(icon, 22, C.accent)}<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="${BODY};font-size:17px;font-weight:600;line-height:1.15">${title}</span><span style="${CONTROLS};font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:${C.accent}">${sub}</span><span style="${ANNOT};font-size:13px;line-height:1.4;color:${C.muted}">${body}</span></span>${ti("chevron-right", 20, C.muted)}</button>${extra ? `<div style="padding:0 14px 2px 48px;border-top:1px dashed ${hairline()}">${extra}</div>` : ""}</div>`;
+  `<div style="border:1px solid ${hairline()};border-left:3px solid ${C.accent};background:${C.raised};box-shadow:0 1px 1px ${C.shadow}"><button type="button" style="display:flex;width:100%;align-items:center;gap:12px;padding:14px 14px 14px 14px;background:none;border:0;text-align:left;cursor:pointer;color:${C.ink}">${ti(icon, 22, C.accent)}<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="${BODY};font-size:17px;font-weight:600;line-height:1.15">${title}</span><span style="${ANNOT};font-size:12px;font-weight:500;color:${C.accent}">${sub}</span><span style="${ANNOT};font-size:13px;line-height:1.4;color:${C.muted}">${body}</span></span>${ti("chevron-right", 20, C.muted)}</button>${extra ? `<div style="padding:0 14px 2px 48px;border-top:1px dashed ${hairline()}">${extra}</div>` : ""}</div>`;
 export const orRule = () =>
   `<div aria-hidden="true" style="display:flex;align-items:center;gap:10px;margin:-2px 0;${DISPLAY};font-size:18px;color:${C.muted}"><span style="flex:1;height:1px;background:${hairline(50)}"></span>or<span style="flex:1;height:1px;background:${hairline(50)}"></span></div>`;
 // A checkbox row with a 44 px target, drawn like the tracker’s box.

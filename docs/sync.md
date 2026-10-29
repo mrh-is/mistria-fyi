@@ -170,9 +170,10 @@ One Durable Object per mailbox ID.
 ### Operations
 
 - **Kill switch.** A flag in the singleton object, flipped by an authenticated admin request (a
-  dashboard variable would be dropped by the next deploy). “Sync’s taking a nap” applies to uploads
-  & creation on the next request, while reads & retiring still go through. Manual tracking still
-  works.
+  dashboard variable would be dropped by the next deploy). It carries an end time (a day by default;
+  the maintainer can extend it), so it lifts by itself. `sync_paused`, which says so, applies to
+  uploads & creation on the next request, while reads & retiring still go through, & the courier
+  uploads its latest save once it lifts. Manual tracking still works.
 - **Logging.** Request logging stays off.
 - **Takedown.** [takedown.md](takedown.md) gains a relay section.
 - **Tests** run the Durable Object in Miniflare. Deploying needs the maintainer’s Cloudflare login.
@@ -187,17 +188,19 @@ Built in #133. Planned location (not yet created): src/lib/sync/follow.ts. The U
 [the decision record](decisions/2026-10-28-sync-follow-the-save.md).
 
 - **Lanes.** Each device is in exactly one lane: its save is on this computer (the courier), its
-  save is on another device (a follower), or it tracks by hand, the default. The lane & the follow
-  key live in the progress key’s device-only `local` section, so the lane change & the erase are one
-  write. A following lane is recorded only in the write that erases progress & applies the first
-  save; until then the key lives only in the page, so a setup that fails, finds no save, or is
-  abandoned leaves nothing behind. The computer lane is recorded at “Yep!”, in the write that
-  applies its first save. Leaving the computer lane retires its code only after that leaving write
-  lands, never at a confirmation.
-- **The erase.** Switching lanes, “Stop syncing”, & Data’s reset in a syncing lane all write fresh
-  progress & history & remove the receipt, the lane, & the key. They keep `farmSwitchBackup`, which
-  no export carries, & any pending retire. Restoring a backup & a new farm stay inside a lane. See
-  [sync-setup.md](sync-setup.md#lanes).
+  save is on another device (a follower), or it tracks by hand, the default. Joining a syncing lane
+  erases the device’s progress, so a following lane starts only on empty progress; leaving one for
+  tracking by hand keeps progress as it is. The lane & the follow key live in the progress key’s
+  device-only `local` section, so the lane change & the erase are one write. A following lane is
+  recorded only in the write that erases progress & applies the first save; until then the key lives
+  only in the page, so a setup that fails, finds no save, or is abandoned leaves nothing behind. The
+  computer lane is recorded at “Yep!”, in the write that applies its first save. Leaving the
+  computer lane retires its code only after that leaving write lands, never at a confirmation.
+- **The erase & the stop.** Joining a syncing lane & Data’s reset in a syncing lane write fresh
+  progress & history & remove the receipt, the lane, & the key. “Stop syncing” removes only the
+  receipt, the lane, & the key, keeping progress & history, which are then tracked by hand. Both
+  keep `farmSwitchBackup`, which no export carries, & any pending retire. Restoring a backup & a new
+  farm stay inside a lane. See [sync-setup.md](sync-setup.md#lanes).
 - **Opening a link.** A device opens the link, scans its QR code with the tracker’s own scanner (the
   one the transfer card uses), or pastes it. The page strips the fragment from its address bar,
   holds the key in the page (see Lanes), & fetches the latest envelope. An “empty” mailbox shows
@@ -207,8 +210,9 @@ Built in #133. Planned location (not yet created): src/lib/sync/follow.ts. The U
   that’s accepted, since a save holds nothing close to personal data.
 - **One link per device.** A follower follows one link at a time; opening another asks first,
   offering a backup, since a farm switch replaces the one farm-switch backup; the next save applies
-  with the usual rules. “Stop syncing” erases the device & returns it to tracking by hand. A retired
-  code says the PC isn’t sharing on it anymore & keeps all progress until the player stops syncing.
+  with the usual rules. “Stop syncing” returns the device to tracking by hand, keeping its progress.
+  A retired code says the PC isn’t sharing on it anymore & keeps all progress until the player stops
+  syncing.
 - **The courier’s computer has no link to open.** Its tracker already applies its own saves (see
   [The courier](#the-courier)); a link opened there says the save is already on this computer.
   Leaving the lane there also retires its code (see Lanes).

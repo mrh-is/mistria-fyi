@@ -20,10 +20,15 @@ screens. Those rewrites are the examples below.
   sailing!”
 - **Explain the why** in a sentence when it helps the player decide or relax. Longer & kind beats
   terse & cryptic.
-- **Playful asides** live in parentheses & button subtitles: “I’ll track it all by hand (the way my
+- **Playful asides** live in parentheses & button subtitles: “I’ll track it all by hand (The way my
   ancestors did it)”.
 - **Use the player’s world.** Their farmer & farm by name, _Fields of Mistria_, sleeping, the
   autosave.
+- **Playful, not vague.** A joke never stands in for what happened: “Sync is paused for now”, not
+  “Sync’s taking a nap”, & say when it ends (“It’ll turn back on by itself, usually by tomorrow”).
+- **One obvious next step.** Show one active step at a time, with the rest visible but dimmed, so
+  the player never has to read the whole screen to know what to do; every success ends with a button
+  that says where to go.
 - **Never blame the player.** Things “can happen”; they’re never something the player did wrong.
 
 ## The dial
@@ -104,8 +109,8 @@ Offer the risky route only after the safe ones.
 
 - **“Sync” travels with “save file”** wherever copy explains what happens: “sync your save file”,
   “only the game’s save file gets synced”. It reinforces what syncs & what doesn’t. Short labels on
-  a screen that already said it (“Stop syncing”, “Sync’s taking a nap”) & the Home card’s invitation
-  can say “sync” alone.
+  a screen that already said it (“Stop syncing”, “Sync is paused for now”) & the Home card’s
+  invitation can say “sync” alone.
 - **“Check off”, not “tick”;** “by hand” for manual tracking.
 - **Devices:** “your gaming computer”, “your phone”, “this device”, “this computer”. Not “PC” in
   player copy unless the context is only Windows.
@@ -119,8 +124,8 @@ Offer the risky route only after the safe ones.
 - **Curly quotes & apostrophes** (“ ” ’) & the ellipsis character (…).
 - **`&` for close pairs** in labels & short phrases (“Backup & Restore”, “questions & requests”);
   “and” joins clauses in running sentences.
-- **Sentence case** for headings & buttons. Data page card titles stay in title case to match their
-  siblings.
+- **Sentence case** for headings, buttons, & button subtitles. Data page card titles stay in title
+  case to match their siblings.
 - **Exclamation points** are welcome at success & in reassurance; one per message is plenty.
 - **No emoji** in UI text; the app’s icons & sprites carry that job.
 - **Parameters** read naturally in both directions: write variants for missing values (an unnamed
