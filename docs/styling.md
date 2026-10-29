@@ -117,6 +117,23 @@ default 16px root.
 WCAG sets no minimum size, but small text still needs 4.5:1 contrast (1.4.3) and must survive 200%
 zoom (1.4.4), which `rem` sizing supports.
 
+## Firefox scrollbar flash
+
+On Firefox for macOS, expanding or collapsing a recipe source (`source-paper.svelte`) briefly
+reveals the auto-hiding overlay scrollbar (#3). The cause is the open animation: the panel
+transitions `grid-template-rows` from `0fr` to `1fr` over 260ms, so the document’s `scrollHeight`
+changes on every frame (in Chromium it steps through 15 distinct values during one open). Firefox
+reveals an overlay scrollbar when the scrollable extent changes, and any in-flow expansion changes
+it. The app accepts this native behavior:
+
+- Do not hide scrollbars to avoid it. `scrollbar-width: none` stops the flash but removes the
+  draggable affordance everywhere.
+- Do not rely on `scrollbar-gutter: stable` or a forced `overflow-y: scroll`. Neither affects
+  overlay-scrollbar visibility.
+- Shorter or instant transitions are not a fix; the final height still differs.
+- Revisit only if sources move to a presentation that leaves the document height unchanged, such as
+  an overlay panel. That is a design change, not a CSS fix.
+
 ## Adding a token vs. a one-off
 
 Add a token when:
