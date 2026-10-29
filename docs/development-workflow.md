@@ -356,7 +356,9 @@ the budgets.
 The local Workers integration file, `relay/worker.test.ts`, has a 30-second file ceiling. It runs
 real workerd eviction, hibernating WebSocket closure, & SQLite runtime restarts, with measured
 provider-runtime waits totaling about 20 seconds. This exception changes neither other file ceilings
-nor the suite’s wall-time budget; see [the decision](decisions/2026-10-29-sync-relay.md).
+nor the suite’s wall-time budget. Its sequencer starts this file first within its pool, preserving
+the default order for all other files, so runtime waits overlap ordinary tests even with a cold
+timing cache; see [the decision](decisions/2026-10-29-sync-relay.md).
 
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |

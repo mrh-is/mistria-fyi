@@ -42,6 +42,11 @@ close wait. It exercises actual SQLite persistence & hibernation rather than rep
 with fakes. Ordinary file ceilings & the suite’s wall-time budget stay unchanged; synthetic tests
 prove that this file still fails above 30 seconds & that other files retain their existing ceiling.
 
+Start the relay integration first within its Vitest pool, retaining the default sequencer’s order
+for every other file. Its runtime waits can then overlap ordinary tests, including on a cold timing
+cache. The first PR run hit the unchanged 90-second wall ceiling; no suite budget or worker count is
+raised by this scheduling change.
+
 ## Alternatives
 
 1. A rate binding with a 3,600-second period is invalid. A minute-only cap permits 180 creations an
@@ -55,6 +60,8 @@ prove that this file still fails above 30 seconds & that other files retain thei
    lifecycle & secrets independent of the application build.
 5. Omitting runtime eviction checks to fit ordinary unit-test timing would leave a required
    persistence boundary untested. Raising every file’s ceiling would hide unrelated regressions.
+6. Relying on Vitest’s timing cache to start the relay early does not cover a new file’s first CI
+   run. Explicitly prioritizing this one integration file keeps the existing suite budget intact.
 
 ## Revisit if
 

@@ -12,6 +12,7 @@ import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
+import RelayFirstSequencer from "./scripts/vitest-relay-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
@@ -344,6 +345,7 @@ export default defineConfig({
       },
     ],
     restoreMocks: true,
+    sequence: { sequencer: RelayFirstSequencer },
     testTimeout: loadTolerantTimeoutMs,
     unstubEnvs: true,
     unstubGlobals: true,
