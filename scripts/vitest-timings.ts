@@ -61,6 +61,8 @@ export const cliProbeFiles = [
   "scripts/playwright-allocation.test.ts",
   "tests/lint-ownership.test.ts",
   "tests/vitest-projects.test.ts",
+  // Spawns the script, git, & a fake pnpm in every case; 6.8 s on a four-CPU runner in #288.
+  "scripts/setup-worktree.test.ts",
 ];
 
 export interface VitestInvocation {
