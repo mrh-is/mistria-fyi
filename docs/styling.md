@@ -123,14 +123,17 @@ On Firefox for macOS, expanding or collapsing a recipe source (`source-paper.sve
 reveals the auto-hiding overlay scrollbar (#3). The cause is the open animation: the panel
 transitions `grid-template-rows` from `0fr` to `1fr` over 260ms, so the document’s `scrollHeight`
 changes on every frame (in Chromium it steps through 15 distinct values during one open). Firefox
-reveals an overlay scrollbar when the scrollable extent changes, and any in-flow expansion changes
-it. The app accepts this native behavior:
+appears to reveal an overlay scrollbar when the scrollable extent changes, and any in-flow expansion
+changes it. The app accepts this native behavior. The maintainer tested the approaches below on
+Firefox for macOS (#3); the frame measurement above comes from Chromium, since Firefox could not be
+automated here:
 
 - Do not hide scrollbars to avoid it. `scrollbar-width: none` stops the flash but removes the
   draggable affordance everywhere.
 - Do not rely on `scrollbar-gutter: stable` or a forced `overflow-y: scroll`. Neither affects
   overlay-scrollbar visibility.
-- Shorter or instant transitions are not a fix; the final height still differs.
+- Shorter or instant transitions are untested; the final height still differs, so they are unlikely
+  to help. Reduced-motion users already get an instant transition.
 - Revisit only if sources move to a presentation that leaves the document height unchanged, such as
   an overlay panel. That is a design change, not a CSS fix.
 
