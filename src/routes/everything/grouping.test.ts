@@ -1,11 +1,15 @@
-import { beforeEach, expect, it } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 
+import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
 import AllPage from "./+page.svelte";
+
+import type { WaterType } from "#lib/types/acquisition.js";
+import type { StoreId } from "#lib/types/tracker-data.js";
 
 const props = {
   data: {
@@ -18,6 +22,43 @@ const props = {
 beforeEach(() => {
   userState.resetAll();
   pageStub.reset();
+  // Routing needs representative anchors, not a repeated render of every acquisition instance.
+  // Controller & projection tests cover the full data; this per-test spy restores automatically.
+  vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+    {
+      category: "almanac",
+      completed: false,
+      id: "acorn",
+      key: "almanac:almanac-item:acorn",
+      name: "Acorn",
+      obtainable: true,
+      reportCategory: "almanac-item",
+      sources: [{ type: "store", storeId: "balor" as StoreId }],
+      toggle: vi.fn(() => vi.fn()),
+    },
+    {
+      category: "almanac",
+      completed: false,
+      id: "anchovy",
+      key: "almanac:almanac-item:anchovy",
+      name: "Anchovy",
+      obtainable: true,
+      reportCategory: "almanac-item",
+      sources: [{ type: "fish", waterTypes: ["ocean" as WaterType] }],
+      toggle: vi.fn(() => vi.fn()),
+    },
+    {
+      category: "almanac",
+      completed: false,
+      id: "unsourced",
+      key: "almanac:almanac-item:unsourced",
+      name: "Unsourced entry",
+      obtainable: true,
+      reportCategory: "almanac-item",
+      sources: [],
+      toggle: vi.fn(() => vi.fn()),
+    },
+  ]);
 });
 
 it("offers both grouping lenses and renders source anchors from the device preference", () => {
