@@ -130,6 +130,33 @@
   "skill_perks_unlocked": "{count}/{available} 해금",
   "skill_perks_more_locked": "{count}개 더 잠김",
   "skill_perks_locked": "{count}개 잠김",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "도감 아이템 {count}개 해금"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "코스메틱 {count}개 해금"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "레시피 {count}개 해금"
+      }
+    }
+  ],
   "skill_level_heading": "레벨",
   "mines_floor_progress_section": "층 진행도",
   "mines_floor_progress_compact_label": "층 진행도",

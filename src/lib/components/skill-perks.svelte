@@ -10,9 +10,11 @@
   import { getName } from "#lib/data/names.js";
   import { celebrateCategory } from "#lib/effects/celebrate.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { perkUnlocksFor } from "#lib/engine/perk-unlocks.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
   import { recordKeys } from "#lib/utils/record.js";
 
   import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -52,6 +54,7 @@
             name: getName("perks", perkId, locale),
             spoilered: !visible && !unlocked,
             unlocked,
+            unlocks: unlocksOf(perkId),
           };
         }),
         reached: (userState.state.progress.skillLevels[id] ?? 0) >= level,
@@ -68,6 +71,33 @@
     if (locked === 0) return m.skill_perks_toggle_aria({ available, count: unlocked, name });
     return m.skill_perks_toggle_aria_more_locked({ available, count: unlocked, locked, name });
   });
+
+  /** The pages a perk leads to, each with how many entries it unlocks there. */
+  function unlocksOf(perkId: PerkId): { count: number; href: string; id: string; label: string }[] {
+    const unlocks = perkUnlocksFor(perkId);
+    if (!unlocks) return [];
+    const { almanac, cosmetics, recipes } = unlocks;
+    return [
+      {
+        count: recipes.length,
+        href: localizedHref("recipes"),
+        id: "recipes",
+        label: m.skill_perk_unlocks_recipes({ count: recipes.length }),
+      },
+      {
+        count: almanac.length,
+        href: localizedHref("almanac"),
+        id: "almanac",
+        label: m.skill_perk_unlocks_almanac({ count: almanac.length }),
+      },
+      {
+        count: cosmetics.length,
+        href: localizedHref("cosmetics"),
+        id: "cosmetics",
+        label: m.skill_perk_unlocks_cosmetics({ count: cosmetics.length }),
+      },
+    ].filter(({ count }) => count > 0);
+  }
 
   function togglePerk(perk: (typeof perks)[number]): void {
     const toggle = (): void => {
@@ -149,16 +179,23 @@
                     togglePerk({ ...perk, tier });
                   }}
                 />
-                <span class="skill-perks__perk-name">
-                  {#if perk.spoilered}
-                    <Spoiler
-                      spoilered={covered}
-                      onReveal={() => {
-                        revealed.add(perk.id);
-                      }}>{perk.name}</Spoiler
-                    >
-                  {:else}
-                    {perk.name}
+                <span class="skill-perks__perk-body">
+                  <span class="skill-perks__perk-name">
+                    {#if perk.spoilered}
+                      <Spoiler
+                        spoilered={covered}
+                        onReveal={() => {
+                          revealed.add(perk.id);
+                        }}>{perk.name}</Spoiler
+                      >
+                    {:else}
+                      {perk.name}
+                    {/if}
+                  </span>
+                  {#if !covered}
+                    {#each perk.unlocks as unlock (unlock.id)}
+                      <a class="skill-perks__unlocks" href={unlock.href}>{unlock.label}</a>
+                    {/each}
                   {/if}
                 </span>
               </li>
@@ -300,9 +337,38 @@
     color: var(--color-ink-muted);
   }
 
+  .skill-perks__perk-body {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1px;
+  }
+
   .skill-perks__perk-name {
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+
+  /* A cross-reference in the margin, like a journal's "see also". */
+  .skill-perks__unlocks {
+    color: var(--color-category-skills);
+    font-family: var(--font-annotation);
+    font-size: var(--text-2xs);
+    font-style: italic;
+    line-height: 1.2;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+  }
+
+  .skill-perks__unlocks:is(:active, :focus-visible) {
+    outline: 2px solid var(--color-category-skills);
+    outline-offset: 1px;
+  }
+
+  @media (hover: hover) {
+    .skill-perks__unlocks:hover {
+      text-decoration-style: solid;
+    }
   }
 
   @media (min-width: 701px) and (hover: hover) and (pointer: fine) {

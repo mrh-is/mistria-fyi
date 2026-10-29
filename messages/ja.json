@@ -130,6 +130,33 @@
   "skill_perks_unlocked": "{count}/{available} 解放済み",
   "skill_perks_more_locked": "ほか{count}個未解放",
   "skill_perks_locked": "{count}個未解放",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "図鑑アイテム{count}個を解放"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "コスメ{count}個を解放"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "レシピ{count}個を解放"
+      }
+    }
+  ],
   "skill_level_heading": "レベル",
   "mines_floor_progress_section": "階層の進捗",
   "mines_floor_progress_compact_label": "階層の進捗",

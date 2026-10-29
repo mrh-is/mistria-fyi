@@ -134,6 +134,39 @@
   "skill_perks_unlocked": "{count} / {available} débloqués",
   "skill_perks_more_locked": "encore {count} verrouillés",
   "skill_perks_locked": "{count} verrouillés",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "débloque {count} objet de l’almanach",
+        "countPlural=many": "débloque {count} objets de l’almanach",
+        "countPlural=other": "débloque {count} objets de l’almanach"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "débloque {count} cosmétique",
+        "countPlural=many": "débloque {count} cosmétiques",
+        "countPlural=other": "débloque {count} cosmétiques"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "débloque {count} recette",
+        "countPlural=many": "débloque {count} recettes",
+        "countPlural=other": "débloque {count} recettes"
+      }
+    }
+  ],
   "skill_level_heading": "Niveau",
   "mines_floor_progress_section": "Progression des étages",
   "mines_floor_progress_compact_label": "Progression des étages",

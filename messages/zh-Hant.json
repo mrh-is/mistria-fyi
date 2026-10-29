@@ -130,6 +130,33 @@
   "skill_perks_unlocked": "已解鎖 {count}/{available}",
   "skill_perks_more_locked": "另有{count}個未解鎖",
   "skill_perks_locked": "{count}個未解鎖",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "解鎖{count}個圖鑑物品"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "解鎖{count}個裝飾"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "解鎖{count}個食譜"
+      }
+    }
+  ],
   "skill_level_heading": "等級",
   "mines_floor_progress_section": "樓層進度",
   "mines_floor_progress_compact_label": "樓層進度",
