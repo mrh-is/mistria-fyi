@@ -177,13 +177,10 @@ export const qrBand = (state, caption, after = "") => {
       : state === "generating"
         ? `<div role="status" style="position:relative;width:184px;height:184px;box-sizing:border-box;background:${C.sunken};${frame};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;text-align:center">${ti("loader-2", 22, C.muted)}<span style="${BODY};font-size:14px;color:${C.muted}">Generating the code…</span>${corners()}</div>`
         : state === "paused"
-          ? `<div role="status" style="position:relative;width:calc(100% - 32px);box-sizing:border-box;background:${C.sunken};${frame};display:flex;gap:10px;padding:14px 16px">${ti("player-pause", 18, C.muted, "margin-top:2px")}<div style="display:flex;flex-direction:column;gap:4px"><strong style="${BODY};font-size:15px;color:${C.ink}">Sync is paused for now</strong><span style="${ANNOT};font-size:13px;line-height:1.45;color:${C.muted}">We’ve paused syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow. You can make your code later from Data.</span></div></div>`
+          ? `<div role="status" style="position:relative;width:calc(100% - 32px);box-sizing:border-box;background:${C.sunken};${frame};display:flex;gap:10px;padding:14px 16px">${ti("player-pause", 18, C.muted, "margin-top:2px")}<div style="display:flex;flex-direction:column;gap:4px"><strong style="${BODY};font-size:15px;color:${C.ink}">Sync is paused for now</strong><span style="${ANNOT};font-size:13px;line-height:1.45;color:${C.muted}">We’ve paused save file syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow. You can make your code later from Data.</span></div></div>`
           : `<div style="position:relative;width:184px;height:184px;box-sizing:border-box;background:${C.sunken};${frame};display:flex;align-items:center;justify-content:center">${btn("Show code", { icon: "eye" })}${corners()}</div>`;
   return `<div style="margin:0 -14px;padding:18px 0 16px;border-top:1px solid ${hairline(60)};border-bottom:1px solid ${hairline(60)};background:${mix(C.sunken, 45, C.raised)};display:flex;flex-direction:column;align-items:center;gap:10px">${box}${caption ? `<p style="margin:0;padding:0 16px;text-align:center;${ANNOT};font-size:12px;color:${C.muted}">${caption}</p>` : ""}${after}</div>`;
 };
-
-export const matchCode = (digits = "482 913") =>
-  `<div style="position:relative;align-self:center;padding:12px 22px;background:${C.sunken}"><span role="img" aria-label="Matching code ${digits.replace(/ /g, "").split("").join(" ")}" style="${DATA};font-size:34px;font-weight:500;letter-spacing:.1em;color:${C.ink}">${digits}</span>${corners(10, -3)}</div>`;
 
 // The import card's drop zone, with corners.
 export const dropZone = ({
@@ -236,17 +233,6 @@ export const tagDialog = ({ title, desc = "", body = "", actions = [], narrow = 
         `<button type="button" style="flex:1;min-height:44px;border:1px solid ${confirm ? C.tagAccent : mix(C.tagInk, 42)};background:${confirm ? C.tagAccent : "transparent"};color:${confirm ? C.tagHi : C.tagInk};${CONTROLS};font-size:12px;cursor:pointer">${t}</button>`,
     )
     .join("")}</div></div></div></div>`;
-
-// “How it works”, a tag dialog opened from the welcome card.
-export const howDialog = () => {
-  const part = (ic, t, d) =>
-    `<li style="display:flex;gap:10px;align-items:flex-start">${ti(ic, 18, C.tagAccent, "margin-top:2px")}<div><p style="margin:0;${BODY};font-size:15px;font-weight:600;color:${C.tagInk}">${t}</p><p style="margin:0;${ANNOT};font-size:13px;line-height:1.4;color:${C.tagMuted}">${d}</p></div></li>`;
-  return tagDialog({
-    title: "How it works",
-    body: `<ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px">${part("device-floppy", "The game saves", "Fields of Mistria writes a save on your PC every time you sleep.")}${part("device-desktop", "The relay passes it on", "A tab like this one, open on that PC, spots each new save and sends it to your phone, locked so only your phone can read it.")}${part("device-mobile", "The tracker catches up", "Your phone updates your progress. Anything you check off by hand stays on the device where you checked it off, unless your PC sends its progress when you pair.")}</ol>`,
-    actions: [["Got it", true]],
-  });
-};
 
 // A field note: a taped-in slip with the app’s highlighter band under its title. Amber needs
 // you, red is an error, green is good news, and hairline is just so you know.

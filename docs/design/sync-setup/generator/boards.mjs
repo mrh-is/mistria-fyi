@@ -171,7 +171,7 @@ const findBody = ({ copied = false, help = false } = {}) =>
           : "Copy the folder first, and this box will wake up.",
         browse: false,
       }) +
-      `<div>${textLink("Can’t drag? Choose the file instead", "font-size:13px")}</div>` +
+      `<div>${textLink("Can’t drag?", "font-size:13px")}</div>` +
       helpToggle(help) +
       (help ? HELP : ""),
     copied,
@@ -222,7 +222,8 @@ const redropStep = () =>
       dim(p("First, copy this folder location:") + pathRow(true), false) +
       dim(
         p("Open it in File Explorer and drag your newest autosave in.") +
-          dropZone({ label: "Drop your autosave here" }) +
+          dropZone({ label: "Drop your autosave here", browse: false }) +
+          `<div>${textLink("Can’t drag?", "font-size:13px")}</div>` +
           note("Whenever you’re done playing, drop your save file in again and we’ll sync it."),
         true,
       ),
@@ -665,7 +666,7 @@ export const rows = [
               tone: C().amber,
               icon: "qrcode",
               title: "Your computer stopped sharing this save file",
-              body: "Scan its new code to keep syncing.",
+              body: "Scan its new code to keep your save file syncing.",
               actions: [["Scan the code", true]],
             }),
             { device: "phone", toolbar: { sync: { tone: C().amber, status: "needs a look" } } },
@@ -761,7 +762,7 @@ export const rows = [
             fieldNote({
               icon: "player-pause",
               title: "Sync is paused for now",
-              body: "We’ve paused syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow, and catch up then. Checking things off by hand still works.",
+              body: "We’ve paused save file syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow, and catch up then. Checking things off by hand still works.",
             }),
             { toolbar: { sync: { tone: C().hair, status: "paused" } } },
           ),
@@ -847,6 +848,21 @@ export const rows = [
           }),
       },
       {
+        file: "Data-Stop-PC.dc.html",
+        title: "Computer · Stop syncing: progress stays, the code retires",
+        ...PC,
+        h: 860,
+        render: () =>
+          dataBoard(true, {
+            h: 860,
+            overlay: tagDialog({
+              title: "Stop syncing?",
+              desc: "Your progress stays right here, and you’ll check things off by hand from now on. Your other devices will stop getting your save file. If you sync your save file again later, it’ll start fresh.",
+              actions: [["Cancel"], ["Stop syncing", true]],
+            }),
+          }),
+      },
+      {
         file: "Data-Stop.dc.html",
         title: "Phone · Stop syncing: progress stays",
         ...PH,
@@ -854,7 +870,7 @@ export const rows = [
           dataBoard(false, {
             overlay: tagDialog({
               title: "Stop syncing?",
-              desc: "Your progress stays right here, and you’ll check things off by hand from now on. If you turn syncing back on later, it’ll start fresh.",
+              desc: "Your progress stays right here, and you’ll check things off by hand from now on. If you sync your save file again later, it’ll start fresh.",
               actions: [["Cancel"], ["Stop syncing", true]],
               narrow: true,
             }),

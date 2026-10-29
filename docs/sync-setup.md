@@ -9,10 +9,12 @@ starts fresh; stopping keeps everything. This document is the journey, the scree
 #131; the protocol is in [sync.md](sync.md), & the reasons are in
 [the decision record](decisions/2026-10-28-sync-follow-the-save.md).
 
-Status: journey, copy, & mockups in review on #131 (PR #275). Every state has a board on the
+Status: journey, copy, & mockups in review on #131 (PR #275). Every main state has a board on the
 [design canvas](https://claude.ai/artifact/5MG6rDBdx4HqjGmQyBbjrD); [Screens](#screens) embeds a
-sheet per row from the [design package](design/sync-setup/README.md). This replaces the pairing
-design explored on #251.
+sheet per row from the [design package](design/sync-setup/README.md). Not drawn, & specified only
+here & in the copy table: the Linux & Mac folder views, “Show code” from Data (the same code area as
+setup), the version-update notices, the blocked-store notice, the one-year expired code, & the
+farm’s “try that again” hint. This replaces the pairing design explored on #251.
 
 ## Mental model
 
@@ -42,8 +44,9 @@ For sync in particular:
 - **Use the player’s world:** their farmer, their farm, _Fields of Mistria_.
 - **“Sync” travels with “save file”** wherever copy explains what happens (“sync your save file”,
   “only the game’s save file gets synced”), so it keeps reinforcing what syncs & what doesn’t. Short
-  labels on a screen that already said it, like “Stop syncing”, can stand alone. Never “pair”,
-  “relay”, or “follow” in player copy, & “link” only where the player copies, pastes, or opens one.
+  labels on a screen that already said it, like “Stop syncing”, & the Home card’s invitation can
+  stand alone. Never “pair”, “relay”, or “follow” in player copy, & “link” only where the player
+  copies, pastes, or opens one.
 - **Reassure on errors in this order:** nothing is lost, it isn’t your fault, here’s what happens
   next. Never promise a precise time.
 - **Remind the gaming computer to stay open,** often: at success, in its status, & on its errors.
@@ -60,12 +63,12 @@ For sync in particular:
 - **One lane per device.** “Device” means one browser profile, or one installed app on iPhone, since
   iOS keeps those apart.
 - **Every device starts by hand,** which is today’s tracker.
-- **Starting to sync starts fresh.** Joining either syncing lane, including joining again later or
-  moving from one to the other, erases the device’s progress first, since syncing starts from the
-  save file. The dialog offers a backup every time. This is the v1 rule, chosen over merging or
-  carrying progress between lanes.
+- **Starting to sync starts fresh.** Joining either syncing lane, including joining again later,
+  erases the device’s progress first, since syncing starts from the save file. The dialog offers a
+  backup every time. This is the v1 rule, chosen over merging or carrying progress between lanes.
 - **Stopping keeps everything.** Leaving a syncing lane for tracking by hand keeps progress as it
-  is, since it’s already here; from then on it’s tracked by hand.
+  is, since it’s already here; from then on it’s tracked by hand. There’s no direct move between the
+  two syncing lanes: stop syncing, then set up again, which starts fresh.
 - **A lane starts when the first save file applies.** The erase lands in the same write, & nothing
   is stored before it, so a setup that fails, finds no save file, or is abandoned changes nothing.
 - **Within a lane, nothing is lost.** Scanning a different code, a new farm, & restoring a backup
@@ -81,7 +84,7 @@ removes them, & the player sets them by hand:
 
 - Household choices: relationship changes like a break-up, & choosing not to have children (only
   wanting them leaves evidence). The save does record the break-ups setting, but sync doesn’t
-  compare it yet. Sync doesn’t compare household facts yet ([sync.md](sync.md#completeness)).
+  compare household facts yet ([sync.md](sync.md#completeness)).
 - The Mistmare’s appearance, which the save shows only through one cutscene.
 
 The erase dialog & the “only the save file syncs” notes can say “nearly everything” honestly.
@@ -135,8 +138,11 @@ at the bottom.
    - **Open it.** “Now open File Explorer and paste that into the address bar at the top.” It should
      show files like `game-[numbers]-autosave.sav`.
    - **Drag in the autosave.** Drag only where the save file is watched, since Windows refuses the
-     file picker under `%LOCALAPPDATA%` & a picked file can’t be watched. “Can’t drag? Choose the
-     file instead” switches to dropping it in again after each session, with that copy.
+     file picker under `%LOCALAPPDATA%` & a picked file can’t be watched. Windows’s file picker
+     can’t open that folder either, so “Can’t drag?” (`sync_find_cant_drag`) explains the way around
+     it: copy the save file to the Desktop & choose it there. A copy can’t be watched, so that
+     switches to dropping it in again after each session, with that copy; a keyboard path to the
+     live file is a #130 check.
    - **Can’t find it?** A collapsed section, safest first: check the path was pasted into the
      address bar, not the search box; on Linux & Steam Deck, the Steam library fallback; then
      Windows key + R with the same path, noting it’s safe here because it only opens a folder, &
@@ -202,9 +208,9 @@ watched, but it’s a handy way to grab a save file for development.
 ## Living with it
 
 Syncing devices have a quiet status button beside settings & feedback. Its panel says where the save
-file comes from & when the last one came, with “Show code” on the gaming computer & a reminder to
-keep the tab open there. It speaks up with a dot & a short slip only when something is late or
-wrong. Its accessible name is “Save file sync: {status}”.
+file comes from, when the last one came, & its in-game date (`sync_panel_*`), with “Show code” on
+the gaming computer & a reminder to keep the tab open there. It speaks up with a dot & a short slip
+only when something is late or wrong. Its accessible name is “Save file sync: {status}”.
 
 | Stage            | The gaming computer                             | Another device                                                    |
 | ---------------- | ----------------------------------------------- | ----------------------------------------------------------------- |
@@ -217,7 +223,7 @@ wrong. Its accessible name is “Save file sync: {status}”.
 | New phone        | Show the code again                             | The new phone scans it; the old one keeps syncing until it stops  |
 | Non-Chrome       | Drop the save file in again after each session  | Updates whenever it’s dropped in                                  |
 | New code         | “Make a new code” in Data                       | “Your computer stopped sharing this save file”; scan the new code |
-| Paused           | `sync_paused`, hairline; lifts by itself        | Nothing new arrives; the gap slip if it lasts                     |
+| Paused           | `sync_paused_*`, hairline; lifts by itself      | Nothing new arrives; the gap slip if it lasts                     |
 
 Check-offs made by hand on a phone stay on that phone, so a new phone starts with only what’s in the
 save file. A player who wants them moves them with backup & restore, which stays in the lane.
@@ -229,12 +235,13 @@ hand, keeping all its progress. Each of the card’s actions carries a line sayi
 (`sync_show_code_sub`, `sync_new_code_sub`, `sync_stop_sub`, `sync_scan_other_sub`), so “Make a new
 code” explains itself before anyone opens its dialog.
 
-- **On the gaming computer,** leaving the lane, by “Stop syncing” or by switching to the other
-  syncing lane, also retires the code once the leaving write lands, so other devices say the
-  computer stopped sharing & keep what they have until they stop too. A retire that can’t reach the
-  relay keeps retrying.
+- **On the gaming computer,** leaving the lane by “Stop syncing” (or Data’s reset, which stops
+  syncing too) also retires the code once the leaving write lands, so other devices say the computer
+  stopped sharing & keep what they have until they stop too. A retire that can’t reach the relay
+  keeps retrying.
 - **Stopping removes only the sync state:** the receipt, the lane, & the key. **Starting fresh**
   erases progress & history too, but keeps the farm-switch backup, since no export carries it.
+  **Data’s reset** in a syncing lane erases progress & stops syncing, back to tracking by hand.
 - **“Make a new code”** stays in the lane, for when the old one ended up on stream. It makes & shows
   the new code first, then retires the old one; if it can’t make one, the old code keeps working
   (`sync_new_code_failed`).
@@ -248,7 +255,7 @@ code” explains itself before anyone opens its dialog.
   keep the tab open. Another device shows the short version only when it gets a save file it can’t
   read either; otherwise it just sees no new saves.
 - **The save file moved or access lapsed:** an amber field note with the drop box & folder again.
-- **Sync can’t be reached:** `sync_unreachable` with “Try again”, on either side. Uploads retry by
+- **Sync can’t be reached:** `sync_unreachable_*` with “Try again”, on either side. Uploads retry by
   themselves.
 - **Sync is paused** (the kill switch): a hairline note on the gaming computer saying it turns back
   on by itself, usually by tomorrow, & catches up then; nothing to do. Other devices just see no new
@@ -330,6 +337,9 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_where_hand_sub`       | No save file                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `sync_where_here_mac`       | The game runs on this Mac                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `sync_where_hand`           | I’ll track it all by hand                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `sync_where_other_body`     | Scan a code from the computer that runs the game.                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `sync_where_here_body`      | Read it here, and share it with your phone.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `sync_where_hand_body`      | Check things off yourself. You can still import a save file now and then.                                                                                                                                                                                                                                                                                                                                                                              |
 | `sync_only_save_device`     | Computer: Heads up: only the game’s save file gets synced; anything you check off by hand on this computer stays here. Easiest is to track on one device, like your phone, and let your gaming computer just read the save file. Phone: Heads up: only the game’s save file gets synced; anything you check off by hand on this phone stays here. Easiest is to do all your tracking right here, and let your gaming computer just read the save file. |
 | `sync_override_computer`    | On a computer?                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `sync_override_phone`       | On a phone?                                                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -351,9 +361,12 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_find_other_os`       | On Linux, Steam Deck, or a Mac?                                                                                                                                                             |
 | `sync_find_linux_hint`     | Not there? Look in your Steam library’s steamapps/compatdata/2142790 folder.                                                                                                                |
 | `sync_find_open`           | Now open File Explorer and paste that into the address bar at the top. It should take you to a folder with files like `game-[numbers]-autosave.sav`. Drag that autosave file into this box: |
+| `sync_find_open_redrop`    | Open it in File Explorer and drag your newest autosave in.                                                                                                                                  |
 | `sync_find_drop`           | Drop your autosave here                                                                                                                                                                     |
 | `sync_find_drop_locked`    | Copy the folder first, and this box will wake up.                                                                                                                                           |
-| `sync_find_cant_drag`      | Can’t drag? Choose the file instead                                                                                                                                                         |
+| `sync_find_cant_drag`      | Can’t drag?                                                                                                                                                                                 |
+| `sync_find_cant_drag_body` | Copy the save file to your Desktop, then choose it from there. We can’t watch a copy, though, so you’ll need to do that again after you play.                                               |
+| `sync_find_choose`         | Choose a copy                                                                                                                                                                               |
 | `sync_find_help`           | Can’t find it?                                                                                                                                                                              |
 | `sync_find_help_bar`       | Make sure you pasted it into the address bar at the very top of File Explorer, not the search box.                                                                                          |
 | `sync_find_help_run`       | Still nothing? Press the Windows key + R, paste the same folder location, and press Enter. (That only opens a folder. Never paste anything else into that box, from us or anyone.)          |
@@ -375,69 +388,90 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_done_watched`        | While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!                                                                                     |
 | `sync_done_redrop`         | Whenever you’re done playing, drop your save file in again and we’ll sync it.                                                                                                               |
 | `sync_done_home`           | Go to my field guide                                                                                                                                                                        |
+| `sync_done_code_summary`   | Your code’s ready any time in Data                                                                                                                                                          |
 | `sync_tip_chrome`          | Let Chrome do this for you                                                                                                                                                                  |
 | `sync_tip_chrome_body`     | In Chrome or Edge, we can sync your save file every time you sleep, no dropping it in again.                                                                                                |
+| `sync_tip_chrome_after`    | Copy this page’s link, then paste it into Chrome or Edge.                                                                                                                                   |
 | `sync_tip_chrome_copy`     | Copy this page’s link                                                                                                                                                                       |
 | `sync_tip_chrome_dismiss`  | I’ll stick with this browser                                                                                                                                                                |
 
 ### On another device
 
-| Key                   | Text                                                                                                                                                                               |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sync_scan_title`     | Scan the code from your gaming computer                                                                                                                                            |
-| `sync_scan_body`      | On your gaming computer, open {url} in Chrome or Edge and go through the steps there. When it shows a code, scan it here.                                                          |
-| `sync_scan`           | Scan the code                                                                                                                                                                      |
-| `sync_scan_paste`     | Or paste a link                                                                                                                                                                    |
-| `sync_scan_bad`       | Hmm, that link doesn’t look quite right. Try scanning the code instead?                                                                                                            |
-| `sync_got_it_title`   | Got it!                                                                                                                                                                            |
-| `sync_got_it_body`    | Your farm as of {time}. We’ll keep up from here.                                                                                                                                   |
-| `sync_waiting`        | Your code works, but there’s no save file waiting yet. Open the tracker on your gaming computer, and we’ll grab the latest one.                                                    |
-| `sync_ios_title`      | Quick question: here, or the home screen app?                                                                                                                                      |
-| `sync_ios_body`       | Safari can clear a site’s data if you don’t visit for a week. The home screen app hangs on to it.                                                                                  |
-| `sync_ios_here`       | Sync in {browser}                                                                                                                                                                  |
-| `sync_ios_app`        | I’ll use the app                                                                                                                                                                   |
-| `sync_ios_app_steps`  | Tap Share, then “Add to Home Screen”. Open the tracker from your home screen and tap “Scan the code” there.                                                                        |
-| `sync_switch_title`   | Sync this save file instead?                                                                                                                                                       |
-| `sync_switch_body`    | This device will start getting a different save file. If it’s a different farm, we’ll back up the current one, but only one backup fits, so you might want to make your own first. |
-| `sync_switch_backup`  | Make a backup                                                                                                                                                                      |
-| `sync_switch_confirm` | Switch it                                                                                                                                                                          |
-| `sync_switch_cancel`  | Cancel                                                                                                                                                                             |
-| `sync_already_here`   | Your save file is already on this computer.                                                                                                                                        |
+| Key                     | Text                                                                                                                                                                               |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sync_scan_title`       | Scan the code from your gaming computer                                                                                                                                            |
+| `sync_scan_body`        | On your gaming computer, open {url} in Chrome or Edge and go through the steps there. When it shows a code, scan it here.                                                          |
+| `sync_scan`             | Scan the code                                                                                                                                                                      |
+| `sync_scan_paste`       | Or paste a link                                                                                                                                                                    |
+| `sync_scan_bad`         | Hmm, that link doesn’t look quite right. Try scanning the code instead?                                                                                                            |
+| `sync_got_it_title`     | Got it!                                                                                                                                                                            |
+| `sync_got_it_body`      | Your farm as of {time}. We’ll keep up from here.                                                                                                                                   |
+| `sync_got_it_note`      | Anything you check off by hand on this phone stays here.                                                                                                                           |
+| `sync_waiting_title`    | Almost there                                                                                                                                                                       |
+| `sync_waiting`          | Your code works, but there’s no save file waiting yet. Open the tracker on your gaming computer, and we’ll grab the latest one.                                                    |
+| `sync_waiting_progress` | Waiting for your save file…                                                                                                                                                        |
+| `sync_waiting_note`     | Nothing on this phone changes until a save file arrives.                                                                                                                           |
+| `sync_ios_title`        | Quick question: here, or the home screen app?                                                                                                                                      |
+| `sync_ios_body`         | Safari can clear a site’s data if you don’t visit for a week. The home screen app hangs on to it.                                                                                  |
+| `sync_ios_here`         | Sync in {browser}                                                                                                                                                                  |
+| `sync_ios_app`          | I’ll use the app                                                                                                                                                                   |
+| `sync_ios_app_steps`    | Tap Share, then “Add to Home Screen”. Open the tracker from your home screen and tap “Scan the code” there.                                                                        |
+| `sync_switch_title`     | Sync this save file instead?                                                                                                                                                       |
+| `sync_switch_body`      | This device will start getting a different save file. If it’s a different farm, we’ll back up the current one, but only one backup fits, so you might want to make your own first. |
+| `sync_switch_backup`    | Make a backup                                                                                                                                                                      |
+| `sync_switch_confirm`   | Switch it                                                                                                                                                                          |
+| `sync_switch_cancel`    | Cancel                                                                                                                                                                             |
+| `sync_already_here`     | Your save file is already on this computer.                                                                                                                                        |
 
 ### Living with it
 
-| Key                     | Text                                                                                                                                                                                                   |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sync_status_ok`        | Last save file from your game: {time}                                                                                                                                                                  |
-| `sync_status_keep_open` | Keep this tab open while you play so we can sync your save file.                                                                                                                                       |
-| `sync_status_gap`       | Haven’t heard from your game in {days} days                                                                                                                                                            |
-| `sync_status_name`      | Save file sync: {status}                                                                                                                                                                               |
-| `sync_stop`             | Stop syncing                                                                                                                                                                                           |
-| `sync_stop_title`       | Stop syncing?                                                                                                                                                                                          |
-| `sync_stop_body`        | Your progress stays right here, and you’ll check things off by hand from now on. If you turn syncing back on later, it’ll start fresh.                                                                 |
-| `sync_stop_confirm`     | Stop syncing                                                                                                                                                                                           |
-| `sync_stop_cancel`      | Cancel                                                                                                                                                                                                 |
-| `sync_new_code`         | Make a new code                                                                                                                                                                                        |
-| `sync_show_code_sub`    | Add your phone or another device.                                                                                                                                                                      |
-| `sync_new_code_sub`     | Stops the old code, in case it ended up on stream or somewhere you didn’t mean.                                                                                                                        |
-| `sync_stop_sub`         | Go back to checking things off by hand. Your progress stays.                                                                                                                                           |
-| `sync_scan_other_sub`   | Sync a save file from a different computer.                                                                                                                                                            |
-| `sync_new_code_body`    | Showed your code on stream? No problem. A new code stops the old one, so your other devices will need to scan again.                                                                                   |
-| `sync_new_code_confirm` | Make a new code                                                                                                                                                                                        |
-| `sync_new_code_cancel`  | Never mind                                                                                                                                                                                             |
-| `sync_new_code_failed`  | We couldn’t make a new code right now, so your old one still works. Try again in a bit.                                                                                                                |
-| `sync_retired`          | Your computer stopped sharing this save file. Scan its new code to keep syncing.                                                                                                                       |
-| `sync_link_expired`     | It’s been a while! We made a new code for your save file. Scan it on your other devices to keep syncing.                                                                                               |
-| `sync_reallow`          | Mind letting us read your save file again? Your browser asks after a restart.                                                                                                                          |
-| `sync_moved`            | We lost track of your save file. Drop it in again and we’re back in business.                                                                                                                          |
-| `sync_unreachable`      | We can’t connect right now. We’ll keep trying, or you can try again.                                                                                                                                   |
-| `sync_try_again`        | Try again                                                                                                                                                                                              |
-| `sync_paused`           | Sync is paused for now. We’ve paused syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow, and catch up then. Checking things off by hand still works. |
-| `sync_too_many`         | Whoa, that’s a lot of new codes! Give it a few minutes and try again.                                                                                                                                  |
-| `sync_other_window`     | Your save file is already syncing in another window.                                                                                                                                                   |
-| `sync_update_computer`  | The tracker on your computer needs a refresh to keep syncing.                                                                                                                                          |
-| `sync_update_here`      | This tracker needs a refresh to keep syncing.                                                                                                                                                          |
-| `sync_blocked`          | Before we can sync your save file, this device’s data needs a look. Head to Data to sort it out.                                                                                                       |
+| Key                       | Text                                                                                                                                                                                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sync_panel_from`         | Save file from                                                                                                                                                                                   |
+| `sync_panel_file`         | Save file                                                                                                                                                                                        |
+| `sync_panel_last`         | Last save file                                                                                                                                                                                   |
+| `sync_panel_date`         | In-game date                                                                                                                                                                                     |
+| `sync_panel_code`         | Your code                                                                                                                                                                                        |
+| `sync_data_intro`         | Sync your save file, or import, back up, or reset your Field Guide progress.                                                                                                                     |
+| `sync_status_keep_open`   | Keep this tab open while you play so we can sync your save file.                                                                                                                                 |
+| `sync_status_gap`         | Haven’t heard from your game in {days} days                                                                                                                                                      |
+| `sync_status_name`        | Save file sync: {status}                                                                                                                                                                         |
+| `sync_status_values`      | up to date · no new saves in a while · needs a look · paused · can’t connect · can’t read the save file (one per state, as `{status}`)                                                           |
+| `sync_stop`               | Stop syncing                                                                                                                                                                                     |
+| `sync_stop_title`         | Stop syncing?                                                                                                                                                                                    |
+| `sync_stop_body`          | Your progress stays right here, and you’ll check things off by hand from now on. If you sync your save file again later, it’ll start fresh.                                                      |
+| `sync_stop_body_computer` | Your progress stays right here, and you’ll check things off by hand from now on. Your other devices will stop getting your save file. If you sync your save file again later, it’ll start fresh. |
+| `sync_stop_confirm`       | Stop syncing                                                                                                                                                                                     |
+| `sync_stop_cancel`        | Cancel                                                                                                                                                                                           |
+| `sync_new_code`           | Make a new code                                                                                                                                                                                  |
+| `sync_show_code_sub`      | Add your phone or another device.                                                                                                                                                                |
+| `sync_new_code_sub`       | Stops the old code, in case it ended up on stream or somewhere you didn’t mean.                                                                                                                  |
+| `sync_stop_sub`           | Go back to checking things off by hand. Your progress stays.                                                                                                                                     |
+| `sync_scan_other_sub`     | Sync a save file from a different computer.                                                                                                                                                      |
+| `sync_new_code_body`      | Showed your code on stream? No problem. A new code stops the old one, so your other devices will need to scan again.                                                                             |
+| `sync_new_code_confirm`   | Make a new code                                                                                                                                                                                  |
+| `sync_new_code_cancel`    | Never mind                                                                                                                                                                                       |
+| `sync_new_code_failed`    | We couldn’t make a new code right now, so your old one still works. Try again in a bit.                                                                                                          |
+| `sync_retired_title`      | Your computer stopped sharing this save file                                                                                                                                                     |
+| `sync_retired_body`       | Scan its new code to keep your save file syncing.                                                                                                                                                |
+| `sync_retired_action`     | Scan the code                                                                                                                                                                                    |
+| `sync_link_expired`       | It’s been a while! We made a new code for your save file. Scan it on your other devices to keep your save file syncing.                                                                          |
+| `sync_reallow_title`      | Mind letting us read your save file again?                                                                                                                                                       |
+| `sync_reallow_body`       | Your browser asks after a restart.                                                                                                                                                               |
+| `sync_reallow_action`     | Let us read it                                                                                                                                                                                   |
+| `sync_moved_title`        | We lost track of your save file                                                                                                                                                                  |
+| `sync_moved_body`         | Drop it in again and we’re back in business.                                                                                                                                                     |
+| `sync_unreachable_title`  | We can’t connect right now                                                                                                                                                                       |
+| `sync_unreachable_body`   | We’ll keep trying, or you can try again.                                                                                                                                                         |
+| `sync_try_again`          | Try again                                                                                                                                                                                        |
+| `sync_paused_title`       | Sync is paused for now                                                                                                                                                                           |
+| `sync_paused_body`        | We’ve paused save file syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow, and catch up then. Checking things off by hand still works.         |
+| `sync_paused_setup`       | We’ve paused save file syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow. You can make your code later from Data.                             |
+| `sync_too_many`           | Whoa, that’s a lot of new codes! Give it a few minutes and try again.                                                                                                                            |
+| `sync_other_window`       | Your save file is already syncing in another window.                                                                                                                                             |
+| `sync_update_computer`    | The tracker on your computer needs a refresh to keep your save file syncing.                                                                                                                     |
+| `sync_update_here`        | This tracker needs a refresh to keep your save file syncing.                                                                                                                                     |
+| `sync_blocked`            | Before we can sync your save file, this device’s data needs a look. Head to Data to sort it out.                                                                                                 |
 
 ### The save file can’t be read
 

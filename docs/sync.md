@@ -84,8 +84,8 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
   else could claim. A create on an ID that already exists under the same token counts as success,
   which covers a lost response. One under another token means the PC silently makes a fresh key,
   since nobody has seen the code yet. A failed create keeps the code hidden & says why
-  (`sync_unreachable`, `sync_paused`, `sync_too_many`). A wrong file, or “No thanks, I’ll track
-  here”, creates nothing.
+  (`sync_unreachable_*`, `sync_paused_setup`, `sync_too_many`). A wrong file, or “No thanks, I’ll
+  track here”, creates nothing.
 - **Uploading.** Once sharing, the courier uploads every save it reads & can prune, whatever its own
   tracker does with it: a question waiting behind the fullscreen game, a quarantined or newer-data
   store, or an apply that failed never holds an upload back. A save it can’t prune uploads nothing &
@@ -146,7 +146,7 @@ One Durable Object per mailbox ID.
   created again. “Make a new code” creates & shows the new code first & retires the old one after;
   if creation fails, the old code keeps working & the PC says so (`sync_new_code_failed`). A retire
   the relay hasn’t confirmed stays pending in `local` (the mailbox ID & token) & retries like an
-  upload, through “Stop syncing” & its erase. Every follower holds the sealing key, so a follower
+  upload, through “Stop syncing” or an erase. Every follower holds the sealing key, so a follower
   that could recreate a retired ID with its own token could write saves to the others.
 - **Nothing else.** No confirmations or delivery states; the high-water counter is the relay’s only
   ordering. A follower that misses a save loses nothing, since the next one is a full snapshot.
@@ -171,7 +171,7 @@ One Durable Object per mailbox ID.
 
 - **Kill switch.** A flag in the singleton object, flipped by an authenticated admin request (a
   dashboard variable would be dropped by the next deploy). It carries an end time (a day by default;
-  the maintainer can extend it), so it lifts by itself. `sync_paused`, which says so, applies to
+  the maintainer can extend it), so it lifts by itself. `sync_paused_*`, which says so, applies to
   uploads & creation on the next request, while reads & retiring still go through, & the courier
   uploads its latest save once it lifts. Manual tracking still works.
 - **Logging.** Request logging stays off.
@@ -204,7 +204,7 @@ Built in #133. Planned location (not yet created): src/lib/sync/follow.ts. The U
 - **Opening a link.** A device opens the link, scans its QR code with the tracker’s own scanner (the
   one the transfer card uses), or pastes it. The page strips the fragment from its address bar,
   holds the key in the page (see Lanes), & fetches the latest envelope. An “empty” mailbox shows
-  `sync_waiting` & changes nothing; a “retired” one shows `sync_retired`.
+  `sync_waiting` & changes nothing; a “retired” one shows `sync_retired_*`.
 - **Nothing is spent.** Opening a link only reads, so a chat app’s link preview or a stream viewer
   can’t take anything from the player. A leaked link can read saves until the PC makes a new one;
   that’s accepted, since a save holds nothing close to personal data.
@@ -263,9 +263,10 @@ every follower.
 
 ### Freshness
 
-A follower shows “Last save file from your game: {time}” & learns the typical gap between saves.
-When it opens after an abnormally long gap, a slip says so (`sync_status_gap`). There are no push
-notifications. Describe sync as best effort until real sessions prove it.
+A follower’s sync panel shows when the last save file came & its in-game date (`sync_panel_*` in
+[sync-setup.md](sync-setup.md#copy)), & it learns the typical gap between saves. When it opens after
+an abnormally long gap, a slip says so (`sync_status_gap`). There are no push notifications.
+Describe sync as best effort until real sessions prove it.
 
 ## Applying a bundle
 
