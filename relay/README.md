@@ -38,9 +38,13 @@ random bits, supplied only as `Authorization: Bearer <write-token>`. Query strin
 All responses carry `Cache-Control: no-store`. Missing or malformed write authorization is `401`; a
 wrong token is `403`. A missing secret, upstream verification failure, or unexpected runtime failure
 returns `503` without error details. A paused relay returns `503` with state `paused`, its end time,
-& `Retry-After`. Reads & retirement bypass the pause. Same-owner creation retries skip Siteverify &
-creation quotas after the short-window edge check; a fresh create needs a fresh Turnstile token with
-action `sync-create` & the configured hostname.
+& `Retry-After`. Only retirement bypasses the pause; new reads & WebSocket handshakes are paused
+too. An admin request may pause at most seven days ahead; a past end time resumes the relay.
+Existing WebSockets remain connected. Preflight responses allow a 7,200-second cache. Rate-limited
+responses include `Retry-After` in seconds, using the relevant minute, UTC hour, or UTC day
+deadline. Same-owner creation retries skip Siteverify & creation quotas after the short-window edge
+check; a fresh create needs a fresh Turnstile token with action `sync-create` & the configured
+hostname.
 
 The binary envelope is a 12-byte AES-GCM nonce followed by ciphertext & its 16-byte authentication
 tag, with a total cap of 262,144 bytes (256 KiB). The relay treats it as opaque bytes. Clients must
@@ -65,26 +69,39 @@ Client messages close the socket as read-only. No delivery receipts exist.
 
 ## Caps & storage
 
-The edge binding allows three create attempts per minute per address, approximately per Cloudflare
-location. The singleton additionally admits at most three successful fresh creates per UTC hour per
-rotating HMAC handle, & 200 per UTC day across the account. HMAC input includes the hour & address;
-its dedicated secret stays out of storage, & an alarm removes handles after the hour. Raw IP
-addresses only reach the edge binding & in-memory HMAC computation, never a Durable Object, log, or
-Siteverify request. Clock-hour windows can admit six creations across a boundary. Failed
-verification uses the edge attempt budget but no singleton quota; an admission followed by a failed
-mailbox storage operation conservatively consumes singleton quota.
+The creation edge binding allows three attempts per minute, keyed by canonical IPv4 address or IPv6
+/64, approximately per Cloudflare location. IPv4-mapped IPv6 shares the IPv4 budget. The singleton
+additionally admits at most three successful fresh creates per UTC hour per rotating 16-bit HMAC
+bucket, & 200 per UTC day across the account. HMAC input includes the hour & prefix; only its first
+two bytes reach storage. Each bucket combines many possible addresses, so knowledge of the secret
+cannot recover a unique address. Collisions share a budget; a different hour changes the assignment.
+The dedicated secret stays out of storage, & an alarm clears buckets after the hour. Cloudflare’s
+recovery can retain old bucket counts for 30 days. Raw addresses, prefixes, & full HMACs never reach
+a Durable Object, log, or Siteverify request. Clock-hour windows can admit six creations across a
+boundary. Failed verification uses the edge attempt budget but no singleton quota; an admission
+followed by a failed mailbox storage operation conservatively consumes singleton quota.
 
-Each mailbox accepts one fresh upload per 60 seconds & 60 per UTC day. Reads write no application
-storage. Alarms delete envelopes after 30 days & replace mailboxes after 365 days without an upload
-(or after creation for never-uploaded mailboxes) with permanent tombstones. Reads apply the same
-deadlines without deleting anything, so a delayed alarm cannot serve expired content. Retirement
-atomically removes the envelope, owner hash, & other metadata, retaining only the tombstone.
+Public reads & WebSocket handshakes share a separate 60-attempt-per-minute binding per IPv4 address
+or IPv6 /64, checked before any object access. The singleton pause gate then runs before mailbox
+access. A pause protects mailbox requests but still costs singleton & Worker requests; bindings
+cannot prevent Worker request exhaustion, & distributed traffic can defeat per-client limits. The
+zone WAF rule below is a required launch step, not configured by this repository.
+
+Each mailbox accepts one fresh upload per 60 seconds & 60 per UTC day. The Worker bounds & buffers
+network bodies before forwarding them, so a slow uplink holds no mailbox lock. A fresh counter’s
+upload caps are checked before reading or hashing that buffer inside the mailbox; equal-counter
+retries still check byte identity without consuming quota. Reads write no application storage.
+Alarms delete envelopes after 30 days & replace mailboxes after 365 days without an upload (or after
+creation for never-uploaded mailboxes) with permanent tombstones. Reads apply the same deadlines
+without deleting anything, so a delayed alarm cannot serve expired content. Retirement atomically
+removes the envelope, owner hash, & other metadata, retaining only the tombstone.
 
 ## Maintainer launch
 
-1. Keep this Worker separate from the Pages project. Review its name, binding namespace ID `132`,
-   SQLite migrations, & the existing account’s usage before deployment. Choose a unique rate-limit
-   namespace ID if `132` is already used by another Worker.
+1. Keep this Worker separate from the Pages project. Review its name, binding namespace IDs `132`
+   (creation) & `133` (reads), SQLite migrations, & the existing account’s usage before deployment.
+   Choose unique rate-limit namespace IDs if either is already used by another binding in the
+   account.
 2. Create a dedicated invisible Turnstile widget for the site; configure the client action as
    `sync-create` & keep `TURNSTILE_HOSTNAME` aligned with the verified hostname. For a preview test,
    use an isolated relay/widget with that exact preview hostname, not a permissive hostname match.
@@ -103,6 +120,15 @@ atomically removes the envelope, owner hash, & other metadata, retaining only th
    creation, upload, read, retirement, & a pause that expires automatically. Confirm the privacy
    page update (#136) ships before enabling sync for players, including Cloudflare’s recovery
    retention. Follow [the relay takedown procedure](../docs/takedown.md#sync-relay) for withdrawal.
+6. Before enabling sync, configure a zone
+   [WAF rate-limiting rule](https://developers.cloudflare.com/waf/rate-limiting-rules/) that blocks
+   relay traffic above 60 requests per 10 seconds per client IP for 10 seconds, before Worker
+   execution. On a plan supporting host filters, match `http.host eq "relay.mistria.fyi"`. Free’s
+   rate rules support path filters only; match `starts_with(http.request.uri.path, "/v1/")` after
+   confirming the Pages app has no matching path (otherwise use a plan with host filtering). Include
+   OPTIONS, absent IDs, & upgrade requests. Verify the rule with HTTP & WebSocket traffic and review
+   its effect on shared networks. Keep an emergency hostname block available; bindings, WAF limits,
+   & the pause are layered mitigations, not a hard daily request-budget guarantee.
 
 ## Cloudflare sources
 

@@ -151,7 +151,7 @@ Evidence: [docs/sync.md](../docs/sync.md), [docs/sync-setup.md](../docs/sync-set
 ID: 2026-10-29-sync-relay. Status: Current.
 
 The standalone SQLite relay supplements Cloudflare’s minute-only rate binding with rotating hourly
-HMAC admission handles, preserving address privacy & permanent mailbox retirement.
+shared 16-bit HMAC buckets & prefix read limits, preserving address privacy & permanent retirement.
 
 Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/132](https://github.com/mrh-is/mistria-fyi/issues/132),

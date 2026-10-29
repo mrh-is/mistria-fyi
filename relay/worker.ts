@@ -4,6 +4,7 @@ interface Env {
   CREATE_RATE: RateLimit;
   IP_RATE_SECRET: string;
   MAILBOXES: DurableObjectNamespace;
+  READ_RATE: RateLimit;
   TURNSTILE_HOSTNAME: string;
   TURNSTILE_SECRET: string;
 }
@@ -36,6 +37,16 @@ const encoder = new TextEncoder();
 
 function json(state: string, status = 200): Response {
   return Response.json({ state }, { status });
+}
+
+function rateLimited(retryAt: number): Response {
+  return Response.json(
+    { state: "rate-limited" },
+    {
+      headers: { "Retry-After": String(Math.max(1, Math.ceil((retryAt - Date.now()) / 1000))) },
+      status: 429,
+    },
+  );
 }
 
 function bearer(request: Request): string | undefined {
@@ -106,7 +117,41 @@ function control(env: Env): DurableObjectStub {
   return env.CONTROL.get(env.CONTROL.idFromName("relay-control-v1"));
 }
 
-async function clientHandle(ip: string, secret: string): Promise<string> {
+/** Canonical IPv4 address or IPv6 /64; temporary IPv6 addresses share one budget. */
+function clientPrefix(ip: string): null | string {
+  if (!ip.includes(":")) {
+    const parts = ip.split(".");
+    return parts.length === 4 &&
+      parts.every((part) => /^\d{1,3}$/u.test(part) && Number(part) <= 255)
+      ? parts.map(Number).join(".")
+      : null;
+  }
+  if (!/^[\da-f:.]+$/iu.test(ip)) return null;
+  let canonical: string;
+  try {
+    canonical = new URL(`http://[${ip}]/`).hostname.slice(1, -1);
+  } catch {
+    return null;
+  }
+  const [left, right] = canonical.split("::");
+  const head = left ? left.split(":") : [];
+  const tail = right ? right.split(":") : [];
+  const groups = [
+    ...head,
+    ...Array.from({ length: 8 - head.length - tail.length }, () => "0"),
+    ...tail,
+  ].map((group) => Number.parseInt(group, 16));
+  if (groups.slice(0, 5).every((group) => group === 0) && groups[5] === 0xff_ff) {
+    // IPv4-mapped IPv6 uses the same address budget as its dotted-decimal spelling.
+    return [groups[6] >> 8, groups[6] & 255, groups[7] >> 8, groups[7] & 255].join(".");
+  }
+  return `${groups
+    .slice(0, 4)
+    .map((group) => group.toString(16).padStart(4, "0"))
+    .join(":")}/64`;
+}
+
+async function clientBucket(prefix: string, secret: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
     encoder.encode(secret),
@@ -117,11 +162,12 @@ async function clientHandle(ip: string, secret: string): Promise<string> {
   const signature = await crypto.subtle.sign(
     "HMAC",
     key,
-    encoder.encode(`sync-create:${Math.floor(Date.now() / HOUR)}:${ip}`),
+    encoder.encode(`sync-create:${Math.floor(Date.now() / HOUR)}:${prefix}`),
   );
-  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, "0")).join(
-    "",
-  );
+  // Deliberately many-to-one: no recoverable per-address pseudonym enters SQLite or its backups.
+  return Array.from(new Uint8Array(signature).subarray(0, 2), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 async function route(request: Request, env: Env): Promise<Response> {
@@ -135,9 +181,9 @@ async function route(request: Request, env: Env): Promise<Response> {
     ) {
       return json("forbidden", 403);
     }
-    return control(env).fetch(
-      new Request("https://control/pause", { body: request.body, method: "PUT" }),
-    );
+    const body = await bodyBytes(request, 4096);
+    if (!body) return json("too-large", 413);
+    return control(env).fetch(new Request("https://control/pause", { body, method: "PUT" }));
   }
   const match = /^\/v1\/mailboxes\/([A-Za-z0-9_-]{22})(\/envelope)?$/u.exec(url.pathname);
   if (!match) return json("not-found", 404);
@@ -147,6 +193,20 @@ async function route(request: Request, env: Env): Promise<Response> {
   const retire = request.method === "DELETE" && !match[2];
   if (!create && !upload && !read && !retire) return json("method-not-allowed", 405);
   if (!read && !bearer(request)) return json("unauthorized", 401);
+  const prefix =
+    create || read ? clientPrefix(request.headers.get("CF-Connecting-IP") ?? "") : null;
+  if ((create || read) && !prefix) return json("bad-request", 400);
+  if (read && prefix) {
+    const limit = await env.READ_RATE.limit({ key: prefix });
+    if (!limit.success) return rateLimited(Date.now() + MINUTE);
+  }
+  if (create && prefix) {
+    if (!env.IP_RATE_SECRET || !env.TURNSTILE_SECRET || !env.TURNSTILE_HOSTNAME) {
+      return json("unavailable", 503);
+    }
+    const limit = await env.CREATE_RATE.limit({ key: prefix });
+    if (!limit.success) return rateLimited(Date.now() + MINUTE);
+  }
   const headers = new Headers();
   for (const name of [
     "Authorization",
@@ -159,20 +219,17 @@ async function route(request: Request, env: Env): Promise<Response> {
     const value = request.headers.get(name);
     if (value !== null) headers.set(name, value);
   }
-  if (create || upload) {
+  if (create || upload || read) {
     const gate = await control(env).fetch("https://control/gate");
     if (!gate.ok) return gate;
   }
-  if (create) {
-    if (!env.IP_RATE_SECRET || !env.TURNSTILE_SECRET || !env.TURNSTILE_HOSTNAME) {
-      return json("unavailable", 503);
-    }
-    const ip = request.headers.get("CF-Connecting-IP");
-    if (!ip) return json("bad-request", 400);
-    const limit = await env.CREATE_RATE.limit({ key: ip });
-    if (!limit.success) return json("rate-limited", 429);
-    headers.set("X-Relay-Client", await clientHandle(ip, env.IP_RATE_SECRET));
+  if (create && prefix) {
+    headers.set("X-Relay-Client", await clientBucket(prefix, env.IP_RATE_SECRET));
   }
+  // Buffer bounded network input before any mailbox lock; a slow uplink cannot block followers.
+  const body =
+    create || upload ? await bodyBytes(request, upload ? MAX_ENVELOPE : 4096) : undefined;
+  if (body === null) return json("too-large", 413);
   const stub = env.MAILBOXES.get(env.MAILBOXES.idFromName(match[1]));
   // Never forward the client address, cookies, URLs with query strings, or incidental headers.
   let action = "read";
@@ -181,7 +238,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (retire) action = "retire";
   return stub.fetch(
     new Request(`https://mailbox/${action}`, {
-      body: read ? undefined : request.body,
+      body,
       headers,
       method: request.method,
     }),
@@ -202,6 +259,7 @@ export default {
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Access-Control-Allow-Origin", "*");
     headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    headers.set("Access-Control-Max-Age", "7200");
     headers.set(
       "Access-Control-Allow-Headers",
       "Authorization, Content-Type, X-Sync-Version, X-Sync-Counter, If-None-Match",
@@ -229,7 +287,7 @@ export class Mailbox implements DurableObject {
   }
 
   fetch(request: Request): Promise<Response> {
-    // A bounded Siteverify fetch & small bodies keep this below the runtime's 30 s lock limit.
+    // The Worker buffers network bodies first; only the bounded Siteverify fetch waits externally.
     // Serialization includes external awaits, so simultaneous creates cannot change ownership.
     return this.ctx.blockConcurrencyWhile(async () => {
       const meta = await this.ctx.storage.get<MailboxMeta>("meta");
@@ -278,7 +336,19 @@ export class Mailbox implements DurableObject {
       signal: AbortSignal.timeout(5000),
     });
     if (!verified.ok) return json("unavailable", 503);
-    const result: { action?: string; hostname?: string; success?: boolean } = await verified.json();
+    const result: {
+      action?: string;
+      "error-codes"?: string[];
+      hostname?: string;
+      success?: boolean;
+    } = await verified.json();
+    if (
+      result["error-codes"]?.some(
+        (code) => code === "invalid-input-secret" || code === "missing-input-secret",
+      )
+    ) {
+      return json("unavailable", 503);
+    }
     if (
       result.success !== true ||
       result.hostname !== this.env.TURNSTILE_HOSTNAME ||
@@ -319,6 +389,13 @@ export class Mailbox implements DurableObject {
       return json("bad-request", 400);
     }
     if (counter < meta.counter) return json("stale-counter", 409);
+    const now = Date.now();
+    const day = Math.floor(now / DAY);
+    const count = day === meta.uploadDay ? meta.uploadCount : 0;
+    if (counter > meta.counter) {
+      const retryAt = Math.max(meta.lastUpload + MINUTE, count >= 60 ? (day + 1) * DAY : 0);
+      if (now < retryAt) return rateLimited(retryAt);
+    }
     const bytes = await bodyBytes(request, MAX_ENVELOPE);
     if (!bytes) return json("too-large", 413);
     // AES-GCM's 96-bit nonce & 128-bit tag are part of the opaque body.
@@ -327,10 +404,6 @@ export class Mailbox implements DurableObject {
     if (counter === meta.counter) {
       return digest === meta.digest ? json("stored") : json("counter-conflict", 409);
     }
-    const now = Date.now();
-    const day = Math.floor(now / DAY);
-    const count = day === meta.uploadDay ? meta.uploadCount : 0;
-    if (now < meta.lastUpload + MINUTE || count >= 60) return json("rate-limited", 429);
     const next: LiveMailbox = {
       ...meta,
       counter,
@@ -455,7 +528,12 @@ export class RelayControl implements DurableObject {
         const body = await smallJson(request);
         if (!body) return json("bad-request", 400);
         const until = body.until ?? now + DAY;
-        if (typeof until !== "number" || !Number.isSafeInteger(until) || until < 0) {
+        if (
+          typeof until !== "number" ||
+          !Number.isSafeInteger(until) ||
+          until < 0 ||
+          until > now + 7 * DAY
+        ) {
           return json("bad-request", 400);
         }
         await this.ctx.storage.put("pausedUntil", until);
@@ -474,13 +552,15 @@ export class RelayControl implements DurableObject {
       if (path === "/gate") return json("live");
       if (path !== "/admit") return json("not-found", 404);
       const client = await request.text();
-      if (!/^[\da-f]{64}$/u.test(client)) return json("bad-request", 400);
+      if (!/^[\da-f]{4}$/u.test(client)) return json("bad-request", 400);
       const day = Math.floor(now / DAY);
       const hour = Math.floor(now / HOUR);
       const previous = await this.ctx.storage.get<Usage>("usage");
       const clients = previous?.hour === hour ? previous.clients : {};
       const count = previous?.day === day ? previous.count : 0;
-      if (count >= 200 || (clients[client] ?? 0) >= 3) return json("rate-limited", 429);
+      if (count >= 200 || (clients[client] ?? 0) >= 3) {
+        return rateLimited(count >= 200 ? (day + 1) * DAY : (hour + 1) * HOUR);
+      }
       clients[client] = (clients[client] ?? 0) + 1;
       await this.ctx.storage.transaction(async (storage) => {
         await storage.put("usage", { clients, count: count + 1, day, hour } satisfies Usage);
@@ -494,7 +574,7 @@ export class RelayControl implements DurableObject {
     return this.ctx.blockConcurrencyWhile(async () => {
       const usage = await this.ctx.storage.get<Usage>("usage");
       if (usage && usage.hour < Math.floor(Date.now() / HOUR)) {
-        // The global daily counter survives; unlinkable hourly handles do not.
+        // The global daily counter survives; the previous hour's shared buckets do not.
         await this.ctx.storage.put("usage", {
           ...usage,
           clients: {},

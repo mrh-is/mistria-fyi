@@ -27,6 +27,11 @@ name = "CREATE_RATE"
 namespace_id = "132"
 simple = { limit = 3, period = 60 }
 
+[[ratelimits]]
+name = "READ_RATE"
+namespace_id = "133"
+simple = { limit = 60, period = 60 }
+
 [observability]
 enabled = false
 

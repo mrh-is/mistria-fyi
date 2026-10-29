@@ -63,8 +63,11 @@ require taking down the tracker, Pages project, or asset bucket.
 
 1. **Pause new data.** Make an authenticated `PUT /v1/admin/pause` request with the separate admin
    token & an explicit `until` timestamp (Unix milliseconds). An empty object defaults to one day;
-   extend it while investigating. This blocks creation & upload on the next request, while reads &
-   retirement remain available. Keep the token out of URLs, command history, logs, & public issues.
+   each request can set at most seven days ahead, & another request extends it while investigating.
+   This blocks creation, upload, public reads, & new WebSocket handshakes on the next request;
+   retirement remains available. Existing sockets stay connected. Rejected requests still consume
+   Worker & singleton quota; use an edge block for request floods. Keep the token out of URLs,
+   command history, logs, & public issues.
 2. **For an individual mailbox,** ask its owner to stop syncing, which retires it with its write
    token. The relay keeps no names, follow keys, or mailbox inventory, & the admin pause cannot
    impersonate an owner. When the owner cannot retire it, use an authenticated, reviewed maintainer

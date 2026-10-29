@@ -19,6 +19,8 @@ let caseIndex: number;
 
 // Only the local test module has this storage/clock control. Public routing never exposes it.
 const testSubclass = `
+let mailboxRequests = 0;
+let gateRequests = 0;
 export class TestMailbox extends Mailbox {
   async fetch(request) {
     const url = new URL(request.url);
@@ -38,6 +40,7 @@ export class TestMailbox extends Mailbox {
       if (action.alarmAt) return Response.json({ alarm: await this.ctx.storage.getAlarm() });
       return Response.json(Object.fromEntries(await this.ctx.storage.list()));
     }
+    mailboxRequests++;
     return super.fetch(request);
   }
 }
@@ -45,11 +48,17 @@ export class TestControl extends RelayControl {
   async fetch(request) {
     if (new URL(request.url).pathname === "/__test") {
       const action = await request.json();
-      if (action.reset) await this.ctx.storage.deleteAll();
+      if (action.reset) {
+        await this.ctx.storage.deleteAll();
+        mailboxRequests = 0;
+        gateRequests = 0;
+      }
+      if (action.requests) return Response.json({ mailboxRequests, gateRequests });
       if (action.usage) await this.ctx.storage.put("usage", action.usage);
       if (action.alarm) await this.alarm();
       return Response.json(Object.fromEntries(await this.ctx.storage.list()));
     }
+    if (new URL(request.url).pathname === "/gate") gateRequests++;
     return super.fetch(request);
   }
 }
@@ -103,13 +112,19 @@ function runtime(persist?: string): Miniflare {
         verifications++;
         const token = form.get("response");
         if (token === "unavailable") return new Response(null, { status: 503 });
+        if (token === "invalid-input-secret" || token === "missing-input-secret") {
+          return Response.json({ "error-codes": [token], success: false });
+        }
         return Response.json({
           action: token === "wrong-action" ? "feedback" : "sync-create",
           hostname: token === "wrong-host" ? "attacker.test" : "mistria.fyi",
           success: token !== "invalid",
         });
       },
-      ratelimits: { CREATE_RATE: { namespace_id: "132", simple: { limit: 3, period: 60 } } },
+      ratelimits: {
+        CREATE_RATE: { namespace_id: "132", simple: { limit: 3, period: 60 } },
+        READ_RATE: { namespace_id: "133", simple: { limit: 60, period: 60 } },
+      },
       resourcePersistencePath: persist,
       script,
     }),
@@ -134,8 +149,18 @@ function request(mf: Miniflare, method: string, route: string, token?: string, b
   });
 }
 
-function create(mf: Miniflare, id = mailboxId, token = TOKEN, turnstile = "valid") {
-  return request(mf, "POST", `mailboxes/${id}`, token, JSON.stringify({ turnstile }));
+function create(
+  mf: Miniflare,
+  id = mailboxId,
+  token = TOKEN,
+  turnstile = "valid",
+  ip = `192.0.2.${caseIndex}`,
+) {
+  return mf.dispatchFetch(`https://relay.mistria.fyi/v1/mailboxes/${id}`, {
+    body: JSON.stringify({ turnstile }),
+    headers: { Authorization: `Bearer ${token}`, "CF-Connecting-IP": ip },
+    method: "POST",
+  });
 }
 
 function upload(mf: Miniflare, counter = 1, token = TOKEN, body = new Uint8Array(32).fill(7)) {
@@ -241,13 +266,16 @@ describe("sync relay in the local Workers runtime", () => {
     expect(new Uint8Array(await read.arrayBuffer())).toEqual(new Uint8Array(32).fill(7));
     expect(read.headers.get("ETag")).toMatch(/^"10-[\da-f]{64}"$/u);
     const cached = await mf.dispatchFetch(`https://relay.mistria.fyi/v1/mailboxes/${mailboxId}`, {
-      headers: { "If-None-Match": read.headers.get("ETag") ?? "" },
+      headers: {
+        "CF-Connecting-IP": `192.0.2.${caseIndex}`,
+        "If-None-Match": read.headers.get("ETag") ?? "",
+      },
     });
     expect(cached.status).toBe(304);
     expect(await inspect(mf)).toEqual(saved);
   });
 
-  it("allows reads & retirement while the kill switch blocks create & upload, and lifts automatically", async () => {
+  it("pauses new reads, handshakes, creates, & uploads while preserving retirement, then lifts automatically", async () => {
     const mf = runtime();
     await create(mf);
     await upload(mf);
@@ -256,7 +284,17 @@ describe("sync relay in the local Workers runtime", () => {
     expect(paused.status).toBe(200);
     expect(await status(upload(mf, 2))).toBe(503);
     expect(await status(create(mf, "BBBBBBBBBBBBBBBBBBBBBB"))).toBe(503);
-    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(200);
+    const read = await request(mf, "GET", `mailboxes/${mailboxId}`);
+    expect(read.status).toBe(503);
+    expect(read.headers.get("Retry-After")).toMatch(/^[1-9]\d*$/u);
+    expect(await read.json()).toMatchObject({ state: "paused" });
+    expect(
+      await status(
+        mf.dispatchFetch(`https://relay.mistria.fyi/v1/mailboxes/${mailboxId}`, {
+          headers: { "CF-Connecting-IP": `192.0.2.${caseIndex}`, Upgrade: "websocket" },
+        }),
+      ),
+    ).toBe(503);
     expect(await status(request(mf, "DELETE", `mailboxes/${mailboxId}`, TOKEN))).toBe(200);
     expect(await status(create(mf))).toBe(503);
     expect(
@@ -264,13 +302,17 @@ describe("sync relay in the local Workers runtime", () => {
         request(mf, "PUT", "admin/pause", ADMIN, JSON.stringify({ until: Date.now() - 1 })),
       ),
     ).toBe(200);
-    expect(await status(create(mf))).toBe(410);
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", "198.51.100.1"))).toBe(410);
   });
 
   it("deletes expired envelopes, preserves ordering, and tombstones year-old mailboxes", async () => {
     const mf = runtime();
     await create(mf);
     await upload(mf, 20);
+    const uploaded = (await inspect(mf)) as { meta: { lastUpload: number } };
+    expect(await inspect(mf, { alarmAt: true })).toEqual({
+      alarm: uploaded.meta.lastUpload + 30 * DAY,
+    });
     await inspect(mf, { age: 31 * DAY });
     const before = await inspect(mf);
     const empty = await request(mf, "GET", `mailboxes/${mailboxId}`);
@@ -278,6 +320,10 @@ describe("sync relay in the local Workers runtime", () => {
     expect(await inspect(mf)).toEqual(before);
     const expired = await inspect(mf, { alarm: true });
     expect(expired).not.toHaveProperty("envelope");
+    const aged = expired as { meta: { lastUpload: number } };
+    expect(await inspect(mf, { alarmAt: true })).toEqual({
+      alarm: aged.meta.lastUpload + 365 * DAY,
+    });
     expect(await status(upload(mf, 20))).toBe(200);
     expect(await inspect(mf)).toEqual(expired);
     expect(await status(upload(mf, 19))).toBe(409);
@@ -312,24 +358,42 @@ describe("sync relay in the local Workers runtime", () => {
     await create(mf);
     await upload(mf);
     const saved = await inspect(mf);
-    expect(await status(upload(mf, 2))).toBe(429);
+    const minuteLimited = await upload(mf, 2);
+    expect(minuteLimited.status).toBe(429);
+    expect(Number(minuteLimited.headers.get("Retry-After"))).toBeGreaterThan(0);
+    expect(Number(minuteLimited.headers.get("Retry-After"))).toBeLessThanOrEqual(60);
+    // A new counter must be rejected before digesting or validating the buffered envelope.
+    expect(await status(upload(mf, 2, TOKEN, new Uint8Array(0)))).toBe(429);
     expect(await status(upload(mf, 2, OTHER_TOKEN))).toBe(403);
     expect(await inspect(mf)).toEqual(saved);
     await inspect(mf, { patch: { lastUpload: Date.now() - 61_000, uploadCount: 59 } });
     expect(await status(upload(mf, 2))).toBe(200);
     await inspect(mf, { patch: { lastUpload: Date.now() - 61_000 } });
-    expect(await status(upload(mf, 3))).toBe(429);
+    const dailyLimited = await upload(mf, 3);
+    expect(dailyLimited.status).toBe(429);
+    expect(Number(dailyLimited.headers.get("Retry-After"))).toBeGreaterThan(0);
+    expect(Number(dailyLimited.headers.get("Retry-After"))).toBeLessThanOrEqual(86_400);
     expect(await status(upload(mf, 2))).toBe(200);
     await inspect(mf, { patch: { uploadDay: Math.floor(Date.now() / DAY) - 1 } });
     expect(await status(upload(mf, 3))).toBe(200);
   });
 
-  it("uses the edge binding & keeps raw addresses and tokens out of durable storage", async () => {
+  it("enforces CREATE_RATE independently of singleton admission, including same-owner retries", async () => {
     const mf = runtime();
     expect(await status(create(mf))).toBe(201);
-    expect(await status(create(mf, "BBBBBBBBBBBBBBBBBBBBBB"))).toBe(201);
-    expect(await status(create(mf, "CCCCCCCCCCCCCCCCCCCCCC"))).toBe(201);
-    expect(await status(create(mf, "DDDDDDDDDDDDDDDDDDDDDD"))).toBe(429);
+    expect(await status(create(mf))).toBe(200);
+    expect(await status(create(mf))).toBe(200);
+    const before = await inspectControl(mf, { requests: true });
+    const limited = await create(mf);
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("Retry-After")).toBe("60");
+    expect(await inspectControl(mf, { requests: true })).toEqual(before);
+    const control = (await inspectControl(mf)) as {
+      usage: { clients: Record<string, number>; count: number };
+    };
+    expect(control.usage.count).toBe(1);
+    expect(Object.keys(control.usage.clients)).toHaveLength(1);
+    expect(Object.keys(control.usage.clients)[0]).toMatch(/^[\da-f]{4}$/u);
     const state = JSON.stringify([await inspect(mf), await inspectControl(mf)]);
     expect(state).not.toContain("192.0.2.");
     expect(state).not.toContain(TOKEN);
@@ -339,7 +403,7 @@ describe("sync relay in the local Workers runtime", () => {
   it("enforces singleton hourly & account-wide daily creation caps and clears old handles", async () => {
     const mf = runtime();
     const stub = await controlStub(mf);
-    const client = "c".repeat(64);
+    const client = "cccc";
     const hour = Math.floor(Date.now() / 3_600_000);
     const day = Math.floor(Date.now() / DAY);
     await inspectControl(mf, { usage: { clients: { [client]: 3 }, count: 10, day, hour } });
@@ -351,7 +415,7 @@ describe("sync relay in the local Workers runtime", () => {
       await status(stub.fetch("https://control/admit", { body: client, method: "POST" })),
     ).toBe(200);
     expect(
-      await status(stub.fetch("https://control/admit", { body: "d".repeat(64), method: "POST" })),
+      await status(stub.fetch("https://control/admit", { body: "dddd", method: "POST" })),
     ).toBe(429);
     await inspectControl(mf, {
       usage: { clients: { [client]: 1 }, count: 200, day, hour: hour - 1 },
@@ -363,6 +427,161 @@ describe("sync relay in the local Workers runtime", () => {
     expect(
       await status(stub.fetch("https://control/admit", { body: client, method: "POST" })),
     ).toBe(200);
+  });
+
+  it("shares both creation budgets across equivalent IPv6 /64 addresses", async () => {
+    const mf = runtime();
+    const prefix = `2001:db8:${caseIndex}:1`;
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", `${prefix}::1`))).toBe(201);
+    const initial = (await inspectControl(mf)) as {
+      usage: { clients: Record<string, number>; count: number; day: number; hour: number };
+    };
+    const buckets = Object.keys(initial.usage.clients);
+    expect(buckets).toHaveLength(1);
+    const otherId = "BBBBBBBBBBBBBBBBBBBBBB";
+    expect(await status(create(mf, otherId, TOKEN, "valid", `${prefix}:abcd:0:1234:ffff`))).toBe(
+      201,
+    );
+    const next = (await inspectControl(mf)) as typeof initial;
+    expect(next.usage.clients).toEqual({ [buckets[0]]: 2 });
+    await inspectControl(mf, { usage: { ...next.usage, clients: { [buckets[0]]: 3 } } });
+    const hourly = await create(mf, "CCCCCCCCCCCCCCCCCCCCCC", TOKEN, "valid", `${prefix}::3`);
+    expect(hourly.status).toBe(429);
+    expect(Number(hourly.headers.get("Retry-After"))).toBeGreaterThan(0);
+    // The fourth attempt targets an existing mailbox, so only the edge binding can reject it.
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", `${prefix}::4`))).toBe(429);
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", `2001:db8:${caseIndex}:2::1`))).toBe(
+      200,
+    );
+  });
+
+  it("normalizes compressed IPv6 spellings & mapped IPv4 addresses before limiting", async () => {
+    const mf = runtime();
+    const ip = `2001:db8:${caseIndex}::1`;
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", ip))).toBe(201);
+    expect(
+      await status(create(mf, mailboxId, TOKEN, "valid", `2001:0DB8:00${caseIndex}:0000:0:0:0:2`)),
+    ).toBe(200);
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", ip))).toBe(200);
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", `2001:db8:${caseIndex}::ffff`))).toBe(
+      429,
+    );
+    const ipv4 = `192.0.2.${caseIndex}`;
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", ipv4))).toBe(200);
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", `::ffff:${ipv4}`))).toBe(200);
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", ipv4))).toBe(200);
+    expect(await status(create(mf, mailboxId, TOKEN, "valid", `::ffff:${ipv4}`))).toBe(429);
+  });
+
+  it("limits public reads & handshakes across mailbox IDs before any object request", async () => {
+    const mf = runtime();
+    const prefix = `2001:db8:${caseIndex}:abcd`;
+    const results = await Promise.all(
+      Array.from({ length: 60 }, async (_, index) => {
+        const id = Buffer.alloc(16, index + 128).toString("base64url");
+        const response = await mf.dispatchFetch(`https://relay.mistria.fyi/v1/mailboxes/${id}`, {
+          headers: {
+            "CF-Connecting-IP": `${prefix}::${index + 1}`,
+            ...(index % 2 ? { Upgrade: "websocket" } : {}),
+          },
+        });
+        return response.status;
+      }),
+    );
+    expect(results).toEqual(Array.from({ length: 60 }, () => 404));
+    const before = await inspectControl(mf, { requests: true });
+    expect(before).toEqual({ gateRequests: 60, mailboxRequests: 60 });
+    for (const upgrade of [false, true]) {
+      // oxlint-disable-next-line no-await-in-loop -- Both request variants must use the exhausted budget.
+      const limited = await mf.dispatchFetch(
+        `https://relay.mistria.fyi/v1/mailboxes/${mailboxId}`,
+        {
+          headers: {
+            "CF-Connecting-IP": `${prefix}::ffff`,
+            ...(upgrade ? { Upgrade: "websocket" } : {}),
+          },
+        },
+      );
+      expect(limited.status).toBe(429);
+      expect(limited.headers.get("Retry-After")).toBe("60");
+    }
+    expect(await inspectControl(mf, { requests: true })).toEqual(before);
+    expect(await inspectControl(mf)).toEqual({});
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(404);
+  });
+
+  it("caches preflights & bounds pauses to seven days without changing an existing pause", async () => {
+    const mf = runtime();
+    const preflight = await request(mf, "OPTIONS", `mailboxes/${mailboxId}`);
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get("Access-Control-Max-Age")).toBe("7200");
+    const until = Date.now() + 7 * DAY;
+    expect(await status(request(mf, "PUT", "admin/pause", ADMIN, JSON.stringify({ until })))).toBe(
+      200,
+    );
+    const before = await inspectControl(mf);
+    expect(
+      await status(
+        request(mf, "PUT", "admin/pause", ADMIN, JSON.stringify({ until: until + DAY })),
+      ),
+    ).toBe(400);
+    expect(await inspectControl(mf)).toEqual(before);
+  });
+
+  it("reports misconfigured Siteverify secrets as unavailable without consuming admission", async () => {
+    const mf = runtime();
+    expect(await status(create(mf, mailboxId, TOKEN, "invalid-input-secret"))).toBe(503);
+    expect(await status(create(mf, mailboxId, TOKEN, "missing-input-secret"))).toBe(503);
+    expect(await inspect(mf)).toEqual({});
+    expect(await inspectControl(mf)).toEqual({});
+  });
+
+  it("buffers a slow upload before entering the mailbox lock so reads can continue", async () => {
+    const mf = runtime();
+    await create(mf);
+    let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        streamController = controller;
+      },
+    });
+    streamController?.enqueue(new Uint8Array(28));
+    const uploading = mf.dispatchFetch(
+      `https://relay.mistria.fyi/v1/mailboxes/${mailboxId}/envelope`,
+      {
+        body: stream,
+        duplex: "half",
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+          "Content-Type": "application/octet-stream",
+          "X-Sync-Counter": "1",
+          "X-Sync-Version": "1",
+        },
+        method: "PUT",
+      },
+    );
+    // dispatchFetch resolves after headers arrive; let the chunk reach the Worker before reading.
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    try {
+      const read = await Promise.race([
+        request(mf, "GET", `mailboxes/${mailboxId}`),
+        new Promise<never>((_resolve, reject) => {
+          setTimeout(() => {
+            reject(new Error("Read blocked by streaming upload"));
+          }, 1000);
+        }),
+      ]);
+      expect(await read.json()).toEqual({ state: "empty" });
+      expect(await inspectControl(mf, { requests: true })).toEqual({
+        gateRequests: 3,
+        mailboxRequests: 2,
+      });
+    } finally {
+      streamController?.close();
+      expect(await status(uploading)).toBe(200);
+    }
   });
 
   it("serializes racing creates without allowing the loser to replace ownership", async () => {
@@ -404,7 +623,7 @@ describe("sync relay in the local Workers runtime", () => {
     const mf = runtime();
     await create(mf);
     const response = await mf.dispatchFetch(`https://relay.mistria.fyi/v1/mailboxes/${mailboxId}`, {
-      headers: { Upgrade: "websocket" },
+      headers: { "CF-Connecting-IP": `192.0.2.${caseIndex}`, Upgrade: "websocket" },
     });
     expect(response.status).toBe(101);
     const socket = response.webSocket;
