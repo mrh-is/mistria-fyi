@@ -227,7 +227,7 @@ describe("SkillPerks", () => {
       renderArchaeology();
       await fireEvent.click(screen.getByRole("button", { name: /^Archaeology perks, / }));
 
-      expect(screen.queryByRole("link")).toBeNull();
+      expect(document.querySelectorAll(".skill-perks__unlocks")).toHaveLength(0);
       const tier3 = screen.getByRole("list", { name: /Tier 3,/ });
       const revealButtons = within(tier3).getAllByRole("button", { name: "Reveal spoiler" });
       await Promise.all(revealButtons.map((button) => fireEvent.click(button)));

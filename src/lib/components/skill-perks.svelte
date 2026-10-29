@@ -351,6 +351,10 @@
 
   /* A cross-reference in the margin, like a journal's "see also". */
   .skill-perks__unlocks {
+    display: inline-flex;
+    min-height: 24px;
+    align-items: center;
+    align-self: flex-start;
     color: var(--color-category-skills);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
