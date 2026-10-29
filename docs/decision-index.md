@@ -146,6 +146,17 @@ roles, & carried progress are gone.
 Evidence: [docs/sync.md](../docs/sync.md), [docs/sync-setup.md](../docs/sync-setup.md),
 [https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
 
+### [Sync relay admission](decisions/2026-10-29-sync-relay.md)
+
+ID: 2026-10-29-sync-relay. Status: Current.
+
+The standalone SQLite relay supplements Cloudflare’s minute-only rate binding with rotating hourly
+HMAC admission handles, preserving address privacy & permanent mailbox retirement.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/132](https://github.com/mrh-is/mistria-fyi/issues/132),
+[relay/README.md](../relay/README.md), [relay/worker.ts](../relay/worker.ts).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)

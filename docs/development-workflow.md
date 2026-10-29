@@ -353,6 +353,11 @@ the enforced ceilings. Imports, environment setup, transforms, startup, & report
 toward the wall budget. Missing timing reports & unsuccessful tests fail the step independently of
 the budgets.
 
+The local Workers integration file, `relay/worker.test.ts`, has a 30-second file ceiling. It runs
+real workerd eviction, hibernating WebSocket closure, & SQLite runtime restarts, with measured
+provider-runtime waits totaling about 20 seconds. This exception changes neither other file ceilings
+nor the suite’s wall-time budget; see [the decision](decisions/2026-10-29-sync-relay.md).
+
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
 | Two CPUs (current private `ubuntu-latest`) | 10 s             | 120 s                 | 10 s per file, 300 s     |

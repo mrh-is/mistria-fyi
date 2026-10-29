@@ -275,7 +275,12 @@ export default defineConfig({
               ? ["scripts/cleanup-merged-worktrees.test.ts"]
               : []),
           ],
-          include: ["eslint-rules/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
+          include: [
+            "eslint-rules/**/*.test.ts",
+            "scripts/**/*.test.ts",
+            "tests/**/*.test.ts",
+            "relay/**/*.test.ts",
+          ],
           name: "node",
           ...sharedRegistry,
         },

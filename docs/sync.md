@@ -107,10 +107,12 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 
 ## The relay
 
-Built in #132, a separate Worker with Durable Objects (they cannot live in a Pages project) with its
-own `wrangler.toml`, in a directory that is not yet decided (relay/ or workers/relay/, #132), on
-Workers Free until usage says otherwise. It is reachable under the site’s origin or listed in
-`connect-src` (with `wss:`).
+Built in #132, a separate Worker with SQLite-backed Durable Objects (they cannot live in a Pages
+project), configured in `relay/wrangler.toml`, on Workers Free until usage says otherwise. Its
+planned origin, `relay.mistria.fyi`, is listed in `connect-src` for HTTPS & WSS. The
+[wire contract & launch steps](../relay/README.md) define its API; the
+[admission decision](decisions/2026-10-29-sync-relay.md) explains the hourly cap adaptation to
+Cloudflare’s minute-only binding. Deployment & secrets remain maintainer steps.
 
 ### The follow link
 

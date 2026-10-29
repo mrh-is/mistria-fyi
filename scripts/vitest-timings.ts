@@ -86,6 +86,10 @@ export function vitestInvocations(coverage: boolean, cpus: number): VitestInvoca
 }
 
 function fileBudget(file: string, budgets: Budgets): number {
+  // Real workerd eviction waits for in-flight events (5 s), and WebSocket close can wait
+  // another 10 s. The local relay suite also restarts SQLite storage: measured at 21 s in #132.
+  // Only this integration file gets 30 s; the wall budget & ordinary file ceilings stay fixed.
+  if (file === "relay/worker.test.ts") return 30_000;
   return cliProbeFiles.includes(file) ? (budgets.probeFileMs ?? budgets.fileMs) : budgets.fileMs;
 }
 
@@ -114,7 +118,7 @@ export function timingSummary(files: FileTiming[], elapsedMs: number, budgets: B
   return [
     "## Vitest timings",
     "",
-    `Wall time: ${(elapsedMs / 1000).toFixed(2)} s; budget: ${budgets.stepMs / 1000} s. File budget: ${budgets.fileMs / 1000} s (${(budgets.probeFileMs ?? budgets.fileMs) / 1000} s for CLI probes; tests & hooks). Wall time includes startup, imports, setup, & report generation.`,
+    `Wall time: ${(elapsedMs / 1000).toFixed(2)} s; budget: ${budgets.stepMs / 1000} s. File budget: ${budgets.fileMs / 1000} s (${(budgets.probeFileMs ?? budgets.fileMs) / 1000} s for CLI probes; 30 s for relay/worker.test.ts; tests & hooks). Wall time includes startup, imports, setup, & report generation.`,
     "",
     "| Project | File | Tests & hooks (s) |",
     "| --- | --- | ---: |",

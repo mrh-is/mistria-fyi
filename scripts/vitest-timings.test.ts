@@ -67,6 +67,18 @@ describe("Vitest timing budgets", () => {
     ).toEqual(["scripts/example.test.ts: 9500 ms exceeds the 5000 ms file budget"]);
   });
 
+  it("bounds the real Workers integration separately without relaxing other files", () => {
+    const runtimeBudgets = timingBudgets(4, false);
+    const relay = { durationMs: 25_000, file: "relay/worker.test.ts", project: "node" };
+    expect(budgetFailures([relay], 30_000, runtimeBudgets)).toEqual([]);
+    expect(budgetFailures([{ ...relay, durationMs: 30_001 }], 35_000, runtimeBudgets)).toEqual([
+      "relay/worker.test.ts: 30001 ms exceeds the 30000 ms file budget",
+    ]);
+    expect(
+      budgetFailures([{ ...relay, file: "relay/other.test.ts" }], 30_000, runtimeBudgets),
+    ).toEqual(["relay/other.test.ts: 25000 ms exceeds the 5000 ms file budget"]);
+  });
+
   it("publishes every file, slowest first, with the wall-time budget", () => {
     const summary = timingSummary(
       [...files, { ...files[0], durationMs: 6000, file: "slow.test.ts" }],
