@@ -5,6 +5,7 @@ import { pageMetadata } from "#lib/data/page-metadata.js";
 import { CATEGORY_KEYS, getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
 import { getMaxRenownLevel } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 import { formatNumber } from "#lib/utils/format.js";
 
@@ -20,6 +21,7 @@ const props = {
 
 beforeEach(() => {
   userState.resetAll();
+  pageStub.reset();
 });
 
 describe("/everything page", () => {
@@ -81,5 +83,31 @@ describe("/everything page", () => {
     userState.toggleShowCompleted();
     const shown = renderToFragmentWithFeedback(AllPage, { props });
     expect(shown.container.querySelector("#category-renown")).not.toBeNull();
+  });
+
+  it("offers both grouping lenses and renders source anchors from the device preference", () => {
+    userState.setEverythingGrouping("source");
+    const view = renderToFragmentWithFeedback(AllPage, { props });
+    expect(view.queries.getByLabelText("Group by")).toBeTruthy();
+    expect(view.container.querySelector("#sources-stores")).not.toBeNull();
+    expect(view.container.querySelector("#store-balor")).not.toBeNull();
+    expect(view.container.querySelector("#fish-ocean")).not.toBeNull();
+    expect(view.container.querySelector("#source-progress")).not.toBeNull();
+    expect(view.container.querySelector("#category-almanac")).toBeNull();
+  });
+
+  it("lets the URL override the device preference without replacing it", () => {
+    pageStub.navigate("/en/everything?group=source#store-balor");
+    const sourceView = renderToFragmentWithFeedback(AllPage, { props });
+    expect(
+      sourceView.container.querySelector("#store-balor [data-tracker-row-list]"),
+    ).not.toBeNull();
+    expect(userState.state.everythingGrouping).toBe("category");
+    userState.setEverythingGrouping("source");
+    pageStub.navigate("/en/everything?group=category");
+    const categoryView = renderToFragmentWithFeedback(AllPage, { props });
+    expect(categoryView.container.querySelector("#category-almanac")).not.toBeNull();
+    expect(categoryView.container.querySelector("#sources-stores")).toBeNull();
+    expect(userState.state.everythingGrouping).toBe("source");
   });
 });

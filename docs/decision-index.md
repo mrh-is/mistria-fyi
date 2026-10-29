@@ -146,6 +146,17 @@ roles, & carried progress are gone.
 Evidence: [docs/sync.md](../docs/sync.md), [docs/sync-setup.md](../docs/sync-setup.md),
 [https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
 
+### [Source grouping](decisions/2026-10-29-source-grouping.md)
+
+ID: 2026-10-29-source-grouping. Status: Current.
+
+Everything groups existing completion tasks by acquisition instance, with source-specific windows &
+rollups, and a device preference overridden by the URL.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048](https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048),
+[src/lib/presentation/source-groups.ts](../src/lib/presentation/source-groups.ts).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)

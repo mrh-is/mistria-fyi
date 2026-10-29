@@ -1,5 +1,11 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "everything_group_by": "Группировать по",
+  "everything_group_category": "Категории",
+  "everything_group_source": "Источнику",
+  "everything_progress": "Прогресс",
+  "everything_source_done": "Готово",
+  "everything_source_heading": "{name} · {state}",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Отслеживайте коллекции, задания, навыки и многое другое",
   "og_share_description": "Вся Мистрия в одном месте",
