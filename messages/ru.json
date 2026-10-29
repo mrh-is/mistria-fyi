@@ -571,6 +571,7 @@
   "source_horse_statue_perk": "Купить у статуи лошади ({cost} эссенции) после получения: {mount}",
   "source_chicken_statue_all_tiers": "Получить у статуи курицы после разведения кур всех уровней",
   "source_crop": "Вырастить из: {seed}",
+  "source_crop_greenhouse": "Вырастить в теплице из: {seed}",
   "source_cutscene_elsie_dating_tutorial": "Получить во время обучения свиданиям ({villager})",
   "source_cutscene_great_bird_0": "Получить в сценке после свадьбы",
   "source_date": "Получить на свидании",

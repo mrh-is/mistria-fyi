@@ -559,6 +559,7 @@
   "source_horse_statue_perk": "Buy at the Horse Statue ({cost} essence) once you have the {mount}",
   "source_chicken_statue_all_tiers": "Obtain from the Chicken Statue after breeding every chicken tier",
   "source_crop": "Grow from {seed}",
+  "source_crop_greenhouse": "Grow in the greenhouse from {seed}",
   "source_cutscene_elsie_dating_tutorial": "Receive during {villager}’s dating tutorial",
   "source_cutscene_great_bird_0": "Receive in a cutscene after you marry",
   "source_date": "Receive on a date",

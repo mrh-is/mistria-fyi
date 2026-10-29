@@ -553,6 +553,7 @@
   "source_horse_statue_perk": "{mount}の入手後、馬の像で購入（エッセンス{cost}）",
   "source_chicken_statue_all_tiers": "すべてのランクのニワトリを繁殖させた後、ニワトリ像から入手",
   "source_crop": "{seed}から育てる",
+  "source_crop_greenhouse": "温室で{seed}から育てる",
   "source_cutscene_elsie_dating_tutorial": "{villager}のデートのチュートリアルで受け取る",
   "source_cutscene_great_bird_0": "結婚後のイベントで受け取る",
   "source_date": "デートで受け取る",

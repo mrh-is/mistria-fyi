@@ -553,6 +553,7 @@
   "source_horse_statue_perk": "获得{mount}后，在马雕像处购买（{cost}精华）",
   "source_chicken_statue_all_tiers": "繁殖出所有等级的鸡后，从小鸡雕像处获得",
   "source_crop": "由{seed}种植",
+  "source_crop_greenhouse": "在温室中由{seed}种植",
   "source_cutscene_elsie_dating_tutorial": "在{villager}的约会教程中获得",
   "source_cutscene_great_bird_0": "婚后在剧情中获得",
   "source_date": "在约会中获得",
