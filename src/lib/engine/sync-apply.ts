@@ -18,8 +18,8 @@ import { progressFacts, resolutionHolds } from "./provenance.js";
 import { compareFarms } from "./save-identity.js";
 
 import type { FarmIdentity } from "#lib/types/save-identity.js";
-import type { QuestId, QuestType, Season } from "#lib/types/tracker-data.js";
-import type { ProgressState, QuestState } from "#lib/types/user-progress.js";
+import type { QuestId, QuestType, Season, VillagerRelationship } from "#lib/types/tracker-data.js";
+import type { ChildChoice, ProgressState, QuestState } from "#lib/types/user-progress.js";
 
 import type { ExtractedProgressKey, SaveExtraction } from "./import-save.js";
 import type { FactProvenance, ProgressHistory, ProvenanceSource } from "./provenance.js";
@@ -63,11 +63,8 @@ export type SyncDirection = "backward" | "forward";
  */
 export type AskReason = "level-decrease" | "local-disagrees" | "many-removals";
 
-/** The fields sync compares. Household facts stay the player's own (see {@link isHouseholdFact}). */
-export type SyncField = Exclude<
-  ExtractedProgressKey,
-  "breakUpsDisabled" | "childChoice" | "villagerRelationships"
->;
+/** The fields sync compares. */
+export type SyncField = ExtractedProgressKey;
 
 /** One fact on which stored progress & the save disagree. Values are `progressFacts` values. */
 export interface SyncDifference {
@@ -210,12 +207,15 @@ const QUEST_KIND = new Map<string, QuestType>(
 );
 
 /**
- * Household facts stay the player's own: the importer reads them (public #6) for manual import,
- * but sync doesn't compare relationships or the child choice yet, & pregnancy quests (the craving
- * quest) follow the household.
+ * These facts describe one household; a decision must keep or apply its dependent changes together.
  */
 function isHouseholdFact(field: SyncField, id: string | undefined): boolean {
-  return field === "questStates" && PREGNANCY_QUEST_IDS.has(id as QuestId);
+  return (
+    field === "villagerRelationships" ||
+    field === "breakUpsDisabled" ||
+    field === "childChoice" ||
+    (field === "questStates" && PREGNANCY_QUEST_IDS.has(id as QuestId))
+  );
 }
 
 const LEVEL_FIELDS: ReadonlySet<SyncField> = new Set<SyncField>([
@@ -231,6 +231,8 @@ const SYNC_FIELDS: readonly SyncField[] = [
   "almanacRecipes",
   "animalCosmetics",
   "animals",
+  "breakUpsDisabled",
+  "childChoice",
   "cosmetics",
   "hasUpperFloor",
   "heartLevels",
@@ -245,6 +247,7 @@ const SYNC_FIELDS: readonly SyncField[] = [
   "skillLevels",
   "spells",
   "unlockedPerks",
+  "villagerRelationships",
 ];
 
 function factKind(field: SyncField): FactKind {
@@ -254,6 +257,11 @@ function factKind(field: SyncField): FactKind {
 
 /** A fact value's place in its field's order; `undefined` is the default. */
 function rank(field: SyncField, value: string | undefined): number {
+  if (field === "villagerRelationships") {
+    if (value === "married") return 3;
+    if (value === "proposed") return 2;
+    return value === undefined ? 0 : 1;
+  }
   if (field === "questStates") return questStateRank((value ?? "none") as QuestState);
   if (field === "reachedSeason") return seasonOrdinal((value ?? "spring") as Season);
   return LEVEL_FIELDS.has(field) ? Number(value ?? 0) : Number(value !== undefined);
@@ -392,11 +400,16 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
     // A complete field also settles “keep mine” for facts at their default on both sides.
     const keys = new Set([
       ...save.keys(),
-      ...(complete ? [...fieldKeys(local.keys(), field), ...fieldKeys(resolved, field)] : []),
+      ...(complete
+        ? [
+            ...fieldKeys(local.keys(), field),
+            ...fieldKeys(resolved, field),
+            ...fieldKeys(Object.keys(history.provenance), field),
+          ]
+        : []),
     ]);
     for (const key of keys) {
       const [, id] = key.split("/");
-      if (isHouseholdFact(field, id)) continue;
       const [localValue, saveValue] = [local.get(key), save.get(key)];
       const resolution = ownEntry(history.resolutions, key);
       const provenance = ownEntry(history.provenance, key);
@@ -408,7 +421,7 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
       const direction = rank(field, saveValue) > rank(field, localValue) ? "forward" : "backward";
       // Only a complete field removes or lowers, and only quests the game reliably lists.
       if (direction === "backward" && (!complete || !questReplaceable(field, id))) continue;
-      if (resolutionHolds(resolution, saveValue ?? null)) continue;
+      if (!isHouseholdFact(field, id) && resolutionHolds(resolution, saveValue ?? null)) continue;
       if (resolution) comparison.settled.push(key);
 
       const kind = factKind(field);
@@ -445,7 +458,50 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
       removal.reason = "many-removals";
     }
   }
+  const household = comparison.differences.filter(({ field, key }) =>
+    isHouseholdFact(field, key.split("/")[1]),
+  );
+  if (
+    household.length > 0 &&
+    household.every(({ key, save }) =>
+      resolutionHolds(ownEntry(history.resolutions, key), save ?? null),
+    )
+  ) {
+    comparison.differences = comparison.differences.filter(
+      (difference) => !household.includes(difference),
+    );
+    comparison.settled = comparison.settled.filter(
+      (key) => !household.some((difference) => difference.key === key),
+    );
+  }
+  settleHousehold(base, comparison.differences);
   return comparison;
+}
+
+/** Preserve the strictest dependent decision; never synthesize cascades over manual facts. */
+function settleHousehold(base: SyncState, differences: SyncDifference[]): void {
+  const household = differences.filter(({ field, key }) =>
+    isHouseholdFact(field, key.split("/")[1]),
+  );
+  if (household.length === 0) return;
+  const candidate = structuredClone(base.progress);
+  for (const difference of household) writeFact(candidate, difference.key, difference.save);
+  const relationships = Object.values(candidate.villagerRelationships);
+  const partners = relationships.filter((value) => value === "married" || value === "proposed");
+  const inconsistent =
+    partners.length > 1 ||
+    (!candidate.breakUpsDisabled && partners.length > 0 && relationships.includes("romantic"));
+  const keep = inconsistent || household.some(({ policy }) => policy === "keep-local-and-tell");
+  const ask = household.some(({ policy }) => policy === "ask-first");
+  if (!keep && !ask) return;
+  for (const difference of household) {
+    difference.policy = keep ? "keep-local-and-tell" : "ask-first";
+    if (keep) {
+      delete difference.reason;
+    } else {
+      difference.reason = "local-disagrees";
+    }
+  }
 }
 
 function settleRule(
@@ -474,7 +530,10 @@ function factQuestions(differences: readonly SyncDifference[]): FactsQuestion[] 
   const groups = new Map<string, SyncDifference[]>();
   for (const difference of differences) {
     if (difference.policy !== "ask-first" || !difference.reason) continue;
-    const group = `${difference.field}:${difference.reason}`;
+    const household = isHouseholdFact(difference.field, difference.key.split("/")[1]);
+    const group = household
+      ? "household:local-disagrees"
+      : `${difference.field}:${difference.reason}`;
     groups.set(group, [...(groups.get(group) ?? []), difference]);
   }
   return [...groups].map(([group, grouped]) => ({
@@ -570,6 +629,16 @@ function writeFact(progress: ProgressState, key: string, value: string | undefin
     }
     case "hasUpperFloor":
       progress.hasUpperFloor = value !== undefined;
+      return;
+    case "breakUpsDisabled":
+      progress.breakUpsDisabled = value !== undefined;
+      return;
+    case "childChoice":
+      progress.childChoice = (value ?? "undeclared") as ChildChoice;
+      return;
+    case "villagerRelationships":
+      (progress.villagerRelationships as Record<string, VillagerRelationship>)[id] = (value ??
+        "undecided") as VillagerRelationship;
       return;
     case "heartLevels":
     case "skillLevels":

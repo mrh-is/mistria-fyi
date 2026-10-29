@@ -22,7 +22,7 @@ const SAVE_DIR = path.join(
 );
 const SAVE_FILES = readdirSync(SAVE_DIR).filter((name) => name.endsWith(".sav"));
 /** Fields a save never fully determines (see `PARTIAL_FIELDS` in `import-save.ts`). */
-const PARTIAL_KEYS = new Set(["childChoice", "mountAppearances", "villagerRelationships"]);
+const PARTIAL_KEYS = new Set(["childChoice"]);
 
 async function readSave(name: string): Promise<SaveBundle> {
   return parseSavArchive(new File([readFileSync(path.join(SAVE_DIR, name))], name));
@@ -60,6 +60,42 @@ describe.each(SAVE_FILES)("real save %s", (name) => {
       const expected = PARTIAL_KEYS.has(key) ? "unknown" : "complete";
       expect(field.completeness, `${key}: ${JSON.stringify(field.diagnostics)}`).toBe(expected);
     }
+  });
+
+  it("reads the actual household statuses, break-ups setting, and Mistmare fact", () => {
+    const { fields } = extractSave(bundle);
+    const late = name === "game-1315159680-autosave.sav";
+    expect(bundle.player?.disable_break_ups).toBe(late);
+    expect(fields.breakUpsDisabled).toMatchObject({ completeness: "complete", value: late });
+    const facts = bundle.gamedata?.t2_world_facts as Record<string, unknown>;
+    expect(facts.cutscene_seen_reveal_mistmare).toBe(late ? 1 : 0);
+    expect(fields.mountAppearances).toMatchObject({
+      completeness: "complete",
+      value: new Set(late ? ["mistmare", "giant_chicken_gold", "giant_chicken_white"] : []),
+    });
+    expect(fields.villagerRelationships).toMatchObject({
+      completeness: "complete",
+      value: late
+        ? {
+            adeline: "romantic",
+            balor: "romantic",
+            caldarus: "platonic",
+            celine: "platonic",
+            eiland: "romantic",
+            hayden: "romantic",
+            juniper: "romantic",
+            march: "romantic",
+            reina: "romantic",
+            ryis: "married",
+            seridia: "platonic",
+            valen: "platonic",
+          }
+        : {},
+    });
+    expect(bundle.player?.children).toEqual([]);
+    expect(bundle.player?.pending_child).toBeNull();
+    expect(facts.pending_stork_visit).toBe(0);
+    expect(fields.childChoice).toMatchObject({ completeness: "unknown", value: "undeclared" });
   });
 
   it("credits every reached rank even when its historical completion fact is false", () => {
@@ -226,17 +262,18 @@ describe("fields mutated from a real save", () => {
     expect(fields.animals.completeness).toBe("unknown");
   });
 
-  it("keeps mount appearances unknown when the Mistmare's reveal scene is renamed", () => {
+  it("keeps the Mistmare complete when only its historical scene is renamed", () => {
     const { fields } = extractSave(
       mutated(bundle, (copy) => {
         const scenes = copy.gamedata?.scene_history as string[];
+        expect(scenes).toContain("reveal_mistmare");
         scenes[scenes.indexOf("reveal_mistmare")] = "reveal_mistmare_renamed";
       }),
     );
 
     expect(fields.animals.completeness).toBe("complete");
-    expect(fields.mountAppearances.completeness).toBe("unknown");
-    expect(fields.mountAppearances.value).not.toContain("mistmare");
+    expect(fields.mountAppearances.completeness).toBe("complete");
+    expect(fields.mountAppearances.value).toContain("mistmare");
   });
 
   it("marks levels unknown when a villager's heart level is missing", () => {
