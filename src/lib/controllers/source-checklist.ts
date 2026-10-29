@@ -1,5 +1,6 @@
 import { trackerData } from "#lib/data/index.js";
 import { animalNameId, getAlmanacEntryNames, getName } from "#lib/data/names.js";
+import { isAnimalVariantSpoilered } from "#lib/engine/animal-availability.js";
 import { projectAlmanac } from "#lib/engine/projections/almanac.js";
 import { projectAnimals } from "#lib/engine/projections/animals.js";
 import { projectMuseum } from "#lib/engine/projections/museum.js";
@@ -25,6 +26,7 @@ export interface SourceChecklistRow extends SourceGroupRow {
   name: string;
   questState?: QuestState;
   reportCategory: ReportCategory;
+  searchNames?: string[];
   sprite?: string;
   subtitle?: string;
   /** Apply the category action and return its exact undo, including any recipe grants. */
@@ -73,7 +75,11 @@ export function buildSourceChecklist(
       () => {
         userState.toggleAlmanacItem(row.canonicalId);
       },
-      { obtainable: row.obtainable, sprite: row.canonicalId },
+      {
+        obtainable: row.obtainable,
+        searchNames: getAlmanacEntryNames(row.entry, locale),
+        sprite: row.canonicalId,
+      },
     );
   }
   for (const row of projectMuseum(ctx).rows) {
@@ -128,6 +134,7 @@ export function buildSourceChecklist(
     switch (row.kind) {
       case "variant": {
         const animal = trackerData.animals[row.animalId];
+        const species = getName("animals", animalNameId(row.animalId, "core"), locale);
         const tier = animal.variantTiers.findIndex((t) => row.variantId in t);
         const variant = animal.variantTiers[tier][row.variantId];
         add(
@@ -141,16 +148,28 @@ export function buildSourceChecklist(
             userState.toggleAnimalVariant(row.animalId, row.variantId);
           },
           {
-            subtitle:
+            searchNames: [species],
+            spoilered: isAnimalVariantSpoilered(
+              row.animalId,
+              row.variantId,
+              ctx.progress.animals[row.animalId],
+              ctx.progressionState.showSpoilers,
+            ),
+            subtitle: [
+              species,
               animal.variantTiers.length > 1
                 ? getName("ui", `tier_${tier + 1}`, locale)
                 : undefined,
+            ]
+              .filter(Boolean)
+              .join(" · "),
           },
         );
         break;
       }
       case "cosmetic": {
         const animal = trackerData.animals[row.animalId];
+        const species = getName("animals", animalNameId(row.animalId, "core"), locale);
         add(
           "animals",
           `${row.animalId}/${row.cosmeticId}`,
@@ -161,6 +180,7 @@ export function buildSourceChecklist(
           () => {
             userState.toggleAnimalCosmetic(row.animalId, row.cosmeticId);
           },
+          { searchNames: [species], subtitle: species },
         );
         break;
       }

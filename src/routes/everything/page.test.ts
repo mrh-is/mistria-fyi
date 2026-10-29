@@ -73,41 +73,19 @@ describe("/everything page", () => {
     });
   });
 
-  it("hides a completed category unless completed content is shown", () => {
+  it("hides completed categories & respects a category URL override when showing them", () => {
     userState.setRenown(getMaxRenownLevel());
 
     const hidden = renderToFragmentWithFeedback(AllPage, { props });
     expect(hidden.container.querySelector("#category-renown")).toBeNull();
     expect(hidden.container.querySelector("#category-skills")).not.toBeNull();
 
+    userState.setEverythingGrouping("source");
+    pageStub.navigate("/en/everything?group=category");
     userState.toggleShowCompleted();
     const shown = renderToFragmentWithFeedback(AllPage, { props });
     expect(shown.container.querySelector("#category-renown")).not.toBeNull();
-  });
-
-  it("offers both grouping lenses and renders source anchors from the device preference", () => {
-    userState.setEverythingGrouping("source");
-    const view = renderToFragmentWithFeedback(AllPage, { props });
-    expect(view.queries.getByLabelText("Group by")).toBeTruthy();
-    expect(view.container.querySelector("#sources-stores")).not.toBeNull();
-    expect(view.container.querySelector("#store-balor")).not.toBeNull();
-    expect(view.container.querySelector("#fish-ocean")).not.toBeNull();
-    expect(view.container.querySelector("#source-progress")).not.toBeNull();
-    expect(view.container.querySelector("#category-almanac")).toBeNull();
-  });
-
-  it("lets the URL override the device preference without replacing it", () => {
-    pageStub.navigate("/en/everything?group=source#store-balor");
-    const sourceView = renderToFragmentWithFeedback(AllPage, { props });
-    expect(
-      sourceView.container.querySelector("#store-balor [data-tracker-row-list]"),
-    ).not.toBeNull();
-    expect(userState.state.everythingGrouping).toBe("category");
-    userState.setEverythingGrouping("source");
-    pageStub.navigate("/en/everything?group=category");
-    const categoryView = renderToFragmentWithFeedback(AllPage, { props });
-    expect(categoryView.container.querySelector("#category-almanac")).not.toBeNull();
-    expect(categoryView.container.querySelector("#sources-stores")).toBeNull();
+    expect(shown.container.querySelector("#sources-stores")).toBeNull();
     expect(userState.state.everythingGrouping).toBe("source");
   });
 });

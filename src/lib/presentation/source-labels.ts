@@ -55,9 +55,8 @@ export function sourceSectionLabel(
       .map((segment) => {
         if (typeof segment === "string") return segment;
         if ("condition" in segment) {
-          if (isConditionVisible(segment.condition, progression)) return text(segment.unspoilered);
-          spoilered = true;
-          return "";
+          if (!isConditionVisible(segment.condition, progression)) spoilered = true;
+          return text(segment.unspoilered);
         }
         spoilered = true;
         return "";
@@ -66,7 +65,7 @@ export function sourceSectionLabel(
   }
   const label = text(buildSourceSegments(source, lookups));
   return {
-    name: spoilered ? m.tracker_row_spoilered_item({}, { locale: lookups.locale }) : label,
+    name: label,
     spoilered,
   };
 }

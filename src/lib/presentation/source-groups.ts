@@ -42,6 +42,7 @@ export interface SourceGroupRow {
   key: string;
   obtainable: boolean;
   sources: Source[];
+  spoilered?: boolean;
   visibility?: VisibilityCondition;
 }
 
@@ -137,10 +138,12 @@ export function projectSourceGroups<Row extends SourceGroupRow>(
   return [...sections.values()].flatMap(({ placements, ...instance }) => {
     const rows = [...placements.values()].map((placement) => ({
       ...placement,
-      window: classifyItemAvailability(
-        { sources: placement.sources, visibility: placement.entry.visibility },
-        ctx,
-      ),
+      window: placement.entry.spoilered
+        ? ("later" as const)
+        : classifyItemAvailability(
+            { sources: placement.sources, visibility: placement.entry.visibility },
+            ctx,
+          ),
     }));
     if (!matchesSources(rows.flatMap(({ sources }) => sources))) return [];
     const counted = rows.filter(({ entry }) => entry.obtainable);

@@ -15,6 +15,33 @@ beforeEach(() => {
   userState.resetAll();
 });
 
+it("retains the localized source name behind the spoiler mask for an explicit reveal", () => {
+  const sections = projectSourceGroups(
+    buildSourceChecklist(userState.progressContext, "en"),
+    userState.progressContext,
+  );
+  const lookups = buildBaseSegmentLookups(
+    computeSpoileredStoreIds(userState.progressionState),
+    "en",
+  );
+  const gated = sections.find(
+    (section) =>
+      section.source?.type === "perk" &&
+      sourceSectionLabel(section, lookups, userState.progressionState).spoilered,
+  );
+  if (!gated) throw new Error("No gated perk fixture");
+  const hidden = sourceSectionLabel(gated, lookups, userState.progressionState);
+  expect(hidden.spoilered).toBe(true);
+  userState.toggleShowSpoilers();
+  const updated = projectSourceGroups(
+    buildSourceChecklist(userState.progressContext, "en"),
+    userState.progressContext,
+  ).find((section) => section.id === gated.id);
+  if (!updated) throw new Error("Missing revealed source");
+  const revealed = sourceSectionLabel(updated, lookups, userState.progressionState);
+  expect(hidden.name).toBe(revealed.name);
+});
+
 it.each(LOCALE_CODES)(
   "resolves every source label in %s, with hidden sources redacted",
   async (locale) => {

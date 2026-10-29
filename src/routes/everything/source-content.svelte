@@ -8,9 +8,10 @@
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
+  import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { categoryForKey } from "#lib/data/categories.js";
-  import { trackerData } from "#lib/data/index.js";
+  import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
@@ -40,6 +41,7 @@
 
   const guard = createSpoilerGuard();
   const leaving = createLeavingSet<string>();
+  registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
   let entries = $derived(buildSourceChecklist(userState.progressContext, locale));
   let lookups = $derived(
     buildBaseSegmentLookups(computeSpoileredStoreIds(userState.progressionState), locale),
@@ -60,10 +62,15 @@
           ...sourceSectionLabel(section, lookups, userState.progressionState),
           visibleRows: section.rows
             .filter(({ entry, window }) => {
-              const spoilered = !isConditionVisible(entry.visibility, userState.progressionState);
+              const spoilered =
+                entry.spoilered ||
+                !isConditionVisible(entry.visibility, userState.progressionState);
               if (
                 toolbarState.searchQuery &&
-                (spoilered || !matchesName(entry.name, toolbarState.searchQuery, locale))
+                (spoilered ||
+                  ![entry.name, ...(entry.searchNames ?? [])].some((name) =>
+                    matchesName(name, toolbarState.searchQuery, locale),
+                  ))
               ) {
                 return false;
               }
@@ -119,7 +126,10 @@
         else if (completesSource) celebrate();
       }
     };
-    if (entry.completed || isConditionVisible(entry.visibility, userState.progressionState)) {
+    if (
+      entry.completed ||
+      (!entry.spoilered && isConditionVisible(entry.visibility, userState.progressionState))
+    ) {
       perform();
     } else {
       guard.requestGuardedAction(entry.visibility, perform);
@@ -172,10 +182,9 @@
           >
             <TrackerRowList getKey={({ entry }) => entry.key} items={visibleRows}>
               {#snippet row({ entry, sources, window })}
-                {@const spoileredRow = !isConditionVisible(
-                  entry.visibility,
-                  userState.progressionState,
-                )}
+                {@const spoileredRow =
+                  entry.spoilered ||
+                  !isConditionVisible(entry.visibility, userState.progressionState)}
                 <TrackerRow
                   category={entry.category}
                   display={entry.questState === "obtained" && !spoileredRow
