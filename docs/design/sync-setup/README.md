@@ -5,8 +5,8 @@ generator that draws them. The design itself lives in [sync-setup.md](../../sync
 screens, & copy) & [sync.md](../../sync.md) (the protocol); this folder holds the evidence behind
 them.
 
-Status: in review on PR #275, after one design review round. The sheets match the canvas as
-generated from `generator/boards.mjs`.
+Status: approved on #131 (2026-10-28), after two design review rounds on PR #275, both resolved
+there. The sheets match the canvas as generated from `generator/boards.mjs`.
 
 ## What’s here
 
@@ -31,7 +31,8 @@ on that PR as history. The generator is throwaway tooling kept for reference; li
   [follow the save, not a pairing](../../decisions/2026-10-28-sync-follow-the-save.md).
 - **Canvas:** the private design canvas, https://claude.ai/artifact/5MG6rDBdx4HqjGmQyBbjrD. The
   generator is its source of truth; hand edits on the canvas would be lost on the next build.
-- **Reviews:** round one on PR #275, with its resolutions in the PR comment that follows it.
+- **Reviews:** rounds one & two on PR #275, each with its resolutions in the PR comment that follows
+  it, & the maintainer’s two mockup passes.
 
 ## Sheets
 

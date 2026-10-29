@@ -9,7 +9,8 @@ starts fresh; stopping keeps everything. This document is the journey, the scree
 #131; the protocol is in [sync.md](sync.md), & the reasons are in
 [the decision record](decisions/2026-10-28-sync-follow-the-save.md).
 
-Status: journey, copy, & mockups in review on #131 (PR #275). Every main state has a board on the
+Status: journey, copy, & mockups approved by the maintainer on #131 (2026-10-28), after two design
+review rounds on PR #275. Every main state has a board on the
 [design canvas](https://claude.ai/artifact/5MG6rDBdx4HqjGmQyBbjrD); [Screens](#screens) embeds a
 sheet per row from the [design package](design/sync-setup/README.md). Not drawn, & specified only
 here & in the copy table: the Linux & Mac folder views, “Show code” from Data (the same code area as
