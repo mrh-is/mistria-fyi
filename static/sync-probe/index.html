@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Sync probe</title>
+    <link rel="manifest" href="/sync-probe/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.png" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f5f0;
+        --ink: #2b2620;
+        --rule: #b9ad98;
+        --mark: #8a3b12;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1f1c18;
+          --ink: #ece4d6;
+          --rule: #5c5246;
+          --mark: #e39a6b;
+        }
+      }
+      body {
+        margin: 0 auto;
+        max-width: 46rem;
+        padding: 1rem;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.45 Georgia,
+          "Iowan Old Style",
+          serif;
+      }
+      h1 {
+        margin: 0 0 0.25rem;
+        font-size: 1.5rem;
+      }
+      h2 {
+        margin: 1.5rem 0 0.5rem;
+        border-bottom: 1px solid var(--rule);
+        font-size: 1.1rem;
+      }
+      p {
+        margin: 0.4rem 0;
+      }
+      button {
+        margin: 0.2rem 0.4rem 0.2rem 0;
+        padding: 0.45rem 0.8rem;
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+      }
+      #drop {
+        padding: 1.5rem 1rem;
+        border: 2px dashed var(--rule);
+        text-align: center;
+      }
+      #drop.over {
+        border-color: var(--mark);
+      }
+      #status {
+        color: var(--mark);
+        font-weight: bold;
+      }
+      textarea {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 18rem;
+        border: 1px solid var(--rule);
+        background: transparent;
+        color: inherit;
+        font:
+          12px/1.4 ui-monospace,
+          Consolas,
+          monospace;
+      }
+      code {
+        font-size: 0.9em;
+      }
+    </style>
+    <script type="module" src="/sync-probe/probe.js"></script>
+  </head>
+  <body>
+    <h1>Sync probe</h1>
+    <p>
+      A throwaway instrument for issue #130. Nothing leaves this device: the page makes no network
+      requests, & the save is read only to note its size, date, & a short checksum.
+    </p>
+    <p id="status">Loading…</p>
+
+    <h2>Save file</h2>
+    <div id="drop">Drag one <code>.sav</code> here</div>
+    <p>
+      <button id="pick" type="button">Pick the save</button>
+      <input id="file-input" type="file" accept=".sav" hidden />
+      <button id="grant" type="button">Ask for permission</button>
+      <button id="reread" type="button">Read again now</button>
+      <button id="forget" type="button">Forget the save</button>
+    </p>
+
+    <h2>Scan test</h2>
+    <p>
+      <button id="scan-link" type="button">Make a scan link</button>
+      <a id="scan-url" href="/sync-probe/"></a>
+    </p>
+
+    <h2>Report</h2>
+    <p>
+      <label><input id="note" type="text" placeholder="Step label, e.g. A3" /></label>
+      <button id="add-note" type="button">Add note</button>
+    </p>
+    <textarea id="report" readonly></textarea>
+    <p>
+      <button id="copy" type="button">Copy report</button>
+      <button id="clear" type="button">Clear log</button>
+    </p>
+  </body>
+</html>

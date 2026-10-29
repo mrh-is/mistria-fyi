@@ -9,6 +9,8 @@
       "entry": [
         // SvelteKit's universal hooks module (`reroute`), loaded by the framework.
         "src/hooks.ts",
+        // The throwaway sync probe (#130), loaded by its static page's script tag.
+        "static/sync-probe/probe.js",
       ],
       "ignore": [
         // `scripts/locale-fonts/` is its own pnpm package with its own scripts & dependencies.
