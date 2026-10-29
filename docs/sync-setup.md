@@ -129,12 +129,15 @@ at the bottom.
 
 1. **Find your save file.** The step admits it’s the weirdest part & promises smooth sailing after.
    It has two halves, copying the folder & dragging the file in, both always visible but only one
-   active at a time: the second is dimmed until the folder is copied, & the first dims once it is,
-   so the next step is always obvious at a glance.
+   active at a time, marked by an accent rule beside it; the other half keeps a hairline rule.
+   Nothing is dimmed or disabled except the drop box itself before the copy, so help, the platform
+   switch, & the instructions stay readable & usable, & the next step is still obvious at a glance.
    - **Copy the folder.** The path (Windows by default; “On Linux, Steam Deck, or a Mac?” shows the
-     others) with a Copy button. The drop box below looks inactive until the path is copied, by the
-     button or by a manual copy (a `copy` event whose selection is inside the path). The gate is
-     only visual: a save file dropped anyway still works, since it proves the player found it.
+     others) with a Copy button. The drop box below looks inactive until the path is copied (a
+     hairline border & muted icon, its label still at full contrast, & `aria-disabled` on the box
+     alone), by the button or by a manual copy (a `copy` event whose selection is inside the path).
+     The gate is only visual: a save file dropped anyway still works, since it proves the player
+     found it.
    - **Open it.** “Now open File Explorer and paste that into the address bar at the top.” It should
      show files like `game-[numbers]-autosave.sav`.
    - **Drag in the autosave.** Drag only where the save file is watched, since Windows refuses the
@@ -153,20 +156,29 @@ at the bottom.
    own variants, never filler text. “Yep!” applies the save file here.
 3. **Wanna track this on your phone?** The default next step. The code area holds everything about
    the code: the covered code with “Show code”, the stream note, & “Copy link” for a computer with
-   no camera. “No thanks, I’ll track here” sits in the step’s footer & finishes setup. Nothing is
+   no camera. The step’s footer holds the way on: “No thanks, I’ll track here” while the code is
+   covered, & once a code exists, `sync_done_home` (primary) with `sync_done_watched` beside it,
+   since the computer can’t tell when a phone scans. Either way setup finishes there. Nothing is
    shared until the first “Show code” or “Copy link”, which creates the code & reveals it only once
    that works; meanwhile the code area itself says `sync_making_code`, so the card doesn’t change
    height. If sync is paused, the code area says so & the footer’s only button becomes
    `sync_phone_later`, since setting up later is all the player can do. “No thanks” & a wrong file
    create nothing.
 
-- **Success says to keep the tab open:** “While this tab’s open, we’ll sync your save file every
+- **Finishing says to keep the tab open:** “While this tab’s open, we’ll sync your save file every
   time you sleep.” A browser that can’t watch files says to drop it in again after playing instead.
-  Its one button, `sync_done_home`, goes to the field guide, so there’s always a clear next step.
+  After “No thanks”, the done screen says so, with step iii folded to `sync_share_skipped`; its one
+  button, `sync_done_home`, goes to the field guide, so there’s always a clear next step.
 - **The Chrome tip.** In a browser that can’t watch a file & isn’t Chrome or Edge, the sync page
   opens with a dismissible tag dialog, “Let Chrome do this for you”, with “Copy this page’s link” &
-  `sync_tip_chrome_dismiss`; dismissing it leaves the drop-it-in-again steps.
+  `sync_tip_chrome_dismiss`; dismissing it leaves the normal setup steps, help included. The shorter
+  drop-it-in-again copy (`sync_find_open_redrop`, `sync_done_redrop`) appears only after the first
+  save file is read.
 - **Showing the code again** is one tap from Data or the status button.
+- **Dropping it in again.** Where the save file isn’t watched (another browser, or a copy chosen
+  through “Can’t drag?”), Data’s sync card holds the drop box for each new save file, with “Can’t
+  drag?” too, & the status button’s panel links there (`sync_redrop_label`). A drop stays in the
+  lane & skips the farm question unless the farm changed, which switches with a backup as usual.
 
 ### Save folders
 
@@ -197,7 +209,8 @@ watched, but it’s a handy way to grab a save file for development.
 
 - **iPhone & iPad browsers** get one question first, as a tag dialog: sync here, or in the home
   screen app, since Safari can clear a site’s data after a week away & the app keeps it. “I’ll use
-  the app” explains Share › “Add to Home Screen”, then opening the app & scanning there.
+  the app” is the primary button, since the dialog argues for it, & explains Share › “Add to Home
+  Screen”, then opening the app, tapping “Sync from my farm automagically”, & scanning there.
 - **A device already syncing** from another code asks `sync_switch_title`, offering “Make a backup”
   like the other dialogs, since a different farm replaces the one farm-switch backup; the next save
   file applies with the usual rules.
@@ -212,18 +225,18 @@ file comes from, when the last one came, & its in-game date (`sync_panel_*`), wi
 the gaming computer & a reminder to keep the tab open there. It speaks up with a dot & a short slip
 only when something is late or wrong. Its accessible name is “Save file sync: {status}”.
 
-| Stage            | The gaming computer                             | Another device                                                    |
-| ---------------- | ----------------------------------------------- | ----------------------------------------------------------------- |
-| Playing          | Syncs each time you sleep, while the tab’s open | Updates a moment later                                            |
-| Away for a while | Nothing                                         | A slip after an unusually long gap                                |
-| Browser restart  | Asks to read the save file again (one click)    | Nothing                                                           |
-| Game update      | Can’t read the save file: the notice below      | If it gets a save it can’t read either, the short notice below    |
-| App update       | Reloads itself at a safe moment                 | Same; `sync_update_computer` or `sync_update_here`                |
-| New farm         | Drop the new save file in                       | Switches to the new farm & backs up the old one                   |
-| New phone        | Show the code again                             | The new phone scans it; the old one keeps syncing until it stops  |
-| Non-Chrome       | Drop the save file in again after each session  | Updates whenever it’s dropped in                                  |
-| New code         | “Make a new code” in Data                       | “Your computer stopped sharing this save file”; scan the new code |
-| Paused           | `sync_paused_*`, hairline; lifts by itself      | Nothing new arrives; the gap slip if it lasts                     |
+| Stage            | The gaming computer                                                 | Another device                                                       |
+| ---------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Playing          | Syncs each time you sleep, while the tab’s open                     | Updates a moment later                                               |
+| Away for a while | Nothing                                                             | A slip after an unusually long gap                                   |
+| Browser restart  | Asks to read the save file again (one click)                        | Nothing                                                              |
+| Game update      | Can’t read the save file: the notice below                          | If it gets a save it can’t read either, the short notice below       |
+| App update       | Reloads itself at a safe moment                                     | Same; `sync_update_computer` or `sync_update_here`                   |
+| New farm         | Drop the new save file in                                           | Switches to the new farm & backs up the old one                      |
+| New phone        | Show the code again                                                 | The new phone scans it; the old one keeps syncing until it stops     |
+| Non-Chrome       | Drop the save file in again after each session, in Data’s sync card | Updates whenever it’s dropped in                                     |
+| New code         | “Make a new code” in Data                                           | `sync_retired_*`: scan the new code if there is one, or stop syncing |
+| Paused           | `sync_paused_*`, hairline; lifts by itself                          | Nothing new arrives; the gap slip if it lasts                        |
 
 Check-offs made by hand on a phone stay on that phone, so a new phone starts with only what’s in the
 save file. A player who wants them moves them with backup & restore, which stays in the lane.
@@ -235,13 +248,14 @@ hand, keeping all its progress. Each of the card’s actions carries a line sayi
 (`sync_show_code_sub`, `sync_new_code_sub`, `sync_stop_sub`, `sync_scan_other_sub`), so “Make a new
 code” explains itself before anyone opens its dialog.
 
-- **On the gaming computer,** leaving the lane by “Stop syncing” (or Data’s reset, which stops
-  syncing too) also retires the code once the leaving write lands, so other devices say the computer
-  stopped sharing & keep what they have until they stop too. A retire that can’t reach the relay
-  keeps retrying.
+- **On the gaming computer,** leaving the lane by “Stop syncing” also retires the code once the
+  leaving write lands, so other devices say the computer stopped sharing & keep what they have until
+  they stop too. A retire that can’t reach the relay keeps retrying.
 - **Stopping removes only the sync state:** the receipt, the lane, & the key. **Starting fresh**
   erases progress & history too, but keeps the farm-switch backup, since no export carries it.
-  **Data’s reset** in a syncing lane erases progress & stops syncing, back to tracking by hand.
+  **Data’s reset** in a syncing lane erases progress & history but stays in the lane: the save file
+  fills it back in, at once on the computer & with the next save file elsewhere. The reset dialog
+  adds `sync_reset_note` in a syncing lane.
 - **“Make a new code”** stays in the lane, for when the old one ended up on stream. It makes & shows
   the new code first, then retires the old one; if it can’t make one, the old code keeps working
   (`sync_new_code_failed`).
@@ -254,7 +268,8 @@ code” explains itself before anyone opens its dialog.
   nothing is lost, it isn’t your fault, we’re on it, & the next read applies everything since, so
   keep the tab open. Another device shows the short version only when it gets a save file it can’t
   read either; otherwise it just sees no new saves.
-- **The save file moved or access lapsed:** an amber field note with the drop box & folder again.
+- **The save file moved or access lapsed:** an amber field note with the folder, the drop box, &
+  “Can’t drag?”, the same file input as setup.
 - **Sync can’t be reached:** `sync_unreachable_*` with “Try again”, on either side. Uploads retry by
   themselves.
 - **Sync is paused** (the kill switch): a hairline note on the gaming computer saying it turns back
@@ -362,6 +377,7 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_find_linux_hint`     | Not there? Look in your Steam library’s steamapps/compatdata/2142790 folder.                                                                                                                |
 | `sync_find_open`           | Now open File Explorer and paste that into the address bar at the top. It should take you to a folder with files like `game-[numbers]-autosave.sav`. Drag that autosave file into this box: |
 | `sync_find_open_redrop`    | Open it in File Explorer and drag your newest autosave in.                                                                                                                                  |
+| `sync_redrop_label`        | Drop in your latest save file                                                                                                                                                               |
 | `sync_find_drop`           | Drop your autosave here                                                                                                                                                                     |
 | `sync_find_drop_locked`    | Copy the folder first, and this box will wake up.                                                                                                                                           |
 | `sync_find_cant_drag`      | Can’t drag?                                                                                                                                                                                 |
@@ -388,7 +404,7 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_done_watched`        | While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!                                                                                     |
 | `sync_done_redrop`         | Whenever you’re done playing, drop your save file in again and we’ll sync it.                                                                                                               |
 | `sync_done_home`           | Go to my field guide                                                                                                                                                                        |
-| `sync_done_code_summary`   | Your code’s ready any time in Data                                                                                                                                                          |
+| `sync_share_skipped`       | Skipped. Show a code any time from Data.                                                                                                                                                    |
 | `sync_tip_chrome`          | Let Chrome do this for you                                                                                                                                                                  |
 | `sync_tip_chrome_body`     | In Chrome or Edge, we can sync your save file every time you sleep, no dropping it in again.                                                                                                |
 | `sync_tip_chrome_after`    | Copy this page’s link, then paste it into Chrome or Edge.                                                                                                                                   |
@@ -415,7 +431,7 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_ios_body`         | Safari can clear a site’s data if you don’t visit for a week. The home screen app hangs on to it.                                                                                  |
 | `sync_ios_here`         | Sync in {browser}                                                                                                                                                                  |
 | `sync_ios_app`          | I’ll use the app                                                                                                                                                                   |
-| `sync_ios_app_steps`    | Tap Share, then “Add to Home Screen”. Open the tracker from your home screen and tap “Scan the code” there.                                                                        |
+| `sync_ios_app_steps`    | Tap Share, then “Add to Home Screen”. Open the tracker from your home screen, tap “Sync from my farm automagically”, and scan the code there.                                      |
 | `sync_switch_title`     | Sync this save file instead?                                                                                                                                                       |
 | `sync_switch_body`      | This device will start getting a different save file. If it’s a different farm, we’ll back up the current one, but only one backup fits, so you might want to make your own first. |
 | `sync_switch_backup`    | Make a backup                                                                                                                                                                      |
@@ -443,6 +459,7 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_stop_body_computer` | Your progress stays right here, and you’ll check things off by hand from now on. Your other devices will stop getting your save file. If you sync your save file again later, it’ll start fresh. |
 | `sync_stop_confirm`       | Stop syncing                                                                                                                                                                                     |
 | `sync_stop_cancel`        | Cancel                                                                                                                                                                                           |
+| `sync_reset_note`         | Your save file will fill most of it back in, so you’ll stay synced.                                                                                                                              |
 | `sync_new_code`           | Make a new code                                                                                                                                                                                  |
 | `sync_show_code_sub`      | Add your phone or another device.                                                                                                                                                                |
 | `sync_new_code_sub`       | Stops the old code, in case it ended up on stream or somewhere you didn’t mean.                                                                                                                  |
@@ -453,8 +470,9 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_new_code_cancel`    | Never mind                                                                                                                                                                                       |
 | `sync_new_code_failed`    | We couldn’t make a new code right now, so your old one still works. Try again in a bit.                                                                                                          |
 | `sync_retired_title`      | Your computer stopped sharing this save file                                                                                                                                                     |
-| `sync_retired_body`       | Scan its new code to keep your save file syncing.                                                                                                                                                |
+| `sync_retired_body`       | If it made a new code, scan it here. Or stop syncing and keep tracking by hand.                                                                                                                  |
 | `sync_retired_action`     | Scan the code                                                                                                                                                                                    |
+| `sync_retired_stop`       | Stop syncing                                                                                                                                                                                     |
 | `sync_link_expired`       | It’s been a while! We made a new code for your save file. Scan it on your other devices to keep your save file syncing.                                                                          |
 | `sync_reallow_title`      | Mind letting us read your save file again?                                                                                                                                                       |
 | `sync_reallow_body`       | Your browser asks after a restart.                                                                                                                                                               |
@@ -521,3 +539,6 @@ On other devices:
 - After the first mockup pass: subtitles in sentence case; one active half at a time in “Find your
   save file”; the code area holds the code’s whole lifecycle; the kill switch lifts by itself & says
   so; Data’s actions explain themselves (maintainer).
+- After review round two: once a code exists, setup finishes with “Go to my field guide”; the
+  retired-code notice is neutral & offers “Stop syncing”; Data’s sync card holds the ongoing drop
+  box; only the drop box is ever disabled; Data’s reset stays in the lane (maintainer).

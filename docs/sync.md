@@ -90,9 +90,10 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
   tracker does with it: a question waiting behind the fullscreen game, a quarantined or newer-data
   store, or an apply that failed never holds an upload back. A save it can’t prune uploads nothing &
   shows the PC’s error. It also reads the current save when it starts & when it shows the code, &
-  uploads it if its hash differs from the last upload, so an expired envelope fills again & a
-  tracker update after a game update catches up without waiting for the game to save. Nothing waits
-  for a follower, so a device that follows later gets the latest save straight away.
+  uploads it if its hash differs from the last upload or the mailbox answers “empty”, so an expired
+  envelope fills again even when the save hasn’t changed, & a tracker update after a game update
+  catches up without waiting for the game to save. Nothing waits for a follower, so a device that
+  follows later gets the latest save straight away.
 - **Applying here.** The PC’s own tracker applies each save the courier reads, through the same
   receiver path as a follower (see [Followers](#followers)) but without the relay, skipping a save
   whose hash matches its receipt. Check-offs on the PC stay on the PC, like any device’s.
@@ -196,11 +197,13 @@ Built in #133. Planned location (not yet created): src/lib/sync/follow.ts. The U
   only in the page, so a setup that fails, finds no save, or is abandoned leaves nothing behind. The
   computer lane is recorded at “Yep!”, in the write that applies its first save. Leaving the
   computer lane retires its code only after that leaving write lands, never at a confirmation.
-- **The erase & the stop.** Joining a syncing lane & Data’s reset in a syncing lane write fresh
-  progress & history & remove the receipt, the lane, & the key. “Stop syncing” removes only the
-  receipt, the lane, & the key, keeping progress & history, which are then tracked by hand. Both
-  keep `farmSwitchBackup`, which no export carries, & any pending retire. Restoring a backup & a new
-  farm stay inside a lane. See [sync-setup.md](sync-setup.md#lanes).
+- **The erase, the reset, & the stop.** Joining a syncing lane writes fresh progress & history &
+  removes any old receipt, lane, & key. Data’s reset in a syncing lane writes fresh progress &
+  history & removes the receipt but keeps the lane & key, so the latest save file applies again (on
+  the computer at once, from its current save). “Stop syncing” removes only the receipt, the lane, &
+  the key, keeping progress & history, which are then tracked by hand. Both keep `farmSwitchBackup`,
+  which no export carries, & any pending retire. Restoring a backup & a new farm stay inside a lane.
+  See [sync-setup.md](sync-setup.md#lanes).
 - **Opening a link.** A device opens the link, scans its QR code with the tracker’s own scanner (the
   one the transfer card uses), or pastes it. The page strips the fragment from its address bar,
   holds the key in the page (see Lanes), & fetches the latest envelope. An “empty” mailbox shows

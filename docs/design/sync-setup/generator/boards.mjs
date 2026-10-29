@@ -59,8 +59,12 @@ const syncPage = (lead, inner, { device = "pc", h, overlay } = {}) =>
 const dataScreen = (inner, { device = "pc", h, overlay } = {}) =>
   screen(dataPage(inner), { device, h, overlay, toolbar: false });
 const small = (t, icon) => btn(t, { size: "sm", icon });
-const dim = (inner, on) =>
-  `<div ${on ? "" : 'aria-disabled="true" '}style="display:flex;flex-direction:column;gap:10px${on ? "" : ";opacity:.42"}">${inner}</div>`;
+// One half of a step: the active half gets an accent rule, the other a hairline. Nothing dims.
+const half = (inner, on) =>
+  `<div style="display:flex;flex-direction:column;gap:10px;padding-left:12px;border-left:3px solid ${on ? C().accent : hairline(40)}">${inner}</div>`;
+// The drop box before the folder is copied: the only disabled thing, its label still readable.
+const lockedDrop = () =>
+  `<div aria-disabled="true" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 16px;text-align:center;border:2px dashed ${hairline(40)};border-radius:4px">${ti("upload", 24, hairline(80))}<p style="margin:0;${SERIF};font-size:14px;color:${C().muted}">Copy the folder first, and this box will wake up.</p></div>`;
 
 // Home’s two whole-card choices, each with its subtitle.
 const bigChoice = (t, sub, ic, primary) =>
@@ -155,22 +159,17 @@ const findBody = ({ copied = false, help = false } = {}) =>
   p(
     "Gonna be honest, this is the weirdest part of the setup. But once you’re done here, it’s smooth sailing!",
   ) +
-  dim(
+  half(
     p("First, copy this folder location:") +
       pathRow(copied) +
       switchLink("On Linux, Steam Deck, or a Mac?"),
     !copied,
   ) +
-  dim(
+  half(
     p(
       `Now open File Explorer and paste that into the address bar at the top. It should take you to a folder with files like ${code("game-[numbers]-autosave.sav")}. Drag that autosave file into this box:`,
     ) +
-      dropZone({
-        label: copied
-          ? "Drop your autosave here"
-          : "Copy the folder first, and this box will wake up.",
-        browse: false,
-      }) +
+      (copied ? dropZone({ label: "Drop your autosave here", browse: false }) : lockedDrop()) +
       `<div>${textLink("Can’t drag?", "font-size:13px")}</div>` +
       helpToggle(help) +
       (help ? HELP : ""),
@@ -201,10 +200,12 @@ const shareBody = (state) =>
     state === "paused" ? "" : "Live on stream? Maybe don’t show this bit.",
     copyLink(state),
   ) +
-  `<div style="display:flex;justify-content:flex-end;margin:0 -14px -16px;padding:10px 14px;border-top:1px dashed ${hairline()}">${
+  `<div style="display:flex;justify-content:flex-end;gap:12px;margin:0 -14px -16px;padding:10px 14px;border-top:1px dashed ${hairline()}">${
     state === "paused"
       ? btn("Okay, I’ll set it up later", { kind: "default" })
-      : btn("No thanks, I’ll track here", { kind: "ghost" })
+      : state === "shown"
+        ? `<span style="flex:1;align-self:center;${ANNOT};font-size:12px;line-height:1.4;color:${C().muted}">While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!</span>${btn("Go to my field guide", { kind: "default", icon: "arrow-right" })}`
+        : btn("No thanks, I’ll track here", { kind: "ghost" })
   }</div>`;
 const share = (state) =>
   stepCard("iii", "Wanna track this on your phone?", { state: "current", body: shareBody(state) });
@@ -215,19 +216,11 @@ const DONE = k.status(
   `<strong style="font-size:16px">Nice, you’re all set!</strong>${p("While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!", 14, "inherit")}<div style="margin-top:4px">${btn("Go to my field guide", { kind: "default", icon: "arrow-right" })}</div>`,
 );
 
-const redropStep = () =>
-  stepCard("i", "Find your save file", {
-    state: "current",
-    body:
-      dim(p("First, copy this folder location:") + pathRow(true), false) +
-      dim(
-        p("Open it in File Explorer and drag your newest autosave in.") +
-          dropZone({ label: "Drop your autosave here", browse: false }) +
-          `<div>${textLink("Can’t drag?", "font-size:13px")}</div>` +
-          note("Whenever you’re done playing, drop your save file in again and we’ll sync it."),
-        true,
-      ),
-  });
+// Where the save file isn’t watched, Data’s sync card holds the drop box for each new save.
+const REDROP =
+  note("Whenever you’re done playing, drop your save file in again and we’ll sync it.") +
+  dropZone({ label: "Drop in your latest save file", browse: false }) +
+  `<div>${textLink("Can’t drag?", "font-size:13px")}</div>`;
 
 // Phone pieces
 const scanStep = () =>
@@ -248,8 +241,8 @@ const phoneScan = (overlay, extra = "") =>
       extra +
       headsUp("phone") +
       row([
-        small("I’ll track it all by hand", "pencil"),
-        small("On a computer?", "device-desktop"),
+        btn("I’ll track it all by hand", { icon: "pencil" }),
+        btn("On a computer?", { icon: "device-desktop" }),
       ]),
     { device: "phone", overlay },
   );
@@ -278,7 +271,7 @@ const action = (button, why) =>
   `<div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;align-items:center">${button}<span style="${ANNOT};font-size:12px;line-height:1.4;color:${C().muted}">${why}</span></div>`;
 const actionPhone = (button, why) =>
   `<div style="display:flex;flex-direction:column;gap:4px">${button}<span style="${ANNOT};font-size:12px;line-height:1.4;color:${C().muted}">${why}</span></div>`;
-const syncCard = (pc, extra = "") =>
+const syncCard = (pc, extra = "", redrop = false) =>
   dataCard("Save File Sync", "", {
     open: true,
     body: pc
@@ -287,7 +280,9 @@ const syncCard = (pc, extra = "") =>
           ["Last save file", "Today, 7:42 PM"],
           ["Farm", "Robin on Sunny Meadow Farm"],
         ]) +
-        note("Keep this tab open while you play so we can sync your save file.") +
+        (redrop
+          ? REDROP
+          : note("Keep this tab open while you play so we can sync your save file.")) +
         extra +
         col(
           [
@@ -332,8 +327,8 @@ const dataRest = () =>
     dataCard("Backup & Restore", "Keep a copy of your progress, or restore one.") +
       dataCard("Danger Zone", "Reset your progress.", { tone: "danger" }),
   );
-const dataBoard = (pc, { extra = "", overlay, h } = {}) =>
-  dataScreen(section("Save file sync", syncCard(pc, extra)) + dataRest(), {
+const dataBoard = (pc, { extra = "", overlay, h, redrop = false } = {}) =>
+  dataScreen(section("Save file sync", syncCard(pc, extra, redrop)) + dataRest(), {
     device: pc ? "pc" : "phone",
     overlay,
     h,
@@ -483,19 +478,19 @@ export const rows = [
               step2Done() +
               stepCard("iii", "Wanna track this on your phone?", {
                 state: "done",
-                summary: "Your code’s ready any time in Data",
+                summary: "Skipped. Show a code any time from Data.",
               }),
           ),
       },
       {
         file: "Redrop.dc.html",
-        title: "Another browser: the Chrome tip, dismissible",
+        title: "Another browser: the Chrome tip, over the normal first step",
         ...PC,
-        h: 900,
+        h: 1000,
         render: () =>
           pcSetup(
-            redropStep() + step2Todo() + step3Todo(),
-            900,
+            step1() + step2Todo() + step3Todo(),
+            1000,
             tagDialog({
               title: "Let Chrome do this for you",
               desc: "In Chrome or Edge, we can sync your save file every time you sleep, no dropping it in again.",
@@ -503,13 +498,6 @@ export const rows = [
               actions: [["I’ll stick with this browser"], ["Copy this page’s link", true]],
             }),
           ),
-      },
-      {
-        file: "Redrop-Page.dc.html",
-        title: "Another browser: drop it in again after you play",
-        ...PC,
-        h: 900,
-        render: () => pcSetup(redropStep() + step2Todo() + step3Todo(), 900),
       },
     ],
   },
@@ -563,7 +551,7 @@ export const rows = [
             tagDialog({
               title: "Quick question: here, or the home screen app?",
               desc: "Safari can clear a site’s data if you don’t visit for a week. The home screen app hangs on to it.",
-              actions: [["I’ll use the app"], ["Sync in Safari", true]],
+              actions: [["Sync in Safari"], ["I’ll use the app", true]],
               narrow: true,
             }),
           ),
@@ -658,7 +646,7 @@ export const rows = [
       },
       {
         file: "Phone-Retired.dc.html",
-        title: "Phone · The computer made a new code",
+        title: "Phone · The computer stopped sharing: a new code, or stop",
         ...PH,
         render: () =>
           home(
@@ -666,8 +654,11 @@ export const rows = [
               tone: C().amber,
               icon: "qrcode",
               title: "Your computer stopped sharing this save file",
-              body: "Scan its new code to keep your save file syncing.",
-              actions: [["Scan the code", true]],
+              body: "If it made a new code, scan it here. Or stop syncing and keep tracking by hand.",
+              actions: [
+                ["Scan the code", true],
+                ["Stop syncing", false],
+              ],
             }),
             { device: "phone", toolbar: { sync: { tone: C().amber, status: "needs a look" } } },
           ),
@@ -746,7 +737,11 @@ export const rows = [
               title: "We lost track of your save file",
               body: "Drop it in again and we’re back in business.",
               extra: col(
-                [pathRow(false), dropZone({ label: "Drop your autosave here", browse: false })],
+                [
+                  pathRow(false),
+                  dropZone({ label: "Drop your autosave here", browse: false }),
+                  `<div>${textLink("Can’t drag?", "font-size:13px")}</div>`,
+                ],
                 10,
               ),
             }),
@@ -801,6 +796,13 @@ export const rows = [
     id: "data",
     title: "Data: what each action is for",
     boards: [
+      {
+        file: "Data-Redrop.dc.html",
+        title: "Computer · Not watched: drop each new save file in here",
+        ...PC,
+        h: 960,
+        render: () => dataBoard(true, { h: 960, redrop: true }),
+      },
       {
         file: "Data-PC.dc.html",
         title: "Computer · Data: save file sync",
