@@ -138,6 +138,36 @@
   "skill_perks_unlocked": "{count} / {available} unlocked",
   "skill_perks_more_locked": "{count} more locked",
   "skill_perks_locked": "{count} locked",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "unlocks {count} almanac item",
+        "countPlural=other": "unlocks {count} almanac items"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "unlocks {count} cosmetic",
+        "countPlural=other": "unlocks {count} cosmetics"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "unlocks {count} recipe",
+        "countPlural=other": "unlocks {count} recipes"
+      }
+    }
+  ],
   "skill_level_heading": "Level",
   "mines_floor_progress_section": "Floor Progress",
   "mines_floor_progress_compact_label": "Floor progress",
