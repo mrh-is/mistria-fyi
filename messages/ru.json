@@ -142,6 +142,42 @@
   "skill_perks_unlocked": "открыто {count} / {available}",
   "skill_perks_more_locked": "ещё закрыто: {count}",
   "skill_perks_locked": "закрыто: {count}",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "открывает {count} предмет альманаха",
+        "countPlural=few": "открывает {count} предмета альманаха",
+        "countPlural=many": "открывает {count} предметов альманаха",
+        "countPlural=other": "открывает {count} предмета альманаха"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "открывает {count} предмет косметики",
+        "countPlural=few": "открывает {count} предмета косметики",
+        "countPlural=many": "открывает {count} предметов косметики",
+        "countPlural=other": "открывает {count} предмета косметики"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "открывает {count} рецепт",
+        "countPlural=few": "открывает {count} рецепта",
+        "countPlural=many": "открывает {count} рецептов",
+        "countPlural=other": "открывает {count} рецепта"
+      }
+    }
+  ],
   "skill_level_heading": "Уровень",
   "mines_floor_progress_section": "Прогресс по этажам",
   "mines_floor_progress_compact_label": "Прогресс по этажам",
