@@ -16,6 +16,7 @@
   import type { SpriteSlotState } from "#lib/components/sprite-slot.svelte";
   import type { CheckboxState } from "#lib/components/tracker-checkbox.svelte";
   import type { DisplayBadges } from "#lib/engine/availability-condition.js";
+  import type { CategoryKey } from "#lib/engine/categories.js";
   import type { ReportCategory } from "#lib/feedback/types.js";
   import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
   import type { Source } from "#lib/types/acquisition.js";
@@ -24,6 +25,7 @@
   const feedbackContext = getFeedbackContext();
 
   let {
+    category,
     display,
     name,
     onToggle,
@@ -36,6 +38,7 @@
     spriteClass = "text-primary",
     subtitle,
   }: {
+    category?: CategoryKey;
     display: TrackerRowDisplay;
     name: string;
     onToggle: () => void;
@@ -168,6 +171,7 @@
 </script>
 
 <div
+  style:--primary={category ? `var(--color-category-${category})` : undefined}
   data-tracker-row
   data-source-state={sourceState}
   out:leaveTransition

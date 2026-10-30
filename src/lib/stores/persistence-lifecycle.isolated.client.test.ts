@@ -143,9 +143,11 @@ describe("persistence lifecycle", () => {
     userState.loadFromStorage();
     expect(userState.state.availabilityWindows).toEqual(["later"]);
     userState.toggleAvailabilityWindow("now");
+    userState.setEverythingGrouping("source");
     await vi.runAllTimersAsync();
     expect(JSON.parse(storage.getItem("mistria-fyi:preferences") ?? "null")).toEqual({
       availabilityWindows: ["now", "later"],
+      everythingGrouping: "source",
       showSpoilers: true,
     });
     expect(JSON.parse(userState.exportBackup())).not.toHaveProperty("availabilityWindows");
@@ -161,7 +163,11 @@ describe("persistence lifecycle", () => {
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
-    const incoming = JSON.stringify({ availabilityWindows: ["now"], showSpoilers: true });
+    const incoming = JSON.stringify({
+      availabilityWindows: ["now"],
+      everythingGrouping: "source",
+      showSpoilers: true,
+    });
     storage.setItem("mistria-fyi:preferences", incoming);
     testWindow.dispatch("storage", {
       key: "mistria-fyi:preferences",
@@ -170,6 +176,7 @@ describe("persistence lifecycle", () => {
     });
 
     expect(userState.state.availabilityWindows).toEqual(["now"]);
+    expect(userState.state.everythingGrouping).toBe("source");
     expect(userState.state.showSpoilers).toBe(true);
     await Promise.resolve();
     expect(storage.getItem("mistria-fyi:preferences")).toBe(incoming);

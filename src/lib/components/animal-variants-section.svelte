@@ -4,6 +4,7 @@
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
   import {
     getVariantSeason,
+    isAnimalVariantSpoilered,
     isVariantInScope as isVariantInScopeEngine,
   } from "#lib/engine/animal-availability.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -84,30 +85,12 @@
   }
 
   function isVariantSpoilered(animalId: AnimalId, variantId: AnimalVariantId): boolean {
-    if (userState.state.showSpoilers) return false;
-
-    const completedVariants = userState.state.progress.animals[animalId];
-    if (completedVariants?.has(variantId)) return false;
-
-    const animal = trackerData.animals[animalId];
-
-    let foundThisVariant = false;
-    let wasThisVariantLastTier: boolean;
-    // Search tiers from the top
-    for (const tier of animal.variantTiers.toReversed()) {
-      wasThisVariantLastTier = foundThisVariant;
-      for (const vid of Object.keys(tier)) {
-        // If we find a completed one, this tier is unspoilered
-        if (completedVariants?.has(vid as AnimalVariantId)) return false;
-        // If we find this variant, set a flag, and only check one more tier down
-        if (vid === variantId) foundThisVariant = true;
-      }
-      if (wasThisVariantLastTier) return true;
-    }
-
-    // Never found the desired variant on this animal
-    // This shouldn't happen, but fail gracefully
-    return true;
+    return isAnimalVariantSpoilered(
+      animalId,
+      variantId,
+      userState.state.progress.animals[animalId],
+      userState.state.showSpoilers,
+    );
   }
 
   function isVariantVisible(

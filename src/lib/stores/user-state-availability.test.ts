@@ -7,6 +7,19 @@ afterEach(() => {
 });
 
 describe("availability windows", () => {
+  it("keeps Everything grouping on this device across restore and reset, but outside backups", () => {
+    expect(userState.state.everythingGrouping).toBe("category");
+    const backup = userState.exportBackup();
+    userState.setEverythingGrouping("source");
+    expect(userState.restoreBackup(backup)).toEqual({ ok: true });
+    expect(userState.state.everythingGrouping).toBe("source");
+    userState.resetProgress();
+    expect(userState.state.everythingGrouping).toBe("source");
+    expect(JSON.parse(userState.exportBackup())).not.toHaveProperty("everythingGrouping");
+    userState.resetAll();
+    expect(userState.state.everythingGrouping).toBe("category");
+  });
+
   it("defaults to now and anytime", () => {
     expect(userState.state.availabilityWindows).toEqual(["now", "anytime"]);
   });
