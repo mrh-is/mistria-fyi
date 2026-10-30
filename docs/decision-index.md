@@ -169,6 +169,19 @@ Evidence:
 [src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts),
 [src/lib/stores/sync-household-storage.test.ts](../src/lib/stores/sync-household-storage.test.ts).
 
+### [Mid-session setup hooks](decisions/2026-10-29-mid-session-setup-hooks.md)
+
+ID: 2026-10-29-mid-session-setup-hooks. Status: Current.
+
+Both clients share synchronous setup & formatting for shell calls & root manifest edits. Claude Code
+also watches manifest & directory changes. Automatic setup failures require explicit repair.
+
+Evidence: [docs/agent-reference.md](../docs/agent-reference.md),
+[scripts/agent-tool-hook.ts](../scripts/agent-tool-hook.ts),
+[scripts/setup-worktree.ts](../scripts/setup-worktree.ts),
+[https://github.com/mrh-is/mistria-fyi/issues/199](https://github.com/mrh-is/mistria-fyi/issues/199),
+[https://github.com/mrh-is/mistria-fyi/pull/288](https://github.com/mrh-is/mistria-fyi/pull/288).
+
 ### [Source grouping](decisions/2026-10-29-source-grouping.md)
 
 ID: 2026-10-29-source-grouping. Status: Current.
