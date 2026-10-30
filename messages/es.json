@@ -604,6 +604,7 @@
   "source_horse_statue_perk": "Comprar en la estatua del caballo ({cost} de esencia) cuando tengas a {mount}",
   "source_chicken_statue_all_tiers": "Obtener de la estatua del pollo tras criar todos los niveles de pollo",
   "source_crop": "Cultivar a partir de {seed}",
+  "source_crop_greenhouse": "Cultivar en el invernadero a partir de {seed}",
   "source_cutscene_elsie_dating_tutorial": "Recibir durante el tutorial de citas de {villager}",
   "source_cutscene_great_bird_0": "Recibir en una escena tras casarte",
   "source_date": "Recibir en una cita",

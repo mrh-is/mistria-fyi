@@ -311,6 +311,20 @@ relevant target kinds from each native table.
 | `reviewed-references.ts`                    | The explicit, reviewed IDs no parsed table defines.                                                                                                |
 | `reference-index.ts`, `validate-sources.ts` | Index the registries, then throw `AcquisitionSourceValidationError` on unknown references, bad fields, or recipe cycles in the final tracker data. |
 
+### Crop acquisition
+
+Crop acquisition follows each seed’s `crop_object` into `object_prototypes.crop`, where a season
+name or a nonempty array of distinct season names controls outdoor growing. An explicit set of all
+four seasons is year-round. The default prototype’s `-1` is a required-field placeholder, not an
+all-season value; missing prototypes, missing seasons, that sentinel on a seeded crop, & malformed
+seasons throw. The real-asset crop test pins the placeholder’s scope & the two year-round seeds.
+
+Each crop also has a `crop` source with `greenhouse: true`, gated by completion of
+`upgrade_the_carpenters_shop`, which awards the first greenhouse blueprint. `Plant.gml` &
+`Crops.gml` enforce seasons only on the farm. This gate records access to greenhouse growing;
+construction & seeds in inventory are not tracked. Balor’s rotating crop & seed sources already come
+from `stores.toml`; their unlock gates remain, with no growing-season restriction.
+
 ### Data-quality diagnostics
 
 Recipe scroll targets, letter triggers, recipe defaults & ID collisions, almanac categories, Mines

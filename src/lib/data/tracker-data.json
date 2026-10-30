@@ -48776,6 +48776,26 @@
       "sources": [
         {
           "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_turnip",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_turnip"
         },
         {
@@ -48788,6 +48808,26 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_potato",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_potato"
         },
@@ -48802,6 +48842,26 @@
       "sources": [
         {
           "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_cabbage",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_cabbage"
         },
         {
@@ -48814,6 +48874,26 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_strawberry",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_strawberry"
         },
@@ -48841,6 +48921,26 @@
         },
         {
           "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_carrot",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_carrot"
         }
       ]
@@ -48863,6 +48963,26 @@
         },
         {
           "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_peas",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_peas"
         }
       ]
@@ -48880,6 +49000,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_chickpea",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_chickpea"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -48887,10 +49031,6 @@
               "spring"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_chickpea"
         },
         {
           "type": "store",
@@ -48920,6 +49060,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_tulip",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_tulip"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -48947,10 +49111,6 @@
           }
         },
         {
-          "type": "crop",
-          "seedItemId": "seed_tulip"
-        },
-        {
           "type": "store",
           "storeId": "balor"
         }
@@ -48960,6 +49120,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_lilac",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_lilac"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -48967,10 +49151,6 @@
               "spring"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_lilac"
         },
         {
           "type": "store",
@@ -48991,6 +49171,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_snowdrop_anemone",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_snowdrop_anemone"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -48998,10 +49202,6 @@
               "spring"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_snowdrop_anemone"
         },
         {
           "type": "store",
@@ -49035,6 +49235,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_daffodil",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_daffodil"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49051,10 +49275,6 @@
             "type": "questAvailable",
             "questId": "request_for_gardening_supplies"
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_daffodil"
         },
         {
           "type": "store",
@@ -49174,6 +49394,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_cucumber",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49186,6 +49420,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_cucumber"
         }
@@ -49195,6 +49435,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_tomato",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49207,6 +49461,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_tomato"
         }
@@ -49216,6 +49476,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_corn",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49228,6 +49502,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_corn"
         }
@@ -49237,6 +49517,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_chili_pepper",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49249,6 +49543,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_chili_pepper"
         }
@@ -49258,6 +49558,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_watermelon",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49270,6 +49584,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_watermelon"
         }
@@ -49293,6 +49613,26 @@
         },
         {
           "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_sugar_cane",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_sugar_cane"
         }
       ]
@@ -49314,6 +49654,26 @@
           }
         },
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_tea",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_tea"
         }
@@ -49414,6 +49774,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_dill",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49426,6 +49800,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_dill"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49433,10 +49817,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_dill"
         }
       ]
     },
@@ -49444,6 +49824,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_sage",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49454,6 +49848,16 @@
             "type": "reachedSeason",
             "season": "summer"
           }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_sage"
         },
         {
           "type": "forage",
@@ -49463,16 +49867,26 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_sage"
         }
       ]
     },
     "sunflower": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_sunflower",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -49486,6 +49900,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_sunflower"
         }
@@ -49542,6 +49962,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_daisy",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49554,6 +49988,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_daisy"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49561,10 +50005,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_daisy"
         }
       ]
     },
@@ -49572,6 +50012,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_iris",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49584,6 +50038,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_iris"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49591,10 +50055,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_iris"
         }
       ]
     },
@@ -49602,6 +50062,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_catmint",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49614,6 +50088,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_catmint"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49621,10 +50105,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_catmint"
         }
       ]
     },
@@ -49632,6 +50112,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_night_queen",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49644,6 +50138,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_night_queen"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49651,10 +50155,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_night_queen"
         }
       ]
     },
@@ -49683,6 +50183,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_thyme",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49695,6 +50209,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_thyme"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49702,10 +50226,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_thyme"
         }
       ]
     },
@@ -49713,6 +50233,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_oregano",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49725,6 +50259,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_oregano"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49732,10 +50276,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_oregano"
         }
       ]
     },
@@ -49743,6 +50283,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_basil",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49755,6 +50309,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_basil"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49762,10 +50326,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_basil"
         }
       ]
     },
@@ -49773,6 +50333,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_cosmos",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49785,6 +50359,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_cosmos"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49792,10 +50376,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_cosmos"
         }
       ]
     },
@@ -49840,6 +50420,20 @@
           }
         },
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_marigold",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49852,6 +50446,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_marigold"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49859,10 +50463,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_marigold"
         }
       ]
     },
@@ -49891,6 +50491,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_sweet_potato",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -49903,6 +50517,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_sweet_potato"
         }
@@ -49912,6 +50532,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_broccoli",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -49924,6 +50558,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_broccoli"
         }
@@ -49933,6 +50573,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_pumpkin",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -49945,6 +50599,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_pumpkin"
         }
@@ -49968,6 +50628,26 @@
         },
         {
           "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_onion",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_onion"
         }
       ]
@@ -49975,6 +50655,20 @@
     "cranberry": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_cranberry",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -49988,6 +50682,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_cranberry"
         }
@@ -50019,6 +50719,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_wheat",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50031,6 +50745,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_wheat"
         },
@@ -50044,6 +50764,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_moon_fruit",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50056,6 +50790,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_moon_fruit"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50063,10 +50807,6 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_moon_fruit"
         }
       ]
     },
@@ -50074,6 +50814,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_rosemary",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50086,6 +50840,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_rosemary"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50093,10 +50857,6 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_rosemary"
         }
       ]
     },
@@ -50216,6 +50976,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_viola",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50226,6 +51000,16 @@
             "type": "reachedSeason",
             "season": "fall"
           }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_viola"
         },
         {
           "type": "forage",
@@ -50235,16 +51019,26 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_viola"
         }
       ]
     },
     "celosia": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_celosia",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -50258,6 +51052,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_celosia"
         }
@@ -50267,6 +51067,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_heather",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50279,6 +51093,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_heather"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50286,10 +51110,6 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_heather"
         }
       ]
     },
@@ -50297,6 +51117,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_garlic",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50307,6 +51141,16 @@
             "type": "reachedSeason",
             "season": "fall"
           }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_garlic"
         },
         {
           "type": "forage",
@@ -50316,16 +51160,26 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_garlic"
         }
       ]
     },
     "chrysanthemum": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_chrysanthemum",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -50339,6 +51193,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_chrysanthemum"
         }
@@ -50395,6 +51255,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_cauliflower",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50407,6 +51281,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_cauliflower"
         }
@@ -50416,6 +51296,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_daikon_radish",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50428,6 +51322,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_daikon_radish"
         }
@@ -50437,6 +51337,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_burdock_root",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50449,6 +51363,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_burdock_root"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50456,10 +51380,6 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_burdock_root"
         }
       ]
     },
@@ -50467,6 +51387,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_poinsettia",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50477,6 +51411,16 @@
             "type": "reachedSeason",
             "season": "winter"
           }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_poinsettia"
         },
         {
           "type": "forage",
@@ -50486,16 +51430,26 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_poinsettia"
         }
       ]
     },
     "snow_peas": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_snow_peas",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -50509,6 +51463,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_snow_peas"
         }
@@ -50518,6 +51478,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_beet",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50530,6 +51504,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_beet"
         }
@@ -50560,6 +51540,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_frost_lily",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50572,6 +51566,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_frost_lily"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50579,10 +51583,6 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_frost_lily"
         }
       ]
     },
@@ -50590,6 +51590,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_jasmine",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50602,6 +51616,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_jasmine"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50609,10 +51633,6 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_jasmine"
         }
       ]
     },
@@ -50620,6 +51640,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_snapdragon",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50632,6 +51666,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_snapdragon"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50639,10 +51683,6 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_snapdragon"
         }
       ]
     },
@@ -52495,6 +53535,20 @@
           "visibility": {
             "type": "questAvailable",
             "questId": "breaking_the_fire_seal"
+          }
+        },
+        {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_temple_flower",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
           }
         },
         {
@@ -55231,13 +56285,33 @@
       "category": "materials",
       "sources": [
         {
+          "type": "crop",
+          "greenhouse": true,
+          "seedItemId": "seed_rice",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_rice"
+        },
+        {
           "type": "recipe",
           "method": "mill",
           "recipeId": "rice"
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_rice"
         },
         {
           "type": "store",
