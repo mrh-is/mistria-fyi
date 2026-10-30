@@ -99,6 +99,8 @@ Agent attribution is mandatory for agent-authored Git and GitHub content:
 
 ## Evidence attachments
 
+- Every PR under the visual review gate must attach its verification screenshots; attaching is not
+  optional. When the change alters existing UI, prefer a before & after pair of the same state.
 - Attach screenshots with GitHub CLI’s `--attach` flag, referencing each file in the body above the
   final `Agent:` line (otherwise the image lands after it and fails Attribution). Include useful
   prototype code in a collapsed `<details>` element. See the

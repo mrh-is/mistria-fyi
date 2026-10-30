@@ -131,6 +131,9 @@ not here.
   changed routes, desktop (~1280) & mobile (~390), changed interactions & a reversal, light & dark
   modes, relevant empty/loaded/error/disabled states, & console errors. Cap at 10 screenshots per
   PR; compare any design reference, & record omissions under “Not verified” in the PR description.
+- Attach the verification screenshots to the PR body: at least one per changed route or component,
+  at desktop & mobile widths, showing the changed state. A visual PR with no attached screenshots is
+  not ready for review.
 - Docs-only, pipeline-only, & test-only changes are visually exempt. Pure engine changes are exempt
   unless they affect rendered output. Use the complete checklist in agent-verification.md.
 - Most PRs need a fresh-context self-review. High-risk surfaces need full local verification &

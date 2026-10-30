@@ -104,6 +104,8 @@ notice. That notice, not a GitHub issue, is the expected result
 ### Screenshot limits
 
 - Cap at **10 screenshots** per PR. One per materially changed state, not one per interaction step.
+- The cap counts the screenshots attached to the PR. Choose the attached set so a reviewer can judge
+  layout & spacing without running the preview.
 - If a design reference exists (Figma file, existing page to match), screenshot both and compare.
 - Record what was **not** visually verified in the PR description under a “Not verified” section.
 
