@@ -1,5 +1,11 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "everything_group_by": "分組方式",
+  "everything_group_category": "類別",
+  "everything_group_source": "來源",
+  "everything_progress": "進度",
+  "everything_source_done": "已完成",
+  "everything_source_heading": "{name} · {state}",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "追蹤所有收藏、任務、技能及更多內容",
   "og_share_description": "米斯特里亞的一切，盡在一處",
@@ -130,6 +136,33 @@
   "skill_perks_unlocked": "已解鎖 {count}/{available}",
   "skill_perks_more_locked": "另有{count}個未解鎖",
   "skill_perks_locked": "{count}個未解鎖",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "解鎖{count}個圖鑑物品"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "解鎖{count}個裝飾"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "解鎖{count}個食譜"
+      }
+    }
+  ],
   "skill_level_heading": "等級",
   "mines_floor_progress_section": "樓層進度",
   "mines_floor_progress_compact_label": "樓層進度",
@@ -553,6 +586,7 @@
   "source_horse_statue_perk": "獲得{mount}後，在馬雕像處購買（{cost}精華）",
   "source_chicken_statue_all_tiers": "繁殖出所有等級的雞後，從小雞雕像處獲得",
   "source_crop": "由{seed}種植",
+  "source_crop_greenhouse": "在溫室中由{seed}種植",
   "source_cutscene_elsie_dating_tutorial": "在{villager}的約會教學中獲得",
   "source_cutscene_great_bird_0": "婚後在劇情中獲得",
   "source_date": "在約會中獲得",

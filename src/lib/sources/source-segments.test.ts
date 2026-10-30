@@ -984,6 +984,20 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     expect(result).toEqual(["Grow from Turnip Seeds"]);
   });
 
+  it("distinguishes greenhouse growing from seasonal growing", () => {
+    const source: Source = {
+      type: "crop",
+      greenhouse: true,
+      seedItemId: "seed_carrot" as ItemId,
+    };
+    expect(
+      buildSourceSegments(source, {
+        ...BASE_LOOKUPS,
+        itemNames: { ["seed_carrot" as ItemId]: "Carrot Seeds" },
+      }),
+    ).toEqual(["Grow in the greenhouse from Carrot Seeds"]);
+  });
+
   it("date", () => {
     const source: Source = { type: "date", dateId: "date_1" as DateId };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Receive on a date"]);

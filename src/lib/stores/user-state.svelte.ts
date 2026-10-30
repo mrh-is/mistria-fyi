@@ -127,6 +127,7 @@ export interface QuestCompletion {
 
 export interface UserState {
   availabilityWindows: AvailabilityWindow[];
+  everythingGrouping: "category" | "source";
   lastImport: null | SaveImportMetadata;
   progress: ProgressState;
   showCompleted: boolean;
@@ -139,6 +140,7 @@ export interface UserState {
 /** Per-device display preferences, stored apart from progress so a backup restore keeps them. */
 export interface SerializedPreferences {
   availabilityWindows: AvailabilityWindow[];
+  everythingGrouping: "category" | "source";
   showSpoilers: boolean;
 }
 
@@ -210,7 +212,11 @@ function createDefaultProgress(): ProgressState {
 // ─── Store ──────────────────────────────────────────────────────────
 
 function createDefaultPreferences(): SerializedPreferences {
-  return { availabilityWindows: [...DEFAULT_AVAILABILITY_WINDOWS], showSpoilers: false };
+  return {
+    availabilityWindows: [...DEFAULT_AVAILABILITY_WINDOWS],
+    everythingGrouping: "category",
+    showSpoilers: false,
+  };
 }
 
 function createDefaultState(): UserState {
@@ -567,6 +573,7 @@ function createUserState() {
     lastKnownPreferencesValue = value;
     const preferences = deserializePreferences(value);
     state.availabilityWindows = preferences.availabilityWindows;
+    state.everythingGrouping = preferences.everythingGrouping;
     state.showSpoilers = preferences.showSpoilers;
   }
 
@@ -871,6 +878,9 @@ function createUserState() {
       manual("childChoice", () => {
         state.progress.childChoice = choice;
       });
+    },
+    setEverythingGrouping(grouping: "category" | "source") {
+      state.everythingGrouping = grouping;
     },
     setHasUpperFloor(value: boolean) {
       manual("hasUpperFloor", () => {
@@ -1272,6 +1282,7 @@ function deserializePreferences(json: null | string): SerializedPreferences {
   const windows = AVAILABILITY_WINDOWS.filter((window) => stored.includes(window));
   return {
     availabilityWindows: windows.length > 0 ? windows : defaults.availabilityWindows,
+    everythingGrouping: parsed.everythingGrouping === "source" ? "source" : "category",
     showSpoilers:
       typeof parsed.showSpoilers === "boolean" ? parsed.showSpoilers : defaults.showSpoilers,
   };
@@ -1280,6 +1291,7 @@ function deserializePreferences(json: null | string): SerializedPreferences {
 function serializePreferences(state: UserState): string {
   const preferences: SerializedPreferences = {
     availabilityWindows: [...state.availabilityWindows],
+    everythingGrouping: state.everythingGrouping,
     showSpoilers: state.showSpoilers,
   };
   return JSON.stringify(preferences);

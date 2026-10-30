@@ -1,5 +1,11 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "everything_group_by": "그룹 기준",
+  "everything_group_category": "카테고리",
+  "everything_group_source": "획득처",
+  "everything_progress": "진행 상황",
+  "everything_source_done": "완료",
+  "everything_source_heading": "{name} · {state}",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "수집품, 퀘스트, 스킬 등 모든 진행 상황을 기록하세요",
   "og_share_description": "미스트리아의 모든 것을 한곳에",
@@ -130,6 +136,33 @@
   "skill_perks_unlocked": "{count}/{available} 해금",
   "skill_perks_more_locked": "{count}개 더 잠김",
   "skill_perks_locked": "{count}개 잠김",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "도감 아이템 {count}개 해금"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "코스메틱 {count}개 해금"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "레시피 {count}개 해금"
+      }
+    }
+  ],
   "skill_level_heading": "레벨",
   "mines_floor_progress_section": "층 진행도",
   "mines_floor_progress_compact_label": "층 진행도",
@@ -553,6 +586,7 @@
   "source_horse_statue_perk": "{mount} 획득 후 말 조각상에서 구매 (정수 {cost})",
   "source_chicken_statue_all_tiers": "모든 등급의 닭을 번식시킨 후 닭 조각상에서 획득",
   "source_crop": "{seed}에서 재배",
+  "source_crop_greenhouse": "온실에서 {seed} 재배",
   "source_cutscene_elsie_dating_tutorial": "{villager}의 데이트 튜토리얼에서 받기",
   "source_cutscene_great_bird_0": "결혼 후 이벤트에서 받기",
   "source_date": "데이트에서 받기",

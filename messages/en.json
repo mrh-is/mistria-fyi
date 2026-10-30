@@ -1,5 +1,11 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "everything_group_by": "Group by",
+  "everything_group_category": "Category",
+  "everything_group_source": "Source",
+  "everything_progress": "Progress",
+  "everything_source_done": "Done",
+  "everything_source_heading": "{name} · {state}",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Track every collection, quest, skill & more",
   "og_share_description": "All of Mistria in one place",
@@ -132,6 +138,36 @@
   "skill_perks_unlocked": "{count} / {available} unlocked",
   "skill_perks_more_locked": "{count} more locked",
   "skill_perks_locked": "{count} locked",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "unlocks {count} almanac item",
+        "countPlural=other": "unlocks {count} almanac items"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "unlocks {count} cosmetic",
+        "countPlural=other": "unlocks {count} cosmetics"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "unlocks {count} recipe",
+        "countPlural=other": "unlocks {count} recipes"
+      }
+    }
+  ],
   "skill_level_heading": "Level",
   "mines_floor_progress_section": "Floor Progress",
   "mines_floor_progress_compact_label": "Floor progress",
@@ -559,6 +595,7 @@
   "source_horse_statue_perk": "Buy at the Horse Statue ({cost} essence) once you have the {mount}",
   "source_chicken_statue_all_tiers": "Obtain from the Chicken Statue after breeding every chicken tier",
   "source_crop": "Grow from {seed}",
+  "source_crop_greenhouse": "Grow in the greenhouse from {seed}",
   "source_cutscene_elsie_dating_tutorial": "Receive during {villager}’s dating tutorial",
   "source_cutscene_great_bird_0": "Receive in a cutscene after you marry",
   "source_date": "Receive on a date",

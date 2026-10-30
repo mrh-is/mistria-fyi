@@ -1,5 +1,11 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "everything_group_by": "Agrupar por",
+  "everything_group_category": "Categoría",
+  "everything_group_source": "Fuente",
+  "everything_progress": "Progreso",
+  "everything_source_done": "Completado",
+  "everything_source_heading": "{name} · {state}",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Sigue todas tus colecciones, misiones, habilidades y más",
   "og_share_description": "Todo Mistria en un solo lugar",
@@ -134,6 +140,39 @@
   "skill_perks_unlocked": "{count} / {available} desbloqueados",
   "skill_perks_more_locked": "{count} más bloqueados",
   "skill_perks_locked": "{count} bloqueados",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "desbloquea {count} objeto del almanaque",
+        "countPlural=many": "desbloquea {count} objetos del almanaque",
+        "countPlural=other": "desbloquea {count} objetos del almanaque"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "desbloquea {count} cosmético",
+        "countPlural=many": "desbloquea {count} cosméticos",
+        "countPlural=other": "desbloquea {count} cosméticos"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "desbloquea {count} receta",
+        "countPlural=many": "desbloquea {count} recetas",
+        "countPlural=other": "desbloquea {count} recetas"
+      }
+    }
+  ],
   "skill_level_heading": "Nivel",
   "mines_floor_progress_section": "Progreso de pisos",
   "mines_floor_progress_compact_label": "Progreso de pisos",
@@ -565,6 +604,7 @@
   "source_horse_statue_perk": "Comprar en la estatua del caballo ({cost} de esencia) cuando tengas a {mount}",
   "source_chicken_statue_all_tiers": "Obtener de la estatua del pollo tras criar todos los niveles de pollo",
   "source_crop": "Cultivar a partir de {seed}",
+  "source_crop_greenhouse": "Cultivar en el invernadero a partir de {seed}",
   "source_cutscene_elsie_dating_tutorial": "Recibir durante el tutorial de citas de {villager}",
   "source_cutscene_great_bird_0": "Recibir en una escena tras casarte",
   "source_date": "Recibir en una cita",
