@@ -120,15 +120,15 @@ removes the envelope, owner hash, & other metadata, retaining only the tombstone
    creation, upload, read, retirement, & a pause that expires automatically. Confirm the privacy
    page update (#136) ships before enabling sync for players, including Cloudflare’s recovery
    retention. Follow [the relay takedown procedure](../docs/takedown.md#sync-relay) for withdrawal.
-6. Before enabling sync, configure a zone
-   [WAF rate-limiting rule](https://developers.cloudflare.com/waf/rate-limiting-rules/) that blocks
-   relay traffic above 60 requests per 10 seconds per client IP for 10 seconds, before Worker
-   execution. On a plan supporting host filters, match `http.host eq "relay.mistria.fyi"`. Free’s
-   rate rules support path filters only; match `starts_with(http.request.uri.path, "/v1/")` after
-   confirming the Pages app has no matching path (otherwise use a plan with host filtering). Include
-   OPTIONS, absent IDs, & upgrade requests. Verify the rule with HTTP & WebSocket traffic and review
-   its effect on shared networks. Keep an emergency hostname block available; bindings, WAF limits,
-   & the pause are layered mitigations, not a hard daily request-budget guarantee.
+6. The zone WAF rate-limiting rule is configured (2026-10-30). The Free plan allows one, so it is
+   shared with feedback: expression
+   `(http.request.uri.path eq "/api/feedback") or starts_with(http.request.uri.path, "/v1/")`,
+   counted by IP & Cloudflare location, blocking 10 seconds above 10 requests per 10 seconds. It
+   runs before the Worker & covers OPTIONS, absent IDs, & upgrade requests. Verify it before
+   enabling sync by sending more than 10 requests in a burst & checking “Security”, then “Events”,
+   for its blocks. Keep an emergency hostname block available; bindings, the WAF limit, & the pause
+   are layered mitigations, not a hard daily request-budget guarantee. See
+   [the shared edge rate rule](../docs/decisions/2026-10-30-shared-edge-rate-rule.md).
 
 ## Cloudflare sources
 
