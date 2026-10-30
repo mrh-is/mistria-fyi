@@ -159,16 +159,6 @@ Evidence:
 [src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts),
 [src/lib/stores/sync-household-storage.test.ts](../src/lib/stores/sync-household-storage.test.ts).
 
-### [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md)
-
-ID: 2026-10-30-shared-edge-rate-rule. Status: Current.
-
-The feedback endpoint & the sync relay share the zone’s one Free-plan rate-limiting rule, at 10
-requests per 10 seconds per IP & Cloudflare location.
-
-Evidence: [relay/README.md](../relay/README.md),
-[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
-
 ### [Reader-first agent guidance](decisions/2026-10-30-reader-first-agent-guidance.md)
 
 ID: 2026-10-30-reader-first-agent-guidance. Status: Current.
@@ -180,6 +170,16 @@ Evidence: [AGENTS.md](../AGENTS.md), [docs/agent-workflow.md](../docs/agent-work
 [docs/agent-verification.md](../docs/agent-verification.md),
 [docs/agent-reference.md](../docs/agent-reference.md),
 [.github/pull_request_template.md](../.github/pull_request_template.md).
+
+### [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md)
+
+ID: 2026-10-30-shared-edge-rate-rule. Status: Current.
+
+The feedback endpoint & the sync relay share the zone’s one Free-plan rate-limiting rule, at 10
+requests per 10 seconds per IP & Cloudflare location.
+
+Evidence: [relay/README.md](../relay/README.md),
+[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
 
 ## Partially superseded/amended
 
