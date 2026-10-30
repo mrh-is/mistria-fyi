@@ -170,6 +170,18 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048](https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048),
 [src/lib/presentation/source-groups.ts](../src/lib/presentation/source-groups.ts).
 
+### [Reader-first agent guidance](decisions/2026-10-30-reader-first-agent-guidance.md)
+
+ID: 2026-10-30-reader-first-agent-guidance. Status: Current.
+
+Agent-facing guidance is written in reader-first prose, because agents imitate its style in PR
+bodies.
+
+Evidence: [AGENTS.md](../AGENTS.md), [docs/agent-workflow.md](../docs/agent-workflow.md),
+[docs/agent-verification.md](../docs/agent-verification.md),
+[docs/agent-reference.md](../docs/agent-reference.md),
+[.github/pull_request_template.md](../.github/pull_request_template.md).
+
 ### [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md)
 
 ID: 2026-10-30-shared-edge-rate-rule. Status: Current.
