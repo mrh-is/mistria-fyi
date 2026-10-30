@@ -1,8 +1,9 @@
 # Provenance marks design package
 
-tl;dr: Mockups for drawing a checked box by where its fact came from (#276). The player inks it
-(`manual`), the save stamps it (`save`), we pencil it in (`inferred`), and the old records were
-typed (`unknown`). Hand marks wander & break the box; machine marks land square inside it.
+tl;dr: Mockups for drawing a checked box by where its fact came from (#276). The mark’s shape never
+changes: completed is a green X and obtained is an amber slash. Only the tool that drew it varies.
+The player inks it (`manual`), the save stamps it (`save`), we pencil it in (`inferred`), and the
+old records were typed (`unknown`).
 
 Status: proposed, awaiting the maintainer’s approval on the PR that adds this folder. Nothing in
 `src/` changes until the marks are approved.
@@ -21,22 +22,38 @@ component as they are. Lint & Knip skip `docs/design/*/generator/`.
 
 ## Recommended marks
 
-| Source     | Mark                                                    | Color role (proposed)                  | Description (`en`)             | Key                               |
-| ---------- | ------------------------------------------------------- | -------------------------------------- | ------------------------------ | --------------------------------- |
-| `manual`   | Inked X: today’s X with a nib blot, overrunning the box | `--color-tracker-mark-manual` (green)  | “You checked this off by hand” | `tracker_row_provenance_manual`   |
-| `save`     | Rubber-stamped check: one filled, square-ended shape    | `--color-tracker-mark-save` (green)    | “Filled in from your save”     | `tracker_row_provenance_save`     |
-| `inferred` | Pencil ditto: two short graphite strokes                | `--color-tracker-mark-inferred` (grey) | “We filled this in for you”    | `tracker_row_provenance_inferred` |
-| `unknown`  | Typed x: small, serifed, never touching the box         | `--color-tracker-mark-unknown` (green) | “From your older records”      | `tracker_row_provenance_unknown`  |
+| Source     | Tool         | How it draws the X                                                    | Description (`en`)             | Key                               |
+| ---------- | ------------ | --------------------------------------------------------------------- | ------------------------------ | --------------------------------- |
+| `manual`   | Pen          | Today’s X, loosened, with nib blots; overruns the box                 | “You checked this off by hand” | `tracker_row_provenance_manual`   |
+| `save`     | Rubber stamp | Square-ended filled bars, a few degrees off, with an edge kiss & fade | “Filled in from your save”     | `tracker_row_provenance_save`     |
+| `inferred` | Pencil       | Green colored pencil, grainy, gone over twice                         | “We filled this in for you”    | `tracker_row_provenance_inferred` |
+| `unknown`  | Typewriter   | A small serifed x, struck a hair off level                            | “From your older records”      | `tracker_row_provenance_unknown`  |
 
-The amber single slash for `obtained` stays as it is. Only the inked X keeps the drawn-stroke
-animation, since it’s the only mark the player draws.
+Every X uses `--color-tracker-checked` and every slash `--color-tracker-obtained`, so no new color
+roles are needed. Only the inked X keeps the drawn-stroke animation, since it’s the only mark the
+player draws.
+
+### One moment or two
+
+Most entries are done in one moment, so they get one X. A quest is obtained first and finished
+later, so it gets two impressions: the amber slash, then a green X over it, slightly out of
+register. The two can come from different tools, such as a stamped slash under an inked X.
+
+### Pen & the pencil filter
+
+The checkbox draws no filter today; `pencil-filter.svelte`’s filters are used only by
+`icon-completion.svelte`. The inked X applies `pencil-sm` to the mark, not the box. Its noise has a
+fixed seed in user space, so every inked X on a page would wobble identically. The recommendation
+adds two more seeds and picks one from the entry’s id. Because the noise is in user space, a quest’s
+slash & X get the same displacement, so their misregistration stays as drawn. The drawn-stroke
+animation runs inside the filter unchanged.
 
 ## Accessibility
 
 The checkbox keeps its accessible name (“Uncheck {name}”) & its state. A checked box adds
 `aria-describedby` pointing at visually hidden text holding its provenance’s description. Unchecked
-boxes get no description. The four marks differ in shape (an overrunning X, a filled check, two
-short strokes, a small serifed x), not only in color or weight.
+boxes get no description. The marks share one shape on purpose, so provenance is never conveyed by
+the mark alone; the description carries it.
 
 ## Regenerating
 
