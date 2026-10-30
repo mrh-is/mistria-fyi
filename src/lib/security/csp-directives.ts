@@ -41,6 +41,8 @@ export function cspDirectives(
         "self",
         "https://challenges.cloudflare.com",
         PRODUCTION_ASSET_ORIGIN,
+        "https://relay.mistria.fyi",
+        "wss://relay.mistria.fyi",
         spriteOrigin,
       ]),
     ],

@@ -1,0 +1,43 @@
+name = "mistria-sync-relay"
+main = "worker.ts"
+compatibility_date = "2026-10-26"
+workers_dev = false
+preview_urls = false
+send_metrics = false
+
+# The maintainer attaches relay.mistria.fyi as a custom domain at deployment.
+# Secrets are deliberately absent: TURNSTILE_SECRET, ADMIN_TOKEN, IP_RATE_SECRET.
+[vars]
+TURNSTILE_HOSTNAME = "mistria.fyi"
+
+[[durable_objects.bindings]]
+name = "MAILBOXES"
+class_name = "Mailbox"
+
+[[durable_objects.bindings]]
+name = "CONTROL"
+class_name = "RelayControl"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Mailbox", "RelayControl"]
+
+[[ratelimits]]
+name = "CREATE_RATE"
+namespace_id = "132"
+simple = { limit = 3, period = 60 }
+
+[[ratelimits]]
+name = "READ_RATE"
+namespace_id = "133"
+simple = { limit = 60, period = 60 }
+
+[observability]
+enabled = false
+
+[observability.logs]
+enabled = false
+invocation_logs = false
+
+[observability.traces]
+enabled = false

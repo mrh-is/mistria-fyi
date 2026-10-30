@@ -7,5 +7,12 @@
     "types": ["$app/types"]
   },
   "exclude": ["node_modules/**", "scripts/locale-fonts/**", "src/service-worker/**"],
-  "include": ["src", "tests", "scripts/**/*.ts", "eslint-rules/**/*.ts", "vite.config.ts"]
+  "include": [
+    "src",
+    "tests",
+    "scripts/**/*.ts",
+    "eslint-rules/**/*.ts",
+    "relay/**/*.test.ts",
+    "vite.config.ts"
+  ]
 }

@@ -55,6 +55,39 @@ sprite once more after a day, then the placeholder. Objects uploaded before this
 carry the old one-year immutable header until re-uploaded (`FORCE=1 pnpm run sprites:upload`, a
 launch step); against those, a plain browser tab is only guaranteed clean in a fresh profile.
 
+## Sync relay
+
+The relay is the separate `mistria-sync-relay` Worker at `relay.mistria.fyi`, with SQLite-backed
+`Mailbox` & `RelayControl` Durable Objects. It holds ciphertext only. Taking it down does not
+require taking down the tracker, Pages project, or asset bucket.
+
+1. **Pause new data.** Make an authenticated `PUT /v1/admin/pause` request with the separate admin
+   token & an explicit `until` timestamp (Unix milliseconds). An empty object defaults to one day;
+   each request can set at most seven days ahead, & another request extends it while investigating.
+   This blocks creation, upload, public reads, & new WebSocket handshakes on the next request;
+   retirement remains available. Existing sockets stay connected. Rejected requests still consume
+   Worker & singleton quota; use an edge block for request floods. Keep the token out of URLs,
+   command history, logs, & public issues.
+2. **For an individual mailbox,** ask its owner to stop syncing, which retires it with its write
+   token. The relay keeps no names, follow keys, or mailbox inventory, & the admin pause cannot
+   impersonate an owner. When the owner cannot retire it, use an authenticated, reviewed maintainer
+   storage operation on that exact object: remove its envelope & replace metadata with a permanent
+   tombstone. Do not delete the object or its namespace, since recreating its public ID must stay
+   impossible.
+3. **For complete withdrawal,** disable the relay’s custom domain or block that hostname at the
+   edge, & verify that new HTTP requests & WebSocket handshakes fail. Close existing subscriptions
+   through retirement or the provider’s controls; blocking handshakes alone does not disconnect
+   existing sockets. Keep Workers observability, invocation logging, tail consumers, & Logpush off.
+4. **Preserve tombstones.** Disable future relay deployments & the client’s sync entry points.
+   Routine withdrawal must not delete a namespace then recreate it under the same public protocol.
+   If a legal request requires deleting provider storage too, record that namespace as permanently
+   withdrawn; restoring this service requires a reviewed protocol/origin migration that cannot reuse
+   old public IDs.
+5. **Record retention limits.** Envelope deletion is immediate in active storage; Cloudflare’s
+   recovery retention may retain recoverable data for 30 days. Removing relay data cannot revoke
+   ciphertext or decrypted saves already downloaded by followers. Verify that the rest of the
+   tracker still works in a fresh profile.
+
 ## Dataset
 
 `src/lib/data/tracker-data.json` is bundled into every build; the site can’t run without it, so

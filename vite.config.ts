@@ -12,6 +12,7 @@ import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
+import RelayFirstSequencer from "./scripts/vitest-relay-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
@@ -275,7 +276,12 @@ export default defineConfig({
               ? ["scripts/cleanup-merged-worktrees.test.ts"]
               : []),
           ],
-          include: ["eslint-rules/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
+          include: [
+            "eslint-rules/**/*.test.ts",
+            "scripts/**/*.test.ts",
+            "tests/**/*.test.ts",
+            "relay/**/*.test.ts",
+          ],
           name: "node",
           ...sharedRegistry,
         },
@@ -339,6 +345,7 @@ export default defineConfig({
       },
     ],
     restoreMocks: true,
+    sequence: { sequencer: RelayFirstSequencer },
     testTimeout: loadTolerantTimeoutMs,
     unstubEnvs: true,
     unstubGlobals: true,

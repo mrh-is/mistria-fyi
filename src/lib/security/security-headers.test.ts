@@ -15,7 +15,7 @@ const appHtml = readFileSync(path.resolve(import.meta.dirname, "../../app.html")
  */
 const PRODUCTION_CSP = [
   "base-uri 'self'",
-  "connect-src 'self' https://challenges.cloudflare.com https://assets.mistria.fyi",
+  "connect-src 'self' https://challenges.cloudflare.com https://assets.mistria.fyi https://relay.mistria.fyi wss://relay.mistria.fyi",
   "default-src 'none'",
   "font-src 'self' https://assets.mistria.fyi",
   "form-action 'self'",
@@ -42,6 +42,8 @@ describe("Content-Security-Policy", () => {
       "self",
       "https://challenges.cloudflare.com",
       "https://assets.mistria.fyi",
+      "https://relay.mistria.fyi",
+      "wss://relay.mistria.fyi",
       "http://localhost:8080",
     ]);
   });
