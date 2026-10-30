@@ -138,7 +138,7 @@ const SOURCE_FIELDS = {
   breed: [],
   bug_catch: ["locationIds"],
   chicken_statue: [],
-  crop: ["seedItemId"],
+  crop: ["greenhouse", "seedItemId"],
   cutscene: ["cutsceneId"],
   date: ["dateId"],
   date_inspiration: ["itemId"],

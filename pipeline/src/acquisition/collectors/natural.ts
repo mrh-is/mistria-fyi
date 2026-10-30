@@ -21,6 +21,7 @@ import type {
   MinesBiomeId,
   PerkId,
   PetCosmeticSetId,
+  QuestId,
   Season,
   Weather,
 } from "#lib/types/tracker-data.js";
@@ -124,8 +125,9 @@ function collectCropSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
     | undefined;
   if (!items?.other?.crops_and_forage) return;
 
-  const seedToCrop = new Map<string, string>();
-  const seedSeasons = new Map<string, NonEmptyArray<Season>>();
+  const prototypes = fiddle.object_prototypes as
+    | undefined
+    | { crop?: Record<string, Record<string, unknown> | undefined> };
 
   for (const [itemId, item] of Object.entries(items.other.crops_and_forage)) {
     if (itemId === "default" || typeof item !== "object" || item === null) continue;
@@ -134,24 +136,58 @@ function collectCropSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
       ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
       : [];
 
-    if (tags.includes("seed")) {
-      const cropObject = item.crop_object as string | undefined;
-      if (cropObject) {
-        seedToCrop.set(itemId, cropObject);
-        const seasons = parseSeasonsArray(item.seasons);
-        if (seasons) seedSeasons.set(itemId, seasons);
-      }
+    if (!tags.includes("seed") || typeof item.sapling === "string" || tags.includes("sapling")) {
+      continue;
     }
-  }
-
-  for (const [seedId, cropId] of seedToCrop) {
-    const seasons = seedSeasons.get(seedId);
-    accumulator.add(cropId as ItemId, {
+    const cropObject = item.crop_object;
+    if (typeof cropObject !== "string" || cropObject.length === 0) {
+      throw new Error(`Seed "${itemId}" has a missing or invalid crop_object`);
+    }
+    const prototype = prototypes?.crop?.[cropObject];
+    if (!prototype || typeof prototype !== "object" || Array.isArray(prototype)) {
+      throw new Error(`Seed "${itemId}" crop "${cropObject}" has a missing or invalid prototype`);
+    }
+    const seasons = parseCropSeasons(prototype.seasons, itemId, cropObject);
+    accumulator.add(cropObject as ItemId, {
       ...(seasons ? { availability: { type: "season" as const, seasons } } : {}),
       type: "crop",
-      seedItemId: seedId as ItemId,
+      seedItemId: itemId as ItemId,
+    });
+    // Plant.gml & Crops.gml restrict seasons only on the farm. The carpenter upgrade
+    // rewards the first greenhouse blueprint (story_quests.toml); construction & seed
+    // inventory are not tracked, so this records access to the route, like other sources.
+    accumulator.add(cropObject as ItemId, {
+      type: "crop",
+      availability: {
+        type: "quest",
+        questId: "upgrade_the_carpenters_shop" as QuestId,
+        state: "completed",
+      },
+      greenhouse: true,
+      seedItemId: itemId as ItemId,
     });
   }
+}
+
+function parseCropSeasons(
+  value: unknown,
+  seedId: string,
+  cropId: string,
+): NonEmptyArray<Season> | undefined {
+  // crop.toml's default -1 is a required-field sentinel, not all seasons.
+  // Crops.gml passes explicit season names through wrap_in_array & deserialize_array_bool.
+  const values = typeof value === "string" ? [value] : value;
+  if (
+    !Array.isArray(values) ||
+    values.length === 0 ||
+    values.some((season) => !SEASONS.includes(season as Season)) ||
+    new Set(values).size !== values.length
+  ) {
+    throw new Error(
+      `Seed "${seedId}" crop "${cropId}" has missing or invalid seasons: ${JSON.stringify(value)}`,
+    );
+  }
+  return values.length === SEASONS.length ? undefined : (values as NonEmptyArray<Season>);
 }
 
 function collectEarthlyEssenceCosmeticSources(

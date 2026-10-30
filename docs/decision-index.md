@@ -146,6 +146,16 @@ roles, & carried progress are gone.
 Evidence: [docs/sync.md](../docs/sync.md), [docs/sync-setup.md](../docs/sync-setup.md),
 [https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
 
+### [Greenhouse acquisition](decisions/2026-10-29-greenhouse-acquisition.md)
+
+ID: 2026-10-29-greenhouse-acquisition. Status: Current.
+
+Greenhouse growing is a crop route gated by the quest that awards its first blueprint.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/245](https://github.com/mrh-is/mistria-fyi/issues/245),
+[pipeline/src/acquisition/collectors/natural.assets.test.ts](../pipeline/src/acquisition/collectors/natural.assets.test.ts).
+
 ### [Household save facts](decisions/2026-10-29-household-save-facts.md)
 
 ID: 2026-10-29-household-save-facts. Status: Current.

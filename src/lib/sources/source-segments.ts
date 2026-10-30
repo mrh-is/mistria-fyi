@@ -193,7 +193,11 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
         : [m.source_chicken_statue_all_tiers({}, opts)];
     case "crop": {
       const seed = requireEntry(lookups.itemNames, source.seedItemId, "itemNames");
-      return [m.source_crop({ seed }, opts)];
+      return [
+        source.greenhouse
+          ? m.source_crop_greenhouse({ seed }, opts)
+          : m.source_crop({ seed }, opts),
+      ];
     }
     case "cutscene":
       return [buildCutsceneLabel(source.cutsceneId, lookups)];

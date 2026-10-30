@@ -104,7 +104,7 @@ export const SourceSchema = v.variant("type", [
   source("bug_catch", { locationIds: v.optional(nonEmpty(id("LocationId"))) }),
   source("chicken_statue", { cost: number }),
   source("chicken_statue", { unlockCondition: v.literal("breed_all_chicken_tiers") }),
-  source("crop", { seedItemId: id("ItemId") }),
+  source("crop", { greenhouse: v.optional(v.literal(true)), seedItemId: id("ItemId") }),
   source("cutscene", { cutsceneId: v.picklist(CUTSCENE_SOURCE_IDS) }),
   source("date", { dateId: id("DateId") }),
   source("date_inspiration", { itemId: id("ItemId") }),
