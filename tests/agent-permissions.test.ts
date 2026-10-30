@@ -137,11 +137,12 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
   };
   const find = (event: string, script: string) =>
     hooks[event]?.find((entry) => entry.hooks.some((hook) => hook.command.includes(script)));
+  const formatter = file.startsWith(".codex") ? "codex-tool-hook.ts" : "format-agent-edit.ts";
 
   it("registers edit guards & formatting for patches, file tools, and shell commands", () => {
     for (const [event, script] of [
       ["PreToolUse", "guard-generated-paths.ts"],
-      ["PostToolUse", "format-agent-edit.ts"],
+      ["PostToolUse", formatter],
     ]) {
       const matcher = new RegExp(`^(?:${find(event, script)?.matcher ?? ""})$`);
       for (const tool of ["apply_patch", "Edit", "Write", "Bash"]) {
@@ -154,6 +155,16 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
     expect(find("PreToolUse", "guard-generated-reads.ts")?.matcher).toBe("Read|Bash");
     expect(find("Stop", "lint-agent-stop.ts")).toBeDefined();
     expect(find("SubagentStart", "agent-subagent-start.ts")).toBeDefined();
-    expect(find("PreToolUse", "format-agent-edit.ts")?.matcher).toBe("Bash");
+    expect(find("PreToolUse", formatter)?.matcher).toBe("Bash");
+  });
+
+  it("has exactly one formatting handler per event, so setup cannot race formatting", () => {
+    for (const event of ["PreToolUse", "PostToolUse"]) {
+      const handlers = hooks[event]
+        .flatMap((entry) => entry.hooks)
+        .filter((hook) => /(?:format-agent-edit|codex-tool-hook)\.ts/.test(hook.command));
+      expect(handlers).toHaveLength(1);
+      expect(handlers[0].command).toContain(formatter);
+    }
   });
 });

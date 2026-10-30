@@ -368,7 +368,7 @@ export interface SetupResult {
  * (`quiet`), the main checkout gets dependencies only, and dependencies install only when absent
  * or stale, so a current checkout is left alone.
  */
-function main(quiet: boolean): SetupResult {
+function main(quiet: boolean, forceInstall = false): SetupResult {
   const worktreeDir = resolve(git("rev-parse", "--show-toplevel"));
   // `git worktree list` lists the main worktree first.
   const repoRoot = resolve(
@@ -387,7 +387,10 @@ function main(quiet: boolean): SetupResult {
         ...readFileSync(join(repoRoot, ".worktreeinclude"), "utf8").split(/\r?\n/),
       ]);
   const installs =
-    !quiet || !existsSync(join(worktreeDir, "node_modules")) || !dependenciesCurrent(worktreeDir);
+    forceInstall ||
+    !quiet ||
+    !existsSync(join(worktreeDir, "node_modules")) ||
+    !dependenciesCurrent(worktreeDir);
   if (links.length === 0 && !installs) {
     return { installed: false, linked: 0, status: 0 };
   }
@@ -411,7 +414,7 @@ function main(quiet: boolean): SetupResult {
   return { installed: install !== undefined, linked: links.length, status: 0 };
 }
 
-function describeSetup(directory: string, result: SetupResult): string {
+export function describeSetup(directory: string, result: SetupResult): string {
   const steps = [
     ...(result.linked > 0 ? [`linked ${result.linked} entries from the main checkout`] : []),
     ...(result.installed ? ["installed dependencies with the frozen lockfile & ran prepare"] : []),
@@ -421,11 +424,38 @@ function describeSetup(directory: string, result: SetupResult): string {
 
 /** Runs `main` under the checkout's setup lock, from inside that checkout. */
 function lockedSetup(): SetupResult {
-  const gitDir = tryGit(".", "rev-parse", "--absolute-git-dir");
-  if (gitDir === undefined) {
-    throw new Error("not inside a git checkout");
+  return setupBeforeTool(process.cwd());
+}
+
+/** Automatic hooks stop after a failed setup until an explicitly authorized manual setup succeeds. */
+export function setupBeforeTool(directory: string): SetupResult {
+  const previous = process.cwd();
+  try {
+    process.chdir(directory);
+    const gitDir = git("rev-parse", "--absolute-git-dir");
+    const failure = join(gitDir, "mistria-tool-setup.failure");
+    return withSetupLock(gitDir, () => {
+      if (existsSync(failure)) {
+        throw new Error(
+          "Previous automatic setup failed; report it & wait for explicit direction before running node scripts/setup-worktree.ts --repair.",
+        );
+      }
+      try {
+        const result = main(true);
+        if (result.status !== 0) {
+          throw new Error(
+            `node scripts/setup-worktree.ts failed with exit status ${result.status}; inspect the hook’s stderr`,
+          );
+        }
+        return result;
+      } catch (error) {
+        writeFileSync(failure, "Automatic tool setup failed. Manual setup is required.\n");
+        throw error;
+      }
+    });
+  } finally {
+    process.chdir(previous);
   }
-  return withSetupLock(gitDir, () => main(true));
 }
 
 /**
@@ -473,7 +503,7 @@ function runEvent(mode: "cwd-changed" | "file-changed"): void {
       }
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
-      output.systemMessage = `Automatic worktree setup failed in ${directory} (${reason}). Follow AGENTS.md, Tooling failures: rerun node scripts/setup-worktree.ts to see the error.`;
+      output.systemMessage = `Automatic worktree setup failed in ${directory} (${reason}). Follow AGENTS.md, Tooling failures: report it & wait for explicit direction before running node scripts/setup-worktree.ts --repair.`;
     }
   }
   if (Object.keys(output).length > 0) {
@@ -496,7 +526,17 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       if (cwd) {
         process.chdir(cwd);
       }
-      const result = sessionStart ? lockedSetup() : main(false);
+      const result = sessionStart
+        ? lockedSetup()
+        : withSetupLock(git("rev-parse", "--absolute-git-dir"), () => {
+            const manual = main(process.argv.includes("--repair"), true);
+            if (manual.status === 0) {
+              rmSync(join(git("rev-parse", "--absolute-git-dir"), "mistria-tool-setup.failure"), {
+                force: true,
+              });
+            }
+            return manual;
+          });
       process.exitCode = result.status;
       if (sessionStart && result.status === 0 && (result.installed || result.linked > 0)) {
         console.log(
@@ -515,7 +555,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       console.log(
         contextOutput(
           "SessionStart",
-          `Automatic worktree setup (node scripts/setup-worktree.ts --session-start) failed with exit status ${String(process.exitCode)}; its output is in the hook's stderr. Follow AGENTS.md, Tooling failures: report this before other work, then rerun node scripts/setup-worktree.ts to see the error.`,
+          `Automatic worktree setup (node scripts/setup-worktree.ts --session-start) failed with exit status ${String(process.exitCode)}; its output is in the hook's stderr. Follow AGENTS.md, Tooling failures: report this before other work & wait for explicit direction before running node scripts/setup-worktree.ts --repair.`,
         ),
       );
       process.exitCode = 0;

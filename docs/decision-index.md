@@ -146,12 +146,12 @@ roles, & carried progress are gone.
 Evidence: [docs/sync.md](../docs/sync.md), [docs/sync-setup.md](../docs/sync-setup.md),
 [https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
 
-### [Mid-session setup hooks are Claude-only](decisions/2026-10-29-mid-session-setup-hooks.md)
+### [Mid-session setup hooks](decisions/2026-10-29-mid-session-setup-hooks.md)
 
 ID: 2026-10-29-mid-session-setup-hooks. Status: Current.
 
-Claude Code keeps worktree setup current mid-session with FileChanged & CwdChanged hooks; Codex has
-no equivalent event, so it keeps session-start setup & a deferred PreToolUse alternative.
+Claude Code watches manifest & directory changes; Codex checks setup synchronously before tools &
+before post-tool formatting. Automatic setup failures require an explicitly authorized repair.
 
 Evidence: [docs/agent-reference.md](../docs/agent-reference.md),
 [scripts/setup-worktree.ts](../scripts/setup-worktree.ts),
