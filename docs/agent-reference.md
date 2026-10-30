@@ -60,16 +60,16 @@ or stale, instead of installing them implicitly.
 Install output goes to the hook’s stderr, and the outcome arrives as session context. A failed setup
 never blocks the session, but its context message is a tooling failure to report under AGENTS.md.
 
-**Mid-session upkeep:** Claude Code watches manifests & directory changes; Codex checks setup
-synchronously at tool boundaries.
+**Mid-session upkeep:** both clients share synchronous setup & formatting through
+`scripts/agent-tool-hook.ts`. Claude Code also watches manifests & directory changes.
 
 - `FileChanged` with matcher `pnpm-lock.yaml|package.json|pnpm-workspace.yaml` runs
   `setup-worktree.ts --file-changed`. Claude Code’s file watcher fires it for any writer (a merge, a
-  pull, or an external process), so a lockfile change is repaired before the next pnpm command. The
-  matcher is also the watch list (literal names in the working directory). The script acts only on a
-  manifest at the root of a checkout of this repository, skips deletions, waits three seconds
-  (`MISTRIA_SETUP_SETTLE_MS`) for a burst of manifest writes such as `pnpm add` to finish, then runs
-  the session-start probe: a frozen install & `prepare` only when pnpm reports stale dependencies.
+  pull, or an external process), so a lockfile change starts a repair. The matcher is also the watch
+  list (literal names in the working directory). The script acts only on a manifest at the root of a
+  checkout of this repository, skips deletions, waits three seconds (`MISTRIA_SETUP_SETTLE_MS`) for
+  a burst of manifest writes such as `pnpm add` to finish, then runs the session-start probe: a
+  frozen install & `prepare` only when pnpm reports stale dependencies.
 - `CwdChanged` runs `setup-worktree.ts --cwd-changed` with `new_cwd` & `old_cwd`. When the move
   crosses into a different checkout of this repository, it links & installs as at session start. It
   always returns `watchPaths` (both top-level & under `hookSpecificOutput`, since the docs don’t say
@@ -78,34 +78,40 @@ synchronously at tool boundaries.
   conversation; whether the harness’s own move into a worktree fires it is unconfirmed.
 
 Neither Claude event can add context for the agent or block anything. The hooks always exit 0, & an
-install or failure reaches the user as a `systemMessage` terminal notification. The agent learns of
-a failure from the next pnpm command’s `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN` error; the frozen install
-is preauthorized, & AGENTS.md’s stop & report rule still applies to a failed setup. Setups of one
-checkout (session start, file change, directory change, or Codex tool call) serialize on a
+install or failure reaches the user as a `systemMessage` terminal notification. The shared tool
+handler also reports a previous setup failure to the agent at the next command boundary. The frozen
+install is preauthorized, & AGENTS.md’s stop & report rule still applies to a failed setup. Setups
+of one checkout (session start, file change, directory change, or tool call) serialize on a
 `mistria-setup.lock` directory in that checkout’s git directory, & a waiter re-probes after
-acquiring it. The lock does not hold back the agent’s own pnpm command, which can start during an
-install & fail with the same stale-dependency error; retry it once a successful install ends.
+acquiring it. The lock serializes setups; it does not lock every pnpm command across sessions.
 
-- Codex’s `PreToolUse` hook matches `Bash`, including unified `exec_command`. It checks the target
-  checkout before taking the formatter’s snapshot, so a stale lockfile or a new worktree is repaired
-  before the command starts. It probes on every shell call; there is no HEAD-only cache that could
-  miss uncommitted manifest changes.
-- Codex’s `PostToolUse` hook matches `Bash|apply_patch|Edit|Write`. One handler,
-  `scripts/codex-tool-hook.ts`, runs setup before formatting. Separate matching hooks run
-  concurrently, so adding another setup handler beside the formatter would leave a race.
+- Both clients’ `PreToolUse` hook matches `Bash`, including Codex’s unified `exec_command`. It
+  checks the target checkout before taking the formatter’s snapshot, so a stale lockfile or a new
+  worktree is repaired before the command starts. It probes on every shell call; there is no
+  HEAD-only cache that could miss uncommitted manifest changes.
+- Both clients’ `PostToolUse` hook matches shell calls & file edits, including `MultiEdit` &
+  `NotebookEdit`. Claude’s `PostToolUseFailure` also reaches the shared handler for failed shell
+  calls. The handler runs setup before formatting. Separate matching hooks run concurrently, so
+  adding another setup handler beside the formatter would leave a race.
+- The handler probes around shell calls & edits to root dependency manifests only. A root
+  `package.json` edit triggers setup; a nested fixture manifest, an ordinary source edit, or a
+  manifest name in patch content does not. Ordinary edits still get formatted.
 - Both hooks validate the target against the configured script’s Git common directory. They use the
   payload’s `cwd`, including a per-call directory on runtimes that expose it, & support literal
-  leading `cd … &&` plus pnpm’s `-C`, `--dir`, & `--dir=` options. They never evaluate shell text.
-  Dynamic paths are rejected. A combined command such as `git pull && pnpm exec vitest` is also
-  rejected: run each operation in its own tool call so setup can run between them.
-- Codex receives event-specific context when setup changes anything. A setup or formatter failure
-  exits 2, preventing a pending command or returning feedback after a completed command. Hooks
-  cannot undo a completed command, & an asynchronous command’s post-hook arrives when it finishes.
+  `cd … &&` plus pnpm’s directory options. They never evaluate shell text. Dynamic paths are
+  rejected. Commands such as `pnpm run lint:fix && pnpm run lint` & `pnpm exec vitest run … | tail`
+  stay allowed. An earlier manifest-changing Git operation still blocks a later pnpm segment, such
+  as `git pull && pnpm exec vitest`; split that call so setup can run between the operations. A
+  compound call spanning checkouts keeps separate formatter snapshots.
+- Both clients receive event-specific context when setup changes anything. A setup or formatter
+  failure exits 2, preventing a pending command or returning feedback after a completed command.
+  Hooks cannot undo a completed command, & an asynchronous command’s post-hook arrives when it
+  finishes.
 
 **Failure recovery:** automatic setup records a failed install, `prepare`, or link operation in
 `mistria-tool-setup.failure` in the checkout’s git directory. Later automatic hooks report the
 failure without retrying. Follow AGENTS.md’s stop & report procedure;
-`node scripts/machine-doctor.ts --for core` remains available through the Codex handler. After
+`node scripts/machine-doctor.ts --for core` remains available through the shared handler. After
 explicit direction, run `node scripts/setup-worktree.ts --repair` in the affected checkout. This
 forces the frozen install & `prepare`, permits dependency repair in the main checkout, & clears the
 marker only on success. The main checkout still receives no worktree links. Ordinary manual worktree
@@ -232,8 +238,8 @@ package ships no license text. Instead of weakening that check, list the package
   - worktree `SessionStart`.
 - **Codex trust:** Codex skips new or changed hooks until they’re trusted again in its hook review
   (`/hooks`). Review & trust them before relying on their enforcement.
-- **Mid-session setup:** Claude Code uses `FileChanged` & `CwdChanged`; Codex sequences setup &
-  formatting in one tool handler (see Mid-session upkeep above).
+- **Mid-session setup:** both clients sequence setup & formatting in one tool handler. Claude Code
+  also uses `FileChanged` & `CwdChanged` (see Mid-session upkeep above).
 - **When hook changes apply:** hook changes take effect in the next session. Claude Code runs each
   hook from `$CLAUDE_PROJECT_DIR`, which is fixed at session start to the session’s original
   checkout. So an edit to a hook script or its settings in a worktree, including a subagent’s,

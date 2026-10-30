@@ -1,13 +1,15 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { codexToolHook, toolDirectory } from "./codex-tool-hook.js";
+import { agentToolHook, toolDirectories } from "./agent-tool-hook.js";
 
 import type { HookInput } from "./lib/agent-hook.js";
+
+const toolDirectory = (input: HookInput) => toolDirectories(input)[0];
 
 const roots: string[] = [];
 afterEach(() => {
@@ -16,7 +18,7 @@ afterEach(() => {
 });
 
 function fixture() {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), "codex-tool-hook-")));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "agent-tool-hook-")));
   roots.push(root);
   const git = (...args: string[]) => execFileSync("git", args, { cwd: root, stdio: "pipe" });
   git("init");
@@ -70,7 +72,6 @@ describe("toolDirectory", () => {
     "cd /repo/linked | pnpm run check",
     "cd /repo/linked || pnpm run check",
     "git merge branch; pnpm run check",
-    "pnpm install && pnpm run check",
     'cd "$WORKTREE" && pnpm run check',
     'pnpm -C "$(pwd)" run check',
   ])("rejects commands whose setup cannot be ordered safely: %s", (command) => {
@@ -79,6 +80,27 @@ describe("toolDirectory", () => {
     );
   });
 
+  it.each([
+    "pnpm run lint:fix && pnpm run lint",
+    "pnpm exec vitest run example.test.ts | tail",
+    "pnpm install && pnpm run check",
+    "git status && pnpm run check",
+    "pnpm run check && git pull",
+    "echo 'git pull' && pnpm run check",
+    "git log --grep merge && pnpm run check",
+  ])("allows compound commands without an earlier manifest-changing Git command: %s", (command) => {
+    expect(toolDirectory(shell("/repo", command))).toBe("/repo");
+  });
+
+  it.each(["pull", "merge topic", "rebase main", "checkout topic", "switch topic"])(
+    "rejects a Git operation before pnpm: %s",
+    (operation) => {
+      expect(() =>
+        toolDirectory(shell("/repo", `git -C /repo ${operation} && pnpm run check`)),
+      ).toThrow("separate tool call");
+    },
+  );
+
   it("rejects an incomplete quoted directory instead of choosing another checkout", () => {
     expect(() => toolDirectory(shell("/repo", 'pnpm --dir="/repo/linked run check'))).toThrow(
       "complete literal quotes",
@@ -86,7 +108,7 @@ describe("toolDirectory", () => {
   });
 });
 
-describe("Codex tool upkeep", () => {
+describe("Shared agent tool upkeep", () => {
   it.each([
     (directory: string) => `pnpm --dir="${directory}" run check`,
     (directory: string) => `pnpm "--dir=${directory}" run check`,
@@ -96,9 +118,9 @@ describe("Codex tool upkeep", () => {
     const { root, worktree } = fixture();
     const setup = vi.fn(current);
     const input = shell(root, command(worktree));
-    codexToolHook(input, setup, undefined, root);
+    agentToolHook(input, setup, undefined, root);
     expect(setup).toHaveBeenCalledExactlyOnceWith(worktree);
-    codexToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, undefined, root);
+    agentToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, undefined, root);
     expect(setup).toHaveBeenLastCalledWith(worktree);
   });
 
@@ -113,7 +135,7 @@ describe("Codex tool upkeep", () => {
       return { installed: true, linked: 2, status: 0 };
     });
     const input = shell(worktree, "git merge incoming");
-    expect(codexToolHook(input, setup, undefined, root)).toEqual([
+    expect(agentToolHook(input, setup, undefined, root)).toEqual([
       expect.stringContaining("installed dependencies"),
     ]);
     writeFileSync(join(worktree, "new.ts"), "const value=1");
@@ -125,7 +147,7 @@ describe("Codex tool upkeep", () => {
       calls.push("format");
       return { output: "", status: 0 };
     });
-    codexToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, format, root);
+    agentToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, format, root);
     expect(calls).toEqual(["setup", "setup", "format"]);
     expect(format).toHaveBeenCalledTimes(1);
   });
@@ -138,7 +160,7 @@ describe("Codex tool upkeep", () => {
       expect(setup).toHaveBeenCalledTimes(1);
       return { output: "", status: 0 };
     });
-    codexToolHook(
+    agentToolHook(
       {
         cwd: worktree,
         hook_event_name: "PostToolUse",
@@ -159,7 +181,7 @@ describe("Codex tool upkeep", () => {
     const setup = vi.fn(() => {
       throw new Error("frozen install failed");
     });
-    expect(() => codexToolHook(shell(worktree, "pnpm exec vitest"), setup, run, root)).toThrow(
+    expect(() => agentToolHook(shell(worktree, "pnpm exec vitest"), setup, run, root)).toThrow(
       "frozen install failed",
     );
     expect(run).not.toHaveBeenCalled();
@@ -170,11 +192,11 @@ describe("Codex tool upkeep", () => {
     const foreign = fixture().root;
     const setup = vi.fn(current);
     const run = vi.fn();
-    expect(codexToolHook(shell(foreign, "git status"), setup, run, root)).toEqual([]);
-    expect(codexToolHook(shell(foreign, "git pull && pnpm run check"), setup, run, root)).toEqual(
+    expect(agentToolHook(shell(foreign, "git status"), setup, run, root)).toEqual([]);
+    expect(agentToolHook(shell(foreign, "git pull && pnpm run check"), setup, run, root)).toEqual(
       [],
     );
-    expect(codexToolHook(shell(tmpdir(), "ls"), setup, run, root)).toEqual([]);
+    expect(agentToolHook(shell(tmpdir(), "ls"), setup, run, root)).toEqual([]);
     expect(setup).not.toHaveBeenCalled();
     expect(run).not.toHaveBeenCalled();
   });
@@ -187,15 +209,15 @@ describe("Codex tool upkeep", () => {
     const { root, worktree } = fixture();
     const setup = vi.fn(current);
     const input = shell(worktree, command);
-    codexToolHook(input, setup, undefined, root);
-    codexToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, undefined, root);
+    agentToolHook(input, setup, undefined, root);
+    agentToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, undefined, root);
     expect(setup).not.toHaveBeenCalled();
   });
 
   it("exits 2 with agent-visible diagnostics for an unsupported real hook payload", () => {
     const result = spawnSync(
       process.execPath,
-      [fileURLToPath(new URL("codex-tool-hook.ts", import.meta.url))],
+      [fileURLToPath(new URL("agent-tool-hook.ts", import.meta.url))],
       {
         encoding: "utf8",
         input: JSON.stringify({
@@ -215,10 +237,141 @@ describe("Codex tool upkeep", () => {
     const { root, worktree } = fixture();
     const input = shell(worktree, "git status");
     const setup = vi.fn(current);
-    expect(codexToolHook(input, setup, undefined, root)).toEqual([]);
+    expect(agentToolHook(input, setup, undefined, root)).toEqual([]);
     expect(
-      codexToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, undefined, root),
+      agentToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, undefined, root),
     ).toEqual([]);
     expect(setup).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(["Edit", "Write", "MultiEdit"])(
+    "formats a %s without probing for ordinary source edits",
+    (tool_name) => {
+      const { root, worktree } = fixture();
+      writeFileSync(join(worktree, "new.ts"), "const value=1");
+      const setup = vi.fn(current);
+      const run = vi.fn(() => ({ output: "", status: 0 }));
+      agentToolHook(
+        {
+          cwd: worktree,
+          hook_event_name: "PostToolUse",
+          tool_input: { file_path: "new.ts" },
+          tool_name,
+        },
+        setup,
+        run,
+        root,
+      );
+      expect(setup).not.toHaveBeenCalled();
+      expect(run).toHaveBeenCalledExactlyOnceWith(
+        ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "new.ts"],
+        worktree,
+      );
+    },
+  );
+
+  it("accepts a notebook edit without probing", () => {
+    const { root, worktree } = fixture();
+    writeFileSync(join(worktree, "notes.ipynb"), "{}");
+    const setup = vi.fn(current);
+    expect(
+      agentToolHook(
+        {
+          cwd: worktree,
+          hook_event_name: "PostToolUse",
+          tool_input: { notebook_path: "notes.ipynb" },
+          tool_name: "NotebookEdit",
+        },
+        setup,
+        undefined,
+        root,
+      ),
+    ).toEqual([]);
+    expect(setup).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["Edit", "package.json"],
+    ["Write", "pnpm-lock.yaml"],
+    ["MultiEdit", "pnpm-workspace.yaml"],
+  ])("probes before formatting %s to %s", (tool_name, file_path) => {
+    const { root, worktree } = fixture();
+    writeFileSync(join(worktree, file_path), "{}");
+    const setup = vi.fn(current);
+    const run = vi.fn(() => {
+      expect(setup).toHaveBeenCalledExactlyOnceWith(worktree);
+      return { output: "", status: 0 };
+    });
+    agentToolHook(
+      { cwd: worktree, hook_event_name: "PostToolUse", tool_input: { file_path }, tool_name },
+      setup,
+      run,
+      root,
+    );
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("repairs & formats shell changes after Claude’s PostToolUseFailure", () => {
+    const { root, worktree } = fixture();
+    const setup = vi.fn(current);
+    const input = shell(worktree, "git merge topic");
+    agentToolHook(input, setup, undefined, root);
+    writeFileSync(join(worktree, "new.ts"), "const value=1");
+    const run = vi.fn(() => ({ output: "", status: 0 }));
+    agentToolHook({ ...input, hook_event_name: "PostToolUseFailure" }, setup, run, root);
+    expect(setup).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not probe for a nested manifest or a manifest name in patch content", () => {
+    const { root, worktree } = fixture();
+    mkdirSync(join(worktree, "nested"));
+    writeFileSync(join(worktree, "nested/package.json"), "{}");
+    writeFileSync(join(worktree, "new.ts"), "// package.json\n");
+    const setup = vi.fn(current);
+    const run = vi.fn(() => ({ output: "", status: 0 }));
+    agentToolHook(
+      {
+        cwd: worktree,
+        hook_event_name: "PostToolUse",
+        tool_input: { file_path: "nested/package.json" },
+        tool_name: "Edit",
+      },
+      setup,
+      run,
+      root,
+    );
+    agentToolHook(
+      {
+        cwd: worktree,
+        hook_event_name: "PostToolUse",
+        tool_input: { command: "*** Update File: new.ts\n+// package.json\n" },
+        tool_name: "apply_patch",
+      },
+      setup,
+      run,
+      root,
+    );
+    expect(setup).not.toHaveBeenCalled();
+    expect(run).toHaveBeenCalledTimes(2);
+  });
+
+  it("probes once per checkout & keeps separate snapshots for a compound command across worktrees", () => {
+    const { root, worktree } = fixture();
+    const second = join(root, "second tree");
+    execFileSync("git", ["worktree", "add", "--detach", second], { cwd: root, stdio: "pipe" });
+    const setup = vi.fn(current);
+    const input = shell(root, `pnpm -C "${worktree}" run check && pnpm -C "${second}" run check`);
+    agentToolHook(input, setup, undefined, root);
+    expect(setup.mock.calls).toEqual([[worktree], [second]]);
+    writeFileSync(join(worktree, "first.ts"), "const first=1");
+    writeFileSync(join(second, "second.ts"), "const second=1");
+    const run = vi.fn(() => ({ output: "", status: 0 }));
+    agentToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, run, root);
+    expect(setup.mock.calls).toEqual([[worktree], [second], [worktree], [second]]);
+    expect(run.mock.calls).toEqual([
+      [["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "first.ts"], worktree],
+      [["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "second.ts"], second],
+    ]);
   });
 });

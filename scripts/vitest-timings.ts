@@ -66,6 +66,8 @@ export const cliProbeFiles = [
   "tests/vitest-projects.test.ts",
   // Spawns the script, git, & a fake pnpm in every case; 6.8 s on a four-CPU runner in #288.
   "scripts/setup-worktree.test.ts",
+  // Creates real Git worktrees for shared client-hook cases; about 4 s alone in #288.
+  "scripts/agent-tool-hook.test.ts",
 ];
 
 export interface VitestInvocation {

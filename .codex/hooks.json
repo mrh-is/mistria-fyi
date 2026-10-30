@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/codex-tool-hook.ts\"",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/agent-tool-hook.ts\"",
             "timeout": 600,
             "statusMessage": "Checking worktree setup & formatting"
           }
@@ -35,11 +35,11 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "apply_patch|Edit|Write|Bash",
+        "matcher": "apply_patch|Edit|MultiEdit|NotebookEdit|Write|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/codex-tool-hook.ts\"",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/agent-tool-hook.ts\"",
             "timeout": 600,
             "statusMessage": "Checking worktree setup & formatting"
           }

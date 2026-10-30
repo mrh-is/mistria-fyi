@@ -173,10 +173,11 @@ Evidence:
 
 ID: 2026-10-29-mid-session-setup-hooks. Status: Current.
 
-Claude Code watches manifest & directory changes; Codex checks setup synchronously before tools &
-before post-tool formatting. Automatic setup failures require an explicitly authorized repair.
+Both clients share synchronous setup & formatting for shell calls & root manifest edits. Claude Code
+also watches manifest & directory changes. Automatic setup failures require explicit repair.
 
 Evidence: [docs/agent-reference.md](../docs/agent-reference.md),
+[scripts/agent-tool-hook.ts](../scripts/agent-tool-hook.ts),
 [scripts/setup-worktree.ts](../scripts/setup-worktree.ts),
 [https://github.com/mrh-is/mistria-fyi/issues/199](https://github.com/mrh-is/mistria-fyi/issues/199),
 [https://github.com/mrh-is/mistria-fyi/pull/288](https://github.com/mrh-is/mistria-fyi/pull/288).
