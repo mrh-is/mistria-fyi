@@ -146,16 +146,15 @@ roles, & carried progress are gone.
 Evidence: [docs/sync.md](../docs/sync.md), [docs/sync-setup.md](../docs/sync-setup.md),
 [https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
 
-### [Sync relay admission](decisions/2026-10-29-sync-relay.md)
+### [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md)
 
-ID: 2026-10-29-sync-relay. Status: Current.
+ID: 2026-10-30-shared-edge-rate-rule. Status: Current.
 
-The standalone SQLite relay supplements Cloudflare’s minute-only rate binding with rotating hourly
-shared 16-bit HMAC buckets & prefix read limits, preserving address privacy & permanent retirement.
+The feedback endpoint & the sync relay share the zone’s one Free-plan rate-limiting rule, at 10
+requests per 10 seconds per IP & Cloudflare location.
 
-Evidence:
-[https://github.com/mrh-is/mistria-fyi/issues/132](https://github.com/mrh-is/mistria-fyi/issues/132),
-[relay/README.md](../relay/README.md), [relay/worker.ts](../relay/worker.ts).
+Evidence: [relay/README.md](../relay/README.md),
+[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
 
 ## Partially superseded/amended
 
@@ -436,6 +435,30 @@ Relationship evidence:
 
 Unresolved applicability: Personal token revocation remains unverified. Issue #242 proves production
 App use; the owner authorized removal without claiming revocation.
+
+### [Sync relay admission](decisions/2026-10-29-sync-relay.md)
+
+ID: 2026-10-29-sync-relay. Status: Partially superseded/amended.
+
+The standalone SQLite relay supplements Cloudflare’s minute-only rate binding with rotating hourly
+shared 16-bit HMAC buckets & prefix read limits, preserving address privacy & permanent retirement.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/132](https://github.com/mrh-is/mistria-fyi/issues/132),
+[relay/README.md](../relay/README.md), [relay/worker.ts](../relay/worker.ts).
+
+Amended by [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md). Affected portion:
+The required zone WAF rule’s threshold & scope: it shares the Free plan’s one rate-limiting rule
+with feedback, at 10 requests per 10 seconds.
+
+Relationship evidence:
+[docs/decisions/2026-10-30-shared-edge-rate-rule.md](../docs/decisions/2026-10-30-shared-edge-rate-rule.md).
+
+Revisit condition: The zone’s Free plan allows one rate-limiting rule, which feedback already used.
+Evidence:
+[docs/decisions/2026-10-30-shared-edge-rate-rule.md](../docs/decisions/2026-10-30-shared-edge-rate-rule.md).
+Authorization:
+[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
 
 ## Superseded
 

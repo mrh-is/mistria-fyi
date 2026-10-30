@@ -170,9 +170,11 @@ One Durable Object per mailbox ID.
   per in-game day, about every half hour, so Workers Free’s 100,000 row writes a day cover thousands
   of players, but only a few hundred mailboxes uploading at the cap (estimates). There’s no runtime
   budget check. The kill switch stops new mailbox reads & writes, but its singleton gate still costs
-  object requests, & rejected traffic still costs Worker requests. A zone WAF rate rule must protect
-  the relay before the Worker runs (see the launch steps); distributed abuse can still exhaust Free
-  quotas. Tighter caps, an edge block, or Workers Paid come first if usage approaches the limit.
+  object requests, & rejected traffic still costs Worker requests. A zone WAF rate rule, shared with
+  feedback at 10 requests per 10 seconds per address, protects the relay before the Worker runs
+  ([decision](decisions/2026-10-30-shared-edge-rate-rule.md)); distributed abuse can still exhaust
+  Free quotas. Tighter caps, an edge block, or Workers Paid come first if usage approaches the
+  limit.
 - **Expiry.** An envelope is deleted 30 days after it was uploaded. A mailbox with no upload for a
   year becomes a tombstone, like a retired one, & tombstones are never deleted, since each is a few
   bytes; the PC’s next upload, finding its own code retired, makes a new code & says so
