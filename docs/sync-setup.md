@@ -83,13 +83,12 @@ For sync in particular:
 The save file fills every category the tracker has. A few things it can’t settle, so syncing never
 removes them, & the player sets them by hand:
 
-- Household choices: relationship changes like a break-up, & choosing not to have children (only
-  wanting them leaves evidence). The save does record the break-ups setting, but sync doesn’t
-  compare household facts yet ([sync.md](sync.md#completeness)).
-- The Mistmare’s appearance, which the save shows only through one cutscene.
+- Choosing not to have children: a childless save cannot distinguish refusing from postponing, so
+  the player’s recorded choice stays. Positive child evidence, relationship changes, the break-ups
+  setting, pregnancy quests, & the Mistmare’s appearances follow the save file under the usual
+  [sync apply rules](sync.md#completeness).
 
 The erase dialog & the “only the save file syncs” notes can say “nearly everything” honestly.
-Improving the reader for these is #277.
 
 ## What the app detects
 

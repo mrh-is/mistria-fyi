@@ -222,6 +222,23 @@ afterEach(() => {
 });
 
 describe("stored preferences", () => {
+  it.each([undefined, "invalid", "category", "source"])(
+    "loads grouping %s without changing progress",
+    async (everythingGrouping) => {
+      vi.stubGlobal("window", {});
+      vi.stubGlobal(
+        "localStorage",
+        memoryStorage({ [PREFERENCES_STORAGE_KEY]: JSON.stringify({ everythingGrouping }) }),
+      );
+      const { userState } = await import("#lib/stores/user-state.svelte.js");
+      userState.loadFromStorage();
+      expect(userState.state.everythingGrouping).toBe(
+        everythingGrouping === "source" ? "source" : "category",
+      );
+      expect(userState.state.progress.mineFloor).toBe(0);
+    },
+  );
+
   it.each([
     ["missing", undefined, ["now", "anytime"], false],
     ["malformed", "not json", ["now", "anytime"], false],

@@ -146,6 +146,53 @@ roles, & carried progress are gone.
 Evidence: [docs/sync.md](../docs/sync.md), [docs/sync-setup.md](../docs/sync-setup.md),
 [https://github.com/mrh-is/mistria-fyi/pull/251](https://github.com/mrh-is/mistria-fyi/pull/251).
 
+### [Greenhouse acquisition](decisions/2026-10-29-greenhouse-acquisition.md)
+
+ID: 2026-10-29-greenhouse-acquisition. Status: Current.
+
+Greenhouse growing is a crop route gated by the quest that awards its first blueprint.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/245](https://github.com/mrh-is/mistria-fyi/issues/245),
+[pipeline/src/acquisition/collectors/natural.assets.test.ts](../pipeline/src/acquisition/collectors/natural.assets.test.ts).
+
+### [Household save facts](decisions/2026-10-29-household-save-facts.md)
+
+ID: 2026-10-29-household-save-facts. Status: Current.
+
+Explicit relationship statuses & the Mistmare reveal fact support complete extraction; household
+sync decisions preserve dependent facts together.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/277](https://github.com/mrh-is/mistria-fyi/issues/277),
+[src/lib/engine/import-save.assets.test.ts](../src/lib/engine/import-save.assets.test.ts),
+[src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts),
+[src/lib/stores/sync-household-storage.test.ts](../src/lib/stores/sync-household-storage.test.ts).
+
+### [Mid-session setup hooks](decisions/2026-10-29-mid-session-setup-hooks.md)
+
+ID: 2026-10-29-mid-session-setup-hooks. Status: Current.
+
+Both clients share synchronous setup & formatting for shell calls & root manifest edits. Claude Code
+also watches manifest & directory changes. Automatic setup failures require explicit repair.
+
+Evidence: [docs/agent-reference.md](../docs/agent-reference.md),
+[scripts/agent-tool-hook.ts](../scripts/agent-tool-hook.ts),
+[scripts/setup-worktree.ts](../scripts/setup-worktree.ts),
+[https://github.com/mrh-is/mistria-fyi/issues/199](https://github.com/mrh-is/mistria-fyi/issues/199),
+[https://github.com/mrh-is/mistria-fyi/pull/288](https://github.com/mrh-is/mistria-fyi/pull/288).
+
+### [Source grouping](decisions/2026-10-29-source-grouping.md)
+
+ID: 2026-10-29-source-grouping. Status: Current.
+
+Everything groups existing completion tasks by acquisition instance, with source-specific windows &
+rollups, and a device preference overridden by the URL.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048](https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048),
+[src/lib/presentation/source-groups.ts](../src/lib/presentation/source-groups.ts).
+
 ### [Provenance marks: one X, four tools](decisions/2026-10-30-provenance-marks.md)
 
 ID: 2026-10-30-provenance-marks. Status: Current.
@@ -155,6 +202,28 @@ that drew it, seeded per entry, and it’s decorative to assistive tech.
 
 Evidence: [docs/design/provenance-marks/README.md](../docs/design/provenance-marks/README.md),
 [https://github.com/mrh-is/mistria-fyi/pull/284](https://github.com/mrh-is/mistria-fyi/pull/284).
+
+### [Reader-first agent guidance](decisions/2026-10-30-reader-first-agent-guidance.md)
+
+ID: 2026-10-30-reader-first-agent-guidance. Status: Current.
+
+Agent-facing guidance is written in reader-first prose, because agents imitate its style in PR
+bodies.
+
+Evidence: [AGENTS.md](../AGENTS.md), [docs/agent-workflow.md](../docs/agent-workflow.md),
+[docs/agent-verification.md](../docs/agent-verification.md),
+[docs/agent-reference.md](../docs/agent-reference.md),
+[.github/pull_request_template.md](../.github/pull_request_template.md).
+
+### [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md)
+
+ID: 2026-10-30-shared-edge-rate-rule. Status: Current.
+
+The feedback endpoint & the sync relay share the zone’s one Free-plan rate-limiting rule, at 10
+requests per 10 seconds per IP & Cloudflare location.
+
+Evidence: [relay/README.md](../relay/README.md),
+[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
 
 ## Partially superseded/amended
 
@@ -396,12 +465,20 @@ unchanged? They were not revalidated while seeding issue #268.
 
 ID: 2026-10-20-save-extraction-completeness. Status: Partially superseded/amended.
 
-Mistmare perks are now tracked instead of known-but-untracked. The completeness policy retains its
-scope.
+Mistmare perks are tracked. Explicit relationship statuses & the Mistmare reveal fact now support
+complete extraction; missing data remains unknown.
 
 Evidence:
 [docs/decisions/2026-10-22-mistmare-perks.md](../docs/decisions/2026-10-22-mistmare-perks.md),
 [src/lib/engine/untracked-save-ids.ts](../src/lib/engine/untracked-save-ids.ts).
+
+Amended by [Household save facts](decisions/2026-10-29-household-save-facts.md). Affected portion:
+Relationships & mount appearances can be complete from explicit save facts. The general
+complete/unknown distinction & conservative removal rules remain.
+
+Relationship evidence:
+[docs/decisions/2026-10-29-household-save-facts.md](../docs/decisions/2026-10-29-household-save-facts.md),
+[src/lib/engine/import-save.assets.test.ts](../src/lib/engine/import-save.assets.test.ts).
 
 Amended by [The Mistmare's perks live in the Mount section](decisions/2026-10-22-mistmare-perks.md).
 Affected portion: Only the Mistmare perk example in Three classes of ID. The complete/unknown
@@ -411,8 +488,28 @@ Relationship evidence:
 [docs/decisions/2026-10-22-mistmare-perks.md](../docs/decisions/2026-10-22-mistmare-perks.md),
 [src/lib/engine/untracked-save-ids.ts](../src/lib/engine/untracked-save-ids.ts).
 
-Unresolved applicability: Other extraction details have not been re-audited against current save
-logic in this documentation change.
+Unresolved applicability: Issue 277 rechecks household & Mistmare completeness against both full
+v1.0.8 saves and the serializer. Other extraction details remain outside that audit.
+
+### [Sync apply rules](decisions/2026-10-21-sync-apply-rules.md)
+
+ID: 2026-10-21-sync-apply-rules. Status: Partially superseded/amended.
+
+Sync apply rules now compare household facts, settling dependent differences together.
+
+Evidence:
+[docs/decisions/2026-10-21-sync-apply-rules.md#decision](../docs/decisions/2026-10-21-sync-apply-rules.md#decision).
+
+Amended by [Household save facts](decisions/2026-10-29-household-save-facts.md). Affected portion:
+Household & pregnancy quest facts join sync comparison, with dependent changes settled together
+under the existing provenance table.
+
+Relationship evidence:
+[docs/decisions/2026-10-29-household-save-facts.md](../docs/decisions/2026-10-29-household-save-facts.md),
+[src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts).
+
+Unresolved applicability: Issue 277 revalidates household comparison only. Other portions retain the
+earlier review caveat.
 
 ### [Feedback GitHub App](decisions/2026-10-22-feedback-github-app.md)
 
@@ -435,6 +532,30 @@ Relationship evidence:
 
 Unresolved applicability: Personal token revocation remains unverified. Issue #242 proves production
 App use; the owner authorized removal without claiming revocation.
+
+### [Sync relay admission](decisions/2026-10-29-sync-relay.md)
+
+ID: 2026-10-29-sync-relay. Status: Partially superseded/amended.
+
+The standalone SQLite relay supplements Cloudflare’s minute-only rate binding with rotating hourly
+shared 16-bit HMAC buckets & prefix read limits, preserving address privacy & permanent retirement.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/132](https://github.com/mrh-is/mistria-fyi/issues/132),
+[relay/README.md](../relay/README.md), [relay/worker.ts](../relay/worker.ts).
+
+Amended by [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md). Affected portion:
+The required zone WAF rule’s threshold & scope: it shares the Free plan’s one rate-limiting rule
+with feedback, at 10 requests per 10 seconds.
+
+Relationship evidence:
+[docs/decisions/2026-10-30-shared-edge-rate-rule.md](../docs/decisions/2026-10-30-shared-edge-rate-rule.md).
+
+Revisit condition: The zone’s Free plan allows one rate-limiting rule, which feedback already used.
+Evidence:
+[docs/decisions/2026-10-30-shared-edge-rate-rule.md](../docs/decisions/2026-10-30-shared-edge-rate-rule.md).
+Authorization:
+[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
 
 ## Superseded
 
@@ -1051,18 +1172,6 @@ Historical scope: Progress provenance. Current applicability is unverified.
 
 Evidence:
 [docs/decisions/2026-10-21-progress-provenance.md#decision](../docs/decisions/2026-10-21-progress-provenance.md#decision).
-
-Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
-later resolutions were not revalidated while seeding issue #268.
-
-### [Sync apply rules](decisions/2026-10-21-sync-apply-rules.md)
-
-ID: 2026-10-21-sync-apply-rules. Status: Needs review.
-
-Historical scope: Sync apply rules. Current applicability is unverified.
-
-Evidence:
-[docs/decisions/2026-10-21-sync-apply-rules.md#decision](../docs/decisions/2026-10-21-sync-apply-rules.md#decision).
 
 Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
 later resolutions were not revalidated while seeding issue #268.

@@ -1,73 +1,155 @@
 # Agent technical reference
 
 Read the relevant heading before implementation, dependency changes, asset work, or tool
-configuration. Architecture, localization, styling, save formats, wiki APIs, & cloud setup retain
-their own canonical guides.
+configuration. Architecture, localization, styling, save formats, wiki APIs, & cloud setup each keep
+their own canonical guide.
 
-Decision applicability & replacement links live in the [decision index](decision-index.md),
-generated from each record’s [metadata header](decision-metadata.md).
+The [decision index](decision-index.md) says which decisions still apply and links each replaced one
+to its replacement. It’s generated from each record’s [metadata header](decision-metadata.md).
 
 ## Worktree mechanics
 
-Worktrees are optional; use them when several sessions work at once. Harness-created worktrees and
-branches (such as Claude Code’s `.claude/worktrees/` with `claude/issue-<number>-<suffix>` branches,
-or Codex’s `codex/…` branches) are equally acceptable.
+Worktrees are optional; use them when several sessions work at once. Worktrees & branches that a
+harness creates are equally acceptable. Examples include Claude Code’s `.claude/worktrees/` with
+`claude/issue-<number>-<suffix>` branches, and Codex’s `codex/…` branches.
 
-Create and set up a worktree with one command:
+Create & set up a worktree with one command:
 
 ```sh
 pnpm run worktree:new <issue-number>-<short-description>
 ```
 
-Refresh the starting branch (usually `main`) before beginning work. This script fetches the latest
-`origin/main` before creating the worktree; pass a second argument to start from another branch. For
-a harness-created worktree, fetch its intended starting branch and ensure the new worktree starts at
-that refreshed remote tip before setup or edits. If working directly on an existing starting branch,
-use `git pull --ff-only`. Never reset existing work, switch a shared checkout, or discard local
-changes to refresh a base.
+The command creates `.worktrees/<slug>` on a matching branch (`<issue-number>-<short-description>`).
+Then it:
 
-This creates `.worktrees/<slug>` on a matching branch (`<issue-number>-<short-description>`),
-symlinks `pipeline/input/` & the `.worktreeinclude` entries in from the main checkout, and runs
-`pnpm install --frozen-lockfile` and `pnpm run prepare`. It never copies dependencies, caches, build
-artifacts, or other writable generated directories. See
+- symlinks `pipeline/input/` & the `.worktreeinclude` entries in from the main checkout,
+- runs `pnpm install --frozen-lockfile`,
+- runs `pnpm run prepare`.
+
+It never copies dependencies, caches, build artifacts, or other writable generated directories.
 [docs/development-workflow.md §2](development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
-for the manual steps and troubleshooting. Inside a harness-created worktree, run
-`node scripts/setup-worktree.ts` for the same symlink & install steps. This standard initialization
-is preauthorized when dependencies or included links are absent, even if a dependency preflight
-already failed; no additional confirmation is needed. Setup failures still require the stop & report
-procedure in AGENTS.md. It is deliberately not a pnpm script: `verifyDepsBeforeRun: error` in
-`pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse to start on absent or stale dependencies
-rather than installing them implicitly.
+has the manual steps & troubleshooting.
+
+**Refreshing the base:** refresh the starting branch, usually `main`, before beginning work.
+
+- `worktree:new` fetches the latest `origin/main` before it creates the worktree. Pass a second
+  argument to start from another branch.
+- For a harness-created worktree, fetch its intended starting branch. Make sure the worktree starts
+  at that refreshed remote tip before setup or edits.
+- If you work directly on an existing starting branch, use `git pull --ff-only`.
+
+Never reset existing work, switch a shared checkout, or discard local changes to refresh a base.
+
+**Harness-created worktrees:** inside one, run `node scripts/setup-worktree.ts` for the same symlink
+& install steps. This standard setup is preauthorized when dependencies or included links are
+missing, even if a dependency preflight check already failed. It needs no further confirmation. If
+setup fails, follow the stop & report procedure in AGENTS.md.
+
+The setup script is deliberately not a pnpm script. `verifyDepsBeforeRun: error` in
+`pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse to start when dependencies are missing
+or stale, instead of installing them implicitly.
 
 **Automatic initialization:** Claude Code & Codex `SessionStart` hooks run
-`node scripts/setup-worktree.ts --session-start`, the harness entry point. In a linked worktree it
-links absent `pipeline/input/` & `.worktreeinclude` entries; in any checkout, including the main
-one, it runs the frozen install & `prepare` when dependencies are absent or stale, which it detects
-with pnpm’s own `verifyDepsBeforeRun` check. A current checkout is left alone. Install output goes
-to the hook’s stderr, and the outcome arrives as session context. A failed setup never blocks the
-session; its context message is a tooling failure to report under AGENTS.md. Dependencies that go
-stale mid-session (a merge that changes the lockfile) need `pnpm install --frozen-lockfile`, which
-agents run without asking.
+`node scripts/setup-worktree.ts --session-start`, the harness entry point:
 
-**No shared dependencies:** a worktree never links `node_modules` from another checkout. pnpm
-records each install’s workspace layout, so `verifyDepsBeforeRun` refuses a linked directory with
-`ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`, and Vitest & Vite write caches beneath `node_modules`, which
-links would share between concurrent sessions. An isolated frozen install from the shared global
-store takes seconds & gives each worktree its own caches & build state.
+- In a linked worktree, it links any missing `pipeline/input/` & `.worktreeinclude` entries.
+- In any checkout, including the main one, it runs the frozen install & `prepare` when dependencies
+  are missing or stale. It detects that with pnpm’s own `verifyDepsBeforeRun` check.
+- It leaves a current checkout alone.
 
-**Subagent worktrees:** an orchestrator gives each editing subagent a worktree its harness lets that
-subagent edit. In Claude Code, the session’s edit guard refuses Write/Edit outside the session’s own
-worktree, including `.worktrees/`, so spawn editing subagents with the Agent tool’s
-`isolation: "worktree"` and have each run `node scripts/setup-worktree.ts` first.
+Install output goes to the hook’s stderr, and the outcome arrives as session context. A failed setup
+never blocks the session, but its context message is a tooling failure to report under AGENTS.md.
 
-**Previews:** `preview_start` by `name` serves the session’s original folder, not the worktree. That
-is the orchestrator’s checkout for a subagent, and the main checkout for a session that moved into
-`.worktrees/`. Any agent working in a worktree previews its own dev server by URL & confirms it
+**Mid-session upkeep:** both clients share synchronous setup & formatting through
+`scripts/agent-tool-hook.ts`. Claude Code also watches manifests & directory changes.
+
+- `FileChanged` with matcher `pnpm-lock.yaml|package.json|pnpm-workspace.yaml` runs
+  `setup-worktree.ts --file-changed`. Claude Code’s file watcher fires it for any writer (a merge, a
+  pull, or an external process), so a lockfile change starts a repair. The matcher is also the watch
+  list (literal names in the working directory). The script acts only on a manifest at the root of a
+  checkout of this repository, skips deletions, waits three seconds (`MISTRIA_SETUP_SETTLE_MS`) for
+  a burst of manifest writes such as `pnpm add` to finish, then runs the session-start probe: a
+  frozen install & `prepare` only when pnpm reports stale dependencies.
+- `CwdChanged` runs `setup-worktree.ts --cwd-changed` with `new_cwd` & `old_cwd`. When the move
+  crosses into a different checkout of this repository, it links & installs as at session start. It
+  always returns `watchPaths` (both top-level & under `hookSpecificOutput`, since the docs don’t say
+  which nesting applies) for the new checkout’s manifests (`[]` outside this repository), so the
+  `FileChanged` watch follows the session. Per the docs it fires for shell `cd` in the main
+  conversation; whether the harness’s own move into a worktree fires it is unconfirmed.
+
+Neither Claude event can add context for the agent or block anything. The hooks always exit 0, & an
+install or failure reaches the user as a `systemMessage` terminal notification. The shared tool
+handler also reports a previous setup failure to the agent at the next command boundary. The frozen
+install is preauthorized, & AGENTS.md’s stop & report rule still applies to a failed setup. Setups
+of one checkout (session start, file change, directory change, or tool call) serialize on a
+`mistria-setup.lock` directory in that checkout’s git directory, & a waiter re-probes after
+acquiring it. The lock serializes setups; it does not lock every pnpm command across sessions.
+
+- Both clients’ `PreToolUse` hook matches `Bash`, including Codex’s unified `exec_command`. It
+  checks the target checkout before taking the formatter’s snapshot, so a stale lockfile or a new
+  worktree is repaired before the command starts. It probes on every shell call; there is no
+  HEAD-only cache that could miss uncommitted manifest changes.
+- Both clients’ `PostToolUse` hook matches shell calls & file edits, including `MultiEdit` &
+  `NotebookEdit`. Claude’s `PostToolUseFailure` also reaches the shared handler for failed shell
+  calls. The handler runs setup before formatting. Separate matching hooks run concurrently, so
+  adding another setup handler beside the formatter would leave a race.
+- The handler probes around shell calls & edits to root dependency manifests only. A root
+  `package.json` edit triggers setup; a nested fixture manifest, an ordinary source edit, or a
+  manifest name in patch content does not. Ordinary edits still get formatted.
+- Both hooks validate the target against the configured script’s Git common directory. They use the
+  payload’s `cwd`, including a per-call directory on runtimes that expose it, & support literal
+  `cd … &&` plus pnpm’s directory options. They never evaluate shell text. Dynamic pnpm directory
+  options remain unsupported.
+- An unresolved `cd` only blocks a call when a later segment runs pnpm. Otherwise, directory
+  resolution stops & the formatter keeps its last known checkout. Ordinary navigation such as
+  `cd "$TMPDIR" && ls` or `cd scripts; ls` stays available.
+- Commands such as `pnpm run lint:fix && pnpm run lint` & `pnpm exec vitest run … | tail` stay
+  allowed. An earlier manifest-changing Git operation still blocks a later pnpm segment, such as
+  `git pull && pnpm exec vitest`; split that call so setup can run between the operations. A
+  compound call spanning checkouts keeps separate formatter snapshots.
+- Both clients receive event-specific context when setup changes anything. A setup or formatter
+  failure exits 2, preventing a pending command or returning feedback after a completed command.
+  Hooks cannot undo a completed command, & an asynchronous command’s post-hook arrives when it
+  finishes.
+
+**Failure recovery:** automatic setup records a failed install, `prepare`, or link operation in
+`mistria-tool-setup.failure` in the checkout’s git directory. Later automatic hooks report the
+failure without retrying. Follow AGENTS.md’s stop & report procedure;
+`node scripts/machine-doctor.ts --for core` remains available through the shared handler. After
+explicit direction, run `node scripts/setup-worktree.ts --repair` in the affected checkout. This
+forces the frozen install & `prepare`, permits dependency repair in the main checkout, & clears the
+marker only on success. The main checkout still receives no worktree links. Ordinary manual worktree
+setup also clears the marker on success.
+
+Note: the standalone Codex CLI 0.165.0 drops unified exec’s `workdir` from hook input; its `cwd`
+remains the session directory. Use the session directory or a literal directory in the command on
+that runtime. Newer upstream code supplies the resolved command directory as `cwd`; fixture tests
+cover that contract, but a trusted live session still needs to verify the installed client.
+
+**No shared dependencies:** a worktree never links `node_modules` from another checkout, for two
+reasons:
+
+- pnpm records each install’s workspace layout, so `verifyDepsBeforeRun` refuses a linked directory
+  with `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`.
+- Vitest & Vite write caches beneath `node_modules`, so a link would share them between concurrent
+  sessions.
+
+An isolated frozen install from the shared global store takes seconds. It gives each worktree its
+own caches & build state.
+
+**Subagent worktrees:** an orchestrator gives each editing subagent a worktree that its harness lets
+the subagent edit. In Claude Code, the session’s edit guard refuses Write & Edit outside the
+session’s own worktree, including in `.worktrees/`. So spawn editing subagents with the Agent tool’s
+`isolation: "worktree"`, and have each run `node scripts/setup-worktree.ts` first.
+
+**Previews:** `preview_start` by `name` serves the session’s original folder, not the worktree. For
+a subagent, that’s the orchestrator’s checkout. For a session that moved into `.worktrees/`, it’s
+the main checkout. An agent working in a worktree previews its own dev server by URL & confirms it
 serves the branch’s code; see
 [docs/development-workflow.md](development-workflow.md#preview-from-a-worktree).
 
 **Stashes are shared:** `refs/stash` is one stack for every linked worktree, so a bare
-`git stash pop` or `apply` can restore another session’s edits. Prefer a temporary WIP commit; if
+`git stash pop` or `apply` can restore another session’s edits. Prefer a temporary WIP commit. If
 you must stash, address your entry by its commit ID (see
 [docs/development-workflow.md](development-workflow.md#set-work-aside-without-the-shared-stash)).
 
@@ -75,36 +157,53 @@ you must stash, address your entry by its commit ID (see
 
 **Check `pipeline/input/` before assuming a machine has no game files.** Worktree setup symlinks it
 from the main checkout (`SHARED_DIRECTORIES` in `scripts/setup-worktree.ts`), so `ls pipeline/input`
-settles the question; a `needs game installation` label is not, by itself, a blocker. When present,
-it holds one `vX.Y.Z/` folder per release, each with `assets/` (`fiddle/` TOML, `localization/`
-translation tables, `gml/`, `tiled/`) and/or `save/`. Regenerate data from it with
-`pnpm run pipeline:assets`, which stamps `CURRENT_GAME_VERSION` (`pipeline/src/game-version.ts`).
-Relative paths passed to the plain `pipeline` script resolve from where you run `pnpm`; `--version`
-is required there (see [pipeline/README.md](../pipeline/README.md#setup--commands)). Read
-[game-asset-format.md](game-asset-format.md) before exploring the files themselves, and run
-`pnpm run pipeline:atlas` for per-file keys instead of opening each file.
+settles the question. A `needs game installation` label alone doesn’t block a task.
+
+When present, `pipeline/input/` holds one `vX.Y.Z/` folder per release. Each has `assets/`, `save/`,
+or both. The `assets/` folder holds:
+
+- `fiddle/` TOML,
+- `localization/` translation tables,
+- `gml/`,
+- `tiled/`.
+
+To work with these files:
+
+- Regenerate data with `pnpm run pipeline:assets`, which stamps `CURRENT_GAME_VERSION`
+  (`pipeline/src/game-version.ts`).
+- The plain `pipeline` script resolves relative paths from where you run `pnpm`, and it requires
+  `--version` (see [pipeline/README.md](../pipeline/README.md#setup--commands)).
+- Read [game-asset-format.md](game-asset-format.md) before exploring the files themselves.
+- Run `pnpm run pipeline:atlas` for each file’s keys instead of opening every file.
 
 ## Package commands
 
-Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, `bun`, or `pnpx`. Wrangler is
-installed in the workspace through `@sveltejs/adapter-cloudflare`, and `allowBuilds` in
-`pnpm-workspace.yaml` approves its native dependencies (`esbuild`, `workerd`), so run it as
-`pnpm exec wrangler <command>` (including `pnpm exec wrangler login`). `pnpx wrangler` installs a
+Use **pnpm** only. Do **not** use `npm`, `npx`, `yarn`, `bun`, or `pnpx`.
+
+Wrangler comes into the workspace through `@sveltejs/adapter-cloudflare`. `allowBuilds` in
+`pnpm-workspace.yaml` approves its native dependencies, `esbuild` & `workerd`. So run Wrangler as
+`pnpm exec wrangler <command>`, including `pnpm exec wrangler login`. `pnpx wrangler` installs a
 separate copy that ignores `allowBuilds` and fails with `ERR_PNPM_IGNORED_BUILDS`. The R2 uploader
 (`scripts/lib/r2-upload.ts`, behind `sprites:upload` & `fonts:upload`) runs the workspace binary the
-same way. Wrangler may need access to Cloudflare’s API and to its stored credentials (on macOS,
-under `~/Library/Preferences/.wrangler/`; on Windows, under `%APPDATA%\xdg.config\.wrangler\`);
-never read or expose the stored OAuth token.
+same way.
 
-**Adding or bumping a dependency:** run `pnpm audit --audit-level=moderate` before committing, and
-check what the new package pulls in (`pnpm why <transitive>` for anything flagged). Don’t add a
-package whose tree carries an unpatched advisory; find an alternative. CI’s “Audit dependencies” job
-enforces the same threshold. Ignore an advisory only when it’s disputed or has no fix, through
-`auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with a comment linking the reason.
+Wrangler may need access to Cloudflare’s API & to its stored credentials. Those live under
+`~/Library/Preferences/.wrangler/` on macOS and under `%APPDATA%\xdg.config\.wrangler\` on Windows.
+Never read or expose the stored OAuth token.
 
-The build publishes `/licenses.txt` for every package bundled into the client & fails when one ships
-no license text. List such a package in `LICENSE_ALLOWLIST` (`src/lib/build/licenses.ts`) with the
-reason it was reviewed, rather than weakening the check.
+**Adding or bumping a dependency:**
+
+1. Run `pnpm audit --audit-level=moderate` before committing.
+2. Check what the new package pulls in, with `pnpm why <transitive>` for anything flagged.
+3. Don’t add a package whose tree carries an unpatched advisory; find an alternative.
+
+CI’s “Audit dependencies” job enforces the same threshold. Ignore an advisory only when it’s
+disputed or has no fix. Do that through `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml`, with a
+comment linking the reason.
+
+The build publishes `/licenses.txt` for every package bundled into the client. It fails when a
+package ships no license text. Instead of weakening that check, list the package in
+`LICENSE_ALLOWLIST` (`src/lib/build/licenses.ts`) with the reason it was reviewed.
 
 | Command                       | Purpose                                                            |
 | ----------------------------- | ------------------------------------------------------------------ |
@@ -132,86 +231,125 @@ reason it was reviewed, rather than weakening the check.
 
 ## Enforcement boundaries
 
-- Claude Code & Codex share `PreToolUse`, `PostToolUse`, `Stop`, `SubagentStart`, & worktree
-  `SessionStart` command hooks in `.claude/settings.json` & `.codex/hooks.json`. The post-tool
-  formatter skips files with unresolved index stages, so it never rewrites conflict markers; they
-  format once resolved & staged. Codex skips new or changed hooks until they are re-trusted in its
-  hook review (`/hooks`); review & trust them before relying on enforcement.
-- Hook changes take effect next session. Claude Code runs each hook from `$CLAUDE_PROJECT_DIR`,
-  fixed at session start to the session’s original checkout, so an edit to a hook script or its
-  settings in a worktree (including a subagent’s) does not change the hooks guarding that session.
-  Hooks deliberately do not re-exec from the tool call’s tree, which would let a branch weaken its
-  own guard. When a PR changes a guard & also needs the edit it newly permits, land the hook change
-  first & make the guarded edit in a later session; record the deferred criterion in the PR.
-- `guard-generated-paths.ts` denies file-tool edits, patch headers (including deletions & moves),
-  and direct shell writes referring to generated tracker data. Recover by running the pipeline.
-  CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership and the `generated-data`
-  label. `src/lib/components/ui/` is project-owned & not guarded. The hook matches the exact
-  tracker-data file, so a directory-level or `cd`-relative write that reaches it is not caught
-  there; the “Guarded paths” CI check catches it.
-- `guard-generated-reads.ts` denies file-tool & direct shell reads of generated tracker data; read
-  `src/lib/types/tracker-data.ts` or pipeline source instead. Existing symlinks are resolved.
-- Shell guards check each command segment (split at `;`, `&&`, `||`, `|`, & newlines) on its own, so
-  a path counts only in a segment that reads or writes it. Heredoc bodies & here-strings are text
-  unless fed, directly or through a pipe, to a shell or to an interpreter (Python, Node, & similar)
-  whose code calls a file-reading or file-writing API; an unquoted heredoc's `$(…)` & backtick
-  substitutions are always checked as commands. When a target is dynamic (an expansion, `xargs`, or
-  a non-literal API target), every path in the command counts; a `cd` or `pushd` widens writes the
-  same way only when a write target is relative.
-- Shell guards recognize direct path arguments & common read/write commands, not arbitrary shell
-  programs, dynamically constructed paths, or every MCP tool. They supplement repository rules; they
-  are not a filesystem sandbox. Pipeline commands remain permitted.
-- `format-agent-edit.ts` formats surviving edit or patch targets with oxfmt. For Bash, a pre-tool
-  snapshot identifies files changed by that invocation, including changes committed during it; shell
-  reads leave existing edits untouched. Deleted files, outside-worktree symlink targets, & guarded
-  paths are excluded; report formatter failures before continuing.
-- `lint-agent-stop.ts` runs `lint:fix --files <paths...>` then `lint --files <paths...>` for
-  existing staged, unstaged, untracked, & committed branch changes relative to `origin/main`. Lint
-  errors block the first stop & return diagnostics; `stop_hook_active` permits the next stop with a
-  visible failure report instead of another continuation. Fix errors or report the blocker.
-- Git enumeration & lint execution use the repository root, even when clients start below it.
-- `agent-subagent-start.ts` injects the focused-test command & file-ownership reminder in both
-  clients; if the hook is unavailable, supply them explicitly in the delegation prompt.
-- Hooks are conveniences, not verification evidence; run the required checks directly before
-  committing. `pnpm run lint` & `pnpm run lint:fix` retain their full-repository behavior without
-  `--files`; changed-file mode uses the same lint tools, scopes, & zero-warning checks.
-- `.claude/settings.json` and `.codex/rules/default.rules` allow the same `pnpm` scripts;
-  `tests/agent-permissions.test.ts` fails when a `package.json` script is in neither the allowlists
-  nor its explicit exclusion list.
+### Hooks
+
+- **Shared hooks:** Claude Code & Codex share the same command hooks, configured in
+  `.claude/settings.json` & `.codex/hooks.json`:
+  - `PreToolUse`,
+  - `PostToolUse`,
+  - `Stop`,
+  - `SubagentStart`,
+  - worktree `SessionStart`.
+- **Codex trust:** Codex skips new or changed hooks until they’re trusted again in its hook review
+  (`/hooks`). Review & trust them before relying on their enforcement.
+- **Mid-session setup:** both clients sequence setup & formatting in one tool handler. Claude Code
+  also uses `FileChanged` & `CwdChanged` (see Mid-session upkeep above).
+- **When hook changes apply:** hook changes take effect in the next session. Claude Code runs each
+  hook from `$CLAUDE_PROJECT_DIR`, which is fixed at session start to the session’s original
+  checkout. So an edit to a hook script or its settings in a worktree, including a subagent’s,
+  doesn’t change the hooks guarding that session. Hooks deliberately don’t re-exec from the tool
+  call’s tree, which would let a branch weaken its own guard.
+- **Changing a guard:** a PR may change a guard & also need the edit that the change newly permits.
+  Land the hook change first, then make the guarded edit in a later session. Record the deferred
+  criterion in the PR.
+- **Hooks aren’t evidence:** run the required checks directly before committing. Without `--files`,
+  `pnpm run lint` & `pnpm run lint:fix` still cover the full repository. Changed-file mode uses the
+  same lint tools, scopes, & zero-warning checks.
+
+### Generated tracker data
+
+- **Edits:** `guard-generated-paths.ts` denies edits that refer to the generated tracker data. That
+  covers file-tool edits, patch headers (including deletions & moves), & direct shell writes. To
+  recover, run the pipeline.
+- **Reviews & labels:** CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership & the
+  `generated-data` label. `src/lib/components/ui/` is project-owned & isn’t guarded.
+- **Gaps:** the hook matches the exact tracker-data file. It doesn’t catch a directory-level or
+  `cd`-relative write that reaches the file, but the “Guarded paths” CI check does.
+- **Reads:** `guard-generated-reads.ts` denies file-tool & direct shell reads of the generated
+  tracker data. Read `src/lib/types/tracker-data.ts` or the pipeline source instead. The guard
+  resolves existing symlinks.
+
+### Shell guards
+
+- **Segments:** shell guards check each command segment on its own, splitting at `;`, `&&`, `||`,
+  `|`, & newlines. A path counts only in a segment that reads or writes it.
+- **Heredocs:** heredoc bodies & here-strings count as text, with one exception. They count as code
+  when they’re fed, directly or through a pipe, to a shell or to an interpreter (Python, Node, &
+  similar) whose code calls a file-reading or file-writing API. An unquoted heredoc’s `$(…)` &
+  backtick substitutions are always checked as commands.
+- **Dynamic targets:** when a target is dynamic, such as an expansion, `xargs`, or a non-literal API
+  target, every path in the command counts. A `cd` or `pushd` widens writes the same way, but only
+  when a write target is relative.
+- **Limits:** shell guards recognize direct path arguments & common read & write commands. They
+  don’t recognize arbitrary shell programs, dynamically constructed paths, or every MCP tool. They
+  supplement the repository’s rules and aren’t a filesystem sandbox. Pipeline commands stay
+  permitted.
+
+### Formatting & lint hooks
+
+- **Formatter:** `format-agent-edit.ts` formats surviving edit or patch targets with oxfmt.
+  - It skips files with unresolved index stages, so it never rewrites conflict markers. Those files
+    get formatted once they’re resolved & staged.
+  - For Bash, a snapshot taken before the tool call identifies the files that call changed,
+    including changes committed during it. Shell reads leave existing edits untouched.
+  - It excludes deleted files, symlink targets outside the worktree, & guarded paths.
+  - Report formatter failures before continuing.
+- **Stop-time lint:** `lint-agent-stop.ts` runs `lint:fix --files <paths...>`, then
+  `lint --files <paths...>`. It covers every existing file changed relative to `origin/main`,
+  whether staged, unstaged, untracked, or committed on the branch.
+  - Lint errors block the first stop & return diagnostics.
+  - On the next stop, `stop_hook_active` lets the stop proceed with a visible failure report,
+    instead of another continuation.
+  - Fix the errors or report the blocker.
+- **Repository root:** Git enumeration & lint run from the repository root, even when a client
+  starts below it.
+
+### Subagents & permissions
+
+- **Subagent start:** `agent-subagent-start.ts` injects the focused-test command & a file-ownership
+  reminder in both clients. If the hook isn’t available, put both in the delegation prompt yourself.
+- **Permission parity:** `.claude/settings.json` & `.codex/rules/default.rules` allow the same
+  `pnpm` scripts. `tests/agent-permissions.test.ts` fails when a `package.json` script is in neither
+  the allowlists nor the test’s explicit exclusion list.
 
 ## Code conventions
 
-- **TypeScript**: type-aware oxlint with every non-nursery category on (each disabled rule states
-  why) + `strict: true` & `noImplicitReturns` tsconfigs. Use `type` imports
+- **TypeScript:** type-aware oxlint runs with every non-nursery category on, and each disabled rule
+  states why. The tsconfigs set `strict: true` & `noImplicitReturns`. Use `type` imports
   (`consistent-type-imports`).
-- **Formatting**: oxfmt; double quotes, no tabs, trailing commas, 100 char width, semicolons.
-- **Linting**: oxlint for every script, ESLint only for Svelte templates. See
-  [docs/development-workflow.md](development-workflow.md#linting--formatting) for which tool owns
-  which rule and how to suppress each.
-- **Imports**: Auto-sorted by oxfmt; externals first, then `#lib`/`#scripts`/`$app` internals, then
-  relative. Import `src/lib` through the `#lib` subpath import (declared in `package.json`’s
-  `imports`); SvelteKit 3 removed the `$lib` alias. Always write the file extension: `#lib` subpath
-  imports don’t resolve without one, and relative imports follow the same rule for consistency. Name
-  a TypeScript module by its `.js` output (`./availability.js`, `#lib/utils.js`,
-  `./store.svelte.js`) and every other file by its real extension (`.svelte`, `.json`, `.css`).
-  SvelteKit’s virtual `./$types` modules are the one exception. `vi.mock(...)` specifiers must match
-  the import path exactly, so update them alongside the imports they mock. Scripts run under plain
-  `node` can’t resolve a `.js` specifier to a `.ts` sibling, so they share modules through
-  `#scripts/*`, which maps an extensionless specifier to the `.ts` source
-  (`#scripts/lib/pnpm-command`).
-- **Paths**: manipulate paths with `node:path`, never by splitting, joining, or slicing strings, and
-  keep them working on Windows. Use the default functions for filesystem paths and `path.posix` for
-  paths that are `/`-separated everywhere (repo-relative doc paths, git pathspecs, URLs, zip
-  entries). See [the decision record](decisions/2026-10-13-path-apis.md).
-- **Styling**: Tailwind utilities & scoped `<style>` blocks, both on the design tokens in
-  `src/app.css`; Stylelint rejects color, type-size, shadow, & radius literals in scoped CSS. See
+- **Formatting:** oxfmt, with double quotes, no tabs, trailing commas, a 100-character width, &
+  semicolons.
+- **Linting:** oxlint covers every script, and ESLint covers only Svelte templates.
+  [docs/development-workflow.md](development-workflow.md#linting--formatting) says which tool owns
+  which rule & how to suppress each.
+- **Imports:**
+  - oxfmt sorts imports: externals first, then `#lib`, `#scripts`, & `$app` internals, then relative
+    imports.
+  - Import `src/lib` through the `#lib` subpath import, declared in `package.json`’s `imports`.
+    SvelteKit 3 removed the `$lib` alias.
+  - Always write the file extension. `#lib` subpath imports don’t resolve without one, and relative
+    imports follow the same rule for consistency.
+  - Name a TypeScript module by its `.js` output (`./availability.js`, `#lib/utils.js`,
+    `./store.svelte.js`). Name every other file by its real extension (`.svelte`, `.json`, `.css`).
+    SvelteKit’s virtual `./$types` modules are the one exception.
+  - `vi.mock(...)` specifiers must match the import path exactly, so update them along with the
+    imports they mock.
+  - Scripts run under plain `node` can’t resolve a `.js` specifier to a `.ts` sibling. They share
+    modules through `#scripts/*`, which maps an extensionless specifier to the `.ts` source
+    (`#scripts/lib/pnpm-command`).
+- **Paths:** manipulate paths with `node:path`, never by splitting, joining, or slicing strings, and
+  keep them working on Windows. Use the default functions for filesystem paths. Use `path.posix` for
+  paths that are `/`-separated everywhere: repo-relative doc paths, git pathspecs, URLs, & zip
+  entries. See [the decision record](decisions/2026-10-13-path-apis.md).
+- **Styling:** Tailwind utilities & scoped `<style>` blocks, both built on the design tokens in
+  `src/app.css`. Stylelint rejects literal colors, type sizes, shadows, & radii in scoped CSS. See
   [docs/styling.md](styling.md).
-- **Svelte**: Use `let` (not `const`) for `$props()` destructuring. Use runes (`$state`, `$derived`,
+- **Svelte:** use `let`, not `const`, for `$props()` destructuring. Use runes (`$state`, `$derived`,
   `$effect`), not legacy stores.
-- **Naming**: `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.
-  Branded IDs for type safety.
-- **Tests**: Colocate as `foo.test.ts` beside `foo.ts`; no `__tests__/` directories. See
-  [docs/development-workflow.md §4](development-workflow.md#test-file-placement).
-- **Rules**: `eqeqeq`, `prefer-const` (oxlint for scripts, `svelte/prefer-const` for Svelte files;
-  `$props()` destructuring must use `let`, which is linted), `no-var`, `object-shorthand`,
-  `prefer-template`, `curly` (multi-line).
+- **Naming:** `camelCase` for variables & functions, `PascalCase` for types & components, &
+  `kebab-case` for files. Use branded IDs for type safety.
+- **Tests:** colocate each test as `foo.test.ts` beside `foo.ts`, with no `__tests__/` directories.
+  See [docs/development-workflow.md §4](development-workflow.md#test-file-placement).
+- **Rules:** `eqeqeq`, `prefer-const`, `no-var`, `object-shorthand`, `prefer-template`, & `curly`
+  (multi-line). oxlint applies `prefer-const` to scripts, and `svelte/prefer-const` applies it to
+  Svelte files. `$props()` destructuring must use `let`, which lint checks.

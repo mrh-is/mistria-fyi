@@ -1,5 +1,11 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "everything_group_by": "Группировать по",
+  "everything_group_category": "Категории",
+  "everything_group_source": "Источнику",
+  "everything_progress": "Прогресс",
+  "everything_source_done": "Готово",
+  "everything_source_heading": "{name} · {state}",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Отслеживайте коллекции, задания, навыки и многое другое",
   "og_share_description": "Вся Мистрия в одном месте",
@@ -136,6 +142,42 @@
   "skill_perks_unlocked": "открыто {count} / {available}",
   "skill_perks_more_locked": "ещё закрыто: {count}",
   "skill_perks_locked": "закрыто: {count}",
+  "skill_perk_unlocks_almanac": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "открывает {count} предмет альманаха",
+        "countPlural=few": "открывает {count} предмета альманаха",
+        "countPlural=many": "открывает {count} предметов альманаха",
+        "countPlural=other": "открывает {count} предмета альманаха"
+      }
+    }
+  ],
+  "skill_perk_unlocks_cosmetics": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "открывает {count} предмет косметики",
+        "countPlural=few": "открывает {count} предмета косметики",
+        "countPlural=many": "открывает {count} предметов косметики",
+        "countPlural=other": "открывает {count} предмета косметики"
+      }
+    }
+  ],
+  "skill_perk_unlocks_recipes": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "открывает {count} рецепт",
+        "countPlural=few": "открывает {count} рецепта",
+        "countPlural=many": "открывает {count} рецептов",
+        "countPlural=other": "открывает {count} рецепта"
+      }
+    }
+  ],
   "skill_level_heading": "Уровень",
   "mines_floor_progress_section": "Прогресс по этажам",
   "mines_floor_progress_compact_label": "Прогресс по этажам",
@@ -571,6 +613,7 @@
   "source_horse_statue_perk": "Купить у статуи лошади ({cost} эссенции) после получения: {mount}",
   "source_chicken_statue_all_tiers": "Получить у статуи курицы после разведения кур всех уровней",
   "source_crop": "Вырастить из: {seed}",
+  "source_crop_greenhouse": "Вырастить в теплице из: {seed}",
   "source_cutscene_elsie_dating_tutorial": "Получить во время обучения свиданиям ({villager})",
   "source_cutscene_great_bird_0": "Получить в сценке после свадьбы",
   "source_date": "Получить на свидании",

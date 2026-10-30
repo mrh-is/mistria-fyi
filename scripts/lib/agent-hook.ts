@@ -6,7 +6,14 @@ import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 export interface HookInput {
   cwd?: string;
+  /** `FileChanged`: `"change"`, `"add"`, or `"unlink"`. */
+  event?: string;
+  /** `FileChanged`: absolute path of the changed file. */
+  file_path?: string;
   hook_event_name?: string;
+  /** `CwdChanged`: the directories before & after the move. */
+  new_cwd?: string;
+  old_cwd?: string;
   stop_hook_active?: boolean;
   tool_input?:
     | string
@@ -94,6 +101,8 @@ interface ShellSegment {
   heredoc: string;
   /** Whether this segment's output is piped into the next one. */
   pipe: boolean;
+  /** The shell operator after this segment, when present. */
+  separator?: string;
 }
 
 /**
@@ -101,7 +110,7 @@ interface ShellSegment {
  * keeping arithmetic expansions whole. Heredoc bodies stay with the segment that opened them, apart
  * from its command text, so their content is never parsed as commands.
  */
-function shellSegments(command: string): ShellSegment[] {
+export function shellSegments(command: string): ShellSegment[] {
   const segments: ShellSegment[] = [];
   let current: ShellSegment = { command: "", expanding: "", heredoc: "", pipe: false };
   let pending: { delimiter: string; expands: boolean; segment: ShellSegment; tabs: boolean }[] = [];
@@ -201,6 +210,10 @@ function shellSegments(command: string): ShellSegment[] {
         continue;
       }
       current.pipe = char === "|" && previous !== "|" && command[index + 1] !== "|";
+      current.separator =
+        (char === "&" || char === "|") && command[index + 1] === char
+          ? char + command[++index]
+          : char;
       flush();
       continue;
     }
