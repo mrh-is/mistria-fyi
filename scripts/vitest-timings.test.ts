@@ -40,9 +40,9 @@ describe("Vitest timing budgets", () => {
     expect(timingBudgets(2, false)).toEqual({
       fileMs: 10_000,
       probeFileMs: 10_000,
-      stepMs: 120_000,
+      stepMs: 150_000,
     });
-    expect(timingBudgets(4, false)).toEqual({ fileMs: 5000, probeFileMs: 15_000, stepMs: 90_000 });
+    expect(timingBudgets(4, false)).toEqual({ fileMs: 5000, probeFileMs: 15_000, stepMs: 150_000 });
     expect(timingBudgets(4, true)).toEqual({
       fileMs: 15_000,
       probeFileMs: 15_000,
@@ -65,6 +65,18 @@ describe("Vitest timing budgets", () => {
     expect(
       budgetFailures([{ ...probe, file: "scripts/example.test.ts" }], 10_000, probeBudgets),
     ).toEqual(["scripts/example.test.ts: 9500 ms exceeds the 5000 ms file budget"]);
+  });
+
+  it("bounds the real Workers integration separately without relaxing other files", () => {
+    const runtimeBudgets = timingBudgets(4, false);
+    const relay = { durationMs: 25_000, file: "relay/worker.test.ts", project: "node" };
+    expect(budgetFailures([relay], 30_000, runtimeBudgets)).toEqual([]);
+    expect(budgetFailures([{ ...relay, durationMs: 30_001 }], 35_000, runtimeBudgets)).toEqual([
+      "relay/worker.test.ts: 30001 ms exceeds the 30000 ms file budget",
+    ]);
+    expect(
+      budgetFailures([{ ...relay, file: "relay/other.test.ts" }], 30_000, runtimeBudgets),
+    ).toEqual(["relay/other.test.ts: 25000 ms exceeds the 5000 ms file budget"]);
   });
 
   it("publishes every file, slowest first, with the wall-time budget", () => {

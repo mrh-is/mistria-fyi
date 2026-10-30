@@ -345,18 +345,28 @@ their complete changed-file list, & main pushes compare the event’s before/aft
 & manual runs omit it. Direct local runs still include it, so test-only edits can be verified with
 the focused command. It publishes all per-file test & hook durations, slowest first, in the job
 summary & the `vitest-timings` artifact. On two-CPU noncoverage runs, ordinary files use both
-workers; the allocation, lint-ownership, & project-configuration CLI probes run separately with one
-worker, reserving a CPU for their subprocesses. Both invocations share one wall-time budget & their
-file timings are combined. Coverage & other runner classes use half the available CPUs (at least one
-worker, capped at four). The JSON also records CPU count, coverage mode, whole-command wall time, &
-the enforced ceilings. Imports, environment setup, transforms, startup, & report generation count
-toward the wall budget. Missing timing reports & unsuccessful tests fail the step independently of
-the budgets.
+workers; the allocation, verify, lint-ownership, & project-configuration CLI probes run separately
+with one worker, reserving a CPU for their subprocesses. Both invocations share one wall-time budget
+& their file timings are combined. Coverage & other runner classes use half the available CPUs (at
+least one worker, capped at four). The JSON also records CPU count, coverage mode, whole-command
+wall time, & the enforced ceilings. Imports, environment setup, transforms, startup, & report
+generation count toward the wall budget. Missing timing reports & unsuccessful tests fail the step
+independently of the budgets.
+
+The local Workers integration file, `relay/worker.test.ts`, has a 30-second file ceiling. It runs
+real workerd eviction, hibernating WebSocket closure, & SQLite runtime restarts, with measured
+provider-runtime waits totaling about 20 seconds. This exception changes no other file ceiling. Its
+sequencer starts this file first within its pool, preserving the default order for all other files,
+so runtime waits overlap ordinary tests even with a cold timing cache; see
+[the decision](decisions/2026-10-29-sync-relay.md).
 
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
-| Two CPUs (current private `ubuntu-latest`) | 10 s             | 120 s                 | 10 s per file, 300 s     |
-| Four or more CPUs (public `ubuntu-latest`) | 5 s              | 90 s                  | 15 s per file, 300 s     |
+| Two CPUs (current private `ubuntu-latest`) | 10 s             | 150 s                 | 10 s per file, 300 s     |
+| Four or more CPUs (public `ubuntu-latest`) | 5 s              | 150 s                 | 15 s per file, 300 s     |
+
+Four-CPU runs on `main` range 45–99 s, & the relay file adds about 25 s, so both runner classes
+share the 150 s whole-command ceiling until #13 shortens the suite.
 
 On four-CPU runners, coverage triples the ordinary per-file ceiling. On commit `31c10adb`’s four-CPU
 runs, it slowed files over 200 ms by a median 1.14× & up to 2.67× (`names.completeness.test.ts`);
@@ -369,8 +379,8 @@ cleanup file took 5.524 s, the allocation test 9.855 s, & the coverage step 216 
 [37692535010](https://github.com/mrh-is/mistria-fyi/actions/runs/37692535010). After #707 shared
 module registries, warm two-CPU runs took 52–79 s (the same files ran up to 1.7× slower on some
 runners) and a run with a cold transform cache, as after a `vite.config.ts` change, took 105 s; the
-120 s wall ceiling clears that cold run. The lint-ownership probe reached 8.3 s on a slow runner, so
-the 10 s file ceiling stays. The four-CPU ceilings haven’t been re-measured since. The four-CPU wall
+wall ceiling clears that cold run. The lint-ownership probe reached 8.3 s on a slow runner, so the
+10 s file ceiling stays. The four-CPU ceilings haven’t been re-measured since. The four-CPU wall
 ceiling leaves startup headroom above #687’s 60 s target. Budget changes require measurements on the
 same runner class & an explanation in the PR; do not raise ceilings merely to silence a failure.
 Coverage runs nightly because local measurements do not establish that it is free in CI.

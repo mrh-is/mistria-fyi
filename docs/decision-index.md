@@ -158,6 +158,17 @@ Evidence: [docs/agent-reference.md](../docs/agent-reference.md),
 [https://github.com/mrh-is/mistria-fyi/issues/199](https://github.com/mrh-is/mistria-fyi/issues/199),
 [https://github.com/mrh-is/mistria-fyi/pull/288](https://github.com/mrh-is/mistria-fyi/pull/288).
 
+### [Sync relay admission](decisions/2026-10-29-sync-relay.md)
+
+ID: 2026-10-29-sync-relay. Status: Current.
+
+The standalone SQLite relay supplements Cloudflare’s minute-only rate binding with rotating hourly
+shared 16-bit HMAC buckets & prefix read limits, preserving address privacy & permanent retirement.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/132](https://github.com/mrh-is/mistria-fyi/issues/132),
+[relay/README.md](../relay/README.md), [relay/worker.ts](../relay/worker.ts).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)
