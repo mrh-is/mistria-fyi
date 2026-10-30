@@ -157,6 +157,18 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/132](https://github.com/mrh-is/mistria-fyi/issues/132),
 [relay/README.md](../relay/README.md), [relay/worker.ts](../relay/worker.ts).
 
+### [Reader-first agent guidance](decisions/2026-10-30-reader-first-agent-guidance.md)
+
+ID: 2026-10-30-reader-first-agent-guidance. Status: Current.
+
+Agent-facing guidance is written in reader-first prose, because agents imitate its style in PR
+bodies.
+
+Evidence: [AGENTS.md](../AGENTS.md), [docs/agent-workflow.md](../docs/agent-workflow.md),
+[docs/agent-verification.md](../docs/agent-verification.md),
+[docs/agent-reference.md](../docs/agent-reference.md),
+[.github/pull_request_template.md](../.github/pull_request_template.md).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)
