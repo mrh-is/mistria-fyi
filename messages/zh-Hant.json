@@ -1,5 +1,11 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "everything_group_by": "分組方式",
+  "everything_group_category": "類別",
+  "everything_group_source": "來源",
+  "everything_progress": "進度",
+  "everything_source_done": "已完成",
+  "everything_source_heading": "{name} · {state}",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "追蹤所有收藏、任務、技能及更多內容",
   "og_share_description": "米斯特里亞的一切，盡在一處",

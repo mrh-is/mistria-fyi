@@ -1,5 +1,11 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "everything_group_by": "Regrouper par",
+  "everything_group_category": "Catégorie",
+  "everything_group_source": "Source",
+  "everything_progress": "Progression",
+  "everything_source_done": "Terminé",
+  "everything_source_heading": "{name} · {state}",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Suivez toutes vos collections, quêtes, compétences et plus encore",
   "og_share_description": "Tout Mistria au même endroit",

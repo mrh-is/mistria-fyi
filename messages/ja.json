@@ -1,5 +1,11 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "everything_group_by": "グループ分け",
+  "everything_group_category": "カテゴリ",
+  "everything_group_source": "入手先",
+  "everything_progress": "進捗",
+  "everything_source_done": "完了",
+  "everything_source_heading": "{name} · {state}",
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "コレクション、クエスト、スキルなどの進捗を記録",
   "og_share_description": "ミストリアのすべてをひとつに",

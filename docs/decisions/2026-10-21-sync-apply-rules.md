@@ -1,14 +1,22 @@
 ---
 id: 2026-10-21-sync-apply-rules
-status: needs-review
+status: amended
 summary: >-
-  Historical scope: Sync apply rules. Current applicability is unverified.
+  Sync apply rules now compare household facts, settling dependent differences together.
 review: >-
-  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
-  revalidated while seeding issue #268.
+  Issue 277 revalidates household comparison only. Other portions retain the earlier review caveat.
 evidence:
   - docs/decisions/2026-10-21-sync-apply-rules.md#decision
-relationships: []
+relationships:
+  - type: amended-by
+    target: 2026-10-29-household-save-facts
+    scope: partial
+    portion: >-
+      Household & pregnancy quest facts join sync comparison, with dependent changes settled
+      together under the existing provenance table.
+    evidence:
+      - docs/decisions/2026-10-29-household-save-facts.md
+      - src/lib/engine/sync-apply.test.ts
 ---
 
 # Sync apply rules

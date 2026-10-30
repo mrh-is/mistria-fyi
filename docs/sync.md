@@ -107,10 +107,12 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 
 ## The relay
 
-Built in #132, a separate Worker with Durable Objects (they cannot live in a Pages project) with its
-own `wrangler.toml`, in a directory that is not yet decided (relay/ or workers/relay/, #132), on
-Workers Free until usage says otherwise. It is reachable under the site’s origin or listed in
-`connect-src` (with `wss:`).
+Built in #132, a separate Worker with SQLite-backed Durable Objects (they cannot live in a Pages
+project), configured in `relay/wrangler.toml`, on Workers Free until usage says otherwise. Its
+planned origin, `relay.mistria.fyi`, is listed in `connect-src` for HTTPS & WSS. The
+[wire contract & launch steps](../relay/README.md) define its API; the
+[admission decision](decisions/2026-10-29-sync-relay.md) explains the hourly cap adaptation to
+Cloudflare’s minute-only binding. Deployment & secrets remain maintainer steps.
 
 ### The follow link
 
@@ -154,15 +156,25 @@ One Durable Object per mailbox ID.
 
 ### Caps & expiry
 
-- **Creation** needs a Turnstile token, passes the Worker’s rate-limiting binding (a few creations
-  an hour per client IP address, which the relay never logs or stores), & is capped at about 200 a
-  day account-wide by a singleton object.
+- **Creation** needs a Turnstile token & passes the Worker’s three-attempt-per-minute binding, keyed
+  by IPv4 address or IPv6 /64. The singleton admits three successful creations per UTC hour per
+  rotating 16-bit HMAC bucket & 200 per UTC day account-wide. Buckets deliberately combine many
+  addresses; a collision can share a creation budget. No raw address, prefix, or full HMAC enters
+  application storage or logs. Buckets are cleared after the hour; provider recovery can retain old
+  bucket counts for 30 days.
+- **Public reads & WebSocket handshakes** share a 60-attempt-per-minute binding per IPv4 address or
+  IPv6 /64, before any Durable Object request. Both bindings are approximate per Cloudflare
+  location. Reads still write no application storage.
 - **Each mailbox** caps uploads at about one a minute & 60 a day, & envelopes at 256 KB.
 - **The budget.** An upload costs a few Durable Object row writes. A typical session uploads a save
   per in-game day, about every half hour, so Workers Free’s 100,000 row writes a day cover thousands
   of players, but only a few hundred mailboxes uploading at the cap (estimates). There’s no runtime
-  budget check; the kill switch covers abuse, & tighter caps or Workers Paid come first if real
-  usage approaches the limit.
+  budget check. The kill switch stops new mailbox reads & writes, but its singleton gate still costs
+  object requests, & rejected traffic still costs Worker requests. A zone WAF rate rule, shared with
+  feedback at 10 requests per 10 seconds per address, protects the relay before the Worker runs
+  ([decision](decisions/2026-10-30-shared-edge-rate-rule.md)); distributed abuse can still exhaust
+  Free quotas. Tighter caps, an edge block, or Workers Paid come first if usage approaches the
+  limit.
 - **Expiry.** An envelope is deleted 30 days after it was uploaded. A mailbox with no upload for a
   year becomes a tombstone, like a retired one, & tombstones are never deleted, since each is a few
   bytes; the PC’s next upload, finding its own code retired, makes a new code & says so
@@ -172,9 +184,11 @@ One Durable Object per mailbox ID.
 
 - **Kill switch.** A flag in the singleton object, flipped by an authenticated admin request (a
   dashboard variable would be dropped by the next deploy). It carries an end time (a day by default;
-  the maintainer can extend it), so it lifts by itself. `sync_paused_*`, which says so, applies to
-  uploads & creation on the next request, while reads & retiring still go through, & the courier
-  uploads its latest save once it lifts. Manual tracking still works.
+  each request may set at most seven days ahead; the maintainer can extend it with another request),
+  so it lifts by itself. `sync_paused_*`, which says so, applies to uploads, creation, public reads,
+  & new WebSocket handshakes on the next request, while retiring still goes through. Existing
+  WebSockets remain connected; a pause does not enumerate or disconnect them. The courier uploads
+  its latest save once it lifts. Manual tracking still works.
 - **Logging.** Request logging stays off.
 - **Takedown.** [takedown.md](takedown.md) gains a relay section.
 - **Tests** run the Durable Object in Miniflare. Deploying needs the maintainer’s Cloudflare login.
@@ -291,6 +305,13 @@ a question covers changes until all are answered. Fact questions are grouped by 
 changes it covers, so a question whose effect changed while it waited is asked again. “Keep mine”
 records a resolution per fact; an answer that doesn’t fit its question counts as unanswered.
 
+Dependent household differences are the exception to per-field grouping: one fact question uses
+`field: "household"`, while each difference retains its actual field. This keeps one answer atomic
+across relationships, the break-ups setting, child choice, & pregnancy quests. The question & all
+its differences use the strongest dependent reason: `many-removals` takes precedence over
+`local-disagrees`, so the renamed-ID warning survives grouping. Its ID includes that reason & every
+dependent difference; a changed reason or effect requires a new answer.
+
 ### The table
 
 - A save or inference is superseded by the save: an addition applies silently, a removal applies &
@@ -344,10 +365,18 @@ default, so true, then false, then true again asks again.
   lists as completed, per `QUEST_KINDS_LISTED_AS_COMPLETED`; other kinds only advance. In v1.0.8
   every tracked kind qualifies: `QuestLog.complete` is the only way into `completed_quests` & out of
   `active_quests`, & a late-game save’s `quest_<id>_complete` facts match its list for every kind.
-- Household facts stay manual in sync. The importer extracts relationships, the break-ups setting, &
-  the child choice (public #6), & a manual import merges them through `mergeHousehold`, but sync
-  doesn’t compare them yet, & pregnancy quests follow the household. Bringing them under the same
-  rules, including engagement break-ups, is follow-up work. The v1.0.8 game has no divorce flow.
+- Household facts use the same provenance table: relationships, the break-ups setting, positive
+  child evidence, & pregnancy quests. Complete explicit statuses can replace relationships; missing
+  or unrecognized statuses remain partial. A valid childless save leaves child choice unknown, so it
+  cannot remove a manual refusal. The explicit Mistmare reveal fact & readable animal variant lists
+  make mount appearances complete.
+- Household differences settle together: an ordered manual fact that wins keeps the dependent
+  changes local; any question covers the whole household difference. “Keep mine” holds for the whole
+  difference until a dependent save value changes. A candidate with competing spouses or fiancés, or
+  romances forbidden by its break-ups setting, stays local & tells; sync never invents a cascade
+  over manual facts. This covers incomplete relationship evidence too. A manual import still merges
+  additively through `mergeHousehold`; backup restore still replaces. See
+  [the household decision](decisions/2026-10-29-household-save-facts.md).
 
 Property & scenario tests (`sync-apply.test.ts`) cover the rollback, untick, renamed-ID,
 farm-switch, & pre-provenance cases.
@@ -417,8 +446,11 @@ that it is opt-in; end-to-end encrypted, including against the relay; that the r
 latest save per link, deleted 30 days after it was sent; that anyone holding the follow link can
 read the shared saves until the player makes a new link, so it’s worth keeping off stream; that
 Cloudflare processes IP addresses to deliver it & the app does not log them, & that link creation is
-rate-limited by address without storing it; that there is no account; & the provider’s 30-day
-storage recovery, plainly. The rewrite ships before or with sync, in all locales.
+rate-limited by IPv4 address or IPv6 /64 without storing the address or prefix in application
+storage. Hourly admission stores only a rotating 16-bit shared bucket & count, which cannot identify
+one address even with the secret; provider recovery can retain these counts for 30 days. State that
+there is no account, & explain the provider’s 30-day storage recovery plainly. The rewrite ships
+before or with sync, in all locales.
 
 ## Fallbacks
 

@@ -166,7 +166,13 @@ field’s completeness unknown.
 The Mistmare’s appearances share the horse’s list: `animal_variant_unlocks.horse` holds breeds and
 mount appearances (`giant_chicken_white` & `giant_chicken_gold`, from the Big Egg) side by side, so
 the import routes an ID to mount appearances when it isn’t a horse breed. The default `mistmare`
-appearance never appears there; the import infers it from `gamedata.scene_history` (below).
+appearance never appears there; the import reads the explicit
+`gamedata.t2_world_facts.cutscene_seen_reveal_mistmare` fact (`0`/`1`, or a boolean).
+`Mist.mark_scene_seen` writes it, and `obj_horse_statue` requests the scene as it grants the mount.
+Both local v1.0.8 saves contain the fact, zero early & one late. An explicit zero establishes that
+the Mistmare is not unlocked. Missing or malformed facts leave the field unknown; scene-history
+evidence can still add the Mistmare, but never establish a removal. The animal variant lists must
+also be readable for the combined field to be complete.
 
 Starting player cosmetics can be absent from `cosmetic_unlocks`; import unions every cosmetic with a
 native `default` source into the saved unlocks. It also seeds animal variants with a `default`
@@ -229,10 +235,26 @@ game locks the setting after engagement; the tracker leaves it editable so playe
 imported progress. `disable_break_up_letters` suppresses letters only, not status changes. No v1.0.8
 GML implements divorce.
 
-A non-null `pending_child` or non-empty `children` array means the household chose children
-(`childChoice: "yes"`). Choosing no children leaves no trace, so a childless save reads as
-`"undeclared"` & the child choice is never complete. The dates aren’t tracked; who the player
-proposed to or married comes from the status flags in `t2_world_facts` (below).
+A valid `pending_child`, a readable child in `children`, an explicitly true `pending_stork_visit`
+world fact, or a pregnancy quest means the household chose children (`childChoice: "yes"`), which is
+definitive evidence. `Serialization/SaveGame.gml` writes `pending_child` as `{ due_date, utero }`;
+`Children.gml` & `etc/magic_enums.meta.toml` establish that `utero` is serialized as `"ari"`,
+`"spouse"`, or `"stork"`, not its runtime numeric enum. Malformed evidence stays unknown, never a
+manufactured positive choice.
+
+Choosing no children leaves no durable choice the tracker can read. Both full v1.0.8 archives have
+`children: []` & `pending_child: null`, including the married late-game farm. `par_NPC.gml` offers
+the family-planning conversation while holding the Mystical Feather & removes it only when
+`pending_stork_visit` is true. The game’s `TEST_STORK_CYCLE` explicitly declines, verifies that the
+feather remains, then repeats the conversation & accepts. `great_bird_1` then creates
+`pending_child` & clears `utero_choice` (`Mist.gml`). The family-planning gate & seen-scene facts
+record an offer or a visit, not a permanent refusal. Thus a valid childless save reads as
+`"undeclared"` with unknown completeness; it cannot erase a manually recorded `"no"`. The supplied
+saves contain no pending or born children, so those positive cases use serializer-backed synthetic
+fixtures.
+
+The dates aren’t tracked; who the player proposed to or married comes from the explicit statuses in
+`t2_world_facts` (below).
 
 ---
 
@@ -265,11 +287,16 @@ world state. Keys follow naming conventions:
 - **`{npc_id}_heart_level`** → `number`: Villager relationship level (0–10+)
 - **`{skill_id}_level`** → `number`: Skill level
 - **`renown`** → `number`: Player's renown level
-- **`{npc_id}_status`** → `string | undefined`: the relationship status, `best_friend`, `dating`,
+- **`{npc_id}_status`** → `string | null`: the relationship status, `best_friend`, `dating`,
   `fiance`, or `spouse`. `Npc.report_relationship` mirrors it into `{npc_id}_is_best_friend`,
   `_is_dating`, `_is_fiance`, & `_is_spouse` (`0`/`1`), plus `has_spouse` & `has_fiance`. The
-  importer reads the flags as platonic, romantic, proposed, & married. A spouse takes precedence
-  over a stale dating flag for the same villager. Other dating relationships remain as stored; the
+  importer reads each explicit status as platonic, romantic, proposed, or married; an explicitly
+  present `null` establishes undecided. Every dateable villager’s status must be present &
+  recognized for relationships to be complete. A missing or unrecognized status leaves the field
+  unknown; readable legacy flags can still add evidence, with a spouse taking precedence over
+  dating. Explicit statuses take precedence over stale flags & pregnancy-quest inference. A
+  pregnancy quest that contradicts an explicit status leaves that status untouched & relationships
+  unknown, with an `invalid-value` diagnostic. Other dating relationships remain as stored; the
   v1.0.8 married save has break-ups disabled and retains seven other partners. No v1.0.8 script
   writes `ari_is_married` or `ari_is_engaged`, so the importer ignores them.
 - **Various flags** → `boolean | number | string`: quest triggers, event flags, world unlocks

@@ -111,10 +111,10 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
     never brings one in; a progress reset keeps it and a full reset clears it. Provenance & resolved
     diffs live in `progress`, so they travel with backups.
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
-  `now`, `anytime`, & `later`, and `showSpoilers`). The UI labels `anytime` “Whenever”; the stored
-  value keeps its original name. These are per-device conveniences: they're never exported, so
-  restoring a backup or resetting progress keeps them, and a missing or invalid field falls back to
-  its default rather than blocking anything.
+  `now`, `anytime`, & `later`, `showSpoilers`, and `everythingGrouping`, either `category` or
+  `source`). The UI labels `anytime` “Whenever”; the stored value keeps its original name. These are
+  per-device conveniences: they're never exported, so restoring a backup or resetting progress keeps
+  them, and a missing or invalid field falls back to its default rather than blocking anything.
 
 `src/lib/stores/progress-storage.ts` owns the blob. Storage hydration & backup restore both read it
 the same way: parse it, dispatch on `version`, run the numbered `MIGRATIONS` that bring it up to
@@ -239,11 +239,12 @@ The app processes save files entirely client-side. No save data is uploaded.
    absent or malformed field is `unknown` with no value, never an empty list or a zero. Every ID is
    tracked, known-but-untracked (a game ID the tracker deliberately leaves out, listed in
    `untracked-save-ids.ts`), or unrecognized; an unrecognized ID or an unreadable entry makes its
-   field `unknown`. Relationships are never `complete`, since absent status flags do not establish a
-   relationship removal; nor is the child choice, since only wanting children leaves evidence; nor
-   are mount appearances, since the Mistmare is inferred from one scene ID in an uncatalogued scene
-   history. It also retains the save’s identity: `info.creation_version` & `header.playtime`. A
-   quest listed as both completed and active imports as `completed`.
+   field `unknown`. Relationships are complete when every dateable villager’s explicit status is
+   readable, including `null` for undecided. Mount appearances use the explicit Mistmare reveal fact
+   & the animal variant lists. Child choice is complete only with positive evidence; a childless
+   save cannot distinguish refusal from postponement. It also retains the save’s identity:
+   `info.creation_version` & `header.playtime`. A quest listed as both completed and active imports
+   as `completed`.
 4. `extractSaveProgress` turns that into the `Partial<ProgressState>` of every value it could read,
    plus the diagnostics the player sees as warnings (`absent` & `invalid-value` are diagnostics
    only). It doesn’t count anything. See the
@@ -311,6 +312,16 @@ Pages are layout compositors. They handle data fetching and composition, not bus
   map (which content component, whether it's compact, whether its rows stack), the sticky
   `section-header.svelte`, and hiding a completed category unless completed content is shown. A new
   category adds one map entry, not a new section file.
+
+The Everything page also offers a Source grouping. `controllers/source-checklist.ts` adapts the
+category projections into rows with their original completion identity, presentation, & reversible
+store action. `presentation/source-groups.ts` places each row under all of its source instances,
+merges stock facets within an instance, & classifies availability using only that instance’s
+sources. Source totals & Now/Later/Done rollups precede display filtering; unobtainable rows never
+hold a source open. `source-content.svelte` composes the source types & sections, leaving type-level
+collapsing and the page-wide completed list to #248. The `group=category|source` query overrides the
+device’s `everythingGrouping` preference without rewriting it; choosing the control updates both the
+preference & URL. Progress serialization is unchanged.
 
 ### Component conventions
 
