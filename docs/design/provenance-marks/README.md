@@ -26,7 +26,7 @@ component as they are. Lint & Knip skip `docs/design/*/generator/`.
 | ---------- | ------------ | -------------------------------------------------------------------------- | ------------------------------ | --------------------------------- |
 | `manual`   | Pen          | Today’s X, loosened, with nib blots; overruns the box                      | “You checked this off by hand” | `tracker_row_provenance_manual`   |
 | `save`     | Rubber stamp | Square-ended filled bars, a few degrees off, with specks & a pressure fade | “Filled in from your save”     | `tracker_row_provenance_save`     |
-| `inferred` | Pencil       | Green colored pencil at 62% of the pen’s strength, grainy                  | “We filled this in for you”    | `tracker_row_provenance_inferred` |
+| `inferred` | Pencil       | Green colored pencil at 75% of the pen’s strength, grainy                  | “We filled this in for you”    | `tracker_row_provenance_inferred` |
 | `unknown`  | Typewriter   | A small serifed x, struck a hair off level                                 | “From your older records”      | `tracker_row_provenance_unknown`  |
 
 Every X uses `--color-tracker-checked` and every slash `--color-tracker-obtained`, so no new color
@@ -47,6 +47,8 @@ seed picks:
 
 - one of eight filter seeds for the tool’s texture (pen wobble, pencil grain, stamp specks, or
   ribbon ink),
+- each pen stroke’s ends (±1.6 units), bow, & weight, so the overrun varies and some ends stop
+  short,
 - the stamp’s angle (±5°) & its pressure fade (any direction, 0% to about 45%, none for about a
   fifth of entries),
 - the typewriter’s angle & offset,

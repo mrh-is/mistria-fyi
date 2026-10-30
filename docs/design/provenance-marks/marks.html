@@ -583,8 +583,9 @@
         <h2>Every entry a little different</h2>
         <p class="note">
           Eight entries per tool, each seeded by its id: five single X’s, then three quests. The
-          seed picks the filter’s noise, the stamp’s angle & pressure, and the second stroke’s
-          registration. Pressure fades in any direction, by anything from nothing to about half.
+          seed picks the filter’s noise, the pen’s stroke ends, bow, & weight, the stamp’s angle &
+          pressure, and the second stroke’s registration. Pressure fades in any direction, by
+          anything from nothing to about half.
         </p>
       </div>
       <div class="variants" id="variants"></div>
@@ -707,17 +708,37 @@
       const misregister = (r) =>
         `translate(${between(r, -0.9, 0.9).toFixed(2)} ${between(r, -0.7, 0.7).toFixed(2)}) rotate(${between(r, -3, 3).toFixed(1)} 14 14)`;
 
-      // Pen: today's X, loosened, with a nib blot where each stroke lands. It overruns the box.
+      // Pen: today's X, loosened, with a nib blot where each stroke lands. Each stroke's ends,
+      // bow, & weight are drawn fresh per entry, so the overrun varies and some ends stop short.
       const pen = (r) => {
         const f = filter("pen", pickSeed(r));
         const later = misregister(r);
-        const stroke = (c, d, blot, w, at = "") =>
+        const hand = ([sx, sy], [ex, ey]) => {
+          const x0 = sx + between(r, -1.6, 1.6);
+          const y0 = sy + between(r, -1.6, 1.6);
+          const x1 = ex + between(r, -1.8, 1.8);
+          const y1 = ey + between(r, -1.8, 1.8);
+          const len = Math.hypot(x1 - x0, y1 - y0);
+          const [nx, ny] = [-(y1 - y0) / len, (x1 - x0) / len];
+          const bow = between(r, -1.8, 1.8);
+          const bow2 = bow * between(r, 0.3, 1.3);
+          const at = (t, b) => [x0 + (x1 - x0) * t + nx * b, y0 + (y1 - y0) * t + ny * b];
+          const [c1, c2] = [at(between(r, 0.25, 0.4), bow), at(between(r, 0.6, 0.75), bow2)];
+          const n = (v) => v.toFixed(1);
+          return {
+            d: `M${n(x0)} ${n(y0)} C${n(c1[0])} ${n(c1[1])} ${n(c2[0])} ${n(c2[1])} ${n(x1)} ${n(y1)}`,
+            blot: [x0, y0, between(r, 1.1, 1.7)],
+            width: between(r, 2.1, 2.8).toFixed(2),
+          };
+        };
+        const first = hand([21.9, 3.1], [6.6, 21.7]);
+        const second = hand([7.4, 7.6], [25.6, 24.1]);
+        const stroke = (c, { d, blot, width }, at = "") =>
           `<g filter="${f}" transform="${at}" fill="none" stroke="${c}" stroke-linecap="round">
-            <path d="${d}" stroke-width="${w}"/><circle cx="${blot[0]}" cy="${blot[1]}" r="1.4" fill="${c}" stroke="none"/>
+            <path d="${d}" stroke-width="${width}"/><circle cx="${blot[0]}" cy="${blot[1]}" r="${blot[2]}" fill="${c}" stroke="none"/>
           </g>`;
-        const slash = (c) => stroke(c, "M21.9 3.1 C17.6 9.4 12.8 15.2 6.6 21.7", [21.9, 3.2], 2.6);
-        const cross = (c, at) =>
-          stroke(c, "M7.4 7.6 C11.2 11.6 16.4 17 25.6 24.1", [7.3, 7.5], 2.3, at);
+        const slash = (c) => stroke(c, first);
+        const cross = (c, at) => stroke(c, second, at);
         return {
           slash,
           cross: (c) => cross(c, later),
@@ -748,7 +769,7 @@
 
       // Pencil: two light passes per stroke, grainy, inside the box. Lighter than the pen, like a
       // pencil next to a pen in a sketching app, but still clearly green.
-      const pencil = (r, weight = 0.62) => {
+      const pencil = (r, weight = 0.75) => {
         const f = filter("pencil", pickSeed(r));
         const later = misregister(r);
         const stroke = (c, d, d2, at = "") =>
@@ -851,8 +872,8 @@
         });
 
       const weights = [
-        ["0.45", "Lighter"],
-        ["0.62", "Pick"],
+        ["0.62", "The last round"],
+        ["0.75", "Pick"],
         ["1", "Full strength"],
       ];
       document.querySelector("#variants").innerHTML =
