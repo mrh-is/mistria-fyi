@@ -12,7 +12,7 @@ Status: proposed, awaiting the maintainer’s approval on the PR that adds this 
 
 | Path                  | What it is                                                                 |
 | --------------------- | -------------------------------------------------------------------------- |
-| `marks.html`          | The mockup: key, variants, & tracker rows. Add `?theme=dark` for dark mode |
+| `marks.html`          | The mockup: key, variants, quests, & rows. Add `?theme=dark` for dark mode |
 | `sheets/`             | One PNG per section & theme, rendered from `marks.html` at 2×              |
 | `generator/shots.mjs` | Renders the sheets with the workspace Playwright                           |
 
@@ -22,12 +22,12 @@ component as they are. Lint & Knip skip `docs/design/*/generator/`.
 
 ## Recommended marks
 
-| Source     | Tool         | How it draws the X                                                         | Description (`en`)             | Key                               |
-| ---------- | ------------ | -------------------------------------------------------------------------- | ------------------------------ | --------------------------------- |
-| `manual`   | Pen          | Today’s X, loosened, with nib blots; overruns the box                      | “You checked this off by hand” | `tracker_row_provenance_manual`   |
-| `save`     | Rubber stamp | Square-ended filled bars, a few degrees off, with specks & a pressure fade | “Filled in from your save”     | `tracker_row_provenance_save`     |
-| `inferred` | Pencil       | Green colored pencil at 75% of the pen’s strength, grainy                  | “We filled this in for you”    | `tracker_row_provenance_inferred` |
-| `unknown`  | Typewriter   | A small serifed x, struck a hair off level                                 | “From your older records”      | `tracker_row_provenance_unknown`  |
+| Source     | Tool         | How it draws the X                                                         |
+| ---------- | ------------ | -------------------------------------------------------------------------- |
+| `manual`   | Pen          | Today’s X, loosened, with nib blots; overruns the box                      |
+| `save`     | Rubber stamp | Square-ended filled bars, a few degrees off, with specks & a pressure fade |
+| `inferred` | Pencil       | Green colored pencil at 75% of the pen’s strength, grainy                  |
+| `unknown`  | Typewriter   | A small serifed x, struck a hair off level                                 |
 
 Every X uses `--color-tracker-checked` and every slash `--color-tracker-obtained`, so no new color
 roles are needed. Only the inked X keeps the drawn-stroke animation, since it’s the only mark the
@@ -61,10 +61,15 @@ unchanged.
 
 ## Accessibility
 
-The checkbox keeps its accessible name (“Uncheck {name}”) & its state. A checked box adds
-`aria-describedby` pointing at visually hidden text holding its provenance’s description. Unchecked
-boxes get no description. The marks share one shape on purpose, so provenance is never conveyed by
-the mark alone; the description carries it.
+Provenance is decorative. The checkbox keeps its accessible name (“Uncheck {name}”) & its state, and
+the tool isn’t announced, so no description strings or keys are needed. The marks share one shape,
+so the status a player acts on never depends on the tool.
+
+## Quests from two sources
+
+A quest can be obtained from one source and finished from another. The quests sheet compares two
+models: each moment keeps its own tool (A), or the quest has one provenance and the finish redraws
+the whole mark in its tool (B). The choice is open.
 
 ## Regenerating
 
@@ -76,8 +81,9 @@ node docs/design/provenance-marks/generator/shots.mjs
 
 ## Sheets
 
-| Sheet                                                                                      | Section                            |
-| ------------------------------------------------------------------------------------------ | ---------------------------------- |
-| [01-key-light.png](sheets/01-key-light.png), [dark](sheets/01-key-dark.png)                | The recommended set                |
-| [02-variants-light.png](sheets/02-variants-light.png), [dark](sheets/02-variants-dark.png) | Variants, with the picks           |
-| [03-context-light.png](sheets/03-context-light.png), [dark](sheets/03-context-dark.png)    | On tracker rows, both target sizes |
+| Sheet                                                                                      | Section                             |
+| ------------------------------------------------------------------------------------------ | ----------------------------------- |
+| [01-key-light.png](sheets/01-key-light.png), [dark](sheets/01-key-dark.png)                | The recommended set                 |
+| [02-variants-light.png](sheets/02-variants-light.png), [dark](sheets/02-variants-dark.png) | Per-entry variation & pencil weight |
+| [03-context-light.png](sheets/03-context-light.png), [dark](sheets/03-context-dark.png)    | On tracker rows, both target sizes  |
+| [04-quests-light.png](sheets/04-quests-light.png), [dark](sheets/04-quests-dark.png)       | Quests from two sources, A & B      |

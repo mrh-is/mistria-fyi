@@ -213,6 +213,18 @@
         color: var(--color-ink-muted);
       }
 
+      .ledger .tool-name {
+        display: block;
+        font-family: var(--font-annotation);
+        font-size: 13px;
+        color: var(--color-ink-muted);
+      }
+
+      #sheet-quests .enlarged svg {
+        width: 72px;
+        height: 72px;
+      }
+
       .ledger .words q {
         quotes: "\201C" "\201D";
       }
@@ -571,7 +583,6 @@
             <th>Real size</th>
             <th>One moment</th>
             <th>Quest: obtained, then done</th>
-            <th>Description & key</th>
           </tr>
         </thead>
         <tbody id="ledger-body"></tbody>
@@ -589,6 +600,29 @@
         </p>
       </div>
       <div class="variants" id="variants"></div>
+    </section>
+
+    <section class="sheet" id="sheet-quests">
+      <div class="sheet-head">
+        <h2>Quests from two sources</h2>
+        <p class="note">
+          A quest can be obtained from one source and finished from another. Either each moment
+          keeps its own tool (A), or the quest has one provenance and the finish redraws the whole
+          mark in its tool (B). Same-source quests look the same both ways.
+        </p>
+      </div>
+      <table class="ledger">
+        <thead>
+          <tr>
+            <th>Obtained</th>
+            <th>Finished</th>
+            <th>Active</th>
+            <th>A: each moment keeps its tool</th>
+            <th>B: the finish redraws it</th>
+          </tr>
+        </thead>
+        <tbody id="quests-body"></tbody>
+      </table>
     </section>
 
     <section class="sheet" id="sheet-context">
@@ -609,13 +643,12 @@
           </p>
           <p>
             <strong>Quests take two moments.</strong> Request for an Apple was obtained & finished
-            from saves, so two stamps. Request for Bait was obtained from a save and finished by
-            hand: an inked stroke across a stamped slash.
+            from saves, so two stamps. Request for Bait was obtained & finished by hand.
           </p>
-          <p><strong>What a screen reader hears</strong>, for the stamped row:</p>
-          <p class="sr">
-            <b>name</b> Uncheck Sardine<br /><b>role</b> button<br /><b>description</b> Filled in
-            from your save
+          <p>
+            <strong>Decorative to assistive tech.</strong> The checkbox keeps its name (“Uncheck
+            Sardine”) & state, and the tool isn’t announced. Provenance is texture, not information
+            a player needs to act on.
           </p>
           <p>
             <strong>Only the ink stroke animates.</strong> It’s the only mark the player draws, so
@@ -762,6 +795,7 @@
         const slash = (c) => print(c, bar(-45), first, firstPress);
         return {
           slash,
+          cross: (c) => print(c, bar(45), `${first} ${later}`, laterPress),
           x: (c) => print(c, bar(-45) + bar(45), first, firstPress),
           quest: (c) => slash(c) + print(c, bar(45), `${first} ${later}`, laterPress),
         };
@@ -789,7 +823,12 @@
             "M9.6 8.2 C12.8 11.6 16.1 15.4 19.5 19.1",
             at,
           );
-        return { slash, x: (c) => slash(c) + cross(c), quest: (c) => slash(c) + cross(c, later) };
+        return {
+          slash,
+          cross: (c) => cross(c, later),
+          x: (c) => slash(c) + cross(c),
+          quest: (c) => slash(c) + cross(c, later),
+        };
       };
 
       // Typewriter: a small serifed x, struck a hair off level in one keystroke. A quest types /
@@ -805,6 +844,7 @@
         const slash = (c) => key(c, SLASH, first);
         return {
           slash,
+          cross: (c) => key(c, BACK, `${first} ${later}`),
           x: (c) => key(c, SLASH + BACK, first),
           quest: (c) => slash(c) + key(c, BACK, `${first} ${later}`),
         };
@@ -826,25 +866,21 @@
           source: "manual",
           tool: "Pen",
           why: "The player’s own hand. Today’s X, loosened: a nib’s landing blot, strokes that overrun the box.",
-          words: "You checked this off by hand",
         },
         {
           source: "save",
           tool: "Rubber stamp",
           why: "A clerk’s stamp, set a few degrees off, with specks the ink missed and a fade where it was pressed lightly.",
-          words: "Filled in from your save",
         },
         {
           source: "inferred",
           tool: "Pencil",
           why: "Green colored pencil: lighter & grainier than the pen, so it reads as our note, and it stays inside the box.",
-          words: "We filled this in for you",
         },
         {
           source: "unknown",
           tool: "Typewriter",
           why: "A typed x, as on old forms: small, serifed, struck a hair off level.",
-          words: "From your older records",
         },
       ];
       const TOOL_OF = { manual: pen, save: stamp, inferred: pencil, unknown: typewriter };
@@ -857,7 +893,6 @@
           <td>${atRow(f)}</td>
           <td><span class="enlarged">${f.x}</span></td>
           <td><span class="pair"><span class="enlarged">${f.slash}</span><span class="arrow">→</span><span class="enlarged">${f.quest}</span></span></td>
-          <td class="words"><q>${rec.words}</q><br /><code>tracker_row_provenance_${rec.source}</code></td>
         </tr>`;
       }).join("");
 
@@ -896,6 +931,29 @@
             })
             .join("")}</div>`;
 
+      const QUESTS = [
+        ["save", "manual", "Request for Bait"],
+        ["manual", "save", "Request for a Pearl"],
+        ["unknown", "manual", "Request for Tea"],
+        ["manual", "inferred", "Request for Wool"],
+        ["save", "save", "Request for an Apple"],
+      ];
+      const shown = (mark) =>
+        `<span class="pair"><span class="enlarged">${mark}</span><span class="at-size">${mark}</span></span>`;
+      document.querySelector("#quests-body").innerHTML = QUESTS.map(([got, finished, name]) => {
+        const r = random(name);
+        const before = TOOL_OF[got](r);
+        const after = got === finished ? before : TOOL_OF[finished](r);
+        const tool = (source) => RECOMMENDED.find((rec) => rec.source === source).tool;
+        return `<tr>
+          <td class="source">${got}<small class="tool-name">${tool(got)}</small></td>
+          <td class="source">${finished}<small class="tool-name">${tool(finished)}</small></td>
+          <td>${shown(svg(before.slash(AMBER)))}</td>
+          <td>${shown(svg(before.slash(GREEN) + after.cross(GREEN)))}</td>
+          <td>${shown(svg(after.quest(GREEN)))}</td>
+        </tr>`;
+      }).join("");
+
       const row = (name, mark, extra = "", completed = true) =>
         `<div class="row${completed ? " completed" : ""}"><div class="surface">
           <span class="box">${mark}</span>
@@ -904,9 +962,6 @@
       const done = (tool, name) => svg(tool(random(name)).x(GREEN));
 
       const column = (title) => {
-        const bait = random("Request for Bait");
-        const baitSlash = stamp(bait).slash(GREEN);
-        const baitCross = pen(bait).cross(GREEN);
         return `<div class="column-title">${title}</div>
         <div class="section-name">Fish <span class="count">5 / 7</span></div>
         <div class="stack">
@@ -922,7 +977,7 @@
         <div class="stack">
           ${row("Request for an Apple", svg(stamp(random("Request for an Apple")).quest(GREEN)))}
           ${row("Request for Armored Bass", svg(stamp(random("Request for Armored Bass")).slash(AMBER)), '<span class="badge">Active</span>', false)}
-          ${row("Request for Bait", svg(baitSlash + baitCross))}
+          ${row("Request for Bait", svg(pen(random("Request for Bait")).quest(GREEN)))}
           ${row("Request for a Beet", EMPTY, "", false)}
         </div>`;
       };

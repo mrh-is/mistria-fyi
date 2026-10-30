@@ -14,6 +14,7 @@ const sheets = [
   ["sheet-key", "01-key"],
   ["sheet-variants", "02-variants"],
   ["sheet-context", "03-context"],
+  ["sheet-quests", "04-quests"],
 ];
 for (const theme of ["light", "dark"]) {
   const url = pathToFileURL(path.join(here, "marks.html"));
