@@ -57,6 +57,9 @@ describe("toolDirectory", () => {
     ["cd '/repo/linked tree' && pnpm run check", "/repo/linked tree"],
     ["pnpm -C '/repo/linked tree' exec vitest", "/repo/linked tree"],
     ["pnpm --dir=/repo/linked exec vitest", "/repo/linked"],
+    ['pnpm --dir=/repo/"linked tree" exec vitest', "/repo/linked tree"],
+    ["pnpm --dir='/repo/linked tree' exec vitest", "/repo/linked tree"],
+    ["cd '/repo/'\"linked tree\" && pnpm run check", "/repo/linked tree"],
     ["cd linked && cd src && pnpm run check", "/repo/linked/src"],
   ])("resolves a literal command directory: %s", (command, expected) => {
     expect(toolDirectory(shell("/repo", command))).toBe(expected);
@@ -75,9 +78,30 @@ describe("toolDirectory", () => {
       /separate tool call|literal directory/,
     );
   });
+
+  it("rejects an incomplete quoted directory instead of choosing another checkout", () => {
+    expect(() => toolDirectory(shell("/repo", 'pnpm --dir="/repo/linked run check'))).toThrow(
+      "complete literal quotes",
+    );
+  });
 });
 
 describe("Codex tool upkeep", () => {
+  it.each([
+    (directory: string) => `pnpm --dir="${directory}" run check`,
+    (directory: string) => `pnpm "--dir=${directory}" run check`,
+    (directory: string) => `pnpm -C"${directory}" run check`,
+    (directory: string) => `pnpm --filter app --dir="${directory}" run check`,
+  ])("sets up the linked checkout for quoted directory options (%#)", (command) => {
+    const { root, worktree } = fixture();
+    const setup = vi.fn(current);
+    const input = shell(root, command(worktree));
+    codexToolHook(input, setup, undefined, root);
+    expect(setup).toHaveBeenCalledExactlyOnceWith(worktree);
+    codexToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, undefined, root);
+    expect(setup).toHaveBeenLastCalledWith(worktree);
+  });
+
   it("sets up a linked checkout before the command & formats only after setup", () => {
     const { root, worktree } = fixture();
     const calls: string[] = [];

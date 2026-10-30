@@ -19,12 +19,43 @@ import type { HookInput, RunCommand } from "#scripts/lib/agent-hook";
 const project = dirname(import.meta.dirname);
 
 function literalPath(word: string | undefined): string {
-  if (!word || /[$`\\~*?{}()<>]/.test(word)) {
+  if (!word || word === "-" || /[$`\\~*?{}()<>]/.test(word)) {
     throw new Error(
       "Use an explicit workdir or a literal directory for setup; dynamic shell paths cannot be resolved by the hook.",
     );
   }
   return word;
+}
+
+/** Join adjacent quoted & unquoted sections as the shell does, without evaluating expansions. */
+function literalWords(command: string): string[] {
+  const words: string[] = [];
+  let word = "";
+  let started = false;
+  let quote: string | undefined;
+  for (let index = 0; index < command.length; index++) {
+    const character = command[index];
+    if (character === "\\" && quote !== "'") {
+      // Preserve escapes so literalPath rejects them rather than guessing their shell meaning.
+      word += character + (command[++index] ?? "");
+    } else if (quote !== undefined) {
+      if (character === quote) quote = undefined;
+      else word += character;
+    } else if (character === "'" || character === '"') {
+      quote = character;
+    } else if (/\s/.test(character)) {
+      if (started) words.push(word);
+      word = "";
+      started = false;
+      continue;
+    } else {
+      word += character;
+    }
+    started = true;
+  }
+  if (quote !== undefined) throw new Error("Use complete literal quotes for a command directory.");
+  if (started) words.push(word);
+  return words;
 }
 
 /** Resolve only literal leading cd & pnpm directory options; never execute shell text in a hook. */
@@ -43,7 +74,7 @@ export function toolDirectory(input: HookInput): string {
         "Use cd with && before pnpm, or run the directory change in a separate tool call.",
       );
     }
-    const words = shellPaths(segments[last].command);
+    const words = literalWords(segments[last].command);
     const path = words[1] === "--" ? words[2] : words[1];
     if (words.length !== (words[1] === "--" ? 3 : 2)) {
       throw new Error("Use a separate command for a complex directory change.");
@@ -59,7 +90,7 @@ export function toolDirectory(input: HookInput): string {
     );
   }
   if (pnpm.length === 1) {
-    const words = shellPaths(pnpm[0].command);
+    const words = literalWords(pnpm[0].command);
     for (let index = 1; index < words.length; index++) {
       const word = words[index];
       if (word === "-C" || word === "--dir") {
@@ -69,6 +100,14 @@ export function toolDirectory(input: HookInput): string {
       if (word.startsWith("--dir=")) {
         cwd = resolve(cwd, literalPath(word.slice("--dir=".length)));
         break;
+      }
+      if (word.startsWith("-C") && word.length > 2) {
+        cwd = resolve(cwd, literalPath(word.slice(2)));
+        break;
+      }
+      if (word === "--filter" || word === "-F") {
+        index++;
+        continue;
       }
       if (!word.startsWith("-")) break;
     }
