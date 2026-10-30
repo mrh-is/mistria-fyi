@@ -5,8 +5,9 @@ changes: completed is a green X and obtained is an amber slash. Only the tool th
 The player inks it (`manual`), the save stamps it (`save`), we pencil it in (`inferred`), and the
 old records were typed (`unknown`).
 
-Status: proposed, awaiting the maintainer’s approval on the PR that adds this folder. Nothing in
-`src/` changes until the marks are approved.
+Status: approved on the PR that adds this folder, with option A for quests. The decision record is
+[2026-10-30-provenance-marks](../../decisions/2026-10-30-provenance-marks.md). Implementation is
+separate work.
 
 ## What’s here
 
@@ -69,7 +70,7 @@ so the status a player acts on never depends on the tool.
 
 A quest can be obtained from one source and finished from another. The quests sheet compares two
 models: each moment keeps its own tool (A), or the quest has one provenance and the finish redraws
-the whole mark in its tool (B). The choice is open.
+the whole mark in its tool (B). The maintainer chose A.
 
 ## Regenerating
 
