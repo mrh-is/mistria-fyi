@@ -305,6 +305,13 @@ a question covers changes until all are answered. Fact questions are grouped by 
 changes it covers, so a question whose effect changed while it waited is asked again. “Keep mine”
 records a resolution per fact; an answer that doesn’t fit its question counts as unanswered.
 
+Dependent household differences are the exception to per-field grouping: one fact question uses
+`field: "household"`, while each difference retains its actual field. This keeps one answer atomic
+across relationships, the break-ups setting, child choice, & pregnancy quests. The question & all
+its differences use the strongest dependent reason: `many-removals` takes precedence over
+`local-disagrees`, so the renamed-ID warning survives grouping. Its ID includes that reason & every
+dependent difference; a changed reason or effect requires a new answer.
+
 ### The table
 
 - A save or inference is superseded by the save: an addition applies silently, a removal applies &
@@ -358,10 +365,18 @@ default, so true, then false, then true again asks again.
   lists as completed, per `QUEST_KINDS_LISTED_AS_COMPLETED`; other kinds only advance. In v1.0.8
   every tracked kind qualifies: `QuestLog.complete` is the only way into `completed_quests` & out of
   `active_quests`, & a late-game save’s `quest_<id>_complete` facts match its list for every kind.
-- Household facts stay manual in sync. The importer extracts relationships, the break-ups setting, &
-  the child choice (public #6), & a manual import merges them through `mergeHousehold`, but sync
-  doesn’t compare them yet, & pregnancy quests follow the household. Bringing them under the same
-  rules, including engagement break-ups, is follow-up work. The v1.0.8 game has no divorce flow.
+- Household facts use the same provenance table: relationships, the break-ups setting, positive
+  child evidence, & pregnancy quests. Complete explicit statuses can replace relationships; missing
+  or unrecognized statuses remain partial. A valid childless save leaves child choice unknown, so it
+  cannot remove a manual refusal. The explicit Mistmare reveal fact & readable animal variant lists
+  make mount appearances complete.
+- Household differences settle together: an ordered manual fact that wins keeps the dependent
+  changes local; any question covers the whole household difference. “Keep mine” holds for the whole
+  difference until a dependent save value changes. A candidate with competing spouses or fiancés, or
+  romances forbidden by its break-ups setting, stays local & tells; sync never invents a cascade
+  over manual facts. This covers incomplete relationship evidence too. A manual import still merges
+  additively through `mergeHousehold`; backup restore still replaces. See
+  [the household decision](decisions/2026-10-29-household-save-facts.md).
 
 Property & scenario tests (`sync-apply.test.ts`) cover the rollback, untick, renamed-ID,
 farm-switch, & pre-provenance cases.
