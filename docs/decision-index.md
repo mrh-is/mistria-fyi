@@ -159,6 +159,17 @@ Evidence:
 [src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts),
 [src/lib/stores/sync-household-storage.test.ts](../src/lib/stores/sync-household-storage.test.ts).
 
+### [Source grouping](decisions/2026-10-29-source-grouping.md)
+
+ID: 2026-10-29-source-grouping. Status: Current.
+
+Everything groups existing completion tasks by acquisition instance, with source-specific windows &
+rollups, and a device preference overridden by the URL.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048](https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048),
+[src/lib/presentation/source-groups.ts](../src/lib/presentation/source-groups.ts).
+
 ### [Reader-first agent guidance](decisions/2026-10-30-reader-first-agent-guidance.md)
 
 ID: 2026-10-30-reader-first-agent-guidance. Status: Current.

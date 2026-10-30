@@ -5,6 +5,7 @@ import { pageMetadata } from "#lib/data/page-metadata.js";
 import { CATEGORY_KEYS, getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
 import { getMaxRenownLevel } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 import { formatNumber } from "#lib/utils/format.js";
 
@@ -20,6 +21,7 @@ const props = {
 
 beforeEach(() => {
   userState.resetAll();
+  pageStub.reset();
 });
 
 describe("/everything page", () => {
@@ -71,15 +73,19 @@ describe("/everything page", () => {
     });
   });
 
-  it("hides a completed category unless completed content is shown", () => {
+  it("hides completed categories & respects a category URL override when showing them", () => {
     userState.setRenown(getMaxRenownLevel());
 
     const hidden = renderToFragmentWithFeedback(AllPage, { props });
     expect(hidden.container.querySelector("#category-renown")).toBeNull();
     expect(hidden.container.querySelector("#category-skills")).not.toBeNull();
 
+    userState.setEverythingGrouping("source");
+    pageStub.navigate("/en/everything?group=category");
     userState.toggleShowCompleted();
     const shown = renderToFragmentWithFeedback(AllPage, { props });
     expect(shown.container.querySelector("#category-renown")).not.toBeNull();
+    expect(shown.container.querySelector("#sources-stores")).toBeNull();
+    expect(userState.state.everythingGrouping).toBe("source");
   });
 });
