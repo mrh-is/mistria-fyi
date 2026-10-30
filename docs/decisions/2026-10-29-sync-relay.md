@@ -62,8 +62,9 @@ prove that this file still fails above 30 seconds & that other files retain thei
 
 Start the relay integration first within its Vitest pool, retaining the default sequencer’s order
 for every other file. Its runtime waits can then overlap ordinary tests, including on a cold timing
-cache. The first PR run hit the unchanged 90-second wall ceiling; no suite budget or worker count is
-raised by this scheduling change.
+cache. Even so, four-CPU CI runs reached 95 seconds against the 90-second wall ceiling, so that
+ceiling rises to 120 seconds, matching two-CPU runners, until #13 shortens the suite. Worker counts
+stay unchanged.
 
 ## Alternatives
 

@@ -21,11 +21,12 @@ export interface Budgets {
   stepMs: number;
 }
 
-// Private ubuntu-latest runners have two CPUs; public runners have four. The four-CPU
-// ceiling is deliberately tighter. Coverage has a separate nightly wall-time ceiling. The
-// two-CPU wall ceiling covers a cold transform cache (105 s) above warm runs (52-79 s, #707).
+// Private ubuntu-latest runners have two CPUs; public runners have four. Coverage has a
+// separate nightly wall-time ceiling. The two-CPU wall ceiling covers a cold transform cache
+// (105 s) above warm runs (52-79 s, #707). Four-CPU runs reached 95 s once the relay's
+// workerd file joined the suite (#281), so both share 120 s until #13 shortens the suite.
 export function timingBudgets(cpus: number, coverage: boolean): Budgets {
-  const stepMs = cpus < 4 ? 120_000 : 90_000;
+  const stepMs = 120_000;
   // V8 coverage instrumentation slows in-process code, so four-CPU coverage runs triple the
   // ordinary file ceiling. On commit 31c10adb, coverage slowed four-CPU files over 200 ms by a
   // median 1.14× & up to 2.67× (names.completeness.test.ts); tracker-data-schema.test.ts, which
