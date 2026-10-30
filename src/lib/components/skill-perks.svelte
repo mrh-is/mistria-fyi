@@ -14,7 +14,6 @@
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { localizedHref } from "#lib/utils/localized-href.js";
   import { recordKeys } from "#lib/utils/record.js";
 
   import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -72,27 +71,24 @@
     return m.skill_perks_toggle_aria_more_locked({ available, count: unlocked, locked, name });
   });
 
-  /** The pages a perk leads to, each with how many entries it unlocks there. */
-  function unlocksOf(perkId: PerkId): { count: number; href: string; id: string; label: string }[] {
+  /** What a perk unlocks, one note per kind. Plain text until rows can be linked directly. */
+  function unlocksOf(perkId: PerkId): { count: number; id: string; label: string }[] {
     const unlocks = perkUnlocksFor(perkId);
     if (!unlocks) return [];
     const { almanac, cosmetics, recipes } = unlocks;
     return [
       {
         count: recipes.length,
-        href: localizedHref("recipes"),
         id: "recipes",
         label: m.skill_perk_unlocks_recipes({ count: recipes.length }),
       },
       {
         count: almanac.length,
-        href: localizedHref("almanac"),
         id: "almanac",
         label: m.skill_perk_unlocks_almanac({ count: almanac.length }),
       },
       {
         count: cosmetics.length,
-        href: localizedHref("cosmetics"),
         id: "cosmetics",
         label: m.skill_perk_unlocks_cosmetics({ count: cosmetics.length }),
       },
@@ -194,7 +190,7 @@
                   </span>
                   {#if !covered}
                     {#each perk.unlocks as unlock (unlock.id)}
-                      <a class="skill-perks__unlocks" href={unlock.href}>{unlock.label}</a>
+                      <span class="skill-perks__unlocks">{unlock.label}</span>
                     {/each}
                   {/if}
                 </span>
@@ -349,30 +345,13 @@
     overflow-wrap: anywhere;
   }
 
-  /* A cross-reference in the margin, like a journal's "see also". */
+  /* A note in the margin, like a journal's pencilled aside. */
   .skill-perks__unlocks {
-    display: inline-flex;
-    min-height: 24px;
-    align-items: center;
-    align-self: flex-start;
-    color: var(--color-category-skills);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     font-style: italic;
     line-height: 1.2;
-    text-decoration: underline dotted;
-    text-underline-offset: 2px;
-  }
-
-  .skill-perks__unlocks:is(:active, :focus-visible) {
-    outline: 2px solid var(--color-category-skills);
-    outline-offset: 1px;
-  }
-
-  @media (hover: hover) {
-    .skill-perks__unlocks:hover {
-      text-decoration-style: solid;
-    }
   }
 
   @media (min-width: 701px) and (hover: hover) and (pointer: fine) {

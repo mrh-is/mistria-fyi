@@ -193,17 +193,16 @@ describe("SkillPerks", () => {
       });
     }
 
-    it("links a perk to the recipes it unlocks, with their count", async () => {
+    it("notes how many recipes a perk unlocks, as text rather than a link", async () => {
       userState.setSkillLevel(archaeology, 60);
       renderArchaeology();
       await fireEvent.click(screen.getByRole("button", { name: /^Archaeology perks, / }));
 
       expect(linkedUnlocks?.recipes.length).toBeGreaterThan(1);
-      const link = screen.getByRole("link", {
-        name: `unlocks ${String(linkedUnlocks?.recipes.length)} recipes`,
-      });
-      expect(link).toHaveAttribute("href", expect.stringMatching(/\/recipes$/));
-      expect(link.closest("li")).toHaveTextContent(linkedName);
+      const note = screen.getByText(`unlocks ${String(linkedUnlocks?.recipes.length)} recipes`);
+      expect(note.closest("a")).toBeNull();
+      expect(note.closest("li")).toHaveTextContent(linkedName);
+      expect(screen.queryByRole("link", { name: /^unlocks / })).toBeNull();
     });
 
     it("annotates only perks whose sources link to something", async () => {
@@ -212,7 +211,7 @@ describe("SkillPerks", () => {
       await fireEvent.click(screen.getByRole("button", { name: /^Archaeology perks, / }));
 
       const annotated = [...document.querySelectorAll(".skill-perks__perk")].filter(
-        (item) => item.querySelector("a") !== null,
+        (item) => item.querySelector(".skill-perks__unlocks") !== null,
       );
       const expected = trackerData.skills[archaeology].perkTiers
         .flatMap((tier) => recordKeys(tier))
@@ -231,22 +230,16 @@ describe("SkillPerks", () => {
       const tier3 = screen.getByRole("list", { name: /Tier 3,/ });
       const revealButtons = within(tier3).getAllByRole("button", { name: "Reveal spoiler" });
       await Promise.all(revealButtons.map((button) => fireEvent.click(button)));
-      expect(await screen.findByRole("link", { name: /^unlocks \d+ recipes$/ })).toBeVisible();
+      expect(await screen.findByText(/^unlocks \d+ recipes$/)).toBeVisible();
     });
 
-    it("links a perk's almanac & cosmetics notes separately", async () => {
+    it("notes a perk's almanac & cosmetics unlocks separately", async () => {
       userState.toggleShowSpoilers();
       renderArchaeology();
       await fireEvent.click(screen.getByRole("button", { name: /^Archaeology perks, / }));
 
-      expect(screen.getByRole("link", { name: /^unlocks \d+ almanac items?$/ })).toHaveAttribute(
-        "href",
-        expect.stringMatching(/\/almanac$/),
-      );
-      expect(screen.getByRole("link", { name: /^unlocks \d+ cosmetics?$/ })).toHaveAttribute(
-        "href",
-        expect.stringMatching(/\/cosmetics$/),
-      );
+      expect(screen.getByText(/^unlocks \d+ almanac items?$/)).toBeVisible();
+      expect(screen.getByText(/^unlocks \d+ cosmetics?$/)).toBeVisible();
     });
   });
 });
