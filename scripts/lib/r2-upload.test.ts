@@ -10,6 +10,7 @@ import {
   listFiles,
   r2UploadOptionsFromEnv,
   r2UploadTree,
+  wranglerEnv,
 } from "#scripts/lib/r2-upload";
 
 import type {
@@ -78,6 +79,7 @@ const options: R2UploadOptions = {
   bucket: "bucket",
   dryRun: false,
   force: false,
+  hasUploadToken: true,
   origin: "https://assets.example",
   parallel: 2,
 };
@@ -93,12 +95,31 @@ function sprites(dir: string): R2UploadTree {
   };
 }
 
+describe("wranglerEnv", () => {
+  it("hands R2_UPLOAD_TOKEN to Wrangler as its CLOUDFLARE_API_TOKEN", () => {
+    expect(
+      wranglerEnv({
+        CLOUDFLARE_API_TOKEN: "pages-read",
+        PATH: "/bin",
+        R2_UPLOAD_TOKEN: "r2-admin",
+      }),
+    ).toEqual({ CLOUDFLARE_API_TOKEN: "r2-admin", PATH: "/bin", R2_UPLOAD_TOKEN: "r2-admin" });
+  });
+
+  it("drops an inherited CLOUDFLARE_API_TOKEN without an upload token, leaving wrangler login", () => {
+    expect(
+      wranglerEnv({ CLOUDFLARE_API_TOKEN: "pages-read", PATH: "/bin", R2_UPLOAD_TOKEN: "" }),
+    ).toEqual({ PATH: "/bin", R2_UPLOAD_TOKEN: "" });
+  });
+});
+
 describe("r2UploadOptionsFromEnv", () => {
   it("defaults to the production bucket & origin", () => {
     expect(r2UploadOptionsFromEnv({})).toEqual({
       bucket: "mistria-fyi-assets",
       dryRun: false,
       force: false,
+      hasUploadToken: false,
       origin: "https://assets.mistria.fyi",
       parallel: 8,
     });
@@ -112,11 +133,13 @@ describe("r2UploadOptionsFromEnv", () => {
         FORCE: "1",
         PARALLEL: "zero",
         R2_BUCKET: "staging",
+        R2_UPLOAD_TOKEN: "r2-admin",
       }),
     ).toEqual({
       bucket: "staging",
       dryRun: true,
       force: true,
+      hasUploadToken: true,
       origin: "http://localhost:8080",
       parallel: 8,
     });
@@ -308,6 +331,32 @@ describe("r2UploadTree", () => {
     await r2UploadTree(sprites(dir), { ...options, dryRun: true }, dryRun);
     expect(dryRun.puts).toEqual([]);
     expect(dryRun.lines).toContain("would put sprites/a.webp");
+  });
+
+  it("refuses to upload without R2_UPLOAD_TOKEN rather than falling back to wrangler login", async () => {
+    const dir = tree({ "a.webp": "" });
+    const io = fakeIo();
+
+    await expect(
+      r2UploadTree(sprites(dir), { ...options, hasUploadToken: false }, io),
+    ).resolves.toBe(false);
+
+    expect(io.puts).toEqual([]);
+    expect(io.lines).toEqual([]);
+    expect(io.errors).toEqual([
+      "R2_UPLOAD_TOKEN is not set; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
+    ]);
+  });
+
+  it("previews without R2_UPLOAD_TOKEN", async () => {
+    const dir = tree({ "a.webp": "" });
+    const io = fakeIo();
+
+    await expect(
+      r2UploadTree(sprites(dir), { ...options, dryRun: true, hasUploadToken: false }, io),
+    ).resolves.toBe(true);
+
+    expect(io.lines).toContain("would put sprites/a.webp");
   });
 
   it("treats an unreachable origin as not current", async () => {
