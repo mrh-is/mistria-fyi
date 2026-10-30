@@ -239,11 +239,12 @@ The app processes save files entirely client-side. No save data is uploaded.
    absent or malformed field is `unknown` with no value, never an empty list or a zero. Every ID is
    tracked, known-but-untracked (a game ID the tracker deliberately leaves out, listed in
    `untracked-save-ids.ts`), or unrecognized; an unrecognized ID or an unreadable entry makes its
-   field `unknown`. Relationships are never `complete`, since absent status flags do not establish a
-   relationship removal; nor is the child choice, since only wanting children leaves evidence; nor
-   are mount appearances, since the Mistmare is inferred from one scene ID in an uncatalogued scene
-   history. It also retains the save’s identity: `info.creation_version` & `header.playtime`. A
-   quest listed as both completed and active imports as `completed`.
+   field `unknown`. Relationships are complete when every dateable villager’s explicit status is
+   readable, including `null` for undecided. Mount appearances use the explicit Mistmare reveal fact
+   & the animal variant lists. Child choice is complete only with positive evidence; a childless
+   save cannot distinguish refusal from postponement. It also retains the save’s identity:
+   `info.creation_version` & `header.playtime`. A quest listed as both completed and active imports
+   as `completed`.
 4. `extractSaveProgress` turns that into the `Partial<ProgressState>` of every value it could read,
    plus the diagnostics the player sees as warnings (`absent` & `invalid-value` are diagnostics
    only). It doesn’t count anything. See the

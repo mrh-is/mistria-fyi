@@ -523,29 +523,119 @@ describe("applySync: quests & household facts", () => {
     expect(result.state.progress.questStates).toEqual({ [STORY_QUEST]: "none" });
   });
 
-  it("leaves household facts the player's own", () => {
+  it("compares household facts and pregnancy quests through the policy table", () => {
     const state = syncState({
       breakUpsDisabled: true,
       childChoice: "yes",
       questStates: { [PREGNANCY_QUEST]: "completed" },
       villagerRelationships: { [BALOR]: "married" },
     });
-    const result = applied(
-      applySync(
-        state,
-        bundle(
-          {
-            breakUpsDisabled: field(false, "complete"),
-            questStates: {},
-            villagerRelationships: field({ [CELINE]: "romantic" }, "unknown"),
-          },
-          { playtime: 100 },
-        ),
-        { fresh: FRESH },
+    const result = settle(
+      state,
+      bundle(
+        {
+          breakUpsDisabled: field(false, "complete"),
+          questStates: {},
+          villagerRelationships: field({ [CELINE]: "romantic" }, "complete"),
+        },
+        { playtime: 100 },
       ),
+      () => "accept",
     );
-    expect(result.differences).toEqual([]);
+    expect(result.state.progress.breakUpsDisabled).toBe(false);
+    expect(result.state.progress.villagerRelationships).toMatchObject({ [CELINE]: "romantic" });
+    expect(result.state.progress.questStates[PREGNANCY_QUEST as never]).toBe("none");
+    expect(result.state.progress.childChoice).toBe("yes");
+  });
+
+  it("settles a spouse change and its child evidence as one household question", () => {
+    const state = syncState({
+      childChoice: "no",
+      provenance: { childChoice: { source: "unknown" } },
+      villagerRelationships: { [BALOR]: "married" },
+    });
+    const incoming = bundle({
+      breakUpsDisabled: true,
+      childChoice: "yes",
+      villagerRelationships: { [CELINE]: "married" },
+    });
+    const questions = asked(applySync(state, incoming, { fresh: FRESH }));
+    expect(questions).toHaveLength(1);
+    expect(questions[0]).toMatchObject({
+      field: "household",
+      kind: "facts",
+      reason: "local-disagrees",
+    });
+    expect(settle(state, incoming, () => "keep").state.progress).toEqual(state.progress);
+    const result = settle(state, incoming, () => "accept");
+    expect(result.state.progress.villagerRelationships).toEqual({
+      [CELINE]: "married",
+    });
+    expect(result.state.progress.childChoice).toBe("yes");
+  });
+
+  it("does not construct a second spouse from partial relationship evidence", () => {
+    const state = syncState({ villagerRelationships: { [BALOR]: "married" } });
+    const incoming = bundle({
+      childChoice: "yes",
+      villagerRelationships: field({ [CELINE]: "married" }, "unknown"),
+    });
+    const result = settle(state, incoming, () => "accept");
+    expect(result.state.progress.villagerRelationships).toEqual(
+      state.progress.villagerRelationships,
+    );
+    expect(result.state.progress.childChoice).toBe("undeclared");
+  });
+
+  it("reopens the whole kept household when one dependent save value changes", () => {
+    const state = syncState({
+      childChoice: "no",
+      provenance: { childChoice: { source: "manual" } },
+      villagerRelationships: { [BALOR]: "married" },
+    });
+    const incoming = bundle({
+      childChoice: "yes",
+      villagerRelationships: { [CELINE]: "proposed" },
+    });
+    const first = settle(state, incoming, () => "keep");
+    expect(applySync(first.state, incoming, { fresh: FRESH }).kind).toBe("applied");
+    const changed = bundle({ childChoice: "yes", villagerRelationships: { [CELINE]: "married" } });
+    const result = settle(first.state, changed, () => "accept");
+    expect(result.state.progress.villagerRelationships).toEqual({
+      [CELINE]: "married",
+    });
+    expect(result.state.progress.childChoice).toBe("yes");
+    expect(result.state.history.resolutions).toEqual({});
+  });
+
+  it("preserves an unordered manual household when any dependent fact would be kept", () => {
+    const state = syncState({
+      childChoice: "no",
+      lastSavePlaytime: 100,
+      provenance: { [`villagerRelationships/${BALOR}`]: { playtime: 100, source: "manual" } },
+      villagerRelationships: { [BALOR]: "married" },
+    });
+    const result = settle(
+      state,
+      bundle(
+        { childChoice: "yes", villagerRelationships: { [CELINE]: "married" } },
+        { playtime: 100 },
+      ),
+      () => "accept",
+    );
     expect(result.state.progress).toEqual(state.progress);
+  });
+
+  it("forgets a kept break-ups disagreement after an explicit return to the default", () => {
+    const state = syncState();
+    state.history.provenance.breakUpsDisabled = { source: "manual" };
+    const first = settle(state, bundle({ breakUpsDisabled: true }), () => "keep");
+    expect(first.state.history.resolutions.breakUpsDisabled).toEqual({ saveValue: "1" });
+    const reset = settle(first.state, bundle({ breakUpsDisabled: false }), () => "keep");
+    expect(reset.state.history.resolutions).toEqual({});
+    expect(applySync(reset.state, bundle({ breakUpsDisabled: true }), { fresh: FRESH }).kind).toBe(
+      "ask",
+    );
   });
 });
 
@@ -740,10 +830,15 @@ function randomBundle(): SyncBundle {
   return bundle(
     {
       almanac: field(some(ITEMS, pick([0.1, 0.5])), completeness()),
+      breakUpsDisabled: field(pick([true, false]), completeness()),
+      childChoice: field(pick(["undeclared", "yes"]), completeness()),
       heartLevels: field(levels(), completeness()),
       mineFloor: field(pick([1, 10, 40]), completeness()),
       questStates: field(quests(), completeness()),
-      villagerRelationships: field({ [CELINE]: "romantic" }, "unknown"),
+      villagerRelationships: field(
+        { [CELINE]: pick(["romantic", "platonic", "married"]) },
+        completeness(),
+      ),
     },
     { playtime: pick([undefined, 120, 180, 300]) },
   );
@@ -779,7 +874,7 @@ describe("applySync: properties", () => {
     }
   });
 
-  it("never changes a fact an unknown field disagrees with, nor a household fact", () => {
+  it("never removes or lowers facts from unknown fields", () => {
     for (let sample = 0; sample < SAMPLES; sample++) {
       const state = randomState();
       const incoming = randomBundle();
@@ -788,12 +883,6 @@ describe("applySync: properties", () => {
       }
       const result = settle(state, incoming, () => "accept");
       expect(lowered(state, result.state)).toEqual([]);
-      const household = ({ progress: p }: SyncState) => [
-        p.childChoice,
-        p.villagerRelationships,
-        p.questStates[PREGNANCY_QUEST as never],
-      ];
-      expect(household(result.state)).toEqual(household(state));
     }
   });
 
@@ -819,5 +908,27 @@ describe("applySync: properties", () => {
       expect(second.differences.filter(({ applied: written }) => written)).toEqual([]);
       expect(second.state.progress).toEqual(first.state.progress);
     }
+  });
+
+  it("never constructs competing partners or romances forbidden by the break-ups setting", () => {
+    let changed = 0;
+    for (let sample = 0; sample < SAMPLES; sample++) {
+      const state = randomState();
+      const result = settle(state, randomBundle(), fitting);
+      const relationships = Object.values(result.state.progress.villagerRelationships);
+      const partners = relationships.filter((value) => value === "proposed" || value === "married");
+      expect(partners.length).toBeLessThanOrEqual(1);
+      const forbiddenRomance =
+        !result.state.progress.breakUpsDisabled &&
+        partners.length > 0 &&
+        relationships.includes("romantic");
+      expect(forbiddenRomance).toBe(false);
+      changed += Number(
+        result.differences.some(
+          (difference) => difference.applied && difference.field === "villagerRelationships",
+        ),
+      );
+    }
+    expect(changed).toBeGreaterThan(0);
   });
 });
