@@ -65,8 +65,9 @@ A PR merges only when CI passes. Fix CI failures on the branch instead of mergin
 ## Full verification
 
 `pnpm run verify` runs CI’s non-browser matrix: the steps that `STEPS` in
-[scripts/verify.ts](../scripts/verify.ts) marks as default. It doesn’t change any files. Run
-`pnpm run lint:fix` first. These flags change what it runs:
+[scripts/verify.ts](../scripts/verify.ts) marks as default. It’s read-only for tracked source files,
+though its `check` & `build` steps write generated output & caches. Run `pnpm run lint:fix` first.
+These flags change what it runs:
 
 - `pnpm run verify -- --assets` adds `test:pipeline:assets`.
 - `pnpm run verify -- --browser` adds the Playwright suites.

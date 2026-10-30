@@ -121,7 +121,7 @@ session limits) belong in each contributor’s user config.
 - `src/lib/engine/` holds pure domain logic. Side effects belong at the store or component boundary.
 - `src/lib/stores/user-state.svelte.ts` owns mutable progress & its localStorage persistence.
 - Save import & backup restore are different flows, so don’t substitute one for the other:
-  - Save import merges progress into what’s already there.
+  - Save import merges progress additively: it adds progress and never removes existing entries.
   - Backup restore replaces the serialized state.
 - Assume real players have saved progress. A change to the storage or backup schema needs a version
   bump, a migration, & compatibility tests, and it never ships as a compatibility break. Transfer
