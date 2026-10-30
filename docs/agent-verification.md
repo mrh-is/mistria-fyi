@@ -135,6 +135,8 @@ Instead, the page shows a “Preview build” notice, and that notice is the exp
 
 - Take at most **10 screenshots** per PR: one per materially changed state, not one per interaction
   step.
+- The cap counts the screenshots attached to the PR. Choose that set so a reviewer can judge layout
+  & spacing without running the preview.
 - If a design reference exists, such as a Figma file or an existing page to match, screenshot both &
   compare them.
 - List what you did **not** check visually under a “Not verified” section in the PR description.

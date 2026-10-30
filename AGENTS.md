@@ -160,6 +160,9 @@ session limits) belong in each contributor’s user config.
   - console errors.
 - Take at most 10 screenshots per PR. Compare against a design reference if one exists. List
   anything you didn’t check under “Not verified” in the PR description.
+- Attach the verification screenshots to the PR body: at least one per changed route or component,
+  at desktop & mobile widths, showing the changed state. A visual PR with no attached screenshots
+  isn’t ready for review.
 - Docs-only, pipeline-only, & test-only changes don’t need visual checks. Pure engine changes don’t
   either, unless they change rendered output. The complete checklist is in agent-verification.md.
 - Most PRs need a fresh-context self-review, such as a subagent that didn’t write the change reading
