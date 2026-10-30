@@ -23,10 +23,11 @@ export interface Budgets {
 
 // Private ubuntu-latest runners have two CPUs; public runners have four. Coverage has a
 // separate nightly wall-time ceiling. The two-CPU wall ceiling covers a cold transform cache
-// (105 s) above warm runs (52-79 s, #707). Four-CPU runs reached 95 s once the relay's
-// workerd file joined the suite (#281), so both share 120 s until #13 shortens the suite.
+// (105 s) above warm runs (52-79 s, #707). Four-CPU runs on main range 45-99 s, & the relay's
+// workerd file adds about 25 s (#281, which measured 95 s & 125 s), so both share 150 s until
+// #13 shortens the suite.
 export function timingBudgets(cpus: number, coverage: boolean): Budgets {
-  const stepMs = 120_000;
+  const stepMs = 150_000;
   // V8 coverage instrumentation slows in-process code, so four-CPU coverage runs triple the
   // ordinary file ceiling. On commit 31c10adb, coverage slowed four-CPU files over 200 ms by a
   // median 1.14× & up to 2.67× (names.completeness.test.ts); tracker-data-schema.test.ts, which
@@ -38,7 +39,7 @@ export function timingBudgets(cpus: number, coverage: boolean): Budgets {
     // The CLI probes spawn pnpm, oxlint, & vitest subprocesses, so their time is dominated by
     // process startup rather than the code under test. On four-CPU runners they share workers
     // with the suite & measured 9.1-9.4 s (lint-ownership) & 5.2-5.6 s (vitest-projects) in
-    // #13. Two-CPU runners isolate them on noncoverage runs and keep the ordinary ceiling.
+    // #13, & 5.2 s (verify, 20 subprocess runs) in #281. Two-CPU runners isolate them on noncoverage runs and keep the ordinary ceiling.
     // Coverage leaves the probes' time unchanged (0.98-0.99×), so their ceiling doesn't scale.
     probeFileMs: cpus < 4 ? 10_000 : 15_000,
     stepMs: coverage ? 300_000 : stepMs,
@@ -60,6 +61,7 @@ export function vitestArguments(coverage: boolean, cpus: number): string[] {
 
 export const cliProbeFiles = [
   "scripts/playwright-allocation.test.ts",
+  "scripts/verify.test.ts",
   "tests/lint-ownership.test.ts",
   "tests/vitest-projects.test.ts",
 ];

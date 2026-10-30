@@ -40,9 +40,9 @@ describe("Vitest timing budgets", () => {
     expect(timingBudgets(2, false)).toEqual({
       fileMs: 10_000,
       probeFileMs: 10_000,
-      stepMs: 120_000,
+      stepMs: 150_000,
     });
-    expect(timingBudgets(4, false)).toEqual({ fileMs: 5000, probeFileMs: 15_000, stepMs: 120_000 });
+    expect(timingBudgets(4, false)).toEqual({ fileMs: 5000, probeFileMs: 15_000, stepMs: 150_000 });
     expect(timingBudgets(4, true)).toEqual({
       fileMs: 15_000,
       probeFileMs: 15_000,
@@ -105,7 +105,7 @@ it("reserves headroom only for CLI probes on two-CPU noncoverage runs", () => {
   expect(ordinary.arguments).toContain("--maxWorkers=2");
   expect(probes.arguments).toContain("--maxWorkers=1");
   const probeFiles = probes.arguments.filter((argument) => argument.endsWith(".test.ts"));
-  expect(probeFiles).toHaveLength(3);
+  expect(probeFiles).toHaveLength(4);
   expect(probeFiles).toEqual(cliProbeFiles);
   expect(ordinary.excludeCliProbes).toBe(true);
   expect(probes.excludeCliProbes).toBe(false);
