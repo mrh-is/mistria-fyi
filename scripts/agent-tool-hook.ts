@@ -105,19 +105,30 @@ export function toolDirectories(input: HookInput): string[] {
   const segments = shellSegments(command);
   const directories: string[] = [];
   let manifestsChanged = false;
-  for (const segment of segments) {
+  for (const [index, segment] of segments.entries()) {
     const words = commandWords(segment.command);
     if (words[0] === "cd") {
-      if (segment.separator !== undefined && segment.separator !== "&&") {
-        throw new Error(
-          "Use cd with && before pnpm, or run the directory change in a separate tool call.",
-        );
+      try {
+        if (segment.separator !== undefined && segment.separator !== "&&") {
+          throw new Error(
+            "Use cd with && before pnpm, or run the directory change in a separate tool call.",
+          );
+        }
+        const path = words[1] === "--" ? words[2] : words[1];
+        if (words.length !== (words[1] === "--" ? 3 : 2)) {
+          throw new Error("Use a separate command for a complex directory change.");
+        }
+        cwd = resolve(cwd, literalPath(path));
+      } catch (error) {
+        const laterPnpm = segments
+          .slice(index + 1)
+          .some((later) => basename(commandWords(later.command)[0] ?? "") === "pnpm");
+        if (laterPnpm) throw error;
+        // Navigation alone needs no dependency target. Keep the last known snapshot directory &
+        // stop interpreting later paths, which may now be relative to an unknown shell directory.
+        directories.push(cwd);
+        break;
       }
-      const path = words[1] === "--" ? words[2] : words[1];
-      if (words.length !== (words[1] === "--" ? 3 : 2)) {
-        throw new Error("Use a separate command for a complex directory change.");
-      }
-      cwd = resolve(cwd, literalPath(path));
       continue;
     }
     const pnpm = basename(words[0] ?? "") === "pnpm";

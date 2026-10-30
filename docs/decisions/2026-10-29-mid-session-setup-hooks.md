@@ -40,9 +40,10 @@ adapter & blanket compound-command restriction.
   or a filename in patch content does not trigger setup.
 - **Directories must be explicit.** Validate the payload directory against the script’s Git common
   directory. Support literal `cd` & pnpm directory options. Compound commands & pipes remain
-  allowed; reject a later pnpm segment only after a Git operation that can replace manifests.
-  Dynamic paths remain unsupported. Each checkout in a compound call owns a separate formatter
-  snapshot.
+  allowed; reject a later pnpm segment only after a Git operation that can replace manifests. An
+  unresolved `cd` without a later pnpm segment stops directory resolution & preserves the last known
+  formatter directory, so ordinary navigation stays available. Dynamic pnpm directory options remain
+  unsupported. Each checkout in a compound call owns a separate formatter snapshot.
 - **Failures reach the agent.** Tool handlers exit 2 with diagnostics in both clients. Claude’s
   native file & directory events retain their advisory exit 0 & `systemMessage` behavior. Both stop
   automatic installation attempts after a failure.

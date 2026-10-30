@@ -98,10 +98,14 @@ acquiring it. The lock serializes setups; it does not lock every pnpm command ac
   manifest name in patch content does not. Ordinary edits still get formatted.
 - Both hooks validate the target against the configured script’s Git common directory. They use the
   payload’s `cwd`, including a per-call directory on runtimes that expose it, & support literal
-  `cd … &&` plus pnpm’s directory options. They never evaluate shell text. Dynamic paths are
-  rejected. Commands such as `pnpm run lint:fix && pnpm run lint` & `pnpm exec vitest run … | tail`
-  stay allowed. An earlier manifest-changing Git operation still blocks a later pnpm segment, such
-  as `git pull && pnpm exec vitest`; split that call so setup can run between the operations. A
+  `cd … &&` plus pnpm’s directory options. They never evaluate shell text. Dynamic pnpm directory
+  options remain unsupported.
+- An unresolved `cd` only blocks a call when a later segment runs pnpm. Otherwise, directory
+  resolution stops & the formatter keeps its last known checkout. Ordinary navigation such as
+  `cd "$TMPDIR" && ls` or `cd scripts; ls` stays available.
+- Commands such as `pnpm run lint:fix && pnpm run lint` & `pnpm exec vitest run … | tail` stay
+  allowed. An earlier manifest-changing Git operation still blocks a later pnpm segment, such as
+  `git pull && pnpm exec vitest`; split that call so setup can run between the operations. A
   compound call spanning checkouts keeps separate formatter snapshots.
 - Both clients receive event-specific context when setup changes anything. A setup or formatter
   failure exits 2, preventing a pending command or returning feedback after a completed command.

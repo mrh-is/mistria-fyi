@@ -41,6 +41,13 @@ function fixture() {
 }
 
 const current = () => ({ installed: false, linked: 0, status: 0 });
+const navigation = [
+  "cd ~/Projects && ls",
+  'cd "$TMPDIR" && ls',
+  "cd scripts; ls",
+  "cd - && ls",
+  'cd "$(git rev-parse --show-toplevel)" && git status',
+];
 const shell = (cwd: string, command: string, hook_event_name = "PreToolUse"): HookInput => ({
   cwd,
   hook_event_name,
@@ -74,10 +81,30 @@ describe("toolDirectory", () => {
     "git merge branch; pnpm run check",
     'cd "$WORKTREE" && pnpm run check',
     'pnpm -C "$(pwd)" run check',
+    "cd ~/Projects && pnpm run check",
+    "cd scripts; pnpm run check",
+    "cd - && pnpm run check",
+    'cd "$(git rev-parse --show-toplevel)" && pnpm run check',
   ])("rejects commands whose setup cannot be ordered safely: %s", (command) => {
     expect(() => toolDirectory(shell("/repo", command))).toThrow(
       /separate tool call|literal directory/,
     );
+  });
+
+  it.each(navigation)("keeps non-pnpm navigation available: %s", (command) => {
+    expect(toolDirectories(shell("/repo", command))).toEqual(["/repo"]);
+  });
+
+  it("stops resolving after an unknown cd & keeps the last known directory", () => {
+    expect(
+      toolDirectories(shell("/repo", 'cd scripts && cd "$TMPDIR" && cd elsewhere && ls')),
+    ).toEqual(["/repo/scripts"]);
+  });
+
+  it("does not reject an unknown cd after the last pnpm segment", () => {
+    expect(toolDirectories(shell("/repo", 'pnpm run check && cd "$TMPDIR" && ls'))).toEqual([
+      "/repo",
+    ]);
   });
 
   it.each([
@@ -109,6 +136,22 @@ describe("toolDirectory", () => {
 });
 
 describe("Shared agent tool upkeep", () => {
+  it.each(navigation)("preserves formatter snapshots for non-pnpm navigation: %s", (command) => {
+    const { root, worktree } = fixture();
+    const setup = vi.fn(current);
+    const input = shell(worktree, command);
+    expect(agentToolHook(input, setup, undefined, root)).toEqual([]);
+    expect(setup).toHaveBeenCalledExactlyOnceWith(worktree);
+    writeFileSync(join(worktree, "new.ts"), "const value=1");
+    const run = vi.fn(() => ({ output: "", status: 0 }));
+    agentToolHook({ ...input, hook_event_name: "PostToolUse" }, setup, run, root);
+    expect(setup).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenCalledExactlyOnceWith(
+      ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "new.ts"],
+      worktree,
+    );
+  });
+
   it.each([
     (directory: string) => `pnpm --dir="${directory}" run check`,
     (directory: string) => `pnpm "--dir=${directory}" run check`,
