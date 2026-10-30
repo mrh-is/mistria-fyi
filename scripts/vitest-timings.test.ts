@@ -105,7 +105,7 @@ it("reserves headroom only for CLI probes on two-CPU noncoverage runs", () => {
   expect(ordinary.arguments).toContain("--maxWorkers=2");
   expect(probes.arguments).toContain("--maxWorkers=1");
   const probeFiles = probes.arguments.filter((argument) => argument.endsWith(".test.ts"));
-  expect(probeFiles).toHaveLength(4);
+  expect(probeFiles).toHaveLength(cliProbeFiles.length);
   expect(probeFiles).toEqual(cliProbeFiles);
   expect(ordinary.excludeCliProbes).toBe(true);
   expect(probes.excludeCliProbes).toBe(false);
