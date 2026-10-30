@@ -22,12 +22,12 @@ component as they are. Lint & Knip skip `docs/design/*/generator/`.
 
 ## Recommended marks
 
-| Source     | Tool         | How it draws the X                                                    | Description (`en`)             | Key                               |
-| ---------- | ------------ | --------------------------------------------------------------------- | ------------------------------ | --------------------------------- |
-| `manual`   | Pen          | Today’s X, loosened, with nib blots; overruns the box                 | “You checked this off by hand” | `tracker_row_provenance_manual`   |
-| `save`     | Rubber stamp | Square-ended filled bars, a few degrees off, with an edge kiss & fade | “Filled in from your save”     | `tracker_row_provenance_save`     |
-| `inferred` | Pencil       | Green colored pencil, grainy, gone over twice                         | “We filled this in for you”    | `tracker_row_provenance_inferred` |
-| `unknown`  | Typewriter   | A small serifed x, struck a hair off level                            | “From your older records”      | `tracker_row_provenance_unknown`  |
+| Source     | Tool         | How it draws the X                                                         | Description (`en`)             | Key                               |
+| ---------- | ------------ | -------------------------------------------------------------------------- | ------------------------------ | --------------------------------- |
+| `manual`   | Pen          | Today’s X, loosened, with nib blots; overruns the box                      | “You checked this off by hand” | `tracker_row_provenance_manual`   |
+| `save`     | Rubber stamp | Square-ended filled bars, a few degrees off, with specks & a pressure fade | “Filled in from your save”     | `tracker_row_provenance_save`     |
+| `inferred` | Pencil       | Green colored pencil at 62% of the pen’s strength, grainy                  | “We filled this in for you”    | `tracker_row_provenance_inferred` |
+| `unknown`  | Typewriter   | A small serifed x, struck a hair off level                                 | “From your older records”      | `tracker_row_provenance_unknown`  |
 
 Every X uses `--color-tracker-checked` and every slash `--color-tracker-obtained`, so no new color
 roles are needed. Only the inked X keeps the drawn-stroke animation, since it’s the only mark the
@@ -36,17 +36,26 @@ player draws.
 ### One moment or two
 
 Most entries are done in one moment, so they get one X. A quest is obtained first and finished
-later, so it gets two impressions: the amber slash, then a green X over it, slightly out of
-register. The two can come from different tools, such as a stamped slash under an inked X.
+later, so it gets two impressions: the slash, which turns from amber to green when the quest is
+done, then the crossing stroke, slightly out of register. The two can come from different tools,
+such as an inked stroke across a stamped slash.
 
-### Pen & the pencil filter
+### A seed per entry
+
+Each entry’s id seeds a small generator, so a row’s mark never changes but no two rows match. The
+seed picks:
+
+- one of eight filter seeds for the tool’s texture (pen wobble, pencil grain, stamp specks, or
+  ribbon ink),
+- the stamp’s angle (±5°) & its pressure fade (any direction, 0% to about 45%, none for about a
+  fifth of entries),
+- the typewriter’s angle & offset,
+- where a quest’s second stroke lands.
 
 The checkbox draws no filter today; `pencil-filter.svelte`’s filters are used only by
-`icon-completion.svelte`. The inked X applies `pencil-sm` to the mark, not the box. Its noise has a
-fixed seed in user space, so every inked X on a page would wobble identically. The recommendation
-adds two more seeds and picks one from the entry’s id. Because the noise is in user space, a quest’s
-slash & X get the same displacement, so their misregistration stays as drawn. The drawn-stroke
-animation runs inside the filter unchanged.
+`icon-completion.svelte`. The pen uses `pencil-sm`’s filter with the entry’s seed in place of its
+fixed one, applied to the mark, not the box. The drawn-stroke animation runs inside the filter
+unchanged.
 
 ## Accessibility
 

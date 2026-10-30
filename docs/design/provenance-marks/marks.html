@@ -315,6 +315,8 @@
 
       .variant .enlarged {
         grid-row: 1 / 3;
+        align-self: start;
+        justify-self: start;
       }
 
       .variant .at-size {
@@ -502,144 +504,43 @@
         font-weight: 400;
         color: var(--color-ink-muted);
       }
+
+      .spread {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .spread .line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .spread .enlarged svg {
+        width: 64px;
+        height: 64px;
+      }
+
+      .spread .slot {
+        display: flex;
+        justify-content: center;
+        width: 72px;
+      }
+
+      .spread .sep {
+        align-self: stretch;
+        width: 1px;
+        margin: 0 8px;
+        background: var(--tracker-paper-line);
+      }
     </style>
   </head>
   <body>
-    <!-- Filters: pencil-sm is src/lib/components/pencil-filter.svelte's; the rest are proposed. -->
+    <!-- Filters & pressure masks are generated per seed by the script below. pen-N is
+         src/lib/components/pencil-filter.svelte's pencil-sm with seed N. -->
     <svg width="0" height="0" style="position: absolute" aria-hidden="true">
-      <defs>
-        <filter id="pencil-sm" x="-5%" y="-5%" width="110%" height="110%">
-          <feTurbulence
-            type="turbulence"
-            baseFrequency="0.04"
-            numOctaves="4"
-            seed="2"
-            result="noise"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="noise"
-            scale="1"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-        <!-- pencil-sm with other seeds, so neighboring rows don't wobble identically. -->
-        <filter id="pencil-sm-b" x="-5%" y="-5%" width="110%" height="110%">
-          <feTurbulence
-            type="turbulence"
-            baseFrequency="0.04"
-            numOctaves="4"
-            seed="7"
-            result="noise"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="noise"
-            scale="1"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-        <filter id="pencil-sm-c" x="-5%" y="-5%" width="110%" height="110%">
-          <feTurbulence
-            type="turbulence"
-            baseFrequency="0.04"
-            numOctaves="4"
-            seed="13"
-            result="noise"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="noise"
-            scale="1"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-        <!-- Pencil: a grainy, slightly broken line. -->
-        <filter id="graphite" x="-10%" y="-10%" width="120%" height="120%">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="1.6"
-            numOctaves="2"
-            seed="11"
-            result="grain"
-          />
-          <feColorMatrix
-            in="grain"
-            type="matrix"
-            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -2.5 0 0 0 2.6"
-            result="tooth"
-          />
-          <feComposite in="SourceGraphic" in2="tooth" operator="in" result="grained" />
-          <feTurbulence
-            type="turbulence"
-            baseFrequency="0.05"
-            numOctaves="3"
-            seed="4"
-            result="wobble"
-          />
-          <feDisplacementMap
-            in="grained"
-            in2="wobble"
-            scale="0.9"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-        <!-- Rubber stamp: crisp edges, ink that misses a few specks of the paper's tooth. -->
-        <filter id="stamp" x="-10%" y="-10%" width="120%" height="120%">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="1.1"
-            numOctaves="2"
-            seed="5"
-            result="grain"
-          />
-          <feColorMatrix
-            in="grain"
-            type="matrix"
-            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -6 0 0 0 4.9"
-            result="speck"
-          />
-          <feComposite in="SourceGraphic" in2="speck" operator="in" />
-        </filter>
-        <!-- Uneven pressure: the stamp is pressed harder at its top-left than its bottom-right. -->
-        <linearGradient
-          id="press-ramp"
-          gradientUnits="userSpaceOnUse"
-          x1="6"
-          y1="6"
-          x2="22"
-          y2="22"
-        >
-          <stop offset="0" stop-color="#fff" />
-          <stop offset="0.45" stop-color="#e6e6e6" />
-          <stop offset="1" stop-color="#7a7a7a" />
-        </linearGradient>
-        <mask id="press" maskUnits="userSpaceOnUse" x="0" y="0" width="28" height="28">
-          <rect width="28" height="28" fill="url(#press-ramp)" />
-        </mask>
-        <!-- Typewriter ribbon: a struck glyph, a touch of spread, uneven ink. -->
-        <filter id="ribbon" x="-10%" y="-10%" width="120%" height="120%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="0.18" result="spread" />
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.9"
-            numOctaves="2"
-            seed="8"
-            result="grain"
-          />
-          <feColorMatrix
-            in="grain"
-            type="matrix"
-            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -3 0 0 0 2.9"
-            result="ink"
-          />
-          <feComposite in="spread" in2="ink" operator="in" />
-        </filter>
-      </defs>
+      <defs id="defs"></defs>
     </svg>
 
     <header>
@@ -647,7 +548,8 @@
       <p class="lede">
         One X, made four ways. Completed is always a green X and obtained is always an amber slash;
         only the tool that drew it changes. The player inks it, the save stamps it, we pencil it in,
-        and the old records were typed.
+        and the old records were typed. Each entry gets its own seed, so no two marks on a page are
+        quite the same.
       </p>
     </header>
 
@@ -657,8 +559,8 @@
         <p class="note">
           Real size is the app’s 24 px icon in a 32 px target: the X, the obtained slash, & a quest
           done in two moments. Enlarged is 3.5×. Most entries are done in one moment, so they get
-          one X. A quest is obtained first and finished later, so its green X lands over the amber
-          slash, a little out of register.
+          one X. A quest’s slash turns green when it’s done, and the crossing stroke lands later, a
+          little out of register.
         </p>
       </div>
       <table class="ledger">
@@ -678,10 +580,11 @@
 
     <section class="sheet" id="sheet-variants">
       <div class="sheet-head">
-        <h2>Variants</h2>
+        <h2>Every entry a little different</h2>
         <p class="note">
-          Same X, different handling of the tool. The one marked “pick” is the recommendation. Each
-          real-size row shows the X, the slash, & the quest done in two moments.
+          Eight entries per tool, each seeded by its id: five single X’s, then three quests. The
+          seed picks the filter’s noise, the stamp’s angle & pressure, and the second stroke’s
+          registration. Pressure fades in any direction, by anything from nothing to about half.
         </p>
       </div>
       <div class="variants" id="variants"></div>
@@ -691,8 +594,8 @@
       <div class="sheet-head">
         <h2>On the page</h2>
         <p class="note">
-          Recommended marks on tracker rows, transcribed from tracker-row.svelte. Row text &
-          struck-through state are unchanged; only the tool varies.
+          Recommended marks on tracker rows, transcribed from tracker-row.svelte, each seeded by its
+          row. Row text & struck-through state are unchanged; only the tool varies.
         </p>
       </div>
       <div class="context">
@@ -704,9 +607,9 @@
             whichever tool drew it. The tool is texture for the player who looks closer.
           </p>
           <p>
-            <strong>Quests show both moments.</strong> Request for an Apple was obtained & finished
+            <strong>Quests take two moments.</strong> Request for an Apple was obtained & finished
             from saves, so two stamps. Request for Bait was obtained from a save and finished by
-            hand: an inked X over a stamped slash.
+            hand: an inked stroke across a stamped slash.
           </p>
           <p><strong>What a screen reader hears</strong>, for the stamped row:</p>
           <p class="sr">
@@ -726,292 +629,286 @@
         '<rect x="3.5" y="3.5" width="21" height="21" rx="1" stroke="var(--color-ink-hairline)" stroke-width="1.5" fill="none"/>';
       const GREEN = "var(--color-tracker-checked)";
       const AMBER = "var(--color-tracker-obtained)";
-      const GRAPHITE = "var(--color-ink-muted)";
+      const SEEDS = 8;
+
+      // A seeded generator per entry id (FNV-1a into mulberry32), so a row's mark never changes.
+      const random = (id) => {
+        let a = 2166136261;
+        for (const ch of id) a = Math.imul(a ^ ch.codePointAt(0), 16777619);
+        return () => {
+          a = (a + 0x6d2b79f5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      };
+      const between = (r, lo, hi) => lo + r() * (hi - lo);
+      const pickSeed = (r) => 1 + Math.floor(r() * SEEDS);
+
+      // Filters, one per tool & seed, made on first use.
+      const defs = [];
+      const made = new Set();
+      const FILTERS = {
+        pen: (
+          s,
+        ) => `<feTurbulence type="turbulence" baseFrequency="0.04" numOctaves="4" seed="${s}" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="1" xChannelSelector="R" yChannelSelector="G"/>`,
+        pencil: (
+          s,
+        ) => `<feTurbulence type="fractalNoise" baseFrequency="1.7" numOctaves="2" seed="${s}" result="grain"/>
+          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -2.6 0 0 0 2.35" result="tooth"/>
+          <feComposite in="SourceGraphic" in2="tooth" operator="in" result="grained"/>
+          <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="3" seed="${s + 20}" result="wobble"/>
+          <feDisplacementMap in="grained" in2="wobble" scale="0.9" xChannelSelector="R" yChannelSelector="G"/>`,
+        stamp: (
+          s,
+        ) => `<feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="${s}" result="grain"/>
+          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -6 0 0 0 4.9" result="speck"/>
+          <feComposite in="SourceGraphic" in2="speck" operator="in"/>`,
+        ribbon: (s) => `<feGaussianBlur in="SourceGraphic" stdDeviation="0.18" result="spread"/>
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="${s}" result="grain"/>
+          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -3 0 0 0 2.9" result="ink"/>
+          <feComposite in="spread" in2="ink" operator="in"/>`,
+      };
+      const filter = (kind, seed) => {
+        const id = `${kind}-${seed}`;
+        if (!made.has(id)) {
+          made.add(id);
+          defs.push(
+            `<filter id="${id}" x="-10%" y="-10%" width="120%" height="120%">${FILTERS[kind](seed)}</filter>`,
+          );
+        }
+        return `url(#${id})`;
+      };
+
+      // Uneven pressure: a fade in a random direction, by 0 to ~45%. About a fifth fade not at all.
+      let masks = 0;
+      const pressure = (r) => {
+        const angle = between(r, 0, 2 * Math.PI);
+        const fade = Math.max(0, between(r, -0.1, 0.45));
+        const id = `press-${++masks}`;
+        const dx = Math.cos(angle) * 8;
+        const dy = Math.sin(angle) * 8;
+        const end = Math.round(255 * (1 - fade));
+        defs.push(`<linearGradient id="${id}-ramp" gradientUnits="userSpaceOnUse"
+            x1="${14 - dx}" y1="${14 - dy}" x2="${14 + dx}" y2="${14 + dy}">
+            <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="rgb(${end} ${end} ${end})"/>
+          </linearGradient>
+          <mask id="${id}" maskUnits="userSpaceOnUse" x="0" y="0" width="28" height="28">
+            <rect width="28" height="28" fill="url(#${id}-ramp)"/>
+          </mask>`);
+        return `url(#${id})`;
+      };
 
       // Every mark is drawn in tracker-checkbox.svelte's 28-unit viewBox, inside its 21-unit box.
-      // Each tool supplies its slash (bottom-left to top-right) & its X; a quest's done mark is the
-      // amber slash with a second, slightly misregistered green X on top.
+      // Each tool, given an entry's seeded generator, returns the slash (the first moment) and the
+      // crossing stroke. A single X draws both at once; a quest's crossing stroke lands later, so
+      // it gets its own registration. The slash is drawn the same either way, only recolored.
+      const misregister = (r) =>
+        `translate(${between(r, -0.9, 0.9).toFixed(2)} ${between(r, -0.7, 0.7).toFixed(2)}) rotate(${between(r, -3, 3).toFixed(1)} 14 14)`;
 
       // Pen: today's X, loosened, with a nib blot where each stroke lands. It overruns the box.
-      const pen = {
-        slash: (c, f = "pencil-sm", at = "") =>
-          `<g ${f === "none" ? "" : `filter="url(#${f})"`} transform="${at}" fill="none" stroke="${c}" stroke-linecap="round">
-            <path d="M21.9 3.1 C17.6 9.4 12.8 15.2 6.6 21.7" stroke-width="2.6"/>
-            <circle cx="21.9" cy="3.2" r="1.35" fill="${c}" stroke="none"/>
-          </g>`,
-        back: (c, f = "pencil-sm") =>
-          `<g ${f === "none" ? "" : `filter="url(#${f})"`} fill="none" stroke="${c}" stroke-linecap="round">
-            <path d="M7.4 7.6 C11.2 11.6 16.4 17 25.6 24.1" stroke-width="2.3"/>
-            <circle cx="7.3" cy="7.5" r="1.45" fill="${c}" stroke="none"/>
-          </g>`,
-      };
-      pen.x = (c, f) => pen.slash(c, f) + pen.back(c, f);
-      pen.over = (c, f) => pen.slash(c, f, "translate(0.9 0.6)") + pen.back(c, f);
-
-      // Rubber stamp: square-ended filled bars, set a few degrees off. The mount's far edge kisses
-      // the paper, and the pressure fades toward one corner.
-      const KISS = `<g fill="none" stroke-linecap="butt">
-          <path d="M21.7 7.2 L21.8 12.8 M21.9 14.9 L21.8 19.6" stroke-width="0.8" opacity=".42"/>
-          <path d="M21.8 19.2 L21.8 21.8 L18.2 21.9" stroke-width="1.2" opacity=".62"/>
-          <path d="M15.6 22 L13.1 22" stroke-width="0.7" opacity=".35"/>
-        </g>`;
-      const bars = (angles) =>
-        angles
-          .map(
-            (a) =>
-              `<rect x="5.6" y="12.2" width="16.8" height="3.6" transform="rotate(${a} 14 14)"/>`,
-          )
-          .join("");
-      const stampPrint = (c, angles, { at = "rotate(-4 14 14)", kiss = true, press = true } = {}) =>
-        `<g transform="${at}"${press ? ' mask="url(#press)"' : ""}>
-          <g filter="url(#stamp)" fill="${c}" stroke="${c}">${bars(angles)}${kiss ? KISS : ""}</g>
-        </g>`;
-      const stamp = (opts) => ({
-        slash: (c) => stampPrint(c, [-45], { ...opts, at: "rotate(-7 14 14) translate(-0.5 0.6)" }),
-        x: (c) => stampPrint(c, [-45, 45], opts),
-        over: (c) =>
-          stampPrint(c, [-45, 45], { ...opts, at: "rotate(-3 14 14) translate(0.6 -0.4)" }),
-      });
-
-      // Pencil: two passes per stroke, grainy, inside the box.
-      const pencilStroke = (d, d2) =>
-        `<path d="${d}" stroke-width="1.9"/><path d="${d2}" stroke-width="1" opacity=".55"/>`;
-      const pencilGroup = (c, body, at = "") =>
-        `<g filter="url(#graphite)" transform="${at}" fill="none" stroke="${c}" stroke-linecap="round">${body}</g>`;
-      const PENCIL_SLASH = pencilStroke(
-        "M9.3 19.9 C12.1 16.5 15.2 12.5 18.9 8.2",
-        "M9.9 20.2 C12.6 16.9 15.6 13 19.1 8.9",
-      );
-      const PENCIL_BACK = pencilStroke(
-        "M9.1 8.5 C12.3 12 15.7 16 19.2 19.8",
-        "M9.6 8.2 C12.8 11.6 16.1 15.4 19.5 19.1",
-      );
-      const pencil = {
-        slash: (c) => pencilGroup(c, PENCIL_SLASH),
-        x: (c) => pencilGroup(c, PENCIL_SLASH + PENCIL_BACK),
-        over: (c) =>
-          pencilGroup(c, PENCIL_SLASH, "translate(0.7 0.5)") + pencilGroup(c, PENCIL_BACK),
-      };
-
-      // Typewriter: a small serifed x, struck a hair off level. A bichrome ribbon's amber half
-      // types the slash, and the x is overstruck on it after the carriage has moved a little.
-      const TYPED_X = `<path d="M10.7 10.4 L17.5 18.4 M17.5 10.4 L10.7 18.4" stroke-width="1.75"/>
-        <path d="M9.2 10.4 H12.3 M15.9 10.4 H19 M9.2 18.4 H12.3 M15.9 18.4 H19" stroke-width="1.25"/>`;
-      const typedGroup = (c, body, at) =>
-        `<g filter="url(#ribbon)" transform="${at}" fill="none" stroke="${c}">${body}</g>`;
-      const typewriter = (struck = 1) => {
-        const x = (c, at) =>
-          typedGroup(c, TYPED_X, at) +
-          (struck > 1
-            ? `<g opacity=".7">${typedGroup(c, TYPED_X, `${at} translate(0.5 0.25)`)}</g>`
-            : "");
+      const pen = (r) => {
+        const f = filter("pen", pickSeed(r));
+        const later = misregister(r);
+        const stroke = (c, d, blot, w, at = "") =>
+          `<g filter="${f}" transform="${at}" fill="none" stroke="${c}" stroke-linecap="round">
+            <path d="${d}" stroke-width="${w}"/><circle cx="${blot[0]}" cy="${blot[1]}" r="1.4" fill="${c}" stroke="none"/>
+          </g>`;
+        const slash = (c) => stroke(c, "M21.9 3.1 C17.6 9.4 12.8 15.2 6.6 21.7", [21.9, 3.2], 2.6);
+        const cross = (c, at) =>
+          stroke(c, "M7.4 7.6 C11.2 11.6 16.4 17 25.6 24.1", [7.3, 7.5], 2.3, at);
         return {
-          slash: (c) =>
-            typedGroup(
-              c,
-              '<path d="M16.9 9.8 L11.2 19" stroke-width="1.7"/>',
-              "rotate(1 14 14) translate(-0.3 0.2)",
-            ),
-          x: (c) => x(c, "rotate(2 14 14) translate(0.3 0.5)"),
-          over: (c) => x(c, "rotate(2.5 14 14) translate(0.7 0.1)"),
+          slash,
+          cross: (c) => cross(c, later),
+          x: (c) => slash(c) + cross(c),
+          quest: (c) => slash(c) + cross(c, later),
         };
       };
 
+      // Rubber stamp: square-ended filled bars, set a few degrees off, with specks the ink missed
+      // and a pressure fade. A quest's two stamps each get their own angle & pressure.
+      const stamp = (r) => {
+        const f = filter("stamp", pickSeed(r));
+        const first = `rotate(${between(r, -5, 5).toFixed(1)} 14 14)`;
+        const firstPress = pressure(r);
+        const later = misregister(r);
+        const laterPress = pressure(r);
+        const bar = (a) =>
+          `<rect x="5.6" y="12.2" width="16.8" height="3.6" transform="rotate(${a} 14 14)"/>`;
+        const print = (c, body, at, press) =>
+          `<g transform="${at}" mask="${press}"><g filter="${f}" fill="${c}">${body}</g></g>`;
+        const slash = (c) => print(c, bar(-45), first, firstPress);
+        return {
+          slash,
+          x: (c) => print(c, bar(-45) + bar(45), first, firstPress),
+          quest: (c) => slash(c) + print(c, bar(45), `${first} ${later}`, laterPress),
+        };
+      };
+
+      // Pencil: two light passes per stroke, grainy, inside the box. Lighter than the pen, like a
+      // pencil next to a pen in a sketching app, but still clearly green.
+      const pencil = (r, weight = 0.62) => {
+        const f = filter("pencil", pickSeed(r));
+        const later = misregister(r);
+        const stroke = (c, d, d2, at = "") =>
+          `<g filter="${f}" transform="${at}" opacity="${weight}" fill="none" stroke="${c}" stroke-linecap="round">
+            <path d="${d}" stroke-width="1.6"/><path d="${d2}" stroke-width="0.9" opacity=".6"/>
+          </g>`;
+        const slash = (c) =>
+          stroke(
+            c,
+            "M9.3 19.9 C12.1 16.5 15.2 12.5 18.9 8.2",
+            "M9.9 20.2 C12.6 16.9 15.6 13 19.1 8.9",
+          );
+        const cross = (c, at) =>
+          stroke(
+            c,
+            "M9.1 8.5 C12.3 12 15.7 16 19.2 19.8",
+            "M9.6 8.2 C12.8 11.6 16.1 15.4 19.5 19.1",
+            at,
+          );
+        return { slash, x: (c) => slash(c) + cross(c), quest: (c) => slash(c) + cross(c, later) };
+      };
+
+      // Typewriter: a small serifed x, struck a hair off level in one keystroke. A quest types /
+      // first, then \ after the carriage has moved a little.
+      const typewriter = (r) => {
+        const f = filter("ribbon", pickSeed(r));
+        const first = `translate(${between(r, -0.4, 0.4).toFixed(2)} ${between(r, -0.3, 0.5).toFixed(2)}) rotate(${between(r, -2.5, 2.5).toFixed(1)} 14 14)`;
+        const later = misregister(r);
+        const key = (c, body, at) =>
+          `<g filter="${f}" transform="${at}" fill="none" stroke="${c}">${body}</g>`;
+        const SLASH = `<path d="M17.5 10.4 L10.7 18.4" stroke-width="1.75"/><path d="M15.9 10.4 H19 M9.2 18.4 H12.3" stroke-width="1.25"/>`;
+        const BACK = `<path d="M10.7 10.4 L17.5 18.4" stroke-width="1.75"/><path d="M9.2 10.4 H12.3 M15.9 18.4 H19" stroke-width="1.25"/>`;
+        const slash = (c) => key(c, SLASH, first);
+        return {
+          slash,
+          x: (c) => key(c, SLASH + BACK, first),
+          quest: (c) => slash(c) + key(c, BACK, `${first} ${later}`),
+        };
+      };
+
+      const TOOLS = { pen, stamp, pencil, typewriter };
       const svg = (body) =>
         `<svg viewBox="0 0 28 28" fill="none" aria-hidden="true">${BOX}${body}</svg>`;
-      const forms = (tool, color = GREEN) => ({
-        x: svg(tool.x(color)),
-        slash: svg(tool.slash(AMBER)),
-        quest: svg(tool.slash(AMBER) + tool.over(color)),
-      });
+      const EMPTY = svg("");
+      const forms = (tool, id, ...args) => {
+        const t = tool(random(id), ...args);
+        return { x: svg(t.x(GREEN)), slash: svg(t.slash(AMBER)), quest: svg(t.quest(GREEN)) };
+      };
       const atRow = (f) =>
         `<span class="at-row"><span class="at-size">${f.x}</span><span class="at-size">${f.slash}</span><span class="at-size">${f.quest}</span></span>`;
-
-      const TOOLS = {
-        pen: { x: (c) => pen.x(c), slash: (c) => pen.slash(c), over: (c) => pen.over(c) },
-        stamp: stamp(),
-        pencil,
-        typewriter: typewriter(),
-      };
 
       const RECOMMENDED = [
         {
           source: "manual",
           tool: "Pen",
-          forms: forms(TOOLS.pen),
           why: "The player’s own hand. Today’s X, loosened: a nib’s landing blot, strokes that overrun the box.",
           words: "You checked this off by hand",
-          key: "tracker_row_provenance_manual",
         },
         {
           source: "save",
           tool: "Rubber stamp",
-          forms: forms(TOOLS.stamp),
-          why: "A clerk’s stamp, set a few degrees off: the mount’s far edge kisses the paper, and the ink thins where it was pressed lightly.",
+          why: "A clerk’s stamp, set a few degrees off, with specks the ink missed and a fade where it was pressed lightly.",
           words: "Filled in from your save",
-          key: "tracker_row_provenance_save",
         },
         {
           source: "inferred",
           tool: "Pencil",
-          forms: forms(TOOLS.pencil),
-          why: "Colored pencil, so it reads as a provisional note. Grainy, gone over twice, and it stays inside the box.",
+          why: "Green colored pencil: lighter & grainier than the pen, so it reads as our note, and it stays inside the box.",
           words: "We filled this in for you",
-          key: "tracker_row_provenance_inferred",
         },
         {
           source: "unknown",
           tool: "Typewriter",
-          forms: forms(TOOLS.typewriter),
-          why: "A typed x, as on old forms: small, serifed, struck a hair off level. The slash comes from the ribbon’s amber half.",
+          why: "A typed x, as on old forms: small, serifed, struck a hair off level.",
           words: "From your older records",
-          key: "tracker_row_provenance_unknown",
         },
       ];
+      const TOOL_OF = { manual: pen, save: stamp, inferred: pencil, unknown: typewriter };
 
-      document.querySelector("#ledger-body").innerHTML = RECOMMENDED.map(
-        (r) => `<tr>
-          <td class="source">${r.source}</td>
-          <td class="tool">${r.tool}<small>${r.why}</small></td>
-          <td>${atRow(r.forms)}</td>
-          <td><span class="enlarged">${r.forms.x}</span></td>
-          <td><span class="pair"><span class="enlarged">${r.forms.slash}</span><span class="arrow">→</span><span class="enlarged">${r.forms.quest}</span></span></td>
-          <td class="words"><q>${r.words}</q><br /><code>${r.key}</code></td>
-        </tr>`,
-      ).join("");
+      document.querySelector("#ledger-body").innerHTML = RECOMMENDED.map((rec) => {
+        const f = forms(TOOL_OF[rec.source], `key-${rec.source}`);
+        return `<tr>
+          <td class="source">${rec.source}</td>
+          <td class="tool">${rec.tool}<small>${rec.why}</small></td>
+          <td>${atRow(f)}</td>
+          <td><span class="enlarged">${f.x}</span></td>
+          <td><span class="pair"><span class="enlarged">${f.slash}</span><span class="arrow">→</span><span class="enlarged">${f.quest}</span></span></td>
+          <td class="words"><q>${rec.words}</q><br /><code>tracker_row_provenance_${rec.source}</code></td>
+        </tr>`;
+      }).join("");
 
-      const seeded = (f) => svg(pen.x(GREEN, f));
-      const VARIANTS = [
-        {
-          source: "manual",
-          tool: "Pen",
-          options: [
-            {
-              pick: true,
-              title: "A seed per entry",
-              text: "pencil-sm’s wobble with a seed picked from the entry’s id, so neighboring rows differ.",
-              forms: forms(TOOLS.pen),
-              row: `<span class="at-row">${["pencil-sm", "pencil-sm-b", "pencil-sm-c"].map((f) => `<span class="at-size">${seeded(f)}</span>`).join("")}<span class="caption">3 seeds</span></span>`,
-            },
-            {
-              title: "Today’s filter as is",
-              text: "One shared seed, so every inked X on a page has the same wobble in the same place.",
-              forms: forms(TOOLS.pen),
-              row: `<span class="at-row">${[1, 2, 3].map(() => `<span class="at-size">${seeded("pencil-sm")}</span>`).join("")}<span class="caption">1 seed</span></span>`,
-            },
-            {
-              title: "No filter",
-              text: "The drawn path alone. The blots & overrun still read as ink; the edges are cleaner.",
-              forms: forms({
-                x: (c) => pen.x(c, "none"),
-                slash: (c) => pen.slash(c, "none"),
-                over: (c) => pen.over(c, "none"),
-              }),
-            },
-          ],
-        },
-        {
-          source: "save",
-          tool: "Rubber stamp",
-          options: [
-            {
-              pick: true,
-              title: "Edge kiss & pressure",
-              text: "The mount’s far edge touches down at the right, and the ink thins toward that corner.",
-              forms: forms(stamp()),
-            },
-            {
-              title: "Edge kiss only",
-              text: "Evenly pressed, so the X is solid; the stray edge alone says “stamp”.",
-              forms: forms(stamp({ press: false })),
-            },
-            {
-              title: "Pressure only",
-              text: "No stray edge, so it’s quieter at 24 px, but it reads closer to a faded print.",
-              forms: forms(stamp({ kiss: false })),
-            },
-          ],
-        },
-        {
-          source: "inferred",
-          tool: "Pencil",
-          options: [
-            {
-              pick: true,
-              title: "Colored pencil",
-              text: "Green like every X, so it reads as done; the grain says it’s our note.",
-              forms: forms(TOOLS.pencil),
-            },
-            {
-              title: "Graphite",
-              text: "The first proposal’s grey. More clearly provisional, but it breaks “done is green”.",
-              forms: forms(TOOLS.pencil, GRAPHITE),
-            },
-          ],
-        },
-        {
-          source: "unknown",
-          tool: "Typewriter",
-          options: [
-            {
-              pick: true,
-              title: "Typed x",
-              text: "One keystroke. Small & inside the box, so it never reads as the inked X.",
-              forms: forms(TOOLS.typewriter),
-            },
-            {
-              title: "Struck twice",
-              text: "Typed again to darken it. More ink at 24 px, but the doubling reads as a smudge.",
-              forms: forms(typewriter(2)),
-            },
-          ],
-        },
+      const spread = (marks) => `<div class="spread">
+          <div class="line">${marks.map((m, i) => `${i === 5 ? '<span class="sep"></span>' : ""}<span class="enlarged">${m}</span>`).join("")}</div>
+          <div class="line small">${marks.map((m, i) => `${i === 5 ? '<span class="sep"></span>' : ""}<span class="slot"><span class="at-size">${m}</span></span>`).join("")}</div>
+        </div>`;
+      const sample = (tool, ...args) =>
+        Array.from({ length: 8 }, (_, i) => {
+          const f = forms(tool, `sample-${i}`, ...args);
+          return i < 5 ? f.x : f.quest;
+        });
+
+      const weights = [
+        ["0.45", "Lighter"],
+        ["0.62", "Pick"],
+        ["1", "Full strength"],
       ];
-
-      document.querySelector("#variants").innerHTML = VARIANTS.map(
-        (v) => `<div class="label">${v.source}<small>${v.tool}</small></div>
-          <div class="strip">${v.options
-            .map(
-              (o) => `<div class="variant${o.pick ? " is-pick" : ""}">
-                ${o.pick ? '<span class="pick">pick</span>' : ""}
-                <span class="enlarged">${o.forms.quest}</span>
+      document.querySelector("#variants").innerHTML =
+        RECOMMENDED.map(
+          (rec) => `<div class="label">${rec.source}<small>${rec.tool}</small></div>
+            ${spread(sample(TOOL_OF[rec.source]))}`,
+        ).join("") +
+        `<div class="label">inferred<small>Pencil weight</small></div>
+          <div class="strip">${weights
+            .map(([w, name]) => {
+              const f = forms(pencil, "weight", Number(w));
+              return `<div class="variant${name === "Pick" ? " is-pick" : ""}">
+                ${name === "Pick" ? '<span class="pick">pick</span>' : ""}
+                <span class="enlarged">${f.x}</span>
                 <div class="variant-body text">
-                  ${o.row ?? atRow(o.forms)}
-                  <div><h3>${o.title}</h3>${o.text}</div>
+                  ${atRow(f)}
+                  <div><h3>${name === "Pick" ? "Lighter than the pen" : name}</h3>${Math.round(w * 100)}% of the pen’s strength.</div>
                 </div>
-              </div>`,
-            )
-            .join("")}</div>`,
-      ).join("");
+              </div>`;
+            })
+            .join("")}</div>`;
 
       const row = (name, mark, extra = "", completed = true) =>
         `<div class="row${completed ? " completed" : ""}"><div class="surface">
           <span class="box">${mark}</span>
           <span class="label">${name}</span>${extra}
         </div></div>`;
-      const EMPTY = svg("");
-      const f = Object.fromEntries(Object.entries(TOOLS).map(([k, t]) => [k, forms(t)]));
+      const done = (tool, name) => svg(tool(random(name)).x(GREEN));
 
-      const column = (title) => `<div class="column-title">${title}</div>
-        <div class="section-name">Fish <span class="count">4 / 7</span></div>
+      const column = (title) => {
+        const bait = random("Request for Bait");
+        const baitSlash = stamp(bait).slash(GREEN);
+        const baitCross = pen(bait).cross(GREEN);
+        return `<div class="column-title">${title}</div>
+        <div class="section-name">Fish <span class="count">5 / 7</span></div>
         <div class="stack">
-          ${row("Brown Trout", f.pen.x)}
-          ${row("Sardine", f.stamp.x)}
-          ${row("Catfish", f.typewriter.x)}
+          ${row("Brown Trout", done(pen, "Brown Trout"))}
+          ${row("Sardine", done(stamp, "Sardine"))}
+          ${row("Catfish", done(typewriter, "Catfish"))}
           ${row("Lake Trout", EMPTY, "", false)}
-          ${row("Crucian Carp", f.pencil.x)}
-          ${row("Tuna", EMPTY, "", false)}
+          ${row("Crucian Carp", done(pencil, "Crucian Carp"))}
+          ${row("Tuna", done(stamp, "Tuna"))}
+          ${row("Eel", EMPTY, "", false)}
         </div>
         <div class="section-name">Requests <span class="count">2 / 4</span></div>
         <div class="stack">
-          ${row("Request for an Apple", f.stamp.quest)}
-          ${row("Request for Armored Bass", f.stamp.slash, '<span class="badge">Active</span>', false)}
-          ${row("Request for Bait", svg(TOOLS.stamp.slash(AMBER) + pen.over(GREEN)))}
+          ${row("Request for an Apple", svg(stamp(random("Request for an Apple")).quest(GREEN)))}
+          ${row("Request for Armored Bass", svg(stamp(random("Request for Armored Bass")).slash(AMBER)), '<span class="badge">Active</span>', false)}
+          ${row("Request for Bait", svg(baitSlash + baitCross))}
           ${row("Request for a Beet", EMPTY, "", false)}
         </div>`;
+      };
 
       document.querySelector("#col-fine").innerHTML = column("Computer · 32 px target");
       document.querySelector("#col-coarse").innerHTML = column("Phone · 44 px target");
+      document.querySelector("#defs").innerHTML = defs.join("");
     </script>
   </body>
 </html>
