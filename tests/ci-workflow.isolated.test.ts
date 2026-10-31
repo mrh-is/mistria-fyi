@@ -507,6 +507,55 @@ describe("CI workflow locale sync", () => {
   });
 });
 
+describe("CI workflow audit", () => {
+  it.each(["pull_request", "push"])("detects dependency changes on %s", (event) => {
+    for (const file of [
+      "package.json",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      ".github/workflows/ci.yml",
+    ]) {
+      expect(detectChanges(event, file).dependencies, file).toBe("true");
+    }
+    expect(detectChanges(event, "src/app.css", "docs/development-workflow.md").dependencies).toBe(
+      "false",
+    );
+    expect(detectChanges(event).dependencies).toBe("false");
+  });
+
+  it("leaves scheduled audits to the report & keeps manual audits available", () => {
+    expect(detectChanges("schedule").dependencies).toBe("false");
+    expect(jobs.changes.outputs?.dependencies).toBe("${{ steps.filter.outputs.dependencies }}");
+    expect(jobs.audit.needs).toBe("changes");
+    expect(jobs.audit.if).toBe(
+      "needs.changes.outputs.dependencies == 'true' || github.event_name == 'workflow_dispatch'",
+    );
+  });
+
+  it("keeps the blocking audit at moderate & never masks its failure", () => {
+    const step = jobs.audit.steps?.find(
+      (entry) => entry.run === "node scripts/verify.ts --step=audit",
+    );
+    expect(step).toBeDefined();
+    expect(step?.["continue-on-error"]).toBeUndefined();
+    expect(STEPS.find(({ name }) => name === "audit")?.command).toEqual({
+      args: ["audit", "--audit-level=moderate"],
+      kind: "pnpm",
+    });
+  });
+
+  it("sets up pnpm before the install-free nightly audit", () => {
+    const steps = jobs["nightly-report"].steps ?? [];
+    const setup = steps.findIndex((step) => step.uses?.startsWith("pnpm/setup@"));
+    expect(setup).toBeGreaterThan(-1);
+    expect(steps[setup].with?.install).toBe(false);
+    expect(setup).toBeLessThan(
+      steps.findIndex((step) => step.run === "node scripts/nightly-report.ts"),
+    );
+    expect(runCommands(jobs["nightly-report"])).not.toContain("pnpm install --frozen-lockfile");
+  });
+});
+
 describe("CI workflow gate", () => {
   it("aggregates every merge-relevant job into one always-reported check", () => {
     expect(jobs["ci-passed"].if).toBe("always()");

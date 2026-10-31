@@ -35,6 +35,7 @@ jobs:
     outputs:
       browser: ${{ steps.filter.outputs.browser }}
       cleanup: ${{ steps.filter.outputs.cleanup }}
+      dependencies: ${{ steps.filter.outputs.dependencies }}
       messages: ${{ steps.filter.outputs.messages }}
       tests: ${{ steps.filter.outputs.tests }}
     steps:
@@ -55,6 +56,7 @@ jobs:
         run: |
           browser=true
           cleanup=false
+          dependencies=false
           messages=false
           tests=
           files=
@@ -78,6 +80,9 @@ jobs:
               scripts/cleanup-merged-worktrees.ts) cleanup=true ;;
             esac
             case "$file" in
+              package.json | pnpm-lock.yaml | pnpm-workspace.yaml | .github/workflows/ci.yml) dependencies=true ;;
+            esac
+            case "$file" in
               messages/* | scripts/check-locale-sync.* | scripts/locale-sync-allowlist.json) messages=true ;;
             esac
             case "$file" in
@@ -97,6 +102,7 @@ jobs:
           [ "$EVENT_NAME" = "pull_request" ] || tests=
           echo "browser=$browser" >> "$GITHUB_OUTPUT"
           echo "cleanup=$cleanup" >> "$GITHUB_OUTPUT"
+          echo "dependencies=$dependencies" >> "$GITHUB_OUTPUT"
           echo "messages=$messages" >> "$GITHUB_OUTPUT"
           echo "tests=${tests# }" >> "$GITHUB_OUTPUT"
 
@@ -146,10 +152,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run verify -- --step=check:locale-sync --base HEAD^1
 
-  # Fails on moderate or worse advisories in the lockfile. Nightly runs catch advisories published
-  # after a merge. Accepted exceptions live in pnpm-workspace.yaml's auditConfig.
+  # PRs & main pushes fail on moderate or worse advisories only when dependency inputs or this
+  # workflow change. Manual dispatches always audit; the nightly report tracks new advisories
+  # without failing on findings. Accepted exceptions live in pnpm-workspace.yaml's auditConfig.
   audit:
     name: Audit dependencies
+    needs: changes
+    if: needs.changes.outputs.dependencies == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -441,8 +450,8 @@ jobs:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: pnpm run accessibility:monitor
 
-  # Findings too noisy or too broad to fail a pull request, kept in one issue. It reads main's recent
-  # timing artifacts, so this runs on its own instead of waiting for tonight's test job.
+  # Timing trends & dependency advisories stay in one issue. It reads main's recent timing
+  # artifacts, so this runs on its own instead of waiting for tonight's test job.
   nightly-report:
     name: Report nightly findings
     if: github.event_name == 'schedule'
@@ -459,6 +468,12 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .node-version
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+        timeout-minutes: 3
+        with:
+          cache: true
+          save-cache: false
+          install: false
       - env:
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_URL:

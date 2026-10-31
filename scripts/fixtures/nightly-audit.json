@@ -1,0 +1,44 @@
+{
+  "advisories": {
+    "1243505": {
+      "findings": [
+        {
+          "version": "4.3.1",
+          "paths": [
+            ".>bits-ui>runed>@sveltejs/kit>@sveltejs/vite-plugin-svelte>deepmerge",
+            ".>bits-ui>svelte-toolbelt>runed>@sveltejs/kit>@sveltejs/vite-plugin-svelte>deepmerge",
+            ".>@sveltejs/adapter-cloudflare>@sveltejs/kit>@sveltejs/vite-plugin-svelte>deepmerge",
+            ".>@sveltejs/kit>@sveltejs/vite-plugin-svelte>deepmerge",
+            ".>@sveltejs/vite-plugin-svelte>deepmerge"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1243505,
+      "title": "deepmerge mergeObject() allows prototype poisoning of returned objects",
+      "module_name": "deepmerge",
+      "vulnerable_versions": ">=4.2.0 <=4.3.1",
+      "patched_versions": null,
+      "severity": "low",
+      "cwe": "CWE-1321",
+      "github_advisory_id": "GHSA-gcqx-w48m-w2h4",
+      "url": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+      "patched_versions_unpublished": true
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 1,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 87,
+    "devDependencies": 557,
+    "optionalDependencies": 266,
+    "totalDependencies": 717
+  }
+}

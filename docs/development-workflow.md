@@ -383,11 +383,22 @@ runs can’t fail on timing, because no pull request is involved.
 The scheduled CI run’s `nightly-report` job (`scripts/nightly-report.ts`) reads the `vitest-timings`
 artifacts from up to 10 recent pushes to `main`, which run without coverage, & compares medians, so
 one slow runner can’t raise a finding. It reports a file with at least 3 samples over its warning
-line, or a median wall time over 120 s. Findings live in one “Nightly CI report” issue: the job
-files it, edits it in place so a standing finding doesn’t notify anyone each night, & closes it once
-the findings clear. With 1 or 2 samples it changes nothing. With none, the job fails, because that
-means the report can’t read its data, such as after a permission change or a renamed artifact. This
-job doesn’t count toward “CI passed”.
+line, or a median wall time over 120 s.
+
+The job also runs `pnpm audit --audit-level=moderate --json` without installing dependencies. It
+reports moderate-or-higher advisory entries after pnpm applies `auditConfig.ignoreGhsas`. The raw
+metadata counts include accepted exceptions, so those counts don’t determine findings. An advisory
+is a finding, not a scheduled-job failure; an audit that can’t run or returns unusable JSON fails
+the job before changing the issue.
+
+Findings live in one “Nightly CI report” issue. The job files it, edits it in place, & closes it
+only when both checks are clear. With one or two timing samples, it skips timing findings but still
+reports advisories, retaining the earlier timing warnings with a note that they haven’t been
+rechecked. Repeated incomplete updates replace old advisories & status notes without duplicating the
+retained warnings. A complete timing check replaces the earlier warnings with fresh findings.
+Without advisories, it leaves the issue alone. With no readable timing samples, it publishes any
+advisories & then fails, because the timing report can’t read its data. A failure to list timing
+runs also publishes any advisories before failing. This job doesn’t count toward “CI passed”.
 
 ### Test projects
 
@@ -485,15 +496,21 @@ other full-suite command during development.
 `STEPS` lists in [scripts/verify.ts](../scripts/verify.ts), each naming its CI job; a job runs a
 step with `pnpm run verify -- --step=<name>`. Add or change a step there, not by copying a command
 into the workflow, & give a new step both a `STEPS` entry & its `--step` line in `ci.yml` (the CI
-test fails until both exist). Some steps run only in CI: the audit, the budgeted Vitest run (file
-timing limits, coverage only nightly), & the pull-request-only stale-translation check are outside
-the default `verify` matrix.
+test fails until both exist). Some steps run only in CI: the scoped audit, the budgeted Vitest run
+(file timing limits, coverage only nightly), & the pull-request-only stale-translation check are
+outside the default `verify` matrix.
+
+The audit blocks pull requests & main pushes only when they change `package.json`, `pnpm-lock.yaml`,
+`pnpm-workspace.yaml`, or `.github/workflows/ci.yml`. For example, a CSS-only pull request skips the
+audit; a lockfile change still fails on a moderate-or-higher advisory. Manual dispatches always
+audit. Scheduled advisories go to the [nightly report](#nightly-report). The local opt-in audit
+step, `pnpm run verify -- --step=audit`, stays available.
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see
 [accessibility testing](accessibility-testing.md) and [PWA verification](pwa-verification.md). Its
-"CI passed" job fails when any other job fails and passes when the browser jobs were skipped, so it
-is the one check to require for merging.
+“CI passed” job aggregates the merge checks & accepts skipped audits, locale-sync, & browser jobs.
+Scheduled reporting jobs stay outside that gate, so it is the one check to require for merging.
 
 ### Linting & formatting
 
