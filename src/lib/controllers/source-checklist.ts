@@ -6,6 +6,7 @@ import { projectAlmanac } from "#lib/engine/projections/almanac.js";
 import { projectAnimals } from "#lib/engine/projections/animals.js";
 import { projectMuseum } from "#lib/engine/projections/museum.js";
 import { recipePlacements } from "#lib/engine/projections/recipes.js";
+import { factKey } from "#lib/engine/provenance.js";
 import { buildQuestSections } from "#lib/presentation/quest-sections.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordEntries } from "#lib/utils/record.js";
@@ -17,12 +18,30 @@ import type { SourceGroupRow } from "#lib/presentation/source-groups.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
-import type { QuestState } from "#lib/types/user-progress.js";
+import type { ProgressState, QuestState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
+
+/** The progress field each row kind records its fact under. */
+const FACT_FIELDS = {
+  "almanac-item": "almanac",
+  "animal-cosmetics": "animalCosmetics",
+  "animal-variants": "animals",
+  cosmetic: "cosmetics",
+  "mount-appearance": "mountAppearances",
+  "mount-perk": "unlockedPerks",
+  "museum-item": "museum",
+  "pet-cosmetic": "petCosmetics",
+  "pet-skin": "petSkins",
+  quest: "questStates",
+  recipe: "almanacRecipes",
+  spell: "spells",
+} as const satisfies Partial<Record<ReportCategory, keyof ProgressState>>;
 
 /** One category row, with its original identity, presentation, & reversible store action. */
 export interface SourceChecklistRow extends SourceGroupRow {
   category: CategoryKey;
+  /** The row's `factKey`, which picks its checkbox's mark. */
+  fact: string;
   id: string;
   name: string;
   questState?: QuestState;
@@ -47,7 +66,7 @@ export function buildSourceChecklist(
     name: string,
     entity: { sources: Source[]; visibility?: VisibilityCondition },
     completed: boolean,
-    reportCategory: ReportCategory,
+    reportCategory: keyof typeof FACT_FIELDS,
     toggle: () => void,
     extra: Partial<SourceChecklistRow> = {},
   ): void {
@@ -55,6 +74,7 @@ export function buildSourceChecklist(
       ...entity,
       category,
       completed,
+      fact: factKey(FACT_FIELDS[reportCategory], id),
       id,
       key: `${category}:${reportCategory}:${id}`,
       name,
@@ -270,6 +290,7 @@ export function buildSourceChecklist(
           userState.completeQuestWithRecipes(questId);
         },
         {
+          fact: factKey("questStates", questId),
           questState: ctx.progress.questStates[questId] ?? "none",
           subtitle: row.subtitle,
           toggle: () => {

@@ -16,6 +16,7 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { projectAlmanac } from "#lib/engine/projections/almanac.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -139,6 +140,7 @@
             {@const { canonicalId, completed, item, name, sources, spoilered, variant } = row}
             {@const itemVisibility = item.visibility}
             <TrackerRow
+              fact={factKey("almanac", canonicalId)}
               display={rowDisplay(row)}
               segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
               {name}

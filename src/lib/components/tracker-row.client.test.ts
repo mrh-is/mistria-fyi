@@ -10,6 +10,7 @@ describe("TrackerRow reportable metadata", () => {
   it("reveals a ready sprite with the spoiler name", async () => {
     const view = renderWithFeedback(TrackerRow, {
       display: { mode: "spoilered" },
+      fact: "almanac/turnip",
       name: "Turnip",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -32,6 +33,7 @@ describe("TrackerRow reportable metadata", () => {
       TrackerRow,
       {
         display: { mode: "incomplete" },
+        fact: "almanacRecipes/turnip",
         name: "Tomato Soup",
         onToggle,
         reportCategory: "recipe",
@@ -59,6 +61,7 @@ describe("TrackerRow reportable metadata", () => {
   it("keeps one source paper and control while toggling its content", async () => {
     const view = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "Amberjack",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -114,6 +117,7 @@ describe("TrackerRow reportable metadata", () => {
   it("keeps multiple source papers expanded independently", async () => {
     const first = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "Amberjack",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -122,6 +126,7 @@ describe("TrackerRow reportable metadata", () => {
     });
     const second = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "Cod",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -153,10 +158,12 @@ describe("TrackerRow reportable metadata", () => {
     document.body.append(list);
     const first = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "First item",
       onToggle: () => {
         void first.rerender({
           display: { leaving: true, mode: "completed" },
+          fact: "almanac/turnip",
           name: "First item",
           onToggle: vi.fn(),
           reportCategory: "almanac-item",
@@ -168,6 +175,7 @@ describe("TrackerRow reportable metadata", () => {
     });
     const second = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "Second item",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -201,6 +209,7 @@ function previewLayer(container: HTMLElement): Element | null {
 describe("TrackerRow sprite preview", () => {
   const props = {
     display: { mode: "incomplete" },
+    fact: "almanac/turnip",
     name: "Animated Clouds Window",
     reportCategory: "almanac-item",
     reportEntityId: "animated_clouds_window_blue",
