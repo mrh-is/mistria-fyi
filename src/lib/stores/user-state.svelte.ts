@@ -367,6 +367,8 @@ function createUserState() {
   let retained = $state.raw<RetainedProgress>(emptyRetainedProgress());
   /** This device's own section of the stored blob; never exported, kept across a restore. */
   let local = $state.raw<DeviceLocalState>({});
+  /** A replacement answer belongs to this exact backup & incoming farm, never just their names. */
+  let backupReplacementQuestion: undefined | { id: string; snapshot: string };
   /** Provenance & resolutions for every fact, which backups carry. */
   let history = $state<ProgressHistory>(emptyProgressHistory());
   /** The source the outermost {@link track} call is recording, while one runs. */
@@ -748,7 +750,15 @@ function createUserState() {
     const { result } = outcome;
     const replaced = result.farmSwitch ? readFarmSwitchBackup(local) : undefined;
     if (replaced) {
-      const id = `replace-backup:${request.metadata.identity.saveNumber ?? "unnumbered"}`;
+      const backupSnapshot = JSON.stringify([request.metadata.identity, replaced]);
+      if (backupReplacementQuestion?.snapshot !== backupSnapshot) {
+        // Compare the complete snapshot inside the lock, but keep the ID sent between tabs small.
+        backupReplacementQuestion = {
+          id: `replace-backup:${crypto.randomUUID()}`,
+          snapshot: backupSnapshot,
+        };
+      }
+      const { id } = backupReplacementQuestion;
       if (request.answers[id] !== "accept") {
         const { farmName, savedAt } = replaced;
         settle({ kind: "ask", questions: [{ farmName, id, kind: "replace-backup", savedAt }] });

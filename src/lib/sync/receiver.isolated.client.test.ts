@@ -166,7 +166,7 @@ function canonical(json: string): string {
 }
 
 /** Opens channels that hear each other, as one browser's tabs do. */
-function linkedChannels(): () => BroadcastChannel {
+function linkedChannels(defer = false): () => BroadcastChannel {
   type Listener = (event: { data: unknown }) => void;
   const listeners = new Set<Listener>();
   return () => {
@@ -181,7 +181,14 @@ function linkedChannels(): () => BroadcastChannel {
       },
       postMessage: (data: unknown) => {
         for (const listener of listeners) {
-          if (!own.has(listener)) listener({ data });
+          if (own.has(listener)) continue;
+          if (defer) {
+            queueMicrotask(() => {
+              listener({ data });
+            });
+          } else {
+            listener({ data });
+          }
         }
       },
       removeEventListener: (_: string, listener: Listener) => {
@@ -849,6 +856,91 @@ describe("switching farms", () => {
     savedAt: 5,
   };
 
+  it.each([true, false])(
+    "asks again before replacing a changed backup, even with unchanged labels: %s (F14)",
+    async (sameLabels) => {
+      const relay = fakeRelay(await envelope(4, saveBytes(SEASON), { fileName: OTHER_FARM_FILE }));
+      const { receiver, userState } = await load(
+        blob({ farmSwitchBackup: earlier, syncLane: FOLLOWING }, TRACKED),
+        relay,
+      );
+      receiver.start();
+      await flush();
+      expect(receiver.status).toMatchObject({
+        kind: "asking",
+        questions: [{ farmName: "Old Acres", kind: "replace-backup", savedAt: 5 }],
+      });
+      const asked = questionId(receiver.status);
+      const replacement = {
+        backup: JSON.parse(blob({}, { progress: { renown: 12 } })) as unknown,
+        farmName: sameLabels ? earlier.farmName : "Other Acres",
+        savedAt: sameLabels ? earlier.savedAt : 999,
+      };
+      // Another tab's write, whose storage event has not reached this one.
+      const changed = JSON.parse(localStorage.getItem(PROGRESS_KEY) ?? "null") as { local: Local };
+      changed.local.farmSwitchBackup = replacement;
+      const before = JSON.stringify(changed);
+      localStorage.setItem(PROGRESS_KEY, before);
+      await receiver.answer(asked, "accept");
+
+      expect(receiver.status).toMatchObject({
+        kind: "asking",
+        questions: [
+          { farmName: replacement.farmName, kind: "replace-backup", savedAt: replacement.savedAt },
+        ],
+      });
+      const nextQuestion = questionId(receiver.status);
+      expect(nextQuestion).not.toBe(asked);
+      expect(localStorage.getItem(PROGRESS_KEY)).toBe(before);
+      expect(userState.farmSwitchBackup?.backup.progress.renown).toBe(12);
+      expect(stored().local.syncReceipt).toBeUndefined();
+
+      // The new question stays stable until its effect changes, and its own answer can apply.
+      receiver.refresh();
+      await flush();
+      expect(questionId(receiver.status)).toBe(nextQuestion);
+      await receiver.answer(nextQuestion, "accept");
+      expect(receiver.status.kind).toBe("up-to-date");
+      expect(userState.farmSwitchBackup?.farmName).toBe("Rosewood");
+      expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
+    },
+  );
+
+  it.each([false, true])(
+    "leaves no already-shown tell held in a hidden follower, deferred channel: %s (F16)",
+    async (defer) => {
+      const relay = fakeRelay(await envelope(4, saveBytes(SEASON), { fileName: OTHER_FARM_FILE }));
+      const { make } = await load(blob({ syncLane: FOLLOWING }, TRACKED), relay, {
+        channel: linkedChannels(defer),
+      });
+      const held: SyncTell[] = [];
+      const received = vi.fn((tell: SyncTell) => held.push(tell));
+      const leader: Receiver = make({
+        ontell: () => {
+          leader.tellsShown();
+        },
+      });
+      const follower = make({
+        ontell: received,
+        ontellsshown: () => {
+          held.length = 0;
+        },
+      });
+      leader.start();
+      follower.start();
+      await flush();
+
+      await vi.waitFor(() => {
+        expect(received).toHaveBeenCalledExactlyOnceWith({
+          applied: false,
+          kept: false,
+          switchedFrom: { farmName: "Rosewood" },
+        });
+      });
+      expect(held).toEqual([]);
+    },
+  );
+
   it("backs the outgoing farm up in the same write, & tells", async () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON), { fileName: OTHER_FARM_FILE }));
     const { receiver, tells, userState } = await load(
@@ -911,6 +1003,35 @@ describe("switching farms", () => {
 
 describe("the computer's own saves", () => {
   const computer = blob({ syncLane: { kind: "computer" } });
+
+  it.each([false, true])(
+    "retires an obsolete question when the latest file matches the receipt, queued answer: %s (F15)",
+    async (queuedAnswer) => {
+      const { receiver, userState } = await load(computer, fakeRelay());
+      receiver.start();
+      await flush();
+      const current = file(saveBytes(2 * SEASON, 100));
+      expect(await receiver.applyLocalSave(current)).toBe("applied");
+      expect(await receiver.applyLocalSave(file(saveBytes(SEASON, 10)))).toBe("ask");
+      const asked = questionId(receiver.status);
+      const before = localStorage.getItem(PROGRESS_KEY);
+      const writes = countWrites();
+      const skipped = receiver.applyLocalSave(current);
+      // An answer already queued behind the newest file cannot resurrect the old save either.
+      const answering = queuedAnswer ? receiver.answer(asked, "keep") : Promise.resolve();
+      expect(await skipped).toBe("skipped");
+      await answering;
+      expect(receiver.status.kind).toBe("up-to-date");
+      await receiver.answer(asked, "accept");
+      receiver.refresh();
+      await flush();
+      expect(receiver.status.kind).toBe("up-to-date");
+      expect(userState.lastSavePlaytime).toBe(100);
+      expect(userState.state.progress.reachedSeason).toBe("fall");
+      expect(localStorage.getItem(PROGRESS_KEY)).toBe(before);
+      expect(writes.count()).toBe(0);
+    },
+  );
 
   it("applies without the relay, then skips by the save's hash", async () => {
     const relay = fakeRelay();

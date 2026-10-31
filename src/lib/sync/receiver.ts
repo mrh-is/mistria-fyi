@@ -351,13 +351,14 @@ export function createReceiver({
         reportSettled();
         const tell = tellOf(outcome.result, outgoingFarm);
         if (tell) {
-          ontell?.(tell);
           post({ type: "tell", tell });
+          ontell?.(tell);
         }
         return outcome.kind;
       }
       case "skipped":
         pending = undefined;
+        answers = {};
         reportSettled();
         return outcome.kind;
       case "stale":
@@ -542,17 +543,21 @@ export function createReceiver({
     },
     answer,
     async applyLocalSave(file) {
-      let save: ReadSave;
-      try {
-        save = await readSaveFile(file);
-      } catch {
-        return "unreadable";
-      }
-      const stamp = stampOf(save);
-      if (receiptCovers(userState.syncReceipt, stamp.receipt)) return "skipped";
-      pending = { request: { ...stamp, wantsLane: (lane) => lane?.kind === "computer" }, save };
       let result: LocalSaveResult = "blocked";
       await enqueue(async () => {
+        let save: ReadSave;
+        try {
+          save = await readSaveFile(file);
+        } catch {
+          result = "unreadable";
+          return;
+        }
+        // Replace in arrival order, even when the writer skips this file by its receipt. That
+        // skip must also retire any older pending save & question before a queued answer runs.
+        pending = {
+          request: { ...stampOf(save), wantsLane: (lane) => lane?.kind === "computer" },
+          save,
+        };
         result = (await applyPending()) ?? "skipped";
       });
       return result;
