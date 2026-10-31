@@ -29,7 +29,7 @@ const GUARDED_PATHS = [
   {
     advice:
       "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
-    pattern: /(^|\/)docs\/superpowers\//,
+    pattern: /(^|\/)docs\/superpowers(?:\/|$)/,
   },
 ];
 
