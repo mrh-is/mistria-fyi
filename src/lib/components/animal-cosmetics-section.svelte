@@ -90,6 +90,7 @@
 </script>
 
 <AnimalSubcategory
+  factField="animalCosmetics"
   {areAllAnimalsComplete}
   completionCheck={hasCompletedCosmetic}
   hasDisplayableItem={hasDisplayableCosmetic}

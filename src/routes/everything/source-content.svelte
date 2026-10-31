@@ -187,6 +187,7 @@
                   !isConditionVisible(entry.visibility, userState.progressionState)}
                 <TrackerRow
                   category={entry.category}
+                  fact={entry.fact}
                   display={entry.questState === "obtained" && !spoileredRow
                     ? { mode: "obtained" }
                     : trackerRowDisplay({

@@ -98,6 +98,66 @@ describe("provenance", () => {
     });
   });
 
+  it("keeps a quest's obtained moment's source when another source finishes it", () => {
+    const key = `questStates/${ONE_REWARD_QUEST}`;
+    userState.mergeFromSave({ questStates: { [ONE_REWARD_QUEST]: "obtained" } }, { playtime: 5 });
+    expect(userState.provenanceOf(key)).toEqual({ playtime: 5, source: "save" });
+
+    const completion = userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    expect(userState.provenanceOf(key)).toEqual({
+      obtainedSource: "save",
+      playtime: 5,
+      source: "manual",
+    });
+
+    // Undoing the finish is a manual edit, so the slash is the player's now.
+    userState.undoQuestWithRecipes(ONE_REWARD_QUEST, completion);
+    expect(userState.provenanceOf(key)).toEqual({ playtime: 5, source: "manual" });
+  });
+
+  it("records no obtained source when one source obtains & finishes a quest", () => {
+    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+
+    expect(userState.provenanceOf(`questStates/${ONE_REWARD_QUEST}`)).toEqual({
+      source: "manual",
+    });
+  });
+
+  it("promotes an unknown fact a save agrees with, stamped with its playtime", () => {
+    userState.mergeFromSave({ almanac: new Set([TURNIP, POTATO]) }, { source: "unknown" });
+    expect(userState.provenanceOf("almanac/turnip")).toEqual({ source: "unknown" });
+
+    userState.mergeFromSave({ almanac: new Set([TURNIP]) }, { playtime: 5 });
+
+    expect(userState.provenanceOf("almanac/turnip")).toEqual({ playtime: 5, source: "save" });
+    expect(userState.provenanceOf("almanac/potato")).toEqual({ source: "unknown" });
+  });
+
+  it("doesn't promote a fact the save reports differently", () => {
+    const key = `questStates/${ONE_REWARD_QUEST}`;
+    const completed = { questStates: { [ONE_REWARD_QUEST]: "completed" as const } };
+    userState.mergeFromSave(completed, { source: "unknown" });
+
+    userState.mergeFromSave({ questStates: { [ONE_REWARD_QUEST]: "obtained" } }, { playtime: 5 });
+
+    expect(userState.provenanceOf(key)).toEqual({ source: "unknown" });
+  });
+
+  it("doesn't promote when a transfer agrees", () => {
+    userState.mergeFromSave({ mineFloor: 10 }, { source: "unknown" });
+    userState.mergeFromSave({ mineFloor: 10 }, { source: "unknown" });
+
+    expect(userState.provenanceOf("mineFloor")).toEqual({ source: "unknown" });
+  });
+
+  it("leaves a manual fact manual when a save agrees with it", () => {
+    userState.toggleAlmanacItem(TURNIP);
+    userState.mergeFromSave({ almanac: new Set([TURNIP]) }, { playtime: 5 });
+
+    expect(userState.provenanceOf("almanac/turnip")).toEqual({ source: "manual" });
+  });
+
   it("records default unlocks & everything recordInferred changes as inferred", () => {
     userState.markDefaultUnlocksComplete();
     const [defaultRecipe] = userState.state.progress.almanacRecipes;

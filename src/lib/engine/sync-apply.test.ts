@@ -356,6 +356,67 @@ const legacy = () =>
     },
   });
 
+describe("applySync: a quest's two moments", () => {
+  const key = `questStates/${STORY_QUEST}`;
+  const applyQuest = (state: SyncState, questState: string) =>
+    applied(
+      applySync(state, bundle({ questStates: { [STORY_QUEST]: questState } }, { playtime: 100 }), {
+        fresh: FRESH,
+      }),
+    ).state.history.provenance[key];
+
+  it("keeps the obtained moment's source when a save finishes a quest", () => {
+    const state = syncState({
+      provenance: { [key]: { source: "inferred" } },
+      questStates: { [STORY_QUEST]: "obtained" },
+    });
+
+    expect(applyQuest(state, "completed")).toEqual({
+      obtainedSource: "inferred",
+      playtime: 100,
+      source: "save",
+    });
+  });
+
+  it("counts an obtained quest with no record as unknown", () => {
+    const state = syncState({ questStates: { [STORY_QUEST]: "obtained" } });
+
+    expect(applyQuest(state, "completed")).toEqual({
+      obtainedSource: "unknown",
+      playtime: 100,
+      source: "save",
+    });
+  });
+
+  it("records none when a save finishes the quest a save obtained", () => {
+    const state = syncState({
+      provenance: { [key]: { playtime: 50, source: "save" } },
+      questStates: { [STORY_QUEST]: "obtained" },
+    });
+
+    expect(applyQuest(state, "completed")).toEqual({ playtime: 100, source: "save" });
+  });
+
+  it("leaves a manual finish alone when a save agrees, mixed mark included", () => {
+    const record: FactProvenance = { obtainedSource: "save", playtime: 50, source: "manual" };
+    const state = syncState({
+      provenance: { [key]: record },
+      questStates: { [STORY_QUEST]: "completed" },
+    });
+
+    expect(applyQuest(state, "completed")).toEqual(record);
+  });
+
+  it("clears the obtained source when promoting an agreeing unknown fact", () => {
+    const state = syncState({
+      provenance: { [key]: { obtainedSource: "manual", source: "unknown" } },
+      questStates: { [STORY_QUEST]: "completed" },
+    });
+
+    expect(applyQuest(state, "completed")).toEqual({ playtime: 100, source: "save" });
+  });
+});
+
 describe("applySync: facts from before provenance", () => {
   it("promotes agreeing facts to save facts & lets the save add", () => {
     const state = syncState({
