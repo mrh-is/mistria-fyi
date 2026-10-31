@@ -217,6 +217,18 @@ Evidence: [AGENTS.md](../AGENTS.md), [docs/agent-workflow.md](../docs/agent-work
 [docs/agent-reference.md](../docs/agent-reference.md),
 [.github/pull_request_template.md](../.github/pull_request_template.md).
 
+### [Same-name row variants](decisions/2026-10-30-same-name-row-variants.md)
+
+ID: 2026-10-30-same-name-row-variants. Status: Current.
+
+Almanac rows sharing a name within a category get a reviewed variant word from the game’s own
+descriptions. A set means visible rows (recipe entries), not the members of one entry.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/149#issuecomment-6452968696](https://github.com/mrh-is/mistria-fyi/issues/149#issuecomment-6452968696),
+[pipeline/src/overrides/item-variants.ts](../pipeline/src/overrides/item-variants.ts),
+[pipeline/src/overrides/item-variant-terms.ts](../pipeline/src/overrides/item-variant-terms.ts).
+
 ### [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md)
 
 ID: 2026-10-30-shared-edge-rate-rule. Status: Current.

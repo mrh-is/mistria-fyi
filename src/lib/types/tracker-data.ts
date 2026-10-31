@@ -73,6 +73,70 @@ export type Spell = TrackerEntity;
 /** A chest tier carries no data; its name lives in locale files. */
 export type TreasureChestTier = TrackerData["treasureChestTiers"][TreasureChestTierId];
 
+/**
+ * Words that tell same-named almanac rows apart, such as the six “Animated Clouds Window” rows.
+ * Each is a phrase from the game’s own descriptions, reviewed in
+ * `pipeline/src/overrides/item-variants.ts`, and displayed through a `variant_<key>` message.
+ */
+export const ITEM_VARIANTS = [
+  "aqua",
+  "black",
+  "blue",
+  "blue_and_yellow",
+  "brown",
+  "cherry",
+  "chocolate",
+  "cool_toned",
+  "cracked_purple",
+  "cream",
+  "dark_brown",
+  "dark_wood",
+  "double",
+  "gold",
+  "gold_accents",
+  "gray",
+  "green",
+  "light_brown",
+  "lightning",
+  "mocha",
+  "moon",
+  "oak",
+  "oak_and_brown",
+  "oak_and_green",
+  "oak_and_white",
+  "off_white",
+  "orange",
+  "orange_gourd",
+  "pink",
+  "pink_accents",
+  "pink_tinged",
+  "plain",
+  "purple",
+  "purple_blue",
+  "purple_blue_and_yellow",
+  "purple_framed",
+  "raindrop",
+  "red",
+  "sage",
+  "single",
+  "sparkly",
+  "stone_framed",
+  "strawberry",
+  "walnut",
+  "walnut_and_gold",
+  "walnut_and_green",
+  "walnut_and_orange",
+  "walnut_and_white",
+  "warm_toned",
+  "white",
+  "white_and_blue",
+  "white_and_gold",
+  "white_and_tan",
+  "white_goblet",
+  "wood_framed",
+  "yellow",
+] as const;
+export type ItemVariant = (typeof ITEM_VARIANTS)[number];
 export const SEASONS = ["fall", "spring", "summer", "winter"] as const;
 export type Season = (typeof SEASONS)[number];
 export const STORE_UPGRADE_ACTIONS = ["repair"] as const;
