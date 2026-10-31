@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,81 @@ import { describe, expect, it, vi } from "vitest";
 import { stopLint } from "./lint-agent-stop.js";
 
 describe("stop lint hook", () => {
+  it("lints a SubagentStop worktree instead of the parent and continues only once", () => {
+    const parent = realpathSync(mkdtempSync(join(tmpdir(), "agent-stop-parent-")));
+    const child = `${parent}-child`;
+    const git = (...args: string[]) => {
+      const result = spawnSync("git", args, { cwd: parent, encoding: "utf8" });
+      expect(result.status, result.stderr).toBe(0);
+    };
+    try {
+      git("init");
+      writeFileSync(
+        join(parent, "package.json"),
+        JSON.stringify({
+          scripts: {
+            lint: "node lint.cjs",
+            "lint:fix": "node lint.cjs",
+          },
+        }),
+      );
+      writeFileSync(
+        join(parent, "lint.cjs"),
+        'console.error("fixture lint error", process.cwd(), process.argv.slice(2)); process.exitCode = 1;',
+      );
+      git("add", ".");
+      git(
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.com",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "-m",
+        "base",
+      );
+      git("update-ref", "refs/remotes/origin/main", "HEAD");
+      git("worktree", "add", "--detach", child);
+      writeFileSync(join(parent, "parent.ts"), "parent change");
+      writeFileSync(join(child, "child.ts"), "child change");
+      for (const stop_hook_active of [false, true]) {
+        const result = spawnSync(
+          process.execPath,
+          [fileURLToPath(new URL("lint-agent-stop.ts", import.meta.url))],
+          {
+            cwd: parent,
+            encoding: "utf8",
+            env: { ...process.env, CLAUDE_PROJECT_DIR: parent },
+            input: JSON.stringify({
+              agent_id: "fixture-agent",
+              agent_transcript_path: "/unused/transcript.jsonl",
+              agent_type: "general-purpose",
+              cwd: child,
+              hook_event_name: "SubagentStop",
+              stop_hook_active,
+            }),
+          },
+        );
+        expect(result.status, result.stderr).toBe(0);
+        const output = JSON.parse(result.stdout) as {
+          decision?: string;
+          reason?: string;
+          systemMessage?: string;
+        };
+        expect(output.decision).toBe(stop_hook_active ? undefined : "block");
+        const message = output.reason ?? output.systemMessage;
+        expect(message).toContain("fixture lint error");
+        expect(message).toContain(child);
+        expect(message).toContain("child.ts");
+        expect(message).not.toContain("parent.ts");
+      }
+    } finally {
+      rmSync(parent, { force: true, recursive: true });
+      rmSync(child, { force: true, recursive: true });
+    }
+  });
+
   it("silently skips an unrelated repository", () => {
     const cwd = mkdtempSync(join(tmpdir(), "agent-stop-unrelated-"));
     try {

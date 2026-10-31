@@ -133,7 +133,9 @@ describe("Claude Code path guard", () => {
 
 describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", (file) => {
   const { hooks } = JSON.parse(readFileSync(file, "utf8")) as {
-    hooks: Partial<Record<string, { hooks: { command: string }[]; matcher?: string }[]>>;
+    hooks: Partial<
+      Record<string, { hooks: { command: string; onFailure?: string }[]; matcher?: string }[]>
+    >;
   };
   const find = (event: string, script: string) =>
     hooks[event]?.find((entry) => entry.hooks.some((hook) => hook.command.includes(script)));
@@ -156,8 +158,31 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
   it("registers read guards, stop lint, and subagent guidance", () => {
     expect(find("PreToolUse", "guard-generated-reads.ts")?.matcher).toBe("Read|Bash");
     expect(find("Stop", "lint-agent-stop.ts")).toBeDefined();
+    expect(find("SubagentStop", "lint-agent-stop.ts")).toBeDefined();
     expect(find("SubagentStart", "agent-subagent-start.ts")).toBeDefined();
     expect(find("PreToolUse", formatter)?.matcher).toBe("Bash");
+  });
+
+  it("registers matching policy guards, and only Claude guard failures block", () => {
+    expect(find("PreToolUse", "guard-agent-policy.ts")?.matcher).toBe("Bash");
+    const release = find("PreToolUse", "guard-release-version.ts");
+    expect(release).toBeDefined();
+    for (const tool of ["apply_patch", "Edit", "Write", "MultiEdit", "NotebookEdit", "Bash"]) {
+      expect(new RegExp(`^(?:${release?.matcher ?? ""})$`).test(tool)).toBe(true);
+    }
+    const guards = (hooks.PreToolUse ?? [])
+      .flatMap((entry) => entry.hooks)
+      .filter((hook) => hook.command.includes("guard-"));
+    expect(guards).toHaveLength(4);
+    for (const hook of guards) {
+      expect(hook.onFailure).toBe(file.startsWith(".claude") ? "block" : undefined);
+    }
+    const upkeep = Object.values(hooks)
+      .flatMap((entries) => entries ?? [])
+      .flatMap((entry) => entry.hooks)
+      .filter((hook) => !hook.command.includes("guard-"));
+    expect(upkeep.length).toBeGreaterThan(0);
+    for (const hook of upkeep) expect(hook.onFailure).toBeUndefined();
   });
 
   it("has exactly one formatting handler per event, so setup cannot race formatting", () => {

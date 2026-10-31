@@ -11,6 +11,8 @@ import { pinnedNodeMismatch, readPinnedNodeVersion } from "#scripts/lib/pinned-n
 const unguarded = new Map([
   ["scripts/guard-generated-paths.ts", "Claude edit-guard hook"],
   ["scripts/guard-generated-reads.ts", "Dependency-free read guard on the shell runtime"],
+  ["scripts/guard-agent-policy.ts", "Dependency-free policy guard on the shell runtime"],
+  ["scripts/guard-release-version.ts", "Dependency-free release guard on the shell runtime"],
   ["scripts/agent-tool-hook.ts", "Hook delegates formatter execution to pnpm’s pinned runtime"],
   ["scripts/lint-agent-stop.ts", "Hook delegates lint execution to pnpm’s pinned runtime"],
   ["scripts/agent-subagent-start.ts", "Dependency-free subagent context hook"],

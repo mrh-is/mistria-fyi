@@ -96,23 +96,19 @@ session limits) belong in each contributor’s user config.
 
 - Use pnpm only; the lockfile is pnpm’s. Don’t use `npm`, `npx`, `yarn`, `bun`, or `pnpx`.
 - Run Wrangler from the workspace: `pnpm exec wrangler <command>`, including `login`.
-- Never read or expose stored OAuth tokens.
+- Stored OAuth token reads are forbidden; the read guard covers the known gh & Wrangler files.
 - If a harness or hook refuses an edit, stop & report it. Never route around the refusal with shell
   writes, heredocs, `sed -i`, `perl -i`, or scripts.
-- Before adding or bumping a dependency:
-  1. Read [agent-reference.md](docs/agent-reference.md#package-commands).
-  2. Run `pnpm audit --audit-level=moderate`.
-  3. Inspect each flagged transitive dependency with `pnpm why`.
-
-  Don’t add a dependency tree with an unpatched advisory. An advisory that’s disputed or has no fix
-  needs a documented `auditConfig.ignoreGhsas` exception in `pnpm-workspace.yaml`.
+- Dependency commands inject audit guidance. Follow
+  [Package commands](docs/agent-reference.md#package-commands) before adding or bumping
+  dependencies.
 
 - The existing guards each enforce only the surface they name: guarded paths, attribution,
   permission parity, & shell rules. Hooks don’t replace policy, verification, or the harness’s
   consent prompts. Read [agent-reference.md](docs/agent-reference.md#enforcement-boundaries) before
   changing agent permissions or guarded paths.
-- Don’t unpack the full `assets.zip` without the user’s explicit approval. Read files from it
-  directly, or extract only the subtrees you need.
+- Inspect `assets.zip` entries or extract named subtrees. Full extraction needs user approval &
+  inherited `MISTRIA_ALLOW_FULL_ASSETS=1` (see “Policy guards” in agent-reference.md).
 - Before declaring the game assets unavailable, look in `pipeline/input/`. The “needs game
   installation” label alone doesn’t block a task.
 - Before pipeline work, read [pipeline/README.md](pipeline/README.md) & the “Asset inputs” section
@@ -141,9 +137,8 @@ session limits) belong in each contributor’s user config.
   strict protocol version.
 - Category pages compose layouts. Put shared or stateful concerns in focused components. Split a
   complex component by logical concern, even with one caller, so it’s easier to reason about.
-- `docs/superpowers/` holds historical plans, specs, & notes, and `.ignore` hides it from ripgrep.
-  Read a file there only when a task names it. Never revise that history for later changes; update
-  the current `docs/*.md` instead.
+- `docs/superpowers/` is guarded history, hidden from ripgrep by `.ignore`. Read it only when a task
+  names a file; update the current `docs/*.md` for later changes.
 - Before implementation, read [agent-reference.md](docs/agent-reference.md#code-conventions), which
   covers naming, imports, path handling, Svelte, lint, formatting, & colocated tests.
 - Read these guides when your work touches their area:
@@ -201,15 +196,15 @@ session limits) belong in each contributor’s user config.
 - The “Attribution” check covers commits, PR bodies (including the preview URL), & labels. It
   doesn’t check issues or comments.
 - Commit, push, & open an attributed PR. Its body includes `Closes #N` & the branch-preview URL.
-- Pass a multiline body with `--body-file`, never with escaped `\n`, and re-read the result.
+- GitHub body guards require `--body-file` for multiline text & a final `Agent:` line. Re-read the
+  published result.
 - An open PR’s state is your merge recommendation. Keep it a draft while any manual step, question,
   gap, or review remains. Mark it ready only when you would merge it yourself, and return it to
   draft if that changes.
 - Watch CI & fix failures on the branch. Don’t merge around failing CI. If no “CI” run starts a few
   minutes after you open the PR, follow the workflow’s empty-commit recovery.
-- Don’t change `package.json`’s version or create version tags unless you’re explicitly cutting a
-  release. Get the user’s approval of the release version first. Production versions come from Git
-  metadata.
+- Release metadata is guarded. For an approved release version, the user enables inherited
+  `MISTRIA_RELEASE=1`. Production versions come from Git metadata.
 
 ## Tooling failures
 
