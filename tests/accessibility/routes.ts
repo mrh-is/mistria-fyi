@@ -19,4 +19,5 @@ export const accessibilityRoutes = [
   { name: "Data management", path: "/data" },
   { name: "About", path: "/about" },
   { name: "Privacy", path: "/privacy" },
+  { name: "Sync your save file", path: "/sync" },
 ] as const satisfies readonly AccessibilityRoute[];

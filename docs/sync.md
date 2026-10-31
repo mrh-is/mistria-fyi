@@ -127,9 +127,10 @@ The PC also makes a random 256-bit write token. The key & token stay on the PC i
 device-only `local` section, which exports & restores leave out. The link alone can read; only the
 token writes.
 
-Version 1 pins HKDF-SHA-256 & AES-GCM, with a random 96-bit nonce per envelope & the protocol
-version & mailbox ID as authenticated data, with no negotiation. A different suite means a new
-protocol version.
+Version 1 pins HKDF-SHA-256 (empty salt) & AES-GCM, with a random 96-bit nonce per envelope & the
+protocol version, mailbox ID, & counter as authenticated data, with no negotiation. A different
+suite means a new protocol version. The byte layouts are in
+[the format record](decisions/2026-10-30-follow-envelope-format.md).
 
 ### Mailboxes
 
@@ -198,9 +199,12 @@ One Durable Object per mailbox ID.
 
 ## Following
 
-Built in #133. Planned location (not yet created): src/lib/sync/follow.ts. The UI is in
-[sync-setup.md](sync-setup.md) (#131). See
-[the decision record](decisions/2026-10-28-sync-follow-the-save.md).
+Built in #133: `src/lib/sync/follow.ts` (keys, link, envelope, & relay client) &
+`src/lib/sync/sharing.ts` (the writes around them). The UI is in [sync-setup.md](sync-setup.md)
+(#131), on `/sync` & Data's sync card. See
+[the decision record](decisions/2026-10-28-sync-follow-the-save.md); the envelope's byte layout is
+in [the format record](decisions/2026-10-30-follow-envelope-format.md). Until launch (#291), every
+sync entry point is hidden on the production site behind `src/lib/sync/enabled.ts`.
 
 - **Lanes.** Each device is in exactly one lane: its save is on this computer (the courier), its
   save is on another device (a follower), or it tracks by hand, the default. Joining a syncing lane

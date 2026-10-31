@@ -781,14 +781,20 @@ describe("this device's local section", () => {
     expect(JSON.parse(tab.userState.exportBackup())).not.toHaveProperty("local");
   });
 
-  it("is kept by a progress reset & cleared by a full reset", async () => {
+  it("is kept by a progress reset, all but the receipt, & cleared by a full reset", async () => {
     const { storage } = recordingStorage({ [PROGRESS_KEY]: buildState(1, { local }) });
     vi.stubGlobal("localStorage", storage);
 
     const tab = await openTab();
     tab.userState.resetProgress();
     await settle(0);
-    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({ local });
+    // The receipt goes, so the latest save file applies again (docs/sync.md § Following).
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      local: { farmSwitchBackup: local.farmSwitchBackup },
+    });
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).not.toHaveProperty(
+      "local.syncReceipt",
+    );
 
     tab.userState.resetAll();
     await settle(0);

@@ -184,6 +184,18 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048](https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048),
 [src/lib/presentation/source-groups.ts](../src/lib/presentation/source-groups.ts).
 
+### [Follow envelope format & the sync switch](decisions/2026-10-30-follow-envelope-format.md)
+
+ID: 2026-10-30-follow-envelope-format. Status: Current.
+
+Version 1 envelopes authenticate a fixed 26-byte additional-data layout & carry a length-prefixed
+JSON header before the pruned save; sync stays behind one build-time switch until launch.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/133](https://github.com/mrh-is/mistria-fyi/issues/133),
+[src/lib/sync/follow.ts](../src/lib/sync/follow.ts),
+[src/lib/sync/enabled.ts](../src/lib/sync/enabled.ts).
+
 ### [Provenance marks: one X, four tools](decisions/2026-10-30-provenance-marks.md)
 
 ID: 2026-10-30-provenance-marks. Status: Current.
