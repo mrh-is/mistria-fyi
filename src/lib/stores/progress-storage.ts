@@ -288,19 +288,41 @@ const PendingRetireSchema = v.object({
   token: SyncSecretSchema,
 });
 
+/** What this device last applied; see `receiptCovers` in `sync-apply.ts`. */
+const SyncReceiptSchema = v.object({
+  counter: v.optional(v.pipe(v.number(), v.safeInteger(), v.minValue(1))),
+  hash: SyncSecretSchema,
+  mailboxId: v.optional(v.pipe(v.string(), v.regex(/^[\w-]{22}$/u))),
+});
+
+/** The last save file's time & date, & the gaps learned between saves; see `sync-freshness.ts`. */
+const SyncFreshnessSchema = v.object({
+  gameDate: v.optional(
+    v.object({
+      day: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+      season: v.picklist(SEASONS),
+      year: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+    }),
+  ),
+  gaps: v.array(v.pipe(FiniteNumberSchema, v.minValue(0))),
+  modified: v.pipe(FiniteNumberSchema, v.minValue(0)),
+});
+
 /**
  * This device's own data under the progress key, which never leaves it: exports leave it out and
  * a restore keeps this device's. Its slots are for sync: `syncReceipt` (what this device last
- * applied), `farmSwitchBackup` (progress saved before switching farms), `syncLane` (the lane & its
- * key), & `syncPendingRetires` (codes still to retire). The receipt's & backup's shapes belong to
- * the sync work that fills them, so they're carried through as stored, unknown keys included. A
- * malformed lane or retire list is dropped rather than quarantining progress.
+ * applied), `syncFreshness` (when the last save came), `farmSwitchBackup` (progress saved before
+ * switching farms), `syncLane` (the lane & its key), & `syncPendingRetires` (codes still to retire).
+ * The backup is carried through as stored & read with {@link readFarmSwitchBackup}. A malformed lane,
+ * retire list, receipt, or freshness is dropped rather than quarantining progress; losing a receipt
+ * only applies the latest save again.
  */
 const DeviceLocalSchema = v.looseObject({
   farmSwitchBackup: v.optional(v.unknown()),
+  syncFreshness: v.fallback(v.optional(SyncFreshnessSchema), undefined),
   syncLane: v.fallback(v.optional(SyncLaneSchema), undefined),
   syncPendingRetires: v.fallback(v.optional(v.array(PendingRetireSchema)), undefined),
-  syncReceipt: v.optional(v.unknown()),
+  syncReceipt: v.fallback(v.optional(SyncReceiptSchema), undefined),
 });
 export type DeviceLocalState = v.InferOutput<typeof DeviceLocalSchema>;
 
@@ -750,6 +772,8 @@ export interface FarmSwitchBackup {
   /** A backup of the outgoing farm, restorable as is. It never holds a `local` section itself. */
   backup: SerializedState;
   farmName: null | string;
+  /** When the switch happened, in Unix milliseconds. */
+  savedAt: number;
 }
 
 /**
@@ -762,14 +786,33 @@ export function serializeFarmSwitch(
   next: ProgressSnapshot,
   outgoing: ProgressSnapshot,
   local: DeepReadonly<DeviceLocalState>,
+  savedAt: number = Date.now(),
 ): null | string {
   const backup = serializedState(outgoing);
   if (readProgressBlob(JSON.stringify(backup), "strict").kind !== "ok") return null;
   const farmSwitchBackup: FarmSwitchBackup = {
     backup,
     farmName: outgoing.lastImport?.farmName ?? null,
+    savedAt,
   };
   return serializeStoredProgress(next, { ...local, farmSwitchBackup });
+}
+
+const FarmSwitchBackupSchema = v.object({
+  backup: v.looseObject({ version: VersionSchema }),
+  farmName: v.nullable(v.string()),
+  savedAt: FiniteNumberSchema,
+});
+
+/**
+ * The farm-switch backup in a `local` section, or `undefined` when it holds none it can offer. A
+ * backup from a newer build still reads here; restoring it reports that it can't be restored.
+ */
+export function readFarmSwitchBackup(
+  local: DeepReadonly<DeviceLocalState>,
+): FarmSwitchBackup | undefined {
+  const parsed = v.safeParse(FarmSwitchBackupSchema, local.farmSwitchBackup);
+  return parsed.success ? (parsed.output as unknown as FarmSwitchBackup) : undefined;
 }
 
 /**

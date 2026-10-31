@@ -334,8 +334,7 @@ of most of these pieces to borrow from.
 
 Keys are new inlang messages. `{farmer}`, `{farm}`, `{time}`, `{days}`, `{browser}`, `{status}`, &
 `{url}` are parameters; `_device` variants use inlang’s `match` on computer or phone. Text in
-parentheses after a button is its subtitle. Line breaks in a body are paragraphs. Apply-time copy
-(the farm question, “We saved a backup of {old farm}”) belongs to #135.
+parentheses after a button is its subtitle. Line breaks in a body are paragraphs.
 
 ### Getting started
 
@@ -453,6 +452,7 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_panel_farmer`       | Farmer                                                                                                                                                                                           |
 | `sync_panel_farm`         | Farm                                                                                                                                                                                             |
 | `sync_panel_code`         | Your code                                                                                                                                                                                        |
+| `sync_panel_settings`     | Sync & data settings                                                                                                                                                                             |
 | `sync_data_intro`         | Sync your save file, or import, back up, or reset your Field Guide progress.                                                                                                                     |
 | `sync_status_keep_open`   | Keep this tab open while you play so we can sync your save file.                                                                                                                                 |
 | `sync_status_gap`         | Haven’t heard from your game in {days} days                                                                                                                                                      |
@@ -495,6 +495,50 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_update_computer`    | The tracker on your computer needs a refresh to keep your save file syncing.                                                                                                                     |
 | `sync_update_here`        | This tracker needs a refresh to keep your save file syncing.                                                                                                                                     |
 | `sync_blocked`            | Before we can sync your save file, this device’s data needs a look. Head to Data to sort it out.                                                                                                 |
+
+### Applying a save file
+
+Written with #135. Each question is a tag dialog; “Not now” (`sync_question_later`), or closing it,
+keeps the status button’s dot & leaves `sync_question_waiting` on Home & in the panel, with
+`sync_question_open` to bring it back. Fact questions name the tracker category they’re about, since
+one question can cover many facts.
+
+| Key                               | Text                                                                                                                                                              |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sync_question_waiting`           | Your save file has a question for you. Nothing changes until you answer.                                                                                          |
+| `sync_question_open`              | Answer it                                                                                                                                                         |
+| `sync_question_later`             | Not now                                                                                                                                                           |
+| `sync_farm_question_title`        | Is this the farm you’ve been tracking?                                                                                                                            |
+| `sync_farm_question_body`         | This save file is for {farm}, but we can’t tell which farm the progress here belongs to.                                                                          |
+| `sync_farm_question_body_unnamed` | We found a farm in this save file, but we can’t tell which farm the progress here belongs to.                                                                     |
+| `sync_farm_question_same`         | Yep, same farm                                                                                                                                                    |
+| `sync_farm_question_new`          | Nope, it’s a new farm                                                                                                                                             |
+| `sync_older_title`                | Go back to an older save file?                                                                                                                                    |
+| `sync_older_body`                 | This save file has less playtime than the last one we read, so it looks like you loaded an older save. Anything you checked off by hand sticks around either way. |
+| `sync_older_accept`               | Go back to it                                                                                                                                                     |
+| `sync_older_keep`                 | Keep what’s here                                                                                                                                                  |
+| `sync_facts_title`                | Your save file sees this differently                                                                                                                              |
+| `sync_facts_disagrees`            | {field}: your save file doesn’t match what’s on this device, and we can’t tell which is newer.                                                                    |
+| `sync_facts_level`                | {field}: your save file has lower levels than this device.                                                                                                        |
+| `sync_facts_removals`             | {field}: your save file would take back a lot at once. That can happen after a game update, so we wanted to check.                                                |
+| `sync_facts_accept`               | Use the save file                                                                                                                                                 |
+| `sync_facts_keep`                 | Keep mine                                                                                                                                                         |
+| `sync_field_farm`                 | Your farm                                                                                                                                                         |
+| `sync_replace_title`              | Only one farm backup fits                                                                                                                                         |
+| `sync_replace_body`               | This save file is a different farm, so we’ll back up the one here. That replaces your backup of {farm}, from {date}.                                              |
+| `sync_replace_save`               | Save the old one first                                                                                                                                            |
+| `sync_replace_confirm`            | Replace it                                                                                                                                                        |
+| `sync_switch_failed_title`        | We didn’t switch farms                                                                                                                                            |
+| `sync_switch_failed_body`         | Your progress is safe! This save file is a different farm, but we couldn’t back up the one here, so nothing changed. We’ll try again with your next save file.    |
+| `sync_write_failed_title`         | We couldn’t store your latest save file                                                                                                                           |
+| `sync_write_failed_body`          | Your progress is safe! This device wouldn’t let us store it. It might be out of space. We’ll try again with your next save file, or you can try now.              |
+| `sync_tell_applied`               | Your latest save file changed a few things here.                                                                                                                  |
+| `sync_tell_kept`                  | We kept a few things you checked off by hand that your save file sees differently.                                                                                |
+| `sync_tell_switched`              | New farm! We saved a backup of {farm}. Restore it any time from Data.                                                                                             |
+| `sync_backup_named`               | Backup of {farm}, from {date}                                                                                                                                     |
+| `sync_backup_restore_title`       | Restore this backup?                                                                                                                                              |
+| `sync_backup_restore_body`        | It replaces what’s on this device. You’ll stay synced, so your next save file still applies with the usual rules.                                                 |
+| `sync_backup_restore_confirm`     | Restore it                                                                                                                                                        |
 
 ### The save file can’t be read
 

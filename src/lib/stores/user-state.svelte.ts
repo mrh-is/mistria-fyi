@@ -24,6 +24,8 @@ import {
 } from "#lib/engine/provenance.js";
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
 import { applyEngagementCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
+import { applySync, receiptCovers } from "#lib/engine/sync-apply.js";
+import { nextFreshness } from "#lib/engine/sync-freshness.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
@@ -35,7 +37,9 @@ import {
   backfillAnimalMaps,
   emptyProgressHistory,
   emptyRetainedProgress,
+  readFarmSwitchBackup,
   readProgressBlob,
+  serializeFarmSwitch,
   serializeProgress,
   serializeStoredProgress,
   withoutDeviceLocal,
@@ -47,6 +51,7 @@ import {
   QUARANTINE_STORAGE_KEY,
 } from "./storage-keys.js";
 
+import type { SaveExtraction } from "#lib/engine/import-save.js";
 import type { ProgressContext } from "#lib/engine/progress.js";
 import type {
   FactProvenance,
@@ -54,6 +59,8 @@ import type {
   ProvenanceSource,
   Resolution,
 } from "#lib/engine/provenance.js";
+import type { SyncAnswers, SyncQuestion, SyncReceipt, SyncResult } from "#lib/engine/sync-apply.js";
+import type { GameDate, SyncFreshness } from "#lib/engine/sync-freshness.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
@@ -87,6 +94,7 @@ import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 import type {
   DeviceLocalState,
+  FarmSwitchBackup,
   LoadedProgress,
   ProgressSnapshot,
   RetainedProgress,
@@ -101,6 +109,7 @@ type WriteIntent =
       kind: "staged";
       lane: SyncLane;
       staged: Omit<LoadedProgress, "local">;
+      stamp?: SyncApplyStamp;
     }
   | {
       /** What `json` builds on: the stored value this tab last read, or a pending explicit write. */
@@ -121,6 +130,12 @@ type WriteIntent =
        * isn't what the change expected (another tab changed the lane or code), so nothing is written.
        */
       update: (stored: DeepReadonly<DeviceLocalState>) => DeviceLocalState | undefined;
+    }
+  | {
+      kind: "sync";
+      request: SyncApplyRequest;
+      /** Reports what the write did; left unset, the store was blocked before it could look. */
+      settle: (outcome: SyncApplyOutcome) => void;
     };
 
 /** The browser's Web Locks, where it has them; absent in old browsers & insecure contexts. */
@@ -263,6 +278,42 @@ export interface SyncedSave {
   playtime: number | undefined;
 }
 
+/** What an applied save leaves in `local`: its receipt & when it came. */
+export interface SyncApplyStamp {
+  gameDate: GameDate | undefined;
+  modified: number;
+  receipt: SyncReceipt;
+}
+
+/** A save to apply through the single write path, with the answers given so far. */
+export interface SyncApplyRequest extends SyncApplyStamp {
+  answers: SyncAnswers;
+  extraction: SaveExtraction;
+  metadata: SaveImportMetadata;
+  /** The lane this save belongs to. Any other stored lane (stopped, or another code) refuses it. */
+  wantsLane: (lane: DeepReadonly<SyncLane> | undefined) => boolean;
+}
+
+/** {@link SyncQuestion}s, & the one question the write itself asks before it replaces a backup. */
+export type SyncApplyQuestion =
+  | SyncQuestion
+  | { farmName: null | string; id: string; kind: "replace-backup"; savedAt: number };
+
+/**
+ * What a sync apply did. Only `applied` wrote anything:
+ *
+ * - `ask`: nothing changes until these are answered.
+ * - `blocked`: the store is quarantined or holds a newer build's data.
+ * - `skipped`: the receipt already covers this save.
+ * - `stale`: the stored lane no longer wants this save.
+ * - `switch-failed`: another farm's save, whose backup couldn't be written, so no switch happened.
+ * - `write-failed`: storage refused the write.
+ */
+export type SyncApplyOutcome =
+  | { kind: "applied"; result: SyncResult }
+  | { kind: "ask"; questions: SyncApplyQuestion[] }
+  | { kind: "blocked" | "skipped" | "stale" | "switch-failed" | "write-failed" };
+
 /** The code a computer lane shares: its key & the write token only that device holds. */
 export type SharedCode = NonNullable<Extract<SyncLane, { kind: "computer" }>["code"]>;
 
@@ -276,6 +327,17 @@ function emptyLoadedProgress(): Omit<LoadedProgress, "local"> {
     progress: createDefaultProgress(),
     retained: emptyRetainedProgress(),
     worldState: createDefaultWorldState(),
+  };
+}
+
+/** The `local` slots an applied save advances, which only an applying write may set. */
+function stampedLocal(
+  previous: DeviceLocalState["syncFreshness"],
+  { gameDate, modified, receipt }: SyncApplyStamp,
+): Pick<DeviceLocalState, "syncFreshness" | "syncReceipt"> {
+  return {
+    syncFreshness: nextFreshness(previous, modified, gameDate),
+    syncReceipt: { ...receipt },
   };
 }
 
@@ -446,7 +508,8 @@ function createUserState() {
         return false;
       }
       if (read?.kind === "unreadable") {
-        if (!trySetItem(QUARANTINE_STORAGE_KEY, stored)) {
+        // A sync apply never takes manual import's way past unreadable data.
+        if (intent.kind === "sync" || !trySetItem(QUARANTINE_STORAGE_KEY, stored)) {
           quarantine(stored);
           return false;
         }
@@ -456,6 +519,7 @@ function createUserState() {
 
     if (intent.kind === "local") return writeLocalPatch(intent.update, stored, read);
     if (intent.kind === "staged") return writeStaged(intent, stored, read);
+    if (intent.kind === "sync") return writeSyncApply(intent, stored);
 
     let json = serialize();
     if (intent.kind !== "auto-save") {
@@ -602,8 +666,17 @@ function createUserState() {
   ): boolean {
     if (!intent.guard()) return false;
     const storedLocal = read?.kind === "ok" ? read.loaded.local : local;
-    const { syncLane: _lane, syncReceipt: _receipt, ...kept } = storedLocal;
-    const nextLocal: DeviceLocalState = { ...kept, syncLane: intent.lane };
+    const {
+      syncFreshness: _freshness,
+      syncLane: _lane,
+      syncReceipt: _receipt,
+      ...kept
+    } = storedLocal;
+    const nextLocal: DeviceLocalState = {
+      ...kept,
+      ...(intent.stamp && stampedLocal(undefined, intent.stamp)),
+      syncLane: intent.lane,
+    };
     const json = serializeStoredProgress(intent.staged, nextLocal);
     if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
       reportStorageUnavailable();
@@ -615,6 +688,97 @@ function createUserState() {
     local = nextLocal;
     lastKnownStoredValue = json;
     _persistenceFailureGeneration = 0;
+    return true;
+  }
+
+  /**
+   * The body of a sync apply, inside the lock: settles the save against the progress as it stands
+   * now, so a question whose effect changed while it waited comes back with a new ID, & writes the
+   * result, the receipt, & any farm-switch backup in one write. Nothing here unblocks persistence:
+   * {@link writeProgress} has already refused a quarantined store or a newer build's data.
+   */
+  function writeSyncApply(
+    { request, settle }: Extract<WriteIntent, { kind: "sync" }>,
+    stored: null | string,
+  ): boolean {
+    // Another tab's value is adopted first, as an auto-save adopts it; otherwise this tab's own
+    // unsaved edits are part of what the save is settled against.
+    if (stored !== null && stored !== lastKnownStoredValue) applyStorageValue(stored);
+    const current = readProgressBlob(serialize(), "repair");
+    if (current.kind !== "ok") {
+      settle({ kind: "write-failed" });
+      return false;
+    }
+    if (!request.wantsLane(local.syncLane)) {
+      settle({ kind: "stale" });
+      return false;
+    }
+    if (receiptCovers(local.syncReceipt, request.receipt)) {
+      settle({ kind: "skipped" });
+      return false;
+    }
+
+    const base = current.loaded;
+    const empty = emptyLoadedProgress();
+    const outcome = applySync(
+      { farm: base.lastImport?.identity ?? null, history: base.history, progress: base.progress },
+      { extraction: request.extraction, farm: request.metadata.identity },
+      {
+        answers: request.answers,
+        fresh: { farm: null, history: empty.history, progress: empty.progress },
+      },
+    );
+    if (outcome.kind === "ask") {
+      settle(outcome);
+      return false;
+    }
+
+    const { result } = outcome;
+    const replaced = result.farmSwitch ? readFarmSwitchBackup(local) : undefined;
+    if (replaced) {
+      const id = `replace-backup:${request.metadata.identity.saveNumber ?? "unnumbered"}`;
+      if (request.answers[id] !== "accept") {
+        const { farmName, savedAt } = replaced;
+        settle({ kind: "ask", questions: [{ farmName, id, kind: "replace-backup", savedAt }] });
+        return false;
+      }
+    }
+
+    const next: ProgressSnapshot = {
+      history: result.state.history,
+      // Keeping current progress applies nothing from the older save, its names included.
+      lastImport:
+        result.rollback === "declined"
+          ? base.lastImport
+          : { ...request.metadata, identity: result.state.farm ?? request.metadata.identity },
+      progress: result.state.progress,
+      retained: result.farmSwitch ? empty.retained : base.retained,
+      worldState: result.farmSwitch ? empty.worldState : base.worldState,
+    };
+    const nextLocal: DeviceLocalState = { ...local, ...stampedLocal(local.syncFreshness, request) };
+    const built = result.farmSwitch
+      ? serializeFarmSwitch(next, base, nextLocal)
+      : serializeStoredProgress(next, nextLocal);
+    const failure = result.farmSwitch ? "switch-failed" : "write-failed";
+    const written = built === null ? undefined : readProgressBlob(built, "repair");
+    if (written?.kind !== "ok") {
+      settle({ kind: failure });
+      return false;
+    }
+    // Written as memory will serialize it, so the auto-save finds nothing left to write.
+    const json = serializeStoredProgress(written.loaded, written.loaded.local);
+    if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
+      reportStorageUnavailable();
+      settle({ kind: failure });
+      return false;
+    }
+    clearPendingSave();
+    pendingExplicitJson = undefined;
+    replaceProgress(written.loaded);
+    local = written.loaded.local;
+    lastKnownStoredValue = json;
+    _persistenceFailureGeneration = 0;
+    settle({ kind: "applied", result });
     return true;
   }
 
@@ -846,7 +1010,34 @@ function createUserState() {
     });
   }
 
+  /** {@link restoreBackup}'s body, so the farm-switch backup restores the same way. */
+  function restoreBackupJson(json: string): BackupRestoreResult {
+    const result = readProgressBlob(json, "strict");
+    if (result.kind === "newer") return { error: "newer-version", ok: false };
+    if (result.kind === "unreadable") return { error: result.error, ok: false };
+    replaceProgress(result.loaded);
+    enablePersistenceAfterExplicitReplace();
+    writeExplicitProgress();
+    return { ok: true };
+  }
+
   return {
+    /**
+     * Applies a synced save in one immediate write: the settled progress, the receipt, & any
+     * farm-switch backup land together or not at all, so the receipt advances only here. It never
+     * unblocks a quarantined store or a newer build's data.
+     */
+    async applySyncedSave(request: SyncApplyRequest): Promise<SyncApplyOutcome> {
+      const settled: { outcome: SyncApplyOutcome } = { outcome: { kind: "blocked" } };
+      await requestProgressWrite({
+        kind: "sync",
+        request,
+        settle: (outcome) => {
+          settled.outcome = outcome;
+        },
+      });
+      return settled.outcome;
+    },
     /** Cycles the quest's state, completing its recipe rewards on the obtained-to-completed step. */
     completeQuestWithRecipes(id: QuestId): QuestCompletion {
       return track(
@@ -904,6 +1095,10 @@ function createUserState() {
         if (value !== null) return withoutDeviceLocal(value);
       }
       return serializeProgress(snapshot());
+    },
+    /** The backup kept from the last farm switch, if there is one to offer. */
+    get farmSwitchBackup(): FarmSwitchBackup | undefined {
+      return readFarmSwitchBackup(local);
     },
     get hasAnyProgress(): boolean {
       return hasAnyProgress;
@@ -1048,14 +1243,15 @@ function createUserState() {
      * preferences & `local` section are kept, and a backup never brings one in. A backup from a
      * newer build is refused, never partly read.
      */
-    restoreBackup(json: string): BackupRestoreResult {
-      const result = readProgressBlob(json, "strict");
-      if (result.kind === "newer") return { error: "newer-version", ok: false };
-      if (result.kind === "unreadable") return { error: result.error, ok: false };
-      replaceProgress(result.loaded);
-      enablePersistenceAfterExplicitReplace();
-      writeExplicitProgress();
-      return { ok: true };
+    restoreBackup: restoreBackupJson,
+    /**
+     * Restores the farm-switch backup like any backup; it stays in place, so restoring it again
+     * still works until the next farm switch replaces it.
+     */
+    restoreFarmSwitchBackup(): BackupRestoreResult {
+      const kept = readFarmSwitchBackup(local);
+      if (!kept) return { error: "invalid-fields", ok: false };
+      return restoreBackupJson(JSON.stringify(kept.backup));
     },
     setAvailabilityWindows(windows: readonly AvailabilityWindow[]) {
       state.availabilityWindows = AVAILABILITY_WINDOWS.filter((window) => windows.includes(window));
@@ -1166,13 +1362,14 @@ function createUserState() {
     /**
      * Starts a syncing lane: erases progress & history, applies the lane's first save, & records
      * the lane, all in one write, so a setup that never gets this far leaves nothing behind. Any old
-     * receipt & lane go; the farm-switch backup & pending retires stay. Resolves with whether
-     * the write landed.
+     * receipt & lane go, replaced by `stamp`'s; the farm-switch backup & pending retires stay.
+     * Resolves with whether the write landed.
      */
     startSyncLane(
       lane: SyncLane,
       save: SyncedSave,
       stillWanted: () => boolean = () => true,
+      stamp?: SyncApplyStamp,
     ): Promise<boolean> {
       // Built aside from live state, which stays untouched until the write lands, so a lane start
       // that's cancelled or can't be stored never erases anything, even in a later save.
@@ -1192,6 +1389,7 @@ function createUserState() {
         guard: stillWanted,
         kind: "staged",
         lane: $state.snapshot(lane),
+        ...(stamp ? { stamp } : {}),
         staged,
       });
     },
@@ -1209,7 +1407,12 @@ function createUserState() {
         const storedCode = lane?.kind === "computer" ? lane.code?.key : undefined;
         if (storedCode !== stopped?.code.key) return undefined;
         const current = $state.snapshot(stored) as DeviceLocalState;
-        const { syncLane: _lane, syncReceipt: _receipt, ...kept } = current;
+        const {
+          syncFreshness: _freshness,
+          syncLane: _lane,
+          syncReceipt: _receipt,
+          ...kept
+        } = current;
         return {
           ...kept,
           syncPendingRetires: withRetire(kept.syncPendingRetires, stopped?.retire),
@@ -1232,6 +1435,10 @@ function createUserState() {
     get syncBlocked(): boolean {
       return !_persistenceReady;
     },
+    /** When the last save came & the gaps learned between saves, while syncing. */
+    get syncFreshness(): DeepReadonly<SyncFreshness> | undefined {
+      return local.syncFreshness;
+    },
     /** This device's sync lane, or `undefined` while it tracks by hand. */
     get syncLane(): DeepReadonly<SyncLane> | undefined {
       return local.syncLane;
@@ -1239,6 +1446,10 @@ function createUserState() {
     /** Codes this device stopped sharing that the relay hasn't confirmed retired yet. */
     get syncPendingRetires(): readonly DeepReadonly<PendingRetire>[] {
       return local.syncPendingRetires ?? [];
+    },
+    /** What this device last applied, which only {@link applySyncedSave} & a lane start advance. */
+    get syncReceipt(): DeepReadonly<SyncReceipt> | undefined {
+      return local.syncReceipt;
     },
     toggleAlmanacItem(id: ItemId) {
       toggleFact("almanac", state.progress.almanac, id);

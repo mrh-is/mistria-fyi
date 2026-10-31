@@ -1,6 +1,7 @@
 <script lang="ts">
   import IconFilter from "@tabler/icons-svelte-runes/icons/filter";
   import IconMessageReport from "@tabler/icons-svelte-runes/icons/message-report";
+  import IconPlugConnected from "@tabler/icons-svelte-runes/icons/plug-connected";
   import IconRotate from "@tabler/icons-svelte-runes/icons/rotate";
   import IconSearch from "@tabler/icons-svelte-runes/icons/search";
   import IconSettings from "@tabler/icons-svelte-runes/icons/settings";
@@ -13,6 +14,7 @@
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
   import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
+  import SyncStatusPanel from "#lib/components/sync/sync-status-panel.svelte";
   import { Input } from "#lib/components/ui/input/index.js";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -20,13 +22,15 @@
   import { deLocalizeHref } from "#lib/paraglide/runtime.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncEnabled } from "#lib/sync/enabled.js";
+  import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
   import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
   import type { PageMetadata } from "#lib/data/page-metadata.js";
 
-  type ActivePanel = "feedback" | "settings" | "visibility" | null;
+  type ActivePanel = "feedback" | "settings" | "sync" | "visibility" | null;
 
   // The root layout resolves `metadata` (including the error-page fallback) and passes it down, so
   // this never reads `page.data.metadata`, which is absent when no `+page.ts` load ran.
@@ -37,6 +41,17 @@
   let pathname = $derived(deLocalizeHref(page.url.pathname));
   let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);
   let toolbarAccent = $derived(metadata.accent);
+
+  let syncing = $derived(syncEnabled && userState.syncLane !== undefined);
+  let syncSpeaksUp = $derived(syncReceiver.needsALook || syncReceiver.gapDays !== undefined);
+  let syncStatusLabel = $derived.by(() => {
+    if (syncReceiver.status.kind === "unreadable") return m.sync_status_unreadable();
+    if (syncReceiver.needsALook) return m.sync_status_look();
+    if (syncReceiver.gapDays !== undefined) return m.sync_status_late();
+    if (syncReceiver.status.kind === "paused") return m.sync_status_paused();
+    if (syncReceiver.status.kind === "unreachable") return m.sync_status_offline();
+    return m.sync_status_up_to_date();
+  });
 
   let activePanel = $state<ActivePanel>(null);
   let panelElement = $state<HTMLElement | null>(null);
@@ -240,6 +255,26 @@
           >
             <IconMessageReport class="size-5" />
           </button>
+          {#if syncing}
+            <div class="sync-tool">
+              {#if syncReceiver.gapDays !== undefined && activePanel !== "sync"}
+                <p class="sync-tool__slip">{m.sync_status_gap({ days: syncReceiver.gapDays })}</p>
+              {/if}
+              <button
+                class="floating-tool {activePanel === 'sync' ? 'floating-tool--active' : ''}"
+                type="button"
+                aria-label={m.sync_status_name({ status: syncStatusLabel })}
+                aria-expanded={activePanel === "sync"}
+                aria-controls="sync-status-panel"
+                onclick={() => {
+                  togglePanel("sync");
+                }}
+              >
+                <IconPlugConnected class="size-5" />
+                {#if syncSpeaksUp}<span class="sync-tool__dot" aria-hidden="true"></span>{/if}
+              </button>
+            </div>
+          {/if}
         </div>
 
         <div class="flex items-center gap-1.5">
@@ -275,7 +310,7 @@
     {/if}
   </nav>
 
-  {#if activePanel === "settings" || activePanel === "visibility"}
+  {#if activePanel === "settings" || activePanel === "visibility" || activePanel === "sync"}
     <PanelOverlay
       bind:element={panelElement}
       animateOut
@@ -290,6 +325,10 @@
           onClose={closePanel}
         >
           <QuickSettingsPanel />
+        </FoldoutPanel>
+      {:else if activePanel === "sync"}
+        <FoldoutPanel id="sync-status-panel" title={m.sync_card_title()} onClose={closePanel}>
+          <SyncStatusPanel />
         </FoldoutPanel>
       {:else}
         <FoldoutPanel id="filter-panel" title={m.toolbar_filters()} onClose={closePanel}>
@@ -351,6 +390,38 @@
     outline: 2px solid var(--primary);
     outline-offset: 2px;
     transform: translateY(-2px);
+  }
+
+  .sync-tool {
+    position: relative;
+    pointer-events: auto;
+  }
+
+  .sync-tool__dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-status-warning);
+  }
+
+  .sync-tool__slip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    width: max-content;
+    max-width: min(240px, 60vw);
+    padding: 4px 9px;
+    border: 1px solid color-mix(in srgb, var(--color-status-warning) 50%, transparent);
+    background: var(--color-paper-raised);
+    font-family: var(--font-annotation);
+    font-size: var(--text-2xs);
+    line-height: 1.3;
+    box-shadow: var(--shadow-medium);
+    pointer-events: none;
+    transform: translateX(-50%) rotate(-1deg);
   }
 
   .floating-tool--filtered {

@@ -251,11 +251,19 @@ an empty mailbox, “Make a new code” during the kill switch, a retire that la
 
 ## Followers
 
-Built in #135. Planned location (not yet created): src/lib/sync/receiver.ts. It sits on top of the
-apply rules (#129) & the single write path (#127), & serves the sharing PC’s own tracker as well as
-every follower.
+Built in #135: `src/lib/sync/receiver.ts`, with its page state in `receiver-state.svelte.ts`. It
+sits on top of the apply rules (#129) & the single write path (#127), & serves the sharing PC’s own
+tracker (`applyLocalSave`, which the courier in #134 calls) as well as every follower.
 
-- **One tab leads** (Web Locks).
+- **One tab leads** (Web Locks): it holds `mistria-fyi:sync-receiver` for as long as it runs, &
+  other tabs queue, so one takes over when the leader’s page goes away. The lock is let go on
+  `pagehide`, so a page in the back/forward cache never keeps the lead. Other tabs show the leader’s
+  status & send their answers to it over a `BroadcastChannel`, so a question waiting in a hidden tab
+  can be answered from the one in front. A browser without Web Locks never leads, so it never
+  applies; the writer’s synchronous fallback isn’t enough for two long-lived receivers.
+- **It listens** on the mailbox’s WebSocket, & reads the mailbox once each time it connects. A
+  closed socket retries from 5 seconds, doubling up to 5 minutes; coming back into view or online
+  retries at once.
 - **It never applies** while its store is quarantined or in the “newer data” state, & never uses
   manual import’s unlock path; on the sharing PC the courier still uploads. In the newer-data state,
   “Export backup” returns the stored blob verbatim (the choice in PR #158 for #106, provisional
@@ -266,28 +274,38 @@ every follower.
   through one function (#127), serialized by a Web Lock that re-reads & validates before writing.
   The pagehide flush keeps today’s compare-before-write. The receipt never goes into exports or
   restores.
-- **Each apply is one immediate write** through that function, & the receipt advances only through
-  that write.
+- **Each apply is one immediate write** through that function (`userState.applySyncedSave`), which
+  settles the save inside the lock, against the progress as it stands then, & the receipt advances
+  only through that write. A lane’s first save writes its receipt in the write that starts the lane.
 - **The latest save wins.** An envelope is skipped only when its mailbox ID matches the receipt’s &
   its counter isn’t above the receipt’s, so a new code’s envelopes always apply; the PC’s own
   applies skip by the save’s hash. Either way, so a repeated or replayed save changes nothing. A
   newer envelope that arrives while a question waits replaces the save the question was about.
 - **Recomputed questions.** If progress or the save changed while a question waited, the diff is
-  recomputed & the question asked again where its effect changed.
+  recomputed & the question asked again where its effect changed. Answering is what recomputes,
+  since every answer goes back through the write.
+- **A cancelled question** keeps the status button’s dot & a note on Home, & opens again from there,
+  when its effect changes, or the next time the tracker opens. Nothing is written until it’s
+  answered.
 - **Crashes.** A crash before the write applies the latest envelope again on the next open; one
   after it skips that envelope by the receipt.
 - **A save it can’t read** (after a game update, the computer can’t read it either) shows
   `sync_unreadable_away_title` here & keeps progress as it is; followers get no other notice from
-  the PC, only the freshness slip.
+  the PC, only the freshness slip. An envelope that fails authentication shows the same note. It
+  isn’t read again until the next envelope or page load, so a new build can pick it up.
 - **Extraction** returns values, per-field completeness, & diagnostics together, telling
   known-but-untracked IDs from unknown ones (#125).
 
 ### Freshness
 
-A follower’s sync panel shows when the last save file came & its in-game date (`sync_panel_*` in
-[sync-setup.md](sync-setup.md#copy)), & it learns the typical gap between saves. When it opens after
-an abnormally long gap, a slip says so (`sync_status_gap`). There are no push notifications.
-Describe sync as best effort until real sessions prove it.
+A follower’s sync panel shows when the last save file came (the file’s own modification time) & its
+in-game date (`sync_panel_*` in [sync-setup.md](sync-setup.md#copy)), read from `gamedata.date`, &
+it learns the typical gap between saves. The last 32 gaps are kept in `local.syncFreshness`, which
+the apply write advances beside the receipt (`src/lib/engine/sync-freshness.ts`). A gap is abnormal
+at three days or twice the longest gap remembered, whichever is longer, since sessions run half an
+hour apart but days can pass between them. When it opens after an abnormally long gap, a slip says
+so (`sync_status_gap`). There are no push notifications. Describe sync as best effort until real
+sessions prove it.
 
 ## Applying a bundle
 
@@ -405,10 +423,15 @@ plus `info.creation_version`, parsed tolerantly (#128).
   creation version only one side could read doesn’t make farms differ. `applySync` returns the
   outgoing state as `farmSwitch.backup` & starts the new farm from the receiver’s fresh state.
   `serializeFarmSwitch` (`src/lib/stores/progress-storage.ts`) writes the new farm & the backup into
-  one stored document, the backup under `local.farmSwitchBackup` as `{ backup, farmName }` in the
-  restorable backup format, replacing any earlier one; it returns `null` when the backup wouldn’t
-  restore, & the switch doesn’t happen.
-- Switching back is a restore. Multi-farm profiles stay later.
+  one stored document, the backup under `local.farmSwitchBackup` as `{ backup, farmName, savedAt }`
+  in the restorable backup format, replacing any earlier one; it returns `null` when the backup
+  wouldn’t restore, & the switch doesn’t happen.
+- A switch that would replace an existing backup says so first (`sync_replace_*`), offering to save
+  the old one; nothing changes until it’s answered. A switch whose backup can’t be written leaves
+  everything as it was, keeps the receipt where it was, & says why (`sync_switch_failed_*`).
+- Switching back is a restore: Data’s backup card offers the backup by name (“Backup of {farm}, from
+  {date}”), the date being when the switch happened, & it stays there after restoring. Multi-farm
+  profiles stay later.
 - Manual import stores the same identity & shows “last imported {time ago}”. Player & farm names
   stay out of the feedback snapshot.
 

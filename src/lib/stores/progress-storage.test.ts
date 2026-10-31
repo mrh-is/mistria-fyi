@@ -586,17 +586,22 @@ function currentFixture(version = CURRENT_SERIALIZATION_VERSION): LoadedProgress
 }
 
 describe("serializeFarmSwitch", () => {
+  const RECEIPT = { counter: 3, hash: "h".repeat(43) };
+
   it("writes the new farm & one backup of the outgoing farm in the same document", () => {
     const outgoing = currentFixture();
     const next = readOk(serializeProgress({ ...currentFixture(), lastImport: null }), "repair");
     next.progress.almanac.clear();
     const earlier = { backup: { nested: true }, farmName: "Earlier farm" };
-    const json = serializeFarmSwitch(next, outgoing, { farmSwitchBackup: earlier, syncReceipt: 7 });
+    const json = serializeFarmSwitch(next, outgoing, {
+      farmSwitchBackup: earlier,
+      syncReceipt: RECEIPT,
+    });
     if (json === null) throw new Error("Expected the switch to serialize");
 
     const stored = readOk(json, "repair");
     expect(stored.progress.almanac.size).toBe(0);
-    expect(stored.local.syncReceipt).toBe(7);
+    expect(stored.local.syncReceipt).toEqual(RECEIPT);
     const { backup, farmName } = stored.local.farmSwitchBackup as FarmSwitchBackup;
     expect(farmName).toBe(outgoing.lastImport?.farmName ?? null);
     // The backup restores as the outgoing farm, & replaced the earlier one rather than nesting it.

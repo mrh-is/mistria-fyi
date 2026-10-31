@@ -106,10 +106,11 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
     filtered to non-default entries, plus each fact's history (see [Provenance](#provenance)):
     `provenance`, `resolutions`, & `lastSavePlaytime`.
   - `worldState`: the in-game season & weather the availability filters read.
-  - `local` (storage only, left out while empty): this device's own section, with slots reserved for
-    sync's receipt & farm-switch backup. Exports never include it; a restore keeps this device's and
-    never brings one in; a progress reset keeps it and a full reset clears it. Provenance & resolved
-    diffs live in `progress`, so they travel with backups.
+  - `local` (storage only, left out while empty): this device's own section, which holds sync's
+    lane, receipt, freshness, pending retires, & farm-switch backup (see [sync.md](sync.md)).
+    Exports never include it; a restore keeps this device's and never brings one in; a progress
+    reset keeps it (all but the receipt) and a full reset clears it. Provenance & resolved diffs
+    live in `progress`, so they travel with backups.
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
   `now`, `anytime`, & `later`, `showSpoilers`, and `everythingGrouping`, either `category` or
   `source`). The UI labels `anytime` “Whenever”; the stored value keeps its original name. These are

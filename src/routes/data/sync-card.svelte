@@ -8,6 +8,7 @@
   import StatusNote from "#lib/components/status-note.svelte";
   import SyncTagDialog from "#lib/components/sync/sync-tag-dialog.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
+  import { getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { makeNewCode, stopSyncing } from "#lib/sync/sharing.js";
@@ -34,14 +35,24 @@
   let working = $state(false);
 
   const lastImport = $derived(userState.state.lastImport);
+  const lastSaveAt = $derived(userState.syncFreshness?.modified ?? lastImport?.importedAt);
   const lastSaveTime = $derived(
-    lastImport
-      ? new Intl.DateTimeFormat(page.data.locale, {
+    lastSaveAt === undefined
+      ? undefined
+      : new Intl.DateTimeFormat(page.data.locale, {
           dateStyle: "medium",
           timeStyle: "short",
-        }).format(lastImport.importedAt)
-      : undefined,
+        }).format(lastSaveAt),
   );
+  const gameDate = $derived.by(() => {
+    const date = userState.syncFreshness?.gameDate;
+    if (!date) return undefined;
+    return m.source_date_label_year({
+      day: String(date.day),
+      season: getName("ui", date.season, page.data.locale),
+      year: String(date.year),
+    });
+  });
 
   async function confirmNewCode(): Promise<void> {
     newCodeOpen = false;
@@ -78,6 +89,10 @@
         {#if lastSaveTime}
           <dt>{m.sync_panel_last()}</dt>
           <dd>{lastSaveTime}</dd>
+        {/if}
+        {#if gameDate}
+          <dt>{m.sync_panel_date()}</dt>
+          <dd>{gameDate}</dd>
         {/if}
         {#if lastImport?.playerName}
           <dt>{m.sync_panel_farmer()}</dt>

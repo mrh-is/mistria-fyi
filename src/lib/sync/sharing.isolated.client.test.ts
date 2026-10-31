@@ -212,7 +212,16 @@ describe("following a code", () => {
     const stored = JSON.parse(localStorage.getItem(PROGRESS_KEY) ?? "null") as {
       local: unknown;
     };
-    expect(stored.local).toEqual({ syncLane: { key, kind: "following" } });
+    // The receipt lands in that same write, so the receiver doesn't apply this envelope again.
+    expect(stored.local).toEqual({
+      syncFreshness: { gaps: [], modified: 1_700_000_000_000 },
+      syncLane: { key, kind: "following" },
+      syncReceipt: {
+        counter: 2,
+        hash: expect.stringMatching(/^[\w-]{43}$/u) as string,
+        mailboxId: await mailboxIdFor(key),
+      },
+    });
   });
 
   it("changes nothing when the player left before the save arrived", async () => {

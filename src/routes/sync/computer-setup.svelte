@@ -6,6 +6,7 @@
   import { Button } from "#lib/components/ui/button/index.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { stampOf } from "#lib/sync/read-save.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";
 
@@ -56,7 +57,7 @@
   function confirmFarm(): void {
     if (!save) return;
     // “Yep!” applies the save here, in the write that starts the computer lane.
-    userState.startSyncLane({ kind: "computer" }, save);
+    userState.startSyncLane({ kind: "computer" }, save, undefined, stampOf(save));
     step = "share";
     announce(m.sync_farm_step_title());
     void focusStep(() => shareTitle);
