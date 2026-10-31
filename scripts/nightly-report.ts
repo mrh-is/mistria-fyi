@@ -29,6 +29,60 @@ export interface TimingSample {
   files: FileTiming[];
 }
 
+const SEVERITIES = ["info", "low", "moderate", "high", "critical"] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export async function auditFindings(run: CommandRunner): Promise<string[]> {
+  // Audit exits one for findings. Only this call accepts it; unusable JSON still fails below.
+  const output: unknown = JSON.parse(
+    await run("pnpm", ["audit", "--audit-level=moderate", "--json"], undefined, [0, 1]),
+  );
+  if (
+    !isRecord(output) ||
+    "error" in output ||
+    !isRecord(output.advisories) ||
+    !isRecord(output.metadata) ||
+    !isRecord(output.metadata.vulnerabilities)
+  ) {
+    throw new Error("Dependency audit returned no usable report.");
+  }
+  const counts = output.metadata.vulnerabilities;
+  if (
+    SEVERITIES.some(
+      (severity) => !Number.isInteger(counts[severity]) || Number(counts[severity]) < 0,
+    )
+  ) {
+    throw new Error("Dependency audit returned invalid vulnerability counts.");
+  }
+  const findings: string[] = [];
+  // Metadata counts include ignored advisories; only the filtered entries honor auditConfig.
+  for (const advisory of Object.values(output.advisories)) {
+    if (
+      !isRecord(advisory) ||
+      typeof advisory.severity !== "string" ||
+      !SEVERITIES.some((severity) => severity === advisory.severity) ||
+      typeof advisory.module_name !== "string" ||
+      !advisory.module_name ||
+      typeof advisory.title !== "string" ||
+      !advisory.title ||
+      typeof advisory.github_advisory_id !== "string" ||
+      !/^GHSA-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}$/u.test(advisory.github_advisory_id) ||
+      advisory.url !== `https://github.com/advisories/${advisory.github_advisory_id}`
+    ) {
+      throw new Error("Dependency audit returned an unrecognized advisory.");
+    }
+    if (advisory.severity === "info" || advisory.severity === "low") continue;
+    findings.push(
+      `Dependency audit: \`${advisory.module_name}\` has a ${advisory.severity} advisory, ` +
+        `[${advisory.github_advisory_id}](${advisory.url}): ${advisory.title}.`,
+    );
+  }
+  return findings;
+}
+
 function median(values: number[]): number {
   const sorted = values.toSorted((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
@@ -94,7 +148,7 @@ export async function synchronizeNightlyIssue(options: {
 
   const body = [
     MARKER,
-    "None of these fail a pull request. The nightly CI run updates this issue & closes it once they clear.",
+    "These findings track repository health. Dependency advisories also block pull requests that change dependencies or the CI workflow. The nightly CI run updates this issue & closes it once all checks are clear.",
     "",
     ...findings.map((finding) => `- ${finding}`),
     "",
@@ -152,18 +206,49 @@ export async function reportNightly(options: {
 }): Promise<void> {
   const { workflowUrl } = options;
   const run = options.run ?? defaultCommandRunner;
-  const samples = await recentSamples(run);
+  const advisories = await auditFindings(run);
+  let samples: TimingSample[];
+  try {
+    samples = await recentSamples(run);
+  } catch (error) {
+    if (advisories.length > 0) {
+      await synchronizeNightlyIssue({
+        findings: [
+          ...advisories,
+          "Timing report unavailable: main’s recent runs could not be read.",
+        ],
+        run,
+        workflowUrl,
+      });
+    }
+    throw error;
+  }
+  // Advisories don't depend on timing samples. An incomplete timing check can't close an issue.
+  if (samples.length < MINIMUM_SAMPLES && advisories.length > 0) {
+    await synchronizeNightlyIssue({
+      findings: [
+        ...advisories,
+        `Timing report incomplete: only ${samples.length} readable samples; existing timing findings have not been rechecked.`,
+      ],
+      run,
+      workflowUrl,
+    });
+  }
   // Every download failing looks the same as a quiet week otherwise, such as with a missing
   // permission or a renamed artifact, and the report would stop working with a green job.
   if (samples.length === 0) {
     throw new Error("No timing samples: main's recent runs had no readable timing artifact.");
   }
-  // Too few runs to trust a median, so this says nothing either way & leaves any open issue alone.
+  // Too few runs to trust a median; any advisory report above keeps timing explicitly incomplete.
   if (samples.length < MINIMUM_SAMPLES) {
-    console.warn(`Only ${samples.length} recent timing samples; skipping the report.`);
+    console.warn(`Only ${samples.length} recent timing samples; skipping timing findings.`);
     return;
   }
-  await synchronizeNightlyIssue({ findings: timingFindings(samples), run, workflowUrl });
+  await synchronizeNightlyIssue({
+    findings: [...advisories, ...timingFindings(samples)],
+    run,
+    workflowUrl,
+  });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

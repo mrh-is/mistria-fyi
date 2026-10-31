@@ -2,12 +2,74 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
+import capturedAudit from "./fixtures/nightly-audit.json";
 import {
+  auditFindings,
   recentSamples,
   reportNightly,
   synchronizeNightlyIssue,
   timingFindings,
 } from "./nightly-report.js";
+
+// Captured with pnpm 11.28.2 on October 31, 2026, in a temporary copy of the workspace with
+// auditConfig removed: pnpm audit --audit-level=low --json. Higher severities below are synthetic.
+const clearAudit = JSON.stringify({ ...capturedAudit, advisories: {} });
+function advisoryAudit(severity = "moderate"): string {
+  const report = structuredClone(capturedAudit);
+  report.advisories["1243505"].severity = severity;
+  return JSON.stringify(report);
+}
+
+describe("auditFindings", () => {
+  it.each(["moderate", "high", "critical"])(
+    "reports %s advisories with actionable links",
+    async (severity) => {
+      const run = vi.fn().mockResolvedValue(advisoryAudit(severity));
+      const findings = await auditFindings(run);
+      expect(run).toHaveBeenCalledExactlyOnceWith(
+        "pnpm",
+        ["audit", "--audit-level=moderate", "--json"],
+        undefined,
+        [0, 1],
+      );
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toContain("`deepmerge`");
+      expect(findings[0]).toContain(severity);
+      expect(findings[0]).toContain("https://github.com/advisories/GHSA-gcqx-w48m-w2h4");
+    },
+  );
+
+  it("ignores the captured low advisory & lower severities", async () => {
+    expect(await auditFindings(() => Promise.resolve(JSON.stringify(capturedAudit)))).toEqual([]);
+    expect(await auditFindings(() => Promise.resolve(advisoryAudit("info")))).toEqual([]);
+  });
+
+  it("uses filtered advisories, since metadata still counts accepted exceptions", async () => {
+    const report = JSON.parse(clearAudit) as typeof capturedAudit;
+    report.metadata.vulnerabilities.high = 1;
+    expect(await auditFindings(() => Promise.resolve(JSON.stringify(report)))).toEqual([]);
+  });
+
+  it.each([
+    "not json",
+    "null",
+    "{}",
+    '{"error":{"code":"ECONNRESET"}}',
+    JSON.stringify({ ...capturedAudit, advisories: null }),
+    JSON.stringify({ ...capturedAudit, metadata: {} }),
+    JSON.stringify({ ...capturedAudit, error: { code: "ECONNRESET" } }),
+    JSON.stringify({
+      ...capturedAudit,
+      metadata: { vulnerabilities: { ...capturedAudit.metadata.vulnerabilities, high: -1 } },
+    }),
+    JSON.stringify({ ...capturedAudit, advisories: { broken: {} } }),
+    advisoryAudit("unknown"),
+  ])("rejects unusable audit output: %s", async (output) => {
+    await expect(auditFindings(() => Promise.resolve(output))).rejects.toThrow(
+      /JSON|Dependency audit/u,
+    );
+  });
+});
 
 const sample = (elapsedMs: number, durations: Record<string, number> = {}) => ({
   elapsedMs,
@@ -115,16 +177,26 @@ function recorder(issues: { body: string; number: number }[]) {
 }
 
 /** Answers listings for the issue search & for `runIds`, recording anything that writes. */
-function nightlyRunner(runIds: number[], cancelled: number[]) {
+function nightlyRunner(
+  runIds: number[],
+  cancelled: number[],
+  audit: Error | string = clearAudit,
+  issues: { body: string; number: number }[] = [],
+) {
   const artifacts = artifactRunner(runIds, cancelled);
   const writes: string[][] = [];
-  const run = (command: string, args: string[]) => {
+  const bodies: string[] = [];
+  const run = (command: string, args: string[], input?: string) => {
+    if (command === "pnpm") {
+      return audit instanceof Error ? Promise.reject(audit) : Promise.resolve(audit);
+    }
     if (args[0] === "run") return artifacts.run(command, args);
-    if (args[1] === "list") return Promise.resolve("[]");
+    if (args[1] === "list") return Promise.resolve(JSON.stringify(issues));
     writes.push(args);
+    if (input) bodies.push(input);
     return Promise.resolve("");
   };
-  return { run, writes };
+  return { bodies, run, writes };
 }
 
 describe("recentSamples", () => {
@@ -161,17 +233,84 @@ describe("reportNightly", () => {
   });
 
   it("leaves everything alone with too few samples to trust a median", async () => {
-    const { run, writes } = nightlyRunner([1, 2], []);
+    const { run, writes } = nightlyRunner([1, 2], [], clearAudit, [
+      { body: "<!-- mistria-nightly-report -->\nold findings", number: 42 },
+    ]);
     vi.spyOn(console, "warn").mockReturnValue();
     await reportNightly({ run, workflowUrl });
     expect(writes).toEqual([]);
     vi.restoreAllMocks();
   });
 
+  it("closes the existing issue only after timing & advisories both clear", async () => {
+    const { run, writes } = nightlyRunner([1, 2, 3], [], clearAudit, [
+      { body: "<!-- mistria-nightly-report -->\nold findings", number: 42 },
+    ]);
+    await reportNightly({ run, workflowUrl });
+    expect(writes.map((args) => args.slice(0, 3))).toEqual([
+      ["issue", "comment", "42"],
+      ["issue", "close", "42"],
+    ]);
+  });
+
   it("reports the findings from enough samples", async () => {
     const { run, writes } = nightlyRunner([200_000, 200_001, 200_002], []);
     await reportNightly({ run, workflowUrl });
     expect(writes.map((args) => args.slice(0, 2))).toEqual([["issue", "create"]]);
+  });
+
+  it("reports advisories together with timing findings", async () => {
+    const { bodies, run, writes } = nightlyRunner([200_000, 200_001, 200_002], [], advisoryAudit());
+    await reportNightly({ run, workflowUrl });
+    expect(writes.map((args) => args.slice(0, 2))).toEqual([["issue", "create"]]);
+    expect(bodies[0]).toContain("`deepmerge`");
+    expect(bodies[0]).toContain("median wall time");
+    expect(bodies[0]).not.toContain("None of these fail a pull request");
+  });
+
+  it.each([{ ids: [1] }, { ids: [1, 2] }])(
+    "reports advisories despite insufficient timing samples: $ids",
+    async ({ ids }) => {
+      const { bodies, run, writes } = nightlyRunner(ids, [], advisoryAudit());
+      vi.spyOn(console, "warn").mockReturnValue();
+      await reportNightly({ run, workflowUrl });
+      expect(writes.map((args) => args.slice(0, 2))).toEqual([["issue", "create"]]);
+      expect(bodies[0]).toContain("`deepmerge`");
+      expect(bodies[0]).toContain("Timing");
+      vi.restoreAllMocks();
+    },
+  );
+
+  it("updates the existing issue with advisories before failing on zero timing samples", async () => {
+    const { bodies, run, writes } = nightlyRunner([], [], advisoryAudit(), [
+      { body: "<!-- mistria-nightly-report -->\nold findings", number: 42 },
+    ]);
+    await expect(reportNightly({ run, workflowUrl })).rejects.toThrow("No timing samples");
+    expect(writes.map((args) => args.slice(0, 3))).toEqual([["issue", "edit", "42"]]);
+    expect(bodies[0]).toContain("`deepmerge`");
+    expect(bodies[0]).toContain("Timing report incomplete");
+  });
+
+  it.each(["not json", '{"error":{"code":"ECONNRESET"}}', new Error("pnpm exited with status 2")])(
+    "fails without changing the issue when the audit couldn't run: %s",
+    async (audit) => {
+      const { run, writes } = nightlyRunner([1, 2, 3], [], audit);
+      await expect(reportNightly({ run, workflowUrl })).rejects.toThrow(
+        /JSON|Dependency audit|pnpm exited/u,
+      );
+      expect(writes).toEqual([]);
+    },
+  );
+
+  it("publishes advisories even when listing timing runs fails", async () => {
+    const runner = nightlyRunner([], [], advisoryAudit());
+    const run = (command: string, args: string[], input?: string) =>
+      args[0] === "run"
+        ? Promise.reject(new Error("cannot list runs"))
+        : runner.run(command, args, input);
+    await expect(reportNightly({ run, workflowUrl })).rejects.toThrow("cannot list runs");
+    expect(runner.bodies[0]).toContain("`deepmerge`");
+    expect(runner.writes.map((args) => args.slice(0, 2))).toEqual([["issue", "create"]]);
   });
 });
 

@@ -48,14 +48,18 @@ The `knip` step fails on unused files, exports, & dependencies. Its reviewed exc
 
 These CI steps aren’t in the local matrix:
 
-- the dependency audit,
+- the dependency audit, which blocks pull requests & main pushes only when `package.json`,
+  `pnpm-lock.yaml`, `pnpm-workspace.yaml`, or `.github/workflows/ci.yml` changes (manual dispatches
+  always audit),
 - the budgeted test run, which is the complete asset-independent suite with per-file timing limits
   (its cleanup test runs only when the cleanup script changes),
 - the stale-translation check, which runs only on pull requests that touch `messages/`.
 
 The accessibility & PWA suites run against the build job’s output when `src/`, `static/`, `tests/`,
 or their tooling change. The “CI passed” job aggregates every result. Coverage runs nightly; it’s
-reported but doesn’t gate merges.
+reported but doesn’t gate merges. The nightly report also records moderate-or-higher dependency
+advisories after accepted exceptions. Advisories don’t fail the scheduled run; an audit that can’t
+run or returns unusable JSON fails the report job. An incomplete report never closes its issue.
 [The development workflow](development-workflow.md#vitest-time-budgets) documents the timing
 ceilings.
 

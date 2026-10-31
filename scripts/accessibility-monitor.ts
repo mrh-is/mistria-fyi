@@ -7,7 +7,12 @@ import { pathToFileURL } from "node:url";
 const MARKER = "<!-- mistria-accessibility-monitor -->";
 const TITLE = "Automated accessibility regression detected";
 
-export type CommandRunner = (command: string, args: string[], input?: string) => Promise<string>;
+export type CommandRunner = (
+  command: string,
+  args: string[],
+  input?: string,
+  acceptedExitCodes?: readonly number[],
+) => Promise<string>;
 
 interface IssueSummary {
   body: string;
@@ -18,6 +23,7 @@ export async function defaultCommandRunner(
   command: string,
   args: string[],
   input?: string,
+  acceptedExitCodes: readonly number[] = [0],
 ): Promise<string> {
   return await new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ["pipe", "pipe", "inherit"] });
@@ -26,7 +32,7 @@ export async function defaultCommandRunner(
     child.stdout.on("data", (chunk: string) => (output += chunk));
     child.on("error", reject);
     child.on("close", (code) => {
-      if (code === 0) resolve(output);
+      if (code !== null && acceptedExitCodes.includes(code)) resolve(output);
       else reject(new Error(`${command} exited with status ${code}`));
     });
     child.stdin.end(input);
