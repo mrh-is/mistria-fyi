@@ -41,6 +41,18 @@ describe("guardMessage", () => {
     expect(bash("echo x > docs/superpowers/notes.md")).toContain(
       "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
     );
+    expect(bash("rm -rf docs/superpowers")).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
+    expect(bash("rm -rf docs/superpowers/")).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
+    expect(bash("mv docs/superpowers /tmp/archive")).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
+    expect(bash("mv docs/superpowers/ /tmp/archive")).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
   });
 
   it("allows lookalikes & ordinary files", () => {
