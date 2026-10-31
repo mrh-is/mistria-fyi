@@ -108,6 +108,7 @@ const localizer = createMemoryLocalizer({
 
 const options: AssembleOptions = {
   reviewedDiagnostics: [],
+  reviewedItemVariants: [],
   reviewedOverrides: { cosmetics: {}, itemReplacements: {}, items: {} },
   version: "1.0.0",
 };

@@ -165,6 +165,13 @@ game leaves some source names untranslated or unnamed, so `source-names.ts` fill
   machine-translated `source_cutscene_*` message; villager names inside them come from the
   `villagers` chunk.
 
+Almanac rows that share a name (six “Animated Clouds Window” rows) show a variant word, such as
+“Oak”, as a subtitle. The game names no variants, so each `ItemVariant` key is a `variant_*`
+message. Most values are the game’s own terms, taken from each locale’s descriptions; the rest are
+machine translations. `pipeline/src/overrides/item-variant-terms.ts` records which is which, and the
+[game version update protocol](game-version-update-protocol.md#name-same-name-almanac-rows) says how
+to add one.
+
 Scroll bundle sources carry the bundle's `bundleItemId` and render through the `items` chunk.
 Upgrade sources carry a closed `UpgradeId`, and a store's `upgradeAction` is a `StoreUpgradeAction`
 key; each maps to a Paraglide message.
