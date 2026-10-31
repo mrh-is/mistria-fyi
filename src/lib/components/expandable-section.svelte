@@ -5,6 +5,7 @@
 
   import { Icon } from "#lib/components/icon/index.js";
   import SectionTrigger from "#lib/components/section-trigger.svelte";
+  import { registerCompletionSection } from "#lib/controllers/completion-scope.svelte.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -71,6 +72,10 @@
   );
   // A filter that leaves nothing in scope is not a finished section.
   let complete = $derived(total !== undefined && total > 0 && boundedCount === total);
+  const completionSection = registerCompletionSection(
+    () => complete,
+    () => depth === 0,
+  );
   let instanceId = $props.id();
   let contentId = $derived(
     `expandable-${instanceId}-${name
@@ -106,6 +111,7 @@
 
 <div
   class="section"
+  hidden={!completionSection.visible}
   data-tracker-section
   data-section-depth={depth}
   style="--section-depth: {depth}"
@@ -145,7 +151,7 @@
     </SectionTrigger>
   </svelte:element>
 
-  {#if isOpen}
+  {#if isOpen && completionSection.visible}
     <div
       id={contentId}
       class="section-content"
