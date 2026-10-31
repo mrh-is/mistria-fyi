@@ -99,7 +99,7 @@
                 pathLength={element.animated ? 1 : undefined}
                 stroke="currentColor"
                 stroke-width={element.width}
-                stroke-dasharray={element.animated ? 1 : undefined}
+                stroke-dasharray={element.animated ? "1 2" : undefined}
                 stroke-dashoffset={element.animated ? 1 : undefined}
               />
             {:else if element.kind === "dot"}

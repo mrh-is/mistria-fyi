@@ -108,4 +108,13 @@ describe("TrackerCheckbox", () => {
 
     expect(button.querySelectorAll(".tracker-checkbox__crossing-stroke")).toHaveLength(strokes);
   });
+
+  it("leaves a gap longer than the stroke, so no round cap shows before it draws", () => {
+    const stroke = renderBox("checked", { source: "manual" }).querySelector(
+      ".tracker-checkbox__crossing-stroke",
+    );
+
+    expect(stroke).toHaveAttribute("stroke-dasharray", "1 2");
+    expect(stroke).toHaveAttribute("stroke-dashoffset", "1");
+  });
 });
