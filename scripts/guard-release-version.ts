@@ -21,6 +21,41 @@ function packagePath(path: string): boolean {
   return basename(path.replaceAll("\\", "/")) === "package.json";
 }
 
+/** Without a tag-name operand, Git defaults to inspection even without an explicit list flag. */
+function mutatesTags(options: string[]): boolean {
+  const takesValue = new Set([
+    "--sort",
+    "--format",
+    "--contains",
+    "--no-contains",
+    "--points-at",
+    "--merged",
+    "--no-merged",
+  ]);
+  let listing = false;
+  let operand = false;
+  for (let index = 0; index < options.length; index++) {
+    const option = options[index];
+    if (option === "--") {
+      operand ||= index + 1 < options.length;
+      break;
+    }
+    if (
+      /^--(?:delete|annotate|sign|local-user|message|file|force)(?:=|$)/.test(option) ||
+      /^-[^-]*[dasumFf]/.test(option)
+    ) {
+      return true;
+    }
+    listing ||=
+      /^(?:--list|--verify|--contains|--no-contains|--points-at|--merged|--no-merged)(?:=|$)/.test(
+        option,
+      ) || /^-[^-]*[lnv]/.test(option);
+    if (takesValue.has(option)) index++;
+    else if (!option.startsWith("-")) operand = true;
+  }
+  return operand && !listing;
+}
+
 function version(text: string): unknown {
   return (JSON.parse(text) as { version?: unknown }).version;
 }
@@ -125,23 +160,7 @@ export function releaseGuardMessage(
     for (const segment of policySegments(command)) {
       const words = programWords(segment.command);
       const args = commandArgs(words);
-      if (words[0] === "git" && args[0] === "tag") {
-        const options = args.slice(1);
-        const mutation = options.some(
-          (arg) =>
-            /^--(?:delete|annotate|sign|local-user|message|file|force)(?:=|$)/.test(arg) ||
-            /^-[^-]*[dasumFf]/.test(arg),
-        );
-        const listing =
-          options.length === 0 ||
-          options.some(
-            (arg) =>
-              /^(?:--list|--verify|--contains|--no-contains|--points-at|--merged|--no-merged)(?:=|$)/.test(
-                arg,
-              ) || /^-[^-]*[lv]/.test(arg),
-          );
-        if (mutation || !listing) return ADVICE;
-      }
+      if (words[0] === "git" && args[0] === "tag" && mutatesTags(args.slice(1))) return ADVICE;
       if (
         words[0] === "pnpm" &&
         (args[0] === "version" ||

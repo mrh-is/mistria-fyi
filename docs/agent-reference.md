@@ -266,9 +266,13 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   the tool still ran. [Codex's hook contract](https://learn.chatgpt.com/docs/hooks) documents
   explicit exit-2/JSON denials, but no `onFailure` equivalent. Don't rely on a crash as a denial in
   Codex.
-- **Copilot failures:** its reference says command `preToolUse` crashes deny the call, but timeouts
-  let it continue. It doesn't document `onFailure`; compatibility with the new field still needs
-  Michael's live test. Don't rely on the Claude timeout guarantee in Copilot.
+- **Copilot failures:** fresh, trusted CLI 1.0.105 sessions loaded all four `onFailure` fields & ran
+  a harmless command. The real policy guard's exit-2 denial & a temporary guard's exit-1 crash both
+  blocked the call. A timed-out guard let the command run despite `onFailure: "block"`, matching its
+  reference. These probes establish decisions, not timeout process cleanup: the timeout log also
+  reported a process-group signaling error. See
+  [the live test record](https://github.com/mrh-is/mistria-fyi/pull/323#pullrequestreview-5724777517).
+  Don't rely on the Claude timeout guarantee in Copilot.
 - **Codex trust:** Codex skips new or changed hooks until they’re trusted again in its hook review
   (`/hooks`). Review & trust them before relying on their enforcement.
 - **Mid-session setup:** both clients sequence setup & formatting in one tool handler. Claude Code
