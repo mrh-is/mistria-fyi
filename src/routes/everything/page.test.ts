@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { sortCategoryKeysByName } from "#lib/data/categories.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
@@ -22,6 +22,12 @@ const props = {
 beforeEach(() => {
   userState.resetAll();
   pageStub.reset();
+});
+
+// Files in a shared-registry project also share `userState`, so a later file must not inherit this
+// file's grouping & progress.
+afterAll(() => {
+  userState.resetAll();
 });
 
 describe("/everything page", () => {

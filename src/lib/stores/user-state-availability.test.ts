@@ -1,6 +1,11 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
+
+// These tests assert the defaults, and files in a shared-registry project share `userState`.
+beforeEach(() => {
+  userState.resetAll();
+});
 
 afterEach(() => {
   userState.resetAll();
