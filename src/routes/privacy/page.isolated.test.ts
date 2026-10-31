@@ -51,6 +51,8 @@ describe("privacy page sync sections", () => {
     expect(text).toContain("a replaced or deleted save file");
     expect(text).toContain("up to 30 more days");
     expect(text).toContain("a small record for each code");
+    expect(text).toContain("one-way fingerprints");
+    expect(text).toContain("That record isn’t encrypted");
   });
 
   it("keeps the addendum link's slot in every locale", () => {
