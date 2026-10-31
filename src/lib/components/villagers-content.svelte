@@ -1,8 +1,10 @@
 <script lang="ts">
   import BlockySwitch from "#lib/components/blocky-switch.svelte";
+  import CompletionSection from "#lib/components/completion-section.svelte";
   import VillagerAlphabetIndex from "#lib/components/villager-alphabet-index.svelte";
   import VillagerRecord from "#lib/components/villager-record.svelte";
   import { getName } from "#lib/data/names.js";
+  import { isVillagerComplete } from "#lib/engine/progress.js";
   import { buildVillagerRoster, filterVillagerRoster } from "#lib/engine/villager-roster.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -67,13 +69,15 @@
     tabindex="-1"
   >
     {#each visibleVillagers as villager (villager.id)}
-      <VillagerRecord
-        {compact}
-        id={villager.id}
-        name={villager.name}
-        spoilered={!userState.progressionState.knownVillagers.has(villager.id)}
-        {villager}
-      />
+      <CompletionSection complete={isVillagerComplete(villager.id, userState.state.progress)}>
+        <VillagerRecord
+          {compact}
+          id={villager.id}
+          name={villager.name}
+          spoilered={!userState.progressionState.knownVillagers.has(villager.id)}
+          {villager}
+        />
+      </CompletionSection>
     {/each}
   </ul>
 
