@@ -28,12 +28,53 @@ describe("guardMessage", () => {
     expect(guardMessage(edit("/work/.worktrees/x/src/lib/data/tracker-data.json"))).toBeDefined();
   });
 
+  it("blocks historical superpowers plans & specs", () => {
+    expect(
+      guardMessage({
+        cwd,
+        tool_input: { file_path: "docs/superpowers/plans/example.md" },
+        tool_name: "Edit",
+      }),
+    ).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
+    expect(bash("echo x > docs/superpowers/notes.md")).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
+    expect(bash("rm -rf docs/superpowers")).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
+    expect(bash("rm -rf docs/superpowers/")).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
+    expect(bash("mv docs/superpowers /tmp/archive")).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
+    expect(bash("mv docs/superpowers/ /tmp/archive")).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
+  });
+
   it("allows lookalikes & ordinary files", () => {
     expect(guardMessage(edit("src/lib/components/icon/ui.svelte"))).toBeUndefined();
     expect(guardMessage(edit("src/lib/components/ui-kit/a.svelte"))).toBeUndefined();
     expect(guardMessage(edit("src/lib/data/tracker-data.ts"))).toBeUndefined();
     expect(guardMessage(edit("src/lib/data/tracker-data.json.md"))).toBeUndefined();
     expect(guardMessage(edit("pipeline/src/main.ts"))).toBeUndefined();
+    expect(
+      guardMessage({
+        cwd,
+        tool_input: { file_path: "docs/superpowers-notes.md" },
+        tool_name: "Edit",
+      }),
+    ).toBeUndefined();
+    expect(
+      guardMessage({
+        cwd,
+        tool_input: { file_path: "docs/styling.md" },
+        tool_name: "Edit",
+      }),
+    ).toBeUndefined();
     expect(guardMessage({ cwd, tool_input: {} })).toBeUndefined();
   });
 
@@ -190,6 +231,18 @@ describe("guard-generated-paths hook", () => {
     });
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("Blocked edit");
+  });
+
+  it("exits 2 with an explanation for an edit under docs/superpowers/", () => {
+    const result = run({
+      cwd,
+      tool_input: { file_path: "docs/superpowers/plans/example.md" },
+      tool_name: "Edit",
+    });
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain(
+      "docs/superpowers/ holds historical plans & specs. Update the current docs/*.md instead.",
+    );
   });
 
   it("exits 0 for any other edit", () => {
