@@ -9,6 +9,7 @@ import {
   applySync,
   POLICY_TABLE,
   QUEST_KINDS_LISTED_AS_COMPLETED,
+  receiptCovers,
   REMOVAL_HANDFUL,
 } from "./sync-apply.js";
 
@@ -1047,5 +1048,37 @@ describe("applySync: properties", () => {
       );
     }
     expect(changed).toBeGreaterThan(0);
+  });
+});
+
+describe("receiptCovers", () => {
+  const receipt = { counter: 5, hash: "h5", mailboxId: "box" };
+
+  it("applies everything before the first receipt", () => {
+    expect(receiptCovers(undefined, receipt)).toBe(false);
+    expect(receiptCovers(undefined, { hash: "h5" })).toBe(false);
+  });
+
+  it("skips an envelope from the same mailbox whose counter isn't higher", () => {
+    expect(receiptCovers(receipt, receipt)).toBe(true);
+    expect(receiptCovers(receipt, { counter: 4, hash: "h4", mailboxId: "box" })).toBe(true);
+    expect(receiptCovers(receipt, { counter: 6, hash: "h6", mailboxId: "box" })).toBe(false);
+  });
+
+  it("applies a higher counter even when the save is unchanged", () => {
+    expect(receiptCovers(receipt, { counter: 6, hash: "h5", mailboxId: "box" })).toBe(false);
+  });
+
+  it("always applies a new code's envelopes, whatever their counter", () => {
+    expect(receiptCovers(receipt, { counter: 1, hash: "h5", mailboxId: "new" })).toBe(false);
+  });
+
+  it("skips the computer's own saves by hash", () => {
+    expect(receiptCovers({ hash: "same" }, { hash: "same" })).toBe(true);
+    expect(receiptCovers({ hash: "same" }, { hash: "other" })).toBe(false);
+  });
+
+  it("doesn't skip an envelope on a receipt the computer wrote", () => {
+    expect(receiptCovers({ hash: "h" }, { counter: 1, hash: "h", mailboxId: "box" })).toBe(false);
   });
 });

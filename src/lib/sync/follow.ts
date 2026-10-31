@@ -24,6 +24,9 @@ export const FOLLOW_LINK_PATH = "/sync";
 /** The relay's origin; `connect-src` allows it for HTTPS & WSS. */
 export const RELAY_ORIGIN = "https://relay.mistria.fyi";
 
+/** How long a read may take. The receiver reads in turn, so a hung one would hold up what follows. */
+const READ_TIMEOUT_MS = 30_000;
+
 const KEY_BYTES = 32;
 const WRITE_TOKEN_BYTES = 32;
 const MAILBOX_ID_BYTES = 16;
@@ -400,7 +403,10 @@ export function createRelayClient(
       return failureOf(response);
     },
     async read(mailboxId) {
-      const response = await send(mailboxUrl(mailboxId), { method: "GET" });
+      const response = await send(mailboxUrl(mailboxId), {
+        method: "GET",
+        signal: AbortSignal.timeout(READ_TIMEOUT_MS),
+      });
       if (response === undefined) return { kind: "unreachable" };
       if (response.status === 404) return { kind: "absent" };
       if (response.status === 410) return { kind: "retired" };
@@ -411,8 +417,12 @@ export function createRelayClient(
         if (!Number.isSafeInteger(counter) || counter < 1 || !Number.isInteger(version)) {
           return { kind: "unreachable" };
         }
-        const envelope = new Uint8Array(await response.arrayBuffer());
-        return { counter, envelope, kind: "envelope", version };
+        try {
+          const envelope = new Uint8Array(await response.arrayBuffer());
+          return { counter, envelope, kind: "envelope", version };
+        } catch {
+          return { kind: "unreachable" };
+        }
       }
       const body = await stateOf(response);
       return body.state === "empty" ? { kind: "empty" } : { kind: "unreachable" };
@@ -427,6 +437,79 @@ export function createRelayClient(
       if (response.status === 200 || response.status === 410) return { kind: "retired" };
       return failureOf(response);
     },
+  };
+}
+
+/** What the relay pushes over a mailbox's socket: its state on connecting, then each change. */
+export type MailboxPush = Extract<ReadResult, { kind: "empty" | "envelope" | "retired" }>;
+
+/** A push's JSON, or `undefined` when it isn't one this client understands. */
+export function parseMailboxPush(data: unknown): MailboxPush | undefined {
+  if (typeof data !== "string") return undefined;
+  let message: { counter?: unknown; envelope?: unknown; state?: unknown; version?: unknown };
+  try {
+    message = JSON.parse(data) as typeof message;
+  } catch {
+    return undefined;
+  }
+  if (message.state === "empty") return { kind: "empty" };
+  if (message.state === "retired") return { kind: "retired" };
+  if (message.state !== "envelope" || typeof message.envelope !== "string") return undefined;
+  const { counter, version } = message;
+  if (typeof counter !== "number" || !Number.isSafeInteger(counter) || counter < 1) {
+    return undefined;
+  }
+  if (typeof version !== "number" || !Number.isInteger(version)) return undefined;
+  try {
+    const envelope = Uint8Array.from(atob(message.envelope), (char) => char.codePointAt(0) ?? 0);
+    return { counter, envelope, kind: "envelope", version };
+  } catch {
+    return undefined;
+  }
+}
+
+export interface MailboxSubscriber {
+  /** The socket closed or never opened; nothing more will arrive on this subscription. */
+  onclose: () => void;
+  onpush: (push: MailboxPush) => void;
+}
+
+/**
+ * Subscribes to a mailbox over the relay's hibernating WebSocket. Returns a function that closes
+ * it, after which neither handler runs. Read-only: any message a client sent would close the socket.
+ */
+export function subscribeToMailbox(
+  mailboxId: MailboxId,
+  { onclose, onpush }: MailboxSubscriber,
+  origin: string = RELAY_ORIGIN,
+  Socket: typeof WebSocket = WebSocket,
+): () => void {
+  const url = `${origin.replace(/^http/u, "ws")}/v1/mailboxes/${mailboxId}`;
+  let closed = false;
+  let socket: WebSocket;
+  const end = (): void => {
+    if (closed) return;
+    closed = true;
+    onclose();
+  };
+  try {
+    socket = new Socket(url);
+  } catch {
+    queueMicrotask(end);
+    return () => {
+      closed = true;
+    };
+  }
+  socket.addEventListener("message", (event: MessageEvent<unknown>) => {
+    if (closed) return;
+    const push = parseMailboxPush(event.data);
+    if (push) onpush(push);
+  });
+  socket.addEventListener("close", end);
+  socket.addEventListener("error", end);
+  return () => {
+    closed = true;
+    socket.close();
   };
 }
 
@@ -501,7 +584,8 @@ export async function openFollowKey(relay: RelayClient, key: FollowKey): Promise
   }
 }
 
-async function openEnvelopeRead(
+/** Opens one envelope the relay served or pushed, under the keys of the mailbox it came from. */
+export async function openEnvelopeRead(
   keys: FollowKeys,
   read: Extract<ReadResult, { kind: "envelope" }>,
 ): Promise<OpenResult> {

@@ -74,7 +74,11 @@ describe("starting a syncing lane", () => {
   it("erases progress & applies the first save in the write that records the lane", async () => {
     const backup = { backup: {}, farmName: "Old Farm" };
     const userState = await openStore(
-      blob({ farmSwitchBackup: backup, syncPendingRetires: [RETIRE], syncReceipt: { counter: 1 } }),
+      blob({
+        farmSwitchBackup: backup,
+        syncPendingRetires: [RETIRE],
+        syncReceipt: { counter: 1, hash: "h".repeat(43) },
+      }),
     );
     let writes = 0;
     const setItem = storage.setItem.bind(storage);
@@ -118,7 +122,10 @@ describe("starting a syncing lane", () => {
 describe("leaving a lane", () => {
   it("keeps progress & history when the device stops syncing", async () => {
     const userState = await openStore(
-      blob({ syncLane: { key: KEY, kind: "following" }, syncReceipt: { counter: 3 } }),
+      blob({
+        syncLane: { key: KEY, kind: "following" },
+        syncReceipt: { counter: 3, hash: "h".repeat(43) },
+      }),
     );
     await userState.stopSyncing();
     const after = stored();
@@ -144,7 +151,7 @@ describe("leaving a lane", () => {
 describe("Data's reset in a syncing lane", () => {
   it("erases progress & the receipt but stays in the lane", async () => {
     const userState = await openStore(
-      blob({ syncLane: { kind: "computer" }, syncReceipt: { counter: 3 } }),
+      blob({ syncLane: { kind: "computer" }, syncReceipt: { counter: 3, hash: "h".repeat(43) } }),
     );
     userState.resetProgress();
     const after = stored();
@@ -171,7 +178,10 @@ describe("codes", () => {
 
   it("switches the key a following lane reads without leaving it", async () => {
     const userState = await openStore(
-      blob({ syncLane: { key: KEY, kind: "following" }, syncReceipt: { counter: 3 } }),
+      blob({
+        syncLane: { key: KEY, kind: "following" },
+        syncReceipt: { counter: 3, hash: "h".repeat(43) },
+      }),
     );
     await userState.switchFollowKey(OTHER_KEY);
     expect(stored().local).toEqual({ syncLane: { key: OTHER_KEY, kind: "following" } });
@@ -280,12 +290,15 @@ describe("cancelled lane changes", () => {
 
   it("keeps the followed key when a switch is cancelled inside the lock", async () => {
     const userState = await openStore(
-      blob({ syncLane: { key: KEY, kind: "following" }, syncReceipt: { counter: 3 } }),
+      blob({
+        syncLane: { key: KEY, kind: "following" },
+        syncReceipt: { counter: 3, hash: "h".repeat(43) },
+      }),
     );
     expect(await userState.switchFollowKey(OTHER_KEY, () => false)).toBe(false);
     expect(stored().local).toEqual({
       syncLane: { key: KEY, kind: "following" },
-      syncReceipt: { counter: 3 },
+      syncReceipt: { counter: 3, hash: "h".repeat(43) },
     });
   });
 });

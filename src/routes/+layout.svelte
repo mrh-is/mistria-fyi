@@ -10,6 +10,7 @@
   import PencilFilter from "#lib/components/pencil-filter.svelte";
   import PersistenceWarning from "#lib/components/persistence-warning.svelte";
   import SeoHead from "#lib/components/seo-head.svelte";
+  import SyncReceiverHost from "#lib/components/sync/sync-receiver-host.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
   import { Toaster } from "#lib/components/ui/sonner/index.js";
   import { errorPageMetadata } from "#lib/data/page-metadata.js";
@@ -118,6 +119,9 @@
   />
 
   <PersistenceWarning />
+  {#if syncEnabled}
+    <SyncReceiverHost />
+  {/if}
   <PencilFilter />
 {/key}
 

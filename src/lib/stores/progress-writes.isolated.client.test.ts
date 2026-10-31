@@ -739,7 +739,7 @@ describe("serialized progress writes", () => {
 describe("this device's local section", () => {
   const local = {
     farmSwitchBackup: { note: "progress before switching farms" },
-    syncReceipt: { appliedPlaytime: 3600 },
+    syncReceipt: { counter: 3600, hash: "h".repeat(43) },
   };
 
   it("is written back with progress but never exported", async () => {
@@ -772,7 +772,9 @@ describe("this device's local section", () => {
     vi.stubGlobal("localStorage", storage);
 
     const tab = await openTab();
-    const foreign = buildState(12, { local: { syncReceipt: { appliedPlaytime: 1 } } });
+    const foreign = buildState(12, {
+      local: { syncReceipt: { counter: 1, hash: "h".repeat(43) } },
+    });
     expect(tab.userState.restoreBackup(foreign)).toEqual({ ok: true });
     await settle(0);
 

@@ -17,10 +17,12 @@ import {
   openEnvelope,
   openFollowKey,
   parseFollowLink,
+  parseMailboxPush,
   pendingRetireFor,
   retirePending,
   sealEnvelope,
   shareNewCode,
+  subscribeToMailbox,
   toBase64url,
 } from "./follow.js";
 
@@ -335,5 +337,131 @@ describe("retiring", () => {
       .mockResolvedValueOnce({ kind: "retired" });
     expect(await retirePending(relayStub({ retire }), [first, second])).toEqual([second]);
     expect(first).toEqual({ mailboxId: "Um4iPaITziwZ-9gBeM0c6g", token: "a" });
+  });
+});
+
+describe("parseMailboxPush", () => {
+  it("reads each state the relay pushes", () => {
+    expect(parseMailboxPush(JSON.stringify({ state: "empty" }))).toEqual({ kind: "empty" });
+    expect(parseMailboxPush(JSON.stringify({ state: "retired" }))).toEqual({ kind: "retired" });
+    expect(
+      parseMailboxPush(
+        JSON.stringify({
+          counter: 3,
+          envelope: btoa("\u0001\u0002"),
+          state: "envelope",
+          version: 1,
+        }),
+      ),
+    ).toEqual({
+      counter: 3,
+      envelope: Uint8Array.from([1, 2]),
+      kind: "envelope",
+      version: 1,
+    });
+  });
+
+  it.each([
+    ["binary", new ArrayBuffer(2)],
+    ["not JSON", "{"],
+    ["an unknown state", JSON.stringify({ state: "party" })],
+    ["no envelope", JSON.stringify({ counter: 1, state: "envelope", version: 1 })],
+    [
+      "a bad counter",
+      JSON.stringify({ counter: 0, envelope: "AA==", state: "envelope", version: 1 }),
+    ],
+    [
+      "a bad version",
+      JSON.stringify({ counter: 1, envelope: "AA==", state: "envelope", version: "1" }),
+    ],
+    ["bad base64", JSON.stringify({ counter: 1, envelope: "*", state: "envelope", version: 1 })],
+  ])("ignores %s", (_label, data) => {
+    expect(parseMailboxPush(data)).toBeUndefined();
+  });
+});
+
+describe("subscribeToMailbox", () => {
+  class FakeSocket extends EventTarget {
+    static last: FakeSocket | undefined;
+    closed = false;
+    url: string;
+    constructor(url: string) {
+      super();
+      this.url = url;
+      FakeSocket.last = this;
+    }
+    close() {
+      this.closed = true;
+    }
+  }
+  const Socket = FakeSocket as unknown as typeof WebSocket;
+
+  it("connects over wss, passes pushes on, & reports a close once", () => {
+    const onpush = vi.fn();
+    const onclose = vi.fn();
+    subscribeToMailbox("box", { onclose, onpush }, "https://relay.test", Socket);
+    const socket = FakeSocket.last;
+    expect(socket?.url).toBe("wss://relay.test/v1/mailboxes/box");
+
+    socket?.dispatchEvent(
+      new MessageEvent("message", { data: JSON.stringify({ state: "empty" }) }),
+    );
+    socket?.dispatchEvent(new MessageEvent("message", { data: "not a push" }));
+    expect(onpush.mock.calls).toEqual([[{ kind: "empty" }]]);
+
+    socket?.dispatchEvent(new Event("error"));
+    socket?.dispatchEvent(new Event("close"));
+    expect(onclose).toHaveBeenCalledTimes(1);
+  });
+
+  it("goes quiet once closed from this side", () => {
+    const onpush = vi.fn();
+    const onclose = vi.fn();
+    const close = subscribeToMailbox("box", { onclose, onpush }, "https://relay.test", Socket);
+    const socket = FakeSocket.last;
+    close();
+    expect(socket?.closed).toBe(true);
+    socket?.dispatchEvent(
+      new MessageEvent("message", { data: JSON.stringify({ state: "empty" }) }),
+    );
+    socket?.dispatchEvent(new Event("close"));
+    expect(onpush).not.toHaveBeenCalled();
+    expect(onclose).not.toHaveBeenCalled();
+  });
+
+  it("reports a socket that can't be opened as a close", async () => {
+    const onclose = vi.fn();
+    // An arrow function can't be constructed, so `new` throws as a blocked socket would.
+    const Refused = (() => undefined) as unknown as typeof WebSocket;
+    subscribeToMailbox("box", { onclose, onpush: vi.fn() }, "https://relay.test", Refused);
+    await Promise.resolve();
+    expect(onclose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("reading a mailbox that misbehaves", () => {
+  it("gives the read a time limit, so a hung fetch can't stall what's queued behind it", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 404 }));
+    await createRelayClient("https://relay.test", fetcher).read("box");
+    expect(fetcher.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("reports a body that fails partway as unreachable", async () => {
+    const body = new ReadableStream({
+      start(controller) {
+        controller.error(new Error("dropped"));
+      },
+    });
+    const response = new Response(body, {
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "X-Sync-Counter": "1",
+        "X-Sync-Version": "1",
+      },
+    });
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response);
+    expect(await createRelayClient("https://relay.test", fetcher).read("box")).toEqual({
+      kind: "unreachable",
+    });
   });
 });
