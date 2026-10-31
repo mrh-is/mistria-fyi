@@ -156,6 +156,9 @@ export function agentToolHook(
   if (event !== "PreToolUse" && event !== "PostToolUse" && event !== "PostToolUseFailure") {
     throw new Error("Unsupported agent tool hook event.");
   }
+  // Copilot 1.0.105 also sends Claude-compatible events, but no ID to pair shell snapshots.
+  // Keep its existing no-upkeep behavior; the independent generated-data guards still run.
+  if (!input.tool_use_id && input.session_id && input.timestamp) return [];
   let directories: string[];
   try {
     directories = toolDirectories(input);
