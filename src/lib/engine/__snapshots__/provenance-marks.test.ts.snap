@@ -1,0 +1,41 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`provenanceMark > pins the pen's geometry, since the draw order fixes every shipped mark 1`] = `
+[
+  {
+    "elements": [
+      {
+        "d": "M20.6 4.6 C14.9 11.4 11.8 15.6 6.4 22.7",
+        "kind": "stroke",
+        "width": "2.16",
+      },
+      {
+        "cx": "20.62",
+        "cy": "4.55",
+        "kind": "dot",
+        "r": "1.24",
+      },
+    ],
+    "filter": "url(#mark-pen-7)",
+    "roundCaps": true,
+  },
+  {
+    "elements": [
+      {
+        "animated": true,
+        "d": "M6.5 6.0 C14.4 11.8 21.6 19.5 26.3 25.6",
+        "kind": "stroke",
+        "width": "2.22",
+      },
+      {
+        "cx": "6.50",
+        "cy": "6.04",
+        "kind": "dot",
+        "r": "1.23",
+      },
+    ],
+    "filter": "url(#mark-pen-7)",
+    "roundCaps": true,
+  },
+]
+`;

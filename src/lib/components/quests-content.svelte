@@ -15,6 +15,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showQuestToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildQuestSections } from "#lib/presentation/quest-sections.js";
@@ -148,6 +149,7 @@
             {#snippet row(row)}
               {#if row.kind === "craving"}
                 <TrackerRow
+                  fact={factKey("questStates", row.questId ?? row.id)}
                   display={questRowDisplay(row.completed ? "completed" : "none", !row.villagerId)}
                   segmentLookups={baseLookups}
                   name={row.displayName}
@@ -163,6 +165,7 @@
                 {@const questState = getQuestState(row.id)}
                 {@const spoilered = !isConditionVisible(row.visibility, userState.progressionState)}
                 <TrackerRow
+                  fact={factKey("questStates", row.id)}
                   display={questRowDisplay(questState, spoilered)}
                   segmentLookups={{ ...baseLookups, entityVisibility: row.visibility }}
                   name={row.displayName}

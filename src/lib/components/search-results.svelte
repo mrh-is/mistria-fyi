@@ -9,6 +9,7 @@
   import { trackerData } from "#lib/data/index.js";
   import { hasNames, loadNames, NAME_CHUNKS } from "#lib/data/names.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { searchAllCategories } from "#lib/engine/search.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -144,6 +145,32 @@
     });
   }
 
+  /** The `factKey` a result toggles, mirroring {@link toggleResult}. */
+  function resultFact(result: SearchResult): string {
+    switch (result.category) {
+      case "almanac":
+        return factKey("almanac", result.id);
+      case "animals": {
+        const [kind, id] = result.id.split(":");
+        if (kind === "pet-cosmetic") return factKey("petCosmetics", id);
+        if (kind === "mount-appearance") return factKey("mountAppearances", id);
+        if (kind === "mount-perk") return factKey("unlockedPerks", id);
+        if (kind === "pet-skin") return factKey("petSkins", id);
+        return factKey(result.fullName ? "animalCosmetics" : "animals", kind, id);
+      }
+      case "cosmetics":
+        return factKey("cosmetics", result.id);
+      case "museum":
+        return factKey("museum", result.id);
+      case "quests":
+        return factKey("questStates", result.id);
+      case "recipes":
+        return factKey("almanacRecipes", result.id);
+      case "villagers":
+        return factKey("villagerRelationships", result.id);
+    }
+  }
+
   function toggleResult(result: SearchResult): void {
     switch (result.category) {
       case "almanac":
@@ -239,6 +266,7 @@
               />
             {:else}
               <TrackerRow
+                fact={resultFact(result)}
                 display={trackerRowDisplay({
                   completed: result.completed,
                   dimmed: !result.available,

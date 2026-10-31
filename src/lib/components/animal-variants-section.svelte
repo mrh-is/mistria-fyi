@@ -157,6 +157,7 @@
 </script>
 
 <AnimalSubcategory
+  factField="animals"
   {areAllAnimalsComplete}
   completionCheck={hasCompletedVariant}
   hasDisplayableItem={hasDisplayableVariant}

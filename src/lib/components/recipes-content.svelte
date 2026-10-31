@@ -16,6 +16,7 @@
   import { isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { recipePlacements } from "#lib/engine/projections/recipes.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
@@ -154,6 +155,7 @@
           {#snippet row(entry)}
             {@const completed = userState.state.progress.almanacRecipes.has(entry.id)}
             <TrackerRow
+              fact={factKey("almanacRecipes", entry.id)}
               display={trackerRowDisplay({
                 completed,
                 leaving: recentlyCompleted.has(entry.id),

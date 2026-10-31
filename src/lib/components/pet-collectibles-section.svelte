@@ -8,6 +8,7 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
@@ -105,6 +106,7 @@
     <TrackerRowList getKey={(entry) => entry.id} items={visibleCosmeticEntries}>
       {#snippet row(entry)}
         <TrackerRow
+          fact={factKey("petCosmetics", entry.id)}
           display={trackerRowDisplay({
             completed: userState.state.progress.petCosmetics.has(entry.id),
           })}
@@ -143,6 +145,7 @@
     <TrackerRowList getKey={(entry) => entry.id} items={visibleSkinEntries}>
       {#snippet row(entry)}
         <TrackerRow
+          fact={factKey("petSkins", entry.id)}
           display={trackerRowDisplay({
             completed: userState.state.progress.petSkins.has(entry.id),
           })}

@@ -4,7 +4,7 @@ import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 
 import type { userState } from "#lib/stores/user-state.svelte.js";
-import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
+import type { ItemId, QuestId, VillagerId } from "#lib/types/tracker-data.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const WRITE_LOCK = "mistria-fyi:progress-write";
@@ -425,6 +425,99 @@ describe("serialized progress writes", () => {
       },
     });
   });
+
+  it("stores the promotion when an importing tab's save agrees with an unknown fact", async () => {
+    const { locks } = sharedLocks();
+    const stored = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    stored.progress.almanac = ["turnip"];
+    stored.progress.provenance = { "almanac/turnip": { source: "unknown" } };
+    const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(stored) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+
+    tab.userState.mergeFromSave({ almanac: new Set(["turnip"] as ItemId[]) }, { playtime: 50 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { provenance: { "almanac/turnip": { playtime: 50, source: "save" } } },
+    });
+    expect(tab.userState.provenanceOf("almanac/turnip")).toEqual({ playtime: 50, source: "save" });
+  });
+
+  it("keeps another tab's manual edit over a promotion the importing tab made", async () => {
+    const { locks } = sharedLocks();
+    const stored = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    stored.progress.almanac = ["turnip"];
+    stored.progress.provenance = { "almanac/turnip": { source: "unknown" } };
+    const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(stored) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    stored.progress.provenance = { "almanac/turnip": { source: "manual" } };
+    storage.setItem(PROGRESS_KEY, JSON.stringify(stored));
+
+    tab.userState.mergeFromSave({ almanac: new Set(["turnip"] as ItemId[]) }, { playtime: 50 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { provenance: { "almanac/turnip": { source: "manual" } } },
+    });
+  });
+
+  it("stores a guessed slash's replacement when an importing tab's save agrees", async () => {
+    const { locks } = sharedLocks();
+    const stored = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    const quest = "bell_berry_bakewell_tart_challenge" as QuestId;
+    const key = `questStates/${quest}`;
+    stored.progress.questStates = { [quest]: "completed" };
+    stored.progress.provenance = {
+      [key]: { obtainedSource: "unknown", playtime: 40, source: "save" },
+    };
+    const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(stored) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+
+    tab.userState.mergeFromSave({ questStates: { [quest]: "completed" } }, { playtime: 50 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    const written = JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null") as {
+      progress: { provenance: Record<string, unknown> };
+    };
+    expect(written.progress.provenance[key]).toEqual({ playtime: 40, source: "save" });
+  });
+
+  it.each(["inferred", "unknown"])(
+    "doesn't stamp a %s fact's promotion on a value another tab raised",
+    async (source) => {
+      const { locks } = sharedLocks();
+      const stored = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+        progress: Record<string, unknown>;
+      };
+      stored.progress.mineFloor = 3;
+      stored.progress.provenance = { mineFloor: { source } };
+      const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(stored) });
+      vi.stubGlobal("localStorage", storage);
+      vi.stubGlobal("navigator", { locks });
+      const tab = await openTab();
+      stored.progress.mineFloor = 5;
+      storage.setItem(PROGRESS_KEY, JSON.stringify(stored));
+
+      tab.userState.mergeFromSave({ mineFloor: 3 }, { playtime: 50 });
+      await settle(tab.PERSIST_DEBOUNCE_MS);
+
+      expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+        progress: { mineFloor: 5, provenance: { mineFloor: { source } } },
+      });
+    },
+  );
 
   it("merges an import queued behind a reset against the reset, not the old value", async () => {
     const { locks } = sharedLocks();

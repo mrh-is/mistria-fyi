@@ -144,6 +144,45 @@ describe("readProgressBlob", () => {
     },
   );
 
+  const quest = "repair_the_general_store";
+  const withQuest = (version: number, record: Record<string, unknown>) => {
+    const stored = fixture(version) as { progress: Record<string, unknown> };
+    return JSON.stringify({
+      ...stored,
+      progress: {
+        ...stored.progress,
+        provenance: { [`questStates/${quest}`]: record },
+        questStates: { [quest]: "completed" },
+      },
+    });
+  };
+
+  it.each(POLICIES)("round-trips a quest's obtained source (%s)", (policy) => {
+    const record = { obtainedSource: "save", playtime: 5, source: "manual" };
+    const loaded = readOk(withQuest(6, record), policy);
+    expect(loaded.history.provenance[`questStates/${quest}`]).toEqual(record);
+
+    const written = serializeProgress(loaded);
+    expect(readOk(written, policy).history.provenance[`questStates/${quest}`]).toEqual(record);
+  });
+
+  it.each(POLICIES)("adds no obtained source to a version 5 quest (%s)", (policy) => {
+    const record = { playtime: 5, source: "save" };
+    const loaded = readOk(withQuest(5, record), policy);
+
+    expect(loaded.history.provenance[`questStates/${quest}`]).toEqual(record);
+    expect(JSON.parse(serializeProgress(loaded))).toMatchObject({ version: 6 });
+  });
+
+  it("drops a malformed obtained source's record in hydration but rejects it in a backup", () => {
+    const json = withQuest(6, { obtainedSource: "stamp", source: "manual" });
+
+    const { history, progress } = readOk(json, "repair");
+    expect(history.provenance[`questStates/${quest}`]).toBeUndefined();
+    expect(progress.questStates[quest as never]).toBe("completed");
+    expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
+  });
+
   it("repairs an invalid setting during hydration but rejects it in a backup", () => {
     const stored = fixture(5) as { progress: Record<string, unknown> };
     const json = JSON.stringify({

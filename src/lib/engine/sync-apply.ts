@@ -14,7 +14,13 @@ import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { questStateRank, seasonOrdinal } from "#lib/engine/domain-primitives.js";
 import { getOrCreate, recordEntries, recordKeys } from "#lib/utils/record.js";
 
-import { progressFacts, resolutionHolds } from "./provenance.js";
+import {
+  confirmedBySave,
+  holdsGuess,
+  obtainedSourceOf,
+  progressFacts,
+  resolutionHolds,
+} from "./provenance.js";
 import { compareFarms } from "./save-identity.js";
 
 import type { FarmIdentity } from "#lib/types/save-identity.js";
@@ -339,7 +345,9 @@ export function applySync(
     playtime === undefined ? { source: "save" } : { playtime, source: "save" };
   const { history, progress } = base;
   for (const key of settled) history.resolutions = withoutKey(history.resolutions, key);
-  for (const key of promotions) history.provenance[key] = { ...stamp };
+  for (const key of promotions) {
+    history.provenance[key] = confirmedBySave(history.provenance[key], playtime);
+  }
   for (const difference of differences) {
     const { key, policy, save } = difference;
     difference.applied =
@@ -348,7 +356,13 @@ export function applySync(
       (policy === "ask-first" && accepted.has(key));
     if (difference.applied) {
       writeFact(progress, key, save);
-      history.provenance[key] = { ...stamp };
+      const obtainedSource = obtainedSourceOf(
+        ownEntry(history.provenance, key),
+        "save",
+        difference.local,
+        save,
+      );
+      history.provenance[key] = obtainedSource ? { ...stamp, obtainedSource } : { ...stamp };
       history.resolutions = withoutKey(history.resolutions, key);
     } else if (policy === "ask-first") {
       history.resolutions[key] = { saveValue: save ?? null };
@@ -381,7 +395,7 @@ export function applySync(
 
 interface Comparison {
   differences: SyncDifference[];
-  /** `unknown` facts the save agrees with, which become `save` facts. */
+  /** Facts the save agrees with whose records hold a guess, which the save replaces. */
   promotions: string[];
   /** Facts whose “keep mine” lapsed: the save now reports another value, or agrees. */
   settled: string[];
@@ -417,7 +431,7 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
       const resolution = ownEntry(history.resolutions, key);
       const provenance = ownEntry(history.provenance, key);
       if (localValue === saveValue) {
-        if (provenance?.source === "unknown") comparison.promotions.push(key);
+        if (provenance && holdsGuess(provenance)) comparison.promotions.push(key);
         if (resolution) comparison.settled.push(key);
         continue;
       }

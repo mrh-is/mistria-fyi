@@ -1,0 +1,990 @@
+<!doctype html>
+<!--
+  Provenance marks (#276): one checked-box mark per provenance source, with variants, at real
+  size & enlarged, and in context on tracker rows. Open it straight from the checkout; add
+  `?theme=dark` for the dark theme. Tokens are copied from src/app.css (light `:root` & `.dark`),
+  fonts load from static/fonts/, and the box geometry is tracker-checkbox.svelte's.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Provenance marks</title>
+    <script>
+      if (new URLSearchParams(location.search).get("theme") === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+    <style>
+      @font-face {
+        font-family: "Instrument Serif";
+        font-style: italic;
+        font-weight: 400;
+        src: url("../../../static/fonts/instrument-serif-italic.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Petrona";
+        font-style: normal;
+        font-weight: 400 600;
+        src: url("../../../static/fonts/petrona-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Petrona";
+        font-style: italic;
+        font-weight: 400 600;
+        src: url("../../../static/fonts/petrona-italic-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Fragment Mono";
+        font-style: normal;
+        font-weight: 400;
+        src: url("../../../static/fonts/fragment-mono-regular.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        font-weight: 400;
+        src: url("../../../static/fonts/ibm-plex-mono-latin.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Satoshi";
+        font-style: normal;
+        font-weight: 400;
+        src: url("https://assets.mistria.fyi/fonts/satoshi-regular.woff2") format("woff2");
+      }
+
+      /* src/app.css, light */
+      :root {
+        --radius: 2px;
+        --font-display: "Instrument Serif", "Georgia", serif;
+        --font-body: "Petrona", "Georgia", serif;
+        --font-controls: "Fragment Mono", "Courier New", monospace;
+        --font-annotation: "Satoshi", system-ui, sans-serif;
+        --font-data: "IBM Plex Mono", "Courier New", monospace;
+        --text-2xs: 0.6875rem;
+        --color-paper: #f7f5f0;
+        --color-paper-raised: #fdfcf9;
+        --color-paper-sunken: #eeedea;
+        --color-ink: #2e2a22;
+        --color-ink-muted: #6a6460;
+        --color-ink-hairline: #948a7c;
+        --shadow-small: 0 1px 1px rgb(46 42 34 / 12%);
+        --color-hue-green: #1a7a3a;
+        --color-hue-amber: #a85a0e;
+        --color-tracker-checked: var(--color-hue-green);
+        --color-tracker-obtained: var(--color-hue-amber);
+        --color-tracker-active: var(--color-hue-amber);
+        --color-category-museum: #2e8a30;
+        --color-category-quests: #1878b8;
+        --tracker-paper-line: color-mix(in srgb, var(--color-ink-hairline) 42%, transparent);
+        --tracker-row-gap: 7px;
+        --tracker-sheet-gap: 6px;
+
+        /* Every source draws the same X in the same green, and the same slash in the same amber. */
+      }
+
+      /* src/app.css, .dark ("oil lamp") */
+      .dark {
+        --color-paper: #222226;
+        --color-paper-raised: #28282c;
+        --color-paper-sunken: #2e2e32;
+        --color-ink: #e4dfd8;
+        --color-ink-muted: #a8a098;
+        --color-ink-hairline: #746c64;
+        --shadow-small: 0 1px 1px rgb(0 0 0 / 30%);
+        --color-hue-green: #38984e;
+        --color-hue-amber: #c88030;
+        --color-category-museum: #38902e;
+        --color-category-quests: #2e82b8;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        background: var(--color-paper);
+        color: var(--color-ink);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.45;
+        padding: 12px 20px 32px 20px;
+        width: 1280px;
+      }
+
+      h1,
+      h2 {
+        font-family: var(--font-display);
+        font-style: italic;
+        font-weight: 400;
+      }
+
+      h1 {
+        font-size: 44px;
+        line-height: 1;
+        margin-bottom: 10px;
+      }
+
+      h2 {
+        font-size: 28px;
+        line-height: 1.1;
+        margin: 0 0 4px;
+      }
+
+      .lede {
+        max-width: 62ch;
+        color: var(--color-ink-muted);
+      }
+
+      .note {
+        font-family: var(--font-annotation);
+        font-size: 13px;
+        color: var(--color-ink-muted);
+        line-height: 1.4;
+      }
+
+      .sheet {
+        padding: 28px 28px 20px;
+      }
+
+      .sheet + .sheet {
+        border-top: 1px dashed var(--tracker-paper-line);
+        margin-top: 24px;
+      }
+
+      .sheet-head {
+        display: flex;
+        align-items: baseline;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+
+      .sheet-head .note {
+        max-width: 70ch;
+      }
+
+      /* The key, laid out like a specimen ledger: tool, mark at size, mark enlarged, words. */
+      .ledger {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      .ledger th {
+        font-family: var(--font-data);
+        font-size: var(--text-2xs);
+        font-weight: 400;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-ink-muted);
+        text-align: left;
+        padding: 0 14px 6px 0;
+        border-bottom: 1px solid var(--color-ink-hairline);
+      }
+
+      .ledger td {
+        padding: 14px 14px 14px 0;
+        border-bottom: 1px solid var(--tracker-paper-line);
+        vertical-align: middle;
+      }
+
+      .ledger .source {
+        font-family: var(--font-controls);
+        font-size: 14px;
+      }
+
+      .ledger .tool {
+        font-style: italic;
+      }
+
+      .ledger .tool small {
+        display: block;
+        font-style: normal;
+        font-family: var(--font-annotation);
+        font-size: 13px;
+        color: var(--color-ink-muted);
+        max-width: 30ch;
+      }
+
+      .ledger code,
+      .variants code {
+        font-family: var(--font-data);
+        font-size: 12px;
+        color: var(--color-ink-muted);
+      }
+
+      .ledger .tool-name {
+        display: block;
+        font-family: var(--font-annotation);
+        font-size: 13px;
+        color: var(--color-ink-muted);
+      }
+
+      #sheet-quests .enlarged svg {
+        width: 72px;
+        height: 72px;
+      }
+
+      .ledger .words q {
+        quotes: "\201C" "\201D";
+      }
+
+      .at-size {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: var(--color-paper-raised);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-small);
+      }
+
+      .at-size svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .enlarged {
+        display: inline-block;
+        background: var(--color-paper-raised);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-small);
+        padding: 4px;
+        line-height: 0;
+      }
+
+      .enlarged svg {
+        width: 92px;
+        height: 92px;
+      }
+
+      .pair {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .pair .arrow {
+        font-family: var(--font-data);
+        font-size: 12px;
+        color: var(--color-ink-muted);
+      }
+
+      .at-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .at-row .caption {
+        font-family: var(--font-data);
+        font-size: var(--text-2xs);
+        color: var(--color-ink-muted);
+        margin-left: 2px;
+      }
+
+      /* Variants: one strip per provenance, the pick marked in the margin like a proofreader. */
+      .variants {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        row-gap: 22px;
+        column-gap: 18px;
+      }
+
+      .variants > .label {
+        font-family: var(--font-controls);
+        font-size: 14px;
+        padding-top: 6px;
+      }
+
+      .variants > .label small {
+        display: block;
+        font-family: var(--font-annotation);
+        font-size: 13px;
+        color: var(--color-ink-muted);
+      }
+
+      .strip {
+        display: flex;
+        gap: 18px;
+        align-items: flex-start;
+      }
+
+      .variant {
+        position: relative;
+        display: grid;
+        grid-template-columns: auto auto;
+        grid-template-rows: auto 1fr;
+        column-gap: 12px;
+        width: 328px;
+      }
+
+      .variant .enlarged svg {
+        width: 80px;
+        height: 80px;
+      }
+
+      .variant .enlarged {
+        grid-row: 1 / 3;
+        align-self: start;
+        justify-self: start;
+      }
+
+      .variant .at-size {
+        align-self: start;
+      }
+
+      .variant .text {
+        grid-column: 2;
+      }
+
+      .variant h3 {
+        font-family: var(--font-body);
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.25;
+        margin: 6px 0 2px;
+      }
+
+      .variant .text {
+        font-size: 13.5px;
+        line-height: 1.35;
+        color: var(--color-ink-muted);
+      }
+
+      .variant-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .pick {
+        position: absolute;
+        left: -14px;
+        top: -10px;
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: 19px;
+        color: var(--color-hue-amber);
+        transform: rotate(-7deg);
+        pointer-events: none;
+      }
+
+      .variant.is-pick .enlarged {
+        outline: 1.5px solid color-mix(in srgb, var(--color-hue-amber) 70%, transparent);
+        outline-offset: 3px;
+      }
+
+      /* Tracker rows, transcribed from tracker-row.svelte & tracker-paper.svelte. */
+      .context {
+        display: flex;
+        gap: 48px;
+        align-items: flex-start;
+      }
+
+      .column {
+        width: 390px;
+      }
+
+      .column.fine {
+        --tracker-target-size: 32px;
+        --tracker-row-min-size: 40px;
+      }
+
+      .column.coarse {
+        --tracker-target-size: 44px;
+        --tracker-row-min-size: 48px;
+      }
+
+      .column-title {
+        font-family: var(--font-data);
+        font-size: var(--text-2xs);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-ink-muted);
+        margin-bottom: 8px;
+      }
+
+      .section-name {
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: 22px;
+        margin: 14px 0 6px;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+
+      .section-name .count {
+        font-family: var(--font-data);
+        font-style: normal;
+        font-size: 12px;
+        color: var(--color-ink-muted);
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--tracker-sheet-gap);
+      }
+
+      .row {
+        filter: drop-shadow(var(--shadow-small));
+      }
+
+      .row .surface {
+        display: flex;
+        min-block-size: var(--tracker-row-min-size);
+        align-items: center;
+        gap: var(--tracker-row-gap);
+        padding: 4px 12px 4px 0;
+        background: var(--color-paper-raised);
+        border: 1px solid var(--tracker-paper-line);
+        border-radius: var(--radius);
+      }
+
+      .row .box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--tracker-target-size);
+        min-height: var(--tracker-target-size);
+        flex-shrink: 0;
+        color: var(--color-ink-muted);
+      }
+
+      .row .box svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .row .label {
+        flex: 1;
+        font-size: 16px;
+        line-height: 1.3;
+      }
+
+      .row.completed .label {
+        color: var(--color-ink-muted);
+        text-decoration: line-through;
+      }
+
+      .row .badge {
+        font-family: var(--font-data);
+        font-size: var(--text-2xs);
+        font-weight: 600;
+        color: var(--color-tracker-active);
+      }
+
+      .row .whisper {
+        font-family: var(--font-annotation);
+        font-size: 12px;
+        color: var(--color-ink-muted);
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .callouts {
+        width: 360px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding-top: 30px;
+      }
+
+      .callouts p {
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .callouts strong {
+        font-weight: 600;
+      }
+
+      .sr {
+        font-family: var(--font-data);
+        font-size: 12px;
+        background: var(--color-paper-sunken);
+        border-radius: var(--radius);
+        padding: 8px 10px;
+        line-height: 1.5;
+        color: var(--color-ink);
+      }
+
+      .sr b {
+        font-weight: 400;
+        color: var(--color-ink-muted);
+      }
+
+      .spread {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .spread .line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .spread .enlarged svg {
+        width: 64px;
+        height: 64px;
+      }
+
+      .spread .slot {
+        display: flex;
+        justify-content: center;
+        width: 72px;
+      }
+
+      .spread .sep {
+        align-self: stretch;
+        width: 1px;
+        margin: 0 8px;
+        background: var(--tracker-paper-line);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Filters & pressure masks are generated per seed by the script below. pen-N is
+         src/lib/components/pencil-filter.svelte's pencil-sm with seed N. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs id="defs"></defs>
+    </svg>
+
+    <header>
+      <h1>Provenance marks</h1>
+      <p class="lede">
+        One X, made four ways. Completed is always a green X and obtained is always an amber slash;
+        only the tool that drew it changes. The player inks it, the save stamps it, we pencil it in,
+        and the old records were typed. Each entry gets its own seed, so no two marks on a page are
+        quite the same.
+      </p>
+    </header>
+
+    <section class="sheet" id="sheet-key">
+      <div class="sheet-head">
+        <h2>The recommended set</h2>
+        <p class="note">
+          Real size is the app’s 24 px icon in a 32 px target: the X, the obtained slash, & a quest
+          done in two moments. Enlarged is 3.5×. Most entries are done in one moment, so they get
+          one X. A quest’s slash turns green when it’s done, and the crossing stroke lands later, a
+          little out of register.
+        </p>
+      </div>
+      <table class="ledger">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Tool</th>
+            <th>Real size</th>
+            <th>One moment</th>
+            <th>Quest: obtained, then done</th>
+          </tr>
+        </thead>
+        <tbody id="ledger-body"></tbody>
+      </table>
+    </section>
+
+    <section class="sheet" id="sheet-variants">
+      <div class="sheet-head">
+        <h2>Every entry a little different</h2>
+        <p class="note">
+          Eight entries per tool, each seeded by its id: five single X’s, then three quests. The
+          seed picks the filter’s noise, the pen’s stroke ends, bow, & weight, the stamp’s angle &
+          pressure, and the second stroke’s registration. Pressure fades in any direction, by
+          anything from nothing to about half.
+        </p>
+      </div>
+      <div class="variants" id="variants"></div>
+    </section>
+
+    <section class="sheet" id="sheet-quests">
+      <div class="sheet-head">
+        <h2>Quests from two sources</h2>
+        <p class="note">
+          A quest can be obtained from one source and finished from another. Either each moment
+          keeps its own tool (A), or the quest has one provenance and the finish redraws the whole
+          mark in its tool (B). Same-source quests look the same both ways.
+        </p>
+      </div>
+      <table class="ledger">
+        <thead>
+          <tr>
+            <th>Obtained</th>
+            <th>Finished</th>
+            <th>Active</th>
+            <th>A: each moment keeps its tool</th>
+            <th>B: the finish redraws it</th>
+          </tr>
+        </thead>
+        <tbody id="quests-body"></tbody>
+      </table>
+    </section>
+
+    <section class="sheet" id="sheet-context">
+      <div class="sheet-head">
+        <h2>On the page</h2>
+        <p class="note">
+          Recommended marks on tracker rows, transcribed from tracker-row.svelte, each seeded by its
+          row. Row text & struck-through state are unchanged; only the tool varies.
+        </p>
+      </div>
+      <div class="context">
+        <div class="column fine" id="col-fine"></div>
+        <div class="column coarse" id="col-coarse"></div>
+        <div class="callouts">
+          <p>
+            <strong>One vocabulary.</strong> A glance still reads X as done and a slash as obtained,
+            whichever tool drew it. The tool is texture for the player who looks closer.
+          </p>
+          <p>
+            <strong>Quests take two moments.</strong> Request for an Apple was obtained & finished
+            from saves, so two stamps. Request for Bait was obtained & finished by hand.
+          </p>
+          <p>
+            <strong>Decorative to assistive tech.</strong> The checkbox keeps its name (“Uncheck
+            Sardine”) & state, and the tool isn’t announced. Provenance is texture, not information
+            a player needs to act on.
+          </p>
+          <p>
+            <strong>Only the ink stroke animates.</strong> It’s the only mark the player draws, so
+            it keeps today’s drawn second stroke. The others arrive already made.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const BOX =
+        '<rect x="3.5" y="3.5" width="21" height="21" rx="1" stroke="var(--color-ink-hairline)" stroke-width="1.5" fill="none"/>';
+      const GREEN = "var(--color-tracker-checked)";
+      const AMBER = "var(--color-tracker-obtained)";
+      const SEEDS = 8;
+
+      // A seeded generator per entry id (FNV-1a into mulberry32), so a row's mark never changes.
+      const random = (id) => {
+        let a = 2166136261;
+        for (const ch of id) a = Math.imul(a ^ ch.codePointAt(0), 16777619);
+        return () => {
+          a = (a + 0x6d2b79f5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      };
+      const between = (r, lo, hi) => lo + r() * (hi - lo);
+      const pickSeed = (r) => 1 + Math.floor(r() * SEEDS);
+
+      // Filters, one per tool & seed, made on first use.
+      const defs = [];
+      const made = new Set();
+      const FILTERS = {
+        pen: (
+          s,
+        ) => `<feTurbulence type="turbulence" baseFrequency="0.04" numOctaves="4" seed="${s}" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="1" xChannelSelector="R" yChannelSelector="G"/>`,
+        pencil: (
+          s,
+        ) => `<feTurbulence type="fractalNoise" baseFrequency="1.7" numOctaves="2" seed="${s}" result="grain"/>
+          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -2.6 0 0 0 2.35" result="tooth"/>
+          <feComposite in="SourceGraphic" in2="tooth" operator="in" result="grained"/>
+          <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="3" seed="${s + 20}" result="wobble"/>
+          <feDisplacementMap in="grained" in2="wobble" scale="0.9" xChannelSelector="R" yChannelSelector="G"/>`,
+        stamp: (
+          s,
+        ) => `<feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="${s}" result="grain"/>
+          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -6 0 0 0 4.9" result="speck"/>
+          <feComposite in="SourceGraphic" in2="speck" operator="in"/>`,
+        ribbon: (s) => `<feGaussianBlur in="SourceGraphic" stdDeviation="0.18" result="spread"/>
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="${s}" result="grain"/>
+          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -3 0 0 0 2.9" result="ink"/>
+          <feComposite in="spread" in2="ink" operator="in"/>`,
+      };
+      const filter = (kind, seed) => {
+        const id = `${kind}-${seed}`;
+        if (!made.has(id)) {
+          made.add(id);
+          defs.push(
+            `<filter id="${id}" x="-10%" y="-10%" width="120%" height="120%">${FILTERS[kind](seed)}</filter>`,
+          );
+        }
+        return `url(#${id})`;
+      };
+
+      // Uneven pressure: a fade in a random direction, by 0 to ~45%. About a fifth fade not at all.
+      let masks = 0;
+      const pressure = (r) => {
+        const angle = between(r, 0, 2 * Math.PI);
+        const fade = Math.max(0, between(r, -0.1, 0.45));
+        const id = `press-${++masks}`;
+        const dx = Math.cos(angle) * 8;
+        const dy = Math.sin(angle) * 8;
+        const end = Math.round(255 * (1 - fade));
+        defs.push(`<linearGradient id="${id}-ramp" gradientUnits="userSpaceOnUse"
+            x1="${14 - dx}" y1="${14 - dy}" x2="${14 + dx}" y2="${14 + dy}">
+            <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="rgb(${end} ${end} ${end})"/>
+          </linearGradient>
+          <mask id="${id}" maskUnits="userSpaceOnUse" x="0" y="0" width="28" height="28">
+            <rect width="28" height="28" fill="url(#${id}-ramp)"/>
+          </mask>`);
+        return `url(#${id})`;
+      };
+
+      // Every mark is drawn in tracker-checkbox.svelte's 28-unit viewBox, inside its 21-unit box.
+      // Each tool, given an entry's seeded generator, returns the slash (the first moment) and the
+      // crossing stroke. A single X draws both at once; a quest's crossing stroke lands later, so
+      // it gets its own registration. The slash is drawn the same either way, only recolored.
+      const misregister = (r) =>
+        `translate(${between(r, -0.9, 0.9).toFixed(2)} ${between(r, -0.7, 0.7).toFixed(2)}) rotate(${between(r, -3, 3).toFixed(1)} 14 14)`;
+
+      // Pen: today's X, loosened, with a nib blot where each stroke lands. Each stroke's ends,
+      // bow, & weight are drawn fresh per entry, so the overrun varies and some ends stop short.
+      const pen = (r) => {
+        const f = filter("pen", pickSeed(r));
+        const later = misregister(r);
+        const hand = ([sx, sy], [ex, ey]) => {
+          const x0 = sx + between(r, -1.6, 1.6);
+          const y0 = sy + between(r, -1.6, 1.6);
+          const x1 = ex + between(r, -1.8, 1.8);
+          const y1 = ey + between(r, -1.8, 1.8);
+          const len = Math.hypot(x1 - x0, y1 - y0);
+          const [nx, ny] = [-(y1 - y0) / len, (x1 - x0) / len];
+          const bow = between(r, -1.8, 1.8);
+          const bow2 = bow * between(r, 0.3, 1.3);
+          const at = (t, b) => [x0 + (x1 - x0) * t + nx * b, y0 + (y1 - y0) * t + ny * b];
+          const [c1, c2] = [at(between(r, 0.25, 0.4), bow), at(between(r, 0.6, 0.75), bow2)];
+          const n = (v) => v.toFixed(1);
+          return {
+            d: `M${n(x0)} ${n(y0)} C${n(c1[0])} ${n(c1[1])} ${n(c2[0])} ${n(c2[1])} ${n(x1)} ${n(y1)}`,
+            blot: [x0, y0, between(r, 1.1, 1.7)],
+            width: between(r, 2.1, 2.8).toFixed(2),
+          };
+        };
+        const first = hand([21.9, 3.1], [6.6, 21.7]);
+        const second = hand([7.4, 7.6], [25.6, 24.1]);
+        const stroke = (c, { d, blot, width }, at = "") =>
+          `<g filter="${f}" transform="${at}" fill="none" stroke="${c}" stroke-linecap="round">
+            <path d="${d}" stroke-width="${width}"/><circle cx="${blot[0]}" cy="${blot[1]}" r="${blot[2]}" fill="${c}" stroke="none"/>
+          </g>`;
+        const slash = (c) => stroke(c, first);
+        const cross = (c, at) => stroke(c, second, at);
+        return {
+          slash,
+          cross: (c) => cross(c, later),
+          x: (c) => slash(c) + cross(c),
+          quest: (c) => slash(c) + cross(c, later),
+        };
+      };
+
+      // Rubber stamp: square-ended filled bars, set a few degrees off, with specks the ink missed
+      // and a pressure fade. A quest's two stamps each get their own angle & pressure.
+      const stamp = (r) => {
+        const f = filter("stamp", pickSeed(r));
+        const first = `rotate(${between(r, -5, 5).toFixed(1)} 14 14)`;
+        const firstPress = pressure(r);
+        const later = misregister(r);
+        const laterPress = pressure(r);
+        const bar = (a) =>
+          `<rect x="5.6" y="12.2" width="16.8" height="3.6" transform="rotate(${a} 14 14)"/>`;
+        const print = (c, body, at, press) =>
+          `<g transform="${at}" mask="${press}"><g filter="${f}" fill="${c}">${body}</g></g>`;
+        const slash = (c) => print(c, bar(-45), first, firstPress);
+        return {
+          slash,
+          cross: (c) => print(c, bar(45), `${first} ${later}`, laterPress),
+          x: (c) => print(c, bar(-45) + bar(45), first, firstPress),
+          quest: (c) => slash(c) + print(c, bar(45), `${first} ${later}`, laterPress),
+        };
+      };
+
+      // Pencil: two light passes per stroke, grainy, inside the box. Lighter than the pen, like a
+      // pencil next to a pen in a sketching app, but still clearly green.
+      const pencil = (r, weight = 0.75) => {
+        const f = filter("pencil", pickSeed(r));
+        const later = misregister(r);
+        const stroke = (c, d, d2, at = "") =>
+          `<g filter="${f}" transform="${at}" opacity="${weight}" fill="none" stroke="${c}" stroke-linecap="round">
+            <path d="${d}" stroke-width="1.6"/><path d="${d2}" stroke-width="0.9" opacity=".6"/>
+          </g>`;
+        const slash = (c) =>
+          stroke(
+            c,
+            "M9.3 19.9 C12.1 16.5 15.2 12.5 18.9 8.2",
+            "M9.9 20.2 C12.6 16.9 15.6 13 19.1 8.9",
+          );
+        const cross = (c, at) =>
+          stroke(
+            c,
+            "M9.1 8.5 C12.3 12 15.7 16 19.2 19.8",
+            "M9.6 8.2 C12.8 11.6 16.1 15.4 19.5 19.1",
+            at,
+          );
+        return {
+          slash,
+          cross: (c) => cross(c, later),
+          x: (c) => slash(c) + cross(c),
+          quest: (c) => slash(c) + cross(c, later),
+        };
+      };
+
+      // Typewriter: a small serifed x, struck a hair off level in one keystroke. A quest types /
+      // first, then \ after the carriage has moved a little.
+      const typewriter = (r) => {
+        const f = filter("ribbon", pickSeed(r));
+        const first = `translate(${between(r, -0.4, 0.4).toFixed(2)} ${between(r, -0.3, 0.5).toFixed(2)}) rotate(${between(r, -2.5, 2.5).toFixed(1)} 14 14)`;
+        const later = misregister(r);
+        const key = (c, body, at) =>
+          `<g filter="${f}" transform="${at}" fill="none" stroke="${c}">${body}</g>`;
+        const SLASH = `<path d="M17.5 10.4 L10.7 18.4" stroke-width="1.75"/><path d="M15.9 10.4 H19 M9.2 18.4 H12.3" stroke-width="1.25"/>`;
+        const BACK = `<path d="M10.7 10.4 L17.5 18.4" stroke-width="1.75"/><path d="M9.2 10.4 H12.3 M15.9 18.4 H19" stroke-width="1.25"/>`;
+        const slash = (c) => key(c, SLASH, first);
+        return {
+          slash,
+          cross: (c) => key(c, BACK, `${first} ${later}`),
+          x: (c) => key(c, SLASH + BACK, first),
+          quest: (c) => slash(c) + key(c, BACK, `${first} ${later}`),
+        };
+      };
+
+      const TOOLS = { pen, stamp, pencil, typewriter };
+      const svg = (body) =>
+        `<svg viewBox="0 0 28 28" fill="none" aria-hidden="true">${BOX}${body}</svg>`;
+      const EMPTY = svg("");
+      const forms = (tool, id, ...args) => {
+        const t = tool(random(id), ...args);
+        return { x: svg(t.x(GREEN)), slash: svg(t.slash(AMBER)), quest: svg(t.quest(GREEN)) };
+      };
+      const atRow = (f) =>
+        `<span class="at-row"><span class="at-size">${f.x}</span><span class="at-size">${f.slash}</span><span class="at-size">${f.quest}</span></span>`;
+
+      const RECOMMENDED = [
+        {
+          source: "manual",
+          tool: "Pen",
+          why: "The player’s own hand. Today’s X, loosened: a nib’s landing blot, strokes that overrun the box.",
+        },
+        {
+          source: "save",
+          tool: "Rubber stamp",
+          why: "A clerk’s stamp, set a few degrees off, with specks the ink missed and a fade where it was pressed lightly.",
+        },
+        {
+          source: "inferred",
+          tool: "Pencil",
+          why: "Green colored pencil: lighter & grainier than the pen, so it reads as our note, and it stays inside the box.",
+        },
+        {
+          source: "unknown",
+          tool: "Typewriter",
+          why: "A typed x, as on old forms: small, serifed, struck a hair off level.",
+        },
+      ];
+      const TOOL_OF = { manual: pen, save: stamp, inferred: pencil, unknown: typewriter };
+
+      document.querySelector("#ledger-body").innerHTML = RECOMMENDED.map((rec) => {
+        const f = forms(TOOL_OF[rec.source], `key-${rec.source}`);
+        return `<tr>
+          <td class="source">${rec.source}</td>
+          <td class="tool">${rec.tool}<small>${rec.why}</small></td>
+          <td>${atRow(f)}</td>
+          <td><span class="enlarged">${f.x}</span></td>
+          <td><span class="pair"><span class="enlarged">${f.slash}</span><span class="arrow">→</span><span class="enlarged">${f.quest}</span></span></td>
+        </tr>`;
+      }).join("");
+
+      const spread = (marks) => `<div class="spread">
+          <div class="line">${marks.map((m, i) => `${i === 5 ? '<span class="sep"></span>' : ""}<span class="enlarged">${m}</span>`).join("")}</div>
+          <div class="line small">${marks.map((m, i) => `${i === 5 ? '<span class="sep"></span>' : ""}<span class="slot"><span class="at-size">${m}</span></span>`).join("")}</div>
+        </div>`;
+      const sample = (tool, ...args) =>
+        Array.from({ length: 8 }, (_, i) => {
+          const f = forms(tool, `sample-${i}`, ...args);
+          return i < 5 ? f.x : f.quest;
+        });
+
+      const weights = [
+        ["0.62", "The last round"],
+        ["0.75", "Pick"],
+        ["1", "Full strength"],
+      ];
+      document.querySelector("#variants").innerHTML =
+        RECOMMENDED.map(
+          (rec) => `<div class="label">${rec.source}<small>${rec.tool}</small></div>
+            ${spread(sample(TOOL_OF[rec.source]))}`,
+        ).join("") +
+        `<div class="label">inferred<small>Pencil weight</small></div>
+          <div class="strip">${weights
+            .map(([w, name]) => {
+              const f = forms(pencil, "weight", Number(w));
+              return `<div class="variant${name === "Pick" ? " is-pick" : ""}">
+                ${name === "Pick" ? '<span class="pick">pick</span>' : ""}
+                <span class="enlarged">${f.x}</span>
+                <div class="variant-body text">
+                  ${atRow(f)}
+                  <div><h3>${name === "Pick" ? "Lighter than the pen" : name}</h3>${Math.round(w * 100)}% of the pen’s strength.</div>
+                </div>
+              </div>`;
+            })
+            .join("")}</div>`;
+
+      const QUESTS = [
+        ["save", "manual", "Request for Bait"],
+        ["manual", "save", "Request for a Pearl"],
+        ["unknown", "manual", "Request for Tea"],
+        ["manual", "inferred", "Request for Wool"],
+        ["save", "save", "Request for an Apple"],
+      ];
+      const shown = (mark) =>
+        `<span class="pair"><span class="enlarged">${mark}</span><span class="at-size">${mark}</span></span>`;
+      document.querySelector("#quests-body").innerHTML = QUESTS.map(([got, finished, name]) => {
+        const r = random(name);
+        const before = TOOL_OF[got](r);
+        const after = got === finished ? before : TOOL_OF[finished](r);
+        const tool = (source) => RECOMMENDED.find((rec) => rec.source === source).tool;
+        return `<tr>
+          <td class="source">${got}<small class="tool-name">${tool(got)}</small></td>
+          <td class="source">${finished}<small class="tool-name">${tool(finished)}</small></td>
+          <td>${shown(svg(before.slash(AMBER)))}</td>
+          <td>${shown(svg(before.slash(GREEN) + after.cross(GREEN)))}</td>
+          <td>${shown(svg(after.quest(GREEN)))}</td>
+        </tr>`;
+      }).join("");
+
+      const row = (name, mark, extra = "", completed = true) =>
+        `<div class="row${completed ? " completed" : ""}"><div class="surface">
+          <span class="box">${mark}</span>
+          <span class="label">${name}</span>${extra}
+        </div></div>`;
+      const done = (tool, name) => svg(tool(random(name)).x(GREEN));
+
+      const column = (title) => {
+        return `<div class="column-title">${title}</div>
+        <div class="section-name">Fish <span class="count">5 / 7</span></div>
+        <div class="stack">
+          ${row("Brown Trout", done(pen, "Brown Trout"))}
+          ${row("Sardine", done(stamp, "Sardine"))}
+          ${row("Catfish", done(typewriter, "Catfish"))}
+          ${row("Lake Trout", EMPTY, "", false)}
+          ${row("Crucian Carp", done(pencil, "Crucian Carp"))}
+          ${row("Tuna", done(stamp, "Tuna"))}
+          ${row("Eel", EMPTY, "", false)}
+        </div>
+        <div class="section-name">Requests <span class="count">2 / 4</span></div>
+        <div class="stack">
+          ${row("Request for an Apple", svg(stamp(random("Request for an Apple")).quest(GREEN)))}
+          ${row("Request for Armored Bass", svg(stamp(random("Request for Armored Bass")).slash(AMBER)), '<span class="badge">Active</span>', false)}
+          ${row("Request for Bait", svg(pen(random("Request for Bait")).quest(GREEN)))}
+          ${row("Request for a Beet", EMPTY, "", false)}
+        </div>`;
+      };
+
+      document.querySelector("#col-fine").innerHTML = column("Computer · 32 px target");
+      document.querySelector("#col-coarse").innerHTML = column("Phone · 44 px target");
+      document.querySelector("#defs").innerHTML = defs.join("");
+    </script>
+  </body>
+</html>

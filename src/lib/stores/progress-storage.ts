@@ -104,6 +104,9 @@ export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
     return { ...document, progress };
   },
   5: (document) => document,
+  // Version 6 lets a completed quest's provenance name its obtained moment's source. An older
+  // quest has no record of that moment, so nothing is backfilled & it draws in its own source.
+  6: (document) => document,
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -231,6 +234,7 @@ const LIST_ENTRIES = {
 
 const PlaytimeSchema = v.pipe(FiniteNumberSchema, v.minValue(0));
 const FactProvenanceSchema = v.object({
+  obtainedSource: v.optional(v.picklist(PROVENANCE_SOURCES)),
   playtime: v.optional(PlaytimeSchema),
   source: v.picklist(PROVENANCE_SOURCES),
 });

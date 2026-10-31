@@ -193,6 +193,16 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048](https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048),
 [src/lib/presentation/source-groups.ts](../src/lib/presentation/source-groups.ts).
 
+### [Provenance marks: one X, four tools](decisions/2026-10-30-provenance-marks.md)
+
+ID: 2026-10-30-provenance-marks. Status: Current.
+
+Every checked box draws the same green X (obtained: amber slash); provenance only changes the tool
+that drew it, seeded per entry, and it’s decorative to assistive tech.
+
+Evidence: [docs/design/provenance-marks/README.md](../docs/design/provenance-marks/README.md),
+[https://github.com/mrh-is/mistria-fyi/pull/284](https://github.com/mrh-is/mistria-fyi/pull/284).
+
 ### [Reader-first agent guidance](decisions/2026-10-30-reader-first-agent-guidance.md)
 
 ID: 2026-10-30-reader-first-agent-guidance. Status: Current.

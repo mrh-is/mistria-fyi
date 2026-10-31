@@ -96,7 +96,7 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `5`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `6`.
   - `lastImport`: the last manual save import's timestamp, identity (filename number plus creation
     version), & player/farm display names, or `null`. Version 1 migrates to `null` without inventing
     history. Missing or malformed game metadata remains unknown and never blocks importing progress.
@@ -186,12 +186,13 @@ preserves captured world state & unknown IDs. Its history merges three ways: eac
 resolution, or last save playtime the importing tab recorded since its base (the stored value it
 last read, or its own explicit write still waiting for the lock) overwrites the stored one, and the
 rest keep the history another tab stored meanwhile. A save or transfer agreeing with a fact already
-stored leaves that fact's stored provenance in place. Edits made after confirmation are rebased onto
-the locked merge result for the next auto-save, including removals & decreases, and so is their
-history; a later household edit replaces that household as a unit to preserve the engagement
-cascade. The pagehide flush can't wait for a lock, so it runs the same function synchronously,
-keeping the compare-before-write. A browser without Web Locks runs every write synchronously; see
-the [decision record](decisions/2026-10-20-serialized-progress-writes.md).
+stored leaves that fact's stored provenance in place, unless a save is replacing a guess in it and
+the merge kept the value that save reported. Edits made after confirmation are rebased onto the
+locked merge result for the next auto-save, including removals & decreases, and so is their history;
+a later household edit replaces that household as a unit to preserve the engagement cascade. The
+pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
+compare-before-write. A browser without Web Locks runs every write synchronously; see the
+[decision record](decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Provenance
 
@@ -205,8 +206,17 @@ inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the st
 - **Sources.** Setters & toggles record `manual`. An engagement cascade, a quest's recipe rewards (&
   the undo that takes them back), default unlocks, & “Record prerequisites” record `inferred`. A
   save import records `save`; a device transfer records `unknown`, since its payload carries no
-  provenance. Only facts a call changes record: a save agreeing with a fact leaves its provenance as
-  it was.
+  provenance. Only facts a call changes record, with one exception: a save replaces the app's
+  guesses but never the player's entries, so one agreeing with an `unknown` or `inferred` fact
+  promotes it to `save`, and one agreeing with a `manual` fact leaves it `manual`.
+- **A quest's two moments.** When a different source finishes an obtained quest, its record keeps
+  the obtained moment's source in `obtainedSource` (version 6), and any later change replaces the
+  record. A save reporting `completed` follows the same rule for that moment: it replaces a guess
+  and keeps `manual`, so a pen slash under a stamped X is permanent on purpose. A quest finished
+  before version 6 has none, so it draws in its own source.
+- **Marks.** `provenanceMark` turns a fact's key & sources into its checkbox's mark. The tool is
+  decorative, so it's never announced. See the
+  [decision record](decisions/2026-10-30-provenance-marks.md).
 - **Hydration.** Facts stored before version 3 migrate as `unknown`, read the way hydration reads
   them, so a value it repairs to the default gets no record. A relationship the engagement cascade
   applies on load records `inferred`. History for a historical almanac ID is rekeyed under its

@@ -10,6 +10,7 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -133,6 +134,10 @@
               {@const completed = isCompleted(entry)}
               {@const spoilered = !isConditionVisible(entry.visibility, userState.progressionState)}
               <TrackerRow
+                fact={factKey(
+                  entry.kind === "appearance" ? "mountAppearances" : "unlockedPerks",
+                  entry.id,
+                )}
                 display={trackerRowDisplay({ completed, spoilered })}
                 segmentLookups={{ ...baseLookups, entityVisibility: entry.visibility }}
                 name={entry.name}

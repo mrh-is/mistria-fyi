@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { changedFacts, factKey, progressFacts, resolutionHolds } from "./provenance.js";
+import {
+  changedFacts,
+  confirmedBySave,
+  factKey,
+  holdsGuess,
+  obtainedSourceOf,
+  progressFacts,
+  resolutionHolds,
+} from "./provenance.js";
 
 import type { JsonValue } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
+
+import type { FactProvenance } from "./provenance.js";
 
 function progress(overrides: Partial<ProgressState> = {}): ProgressState {
   return {
@@ -95,6 +105,77 @@ describe("changedFacts", () => {
       "museum/turnip",
       "spells/summon_rain",
     ]);
+  });
+});
+
+describe("obtainedSourceOf", () => {
+  it.each(["inferred", "unknown"] as const)("lets a save's finish replace a %s slash", (source) => {
+    expect(obtainedSourceOf({ source }, "save", "obtained", "completed")).toBeUndefined();
+  });
+
+  it("lets a save's finish replace the slash of a quest with no record", () => {
+    expect(obtainedSourceOf(undefined, "save", "obtained", "completed")).toBeUndefined();
+  });
+
+  it("keeps a manual slash under a save's finish", () => {
+    const previous: FactProvenance = { source: "manual" };
+    expect(obtainedSourceOf(previous, "save", "obtained", "completed")).toBe("manual");
+  });
+
+  it("keeps a guessed slash under a finish that isn't a save's", () => {
+    const previous: FactProvenance = { source: "inferred" };
+    expect(obtainedSourceOf(previous, "manual", "obtained", "completed")).toBe("inferred");
+    expect(obtainedSourceOf(undefined, "manual", "obtained", "completed")).toBe("unknown");
+  });
+});
+
+describe("confirmedBySave", () => {
+  const PLAYTIME = 100;
+
+  it.each<[string, FactProvenance, FactProvenance]>([
+    ["promotes unknown", { source: "unknown" }, { playtime: PLAYTIME, source: "save" }],
+    [
+      "promotes inferred, replacing its playtime",
+      { playtime: 5, source: "inferred" },
+      { playtime: PLAYTIME, source: "save" },
+    ],
+    [
+      "promotes a guessed finish over a guessed slash",
+      { obtainedSource: "inferred", source: "unknown" },
+      { playtime: PLAYTIME, source: "save" },
+    ],
+    [
+      "promotes a guessed finish over a manual slash, keeping the slash",
+      { obtainedSource: "manual", source: "unknown" },
+      { obtainedSource: "manual", playtime: PLAYTIME, source: "save" },
+    ],
+    [
+      "clears a guessed slash under a save's X, keeping its playtime",
+      { obtainedSource: "unknown", playtime: 5, source: "save" },
+      { playtime: 5, source: "save" },
+    ],
+    [
+      "stamps a guessed slash under a manual X, keeping the edit's playtime",
+      { obtainedSource: "inferred", playtime: 5, source: "manual" },
+      { obtainedSource: "save", playtime: 5, source: "manual" },
+    ],
+  ])("%s", (_name, record, expected) => {
+    expect(holdsGuess(record)).toBe(true);
+    expect(confirmedBySave(record, PLAYTIME)).toEqual(expected);
+  });
+
+  it.each<FactProvenance>([
+    { playtime: 5, source: "manual" },
+    { playtime: 5, source: "save" },
+    { obtainedSource: "save", playtime: 5, source: "manual" },
+    { obtainedSource: "manual", playtime: 5, source: "save" },
+  ])("holds no guess in %j", (record) => {
+    expect(holdsGuess(record)).toBe(false);
+    expect(confirmedBySave(record, PLAYTIME)).toEqual(record);
+  });
+
+  it("omits the playtime of a save that couldn't be read", () => {
+    expect(confirmedBySave({ source: "inferred" }, undefined)).toEqual({ source: "save" });
   });
 });
 
