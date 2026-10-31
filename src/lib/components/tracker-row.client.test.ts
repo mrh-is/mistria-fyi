@@ -3,10 +3,96 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { SPRITE_PREVIEW_FADE_MS, SPRITE_PREVIEW_HOLD_MS } from "#lib/utils/row-timing.js";
 
+import type { LocaleCode } from "#lib/types/locale.js";
+
+describe("TrackerRow localized checkbox labels", () => {
+  const originalGetLocale = getLocale;
+
+  afterEach(() => {
+    overwriteGetLocale(originalGetLocale);
+  });
+
+  it.each<{
+    locale: LocaleCode;
+    plain: string;
+    variant: string;
+  }>([
+    { locale: "en", plain: "Check Window", variant: "Check Window, Oak" },
+    { locale: "es", plain: "Marcar Window", variant: "Marcar Window, Oak" },
+    { locale: "fr", plain: "Cocher Window", variant: "Cocher Window, Oak" },
+    { locale: "ja", plain: "Windowをチェック", variant: "Window（Oak）をチェック" },
+    { locale: "ko", plain: "Window 선택", variant: "Window(Oak) 선택" },
+    { locale: "ru", plain: "Отметить «Window»", variant: "Отметить «Window, Oak»" },
+    { locale: "zh-Hans", plain: "勾选Window", variant: "勾选Window，Oak" },
+    { locale: "zh-Hant", plain: "勾選Window", variant: "勾選Window，Oak" },
+  ])("includes the variant only when present in $locale", async ({ locale, plain, variant }) => {
+    overwriteGetLocale(() => locale);
+    const view = renderWithFeedback(TrackerRow, {
+      display: { mode: "incomplete" },
+      fact: "almanac/window",
+      name: "Window",
+      onToggle: vi.fn(),
+      reportCategory: "almanac-item",
+      reportEntityId: "window",
+      subtitle: "Oak",
+      variant: "Oak",
+    });
+
+    expect(view.getByRole("button", { name: variant })).toBeInTheDocument();
+    await view.rerender({ variant: undefined });
+    expect(view.getByRole("button", { name: plain })).toBeInTheDocument();
+  });
+});
+
 describe("TrackerRow reportable metadata", () => {
+  it("names the variant when checking & unchecking a row", async () => {
+    const onToggle = vi.fn();
+    const view = renderWithFeedback(TrackerRow, {
+      display: { mode: "incomplete" },
+      fact: "almanac/animated_clouds_window_oak",
+      name: "Animated Clouds Window",
+      onToggle,
+      reportCategory: "almanac-item",
+      reportEntityId: "animated_clouds_window_oak",
+      subtitle: "Oak",
+      variant: "Oak",
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Check Animated Clouds Window, Oak" }),
+    );
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    await view.rerender({ display: { mode: "completed" } });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Uncheck Animated Clouds Window, Oak" }),
+    );
+    expect(onToggle).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a variant behind the spoiler guard until the row is revealed", async () => {
+    renderWithFeedback(TrackerRow, {
+      display: { mode: "spoilered" },
+      fact: "almanac/animated_clouds_window_oak",
+      name: "Animated Clouds Window",
+      onToggle: vi.fn(),
+      reportCategory: "almanac-item",
+      reportEntityId: "animated_clouds_window_oak",
+      subtitle: "Oak",
+      variant: "Oak",
+    });
+
+    expect(screen.getByRole("button", { name: "Check spoilered item" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Check Animated Clouds Window/ })).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
+    expect(
+      screen.getByRole("button", { name: "Check Animated Clouds Window, Oak" }),
+    ).toBeInTheDocument();
+  });
+
   it("reveals a ready sprite with the spoiler name", async () => {
     const view = renderWithFeedback(TrackerRow, {
       display: { mode: "spoilered" },

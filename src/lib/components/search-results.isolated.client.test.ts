@@ -90,6 +90,16 @@ describe("SearchResults pictures", () => {
 });
 
 describe("SearchResults completion dispatch", () => {
+  it("names the Almanac variant in search checkbox labels", async () => {
+    userState.toggleShowSpoilers();
+    const view = renderWithFeedback(SearchResults, { locale: "en", query: "oak window" });
+
+    expect(
+      await view.findByRole("button", { name: "Check Animated Clouds Window, Oak" }),
+    ).toBeInTheDocument();
+    expect(view.queryByRole("button", { name: "Check Animated Clouds Window" })).toBeNull();
+  });
+
   it("links a villager result to its record instead of toggling hearts", () => {
     const id = "adeline" as VillagerId;
     userState.setHeartLevel(id, 9);

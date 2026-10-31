@@ -274,6 +274,7 @@
                 segmentLookups={baseLookups}
                 name={result.detail ? `${label} ${result.detail}` : label}
                 subtitle={result.subtitle}
+                variant={result.category === "almanac" ? result.subtitle : undefined}
                 reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
                 reportEntityId={result.id}
                 sources={getSources(result)}

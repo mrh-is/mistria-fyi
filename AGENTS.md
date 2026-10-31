@@ -158,8 +158,8 @@ session limits) belong in each contributor’s user config.
 
 ## Review gates
 
-- A change to `.svelte` files, CSS, layout, or routes needs visual verification before it’s done.
-  Check:
+- A change to `.svelte` files, CSS, layout, or routes needs visual verification before it’s done,
+  unless it meets a [visual exemption](docs/agent-verification.md#visual-exemptions). Check:
   - each changed route,
   - desktop (~1280) & mobile (~390) widths,
   - each changed interaction & one way to reverse it,
@@ -172,7 +172,10 @@ session limits) belong in each contributor’s user config.
   at desktop & mobile widths, showing the changed state. A visual PR with no attached screenshots
   isn’t ready for review.
 - Docs-only, pipeline-only, & test-only changes don’t need visual checks. Pure engine changes don’t
-  either, unless they change rendered output. The complete checklist is in agent-verification.md.
+  either, unless they change rendered output. Accessibility-only changes, such as a checkbox’s
+  accessible label, don’t need visual checks or screenshots when visible content, layout, focus
+  behavior, & interactions stay unchanged. Verify the accessibility behavior with focused tests. The
+  complete checklist is in agent-verification.md.
 - Most PRs need a fresh-context self-review, such as a subagent that didn’t write the change reading
   its diff cold.
 - A request to review is a request to post. Post the review on GitHub (`gh pr review --comment`, or

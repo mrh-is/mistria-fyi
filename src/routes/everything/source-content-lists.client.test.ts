@@ -104,6 +104,25 @@ function mockChecklist() {
   });
 }
 
+it("names the Almanac variant in the source view’s checkbox label", () => {
+  const sources: Source[] = [{ type: "store", storeId: "balor" as StoreId }];
+  vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+    {
+      ...checklistRow("window", false, sources),
+      name: "Animated Clouds Window",
+      subtitle: "Oak",
+    },
+    { ...checklistRow("turnip", false, sources), name: "Turnip" },
+  ]);
+  const view = renderWithFeedback(SourceContent, { anchor: "store-balor", locale: "en" });
+
+  expect(
+    view.getByRole("button", { name: "Check Animated Clouds Window, Oak" }),
+  ).toBeInTheDocument();
+  expect(view.getByRole("button", { name: "Check Turnip" })).toBeInTheDocument();
+  expect(view.queryByRole("button", { name: "Check Animated Clouds Window" })).toBeNull();
+});
+
 const openFishing = async (view: ReturnType<typeof renderWithFeedback>) => {
   await fireEvent.click(view.getByRole("button", { name: /Ocean/ }));
   await tick();
