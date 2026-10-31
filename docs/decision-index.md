@@ -204,6 +204,7 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/133](https://github.com/mrh-is/mistria-fyi/issues/133),
 [src/lib/sync/follow.ts](../src/lib/sync/follow.ts),
 [src/lib/sync/enabled.ts](../src/lib/sync/enabled.ts).
+
 ### [Provenance marks: one X, four tools](decisions/2026-10-30-provenance-marks.md)
 
 ID: 2026-10-30-provenance-marks. Status: Current.
