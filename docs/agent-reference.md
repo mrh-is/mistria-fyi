@@ -240,6 +240,11 @@ package ships no license text. Instead of weakening that check, list the package
   - `Stop`,
   - `SubagentStart`,
   - worktree `SessionStart`.
+- **Copilot CLI:** in a trusted folder, Copilot CLI also runs the hooks in `.claude/settings.json`,
+  but its payload has no `hook_event_name`. The setup & formatting handler lets those calls through
+  without upkeep, so Copilot sessions get no automatic setup or formatting. The guard scripts don’t
+  parse that payload either, so they don’t protect Copilot sessions. If Copilot doesn’t set
+  `$CLAUDE_PROJECT_DIR`, each hook command fails to find its script.
 - **Codex trust:** Codex skips new or changed hooks until they’re trusted again in its hook review
   (`/hooks`). Review & trust them before relying on their enforcement.
 - **Mid-session setup:** both clients sequence setup & formatting in one tool handler. Claude Code

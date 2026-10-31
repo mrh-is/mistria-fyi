@@ -150,6 +150,9 @@ export function agentToolHook(
   origin = project,
 ): string[] {
   const event = input.hook_event_name;
+  // Claude & Codex always name the event. Copilot CLI runs these hooks with its own schema, which
+  // names none, so it gets no upkeep rather than a denied tool call.
+  if (event === undefined) return [];
   if (event !== "PreToolUse" && event !== "PostToolUse" && event !== "PostToolUseFailure") {
     throw new Error("Unsupported agent tool hook event.");
   }

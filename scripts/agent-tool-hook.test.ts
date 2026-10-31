@@ -276,6 +276,30 @@ describe("Shared agent tool upkeep", () => {
     expect(result.stdout).toBe("");
   });
 
+  // Copilot CLI loads `.claude/settings.json` but sends its own payload schema (#286).
+  it.each([
+    { sessionId: "session", toolCalls: [{ args: { command: "pwd" }, id: "call", name: "bash" }] },
+    { timestamp: 1, toolArgs: '{"command":"pwd"}', toolName: "bash" },
+    { hook_event_name: "PreToolUse", tool_input: { command: "pwd" }, tool_name: "bash" },
+  ])("lets another client’s shell call through untouched: %j", (payload) => {
+    const { root } = fixture();
+    const result = spawnSync(
+      process.execPath,
+      [fileURLToPath(new URL("agent-tool-hook.ts", import.meta.url))],
+      { cwd: root, encoding: "utf8", input: JSON.stringify({ ...payload, cwd: root }) },
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("");
+  });
+
+  it("still rejects a named event it doesn’t handle", () => {
+    const { root } = fixture();
+    expect(() =>
+      agentToolHook({ ...shell(root, "pwd"), hook_event_name: "Stop" }, current, undefined, root),
+    ).toThrow("Unsupported agent tool hook event");
+  });
+
   it("remains silent when no setup or formatting is needed", () => {
     const { root, worktree } = fixture();
     const input = shell(worktree, "git status");
