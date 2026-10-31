@@ -1,6 +1,7 @@
 <script lang="ts" generics="Item, Key">
   import CompletedHeading from "#lib/components/completed-heading.svelte";
   import SectionGroupItem from "#lib/components/section-group-item.svelte";
+  import { getCompletionScope } from "#lib/controllers/completion-scope.svelte.js";
 
   import type { Snippet } from "svelte";
 
@@ -21,6 +22,7 @@
   type Entry = { item: Item; key: Key; kind: "section" } | { key: symbol; kind: "heading" };
 
   const headingEntry: Entry = { key: Symbol("completed-heading"), kind: "heading" };
+  const completionScope = getCompletionScope();
 
   // One keyed list, not two, so a section changing groups is moved rather than remounted and keeps
   // its expansion & rendered rows.
@@ -62,7 +64,7 @@
 
 {#each entries as entry (entry.key)}
   {#if entry.kind === "heading"}
-    <CompletedHeading class="px-2 pt-2" />
+    {#if !completionScope}<CompletedHeading class="px-2 pt-2" />{/if}
   {:else}
     <SectionGroupItem {grouping} key={entry.key}>
       {@render section(entry.item)}

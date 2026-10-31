@@ -1,5 +1,5 @@
 import { tick } from "svelte";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it } from "vitest";
 
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -8,13 +8,16 @@ import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
 import SourceContent from "./source-content.svelte";
 
+beforeEach(() => {
+  userState.resetAll();
+});
+
 afterEach(() => {
   toolbarState.closeSearch();
   userState.resetAll();
 });
 
 it("names the Almanac variant in the source view’s checkbox label", async () => {
-  userState.resetAll();
   userState.toggleShowSpoilers();
   userState.setAvailabilityWindows(AVAILABILITY_WINDOWS);
   toolbarState.setSearchQuery("oak window");
