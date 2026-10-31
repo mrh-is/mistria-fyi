@@ -46,7 +46,11 @@ export async function synchronizeAccessibilityIssue(options: {
   workflowUrl: string;
 }): Promise<void> {
   const run = options.run ?? defaultCommandRunner;
-  const issueNumber = await findOpenIssue(run);
+  const issueNumber = await findMarkedIssue(run, {
+    label: "type: bug",
+    marker: MARKER,
+    title: TITLE,
+  });
 
   if (options.result === "success") {
     if (issueNumber === undefined) return;
@@ -121,21 +125,24 @@ function collectErrors(value: unknown, errors: string[]): void {
 
 // GitHub search drops the marker's comment punctuation and matches its words anywhere, so the
 // query only narrows candidates; the exact marker in the body is what identifies a monitor issue.
-async function findOpenIssue(run: CommandRunner): Promise<number | undefined> {
+export async function findMarkedIssue(
+  run: CommandRunner,
+  { label, marker, title }: { label: string; marker: string; title: string },
+): Promise<number | undefined> {
   const output = await run("gh", [
     "issue",
     "list",
     "--state",
     "open",
     "--label",
-    "type: bug",
+    label,
     "--search",
-    `"${TITLE}" in:title`,
+    `"${title}" in:title`,
     "--json",
     "number,body",
   ]);
   const issues = JSON.parse(output) as IssueSummary[];
-  return issues.find((issue) => issue.body.includes(MARKER))?.number;
+  return issues.find((issue) => issue.body.includes(marker))?.number;
 }
 
 async function main(): Promise<void> {

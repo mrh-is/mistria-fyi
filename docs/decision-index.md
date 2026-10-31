@@ -289,6 +289,19 @@ them to Antigravity or Copilot.
 
 Evidence: [docs/agent-workflow.md#small-agent-tasks](../docs/agent-workflow.md#small-agent-tasks).
 
+### [Timing limits follow the diff](decisions/2026-10-31-timing-limits-follow-the-diff.md)
+
+ID: 2026-10-31-timing-limits-follow-the-diff. Status: Current.
+
+Test timing fails a pull request only when it changes a test file over 15 s. Everything else about
+timing warns, & a nightly report tracks trends in one issue.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/13](https://github.com/mrh-is/mistria-fyi/issues/13),
+[docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets),
+[scripts/vitest-timings.ts](../scripts/vitest-timings.ts),
+[scripts/nightly-report.ts](../scripts/nightly-report.ts).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)
@@ -388,6 +401,29 @@ Relationship evidence:
 
 Unresolved applicability: NPC Studio correspondence & current permission were not independently
 rechecked; this index infers no response.
+
+### [Vitest timings & nightly coverage](decisions/2026-10-07-vitest-time-budgets.md)
+
+ID: 2026-10-07-vitest-time-budgets. Status: Partially superseded/amended.
+
+Retain every cleanup safety scenario with deterministic command snapshots & one real-Git integration
+case. Publish test & hook durations for all files, gate whole-command wall time separately, &
+collect coverage only on scheduled runs. At the maintainer’s request, CI runs the cleanup test only
+when its corresponding shell script changes; focused local runs remain available for test-only
+edits.
+
+Evidence:
+[docs/decisions/2026-10-07-vitest-time-budgets.md#decision](../docs/decisions/2026-10-07-vitest-time-budgets.md#decision).
+
+Amended by [Timing limits follow the diff](decisions/2026-10-31-timing-limits-follow-the-diff.md).
+Affected portion: Gating on whole-command wall time & on every file’s time: timing now fails only a
+pull request that changes a slow test file.
+
+Relationship evidence:
+[docs/decisions/2026-10-31-timing-limits-follow-the-diff.md](../docs/decisions/2026-10-31-timing-limits-follow-the-diff.md).
+
+Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
+later resolutions were not revalidated while seeding issue #268.
 
 ### [Public cutover planning](decisions/2026-10-12-public-cutover-planning.md)
 
@@ -623,6 +659,13 @@ shared 16-bit HMAC buckets & prefix read limits, preserving address privacy & pe
 Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/132](https://github.com/mrh-is/mistria-fyi/issues/132),
 [relay/README.md](../relay/README.md), [relay/worker.ts](../relay/worker.ts).
+
+Amended by [Timing limits follow the diff](decisions/2026-10-31-timing-limits-follow-the-diff.md).
+Affected portion: The timing check around the relay’s tests: wall time no longer fails a run, & its
+30 s line fails only a pull request that changes the file.
+
+Relationship evidence:
+[docs/decisions/2026-10-31-timing-limits-follow-the-diff.md](../docs/decisions/2026-10-31-timing-limits-follow-the-diff.md).
 
 Amended by [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md). Affected portion:
 The required zone WAF rule’s threshold & scope: it shares the Free plan’s one rate-limiting rule
@@ -913,22 +956,6 @@ manager. The historical shell-script entry point is not a current implementation
 
 Evidence:
 [docs/decisions/2026-10-07-system-shellcheck.md#decision](../docs/decisions/2026-10-07-system-shellcheck.md#decision).
-
-Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
-later resolutions were not revalidated while seeding issue #268.
-
-### [Vitest timings & nightly coverage](decisions/2026-10-07-vitest-time-budgets.md)
-
-ID: 2026-10-07-vitest-time-budgets. Status: Needs review.
-
-Retain every cleanup safety scenario with deterministic command snapshots & one real-Git integration
-case. Publish test & hook durations for all files, gate whole-command wall time separately, &
-collect coverage only on scheduled runs. At the maintainer’s request, CI runs the cleanup test only
-when its corresponding shell script changes; focused local runs remain available for test-only
-edits.
-
-Evidence:
-[docs/decisions/2026-10-07-vitest-time-budgets.md#decision](../docs/decisions/2026-10-07-vitest-time-budgets.md#decision).
 
 Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
 later resolutions were not revalidated while seeding issue #268.

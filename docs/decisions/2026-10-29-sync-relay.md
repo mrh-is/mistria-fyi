@@ -11,6 +11,14 @@ evidence:
   - relay/worker.ts
 relationships:
   - type: amended-by
+    target: 2026-10-31-timing-limits-follow-the-diff
+    scope: partial
+    portion: >-
+      The timing check around the relay’s tests: wall time no longer fails a run, & its 30 s line
+      fails only a pull request that changes the file.
+    evidence:
+      - docs/decisions/2026-10-31-timing-limits-follow-the-diff.md
+  - type: amended-by
     target: 2026-10-30-shared-edge-rate-rule
     scope: partial
     portion: >-

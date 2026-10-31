@@ -1,6 +1,6 @@
 ---
 id: 2026-10-07-vitest-time-budgets
-status: needs-review
+status: amended
 summary: >-
   Retain every cleanup safety scenario with deterministic command snapshots & one real-Git
   integration case. Publish test & hook durations for all files, gate whole-command wall time
@@ -12,7 +12,15 @@ review: >-
   revalidated while seeding issue #268.
 evidence:
   - docs/decisions/2026-10-07-vitest-time-budgets.md#decision
-relationships: []
+relationships:
+  - type: amended-by
+    target: 2026-10-31-timing-limits-follow-the-diff
+    scope: partial
+    portion: >-
+      Gating on whole-command wall time & on every file’s time: timing now fails only a pull request
+      that changes a slow test file.
+    evidence:
+      - docs/decisions/2026-10-31-timing-limits-follow-the-diff.md
 ---
 
 # Vitest timings & nightly coverage

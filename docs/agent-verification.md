@@ -49,8 +49,8 @@ The `knip` step fails on unused files, exports, & dependencies. Its reviewed exc
 These CI steps aren’t in the local matrix:
 
 - the dependency audit,
-- the budgeted test run, which is the complete asset-independent suite with per-file & wall-time
-  budgets (its cleanup test runs only when the cleanup script changes),
+- the budgeted test run, which is the complete asset-independent suite with per-file timing limits
+  (its cleanup test runs only when the cleanup script changes),
 - the stale-translation check, which runs only on pull requests that touch `messages/`.
 
 The accessibility & PWA suites run against the build job’s output when `src/`, `static/`, `tests/`,
