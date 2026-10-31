@@ -12,7 +12,7 @@ import { recordEntries, recordKeys } from "#lib/utils/record.js";
 import { projectAlmanac } from "./almanac.js";
 
 import type * as DataModule from "#lib/data/index.js";
-import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
+import type { AlmanacEntry, ItemId, VillagerId } from "#lib/types/tracker-data.js";
 
 // The current game data gives marriage items alternate sources. Use an exclusive source
 // fixture so applicability is exercised even when no shipped entry is currently unobtainable.
@@ -77,7 +77,10 @@ describe("projectAlmanac", () => {
     const ctx = context();
     const id = "turnip" as ItemId;
     ctx.progress.almanac.add(id);
-    const options = { matchesEntry: (ids: ItemId[]) => ids.includes(id), showCompleted: false };
+    const options = {
+      matchesEntry: (entry: AlmanacEntry) => entry.itemIds.includes(id),
+      showCompleted: false,
+    };
     const hidden = projectAlmanac(ctx, options);
     expect(hidden.sections.flatMap(({ visibleRows }) => visibleRows)).toHaveLength(0);
     const retained = projectAlmanac(ctx, { ...options, recentlyCompleted: new Set([id]) });

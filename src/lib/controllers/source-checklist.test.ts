@@ -93,3 +93,15 @@ it("writes through the category’s existing toggle and returns an exact undo", 
       ?.completed,
   ).toBe(false);
 });
+
+it("carries an almanac row’s variant as its subtitle & a search term", () => {
+  const rows = buildSourceChecklist(userState.progressContext, "en");
+  expect(rows.find((row) => row.id === "animated_cloud_window_v1_oak")).toMatchObject({
+    name: "Animated Clouds Window",
+    searchTerms: ["Oak"],
+    subtitle: "Oak",
+  });
+  const turnip = rows.find((row) => row.category === "almanac" && row.id === "turnip");
+  expect(turnip?.subtitle).toBeUndefined();
+  expect(turnip?.searchTerms).toBeUndefined();
+});

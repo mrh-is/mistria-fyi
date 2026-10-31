@@ -85,6 +85,10 @@ function overlappingFixture() {
   throw new Error("Expected tracker data to contain an item in both the almanac and the museum");
 }
 
+function namesOak(result: SearchResult): boolean {
+  return result.name.toLowerCase().includes("oak");
+}
+
 function search(query: string, completed?: Partial<ProgressState>) {
   return searchAllCategories(
     query,
@@ -200,6 +204,22 @@ describe("basic matching", () => {
         name: "Emerald Single Bed",
       }),
     );
+  });
+
+  it("finds same-named almanac rows by their variant, below name matches", () => {
+    const oakWindow: Partial<SearchResult> = {
+      category: "almanac",
+      id: "animated_cloud_window_v1_oak",
+      name: "Animated Clouds Window",
+      subtitle: "Oak",
+    };
+    expect(search("oak window")).toContainEqual(expect.objectContaining(oakWindow));
+
+    const results = search("oak");
+    expect(results).toContainEqual(expect.objectContaining(oakWindow));
+    const firstVariantOnly = results.findIndex((result) => !namesOak(result));
+    expect(firstVariantOnly).toBeGreaterThan(0);
+    expect(results.slice(firstVariantOnly).some((result) => namesOak(result))).toBe(false);
   });
 
   it("finds a merged almanac row by a noncanonical member's localized name", () => {

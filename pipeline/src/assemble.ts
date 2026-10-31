@@ -71,6 +71,7 @@ import {
   validateItemExclusionSources,
 } from "./overrides/exclusions.js";
 import { isPregnancyQuest } from "./overrides/game-facts.js";
+import { ITEM_VARIANT_SETS } from "./overrides/item-variants.js";
 import { createRequirementContext } from "./parse/requirements.js";
 import { REVIEWED_PIPELINE_DIAGNOSTICS } from "./reviewed-diagnostics.js";
 
@@ -82,11 +83,14 @@ import type { ReviewedPipelineDiagnostic } from "./diagnostics.js";
 import type { ItemIconSpriteIndex } from "./extract/almanac.js";
 import type { VillagerIconSpriteIndex } from "./extract/villagers.js";
 import type { Localizer } from "./localize/localize.js";
+import type { ItemVariantSet } from "./overrides/item-variants.js";
 import type { ParsedGameData } from "./parse/parse-fiddle.js";
 
 export interface AssembleOptions {
   /** Exact diagnostics this run may raise. Defaults to the installed game's reviewed list. */
   reviewedDiagnostics?: readonly ReviewedPipelineDiagnostic[];
+  /** Names for same-name almanac rows. Defaults to the installed game's reviewed table. */
+  reviewedItemVariants?: readonly ItemVariantSet[];
   /** Hand-reviewed acquisition sources. Defaults to the installed game's reviewed overrides. */
   reviewedOverrides?: ReviewedOverrides;
   version: string;
@@ -137,7 +141,12 @@ export function assembleTrackerData(
     iconSpritesByItemId,
     items: itemMetadata,
     localeNames: itemLocaleNames,
-  } = extractAlmanac(fiddle, localizer, diagnostics);
+  } = extractAlmanac(
+    fiddle,
+    localizer,
+    diagnostics,
+    options.reviewedItemVariants ?? ITEM_VARIANT_SETS,
+  );
   const recipeLocaleNames = deriveRecipeLocaleNames(recipeNameSources, itemLocaleNames);
   const { animals: animalDrafts, localeNames: animalLocaleNames } = extractAnimals(
     fiddle,

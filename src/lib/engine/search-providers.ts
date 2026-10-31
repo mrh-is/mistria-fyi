@@ -1,3 +1,4 @@
+import { getAlmanacEntryVariant } from "#lib/data/item-variants.js";
 import { animalNameId, getAlmanacEntryNames, getName } from "#lib/data/names.js";
 import { projectAlmanac } from "#lib/engine/projections/almanac.js";
 import { projectAnimals } from "#lib/engine/projections/animals.js";
@@ -31,6 +32,8 @@ export function* searchAlmanac({
     if (!row.obtainable || row.spoilered) continue;
     const [name, ...otherLocalizedNames] = getAlmanacEntryNames(row.entry, locale);
     const [englishName, ...otherEnglishNames] = getAlmanacEntryNames(row.entry, "en");
+    const variant = getAlmanacEntryVariant(row.entry, locale);
+    const englishVariant = getAlmanacEntryVariant(row.entry, "en");
     yield {
       englishName,
       localizedName: name,
@@ -43,7 +46,11 @@ export function* searchAlmanac({
         id: row.canonicalId,
         name,
         sprite: row.canonicalId,
+        ...(variant ? { subtitle: variant } : {}),
       }),
+      ...(variant && englishVariant
+        ? { terms: { english: [englishVariant], localized: [variant] } }
+        : {}),
     };
   }
 }

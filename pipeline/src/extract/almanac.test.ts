@@ -151,6 +151,63 @@ tags = ["furniture"]
     expect(cat.items).toHaveLength(1);
   });
 
+  it("names same-name rows from the reviewed table, & throws on a set it doesn’t cover", () => {
+    vi.spyOn(console, "log").mockReturnValue(undefined);
+    const assetsDir = createAssetsFixture({
+      "items/other/furniture.toml": `
+[default]
+
+[cobweb_left]
+name = "Cobweb Left"
+description = "A decorative white cobweb, left version."
+icon_sprite = "spr_ui_item_cobweb_left"
+tags = ["furniture"]
+
+[cobweb_left_dark]
+name = "Cobweb Left"
+description = "A decorative purple cobweb, left version."
+icon_sprite = "spr_ui_item_cobweb_left_dark"
+tags = ["furniture"]
+
+[lamp]
+name = "Lamp"
+icon_sprite = "spr_ui_item_lamp"
+tags = ["furniture"]
+`,
+      "ui/menus/sub_menus/almanac.toml": `
+[[categories]]
+key = "furniture"
+tags = ["furniture"]
+`,
+    });
+    const fiddle = parseFiddle(assetsDir).data;
+
+    const result = extractAlmanac(fiddle, localizer, undefined, [
+      {
+        name: "Cobweb Left",
+        named: {
+          cobweb_left: {
+            description: "A decorative white cobweb, left version.",
+            variant: "white",
+          },
+          cobweb_left_dark: {
+            description: "A decorative purple cobweb, left version.",
+            variant: "purple",
+          },
+        },
+      },
+    ]);
+
+    expect(result.almanac["furniture" as AlmanacCategoryId].items).toEqual([
+      { itemIds: ["cobweb_left"], variant: "white" },
+      { itemIds: ["cobweb_left_dark"], variant: "purple" },
+      { itemIds: ["lamp"] },
+    ]);
+    expect(() => extractAlmanac(fiddle, localizer)).toThrow(
+      /“Cobweb Left” \(cobweb_left, cobweb_left_dark\) aren’t in the reviewed table/,
+    );
+  });
+
   it("groups different names under the same recipe_key into one entry, as the game does", () => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = createAssetsFixture({

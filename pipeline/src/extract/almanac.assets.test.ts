@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createAssetsLocalizer } from "../localize/localize.js";
+import { ITEM_VARIANT_SETS } from "../overrides/item-variants.js";
 import { evaluateExpressions } from "../parse/evaluate.js";
 import { parseFiddle } from "../parse/parse-fiddle.js";
 import { requireGameAssetsDir } from "../test-helpers.js";
@@ -14,7 +15,12 @@ describe("extractAlmanac — real assets", () => {
     const fiddle = parseFiddle(assetsDir).data;
     evaluateExpressions(fiddle);
     const log = vi.spyOn(console, "log").mockReturnValue(undefined);
-    const { almanac, localeNames } = extractAlmanac(fiddle, createAssetsLocalizer(assetsDir));
+    const { almanac, localeNames } = extractAlmanac(
+      fiddle,
+      createAssetsLocalizer(assetsDir),
+      undefined,
+      ITEM_VARIANT_SETS,
+    );
     const fish = almanac["fish" as AlmanacCategoryId];
     const furniture = almanac["furniture" as AlmanacCategoryId];
     const materials = almanac["materials" as AlmanacCategoryId];

@@ -14,7 +14,7 @@ import type { AlmanacCategoryId, AlmanacEntry, Item, ItemId } from "#lib/types/t
 
 interface AlmanacProjectionOptions extends CategoryProjectionOptions {
   hideSpoilered?: boolean;
-  matchesEntry?: (itemIds: ItemId[]) => boolean;
+  matchesEntry?: (entry: AlmanacEntry) => boolean;
   matchesSources?: (sources: Source[]) => boolean;
   recentlyCompleted?: ReadonlySet<ItemId>;
   showCompleted?: boolean;
@@ -83,7 +83,7 @@ export function projectAlmanac(
         (obtainable || options.showUnobtainable === true) &&
         (completed || available) &&
         (!options.hideSpoilered || !spoilered) &&
-        (options.matchesEntry?.(entry.itemIds) ?? true);
+        (options.matchesEntry?.(entry) ?? true);
       const matchesFilters = matchesBaseFilters && (options.matchesSources?.(sources) ?? true);
       return {
         available,

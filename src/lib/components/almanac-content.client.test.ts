@@ -88,6 +88,33 @@ describe("AlmanacContent", () => {
 
     expect(await view.findByText("Emerald Single Bed")).toBeInTheDocument();
   });
+
+  it("shows a same-named row’s variant under its name, & finds the row by it", async () => {
+    userState.toggleShowSpoilers();
+    toolbarState.setSearchQuery("oak window");
+
+    const view = renderWithFeedback(AlmanacContent, { locale: "en" });
+
+    // Six rows share each name; the word & the name each match half of the query.
+    const subtitles = await view.findAllByText("Oak");
+    expect(subtitles.map((subtitle) => subtitle.parentElement?.textContent.trim())).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^Animated Clouds Window\s*Oak$/),
+        expect.stringMatching(/^Animated Clouds Window Seat\s*Oak$/),
+      ]),
+    );
+    for (const subtitle of subtitles) expect(subtitle).toHaveClass("tracker-row__subtitle");
+    expect(view.queryByText("Walnut")).toBeNull();
+  });
+
+  it("shows no subtitle on a row without a variant", async () => {
+    toolbarState.setSearchQuery("Turnip");
+
+    const view = renderWithFeedback(AlmanacContent, { locale: "en" });
+
+    const name = await view.findByText("Turnip");
+    expect(name.querySelector(".tracker-row__subtitle")).toBeNull();
+  });
 });
 
 function escapeRegExp(value: string): string {

@@ -245,6 +245,7 @@
                 })}
                 segmentLookups={baseLookups}
                 name={result.detail ? `${label} ${result.detail}` : label}
+                subtitle={result.subtitle}
                 reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
                 reportEntityId={result.id}
                 sources={getSources(result)}
