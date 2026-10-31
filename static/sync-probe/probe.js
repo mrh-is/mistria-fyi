@@ -14,10 +14,12 @@ const on = (id, type, handler) => {
   $(id).addEventListener(type, (event) => void handler(event));
 };
 
-const context = matchMedia("(display-mode: standalone), (display-mode: window-controls-overlay)")
-  .matches
-  ? "app"
-  : "tab";
+// `navigator.standalone` is how an iPhone home screen app says so.
+const context =
+  matchMedia("(display-mode: standalone), (display-mode: window-controls-overlay)").matches ||
+  navigator.standalone === true
+    ? "app"
+    : "tab";
 
 function browserName() {
   const brand = navigator.userAgentData?.brands.find(
@@ -229,6 +231,32 @@ on("drop", "drop", async (event) => {
   }
   if (file) await adoptFile(file, "dropped");
 });
+
+// A file copied in File Explorer & pasted here is the one keyboard path that might yield a handle.
+async function handlePaste(event) {
+  if (event.target instanceof HTMLInputElement) return;
+  const item = [...event.clipboardData.items].find((entry) => entry.kind === "file");
+  if (!item) {
+    log("pasted: no file on the clipboard");
+    return;
+  }
+  event.preventDefault();
+  // Both must be called before the event handler yields, as with a drop.
+  const pendingHandle = item.getAsFileSystemHandle?.();
+  const file = item.getAsFile();
+  try {
+    const pasted = await pendingHandle;
+    if (pasted?.kind === "file") {
+      await adoptHandle(pasted, "pasted");
+      return;
+    }
+    log(pasted ? `pasted a ${pasted.kind}, not a file` : "pasted: no handle offered");
+  } catch (error) {
+    log(`paste handle failed, ${failure(error)}`);
+  }
+  if (file) await adoptFile(file, "pasted");
+}
+document.addEventListener("paste", (event) => void handlePaste(event));
 
 on("pick", "click", async () => {
   if (!features["file picker"]) return $("file-input").click();
