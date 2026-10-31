@@ -248,3 +248,44 @@ describe("writes that don't land, & other tabs", () => {
     expect(storage.getItem(PROGRESS_KEY)).toBe(theirs);
   });
 });
+
+describe("cancelled lane changes", () => {
+  it("leaves live progress alone until the lane start's write lands", async () => {
+    const gate = Promise.withResolvers<undefined>();
+    const userState = await openStore(blob());
+    vi.stubGlobal("navigator", {
+      locks: {
+        request: async (_name: string, task: () => unknown) => {
+          await gate.promise;
+          return task();
+        },
+      },
+    });
+    let wanted = true;
+    const started = userState.startSyncLane({ key: KEY, kind: "following" }, SAVE, () => wanted);
+
+    // While the write waits for the lock, the player leaves & edits progress by hand.
+    expect(userState.state.progress.renown).toBe(7);
+    expect(userState.syncLane).toBeUndefined();
+    userState.setRenown(8);
+    wanted = false;
+    gate.resolve(undefined);
+
+    expect(await started).toBe(false);
+    expect(userState.state.progress.renown).toBe(8);
+    expect(userState.state.progress.almanac.has(HAND_ITEM)).toBe(true);
+    expect(userState.syncLane).toBeUndefined();
+    expect(stored().local).toBeUndefined();
+  });
+
+  it("keeps the followed key when a switch is cancelled inside the lock", async () => {
+    const userState = await openStore(
+      blob({ syncLane: { key: KEY, kind: "following" }, syncReceipt: { counter: 3 } }),
+    );
+    expect(await userState.switchFollowKey(OTHER_KEY, () => false)).toBe(false);
+    expect(stored().local).toEqual({
+      syncLane: { key: KEY, kind: "following" },
+      syncReceipt: { counter: 3 },
+    });
+  });
+});

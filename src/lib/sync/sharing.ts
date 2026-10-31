@@ -190,6 +190,9 @@ export async function switchCode(
   } catch {
     return { kind: "unreadable" };
   }
-  if (!stillWanted() || !(await userState.switchFollowKey(key))) return { kind: "unreachable" };
+  // Checked again inside the write lock, so leaving while it waits switches nothing.
+  if (!stillWanted() || !(await userState.switchFollowKey(key, stillWanted))) {
+    return { kind: "unreachable" };
+  }
   return { kind: "applied", save };
 }
