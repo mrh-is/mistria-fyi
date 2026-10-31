@@ -22,3 +22,22 @@ overrides:
   # (GHSA-xjj6-f33q-929c and others, patched in 8.12.2). Drop it once jsdom's own range excludes
   # the vulnerable releases.
   "undici@8": "^8.12.2"
+  # ESLint, @eslint/config-array, & typescript-estree allow minimatch ^10.2, which `pnpm audit`
+  # flags (GHSA-g3hv-75wg-m249, patched in 11.0.1). They call only `minimatch()`, `new Minimatch`,
+  # `.match()`, & `.pattern`, which 11 keeps. Drop it once their own ranges allow 11.0.1 or later.
+  "minimatch@10": "^11.0.3"
+
+auditConfig:
+  ignoreGhsas:
+    # deepmerge has no patched release (4.3.1 is the last), and vite-plugin-svelte 7.3.1 still
+    # depends on it. It only merges this project's own Svelte & Vite config at dev & build time,
+    # so no untrusted object reaches it. https://github.com/advisories/GHSA-gcqx-w48m-w2h4
+    # Drop it once vite-plugin-svelte replaces deepmerge or a patched release ships.
+    - GHSA-gcqx-w48m-w2h4
+
+peerDependencyRules:
+  allowedVersions:
+    # bits-ui 2.20.2 pins runed ^0.35.1, whose optional SvelteKit peer stops at ^2. runed only uses
+    # SvelteKit in `useSearchParams`, which bits-ui & svelte-toolbelt never call. Drop it once bits-ui
+    # depends on runed 0.38 or later, which allows SvelteKit 3.
+    "runed@0.35>@sveltejs/kit": "^3.0.0"
