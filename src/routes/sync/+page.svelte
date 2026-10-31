@@ -53,6 +53,8 @@
   let afterGates: (() => void) | undefined;
   let poll: ReturnType<typeof setInterval> | undefined;
   let destroyed = false;
+  /** Bumped whenever the player leaves the follow flow, so a request already running can't apply. */
+  let followGeneration = 0;
 
   const lane = $derived(userState.syncLane);
 
@@ -83,11 +85,23 @@
   async function follow(): Promise<void> {
     const following = key;
     if (!following) return;
+    const generation = followGeneration;
+    // Only the code still on this page, in the follow flow, may erase & start the lane.
+    const current = () => !destroyed && generation === followGeneration && key === following;
     pending = true;
-    // Only the code still on this page, with the page still open, may erase & start the lane.
-    const result = await followCode(following, () => !destroyed && key === following);
+    const result = await followCode(following, current);
+    if (!current()) return;
     pending = false;
-    if (!destroyed && key === following) settle(result);
+    settle(result);
+  }
+
+  /** Leaves the follow flow: forgets the key, stops checking, & orphans any request in flight. */
+  function cancelFollow(): void {
+    followGeneration++;
+    key = undefined;
+    outcome = undefined;
+    pending = false;
+    stopPolling();
   }
 
   function settle(result: FollowOutcome): void {
@@ -138,10 +152,13 @@
   async function confirmSwitch(): Promise<void> {
     switchOpen = false;
     if (!switchKey) return;
+    const generation = followGeneration;
+    const current = () => !destroyed && generation === followGeneration;
     pending = true;
-    const result = await switchCode(switchKey, () => !destroyed);
+    const result = await switchCode(switchKey, current);
+    if (!current()) return;
     pending = false;
-    if (!destroyed) settle(result);
+    settle(result);
   }
 
   async function stop(): Promise<void> {
@@ -154,6 +171,7 @@
   }
 
   function trackByHand(): void {
+    cancelFollow();
     userState.markDefaultUnlocksComplete();
     void goto(localizedHref(""));
   }
@@ -226,6 +244,7 @@
           type="button"
           class="sync-small-button"
           onclick={() => {
+            cancelFollow();
             override = "computer";
             view = "start";
           }}
@@ -244,6 +263,7 @@
         throughGates(() => undefined, true);
       }}
       onhere={() => {
+        cancelFollow();
         throughGates(() => {
           view = "computer";
         }, false);
@@ -288,7 +308,7 @@
       onclick: () => {
         freshOpen = false;
         afterGates = undefined;
-        key = undefined;
+        cancelFollow();
         view = computer ? "start" : "follow";
         if (!computer) void goto(localizedHref(""));
       },

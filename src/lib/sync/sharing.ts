@@ -81,7 +81,7 @@ export async function retryPendingRetires(): Promise<void> {
   const pending = userState.syncPendingRetires;
   if (pending.length === 0) return;
   const confirmed = await retirePending(relay, pending);
-  if (confirmed.length > 0) userState.confirmRetired(confirmed);
+  if (confirmed.length > 0) await userState.confirmRetired(confirmed);
 }
 
 /**
@@ -111,9 +111,10 @@ export async function makeNewCode(): Promise<ShareResult> {
   const old = lane?.kind === "computer" ? lane.code : undefined;
   const result = await shareNewCode(relay, turnstileToken);
   if (result.kind !== "shared") return result;
-  const replaced = old ? await pendingRetireFor(old) : undefined;
+  const replaced = old ? { code: old, retire: await pendingRetireFor(old) } : undefined;
   if (!(await userState.setSharedCode(result.code, replaced))) {
-    // The new code never stored, so the old one keeps working.
+    // The new code never stored (or another tab replaced the old one first), so whichever code is
+    // stored keeps working.
     await abandon(result.code);
     return { kind: "unreachable" };
   }
@@ -128,8 +129,8 @@ export async function makeNewCode(): Promise<ShareResult> {
 export async function stopSyncing(): Promise<void> {
   const lane = userState.syncLane;
   const code = lane?.kind === "computer" ? lane.code : undefined;
-  const retire = code ? await pendingRetireFor(code) : undefined;
-  if (await userState.stopSyncing(retire)) await retryPendingRetires();
+  const stopped = code ? { code, retire: await pendingRetireFor(code) } : undefined;
+  if (await userState.stopSyncing(stopped)) await retryPendingRetires();
 }
 
 /** The copy a failed share shows. */
@@ -167,7 +168,7 @@ export async function followCode(
   }
   // A player who left setup while the fetch ran never sees their progress erased.
   if (!stillWanted()) return { kind: "unreachable" };
-  if (!(await userState.startSyncLane({ key, kind: "following" }, save))) {
+  if (!(await userState.startSyncLane({ key, kind: "following" }, save, stillWanted))) {
     return { kind: "unreachable" };
   }
   return { kind: "applied", save };

@@ -132,11 +132,11 @@ describe("leaving a lane", () => {
     const userState = await openStore(
       blob({ syncLane: { code: { key: KEY, token: TOKEN }, kind: "computer" } }),
     );
-    await userState.stopSyncing(RETIRE);
+    await userState.stopSyncing({ code: { key: KEY, token: TOKEN }, retire: RETIRE });
     expect(stored().local).toEqual({ syncPendingRetires: [RETIRE] });
     expect(userState.syncPendingRetires).toEqual([RETIRE]);
 
-    userState.confirmRetired([RETIRE]);
+    await userState.confirmRetired([RETIRE]);
     expect(stored().local).toBeUndefined();
   });
 });
@@ -159,7 +159,10 @@ describe("codes", () => {
     const userState = await openStore(
       blob({ syncLane: { code: { key: KEY, token: TOKEN }, kind: "computer" } }),
     );
-    await userState.setSharedCode({ key: OTHER_KEY, token: TOKEN }, RETIRE);
+    await userState.setSharedCode(
+      { key: OTHER_KEY, token: TOKEN },
+      { code: { key: KEY, token: TOKEN }, retire: RETIRE },
+    );
     expect(stored().local).toEqual({
       syncLane: { code: { key: OTHER_KEY, token: TOKEN }, kind: "computer" },
       syncPendingRetires: [RETIRE],
@@ -180,5 +183,68 @@ describe("codes", () => {
     expect(userState.syncLane).toBeUndefined();
     expect(userState.syncBlocked).toBe(false);
     expect(userState.state.progress.renown).toBe(7);
+  });
+});
+
+describe("writes that don't land, & other tabs", () => {
+  it("gives progress back when the lane start can't be stored", async () => {
+    const userState = await openStore(blob());
+    const setItem = storage.setItem.bind(storage);
+    storage.setItem = () => {
+      throw new Error("quota");
+    };
+    expect(await userState.startSyncLane({ key: KEY, kind: "following" }, SAVE)).toBe(false);
+    expect(userState.state.progress.renown).toBe(7);
+    expect(userState.syncLane).toBeUndefined();
+
+    // A later write that does land stores the player's progress, not the erase.
+    storage.setItem = setItem;
+    expect(await userState.stopSyncing()).toBe(true);
+    expect(stored().progress.renown).toBe(7);
+    expect(stored().progress.almanac).toEqual([HAND_ITEM]);
+  });
+
+  it("starts no lane once the player has left, checked as the write runs", async () => {
+    const userState = await openStore(blob());
+    const before = storage.getItem(PROGRESS_KEY);
+    expect(await userState.startSyncLane({ kind: "computer" }, SAVE, () => false)).toBe(false);
+    expect(storage.getItem(PROGRESS_KEY)).toBe(before);
+    expect(userState.state.progress.renown).toBe(7);
+  });
+
+  it("keeps another tab's newer progress when only the code changes", async () => {
+    const userState = await openStore(
+      blob({ syncLane: { code: { key: KEY, token: TOKEN }, kind: "computer" } }),
+    );
+    // Another tab stores newer progress; this tab hasn't heard about it yet.
+    storage.setItem(
+      PROGRESS_KEY,
+      blob({ syncLane: { code: { key: KEY, token: TOKEN }, kind: "computer" } }, 9),
+    );
+    expect(
+      await userState.setSharedCode(
+        { key: OTHER_KEY, token: TOKEN },
+        { code: { key: KEY, token: TOKEN }, retire: RETIRE },
+      ),
+    ).toBe(true);
+    expect(stored().progress.renown).toBe(9);
+    expect(stored().local).toMatchObject({ syncLane: { code: { key: OTHER_KEY } } });
+    expect(userState.state.progress.renown).toBe(9);
+  });
+
+  it("refuses to replace a code another tab already replaced", async () => {
+    const userState = await openStore(
+      blob({ syncLane: { code: { key: KEY, token: TOKEN }, kind: "computer" } }),
+    );
+    const theirs = blob({ syncLane: { code: { key: OTHER_KEY, token: TOKEN }, kind: "computer" } });
+    storage.setItem(PROGRESS_KEY, theirs);
+    const mine = "CCECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
+    expect(
+      await userState.setSharedCode(
+        { key: mine, token: TOKEN },
+        { code: { key: KEY, token: TOKEN }, retire: RETIRE },
+      ),
+    ).toBe(false);
+    expect(storage.getItem(PROGRESS_KEY)).toBe(theirs);
   });
 });
