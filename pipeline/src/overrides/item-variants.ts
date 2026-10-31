@@ -18,7 +18,7 @@ export interface NamedItemVariantSet {
   named: Readonly<Record<string, { description: string; variant: ItemVariant }>>;
 }
 
-/** Rows left unnamed: all-or-nothing, so one row without a differentiator leaves the whole set. */
+/** Rows left unnamed because none of them has a differentiator, such as bare `_v1` & `_v2` IDs. */
 export interface UnnamedItemVariantSet {
   name: string;
   reason: string;
@@ -311,11 +311,15 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   },
   {
     name: "Dragon Ruins Pillar",
-    reason:
-      "Only one description names a difference (“gold accents”), so the other row has no name.",
-    unnamed: {
-      dragon_ruins_pillar_v1: "A purple pillar with a dragon scale motif.",
-      dragon_ruins_pillar_v2: "A purple pillar with a dragon scale motif and gold accents.",
+    named: {
+      dragon_ruins_pillar_v1: {
+        description: "A purple pillar with a dragon scale motif.",
+        variant: "plain",
+      },
+      dragon_ruins_pillar_v2: {
+        description: "A purple pillar with a dragon scale motif and gold accents.",
+        variant: "gold_accents",
+      },
     },
   },
   {
@@ -495,16 +499,31 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   },
   {
     name: "Mini Tea Set",
-    reason: "Descriptions differ in two phrases (tray wood & vessel color); held for human review.",
-    unnamed: {
-      mini_tea_set_cup_oak: "A decorative tea set with an oak tray and a green lidded cup.",
-      mini_tea_set_cup_walnut: "A decorative tea set with a walnut tray and a white lidded cup.",
-      mini_tea_set_cup_white:
-        "A decorative tea set with a white tray and a blue and white lidded cup.",
-      mini_tea_set_teapot_oak: "A decorative tea set with an oak tray and a brown clay teapot.",
-      mini_tea_set_teapot_walnut:
-        "A decorative tea set with a walnut tray and an orange clay teapot.",
-      mini_tea_set_teapot_white: "A decorative tea set with a white tray and a tan clay teapot.",
+    named: {
+      mini_tea_set_cup_oak: {
+        description: "A decorative tea set with an oak tray and a green lidded cup.",
+        variant: "oak_and_green",
+      },
+      mini_tea_set_cup_walnut: {
+        description: "A decorative tea set with a walnut tray and a white lidded cup.",
+        variant: "walnut_and_white",
+      },
+      mini_tea_set_cup_white: {
+        description: "A decorative tea set with a white tray and a blue and white lidded cup.",
+        variant: "white_and_blue",
+      },
+      mini_tea_set_teapot_oak: {
+        description: "A decorative tea set with an oak tray and a brown clay teapot.",
+        variant: "oak_and_brown",
+      },
+      mini_tea_set_teapot_walnut: {
+        description: "A decorative tea set with a walnut tray and an orange clay teapot.",
+        variant: "walnut_and_orange",
+      },
+      mini_tea_set_teapot_white: {
+        description: "A decorative tea set with a white tray and a tan clay teapot.",
+        variant: "white_and_tan",
+      },
     },
   },
   {
@@ -943,9 +962,9 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Ruins Pot",
     named: {
-      ruins_pot1: { description: "A white goblet-shaped clay pot.", variant: "white" },
-      ruins_pot2: { description: "An orange gourd-shaped clay pot.", variant: "orange" },
-      ruins_pot5: { description: "A small cracked purple clay pot.", variant: "purple" },
+      ruins_pot1: { description: "A white goblet-shaped clay pot.", variant: "white_goblet" },
+      ruins_pot2: { description: "An orange gourd-shaped clay pot.", variant: "orange_gourd" },
+      ruins_pot5: { description: "A small cracked purple clay pot.", variant: "cracked_purple" },
     },
   },
   {
@@ -1098,10 +1117,12 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   },
   {
     name: "Stone Path",
-    reason: "Identical descriptions; only one ID adds “double”, so the other row has no name.",
-    unnamed: {
-      starter_stone_path: "Paved stones for making paths.",
-      starter_stone_path_double: "Paved stones for making paths.",
+    named: {
+      starter_stone_path: { description: "Paved stones for making paths.", variant: "single" },
+      starter_stone_path_double: {
+        description: "Paved stones for making paths.",
+        variant: "double",
+      },
     },
   },
   {
@@ -1143,11 +1164,12 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   },
   {
     name: "Water Altar",
-    reason:
-      "Only one description names a difference (“pink accents”), so the other row has no name.",
-    unnamed: {
-      dragon_water_altar_v1: "A golden water altar.",
-      dragon_water_altar_v2: "A golden water altar with pink accents.",
+    named: {
+      dragon_water_altar_v1: { description: "A golden water altar.", variant: "plain" },
+      dragon_water_altar_v2: {
+        description: "A golden water altar with pink accents.",
+        variant: "pink_accents",
+      },
     },
   },
 ];

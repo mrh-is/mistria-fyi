@@ -199,14 +199,30 @@ For each set, the agent running the update proposes an entry:
 1. Derive each row’s differentiator from the description diff: the phrase its description doesn’t
    share with the others. A description word beats an ID word (`haunted_attic_wall_cobweb_left_dark`
    says “purple”, not “dark”). Fall back to the ID diff only when every description is identical.
-2. Leave the whole set unnamed when any row has no differentiator (all or nothing), or when the IDs
-   differ only by a bare version number. Never invent ordinals such as “Style 1”.
-3. Commit entries it’s confident in, recording each row’s English description as evidence. Unnamed
+2. Name colors, plus the wood when rows differ by wood (“Oak”, “Walnut & green”). Don’t name other
+   materials: the tea sets’ “oak tray and a green lidded cup” reads “Oak & green”, not “Oak tray,
+   green cup”.
+3. Add a word only when the set needs it to tell rows apart, and drop the rest:
+   - When rows differ in two parts and one part alone repeats, name both. The Ornate Cabinets read
+     “Walnut & green” & “Walnut & gold”.
+   - When one part alone is unique, name only that one. The Ornate Sofas name the upholstery color,
+     not the frame.
+   - When colors alone don’t distinguish the item, add its shape, but no size: the Ruins Pots read
+     “White goblet”, “Orange gourd”, & “Cracked purple” (from “A small cracked purple clay pot”).
+4. When only one row names a difference, give the other row its natural counterpart: “Plain” against
+   “Gold accents”, “Single” against `starter_stone_path_double`’s “Double”. Leave a set unnamed only
+   when no row has a differentiator, or when the IDs differ only by a bare version number. Never
+   invent ordinals such as “Style 1”.
+5. Compare each proposal with the variant names on the
+   [Fields of Mistria wiki](https://fieldsofmistria.wiki.gg/), where its editors have named them.
+   The wiki is a reference, not a source: keep the game-derived name and flag a mismatch for review.
+6. Commit entries it’s confident in, recording each row’s English description as evidence. Unnamed
    sets record theirs too, so a reworded description that adds a differentiator gets reviewed.
-4. Present these cases to a human instead of deciding them:
+7. Present these cases to a human instead of deciding them:
    - descriptions that differ in more than one phrase (the proposal says so),
    - a differentiator that isn’t yet an `ITEM_VARIANTS` key,
-   - a set that would be partially named,
+   - a counterpart word under rule 4,
+   - a wiki name that disagrees with the proposal,
    - a candidate merge of near-synonyms (“white” & “off-white” stay distinct by default).
 
 A new key goes in `ITEM_VARIANTS` (`src/lib/types/tracker-data.ts`), as a `variant_<key>` message in

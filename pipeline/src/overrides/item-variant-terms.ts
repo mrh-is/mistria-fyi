@@ -55,6 +55,11 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
+  cracked_purple: {
+    evidence: "ruins_pot5",
+    game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+    machine: [],
+  },
   cream: { game: [], machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"] },
   dark_brown: {
     evidence: "deluxe_storage_chest_dark_brown",
@@ -62,8 +67,17 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     machine: [],
   },
   dark_wood: { game: [], machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"] },
+  double: {
+    game: [],
+    machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+  },
   gold: {
     evidence: "deluxe_storage_chest_gold",
+    game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+    machine: [],
+  },
+  gold_accents: {
+    evidence: "dragon_ruins_pillar_v2",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
@@ -102,6 +116,16 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
+  oak_and_brown: {
+    evidence: "mini_tea_set_teapot_oak",
+    game: ["es"],
+    machine: ["fr", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+  },
+  oak_and_green: {
+    evidence: "mini_tea_set_cup_oak",
+    game: ["es"],
+    machine: ["fr", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+  },
   oak_and_white: {
     evidence: "ornate_cabinet_v3",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
@@ -113,8 +137,18 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
+  orange_gourd: {
+    evidence: "ruins_pot2",
+    game: ["fr", "es", "ru", "ja", "ko", "zh-Hans"],
+    machine: ["zh-Hant"],
+  },
   pink: {
     evidence: "deluxe_icebox_pink",
+    game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+    machine: [],
+  },
+  pink_accents: {
+    evidence: "dragon_water_altar_v2",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
@@ -122,6 +156,10 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     evidence: "pirate_counterfeit_gold_pile_v2",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
+  },
+  plain: {
+    game: [],
+    machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
   },
   purple: {
     evidence: "incense_burner_purple",
@@ -158,6 +196,10 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
+  single: {
+    game: [],
+    machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+  },
   sparkly: {
     evidence: "mist_bed_v1",
     game: ["fr", "es", "ru", "ko", "zh-Hans", "zh-Hant"],
@@ -188,6 +230,16 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
+  walnut_and_orange: {
+    evidence: "mini_tea_set_teapot_walnut",
+    game: ["es"],
+    machine: ["fr", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+  },
+  walnut_and_white: {
+    evidence: "mini_tea_set_cup_walnut",
+    game: ["es"],
+    machine: ["fr", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+  },
   warm_toned: {
     evidence: "pirate_anchor_v2",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
@@ -198,8 +250,23 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
+  white_and_blue: {
+    evidence: "mini_tea_set_cup_white",
+    game: ["es"],
+    machine: ["fr", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+  },
   white_and_gold: {
     evidence: "ornate_cabinet_v4",
+    game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+    machine: [],
+  },
+  white_and_tan: {
+    evidence: "mini_tea_set_teapot_white",
+    game: ["es"],
+    machine: ["fr", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
+  },
+  white_goblet: {
+    evidence: "ruins_pot1",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },

@@ -97,11 +97,11 @@ export function resolveItemVariants(
 }
 
 /**
- * Applies the review rules to one set: description first, ID second, all or nothing. Each row’s
+ * Applies the mechanical review rules to one set: description first, ID second. Each row’s
  * differentiator is what its text doesn’t share with every other row, so shared wording (“left
  * version”) never becomes part of a name, and IDs that differ mid-stem still diff cleanly. A set
- * where any row has no differentiator stays unnamed, as does one whose IDs differ only by a bare
- * version number (`_v1`, `_v2`).
+ * whose IDs differ only by a bare version number (`_v1`, `_v2`) stays unnamed. So does one where
+ * some rows have no differentiator, which a reviewer may name with a counterpart word (“Plain”).
  */
 export function proposeItemVariants(
   set: SameNameRowSet,

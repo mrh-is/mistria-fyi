@@ -34,6 +34,11 @@ sets & 239 rows in v1.0.8.
   `ITEM_VARIANT_TERMS` lists each locale under `game` or `machine`; the messages themselves stay in
   `messages/<locale>.json`.
 - Search matches the variant per word with the name (“oak window”), ranked after every name match.
+- A one-sided set names its plain row with a counterpart word (“Plain” against “Gold accents”),
+  rather than leaving both rows unnamed. This loosens the all-or-nothing rule from #149’s design, at
+  the maintainer’s review of this change.
+- Names use colors, plus wood where rows differ by wood, and add a shape only when color alone
+  repeats. The wiki’s human-written variant names are a review check, not a source.
 
 ## Alternatives
 

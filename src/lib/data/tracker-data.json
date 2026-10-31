@@ -5055,12 +5055,14 @@
         {
           "itemIds": [
             "dragon_ruins_pillar_v1"
-          ]
+          ],
+          "variant": "plain"
         },
         {
           "itemIds": [
             "dragon_ruins_pillar_v2"
-          ]
+          ],
+          "variant": "gold_accents"
         },
         {
           "itemIds": [
@@ -6944,32 +6946,38 @@
         {
           "itemIds": [
             "mini_tea_set_cup_walnut"
-          ]
+          ],
+          "variant": "walnut_and_white"
         },
         {
           "itemIds": [
             "mini_tea_set_cup_white"
-          ]
+          ],
+          "variant": "white_and_blue"
         },
         {
           "itemIds": [
             "mini_tea_set_cup_oak"
-          ]
+          ],
+          "variant": "oak_and_green"
         },
         {
           "itemIds": [
             "mini_tea_set_teapot_walnut"
-          ]
+          ],
+          "variant": "walnut_and_orange"
         },
         {
           "itemIds": [
             "mini_tea_set_teapot_white"
-          ]
+          ],
+          "variant": "white_and_tan"
         },
         {
           "itemIds": [
             "mini_tea_set_teapot_oak"
-          ]
+          ],
+          "variant": "oak_and_brown"
         },
         {
           "itemIds": [
@@ -8600,7 +8608,7 @@
             "ruins_pot8"
           ],
           "recipeId": "ruins_pot_white",
-          "variant": "white"
+          "variant": "white_goblet"
         },
         {
           "itemIds": [
@@ -8609,7 +8617,7 @@
             "ruins_pot9"
           ],
           "recipeId": "ruins_pot_orange",
-          "variant": "orange"
+          "variant": "orange_gourd"
         },
         {
           "itemIds": [
@@ -8618,7 +8626,7 @@
             "ruins_pot7"
           ],
           "recipeId": "ruins_pot_blue",
-          "variant": "purple"
+          "variant": "cracked_purple"
         },
         {
           "itemIds": [
@@ -9206,12 +9214,14 @@
         {
           "itemIds": [
             "starter_stone_path"
-          ]
+          ],
+          "variant": "single"
         },
         {
           "itemIds": [
             "starter_stone_path_double"
-          ]
+          ],
+          "variant": "double"
         },
         {
           "itemIds": [
@@ -9548,12 +9558,14 @@
         {
           "itemIds": [
             "dragon_water_altar_v1"
-          ]
+          ],
+          "variant": "plain"
         },
         {
           "itemIds": [
             "dragon_water_altar_v2"
-          ]
+          ],
+          "variant": "pink_accents"
         },
         {
           "itemIds": [
