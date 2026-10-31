@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { lintedFiles, unjustifiedDirectives } from "./check-lint-directives.js";
 
-const SCRIPT = fileURLToPath(new URL("./check-lint-directives.ts", import.meta.url));
+const SCRIPT = fileURLToPath(new URL("check-lint-directives.ts", import.meta.url));
 const CLEAN = "export const x = 1;\n";
 const UNJUSTIFIED = "// eslint-disable-next-line no-console\nexport const x = 1;\n";
 
