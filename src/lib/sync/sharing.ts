@@ -13,7 +13,7 @@ import {
   retirePending,
   shareNewCode,
 } from "./follow.js";
-import { readSavePayload } from "./read-save.js";
+import { readSavePayload, stampOf } from "./read-save.js";
 
 import type {
   FollowKey,
@@ -38,6 +38,11 @@ let relay: RelayClient = createRelayClient();
 /** Swaps the relay client, for tests. */
 export function setRelayClient(client: RelayClient): void {
   relay = client;
+}
+
+/** The relay client sharing & following use, which the receiver reads through too. */
+export function relayClient(): RelayClient {
+  return relay;
 }
 
 /** Runs the invisible widget once & resolves with its token. */
@@ -168,7 +173,8 @@ export async function followCode(
   }
   // A player who left setup while the fetch ran never sees their progress erased.
   if (!stillWanted()) return { kind: "unreachable" };
-  if (!(await userState.startSyncLane({ key, kind: "following" }, save, stillWanted))) {
+  const stamp = stampOf(save, { counter: opened.counter, mailboxId: opened.mailboxId });
+  if (!(await userState.startSyncLane({ key, kind: "following" }, save, stillWanted, stamp))) {
     return { kind: "unreachable" };
   }
   return { kind: "applied", save };

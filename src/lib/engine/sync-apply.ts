@@ -1,7 +1,8 @@
 /**
  * Applying a synced save: given stored progress & an extracted save, how each difference between
- * them is settled, and the state that results. Pure: the phone's receiver supplies the state, asks
- * the questions, & writes the result in one write. See `docs/sync.md` § Applying a bundle.
+ * them is settled, and the state that results. Pure: the receiver (`#lib/sync/receiver.js`) asks the
+ * questions, & the store computes & writes the result in one write. See `docs/sync.md` § Applying a
+ * bundle.
  *
  * Each difference gets one {@link SyncPolicy} from {@link POLICY_TABLE}, keyed by the stored fact's
  * provenance & the kind of fact, then the guardrails: a level decrease, or more than
@@ -145,6 +146,38 @@ export interface SyncOptions {
   answers?: SyncAnswers;
   /** A new farm's starting state (default progress, empty history), used on a farm switch. */
   fresh: SyncState;
+}
+
+// ─── The receipt ────────────────────────────────────────────────────
+
+/**
+ * What this device last applied: the save's hash &, when it came through a code, the mailbox &
+ * counter of its envelope. A computer's own applies have only the hash.
+ */
+export interface SyncReceipt {
+  counter?: number;
+  hash: string;
+  mailboxId?: string;
+}
+
+/**
+ * Whether the receipt already covers a save, so it's skipped. An envelope is covered only when its
+ * mailbox matches & its counter isn't higher, so a new code's envelopes always apply; the computer's
+ * own applies, which have no envelope, are covered by the save's hash.
+ */
+export function receiptCovers(
+  receipt: Readonly<SyncReceipt> | undefined,
+  incoming: Readonly<SyncReceipt>,
+): boolean {
+  if (receipt === undefined) return false;
+  if (incoming.mailboxId === undefined || incoming.counter === undefined) {
+    return receipt.hash === incoming.hash;
+  }
+  return (
+    receipt.mailboxId === incoming.mailboxId &&
+    receipt.counter !== undefined &&
+    incoming.counter <= receipt.counter
+  );
 }
 
 // ─── Policy ─────────────────────────────────────────────────────────

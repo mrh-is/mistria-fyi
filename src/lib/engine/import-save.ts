@@ -237,7 +237,15 @@ export function extractSaveProgress(bundle: SaveBundle): {
   playtime: number | undefined;
   warnings: SaveImportWarning[];
 } {
-  const extraction = extractSave(bundle);
+  return progressOfExtraction(extractSave(bundle));
+}
+
+/** What {@link extractSaveProgress} returns, for a save that's already extracted. */
+export function progressOfExtraction(extraction: SaveExtraction): {
+  completed: Partial<ProgressState>;
+  playtime: number | undefined;
+  warnings: SaveImportWarning[];
+} {
   const completed: Partial<Record<ExtractedProgressKey, unknown>> = {};
   for (const [key, field] of Object.entries(extraction.fields)) {
     if (field.value !== undefined) completed[key as ExtractedProgressKey] = field.value;
@@ -954,7 +962,8 @@ export type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 // ─── Season derivation ─────────────────────────────────────────────
 
-const GAME_DAY = 259_200;
+/** One in-game day on the save's calendar (`gamedata.date`). */
+export const GAME_DAY = 259_200;
 const GAME_SEASON = 28 * GAME_DAY;
 
 function deriveReachedSeason(date: unknown): Season {

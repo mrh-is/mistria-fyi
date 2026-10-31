@@ -7,6 +7,7 @@
   import OverallProgress from "#lib/components/overall-progress.svelte";
   import SearchResults from "#lib/components/search-results.svelte";
   import GotItNote from "#lib/components/sync/got-it-note.svelte";
+  import SyncTroubleNote from "#lib/components/sync/sync-trouble-note.svelte";
   import WelcomeCard from "#lib/components/welcome-card.svelte";
   import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -59,6 +60,7 @@
     {:else}
       {#if syncEnabled}
         <GotItNote locale={data.locale} />
+        <SyncTroubleNote />
       {/if}
       <WelcomeCard />
       <h2 class="px-1 font-controls text-2xs tracking-[0.14em] text-muted-foreground uppercase">
