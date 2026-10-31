@@ -33,7 +33,7 @@ network connection, download Satoshi directly from Fontshare and install it loca
 - [docs/app-architecture.md](docs/app-architecture.md) — data contracts, state, persistence,
   composition
 - [docs/accessibility-testing.md](docs/accessibility-testing.md) — automated checks & release matrix
-- [docs/testing-inventory.md](docs/testing-inventory.md) — which test layer covers each component
+- [docs/testing-inventory.md](docs/testing-inventory.md) — which test layer to use for a component
 - [docs/font-assets.md](docs/font-assets.md) — proprietary font boundary and Cloudflare setup
 - [pipeline/README.md](pipeline/README.md) — pipeline contracts & extractor details
 
