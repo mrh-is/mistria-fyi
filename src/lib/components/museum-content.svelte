@@ -15,6 +15,7 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isInProgressScope, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
@@ -54,9 +55,9 @@
     return trackerRowDisplay({
       completed,
       dimmed: isItemDimmed(
-        sources,
+        { sources, visibility: trackerData.items[itemId].visibility },
         completed,
-        userState.state.worldState,
+        userState.progressContext,
         userState.state.availabilityWindows,
       ),
       leaving: recentlyCompleted.has(itemId),
@@ -72,7 +73,7 @@
   }
 
   function isMuseumComplete(): boolean {
-    return isCategoryComplete("museum", userState.state);
+    return isCategoryComplete("museum", userState.progressContext);
   }
 
   function isSetComplete(set: MuseumWingSet): boolean {
@@ -106,9 +107,9 @@
   function isItemBaseScoped(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
     return isInProgressScope(
-      trackerData.items[itemId].sources,
+      trackerData.items[itemId],
       isItemComplete(itemId),
-      userState.state.worldState,
+      userState.progressContext,
       userState.state.availabilityWindows,
     );
   }
@@ -223,6 +224,7 @@
                 {@const museumItemSources = trackerData.items[itemId].sources}
                 {@const museumItemVisibility = trackerData.items[itemId].visibility}
                 <TrackerRow
+                  fact={factKey("museum", itemId)}
                   display={rowDisplay(itemId, museumItemSources)}
                   segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
                   name={getName("items", itemId, locale)}

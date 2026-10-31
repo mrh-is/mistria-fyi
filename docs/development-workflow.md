@@ -192,9 +192,12 @@ Mistria Field Guide uses explicit planning and approval gates for changes that n
 
 Status labels show where an issue stands: `status: ready`, `status: blocked`,
 `status: needs decision`, or `status: in progress`. Do not start a blocked or needs-decision issue.
-An issue with `status: in progress` or an `agent:*` label already has an owner; coordinate on the
-issue instead of starting duplicate work. Applying these labels requires triage access, so outside
-contributors say on the issue that they are taking it.
+A dependency on another issue is a “blocked by” relationship instead of a label, and an issue is
+blocked while any issue blocking it is open; `status: blocked` covers blockers outside the tracker.
+See [Issue triage](agent-workflow.md#issue-triage) for both rules & for the `delegate: small agent`
+label. An issue with `status: in progress` or an `agent:*` label already has an owner; coordinate on
+the issue instead of starting duplicate work. Applying these labels requires triage access, so
+outside contributors say on the issue that they are taking it.
 
 ### Attribute agent-authored content
 
@@ -253,7 +256,29 @@ Tests sit next to the module they cover, so moving or deleting a module takes it
   builder or stub. [The testing inventory](testing-inventory.md#shared-helpers) lists them.
 
 The committed `.vscode/settings.json` nests each test under its source in the VS Code explorer, so
-colocated tests don’t double the length of directory listings.
+colocated tests don’t double the length of directory listings. It also points the Vitest extension
+at `node_modules/.bin/node`, the pinned Node that `pnpm install` links from `devEngines.runtime`.
+Without it, the extension starts Vitest with whatever `node` is first on `PATH`, and
+`require-pinned-node` (the first import in `vite.config.ts`) exits on any other release, which the
+extension reports only as “There were errors during config load.” The ESLint extension gets the same
+runtime through `eslint.runtime`: it otherwise runs on VS Code’s bundled Node, and
+`eslint.config.js` loads `vite.config.ts` for the SvelteKit config, so the guard stops the ESLint
+server too (“Server process exited with code 1”).
+
+- Run `pnpm install` (or `node scripts/setup-worktree.ts` in a worktree) before opening the folder.
+  Until the link exists, the extension fails to spawn `node_modules/.bin/node` (`ENOENT`).
+- The extension honors `vitest.nodeExecutable` only with its default `vitest.shellType`,
+  `child_process`. With `"vitest.shellType": "terminal"` in your user settings, it runs the
+  terminal’s `PATH` node instead and fails the same way.
+- On Windows, pnpm usually links the runtime in `node_modules\.bin` as shims (`node.cmd`,
+  `node.ps1`, and an extensionless shell script), which the extension can’t spawn without a shell,
+  so the committed value likely fails there. A user-level `vitest.nodeExecutable` can’t fix it,
+  because VS Code applies the workspace’s `.vscode/settings.json` over user settings. Instead, edit
+  the committed file locally & keep the edit out of commits:
+  1. Print the pinned runtime’s real path with `pnpm exec node -p process.execPath`.
+  2. Set `vitest.nodeExecutable` & `eslint.runtime` in `.vscode/settings.json` to that path.
+  3. Run `git update-index --skip-worktree .vscode/settings.json`, so Git ignores the local edit.
+     Undo it with `--no-skip-worktree` before pulling a change to that file, then reapply.
 
 ### Executing Tests
 
@@ -323,18 +348,28 @@ their complete changed-file list, & main pushes compare the event’s before/aft
 & manual runs omit it. Direct local runs still include it, so test-only edits can be verified with
 the focused command. It publishes all per-file test & hook durations, slowest first, in the job
 summary & the `vitest-timings` artifact. On two-CPU noncoverage runs, ordinary files use both
-workers; the allocation, lint-ownership, & project-configuration CLI probes run separately with one
-worker, reserving a CPU for their subprocesses. Both invocations share one wall-time budget & their
-file timings are combined. Coverage & other runner classes use half the available CPUs (at least one
-worker, capped at four). The JSON also records CPU count, coverage mode, whole-command wall time, &
-the enforced ceilings. Imports, environment setup, transforms, startup, & report generation count
-toward the wall budget. Missing timing reports & unsuccessful tests fail the step independently of
-the budgets.
+workers; the allocation, verify, lint-ownership, & project-configuration CLI probes run separately
+with one worker, reserving a CPU for their subprocesses. Both invocations share one wall-time budget
+& their file timings are combined. Coverage & other runner classes use half the available CPUs (at
+least one worker, capped at four). The JSON also records CPU count, coverage mode, whole-command
+wall time, & the enforced ceilings. Imports, environment setup, transforms, startup, & report
+generation count toward the wall budget. Missing timing reports & unsuccessful tests fail the step
+independently of the budgets.
+
+The local Workers integration file, `relay/worker.test.ts`, has a 30-second file ceiling. It runs
+real workerd eviction, hibernating WebSocket closure, & SQLite runtime restarts, with measured
+provider-runtime waits totaling about 20 seconds. This exception changes no other file ceiling. Its
+sequencer starts this file first within its pool, preserving the default order for all other files,
+so runtime waits overlap ordinary tests even with a cold timing cache; see
+[the decision](decisions/2026-10-29-sync-relay.md).
 
 | Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
 | ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
-| Two CPUs (current private `ubuntu-latest`) | 10 s             | 120 s                 | 10 s per file, 300 s     |
-| Four or more CPUs (public `ubuntu-latest`) | 5 s              | 90 s                  | 15 s per file, 300 s     |
+| Two CPUs (current private `ubuntu-latest`) | 10 s             | 150 s                 | 10 s per file, 300 s     |
+| Four or more CPUs (public `ubuntu-latest`) | 5 s              | 150 s                 | 15 s per file, 300 s     |
+
+Four-CPU runs on `main` range 45–99 s, & the relay file adds about 25 s, so both runner classes
+share the 150 s whole-command ceiling until #13 shortens the suite.
 
 On four-CPU runners, coverage triples the ordinary per-file ceiling. On commit `31c10adb`’s four-CPU
 runs, it slowed files over 200 ms by a median 1.14× & up to 2.67× (`names.completeness.test.ts`);
@@ -347,8 +382,8 @@ cleanup file took 5.524 s, the allocation test 9.855 s, & the coverage step 216 
 [37692535010](https://github.com/mrh-is/mistria-fyi/actions/runs/37692535010). After #707 shared
 module registries, warm two-CPU runs took 52–79 s (the same files ran up to 1.7× slower on some
 runners) and a run with a cold transform cache, as after a `vite.config.ts` change, took 105 s; the
-120 s wall ceiling clears that cold run. The lint-ownership probe reached 8.3 s on a slow runner, so
-the 10 s file ceiling stays. The four-CPU ceilings haven’t been re-measured since. The four-CPU wall
+wall ceiling clears that cold run. The lint-ownership probe reached 8.3 s on a slow runner, so the
+10 s file ceiling stays. The four-CPU ceilings haven’t been re-measured since. The four-CPU wall
 ceiling leaves startup headroom above #687’s 60 s target. Budget changes require measurements on the
 same runner class & an explanation in the PR; do not raise ceilings merely to silence a failure.
 Coverage runs nightly because local measurements do not establish that it is free in CI.
@@ -757,6 +792,13 @@ removes a local branch only when its current commit exactly matches the head com
 GitHub pull request, and it has no open pull request. It removes an associated worktree only when
 that worktree is clean; Git itself still must accept the removal. It leaves every other branch and
 worktree alone.
+
+Before checking branches, it prunes unlocked worktree registrations whose directory no longer exists
+(such as Codex worktrees under a cleared `/tmp`), so their branches get the same checks as any
+other. If a stale registration's parent directory is also missing, as on an unmounted volume, it
+prunes nothing and says so; lock that worktree or prune by hand. A tip that GitHub has never
+received is unpushed work and stays, unless it is a conflict-free two-parent merge (typically
+`origin/main` merged into a PR head for a local check) whose parents both count as merged.
 
 It also keeps any worktree in use: one that a running process (an agent session or its shell) has as
 its working directory, or, with `--idle-minutes <n>`, one whose `HEAD` changed in the last `n`

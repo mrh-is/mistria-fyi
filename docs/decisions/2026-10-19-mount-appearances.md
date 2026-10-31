@@ -1,3 +1,21 @@
+---
+id: 2026-10-19-mount-appearances
+status: amended
+summary: >-
+  The animals Mount section retains appearances; its deferred Mistmare perk tracking has shipped.
+evidence:
+  - docs/decisions/2026-10-22-mistmare-perks.md
+relationships:
+  - type: amended-by
+    target: 2026-10-22-mistmare-perks
+    scope: partial
+    portion: >-
+      Only the future-tense statements that issue #86 will add the three Mistmare perks. They are
+      now tracked beside appearances.
+    evidence:
+      - docs/decisions/2026-10-22-mistmare-perks.md
+---
+
 # Mount appearances are their own collection
 
 ## Context

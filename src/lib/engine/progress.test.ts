@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { isVariantInScope } from "#lib/engine/animal-availability.js";
+import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
@@ -54,9 +55,11 @@ function ctx(
     worldState: { season: Season; weather: Weather };
   }> = {},
 ) {
+  const progress = makeCompletedState(overrides.completed ?? {});
   return {
     availabilityWindows: [...WINDOW_PRESETS[overrides.windowPreset ?? "everything"]],
-    progress: makeCompletedState(overrides.completed ?? {}),
+    progress,
+    progressionState: deriveProgressionState(progress, trackerData, false),
     worldState: overrides.worldState ?? defaultWorld,
   };
 }
@@ -565,7 +568,7 @@ describe("animal progress variant filtering matches UI predicate", () => {
       for (const [, animal] of recordEntries(trackerData.animals)) {
         for (const tier of animal.variantTiers) {
           for (const [, variant] of recordEntries(tier)) {
-            if (isVariantInScope(variant, season, [...WINDOW_PRESETS[mode]])) {
+            if (isVariantInScope(variant, animal.visibility, c, c.availabilityWindows)) {
               expectedVariantFiltered++;
             }
           }

@@ -15,7 +15,12 @@ declare module "cloudflare:workers" {
   export const env: {
     /** Absent when the Pages project has no KV binding; callers must handle that. */
     FEEDBACK_EMAIL_STORE?: KVNamespace;
-    GITHUB_FEEDBACK_TOKEN: string;
+    /** The GitHub App’s ID (or client ID). Non-secret; all three App settings are required. */
+    GITHUB_APP_ID?: string;
+    /** The App's installation on this repository. Non-secret. */
+    GITHUB_APP_INSTALLATION_ID?: string;
+    /** Secret, production only: the App's private key as a PKCS#8 PEM (`BEGIN PRIVATE KEY`). */
+    GITHUB_APP_PRIVATE_KEY?: string;
     TURNSTILE_SECRET_KEY: string;
   };
 }

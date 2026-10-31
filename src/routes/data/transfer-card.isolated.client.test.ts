@@ -199,6 +199,32 @@ function fakeScanner() {
 }
 
 describe("TransferCard update holds", () => {
+  it("releases a pending update after payload decoding fails without merging progress", async () => {
+    const decoded = Promise.withResolvers<Partial<ProgressState>>();
+    const transfer = await import("#lib/engine/transfer.js");
+    vi.spyOn(transfer, "decodeTransferPayload").mockReturnValueOnce(decoded.promise);
+    const merge = vi.spyOn(userState, "mergeFromSave");
+    transferQr.decodeQrImage.mockResolvedValueOnce("image payload");
+    render(TransferCard, { open: true });
+    vi.useFakeTimers();
+    const reload = vi.fn();
+    await scanImage(new File(["png"], "qr.png", { type: "image/png" }));
+    scheduler = createSafeReload({ isReachable: () => Promise.resolve(true), reload });
+    scheduler.request();
+
+    await vi.advanceTimersByTimeAsync(SAFE_RELOAD_POLL_MS * 2);
+    expect(transfer.decodeTransferPayload).toHaveBeenCalledWith("image payload", version);
+    expect(updateHolds.held).toBe(true);
+    expect(reload).not.toHaveBeenCalled();
+
+    decoded.reject(new Error("Invalid payload"));
+    await vi.advanceTimersByTimeAsync(SAFE_RELOAD_POLL_MS);
+    expect(screen.getByRole("alert")).toHaveTextContent("Invalid QR code: could not decode");
+    expect(merge).not.toHaveBeenCalled();
+    expect(updateHolds.held).toBe(false);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
   it("holds a pending update from a camera result through payload decoding & the result", async () => {
     const decoded = Promise.withResolvers<Partial<ProgressState>>();
     const transfer = await import("#lib/engine/transfer.js");

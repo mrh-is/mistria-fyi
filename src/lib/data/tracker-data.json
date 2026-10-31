@@ -3667,12 +3667,14 @@
         {
           "itemIds": [
             "painting_rose_v1"
-          ]
+          ],
+          "variant": "dark_wood"
         },
         {
           "itemIds": [
             "painting_rose_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
@@ -3738,12 +3740,14 @@
         {
           "itemIds": [
             "pirate_anchor_v1"
-          ]
+          ],
+          "variant": "cool_toned"
         },
         {
           "itemIds": [
             "pirate_anchor_v2"
-          ]
+          ],
+          "variant": "warm_toned"
         },
         {
           "itemIds": [
@@ -3759,62 +3763,74 @@
         {
           "itemIds": [
             "animated_cloud_window_v1_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_cream"
-          ]
+          ],
+          "variant": "cream"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_gold"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_cream"
-          ]
+          ],
+          "variant": "cream"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_gold"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
@@ -3910,12 +3926,14 @@
         {
           "itemIds": [
             "counter_basic_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "counter_basic_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
@@ -4308,32 +4326,38 @@
         {
           "itemIds": [
             "counter_cabin_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "counter_cabin_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "counter_cabin_cherry"
-          ]
+          ],
+          "variant": "cherry"
         },
         {
           "itemIds": [
             "counter_cake_strawberry"
-          ]
+          ],
+          "variant": "strawberry"
         },
         {
           "itemIds": [
             "counter_cake_chocolate"
-          ]
+          ],
+          "variant": "mocha"
         },
         {
           "itemIds": [
             "counter_cake_double_chocolate"
-          ]
+          ],
+          "variant": "chocolate"
         },
         {
           "itemIds": [
@@ -4746,12 +4770,14 @@
         {
           "itemIds": [
             "pirate_counterfeit_gold_pile_v1"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
             "pirate_counterfeit_gold_pile_v2"
-          ]
+          ],
+          "variant": "pink_tinged"
         },
         {
           "itemIds": [
@@ -4834,92 +4860,110 @@
         {
           "itemIds": [
             "deluxe_icebox_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "deluxe_icebox_pink"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
             "deluxe_icebox_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "deluxe_icebox_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "deluxe_icebox_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_red"
-          ]
+          ],
+          "variant": "red"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_gold"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_aqua"
-          ]
+          ],
+          "variant": "aqua"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_pink"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_gray"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_light_brown"
-          ]
+          ],
+          "variant": "light_brown"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_dark_brown"
-          ]
+          ],
+          "variant": "dark_brown"
         },
         {
           "itemIds": [
@@ -5011,22 +5055,26 @@
         {
           "itemIds": [
             "dragon_ruins_pillar_v1"
-          ]
+          ],
+          "variant": "plain"
         },
         {
           "itemIds": [
             "dragon_ruins_pillar_v2"
-          ]
+          ],
+          "variant": "gold_accents"
         },
         {
           "itemIds": [
             "dragon_stained_glass_window_v1"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
             "dragon_stained_glass_window_v2"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
@@ -5189,32 +5237,38 @@
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -6245,37 +6299,44 @@
         {
           "itemIds": [
             "incense_burner_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "incense_burner_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "incense_burner_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "incense_burner_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "incense_stick_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "incense_stick_v2"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "incense_stick_v3"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
@@ -6391,42 +6452,50 @@
         {
           "itemIds": [
             "large_decorative_pumpkin_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "large_dragon_rug"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "medium_dragon_rug"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
@@ -6583,12 +6652,14 @@
         {
           "itemIds": [
             "counter_cottage_v1"
-          ]
+          ],
+          "variant": "sage"
         },
         {
           "itemIds": [
             "counter_cottage_v2"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
@@ -6724,32 +6795,38 @@
         {
           "itemIds": [
             "medium_decorative_pumpkin_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -6869,172 +6946,206 @@
         {
           "itemIds": [
             "mini_tea_set_cup_walnut"
-          ]
+          ],
+          "variant": "walnut_and_white"
         },
         {
           "itemIds": [
             "mini_tea_set_cup_white"
-          ]
+          ],
+          "variant": "white_and_blue"
         },
         {
           "itemIds": [
             "mini_tea_set_cup_oak"
-          ]
+          ],
+          "variant": "oak_and_green"
         },
         {
           "itemIds": [
             "mini_tea_set_teapot_walnut"
-          ]
+          ],
+          "variant": "walnut_and_orange"
         },
         {
           "itemIds": [
             "mini_tea_set_teapot_white"
-          ]
+          ],
+          "variant": "white_and_tan"
         },
         {
           "itemIds": [
             "mini_tea_set_teapot_oak"
-          ]
+          ],
+          "variant": "oak_and_brown"
         },
         {
           "itemIds": [
             "mist_bed_v1"
-          ]
+          ],
+          "variant": "sparkly"
         },
         {
           "itemIds": [
             "mist_bed_v2"
-          ]
+          ],
+          "variant": "moon"
         },
         {
           "itemIds": [
             "mist_bed_v3"
-          ]
+          ],
+          "variant": "raindrop"
         },
         {
           "itemIds": [
             "mist_bed_v4"
-          ]
+          ],
+          "variant": "lightning"
         },
         {
           "itemIds": [
             "mist_cushion_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_cushion_v2"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "mist_cushion_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_cushion_v4"
-          ]
+          ],
+          "variant": "purple_blue"
         },
         {
           "itemIds": [
             "mist_double_bed_v1"
-          ]
+          ],
+          "variant": "sparkly"
         },
         {
           "itemIds": [
             "mist_double_bed_v2"
-          ]
+          ],
+          "variant": "moon"
         },
         {
           "itemIds": [
             "mist_double_bed_v3"
-          ]
+          ],
+          "variant": "raindrop"
         },
         {
           "itemIds": [
             "mist_double_bed_v4"
-          ]
+          ],
+          "variant": "lightning"
         },
         {
           "itemIds": [
             "mist_lamp_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_lamp_v2"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "mist_lamp_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_lamp_v4"
-          ]
+          ],
+          "variant": "purple_blue"
         },
         {
           "itemIds": [
             "mist_pet_bed_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_pet_bed_v2"
-          ]
+          ],
+          "variant": "blue_and_yellow"
         },
         {
           "itemIds": [
             "mist_pet_bed_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_pet_bed_v4"
-          ]
+          ],
+          "variant": "purple_blue_and_yellow"
         },
         {
           "itemIds": [
             "mist_rug_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_rug_v2"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "mist_rug_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_rug_v4"
-          ]
+          ],
+          "variant": "purple_blue"
         },
         {
           "itemIds": [
             "mist_storage_chest_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_storage_chest_v2"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "mist_storage_chest_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_storage_chest_v4"
-          ]
+          ],
+          "variant": "purple_blue"
         },
         {
           "itemIds": [
@@ -7141,12 +7252,14 @@
         {
           "itemIds": [
             "pirate_nautical_compass_v1"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "pirate_nautical_compass_v2"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
@@ -7307,57 +7420,68 @@
         {
           "itemIds": [
             "ornate_banister_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "ornate_banister_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_banister_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "ornate_cabinet_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_cabinet_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_cabinet_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_cabinet_v4"
-          ]
+          ],
+          "variant": "white_and_gold"
         },
         {
           "itemIds": [
             "ornate_coffee_table_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_coffee_table_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_coffee_table_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_coffee_table_v4"
-          ]
+          ],
+          "variant": "white_and_gold"
         },
         {
           "itemIds": [
@@ -7370,22 +7494,26 @@
         {
           "itemIds": [
             "ornate_flooring_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_flooring_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_flooring_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_flooring_v4"
-          ]
+          ],
+          "variant": "white_and_gold"
         },
         {
           "itemIds": [
@@ -7430,42 +7558,50 @@
         {
           "itemIds": [
             "ornate_painted_screen_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "ornate_painted_screen_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_painted_screen_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v4"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v5"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
@@ -7478,77 +7614,92 @@
         {
           "itemIds": [
             "ornate_sofa_v1"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "ornate_sofa_v2"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
             "ornate_sofa_v3"
-          ]
+          ],
+          "variant": "off_white"
         },
         {
           "itemIds": [
             "ornate_sofa_v4"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_sofa_v5"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "ornate_sofa_v6"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "ornate_sofa_v7"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
             "ornate_vase_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_vase_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "ornate_vase_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "ornate_vase_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "ornate_wallpaper_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_wallpaper_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_wallpaper_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_wallpaper_v4"
-          ]
+          ],
+          "variant": "white_and_gold"
         },
         {
           "itemIds": [
@@ -7675,12 +7826,14 @@
         {
           "itemIds": [
             "pirate_wall_flag_v1"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "pirate_wall_flag_v2"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
@@ -7712,52 +7865,62 @@
         {
           "itemIds": [
             "painting_lilac_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "painting_lilac_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "painting_mushroom_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "painting_mushroom_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "pumpkin_pile_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "pumpkin_pile_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "pumpkin_pile_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "pumpkin_pile_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "pumpkin_pile_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "pumpkin_pile_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -8423,17 +8586,20 @@
         {
           "itemIds": [
             "ruins_floor_brazier_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "ruins_floor_brazier_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "ruins_floor_brazier_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
@@ -8441,7 +8607,8 @@
             "ruins_pot4",
             "ruins_pot8"
           ],
-          "recipeId": "ruins_pot_white"
+          "recipeId": "ruins_pot_white",
+          "variant": "white_goblet"
         },
         {
           "itemIds": [
@@ -8449,7 +8616,8 @@
             "ruins_pot3",
             "ruins_pot9"
           ],
-          "recipeId": "ruins_pot_orange"
+          "recipeId": "ruins_pot_orange",
+          "variant": "orange_gourd"
         },
         {
           "itemIds": [
@@ -8457,7 +8625,8 @@
             "ruins_pot6",
             "ruins_pot7"
           ],
-          "recipeId": "ruins_pot_blue"
+          "recipeId": "ruins_pot_blue",
+          "variant": "cracked_purple"
         },
         {
           "itemIds": [
@@ -8472,17 +8641,20 @@
         {
           "itemIds": [
             "ruins_window_v1"
-          ]
+          ],
+          "variant": "stone_framed"
         },
         {
           "itemIds": [
             "ruins_window_v2"
-          ]
+          ],
+          "variant": "purple_framed"
         },
         {
           "itemIds": [
             "ruins_window_v3"
-          ]
+          ],
+          "variant": "wood_framed"
         },
         {
           "itemIds": [
@@ -8629,22 +8801,26 @@
         {
           "itemIds": [
             "painting_leaves_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "painting_leaves_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "painting_wildflowers_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "painting_wildflowers_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
@@ -8654,12 +8830,14 @@
         {
           "itemIds": [
             "pirate_ship_in_a_bottle_v1"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
             "pirate_ship_in_a_bottle_v2"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
@@ -8669,62 +8847,74 @@
         {
           "itemIds": [
             "bonsai_low_cabinet_light_brown"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "bonsai_low_cabinet_brown"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "bonsai_low_cabinet_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "bonsai_low_cabinet_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "bonsai_low_stand_light_brown"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "bonsai_low_stand_brown"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "bonsai_low_stand_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "bonsai_low_stand_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "bonsai_low_table_light_brown"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "bonsai_low_table_brown"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "bonsai_low_table_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "bonsai_low_table_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -8779,32 +8969,38 @@
         {
           "itemIds": [
             "small_decorative_pumpkin_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -9018,12 +9214,14 @@
         {
           "itemIds": [
             "starter_stone_path"
-          ]
+          ],
+          "variant": "single"
         },
         {
           "itemIds": [
             "starter_stone_path_double"
-          ]
+          ],
+          "variant": "double"
         },
         {
           "itemIds": [
@@ -9142,22 +9340,26 @@
         {
           "itemIds": [
             "bonsai_high_stand_light_brown"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "bonsai_high_stand_brown"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "bonsai_high_stand_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "bonsai_high_stand_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -9356,12 +9558,14 @@
         {
           "itemIds": [
             "dragon_water_altar_v1"
-          ]
+          ],
+          "variant": "plain"
         },
         {
           "itemIds": [
             "dragon_water_altar_v2"
-          ]
+          ],
+          "variant": "pink_accents"
         },
         {
           "itemIds": [
@@ -48776,6 +48980,26 @@
       "sources": [
         {
           "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_turnip",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_turnip"
         },
         {
@@ -48788,6 +49012,26 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_potato",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_potato"
         },
@@ -48802,6 +49046,26 @@
       "sources": [
         {
           "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_cabbage",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_cabbage"
         },
         {
@@ -48814,6 +49078,26 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_strawberry",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_strawberry"
         },
@@ -48841,6 +49125,26 @@
         },
         {
           "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_carrot",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_carrot"
         }
       ]
@@ -48863,6 +49167,26 @@
         },
         {
           "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_peas",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_peas"
         }
       ]
@@ -48880,6 +49204,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_chickpea",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_chickpea"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -48887,10 +49235,6 @@
               "spring"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_chickpea"
         },
         {
           "type": "store",
@@ -48920,6 +49264,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_tulip",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_tulip"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -48947,10 +49315,6 @@
           }
         },
         {
-          "type": "crop",
-          "seedItemId": "seed_tulip"
-        },
-        {
           "type": "store",
           "storeId": "balor"
         }
@@ -48960,6 +49324,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_lilac",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_lilac"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -48967,10 +49355,6 @@
               "spring"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_lilac"
         },
         {
           "type": "store",
@@ -48991,6 +49375,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_snowdrop_anemone",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_snowdrop_anemone"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -48998,10 +49406,6 @@
               "spring"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_snowdrop_anemone"
         },
         {
           "type": "store",
@@ -49035,6 +49439,30 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_daffodil",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "spring"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_daffodil"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49051,10 +49479,6 @@
             "type": "questAvailable",
             "questId": "request_for_gardening_supplies"
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_daffodil"
         },
         {
           "type": "store",
@@ -49174,6 +49598,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_cucumber",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49186,6 +49624,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_cucumber"
         }
@@ -49195,6 +49639,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_tomato",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49207,6 +49665,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_tomato"
         }
@@ -49216,6 +49680,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_corn",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49228,6 +49706,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_corn"
         }
@@ -49237,6 +49721,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_chili_pepper",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49249,6 +49747,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_chili_pepper"
         }
@@ -49258,6 +49762,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_watermelon",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49270,6 +49788,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_watermelon"
         }
@@ -49293,6 +49817,26 @@
         },
         {
           "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_sugar_cane",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_sugar_cane"
         }
       ]
@@ -49314,6 +49858,26 @@
           }
         },
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_tea",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_tea"
         }
@@ -49414,6 +49978,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_dill",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49426,6 +50004,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_dill"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49433,10 +50021,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_dill"
         }
       ]
     },
@@ -49444,6 +50028,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_sage",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49454,6 +50052,16 @@
             "type": "reachedSeason",
             "season": "summer"
           }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_sage"
         },
         {
           "type": "forage",
@@ -49463,16 +50071,26 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_sage"
         }
       ]
     },
     "sunflower": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_sunflower",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -49486,6 +50104,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_sunflower"
         }
@@ -49542,6 +50166,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_daisy",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49554,6 +50192,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_daisy"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49561,10 +50209,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_daisy"
         }
       ]
     },
@@ -49572,6 +50216,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_iris",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49584,6 +50242,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_iris"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49591,10 +50259,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_iris"
         }
       ]
     },
@@ -49602,6 +50266,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_catmint",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49614,6 +50292,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_catmint"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49621,10 +50309,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_catmint"
         }
       ]
     },
@@ -49632,6 +50316,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_night_queen",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49644,6 +50342,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_night_queen"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49651,10 +50359,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_night_queen"
         }
       ]
     },
@@ -49683,6 +50387,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_thyme",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49695,6 +50413,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_thyme"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49702,10 +50430,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_thyme"
         }
       ]
     },
@@ -49713,6 +50437,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_oregano",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49725,6 +50463,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_oregano"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49732,10 +50480,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_oregano"
         }
       ]
     },
@@ -49743,6 +50487,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_basil",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49755,6 +50513,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_basil"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49762,10 +50530,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_basil"
         }
       ]
     },
@@ -49773,6 +50537,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_cosmos",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49785,6 +50563,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_cosmos"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49792,10 +50580,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_cosmos"
         }
       ]
     },
@@ -49840,6 +50624,20 @@
           }
         },
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_marigold",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "summer"
@@ -49852,6 +50650,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "summer"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_marigold"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -49859,10 +50667,6 @@
               "summer"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_marigold"
         }
       ]
     },
@@ -49891,6 +50695,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_sweet_potato",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -49903,6 +50721,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_sweet_potato"
         }
@@ -49912,6 +50736,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_broccoli",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -49924,6 +50762,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_broccoli"
         }
@@ -49933,6 +50777,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_pumpkin",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -49945,6 +50803,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_pumpkin"
         }
@@ -49968,6 +50832,26 @@
         },
         {
           "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_onion",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
           "seedItemId": "seed_onion"
         }
       ]
@@ -49975,6 +50859,20 @@
     "cranberry": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_cranberry",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -49988,6 +50886,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_cranberry"
         }
@@ -50019,6 +50923,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_wheat",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50031,6 +50949,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_wheat"
         },
@@ -50044,6 +50968,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_moon_fruit",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50056,6 +50994,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_moon_fruit"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50063,10 +51011,6 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_moon_fruit"
         }
       ]
     },
@@ -50074,6 +51018,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_rosemary",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50086,6 +51044,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_rosemary"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50093,10 +51061,6 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_rosemary"
         }
       ]
     },
@@ -50216,6 +51180,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_viola",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50226,6 +51204,16 @@
             "type": "reachedSeason",
             "season": "fall"
           }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_viola"
         },
         {
           "type": "forage",
@@ -50235,16 +51223,26 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_viola"
         }
       ]
     },
     "celosia": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_celosia",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -50258,6 +51256,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_celosia"
         }
@@ -50267,6 +51271,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_heather",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50279,6 +51297,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_heather"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50286,10 +51314,6 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_heather"
         }
       ]
     },
@@ -50297,6 +51321,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_garlic",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "fall"
@@ -50307,6 +51345,16 @@
             "type": "reachedSeason",
             "season": "fall"
           }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_garlic"
         },
         {
           "type": "forage",
@@ -50316,16 +51364,26 @@
               "fall"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_garlic"
         }
       ]
     },
     "chrysanthemum": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_chrysanthemum",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -50339,6 +51397,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_chrysanthemum"
         }
@@ -50395,6 +51459,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_cauliflower",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50407,6 +51485,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_cauliflower"
         }
@@ -50416,6 +51500,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_daikon_radish",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50428,6 +51526,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_daikon_radish"
         }
@@ -50437,6 +51541,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_burdock_root",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50449,6 +51567,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_burdock_root"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50456,10 +51584,6 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_burdock_root"
         }
       ]
     },
@@ -50467,6 +51591,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_poinsettia",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50477,6 +51615,16 @@
             "type": "reachedSeason",
             "season": "winter"
           }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_poinsettia"
         },
         {
           "type": "forage",
@@ -50486,16 +51634,26 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_poinsettia"
         }
       ]
     },
     "snow_peas": {
       "category": "crops",
       "sources": [
+        {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_snow_peas",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
         {
           "availability": {
             "type": "reachedSeason",
@@ -50509,6 +51667,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_snow_peas"
         }
@@ -50518,6 +51682,20 @@
       "category": "crops",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_beet",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50530,6 +51708,12 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
           "type": "crop",
           "seedItemId": "seed_beet"
         }
@@ -50560,6 +51744,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_frost_lily",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50572,6 +51770,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_frost_lily"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50579,10 +51787,6 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_frost_lily"
         }
       ]
     },
@@ -50590,6 +51794,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_jasmine",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50602,6 +51820,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_jasmine"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50609,10 +51837,6 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_jasmine"
         }
       ]
     },
@@ -50620,6 +51844,20 @@
       "category": "forageables",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_snapdragon",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
           "availability": {
             "type": "reachedSeason",
             "season": "winter"
@@ -50632,6 +51870,16 @@
           }
         },
         {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "winter"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_snapdragon"
+        },
+        {
           "type": "forage",
           "availability": {
             "type": "season",
@@ -50639,10 +51887,6 @@
               "winter"
             ]
           }
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_snapdragon"
         }
       ]
     },
@@ -52495,6 +53739,20 @@
           "visibility": {
             "type": "questAvailable",
             "questId": "breaking_the_fire_seal"
+          }
+        },
+        {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_temple_flower",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
           }
         },
         {
@@ -55231,13 +56489,33 @@
       "category": "materials",
       "sources": [
         {
+          "type": "crop",
+          "availability": {
+            "type": "quest",
+            "questId": "upgrade_the_carpenters_shop",
+            "state": "completed"
+          },
+          "greenhouse": true,
+          "seedItemId": "seed_rice",
+          "visibility": {
+            "type": "questAvailable",
+            "questId": "upgrade_the_carpenters_shop"
+          }
+        },
+        {
+          "availability": {
+            "type": "season",
+            "seasons": [
+              "fall"
+            ]
+          },
+          "type": "crop",
+          "seedItemId": "seed_rice"
+        },
+        {
           "type": "recipe",
           "method": "mill",
           "recipeId": "rice"
-        },
-        {
-          "type": "crop",
-          "seedItemId": "seed_rice"
         },
         {
           "type": "store",

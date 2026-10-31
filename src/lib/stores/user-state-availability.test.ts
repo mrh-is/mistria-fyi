@@ -1,12 +1,30 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
+
+// These tests assert the defaults, and files in a shared-registry project share `userState`.
+beforeEach(() => {
+  userState.resetAll();
+});
 
 afterEach(() => {
   userState.resetAll();
 });
 
 describe("availability windows", () => {
+  it("keeps Everything grouping on this device across restore and reset, but outside backups", () => {
+    expect(userState.state.everythingGrouping).toBe("category");
+    const backup = userState.exportBackup();
+    userState.setEverythingGrouping("source");
+    expect(userState.restoreBackup(backup)).toEqual({ ok: true });
+    expect(userState.state.everythingGrouping).toBe("source");
+    userState.resetProgress();
+    expect(userState.state.everythingGrouping).toBe("source");
+    expect(JSON.parse(userState.exportBackup())).not.toHaveProperty("everythingGrouping");
+    userState.resetAll();
+    expect(userState.state.everythingGrouping).toBe("category");
+  });
+
   it("defaults to now and anytime", () => {
     expect(userState.state.availabilityWindows).toEqual(["now", "anytime"]);
   });

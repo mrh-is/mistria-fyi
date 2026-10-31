@@ -60,6 +60,7 @@ export function createStoredState(
   return {
     preferences: {
       availabilityWindows: overrides.availabilityWindows ?? [...DEFAULT_AVAILABILITY_WINDOWS],
+      everythingGrouping: "category",
       showSpoilers: overrides.showSpoilers ?? false,
     },
     progress: {

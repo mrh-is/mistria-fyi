@@ -11,12 +11,16 @@
         "src/hooks.ts",
         // The throwaway sync probe (#130), loaded by its static page's script tag.
         "static/sync-probe/probe.js",
+        // Standalone Worker, loaded by relay/wrangler.toml rather than the Pages build.
+        "relay/worker.ts",
       ],
       "ignore": [
         // `scripts/locale-fonts/` is its own pnpm package with its own scripts & dependencies.
         "scripts/locale-fonts/**",
         // Fixtures the lint-ownership test feeds to ESLint & oxlint as text; nothing imports them.
         "tests/lint-probes/**",
+        // Throwaway mockup generators kept beside a design package; run by hand, never imported.
+        "docs/design/*/generator/**",
       ],
       "ignoreDependencies": [
         // Registered by name in project.inlang/settings.json, never imported.

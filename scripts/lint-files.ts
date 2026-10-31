@@ -23,13 +23,15 @@ export function lintCommands(files: string[] | undefined, fix: boolean): string[
     ...(fix ? ["--fix"] : ["--max-warnings=0"]),
   ];
   const stylelint = ["exec", "stylelint", ...(fix ? ["--fix"] : ["--max-warnings=0"])];
+  const directives = ["exec", "node", "scripts/check-lint-directives.ts"];
+  const decisions = ["run", "decisions"];
   if (files === undefined) {
     return [
       format,
       oxlint,
       [...eslint, "**/*.svelte", "**/*.svelte.{js,ts}"],
       [...stylelint, "src/**/*.{css,svelte}"],
-      ...(fix ? [] : [["run", "lint:shell"]]),
+      ...(fix ? [] : [directives, decisions, ["run", "lint:shell"]]),
     ];
   }
   if (files.length === 0) {
@@ -40,10 +42,22 @@ export function lintCommands(files: string[] | undefined, fix: boolean): string[
   const styleFiles = files.filter((file) => /^src[/\\].*\.(?:css|svelte)$/.test(file));
   return [
     [...format, "--no-error-on-unmatched-pattern", "--", ...files],
-    ...(scriptFiles.length > 0 ? [[...oxlint, "--", ...scriptFiles]] : []),
+    // A changed file that oxlint ignores (a lint probe, a design generator) selects nothing.
+    ...(scriptFiles.length > 0
+      ? [[...oxlint, "--no-error-on-unmatched-pattern", "--", ...scriptFiles]]
+      : []),
     ...(svelteFiles.length > 0 ? [[...eslint, "--", ...svelteFiles]] : []),
     ...(styleFiles.length > 0 ? [[...stylelint, "--", ...styleFiles]] : []),
+    ...(!fix && scriptFiles.length > 0 ? [[...directives, "--", ...scriptFiles]] : []),
     ...(!fix && files.some((file) => file.endsWith(".sh")) ? [["run", "lint:shell"]] : []),
+    ...(!fix &&
+    files.some((file) =>
+      /^(?:docs[/\\](?:decisions[/\\]|decision-(?:index|metadata)\.md$)|scripts[/\\]decision-index(?:\.test)?\.ts$)/.test(
+        file,
+      ),
+    )
+      ? [decisions]
+      : []),
   ];
 }
 

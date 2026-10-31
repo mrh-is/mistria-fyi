@@ -1,15 +1,40 @@
+---
+id: 2026-10-07-public-launch-posture
+status: amended
+summary: >-
+  The takedown-ready posture gained a precise allowance for independently removable, coarse farm
+  geometry.
+review: >-
+  NPC Studio correspondence & current permission were not independently rechecked; this index infers
+  no response.
+evidence:
+  - docs/decisions/2026-10-20-farm-planner-geometry.md
+relationships:
+  - type: amended-by
+    target: 2026-10-20-farm-planner-geometry
+    scope: partial
+    portion: >-
+      Only the boundary for derived farm geometry beyond sprites & the factual dataset. Launch
+      history & takedown posture keep their original scope.
+    evidence:
+      - docs/decisions/2026-10-20-farm-planner-geometry.md
+---
+
 # Public launch posture & takedown readiness
 
 Amended by [the farm planner geometry decision](2026-10-20-farm-planner-geometry.md).
 
 ## Context
 
-Making the repository public (#218) included asking NPC Studio for permission to publish
-game-derived material: the sprites, the generated dataset, & the extraction pipeline. NPC Studio
-hasn’t replied. On 2026-10-07 the maintainer decided to launch anyway rather than block on the
-reply, on the condition that any part can be withdrawn quickly if NPC Studio objects. The same day,
-the maintainer sent NPC Studio a follow-up (#665) announcing the launch date & listing what the
-public repository will contain.
+Making the repository public
+([mrh-is/mistria-fyi-private#218](https://github.com/mrh-is/mistria-fyi-private/issues/218))
+included asking NPC Studio for permission to publish game-derived material: the sprites, the
+generated dataset, & the extraction pipeline. NPC Studio hasn’t replied. On 2026-10-07 the
+maintainer decided to launch anyway rather than block on the reply, on the condition that any part
+can be withdrawn quickly if NPC Studio objects. The same day, the maintainer sent NPC Studio a
+follow-up
+([mrh-is/mistria-fyi-private#665](https://github.com/mrh-is/mistria-fyi-private/issues/665))
+announcing the launch date & listing what the public repository will contain.
 
 Separately, the current repository’s history contains `static/sprites/` (added in `9390ae1`) and a
 personal filesystem path in the since-removed `measure-transfer-size.ts`. Neither should become

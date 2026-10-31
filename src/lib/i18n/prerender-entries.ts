@@ -22,6 +22,7 @@ export const PRERENDERED_ROUTES = [
   "/recipes",
   "/renown",
   "/skills",
+  "/sync",
   "/villagers",
 ] as const;
 

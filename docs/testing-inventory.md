@@ -62,7 +62,7 @@ single-component row's marks disagree with its test files.
 | `quick-settings-theme-picker`    |        |            | Gap: theme selection and persistence                                              |
 | `feedback-panel`                 |        |     ✓      | Form, Turnstile, submit states                                                    |
 | `feedback-picker`                |        |     ✓      | Element picking                                                                   |
-| `search-results`                 |        |     ✓      | Toggle and undo across categories                                                 |
+| `search-results`                 |        |     ✓      | Toggle & undo across categories; progressive reveal, total, & query changes       |
 | `search-results-loading`         |        |     ✓      |                                                                                   |
 | `source-explainer-dialog`        |        | via parent | Open and dismiss through `filter-panel`                                           |
 | `tag-dialog`                     |        | via parent | Through `source-explainer-dialog` and `quick-settings-panel`                      |
@@ -71,41 +71,42 @@ single-component row's marks disagree with its test files.
 
 ### Tracker rows & controls
 
-| Component                                 | Server | happy-dom  | Notes                                                     |
-| ----------------------------------------- | :----: | :--------: | --------------------------------------------------------- |
-| `tracker-row`                             |   ✓    |     ✓      | Spoiler, completion, source papers, focus, sprite preview |
-| `tracker-row-stack`                       |   ✓    |            | Layout only                                               |
-| `tracker-row-list`                        |   ✓    |     ✓      | Prerender, reveal over frames, reserve, busy, undo, empty |
-| `row-reveal` (controller)                 |        |     ✓      | Height estimate, shared frames, one frame chain           |
-| `tracker-empty-state`                     |        | via parent | Through `tracker-row-list`                                |
-| `tracker-checkbox`                        |        |     ✓      | Label, click forwarding, visual states                    |
-| `tracker-paper`                           |        |            | Layout only; no interaction                               |
-| `confirm-spoiler-dialog`                  |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |
-| `spoiler-guard-dialog`                    |        |     ✓      | Renders only while the guard holds a condition            |
-| `skill-record`                            |        |     ✓      | Level editing, perk drawer                                |
-| `skill-perks`                             |        |     ✓      | Unlocked & locked counts, tiers, check-off, spoiler guard |
-| `stepper`                                 |        |     ✓      | Grouped controls                                          |
-| `dialog-close-button`                     |        |     ✓      | Localized close control, dismisses the dialog             |
-| `status-note`                             |   ✓    |            | Tone classes; alert role for errors & warnings            |
-| `expandable-section`                      |        |     ✓      | Disclosure, IDs, nesting, reporting                       |
-| `section-groups`                          |        |     ✓      | Completed grouping, toggle hold window, kept expansion    |
-| `section-group-item`, `completed-heading` |        | via parent | Through `section-groups`                                  |
-| `spoiler`                                 |        | via parent | Through `tracker-row` & `spoiler-section`                 |
-| `spoiler-section`                         |        |     ✓      | Mask-only reveal, inert row, shared styling, no progress  |
-| `section-trigger`                         |        | via parent | Through `expandable-section` & `spoiler-section`          |
-| `sprite-preview-button`                   |        | via parent | Through `tracker-row`                                     |
-| `sprite-slot`                             |        | via parent | Through `tracker-row`                                     |
-| `source-card`                             |   ✓    |            | Static rendering                                          |
-| `source-paper`                            |        | via parent | Through `tracker-row`                                     |
-| `source-segment-text`                     |   ✓    |            | Static rendering                                          |
-| `source-filtered-content`                 |   ✓    |            | Filtering logic is store-tested                           |
-| `restriction-badges`                      |        |            | Gap: static; server test would suffice                    |
-| `mine-floor-record`                       |        |     ✓      |                                                           |
-| `renown-current-record`                   |        |     ✓      |                                                           |
-| `villager-record`                         |   ✓    |     ✓      | Server: sprite has no inline handler (CSP)                |
-| `villagers-content`                       |        |     ✓      |                                                           |
-| `villager-alphabet-index`                 |        |     ✓      |                                                           |
-| `rank-record`                             |        |     ✓      |                                                           |
+| Component                                 | Server | happy-dom  | Notes                                                                   |
+| ----------------------------------------- | :----: | :--------: | ----------------------------------------------------------------------- |
+| `tracker-row`                             |   ✓    |     ✓      | Spoiler, completion, lazy sources, focus, sprite preview                |
+| `tracker-row-stack`                       |   ✓    |            | Layout only                                                             |
+| `tracker-row-list`                        |   ✓    |     ✓      | Prerender, reveal over frames, reserve, busy, undo, empty               |
+| `row-reveal` (controller)                 |        |     ✓      | Height estimate, shared frames, one frame chain                         |
+| `tracker-empty-state`                     |        | via parent | Through `tracker-row-list`                                              |
+| `tracker-checkbox`                        |        |     ✓      | Label, click forwarding, visual states                                  |
+| `tracker-paper`                           |        |            | Layout only; no interaction                                             |
+| `confirm-spoiler-dialog`                  |        |     ✓      | Invertible vs. non-invertible choices, handler routing                  |
+| `spoiler-guard-dialog`                    |        |     ✓      | Renders only while the guard holds a condition                          |
+| `skill-record`                            |        |     ✓      | Level editing, perk drawer                                              |
+| `skill-perks`                             |        |     ✓      | Unlocked & locked counts, tiers, check-off, spoiler guard, unlock notes |
+| `stepper`                                 |        |     ✓      | Grouped controls                                                        |
+| `dialog-close-button`                     |        |     ✓      | Localized close control, dismisses the dialog                           |
+| `status-note`                             |   ✓    |            | Tone classes; alert role for errors & warnings                          |
+| `expandable-section`                      |        |     ✓      | Disclosure, IDs, nesting, reporting                                     |
+| `section-groups`                          |        |     ✓      | Completed grouping, toggle hold window, kept expansion                  |
+| `section-group-item`, `completed-heading` |        | via parent | Through `section-groups`                                                |
+| `completion-section`                      |        | via parent | Everything-page tests cover section & compact-record partitioning       |
+| `spoiler`                                 |        | via parent | Through `tracker-row` & `spoiler-section`                               |
+| `spoiler-section`                         |        |     ✓      | Mask-only reveal, inert row, shared styling, no progress                |
+| `section-trigger`                         |        | via parent | Through `expandable-section` & `spoiler-section`                        |
+| `sprite-preview-button`                   |        | via parent | Through `tracker-row`                                                   |
+| `sprite-slot`                             |        | via parent | Through `tracker-row`                                                   |
+| `source-card`                             |   ✓    |            | Static rendering                                                        |
+| `source-paper`                            |        | via parent | Through `tracker-row`                                                   |
+| `source-segment-text`                     |   ✓    |            | Static rendering                                                        |
+| `source-filtered-content`                 |   ✓    |            | Filtering logic is store-tested                                         |
+| `restriction-badges`                      |        |            | Gap: static; server test would suffice                                  |
+| `mine-floor-record`                       |        |     ✓      |                                                                         |
+| `renown-current-record`                   |        |     ✓      |                                                                         |
+| `villager-record`                         |   ✓    |     ✓      | Server: sprite has no inline handler (CSP)                              |
+| `villagers-content`                       |        |     ✓      |                                                                         |
+| `villager-alphabet-index`                 |        |     ✓      |                                                                         |
+| `rank-record`                             |        |     ✓      |                                                                         |
 
 ### Category content
 

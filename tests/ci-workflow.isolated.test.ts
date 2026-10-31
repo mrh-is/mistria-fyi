@@ -11,6 +11,7 @@ import { STEPS } from "../scripts/verify.js";
 
 interface Workflow {
   concurrency?: { "cancel-in-progress"?: boolean; group?: string };
+  env?: Record<string, string>;
   jobs?: Record<string, WorkflowJob>;
   on?: {
     pull_request?: null | { paths?: string[] };
@@ -26,6 +27,7 @@ interface Workflow {
 interface WorkflowJob {
   concurrency?: Workflow["concurrency"];
   container?: string | { image?: string; options?: string };
+  env?: Record<string, string>;
   if?: string;
   needs?: string | string[];
   outputs?: Record<string, string>;
@@ -138,6 +140,9 @@ describe("CI workflow jobs", () => {
     // runs also collect coverage.
     const testCommands = runCommands(jobs.test);
     expect(testCommands).not.toContain(verifyCommand("test"));
+    expect(testCommands.filter((command) => command === verifyCommand("test:budgets"))).toEqual([
+      verifyCommand("test:budgets"),
+    ]);
     expect(testCommands.indexOf(verifyCommand("test:budgets"))).toBeLessThan(
       testCommands.indexOf('node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"'),
     );
@@ -263,6 +268,22 @@ describe("CI workflow jobs", () => {
     }
   });
 
+  it("fails a stalled pnpm/setup quickly instead of waiting out the job timeout", () => {
+    const setupJobs: string[] = [];
+    for (const [jobName, job] of Object.entries(jobs)) {
+      for (const step of job.steps?.filter((entry) => entry.uses?.startsWith("pnpm/setup@")) ??
+        []) {
+        setupJobs.push(jobName);
+        // v3.1.2 bundles get-pnpm’s no-progress watchdog & retry fix (get.pnpm.io#73).
+        expect(step.uses, jobName).toBe("pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e");
+        expect(step["timeout-minutes"], jobName).toBe(3);
+        expect(step["timeout-minutes"], jobName).toBeLessThan(job["timeout-minutes"] ?? 0);
+      }
+    }
+    // Pinning the jobs keeps a renamed or relocated action from passing vacuously.
+    expect(setupJobs.toSorted()).toEqual([...installJobs, "audit", "locale-sync"].toSorted());
+  });
+
   it("restores Vitest's module cache before running the tests", () => {
     const steps = jobs.test.steps ?? [];
     const cacheIndex = steps.findIndex((step) => step.uses?.startsWith("actions/cache@"));
@@ -315,6 +336,30 @@ describe("CI workflow jobs", () => {
       const nodeIndex = steps.findIndex((entry) => entry.uses?.startsWith("actions/setup-node@"));
       expect(nodeIndex).toBeGreaterThan(-1);
       expect(steps[nodeIndex].with?.["node-version-file"]).toBe(".node-version");
+    }
+  });
+
+  it("restores the store that holds the pnpm-managed Node in every pnpm/setup job", () => {
+    // The cache archive's paths are relative to the workspace, which the container mounts
+    // elsewhere, so container jobs keep a store of their own that one of them saves.
+    const savers: Record<string, string> = { build: "host", pwa: "container" };
+    const mainPush = "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}";
+    const setupJobs = Object.entries(jobs).filter(([, job]) =>
+      job.steps?.some((step) => step.uses?.startsWith("pnpm/setup@")),
+    );
+    expect(setupJobs.map(([name]) => name)).toEqual(
+      expect.arrayContaining(["audit", ...installJobs]),
+    );
+    expect(workflow.env?.pnpm_config_store_dir).toBeUndefined();
+    for (const [name, job] of setupJobs) {
+      const inContainer = job.container !== undefined;
+      expect(job.env?.pnpm_config_store_dir).toBe(inContainer ? "/__w/.pnpm-store" : undefined);
+      const setup = job.steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
+      expect(setup?.with?.cache).toBe(true);
+      expect(setup?.with?.["save-cache"]).toBe(name in savers ? mainPush : false);
+    }
+    for (const [name, kind] of Object.entries(savers)) {
+      expect(jobs[name].container !== undefined).toBe(kind === "container");
     }
   });
 
@@ -584,11 +629,40 @@ describe("CI workflow gate", () => {
     expect(jobs["ci-passed"].needs).toEqual(
       Object.keys(jobs).filter((jobName) => jobName !== "issue-sync" && jobName !== "ci-passed"),
     );
+    expect(jobs["ci-passed"].needs).toEqual([
+      "changes",
+      "lint",
+      "locale-sync",
+      "audit",
+      "check",
+      "test",
+      "build",
+      "accessibility",
+      "pwa",
+    ]);
     const check = jobs["ci-passed"].steps?.at(-1);
+    expect(check?.if).toBeUndefined();
+    expect(check?.["continue-on-error"]).toBeUndefined();
     expect(check?.env?.RESULTS).toBe("${{ join(needs.*.result, ' ') }}");
     // Skipped browser jobs pass; failures and cancellations do not.
     expect(check?.run).toContain("success | skipped) ;;");
     expect(check?.run).toContain("*) exit 1 ;;");
+  });
+
+  it.each([
+    ["success success skipped", 0],
+    ["success failure skipped", 1],
+    ["success cancelled skipped", 1],
+  ])("executes the actual aggregate gate for %s", (results, status) => {
+    const command = jobs["ci-passed"].steps?.at(-1)?.run;
+    expect(command).toBeTypeOf("string");
+    if (command === undefined) throw new Error("Missing aggregate gate command");
+    const result = spawnSync("bash", ["-e", "-c", command], {
+      encoding: "utf8",
+      env: { ...process.env, RESULTS: results },
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(status);
   });
 });
 

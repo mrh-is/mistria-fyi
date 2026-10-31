@@ -11,6 +11,7 @@
       "Bash(pnpm run check:built *)",
       "Bash(pnpm run knip *)",
       "Bash(pnpm run data:diff *)",
+      "Bash(pnpm run decisions *)",
       "Bash(pnpm run game-update:report *)",
       "Bash(pnpm run test *)",
       "Bash(pnpm run test:accessibility *)",
@@ -58,8 +59,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/format-agent-edit.ts\"",
-            "timeout": 10
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/agent-tool-hook.ts\"",
+            "timeout": 600,
+            "statusMessage": "Checking worktree setup & formatting"
           }
         ]
       },
@@ -90,8 +92,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/format-agent-edit.ts\"",
-            "timeout": 60
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/agent-tool-hook.ts\"",
+            "timeout": 600,
+            "statusMessage": "Checking worktree setup & formatting"
           }
         ]
       }
@@ -102,8 +105,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/format-agent-edit.ts\"",
-            "timeout": 60
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/agent-tool-hook.ts\"",
+            "timeout": 600,
+            "statusMessage": "Checking worktree setup & formatting"
           }
         ]
       }
@@ -115,6 +119,29 @@
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/lint-agent-stop.ts\"",
             "timeout": 120
+          }
+        ]
+      }
+    ],
+    "FileChanged": [
+      {
+        "matcher": "pnpm-lock.yaml|package.json|pnpm-workspace.yaml",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/setup-worktree.ts\" --file-changed",
+            "timeout": 600
+          }
+        ]
+      }
+    ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/setup-worktree.ts\" --cwd-changed",
+            "timeout": 600
           }
         ]
       }

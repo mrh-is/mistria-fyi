@@ -3,8 +3,11 @@ import { error as httpError, isHttpError } from "@sveltejs/kit";
 import { env } from "cloudflare:workers";
 
 import { isReportCategory } from "#lib/feedback/types.js";
+import { isProductionDeployment } from "#lib/server/deployment.js";
+import { GitHubAppAuthError, installationTokens } from "#lib/server/github-app-auth.js";
 
 import type { ReportTarget } from "#lib/feedback/types.js";
+import type { GitHubAppCredentials } from "#lib/server/github-app-auth.js";
 
 import type { RequestHandler } from "./$types";
 
@@ -39,6 +42,15 @@ interface GitHubFailureDiagnostics {
   requestId: null | string;
   status: number;
 }
+
+const GITHUB_APP_VARIABLES = [
+  "GITHUB_APP_ID",
+  "GITHUB_APP_INSTALLATION_ID",
+  "GITHUB_APP_PRIVATE_KEY",
+] as const;
+
+const GITHUB_UNAVAILABLE_MESSAGE =
+  "Feedback service temporarily unavailable. Please try again later or copy your message.";
 
 function buildIssueBody(payload: FeedbackPayload): string {
   const lines: string[] = [
@@ -146,6 +158,43 @@ async function getGitHubFailureDiagnostics(response: Response): Promise<GitHubFa
     requestId: response.headers.get("x-github-request-id"),
     status: response.status,
   };
+}
+
+/**
+ * Exchanges App credentials for an installation token. Logs only fixed messages, statuses, & request
+ * IDs: never key material, JWTs, or tokens.
+ */
+async function getGitHubToken(credentials: GitHubAppCredentials): Promise<string> {
+  try {
+    return await installationTokens.getToken(credentials);
+  } catch (error) {
+    if (error instanceof GitHubAppAuthError) {
+      if (error.diagnostics) {
+        console.error("GitHub App token exchange failed", error.diagnostics);
+      } else {
+        console.error(`GitHub App authentication failed: ${error.message}`);
+      }
+    } else if (error instanceof Error && error.name === "AbortError") {
+      console.error("GitHub App token exchange timeout");
+    } else {
+      console.error("GitHub App token exchange request failed");
+    }
+    httpError(503, GITHUB_UNAVAILABLE_MESSAGE);
+  }
+}
+
+/** Requires all three GitHub App settings; logs only missing variable names. */
+function resolveGitHubCredentials(): GitHubAppCredentials {
+  const appId = env.GITHUB_APP_ID?.trim();
+  const installationId = env.GITHUB_APP_INSTALLATION_ID?.trim();
+  const privateKeyPem = env.GITHUB_APP_PRIVATE_KEY?.trim();
+  if (appId && installationId && privateKeyPem) {
+    return { appId, installationId, privateKeyPem };
+  }
+
+  const missingAppVariables = GITHUB_APP_VARIABLES.filter((name) => !env[name]?.trim());
+  console.error(`GitHub credentials are not configured: missing ${missingAppVariables.join(", ")}`);
+  httpError(503, "Feedback service temporarily unavailable");
 }
 
 function sanitizeTitlePart(value: string): string {
@@ -372,17 +421,21 @@ export const POST: RequestHandler = async ({ request, url }) => {
   }
 
   const turnstileSecret = env.TURNSTILE_SECRET_KEY;
+  if (!isProductionDeployment) {
+    // Previews are public & hold no GitHub App secrets, so they check what they can & file nothing.
+    if (turnstileSecret) {
+      await verifyTurnstile(turnstileToken, turnstileSecret);
+    }
+    console.info("Feedback dry run: no issue filed");
+    return Response.json({ dryRun: true }, { headers: corsHeaders(allowedOrigin) });
+  }
   if (!turnstileSecret) {
     console.error("TURNSTILE_SECRET_KEY is not configured");
     httpError(503, "Feedback service temporarily unavailable");
   }
   await verifyTurnstile(turnstileToken, turnstileSecret);
 
-  const token = env.GITHUB_FEEDBACK_TOKEN;
-  if (!token) {
-    console.error("GITHUB_FEEDBACK_TOKEN is not configured");
-    httpError(503, "Feedback service temporarily unavailable");
-  }
+  const token = await getGitHubToken(resolveGitHubCredentials());
 
   const title = deriveTitle(payload);
   const body = buildIssueBody(payload);
@@ -413,11 +466,13 @@ export const POST: RequestHandler = async ({ request, url }) => {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        // GitHub no longer accepts this installation token, so the next request fetches one, unless
+        // another request has already cached a newer token.
+        installationTokens.clear(token);
+      }
       console.error("GitHub API error", await getGitHubFailureDiagnostics(response));
-      httpError(
-        503,
-        "Feedback service temporarily unavailable. Please try again later or copy your message.",
-      );
+      httpError(503, GITHUB_UNAVAILABLE_MESSAGE);
     }
 
     const result = (await response.json()) as { html_url: string; number: number };
@@ -433,10 +488,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
     } else {
       console.error("GitHub API request failed", error);
     }
-    httpError(
-      503,
-      "Feedback service temporarily unavailable. Please try again later or copy your message.",
-    );
+    httpError(503, GITHUB_UNAVAILABLE_MESSAGE);
   } finally {
     clearTimeout(timeout);
   }

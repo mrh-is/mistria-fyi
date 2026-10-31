@@ -10,6 +10,8 @@
   import { getName } from "#lib/data/names.js";
   import { celebrateCategory } from "#lib/effects/celebrate.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { perkUnlocksFor } from "#lib/engine/perk-unlocks.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -52,6 +54,7 @@
             name: getName("perks", perkId, locale),
             spoilered: !visible && !unlocked,
             unlocked,
+            unlocks: unlocksOf(perkId),
           };
         }),
         reached: (userState.state.progress.skillLevels[id] ?? 0) >= level,
@@ -69,11 +72,35 @@
     return m.skill_perks_toggle_aria_more_locked({ available, count: unlocked, locked, name });
   });
 
+  /** What a perk unlocks, one note per kind. Plain text until rows can be linked directly. */
+  function unlocksOf(perkId: PerkId): { count: number; id: string; label: string }[] {
+    const unlocks = perkUnlocksFor(perkId);
+    if (!unlocks) return [];
+    const { almanac, cosmetics, recipes } = unlocks;
+    return [
+      {
+        count: recipes.length,
+        id: "recipes",
+        label: m.skill_perk_unlocks_recipes({ count: recipes.length }),
+      },
+      {
+        count: almanac.length,
+        id: "almanac",
+        label: m.skill_perk_unlocks_almanac({ count: almanac.length }),
+      },
+      {
+        count: cosmetics.length,
+        id: "cosmetics",
+        label: m.skill_perk_unlocks_cosmetics({ count: cosmetics.length }),
+      },
+    ].filter(({ count }) => count > 0);
+  }
+
   function togglePerk(perk: (typeof perks)[number]): void {
     const toggle = (): void => {
-      const wasDone = isCategoryComplete("skills", userState.state);
+      const wasDone = isCategoryComplete("skills", userState.progressContext);
       userState.togglePerk(perk.id);
-      if (!wasDone && isCategoryComplete("skills", userState.state)) celebrateCategory();
+      if (!wasDone && isCategoryComplete("skills", userState.progressContext)) celebrateCategory();
     };
     if (perk.spoilered) spoilerGuard.requestGuardedAction(perk.tier.condition, toggle);
     else toggle();
@@ -139,6 +166,8 @@
               {@const covered = perk.spoilered && !revealed.has(perk.id)}
               <li class="skill-perks__perk" data-unlocked={perk.unlocked}>
                 <TrackerCheckbox
+                  fact={factKey("unlockedPerks", perk.id)}
+                  provenance={userState.provenanceOf(factKey("unlockedPerks", perk.id))}
                   state={perk.unlocked ? "checked" : "unchecked"}
                   label={perk.unlocked
                     ? m.tracker_row_uncheck({ name: perk.name })
@@ -149,16 +178,23 @@
                     togglePerk({ ...perk, tier });
                   }}
                 />
-                <span class="skill-perks__perk-name">
-                  {#if perk.spoilered}
-                    <Spoiler
-                      spoilered={covered}
-                      onReveal={() => {
-                        revealed.add(perk.id);
-                      }}>{perk.name}</Spoiler
-                    >
-                  {:else}
-                    {perk.name}
+                <span class="skill-perks__perk-body">
+                  <span class="skill-perks__perk-name">
+                    {#if perk.spoilered}
+                      <Spoiler
+                        spoilered={covered}
+                        onReveal={() => {
+                          revealed.add(perk.id);
+                        }}>{perk.name}</Spoiler
+                      >
+                    {:else}
+                      {perk.name}
+                    {/if}
+                  </span>
+                  {#if !covered}
+                    {#each perk.unlocks as unlock (unlock.id)}
+                      <span class="skill-perks__unlocks">{unlock.label}</span>
+                    {/each}
                   {/if}
                 </span>
               </li>
@@ -300,9 +336,25 @@
     color: var(--color-ink-muted);
   }
 
+  .skill-perks__perk-body {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1px;
+  }
+
   .skill-perks__perk-name {
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+
+  /* A note in the margin, like a journal's pencilled aside. */
+  .skill-perks__unlocks {
+    color: var(--color-ink-muted);
+    font-family: var(--font-annotation);
+    font-size: var(--text-2xs);
+    font-style: italic;
+    line-height: 1.2;
   }
 
   @media (min-width: 701px) and (hover: hover) and (pointer: fine) {

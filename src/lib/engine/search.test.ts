@@ -85,6 +85,10 @@ function overlappingFixture() {
   throw new Error("Expected tracker data to contain an item in both the almanac and the museum");
 }
 
+function namesOak(result: SearchResult): boolean {
+  return result.name.toLowerCase().includes("oak");
+}
+
 function search(query: string, completed?: Partial<ProgressState>) {
   return searchAllCategories(
     query,
@@ -202,6 +206,22 @@ describe("basic matching", () => {
     );
   });
 
+  it("finds same-named almanac rows by their variant, below name matches", () => {
+    const oakWindow: Partial<SearchResult> = {
+      category: "almanac",
+      id: "animated_cloud_window_v1_oak",
+      name: "Animated Clouds Window",
+      subtitle: "Oak",
+    };
+    expect(search("oak window")).toContainEqual(expect.objectContaining(oakWindow));
+
+    const results = search("oak");
+    expect(results).toContainEqual(expect.objectContaining(oakWindow));
+    const firstVariantOnly = results.findIndex((result) => !namesOak(result));
+    expect(firstVariantOnly).toBeGreaterThan(0);
+    expect(results.slice(firstVariantOnly).some((result) => namesOak(result))).toBe(false);
+  });
+
   it("finds a merged almanac row by a noncanonical member's localized name", () => {
     const results = searchAllCategories(
       getName("items", "emerald_double_bed_v1" as ItemId, "ja"),
@@ -298,19 +318,27 @@ describe("result ranking", () => {
   });
 });
 
-// ─── Result cap ────────────────────────────────────────────────────
+// ─── Complete results ──────────────────────────────────────────────
 
-describe("result cap", () => {
-  it("returns at most 50 results", () => {
+describe("complete results", () => {
+  it("returns every matching row, including matches beyond the old cap", () => {
+    const expected = allResults().filter((result) =>
+      (result.fullName ?? result.name).toLowerCase().includes("a"),
+    );
     const results = search("a");
-    expect(results.length).toBeLessThanOrEqual(50);
+    expect(expected.length).toBeGreaterThan(50);
+    const resultKeys = new Set(results.map((result) => `${result.category}:${result.id}`));
+    expect(expected.filter((result) => !resultKeys.has(`${result.category}:${result.id}`))).toEqual(
+      [],
+    );
+    expect(resultKeys.size).toBe(results.length);
   });
 });
 
-// ─── Ranking before truncation ────────────────────────────────────
+// ─── Cross-category ranking ────────────────────────────────────
 
-describe("ranking before truncation", () => {
-  it("includes later-category prefix matches even when earlier categories fill the cap", () => {
+describe("cross-category ranking", () => {
+  it("includes later-category prefix matches for a broad query", () => {
     const results = searchAllCategories(
       "a",
       makeCompletedState(),
@@ -365,7 +393,7 @@ describe("ranking before truncation", () => {
     }
   });
 
-  it("collects candidates from all categories before truncating to cap", () => {
+  it("collects every category for a very broad query", () => {
     const results = searchAllCategories(
       "e",
       makeCompletedState(),
@@ -374,7 +402,7 @@ describe("ranking before truncation", () => {
       "en",
     );
 
-    expect(results.length).toBeLessThanOrEqual(50);
+    expect(results.length).toBeGreaterThan(50);
 
     const categories = new Set(results.map((r) => r.category));
     expect(
@@ -691,6 +719,7 @@ function allResults(): SearchResult[] {
     projectionContext: {
       availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
       progress: makeCompletedState(),
+      progressionState: makeProgressionState({ showSpoilers: true }),
       worldState: defaultWorld,
     },
   };

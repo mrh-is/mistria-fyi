@@ -1,3 +1,24 @@
+---
+id: 2026-10-21-sync-apply-rules
+status: amended
+summary: >-
+  Sync apply rules now compare household facts, settling dependent differences together.
+review: >-
+  Issue 277 revalidates household comparison only. Other portions retain the earlier review caveat.
+evidence:
+  - docs/decisions/2026-10-21-sync-apply-rules.md#decision
+relationships:
+  - type: amended-by
+    target: 2026-10-29-household-save-facts
+    scope: partial
+    portion: >-
+      Household & pregnancy quest facts join sync comparison, with dependent changes settled
+      together under the existing provenance table.
+    evidence:
+      - docs/decisions/2026-10-29-household-save-facts.md
+      - src/lib/engine/sync-apply.test.ts
+---
+
 # Sync apply rules
 
 ## Context

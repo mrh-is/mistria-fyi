@@ -1,3 +1,36 @@
+---
+id: 2026-10-20-save-extraction-completeness
+status: amended
+summary: >-
+  Mistmare perks are tracked. Explicit relationship statuses & the Mistmare reveal fact now support
+  complete extraction; missing data remains unknown.
+review: >-
+  Issue 277 rechecks household & Mistmare completeness against both full v1.0.8 saves and the
+  serializer. Other extraction details remain outside that audit.
+evidence:
+  - docs/decisions/2026-10-22-mistmare-perks.md
+  - src/lib/engine/untracked-save-ids.ts
+relationships:
+  - type: amended-by
+    target: 2026-10-29-household-save-facts
+    scope: partial
+    portion: >-
+      Relationships & mount appearances can be complete from explicit save facts. The general
+      complete/unknown distinction & conservative removal rules remain.
+    evidence:
+      - docs/decisions/2026-10-29-household-save-facts.md
+      - src/lib/engine/import-save.assets.test.ts
+  - type: amended-by
+    target: 2026-10-22-mistmare-perks
+    scope: partial
+    portion: >-
+      Only the Mistmare perk example in Three classes of ID. The complete/unknown distinction &
+      conservative removal rules are not replaced.
+    evidence:
+      - docs/decisions/2026-10-22-mistmare-perks.md
+      - src/lib/engine/untracked-save-ids.ts
+---
+
 # Save extraction completeness
 
 ## Context

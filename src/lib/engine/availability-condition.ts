@@ -1,3 +1,5 @@
+import { seasonOrdinal } from "#lib/engine/domain-primitives.js";
+
 import type {
   AvailabilityCondition,
   PerkId,
@@ -7,14 +9,20 @@ import type {
   VillagerId,
   Weather,
 } from "#lib/types/tracker-data.js";
+import type { QuestVisibility } from "#lib/types/visibility.js";
 import type { NonEmptyArray } from "#lib/utils/record.js";
 
+/** Each omitted fact, & each key a lookup doesn't answer, evaluates as "unknown". */
 export interface AvailabilityContext {
-  heartLevels?: ReadonlyMap<VillagerId, number>;
+  hasUpperFloor?: boolean;
+  heartLevels?: Lookup<VillagerId, number>;
+  isDating?: boolean;
   mineFloor?: number;
-  questStates?: ReadonlyMap<QuestId, "available" | "completed">;
+  questStates?: Lookup<QuestId, QuestVisibility>;
+  /** The latest season the player has reached. */
+  reachedSeason?: Season;
   season?: Season;
-  skillLevels?: ReadonlyMap<SkillId, number>;
+  skillLevels?: Lookup<SkillId, number>;
   time?: number;
   unlockedPerks?: ReadonlySet<PerkId>;
   weather?: Weather;
@@ -42,14 +50,15 @@ export function evaluateAvailabilityCondition(
       return evaluateAny(condition.conditions, context);
     case "dateUnlocked":
     case "gamePredicate":
-    case "hasUpperFloor":
-    case "isDating":
-    case "reachedSeason":
       return "unknown";
+    case "hasUpperFloor":
+      return context.hasUpperFloor ?? "unknown";
     case "heartLevel": {
       const level = context.heartLevels?.get(condition.villagerId);
       return level === undefined ? "unknown" : level >= condition.level;
     }
+    case "isDating":
+      return context.isDating ?? "unknown";
     case "mineFloor":
       return context.mineFloor === undefined ? "unknown" : context.mineFloor >= condition.floor;
     case "not": {
@@ -64,6 +73,10 @@ export function evaluateAvailabilityCondition(
       const state = context.questStates?.get(condition.questId);
       return state === undefined ? "unknown" : state === condition.state;
     }
+    case "reachedSeason":
+      return context.reachedSeason === undefined
+        ? "unknown"
+        : seasonOrdinal(context.reachedSeason) >= seasonOrdinal(condition.season);
     case "season":
       return context.season === undefined ? "unknown" : condition.seasons.includes(context.season);
     case "skillLevel": {
@@ -233,6 +246,11 @@ function hasSelectiveSeasonConditionInSimplified(condition?: AvailabilityConditi
         condition.seasons.includes(season),
       );
   }
+}
+
+/** A keyed fact source; a `ReadonlyMap` is one, & so is a defaulting adapter over a record. */
+interface Lookup<Key, Value> {
+  get: (key: Key) => undefined | Value;
 }
 
 function timeMatches(start: number, end: number, time: number): boolean {

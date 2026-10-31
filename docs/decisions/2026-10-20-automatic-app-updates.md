@@ -1,3 +1,15 @@
+---
+id: 2026-10-20-automatic-app-updates
+status: current
+summary: >-
+  The replacement explicitly records the prior revisit condition & owner authorization in issue
+  #111; detection is retained.
+evidence:
+  - docs/decisions/2026-10-16-app-update-detection.md
+  - https://github.com/mrh-is/mistria-fyi/issues/111
+relationships: []
+---
+
 # Automatic app updates at each page's safe moment
 
 Supersedes [App update detection](2026-10-16-app-update-detection.md) and the consent-based update

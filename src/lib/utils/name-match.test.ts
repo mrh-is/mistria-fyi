@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { foldName, matchesName } from "./name-match.js";
+import { foldName, matchesName, matchesTerms } from "./name-match.js";
 
 describe("foldName", () => {
+  it("preserves ASCII punctuation and spacing in every supported locale", () => {
+    for (const locale of ["en", "es", "fr", "ja", "ko", "ru", "zh-Hans", "zh-Hant"] as const) {
+      expect(foldName("  APPLE Pie (1)!  ", locale)).toBe("  apple pie (1)!  ");
+    }
+  });
+
   it("lowercases and drops diacritics", () => {
     expect(foldName("Crème Brûlée", "fr")).toBe("creme brulee");
   });
@@ -44,5 +50,24 @@ describe("matchesName", () => {
   it("treats a blank or whitespace query as matching everything", () => {
     expect(matchesName("Apple Pie", "", "en")).toBe(true);
     expect(matchesName("Apple Pie", "  ", "en")).toBe(true);
+  });
+});
+
+describe("matchesTerms", () => {
+  const name = ["Animated Clouds Window"];
+
+  it("matches query words split across the name & a term", () => {
+    expect(matchesTerms(name, ["White"], "white window", "en")).toBe(true);
+    expect(matchesTerms(name, ["White"], "WHITE", "en")).toBe(true);
+  });
+
+  it("needs every word, & at least one of them in a term", () => {
+    expect(matchesTerms(name, ["White"], "white door", "en")).toBe(false);
+    expect(matchesTerms(name, ["White"], "window clouds", "en")).toBe(false);
+    expect(matchesTerms(name, [], "window", "en")).toBe(false);
+  });
+
+  it("folds terms like names", () => {
+    expect(matchesTerms(["ドア"], ["オーク材"], "おーく", "ja")).toBe(true);
   });
 });

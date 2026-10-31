@@ -104,6 +104,9 @@ export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
     return { ...document, progress };
   },
   5: (document) => document,
+  // Version 6 lets a completed quest's provenance name its obtained moment's source. An older
+  // quest has no record of that moment, so nothing is backfilled & it draws in its own source.
+  6: (document) => document,
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -231,6 +234,7 @@ const LIST_ENTRIES = {
 
 const PlaytimeSchema = v.pipe(FiniteNumberSchema, v.minValue(0));
 const FactProvenanceSchema = v.object({
+  obtainedSource: v.optional(v.picklist(PROVENANCE_SOURCES)),
   playtime: v.optional(PlaytimeSchema),
   source: v.picklist(PROVENANCE_SOURCES),
 });
@@ -262,14 +266,40 @@ const StrictBlobSchema = v.object({
   worldState: v.object({ season: v.picklist(SEASONS), weather: v.picklist(WEATHERS) }),
 });
 
+const SyncSecretSchema = v.pipe(v.string(), v.regex(/^[\w-]{43}$/u));
+
+/**
+ * The device's sync lane (`docs/sync.md` § Following). Tracking by hand, the default, has none. The
+ * computer lane holds the code it shares, once its mailbox exists; a following lane, the key it
+ * follows.
+ */
+const SyncLaneSchema = v.variant("kind", [
+  v.object({
+    code: v.optional(v.object({ key: SyncSecretSchema, token: SyncSecretSchema })),
+    kind: v.literal("computer"),
+  }),
+  v.object({ key: SyncSecretSchema, kind: v.literal("following") }),
+]);
+export type SyncLane = v.InferOutput<typeof SyncLaneSchema>;
+
+/** A code waiting for the relay to confirm its retirement: its mailbox & write token. */
+const PendingRetireSchema = v.object({
+  mailboxId: v.pipe(v.string(), v.regex(/^[\w-]{22}$/u)),
+  token: SyncSecretSchema,
+});
+
 /**
  * This device's own data under the progress key, which never leaves it: exports leave it out and
- * a restore keeps this device's. Its slots are reserved for sync: `syncReceipt` (what this device
- * last applied) & `farmSwitchBackup` (progress saved before switching farms). Their shapes belong to
- * the sync work that fills them, so they're carried through as stored, unknown keys included.
+ * a restore keeps this device's. Its slots are for sync: `syncReceipt` (what this device last
+ * applied), `farmSwitchBackup` (progress saved before switching farms), `syncLane` (the lane & its
+ * key), & `syncPendingRetires` (codes still to retire). The receipt's & backup's shapes belong to
+ * the sync work that fills them, so they're carried through as stored, unknown keys included. A
+ * malformed lane or retire list is dropped rather than quarantining progress.
  */
 const DeviceLocalSchema = v.looseObject({
   farmSwitchBackup: v.optional(v.unknown()),
+  syncLane: v.fallback(v.optional(SyncLaneSchema), undefined),
+  syncPendingRetires: v.fallback(v.optional(v.array(PendingRetireSchema)), undefined),
   syncReceipt: v.optional(v.unknown()),
 });
 export type DeviceLocalState = v.InferOutput<typeof DeviceLocalSchema>;
@@ -711,7 +741,8 @@ export function serializeStoredProgress(
   local: DeepReadonly<DeviceLocalState>,
 ): string {
   const backup = serializedState(snapshot);
-  return JSON.stringify(Object.keys(local).length === 0 ? backup : { local, ...backup });
+  const present = Object.values(local).some((value) => value !== undefined);
+  return JSON.stringify(present ? { local, ...backup } : backup);
 }
 
 /** The outgoing farm's progress, kept in this device's `local` section when sync switches farms. */

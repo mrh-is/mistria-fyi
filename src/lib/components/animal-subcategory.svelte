@@ -9,6 +9,7 @@
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -66,6 +67,7 @@
               <TrackerRowList getKey={(itemRow) => itemRow.id} items={visibleItems}>
                 {#snippet row(itemRow)}
                   <TrackerRow
+                    fact={factKey(props.factField, animal.id, itemRow.id)}
                     display={trackerRowDisplay({
                       completed: itemRow.completed,
                       // Unlike other categories, a completed animal row is never spoilered.
