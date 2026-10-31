@@ -41,7 +41,8 @@ function editText(before: string, edit: unknown): string | undefined {
   ) {
     return undefined;
   }
-  return before.replaceAll(edit.old_string, edit.new_string);
+  const replacement = edit.new_string;
+  return before.replaceAll(edit.old_string, () => replacement);
 }
 
 function patchText(before: string, section: string): string {

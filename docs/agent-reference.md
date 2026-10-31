@@ -338,7 +338,9 @@ Policy commands use the shared segment/heredoc splitter, check shell-fed heredoc
 interpreter programs, or every archive option. Body files must exist before the GitHub command;
 dynamic stdin can't be verified, so use a file or a heredoc. Body-file inspection refuses known
 guarded read targets and never prints body content in diagnostics. Package patches whose application
-can't be predicted are denied; use a file edit preserving the version instead.
+can't be predicted are denied; use a file edit preserving the version instead. After a
+directory-changing command, use an absolute body-file path so the guard checks the same file GitHub
+will receive.
 
 ### Formatting & lint hooks
 
@@ -358,10 +360,11 @@ can't be predicted are denied; use a file edit preserving the version instead.
   - Fix the errors or report the blocker.
 - **Subagent lint:** both clients also register `SubagentStop`, using the same one-continuation
   rule. Claude Code v2.1.316's live worktree probe confirmed that `cwd` is the subagent's worktree,
-  with `stop_hook_active: false` followed by `true` after a block. Tests run the hook against linked
-  parent/child worktrees & prove that only the child's changed files are linted. Codex exposes a
-  separate `SubagentStop` event in its hook contract; its `Stop` entry alone doesn't cover this
-  case.
+  with `stop_hook_active: false` followed by `true` after a block. A second live probe used the real
+  lint hook & oxlint: `probe.ts`'s `no-debugger` error reached the subagent once, then the hook let
+  it finish with a failure report. Tests run the hook against linked parent/child worktrees & prove
+  that only the child's changed files are linted. Codex exposes a separate `SubagentStop` event in
+  its hook contract; its `Stop` entry alone doesn't cover this case.
 - **Repository root:** Git enumeration & lint run from the repository root, even when a client
   starts below it.
 

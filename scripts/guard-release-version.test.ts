@@ -48,6 +48,9 @@ describe("release metadata guard", () => {
       check("Write", { content: before.replace("1.0.0", "2.0.0"), file_path: "package.json" }),
     ).toContain("version");
     expect(
+      check("Edit", { file_path: "package.json", new_string: "$&", old_string: "1.0.0" }),
+    ).toContain("version");
+    expect(
       check("Write", { content: before.replace("example", "renamed"), file_path: "package.json" }),
     ).toBeUndefined();
     expect(

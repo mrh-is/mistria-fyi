@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -50,6 +50,8 @@ describe("agent shell policy", () => {
 
   it.each([
     "git stash",
+    "git stash -u",
+    "git stash --include-untracked",
     'echo "$(git stash pop)"',
     "x=$(git stash pop)",
     "git stash pop",
@@ -67,6 +69,7 @@ describe("agent shell policy", () => {
   it.each([
     "git stash push -m 'issue 298'",
     "git stash push --message=hooks -- scripts",
+    "git stash -u -m 'hooks'",
     "git stash apply abc1234",
     "git stash list",
     "echo '$(git stash pop)'",
@@ -111,6 +114,21 @@ describe("agent shell policy", () => {
     const result = check(`gh issue edit 1 --body-file='${file}'`);
     expect(result.message).toContain("Agent:");
     expect(result.message).not.toContain("Private draft");
+  });
+
+  it("requires absolute body paths when commands change directory", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "agent-body-cwd-"));
+    roots.push(cwd);
+    writeFileSync(join(cwd, "body.md"), "Attributed parent.\n\nAgent: codex\n");
+    mkdirSync(join(cwd, "child"));
+    writeFileSync(join(cwd, "child/body.md"), "Unattributed child.");
+    const command = "cd child && gh issue comment 1 --body-file body.md";
+    expect(policyResult({ cwd, tool_input: { command }, tool_name: "Bash" }, {}).message).toContain(
+      "absolute",
+    );
+    expect(
+      check(`cd /tmp && gh issue comment 1 --body-file '${join(cwd, "body.md")}'`).message,
+    ).toBeUndefined();
   });
 
   it.each([

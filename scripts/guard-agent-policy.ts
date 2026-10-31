@@ -1,5 +1,5 @@
 import { readFileSync, statSync } from "node:fs";
-import { resolve } from "node:path";
+import { isAbsolute, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { readGuardMessage } from "#scripts/guard-generated-reads";
@@ -27,7 +27,12 @@ function optionValue(args: string[], long: string, short: string): string | unde
     : (args[index + 1] ?? "");
 }
 
-function githubBody(args: string[], input: HookInput, heredoc: string): string | undefined {
+function githubBody(
+  args: string[],
+  input: HookInput,
+  heredoc: string,
+  changesDirectory: boolean,
+): string | undefined {
   const [kind, action] = args;
   if (!/^(?:issue|pr)$/.test(kind ?? "") || !/^(?:create|comment|edit)$/.test(action ?? "")) {
     return undefined;
@@ -56,6 +61,9 @@ function githubBody(args: string[], input: HookInput, heredoc: string): string |
       }
       body = heredoc;
     } else {
+      if (changesDirectory && !isAbsolute(file)) {
+        return "Use an absolute --body-file path when the command changes directory; relative body attribution can't be verified safely.";
+      }
       const path = resolve(input.cwd ?? process.cwd(), file);
       const denied = readGuardMessage({
         ...input,
@@ -135,7 +143,11 @@ export function policyResult(input: HookInput, env: NodeJS.ProcessEnv = process.
   const command = shellCommand(input);
   if (command === undefined) return {};
   let context: string | undefined;
-  for (const segment of policySegments(command)) {
+  const segments = policySegments(command);
+  const changesDirectory = segments.some((segment) =>
+    /^(?:cd|pushd|popd)$/.test(programWords(segment.command)[0] ?? ""),
+  );
+  for (const segment of segments) {
     const words = programWords(segment.command);
     const args = commandArgs(words);
     const assetWords = /^python[\d.]*$/.test(words[0] ?? "") ? [...words, segment.heredoc] : words;
@@ -146,7 +158,7 @@ export function policyResult(input: HookInput, env: NodeJS.ProcessEnv = process.
       };
     }
     if (words[0] === "git" && args[0] === "stash") {
-      const operation = args[1];
+      const operation = args[1]?.startsWith("-") ? "push" : args[1];
       const namedPush = operation === "push" && optionValue(args, "--message", "-m");
       if (
         operation === undefined ||
@@ -161,7 +173,7 @@ export function policyResult(input: HookInput, env: NodeJS.ProcessEnv = process.
       }
     }
     if (words[0] === "gh") {
-      const message = githubBody(args, input, segment.heredoc);
+      const message = githubBody(args, input, segment.heredoc, changesDirectory);
       if (message) return { message };
     }
     if (words[0] === "pnpm" && /^(?:add|update|up|remove|rm|uninstall)$/.test(args[0] ?? "")) {
