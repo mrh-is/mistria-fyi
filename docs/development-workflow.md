@@ -192,9 +192,12 @@ Mistria Field Guide uses explicit planning and approval gates for changes that n
 
 Status labels show where an issue stands: `status: ready`, `status: blocked`,
 `status: needs decision`, or `status: in progress`. Do not start a blocked or needs-decision issue.
-An issue with `status: in progress` or an `agent:*` label already has an owner; coordinate on the
-issue instead of starting duplicate work. Applying these labels requires triage access, so outside
-contributors say on the issue that they are taking it.
+A dependency on another issue is a “blocked by” relationship instead of a label, and an issue is
+blocked while any issue blocking it is open; `status: blocked` covers blockers outside the tracker.
+See [Issue triage](agent-workflow.md#issue-triage) for both rules & for the `delegate: small agent`
+label. An issue with `status: in progress` or an `agent:*` label already has an owner; coordinate on
+the issue instead of starting duplicate work. Applying these labels requires triage access, so
+outside contributors say on the issue that they are taking it.
 
 ### Attribute agent-authored content
 

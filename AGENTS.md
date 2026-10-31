@@ -40,11 +40,19 @@ session limits) belong in each contributor’s user config.
 
 ## Task scope
 
-- Before working on an issue, read it & its comments:
-  `gh issue view <number> --json title,body,labels,comments`. Don’t use `--comments` alone, which
-  can return empty output.
-- Don’t start an issue labeled `status: blocked` or `status: needs decision`. If an issue already
-  has `status: in progress` or an `agent:*` label, coordinate with its owner.
+- Before working on an issue, read it, its comments, & its relationships:
+  `gh issue view <number> --json title,body,labels,comments,blockedBy,parent`. Don’t use
+  `--comments` alone, which can return empty output.
+- Don’t start an issue that’s blocked by an open issue, or one labeled `status: blocked` or
+  `status: needs decision`. If an issue already has `status: in progress` or an `agent:*` label,
+  coordinate with its owner.
+- Record a dependency on another issue as a “blocked by” relationship, not a label:
+  `gh issue edit <number> --add-blocked-by <other>`. Keep `status: blocked` for blockers outside the
+  tracker, such as time, hardware, or a third party, and name the blocker in a comment.
+- When you file or triage a small, fully specified task, add the `delegate: small agent` label so
+  the owner can hand it to Antigravity or Copilot. A self-contained piece of a larger issue
+  qualifies as a sub-issue. Read [agent-workflow.md](docs/agent-workflow.md#small-agent-tasks)
+  before applying the label.
 - Clear existing acceptance criteria authorize the implementation. Don’t ask for approval of them
   again, reconfirm a session checklist, or write a duplicate checklist. Ask only about scope the
   criteria leave open, requirements that conflict, or decisions the criteria don’t settle.
@@ -167,6 +175,9 @@ session limits) belong in each contributor’s user config.
   either, unless they change rendered output. The complete checklist is in agent-verification.md.
 - Most PRs need a fresh-context self-review, such as a subagent that didn’t write the change reading
   its diff cold.
+- A request to review is a request to post. Post the review on GitHub (`gh pr review --comment`, or
+  an issue comment when there’s no PR), even when it has no findings. Don’t leave it only in the
+  session. The format is under “Review records” in agent-verification.md.
 - High-risk surfaces need full local verification & an especially careful review. They are:
   - engine, state-machine, or transfer logic,
   - pipeline extractors or schemas,

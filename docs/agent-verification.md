@@ -187,6 +187,11 @@ Keep findings & resolutions in the PR’s existing review threads, or in issue c
 no PR. Don’t edit the original text. This section defines a record format; it doesn’t add a review
 or approval gate.
 
+- **Posting:** a request to review is a request to post, so post every review without being asked.
+  Use a PR review (`gh pr review <number> --comment --body-file <file>`), or an issue comment when
+  there’s no PR. Reviews from a subagent, another model, or a review command count too: the agent
+  that requested the review posts the result. A reply in the session alone isn’t a review record.
+
 - **Finding IDs:** give each finding an ID unique within the PR, such as `F1`. Keep the ID across
   reposts & re-reviews, and never reuse it for a different finding.
 - **Finding contents:** each finding includes:

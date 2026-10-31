@@ -61,11 +61,12 @@ harness reminder may inject model-versioned trailer text; correct it before comm
 
 ## Task sequence
 
-1. **Read the issue & comments.** Use `gh issue view <number> --json title,body,labels,comments`.
-   The `--comments` flag prints nothing when there are no comments, while `--json` works in every
-   case. Don’t start an issue labeled `status: blocked` or `status: needs decision`. If an issue has
-   `status: in progress` or an `agent:*` label, coordinate with its current owner instead of
-   duplicating the work.
+1. **Read the issue, comments, & relationships.** Use
+   `gh issue view <number> --json title,body,labels,comments,blockedBy,parent`. The `--comments`
+   flag prints nothing when there are no comments, while `--json` works in every case. Don’t start
+   an issue that an open issue blocks (see “Blockers” below), or one labeled `status: blocked` or
+   `status: needs decision`. If an issue has `status: in progress` or an `agent:*` label, coordinate
+   with its current owner instead of duplicating the work.
 2. **Resolve open questions before starting.** If the issue already has clear acceptance criteria,
    go ahead without asking for approval again. Ask the user only about scope the criteria leave
    open, requirements that conflict, or decisions the criteria don’t settle.
@@ -102,6 +103,47 @@ harness reminder may inject model-versioned trailer text; correct it before comm
     periodically. GitHub sometimes never starts CI for a PR’s `opened` event. If no “CI” run exists
     for the head commit a few minutes after opening, push an empty commit (see
     [docs/development-workflow.md](development-workflow.md#ci-doesnt-start-on-a-new-pr)).
+
+## Issue triage
+
+### Blockers
+
+A dependency on another issue is a “blocked by” relationship, not a label. GitHub then shows the
+blocker on both issues and clears it when the blocker closes, so the dependency can’t go stale.
+
+- **Add:** `gh issue edit <number> --add-blocked-by <other>`, or
+  `gh issue create --blocked-by <other>` when filing.
+- **Read:** `gh issue view <number> --json blockedBy` lists each blocker & its state. An issue is
+  blocked while any of them is open.
+- **Remove:** `gh issue edit <number> --remove-blocked-by <other>` when the dependency no longer
+  applies.
+
+`status: blocked` is only for blockers outside the tracker, such as waiting on a game release,
+hardware, or a third party. Name the blocker & what would clear it in a comment. An issue blocked
+only by other issues keeps its other status, usually `status: ready`.
+
+### Small-agent tasks
+
+The `delegate: small agent` label marks an issue that Antigravity or Copilot can finish without
+judgment calls. It describes the task’s fit, not who owns it, so the usual `status:*` & `agent:*`
+claiming rules still apply. Claude & Codex add it, unprompted, to any issue they file or triage that
+meets every condition below:
+
+- **Specified:** the body names the files to change, and the acceptance criteria are checkable
+  states, not goals.
+- **Verified by a command:** the body gives the focused test or check that proves it’s done, such as
+  `pnpm exec vitest run src/lib/engine/foo.test.ts`.
+- **Bounded:** the body says when to stop & report instead of continuing. Typical stop points are a
+  needed change to an unlisted file, a failing check that the task didn’t cause, or an acceptance
+  item that can’t be met as written.
+- **Low risk:** it avoids the high-risk surfaces in
+  [agent-verification.md](agent-verification.md#high-risk-surfaces), dependency changes, & design
+  judgment, such as new visual direction or English copy.
+
+To delegate one piece of a larger issue, file that piece as a sub-issue
+(`gh issue create --parent <number>`) that meets the conditions on its own, and label the sub-issue,
+not the parent. When pieces must land in order, link them with “blocked by” relationships. Remove
+the label if the task grows past these conditions.
 
 ## Pull request details
 

@@ -1,12 +1,20 @@
 ---
 id: 2026-10-28-review-record-format
-status: current
+status: amended
 summary: >-
   Shared review IDs & dispositions are repository guidance; aggregation tooling remains deferred.
 evidence:
   - docs/agent-verification.md
   - https://github.com/mrh-is/mistria-fyi/pull/273
-relationships: []
+relationships:
+  - type: amended-by
+    target: 2026-10-31-post-reviews-on-github
+    scope: partial
+    portion: >-
+      Only the rule that posting policy stays in the personal overlay. Posting every review is now
+      repository guidance; review routing stays in the overlay.
+    evidence:
+      - docs/decisions/2026-10-31-post-reviews-on-github.md
 ---
 
 # Review record format
