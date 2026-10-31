@@ -138,10 +138,20 @@ function fakeRelay(initial?: ReadResult) {
   };
 }
 
-/** Long enough for hashing, decrypting, & the fake locks to settle. */
+let statusArrived: (() => void) | undefined;
+
+/**
+ * Waits for the receiver's next status, which comes last in each read or apply. A test expecting
+ * no status waits out the timeout, long enough for hashing, decrypting, & the fake locks.
+ */
 async function flush(): Promise<void> {
   await new Promise((resolve) => {
-    setTimeout(resolve, 40);
+    const timeout = setTimeout(resolve, 40);
+    statusArrived = () => {
+      clearTimeout(timeout);
+      statusArrived = undefined;
+      setTimeout(resolve, 0);
+    };
   });
 }
 
@@ -165,7 +175,6 @@ async function load(
   vi.stubGlobal("localStorage", memoryStorage({ [PROGRESS_KEY]: canonical(initial) }));
   const locks = options.locks?.() ?? queuedLocks();
   vi.stubGlobal("navigator", { locks });
-  vi.resetModules();
   const { userState } = await import("#lib/stores/user-state.svelte.js");
   userState.loadFromStorage();
   const { createReceiver } = await import("./receiver.js");
@@ -175,7 +184,10 @@ async function load(
     const receiver = createReceiver({
       channel: () => undefined,
       locks: () => locks,
-      onstatus: (status) => statuses.push(status),
+      onstatus: (status) => {
+        statuses.push(status);
+        statusArrived?.();
+      },
       ontell: (tell) => tells.push(tell),
       read: relay.read,
       subscribe: relay.subscribe,
@@ -232,8 +244,8 @@ beforeEach(() => {
 
 afterEach(() => {
   for (const receiver of open) receiver.stop();
-  // Each test's store ends as a page does. A pending auto-save would otherwise land in the next
-  // test's storage, which its store would rightly take for another tab's write.
+  // Each test's store ends as a page does. A pending auto-save would otherwise run against the next
+  // test's storage, as if another tab had written it.
   globalThis.dispatchEvent(new Event("pagehide"));
   vi.unstubAllGlobals();
 });
@@ -590,7 +602,6 @@ describe("questions", () => {
     expect(stored().local.syncReceipt).toBeUndefined();
 
     await receiver.answer(questionId(receiver.status), "accept");
-    await flush();
     expect(writes.count()).toBe(1);
     expect(receiver.status.kind).toBe("up-to-date");
     expect(userState.state.progress.reachedSeason).toBe("summer");
@@ -603,7 +614,6 @@ describe("questions", () => {
     receiver.start();
     await flush();
     await receiver.answer(questionId(receiver.status), "keep");
-    await flush();
     expect(userState.state.progress.reachedSeason).toBe("fall");
     expect(userState.resolutionOf("reachedSeason")).toEqual({ saveValue: "summer" });
     expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
@@ -618,7 +628,6 @@ describe("questions", () => {
 
     userState.setReachedSeason("winter");
     await receiver.answer(asked, "accept");
-    await flush();
     expect(receiver.status.kind).toBe("asking");
     expect(questionId(receiver.status)).not.toBe(asked);
     expect(userState.state.progress.reachedSeason).toBe("winter");
@@ -636,7 +645,6 @@ describe("questions", () => {
     userState.setReachedSeason("winter");
     localStorage.setItem(PROGRESS_KEY, `${localStorage.getItem(PROGRESS_KEY) ?? ""} `);
     await receiver.answer(asked, "accept");
-    await flush();
     expect(receiver.status.kind).toBe("up-to-date");
     expect(userState.state.progress.reachedSeason).toBe("summer");
   });
@@ -663,7 +671,6 @@ describe("questions", () => {
       ),
     );
     await receiver.answer(asked, "accept");
-    await flush();
     expect(askedKinds(receiver.status)).toEqual(["facts"]);
     expect(questionId(receiver.status)).not.toBe(asked);
     expect(userState.state.progress.reachedSeason).toBe("winter");
@@ -704,7 +711,6 @@ describe("questions", () => {
     expect(askedKinds(receiver.status)).toEqual(["farm"]);
 
     await receiver.answer(questionId(receiver.status), "same-farm");
-    await flush();
     expect(receiver.status.kind).toBe("up-to-date");
     expect(userState.state.progress.renown).toBe(3);
     expect(userState.state.lastImport?.identity.saveNumber).toBe("1315159680");
@@ -719,7 +725,6 @@ describe("questions", () => {
     expect(askedKinds(receiver.status)).toEqual(["older-save"]);
 
     await receiver.answer(questionId(receiver.status), "keep");
-    await flush();
     expect(receiver.status.kind).toBe("up-to-date");
     expect(userState.lastSavePlaytime).toBe(50);
     expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
@@ -862,7 +867,6 @@ describe("switching farms", () => {
     expect(userState.state.progress.renown).toBe(3);
 
     await receiver.answer(questionId(receiver.status), "accept");
-    await flush();
     expect(receiver.status.kind).toBe("up-to-date");
     expect(userState.farmSwitchBackup?.farmName).toBe("Rosewood");
   });
