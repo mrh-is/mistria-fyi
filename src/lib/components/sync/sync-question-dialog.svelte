@@ -35,8 +35,6 @@
     if (!next) later();
   }
 
-  const farmName = $derived(userState.state.lastImport?.farmName ?? null);
-
   const copy = $derived.by((): { actions: SyncDialogAction[]; body: string; title: string } => {
     const notNow: SyncDialogAction = { label: m.sync_question_later(), onclick: later };
     switch (question.kind) {
@@ -58,8 +56,8 @@
               primary: true,
             },
           ],
-          body: farmName
-            ? m.sync_farm_question_body({ farm: farmName })
+          body: question.farmName
+            ? m.sync_farm_question_body({ farm: question.farmName })
             : m.sync_farm_question_body_unnamed(),
           title: m.sync_farm_question_title(),
         };

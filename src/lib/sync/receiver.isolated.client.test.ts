@@ -165,6 +165,33 @@ function canonical(json: string): string {
   return read.kind === "ok" ? serializeStoredProgress(read.loaded, read.loaded.local) : json;
 }
 
+/** Opens channels that hear each other, as one browser's tabs do. */
+function linkedChannels(): () => BroadcastChannel {
+  type Listener = (event: { data: unknown }) => void;
+  const listeners = new Set<Listener>();
+  return () => {
+    const own = new Set<Listener>();
+    return {
+      addEventListener: (_: string, listener: Listener) => {
+        own.add(listener);
+        listeners.add(listener);
+      },
+      close: () => {
+        for (const listener of own) listeners.delete(listener);
+      },
+      postMessage: (data: unknown) => {
+        for (const listener of listeners) {
+          if (!own.has(listener)) listener({ data });
+        }
+      },
+      removeEventListener: (_: string, listener: Listener) => {
+        own.delete(listener);
+        listeners.delete(listener);
+      },
+    } as unknown as BroadcastChannel;
+  };
+}
+
 const open: Receiver[] = [];
 
 async function load(
@@ -242,8 +269,10 @@ beforeEach(() => {
   open.length = 0;
 });
 
-afterEach(() => {
+afterEach(async () => {
   for (const receiver of open) receiver.stop();
+  const { userState } = await import("#lib/stores/user-state.svelte.js");
+  userState.resetAll();
   // Each test's store ends as a page does. A pending auto-save would otherwise run against the next
   // test's storage, as if another tab had written it.
   globalThis.dispatchEvent(new Event("pagehide"));
@@ -430,7 +459,7 @@ describe("applying", () => {
 });
 
 describe("a store it must not touch", () => {
-  it("never applies in the newer-data state, & leaves the blob alone", async () => {
+  it("never applies after loading a newer build's data, & leaves the blob alone", async () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const newer = blob({ syncLane: FOLLOWING }, { version: 99 });
     const { receiver, userState } = await load(newer, relay);
@@ -441,9 +470,12 @@ describe("a store it must not touch", () => {
     expect(writes.count()).toBe(0);
     expect(localStorage.getItem(PROGRESS_KEY)).toBe(newer);
     expect(userState.syncBlocked).toBe(true);
+    // Its lane is in a blob this build can't read, so the persistence warning speaks for it.
+    expect(userState.syncLane).toBeUndefined();
+    expect(receiver.status.kind).toBe("idle");
   });
 
-  it("never applies to quarantined data, & never takes import's way out", async () => {
+  it("never applies after loading quarantined data, & never takes import's way out", async () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load("{not json", relay);
     receiver.start();
@@ -451,6 +483,8 @@ describe("a store it must not touch", () => {
     expect(localStorage.getItem(PROGRESS_KEY)).toBe("{not json");
     expect(userState.persistenceFailureKind).toBe("unreadable");
     expect(userState.syncBlocked).toBe(true);
+    expect(relay.read).not.toHaveBeenCalled();
+    expect(receiver.status.kind).toBe("idle");
   });
 
   it("refuses when another tab left unreadable data since this one last read", async () => {
@@ -481,6 +515,15 @@ describe("a store it must not touch", () => {
     receiver.update();
     expect(receiver.status.kind).toBe("blocked");
     expect(relay.sockets).toHaveLength(0);
+
+    // The newer data is gone, so the store resumes & the receiver listens again.
+    relay.set(await envelope(5, saveBytes(SEASON)));
+    localStorage.setItem(PROGRESS_KEY, canonical(blob({ syncLane: FOLLOWING })));
+    userState.loadFromStorage();
+    receiver.update();
+    await flush();
+    expect(receiver.status.kind).toBe("up-to-date");
+    expect(stored().local.syncReceipt).toMatchObject({ counter: 5 });
   });
 });
 
@@ -772,29 +815,7 @@ describe("questions", () => {
 
   it("forwards an answer from a tab that isn't leading to the one that is", async () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
-    const listeners = new Set<(event: { data: unknown }) => void>();
-    const fakeChannel = (): BroadcastChannel => {
-      const own = new Set<(event: { data: unknown }) => void>();
-      return {
-        addEventListener: (_: string, listener: (event: { data: unknown }) => void) => {
-          own.add(listener);
-          listeners.add(listener);
-        },
-        close: () => {
-          for (const listener of own) listeners.delete(listener);
-        },
-        postMessage: (data: unknown) => {
-          for (const listener of listeners) {
-            if (!own.has(listener)) listener({ data });
-          }
-        },
-        removeEventListener: (_: string, listener: (event: { data: unknown }) => void) => {
-          own.delete(listener);
-          listeners.delete(listener);
-        },
-      } as unknown as BroadcastChannel;
-    };
-    const { make, userState } = await load(SUMMER_BLOB, relay, { channel: fakeChannel });
+    const { make, userState } = await load(SUMMER_BLOB, relay, { channel: linkedChannels() });
     const leader = make();
     const other = make();
     leader.start();
@@ -927,5 +948,196 @@ describe("the computer's own saves", () => {
   it("refuses a save once the lane has stopped", async () => {
     const { receiver } = await load(blob({}), fakeRelay());
     expect(await receiver.applyLocalSave(file(saveBytes(SEASON)))).toBe("stale");
+  });
+});
+
+describe("what the review found", () => {
+  const LAST_IMPORT = {
+    farmName: "Rosewood",
+    identity: { creationVersion: null, saveNumber: "1315159680" },
+    importedAt: 1,
+    playerName: "Pat",
+  };
+  const ASKS = blob(
+    { syncLane: FOLLOWING },
+    {
+      lastImport: LAST_IMPORT,
+      progress: {
+        lastSavePlaytime: 50,
+        provenance: { reachedSeason: { playtime: 50, source: "save" } },
+        reachedSeason: "fall",
+      },
+    },
+  );
+  const GARBAGE = Uint8Array.from([1, 2, 3, 4]);
+
+  it("says a save is unreadable again after a transient status (F1)", async () => {
+    const unreadable = await envelope(4, GARBAGE);
+    const relay = fakeRelay(unreadable);
+    const { receiver } = await load(blob({ syncLane: FOLLOWING }), relay);
+    receiver.start();
+    await flush();
+    expect(receiver.status.kind).toBe("unreadable");
+
+    relay.set({ kind: "unreachable" });
+    receiver.refresh();
+    await flush();
+    expect(receiver.status.kind).toBe("unreachable");
+
+    relay.set(unreadable);
+    receiver.refresh();
+    await flush();
+    expect(receiver.status.kind).toBe("unreadable");
+  });
+
+  it("keeps a question up when a newer save can't be read, then says so (F2)", async () => {
+    const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
+    const { receiver } = await load(ASKS, relay);
+    receiver.start();
+    await flush();
+    const asked = questionId(receiver.status);
+
+    relay.sockets[0].onpush(await envelope(5, GARBAGE));
+    await flush();
+    expect(questionId(receiver.status)).toBe(asked);
+
+    await receiver.answer(asked, "accept");
+    expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
+    expect(receiver.status.kind).toBe("unreadable");
+  });
+
+  it("keeps a question up when a newer version arrives, then says so (F2)", async () => {
+    const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
+    const { receiver } = await load(ASKS, relay);
+    receiver.start();
+    await flush();
+    const asked = questionId(receiver.status);
+
+    relay.sockets[0].onpush(await envelope(5, saveBytes(SEASON), { version: 2 }));
+    await flush();
+    expect(questionId(receiver.status)).toBe(asked);
+
+    await receiver.answer(asked, "accept");
+    expect(receiver.status.kind).toBe("update-here");
+  });
+
+  it("drops a newer save's trouble when a good one replaces it (F2)", async () => {
+    const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
+    const { receiver } = await load(ASKS, relay);
+    receiver.start();
+    await flush();
+    const [socket] = relay.sockets;
+    socket.onpush(await envelope(5, GARBAGE));
+    await flush();
+    socket.onpush(await envelope(6, saveBytes(2 * SEASON + GAME_DAY)));
+    await flush();
+    expect(receiver.status.kind).toBe("up-to-date");
+    expect(stored().local.syncReceipt).toMatchObject({ counter: 6 });
+  });
+
+  it("reports a retired code once a waiting question is answered (F3)", async () => {
+    const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
+    const { receiver } = await load(ASKS, relay);
+    receiver.start();
+    await flush();
+    const asked = questionId(receiver.status);
+    relay.sockets[0].onpush({ kind: "retired" });
+    await flush();
+    expect(questionId(receiver.status)).toBe(asked);
+
+    await receiver.answer(asked, "accept");
+    expect(receiver.status.kind).toBe("retired");
+    expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
+  });
+
+  it("retries from a tab that isn't leading (F4)", async () => {
+    const relay = fakeRelay({ kind: "unreachable" });
+    const { make } = await load(blob({ syncLane: FOLLOWING }), relay, {
+      channel: linkedChannels(),
+    });
+    const leader = make();
+    const other = make();
+    leader.start();
+    await flush();
+    other.start();
+    await flush();
+    expect(other.status.kind).toBe("unreachable");
+
+    relay.set({ kind: "empty" });
+    other.refresh();
+    await flush();
+    expect(relay.read).toHaveBeenCalledTimes(2);
+    expect(leader.status.kind).toBe("waiting");
+    expect(other.status.kind).toBe("waiting");
+  });
+
+  it("names the save's farm on the farm question, not the stored one (F5)", async () => {
+    const unidentified = blob({ syncLane: FOLLOWING }, { progress: { renown: 3 } });
+    const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
+    const { receiver } = await load(unidentified, relay);
+    receiver.start();
+    await flush();
+    expect(receiver.status).toMatchObject({
+      kind: "asking",
+      questions: [{ farmName: "Rosewood", kind: "farm" }],
+    });
+  });
+
+  it("retries a computer's failed apply on request (F7)", async () => {
+    const { receiver, userState } = await load(
+      blob({ syncLane: { kind: "computer" } }),
+      fakeRelay(),
+    );
+    receiver.start();
+    await flush();
+    const setItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = () => {
+      throw new Error("quota");
+    };
+    expect(await receiver.applyLocalSave(file(saveBytes(SEASON)))).toBe("write-failed");
+    expect(receiver.status.kind).toBe("write-failed");
+
+    localStorage.setItem = setItem;
+    receiver.refresh();
+    await flush();
+    expect(receiver.status.kind).toBe("up-to-date");
+    expect(userState.syncReceipt?.hash).toMatch(/^[\w-]{43}$/u);
+  });
+
+  it("keeps a backup another tab just wrote when this tab resets (F12)", async () => {
+    const receipt = { counter: 4, hash: "h".repeat(43) };
+    const { userState } = await load(
+      blob({ syncLane: FOLLOWING, syncReceipt: receipt }),
+      fakeRelay(),
+    );
+    const farmSwitchBackup = {
+      backup: JSON.parse(blob({})) as unknown,
+      farmName: "Kept",
+      savedAt: 5,
+    };
+    const syncPendingRetires = [{ mailboxId: "A".repeat(22), token: "t".repeat(43) }];
+    // Another tab's write, whose storage event hasn't reached this one.
+    localStorage.setItem(
+      PROGRESS_KEY,
+      canonical(
+        blob({ farmSwitchBackup, syncLane: FOLLOWING, syncPendingRetires, syncReceipt: receipt }),
+      ),
+    );
+    userState.resetProgress();
+    await flush();
+    const { local } = stored();
+    expect(local.syncReceipt).toBeUndefined();
+    expect(local.syncLane).toEqual(FOLLOWING);
+    expect(local.farmSwitchBackup).toMatchObject({ farmName: "Kept" });
+    expect(local.syncPendingRetires).toEqual(syncPendingRetires);
+  });
+
+  it("treats a read that throws as unreachable (F13)", async () => {
+    const relay = fakeRelay();
+    relay.read.mockRejectedValueOnce(new Error("body failed"));
+    const { receiver } = await load(blob({ syncLane: FOLLOWING }), relay);
+    receiver.start();
+    await flush();
+    expect(receiver.status.kind).toBe("unreachable");
   });
 });

@@ -24,6 +24,9 @@ export const FOLLOW_LINK_PATH = "/sync";
 /** The relay's origin; `connect-src` allows it for HTTPS & WSS. */
 export const RELAY_ORIGIN = "https://relay.mistria.fyi";
 
+/** How long a read may take. The receiver reads in turn, so a hung one would hold up what follows. */
+const READ_TIMEOUT_MS = 30_000;
+
 const KEY_BYTES = 32;
 const WRITE_TOKEN_BYTES = 32;
 const MAILBOX_ID_BYTES = 16;
@@ -400,7 +403,10 @@ export function createRelayClient(
       return failureOf(response);
     },
     async read(mailboxId) {
-      const response = await send(mailboxUrl(mailboxId), { method: "GET" });
+      const response = await send(mailboxUrl(mailboxId), {
+        method: "GET",
+        signal: AbortSignal.timeout(READ_TIMEOUT_MS),
+      });
       if (response === undefined) return { kind: "unreachable" };
       if (response.status === 404) return { kind: "absent" };
       if (response.status === 410) return { kind: "retired" };
@@ -411,8 +417,12 @@ export function createRelayClient(
         if (!Number.isSafeInteger(counter) || counter < 1 || !Number.isInteger(version)) {
           return { kind: "unreachable" };
         }
-        const envelope = new Uint8Array(await response.arrayBuffer());
-        return { counter, envelope, kind: "envelope", version };
+        try {
+          const envelope = new Uint8Array(await response.arrayBuffer());
+          return { counter, envelope, kind: "envelope", version };
+        } catch {
+          return { kind: "unreachable" };
+        }
       }
       const body = await stateOf(response);
       return body.state === "empty" ? { kind: "empty" } : { kind: "unreachable" };

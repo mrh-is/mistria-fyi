@@ -76,8 +76,10 @@ export interface ReceiverOptions {
   locks?: () => LockManager | undefined;
   /** Called on any change to {@link Receiver.status}. */
   onstatus?: (status: ReceiverStatus) => void;
-  /** Called once for each applied save with something to tell. */
+  /** Called once for each applied save with something to tell, in every open tab. */
   ontell?: (tell: SyncTell) => void;
+  /** Called when another tab has shown the tells, so this one needn't. */
+  ontellsshown?: () => void;
   /** Reads the mailbox once. */
   read?: (mailboxId: string) => Promise<ReadResult>;
   subscribe?: (mailboxId: string, subscriber: MailboxSubscriber) => () => void;
@@ -98,6 +100,8 @@ export interface Receiver {
   readonly status: ReceiverStatus;
   /** Lets go of the lock, the socket, & any save waiting on a question. */
   stop: () => void;
+  /** Tells other tabs the tells held so far have reached the player. */
+  tellsShown: () => void;
   /** Tells the receiver the lane, the store's state, or the receipt may have changed. */
   update: () => void;
 }
@@ -111,8 +115,10 @@ interface Pending {
 type ChannelMessage =
   | { type: "answer"; answer: SyncAnswer; id: string }
   | { type: "hello" }
+  | { type: "refresh" }
   | { type: "status"; status: ReceiverStatus }
-  | { type: "tell"; tell: SyncTell };
+  | { type: "tell"; tell: SyncTell }
+  | { type: "tells-shown" };
 
 function defaultChannel(): BroadcastChannel | undefined {
   return "BroadcastChannel" in globalThis ? new BroadcastChannel(RECEIVER_CHANNEL) : undefined;
@@ -141,6 +147,7 @@ export function createReceiver({
   locks: lockManager = defaultLocks,
   onstatus,
   ontell,
+  ontellsshown,
   read = (mailboxId) => relayClient().read(mailboxId),
   subscribe = subscribeToMailbox,
 }: ReceiverOptions = {}): Receiver {
@@ -162,6 +169,8 @@ export function createReceiver({
 
   let pending: Pending | undefined;
   let answers: Record<string, SyncAnswer> = {};
+  /** Trouble a read found while a question waited. */
+  let afterQuestion: ReceiverStatus | undefined;
   /** An envelope that couldn't be read isn't read again until the page reloads with a new build. */
   let unreadable: string | undefined;
   /** Serializes everything that reads or applies, so the latest save always goes last. */
@@ -184,6 +193,18 @@ export function createReceiver({
     status = next;
     onstatus?.(next);
     post({ type: "status", status: next });
+  }
+
+  /** Trouble a read found. A waiting question stays up, & the trouble comes out once it settles. */
+  function reportTrouble(next: ReceiverStatus): void {
+    if (pending) afterQuestion = next;
+    else setStatus(next);
+  }
+
+  /** The waiting save has settled, so the status is whatever the latest read found. */
+  function reportSettled(): void {
+    setStatus(afterQuestion ?? { kind: "up-to-date" });
+    afterQuestion = undefined;
   }
 
   function post(message: ChannelMessage): void {
@@ -231,10 +252,10 @@ export function createReceiver({
       // A mailbox that's gone is as good as retired: only a new code can bring this device back.
       case "absent":
       case "retired":
-        // Nobody will write here again, so a question about its last save still stands.
         retired = true;
         disconnect();
-        if (!pending) setStatus({ kind: "retired" });
+        // Nobody will write here again, but a question about its last save still stands.
+        reportTrouble({ kind: "retired" });
         return;
       case "envelope":
         await handleEnvelope(result, current);
@@ -246,7 +267,7 @@ export function createReceiver({
     current: number,
   ): Promise<void> {
     if (envelope.version !== FOLLOW_PROTOCOL_VERSION) {
-      setStatus({
+      reportTrouble({
         kind: envelope.version < FOLLOW_PROTOCOL_VERSION ? "update-computer" : "update-here",
       });
       return;
@@ -264,13 +285,16 @@ export function createReceiver({
     const waiting = pending?.request.receipt;
     if (waiting?.mailboxId === mailboxId && (waiting.counter ?? 0) >= counter) return;
     const attempt = `${mailboxId}:${counter}`;
-    if (unreadable === attempt) return;
+    if (unreadable === attempt) {
+      reportTrouble({ kind: "unreadable" });
+      return;
+    }
 
     const opened = await openEnvelopeRead(opening, envelope);
     if (current !== generation) return;
     if (opened.kind !== "save") {
       unreadable = attempt;
-      setStatus({ kind: "unreadable" });
+      reportTrouble({ kind: "unreadable" });
       return;
     }
     let save: ReadSave;
@@ -278,11 +302,12 @@ export function createReceiver({
       save = await readSavePayload(opened.payload);
     } catch {
       unreadable = attempt;
-      if (current === generation) setStatus({ kind: "unreadable" });
+      if (current === generation) reportTrouble({ kind: "unreadable" });
       return;
     }
     if (current !== generation) return;
     const followed = listening;
+    afterQuestion = undefined;
     pending = {
       request: {
         ...stampOf(save, { counter, mailboxId }),
@@ -323,7 +348,7 @@ export function createReceiver({
       case "applied": {
         if (isWaiting()) pending = undefined;
         answers = {};
-        setStatus({ kind: "up-to-date" });
+        reportSettled();
         const tell = tellOf(outcome.result, outgoingFarm);
         if (tell) {
           ontell?.(tell);
@@ -333,7 +358,7 @@ export function createReceiver({
       }
       case "skipped":
         pending = undefined;
-        setStatus({ kind: "up-to-date" });
+        reportSettled();
         return outcome.kind;
       case "stale":
         pending = undefined;
@@ -346,13 +371,21 @@ export function createReceiver({
     }
   }
 
+  async function readMailbox(mailboxId: string): Promise<ReadResult> {
+    try {
+      return await read(mailboxId);
+    } catch {
+      return { kind: "unreachable" };
+    }
+  }
+
   function connect(): void {
     if (!leading || !keys || closeSocket) return;
     const current = generation;
     const { mailboxId } = keys;
     void enqueue(async () => {
       if (current !== generation) return;
-      await handleRead(await read(mailboxId), current);
+      await handleRead(await readMailbox(mailboxId), current);
     });
     if (retired) return;
     closeSocket = subscribe(mailboxId, {
@@ -373,6 +406,7 @@ export function createReceiver({
     const current = ++generation;
     listening = key;
     keys = undefined;
+    afterQuestion = undefined;
     answers = {};
     pending = undefined;
     retired = false;
@@ -392,6 +426,7 @@ export function createReceiver({
     generation++;
     listening = undefined;
     keys = undefined;
+    afterQuestion = undefined;
     answers = {};
     pending = undefined;
     disconnect();
@@ -407,6 +442,7 @@ export function createReceiver({
       if (listening !== undefined) stopListening();
       // A computer's own question stays up until it's answered, or the lane ends.
       if (lane === undefined) {
+        afterQuestion = undefined;
         answers = {};
         pending = undefined;
       }
@@ -427,14 +463,17 @@ export function createReceiver({
   }
 
   function refresh(): void {
-    if (!leading || !keys) return;
-    retryDelay = FIRST_RETRY_MS;
-    clearRetry();
     if (pending) {
       void enqueue(async () => {
         await applyPending();
       });
+    } else if (!leading) {
+      // The leader holds the socket & the note this tab is showing.
+      post({ type: "refresh" });
     }
+    if (!leading || !keys) return;
+    retryDelay = FIRST_RETRY_MS;
+    clearRetry();
     closeSocket?.();
     closeSocket = undefined;
     connect();
@@ -455,6 +494,7 @@ export function createReceiver({
   async function lead(locks: LockManager, signal: AbortSignal): Promise<void> {
     try {
       await locks.request(RECEIVER_LOCK, { signal }, () => {
+        if (signal.aborted) return undefined;
         leading = true;
         update();
         return new Promise<void>((resolve) => {
@@ -479,8 +519,14 @@ export function createReceiver({
         status = data.status;
         onstatus?.(status);
         return;
+      case "refresh":
+        if (leading) refresh();
+        return;
       case "tell":
         ontell?.(data.tell);
+        return;
+      case "tells-shown":
+        ontellsshown?.();
     }
   }
 
@@ -527,6 +573,9 @@ export function createReceiver({
       channel = undefined;
       status = { kind: "idle" };
       onstatus?.(status);
+    },
+    tellsShown() {
+      post({ type: "tells-shown" });
     },
     update,
   };

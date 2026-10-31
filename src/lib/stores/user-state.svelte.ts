@@ -114,6 +114,8 @@ type WriteIntent =
   | {
       /** What `json` builds on: the stored value this tab last read, or a pending explicit write. */
       base: null | string;
+      /** Removes the receipt from whichever `local` section the write keeps. */
+      dropReceipt: boolean;
       importedSave: boolean;
       /** Serialized at confirmation, so later storage events cannot change the requested write. */
       json: string;
@@ -296,7 +298,8 @@ export interface SyncApplyRequest extends SyncApplyStamp {
 
 /** {@link SyncQuestion}s, & the one question the write itself asks before it replaces a backup. */
 export type SyncApplyQuestion =
-  | SyncQuestion
+  | Exclude<SyncQuestion, { kind: "farm" }>
+  | { farmName: null | string; id: string; kind: "farm" }
   | { farmName: null | string; id: string; kind: "replace-backup"; savedAt: number };
 
 /**
@@ -527,6 +530,10 @@ function createUserState() {
       if (captured.kind !== "ok") throw new Error("Invalid captured progress write");
       let loaded = captured.loaded;
       if (intent.keepLocal && read?.kind === "ok") loaded.local = read.loaded.local;
+      if (intent.dropReceipt) {
+        const { syncReceipt: _receipt, ...kept } = loaded.local;
+        loaded.local = kept;
+      }
       if (intent.kind === "merge" && read?.kind === "ok") {
         loaded = read.loaded;
         // The captured preview includes unsaved local edits as well as the imported progress.
@@ -729,7 +736,12 @@ function createUserState() {
       },
     );
     if (outcome.kind === "ask") {
-      settle(outcome);
+      // The farm question names the save's farm, which only the request knows.
+      const { farmName } = request.metadata;
+      const questions = outcome.questions.map((question) =>
+        question.kind === "farm" ? { ...question, farmName } : question,
+      );
+      settle({ kind: "ask", questions });
       return false;
     }
 
@@ -787,8 +799,9 @@ function createUserState() {
     kind: "merge" | "replace" = "replace",
     keepLocal = true,
     importedSave = false,
+    dropReceipt = false,
   ): void {
-    void explicitWrite(kind, keepLocal, importedSave);
+    void explicitWrite(kind, keepLocal, importedSave, dropReceipt);
   }
 
   /** {@link writeExplicitProgress}, resolving once the write has run with whether it's stored. */
@@ -796,6 +809,7 @@ function createUserState() {
     kind: "merge" | "replace",
     keepLocal: boolean,
     importedSave = false,
+    dropReceipt = false,
   ): Promise<boolean> {
     clearPendingSave();
     const json = serialize();
@@ -803,6 +817,7 @@ function createUserState() {
     pendingExplicitJson = json;
     return requestProgressWrite({
       base,
+      dropReceipt,
       importedSave,
       json,
       keepLocal,
@@ -1226,13 +1241,10 @@ function createUserState() {
     resetProgress() {
       replaceProgress(emptyLoadedProgress());
       enablePersistenceAfterExplicitReplace();
-      if (local.syncReceipt === undefined) {
-        writeExplicitProgress();
-        return;
-      }
       const { syncReceipt: _receipt, ...kept } = local;
       local = kept;
-      writeExplicitProgress("replace", false);
+      // The write keeps the stored section, which another tab may have added to since this one read.
+      writeExplicitProgress("replace", true, false, true);
     },
     /** The player's “keep mine” for a fact, if any; see `resolutionHolds`. */
     resolutionOf(key: string): Readonly<Resolution> | undefined {

@@ -438,3 +438,30 @@ describe("subscribeToMailbox", () => {
     expect(onclose).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("reading a mailbox that misbehaves", () => {
+  it("gives the read a time limit, so a hung fetch can't stall what's queued behind it", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 404 }));
+    await createRelayClient("https://relay.test", fetcher).read("box");
+    expect(fetcher.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("reports a body that fails partway as unreachable", async () => {
+    const body = new ReadableStream({
+      start(controller) {
+        controller.error(new Error("dropped"));
+      },
+    });
+    const response = new Response(body, {
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "X-Sync-Counter": "1",
+        "X-Sync-Version": "1",
+      },
+    });
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response);
+    expect(await createRelayClient("https://relay.test", fetcher).read("box")).toEqual({
+      kind: "unreachable",
+    });
+  });
+});

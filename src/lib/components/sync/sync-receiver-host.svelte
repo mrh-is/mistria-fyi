@@ -11,8 +11,6 @@
   import type { SyncTell } from "#lib/sync/receiver.js";
 
   function tell({ applied, kept, switchedFrom }: SyncTell): void {
-    // Every open tab hears a tell; only one the player is looking at says it.
-    if (document.visibilityState !== "visible") return;
     if (switchedFrom) {
       const farm = switchedFrom.farmName;
       toast(farm ? m.sync_tell_switched({ farm }) : m.sync_tell_switched_unnamed());

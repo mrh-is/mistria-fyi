@@ -29,12 +29,26 @@ let status = $state.raw<ReceiverStatus>({ kind: "idle" });
 let dismissed = $state<null | string>(null);
 let now = $state(Date.now());
 let tellListener: ((tell: SyncTell) => void) | undefined;
+let heldTells: SyncTell[] = [];
+
+/** Says what's been held for a tab the player can see. Every open tab holds a tell until then. */
+function deliverTells(): void {
+  if (!tellListener || heldTells.length === 0 || document.visibilityState !== "visible") return;
+  const tells = heldTells;
+  heldTells = [];
+  for (const tell of tells) tellListener(tell);
+  receiver.tellsShown();
+}
 
 function resume(): void {
-  if (document.visibilityState === "visible") {
-    now = Date.now();
-    receiver.refresh();
-  }
+  if (document.visibilityState !== "visible") return;
+  deliverTells();
+  retry();
+}
+
+function retry(): void {
+  now = Date.now();
+  receiver.refresh();
 }
 
 function questionsKey(next: ReceiverStatus): null | string {
@@ -45,7 +59,13 @@ const receiver = createReceiver({
   onstatus: (next) => {
     status = next;
   },
-  ontell: (tell) => tellListener?.(tell),
+  ontell: (tell) => {
+    heldTells.push(tell);
+    deliverTells();
+  },
+  ontellsshown: () => {
+    heldTells = [];
+  },
 });
 
 export const syncReceiver = {
@@ -61,12 +81,12 @@ export const syncReceiver = {
       if (event.persisted) receiver.start();
     };
     document.addEventListener("visibilitychange", resume);
-    globalThis.addEventListener("online", resume);
+    globalThis.addEventListener("online", retry);
     globalThis.addEventListener("pagehide", leave);
     globalThis.addEventListener("pageshow", returned);
     return () => {
       document.removeEventListener("visibilitychange", resume);
-      globalThis.removeEventListener("online", resume);
+      globalThis.removeEventListener("online", retry);
       globalThis.removeEventListener("pagehide", leave);
       globalThis.removeEventListener("pageshow", returned);
       receiver.stop();
@@ -94,10 +114,7 @@ export const syncReceiver = {
     if (status.kind !== "asking" || dismissed === questionsKey(status)) return undefined;
     return status.questions[0];
   },
-  refresh(): void {
-    now = Date.now();
-    receiver.refresh();
-  },
+  refresh: retry,
   /** Brings a cancelled question back. */
   reopenQuestion(): void {
     dismissed = null;

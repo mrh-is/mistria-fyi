@@ -218,10 +218,10 @@ sync entry point is hidden on the production site behind `src/lib/sync/enabled.t
 - **The erase, the reset, & the stop.** Joining a syncing lane writes fresh progress & history &
   removes any old receipt, lane, & key. Data’s reset in a syncing lane writes fresh progress &
   history & removes the receipt but keeps the lane & key, so the latest save file applies again (on
-  the computer at once, from its current save). “Stop syncing” removes only the receipt, the lane, &
-  the key, keeping progress & history, which are then tracked by hand. Both keep `farmSwitchBackup`,
-  which no export carries, & any pending retire. Restoring a backup & a new farm stay inside a lane.
-  See [sync-setup.md](sync-setup.md#lanes).
+  the computer at once, from its current save). “Stop syncing” removes only the receipt, freshness,
+  the lane, & the key, keeping progress & history, which are then tracked by hand. Both keep
+  `farmSwitchBackup`, which no export carries, & any pending retire. Restoring a backup & a new farm
+  stay inside a lane. See [sync-setup.md](sync-setup.md#lanes).
 - **Opening a link.** A device opens the link, scans its QR code with the tracker’s own scanner (the
   one the transfer card uses), or pastes it. The page strips the fragment from its address bar,
   holds the key in the page (see Lanes), & fetches the latest envelope. An “empty” mailbox shows
@@ -258,16 +258,18 @@ tracker (`applyLocalSave`, which the courier in #134 calls) as well as every fol
 - **One tab leads** (Web Locks): it holds `mistria-fyi:sync-receiver` for as long as it runs, &
   other tabs queue, so one takes over when the leader’s page goes away. The lock is let go on
   `pagehide`, so a page in the back/forward cache never keeps the lead. Other tabs show the leader’s
-  status & send their answers to it over a `BroadcastChannel`, so a question waiting in a hidden tab
-  can be answered from the one in front. A browser without Web Locks never leads, so it never
-  applies; the writer’s synchronous fallback isn’t enough for two long-lived receivers.
-- **It listens** on the mailbox’s WebSocket, & reads the mailbox once each time it connects. A
-  closed socket retries from 5 seconds, doubling up to 5 minutes; coming back into view or online
-  retries at once.
+  status & send their answers & retries to it over a `BroadcastChannel`, so a question waiting in a
+  hidden tab can be answered from the one in front. A browser without Web Locks never leads, so it
+  never applies; the writer’s synchronous fallback isn’t enough for two long-lived receivers.
+- **It listens** on the mailbox’s WebSocket, & reads the mailbox once each time it connects, giving
+  each read 30 seconds, since reads & applies take turns. A closed socket retries from 5 seconds,
+  doubling up to 5 minutes; coming back into view or online retries at once.
 - **It never applies** while its store is quarantined or in the “newer data” state, & never uses
   manual import’s unlock path; on the sharing PC the courier still uploads. In the newer-data state,
   “Export backup” returns the stored blob verbatim (the choice in PR #158 for #106, provisional
-  until it merges), so a blocked device still gives the player a copy.
+  until it merges), so a blocked device still gives the player a copy. `sync_blocked` shows only
+  when the block starts while the page is open. A page that loads blocked can’t read its lane from
+  the blob, so it shows no sync surfaces, & the persistence warning speaks for it.
 - **One write path.** Progress, provenance, resolved diffs, the farm-switch backup, & a “last
   applied” receipt (the mailbox ID, the envelope’s counter, & the save’s hash), plus the lane & the
   follow key, share one storage key. Every writer (auto-save, sync, restore, reset, migration) goes
@@ -280,13 +282,18 @@ tracker (`applyLocalSave`, which the courier in #134 calls) as well as every fol
 - **The latest save wins.** An envelope is skipped only when its mailbox ID matches the receipt’s &
   its counter isn’t above the receipt’s, so a new code’s envelopes always apply; the PC’s own
   applies skip by the save’s hash. Either way, so a repeated or replayed save changes nothing. A
-  newer envelope that arrives while a question waits replaces the save the question was about.
+  newer envelope that arrives while a question waits replaces the save the question was about. One
+  it can’t use (unreadable, another protocol version, or a retired code) leaves the question up, &
+  its notice shows once the question settles.
 - **Recomputed questions.** If progress or the save changed while a question waited, the diff is
   recomputed & the question asked again where its effect changed. Answering is what recomputes,
-  since every answer goes back through the write.
+  since every answer goes back through the write; so does the tracker coming back into view.
 - **A cancelled question** keeps the status button’s dot & a note on Home, & opens again from there,
-  when its effect changes, or the next time the tracker opens. Nothing is written until it’s
+  when a recompute changes it, or the next time the tracker opens. Nothing is written until it’s
   answered.
+- **Tells** wait for a tab the player can see, & whichever tab says them clears them from the
+  others. They live only in the page, so one that never reached a visible tab goes when the page
+  does.
 - **Crashes.** A crash before the write applies the latest envelope again on the next open; one
   after it skips that envelope by the receipt.
 - **A save it can’t read** (after a game update, the computer can’t read it either) shows

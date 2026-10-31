@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { readFileSync } from "node:fs";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -106,6 +106,24 @@ describe("the status button", () => {
     await fireEvent.click(button);
     await tick();
     expect(button).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes its panel when the lane ends (F8)", async () => {
+    enabled.syncEnabled = true;
+    await loadStore();
+    await renderToolbar();
+    await fireEvent.click(screen.getByRole("button", { name: /^Save file sync:/ }));
+    await tick();
+    expect(screen.getByText("Last save file")).toBeVisible();
+
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    await userState.stopSyncing();
+    await tick();
+    expect(screen.queryByRole("button", { name: /^Save file sync:/ })).toBeNull();
+    // The panel animates out.
+    await waitFor(() => {
+      expect(screen.queryByText("Save file from")).toBeNull();
+    });
   });
 
   it("stays off the production site", async () => {

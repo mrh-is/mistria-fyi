@@ -17,6 +17,8 @@ vi.mock("#lib/sync/enabled.js", () => ({
   },
 }));
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
+const toast = vi.hoisted(() => vi.fn());
+vi.mock("svelte-sonner", () => ({ toast }));
 
 /** The receiver under the page's state, so a test can say what it reports. */
 const fake = vi.hoisted(() => ({
@@ -25,6 +27,7 @@ const fake = vi.hoisted(() => ({
   options: undefined as ReceiverOptions | undefined,
   refresh: vi.fn(),
   stop: vi.fn(),
+  tellsShown: vi.fn(),
   update: vi.fn(),
 }));
 vi.mock("#lib/sync/receiver.js", () => ({
@@ -37,6 +40,7 @@ vi.mock("#lib/sync/receiver.js", () => ({
       refresh: fake.refresh,
       status: { kind: "idle" },
       stop: fake.stop,
+      tellsShown: fake.tellsShown,
       update: fake.update,
     };
   },
@@ -119,12 +123,60 @@ afterEach(async () => {
 });
 
 describe("the question dialog", () => {
-  const FARM: ReceiverStatus = { kind: "asking", questions: [{ id: "farm:1", kind: "farm" }] };
+  const FARM: ReceiverStatus = {
+    kind: "asking",
+    questions: [{ farmName: "Saved Acres", id: "farm:1", kind: "farm" }],
+  };
 
-  it("starts the receiver & keeps it told about the lane", async () => {
+  it("uses the unnamed copy for a save with no farm name", async () => {
     await renderHost();
+    report({ kind: "asking", questions: [{ farmName: null, id: "farm:2", kind: "farm" }] });
+    await tick();
+    expect(screen.getByText(/We found a farm in this save file/)).toBeVisible();
+  });
+
+  it("starts the receiver & tells it each time the lane, store, or receipt changes", async () => {
+    const userState = await loadStore({ syncLane: FOLLOWING });
+    const { default: Host } = await import("./sync-receiver-host.svelte");
+    render(Host);
+    await tick();
     expect(fake.start).toHaveBeenCalledTimes(1);
-    expect(fake.update).toHaveBeenCalledWith();
+    expect(fake.update).toHaveBeenCalledTimes(1);
+
+    await userState.stopSyncing();
+    await tick();
+    expect(fake.update).toHaveBeenCalledTimes(2);
+  });
+
+  it("holds a tell while no tab is showing, then says it once (F6)", async () => {
+    await renderHost();
+    toast.mockClear();
+    fake.tellsShown.mockClear();
+    const hidden = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    fake.options?.ontell?.({ applied: false, kept: false, switchedFrom: { farmName: "Old" } });
+    expect(toast).not.toHaveBeenCalled();
+
+    hidden.mockReturnValue("visible");
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(toast).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenCalledWith(expect.stringContaining("Old"));
+    expect(fake.tellsShown).toHaveBeenCalledTimes(1);
+
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(toast).toHaveBeenCalledTimes(1);
+    hidden.mockRestore();
+  });
+
+  it("forgets a held tell once another tab has said it (F6)", async () => {
+    await renderHost();
+    toast.mockClear();
+    const hidden = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    fake.options?.ontell?.({ applied: true, kept: false });
+    fake.options?.ontellsshown?.();
+    hidden.mockReturnValue("visible");
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(toast).not.toHaveBeenCalled();
+    hidden.mockRestore();
   });
 
   it("asks a question & sends the answer on", async () => {
@@ -132,6 +184,8 @@ describe("the question dialog", () => {
     report(FARM);
     await tick();
     expect(screen.getByText("Is this the farm you’ve been tracking?")).toBeVisible();
+    // The save's farm, whatever the stored progress is called (F5).
+    expect(screen.getByText(/This save file is for Saved Acres/)).toBeVisible();
     await fireEvent.click(screen.getByRole("button", { name: "Yep, same farm" }));
     expect(fake.answer).toHaveBeenCalledWith("farm:1", "same-farm");
   });
@@ -203,7 +257,7 @@ describe("the notes", () => {
   it("offers a cancelled question again", async () => {
     await renderNote();
     const { syncReceiver } = await import("#lib/sync/receiver-state.svelte.js");
-    report({ kind: "asking", questions: [{ id: "farm:1", kind: "farm" }] });
+    report({ kind: "asking", questions: [{ farmName: null, id: "farm:1", kind: "farm" }] });
     await tick();
     expect(screen.queryByRole("status")).toBeNull();
 

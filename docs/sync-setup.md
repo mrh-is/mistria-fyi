@@ -254,11 +254,11 @@ code” explains itself before anyone opens its dialog.
 - **On the gaming computer,** leaving the lane by “Stop syncing” also retires the code once the
   leaving write lands, so other devices say the computer stopped sharing & keep what they have until
   they stop too. A retire that can’t reach the relay keeps retrying.
-- **Stopping removes only the sync state:** the receipt, the lane, & the key. **Starting fresh**
-  erases progress & history too, but keeps the farm-switch backup, since no export carries it.
-  **Data’s reset** in a syncing lane erases progress & history but stays in the lane: the save file
-  fills it back in, at once on the computer & with the next save file elsewhere. The reset dialog
-  adds `sync_reset_note` in a syncing lane.
+- **Stopping removes only the sync state:** the receipt, the last save file’s time & date, the lane,
+  & the key. **Starting fresh** erases progress & history too, but keeps the farm-switch backup,
+  since no export carries it. **Data’s reset** in a syncing lane erases progress & history but stays
+  in the lane: the save file fills it back in, at once wherever the latest one can be read. The
+  reset dialog adds `sync_reset_note` in a syncing lane.
 - **“Make a new code”** stays in the lane, for when the old one ended up on stream. It makes & shows
   the new code first, then retires the old one; if it can’t make one, the old code keeps working
   (`sync_new_code_failed`).

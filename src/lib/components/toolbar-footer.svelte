@@ -75,6 +75,11 @@
     };
   });
 
+  // Stopping, here or in another tab, leaves the sync panel nothing to say.
+  $effect(() => {
+    if (!syncing && activePanel === "sync") closePanel(false);
+  });
+
   afterNavigate(({ shallow }) => {
     if (shallow) return;
     closePanel(false);
