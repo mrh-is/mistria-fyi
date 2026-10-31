@@ -476,8 +476,17 @@ Cloudflare processes IP addresses to deliver it & the app does not log them, & t
 rate-limited by IPv4 address or IPv6 /64 without storing the address or prefix in application
 storage. Hourly admission stores only a rotating 16-bit shared bucket & count, which cannot identify
 one address even with the secret; provider recovery can retain these counts for 30 days. State that
-there is no account, & explain the provider’s 30-day storage recovery plainly. The rewrite ships
-before or with sync, in all locales.
+there is no account, & explain the provider’s 30-day storage recovery plainly, including the
+per-code record that outlives a deleted save & the tombstone left after it. It also references
+Cloudflare’s Turnstile Privacy Addendum, a condition of the invisible mode the creation check uses.
+The rewrite ships before or with sync, in all locales.
+
+## The sync switch
+
+Until launch (#291), every sync surface checks `syncSwitchOn` (`src/lib/sync/sync-switch.ts`), which
+hides it on the production site & shows it on branch previews, local builds, dev, & tests. It comes
+from the same `CF_PAGES_BRANCH === "main"` check as the feedback dry run, so renaming the Pages
+production branch would reveal sync. Launch removes the module & its call sites.
 
 ## Fallbacks
 
