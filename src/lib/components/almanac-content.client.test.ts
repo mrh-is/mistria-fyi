@@ -104,6 +104,9 @@ describe("AlmanacContent", () => {
       ]),
     );
     for (const subtitle of subtitles) expect(subtitle).toHaveClass("tracker-row__subtitle");
+    expect(
+      view.getByRole("button", { name: "Check Animated Clouds Window, Oak" }),
+    ).toBeInTheDocument();
     expect(view.queryByText("Walnut")).toBeNull();
   });
 
@@ -114,6 +117,7 @@ describe("AlmanacContent", () => {
 
     const name = await view.findByText("Turnip");
     expect(name.querySelector(".tracker-row__subtitle")).toBeNull();
+    expect(view.getByRole("button", { name: "Check Turnip" })).toBeInTheDocument();
   });
 });
 

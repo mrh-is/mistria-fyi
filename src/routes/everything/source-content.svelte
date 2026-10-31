@@ -203,6 +203,7 @@
                           userState.state.availabilityWindows.some((w) => w !== "later"),
                       })}
                   name={entry.name}
+                  variant={entry.category === "almanac" ? entry.subtitle : undefined}
                   subtitle={[categoryForKey(entry.category, locale).name, entry.subtitle]
                     .filter(Boolean)
                     .join(" · ")}

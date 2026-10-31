@@ -114,6 +114,7 @@
   "tracker_row_uncheck": "Uncheck {name}",
   "tracker_row_check_spoilered": "Check spoilered item",
   "tracker_row_check": "Check {name}",
+  "tracker_row_variant_name": "{name}, {variant}",
   "tracker_row_preview_sprite": "Show {name} in color",
   "tracker_row_active_badge": "Active",
   "tracker_row_sources_label": "{name} sources",
