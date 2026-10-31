@@ -293,6 +293,70 @@ describe("Shared agent tool upkeep", () => {
     expect(result.stderr).toBe("");
   });
 
+  it.each(["PreToolUse", "PostToolUse", "PostToolUseFailure"])(
+    "skips upkeep for Copilot’s Claude-compatible %s payload without a tool ID",
+    (hook_event_name) => {
+      const { root } = fixture();
+      const setup = vi.fn(current);
+      const run = vi.fn(() => ({ output: "", status: 0 }));
+      // Captured from Copilot CLI 1.0.105. Timestamps differ between pre-tool & post-tool events.
+      const input = {
+        cwd: root,
+        hook_event_name,
+        session_id: "copilot-session",
+        timestamp: "2026-10-31T17:33:07.053Z",
+        tool_input: { command: "echo hello", description: "Print hello once" },
+        tool_name: "Bash",
+      };
+      expect(agentToolHook(input, setup, run, root)).toEqual([]);
+      expect(setup).not.toHaveBeenCalled();
+      expect(run).not.toHaveBeenCalled();
+      const result = spawnSync(
+        process.execPath,
+        [fileURLToPath(new URL("agent-tool-hook.ts", import.meta.url))],
+        { cwd: root, encoding: "utf8", input: JSON.stringify(input) },
+      );
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe("");
+    },
+  );
+
+  it.each([{}, { session_id: "session" }, { timestamp: "2026-10-31T17:33:07.053Z" }])(
+    "still rejects a missing Claude tool ID without Copilot’s full signature: %j",
+    (fields) => {
+      const { root } = fixture();
+      const input = {
+        cwd: root,
+        hook_event_name: "PreToolUse",
+        tool_input: { command: "echo hello" },
+        tool_name: "Bash",
+        ...fields,
+      };
+      expect(() => agentToolHook(input, current, undefined, root)).toThrow("requires tool_use_id");
+    },
+  );
+
+  it("keeps upkeep when a stable tool ID accompanies a session ID & timestamp", () => {
+    const { root } = fixture();
+    const setup = vi.fn(current);
+    const input = {
+      ...shell(root, "echo hello"),
+      session_id: "session",
+      timestamp: "2026-10-31T17:33:07.053Z",
+    };
+    expect(agentToolHook(input, setup, undefined, root)).toEqual([]);
+    expect(
+      agentToolHook(
+        { ...input, hook_event_name: "PostToolUse", timestamp: "2026-10-31T17:33:08.053Z" },
+        setup,
+        undefined,
+        root,
+      ),
+    ).toEqual([]);
+    expect(setup).toHaveBeenCalledTimes(2);
+  });
+
   it("still rejects a named event it doesn’t handle", () => {
     const { root } = fixture();
     expect(() =>

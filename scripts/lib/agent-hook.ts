@@ -14,7 +14,10 @@ export interface HookInput {
   /** `CwdChanged`: the directories before & after the move. */
   new_cwd?: string;
   old_cwd?: string;
+  session_id?: string;
   stop_hook_active?: boolean;
+  /** Copilot’s Claude-compatible events include a timestamp, but no stable `tool_use_id`. */
+  timestamp?: string;
   tool_input?:
     | string
     | {
