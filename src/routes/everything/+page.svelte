@@ -6,6 +6,7 @@
   import CompletedHeading from "#lib/components/completed-heading.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import PageHeader from "#lib/components/page-header.svelte";
+  import { createSharedReveals } from "#lib/controllers/completion-scope.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
@@ -24,6 +25,8 @@
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
+
+  createSharedReveals();
 
   let orderedCategories = $derived(sortCategoryKeysByName(CATEGORY_KEYS, data.locale));
   const completedContent = $state<Partial<Record<CategoryKey, boolean>>>({});

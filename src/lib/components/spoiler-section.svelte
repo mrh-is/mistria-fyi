@@ -2,7 +2,10 @@
   import { Icon } from "#lib/components/icon/index.js";
   import SectionTrigger from "#lib/components/section-trigger.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
-  import { registerCompletionSection } from "#lib/controllers/completion-scope.svelte.js";
+  import {
+    getSharedReveals,
+    registerCompletionSection,
+  } from "#lib/controllers/completion-scope.svelte.js";
 
   import type { Snippet } from "svelte";
 
@@ -19,8 +22,11 @@
     topLevel?: boolean;
   } = $props();
 
+  const sharedReveals = getSharedReveals();
   let spoilerDismissed = $state(false);
-  let isSpoilered = $derived(spoilered && !spoilerDismissed);
+  let isSpoilered = $derived(
+    spoilered && !spoilerDismissed && !(topLevel && sharedReveals?.has(name)),
+  );
   // A masked section is never finished, so it stays with the outstanding sections.
   const completionSection = registerCompletionSection(
     () => false,
@@ -39,7 +45,12 @@
     <SectionTrigger element="div" class="text-base">
       <Icon.UI type="disclosure" class="section-disclosure size-4 shrink-0" />
       <span class="font-semibold">
-        <Spoiler onReveal={() => (spoilerDismissed = true)}>{name}</Spoiler>
+        <Spoiler
+          onReveal={() => {
+            spoilerDismissed = true;
+            if (topLevel) sharedReveals?.add(name);
+          }}>{name}</Spoiler
+        >
       </span>
     </SectionTrigger>
   </div>

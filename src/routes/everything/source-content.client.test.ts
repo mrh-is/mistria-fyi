@@ -3,6 +3,7 @@ import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
+import * as celebration from "#lib/effects/celebrate.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -13,10 +14,10 @@ import SourceContent from "./source-content.svelte";
 import type { Source, WaterType } from "#lib/types/acquisition.js";
 import type { ItemId, StoreId } from "#lib/types/tracker-data.js";
 
-vi.mock("#lib/effects/celebrate.js", () => ({ celebrate: vi.fn(), celebrateCategory: vi.fn() }));
-
 beforeEach(() => {
   userState.resetAll();
+  vi.spyOn(celebration, "celebrate").mockImplementation(() => undefined);
+  vi.spyOn(celebration, "celebrateCategory").mockImplementation(() => undefined);
 });
 
 it("keeps the Unobtainable display control available while the source lens renders almanac rows", async () => {

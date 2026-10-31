@@ -1,6 +1,7 @@
 import { getContext, setContext, untrack } from "svelte";
-import { SvelteMap } from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
+import { userState } from "#lib/stores/user-state.svelte.js";
 import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
@@ -10,6 +11,7 @@ interface CompletionScope {
 }
 
 const COMPLETION_SCOPE = Symbol("completion-scope");
+const SHARED_REVEALS = Symbol("shared-reveals");
 
 /** Everything partitions whole sections, using the same completion their headers display. */
 export function createCompletionScope(completed: boolean): {
@@ -21,6 +23,18 @@ export function createCompletionScope(completed: boolean): {
     hasContent: (fallback) =>
       scope.sections.size === 0 ? fallback : [...scope.sections.values()].some(Boolean),
   };
+}
+
+/**
+ * Everything renders each category twice, so revealing a masked section has to reach both copies.
+ * Otherwise a revealed section that's finished would hide in one copy & stay masked in the other.
+ */
+export function createSharedReveals(): void {
+  setContext(SHARED_REVEALS, new SvelteSet<string>());
+}
+
+export function getSharedReveals(): SvelteSet<string> | undefined {
+  return getContext<SvelteSet<string> | undefined>(SHARED_REVEALS);
 }
 
 export function getCompletionScope(): CompletionScope | undefined {
@@ -39,12 +53,20 @@ export function registerCompletionSection(
   const scope = getCompletionScope();
   const key = Symbol("section");
   let settledComplete = $state(untrack(complete));
+  let lastProgress = untrack(() => userState.state.progress);
   let visible = $derived(!scope || !enabled() || scope.completed === settledComplete);
   let wasVisible = untrack(() => visible);
   let restoreFocus: (() => Promise<void>) | undefined;
   $effect(() => {
     if (!scope) return;
     const next = complete();
+    const progress = userState.state.progress;
+    // Loaded or restored progress replaces the whole object. Nobody toggled anything, so nothing waits.
+    if (progress !== lastProgress) {
+      lastProgress = progress;
+      settledComplete = next;
+      return;
+    }
     if (next === untrack(() => settledComplete)) return;
     const timer = setTimeout(() => {
       settledComplete = next;

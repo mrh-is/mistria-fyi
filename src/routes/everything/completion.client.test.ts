@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
+import * as celebration from "#lib/effects/celebrate.js";
 import { getMaxMineFloor, getMaxRenownLevel, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { perksOfSkill } from "#lib/engine/projections/skills.js";
 import * as questSections from "#lib/presentation/quest-sections.js";
@@ -21,8 +22,6 @@ import type { ItemId, QuestType, SkillId, SpellId } from "#lib/types/tracker-dat
 
 const HOLD_TIMEOUT_MS = ROW_LEAVE_MS + 1000;
 
-vi.mock("#lib/effects/celebrate.js", () => ({ celebrate: vi.fn(), celebrateCategory: vi.fn() }));
-
 const props = {
   data: {
     locale: "en" as const,
@@ -34,6 +33,8 @@ const props = {
 beforeEach(() => {
   userState.resetAll();
   pageStub.reset();
+  vi.spyOn(celebration, "celebrate").mockImplementation(() => undefined);
+  vi.spyOn(celebration, "celebrateCategory").mockImplementation(() => undefined);
 });
 
 it("opens incomplete categories, supports collapse, and resets after a fresh mount", async () => {
@@ -202,6 +203,20 @@ describe("while a section changes lists", () => {
     expectFocusOnRenderedTrigger();
   });
 
+  it("moves sections at once when progress is replaced rather than toggled", async () => {
+    userState.setRenown(getMaxRenownLevel());
+    userState.toggleShowCompleted();
+    const view = renderWithFeedback(AllPage, props);
+    await tick();
+    const completed = view.getByTestId("everything-completed");
+    expect(within(completed).getByRole("button", { name: "Renown" })).toBeInTheDocument();
+    userState.resetProgress();
+    await tick();
+    await tick();
+    expect(within(completed).queryByRole("button", { name: "Renown" })).toBeNull();
+    expect(view.getByRole("button", { name: "Renown" })).toBeInTheDocument();
+  });
+
   it("keeps focus on a visible trigger when a compact record finishes", async () => {
     const view = renderWithFeedback(AllPage, props);
     await tick();
@@ -246,6 +261,25 @@ async function renderFinishedQuests() {
 describe("locked quest sections", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("moves a finished locked section to the completed list when it's revealed", async () => {
+    vi.spyOn(questSections, "buildQuestSections").mockReturnValue([
+      section("fetch", false),
+      section("crown", true),
+    ]);
+    userState.toggleShowCompleted();
+    const view = renderWithFeedback(AllPage, props);
+    await tick();
+    const outstanding = view.container.querySelector("#category-quests")?.closest("section");
+    if (!outstanding) throw new Error("Quests has no outstanding group");
+    await fireEvent.click(within(outstanding).getByRole("button", { name: "Reveal spoiler" }));
+    await tick();
+    expect(within(outstanding).queryByRole("button", { name: /^Crown Requests,/ })).toBeNull();
+    const completed = view.getByTestId("everything-completed");
+    await fireEvent.click(within(completed).getByRole("button", { name: "Quests" }));
+    await tick();
+    expect(within(completed).getByRole("button", { name: /^Crown Requests,/ })).toBeInTheDocument();
   });
 
   it("leaves a locked section out of the completed list", async () => {
