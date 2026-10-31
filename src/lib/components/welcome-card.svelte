@@ -320,7 +320,6 @@
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     line-height: 1.3;
-    opacity: 0.85;
   }
 
   .welcome-card__choice:is(:hover, :focus-visible) {

@@ -118,8 +118,9 @@
     font-weight: 600;
   }
 
+  /* The accent alone falls under 4.5:1 at this size in dark mode, so it deepens toward the ink. */
   .where__sub {
-    color: var(--color-home-accent);
+    color: color-mix(in srgb, var(--color-home-accent) 70%, var(--color-ink));
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
   }
