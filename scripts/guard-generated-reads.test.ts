@@ -127,6 +127,25 @@ describe("generated-data read guard", () => {
     ).toBe(tokenMessage);
   });
 
+  it("denies token paths even when their files are symlinked elsewhere", () => {
+    const root = mkdtempSync(join(tmpdir(), "agent-read-"));
+    roots.push(root);
+    const tokenPath = join(root, ".config/gh/hosts.yml");
+    const targetPath = join(root, "synthetic-config.yml");
+    mkdirSync(join(root, ".config/gh"), { recursive: true });
+    writeFileSync(targetPath, "synthetic token");
+    symlinkSync(targetPath, tokenPath);
+
+    expect(readGuardMessage({ cwd: root, tool_input: { file_path: tokenPath } })).toBeDefined();
+    expect(
+      readGuardMessage({
+        cwd: root,
+        tool_input: { command: "cat .config/gh/hosts.yml" },
+        tool_name: "Bash",
+      }),
+    ).toBeDefined();
+  });
+
   it("allows other gh & wrangler config files", () => {
     expect(
       readGuardMessage({ tool_input: { file_path: ".config/gh/config.yml" } }),
