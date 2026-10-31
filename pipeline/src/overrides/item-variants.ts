@@ -22,7 +22,11 @@ export interface NamedItemVariantSet {
 export interface UnnamedItemVariantSet {
   name: string;
   reason: string;
-  unnamed: readonly string[];
+  /**
+   * Each row’s canonical item ID & English description. The extractor throws when one changes,
+   * since a reworded update may give the set a differentiator.
+   */
+  unnamed: Readonly<Record<string, string>>;
 }
 
 /** Every same-named row set in v1.0.8, sorted by name. */
@@ -30,11 +34,11 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Accessory Plant",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: [
-      "bonsai_accessory_plant_v1",
-      "bonsai_accessory_plant_v2",
-      "bonsai_accessory_plant_v3",
-    ],
+    unnamed: {
+      bonsai_accessory_plant_v1: "A small plant to accompany a bonsai.",
+      bonsai_accessory_plant_v2: "A small plant to accompany a bonsai.",
+      bonsai_accessory_plant_v3: "A small plant to accompany a bonsai.",
+    },
   },
   {
     name: "Anchor",
@@ -129,22 +133,31 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Broken Bottle",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_broken_bottle_v1", "dingy_broken_bottle_v2"],
+    unnamed: {
+      dingy_broken_bottle_v1: "A broken bottle.",
+      dingy_broken_bottle_v2: "A broken bottle.",
+    },
   },
   {
     name: "Broken Plate",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_broken_plate_v1", "dingy_broken_plate_v2"],
+    unnamed: { dingy_broken_plate_v1: "A broken plate.", dingy_broken_plate_v2: "A broken plate." },
   },
   {
     name: "Broken Springs Couch",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_couch_v1", "dingy_couch_v2"],
+    unnamed: {
+      dingy_couch_v1: "An uncomfortable couch that's beyond repair.",
+      dingy_couch_v2: "An uncomfortable couch that's beyond repair.",
+    },
   },
   {
     name: "Broken Window",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_window_v1", "dingy_window_v2"],
+    unnamed: {
+      dingy_window_v1: "Many of the panes of this window are broken.",
+      dingy_window_v2: "Many of the panes of this window are broken.",
+    },
   },
   {
     name: "Cabin Counter",
@@ -183,12 +196,15 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Cardboard Box Chair",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_chair_v1", "dingy_chair_v2"],
+    unnamed: {
+      dingy_chair_v1: "An improvised chair made from a cardboard box.",
+      dingy_chair_v2: "An improvised chair made from a cardboard box.",
+    },
   },
   {
     name: "Chipped Cup",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_chipped_cup_v1", "dingy_chipped_cup_v2"],
+    unnamed: { dingy_chipped_cup_v1: "A chipped cup.", dingy_chipped_cup_v2: "A chipped cup." },
   },
   {
     name: "Counterfeit Gold Pile",
@@ -288,13 +304,19 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Dirty Tiles Flooring",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_flooring_v1", "dingy_flooring_v2"],
+    unnamed: {
+      dingy_flooring_v1: "This tiled floor has seen better days.",
+      dingy_flooring_v2: "This tiled floor has seen better days.",
+    },
   },
   {
     name: "Dragon Ruins Pillar",
     reason:
       "Only one description names a difference (“gold accents”), so the other row has no name.",
-    unnamed: ["dragon_ruins_pillar_v1", "dragon_ruins_pillar_v2"],
+    unnamed: {
+      dragon_ruins_pillar_v1: "A purple pillar with a dragon scale motif.",
+      dragon_ruins_pillar_v2: "A purple pillar with a dragon scale motif and gold accents.",
+    },
   },
   {
     name: "Dragon Stained Glass Window",
@@ -354,7 +376,10 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Garbage Bag",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_garbage_bag_v1", "dingy_garbage_bag_v2"],
+    unnamed: {
+      dingy_garbage_bag_v1: "A full bag of garbage.",
+      dingy_garbage_bag_v2: "A full bag of garbage.",
+    },
   },
   {
     name: "Incense Burner",
@@ -471,14 +496,16 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Mini Tea Set",
     reason: "Descriptions differ in two phrases (tray wood & vessel color); held for human review.",
-    unnamed: [
-      "mini_tea_set_cup_oak",
-      "mini_tea_set_cup_walnut",
-      "mini_tea_set_cup_white",
-      "mini_tea_set_teapot_oak",
-      "mini_tea_set_teapot_walnut",
-      "mini_tea_set_teapot_white",
-    ],
+    unnamed: {
+      mini_tea_set_cup_oak: "A decorative tea set with an oak tray and a green lidded cup.",
+      mini_tea_set_cup_walnut: "A decorative tea set with a walnut tray and a white lidded cup.",
+      mini_tea_set_cup_white:
+        "A decorative tea set with a white tray and a blue and white lidded cup.",
+      mini_tea_set_teapot_oak: "A decorative tea set with an oak tray and a brown clay teapot.",
+      mini_tea_set_teapot_walnut:
+        "A decorative tea set with a walnut tray and an orange clay teapot.",
+      mini_tea_set_teapot_white: "A decorative tea set with a white tray and a tan clay teapot.",
+    },
   },
   {
     name: "Mist Bed",
@@ -613,12 +640,18 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Mostly Broken String Lights",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_string_lights_v1", "dingy_string_lights_v2"],
+    unnamed: {
+      dingy_string_lights_v1: "These stringlights are nearly useless.",
+      dingy_string_lights_v2: "These stringlights are nearly useless.",
+    },
   },
   {
     name: "Mouse Hole",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_mouse_hole_v1", "dingy_mouse_hole_v2"],
+    unnamed: {
+      dingy_mouse_hole_v1: "The entrance to a cozy mouse home.",
+      dingy_mouse_hole_v2: "The entrance to a cozy mouse home.",
+    },
   },
   {
     name: "Nautical Compass",
@@ -817,17 +850,26 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Peeling Wallpaper",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_wallpaper_v1", "dingy_wallpaper_v2"],
+    unnamed: {
+      dingy_wallpaper_v1: "A faded and peeling wallpaper.",
+      dingy_wallpaper_v2: "A faded and peeling wallpaper.",
+    },
   },
   {
     name: "Pile of Laundry",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_pile_of_laundry_v1", "dingy_pile_of_laundry_v2"],
+    unnamed: {
+      dingy_pile_of_laundry_v1: "A messy pile of unfolded laundry.",
+      dingy_pile_of_laundry_v2: "A messy pile of unfolded laundry.",
+    },
   },
   {
     name: "Pile of Newspapers",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_pile_of_newspapers_v1", "dingy_pile_of_newspapers_v2"],
+    unnamed: {
+      dingy_pile_of_newspapers_v1: "A pile of very old newspapers.",
+      dingy_pile_of_newspapers_v2: "A pile of very old newspapers.",
+    },
   },
   {
     name: "Pirate Flag",
@@ -876,7 +918,10 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Rickety Table",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_table_v1", "dingy_table_v2"],
+    unnamed: {
+      dingy_table_v1: "A table with one leg that's shorter than the others.",
+      dingy_table_v2: "A table with one leg that's shorter than the others.",
+    },
   },
   {
     name: "Ruins Floor Brazier",
@@ -1054,12 +1099,18 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Stone Path",
     reason: "Identical descriptions; only one ID adds “double”, so the other row has no name.",
-    unnamed: ["starter_stone_path", "starter_stone_path_double"],
+    unnamed: {
+      starter_stone_path: "Paved stones for making paths.",
+      starter_stone_path_double: "Paved stones for making paths.",
+    },
   },
   {
     name: "Strange Garden Stone",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["strange_garden_stone_v1", "strange_garden_stone_v2"],
+    unnamed: {
+      strange_garden_stone_v1: "A strange decorative stone taken from a lake.",
+      strange_garden_stone_v2: "A strange decorative stone taken from a lake.",
+    },
   },
   {
     name: "Tall Display Stand",
@@ -1085,12 +1136,18 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Tattered Rug",
     reason: "Identical descriptions, and the IDs differ only by version number.",
-    unnamed: ["dingy_rug_v1", "dingy_rug_v2"],
+    unnamed: {
+      dingy_rug_v1: "A threadbare and tattered rug.",
+      dingy_rug_v2: "A threadbare and tattered rug.",
+    },
   },
   {
     name: "Water Altar",
     reason:
       "Only one description names a difference (“pink accents”), so the other row has no name.",
-    unnamed: ["dragon_water_altar_v1", "dragon_water_altar_v2"],
+    unnamed: {
+      dragon_water_altar_v1: "A golden water altar.",
+      dragon_water_altar_v2: "A golden water altar with pink accents.",
+    },
   },
 ];

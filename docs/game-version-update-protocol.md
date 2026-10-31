@@ -201,7 +201,8 @@ For each set, the agent running the update proposes an entry:
    says “purple”, not “dark”). Fall back to the ID diff only when every description is identical.
 2. Leave the whole set unnamed when any row has no differentiator (all or nothing), or when the IDs
    differ only by a bare version number. Never invent ordinals such as “Style 1”.
-3. Commit entries it’s confident in, recording each row’s English description as evidence.
+3. Commit entries it’s confident in, recording each row’s English description as evidence. Unnamed
+   sets record theirs too, so a reworded description that adds a differentiator gets reviewed.
 4. Present these cases to a human instead of deciding them:
    - descriptions that differ in more than one phrase (the proposal says so),
    - a differentiator that isn’t yet an `ITEM_VARIANTS` key,

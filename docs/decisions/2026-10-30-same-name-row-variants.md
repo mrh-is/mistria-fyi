@@ -26,10 +26,10 @@ sets & 239 rows in v1.0.8.
 
 - A same-name set is the rows (entries, by canonical item ID) of one almanac category that share an
   English name. The variant is a field of `AlmanacEntry`, not `Item`.
-- `ITEM_VARIANT_SETS` reviews every set, named or unnamed with a reason, and records each named
-  row’s English description. The extractor throws on an uncovered set, a set whose rows changed, a
-  changed description, a repeated variant, & a review that no longer matches. Its error carries a
-  proposal from the review rules.
+- `ITEM_VARIANT_SETS` reviews every set, named or unnamed with a reason, and records every row’s
+  English description, named or not. The extractor throws on an uncovered set, a set whose rows
+  changed, a changed description, a repeated variant, & a review that no longer matches. Its error
+  carries a proposal from the review rules.
 - Each locale’s term comes from that locale’s description of an evidence row where possible.
   `ITEM_VARIANT_TERMS` lists each locale under `game` or `machine`; the messages themselves stay in
   `messages/<locale>.json`.

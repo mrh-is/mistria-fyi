@@ -67,15 +67,17 @@ export function resolveItemVariants(
     if (review.name !== set.name) {
       errors.push(`Reviewed set “${review.name}” is now named “${set.name}”`);
     }
-    if (!("named" in review)) continue;
-
-    const seen = new Set<ItemVariant>();
-    for (const [id, { description, variant }] of Object.entries(review.named)) {
+    for (const [id, description] of Object.entries(reviewedDescriptions(review))) {
       if (descriptions[id] !== description) {
         errors.push(
           `Reviewed description for “${id}” changed: ${JSON.stringify(description)} → ${JSON.stringify(descriptions[id])}`,
         );
       }
+    }
+    if (!("named" in review)) continue;
+
+    const seen = new Set<ItemVariant>();
+    for (const [id, { variant }] of Object.entries(review.named)) {
       if (seen.has(variant)) errors.push(`Reviewed set “${set.name}” repeats variant “${variant}”`);
       seen.add(variant);
       variants.set(id as ItemId, variant);
@@ -136,7 +138,14 @@ export function proposeItemVariants(
 }
 
 function reviewedIds(set: ItemVariantSet): string[] {
-  return "named" in set ? Object.keys(set.named) : [...set.unnamed];
+  return Object.keys(reviewedDescriptions(set));
+}
+
+function reviewedDescriptions(set: ItemVariantSet): Record<string, string> {
+  if (!("named" in set)) return { ...set.unnamed };
+  return Object.fromEntries(
+    Object.entries(set.named).map(([id, { description }]) => [id, description]),
+  );
 }
 
 function setKey(ids: readonly string[]): string {

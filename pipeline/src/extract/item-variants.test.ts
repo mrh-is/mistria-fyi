@@ -114,9 +114,19 @@ describe("resolveItemVariants", () => {
 
   it("returns nothing for a set reviewed as unnamed", () => {
     const unnamed: ItemVariantSet[] = [
-      { name: "Cobweb Left", reason: "test", unnamed: ["cobweb_left_dark", "cobweb_left"] },
+      { name: "Cobweb Left", reason: "test", unnamed: cobwebs.descriptions },
     ];
     expect(resolveItemVariants([cobwebs.set], cobwebs.descriptions, unnamed).size).toBe(0);
+  });
+
+  it("throws when an unnamed set’s description changes", () => {
+    const unnamed: ItemVariantSet[] = [
+      { name: "Cobweb Left", reason: "test", unnamed: cobwebs.descriptions },
+    ];
+    const reworded = { ...cobwebs.descriptions, cobweb_left_dark: "A dark purple cobweb." };
+    expect(() => resolveItemVariants([cobwebs.set], reworded, unnamed)).toThrow(
+      /Reviewed description for “cobweb_left_dark” changed/,
+    );
   });
 
   it("throws on an uncovered set, with a proposal", () => {
