@@ -127,15 +127,6 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/268#issuecomment-6472487942](https://github.com/mrh-is/mistria-fyi/issues/268#issuecomment-6472487942),
 [scripts/decision-index.ts](../scripts/decision-index.ts).
 
-### [Review record format](decisions/2026-10-28-review-record-format.md)
-
-ID: 2026-10-28-review-record-format. Status: Current.
-
-Shared review IDs & dispositions are repository guidance; aggregation tooling remains deferred.
-
-Evidence: [docs/agent-verification.md](../docs/agent-verification.md),
-[https://github.com/mrh-is/mistria-fyi/pull/273](https://github.com/mrh-is/mistria-fyi/pull/273).
-
 ### [Follow the save, not a pairing](decisions/2026-10-28-sync-follow-the-save.md)
 
 ID: 2026-10-28-sync-follow-the-save. Status: Current.
@@ -214,6 +205,33 @@ requests per 10 seconds per IP & Cloudflare location.
 
 Evidence: [relay/README.md](../relay/README.md),
 [https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
+
+### [Issue blocker relationships](decisions/2026-10-31-issue-blocker-relationships.md)
+
+ID: 2026-10-31-issue-blocker-relationships. Status: Current.
+
+Issue-to-issue dependencies use GitHub “blocked by” relationships; `status: blocked` covers only
+blockers outside the tracker.
+
+Evidence: [docs/agent-workflow.md#blockers](../docs/agent-workflow.md#blockers).
+
+### [Post reviews on GitHub](decisions/2026-10-31-post-reviews-on-github.md)
+
+ID: 2026-10-31-post-reviews-on-github. Status: Current.
+
+A request to review is a request to post; every review is posted to its PR or issue by the agent
+that requested it.
+
+Evidence: [docs/agent-verification.md#review-records](../docs/agent-verification.md#review-records).
+
+### [Small-agent label](decisions/2026-10-31-small-agent-label.md)
+
+ID: 2026-10-31-small-agent-label. Status: Current.
+
+Claude & Codex label small, fully specified issues `delegate: small agent` so the owner can assign
+them to Antigravity or Copilot.
+
+Evidence: [docs/agent-workflow.md#small-agent-tasks](../docs/agent-workflow.md#small-agent-tasks).
 
 ## Partially superseded/amended
 
@@ -522,6 +540,22 @@ Relationship evidence:
 
 Unresolved applicability: Personal token revocation remains unverified. Issue #242 proves production
 App use; the owner authorized removal without claiming revocation.
+
+### [Review record format](decisions/2026-10-28-review-record-format.md)
+
+ID: 2026-10-28-review-record-format. Status: Partially superseded/amended.
+
+Shared review IDs & dispositions are repository guidance; aggregation tooling remains deferred.
+
+Evidence: [docs/agent-verification.md](../docs/agent-verification.md),
+[https://github.com/mrh-is/mistria-fyi/pull/273](https://github.com/mrh-is/mistria-fyi/pull/273).
+
+Amended by [Post reviews on GitHub](decisions/2026-10-31-post-reviews-on-github.md). Affected
+portion: Only the rule that posting policy stays in the personal overlay. Posting every review is
+now repository guidance; review routing stays in the overlay.
+
+Relationship evidence:
+[docs/decisions/2026-10-31-post-reviews-on-github.md](../docs/decisions/2026-10-31-post-reviews-on-github.md).
 
 ### [Sync relay admission](decisions/2026-10-29-sync-relay.md)
 
