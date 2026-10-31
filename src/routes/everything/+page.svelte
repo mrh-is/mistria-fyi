@@ -3,6 +3,7 @@
   import { SvelteURL } from "svelte/reactivity";
 
   import AllCompleted from "#lib/components/all-completed.svelte";
+  import CompletedHeading from "#lib/components/completed-heading.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import PageHeader from "#lib/components/page-header.svelte";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
@@ -109,6 +110,19 @@
     {#each orderedCategories as category (category)}
       <CategorySection key={category} locale={data.locale} progress={progress[category]} />
     {/each}
+    {#if userState.state.showCompleted}
+      <div class="flex flex-col gap-6" data-testid="everything-completed">
+        <CompletedHeading class="px-2 pt-2" />
+        {#each orderedCategories as category (category)}
+          <CategorySection
+            completed
+            key={category}
+            locale={data.locale}
+            progress={progress[category]}
+          />
+        {/each}
+      </div>
+    {/if}
   {/if}
 
   <AllCompleted isAllCompleted={overallProgress.completed >= overallProgress.total} />
