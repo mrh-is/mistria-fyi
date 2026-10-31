@@ -186,6 +186,57 @@ Do not infer a rename merely because one ID disappeared while another appeared. 
 in the version-update issue until native data or another authoritative source establishes the
 relationship.
 
+### Name same-name almanac rows
+
+Some almanac rows share a name within a category: six “Animated Clouds Window” rows differ only in
+color. The game names none of its colorways, so `pipeline/src/overrides/item-variants.ts` names each
+such row, and the almanac extractor throws until every set is reviewed. It also throws when a
+reviewed set gains or loses a row, or when a row’s English description changes. The error lists each
+uncovered set with a proposal from `proposeItemVariants` (`pipeline/src/extract/item-variants.ts`).
+
+For each set, the agent running the update proposes an entry:
+
+1. Derive each row’s differentiator from the description diff: the phrase its description doesn’t
+   share with the others. A description word beats an ID word (`haunted_attic_wall_cobweb_left_dark`
+   says “purple”, not “dark”). Fall back to the ID diff only when every description is identical.
+2. Name colors, plus the wood when rows differ by wood (“Oak”, “Walnut & green”). Don’t name other
+   materials: the tea sets’ “oak tray and a green lidded cup” reads “Oak & green”, not “Oak tray,
+   green cup”.
+3. Add a word only when the set needs it to tell rows apart, and drop the rest:
+   - When rows differ in two parts and one part alone repeats, name both. The Ornate Cabinets read
+     “Walnut & green” & “Walnut & gold”.
+   - When one part alone is unique, name only that one. The Ornate Sofas name the upholstery color,
+     not the frame.
+   - When colors alone don’t distinguish the item, add its shape, but no size: the Ruins Pots read
+     “White goblet”, “Orange gourd”, & “Cracked purple” (from “A small cracked purple clay pot”).
+4. When only one row names a difference, give the other row its natural counterpart: “Plain” against
+   “Gold accents”, “Single” against `starter_stone_path_double`’s “Double”. Leave a set unnamed only
+   when no row has a differentiator, or when the IDs differ only by a bare version number. Never
+   invent ordinals such as “Style 1”.
+5. Compare each proposal with the variant names on the
+   [Fields of Mistria wiki](https://fieldsofmistria.wiki.gg/), where its editors have named them.
+   The wiki is a reference, not a source: keep the game-derived name and flag a mismatch for review.
+6. Commit entries it’s confident in, recording each row’s English description as evidence. Unnamed
+   sets record theirs too, so a reworded description that adds a differentiator gets reviewed.
+7. Present these cases to a human instead of deciding them:
+   - descriptions that differ in more than one phrase (the proposal says so),
+   - a differentiator that isn’t yet an `ITEM_VARIANTS` key,
+   - a counterpart word under rule 4,
+   - a wiki name that disagrees with the proposal,
+   - a candidate merge of near-synonyms (“white” & “off-white” stay distinct by default).
+
+A new key goes in `ITEM_VARIANTS` (`src/lib/types/tracker-data.ts`), as a `variant_<key>` message in
+every `messages/<locale>.json`, in `src/lib/data/item-variants.ts`, & in
+`pipeline/src/overrides/item-variant-terms.ts`. Keys name phrases, not tokens (`light_brown`, not
+`light` + `brown`), so each locale orders its words naturally. Take each locale’s term from that
+locale’s own description of a row with that variant: the game’s translators already chose it (purple
+is “violet” in French, “morado” in Spanish, 보라색 in Korean). Descriptions inflect words for their
+nouns, so normalize to a standalone form (masculine singular where gender applies). Record the row
+as `evidence` and the locale under `game`. Where a locale’s description falls back to English or
+doesn’t name the difference, machine-translate with the full English description as context, list
+the locale under `machine`, & flag it for human review. `item-variants.assets.test.ts` checks the
+coverage, every locale’s message, & each `game` locale’s evidence.
+
 ## Review compatibility
 
 Evaluate each compatibility surface separately. A change that is harmless for one surface may be

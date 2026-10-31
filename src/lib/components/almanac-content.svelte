@@ -10,6 +10,7 @@
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerIndex } from "#lib/data/index.js";
+  import { getAlmanacEntryVariant } from "#lib/data/item-variants.js";
   import { getAlmanacEntryNames, getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
@@ -19,7 +20,7 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { matchesName } from "#lib/utils/name-match.js";
+  import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { AlmanacRow } from "#lib/engine/projections/almanac.js";
@@ -71,10 +72,14 @@
   let projection = $derived(
     projectAlmanac(userState.progressContext, {
       hideSpoilered: Boolean(nameFilter),
-      matchesEntry: (ids) =>
-        getAlmanacEntryNames({ itemIds: ids }, locale).some((name) =>
-          matchesName(name, nameFilter, locale),
-        ),
+      matchesEntry: (entry) => {
+        const names = getAlmanacEntryNames(entry, locale);
+        const variant = getAlmanacEntryVariant(entry, locale);
+        return (
+          names.some((name) => matchesName(name, nameFilter, locale)) ||
+          matchesTerms(names, variant ? [variant] : [], nameFilter, locale)
+        );
+      },
       matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
       progressionState: userState.progressionState,
       recentlyCompleted: recentlyCompleted.ids,
@@ -90,6 +95,7 @@
         .map((row) => ({
           ...row,
           name: getAlmanacEntryNames(row.entry, locale)[0],
+          variant: getAlmanacEntryVariant(row.entry, locale),
         }))
         .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
     })),
@@ -130,12 +136,13 @@
       >
         <TrackerRowList getKey={(item) => item.canonicalId} items={visibleRows}>
           {#snippet row(row)}
-            {@const { canonicalId, completed, item, name, sources, spoilered } = row}
+            {@const { canonicalId, completed, item, name, sources, spoilered, variant } = row}
             {@const itemVisibility = item.visibility}
             <TrackerRow
               display={rowDisplay(row)}
               segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
               {name}
+              subtitle={variant}
               reportCategory="almanac-item"
               reportEntityId={canonicalId}
               {sources}
