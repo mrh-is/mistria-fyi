@@ -105,6 +105,41 @@ describe("generated-data read guard", () => {
     ).toBeDefined();
   });
 
+  it("denies reads of stored OAuth token files, with a recovery instruction", () => {
+    const tokenMessage =
+      "Blocked read of a stored OAuth token file. Use `gh auth status` or `pnpm exec wrangler whoami` instead.";
+    expect(readGuardMessage({ tool_input: { file_path: "/Users/me/.config/gh/hosts.yml" } })).toBe(
+      tokenMessage,
+    );
+    expect(
+      readGuardMessage({
+        cwd: "/work/mistria",
+        tool_input: { command: "cat ~/.config/gh/hosts.yml" },
+        tool_name: "Bash",
+      }),
+    ).toBe(tokenMessage);
+    expect(
+      readGuardMessage({
+        cwd: "/work/mistria",
+        tool_input: { command: "cat ~/Library/Preferences/.wrangler/config/default.toml" },
+        tool_name: "Bash",
+      }),
+    ).toBe(tokenMessage);
+  });
+
+  it("allows other gh & wrangler config files", () => {
+    expect(
+      readGuardMessage({ tool_input: { file_path: ".config/gh/config.yml" } }),
+    ).toBeUndefined();
+    expect(
+      readGuardMessage({
+        cwd: "/work/mistria",
+        tool_input: { command: "cat wrangler.toml" },
+        tool_name: "Bash",
+      }),
+    ).toBeUndefined();
+  });
+
   it("returns the blocking exit code & reason over the real stdin protocol", () => {
     const result = spawnSync(process.execPath, ["scripts/guard-generated-reads.ts"], {
       encoding: "utf8",
