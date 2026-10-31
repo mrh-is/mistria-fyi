@@ -71,7 +71,8 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-generated-reads.ts\"",
-            "timeout": 10
+            "timeout": 10,
+            "onFailure": "block"
           }
         ]
       },
@@ -81,7 +82,30 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-generated-paths.ts\"",
-            "timeout": 10
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-agent-policy.ts\"",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "apply_patch|Edit|MultiEdit|NotebookEdit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-release-version.ts\"",
+            "timeout": 10,
+            "onFailure": "block"
           }
         ]
       }
@@ -183,6 +207,17 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/refresh-default-branch.sh\"",
             "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/lint-agent-stop.ts\"",
+            "timeout": 120
           }
         ]
       }

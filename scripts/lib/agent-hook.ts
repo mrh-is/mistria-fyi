@@ -5,6 +5,9 @@ import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 export interface HookInput {
+  agent_id?: string;
+  agent_transcript_path?: string;
+  agent_type?: string;
   cwd?: string;
   /** `FileChanged`: `"change"`, `"add"`, or `"unlink"`. */
   event?: string;
@@ -19,8 +22,12 @@ export interface HookInput {
     | string
     | {
         command?: unknown;
+        content?: unknown;
+        edits?: unknown;
         file_path?: unknown;
+        new_string?: unknown;
         notebook_path?: unknown;
+        old_string?: unknown;
         path?: unknown;
       };
   tool_name?: string;
