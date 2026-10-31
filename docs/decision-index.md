@@ -250,6 +250,18 @@ visual checks or screenshots.
 Evidence: [AGENTS.md](../AGENTS.md), [docs/agent-verification.md](../docs/agent-verification.md),
 [https://github.com/mrh-is/mistria-fyi/pull/318](https://github.com/mrh-is/mistria-fyi/pull/318).
 
+### [Copilot hook upkeep](decisions/2026-10-31-copilot-hook-upkeep.md)
+
+ID: 2026-10-31-copilot-hook-upkeep. Status: Current.
+
+Copilot’s Claude-compatible events without tool IDs skip setup & formatting, while the independent
+generated-data guards continue to run.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/315](https://github.com/mrh-is/mistria-fyi/issues/315),
+[scripts/agent-tool-hook.ts](../scripts/agent-tool-hook.ts),
+[scripts/agent-tool-hook.test.ts](../scripts/agent-tool-hook.test.ts).
+
 ### [Issue blocker relationships](decisions/2026-10-31-issue-blocker-relationships.md)
 
 ID: 2026-10-31-issue-blocker-relationships. Status: Current.

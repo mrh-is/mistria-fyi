@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import {
@@ -21,8 +22,9 @@ export function readGuardMessage(input: HookInput): string | undefined {
   if (command !== undefined) {
     targets = shellReadTargets(command);
   }
-  const paths = targets.map((target) =>
-    canonicalPath(input.cwd ?? process.cwd(), target).replaceAll("\\", "/"),
+  const cwd = input.cwd ?? process.cwd();
+  const paths = targets.flatMap((target) =>
+    [resolve(cwd, target), canonicalPath(cwd, target)].map((path) => path.replaceAll("\\", "/")),
   );
   if (paths.some((path) => /(?:^|\/)src\/lib\/data\/tracker-data\.json$/.test(path))) {
     return "Blocked generated tracker data read. Read src/lib/types/tracker-data.ts or pipeline source instead.";

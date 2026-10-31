@@ -252,7 +252,10 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   [Its reference](https://docs.github.com/en/copilot/reference/hooks-reference) documents
   Claude-style payloads for PascalCase events, alongside native camelCase payloads. The guards
   inspect the former; native payloads aren't parsed. Setup & formatting compatibility is separate
-  from guard enforcement.
+  from guard enforcement. CLI 1.0.105 sets `$CLAUDE_PROJECT_DIR`, but omits `tool_use_id` from its
+  Claude-compatible events. The upkeep handler skips native payloads & those ID-less events;
+  timestamps change between events and cannot pair formatter snapshots. See
+  [Copilot hook upkeep](decisions/2026-10-31-copilot-hook-upkeep.md).
 - **Guard crashes:** Claude Code v2.1.295+ uses `onFailure: "block"` on all four `PreToolUse`
   guards; an exit-1 crash, missing command, invalid output, or timeout blocks the call. Setup,
   formatting, & stop lint keep their existing failure behavior. See
