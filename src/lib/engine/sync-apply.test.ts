@@ -378,6 +378,16 @@ describe("applySync: a quest's two moments", () => {
     });
   });
 
+  it("counts an obtained quest with no record as unknown", () => {
+    const state = syncState({ questStates: { [STORY_QUEST]: "obtained" } });
+
+    expect(applyQuest(state, "completed")).toEqual({
+      obtainedSource: "unknown",
+      playtime: 100,
+      source: "save",
+    });
+  });
+
   it("records none when a save finishes the quest a save obtained", () => {
     const state = syncState({
       provenance: { [key]: { playtime: 50, source: "save" } },

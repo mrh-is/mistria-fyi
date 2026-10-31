@@ -20,7 +20,6 @@ import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
 import type { ProgressState, QuestState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
-/** One category row, with its original identity, presentation, & reversible store action. */
 /** The progress field each row kind records its fact under. */
 const FACT_FIELDS = {
   "almanac-item": "almanac",
@@ -37,6 +36,7 @@ const FACT_FIELDS = {
   spell: "spells",
 } as const satisfies Partial<Record<ReportCategory, keyof ProgressState>>;
 
+/** One category row, with its original identity, presentation, & reversible store action. */
 export interface SourceChecklistRow extends SourceGroupRow {
   category: CategoryKey;
   /** The row's `factKey`, which picks its checkbox's mark. */

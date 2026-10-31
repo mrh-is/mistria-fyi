@@ -33,8 +33,9 @@ status, and only the way it was made varies.
   done, and the crossing stroke lands slightly out of register.
 - A quest’s two moments keep their own tools (the design’s option A), so a stamped slash can sit
   under an inked stroke.
-- A manual mark stays manual when a save agrees with it, since only `unknown` facts are promoted to
-  `save`. So a mixed quest keeps its mixed mark.
+- A manual mark stays manual when a save agrees with it, so a mixed quest keeps its mixed mark. Only
+  sync’s `applySync` promotes an agreeing fact, and only an `unknown` one. A manual save import
+  promotes nothing, so `unknown` marks stay typed until sync applies a save.
 - Provenance is decorative: the checkbox keeps its name & state, and the tool isn’t announced.
 - Only the inked X animates its second stroke.
 

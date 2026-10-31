@@ -139,7 +139,8 @@ export function changedFacts(
 
 /**
  * The `obtainedSource` a fact records as `source` changes its value: the previous source, when this
- * change finishes a quest that source had obtained. Only quest facts hold these values.
+ * change finishes a quest that source had obtained. A quest with no record counts as `unknown`, as
+ * its mark does. Only quest facts hold these values.
  */
 export function obtainedSourceOf(
   previous: FactProvenance | undefined,
@@ -148,7 +149,8 @@ export function obtainedSourceOf(
   afterValue: string | undefined,
 ): ProvenanceSource | undefined {
   if (beforeValue !== "obtained" || afterValue !== "completed") return undefined;
-  return previous?.source === source ? undefined : previous?.source;
+  const obtainedSource = previous?.source ?? "unknown";
+  return obtainedSource === source ? undefined : obtainedSource;
 }
 
 /** Whether a “keep mine” still applies to a save that now reports `saveValue` for the fact. */
