@@ -34,3 +34,10 @@ auditConfig:
     # so no untrusted object reaches it. https://github.com/advisories/GHSA-gcqx-w48m-w2h4
     # Drop it once vite-plugin-svelte replaces deepmerge or a patched release ships.
     - GHSA-gcqx-w48m-w2h4
+
+peerDependencyRules:
+  allowedVersions:
+    # bits-ui 2.20.2 pins runed ^0.35.1, whose optional SvelteKit peer stops at ^2. runed only uses
+    # SvelteKit in `useSearchParams`, which bits-ui & svelte-toolbelt never call. Drop it once bits-ui
+    # depends on runed 0.38 or later, which allows SvelteKit 3.
+    "runed@0.35>@sveltejs/kit": "^3.0.0"
