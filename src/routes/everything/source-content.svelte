@@ -35,7 +35,7 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
-  import { matchesName } from "#lib/utils/name-match.js";
+  import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import CategorySection from "./category-section.svelte";
@@ -85,13 +85,7 @@
               const spoilered =
                 entry.spoilered ||
                 !isConditionVisible(entry.visibility, userState.progressionState);
-              if (
-                toolbarState.searchQuery &&
-                (spoilered ||
-                  ![entry.name, ...(entry.searchNames ?? [])].some((name) =>
-                    matchesName(name, toolbarState.searchQuery, locale),
-                  ))
-              ) {
+              if (toolbarState.searchQuery && (spoilered || !matchesSearch(entry))) {
                 return false;
               }
               if (!entry.obtainable && !toolbarState.showUnobtainable) return false;
@@ -154,6 +148,15 @@
     spoilered: boolean;
   }): boolean {
     return !spoilered && (held ?? section.state === "done");
+  }
+
+  function matchesSearch(entry: SourceChecklistRow): boolean {
+    const names = [entry.name, ...(entry.searchNames ?? [])];
+    const query = toolbarState.searchQuery;
+    return (
+      names.some((name) => matchesName(name, query, locale)) ||
+      matchesTerms(names, entry.searchTerms ?? [], query, locale)
+    );
   }
 
   function toggle(entry: SourceChecklistRow): void {

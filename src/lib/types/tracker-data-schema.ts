@@ -5,7 +5,7 @@ import {
   DATE_INSPIRATION_DROP_ACTIVITIES,
   UPGRADE_IDS,
 } from "./acquisition.js";
-import { SEASONS, STORE_UPGRADE_ACTIONS, WEATHERS } from "./tracker-data.js";
+import { ITEM_VARIANTS, SEASONS, STORE_UPGRADE_ACTIONS, WEATHERS } from "./tracker-data.js";
 
 import type { AvailabilityCondition, JsonValue } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
@@ -187,6 +187,8 @@ export const SourcedEntitySchema = v.strictObject({
 export const AlmanacEntrySchema = v.strictObject({
   itemIds: v.array(id("ItemId")),
   recipeId: v.optional(id("RecipeId")),
+  /** Tells this row apart from same-named rows in its category; absent when no name differs. */
+  variant: v.optional(v.picklist(ITEM_VARIANTS)),
 });
 export const AlmanacCategorySchema = v.strictObject({ items: v.array(AlmanacEntrySchema) });
 export const AnimalVariantSchema = v.strictObject({
