@@ -10,6 +10,7 @@ describe("TrackerRow", () => {
   });
 
   const reportProps = {
+    fact: "almanacRecipes/cherry_cobbler",
     reportCategory: "recipe" as const,
     reportEntityId: "cherry_cobbler",
   };

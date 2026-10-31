@@ -6,8 +6,8 @@ The player inks it (`manual`), the save stamps it (`save`), we pencil it in (`in
 old records were typed (`unknown`).
 
 Status: approved on the PR that adds this folder, with option A for quests. The decision record is
-[2026-10-30-provenance-marks](../../decisions/2026-10-30-provenance-marks.md). Implementation is
-separate work.
+[2026-10-30-provenance-marks](../../decisions/2026-10-30-provenance-marks.md). The app draws them
+from `src/lib/engine/provenance-marks.ts`.
 
 ## What’s here
 

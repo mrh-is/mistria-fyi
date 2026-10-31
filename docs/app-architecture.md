@@ -96,7 +96,7 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `5`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `6`.
   - `lastImport`: the last manual save import's timestamp, identity (filename number plus creation
     version), & player/farm display names, or `null`. Version 1 migrates to `null` without inventing
     history. Missing or malformed game metadata remains unknown and never blocks importing progress.
@@ -207,6 +207,12 @@ inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the st
   save import records `save`; a device transfer records `unknown`, since its payload carries no
   provenance. Only facts a call changes record: a save agreeing with a fact leaves its provenance as
   it was.
+- **A quest's two moments.** When a different source finishes an obtained quest, its record keeps
+  the obtained moment's source in `obtainedSource` (version 6), and any later change replaces the
+  record. A quest finished before version 6 has none, so it draws in its own source.
+- **Marks.** `provenanceMark` turns a fact's key & sources into its checkbox's mark. The tool is
+  decorative, so it's never announced. See the
+  [decision record](decisions/2026-10-30-provenance-marks.md).
 - **Hydration.** Facts stored before version 3 migrate as `unknown`, read the way hydration reads
   them, so a value it repairs to the default gets no record. A relationship the engagement cascade
   applies on load records `inferred`. History for a historical almanac ID is rekeyed under its

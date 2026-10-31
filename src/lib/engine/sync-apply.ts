@@ -14,7 +14,7 @@ import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { questStateRank, seasonOrdinal } from "#lib/engine/domain-primitives.js";
 import { getOrCreate, recordEntries, recordKeys } from "#lib/utils/record.js";
 
-import { progressFacts, resolutionHolds } from "./provenance.js";
+import { obtainedSourceOf, progressFacts, resolutionHolds } from "./provenance.js";
 import { compareFarms } from "./save-identity.js";
 
 import type { FarmIdentity } from "#lib/types/save-identity.js";
@@ -348,7 +348,13 @@ export function applySync(
       (policy === "ask-first" && accepted.has(key));
     if (difference.applied) {
       writeFact(progress, key, save);
-      history.provenance[key] = { ...stamp };
+      const obtainedSource = obtainedSourceOf(
+        ownEntry(history.provenance, key),
+        "save",
+        difference.local,
+        save,
+      );
+      history.provenance[key] = obtainedSource ? { ...stamp, obtainedSource } : { ...stamp };
       history.resolutions = withoutKey(history.resolutions, key);
     } else if (policy === "ask-first") {
       history.resolutions[key] = { saveValue: save ?? null };

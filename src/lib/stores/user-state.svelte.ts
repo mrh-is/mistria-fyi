@@ -14,7 +14,7 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
-import { changedFacts, factKey, progressFacts } from "#lib/engine/provenance.js";
+import { changedFacts, factKey, obtainedSourceOf, progressFacts } from "#lib/engine/provenance.js";
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
 import { applyEngagementCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
@@ -292,8 +292,17 @@ function createUserState() {
    * Records `source` & `playtime` for one fact. A manual edit also clears the fact's “keep mine”,
    * since the player has now decided it themselves.
    */
-  function recordFact(key: string, source: ProvenanceSource, playtime: number | undefined): void {
-    history.provenance[key] = playtime === undefined ? { source } : { playtime, source };
+  function recordFact(
+    key: string,
+    source: ProvenanceSource,
+    playtime: number | undefined,
+    obtainedSource: ProvenanceSource | undefined,
+  ): void {
+    history.provenance[key] = {
+      ...(obtainedSource === undefined ? {} : { obtainedSource }),
+      ...(playtime === undefined ? {} : { playtime }),
+      source,
+    };
     if (source === "manual" && Object.hasOwn(history.resolutions, key)) {
       const { [key]: _cleared, ...kept } = history.resolutions;
       history.resolutions = kept;
@@ -322,9 +331,17 @@ function createUserState() {
     } finally {
       trackingSource = undefined;
     }
-    for (const key of changedFacts(before, progressFacts(state.progress))) {
+    const after = progressFacts(state.progress);
+    for (const key of changedFacts(before, after)) {
       const consequence = source === "manual" && primary.length > 0 && !primary.includes(key);
-      recordFact(key, consequence ? "inferred" : source, playtime);
+      const factSource = consequence ? "inferred" : source;
+      const obtainedSource = obtainedSourceOf(
+        history.provenance[key],
+        factSource,
+        before.get(key),
+        after.get(key),
+      );
+      recordFact(key, factSource, playtime, obtainedSource);
     }
     return result;
   }

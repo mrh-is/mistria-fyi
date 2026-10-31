@@ -98,6 +98,39 @@ describe("provenance", () => {
     });
   });
 
+  it("keeps a quest's obtained moment's source when another source finishes it", () => {
+    const key = `questStates/${ONE_REWARD_QUEST}`;
+    userState.mergeFromSave({ questStates: { [ONE_REWARD_QUEST]: "obtained" } }, { playtime: 5 });
+    expect(userState.provenanceOf(key)).toEqual({ playtime: 5, source: "save" });
+
+    const completion = userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    expect(userState.provenanceOf(key)).toEqual({
+      obtainedSource: "save",
+      playtime: 5,
+      source: "manual",
+    });
+
+    // Undoing the finish is a manual edit, so the slash is the player's now.
+    userState.undoQuestWithRecipes(ONE_REWARD_QUEST, completion);
+    expect(userState.provenanceOf(key)).toEqual({ playtime: 5, source: "manual" });
+  });
+
+  it("records no obtained source when one source obtains & finishes a quest", () => {
+    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+
+    expect(userState.provenanceOf(`questStates/${ONE_REWARD_QUEST}`)).toEqual({
+      source: "manual",
+    });
+  });
+
+  it("leaves a manual fact manual when a save agrees with it", () => {
+    userState.toggleAlmanacItem(TURNIP);
+    userState.mergeFromSave({ almanac: new Set([TURNIP]) }, { playtime: 5 });
+
+    expect(userState.provenanceOf("almanac/turnip")).toEqual({ source: "manual" });
+  });
+
   it("records default unlocks & everything recordInferred changes as inferred", () => {
     userState.markDefaultUnlocksComplete();
     const [defaultRecipe] = userState.state.progress.almanacRecipes;
