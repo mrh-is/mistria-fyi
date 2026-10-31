@@ -1,6 +1,6 @@
 ---
 id: 2026-10-31-timing-limits-follow-the-diff
-status: current
+status: amended
 summary: >-
   Test timing fails a pull request only when it changes a test file over 15 s. Everything else about
   timing warns, & a nightly report tracks trends in one issue.
@@ -9,7 +9,15 @@ evidence:
   - docs/development-workflow.md#vitest-time-budgets
   - scripts/vitest-timings.ts
   - scripts/nightly-report.ts
-relationships: []
+relationships:
+  - type: amended-by
+    target: 2026-10-31-dependency-audit-follows-the-diff
+    scope: partial
+    portion: >-
+      The nightly report also tracks dependency advisories. Incomplete timing samples no longer
+      suppress advisory findings, & the issue closes only when both checks are clear.
+    evidence:
+      - https://github.com/mrh-is/mistria-fyi/issues/326
 ---
 
 # Timing limits follow the diff
