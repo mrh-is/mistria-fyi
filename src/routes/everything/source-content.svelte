@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { untrack } from "svelte";
+
   import CompletedHeading from "#lib/components/completed-heading.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import { Icon } from "#lib/components/icon/index.js";
@@ -8,6 +10,7 @@
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -31,6 +34,7 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -45,6 +49,7 @@
 
   const guard = createSpoilerGuard();
   const leaving = createLeavingSet<string>();
+  const sectionGrouping = createSectionGrouping<string>();
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
   let entries = $derived(buildSourceChecklist(userState.progressContext, locale));
   let lookups = $derived(
@@ -74,6 +79,7 @@
         .map((section) => ({
           section,
           ...sourceSectionLabel(section, lookups, userState.progressionState),
+          held: sectionGrouping.heldCompletion(section.id),
           visibleRows: section.rows
             .filter(({ entry, window }) => {
               const spoilered =
@@ -108,6 +114,47 @@
       ({ group, sections: groupSections }) => group === "progress" || groupSections.length > 0,
     ),
   );
+  let hasCompletedContent = $derived(
+    progressCompletions.includes(true) ||
+      groups.some(({ sections: groupSections }) =>
+        groupSections.some((entry) => isInCompletedList(entry)),
+      ),
+  );
+
+  // The hold starts from the section's current completion, which the grouping needs to know.
+  $effect(() => {
+    const reports = sections.map(({ id, state }) => [id, state === "done"] as const);
+    untrack(() => {
+      for (const [id, done] of reports) sectionGrouping.report(id, done);
+    });
+  });
+
+  // Moving or removing a section blurs whatever it contains.
+  let restoreFocus: (() => Promise<void>) | undefined;
+  $effect.pre(() => {
+    void groups;
+    void progressCompletions;
+    restoreFocus = captureFocusFallback();
+  });
+  $effect(() => {
+    void groups;
+    void progressCompletions;
+    const restore = restoreFocus;
+    restoreFocus = undefined;
+    if (restore) void restore();
+  });
+
+  function isInCompletedList({
+    held,
+    section,
+    spoilered,
+  }: {
+    held: boolean | undefined;
+    section: { state: string };
+    spoilered: boolean;
+  }): boolean {
+    return !spoilered && (held ?? section.state === "done");
+  }
 
   function toggle(entry: SourceChecklistRow): void {
     const perform = () => {
@@ -115,6 +162,9 @@
         const remaining = rows.filter(({ entry: row }) => row.obtainable && !row.completed);
         return remaining.length === 1 && remaining[0].entry.key === entry.key;
       });
+      for (const { id, rows } of sections) {
+        if (rows.some(({ entry: row }) => row.key === entry.key)) sectionGrouping.hold(id);
+      }
       const beforeRecipes = new Set(userState.state.progress.almanacRecipes);
       const undo = entry.toggle();
       const updated = buildSourceChecklist(userState.progressContext, locale).find(
@@ -154,15 +204,19 @@
 <SpoilerGuardDialog {guard} />
 
 {#each userState.state.showCompleted ? [false, true] : [false] as completed (completed)}
-  <div class="flex flex-col gap-6" data-testid={completed ? "everything-completed" : undefined}>
+  <div
+    class="flex flex-col gap-6"
+    data-testid={completed ? "everything-completed" : undefined}
+    hidden={completed && !hasCompletedContent}
+  >
     {#if completed}<CompletedHeading class="px-2 pt-2" />{/if}
     {#each groups as { group, sections: allGroupSections } (group)}
       {@const groupSections = allGroupSections.filter(
-        ({ section, spoilered }) => completed === (!spoilered && section.state === "done"),
+        (entry) => completed === isInCompletedList(entry),
       )}
       {@const hasProgress = group === "progress" && progressCompletions.includes(completed)}
       {@const hasOutstanding =
-        allGroupSections.some(({ section, spoilered }) => spoilered || section.state !== "done") ||
+        allGroupSections.some((entry) => !isInCompletedList(entry)) ||
         (group === "progress" && progressCompletions.includes(false))}
       {@const groupId = `sources-${group}${completed && hasOutstanding ? "-completed" : ""}`}
       {#if groupSections.length > 0 || hasProgress}

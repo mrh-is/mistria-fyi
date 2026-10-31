@@ -324,11 +324,15 @@ sections below the same page-wide Completed divider. In both lenses, outstanding
 completed groups start closed on each page load; these choices aren't persisted. The divider itself
 never collapses. A source anchor opens its containing type group, including a completed one.
 `controllers/completion-scope.svelte.ts` partitions category sections by the same completion their
-headers show; compact records register individually. Collapsed groups keep their content mounted so
-progress edits & filters can update which groups have content. Category pages have no completion
-scope & keep their existing grouping. The `group=category|source` query overrides the device’s
-`everythingGrouping` preference without rewriting it; choosing the control updates both the
-preference & URL. Progress serialization is unchanged.
+headers show; compact records & masked top-level spoiler sections register individually, & a masked
+section always counts as outstanding. A section changes lists once a completed row has had time to
+leave, the source lens holds its sections the same way, & focus inside a section that leaves moves
+to the nearest visible section trigger. The Completed divider hides while no completed group has
+content. Collapsed groups keep their content mounted so progress edits & filters can update which
+groups have content. Category pages have no completion scope & keep their existing grouping. The
+`group=category|source` query overrides the device’s `everythingGrouping` preference without
+rewriting it; choosing the control updates both the preference & URL. Progress serialization is
+unchanged.
 
 ### Component conventions
 

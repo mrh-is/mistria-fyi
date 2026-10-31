@@ -47,6 +47,7 @@
     <button
       type="button"
       class="flex min-h-11 w-full items-center gap-2 px-6 py-2 text-left text-sm font-semibold tracking-wide focus-visible:outline-2 focus-visible:outline-ring"
+      data-section-trigger
       aria-label={name}
       aria-describedby={description ? `${contentId}-description` : undefined}
       disabled={!hydrated}

@@ -132,7 +132,7 @@
     section: questSection,
     visibleRows,
   })}
-    <SpoilerSection name={typeLabel(questSection.questType)} spoilered={categorySpoilered}>
+    <SpoilerSection name={typeLabel(questSection.questType)} spoilered={categorySpoilered} topLevel>
       <ExpandableSection
         {locale}
         count={completedCount}

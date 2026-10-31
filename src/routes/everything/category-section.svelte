@@ -44,11 +44,14 @@
 
   let {
     completed = false,
+    hasContent = $bindable(),
     key,
     locale,
     progress,
   }: {
     completed?: boolean;
+    /** Whether this category shows anything in its list, for a page's Completed divider. */
+    hasContent?: boolean;
     key: CategoryKey;
     locale: LocaleCode;
     progress: CategoryProgress;
@@ -57,17 +60,17 @@
   const scope = createCompletionScope(untrack(() => completed));
 
   let content = $derived(CONTENT[key]);
+  let visible = $derived(
+    scope.hasContent(completed ? progress.completed > 0 : progress.completed < progress.total),
+  );
+
+  $effect(() => {
+    hasContent = visible;
+  });
 </script>
 
 <div class="contents" style="--primary: var(--color-category-{key})">
-  <SectionHeader
-    {key}
-    {progress}
-    {completed}
-    visible={scope.hasContent(
-      completed ? progress.completed > 0 : progress.completed < progress.total,
-    )}
-  >
+  <SectionHeader {key} {progress} {completed} {visible}>
     {#if content.compact}
       <content.component compact {locale} />
     {:else}

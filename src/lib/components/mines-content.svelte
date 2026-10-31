@@ -7,6 +7,7 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -27,6 +28,7 @@
 
   const spoilerGuard = createSpoilerGuard();
   const sectionGrouping = createSectionGrouping<"floors" | "spells">();
+  const leavingSpells = createLeavingSet<SpellId>();
 
   function isSpellSpoilered(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility;
@@ -41,6 +43,7 @@
       userState.toggleSpell(spellId);
     });
     if (completed) {
+      if (!userState.state.showCompleted) leavingSpells.markLeaving(spellId);
       if (isMinesComplete()) {
         celebrateCategory();
       } else if (allSpellsComplete()) {
@@ -112,7 +115,7 @@
   let visibleSpells = $derived(
     scopedSpells.filter((spell) => {
       const completed = userState.state.progress.spells.has(spell.id);
-      return completed ? userState.state.showCompleted : true;
+      return completed ? userState.state.showCompleted || leavingSpells.has(spell.id) : true;
     }),
   );
 </script>
@@ -174,7 +177,11 @@
           {#snippet row(spell)}
             {@const completed = userState.state.progress.spells.has(spell.id)}
             <TrackerRow
-              display={trackerRowDisplay({ completed, spoilered: isSpellSpoilered(spell.id) })}
+              display={trackerRowDisplay({
+                completed,
+                leaving: leavingSpells.has(spell.id),
+                spoilered: isSpellSpoilered(spell.id),
+              })}
               name={spell.name}
               reportCategory="spell"
               reportEntityId={spell.id}
