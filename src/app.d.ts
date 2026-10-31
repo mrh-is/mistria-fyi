@@ -11,6 +11,8 @@ interface Turnstile {
 }
 
 interface TurnstileRenderOptions {
+  action?: string;
+  appearance?: "always" | "execute" | "interaction-only";
   "before-interactive-callback"?: () => void;
   callback?: (token: string) => void;
   "error-callback"?: (errorCode: string) => void;

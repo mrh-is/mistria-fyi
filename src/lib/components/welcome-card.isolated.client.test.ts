@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WelcomeCard from "#lib/components/welcome-card.svelte";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
+// The production site's card, while save file sync is hidden until launch (#291).
+vi.mock("#lib/sync/enabled.js", () => ({ syncEnabled: false }));
+
 function setDevice({ touchPoints, width }: { touchPoints: number; width: number }): void {
   Object.defineProperty(navigator, "maxTouchPoints", { configurable: true, value: touchPoints });
   Object.defineProperty(globalThis, "innerWidth", { configurable: true, value: width });
@@ -21,7 +24,7 @@ afterEach(async () => {
   await tick();
 });
 
-describe("WelcomeCard", () => {
+describe("WelcomeCard with sync hidden", () => {
   it("offers save import first on a desktop and starts manual tracking with default items", async () => {
     render(WelcomeCard);
 

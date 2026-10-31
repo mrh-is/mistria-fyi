@@ -7,6 +7,7 @@
   import * as m from "#lib/paraglide/messages.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
 
   import DataCard from "./data-card.svelte";
 
@@ -26,18 +27,8 @@
   // An app update's reload waits until a restore has finished applying.
   $effect(() => holdUpdatesWhile(restoring));
 
-  function downloadJson(json: string, prefix: string) {
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${prefix}-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   function handleExport() {
-    downloadJson(userState.exportBackup(), "mistria-field-guide-backup");
+    downloadJson(userState.exportBackup(), BACKUP_FILE_PREFIX);
   }
 
   function handleDownloadUnreadable() {

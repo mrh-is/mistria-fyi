@@ -5,6 +5,8 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import { trackerData } from "#lib/data/index.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncEnabled } from "#lib/sync/enabled.js";
   import { version } from "$app/env";
   import { page } from "$app/state";
 
@@ -12,6 +14,7 @@
   import DangerZoneCard from "./danger-zone-card.svelte";
   import { openThenScroll } from "./data-effects.js";
   import ImportCard from "./import-card.svelte";
+  import SyncCard from "./sync-card.svelte";
   import TransferCard from "./transfer-card.svelte";
 
   let importSection = $state<HTMLElement | null>(null);
@@ -20,6 +23,8 @@
   // prerendered, and a prerendered page can't read its query on the server.
   let importOpen = $state(false);
   let transferOpen = $state(false);
+  // A syncing lane already gets the save file by itself, so manual import & transfer step aside.
+  let syncing = $derived(syncEnabled && userState.syncLane !== undefined);
 
   function scrollToTransfer(): void {
     void openThenScroll(
@@ -60,17 +65,26 @@
 <PageHeader title={m.data_title()} backLabel={m.common_go_back()} historyBack />
 
 <div class="data-page">
-  <p class="data-page__intro">{m.data_intro()}</p>
+  <p class="data-page__intro">{syncEnabled ? m.sync_data_intro() : m.data_intro()}</p>
+
+  {#if syncEnabled}
+    <section aria-labelledby="data-sync-heading">
+      <h2 id="data-sync-heading">{m.sync_card_title()}</h2>
+      <SyncCard />
+    </section>
+  {/if}
 
   <section aria-labelledby="data-tools-heading">
     <h2 id="data-tools-heading">{m.data_field_kit_heading()}</h2>
     <div class="data-page__tools">
-      <div bind:this={importSection}>
-        <ImportCard bind:open={importOpen} onScrollToTransfer={scrollToTransfer} />
-      </div>
-      <div bind:this={transferSection}>
-        <TransferCard bind:open={transferOpen} />
-      </div>
+      {#if !syncing}
+        <div bind:this={importSection}>
+          <ImportCard bind:open={importOpen} onScrollToTransfer={scrollToTransfer} />
+        </div>
+        <div bind:this={transferSection}>
+          <TransferCard bind:open={transferOpen} />
+        </div>
+      {/if}
       <BackupCard />
     </div>
   </section>

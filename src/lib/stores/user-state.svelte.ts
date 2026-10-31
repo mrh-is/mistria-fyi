@@ -90,10 +90,18 @@ import type {
   LoadedProgress,
   ProgressSnapshot,
   RetainedProgress,
+  SyncLane,
 } from "./progress-storage.js";
 
 /** How a write treats a value another tab stored since this one last read it. */
 type WriteIntent =
+  | {
+      /** Built aside from live state, which takes it only once it's stored (see `startSyncLane`). */
+      guard: () => boolean;
+      kind: "staged";
+      lane: SyncLane;
+      staged: Omit<LoadedProgress, "local">;
+    }
   | {
       /** What `json` builds on: the stored value this tab last read, or a pending explicit write. */
       base: null | string;
@@ -105,7 +113,15 @@ type WriteIntent =
       progress: ProgressState;
       sequence: number;
     }
-  | { generation: number; kind: "auto-save" };
+  | { generation: number; kind: "auto-save" }
+  | {
+      kind: "local";
+      /**
+       * The next `local` section, given the one stored now, or `undefined` when the stored one
+       * isn't what the change expected (another tab changed the lane or code), so nothing is written.
+       */
+      update: (stored: DeepReadonly<DeviceLocalState>) => DeviceLocalState | undefined;
+    };
 
 /** The browser's Web Locks, where it has them; absent in old browsers & insecure contexts. */
 function progressLockManager(): LockManager | undefined {
@@ -238,6 +254,38 @@ function createDefaultState(): UserState {
 
 function createDefaultWorldState(): UserState["worldState"] {
   return { season: "spring", weather: "calm" };
+}
+
+/** A save file read for sync: the progress it records, its farm, & its playtime. */
+export interface SyncedSave {
+  completed: Partial<ProgressState>;
+  metadata: SaveImportMetadata;
+  playtime: number | undefined;
+}
+
+/** The code a computer lane shares: its key & the write token only that device holds. */
+export type SharedCode = NonNullable<Extract<SyncLane, { kind: "computer" }>["code"]>;
+
+/** A code waiting for the relay to confirm it's retired. */
+export type PendingRetire = NonNullable<DeviceLocalState["syncPendingRetires"]>[number];
+
+function emptyLoadedProgress(): Omit<LoadedProgress, "local"> {
+  return {
+    history: emptyProgressHistory(),
+    lastImport: null,
+    progress: createDefaultProgress(),
+    retained: emptyRetainedProgress(),
+    worldState: createDefaultWorldState(),
+  };
+}
+
+function withRetire(
+  pending: readonly PendingRetire[] | undefined,
+  retire: PendingRetire | undefined,
+): PendingRetire[] | undefined {
+  if (retire === undefined) return pending === undefined ? undefined : [...pending];
+  const others = (pending ?? []).filter((entry) => entry.mailboxId !== retire.mailboxId);
+  return [...others, { ...retire }];
 }
 
 function createUserState() {
@@ -379,14 +427,15 @@ function createUserState() {
    *
    * Cleared storage has nothing to conflict with, so it's written normally. Callers hold the
    * progress Web Lock (see {@link requestProgressWrite}); only the pagehide flush calls it bare.
+   * Returns whether this write's value is now stored.
    */
-  function writeProgress(intent: WriteIntent): void {
-    if (intent.kind === "auto-save" && intent.generation !== saveGeneration) return;
-    if (!_persistenceReady) return;
+  function writeProgress(intent: WriteIntent): boolean {
+    if (intent.kind === "auto-save" && intent.generation !== saveGeneration) return false;
+    if (!_persistenceReady) return false;
     const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
     if (!storedResult.ok) {
       reportStorageUnavailable();
-      return;
+      return false;
     }
 
     const stored = storedResult.value;
@@ -394,16 +443,19 @@ function createUserState() {
     if (stored !== null && stored !== lastKnownStoredValue) {
       if (read?.kind === "newer" || intent.kind === "auto-save") {
         applyStorageValue(stored);
-        return;
+        return false;
       }
       if (read?.kind === "unreadable") {
         if (!trySetItem(QUARANTINE_STORAGE_KEY, stored)) {
           quarantine(stored);
-          return;
+          return false;
         }
         _unreadableData = stored;
       }
     }
+
+    if (intent.kind === "local") return writeLocalPatch(intent.update, stored, read);
+    if (intent.kind === "staged") return writeStaged(intent, stored, read);
 
     let json = serialize();
     if (intent.kind !== "auto-save") {
@@ -462,13 +514,14 @@ function createUserState() {
     }
     if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
       reportStorageUnavailable();
-      return;
+      return false;
     }
     lastKnownStoredValue = json;
     if (intent.kind !== "auto-save" && intent.sequence === explicitSequence) {
       pendingExplicitJson = undefined;
     }
     _persistenceFailureGeneration = 0;
+    return true;
   }
 
   /**
@@ -476,24 +529,93 @@ function createUserState() {
    * re-read & its write. Without Web Locks it runs at once: the read & write are synchronous, so
    * only another tab running in parallel in that same instant could slip between them.
    */
-  function requestProgressWrite(intent: WriteIntent): void {
+  function requestProgressWrite(intent: WriteIntent): Promise<boolean> {
     const locks = progressLockManager();
-    if (!locks) {
-      writeProgress(intent);
-      return;
-    }
-    void writeUnderLock(locks, intent);
+    if (!locks) return Promise.resolve(writeProgress(intent));
+    return writeUnderLock(locks, intent);
   }
 
-  async function writeUnderLock(locks: LockManager, intent: WriteIntent): Promise<void> {
+  async function writeUnderLock(locks: LockManager, intent: WriteIntent): Promise<boolean> {
+    let written = false;
     try {
       await locks.request(PROGRESS_WRITE_LOCK, () => {
-        writeProgress(intent);
+        written = writeProgress(intent);
       });
     } catch {
       // The lock couldn't be taken (e.g. a sandboxed frame); write as a browser without locks does.
-      writeProgress(intent);
+      written = writeProgress(intent);
     }
+    return written;
+  }
+
+  /**
+   * Writes a change to this device's `local` section alone, as a patch to the document stored when
+   * the lock is held: its progress & the rest of `local` stay as stored, whichever tab wrote them.
+   * Memory takes the new section only once it's stored, so it never holds a code or lane that
+   * storage doesn't.
+   */
+  function writeLocal(
+    update: (stored: DeepReadonly<DeviceLocalState>) => DeviceLocalState | undefined,
+  ): Promise<boolean> {
+    return requestProgressWrite({ kind: "local", update });
+  }
+
+  /** The body of a {@link writeLocal} write, inside the lock. */
+  function writeLocalPatch(
+    update: (stored: DeepReadonly<DeviceLocalState>) => DeviceLocalState | undefined,
+    stored: null | string,
+    read: ReturnType<typeof readProgressBlob> | undefined,
+  ): boolean {
+    // An unreadable stored value has no `local` section to patch.
+    if (stored !== null && read?.kind !== "ok") return false;
+    const base = read?.kind === "ok" ? read.loaded : { ...snapshot(), local };
+    const next = update(base.local);
+    if (next === undefined) return false;
+    const json = serializeStoredProgress(base, next);
+    if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
+      reportStorageUnavailable();
+      return false;
+    }
+    // Another tab's newer progress is adopted, as an auto-save adopts it, so no later save here
+    // writes over it.
+    if (read?.kind === "ok" && stored !== lastKnownStoredValue) {
+      clearPendingSave();
+      pendingExplicitJson = undefined;
+      replaceProgress(read.loaded);
+    }
+    local = next;
+    lastKnownStoredValue = json;
+    _persistenceFailureGeneration = 0;
+    return true;
+  }
+
+  /**
+   * The body of a lane start, inside the lock: checks it's still wanted, stores the staged progress
+   * with the lane added to the stored `local` section (its farm-switch backup & pending retires
+   * kept; any old receipt & lane gone), & only then makes it live, discarding this tab's unsaved
+   * edits, which the erase replaces.
+   */
+  function writeStaged(
+    intent: Extract<WriteIntent, { kind: "staged" }>,
+    stored: null | string,
+    read: ReturnType<typeof readProgressBlob> | undefined,
+  ): boolean {
+    if (!intent.guard()) return false;
+    const storedLocal = read?.kind === "ok" ? read.loaded.local : local;
+    const { syncLane: _lane, syncReceipt: _receipt, ...kept } = storedLocal;
+    const nextLocal: DeviceLocalState = { ...kept, syncLane: intent.lane };
+    const json = serializeStoredProgress(intent.staged, nextLocal);
+    if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
+      reportStorageUnavailable();
+      return false;
+    }
+    clearPendingSave();
+    pendingExplicitJson = undefined;
+    replaceProgress(intent.staged);
+    local = nextLocal;
+    lastKnownStoredValue = json;
+    _persistenceFailureGeneration = 0;
+    return true;
   }
 
   /** Captures an explicit write now, rather than after the auto-save debounce. */
@@ -502,11 +624,20 @@ function createUserState() {
     keepLocal = true,
     importedSave = false,
   ): void {
+    void explicitWrite(kind, keepLocal, importedSave);
+  }
+
+  /** {@link writeExplicitProgress}, resolving once the write has run with whether it's stored. */
+  function explicitWrite(
+    kind: "merge" | "replace",
+    keepLocal: boolean,
+    importedSave = false,
+  ): Promise<boolean> {
     clearPendingSave();
     const json = serialize();
     const base = pendingExplicitJson ?? lastKnownStoredValue;
     pendingExplicitJson = json;
-    requestProgressWrite({
+    return requestProgressWrite({
       base,
       importedSave,
       json,
@@ -642,7 +773,7 @@ function createUserState() {
 
         saveTimeout = setTimeout(() => {
           saveTimeout = undefined;
-          requestProgressWrite({ generation: saveGeneration, kind: "auto-save" });
+          void requestProgressWrite({ generation: saveGeneration, kind: "auto-save" });
         }, PERSIST_DEBOUNCE_MS);
       });
 
@@ -738,6 +869,20 @@ function createUserState() {
         },
         [factKey("questStates", id)],
       );
+    },
+    /** Forgets the retires the relay has confirmed. */
+    confirmRetired(confirmed: readonly PendingRetire[]): Promise<boolean> {
+      return writeLocal((stored) => {
+        const pending = stored.syncPendingRetires ?? [];
+        const left = pending.filter(
+          (retire) => !confirmed.some((done) => done.mailboxId === retire.mailboxId),
+        );
+        if (left.length === pending.length) return undefined;
+        const { syncPendingRetires: _pending, ...kept } = $state.snapshot(
+          stored,
+        ) as DeviceLocalState;
+        return left.length > 0 ? { ...kept, syncPendingRetires: [...left] } : kept;
+      });
     },
     dismissPersistenceWarning() {
       if (persistenceBlocked) {
@@ -878,17 +1023,21 @@ function createUserState() {
       enablePersistenceAfterExplicitReplace();
       writeExplicitProgress("replace", false);
     },
-    /** Clears progress & world state; this device's preferences & `local` section are kept. */
+    /**
+     * Clears progress & world state; this device's preferences & `local` section are kept, so a
+     * syncing lane stays a syncing lane. Only the sync receipt goes, so the latest save file
+     * applies again.
+     */
     resetProgress() {
-      replaceProgress({
-        history: emptyProgressHistory(),
-        lastImport: null,
-        progress: createDefaultProgress(),
-        retained: emptyRetainedProgress(),
-        worldState: createDefaultWorldState(),
-      });
+      replaceProgress(emptyLoadedProgress());
       enablePersistenceAfterExplicitReplace();
-      writeExplicitProgress();
+      if (local.syncReceipt === undefined) {
+        writeExplicitProgress();
+        return;
+      }
+      const { syncReceipt: _receipt, ...kept } = local;
+      local = kept;
+      writeExplicitProgress("replace", false);
     },
     /** The player's “keep mine” for a fact, if any; see `resolutionHolds`. */
     resolutionOf(key: string): Readonly<Resolution> | undefined {
@@ -963,6 +1112,28 @@ function createUserState() {
         state.worldState.weather = "calm";
       }
     },
+    /**
+     * Records the code the computer lane now shares. A code it replaces joins the pending retires
+     * in the same write, so the old code is retired only once the new one is stored. Resolves
+     * with whether that write landed.
+     */
+    setSharedCode(
+      code: SharedCode,
+      replaced?: { code: SharedCode; retire: PendingRetire },
+    ): Promise<boolean> {
+      return writeLocal((stored) => {
+        // Only the code this change replaces may be replaced: a code another tab stored meanwhile
+        // would otherwise stay live with nothing left to retire it.
+        const lane = stored.syncLane;
+        if (lane?.kind !== "computer" || lane.code?.key !== replaced?.code.key) return undefined;
+        const current = $state.snapshot(stored) as DeviceLocalState;
+        return {
+          ...current,
+          syncLane: { code: { ...code }, kind: "computer" },
+          syncPendingRetires: withRetire(current.syncPendingRetires, replaced?.retire),
+        };
+      });
+    },
     setSkillLevel(id: SkillId, level: number) {
       manual(factKey("skillLevels", id), () => {
         state.progress.skillLevels[id] = clampLevel(level, MAX_SKILL_LEVEL);
@@ -992,8 +1163,82 @@ function createUserState() {
       if (!isWeatherInSeason(weather, state.worldState.season)) return;
       state.worldState.weather = weather;
     },
+    /**
+     * Starts a syncing lane: erases progress & history, applies the lane's first save, & records
+     * the lane, all in one write, so a setup that never gets this far leaves nothing behind. Any old
+     * receipt & lane go; the farm-switch backup & pending retires stay. Resolves with whether
+     * the write landed.
+     */
+    startSyncLane(
+      lane: SyncLane,
+      save: SyncedSave,
+      stillWanted: () => boolean = () => true,
+    ): Promise<boolean> {
+      // Built aside from live state, which stays untouched until the write lands, so a lane start
+      // that's cancelled or can't be stored never erases anything, even in a later save.
+      const staged = emptyLoadedProgress();
+      staged.lastImport = $state.snapshot(save.metadata);
+      if (save.playtime !== undefined) staged.history.lastSavePlaytime = save.playtime;
+      const before = progressFacts(staged.progress);
+      mergeProgress(staged.progress, save.completed);
+      for (const key of changedFacts(before, progressFacts(staged.progress))) {
+        staged.history.provenance[key] =
+          save.playtime === undefined
+            ? { source: "save" }
+            : { playtime: save.playtime, source: "save" };
+      }
+      enablePersistenceAfterExplicitReplace();
+      return requestProgressWrite({
+        guard: stillWanted,
+        kind: "staged",
+        lane: $state.snapshot(lane),
+        staged,
+      });
+    },
     get state(): DeepReadonly<UserState> {
       return state;
+    },
+    /**
+     * Returns the device to tracking by hand, keeping progress & history: only the receipt, the
+     * lane, & its key go. A code the computer shared joins the pending retires in the same write,
+     * so it's retired only once leaving has landed. Resolves with whether that write landed.
+     */
+    stopSyncing(stopped?: { code: SharedCode; retire: PendingRetire }): Promise<boolean> {
+      return writeLocal((stored) => {
+        const lane = stored.syncLane;
+        const storedCode = lane?.kind === "computer" ? lane.code?.key : undefined;
+        if (storedCode !== stopped?.code.key) return undefined;
+        const current = $state.snapshot(stored) as DeviceLocalState;
+        const { syncLane: _lane, syncReceipt: _receipt, ...kept } = current;
+        return {
+          ...kept,
+          syncPendingRetires: withRetire(kept.syncPendingRetires, stopped?.retire),
+        };
+      });
+    },
+    /** Follows another code without leaving the lane; the next save applies with the usual rules. */
+    switchFollowKey(key: string, stillWanted: () => boolean = () => true): Promise<boolean> {
+      return writeLocal((stored) => {
+        if (!stillWanted() || stored.syncLane?.kind !== "following") return undefined;
+        const current = $state.snapshot(stored) as DeviceLocalState;
+        const { syncReceipt: _receipt, ...kept } = current;
+        return { ...kept, syncLane: { key, kind: "following" } };
+      });
+    },
+    /**
+     * True while stored progress can't be written (quarantined, from a newer build, or not loaded),
+     * so no syncing lane may start.
+     */
+    get syncBlocked(): boolean {
+      return !_persistenceReady;
+    },
+    /** This device's sync lane, or `undefined` while it tracks by hand. */
+    get syncLane(): DeepReadonly<SyncLane> | undefined {
+      return local.syncLane;
+    },
+    /** Codes this device stopped sharing that the relay hasn't confirmed retired yet. */
+    get syncPendingRetires(): readonly DeepReadonly<PendingRetire>[] {
+      return local.syncPendingRetires ?? [];
     },
     toggleAlmanacItem(id: ItemId) {
       toggleFact("almanac", state.progress.almanac, id);
