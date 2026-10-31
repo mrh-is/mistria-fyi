@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
 
+import { TIMING_ARTIFACT } from "../scripts/nightly-report.js";
 import { STEPS } from "../scripts/verify.js";
 
 /**
@@ -20,7 +21,12 @@ interface Workflow {
   concurrency?: { "cancel-in-progress"?: boolean; group?: string };
   env?: Record<string, string>;
   jobs?: Record<string, WorkflowJob>;
-  on?: Record<string, unknown>;
+  on?: {
+    pull_request?: unknown;
+    pull_request_target?: unknown;
+    push?: { branches?: string[] };
+    schedule?: { cron: string }[];
+  };
   permissions?: Record<string, string>;
 }
 
@@ -34,6 +40,7 @@ interface WorkflowJob {
   permissions?: Record<string, string>;
   "runs-on"?: string;
   steps?: WorkflowStep[];
+  strategy?: { matrix?: Record<string, string[]> };
   "timeout-minutes"?: number;
 }
 
@@ -146,6 +153,14 @@ describe("CI workflow triggers", () => {
   it("never runs pull request code with the base repository's privileges", () => {
     expect(workflow.on).not.toHaveProperty("pull_request_target");
   });
+
+  // Losing one of these stops its checks without failing anything: the schedule runs the nightly
+  // jobs, & pushes to main run the full suite & produce the nightly report's samples.
+  it("runs for pull requests, main pushes, & the nightly schedule", () => {
+    expect(workflow.on).toHaveProperty("pull_request");
+    expect(workflow.on?.push?.branches).toContain("main");
+    expect(workflow.on?.schedule).not.toHaveLength(0);
+  });
 });
 
 describe("CI workflow jobs", () => {
@@ -245,6 +260,12 @@ describe("CI workflow jobs", () => {
     const testStep = jobs.test.steps?.find((step) => step.run === verifyCommand("test:budgets"));
     expect(testStep).toBeDefined();
     expect(testStep?.["continue-on-error"]).toBeUndefined();
+  });
+
+  // A renamed artifact would leave the nightly report with nothing to read.
+  it("uploads the timing artifact under the name the nightly report downloads", () => {
+    const upload = jobs.test.steps?.find((step) => step.with?.name === TIMING_ARTIFACT);
+    expect(upload?.uses).toMatch(/^actions\/upload-artifact@/u);
   });
 
   it("bounds every job with a timeout shorter than the 6 hour default", () => {
@@ -416,8 +437,20 @@ describe("CI workflow browser suites", () => {
   it("passes the change detector's result to the browser jobs", () => {
     expect(jobs.changes.outputs?.browser).toBe("${{ steps.filter.outputs.browser }}");
     for (const jobName of browserJobs) {
+      expect(jobs[jobName].needs).toContain("changes");
       expect(jobs[jobName].if).toBe("needs.changes.outputs.browser == 'true'");
     }
+  });
+
+  // Each shard allocates across the total its own entry names & runs only its share, so a missing
+  // entry would silently skip that share of the tests.
+  it("runs every accessibility shard", () => {
+    const shards = jobs.accessibility.strategy?.matrix?.shard ?? [];
+    const total = Number(shards[0]?.split("/")[1]);
+    expect(total).toBeGreaterThan(0);
+    expect(shards.toSorted()).toEqual(
+      Array.from({ length: total }, (_, index) => `${String(index + 1)}/${String(total)}`),
+    );
   });
 
   it("runs browser suites in the matching pinned image without browser or apt installation", () => {
@@ -455,6 +488,15 @@ describe("CI workflow locale sync", () => {
     ["workflow_dispatch", "messages/fr.json", false],
   ] as const)("detects message changes for %s: %s", (event, file, expected) => {
     expect(detectChanges(event, file).messages).toBe(String(expected));
+  });
+
+  // “CI passed” accepts a skipped job, so broken wiring would turn this check off with CI green.
+  it("passes the change detector's result to the locale sync job", () => {
+    expect(jobs.changes.outputs?.messages).toBe("${{ steps.filter.outputs.messages }}");
+    expect(jobs["locale-sync"].needs).toBe("changes");
+    expect(jobs["locale-sync"].if).toBe(
+      "github.event_name == 'pull_request' && needs.changes.outputs.messages == 'true'",
+    );
   });
 });
 

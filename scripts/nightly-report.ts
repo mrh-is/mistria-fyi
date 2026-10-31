@@ -18,9 +18,11 @@ const LABEL = "type: maintenance";
 // Pull requests don't fail on wall time, so this line is what catches the suite growing. Main's
 // step took 73-119 s, with a median of about 90 s, when this was set (#13).
 const WALL_LINE_MS = 120_000;
-// One slow runner shouldn't file an issue, so findings compare medians over main's recent pushes.
+// One slow runner shouldn't file an issue, so findings compare medians over main's recent pushes,
+// for the run as a whole & for each file.
 const SAMPLE_RUNS = 10;
 const MINIMUM_SAMPLES = 3;
+export const TIMING_ARTIFACT = "vitest-timings";
 
 export interface TimingSample {
   elapsedMs: number;
@@ -47,10 +49,12 @@ export function timingFindings(samples: TimingSample[]): string[] {
     samples.flatMap(({ files }) => files),
     ({ file }) => file,
   );
-  const medians = [...durations].map(([file, timings]) => ({
-    file,
-    medianMs: median(timings.map(({ durationMs }) => durationMs)),
-  }));
+  const medians = [...durations]
+    .filter(([, timings]) => timings.length >= MINIMUM_SAMPLES)
+    .map(([file, timings]) => ({
+      file,
+      medianMs: median(timings.map(({ durationMs }) => durationMs)),
+    }));
   for (const { file, medianMs } of medians.toSorted((a, b) => b.medianMs - a.medianMs)) {
     const { warnMs } = fileLimits(file);
     if (medianMs > warnMs) {
@@ -127,7 +131,7 @@ export async function recentSamples(run: CommandRunner): Promise<TimingSample[]>
         "run",
         "download",
         String(databaseId),
-        "--name=vitest-timings",
+        `--name=${TIMING_ARTIFACT}`,
         `--dir=${directory}`,
       ]);
       samples.push(
@@ -142,19 +146,26 @@ export async function recentSamples(run: CommandRunner): Promise<TimingSample[]>
   return samples;
 }
 
-async function main(): Promise<void> {
-  const samples = await recentSamples(defaultCommandRunner);
+export async function reportNightly(options: {
+  run?: CommandRunner;
+  workflowUrl: string;
+}): Promise<void> {
+  const { workflowUrl } = options;
+  const run = options.run ?? defaultCommandRunner;
+  const samples = await recentSamples(run);
+  // Every download failing looks the same as a quiet week otherwise, such as with a missing
+  // permission or a renamed artifact, and the report would stop working with a green job.
+  if (samples.length === 0) {
+    throw new Error("No timing samples: main's recent runs had no readable timing artifact.");
+  }
   // Too few runs to trust a median, so this says nothing either way & leaves any open issue alone.
   if (samples.length < MINIMUM_SAMPLES) {
     console.warn(`Only ${samples.length} recent timing samples; skipping the report.`);
     return;
   }
-  await synchronizeNightlyIssue({
-    findings: timingFindings(samples),
-    workflowUrl: process.env.WORKFLOW_URL ?? "",
-  });
+  await synchronizeNightlyIssue({ findings: timingFindings(samples), run, workflowUrl });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  await main();
+  await reportNightly({ workflowUrl: process.env.WORKFLOW_URL ?? "" });
 }

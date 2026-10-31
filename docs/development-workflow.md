@@ -361,7 +361,7 @@ it:
 | Over 15 s (over 30 s for `relay/worker.test.ts`) | **Fails**                          | Warning       |
 
 “Changes the file” means the test file itself is in the pull request’s changed files, so a new or
-renamed file counts, & splitting a slow file doesn’t avoid the limit. A source change that slows a
+renamed file counts, as does each file that a slow one is split into. A source change that slows a
 test it doesn’t edit only warns; the nightly report covers that case. The 15 s line sits well clear
 of runner noise: one file measured 5.1–11.4 s across #13’s runs. Nothing else about timing fails a
 run or kills Vitest. The job’s 10-minute timeout is the only bound on a hung suite. Missing timing
@@ -382,10 +382,12 @@ runs can’t fail on timing, because no pull request is involved.
 
 The scheduled CI run’s `nightly-report` job (`scripts/nightly-report.ts`) reads the `vitest-timings`
 artifacts from up to 10 recent pushes to `main`, which run without coverage, & compares medians, so
-one slow runner can’t raise a finding. It reports a file over its warning line, or a median wall
-time over 120 s. Findings live in one “Nightly CI report” issue: the job files it, edits it in place
-so a standing finding doesn’t notify anyone each night, & closes it once the findings clear. With
-fewer than 3 samples it changes nothing. This job doesn’t count toward “CI passed”.
+one slow runner can’t raise a finding. It reports a file with at least 3 samples over its warning
+line, or a median wall time over 120 s. Findings live in one “Nightly CI report” issue: the job
+files it, edits it in place so a standing finding doesn’t notify anyone each night, & closes it once
+the findings clear. With 1 or 2 samples it changes nothing. With none, the job fails, because that
+means the report can’t read its data, such as after a permission change or a renamed artifact. This
+job doesn’t count toward “CI passed”.
 
 ### Test projects
 
@@ -483,9 +485,9 @@ other full-suite command during development.
 `STEPS` lists in [scripts/verify.ts](../scripts/verify.ts), each naming its CI job; a job runs a
 step with `pnpm run verify -- --step=<name>`. Add or change a step there, not by copying a command
 into the workflow, & give a new step both a `STEPS` entry & its `--step` line in `ci.yml` (the CI
-test fails until both exist). Some steps run only in CI: the audit, the budgeted Vitest run (file &
-wall-time budgets, coverage only nightly), & the pull-request-only stale-translation check are
-outside the default `verify` matrix.
+test fails until both exist). Some steps run only in CI: the audit, the budgeted Vitest run (file
+timing limits, coverage only nightly), & the pull-request-only stale-translation check are outside
+the default `verify` matrix.
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see

@@ -402,6 +402,29 @@ Relationship evidence:
 Unresolved applicability: NPC Studio correspondence & current permission were not independently
 rechecked; this index infers no response.
 
+### [Vitest timings & nightly coverage](decisions/2026-10-07-vitest-time-budgets.md)
+
+ID: 2026-10-07-vitest-time-budgets. Status: Partially superseded/amended.
+
+Retain every cleanup safety scenario with deterministic command snapshots & one real-Git integration
+case. Publish test & hook durations for all files, gate whole-command wall time separately, &
+collect coverage only on scheduled runs. At the maintainer’s request, CI runs the cleanup test only
+when its corresponding shell script changes; focused local runs remain available for test-only
+edits.
+
+Evidence:
+[docs/decisions/2026-10-07-vitest-time-budgets.md#decision](../docs/decisions/2026-10-07-vitest-time-budgets.md#decision).
+
+Amended by [Timing limits follow the diff](decisions/2026-10-31-timing-limits-follow-the-diff.md).
+Affected portion: Gating on whole-command wall time & on every file’s time: timing now fails only a
+pull request that changes a slow test file.
+
+Relationship evidence:
+[docs/decisions/2026-10-31-timing-limits-follow-the-diff.md](../docs/decisions/2026-10-31-timing-limits-follow-the-diff.md).
+
+Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
+later resolutions were not revalidated while seeding issue #268.
+
 ### [Public cutover planning](decisions/2026-10-12-public-cutover-planning.md)
 
 ID: 2026-10-12-public-cutover-planning. Status: Partially superseded/amended.
@@ -636,6 +659,13 @@ shared 16-bit HMAC buckets & prefix read limits, preserving address privacy & pe
 Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/132](https://github.com/mrh-is/mistria-fyi/issues/132),
 [relay/README.md](../relay/README.md), [relay/worker.ts](../relay/worker.ts).
+
+Amended by [Timing limits follow the diff](decisions/2026-10-31-timing-limits-follow-the-diff.md).
+Affected portion: The timing check around the relay’s tests: wall time no longer fails a run, & its
+30 s line fails only a pull request that changes the file.
+
+Relationship evidence:
+[docs/decisions/2026-10-31-timing-limits-follow-the-diff.md](../docs/decisions/2026-10-31-timing-limits-follow-the-diff.md).
 
 Amended by [Shared edge rate rule](decisions/2026-10-30-shared-edge-rate-rule.md). Affected portion:
 The required zone WAF rule’s threshold & scope: it shares the Free plan’s one rate-limiting rule
@@ -926,22 +956,6 @@ manager. The historical shell-script entry point is not a current implementation
 
 Evidence:
 [docs/decisions/2026-10-07-system-shellcheck.md#decision](../docs/decisions/2026-10-07-system-shellcheck.md#decision).
-
-Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
-later resolutions were not revalidated while seeding issue #268.
-
-### [Vitest timings & nightly coverage](decisions/2026-10-07-vitest-time-budgets.md)
-
-ID: 2026-10-07-vitest-time-budgets. Status: Needs review.
-
-Retain every cleanup safety scenario with deterministic command snapshots & one real-Git integration
-case. Publish test & hook durations for all files, gate whole-command wall time separately, &
-collect coverage only on scheduled runs. At the maintainer’s request, CI runs the cleanup test only
-when its corresponding shell script changes; focused local runs remain available for test-only
-edits.
-
-Evidence:
-[docs/decisions/2026-10-07-vitest-time-budgets.md#decision](../docs/decisions/2026-10-07-vitest-time-budgets.md#decision).
 
 Unresolved applicability: Does this decision still apply unchanged? Its owning implementation &
 later resolutions were not revalidated while seeding issue #268.

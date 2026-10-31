@@ -2,7 +2,12 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
-import { recentSamples, synchronizeNightlyIssue, timingFindings } from "./nightly-report.js";
+import {
+  recentSamples,
+  reportNightly,
+  synchronizeNightlyIssue,
+  timingFindings,
+} from "./nightly-report.js";
 
 const sample = (elapsedMs: number, durations: Record<string, number> = {}) => ({
   elapsedMs,
@@ -12,6 +17,9 @@ const sample = (elapsedMs: number, durations: Record<string, number> = {}) => ({
     project: "node",
   })),
 });
+
+const relaySamples = (durationMs: number) =>
+  Array.from({ length: 3 }, () => sample(80_000, { "relay/worker.test.ts": durationMs }));
 
 describe("timingFindings", () => {
   it("reports nothing when the typical run is within its lines", () => {
@@ -52,13 +60,29 @@ describe("timingFindings", () => {
   });
 
   it("holds the real Workers integration to its own line", () => {
-    const samples = [sample(80_000, { "relay/worker.test.ts": 22_000 })];
-    expect(timingFindings(samples)).toEqual([]);
+    expect(timingFindings(relaySamples(22_000))).toEqual([]);
+    expect(timingFindings(relaySamples(31_000))).toHaveLength(1);
   });
 
   it("uses only the runs that include a file, since the cleanup test doesn't always run", () => {
-    const samples = [sample(80_000), sample(80_000), sample(80_000, { "a.test.ts": 6000 })];
+    const samples = [
+      sample(80_000),
+      sample(80_000, { "a.test.ts": 6000 }),
+      sample(80_000),
+      sample(80_000, { "a.test.ts": 6000 }),
+      sample(80_000, { "a.test.ts": 6000 }),
+    ];
     expect(timingFindings(samples)).toHaveLength(1);
+  });
+
+  it("ignores a file with too few samples, so one slow run of a new file can't file an issue", () => {
+    const samples = [
+      sample(80_000, { "new.test.ts": 9000 }),
+      sample(80_000, { "new.test.ts": 9000 }),
+      sample(80_000),
+      sample(80_000),
+    ];
+    expect(timingFindings(samples)).toEqual([]);
   });
 });
 
@@ -90,6 +114,19 @@ function recorder(issues: { body: string; number: number }[]) {
   return { run, writes };
 }
 
+/** Answers listings for the issue search & for `runIds`, recording anything that writes. */
+function nightlyRunner(runIds: number[], cancelled: number[]) {
+  const artifacts = artifactRunner(runIds, cancelled);
+  const writes: string[][] = [];
+  const run = (command: string, args: string[]) => {
+    if (args[0] === "run") return artifacts.run(command, args);
+    if (args[1] === "list") return Promise.resolve("[]");
+    writes.push(args);
+    return Promise.resolve("");
+  };
+  return { run, writes };
+}
+
 describe("recentSamples", () => {
   it("reads the timing artifacts from pushes to main, which don't collect coverage", async () => {
     const { listings, run } = artifactRunner([1, 2]);
@@ -109,6 +146,32 @@ describe("recentSamples", () => {
     const { downloaded, run } = artifactRunner(Array.from({ length: 20 }, (_, index) => index));
     expect(await recentSamples(run)).toHaveLength(10);
     expect(downloaded).toHaveLength(10);
+  });
+});
+
+describe("reportNightly", () => {
+  const workflowUrl = "https://example.test/run";
+
+  it("fails when it can't read any timing artifact, so the report can't go dark quietly", async () => {
+    const { run, writes } = nightlyRunner([1, 2, 3], [1, 2, 3]);
+    vi.spyOn(console, "warn").mockReturnValue();
+    await expect(reportNightly({ run, workflowUrl })).rejects.toThrow("No timing samples");
+    expect(writes).toEqual([]);
+    vi.restoreAllMocks();
+  });
+
+  it("leaves everything alone with too few samples to trust a median", async () => {
+    const { run, writes } = nightlyRunner([1, 2], []);
+    vi.spyOn(console, "warn").mockReturnValue();
+    await reportNightly({ run, workflowUrl });
+    expect(writes).toEqual([]);
+    vi.restoreAllMocks();
+  });
+
+  it("reports the findings from enough samples", async () => {
+    const { run, writes } = nightlyRunner([200_000, 200_001, 200_002], []);
+    await reportNightly({ run, workflowUrl });
+    expect(writes.map((args) => args.slice(0, 2))).toEqual([["issue", "create"]]);
   });
 });
 
