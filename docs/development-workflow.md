@@ -299,8 +299,8 @@ commands are references for CI or the explicit full-local-matrix exceptions in
   pnpm run test
   ```
   This command passes in a fresh clone without `pipeline/input/`. CI runs the same suite through its
-  `test:budgets` step (`node scripts/vitest-timings.ts`), which reports per-file timings & enforces
-  budgets.
+  `test:budgets` step (`node scripts/vitest-timings.ts`), which reports per-file timings & applies
+  the [timing limits](#vitest-time-budgets).
 - **Measure coverage** (opt-in; the same suite plus v8 coverage):
   ```sh
   pnpm run test:coverage
@@ -347,46 +347,45 @@ project. The cleanup test runs only when `scripts/cleanup-merged-worktrees.ts` c
 their complete changed-file list, & main pushes compare the event’s before/after commits. Scheduled
 & manual runs omit it. Direct local runs still include it, so test-only edits can be verified with
 the focused command. It publishes all per-file test & hook durations, slowest first, in the job
-summary & the `vitest-timings` artifact. On two-CPU noncoverage runs, ordinary files use both
-workers; the allocation, verify, lint-ownership, & project-configuration CLI probes run separately
-with one worker, reserving a CPU for their subprocesses. Both invocations share one wall-time budget
-& their file timings are combined. Coverage & other runner classes use half the available CPUs (at
-least one worker, capped at four). The JSON also records CPU count, coverage mode, whole-command
-wall time, & the enforced ceilings. Imports, environment setup, transforms, startup, & report
-generation count toward the wall budget. Missing timing reports & unsuccessful tests fail the step
-independently of the budgets.
+summary & the `vitest-timings` artifact. Vitest uses half the available CPUs (at least one worker,
+capped at four). The JSON also records CPU count, coverage mode, & whole-command wall time, which
+includes imports, environment setup, transforms, startup, & report generation.
 
-The local Workers integration file, `relay/worker.test.ts`, has a 30-second file ceiling. It runs
-real workerd eviction, hibernating WebSocket closure, & SQLite runtime restarts, with measured
-provider-runtime waits totaling about 20 seconds. This exception changes no other file ceiling. Its
-sequencer starts this file first within its pool, preserving the default order for all other files,
-so runtime waits overlap ordinary tests even with a cold timing cache; see
-[the decision](decisions/2026-10-29-sync-relay.md).
+A slow test costs time, not correctness, so timing fails a run only when the pull request can fix
+it:
 
-| Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
-| ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
-| Two CPUs (current private `ubuntu-latest`) | 10 s             | 150 s                 | 10 s per file, 300 s     |
-| Four or more CPUs (public `ubuntu-latest`) | 5 s              | 150 s                 | 15 s per file, 300 s     |
+| A test file’s tests & hooks take                 | Pull request that changes the file | Anything else |
+| ------------------------------------------------ | ---------------------------------- | ------------- |
+| Up to 5 s                                        | Nothing                            | Nothing       |
+| Over 5 s                                         | Warning                            | Warning       |
+| Over 15 s (over 30 s for `relay/worker.test.ts`) | **Fails**                          | Warning       |
 
-Four-CPU runs on `main` range 45–99 s, & the relay file adds about 25 s, so both runner classes
-share the 150 s whole-command ceiling until #13 shortens the suite.
+“Changes the file” means the test file itself is in the pull request’s changed files, so a new or
+renamed file counts, & splitting a slow file doesn’t avoid the limit. A source change that slows a
+test it doesn’t edit only warns; the nightly report covers that case. The 15 s line sits well clear
+of runner noise: one file measured 5.1–11.4 s across #13’s runs. Nothing else about timing fails a
+run or kills Vitest. The job’s 10-minute timeout is the only bound on a hung suite. Missing timing
+reports, invalid measurements, & unsuccessful tests still fail the step. Before this rule, ceilings
+on wall time & every file failed 22 of 51 failed runs with no failed assertion; see
+[the decision](decisions/2026-10-31-timing-limits-follow-the-diff.md).
 
-On four-CPU runners, coverage triples the ordinary per-file ceiling. On commit `31c10adb`’s four-CPU
-runs, it slowed files over 200 ms by a median 1.14× & up to 2.67× (`names.completeness.test.ts`);
-`tracker-data-schema.test.ts`, which grows with the tracker data, went from 2.1 s to 5.3 s &
-exceeded the 5 s ceiling. The CLI probes ran at 0.98–0.99× under coverage, so their 15 s ceiling
-doesn’t scale. Two-CPU coverage hasn’t been measured, so it keeps the ordinary 10 s ceiling.
+The local Workers integration file, `relay/worker.test.ts`, has its own 30 s line for both warnings
+& failures. It runs real workerd eviction, hibernating WebSocket closure, & SQLite runtime restarts,
+with measured provider-runtime waits totaling about 20 seconds. Its sequencer starts this file first
+within its pool, preserving the default order for all other files, so runtime waits overlap ordinary
+tests even with a cold timing cache; see [the decision](decisions/2026-10-29-sync-relay.md).
 
-The two-CPU ceilings account for the measured runner class, not local Mac timings: before #689, the
-cleanup file took 5.524 s, the allocation test 9.855 s, & the coverage step 216 s on run
-[37692535010](https://github.com/mrh-is/mistria-fyi/actions/runs/37692535010). After #707 shared
-module registries, warm two-CPU runs took 52–79 s (the same files ran up to 1.7× slower on some
-runners) and a run with a cold transform cache, as after a `vite.config.ts` change, took 105 s; the
-wall ceiling clears that cold run. The lint-ownership probe reached 8.3 s on a slow runner, so the
-10 s file ceiling stays. The four-CPU ceilings haven’t been re-measured since. The four-CPU wall
-ceiling leaves startup headroom above #687’s 60 s target. Budget changes require measurements on the
-same runner class & an explanation in the PR; do not raise ceilings merely to silence a failure.
-Coverage runs nightly because local measurements do not establish that it is free in CI.
+Coverage runs nightly because local measurements do not establish that it is free in CI. Coverage
+runs can’t fail on timing, because no pull request is involved.
+
+### Nightly report
+
+The scheduled CI run’s `nightly-report` job (`scripts/nightly-report.ts`) reads the `vitest-timings`
+artifacts from up to 10 recent pushes to `main`, which run without coverage, & compares medians, so
+one slow runner can’t raise a finding. It reports a file over its warning line, or a median wall
+time over 120 s. Findings live in one “Nightly CI report” issue: the job files it, edits it in place
+so a standing finding doesn’t notify anyone each night, & closes it once the findings clear. With
+fewer than 3 samples it changes nothing. This job doesn’t count toward “CI passed”.
 
 ### Test projects
 

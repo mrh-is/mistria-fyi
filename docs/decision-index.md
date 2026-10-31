@@ -289,6 +289,19 @@ them to Antigravity or Copilot.
 
 Evidence: [docs/agent-workflow.md#small-agent-tasks](../docs/agent-workflow.md#small-agent-tasks).
 
+### [Timing limits follow the diff](decisions/2026-10-31-timing-limits-follow-the-diff.md)
+
+ID: 2026-10-31-timing-limits-follow-the-diff. Status: Current.
+
+Test timing fails a pull request only when it changes a test file over 15 s. Everything else about
+timing warns, & a nightly report tracks trends in one issue.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/13](https://github.com/mrh-is/mistria-fyi/issues/13),
+[docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets),
+[scripts/vitest-timings.ts](../scripts/vitest-timings.ts),
+[scripts/nightly-report.ts](../scripts/nightly-report.ts).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)

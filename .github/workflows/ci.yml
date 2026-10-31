@@ -34,6 +34,7 @@ jobs:
       browser: ${{ steps.filter.outputs.browser }}
       cleanup: ${{ steps.filter.outputs.cleanup }}
       messages: ${{ steps.filter.outputs.messages }}
+      tests: ${{ steps.filter.outputs.tests }}
     steps:
       - if: github.event_name == 'push'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -53,6 +54,7 @@ jobs:
           browser=true
           cleanup=false
           messages=false
+          tests=
           files=
           if [ "$EVENT_NAME" = "pull_request" ]; then
             browser=false
@@ -77,6 +79,9 @@ jobs:
               messages/* | scripts/check-locale-sync.* | scripts/locale-sync-allowlist.json) messages=true ;;
             esac
             case "$file" in
+              *.test.ts) tests="$tests $file" ;;
+            esac
+            case "$file" in
               src/* | static/* | tests/* | messages/* | project.inlang/* | _headers | \
                 scripts/playwright-* | playwright*.config.ts | svelte.config.* | vite.config.* | \
                 package.json | pnpm-lock.yaml | .node-version | .github/workflows/ci.yml)
@@ -86,9 +91,12 @@ jobs:
           done <<< "$files"
           # The stale-translation check compares a pull request with its base; other events skip it.
           [ "$EVENT_NAME" = "pull_request" ] || messages=false
+          # Only a pull request can fail on a slow test file it changes; other events just warn.
+          [ "$EVENT_NAME" = "pull_request" ] || tests=
           echo "browser=$browser" >> "$GITHUB_OUTPUT"
           echo "cleanup=$cleanup" >> "$GITHUB_OUTPUT"
           echo "messages=$messages" >> "$GITHUB_OUTPUT"
+          echo "tests=${tests# }" >> "$GITHUB_OUTPUT"
 
   lint:
     name: Lint
@@ -188,7 +196,8 @@ jobs:
     name: Test
     needs: changes
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # The only bound on a hung suite: timing limits never kill a run.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -217,6 +226,7 @@ jobs:
         env:
           VITEST_COVERAGE: ${{ github.event_name == 'schedule' }}
           VITEST_CLEANUP_CHANGED: ${{ needs.changes.outputs.cleanup }}
+          VITEST_TOUCHED_TEST_FILES: ${{ needs.changes.outputs.tests }}
         run: pnpm run verify -- --step=test:budgets
       - name: Publish Vitest timings
         if: always()
@@ -428,6 +438,30 @@ jobs:
           WORKFLOW_URL:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: pnpm run accessibility:monitor
+
+  # Findings too noisy or too broad to fail a pull request, kept in one issue. It reads main's recent
+  # timing artifacts, so this runs on its own instead of waiting for tonight's test job.
+  nightly-report:
+    name: Report nightly findings
+    if: github.event_name == 'schedule'
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_URL:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node scripts/nightly-report.ts
 
   # One stable check to require in branch protection, whatever the job list or shard count. A
   # skipped browser job (no relevant changes) passes; a failed or cancelled job does not.

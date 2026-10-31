@@ -81,7 +81,7 @@ export const STEPS: readonly StepDefinition[] = [
     matrix: "none",
     name: "check:locale-sync",
   },
-  // Locally the plain suite; CI runs it as `test:budgets`, which adds per-file & wall-time budgets.
+  // Locally the plain suite; CI runs it as `test:budgets`, which adds per-file timing limits.
   { command: script("test"), matrix: "default", name: "test" },
   {
     command: { args: ["scripts/vitest-timings.ts"], kind: "node" },
