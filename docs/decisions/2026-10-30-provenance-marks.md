@@ -33,9 +33,13 @@ status, and only the way it was made varies.
   done, and the crossing stroke lands slightly out of register.
 - A quest’s two moments keep their own tools (the design’s option A), so a stamped slash can sit
   under an inked stroke.
-- A save import or sync promotes an `unknown` fact it agrees with to `save`, so old typed marks turn
-  into stamps. A manual mark stays manual when a save agrees with it, so a mixed quest keeps its
-  mixed mark.
+- A save replaces the app’s guesses but never the player’s entries. A save import or sync that
+  agrees with an `unknown` or `inferred` fact promotes it to `save`, so typed & penciled marks turn
+  into stamps. A `manual` fact stays `manual` when a save agrees, which keeps a visible history of
+  the player tracking by hand.
+- A quest’s obtained moment follows the same rule when a save reports `completed`: a guess is
+  replaced and `manual` stays. A mixed mark with a `manual` moment, such as a pen slash under a
+  stamped X, is permanent on purpose; it doesn’t correct itself.
 - Provenance is decorative: the checkbox keeps its name & state, and the tool isn’t announced.
 - Only the inked X animates its second stroke.
 

@@ -365,27 +365,32 @@ describe("applySync: a quest's two moments", () => {
       }),
     ).state.history.provenance[key];
 
-  it("keeps the obtained moment's source when a save finishes a quest", () => {
+  it("keeps a manual obtained moment when a save finishes a quest", () => {
     const state = syncState({
-      provenance: { [key]: { source: "inferred" } },
+      provenance: { [key]: { playtime: 50, source: "manual" } },
       questStates: { [STORY_QUEST]: "obtained" },
     });
 
     expect(applyQuest(state, "completed")).toEqual({
-      obtainedSource: "inferred",
+      obtainedSource: "manual",
       playtime: 100,
       source: "save",
     });
   });
 
-  it("counts an obtained quest with no record as unknown", () => {
+  it("replaces an inferred obtained moment when a save finishes a quest", () => {
+    const state = syncState({
+      provenance: { [key]: { source: "inferred" } },
+      questStates: { [STORY_QUEST]: "obtained" },
+    });
+
+    expect(applyQuest(state, "completed")).toEqual({ playtime: 100, source: "save" });
+  });
+
+  it("replaces the obtained moment of a quest with no record when a save finishes it", () => {
     const state = syncState({ questStates: { [STORY_QUEST]: "obtained" } });
 
-    expect(applyQuest(state, "completed")).toEqual({
-      obtainedSource: "unknown",
-      playtime: 100,
-      source: "save",
-    });
+    expect(applyQuest(state, "completed")).toEqual({ playtime: 100, source: "save" });
   });
 
   it("records none when a save finishes the quest a save obtained", () => {
@@ -407,13 +412,64 @@ describe("applySync: a quest's two moments", () => {
     expect(applyQuest(state, "completed")).toEqual(record);
   });
 
-  it("clears the obtained source when promoting an agreeing unknown fact", () => {
+  it("leaves a pen slash under a stamped X when a save agrees", () => {
+    const record: FactProvenance = { obtainedSource: "manual", playtime: 50, source: "save" };
+    const state = syncState({
+      provenance: { [key]: record },
+      questStates: { [STORY_QUEST]: "completed" },
+    });
+
+    expect(applyQuest(state, "completed")).toEqual(record);
+  });
+
+  it("keeps a manual obtained moment when promoting an agreeing unknown fact", () => {
     const state = syncState({
       provenance: { [key]: { obtainedSource: "manual", source: "unknown" } },
       questStates: { [STORY_QUEST]: "completed" },
     });
 
-    expect(applyQuest(state, "completed")).toEqual({ playtime: 100, source: "save" });
+    expect(applyQuest(state, "completed")).toEqual({
+      obtainedSource: "manual",
+      playtime: 100,
+      source: "save",
+    });
+  });
+
+  it("replaces a guessed obtained moment when a save agrees with the finish", () => {
+    const state = syncState({
+      provenance: { [key]: { obtainedSource: "unknown", playtime: 50, source: "save" } },
+      questStates: { [STORY_QUEST]: "completed" },
+    });
+
+    expect(applyQuest(state, "completed")).toEqual({ playtime: 50, source: "save" });
+  });
+
+  it("stamps a guessed obtained moment under a manual finish when a save agrees", () => {
+    const state = syncState({
+      provenance: { [key]: { obtainedSource: "inferred", playtime: 50, source: "manual" } },
+      questStates: { [STORY_QUEST]: "completed" },
+    });
+
+    expect(applyQuest(state, "completed")).toEqual({
+      obtainedSource: "save",
+      playtime: 50,
+      source: "manual",
+    });
+  });
+});
+
+describe("applySync: inferred facts", () => {
+  it("promotes an agreeing inferred fact to a save fact", () => {
+    const state = syncState({
+      almanac: set(TURNIP),
+      provenance: { [`almanac/${TURNIP}`]: { playtime: 5, source: "inferred" } },
+    });
+    const result = applied(
+      applySync(state, bundle({ almanac: set(TURNIP) }, { playtime: 100 }), { fresh: FRESH }),
+    );
+    expect(result.state.history.provenance).toEqual({
+      [`almanac/${TURNIP}`]: { playtime: 100, source: "save" },
+    });
   });
 });
 

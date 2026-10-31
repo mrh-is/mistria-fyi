@@ -14,7 +14,14 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
-import { changedFacts, factKey, obtainedSourceOf, progressFacts } from "#lib/engine/provenance.js";
+import {
+  changedFacts,
+  confirmedBySave,
+  factKey,
+  holdsGuess,
+  obtainedSourceOf,
+  progressFacts,
+} from "#lib/engine/provenance.js";
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
 import { applyEngagementCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
@@ -416,7 +423,7 @@ function createUserState() {
         // The captured history adds what this tab recorded since its base, the merge included;
         // rebased, it keeps the history another tab stored meanwhile. A save or transfer agreeing
         // with a fact already stored leaves that fact's provenance as stored, unless a save is
-        // promoting an `unknown` one to the value it reported.
+        // replacing a guess in it, for the value it reported.
         const storedProvenance = loaded.history.provenance;
         const capturedFacts = progressFacts(captured.loaded.progress);
         rebaseHistory(
@@ -427,7 +434,8 @@ function createUserState() {
             (source === "save" || source === "unknown") &&
             !(
               source === "save" &&
-              storedProvenance[key]?.source === "unknown" &&
+              Object.hasOwn(storedProvenance, key) &&
+              holdsGuess(storedProvenance[key]) &&
               capturedFacts.get(key) === mergedFacts.get(key)
             ) &&
             storedFacts.has(key) &&
@@ -800,9 +808,9 @@ function createUserState() {
      * Merges a native save into current progress: sets union, levels take the max, and the
      * household follows {@link mergeHousehold}'s conflict policy. Never removes progress. Every
      * fact it changes records `source` (a save, or `unknown` for a device transfer, whose payload
-     * carries no provenance), and a save promotes the `unknown` facts it agrees with to `save`; a
-     * save's `playtime` becomes the last applied save's, and a manual import's `metadata` the last
-     * import's.
+     * carries no provenance), and a save replaces the guesses in the facts it agrees with (see
+     * `confirmedBySave`); a save's `playtime` becomes the last applied save's, and a manual
+     * import's `metadata` the last import's.
      */
     mergeFromSave(
       imported: Partial<ProgressState>,
@@ -821,9 +829,9 @@ function createUserState() {
         const saveFacts = progressFacts({ ...createDefaultProgress(), ...imported });
         const currentFacts = progressFacts(state.progress);
         for (const [key, value] of saveFacts) {
-          if (history.provenance[key]?.source === "unknown" && currentFacts.get(key) === value) {
-            recordFact(key, "save", stamp.playtime, undefined);
-          }
+          if (!Object.hasOwn(history.provenance, key) || currentFacts.get(key) !== value) continue;
+          const record = history.provenance[key];
+          if (holdsGuess(record)) history.provenance[key] = confirmedBySave(record, stamp.playtime);
         }
       }
       if (metadata !== undefined) state.lastImport = structuredClone(metadata);

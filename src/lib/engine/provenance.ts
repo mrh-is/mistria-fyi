@@ -140,7 +140,8 @@ export function changedFacts(
 /**
  * The `obtainedSource` a fact records as `source` changes its value: the previous source, when this
  * change finishes a quest that source had obtained. A quest with no record counts as `unknown`, as
- * its mark does. Only quest facts hold these values.
+ * its mark does. A save finishing a quest replaces a guessed obtained moment, so it records none.
+ * Only quest facts hold these values.
  */
 export function obtainedSourceOf(
   previous: FactProvenance | undefined,
@@ -150,7 +151,41 @@ export function obtainedSourceOf(
 ): ProvenanceSource | undefined {
   if (beforeValue !== "obtained" || afterValue !== "completed") return undefined;
   const obtainedSource = previous?.source ?? "unknown";
+  if (source === "save" && isGuess(obtainedSource)) return undefined;
   return obtainedSource === source ? undefined : obtainedSource;
+}
+
+/** Whether `source` is the app guessing, which a save replaces. `manual` is the player's own. */
+function isGuess(source: ProvenanceSource): boolean {
+  return source === "inferred" || source === "unknown";
+}
+
+/** Whether a save agreeing with this fact would replace a guess in its record. */
+export function holdsGuess({ obtainedSource, source }: FactProvenance): boolean {
+  return isGuess(source) || (obtainedSource !== undefined && isGuess(obtainedSource));
+}
+
+/**
+ * A fact's record once a save with `playtime` agrees with its value: each guessed moment becomes
+ * the save's, and a `manual` moment stays, so a pen slash under a stamped X is permanent. Only a
+ * promoted fact takes the save's playtime, so sync still orders a manual edit by its own.
+ */
+export function confirmedBySave(
+  record: FactProvenance,
+  playtime: number | undefined,
+): FactProvenance {
+  const promoted = isGuess(record.source);
+  const source = promoted ? "save" : record.source;
+  const obtainedSource =
+    record.obtainedSource !== undefined && isGuess(record.obtainedSource)
+      ? "save"
+      : record.obtainedSource;
+  const kept = promoted ? playtime : record.playtime;
+  return {
+    ...(obtainedSource === undefined || obtainedSource === source ? {} : { obtainedSource }),
+    ...(kept === undefined ? {} : { playtime: kept }),
+    source,
+  };
 }
 
 /** Whether a “keep mine” still applies to a save that now reports `saveValue` for the fact. */

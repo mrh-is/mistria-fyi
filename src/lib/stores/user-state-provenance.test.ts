@@ -134,6 +134,58 @@ describe("provenance", () => {
     expect(userState.provenanceOf("almanac/potato")).toEqual({ source: "unknown" });
   });
 
+  it("promotes an inferred fact a save agrees with", () => {
+    const recipe = `almanacRecipes/${ONE_REWARD_RECIPE}`;
+    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    expect(userState.provenanceOf(recipe)?.source).toBe("inferred");
+
+    userState.mergeFromSave({ almanacRecipes: new Set([ONE_REWARD_RECIPE]) }, { playtime: 5 });
+
+    expect(userState.provenanceOf(recipe)).toEqual({ playtime: 5, source: "save" });
+  });
+
+  it("stamps a guessed slash under a pen X when a save agrees with the finish", () => {
+    const key = `questStates/${ONE_REWARD_QUEST}`;
+    userState.mergeFromSave(
+      { questStates: { [ONE_REWARD_QUEST]: "obtained" } },
+      { source: "unknown" },
+    );
+    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    expect(userState.provenanceOf(key)).toEqual({ obtainedSource: "unknown", source: "manual" });
+
+    userState.mergeFromSave({ questStates: { [ONE_REWARD_QUEST]: "completed" } }, { playtime: 5 });
+
+    expect(userState.provenanceOf(key)).toEqual({ obtainedSource: "save", source: "manual" });
+  });
+
+  it("keeps a pen slash under a save's finish through later saves", () => {
+    const key = `questStates/${ONE_REWARD_QUEST}`;
+    const completed = { questStates: { [ONE_REWARD_QUEST]: "completed" as const } };
+    userState.setQuestState(ONE_REWARD_QUEST, "obtained");
+
+    userState.mergeFromSave(completed, { playtime: 5 });
+    userState.mergeFromSave(completed, { playtime: 6 });
+
+    expect(userState.provenanceOf(key)).toEqual({
+      obtainedSource: "manual",
+      playtime: 5,
+      source: "save",
+    });
+  });
+
+  it("replaces a guessed slash when a save finishes the quest", () => {
+    const key = `questStates/${ONE_REWARD_QUEST}`;
+    userState.mergeFromSave(
+      { questStates: { [ONE_REWARD_QUEST]: "obtained" } },
+      { source: "unknown" },
+    );
+
+    userState.mergeFromSave({ questStates: { [ONE_REWARD_QUEST]: "completed" } }, { playtime: 5 });
+
+    expect(userState.provenanceOf(key)).toEqual({ playtime: 5, source: "save" });
+  });
+
   it("doesn't promote a fact the save reports differently", () => {
     const key = `questStates/${ONE_REWARD_QUEST}`;
     const completed = { questStates: { [ONE_REWARD_QUEST]: "completed" as const } };
