@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CompletionSection from "#lib/components/completion-section.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
@@ -119,13 +120,15 @@
 <SpoilerGuardDialog guard={spoilerGuard} />
 
 {#if compact}
-  <MineFloorRecord
-    {biomes}
-    compact
-    floor={userState.state.progress.mineFloor}
-    {locale}
-    onChange={setFloorWithCelebration}
-  />
+  <CompletionSection complete={userState.state.progress.mineFloor >= maxFloors}>
+    <MineFloorRecord
+      {biomes}
+      compact
+      floor={userState.state.progress.mineFloor}
+      {locale}
+      onChange={setFloorWithCelebration}
+    />
+  </CompletionSection>
 {/if}
 
 <!-- The compact floor stepper sits above the sections rather than in one. -->
