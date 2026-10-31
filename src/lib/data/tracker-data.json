@@ -3667,12 +3667,14 @@
         {
           "itemIds": [
             "painting_rose_v1"
-          ]
+          ],
+          "variant": "dark_wood"
         },
         {
           "itemIds": [
             "painting_rose_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
@@ -3738,12 +3740,14 @@
         {
           "itemIds": [
             "pirate_anchor_v1"
-          ]
+          ],
+          "variant": "cool_toned"
         },
         {
           "itemIds": [
             "pirate_anchor_v2"
-          ]
+          ],
+          "variant": "warm_toned"
         },
         {
           "itemIds": [
@@ -3759,62 +3763,74 @@
         {
           "itemIds": [
             "animated_cloud_window_v1_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_cream"
-          ]
+          ],
+          "variant": "cream"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "animated_cloud_window_v1_gold"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_cream"
-          ]
+          ],
+          "variant": "cream"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "animated_cloud_window_v2_gold"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
@@ -3910,12 +3926,14 @@
         {
           "itemIds": [
             "counter_basic_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "counter_basic_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
@@ -4308,32 +4326,38 @@
         {
           "itemIds": [
             "counter_cabin_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "counter_cabin_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "counter_cabin_cherry"
-          ]
+          ],
+          "variant": "cherry"
         },
         {
           "itemIds": [
             "counter_cake_strawberry"
-          ]
+          ],
+          "variant": "strawberry"
         },
         {
           "itemIds": [
             "counter_cake_chocolate"
-          ]
+          ],
+          "variant": "mocha"
         },
         {
           "itemIds": [
             "counter_cake_double_chocolate"
-          ]
+          ],
+          "variant": "chocolate"
         },
         {
           "itemIds": [
@@ -4746,12 +4770,14 @@
         {
           "itemIds": [
             "pirate_counterfeit_gold_pile_v1"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
             "pirate_counterfeit_gold_pile_v2"
-          ]
+          ],
+          "variant": "pink_tinged"
         },
         {
           "itemIds": [
@@ -4834,92 +4860,110 @@
         {
           "itemIds": [
             "deluxe_icebox_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "deluxe_icebox_pink"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
             "deluxe_icebox_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "deluxe_icebox_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "deluxe_icebox_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_red"
-          ]
+          ],
+          "variant": "red"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_gold"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_aqua"
-          ]
+          ],
+          "variant": "aqua"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_pink"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_gray"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_light_brown"
-          ]
+          ],
+          "variant": "light_brown"
         },
         {
           "itemIds": [
             "deluxe_storage_chest_dark_brown"
-          ]
+          ],
+          "variant": "dark_brown"
         },
         {
           "itemIds": [
@@ -5021,12 +5065,14 @@
         {
           "itemIds": [
             "dragon_stained_glass_window_v1"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
             "dragon_stained_glass_window_v2"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
@@ -5189,32 +5235,38 @@
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "extra_large_decorative_pumpkin_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -6245,37 +6297,44 @@
         {
           "itemIds": [
             "incense_burner_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "incense_burner_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "incense_burner_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "incense_burner_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "incense_stick_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "incense_stick_v2"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "incense_stick_v3"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
@@ -6391,42 +6450,50 @@
         {
           "itemIds": [
             "large_decorative_pumpkin_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "large_decorative_pumpkin_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "large_dragon_rug"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "medium_dragon_rug"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
@@ -6583,12 +6650,14 @@
         {
           "itemIds": [
             "counter_cottage_v1"
-          ]
+          ],
+          "variant": "sage"
         },
         {
           "itemIds": [
             "counter_cottage_v2"
-          ]
+          ],
+          "variant": "pink"
         },
         {
           "itemIds": [
@@ -6724,32 +6793,38 @@
         {
           "itemIds": [
             "medium_decorative_pumpkin_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "medium_decorative_pumpkin_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -6899,142 +6974,170 @@
         {
           "itemIds": [
             "mist_bed_v1"
-          ]
+          ],
+          "variant": "sparkly"
         },
         {
           "itemIds": [
             "mist_bed_v2"
-          ]
+          ],
+          "variant": "moon"
         },
         {
           "itemIds": [
             "mist_bed_v3"
-          ]
+          ],
+          "variant": "raindrop"
         },
         {
           "itemIds": [
             "mist_bed_v4"
-          ]
+          ],
+          "variant": "lightning"
         },
         {
           "itemIds": [
             "mist_cushion_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_cushion_v2"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "mist_cushion_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_cushion_v4"
-          ]
+          ],
+          "variant": "purple_blue"
         },
         {
           "itemIds": [
             "mist_double_bed_v1"
-          ]
+          ],
+          "variant": "sparkly"
         },
         {
           "itemIds": [
             "mist_double_bed_v2"
-          ]
+          ],
+          "variant": "moon"
         },
         {
           "itemIds": [
             "mist_double_bed_v3"
-          ]
+          ],
+          "variant": "raindrop"
         },
         {
           "itemIds": [
             "mist_double_bed_v4"
-          ]
+          ],
+          "variant": "lightning"
         },
         {
           "itemIds": [
             "mist_lamp_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_lamp_v2"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "mist_lamp_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_lamp_v4"
-          ]
+          ],
+          "variant": "purple_blue"
         },
         {
           "itemIds": [
             "mist_pet_bed_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_pet_bed_v2"
-          ]
+          ],
+          "variant": "blue_and_yellow"
         },
         {
           "itemIds": [
             "mist_pet_bed_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_pet_bed_v4"
-          ]
+          ],
+          "variant": "purple_blue_and_yellow"
         },
         {
           "itemIds": [
             "mist_rug_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_rug_v2"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "mist_rug_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_rug_v4"
-          ]
+          ],
+          "variant": "purple_blue"
         },
         {
           "itemIds": [
             "mist_storage_chest_v1"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "mist_storage_chest_v2"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "mist_storage_chest_v3"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "mist_storage_chest_v4"
-          ]
+          ],
+          "variant": "purple_blue"
         },
         {
           "itemIds": [
@@ -7141,12 +7244,14 @@
         {
           "itemIds": [
             "pirate_nautical_compass_v1"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "pirate_nautical_compass_v2"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
@@ -7307,57 +7412,68 @@
         {
           "itemIds": [
             "ornate_banister_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "ornate_banister_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_banister_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "ornate_cabinet_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_cabinet_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_cabinet_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_cabinet_v4"
-          ]
+          ],
+          "variant": "white_and_gold"
         },
         {
           "itemIds": [
             "ornate_coffee_table_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_coffee_table_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_coffee_table_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_coffee_table_v4"
-          ]
+          ],
+          "variant": "white_and_gold"
         },
         {
           "itemIds": [
@@ -7370,22 +7486,26 @@
         {
           "itemIds": [
             "ornate_flooring_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_flooring_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_flooring_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_flooring_v4"
-          ]
+          ],
+          "variant": "white_and_gold"
         },
         {
           "itemIds": [
@@ -7430,42 +7550,50 @@
         {
           "itemIds": [
             "ornate_painted_screen_oak"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "ornate_painted_screen_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_painted_screen_walnut"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v4"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_privacy_screen_v5"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
@@ -7478,77 +7606,92 @@
         {
           "itemIds": [
             "ornate_sofa_v1"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "ornate_sofa_v2"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
             "ornate_sofa_v3"
-          ]
+          ],
+          "variant": "off_white"
         },
         {
           "itemIds": [
             "ornate_sofa_v4"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_sofa_v5"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "ornate_sofa_v6"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "ornate_sofa_v7"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
             "ornate_vase_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "ornate_vase_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "ornate_vase_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "ornate_vase_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "ornate_wallpaper_v1"
-          ]
+          ],
+          "variant": "walnut_and_green"
         },
         {
           "itemIds": [
             "ornate_wallpaper_v2"
-          ]
+          ],
+          "variant": "walnut_and_gold"
         },
         {
           "itemIds": [
             "ornate_wallpaper_v3"
-          ]
+          ],
+          "variant": "oak_and_white"
         },
         {
           "itemIds": [
             "ornate_wallpaper_v4"
-          ]
+          ],
+          "variant": "white_and_gold"
         },
         {
           "itemIds": [
@@ -7675,12 +7818,14 @@
         {
           "itemIds": [
             "pirate_wall_flag_v1"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "pirate_wall_flag_v2"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
@@ -7712,52 +7857,62 @@
         {
           "itemIds": [
             "painting_lilac_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "painting_lilac_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "painting_mushroom_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "painting_mushroom_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "pumpkin_pile_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "pumpkin_pile_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "pumpkin_pile_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "pumpkin_pile_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "pumpkin_pile_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "pumpkin_pile_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -8423,17 +8578,20 @@
         {
           "itemIds": [
             "ruins_floor_brazier_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "ruins_floor_brazier_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "ruins_floor_brazier_blue"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
@@ -8441,7 +8599,8 @@
             "ruins_pot4",
             "ruins_pot8"
           ],
-          "recipeId": "ruins_pot_white"
+          "recipeId": "ruins_pot_white",
+          "variant": "white"
         },
         {
           "itemIds": [
@@ -8449,7 +8608,8 @@
             "ruins_pot3",
             "ruins_pot9"
           ],
-          "recipeId": "ruins_pot_orange"
+          "recipeId": "ruins_pot_orange",
+          "variant": "orange"
         },
         {
           "itemIds": [
@@ -8457,7 +8617,8 @@
             "ruins_pot6",
             "ruins_pot7"
           ],
-          "recipeId": "ruins_pot_blue"
+          "recipeId": "ruins_pot_blue",
+          "variant": "purple"
         },
         {
           "itemIds": [
@@ -8472,17 +8633,20 @@
         {
           "itemIds": [
             "ruins_window_v1"
-          ]
+          ],
+          "variant": "stone_framed"
         },
         {
           "itemIds": [
             "ruins_window_v2"
-          ]
+          ],
+          "variant": "purple_framed"
         },
         {
           "itemIds": [
             "ruins_window_v3"
-          ]
+          ],
+          "variant": "wood_framed"
         },
         {
           "itemIds": [
@@ -8629,22 +8793,26 @@
         {
           "itemIds": [
             "painting_leaves_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "painting_leaves_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "painting_wildflowers_v1"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "painting_wildflowers_v2"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
@@ -8654,12 +8822,14 @@
         {
           "itemIds": [
             "pirate_ship_in_a_bottle_v1"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
             "pirate_ship_in_a_bottle_v2"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
@@ -8669,62 +8839,74 @@
         {
           "itemIds": [
             "bonsai_low_cabinet_light_brown"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "bonsai_low_cabinet_brown"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "bonsai_low_cabinet_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "bonsai_low_cabinet_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "bonsai_low_stand_light_brown"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "bonsai_low_stand_brown"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "bonsai_low_stand_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "bonsai_low_stand_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "bonsai_low_table_light_brown"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "bonsai_low_table_brown"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "bonsai_low_table_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "bonsai_low_table_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -8779,32 +8961,38 @@
         {
           "itemIds": [
             "small_decorative_pumpkin_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_yellow"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_orange"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_green"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_purple"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "small_decorative_pumpkin_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -9142,22 +9330,26 @@
         {
           "itemIds": [
             "bonsai_high_stand_light_brown"
-          ]
+          ],
+          "variant": "oak"
         },
         {
           "itemIds": [
             "bonsai_high_stand_brown"
-          ]
+          ],
+          "variant": "walnut"
         },
         {
           "itemIds": [
             "bonsai_high_stand_white"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "bonsai_high_stand_black"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -48776,13 +48968,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_turnip",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_turnip",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -48809,13 +49001,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_potato",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_potato",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -48842,13 +49034,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_cabbage",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_cabbage",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -48875,13 +49067,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_strawberry",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_strawberry",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -48921,13 +49113,13 @@
         },
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_carrot",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_carrot",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -48963,13 +49155,13 @@
         },
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_peas",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_peas",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49001,13 +49193,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_chickpea",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_chickpea",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49061,13 +49253,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_tulip",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_tulip",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49121,13 +49313,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_lilac",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_lilac",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49172,13 +49364,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_snowdrop_anemone",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_snowdrop_anemone",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49236,13 +49428,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_daffodil",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_daffodil",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49395,13 +49587,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_cucumber",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_cucumber",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49436,13 +49628,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_tomato",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_tomato",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49477,13 +49669,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_corn",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_corn",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49518,13 +49710,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_chili_pepper",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_chili_pepper",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49559,13 +49751,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_watermelon",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_watermelon",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49613,13 +49805,13 @@
         },
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_sugar_cane",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_sugar_cane",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49655,13 +49847,13 @@
         },
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_tea",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_tea",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49775,13 +49967,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_dill",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_dill",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49825,13 +50017,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_sage",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_sage",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49875,13 +50067,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_sunflower",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_sunflower",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -49963,13 +50155,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_daisy",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_daisy",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50013,13 +50205,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_iris",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_iris",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50063,13 +50255,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_catmint",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_catmint",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50113,13 +50305,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_night_queen",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_night_queen",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50184,13 +50376,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_thyme",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_thyme",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50234,13 +50426,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_oregano",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_oregano",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50284,13 +50476,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_basil",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_basil",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50334,13 +50526,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_cosmos",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_cosmos",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50421,13 +50613,13 @@
         },
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_marigold",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_marigold",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50492,13 +50684,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_sweet_potato",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_sweet_potato",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50533,13 +50725,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_broccoli",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_broccoli",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50574,13 +50766,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_pumpkin",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_pumpkin",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50628,13 +50820,13 @@
         },
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_onion",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_onion",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50657,13 +50849,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_cranberry",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_cranberry",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50720,13 +50912,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_wheat",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_wheat",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50765,13 +50957,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_moon_fruit",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_moon_fruit",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50815,13 +51007,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_rosemary",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_rosemary",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -50977,13 +51169,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_viola",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_viola",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51027,13 +51219,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_celosia",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_celosia",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51068,13 +51260,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_heather",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_heather",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51118,13 +51310,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_garlic",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_garlic",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51168,13 +51360,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_chrysanthemum",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_chrysanthemum",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51256,13 +51448,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_cauliflower",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_cauliflower",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51297,13 +51489,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_daikon_radish",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_daikon_radish",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51338,13 +51530,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_burdock_root",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_burdock_root",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51388,13 +51580,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_poinsettia",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_poinsettia",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51438,13 +51630,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_snow_peas",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_snow_peas",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51479,13 +51671,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_beet",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_beet",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51541,13 +51733,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_frost_lily",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_frost_lily",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51591,13 +51783,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_jasmine",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_jasmine",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -51641,13 +51833,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_snapdragon",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_snapdragon",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -53539,13 +53731,13 @@
         },
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_temple_flower",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_temple_flower",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"
@@ -56286,13 +56478,13 @@
       "sources": [
         {
           "type": "crop",
-          "greenhouse": true,
-          "seedItemId": "seed_rice",
           "availability": {
             "type": "quest",
             "questId": "upgrade_the_carpenters_shop",
             "state": "completed"
           },
+          "greenhouse": true,
+          "seedItemId": "seed_rice",
           "visibility": {
             "type": "questAvailable",
             "questId": "upgrade_the_carpenters_shop"

@@ -6,6 +6,7 @@ import { PipelineDiagnostics } from "../diagnostics.js";
 import { forEachItem } from "../extractor-helpers.js";
 import { compareStrings } from "../ordering.js";
 import { sourceFileFor } from "../parse/parse-fiddle.js";
+import { findSameNameRowSets, resolveItemVariants } from "./item-variants.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
@@ -18,6 +19,7 @@ import type {
 } from "#lib/types/tracker-data.js";
 
 import type { Localizer } from "../localize/localize.js";
+import type { ItemVariantSet } from "../overrides/item-variants.js";
 import type { ParsedGameData } from "../parse/parse-fiddle.js";
 
 /**
@@ -40,10 +42,15 @@ export interface RawAlmanacCategory {
   tags: string[];
 }
 
+/**
+ * `reviewedVariants` names same-name rows; every such set must be in it (see
+ * `resolveItemVariants`). It defaults to none, for fixtures without same-name rows.
+ */
 export function extractAlmanac(
   fiddle: ParsedGameData,
   localizer: Localizer,
   sharedDiagnostics?: PipelineDiagnostics,
+  reviewedVariants: readonly ItemVariantSet[] = [],
 ): {
   almanac: TrackerData["almanac"];
   iconSpritesByItemId: ItemIconSpriteIndex;
@@ -82,6 +89,7 @@ export function extractAlmanac(
   const namelessItems: string[] = [];
 
   const allItems: {
+    description?: string;
     iconSprite: string;
     id: string;
     name: string;
@@ -118,6 +126,7 @@ export function extractAlmanac(
     const recipeKey = item.recipe_key as string | undefined;
 
     allItems.push({
+      description: typeof item.description === "string" ? item.description : undefined,
       iconSprite,
       id: itemId,
       name: rawName,
@@ -191,22 +200,39 @@ export function extractAlmanac(
     }
   }
 
+  const categoryEntries = rawCategories.map((cat, i) => {
+    const entries = collapseColorways(categoryBuckets[i]);
+    entries.sort((a, b) => compareStrings(a.sortName, b.sortName));
+    return { cat, entries };
+  });
+
+  // A set is unique by its IDs, so one that recurs in another category is reviewed once.
+  const sameNameSets = new Map(
+    categoryEntries
+      .flatMap(({ entries }) =>
+        findSameNameRowSets(
+          entries.map((entry) => ({ id: entry.itemIds[0], name: entry.sortName })),
+        ),
+      )
+      .map((set) => [set.ids.join(","), set]),
+  );
+  const descriptions = Object.fromEntries(allItems.map((item) => [item.id, item.description]));
+  const variants = resolveItemVariants([...sameNameSets.values()], descriptions, reviewedVariants);
+
   const almanac: Record<AlmanacCategoryId, AlmanacCategory> = {};
 
-  for (let i = 0; i < rawCategories.length; i++) {
-    const cat = rawCategories[i];
-    const bucket = categoryBuckets[i];
-    if (bucket.size === 0) continue;
-
-    const entries = collapseColorways(bucket);
-
-    entries.sort((a, b) => compareStrings(a.sortName, b.sortName));
+  for (const { cat, entries } of categoryEntries) {
+    if (entries.length === 0) continue;
 
     almanac[cat.key as AlmanacCategoryId] = {
-      items: entries.map(({ itemIds, recipeId }) => ({
-        itemIds,
-        ...(recipeId ? { recipeId } : {}),
-      })),
+      items: entries.map(({ itemIds, recipeId }) => {
+        const variant = variants.get(itemIds[0]);
+        return {
+          itemIds,
+          ...(recipeId ? { recipeId } : {}),
+          ...(variant ? { variant } : {}),
+        };
+      }),
     };
   }
 

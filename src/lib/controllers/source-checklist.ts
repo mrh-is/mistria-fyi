@@ -1,4 +1,5 @@
 import { trackerData } from "#lib/data/index.js";
+import { getAlmanacEntryVariant } from "#lib/data/item-variants.js";
 import { animalNameId, getAlmanacEntryNames, getName } from "#lib/data/names.js";
 import { isAnimalVariantSpoilered } from "#lib/engine/animal-availability.js";
 import { projectAlmanac } from "#lib/engine/projections/almanac.js";
@@ -27,6 +28,8 @@ export interface SourceChecklistRow extends SourceGroupRow {
   questState?: QuestState;
   reportCategory: ReportCategory;
   searchNames?: string[];
+  /** Secondary words matched with the names, such as an almanac variant (“white window”). */
+  searchTerms?: string[];
   sprite?: string;
   subtitle?: string;
   /** Apply the category action and return its exact undo, including any recipe grants. */
@@ -65,6 +68,7 @@ export function buildSourceChecklist(
     });
   }
   for (const row of projectAlmanac(ctx).rows) {
+    const variant = getAlmanacEntryVariant(row.entry, locale);
     add(
       "almanac",
       row.canonicalId,
@@ -79,6 +83,7 @@ export function buildSourceChecklist(
         obtainable: row.obtainable,
         searchNames: getAlmanacEntryNames(row.entry, locale),
         sprite: row.canonicalId,
+        ...(variant ? { searchTerms: [variant], subtitle: variant } : {}),
       },
     );
   }

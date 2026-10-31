@@ -36,3 +36,26 @@ export function matchesName(name: string, query: string, locale: LocaleCode): bo
   const folded = foldName(query.trim(), locale);
   return !folded || foldName(name, locale).includes(folded);
 }
+
+/**
+ * Whether `query` finds a row through its secondary `terms`, such as a variant word: every word of
+ * the query appears in one of `names` or `terms`, and at least one appears in a term. So “white
+ * window” finds “Animated Clouds Window” (variant “White”), while a reordered name alone (“window
+ * clouds”) doesn’t match. Callers rank these matches below name matches.
+ */
+export function matchesTerms(
+  names: readonly string[],
+  terms: readonly string[],
+  query: string,
+  locale: LocaleCode,
+): boolean {
+  const words = foldName(query.trim(), locale).split(/\s+/u).filter(Boolean);
+  if (words.length === 0 || terms.length === 0) return false;
+  const foldedNames = names.map((name) => foldName(name, locale));
+  const foldedTerms = terms.map((term) => foldName(term, locale));
+  const inTerm = (word: string): boolean => foldedTerms.some((term) => term.includes(word));
+  return (
+    words.some((word) => inTerm(word)) &&
+    words.every((word) => inTerm(word) || foldedNames.some((name) => name.includes(word)))
+  );
+}

@@ -186,6 +186,40 @@ Do not infer a rename merely because one ID disappeared while another appeared. 
 in the version-update issue until native data or another authoritative source establishes the
 relationship.
 
+### Name same-name almanac rows
+
+Some almanac rows share a name within a category: six “Animated Clouds Window” rows differ only in
+color. The game names none of its colorways, so `pipeline/src/overrides/item-variants.ts` names each
+such row, and the almanac extractor throws until every set is reviewed. It also throws when a
+reviewed set gains or loses a row, or when a row’s English description changes. The error lists each
+uncovered set with a proposal from `proposeItemVariants` (`pipeline/src/extract/item-variants.ts`).
+
+For each set, the agent running the update proposes an entry:
+
+1. Derive each row’s differentiator from the description diff: the phrase its description doesn’t
+   share with the others. A description word beats an ID word (`haunted_attic_wall_cobweb_left_dark`
+   says “purple”, not “dark”). Fall back to the ID diff only when every description is identical.
+2. Leave the whole set unnamed when any row has no differentiator (all or nothing), or when the IDs
+   differ only by a bare version number. Never invent ordinals such as “Style 1”.
+3. Commit entries it’s confident in, recording each row’s English description as evidence.
+4. Present these cases to a human instead of deciding them:
+   - descriptions that differ in more than one phrase (the proposal says so),
+   - a differentiator that isn’t yet an `ITEM_VARIANTS` key,
+   - a set that would be partially named,
+   - a candidate merge of near-synonyms (“white” & “off-white” stay distinct by default).
+
+A new key goes in `ITEM_VARIANTS` (`src/lib/types/tracker-data.ts`), as a `variant_<key>` message in
+every `messages/<locale>.json`, in `src/lib/data/item-variants.ts`, & in
+`pipeline/src/overrides/item-variant-terms.ts`. Keys name phrases, not tokens (`light_brown`, not
+`light` + `brown`), so each locale orders its words naturally. Take each locale’s term from that
+locale’s own description of a row with that variant: the game’s translators already chose it (purple
+is “violet” in French, “morado” in Spanish, 보라색 in Korean). Descriptions inflect words for their
+nouns, so normalize to a standalone form (masculine singular where gender applies). Record the row
+as `evidence` and the locale under `game`. Where a locale’s description falls back to English or
+doesn’t name the difference, machine-translate with the full English description as context, list
+the locale under `machine`, & flag it for human review. `item-variants.assets.test.ts` checks the
+coverage, every locale’s message, & each `game` locale’s evidence.
+
 ## Review compatibility
 
 Evaluate each compatibility surface separately. A change that is harmless for one surface may be
