@@ -393,10 +393,12 @@ the job before changing the issue.
 
 Findings live in one “Nightly CI report” issue. The job files it, edits it in place, & closes it
 only when both checks are clear. With one or two timing samples, it skips timing findings but still
-reports advisories, with a note that timing is incomplete. Without advisories, it leaves the issue
-alone. With no readable timing samples, it publishes any advisories & then fails, because the timing
-report can’t read its data. A failure to list timing runs also publishes any advisories before
-failing. This job doesn’t count toward “CI passed”.
+reports advisories, retaining the earlier timing warnings with a note that they haven’t been
+rechecked. Repeated incomplete updates replace old advisories & status notes without duplicating the
+retained warnings. A complete timing check replaces the earlier warnings with fresh findings.
+Without advisories, it leaves the issue alone. With no readable timing samples, it publishes any
+advisories & then fails, because the timing report can’t read its data. A failure to list timing
+runs also publishes any advisories before failing. This job doesn’t count toward “CI passed”.
 
 ### Test projects
 

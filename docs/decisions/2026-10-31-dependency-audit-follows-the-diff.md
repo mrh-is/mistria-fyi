@@ -43,6 +43,10 @@ the report publishes them with an incomplete-timing note, then preserves the exi
 behavior. With insufficient samples, it never closes the issue. The report closes only when both
 checks complete & find nothing.
 
+When a report updates advisories without complete timing data, it retains the last known timing
+warnings under the incomplete-timing note. Fresh advisory findings replace old advisory findings, &
+old status notes do not accumulate. A complete timing check replaces the retained warnings.
+
 ## Alternatives
 
 Keeping the audit unconditional blocks unrelated work whenever an advisory is published. Removing

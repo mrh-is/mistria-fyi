@@ -52,11 +52,12 @@ export async function synchronizeAccessibilityIssue(options: {
   workflowUrl: string;
 }): Promise<void> {
   const run = options.run ?? defaultCommandRunner;
-  const issueNumber = await findMarkedIssue(run, {
+  const issue = await findMarkedIssue(run, {
     label: "type: bug",
     marker: MARKER,
     title: TITLE,
   });
+  const issueNumber = issue?.number;
 
   if (options.result === "success") {
     if (issueNumber === undefined) return;
@@ -134,7 +135,7 @@ function collectErrors(value: unknown, errors: string[]): void {
 export async function findMarkedIssue(
   run: CommandRunner,
   { label, marker, title }: { label: string; marker: string; title: string },
-): Promise<number | undefined> {
+): Promise<IssueSummary | undefined> {
   const output = await run("gh", [
     "issue",
     "list",
@@ -148,7 +149,7 @@ export async function findMarkedIssue(
     "number,body",
   ]);
   const issues = JSON.parse(output) as IssueSummary[];
-  return issues.find((issue) => issue.body.includes(marker))?.number;
+  return issues.find((issue) => issue.body.includes(marker));
 }
 
 async function main(): Promise<void> {

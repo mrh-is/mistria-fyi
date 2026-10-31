@@ -122,14 +122,30 @@ export function timingFindings(samples: TimingSample[]): string[] {
 
 export async function synchronizeNightlyIssue(options: {
   findings: string[];
+  preserveTimingFindings?: boolean;
   run?: CommandRunner;
   workflowUrl: string;
 }): Promise<void> {
   const { findings, workflowUrl } = options;
   const run = options.run ?? defaultCommandRunner;
-  const issueNumber = await findMarkedIssue(run, { label: LABEL, marker: MARKER, title: TITLE });
+  const issue = await findMarkedIssue(run, { label: LABEL, marker: MARKER, title: TITLE });
+  const issueNumber = issue?.number;
+  // Reports have a flat bullet list. Refresh advisories & status notes, retaining the other
+  // findings only when timing data is incomplete. A complete timing check replaces them normally.
+  const retainedTimingFindings = options.preserveTimingFindings
+    ? (issue?.body ?? "")
+        .split(/\r?\n/u)
+        .filter(
+          (line) =>
+            line.startsWith("- ") &&
+            !line.startsWith("- Dependency audit:") &&
+            !line.startsWith("- Timing report "),
+        )
+        .map((line) => line.slice(2))
+    : [];
+  const reportFindings = [...new Set([...findings, ...retainedTimingFindings])];
 
-  if (findings.length === 0) {
+  if (reportFindings.length === 0) {
     if (issueNumber === undefined) return;
     await run(
       "gh",
@@ -150,7 +166,7 @@ export async function synchronizeNightlyIssue(options: {
     MARKER,
     "These findings track repository health. Dependency advisories also block pull requests that change dependencies or the CI workflow. The nightly CI run updates this issue & closes it once all checks are clear.",
     "",
-    ...findings.map((finding) => `- ${finding}`),
+    ...reportFindings.map((finding) => `- ${finding}`),
     "",
     `[Workflow run](${workflowUrl})`,
     "",
@@ -217,6 +233,7 @@ export async function reportNightly(options: {
           ...advisories,
           "Timing report unavailable: main’s recent runs could not be read.",
         ],
+        preserveTimingFindings: true,
         run,
         workflowUrl,
       });
@@ -230,6 +247,7 @@ export async function reportNightly(options: {
         ...advisories,
         `Timing report incomplete: only ${samples.length} readable samples; existing timing findings have not been rechecked.`,
       ],
+      preserveTimingFindings: true,
       run,
       workflowUrl,
     });

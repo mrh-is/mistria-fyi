@@ -14,6 +14,25 @@ import {
 // Captured with pnpm 11.28.2 on October 31, 2026, in a temporary copy of the workspace with
 // auditConfig removed: pnpm audit --audit-level=low --json. Higher severities below are synthetic.
 const clearAudit = JSON.stringify({ ...capturedAudit, advisories: {} });
+const previousTimingFindings = [
+  "The Vitest step's median wall time is 121.0 s, over its 120 s line.",
+  "`slow.test.ts` has a median of 8.0 s, over its 5 s line.",
+];
+const previousReport = {
+  body: [
+    "<!-- mistria-nightly-report -->",
+    "Repository health findings.",
+    "",
+    ...previousTimingFindings.map((finding) => `- ${finding}`),
+    "- Dependency audit: `old-package` has a high advisory.",
+    "- Timing report incomplete: only 1 readable samples; existing timing findings have not been rechecked.",
+    "",
+    "[Workflow run](https://example.test/old-run)",
+    "",
+    "Agent: claude-code",
+  ].join("\n"),
+  number: 42,
+};
 function advisoryAudit(severity = "moderate"): string {
   const report = structuredClone(capturedAudit);
   report.advisories["1243505"].severity = severity;
@@ -243,9 +262,7 @@ describe("reportNightly", () => {
   });
 
   it("closes the existing issue only after timing & advisories both clear", async () => {
-    const { run, writes } = nightlyRunner([1, 2, 3], [], clearAudit, [
-      { body: "<!-- mistria-nightly-report -->\nold findings", number: 42 },
-    ]);
+    const { run, writes } = nightlyRunner([1, 2, 3], [], clearAudit, [previousReport]);
     await reportNightly({ run, workflowUrl });
     expect(writes.map((args) => args.slice(0, 3))).toEqual([
       ["issue", "comment", "42"],
@@ -281,14 +298,37 @@ describe("reportNightly", () => {
     },
   );
 
-  it("updates the existing issue with advisories before failing on zero timing samples", async () => {
-    const { bodies, run, writes } = nightlyRunner([], [], advisoryAudit(), [
-      { body: "<!-- mistria-nightly-report -->\nold findings", number: 42 },
+  it("retains timing warnings across repeated incomplete updates & replaces old advisories", async () => {
+    vi.spyOn(console, "warn").mockReturnValue();
+    const first = nightlyRunner([1], [], advisoryAudit(), [previousReport]);
+    await reportNightly({ run: first.run, workflowUrl });
+    const second = nightlyRunner([1, 2], [], advisoryAudit(), [
+      { body: first.bodies[0], number: 42 },
     ]);
+    await reportNightly({ run: second.run, workflowUrl });
+    expect(first.writes.map((args) => args.slice(0, 3))).toEqual([["issue", "edit", "42"]]);
+    expect(second.writes.map((args) => args.slice(0, 3))).toEqual([["issue", "edit", "42"]]);
+    for (const body of [first.bodies[0], second.bodies[0]]) {
+      const timingLines = body.split("\n").filter((line) => line.includes("median"));
+      expect(timingLines).toEqual(previousTimingFindings.map((finding) => `- ${finding}`));
+      expect(body).toContain("`deepmerge`");
+      expect(body).not.toContain("`old-package`");
+      expect(body).not.toContain("https://example.test/old-run");
+      expect(body.split("Timing report incomplete:")).toHaveLength(2);
+    }
+    vi.restoreAllMocks();
+  });
+
+  it("updates the existing issue with advisories before failing on zero timing samples", async () => {
+    const { bodies, run, writes } = nightlyRunner([], [], advisoryAudit(), [previousReport]);
     await expect(reportNightly({ run, workflowUrl })).rejects.toThrow("No timing samples");
     expect(writes.map((args) => args.slice(0, 3))).toEqual([["issue", "edit", "42"]]);
     expect(bodies[0]).toContain("`deepmerge`");
     expect(bodies[0]).toContain("Timing report incomplete");
+    expect(bodies[0].split("\n")).toEqual(
+      expect.arrayContaining(previousTimingFindings.map((finding) => `- ${finding}`)),
+    );
+    expect(bodies[0]).not.toContain("`old-package`");
   });
 
   it.each(["not json", '{"error":{"code":"ECONNRESET"}}', new Error("pnpm exited with status 2")])(
@@ -303,14 +343,19 @@ describe("reportNightly", () => {
   );
 
   it("publishes advisories even when listing timing runs fails", async () => {
-    const runner = nightlyRunner([], [], advisoryAudit());
+    const runner = nightlyRunner([], [], advisoryAudit(), [previousReport]);
     const run = (command: string, args: string[], input?: string) =>
       args[0] === "run"
         ? Promise.reject(new Error("cannot list runs"))
         : runner.run(command, args, input);
     await expect(reportNightly({ run, workflowUrl })).rejects.toThrow("cannot list runs");
     expect(runner.bodies[0]).toContain("`deepmerge`");
-    expect(runner.writes.map((args) => args.slice(0, 2))).toEqual([["issue", "create"]]);
+    expect(runner.bodies[0].split("\n")).toEqual(
+      expect.arrayContaining(previousTimingFindings.map((finding) => `- ${finding}`)),
+    );
+    expect(runner.bodies[0]).not.toContain("`old-package`");
+    expect(runner.bodies[0]).not.toContain("Timing report incomplete:");
+    expect(runner.writes.map((args) => args.slice(0, 3))).toEqual([["issue", "edit", "42"]]);
   });
 });
 
