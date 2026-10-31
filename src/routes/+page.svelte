@@ -6,11 +6,13 @@
   import { Icon } from "#lib/components/icon/index.js";
   import OverallProgress from "#lib/components/overall-progress.svelte";
   import SearchResults from "#lib/components/search-results.svelte";
+  import GotItNote from "#lib/components/sync/got-it-note.svelte";
   import WelcomeCard from "#lib/components/welcome-card.svelte";
   import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncEnabled } from "#lib/sync/enabled.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
@@ -55,6 +57,9 @@
     {#if toolbarState.searchQuery}
       <SearchResults locale={data.locale} query={toolbarState.searchQuery} />
     {:else}
+      {#if syncEnabled}
+        <GotItNote locale={data.locale} />
+      {/if}
       <WelcomeCard />
       <h2 class="px-1 font-controls text-2xs tracking-[0.14em] text-muted-foreground uppercase">
         {m.home_index_heading()}

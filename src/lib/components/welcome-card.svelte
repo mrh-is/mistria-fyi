@@ -7,16 +7,20 @@
 
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { currentDevice } from "#lib/sync/device.js";
+  import { syncEnabled } from "#lib/sync/enabled.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   type OnboardingFlow = "desktop" | "mobile";
 
   let detectedMobile = $state(false);
+  let syncComputer = $state(true);
   let flowOverride = $state<null | OnboardingFlow>(null);
   let showMobileFlow = $derived(flowOverride ? flowOverride === "mobile" : detectedMobile);
 
   onMount(() => {
     detectedMobile = navigator.maxTouchPoints > 0 && window.innerWidth < 1024;
+    syncComputer = currentDevice().computer;
   });
 
   function startManually(): void {
@@ -28,7 +32,38 @@
   }
 </script>
 
-{#if !userState.hasAnyProgress}
+{#if !userState.hasAnyProgress && syncEnabled}
+  <section class="welcome-card" aria-label={m.onboarding_region_label()}>
+    <div class="welcome-card__marker" aria-hidden="true">
+      <IconSparkles />
+    </div>
+
+    <div class="welcome-card__copy">
+      <p class="welcome-card__overline">{m.onboarding_overline()}</p>
+      <h2>{m.sync_home_title()}</h2>
+      <p>{m.sync_home_body()}</p>
+    </div>
+
+    <div class="welcome-card__choices">
+      <a class="welcome-card__choice welcome-card__choice--sync" href={localizedHref("sync")}>
+        <IconSparkles aria-hidden="true" />
+        <span>
+          <span class="welcome-card__choice-title">{m.sync_home_sync()}</span>
+          <span class="welcome-card__choice-sub">
+            {syncComputer ? m.sync_home_sync_sub_computer() : m.sync_home_sync_sub_phone()}
+          </span>
+        </span>
+      </a>
+      <button class="welcome-card__choice" type="button" onclick={startManually}>
+        <IconPencil aria-hidden="true" />
+        <span>
+          <span class="welcome-card__choice-title">{m.sync_home_hand()}</span>
+          <span class="welcome-card__choice-sub">{m.sync_home_hand_sub()}</span>
+        </span>
+      </button>
+    </div>
+  </section>
+{:else if !userState.hasAnyProgress}
   <section class="welcome-card" aria-label={m.onboarding_region_label()}>
     <div class="welcome-card__marker" aria-hidden="true">
       <IconSparkles />
@@ -234,6 +269,66 @@
     text-decoration-style: solid;
   }
 
+  .welcome-card__choices {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Whole-card choices: the title in the controls face, a subtitle in the annotation face. */
+  .welcome-card__choice {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-home-accent);
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--color-paper-raised) 92%, var(--color-home-accent));
+    text-align: left;
+    transition: transform 140ms ease-out;
+  }
+
+  .welcome-card__choice--sync {
+    color: var(--color-home-accent-foreground);
+    background: var(--color-home-accent);
+  }
+
+  .welcome-card__choice > span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .welcome-card__choice :global(svg) {
+    width: 17px;
+    height: 17px;
+    flex: none;
+  }
+
+  .welcome-card__choice-title {
+    font-family: var(--font-controls);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .welcome-card__choice-sub {
+    font-family: var(--font-annotation);
+    font-size: var(--text-2xs);
+    line-height: 1.3;
+    opacity: 0.85;
+  }
+
+  .welcome-card__choice:is(:hover, :focus-visible) {
+    outline: 2px solid var(--color-home-accent);
+    outline-offset: 2px;
+    transform: translateY(-1px);
+  }
+
   @media (max-width: 460px) {
     .welcome-card__actions {
       grid-template-columns: 1fr;
@@ -241,6 +336,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .welcome-card__choice,
     .welcome-card__primary,
     .welcome-card__secondary {
       transition-duration: 0.01ms;
