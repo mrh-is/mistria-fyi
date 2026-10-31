@@ -240,6 +240,16 @@ requests per 10 seconds per IP & Cloudflare location.
 Evidence: [relay/README.md](../relay/README.md),
 [https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
 
+### [Accessibility-only verification](decisions/2026-10-31-accessibility-only-verification.md)
+
+ID: 2026-10-31-accessibility-only-verification. Status: Current.
+
+Accessibility-only changes with unchanged visible UI need focused accessibility tests instead of
+visual checks or screenshots.
+
+Evidence: [AGENTS.md](../AGENTS.md), [docs/agent-verification.md](../docs/agent-verification.md),
+[https://github.com/mrh-is/mistria-fyi/pull/318](https://github.com/mrh-is/mistria-fyi/pull/318).
+
 ### [Issue blocker relationships](decisions/2026-10-31-issue-blocker-relationships.md)
 
 ID: 2026-10-31-issue-blocker-relationships. Status: Current.
