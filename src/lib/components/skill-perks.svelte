@@ -11,6 +11,7 @@
   import { celebrateCategory } from "#lib/effects/celebrate.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { perkUnlocksFor } from "#lib/engine/perk-unlocks.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -165,6 +166,8 @@
               {@const covered = perk.spoilered && !revealed.has(perk.id)}
               <li class="skill-perks__perk" data-unlocked={perk.unlocked}>
                 <TrackerCheckbox
+                  fact={factKey("unlockedPerks", perk.id)}
+                  provenance={userState.provenanceOf(factKey("unlockedPerks", perk.id))}
                   state={perk.unlocked ? "checked" : "unchecked"}
                   label={perk.unlocked
                     ? m.tracker_row_uncheck({ name: perk.name })

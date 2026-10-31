@@ -28,6 +28,7 @@ beforeEach(() => {
     {
       category: "almanac",
       completed: false,
+      fact: "almanac/entry",
       id: "acorn",
       key: "almanac:almanac-item:acorn",
       name: "Acorn",
@@ -39,6 +40,7 @@ beforeEach(() => {
     {
       category: "almanac",
       completed: false,
+      fact: "almanac/entry",
       id: "anchovy",
       key: "almanac:almanac-item:anchovy",
       name: "Anchovy",
@@ -50,6 +52,7 @@ beforeEach(() => {
     {
       category: "almanac",
       completed: false,
+      fact: "almanac/entry",
       id: "unsourced",
       key: "almanac:almanac-item:unsourced",
       name: "Unsourced entry",

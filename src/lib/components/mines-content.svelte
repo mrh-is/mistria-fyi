@@ -17,6 +17,7 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { getMaxMineFloor } from "#lib/engine/progress.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -177,6 +178,7 @@
           {#snippet row(spell)}
             {@const completed = userState.state.progress.spells.has(spell.id)}
             <TrackerRow
+              fact={factKey("spells", spell.id)}
               display={trackerRowDisplay({
                 completed,
                 leaving: leavingSpells.has(spell.id),
