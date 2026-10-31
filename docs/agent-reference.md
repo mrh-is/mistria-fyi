@@ -231,6 +231,13 @@ package ships no license text. Instead of weakening that check, list the package
 
 ## Enforcement boundaries
 
+### Codex filesystem sandbox
+
+Codex’s “workspace-write” policy protects Git metadata independently of checkout files. For linked
+worktrees, it follows the “.git” pointer & protects the external target too. Command approval rules
+& repository hooks cannot make that target writable. See [Codex Git sandbox](codex-git-sandbox.md)
+for the verified diagnostic syntax, exact-path workaround limits, & fresh-session checks.
+
 ### Hooks
 
 - **Shared hooks:** Claude Code & Codex share the same command hooks, configured in

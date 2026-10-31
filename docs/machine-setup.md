@@ -111,6 +111,11 @@ reports, or the store directory or existing `v11/index.db` is unwritable from th
 installation during `prepare` writes shared Git metadata, which the sandbox may need the user to
 approve.
 
+Git metadata has a separate sandbox boundary from checkout files, including in desktop-created
+worktrees. See [Codex Git sandbox](codex-git-sandbox.md) before changing writable roots or
+diagnosing an “index.lock” denial. Command allowlists do not grant filesystem access, & restarting
+Codex with unchanged settings does not remove that protection.
+
 ## Verify the result
 
 1. `node scripts/machine-doctor.ts --for <the sections you need>` exits 0; for example, `--for core`
