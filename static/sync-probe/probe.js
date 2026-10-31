@@ -2,7 +2,7 @@
 // to log its size, modification time, & a short SHA-256 prefix, and the log stays in localStorage.
 // Served verbatim from static/, outside the TypeScript project, & built on File System Access APIs
 // that TypeScript's DOM types lack, so the type-aware rules see every value as untyped.
-/* oxlint-disable typescript/no-unsafe-argument, typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return */
+/* oxlint-disable typescript/no-unsafe-argument, typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- File System Access APIs are untyped here, & the probe is throwaway */
 
 const LOG_KEY = "sync-probe-log";
 const LOG_LIMIT = 500;
