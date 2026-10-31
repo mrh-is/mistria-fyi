@@ -161,6 +161,13 @@ describe("CI workflow triggers", () => {
     expect(workflow.on?.push?.branches).toContain("main");
     expect(workflow.on?.schedule).not.toHaveLength(0);
   });
+
+  // Main pushes & the schedule both run on refs/heads/main, so sharing a group would let a merge
+  // cancel the nightly jobs, or the schedule cancel a push's timing sample, with nothing going red.
+  it("keeps scheduled runs & main pushes from cancelling each other", () => {
+    expect(workflow.concurrency?.["cancel-in-progress"]).toBe(true);
+    expect(workflow.concurrency?.group).toContain("github.event_name");
+  });
 });
 
 describe("CI workflow jobs", () => {

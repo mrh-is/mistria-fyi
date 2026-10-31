@@ -12,8 +12,10 @@ on:
 permissions:
   contents: read
 
+# Pushes to main & the schedule share a ref, so the event keeps a merge from cancelling the nightly
+# jobs, & the schedule from cancelling a push's timing sample.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 # pnpm/setup restores the pnpm store, which also holds the devEngines Node runtime, so a warm cache

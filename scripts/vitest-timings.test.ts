@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  fileLimits,
   parseTouchedFiles,
+  relayIntegrationFile,
   timingResults,
   timingSummary,
   vitestArguments,
@@ -71,6 +73,12 @@ describe("Vitest timing limits", () => {
     expect(summary.lastIndexOf("slow.test.ts")).toBeLessThan(
       summary.indexOf("scripts/example.test.ts"),
     );
+  });
+
+  it("states the relay limit that the check applies", () => {
+    const summary = timingSummary([], 0, { failures: [], warnings: [] });
+    const { failMs } = fileLimits(relayIntegrationFile);
+    expect(summary).toContain(`${failMs / 1000} s for ${relayIntegrationFile}`);
   });
 });
 

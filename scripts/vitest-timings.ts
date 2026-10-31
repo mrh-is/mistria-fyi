@@ -29,11 +29,12 @@ export interface TimingResults {
 
 // Real workerd eviction waits for in-flight events (5 s), and WebSocket close can wait another
 // 10 s. The local relay suite also restarts SQLite storage: measured at 21 s in #132.
-const relayIntegrationFile = "relay/worker.test.ts";
+export const relayIntegrationFile = "relay/worker.test.ts";
+const relayLimits: FileLimits = { failMs: 30_000, warnMs: 30_000 };
+const defaultLimits: FileLimits = { failMs: 15_000, warnMs: 5000 };
 
 export function fileLimits(file: string): FileLimits {
-  if (file === relayIntegrationFile) return { failMs: 30_000, warnMs: 30_000 };
-  return { failMs: 15_000, warnMs: 5000 };
+  return file === relayIntegrationFile ? relayLimits : defaultLimits;
 }
 
 export function vitestArguments(coverage: boolean, cpus: number): string[] {
@@ -78,11 +79,11 @@ export function timingSummary(
   elapsedMs: number,
   { failures, warnings }: TimingResults,
 ): string {
-  const { failMs, warnMs } = fileLimits("");
+  const { failMs, warnMs } = defaultLimits;
   return [
     "## Vitest timings",
     "",
-    `Wall time: ${(elapsedMs / 1000).toFixed(2)} s. A file over ${warnMs / 1000} s warns; a pull request fails if it changes a file over ${failMs / 1000} s (30 s for ${relayIntegrationFile}). File times cover tests & hooks; wall time also includes startup, imports, setup, & report generation.`,
+    `Wall time: ${(elapsedMs / 1000).toFixed(2)} s. A file over ${warnMs / 1000} s warns; a pull request fails if it changes a file over ${failMs / 1000} s (${relayLimits.failMs / 1000} s for ${relayIntegrationFile}). File times cover tests & hooks; wall time also includes startup, imports, setup, & report generation.`,
     "",
     ...[...failures, ...warnings].map((message) => `- ${message}`),
     ...(failures.length + warnings.length > 0 ? [""] : []),
