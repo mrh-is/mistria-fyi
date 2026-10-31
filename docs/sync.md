@@ -315,7 +315,7 @@ dependent difference; a changed reason or effect requires a new answer.
 ### The table
 
 - A save or inference is superseded by the save: an addition applies silently, a removal applies &
-  tells.
+  tells. An `inferred` fact is promoted to `save` when the save agrees.
 - A manual edit is ordered by `playtime` (below). One with no playtime to order by (made before any
   save was applied, or against a save whose playtime couldn’t be read) asks.
 - An `unknown` fact lets the save add a fact still at its default & is promoted to `save` when the

@@ -15,6 +15,7 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isInProgressScope, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
@@ -223,6 +224,7 @@
                 {@const museumItemSources = trackerData.items[itemId].sources}
                 {@const museumItemVisibility = trackerData.items[itemId].visibility}
                 <TrackerRow
+                  fact={factKey("museum", itemId)}
                   display={rowDisplay(itemId, museumItemSources)}
                   segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
                   name={getName("items", itemId, locale)}

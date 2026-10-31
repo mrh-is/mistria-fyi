@@ -14,6 +14,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -151,6 +152,7 @@
       {@const completed = userState.state.progress.cosmetics.has(cosmetic.id)}
       {@const spoilered = !isConditionVisible(cosmetic.visibility, userState.progressionState)}
       <TrackerRow
+        fact={factKey("cosmetics", cosmetic.id)}
         display={trackerRowDisplay({ completed, spoilered })}
         segmentLookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
         name={cosmetic.name}
