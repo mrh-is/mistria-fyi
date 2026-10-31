@@ -14,6 +14,7 @@ import { receiptCovers } from "#lib/engine/sync-apply.js";
 import { updateHolds } from "#lib/pwa/update-holds.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
+import { syncDiagnostics } from "./diagnostics.js";
 import {
   deriveFollowKeys,
   FOLLOW_PROTOCOL_VERSION,
@@ -190,6 +191,7 @@ export function createReceiver({
   }
 
   function setStatus(next: ReceiverStatus): void {
+    if (next.kind !== status.kind) syncDiagnostics.status(next.kind);
     status = next;
     onstatus?.(next);
     post({ type: "status", status: next });
@@ -323,6 +325,15 @@ export function createReceiver({
     if (!pending) return undefined;
     const { request, save } = pending;
     const outgoingFarm = userState.state.lastImport?.farmName ?? null;
+    const outgoingPlayer = userState.state.lastImport?.playerName;
+    const lane = userState.syncLane;
+    const privateValues = [
+      outgoingFarm,
+      outgoingPlayer,
+      request.receipt.mailboxId,
+      lane?.kind === "following" ? lane.key : lane?.code?.key,
+      lane?.kind === "computer" ? lane.code?.token : undefined,
+    ];
     let outcome: SyncApplyOutcome;
     // An app update's reload waits until the apply has landed.
     const releaseHold = updateHolds.hold();
@@ -338,6 +349,8 @@ export function createReceiver({
     } finally {
       releaseHold();
     }
+    // Optional diagnostics must not delay the receiver's status, tells, or next queued save.
+    void syncDiagnostics.record(save, outcome, privateValues);
     // A newer save arrived behind this one; it takes its own turn on the queue.
     const isWaiting = (): boolean => pending?.save === save;
     if (!isWaiting() && outcome.kind !== "applied") return outcome.kind;
@@ -550,6 +563,7 @@ export function createReceiver({
           save = await readSaveFile(file);
         } catch {
           result = "unreadable";
+          syncDiagnostics.status("unreadable");
           return;
         }
         // Replace in arrival order, even when the writer skips this file by its receipt. That

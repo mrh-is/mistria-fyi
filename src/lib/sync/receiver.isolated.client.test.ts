@@ -6,6 +6,7 @@ import { readProgressBlob, serializeStoredProgress } from "#lib/stores/progress-
 import { QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 
+import { syncDiagnostics } from "./diagnostics.js";
 import { deriveFollowKeys, encodeSavePayload, mailboxIdFor, sealEnvelope } from "./follow.js";
 
 import type { FollowKey, MailboxSubscriber, ReadResult } from "./follow.js";
@@ -53,7 +54,10 @@ function saveBytes(date: number, playtime = 100): Uint8Array<ArrayBuffer> {
   const entries: Record<string, unknown> = {
     gamedata: { date },
     header: { farm_name: "Rosewood", name: "Pat", playtime },
-    info: { creation_version: { major: 1, minor: 0, patch: 8, pre: null } },
+    info: {
+      creation_version: { major: 1, minor: 0, patch: 8, pre: null },
+      version: { major: 1, minor: 2, patch: 3 },
+    },
   };
   const encoder = new TextEncoder();
   const parts: Uint8Array[] = [u64(Object.keys(entries).length)];
@@ -287,6 +291,59 @@ afterEach(async () => {
 });
 
 describe("one tab leads", () => {
+  it("does not wait for diagnostic hashing to finish before reporting an applied save", async () => {
+    let finish: (() => void) | undefined;
+    const diagnostics = vi.spyOn(syncDiagnostics, "record").mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const { receiver } = await load(blob({ syncLane: { kind: "computer" } }), fakeRelay());
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const result = await Promise.race([
+        receiver.applyLocalSave(file(saveBytes(SEASON))),
+        new Promise<string>((resolve) => {
+          timer = setTimeout(() => {
+            resolve("timed-out");
+          }, 500);
+        }),
+      ]);
+      expect(result).toBe("applied");
+      expect(receiver.status.kind).toBe("up-to-date");
+    } finally {
+      clearTimeout(timer);
+      finish?.();
+      diagnostics.mockRestore();
+    }
+  });
+
+  it("records received saves from the real apply path without names or relay credentials", async () => {
+    const relay = fakeRelay(await envelope(1, saveBytes(SEASON, 137)));
+    const { receiver } = await load(blob({ syncLane: FOLLOWING }), relay);
+    receiver.start();
+    await flush();
+    if (receiver.status.kind === "asking") {
+      await receiver.answer(questionId(receiver.status), "new-farm");
+    }
+    await vi.waitFor(() => {
+      expect(
+        syncDiagnostics
+          .snapshot("build-137", "following")
+          ?.events.some((event) => event.outcome === "applied" && event.playtime === 137),
+      ).toBe(true);
+    });
+    const log = syncDiagnostics.snapshot("build-137", "following");
+    const applied = log?.events.findLast((event) => event.outcome === "applied");
+    expect(applied).toMatchObject({ gameVersion: "1.2.3", playtime: 137 });
+    expect(applied?.farmHash).toMatch(/^[a-f0-9]{64}$/u);
+    const payload = JSON.stringify(log);
+    for (const secret of ["Rosewood", "Pat", "1315159680", KEY, await mailboxIdFor(KEY)]) {
+      expect(payload).not.toContain(secret);
+    }
+  });
+
   it("only the lock's holder reads, & a queued tab takes over when it goes", async () => {
     const relay = fakeRelay({ kind: "empty" });
     const { make, receiver } = await load(blob({ syncLane: FOLLOWING }), relay);

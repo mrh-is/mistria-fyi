@@ -21,6 +21,8 @@ const cloudflarePlatform = vi.hoisted(() => {
 
 /** The build-time deployment flag; tests run as production unless they opt into a preview build. */
 const deployment = vi.hoisted(() => ({ isProductionDeployment: true }));
+const syncSwitch = vi.hoisted(() => ({ syncSwitchOn: true }));
+vi.mock("#lib/sync/sync-switch.js", () => syncSwitch);
 
 vi.mock("#lib/server/deployment.js", () => deployment);
 
@@ -202,6 +204,46 @@ function routingFetchMock(
 }
 
 describe("POST /api/feedback", () => {
+  it("validates and formats an opted-in sync log, with production gated off", async () => {
+    const syncLog = {
+      appBuild: "build-123",
+      events: [
+        {
+          farmHash: null,
+          gameVersion: null,
+          outcome: "unreadable",
+          playtime: null,
+          policies: [],
+          unknownFields: [],
+        },
+      ],
+      lane: "following",
+      protocolVersion: 1,
+    };
+    const fetchMock = mockGitHubSuccess();
+    await callPost(makeRequest({ ...validPayload, syncLog }), { fetchMock });
+    const [, options] = getGitHubCall(fetchMock);
+    const issue = JSON.parse(options.body as string) as { body: string };
+    expect(issue.body).toContain("<summary>Sync log");
+    expect(issue.body).toContain('"outcome": "unreadable"');
+    await expect(
+      callPost(makeRequest({ ...validPayload, syncLog: { ...syncLog, key: "secret" } })),
+    ).rejects.toMatchObject({ status: 400 });
+    syncSwitch.syncSwitchOn = false;
+    try {
+      const productionFetch = mockGitHubSuccess();
+      await callPost(makeRequest({ ...validPayload, syncLog: { ...syncLog, key: "secret" } }), {
+        fetchMock: productionFetch,
+      });
+      const [, productionOptions] = getGitHubCall(productionFetch);
+      const productionIssue = JSON.parse(productionOptions.body as string) as { body: string };
+      expect(productionIssue.body).not.toContain("Sync log");
+      expect(productionIssue.body).not.toContain("secret");
+    } finally {
+      syncSwitch.syncSwitchOn = true;
+    }
+  });
+
   it("creates an issue and returns the URL on valid submission", async () => {
     const fetchMock = mockGitHubSuccess();
     const request = makeRequest(validPayload);

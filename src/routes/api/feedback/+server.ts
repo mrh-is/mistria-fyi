@@ -1,11 +1,15 @@
 /* eslint-disable no-console -- server-side error logging */
 import { error as httpError, isHttpError } from "@sveltejs/kit";
 import { env } from "cloudflare:workers";
+import * as v from "valibot";
 
+import { SyncLogSchema } from "#lib/feedback/sync-log-schema.js";
 import { isReportCategory } from "#lib/feedback/types.js";
 import { isProductionDeployment } from "#lib/server/deployment.js";
 import { GitHubAppAuthError, installationTokens } from "#lib/server/github-app-auth.js";
+import { syncSwitchOn } from "#lib/sync/sync-switch.js";
 
+import type { SyncLog } from "#lib/feedback/sync-log-schema.js";
 import type { ReportTarget } from "#lib/feedback/types.js";
 import type { GitHubAppCredentials } from "#lib/server/github-app-auth.js";
 
@@ -34,6 +38,7 @@ interface FeedbackPayload {
   message: string;
   saveData?: Record<string, unknown>;
   selectedElement?: ReportTarget;
+  syncLog?: SyncLog;
 }
 
 interface GitHubFailureDiagnostics {
@@ -76,6 +81,20 @@ function buildIssueBody(payload: FeedbackPayload): string {
       "",
       "```json",
       JSON.stringify(payload.saveData, null, 2),
+      "```",
+      "",
+      "</details>",
+    );
+  }
+
+  if (syncSwitchOn && payload.syncLog) {
+    lines.push(
+      "",
+      "<details>",
+      "<summary>Sync log (names & credentials excluded)</summary>",
+      "",
+      "```json",
+      JSON.stringify(payload.syncLog, null, 2),
       "```",
       "",
       "</details>",
@@ -227,10 +246,15 @@ function validatePayload(body: unknown): FeedbackPayload {
     httpError(400, "Invalid request body");
   }
 
-  const { appVersion, email, gameDataVersion, message, saveData, selectedElement } = body as Record<
-    string,
-    unknown
-  >;
+  const {
+    appVersion,
+    email,
+    gameDataVersion,
+    message,
+    saveData,
+    selectedElement,
+    syncLog: rawSyncLog,
+  } = body as Record<string, unknown>;
 
   if (typeof message !== "string" || message.trim().length === 0) {
     httpError(400, "Message is required");
@@ -265,6 +289,13 @@ function validatePayload(body: unknown): FeedbackPayload {
     }
   }
 
+  let syncLog: SyncLog | undefined;
+  if (syncSwitchOn && rawSyncLog !== undefined) {
+    const parsed = v.safeParse(SyncLogSchema, rawSyncLog);
+    if (!parsed.success) httpError(400, "Invalid sync log");
+    syncLog = parsed.output;
+  }
+
   let validatedSaveData: Record<string, unknown> | undefined;
   if (saveData !== undefined && saveData !== null) {
     if (typeof saveData !== "object" || Array.isArray(saveData)) {
@@ -283,6 +314,7 @@ function validatePayload(body: unknown): FeedbackPayload {
     message: message.trim(),
     saveData: validatedSaveData,
     selectedElement: validateSelectedElement(selectedElement),
+    syncLog,
   };
 }
 

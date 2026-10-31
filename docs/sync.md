@@ -467,11 +467,20 @@ pwa-verification.md & the Public contract section of
 
 ## Diagnostics
 
-Expect iteration from real situations (#137). The feedback form can attach a sync log: app build,
-protocol version, game version, recent sync events with `playtime`, which fields were unknown (with
-their IDs), & which policy fired. Names are stripped & the farm number is hashed, because feedback
-becomes a public issue; a test proves no player or farm name reaches the payload. The game’s own
-`log.txt` records every save path & load.
+The feedback form can optionally attach a previewable sync log (#137): app build, protocol version,
+the device's lane, the save's current numeric game version (`info.version`), recent outcomes with
+`playtime`, unknown fields with their IDs, & counts of each policy by field. It stays behind the
+sync switch until launch. The receiver collects at most 20 events & 24 KiB in memory in the current
+tab; reloads clear it. Unknown IDs are limited to 20 per field & 100 per event. Old events are
+dropped to fit the byte limit.
+
+The collector projects diagnostics before retaining them. Names, paths, raw saves, fact values,
+question IDs, follow keys, write tokens, & mailbox IDs stay out; unknown IDs containing a current
+name or credential are redacted too. The farm number is SHA-256 hashed with a random, unexported
+session salt, so it can correlate events in one log without linking sessions or exposing a small
+enumerable number. The API checks a closed, size-limited schema before formatting the public issue.
+Privacy tests cover the payload & the receiver path, with the switch on & off. The game’s own
+`log.txt` records every save path & load; it is never attached.
 
 ## Privacy
 

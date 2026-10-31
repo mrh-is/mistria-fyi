@@ -1,5 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "feedback_attach_sync_log": "Прикрепить журнал синхронизации сохранений",
+  "feedback_sync_log_description": "Недавние события синхронизации в этой вкладке станут общедоступными. Имена и ссылки синхронизации исключены; номер фермы хешируется.",
+  "feedback_show_sync_log": "Показать журнал синхронизации",
+  "feedback_hide_sync_log": "Скрыть журнал синхронизации",
   "everything_group_by": "Группировать по",
   "everything_group_category": "Категории",
   "everything_group_source": "Источнику",

@@ -4,9 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import FeedbackPanel from "#lib/components/feedback-panel.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { syncDiagnostics } from "#lib/sync/diagnostics.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
+import type { SyncLog } from "#lib/feedback/sync-log-schema.js";
+
 const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), warning: vi.fn() }));
+const syncSwitch = vi.hoisted(() => ({ syncSwitchOn: true }));
+vi.mock("#lib/sync/sync-switch.js", () => syncSwitch);
 
 vi.mock("svelte-sonner", () => ({ toast }));
 
@@ -27,12 +32,60 @@ function mockTurnstile() {
 
 describe("FeedbackPanel", () => {
   beforeEach(() => {
+    syncSwitch.syncSwitchOn = true;
     toast.mockClear();
     toast.error.mockClear();
     toast.warning.mockClear();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     mockTurnstile();
+  });
+
+  it("only attaches the previewed sync log when opted in, and can undo the choice", async () => {
+    syncDiagnostics.status("unreadable");
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    const checkbox = screen.getByRole("checkbox", { name: "Attach my save file sync log" });
+    expect(checkbox).not.toBeChecked();
+    await fireEvent.click(checkbox);
+    await fireEvent.click(screen.getByRole("button", { name: "Show sync log" }));
+    const preview = document.querySelector("pre")?.textContent ?? "";
+    const previewLog = JSON.parse(preview) as SyncLog;
+    expect(previewLog.protocolVersion).toBe(1);
+    expect(previewLog.events.map((event) => event.outcome)).toContain("unreadable");
+    await fireEvent.click(checkbox);
+    expect(screen.queryByRole("button", { name: "Hide sync log" })).toBeNull();
+    await fireEvent.click(checkbox);
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "Sync trouble" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(options.body as string)).toHaveProperty("syncLog", JSON.parse(preview));
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it.each([true, false])("omits sync diagnostics unless chosen (switch %s)", async (on) => {
+    syncSwitch.syncSwitchOn = on;
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    expect(screen.queryByRole("checkbox", { name: "Attach my save file sync log" }) !== null).toBe(
+      on,
+    );
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "A report" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(options.body as string)).not.toHaveProperty("syncLog");
   });
 
   it("previews and attaches progress without player or farm names", async () => {
