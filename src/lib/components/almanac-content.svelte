@@ -145,6 +145,7 @@
               segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
               {name}
               subtitle={variant}
+              {variant}
               reportCategory="almanac-item"
               reportEntityId={canonicalId}
               {sources}

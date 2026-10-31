@@ -112,6 +112,7 @@
   "tracker_row_uncheck": "{name} 선택 해제",
   "tracker_row_check_spoilered": "스포일러 항목 선택",
   "tracker_row_check": "{name} 선택",
+  "tracker_row_variant_name": "{name}({variant})",
   "tracker_row_preview_sprite": "{name} 컬러로 보기",
   "tracker_row_active_badge": "활성",
   "tracker_row_sources_label": "{name} 획득처",

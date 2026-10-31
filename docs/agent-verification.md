@@ -113,7 +113,8 @@ zero, read enough of the log to diagnose it.
 ## Visual checks
 
 When a task changes `.svelte` files, CSS, layout, or routes, verify it visually before calling it
-done. Screenshots add up quickly, so follow the bounded checklist below instead of browsing around.
+done, unless it meets a [visual exemption](#visual-exemptions). Screenshots add up quickly, so
+follow the bounded checklist below instead of browsing around.
 
 ### Visual checklist
 
@@ -145,6 +146,12 @@ Instead, the page shows a “Preview build” notice, and that notice is the exp
 
 Documentation-only, pipeline-only, & test-only changes don’t need visual verification. Changes to
 engine logic (`src/lib/engine/`) don’t either, unless they affect rendered output.
+
+Accessibility-only changes don’t need visual checks or screenshot attachments when visible content,
+layout, focus behavior, & interactions stay unchanged. For example, adding a variant to a checkbox’s
+`aria-label` needs a test of its accessible name, not desktop & mobile screenshots. Use focused
+tests to verify the affected accessible names, roles, states, & behavior. Changes that also affect
+visible content or keyboard focus still need the relevant visual checks.
 
 ## Review selection
 

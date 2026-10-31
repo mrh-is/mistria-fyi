@@ -112,6 +112,7 @@
   "tracker_row_uncheck": "{name}のチェックを外す",
   "tracker_row_check_spoilered": "ネタバレ項目をチェック",
   "tracker_row_check": "{name}をチェック",
+  "tracker_row_variant_name": "{name}（{variant}）",
   "tracker_row_preview_sprite": "{name}をカラーで表示",
   "tracker_row_active_badge": "アクティブ",
   "tracker_row_sources_label": "{name}の入手先",

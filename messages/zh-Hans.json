@@ -112,6 +112,7 @@
   "tracker_row_uncheck": "取消勾选{name}",
   "tracker_row_check_spoilered": "勾选剧透物品",
   "tracker_row_check": "勾选{name}",
+  "tracker_row_variant_name": "{name}，{variant}",
   "tracker_row_preview_sprite": "以彩色显示{name}",
   "tracker_row_active_badge": "使用中",
   "tracker_row_sources_label": "{name}的获取来源",
