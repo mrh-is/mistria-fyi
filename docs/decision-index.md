@@ -184,6 +184,18 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048](https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048),
 [src/lib/presentation/source-groups.ts](../src/lib/presentation/source-groups.ts).
 
+### [Follow envelope format & the sync switch](decisions/2026-10-30-follow-envelope-format.md)
+
+ID: 2026-10-30-follow-envelope-format. Status: Current.
+
+Version 1 envelopes authenticate a fixed 26-byte additional-data layout & carry a length-prefixed
+JSON header before the pruned save; sync stays behind one build-time switch until launch.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/133](https://github.com/mrh-is/mistria-fyi/issues/133),
+[src/lib/sync/follow.ts](../src/lib/sync/follow.ts),
+[src/lib/sync/enabled.ts](../src/lib/sync/enabled.ts).
+
 ### [Provenance marks: one X, four tools](decisions/2026-10-30-provenance-marks.md)
 
 ID: 2026-10-30-provenance-marks. Status: Current.
@@ -227,6 +239,28 @@ requests per 10 seconds per IP & Cloudflare location.
 
 Evidence: [relay/README.md](../relay/README.md),
 [https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
+
+### [Accessibility-only verification](decisions/2026-10-31-accessibility-only-verification.md)
+
+ID: 2026-10-31-accessibility-only-verification. Status: Current.
+
+Accessibility-only changes with unchanged visible UI need focused accessibility tests instead of
+visual checks or screenshots.
+
+Evidence: [AGENTS.md](../AGENTS.md), [docs/agent-verification.md](../docs/agent-verification.md),
+[https://github.com/mrh-is/mistria-fyi/pull/318](https://github.com/mrh-is/mistria-fyi/pull/318).
+
+### [Copilot hook upkeep](decisions/2026-10-31-copilot-hook-upkeep.md)
+
+ID: 2026-10-31-copilot-hook-upkeep. Status: Current.
+
+Copilot’s Claude-compatible events without tool IDs skip setup & formatting, while the independent
+generated-data guards continue to run.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/315](https://github.com/mrh-is/mistria-fyi/issues/315),
+[scripts/agent-tool-hook.ts](../scripts/agent-tool-hook.ts),
+[scripts/agent-tool-hook.test.ts](../scripts/agent-tool-hook.test.ts).
 
 ### [Issue blocker relationships](decisions/2026-10-31-issue-blocker-relationships.md)
 

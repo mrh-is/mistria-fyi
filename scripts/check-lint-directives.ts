@@ -97,16 +97,29 @@ export function lintedFiles(files: string[]): string[] {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  // Usage: check-lint-directives.ts [paths...]; with no paths, every tracked file.
+  // Usage: check-lint-directives.ts [paths...]; with no paths, every tracked or untracked, non-ignored file.
   const args = process.argv.slice(2).filter((arg) => arg !== "--");
   const files = lintedFiles(
     args.length > 0
       ? args
-      : execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0"),
+      : execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], {
+          encoding: "utf8",
+        }).split("\0"),
   );
+  const fromGit = args.length === 0;
   let failed = false;
-  for (const file of files) {
-    for (const line of unjustifiedDirectives(file, readFileSync(file, "utf8"))) {
+  for (const file of new Set(files)) {
+    let text: string;
+    try {
+      text = readFileSync(file, "utf8");
+    } catch (error) {
+      // An unstaged delete or rename leaves the old path in the index; the replacement is untracked.
+      if (fromGit && (error as NodeJS.ErrnoException).code === "ENOENT") {
+        continue;
+      }
+      throw error;
+    }
+    for (const line of unjustifiedDirectives(file, text)) {
       console.error(
         `${file}:${line}: give this disable directive a reason ("-- why"), and keep it to the narrowest rule & line.`,
       );

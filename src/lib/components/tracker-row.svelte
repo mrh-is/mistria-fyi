@@ -39,6 +39,7 @@
     sprite,
     spriteClass = "text-primary",
     subtitle,
+    variant,
   }: {
     category?: CategoryKey;
     display: TrackerRowDisplay;
@@ -54,6 +55,8 @@
     sprite?: string;
     spriteClass?: string;
     subtitle?: string;
+    /** Distinguishes same-name rows in the checkbox label, independently of the subtitle. */
+    variant?: string;
   } = $props();
 
   const rawInstanceId = $props.id();
@@ -73,6 +76,7 @@
   );
 
   let isCompleted = $derived(display.mode === "completed");
+  let checkboxName = $derived(variant ? m.tracker_row_variant_name({ name, variant }) : name);
   let isObtained = $derived(display.mode === "obtained");
   let isSpoilered = $derived(display.mode === "spoilered" && !spoilerDismissed);
   let isLeaving = $derived(display.mode === "completed" && (display.leaving ?? false));
@@ -191,10 +195,10 @@
       provenance={userState.provenanceOf(fact)}
       state={checkboxState}
       label={isCompleted
-        ? m.tracker_row_uncheck({ name })
+        ? m.tracker_row_uncheck({ name: checkboxName })
         : isSpoilered
           ? m.tracker_row_check_spoilered()
-          : m.tracker_row_check({ name })}
+          : m.tracker_row_check({ name: checkboxName })}
       onclick={handleToggle}
     />
 

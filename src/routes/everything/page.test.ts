@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { sortCategoryKeysByName } from "#lib/data/categories.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
@@ -22,6 +22,12 @@ const props = {
 beforeEach(() => {
   userState.resetAll();
   pageStub.reset();
+});
+
+// Files in a shared-registry project also share `userState`, so a later file must not inherit this
+// file's grouping & progress.
+afterAll(() => {
+  userState.resetAll();
 });
 
 describe("/everything page", () => {
@@ -66,7 +72,7 @@ describe("/everything page", () => {
       for (const key of CATEGORY_KEYS) {
         const section = view.container.querySelector(`section[aria-labelledby="category-${key}"]`);
         expect(section, key).not.toBeNull();
-        expect(section?.getAttribute("style"), key).toContain(
+        expect(section?.parentElement?.getAttribute("style"), key).toContain(
           `--primary: var(--color-category-${key})`,
         );
       }
@@ -77,14 +83,16 @@ describe("/everything page", () => {
     userState.setRenown(getMaxRenownLevel());
 
     const hidden = renderToFragmentWithFeedback(AllPage, { props });
-    expect(hidden.container.querySelector("#category-renown")).toBeNull();
+    expect(hidden.container.querySelector("#category-renown")?.closest("section")?.hidden).toBe(
+      true,
+    );
     expect(hidden.container.querySelector("#category-skills")).not.toBeNull();
 
     userState.setEverythingGrouping("source");
     pageStub.navigate("/en/everything?group=category");
     userState.toggleShowCompleted();
     const shown = renderToFragmentWithFeedback(AllPage, { props });
-    expect(shown.container.querySelector("#category-renown")).not.toBeNull();
+    expect(shown.container.querySelector("#category-renown-completed")).not.toBeNull();
     expect(shown.container.querySelector("#sources-stores")).toBeNull();
     expect(userState.state.everythingGrouping).toBe("source");
   });

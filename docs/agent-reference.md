@@ -231,6 +231,13 @@ package ships no license text. Instead of weakening that check, list the package
 
 ## Enforcement boundaries
 
+### Codex filesystem sandbox
+
+Codex’s “workspace-write” policy protects Git metadata independently of checkout files. For linked
+worktrees, it follows the “.git” pointer & protects the external target too. Command approval rules
+& repository hooks cannot make that target writable. See [Codex Git sandbox](codex-git-sandbox.md)
+for the verified diagnostic syntax, exact-path workaround limits, & fresh-session checks.
+
 ### Hooks
 
 - **Shared hooks:** Claude Code & Codex share the same command hooks, configured in
@@ -241,10 +248,12 @@ package ships no license text. Instead of weakening that check, list the package
   - `SubagentStart`,
   - worktree `SessionStart`.
 - **Copilot CLI:** in a trusted folder, Copilot CLI also runs the hooks in `.claude/settings.json`,
-  but its payload has no `hook_event_name`. The setup & formatting handler lets those calls through
-  without upkeep, so Copilot sessions get no automatic setup or formatting. The guard scripts don’t
-  parse that payload either, so they don’t protect Copilot sessions. If Copilot doesn’t set
-  `$CLAUDE_PROJECT_DIR`, each hook command fails to find its script.
+  with either its native payload or Claude-compatible events. CLI 1.0.105 supplies
+  `$CLAUDE_PROJECT_DIR` & sends `session_id` & `timestamp`, but no `tool_use_id`. The setup &
+  formatting handler skips both the native payload & those ID-less events, so Copilot sessions get
+  no automatic setup or formatting. A timestamp cannot pair pre-tool & post-tool snapshots because
+  it changes between events. The independent generated-data guards handle Claude-compatible tool
+  payloads, but don’t parse native Copilot payloads.
 - **Codex trust:** Codex skips new or changed hooks until they’re trusted again in its hook review
   (`/hooks`). Review & trust them before relying on their enforcement.
 - **Mid-session setup:** both clients sequence setup & formatting in one tool handler. Claude Code
