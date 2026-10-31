@@ -416,15 +416,20 @@ function createUserState() {
         // The captured history adds what this tab recorded since its base, the merge included;
         // rebased, it keeps the history another tab stored meanwhile. A save or transfer agreeing
         // with a fact already stored leaves that fact's provenance as stored, unless a save is
-        // promoting an `unknown` one.
+        // promoting an `unknown` one to the value it reported.
         const storedProvenance = loaded.history.provenance;
+        const capturedFacts = progressFacts(captured.loaded.progress);
         rebaseHistory(
           loaded.history,
           storedHistory(intent.base),
           captured.loaded.history,
           (key, { source }) =>
             (source === "save" || source === "unknown") &&
-            !(source === "save" && storedProvenance[key]?.source === "unknown") &&
+            !(
+              source === "save" &&
+              storedProvenance[key]?.source === "unknown" &&
+              capturedFacts.get(key) === mergedFacts.get(key)
+            ) &&
             storedFacts.has(key) &&
             storedFacts.get(key) === mergedFacts.get(key),
         );

@@ -469,6 +469,28 @@ describe("serialized progress writes", () => {
     });
   });
 
+  it("doesn't stamp a promotion on a value another tab raised past the save's", async () => {
+    const { locks } = sharedLocks();
+    const stored = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    stored.progress.mineFloor = 3;
+    stored.progress.provenance = { mineFloor: { source: "unknown" } };
+    const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(stored) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    stored.progress.mineFloor = 5;
+    storage.setItem(PROGRESS_KEY, JSON.stringify(stored));
+
+    tab.userState.mergeFromSave({ mineFloor: 3 }, { playtime: 50 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { mineFloor: 5, provenance: { mineFloor: { source: "unknown" } } },
+    });
+  });
+
   it("merges an import queued behind a reset against the reset, not the old value", async () => {
     const { locks } = sharedLocks();
     const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
