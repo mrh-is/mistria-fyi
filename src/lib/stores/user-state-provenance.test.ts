@@ -124,6 +124,33 @@ describe("provenance", () => {
     });
   });
 
+  it("promotes an unknown fact a save agrees with, stamped with its playtime", () => {
+    userState.mergeFromSave({ almanac: new Set([TURNIP, POTATO]) }, { source: "unknown" });
+    expect(userState.provenanceOf("almanac/turnip")).toEqual({ source: "unknown" });
+
+    userState.mergeFromSave({ almanac: new Set([TURNIP]) }, { playtime: 5 });
+
+    expect(userState.provenanceOf("almanac/turnip")).toEqual({ playtime: 5, source: "save" });
+    expect(userState.provenanceOf("almanac/potato")).toEqual({ source: "unknown" });
+  });
+
+  it("doesn't promote a fact the save reports differently", () => {
+    const key = `questStates/${ONE_REWARD_QUEST}`;
+    const completed = { questStates: { [ONE_REWARD_QUEST]: "completed" as const } };
+    userState.mergeFromSave(completed, { source: "unknown" });
+
+    userState.mergeFromSave({ questStates: { [ONE_REWARD_QUEST]: "obtained" } }, { playtime: 5 });
+
+    expect(userState.provenanceOf(key)).toEqual({ source: "unknown" });
+  });
+
+  it("doesn't promote when a transfer agrees", () => {
+    userState.mergeFromSave({ mineFloor: 10 }, { source: "unknown" });
+    userState.mergeFromSave({ mineFloor: 10 }, { source: "unknown" });
+
+    expect(userState.provenanceOf("mineFloor")).toEqual({ source: "unknown" });
+  });
+
   it("leaves a manual fact manual when a save agrees with it", () => {
     userState.toggleAlmanacItem(TURNIP);
     userState.mergeFromSave({ almanac: new Set([TURNIP]) }, { playtime: 5 });

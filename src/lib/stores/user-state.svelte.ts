@@ -415,13 +415,16 @@ function createUserState() {
         const mergedFacts = progressFacts(loaded.progress);
         // The captured history adds what this tab recorded since its base, the merge included;
         // rebased, it keeps the history another tab stored meanwhile. A save or transfer agreeing
-        // with a fact already stored leaves that fact's provenance as stored.
+        // with a fact already stored leaves that fact's provenance as stored, unless a save is
+        // promoting an `unknown` one.
+        const storedProvenance = loaded.history.provenance;
         rebaseHistory(
           loaded.history,
           storedHistory(intent.base),
           captured.loaded.history,
           (key, { source }) =>
             (source === "save" || source === "unknown") &&
+            !(source === "save" && storedProvenance[key]?.source === "unknown") &&
             storedFacts.has(key) &&
             storedFacts.get(key) === mergedFacts.get(key),
         );
@@ -792,8 +795,9 @@ function createUserState() {
      * Merges a native save into current progress: sets union, levels take the max, and the
      * household follows {@link mergeHousehold}'s conflict policy. Never removes progress. Every
      * fact it changes records `source` (a save, or `unknown` for a device transfer, whose payload
-     * carries no provenance); a save's `playtime` becomes the last applied save's, and a manual
-     * import's `metadata` the last import's.
+     * carries no provenance), and a save promotes the `unknown` facts it agrees with to `save`; a
+     * save's `playtime` becomes the last applied save's, and a manual import's `metadata` the last
+     * import's.
      */
     mergeFromSave(
       imported: Partial<ProgressState>,
@@ -808,6 +812,15 @@ function createUserState() {
       // last applied save's, like an edit.
       const stamp = { playtime: source === "save" ? playtime : history.lastSavePlaytime };
       const result = track(source, () => mergeProgress(state.progress, imported), [], stamp);
+      if (source === "save") {
+        const saveFacts = progressFacts({ ...createDefaultProgress(), ...imported });
+        const currentFacts = progressFacts(state.progress);
+        for (const [key, value] of saveFacts) {
+          if (history.provenance[key]?.source === "unknown" && currentFacts.get(key) === value) {
+            recordFact(key, "save", stamp.playtime, undefined);
+          }
+        }
+      }
       if (metadata !== undefined) state.lastImport = structuredClone(metadata);
 
       // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
