@@ -1,8 +1,10 @@
 <script lang="ts">
+  import CompletionSection from "#lib/components/completion-section.svelte";
   import RankRecord from "#lib/components/rank-record.svelte";
   import RenownCurrentRecord from "#lib/components/renown-current-record.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
+  import { getMaxRenownLevel } from "#lib/engine/progress.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -18,7 +20,9 @@
   }
 </script>
 
-<RenownCurrentRecord {compact} {locale} />
+<CompletionSection complete={userState.state.progress.renown >= getMaxRenownLevel()}>
+  <RenownCurrentRecord {compact} {locale} />
+</CompletionSection>
 
 {#if !compact}
   <ul class="rank-register" aria-label={m.renown_rank_register_aria()}>

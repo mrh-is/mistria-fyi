@@ -78,6 +78,7 @@ it("orders festivals by calendar, biomes by depth, and completed sources last", 
   expect(biomes.toReversed().toSorted((a, b) => compareSourceSections(a, b, "en"))).toEqual(biomes);
   const [first, second] = biomes;
   expect(
+    // Finishing a section doesn't reorder its list while it waits to move to the completed list.
     compareSourceSections({ ...first, section: { ...first.section, state: "done" } }, second, "en"),
-  ).toBeGreaterThan(0);
+  ).toBeLessThan(0);
 });

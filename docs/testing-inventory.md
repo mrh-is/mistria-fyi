@@ -90,6 +90,7 @@ single-component row's marks disagree with its test files.
 | `expandable-section`                      |        |     ✓      | Disclosure, IDs, nesting, reporting                                     |
 | `section-groups`                          |        |     ✓      | Completed grouping, toggle hold window, kept expansion                  |
 | `section-group-item`, `completed-heading` |        | via parent | Through `section-groups`                                                |
+| `completion-section`                      |        | via parent | Everything-page tests cover section & compact-record partitioning       |
 | `spoiler`                                 |        | via parent | Through `tracker-row` & `spoiler-section`                               |
 | `spoiler-section`                         |        |     ✓      | Mask-only reveal, inert row, shared styling, no progress                |
 | `section-trigger`                         |        | via parent | Through `expandable-section` & `spoiler-section`                        |

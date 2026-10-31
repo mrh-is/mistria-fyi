@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CompletionSection from "#lib/components/completion-section.svelte";
   import SkillRecord from "#lib/components/skill-record.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -25,9 +26,11 @@
 
 <ul class="skill-ledger" aria-label={m.skills_ledger_aria()}>
   {#each skills as skill (skill.id)}
-    {#if !isSkillComplete(skill.id, userState.state.progress) || userState.state.showCompleted}
-      <SkillRecord {compact} id={skill.id} {locale} name={skill.name} {spoilerGuard} />
-    {/if}
+    <CompletionSection complete={isSkillComplete(skill.id, userState.state.progress)}>
+      {#if !isSkillComplete(skill.id, userState.state.progress) || userState.state.showCompleted}
+        <SkillRecord {compact} id={skill.id} {locale} name={skill.name} {spoilerGuard} />
+      {/if}
+    </CompletionSection>
   {/each}
 </ul>
 

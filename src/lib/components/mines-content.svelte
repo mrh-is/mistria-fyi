@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CompletionSection from "#lib/components/completion-section.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
@@ -6,6 +7,7 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -27,6 +29,7 @@
 
   const spoilerGuard = createSpoilerGuard();
   const sectionGrouping = createSectionGrouping<"floors" | "spells">();
+  const leavingSpells = createLeavingSet<SpellId>();
 
   function isSpellSpoilered(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility;
@@ -41,6 +44,7 @@
       userState.toggleSpell(spellId);
     });
     if (completed) {
+      if (!userState.state.showCompleted) leavingSpells.markLeaving(spellId);
       if (isMinesComplete()) {
         celebrateCategory();
       } else if (allSpellsComplete()) {
@@ -112,7 +116,7 @@
   let visibleSpells = $derived(
     scopedSpells.filter((spell) => {
       const completed = userState.state.progress.spells.has(spell.id);
-      return completed ? userState.state.showCompleted : true;
+      return completed ? userState.state.showCompleted || leavingSpells.has(spell.id) : true;
     }),
   );
 </script>
@@ -120,13 +124,15 @@
 <SpoilerGuardDialog guard={spoilerGuard} />
 
 {#if compact}
-  <MineFloorRecord
-    {biomes}
-    compact
-    floor={userState.state.progress.mineFloor}
-    {locale}
-    onChange={setFloorWithCelebration}
-  />
+  <CompletionSection complete={userState.state.progress.mineFloor >= maxFloors}>
+    <MineFloorRecord
+      {biomes}
+      compact
+      floor={userState.state.progress.mineFloor}
+      {locale}
+      onChange={setFloorWithCelebration}
+    />
+  </CompletionSection>
 {/if}
 
 <!-- The compact floor stepper sits above the sections rather than in one. -->
@@ -173,7 +179,11 @@
             {@const completed = userState.state.progress.spells.has(spell.id)}
             <TrackerRow
               fact={factKey("spells", spell.id)}
-              display={trackerRowDisplay({ completed, spoilered: isSpellSpoilered(spell.id) })}
+              display={trackerRowDisplay({
+                completed,
+                leaving: leavingSpells.has(spell.id),
+                spoilered: isSpellSpoilered(spell.id),
+              })}
               name={spell.name}
               reportCategory="spell"
               reportEntityId={spell.id}

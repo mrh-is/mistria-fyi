@@ -76,8 +76,6 @@ export function compareSourceSections(
   b: { name: string; section: SourceSection<SourceChecklistRow> },
   locale: LocaleCode,
 ): number {
-  const done = Number(a.section.state === "done") - Number(b.section.state === "done");
-  if (done !== 0) return done;
   const aOrder = sourceGameOrder(a.section);
   const bOrder = sourceGameOrder(b.section);
   if (aOrder !== undefined && bOrder !== undefined && aOrder !== bOrder) return aOrder - bOrder;

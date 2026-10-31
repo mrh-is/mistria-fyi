@@ -318,20 +318,31 @@ Pages are layout compositors. They handle data fetching and composition, not bus
 - **Shared components** — reusable components live in `src/lib/components/` or the project-owned
   `src/lib/components/ui/` (forked from shadcn-svelte).
 - **"Everything" view** — `src/routes/everything/+page.svelte` computes overall completion and
-  renders one `category-section.svelte` per category. That component owns the category-to-content
-  map (which content component, whether it's compact, whether its rows stack), the sticky
-  `section-header.svelte`, and hiding a completed category unless completed content is shown. A new
-  category adds one map entry, not a new section file.
+  renders `category-section.svelte` for outstanding sections & again below a single Completed
+  divider when “Show completed” is on. That component owns the category-to-content map (which
+  content component & whether it's compact), the sticky, collapsible `section-header.svelte`, and
+  hiding categories with no matching sections. A new category adds one map entry, not a new section
+  file.
 
 The Everything page also offers a Source grouping. `controllers/source-checklist.ts` adapts the
 category projections into rows with their original completion identity, presentation, & reversible
 store action. `presentation/source-groups.ts` places each row under all of its source instances,
 merges stock facets within an instance, & classifies availability using only that instance’s
 sources. Source totals & Now/Later/Done rollups precede display filtering; unobtainable rows never
-hold a source open. `source-content.svelte` composes the source types & sections, leaving type-level
-collapsing and the page-wide completed list to #248. The `group=category|source` query overrides the
-device’s `everythingGrouping` preference without rewriting it; choosing the control updates both the
-preference & URL. Progress serialization is unchanged.
+hold a source open. `source-content.svelte` composes the source types & sections, placing Done
+sections below the same page-wide Completed divider. In both lenses, outstanding groups start open &
+completed groups start closed on each page load; these choices aren't persisted. The divider itself
+never collapses. A source anchor opens its containing type group, including a completed one.
+`controllers/completion-scope.svelte.ts` partitions category sections by the same completion their
+headers show; compact records & masked top-level spoiler sections register individually, & a masked
+section always counts as outstanding. A section changes lists once a completed row has had time to
+leave, the source lens holds its sections the same way, & focus inside a section that leaves moves
+to the nearest visible section trigger. The Completed divider hides while no completed group has
+content. Collapsed groups keep their content mounted so progress edits & filters can update which
+groups have content. Category pages have no completion scope & keep their existing grouping. The
+`group=category|source` query overrides the device’s `everythingGrouping` preference without
+rewriting it; choosing the control updates both the preference & URL. Progress serialization is
+unchanged.
 
 ### Component conventions
 

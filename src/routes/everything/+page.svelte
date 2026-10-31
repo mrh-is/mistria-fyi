@@ -3,8 +3,10 @@
   import { SvelteURL } from "svelte/reactivity";
 
   import AllCompleted from "#lib/components/all-completed.svelte";
+  import CompletedHeading from "#lib/components/completed-heading.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import PageHeader from "#lib/components/page-header.svelte";
+  import { createSharedReveals } from "#lib/controllers/completion-scope.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
@@ -18,11 +20,16 @@
   import CategorySection from "./category-section.svelte";
   import SourceContent from "./source-content.svelte";
 
+  import type { CategoryKey } from "#lib/engine/categories.js";
+
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 
+  createSharedReveals();
+
   let orderedCategories = $derived(sortCategoryKeysByName(CATEGORY_KEYS, data.locale));
+  const completedContent = $state<Partial<Record<CategoryKey, boolean>>>({});
 
   registerSourceFilters("all", () => trackerIndex.categorySourceTypes.all);
 
@@ -109,6 +116,25 @@
     {#each orderedCategories as category (category)}
       <CategorySection key={category} locale={data.locale} progress={progress[category]} />
     {/each}
+    {#if userState.state.showCompleted}
+      <!-- Stays mounted while hidden, since its categories report whether they have content. -->
+      <div
+        class="flex flex-col gap-6"
+        data-testid="everything-completed"
+        hidden={!Object.values(completedContent).some(Boolean)}
+      >
+        <CompletedHeading class="px-2 pt-2" />
+        {#each orderedCategories as category (category)}
+          <CategorySection
+            bind:hasContent={completedContent[category]}
+            completed
+            key={category}
+            locale={data.locale}
+            progress={progress[category]}
+          />
+        {/each}
+      </div>
+    {/if}
   {/if}
 
   <AllCompleted isAllCompleted={overallProgress.completed >= overallProgress.total} />
