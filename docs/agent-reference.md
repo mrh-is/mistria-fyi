@@ -245,15 +245,34 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   - `PreToolUse`,
   - `PostToolUse`,
   - `Stop`,
+  - `SubagentStop`,
   - `SubagentStart`,
   - worktree `SessionStart`.
-- **Copilot CLI:** in a trusted folder, Copilot CLI also runs the hooks in `.claude/settings.json`,
-  with either its native payload or Claude-compatible events. CLI 1.0.105 supplies
-  `$CLAUDE_PROJECT_DIR` & sends `session_id` & `timestamp`, but no `tool_use_id`. The setup &
-  formatting handler skips both the native payload & those ID-less events, so Copilot sessions get
-  no automatic setup or formatting. A timestamp cannot pair pre-tool & post-tool snapshots because
-  it changes between events. The independent generated-data guards handle Claude-compatible tool
-  payloads, but don’t parse native Copilot payloads.
+- **Copilot CLI:** in a trusted folder, Copilot also reads `.claude/settings.json`.
+  [Its reference](https://docs.github.com/en/copilot/reference/hooks-reference) documents
+  Claude-style payloads for PascalCase events, alongside native camelCase payloads. The guards
+  inspect the former; native payloads aren't parsed. Setup & formatting compatibility is separate
+  from guard enforcement. CLI 1.0.105 sets `$CLAUDE_PROJECT_DIR`, but omits `tool_use_id` from its
+  Claude-compatible events. The upkeep handler skips native payloads & those ID-less events;
+  timestamps change between events and cannot pair formatter snapshots. See
+  [Copilot hook upkeep](decisions/2026-10-31-copilot-hook-upkeep.md).
+- **Guard crashes:** Claude Code v2.1.295+ uses `onFailure: "block"` on all four `PreToolUse`
+  guards; an exit-1 crash, missing command, invalid output, or timeout blocks the call. Setup,
+  formatting, & stop lint keep their existing failure behavior. See
+  [Claude's failure contract](https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails).
+  A live v2.1.316 probe blocked exit 1 & named the guard; its control without `onFailure` ran the
+  tool.
+- **Codex failures:** a live 0.163.0-alpha.11.2 probe recorded the guard's invocation & exit 1, but
+  the tool still ran. [Codex's hook contract](https://learn.chatgpt.com/docs/hooks) documents
+  explicit exit-2/JSON denials, but no `onFailure` equivalent. Don't rely on a crash as a denial in
+  Codex.
+- **Copilot failures:** fresh, trusted CLI 1.0.105 sessions loaded all four `onFailure` fields & ran
+  a harmless command. The real policy guard's exit-2 denial & a temporary guard's exit-1 crash both
+  blocked the call. A timed-out guard let the command run despite `onFailure: "block"`, matching its
+  reference. These probes establish decisions, not timeout process cleanup: the timeout log also
+  reported a process-group signaling error. See
+  [the live test record](https://github.com/mrh-is/mistria-fyi/pull/323#pullrequestreview-5724777517).
+  Don't rely on the Claude timeout guarantee in Copilot.
 - **Codex trust:** Codex skips new or changed hooks until they’re trusted again in its hook review
   (`/hooks`). Review & trust them before relying on their enforcement.
 - **Mid-session setup:** both clients sequence setup & formatting in one tool handler. Claude Code
@@ -299,6 +318,37 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   supplement the repository’s rules and aren’t a filesystem sandbox. Pipeline commands stay
   permitted.
 
+### Policy guards
+
+Both clients register `guard-agent-policy.ts` for shell commands & `guard-release-version.ts` for
+shell commands, file tools, & patches. The generated-path & read guards also cover history & known
+token files. These guards supplement instructions; client crashes, unsupported tools, & arbitrary
+programs can still bypass them.
+
+| Rule          | Enforcement & permitted alternative                                                                                                                                                                                                                        |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| History       | The edit guard denies `docs/superpowers/`, including its directory root. Update current docs.                                                                                                                                                              |
+| OAuth         | The read guard denies `.config/gh/hosts.yml` & `.wrangler/config/*.toml` suffixes, including literal `~/` paths. Use `gh auth status` or `pnpm exec wrangler whoami`. Other secret locations remain forbidden by instruction.                              |
+| Assets        | Common `unzip`, `tar`, `7z`, & Python zipfile extraction forms require named entries/subtrees. Listing & archive tests stay allowed.                                                                                                                       |
+| Releases      | File tools compare the top-level package version before/after the proposed edit. Patches must be predictable; opaque shell writes to `package.json`, `pnpm version`, & tag mutations are denied. Normal dependency commands & tag inspection stay allowed. |
+| Shared stash  | Bare `git stash`, `pop`, unnamed `push`, & `apply` without a commit SHA are denied. Use `push -m <name>` or `apply <sha>`.                                                                                                                                 |
+| GitHub bodies | `gh issue\|pr create\|comment\|edit` bodies must end in `Agent: <agent-id>`. Multiline text needs `--body-file`; label-only edits stay allowed.                                                                                                            |
+| Dependencies  | `pnpm add`, `update`, & `remove` add the audit procedure as context and remain allowed. The hook doesn't prove an audit ran.                                                                                                                               |
+
+Only the user may enable inherited `MISTRIA_ALLOW_FULL_ASSETS=1` after approving full extraction, or
+`MISTRIA_RELEASE=1` after approving a release version. Assigning either variable in the inspected
+command doesn't opt in. These aren't authorization tokens: an arbitrary program or separate tool can
+evade a command guard, so the underlying approval rules still apply.
+
+Policy commands use the shared segment/heredoc splitter, check shell-fed heredocs & literal shell
+`-c` programs, & inspect command substitutions. They don't evaluate variables, aliases, arbitrary
+interpreter programs, or every archive option. Body files must exist before the GitHub command;
+dynamic stdin can't be verified, so use a file or a heredoc. Body-file inspection refuses known
+guarded read targets and never prints body content in diagnostics. Package patches whose application
+can't be predicted are denied; use a file edit preserving the version instead. After a
+directory-changing command, use an absolute body-file path so the guard checks the same file GitHub
+will receive.
+
 ### Formatting & lint hooks
 
 - **Formatter:** `format-agent-edit.ts` formats surviving edit or patch targets with oxfmt.
@@ -315,6 +365,13 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   - On the next stop, `stop_hook_active` lets the stop proceed with a visible failure report,
     instead of another continuation.
   - Fix the errors or report the blocker.
+- **Subagent lint:** both clients also register `SubagentStop`, using the same one-continuation
+  rule. Claude Code v2.1.316's live worktree probe confirmed that `cwd` is the subagent's worktree,
+  with `stop_hook_active: false` followed by `true` after a block. A second live probe used the real
+  lint hook & oxlint: `probe.ts`'s `no-debugger` error reached the subagent once, then the hook let
+  it finish with a failure report. Tests run the hook against linked parent/child worktrees & prove
+  that only the child's changed files are linted. Codex exposes a separate `SubagentStop` event in
+  its hook contract; its `Stop` entry alone doesn't cover this case.
 - **Repository root:** Git enumeration & lint run from the repository root, even when a client
   starts below it.
 
