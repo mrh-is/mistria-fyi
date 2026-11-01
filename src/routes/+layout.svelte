@@ -9,6 +9,7 @@
   import AppUpdater from "#lib/components/app-updater.svelte";
   import PencilFilter from "#lib/components/pencil-filter.svelte";
   import PersistenceWarning from "#lib/components/persistence-warning.svelte";
+  import RouteMain from "#lib/components/route-main.svelte";
   import SeoHead from "#lib/components/seo-head.svelte";
   import SyncReceiverHost from "#lib/components/sync/sync-receiver-host.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
@@ -97,14 +98,9 @@
     >
       {m.skip_to_main_content()}
     </a>
-    {#key page.url.pathname}
-      <main
-        id="main-content"
-        class="flex flex-1 flex-col motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in"
-      >
-        {@render children()}
-      </main>
-    {/key}
+    <RouteMain>
+      {@render children()}
+    </RouteMain>
   </div>
 
   <ToolbarFooter {metadata} bind:this={toolbarFooter} />
