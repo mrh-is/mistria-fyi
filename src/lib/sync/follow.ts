@@ -342,7 +342,8 @@ export type ReadResult =
   | { kind: "empty" }
   | { kind: "retired" };
 
-export type RetireResult = RelayFailure | { kind: "retired" };
+/** `refused` is a token or mailbox the relay won't retire, which retrying can't change. */
+export type RetireResult = RelayFailure | { kind: "refused" } | { kind: "retired" };
 
 /**
  * What an upload did. `conflict` is a counter at or below the mailbox's high-water mark that isn't
@@ -458,6 +459,9 @@ export function createRelayClient(
       if (response === undefined) return { kind: "unreachable" };
       // A `410` is also a terminal acknowledgment: an earlier attempt landed.
       if (response.status === 200 || response.status === 410) return { kind: "retired" };
+      if (response.status === 401 || response.status === 403 || response.status === 404) {
+        return { kind: "refused" };
+      }
       return failureOf(response);
     },
     async upload(mailboxId, token, { counter, envelope, version }) {
@@ -668,16 +672,12 @@ export async function pendingRetireFor(code: {
 }
 
 /**
- * Retires every pending code, & reports the ones the relay confirmed. A retire that can't
- * reach the relay stays pending for the next try; a pause doesn't hold one back, since retiring
- * bypasses it.
+ * Tries to retire every pending code, & reports each one's result in the same order. A pause
+ * doesn't hold one back, since retiring bypasses it.
  */
 export async function retirePending(
   relay: RelayClient,
   pending: readonly PendingRetire[],
-): Promise<PendingRetire[]> {
-  const results = await Promise.all(
-    pending.map((retire) => relay.retire(retire.mailboxId, retire.token)),
-  );
-  return pending.filter((_, index) => results[index]?.kind === "retired");
+): Promise<RetireResult[]> {
+  return Promise.all(pending.map((retire) => relay.retire(retire.mailboxId, retire.token)));
 }
