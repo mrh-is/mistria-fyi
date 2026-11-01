@@ -40,7 +40,8 @@ const unsafeTriggers = [
   "pull_request_target",
   "workflow_run",
 ];
-const secretReferences = /wrangler|pages deploy|sprites:upload|fonts:upload|CLOUDFLARE_|secrets\./;
+const secretReferences =
+  /wrangler|pages deploy|sprites:upload|fonts:upload|CLOUDFLARE_|\bsecrets\b/;
 // The one exception (docs/decisions/2026-11-01-gate-production-on-ci.md): this exact line, once, in
 // CI. ci-workflow.isolated.test.ts holds its job to main pushes & the `production` environment.
 // oxlint-disable-next-line no-template-curly-in-string -- literal GitHub Actions expression text

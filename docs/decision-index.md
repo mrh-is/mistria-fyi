@@ -378,6 +378,7 @@ Evidence:
 [tests/ci-workflow.isolated.test.ts](../tests/ci-workflow.isolated.test.ts),
 [tests/workflow-hardening.test.ts](../tests/workflow-hardening.test.ts),
 [docs/development-workflow.md#production-deployment](../docs/development-workflow.md#production-deployment).
+
 ### [Pin real-save observations](decisions/2026-11-01-real-save-observations.md)
 
 ID: 2026-11-01-real-save-observations. Status: Current.

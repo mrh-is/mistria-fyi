@@ -673,8 +673,9 @@ describe("production deployment", () => {
     const bin = mkdtempSync(join(tmpdir(), "deploy-production-"));
     try {
       const curlLog = join(bin, "curl.log");
+      const ghLog = join(bin, "gh.log");
       const gh = env.tip === undefined ? "exit 1" : `echo ${env.tip}`;
-      writeFileSync(join(bin, "gh"), `#!/bin/sh\n${gh}\n`, { mode: 0o755 });
+      writeFileSync(join(bin, "gh"), `#!/bin/sh\necho "$@" > "${ghLog}"\n${gh}\n`, { mode: 0o755 });
       writeFileSync(join(bin, "curl"), `#!/bin/sh\necho "$@" > "${curlLog}"\n`, { mode: 0o755 });
       const result = spawnSync("bash", ["-e", "-c", command], {
         encoding: "utf8",
@@ -683,9 +684,11 @@ describe("production deployment", () => {
           DEPLOY_HOOK_URL: env.DEPLOY_HOOK_URL,
           GITHUB_SHA: sha,
           PATH: `${bin}:${process.env.PATH}`,
+          REPOSITORY: "owner/repo",
         },
       });
       return {
+        looked: existsSync(ghLog) ? readFileSync(ghLog, "utf8") : undefined,
         posted: existsSync(curlLog) ? readFileSync(curlLog, "utf8") : undefined,
         status: result.status,
       };
@@ -694,12 +697,24 @@ describe("production deployment", () => {
     }
   }
 
-  it("deploys only after the gate passes on a main push", () => {
+  // Main pushes always skip locale-sync, one of the gate's needs. Without a status function, GitHub's
+  // implicit `success()` would then skip this job too, leaving the run green & production stale.
+  it("deploys only after the gate passes on a main push, despite skipped gate needs", () => {
     const job = jobs[deployJob];
+    expect(jobs["locale-sync"].if).toContain("github.event_name == 'pull_request'");
     expect(job.needs).toBe("ci-passed");
-    expect(job.if).toContain("github.event_name == 'push'");
-    expect(job.if).toContain("github.ref == 'refs/heads/main'");
-    expect(job.if).toContain("needs.ci-passed.result == 'success'");
+    expect(job.if).toBe(
+      "${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci-passed.result == 'success' }}",
+    );
+  });
+
+  it("gives the deploy step the values its script reads", () => {
+    expect(jobs[deployJob].steps).toHaveLength(1);
+    expect(jobs[deployJob].steps?.[0].env).toEqual({
+      DEPLOY_HOOK_URL: "${{ secrets.PRODUCTION_DEPLOY_HOOK }}",
+      GH_TOKEN: "${{ github.token }}",
+      REPOSITORY: "${{ github.repository }}",
+    });
   });
 
   // The hook URL needs no other authentication, so anyone who reads it can trigger a deployment.
@@ -708,14 +723,23 @@ describe("production deployment", () => {
     expect(job.environment).toBe("production");
     expect(job.steps?.filter((step) => step.uses !== undefined)).toEqual([]);
     const holders = Object.entries(jobs)
-      .filter(([, entry]) => JSON.stringify(entry).includes("secrets."))
+      .filter(([, entry]) => /\bsecrets\b/.test(JSON.stringify(entry)))
       .map(([jobName]) => jobName);
     expect(holders).toEqual([deployJob]);
+    const environments = Object.entries(jobs)
+      .filter(([, entry]) => entry.environment !== undefined)
+      .map(([jobName]) => jobName);
+    expect(environments).toEqual([deployJob]);
   });
 
   it("posts to the hook when the passing commit is still main's tip", () => {
-    const { posted, status } = runDeploy({ DEPLOY_HOOK_URL: "https://hook.test/x", tip: sha });
+    const { looked, posted, status } = runDeploy({
+      DEPLOY_HOOK_URL: "https://hook.test/x",
+      tip: sha,
+    });
     expect(status).toBe(0);
+    expect(looked).toContain("repos/owner/repo/commits/main");
+    expect(looked).toContain("--jq .sha");
     expect(posted).toContain("https://hook.test/x");
     expect(posted).toContain("POST");
     expect(posted).toContain("--fail");

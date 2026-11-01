@@ -28,9 +28,9 @@ relay, & scripts suites when path filters say they’re unaffected, while `main`
 Players keep saved progress, & a build that changes persisted state can’t always be rolled back
 safely, so a bad deployment can cost more than the time to redeploy.
 
-The cost is real too. Of the last 38 finished runs for pushes to `main`, 5 failed, & none is known
-to be an application bug. At least three were infrastructure failures, including the one that
-prompted #325. Successful runs took about 4 minutes.
+The cost is real too. On 2026-11-01, 5 of the latest 38 finished runs for pushes to `main` had
+failed, not counting cancelled runs, & none was known to be an application bug. At least three were
+infrastructure failures, including the one that prompted #325. Successful runs took about 4 minutes.
 
 ## Decision
 

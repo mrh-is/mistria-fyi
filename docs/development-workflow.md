@@ -554,10 +554,13 @@ previews still build on every push. See
 
 - **Newer commits:** the hook builds `main`’s tip, so a run whose commit is no longer the tip
   doesn’t call it. The newer commit’s run decides.
-- **A failed run:** nothing deploys. Rerun the failed jobs if the failure was a flake, which deploys
-  if that commit is still the tip. Otherwise the next passing push to `main` ships everything.
+- **A failed run:** nothing deploys. If the failure was a flake & that commit is still the tip,
+  rerun the failed jobs, which deploys it. Don’t rerun an older commit’s run: it shares a
+  concurrency group with newer pushes, so it could cancel the newer run & then deploy nothing. The
+  next passing push to `main` ships everything.
 - **An urgent fix when CI can’t pass:** the owner turns automatic production deployments back on in
-  the Pages project’s settings & pushes the fix.
+  the Pages project’s settings, merges the fix, & turns them off again. The “Protect main” ruleset
+  still requires “CI passed”, so that merge needs a ruleset bypass.
 
 The setup is the owner’s, in this order. Automatic deployments stay on until the hook is proven:
 
@@ -565,9 +568,13 @@ The setup is the owner’s, in this order. Automatic deployments stay on until t
 2. In the GitHub repository’s settings, create a `production` environment that only `main` can
    deploy to. Add the hook URL as its `PRODUCTION_DEPLOY_HOOK` secret. Treat the URL as a
    credential, since anyone who has it can trigger a deployment.
-3. Merge the change that adds the job. That push deploys twice, which is harmless. Confirm that the
-   Pages deployment log shows a hook-triggered production build & that the site’s feedback panel
-   shows no “Preview build” notice.
+3. Merge the change that adds the job. That push deploys twice, which is harmless. Confirm each of
+   these, & if any fails, leave automatic deployments on & report it:
+   - The run’s “Deploy production” job ran rather than being skipped.
+   - The Pages deployment log shows a hook-triggered production build.
+   - Once that build is live, submitting feedback on `mistria.fyi` files a real issue. Close the
+     issue afterward. A “Preview build” message means the hook’s build isn’t marked as production,
+     which also turns on the sync switch in production.
 4. Turn off automatic production deployments in the Pages project’s branch control. Leave preview
    deployments on.
 5. After the next merge, confirm that exactly one production build ran. If none ran, turn automatic

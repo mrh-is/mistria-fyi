@@ -553,12 +553,13 @@ jobs:
   # Production waits for the full suite on the merged commit. The hook builds main's tip, so a commit
   # that's no longer the tip leaves the deployment to the newer commit's run. This is the only job
   # that holds a secret, & the `production` environment releases it only to main. It checks out no
-  # code & uses no actions.
+  # code & uses no actions. Main pushes always skip some of the gate's needs, & without a status
+  # function GitHub's implicit success() would skip this job too, so `!cancelled()` stays.
   deploy-production:
     name: Deploy production
     if:
-      github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci-passed.result ==
-      'success'
+      ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.ci-passed.result == 'success' }}
     needs: ci-passed
     runs-on: ubuntu-latest
     timeout-minutes: 5
