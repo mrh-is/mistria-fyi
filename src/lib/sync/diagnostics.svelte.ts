@@ -33,12 +33,30 @@ interface SyncDiagnostics {
 /** Below this length a name only matches a whole word, so “Al” leaves `almanac` readable. */
 const MIN_SUBSTRING_NAME = 3;
 
-/** Lowercase words without accents, so `Zoë` & `Mary Jane` meet `zoe_note` & `mary-jane`. */
+/** Latin letters that Unicode doesn't decompose into a base letter & an accent. */
+const ROMANIZED: Readonly<Record<string, string>> = {
+  æ: "ae",
+  đ: "d",
+  ð: "d",
+  ı: "i",
+  ł: "l",
+  ø: "o",
+  œ: "oe",
+  ß: "ss",
+  þ: "th",
+};
+
+/**
+ * Lowercase words without accents, so `Zoë`, `Søren`, & `Mary Jane` meet `zoe_note`, `soren_x`, &
+ * `mary-jane`. Words also end at a capital or a digit, so `Bo` meets `BoNote` & `bo2`.
+ */
 function nameWords(value: string): string[] {
   return value
     .normalize("NFKD")
     .replaceAll(/\p{M}/gu, "")
+    .replaceAll(/(?<=[\p{Ll}\p{N}])(?=\p{Lu})|(?<=\p{L})(?=\p{N})|(?<=\p{N})(?=\p{L})/gu, " ")
     .toLowerCase()
+    .replaceAll(/[æðđıłøœßþ]/gu, (letter) => ROMANIZED[letter])
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
 }

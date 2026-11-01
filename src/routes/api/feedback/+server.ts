@@ -3,6 +3,7 @@ import { error as httpError, isHttpError } from "@sveltejs/kit";
 import { env } from "cloudflare:workers";
 import * as v from "valibot";
 
+import { progressAttachment } from "#lib/feedback/progress-attachment.js";
 import { SyncLogSchema } from "#lib/feedback/sync-log-schema.js";
 import { isReportCategory } from "#lib/feedback/types.js";
 import { isProductionDeployment } from "#lib/server/deployment.js";
@@ -329,7 +330,7 @@ function validatePayload(body: unknown): FeedbackPayload {
     if (new TextEncoder().encode(JSON.stringify(saveData)).byteLength > MAX_SAVE_DATA_BYTES) {
       httpError(400, "Save data too large");
     }
-    validatedSaveData = saveData as Record<string, unknown>;
+    validatedSaveData = progressAttachment(saveData as Record<string, unknown>);
   }
 
   return {

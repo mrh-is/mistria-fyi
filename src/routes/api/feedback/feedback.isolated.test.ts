@@ -239,6 +239,21 @@ const fenced = (body: string, heading: string): unknown => {
 
 describe("POST /api/feedback", () => {
   describe("fitting GitHub's issue body limit", () => {
+    it("strips playtimes a tab on an older build still sends, & tolerates odd shapes", async () => {
+      const body = await fileIssue({
+        saveData: {
+          lastSavePlaytime: 4321,
+          provenance: { odd: "shape", renown: { playtime: 4321, source: "save" } },
+          renown: 7,
+        },
+      });
+      expect(body).not.toMatch(/playtime|4321/iu);
+      expect(fenced(body, "<summary>Save data")).toEqual({
+        provenance: { odd: "shape", renown: { source: "save" } },
+        renown: 7,
+      });
+    });
+
     it("keeps attachments pretty-printed when they fit", async () => {
       const body = await fileIssue({ saveData: { renown: 7 }, syncLog: longSyncLog(2) });
       expect(body).toContain('\n  "renown": 7\n');

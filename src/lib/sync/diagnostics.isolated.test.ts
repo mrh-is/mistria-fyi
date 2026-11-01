@@ -188,14 +188,19 @@ describe("public sync diagnostics", () => {
     ["each word of the character's name", "Mary Jane", ["mary", "jane.note", "summary_x"]],
     ["an accented name", "Zoë", ["zoe_note", "ZOE"]],
     ["a short name as a whole word", "Al", ["al", "al_note"]],
+    ["a letter Unicode won't decompose", "Søren", ["soren_note", "SØREN"]],
+    ["a stroked letter", "Łukasz", ["lukasz_note"]],
+    ["a sharp s", "Straße", ["strasse_x"]],
+    ["a ligature", "Ælfric", ["aelfric_x"]],
+    ["a short name beside a capital or digit", "Bo", ["BoNote", "bo2", "2bo"]],
   ])("redacts %s", async (_label, player, ids) => {
     const published = await publishedIds(ids, { farm: [], player: [player] });
     expect(published).toEqual(["[redacted]"]);
   });
 
   it("keeps ordinary IDs that a short name or a farm's words only happen to touch", async () => {
-    const ids = ["almanac_new", "unknown_turnip", "rose_bush", "farm_gate"];
-    const published = await publishedIds(ids, { farm: ["Rose Farm"], player: ["Al", "u"] });
+    const ids = ["almanac_new", "unknown_turnip", "rose_bush", "farm_gate", "boat_2"];
+    const published = await publishedIds(ids, { farm: ["Rose Farm"], player: ["Al", "u", "Bo"] });
     expect(published).toEqual(ids);
   });
 
