@@ -62,6 +62,23 @@ describe("provenance", () => {
     expect(userState.lastSavePlaytime).toBe(100);
   });
 
+  it("stamps no playtime on edits after a save whose playtime couldn't be read", () => {
+    userState.mergeFromSave({ mineFloor: 10 }, { playtime: 100 });
+    userState.mergeFromSave({ renown: 4 });
+    userState.toggleAlmanacItem(TURNIP);
+    expect(userState.provenanceOf("almanac/turnip")).toEqual({ source: "manual" });
+
+    // The unordered state survives the stored format.
+    expect(userState.restoreBackup(userState.exportBackup())).toEqual({ ok: true });
+    userState.toggleAlmanacItem(POTATO);
+    expect(userState.provenanceOf("almanac/potato")).toEqual({ source: "manual" });
+    expect(userState.lastSavePlaytime).toBe(100);
+
+    userState.mergeFromSave({ mineFloor: 11 }, { playtime: 110 });
+    userState.setRenown(5);
+    expect(userState.provenanceOf("renown")).toEqual({ playtime: 110, source: "manual" });
+  });
+
   it("records the relationship set by hand as manual & its marriage cascade as inferred", () => {
     const balor = "balor" as VillagerId;
     userState.setVillagerRelationship(balor, "romantic");

@@ -1,4 +1,5 @@
 import { deflateSync, inflateSync } from "node:zlib";
+import * as v from "valibot";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { UpdateHolds } from "#lib/pwa/update-holds.js";
@@ -1390,5 +1391,151 @@ describe("a store blocked while the page is open", () => {
     await until(() => first.applyLocal.mock.calls.length === 1);
     expect(first.applyLocal).toHaveBeenCalledTimes(1);
     expect(first.relay.upload).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the sync log", () => {
+  it("records each upload's result, but not a retry that failed the same way again", async () => {
+    const { make, relay } = await load();
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload
+      .mockResolvedValueOnce({ kind: "unreachable" })
+      .mockResolvedValueOnce({ kind: "unreachable" })
+      .mockResolvedValueOnce({ kind: "rate-limited" });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    await until(() => log.mock.calls.length === 3);
+    expect(log.mock.calls.map(([outcome]) => outcome)).toEqual([
+      "upload-unreachable",
+      "upload-rate-limited",
+      "uploaded",
+    ]);
+    expect(relay.upload).toHaveBeenCalledTimes(4);
+  });
+
+  it("records a failure again once an upload landed in between", async () => {
+    const { make, relay } = await load();
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload
+      .mockResolvedValueOnce({ kind: "unreachable" })
+      .mockResolvedValueOnce({ kind: "stored" })
+      .mockResolvedValueOnce({ kind: "unreachable" });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes(100)], FILE_NAME), kind: "file" });
+    await until(() => log.mock.calls.length === 2);
+    await courier.take({ file: new File([saveBytes(200)], FILE_NAME), kind: "file" });
+    await until(() => log.mock.calls.length >= 3);
+    expect(log.mock.calls.slice(0, 3).map(([outcome]) => outcome)).toEqual([
+      "upload-unreachable",
+      "uploaded",
+      "upload-unreachable",
+    ]);
+  });
+
+  it("records the same failure again once this window leads again", async () => {
+    const { make, relay } = await load({ options: { firstRetryMs: 60_000 } });
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload.mockResolvedValue({ kind: "unreachable" });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(log).toHaveBeenCalledTimes(1);
+    courier.stop();
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(log.mock.calls.map(([outcome]) => outcome)).toEqual([
+      "upload-unreachable",
+      "upload-unreachable",
+    ]);
+  });
+
+  it("records every envelope too large to send, since none is a retry", async () => {
+    const { make, relay } = await load();
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload.mockResolvedValue({ kind: "too-large" });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes(100)], FILE_NAME), kind: "file" });
+    await courier.take({ file: new File([saveBytes(200)], FILE_NAME), kind: "file" });
+    expect(log.mock.calls.map(([outcome]) => outcome)).toEqual([
+      "upload-too-large",
+      "upload-too-large",
+    ]);
+  });
+
+  it("still uploads when the log throws", async () => {
+    const { last, make, relay } = await load();
+    const courier = make({
+      log: () => {
+        throw new Error("log");
+      },
+    });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(relay.upload).toHaveBeenCalledTimes(1);
+    expect(last()?.upload).toBe("idle");
+  });
+
+  it("records an envelope too large to send", async () => {
+    const { make, relay } = await load();
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload.mockResolvedValueOnce({ kind: "too-large" });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(log).toHaveBeenLastCalledWith("upload-too-large");
+  });
+
+  it("logs a renewed code with no counter, mailbox ID, hash, size, or credential", async () => {
+    const { make, relay, userState } = await load();
+    const { syncDiagnostics } = await import("./diagnostics.svelte.js");
+    const { SyncLogSchema } = await import("#lib/feedback/sync-log-schema.js");
+    relay.upload
+      .mockResolvedValueOnce({ kind: "paused", until: Date.now() })
+      .mockResolvedValueOnce({ kind: "retired" });
+    const renewCode = vi.fn(async () => {
+      const code = { key: OTHER_KEY, token: TOKEN };
+      await userState.setSharedCode(code, {
+        code: { key: KEY, token: TOKEN },
+        retire: { mailboxId: await mailboxIdFor(KEY), token: TOKEN },
+      });
+      return { code, kind: "shared" as const };
+    });
+    const courier = make({ firstRetryMs: 10, renewCode });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    await until(() => syncDiagnostics.snapshot("build", "computer")?.events.length === 3);
+    const events = syncDiagnostics.snapshot("build", "computer")?.events ?? [];
+    // The renewal & the resend under the new code both land after the retire, in either order.
+    expect(events.map((event) => event.outcome).toSorted()).toEqual([
+      "code-renewed",
+      "upload-paused",
+      "uploaded",
+    ]);
+    for (const event of events) {
+      expect(event).toEqual({
+        farmHash: null,
+        gameVersion: null,
+        outcome: event.outcome,
+        policies: [],
+        unknownFields: [],
+      });
+    }
+    const text = JSON.stringify(syncDiagnostics.snapshot("build", "computer"));
+    for (const secret of [
+      KEY,
+      OTHER_KEY,
+      TOKEN,
+      await mailboxIdFor(KEY),
+      await mailboxIdFor(OTHER_KEY),
+      FILE_NAME,
+    ]) {
+      expect(text).not.toContain(secret);
+    }
+    expect(v.safeParse(SyncLogSchema, syncDiagnostics.snapshot("build", "computer")).success).toBe(
+      true,
+    );
   });
 });

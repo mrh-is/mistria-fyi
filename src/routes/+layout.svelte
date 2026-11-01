@@ -9,6 +9,7 @@
   import AppUpdater from "#lib/components/app-updater.svelte";
   import PencilFilter from "#lib/components/pencil-filter.svelte";
   import PersistenceWarning from "#lib/components/persistence-warning.svelte";
+  import RouteMain from "#lib/components/route-main.svelte";
   import SeoHead from "#lib/components/seo-head.svelte";
   import SyncReceiverHost from "#lib/components/sync/sync-receiver-host.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
@@ -22,7 +23,7 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncEnabled } from "#lib/sync/enabled.js";
-  import { retryPendingRetires } from "#lib/sync/sharing.js";
+  import { keepRetiring } from "#lib/sync/sharing.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
@@ -40,11 +41,13 @@
 
   onMount(() => {
     userState.loadFromStorage();
-    // A retire the relay hasn't confirmed yet tries again on every visit.
-    if (syncEnabled) void retryPendingRetires();
+    // A retire the relay hasn't confirmed yet tries again on every visit, then with backoff & on
+    // coming back online for as long as the page is open.
+    const stopRetiring = syncEnabled ? keepRetiring() : undefined;
     // Browser tests wait for this before interacting: a server-rendered control clicked before
     // hydration silently drops the event. Root `onMount` runs after every child has mounted.
     document.documentElement.dataset.hydrated = "true";
+    return () => stopRetiring?.();
   });
 
   let metadata = $derived(
@@ -95,14 +98,9 @@
     >
       {m.skip_to_main_content()}
     </a>
-    {#key page.url.pathname}
-      <main
-        id="main-content"
-        class="flex flex-1 flex-col motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in"
-      >
-        {@render children()}
-      </main>
-    {/key}
+    <RouteMain>
+      {@render children()}
+    </RouteMain>
   </div>
 
   <ToolbarFooter {metadata} bind:this={toolbarFooter} />

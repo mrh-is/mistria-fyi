@@ -396,6 +396,38 @@ describe("serialized progress writes", () => {
     expect(tab.userState.resolutionOf("mineFloor")).toEqual({ saveValue: 4 });
   });
 
+  it("keeps an importing tab's unordered save over another tab's ordered one", async () => {
+    const { locks } = sharedLocks();
+    const unordered = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    unordered.progress.lastSavePlaytime = 100;
+    unordered.progress.lastSaveUnordered = true;
+    const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(unordered) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const ordered = structuredClone(unordered);
+    ordered.progress.lastSavePlaytime = 200;
+    delete ordered.progress.lastSaveUnordered;
+    storage.setItem(PROGRESS_KEY, JSON.stringify(ordered));
+
+    const metadata = {
+      farmName: "Fern",
+      identity: { creationVersion: null, saveNumber: "123" },
+      importedAt: 1000,
+      playerName: "Ada",
+    };
+    tab.userState.mergeFromSave({ mineFloor: 10 }, { metadata });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { lastSavePlaytime: 100, lastSaveUnordered: true },
+    });
+    tab.userState.setRenown(3);
+    expect(tab.userState.provenanceOf("renown")).toEqual({ source: "manual" });
+  });
+
   it("leaves a fact's stored provenance alone when an importing tab's save agrees", async () => {
     const { locks } = sharedLocks();
     const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });

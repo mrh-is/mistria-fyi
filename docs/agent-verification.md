@@ -127,6 +127,9 @@ zero, read enough of the log to diagnose it.
 
 ## Visual checks
 
+The [visual-diff pilot](visual-diff-pilot.md) adds informational PR comparisons for two
+representative routes. Its captures do not replace the checklist below or the accessibility suites.
+
 When a task changes `.svelte` files, CSS, layout, or routes, verify it visually before calling it
 done, unless it meets a [visual exemption](#visual-exemptions). Screenshots add up quickly, so
 follow the bounded checklist below instead of browsing around.
