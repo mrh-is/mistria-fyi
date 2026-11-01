@@ -111,6 +111,23 @@ const clientTestOptions = {
   ],
 };
 
+/**
+ * CI's change detector sets these to "false" on pull requests that can't affect the relay or
+ * `scripts/` tests (#328). Any other value, including unset, runs them, so local runs keep them.
+ */
+const relayChanged = process.env.VITEST_RELAY_CHANGED !== "false";
+const scriptsChanged = process.env.VITEST_SCRIPTS_CHANGED !== "false";
+
+/**
+ * `scripts/` tests that load the browser suites' specs, fixtures, or app modules, so app & test
+ * changes can break them. They run on every pull request.
+ */
+const alwaysRunScriptTests = [
+  "scripts/playwright-allocation.test.ts",
+  "scripts/playwright-satoshi.test.ts",
+  "scripts/sprites/sprite-manifest.test.ts",
+];
+
 export default defineConfig({
   build: {
     // tracker-data.json is the largest chunk: ~844 kB minified, ~75 kB gzipped as of the 1.0.5
@@ -278,9 +295,9 @@ export default defineConfig({
           ],
           include: [
             "eslint-rules/**/*.test.ts",
-            "scripts/**/*.test.ts",
+            ...(scriptsChanged ? ["scripts/**/*.test.ts"] : alwaysRunScriptTests),
             "tests/**/*.test.ts",
-            "relay/**/*.test.ts",
+            ...(relayChanged ? ["relay/**/*.test.ts"] : []),
           ],
           name: "node",
           ...sharedRegistry,
@@ -295,7 +312,7 @@ export default defineConfig({
           exclude: sharedTestExcludes,
           include: [
             "eslint-rules/**/*.isolated.test.ts",
-            "scripts/**/*.isolated.test.ts",
+            ...(scriptsChanged ? ["scripts/**/*.isolated.test.ts"] : []),
             "tests/**/*.isolated.test.ts",
           ],
           name: "node-isolated",

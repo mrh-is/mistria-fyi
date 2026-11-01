@@ -37,6 +37,8 @@ jobs:
       cleanup: ${{ steps.filter.outputs.cleanup }}
       dependencies: ${{ steps.filter.outputs.dependencies }}
       messages: ${{ steps.filter.outputs.messages }}
+      relay: ${{ steps.filter.outputs.relay }}
+      scripts: ${{ steps.filter.outputs.scripts }}
       tests: ${{ steps.filter.outputs.tests }}
     steps:
       - if: github.event_name == 'push'
@@ -44,8 +46,9 @@ jobs:
         with:
           fetch-depth: 2
           persist-credentials: false
-      # Pull requests run the browser suites only when the app, its tests, or their tooling change;
-      # main pushes, nightly runs, and manual dispatches always run them.
+      # Pull requests run the browser suites only when the app, its tests, or their tooling change,
+      # and the relay & scripts tests only when their own inputs or a shared input change. Main
+      # pushes, nightly runs, and manual dispatches always run all three.
       - id: filter
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -58,10 +61,14 @@ jobs:
           cleanup=false
           dependencies=false
           messages=false
+          relay=true
+          scripts=true
           tests=
           files=
           if [ "$EVENT_NAME" = "pull_request" ]; then
             browser=false
+            relay=false
+            scripts=false
             files=$(gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/files" \
               --jq '.[] | .filename, (.previous_filename // empty)')
           elif [ "$EVENT_NAME" = "push" ]; then
@@ -88,6 +95,26 @@ jobs:
             case "$file" in
               *.test.ts) tests="$tests $file" ;;
             esac
+            # Shared inputs change every test's environment, so they run everything.
+            case "$file" in
+              package.json | pnpm-lock.yaml | pnpm-workspace.yaml | .node-version | vite.config.* | \
+                tsconfig* | .github/workflows/ci.yml)
+                relay=true
+                scripts=true
+                ;;
+            esac
+            # The Vitest config loads the relay test's sequencer & Wrangler environment from scripts/.
+            case "$file" in
+              relay/* | scripts/vitest-relay-sequencer.ts | scripts/vitest-wrangler-env.ts) relay=true ;;
+            esac
+            # Pipeline code imports from scripts/. The policy tests read the workflows, hooks, agent
+            # settings, & Playwright configs, and the stylelint test imports its config.
+            case "$file" in
+              scripts/* | pipeline/* | .github/workflows/* | .husky/* | .claude/settings.json | \
+                .codex/hooks.json | playwright*.config.ts | stylelint.config.*)
+                scripts=true
+                ;;
+            esac
             case "$file" in
               src/* | static/* | tests/* | messages/* | project.inlang/* | _headers | \
                 scripts/playwright-* | playwright*.config.ts | svelte.config.* | vite.config.* | \
@@ -104,6 +131,8 @@ jobs:
           echo "cleanup=$cleanup" >> "$GITHUB_OUTPUT"
           echo "dependencies=$dependencies" >> "$GITHUB_OUTPUT"
           echo "messages=$messages" >> "$GITHUB_OUTPUT"
+          echo "relay=$relay" >> "$GITHUB_OUTPUT"
+          echo "scripts=$scripts" >> "$GITHUB_OUTPUT"
           echo "tests=${tests# }" >> "$GITHUB_OUTPUT"
 
   lint:
@@ -237,6 +266,8 @@ jobs:
         env:
           VITEST_COVERAGE: ${{ github.event_name == 'schedule' }}
           VITEST_CLEANUP_CHANGED: ${{ needs.changes.outputs.cleanup }}
+          VITEST_RELAY_CHANGED: ${{ needs.changes.outputs.relay }}
+          VITEST_SCRIPTS_CHANGED: ${{ needs.changes.outputs.scripts }}
           VITEST_TOUCHED_TEST_FILES: ${{ needs.changes.outputs.tests }}
         run: pnpm run verify -- --step=test:budgets
       - name: Publish Vitest timings

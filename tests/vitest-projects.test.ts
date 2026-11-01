@@ -21,23 +21,31 @@ interface ListedFile {
   projectName: string;
 }
 
-/** Every test file Vitest's projects collect, as repo-relative paths with their project names. */
-async function listProjectFiles(cleanupChanged?: boolean): Promise<ListedFile[]> {
+/** The environment variables CI sets to skip test files a pull request can't affect. */
+const gates = ["VITEST_CLEANUP_CHANGED", "VITEST_RELAY_CHANGED", "VITEST_SCRIPTS_CHANGED"] as const;
+
+/**
+ * Every test file Vitest's projects collect, as repo-relative paths with their project names. Each
+ * gate in `unchanged` is set to "false"; the others are unset, whatever this run's environment says.
+ */
+async function listProjectFiles(
+  unchanged: readonly (typeof gates)[number][],
+): Promise<ListedFile[]> {
   const outputDirectory = mkdtempSync(join(tmpdir(), "vitest-projects-"));
   try {
     const outputFile = join(outputDirectory, "list.json");
+    const env = {
+      ...Object.fromEntries(
+        Object.entries(process.env).filter(
+          ([name]) => !(gates as readonly string[]).includes(name),
+        ),
+      ),
+      ...Object.fromEntries(unchanged.map((gate) => [gate, "false"])),
+    };
     await promisify(execFile)(
       process.execPath,
       [join(root, "node_modules/vitest/vitest.mjs"), "list", "--filesOnly", `--json=${outputFile}`],
-      {
-        cwd: root,
-        env: {
-          ...process.env,
-          ...(cleanupChanged === undefined
-            ? {}
-            : { VITEST_CLEANUP_CHANGED: String(cleanupChanged) }),
-        },
-      },
+      { cwd: root, env },
     );
     return (JSON.parse(readFileSync(outputFile, "utf8")) as ListedFile[]).map((entry) => ({
       file: toPosixPath(relative(root, entry.file)),
@@ -51,28 +59,40 @@ async function listProjectFiles(cleanupChanged?: boolean): Promise<ListedFile[]>
 function trackedTestFiles(): string[] {
   return execFileSync("git", ["ls-files", "*.test.ts"], { cwd: root, encoding: "utf8" })
     .split("\n")
-    .filter(Boolean)
-    .filter(
-      (file) =>
-        process.env.VITEST_CLEANUP_CHANGED !== "false" ||
-        file !== "scripts/cleanup-merged-worktrees.test.ts",
-    );
+    .filter(Boolean);
 }
 
 const byFile = (a: ListedFile, b: ListedFile) => a.file.localeCompare(b.file);
 
 describe("Vitest projects", () => {
-  const listing: { files: ListedFile[]; withoutCleanup: ListedFile[] } = {
-    files: [],
-    withoutCleanup: [],
+  const listing = {
+    files: [] as ListedFile[],
+    withoutCleanup: [] as ListedFile[],
+    withoutRelay: [] as ListedFile[],
+    withoutScripts: [] as ListedFile[],
   };
 
-  // Both listings load the full Vite config; running them together halves the probe's wall time.
+  /** The files a gated listing drops, after checking it keeps every other file in its project. */
+  function skippedBy(gated: ListedFile[]): string[] {
+    const kept = new Set(gated.map(({ file }) => file));
+    expect(gated.toSorted(byFile)).toEqual(
+      listing.files.filter(({ file }) => kept.has(file)).toSorted(byFile),
+    );
+    return listing.files
+      .filter(({ file }) => !kept.has(file))
+      .map(({ file }) => file)
+      .toSorted();
+  }
+
+  // Each listing loads the full Vite config; running them together cuts the probe's wall time.
   beforeAll(async () => {
-    [listing.files, listing.withoutCleanup] = await Promise.all([
-      listProjectFiles(),
-      listProjectFiles(false),
-    ]);
+    [listing.files, listing.withoutCleanup, listing.withoutRelay, listing.withoutScripts] =
+      await Promise.all([
+        listProjectFiles([]),
+        listProjectFiles(["VITEST_CLEANUP_CHANGED"]),
+        listProjectFiles(["VITEST_RELAY_CHANGED"]),
+        listProjectFiles(["VITEST_SCRIPTS_CHANGED"]),
+      ]);
   }, 60_000);
 
   it("run every tracked test file", () => {
@@ -81,14 +101,27 @@ describe("Vitest projects", () => {
   });
 
   it("excludes only cleanup when its script is unchanged", () => {
-    const skipped = listing.withoutCleanup;
-    expect(skipped.some(({ file }) => file === "scripts/cleanup-merged-worktrees.test.ts")).toBe(
-      false,
-    );
-    expect(skipped.toSorted(byFile)).toEqual(
-      listing.files
-        .filter(({ file }) => file !== "scripts/cleanup-merged-worktrees.test.ts")
-        .toSorted(byFile),
+    expect(skippedBy(listing.withoutCleanup)).toEqual(["scripts/cleanup-merged-worktrees.test.ts"]);
+  });
+
+  it("excludes only the relay tests when the relay is unchanged", () => {
+    const relayTests = trackedTestFiles().filter((file) => file.startsWith("relay/"));
+    expect(relayTests).toContain("relay/worker.test.ts");
+    expect(skippedBy(listing.withoutRelay)).toEqual(relayTests.toSorted());
+  });
+
+  // These three load the browser suites' specs, fixtures, or app modules, which app & test changes
+  // can break. Every other scripts/ test reads only scripts/, pipeline/, & the CI filter's inputs.
+  it("excludes every other scripts/ test when scripts/ is unchanged", () => {
+    const alwaysRun = [
+      "scripts/playwright-allocation.test.ts",
+      "scripts/playwright-satoshi.test.ts",
+      "scripts/sprites/sprite-manifest.test.ts",
+    ];
+    const scriptTests = trackedTestFiles().filter((file) => file.startsWith("scripts/"));
+    expect(scriptTests).toEqual(expect.arrayContaining(alwaysRun));
+    expect(skippedBy(listing.withoutScripts)).toEqual(
+      scriptTests.filter((file) => !alwaysRun.includes(file)).toSorted(),
     );
   });
 

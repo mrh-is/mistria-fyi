@@ -237,6 +237,55 @@ describe("CI workflow jobs", () => {
     expect(detectChanges(event, file).cleanup).toBe(String(expected));
   });
 
+  // Skipping a suite can hide a failure, so each case below proves a skip safe or runs the suite.
+  it.each([
+    [["relay/worker.ts"], true, false],
+    [["relay/wrangler.toml"], true, false],
+    [["scripts/verify.ts"], false, true],
+    [["scripts/sprites/sprite-manifest.ts"], false, true],
+    [["pipeline/src/main.ts"], false, true],
+    [[".github/workflows/deploy.yml"], false, true],
+    [[".husky/pre-commit"], false, true],
+    [[".claude/settings.json"], false, true],
+    [[".codex/hooks.json"], false, true],
+    [["stylelint.config.js"], false, true],
+    [["playwright.pwa.config.ts"], false, true],
+    [["scripts/vitest-wrangler-env.ts"], true, true],
+    [["scripts/vitest-relay-sequencer.ts"], true, true],
+    [["src/app.css"], false, false],
+    [["docs/styling.md"], false, false],
+    [["tests/accessibility/home.spec.ts"], false, false],
+    [["src/routes/+page.svelte", "scripts/verify.ts"], false, true],
+    [["src/routes/+page.svelte", "relay/worker.ts"], true, false],
+    [[], false, false],
+  ] as const)(
+    "selects the relay & scripts tests for a pull request changing %j",
+    (files, relay, scripts) => {
+      const outputs = detectChanges("pull_request", ...files);
+      expect(outputs.relay).toBe(String(relay));
+      expect(outputs.scripts).toBe(String(scripts));
+    },
+  );
+
+  it.each([
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    ".node-version",
+    "vite.config.ts",
+    "tsconfig.json",
+    ".github/workflows/ci.yml",
+  ])("runs the relay & scripts tests when a pull request changes shared input %s", (file) => {
+    expect(detectChanges("pull_request", file)).toMatchObject({ relay: "true", scripts: "true" });
+  });
+
+  it.each(["push", "schedule", "workflow_dispatch"])(
+    "always runs the relay & scripts tests on %s",
+    (event) => {
+      expect(detectChanges(event, "src/app.css")).toMatchObject({ relay: "true", scripts: "true" });
+    },
+  );
+
   it("gives the test step every test file a pull request changes, & nothing else", () => {
     expect(
       detectChanges("pull_request", "src/a.test.ts", "src/a.ts", "scripts/b.test.ts", "c.spec.ts")
@@ -252,8 +301,8 @@ describe("CI workflow jobs", () => {
     },
   );
 
-  // Without this wiring the changed-file timing limit & the cleanup test's exclusion would silently
-  // stop applying, and nothing else would fail.
+  // Without this wiring the changed-file timing limit & the test exclusions would silently stop
+  // applying, and nothing else would fail.
   it("passes the change detector's results to the test step", () => {
     const testStep = jobs.test.steps?.find((step) => step.run === verifyCommand("test:budgets"));
     expect(jobs.test.needs).toBe("changes");
@@ -261,6 +310,12 @@ describe("CI workflow jobs", () => {
     expect(testStep?.env?.VITEST_TOUCHED_TEST_FILES).toBe("${{ needs.changes.outputs.tests }}");
     expect(jobs.changes.outputs?.cleanup).toBe("${{ steps.filter.outputs.cleanup }}");
     expect(testStep?.env?.VITEST_CLEANUP_CHANGED).toBe("${{ needs.changes.outputs.cleanup }}");
+    for (const gate of ["relay", "scripts"]) {
+      expect(jobs.changes.outputs?.[gate]).toBe(`\${{ steps.filter.outputs.${gate} }}`);
+      expect(testStep?.env?.[`VITEST_${gate.toUpperCase()}_CHANGED`]).toBe(
+        `\${{ needs.changes.outputs.${gate} }}`,
+      );
+    }
   });
 
   it("lets a test failure fail the test job", () => {
