@@ -367,6 +367,14 @@ job summary & the `vitest-timings` artifact. Vitest uses half the available CPUs
 worker, capped at four). The JSON also records CPU count, coverage mode, & whole-command wall time,
 which includes imports, environment setup, transforms, startup, & report generation.
 
+In CI, every Vitest project retries a failing test once; local runs do not retry by default. A
+second failure still fails the run. The timing reporter warns with the full name of every test that
+passes on retry, lists all retries in the summary, & records their counts & final results in
+`timings.json`. A file with retries keeps its full duration but only warns on timing, since that
+duration includes repeated attempts & hooks. Other files keep the limits below. For a focused
+reporter run, pass a test path to `pnpm exec node scripts/vitest-timings.ts`. See
+[the retry decision](decisions/2026-11-01-visible-vitest-retries.md).
+
 A slow test costs time, not correctness, so timing fails a run only when the pull request can fix
 it:
 
@@ -405,6 +413,10 @@ artifacts from up to 10 recent pushes to `main`, which run without coverage, & c
 one slow runner can’t raise a finding. It reports a file with at least 3 samples over its warning
 line, or a median wall time over 120 s.
 
+It also lists every retried test found in these artifacts, with its project, file, full name, retry
+count, final result, & number of affected runs. Retries are reported even with only one timing
+sample. Older artifacts without retry fields remain readable.
+
 The job also runs `pnpm audit --audit-level=moderate --json` without installing dependencies. It
 reports moderate-or-higher advisory entries after pnpm applies `auditConfig.ignoreGhsas`. The raw
 metadata counts include accepted exceptions, so those counts don’t determine findings. An advisory
@@ -412,13 +424,14 @@ is a finding, not a scheduled-job failure; an audit that can’t run or returns 
 the job before changing the issue.
 
 Findings live in one “Nightly CI report” issue. The job files it, edits it in place, & closes it
-only when both checks are clear. With one or two timing samples, it skips timing findings but still
-reports advisories, retaining the earlier timing warnings with a note that they haven’t been
-rechecked. Repeated incomplete updates replace old advisories & status notes without duplicating the
-retained warnings. A complete timing check replaces the earlier warnings with fresh findings.
-Without advisories, it leaves the issue alone. With no readable timing samples, it publishes any
-advisories & then fails, because the timing report can’t read its data. A failure to list timing
-runs also publishes any advisories before failing. This job doesn’t count toward “CI passed”.
+only when timings, retries, & advisories are clear. With one or two timing samples, it skips timing
+findings but still reports advisories & retries, retaining earlier findings with a note that they
+haven’t been rechecked. Repeated incomplete updates replace old advisories & status notes without
+duplicating the retained warnings. A complete timing check replaces the earlier warnings with fresh
+findings. Without advisories or retries & with too few timing samples, it leaves the issue alone.
+With no readable timing samples, it publishes any advisories & then fails, because the timing report
+can’t read its data. A failure to list timing runs also publishes any advisories before failing.
+This job doesn’t count toward “CI passed”.
 
 ### Test projects
 

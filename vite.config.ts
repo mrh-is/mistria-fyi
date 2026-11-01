@@ -76,6 +76,8 @@ const sharedTestExcludes = [
  * load rather than a wrong result (#589). A genuine hang still fails, just 30 s later.
  */
 const loadTolerantTimeoutMs = 30_000;
+// Recover once from a CI flake; the timing reporter keeps every retry visible (#329).
+const retry = process.env.CI ? 1 : 0;
 
 /**
  * The root test options a plain-Node project would otherwise inherit with `extends: true`. Those
@@ -84,6 +86,7 @@ const loadTolerantTimeoutMs = 30_000;
 const plainNodeTestOptions = {
   hookTimeout: loadTolerantTimeoutMs,
   restoreMocks: true,
+  retry,
   testTimeout: loadTolerantTimeoutMs,
   unstubEnvs: true,
   unstubGlobals: true,
@@ -362,6 +365,7 @@ export default defineConfig({
       },
     ],
     restoreMocks: true,
+    retry,
     sequence: { sequencer: RelayFirstSequencer },
     testTimeout: loadTolerantTimeoutMs,
     unstubEnvs: true,

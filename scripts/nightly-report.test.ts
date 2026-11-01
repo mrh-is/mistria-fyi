@@ -7,9 +7,12 @@ import {
   auditFindings,
   recentSamples,
   reportNightly,
+  retryFindings,
   synchronizeNightlyIssue,
   timingFindings,
 } from "./nightly-report.js";
+
+import type { TimingSample } from "./nightly-report.js";
 
 // Captured with pnpm 11.28.2 on October 31, 2026, in a temporary copy of the workspace with
 // auditConfig removed: pnpm audit --audit-level=low --json. Higher severities below are synthetic.
@@ -102,6 +105,45 @@ const sample = (elapsedMs: number, durations: Record<string, number> = {}) => ({
 const relaySamples = (durationMs: number) =>
   Array.from({ length: 3 }, () => sample(80_000, { "relay/worker.test.ts": durationMs }));
 
+const retriedSample: TimingSample = {
+  elapsedMs: 100,
+  files: [
+    {
+      durationMs: 100,
+      file: "src/example.client.test.ts",
+      project: "client",
+      retries: [{ name: "suite > flaky", retryCount: 1, state: "passed" }],
+    },
+  ],
+};
+
+describe("retryFindings", () => {
+  it("reports retries even in a single sample, while accepting older artifacts", () => {
+    expect(retryFindings([sample(100), retriedSample, retriedSample])).toEqual([
+      "Vitest retry: [client] `src/example.client.test.ts` > suite > flaky retried 1 time(s), ended passed (2 recent runs).",
+    ]);
+    expect(retryFindings([sample(100)])).toEqual([]);
+  });
+
+  it("also reports exhausted retries & distinguishes projects with the same test name", () => {
+    const failed: TimingSample = {
+      elapsedMs: 100,
+      files: [
+        {
+          durationMs: 100,
+          file: "src/example.client.test.ts",
+          project: "client-isolated",
+          retries: [{ name: "suite > flaky", retryCount: 1, state: "failed" }],
+        },
+      ],
+    };
+    expect(retryFindings([retriedSample, failed])).toEqual([
+      "Vitest retry: [client] `src/example.client.test.ts` > suite > flaky retried 1 time(s), ended passed (1 recent runs).",
+      "Vitest retry: [client-isolated] `src/example.client.test.ts` > suite > flaky retried 1 time(s), ended failed (1 recent runs).",
+    ]);
+  });
+});
+
 describe("timingFindings", () => {
   it("reports nothing when the typical run is within its lines", () => {
     const samples = [
@@ -179,7 +221,10 @@ function artifactRunner(runIds: number[], cancelled: number[] = []) {
     downloaded.push(id);
     if (cancelled.includes(Number(id))) return Promise.reject(new Error("no artifact"));
     const directory = args.find((arg) => arg.startsWith("--dir="))?.slice("--dir=".length) ?? "";
-    writeFileSync(join(directory, "timings.json"), JSON.stringify(sample(Number(id))));
+    writeFileSync(
+      join(directory, "timings.json"),
+      JSON.stringify(Number(id) === -1 ? retriedSample : sample(Number(id))),
+    );
     return Promise.resolve("");
   };
   return { downloaded, listings, run };
@@ -242,6 +287,24 @@ describe("recentSamples", () => {
 
 describe("reportNightly", () => {
   const workflowUrl = "https://example.test/run";
+
+  it("publishes retries despite insufficient samples & retains earlier timing warnings", async () => {
+    const { bodies, run, writes } = nightlyRunner([-1], [], clearAudit, [previousReport]);
+    vi.spyOn(console, "warn").mockReturnValue();
+    await reportNightly({ run, workflowUrl });
+    expect(writes.map((args) => args.slice(0, 3))).toEqual([["issue", "edit", "42"]]);
+    expect(bodies[0]).toContain("suite > flaky");
+    expect(bodies[0].split("\n")).toEqual(
+      expect.arrayContaining(previousTimingFindings.map((finding) => `- ${finding}`)),
+    );
+    vi.restoreAllMocks();
+  });
+
+  it("includes retries in complete reports", async () => {
+    const { bodies, run } = nightlyRunner([-1, 1, 2], []);
+    await reportNightly({ run, workflowUrl });
+    expect(bodies[0]).toContain("suite > flaky");
+  });
 
   it("fails when it can't read any timing artifact, so the report can't go dark quietly", async () => {
     const { run, writes } = nightlyRunner([1, 2, 3], [1, 2, 3]);
