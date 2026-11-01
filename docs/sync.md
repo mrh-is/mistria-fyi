@@ -140,10 +140,11 @@ sources in `save-source.ts`, & pruning in `pruneSavArchive` (`src/lib/engine/par
   under its own storage key (`mistria-fyi:sync-uploads`), so a blocked store can't hold an upload
   back & no erase or stop resets it. That key also copies the shared code while the lane can be
   read: a page that loads quarantined or from a newer build can’t show its lane, so it uploads with
-  the copy, applying nothing & showing no sync surfaces. A lane that ends removes the copy. Each
-  counter is stored before it's used, & a retry resends the same bytes under it. A mailbox already
-  past the counter means the stored one was lost; the courier jumps to the clock's reading & seals
-  again.
+  the copy, applying nothing & showing no sync surfaces. A lane that ends removes the copy. A page
+  like that can’t ask for read access again, since it shows no surfaces, so if the browser’s grant
+  didn’t survive, uploads wait until the store is sorted out. Each counter is stored before it's
+  used, & a retry resends the same bytes under it. A mailbox already past the counter means the
+  stored one was lost; the courier jumps to the clock's reading & seals again.
 - **Sharing starts with the code.** The first “Show code” or “Copy link” creates the link’s mailbox,
   & the code appears only once creation succeeds, so nobody can hold a code whose mailbox someone
   else could claim. A create on an ID that already exists under the same token counts as success,

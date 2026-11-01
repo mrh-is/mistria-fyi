@@ -1010,6 +1010,8 @@ describe("races", () => {
     const { make, relay } = await load({ options: { handles } });
     const courier = make();
     courier.start();
+    await settle(0);
+    expect(handles.load).toHaveBeenCalledTimes(1);
     const fresh = fakeHandle(saveBytes(200));
     const taking = courier.take({ handle: fresh.handle, kind: "handle" });
     await settle(0);
@@ -1082,5 +1084,146 @@ describe("races", () => {
     await until(() => relay.upload.mock.calls.length === 2);
     await until(() => last()?.upload === "idle");
     expect(relay.upload).toHaveBeenCalledTimes(2);
+  });
+
+  it("still says a new code was made when that lands after its wait timed out", async () => {
+    const { last, make, relay } = await load({
+      options: { firstRetryMs: 60_000, taskTimeoutMs: 5 },
+    });
+    relay.upload.mockResolvedValueOnce({ kind: "retired" });
+    const renewal = Promise.withResolvers<ShareResult>();
+    const courier = make({ renewCode: () => renewal.promise });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(last()?.codeRenewed).toBe(false);
+    renewal.resolve({ code: { key: OTHER_KEY, token: TOKEN }, kind: "shared" });
+    await until(() => last()?.codeRenewed === true);
+    expect(last()?.codeRenewed).toBe(true);
+  });
+
+  it("clears “can't connect” when the file goes back & nothing is left to send", async () => {
+    const { last, make, relay } = await load({ options: { firstRetryMs: 60_000 } });
+    const bytes = saveBytes();
+    const file = fakeHandle(bytes);
+    const courier = make({ pollMs: 60_000 });
+    courier.start();
+    await courier.take({ handle: file.handle, kind: "handle" });
+
+    relay.upload.mockResolvedValueOnce({ kind: "paused" });
+    file.replace(saveBytes(200));
+    await courier.check();
+    expect(last()?.upload).toBe("paused");
+
+    relay.read.mockResolvedValue({
+      counter: 1,
+      envelope: new Uint8Array(28),
+      kind: "envelope",
+      version: 1,
+    });
+    file.replace(bytes);
+    await courier.check();
+    expect(last()?.upload).toBe("idle");
+    expect(relay.upload).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends the save again when an answer lost means the mailbox may hold a newer one", async () => {
+    const { make, relay } = await load({ options: { firstRetryMs: 60_000 } });
+    const bytes = saveBytes(100);
+    const file = fakeHandle(bytes);
+    const courier = make({ pollMs: 60_000 });
+    courier.start();
+    await courier.take({ handle: file.handle, kind: "handle" });
+
+    relay.upload.mockResolvedValueOnce({ kind: "unreachable" });
+    file.replace(saveBytes(200));
+    await courier.check();
+    file.replace(bytes);
+    await courier.check();
+
+    expect(relay.upload).toHaveBeenCalledTimes(3);
+    const sealed = relay.upload.mock.calls[2]?.[2];
+    expect(sealed.counter).toBe(3);
+    const { header } = await opened(sealed);
+    expect(header.playtime).toBe(100);
+  });
+
+  it("doesn't strand a take that a newer one overtook while waiting for the lead", async () => {
+    const inner = fakeLocks();
+    const gate = Promise.withResolvers<undefined>();
+    const locks = {
+      request: async (name: string, options: LockOptions, task: LockGrantedCallback<unknown>) => {
+        if (options.steal) await gate.promise;
+        return inner.request(name, options, task);
+      },
+    } as unknown as LockManager;
+    const { make, relay } = await load({ options: { locks: () => locks, pollMs: 60_000 } });
+    const first = make();
+    first.start();
+    await first.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+
+    const second = make();
+    second.start();
+    await until(() => second.status.trouble === "other-window");
+    relay.upload.mockClear();
+    const older = second.take({ file: new File([saveBytes(200)], FILE_NAME), kind: "file" });
+    const newer = second.take({ file: new File([saveBytes(300)], FILE_NAME), kind: "file" });
+    await settle();
+    gate.resolve(undefined);
+    await Promise.all([older, newer]);
+
+    const sealed = relay.upload.mock.lastCall?.[2];
+    if (!sealed) throw new Error("Expected an upload");
+    const { header } = await opened(sealed);
+    expect(header.playtime).toBe(300);
+    await until(() => first.status.trouble === "other-window");
+  });
+
+  it("drops an older take once a newer one has stored its handle", async () => {
+    const { handles, make } = await load();
+    const courier = make({ pollMs: 60_000 });
+    courier.start();
+    await courier.check();
+    const older = fakeHandle(saveBytes(100));
+    const newer = fakeHandle(saveBytes(200));
+    await Promise.all([
+      courier.take({ handle: older.handle, kind: "handle" }),
+      courier.take({ handle: newer.handle, kind: "handle" }),
+    ]);
+    expect(handles.current).toBe(newer.handle);
+    expect(older.spy.getFile).not.toHaveBeenCalled();
+  });
+});
+
+describe("a store blocked while the page is open", () => {
+  it("makes no new code it couldn't store", async () => {
+    const renewCode = vi.fn(() => Promise.resolve<ShareResult>({ kind: "unreachable" }));
+    const { make, relay, userState } = await load({
+      options: { firstRetryMs: 60_000, renewCode },
+    });
+    relay.upload.mockResolvedValue({ kind: "retired" });
+    vi.spyOn(userState, "syncBlocked", "get").mockReturnValue(true);
+    const courier = make();
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(relay.upload).toHaveBeenCalledTimes(1);
+    expect(renewCode).not.toHaveBeenCalled();
+  });
+
+  it("applies the current save once the store can take it again", async () => {
+    const { again, first } = await visitBlocked("{not json");
+    again.start();
+    await until(() => first.relay.upload.mock.calls.length === 1);
+    expect(first.applyLocal).not.toHaveBeenCalled();
+
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    vi.spyOn(userState, "syncBlocked", "get").mockReturnValue(false);
+    vi.spyOn(userState, "syncLane", "get").mockReturnValue({
+      code: { key: KEY, token: TOKEN },
+      kind: "computer",
+    });
+    again.update();
+    await until(() => first.applyLocal.mock.calls.length === 1);
+    expect(first.applyLocal).toHaveBeenCalledTimes(1);
+    expect(first.relay.upload).toHaveBeenCalledTimes(1);
   });
 });

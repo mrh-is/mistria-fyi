@@ -172,6 +172,8 @@ interface PendingUpload {
   header: SavePayloadHeader;
   pruned: Uint8Array<ArrayBuffer>;
   sealed?: SealedEnvelope & { mailboxId: MailboxId; token: string };
+  /** An attempt's answer was lost, so the mailbox may already hold this save. */
+  uncertain: boolean;
 }
 
 type ReadMode = "change" | "check" | "force";
@@ -509,13 +511,17 @@ export function createCourier({
     const mailboxId = await mailboxIdFor(code.key);
     const ledger = readLedger();
     if (ledger.hash === read.hash && ledger.mailboxId === mailboxId) {
-      // The file went back to what the mailbox holds, so a newer save still retrying is out of date.
+      // The file went back to the last upload, so a newer save still retrying is out of date. If an
+      // answer to that one was lost, the mailbox may hold it, so this save goes up again to be sure.
+      const overtaken = pending?.uncertain === true;
       if (pending) {
         pending = undefined;
+        retryDelay = firstRetryMs;
         clearRetry();
+        setStatus({ upload: "idle" });
       }
       // Only a start or a shown code looks further: an envelope can expire with nothing changing.
-      if (!look || !(await mailboxWantsSave(mailboxId))) return true;
+      if (!overtaken && (!look || !(await mailboxWantsSave(mailboxId)))) return true;
     } else if (pending?.hash === read.hash && pending.sealed?.mailboxId === mailboxId) {
       // Already on its way; a newer read mustn't spend a new counter on the same save.
       await send(pending);
@@ -542,6 +548,7 @@ export function createCourier({
         ...(playtime === undefined ? {} : { playtime }),
       },
       pruned,
+      uncertain: false,
     };
     await send(pending);
     return true;
@@ -618,9 +625,12 @@ export function createCourier({
         clearRetry();
         setStatus({ upload: "idle" });
         return;
+      case "unreachable":
+        upload.uncertain = true;
+        waitOut(result);
+        return;
       case "paused":
       case "rate-limited":
-      case "unreachable":
         waitOut(result);
         return;
       case "conflict":
@@ -657,21 +667,20 @@ export function createCourier({
 
   async function renewAndResend(upload: PendingUpload): Promise<void> {
     const current = generation;
-    // Only a store that can be written can hold a new code.
-    if (userState.syncLane?.kind !== "computer") {
+    // Only a store that can be written can hold a new code, so trying would just burn mailboxes.
+    if (userState.syncLane?.kind !== "computer" || userState.syncBlocked) {
       waitOut({ kind: "unreachable" });
       return;
     }
+    const renewal = renewCode();
+    void noteRenewal(renewal, current);
     let renewed: ShareResult;
     try {
-      renewed = await within(renewCode(), { kind: "unreachable" }, taskTimeoutMs);
+      renewed = await within(renewal, { kind: "unreachable" }, taskTimeoutMs);
     } catch {
       renewed = { kind: "unreachable" };
     }
-    if (current !== generation) return;
-    // Said first: storing the new code can already have sent `update` to upload under it.
-    if (renewed.kind === "shared") setStatus({ codeRenewed: true });
-    if (pending !== upload) return;
+    if (current !== generation || pending !== upload) return;
     if (renewed.kind !== "shared") {
       waitOut(renewed);
       return;
@@ -679,6 +688,19 @@ export function createCourier({
     codeKey = renewed.code.key;
     upload.sealed = undefined;
     await send(upload);
+  }
+
+  /**
+   * Says a new code was made whenever that lands, even after its wait timed out: storing the code
+   * sends `update` to upload under it, whatever the attempt that asked for it is doing by then.
+   */
+  async function noteRenewal(renewal: Promise<ShareResult>, current: number): Promise<void> {
+    try {
+      const renewed = await renewal;
+      if (renewed.kind === "shared" && current === generation) setStatus({ codeRenewed: true });
+    } catch {
+      // The attempt that asked reports this one.
+    }
   }
 
   // -------------------------------------------------------------------------------------------
@@ -793,6 +815,8 @@ export function createCourier({
     abort?.abort();
     abort = undefined;
     seeking = true;
+    // A take already waiting gives way to this one, which is newer.
+    leadArrived?.();
     const arrived = new Promise<void>((resolve) => {
       leadArrived = resolve;
     });
