@@ -2,8 +2,13 @@
 
 This is the record of the #335 experiment, written while its spike PR ran. The owner chose two
 shards plus PWA, and [the decision record](decisions/2026-11-01-two-accessibility-shards.md) has the
-outcome. The layout input described below only ever existed on the unmerged
-[spike branch](https://github.com/mrh-is/mistria-fyi/tree/codex/335-browser-ci-spike).
+outcome.
+
+Everything below describes the unmerged
+[spike branch](https://github.com/mrh-is/mistria-fyi/tree/codex/335-browser-ci-spike), not current
+CI. That includes the layout input & selector, four shards as the “current” layout, and the tests
+for one & four shards. CI now runs two shards on every event, with no layout input, and its
+allocation test covers those two shards.
 
 ## Candidates
 
