@@ -10,8 +10,10 @@
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { currentDevice } from "#lib/sync/device.js";
+  import { syncEnabled } from "#lib/sync/enabled.js";
   import { parseFollowLink } from "#lib/sync/follow.js";
   import { syncNotice } from "#lib/sync/notice.svelte.js";
+  import { browserGivesHandles } from "#lib/sync/save-source.js";
   import { followCode, retryPendingRetires, stopSyncing, switchCode } from "#lib/sync/sharing.js";
   import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
@@ -44,6 +46,7 @@
   let announcement = $state("");
 
   let freshOpen = $state(false);
+  let chromeTipOpen = $state(false);
   let iosOpen = $state(false);
   let iosSteps = $state(false);
   let switchOpen = $state(false);
@@ -60,6 +63,19 @@
 
   function announce(message: string): void {
     announcement = message;
+  }
+
+  function startComputer(): void {
+    view = "computer";
+    chromeTipOpen = syncEnabled && !browserGivesHandles();
+  }
+
+  async function copyPageLink(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(page.url.href);
+    } catch {
+      // Leave the tip open so the player can retry or copy the address by hand.
+    }
   }
 
   /** Runs `next` once the iOS question & the fresh-start warning, where they apply, are settled. */
@@ -264,9 +280,7 @@
       }}
       onhere={() => {
         cancelFollow();
-        throughGates(() => {
-          view = "computer";
-        }, false);
+        throughGates(startComputer, false);
       }}
       onhand={trackByHand}
     />
@@ -287,6 +301,25 @@
     </div>
   {/if}
 </div>
+
+{#if syncEnabled}
+  <SyncTagDialog
+    bind:open={chromeTipOpen}
+    title={m.sync_tip_chrome()}
+    body={m.sync_tip_chrome_body()}
+    actions={[
+      {
+        label: m.sync_tip_chrome_dismiss(),
+        onclick: () => {
+          chromeTipOpen = false;
+        },
+      },
+      { label: m.sync_tip_chrome_copy(), onclick: () => void copyPageLink(), primary: true },
+    ]}
+  >
+    <p>{m.sync_tip_chrome_after()}</p>
+  </SyncTagDialog>
+{/if}
 
 <SyncTagDialog
   bind:open={freshOpen}
