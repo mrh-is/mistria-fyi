@@ -378,6 +378,17 @@ Evidence:
 [tests/ci-workflow.isolated.test.ts](../tests/ci-workflow.isolated.test.ts),
 [tests/workflow-hardening.test.ts](../tests/workflow-hardening.test.ts),
 [docs/development-workflow.md#production-deployment](../docs/development-workflow.md#production-deployment).
+### [Pin real-save observations](decisions/2026-11-01-real-save-observations.md)
+
+ID: 2026-11-01-real-save-observations. Status: Current.
+
+Pin private snapshots & record player-confirmed expectations independently of the importer.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/333](https://github.com/mrh-is/mistria-fyi/issues/333),
+[src/lib/engine/import-save.assets.test.ts](../src/lib/engine/import-save.assets.test.ts),
+[src/lib/engine/import-save.observations.ts](../src/lib/engine/import-save.observations.ts),
+[docs/save-import-verification.md](../docs/save-import-verification.md).
 
 ### [Keep Vitest retries visible](decisions/2026-11-01-visible-vitest-retries.md)
 
