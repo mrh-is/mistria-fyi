@@ -14,6 +14,8 @@ type SelectionHandler = (element: ReportTarget) => void;
  * nothing else can see.
  */
 export class FeedbackContext {
+  /** A local draft request, never raw error details or an automatic submission. */
+  errorReportRequest = $state<undefined | { message: string }>();
   isPicking = $state(false);
   readonly registrations = new SvelteMap<HTMLElement, ReportTarget>();
 
@@ -22,6 +24,10 @@ export class FeedbackContext {
 
   cancel(): void {
     this.#finish();
+  }
+
+  reportError(message: string): void {
+    this.errorReportRequest = { message };
   }
 
   reportableAttachment(metadata: ReportTarget): Attachment<HTMLElement> {
