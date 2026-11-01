@@ -12,6 +12,25 @@ export interface FileTiming {
   durationMs: number;
   file: string;
   project: string;
+  // Optional so the nightly report can still read artifacts from before retries were recorded.
+  retries?: TestRetry[];
+}
+
+export interface TestRetry {
+  name: string;
+  retryCount: number;
+  state: string;
+}
+
+export function retryWarnings(files: FileTiming[]): string[] {
+  return files.flatMap(({ file, project, retries = [] }) =>
+    retries
+      .filter(({ state }) => state === "passed")
+      .map(
+        ({ name, retryCount }) =>
+          `Vitest retry: [${project}] ${file} > ${name} passed after ${retryCount} retry.`,
+      ),
+  );
 }
 
 export interface FileLimits {
@@ -37,7 +56,7 @@ export function fileLimits(file: string): FileLimits {
   return file === relayIntegrationFile ? relayLimits : defaultLimits;
 }
 
-export function vitestArguments(coverage: boolean, cpus: number): string[] {
+export function vitestArguments(coverage: boolean, cpus: number, filters: string[] = []): string[] {
   return [
     "exec",
     "vitest",
@@ -47,6 +66,7 @@ export function vitestArguments(coverage: boolean, cpus: number): string[] {
     "--reporter=default",
     "--reporter=./scripts/vitest-timings.ts",
     ...(coverage ? ["--coverage"] : []),
+    ...filters,
   ];
 }
 
@@ -58,12 +78,12 @@ export function parseTouchedFiles(value: string | undefined): Set<string> {
 export function timingResults(files: FileTiming[], touched: ReadonlySet<string>): TimingResults {
   const results: TimingResults = { failures: [], warnings: [] };
   if (files.length === 0) results.failures.push("Vitest reported no test files");
-  for (const { durationMs, file } of files) {
+  for (const { durationMs, file, retries = [] } of files) {
     const { failMs, warnMs } = fileLimits(file);
     const took = `${file} took ${durationMs.toFixed(0)} ms`;
     if (!Number.isFinite(durationMs) || durationMs < 0) {
       results.failures.push(`${took}, which isn't a valid measurement`);
-    } else if (touched.has(file) && durationMs > failMs) {
+    } else if (touched.has(file) && durationMs > failMs && retries.length === 0) {
       results.failures.push(
         `${took}, over the ${failMs} ms limit for a test file this pull request changes`,
       );
@@ -83,9 +103,15 @@ export function timingSummary(
   return [
     "## Vitest timings",
     "",
-    `Wall time: ${(elapsedMs / 1000).toFixed(2)} s. A file over ${warnMs / 1000} s warns; a pull request fails if it changes a file over ${failMs / 1000} s (${relayLimits.failMs / 1000} s for ${relayIntegrationFile}). File times cover tests & hooks; wall time also includes startup, imports, setup, & report generation.`,
+    `Wall time: ${(elapsedMs / 1000).toFixed(2)} s. A file over ${warnMs / 1000} s warns; a pull request fails if it changes a file over ${failMs / 1000} s (${relayLimits.failMs / 1000} s for ${relayIntegrationFile}). Files with retries only warn on timing. File times cover tests & hooks; wall time also includes startup, imports, setup, & report generation.`,
     "",
     ...[...failures, ...warnings].map((message) => `- ${message}`),
+    ...files.flatMap(({ file, project, retries = [] }) =>
+      retries.map(
+        ({ name, retryCount, state }) =>
+          `- Vitest retry: [${project}] ${file} > ${name}: ${retryCount} retry, ended ${state}.`,
+      ),
+    ),
     ...(failures.length + warnings.length > 0 ? [""] : []),
     "| Project | File | Tests & hooks (s) |",
     "| --- | --- | ---: |",
@@ -110,7 +136,21 @@ export default class TimingReporter implements Reporter {
       durationMs: module.diagnostic().duration,
       file: module.relativeModuleId,
       project: module.project.name,
+      retries: [...module.children.allTests()].flatMap((test) => {
+        const retryCount = test.diagnostic()?.retryCount ?? 0;
+        return retryCount > 0
+          ? [{ name: test.fullName, retryCount, state: test.result().state }]
+          : [];
+      }),
     }));
+    for (const warning of retryWarnings(files)) {
+      // Workflow commands must stay on one line even when a test name contains newlines.
+      const escaped = warning
+        .replaceAll("%", "%25")
+        .replaceAll("\r", "%0D")
+        .replaceAll("\n", "%0A");
+      console.warn(process.env.CI ? `::warning::${escaped}` : warning);
+    }
     mkdirSync(artifactDirectory, { recursive: true });
     writeFileSync(this.output, JSON.stringify({ files }, null, 2));
   }
@@ -122,7 +162,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   mkdirSync(artifactDirectory, { recursive: true });
   rmSync(reportPath, { force: true });
   const started = performance.now();
-  const result = spawnSync("pnpm", vitestArguments(coverage, cpus), { stdio: "inherit" });
+  const result = spawnSync("pnpm", vitestArguments(coverage, cpus, process.argv.slice(2)), {
+    stdio: "inherit",
+  });
   const elapsedMs = performance.now() - started;
   if (result.error) console.error(result.error);
   let succeeded = result.status === 0;

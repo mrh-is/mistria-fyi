@@ -91,6 +91,21 @@ function median(values: number[]): number {
 
 const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
+/** Every retry matters, regardless of sample count or whether the final attempt passed. */
+export function retryFindings(samples: TimingSample[]): string[] {
+  const findings = samples.flatMap(({ files }) =>
+    files.flatMap(({ file, project, retries = [] }) =>
+      retries.map(
+        ({ name, retryCount, state }) =>
+          `Vitest retry: [${project}] \`${file}\` > ${name} retried ${retryCount} time(s), ended ${state}`,
+      ),
+    ),
+  );
+  return [...Map.groupBy(findings, (finding) => finding)].map(
+    ([finding, occurrences]) => `${finding} (${occurrences.length} recent runs).`,
+  );
+}
+
 export function timingFindings(samples: TimingSample[]): string[] {
   const findings: string[] = [];
   const wallMs = median(samples.map(({ elapsedMs }) => elapsedMs));
@@ -240,11 +255,13 @@ export async function reportNightly(options: {
     }
     throw error;
   }
-  // Advisories don't depend on timing samples. An incomplete timing check can't close an issue.
-  if (samples.length < MINIMUM_SAMPLES && advisories.length > 0) {
+  // Advisories & retries don't depend on enough samples for medians. An incomplete check can't close an issue.
+  const retries = retryFindings(samples);
+  if (samples.length < MINIMUM_SAMPLES && advisories.length + retries.length > 0) {
     await synchronizeNightlyIssue({
       findings: [
         ...advisories,
+        ...retries,
         `Timing report incomplete: only ${samples.length} readable samples; existing timing findings have not been rechecked.`,
       ],
       preserveTimingFindings: true,
@@ -257,13 +274,13 @@ export async function reportNightly(options: {
   if (samples.length === 0) {
     throw new Error("No timing samples: main's recent runs had no readable timing artifact.");
   }
-  // Too few runs to trust a median; any advisory report above keeps timing explicitly incomplete.
+  // Too few runs to trust a median; any report above keeps timing explicitly incomplete.
   if (samples.length < MINIMUM_SAMPLES) {
     console.warn(`Only ${samples.length} recent timing samples; skipping timing findings.`);
     return;
   }
   await synchronizeNightlyIssue({
-    findings: [...advisories, ...timingFindings(samples)],
+    findings: [...advisories, ...retries, ...timingFindings(samples)],
     run,
     workflowUrl,
   });
