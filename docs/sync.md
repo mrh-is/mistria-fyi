@@ -79,7 +79,7 @@ The gaming PC with Chrome 156, Edge 156, & Firefox 159, & an iPhone on iOS 18.7,
   expected for the probe’s link.
 
 Checks still open before the network pieces are built: Android opening the installed app from a
-scanned URL, which this run had no device for (#130); & Steam Deck save access, the SD card, &
+scanned URL, which this run had no device for (#341); & Steam Deck save access, the SD card, &
 Flatpak Steam (#238). Record the results in this document & flag any failed assumption on #123.
 Early- & late-game v1.0.8 field presence is recorded in
 [save-file-format.md](save-file-format.md#field-presence-early-vs-late-game-v108): every key the
@@ -550,7 +550,7 @@ production branch would reveal sync. Launch removes the module & its call sites.
 
 1. **Groundwork that needs no network:** the extraction contract (#125), provenance & ordering
    (#126), the single write path (#127), save identity (#128), then the apply rules (#129).
-2. **Feasibility & design:** the hardware checks (#130) & the setup UX design (#131).
+2. **Feasibility & design:** the hardware checks (#130, #238, #341) & the setup UX design (#131).
 3. **The network pieces:** the relay (#132), following (#133), the courier (#134), the receiver
    (#135).
 4. **Launch work:** the privacy rewrite (#136) before launch, diagnostics (#137), then deprecating

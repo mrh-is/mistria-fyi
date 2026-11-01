@@ -192,8 +192,8 @@ at the bottom.
 | Mac, CrossOver             | `~/Library/Application Support/CrossOver/Bottles/Steam/drive_c/users/crossover/AppData/Local/FieldsOfMistria/saves` | In Finder, press Shift-Command-G, paste, press Return |
 
 Fields of Mistria’s Steam app ID is 2142790. The Proton & CrossOver paths, Steam Deck’s browser, an
-SD card’s library, & Flatpak Steam are unverified; #130 checks them. The Linux row adds “Not there?
-Look in your Steam library’s steamapps/compatdata/2142790 folder.”
+SD card’s library, & Flatpak Steam are unverified; #238 checks the Proton & Steam Deck ones. The
+Linux row adds “Not there? Look in your Steam library’s steamapps/compatdata/2142790 folder.”
 
 Note: the
 [Steam Cloud manager](https://store.steampowered.com/account/remotestorageapp/?appid=2142790) also
