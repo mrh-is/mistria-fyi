@@ -468,19 +468,27 @@ pwa-verification.md & the Public contract section of
 ## Diagnostics
 
 The feedback form can optionally attach a previewable sync log (#137): app build, protocol version,
-the device's lane, the save's current numeric game version (`info.version`), recent outcomes with
-`playtime`, unknown fields with their IDs, & counts of each policy by field. It stays behind the
-sync switch until launch. The receiver collects at most 20 events & 24 KiB in memory in the current
-tab; reloads clear it. Unknown IDs are limited to 20 per field & 100 per event. Old events are
-dropped to fit the byte limit.
+the device's lane, the save's current numeric game version (`info.version`), recent outcomes,
+unknown fields with their IDs, & counts of each policy by field. It stays behind the sync switch
+until launch. The receiver collects at most 20 events & 24 KiB in memory in the current tab; reloads
+clear it. Unknown IDs are limited to 20 per field & 100 per event. Old events are dropped to fit the
+byte limit, & again if the finished issue would pass GitHub's body limit.
+
+Feedback never carries `playtime`: it's exact & only grows, so matching values would link reports
+that the session salt keeps apart, & the game's save slot data keeps it beside the player's names.
+The app still uses it for sync. The log leaves it out, & the progress attachment drops
+`lastSavePlaytime` & each fact's provenance `playtime`.
 
 The collector projects diagnostics before retaining them. Names, paths, raw saves, fact values,
-question IDs, follow keys, write tokens, & mailbox IDs stay out; unknown IDs containing a current
-name or credential are redacted too. The farm number is SHA-256 hashed with a random, unexported
-session salt, so it can correlate events in one log without linking sessions or exposing a small
-enumerable number. The API checks a closed, size-limited schema before formatting the public issue.
-Privacy tests cover the payload & the receiver path, with the switch on & off. The game’s own
-`log.txt` records every save path & load; it is never attached.
+question IDs, follow keys, write tokens, & mailbox IDs stay out. Unknown IDs come from the save's
+game ID lists, so the save can't hold anything about the player beyond what they typed into the
+game: the character & farm names. An ID containing one of those names is redacted, ignoring case,
+accents, & separators, as is one containing a word of the character's name or a credential. The
+save's `player` & `header` sections are both checked, plus the farm being replaced. The farm number
+is SHA-256 hashed with a random, unexported session salt, so it can correlate events in one log
+without exposing a small enumerable number. The API checks a closed, size-limited schema before
+formatting the public issue. Privacy tests cover the payload & the receiver path, with the switch on
+& off. The game’s own `log.txt` records every save path & load; it is never attached.
 
 ## Privacy
 

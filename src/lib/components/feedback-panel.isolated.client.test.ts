@@ -1,10 +1,11 @@
 import { fireEvent, screen, waitFor } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import FeedbackPanel from "#lib/components/feedback-panel.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { syncDiagnostics } from "#lib/sync/diagnostics.js";
+import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 import type { SyncLog } from "#lib/feedback/sync-log-schema.js";
@@ -67,6 +68,67 @@ describe("FeedbackPanel", () => {
     const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(JSON.parse(options.body as string)).toHaveProperty("syncLog", JSON.parse(preview));
     expect(checkbox).not.toBeChecked();
+  });
+
+  it("shows & sends sync events that arrive after opting in", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my save file sync log" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Show sync log" }));
+    const before = (JSON.parse(document.querySelector("pre")?.textContent ?? "") as SyncLog).events;
+    syncDiagnostics.status("write-failed");
+    await tick();
+    const preview = document.querySelector("pre")?.textContent ?? "";
+    const previewEvents = (JSON.parse(preview) as SyncLog).events;
+    expect(previewEvents).toHaveLength(before.length + 1);
+    expect(previewEvents.at(-1)?.outcome).toBe("write-failed");
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "Sync trouble" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(options.body as string)).toHaveProperty("syncLog", JSON.parse(preview));
+  });
+
+  it("leaves playtimes out of the attached progress, & keeps the rest", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    const backup = vi.spyOn(userState, "exportBackup").mockReturnValue(
+      JSON.stringify({
+        progress: {
+          lastSavePlaytime: 4321,
+          provenance: { renown: { playtime: 4321, source: "save" } },
+          renown: 7,
+        },
+      }),
+    );
+    try {
+      renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+      await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
+      await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+      await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
+      expect(document.querySelector("pre")?.textContent).not.toMatch(/playtime|4321/iu);
+      await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+        target: { value: "A report" },
+      });
+      await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      });
+      const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+      const body = options.body as string;
+      expect(body).not.toMatch(/playtime|4321/iu);
+      expect(JSON.parse(body)).toHaveProperty("saveData", {
+        provenance: { renown: { source: "save" } },
+        renown: 7,
+      });
+    } finally {
+      backup.mockRestore();
+    }
   });
 
   it.each([true, false])("omits sync diagnostics unless chosen (switch %s)", async (on) => {

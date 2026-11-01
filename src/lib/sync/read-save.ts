@@ -27,6 +27,12 @@ export interface ReadSave extends SyncedSave {
   hash: string;
   /** The file's modification time, in Unix milliseconds. */
   modified: number;
+  /** Every name the save holds, which can differ by section; only ever used to redact them. */
+  names: { farm: string[]; player: string[] };
+}
+
+function strings(...values: unknown[]): string[] {
+  return values.filter((value) => typeof value === "string");
 }
 
 async function hashFile(file: File): Promise<string> {
@@ -57,6 +63,10 @@ export async function readSaveFile(file: File, now = Date.now()): Promise<ReadSa
     hash: await hashFile(file),
     metadata: { ...readSaveIdentity(bundle), importedAt: now },
     modified: file.lastModified,
+    names: {
+      farm: strings(bundle.player?.farm_name, bundle.header?.farm_name),
+      player: strings(bundle.player?.name, bundle.header?.name),
+    },
     playtime,
   };
 }

@@ -15,9 +15,10 @@
   import { Checkbox } from "#lib/components/ui/checkbox/index.js";
   import { trackerData } from "#lib/data/index.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import { progressAttachment } from "#lib/feedback/progress-attachment.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { syncDiagnostics } from "#lib/sync/diagnostics.js";
+  import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
   import { syncSwitchOn } from "#lib/sync/sync-switch.js";
   import { ensureTurnstileScript } from "#lib/turnstile.js";
   import { version } from "$app/env";
@@ -99,7 +100,7 @@
     if (!includeSaveData) return "";
     try {
       const exported = JSON.parse(userState.exportBackup()) as SerializedState;
-      return JSON.stringify(exported.progress, null, 2);
+      return JSON.stringify(progressAttachment(exported.progress), null, 2);
     } catch {
       return "(could not load progress data)";
     }
@@ -262,7 +263,7 @@
       if (includeSaveData) {
         try {
           const exported = JSON.parse(userState.exportBackup()) as SerializedState;
-          saveData = exported.progress;
+          saveData = progressAttachment(exported.progress);
         } catch {
           // Serialization failed; submit without save data
         }

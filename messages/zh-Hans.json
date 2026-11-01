@@ -1,7 +1,7 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "feedback_attach_sync_log": "附加存档同步日志",
-  "feedback_sync_log_description": "此标签页最近的同步活动将公开。日志不含姓名和同步链接；农场编号会经过哈希处理。",
+  "feedback_sync_log_description": "此标签页最近的同步活动将公开，包括游戏版本和我们无法识别的游戏 ID。角色名、农场名和同步链接会被移除；农场编号会经过哈希处理。",
   "feedback_show_sync_log": "显示同步日志",
   "feedback_hide_sync_log": "隐藏同步日志",
   "everything_group_by": "分组方式",

@@ -6,7 +6,7 @@ import { readProgressBlob, serializeStoredProgress } from "#lib/stores/progress-
 import { QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 
-import { syncDiagnostics } from "./diagnostics.js";
+import { syncDiagnostics } from "./diagnostics.svelte.js";
 import { deriveFollowKeys, encodeSavePayload, mailboxIdFor, sealEnvelope } from "./follow.js";
 
 import type { FollowKey, MailboxSubscriber, ReadResult } from "./follow.js";
@@ -50,7 +50,11 @@ function u64(value: number): Uint8Array {
   return bytes;
 }
 
-function saveBytes(date: number, playtime = 100): Uint8Array<ArrayBuffer> {
+function saveBytes(
+  date: number,
+  playtime = 100,
+  itemsAcquired?: string[],
+): Uint8Array<ArrayBuffer> {
   const entries: Record<string, unknown> = {
     gamedata: { date },
     header: { farm_name: "Rosewood", name: "Pat", playtime },
@@ -58,6 +62,9 @@ function saveBytes(date: number, playtime = 100): Uint8Array<ArrayBuffer> {
       creation_version: { major: 1, minor: 0, patch: 8, pre: null },
       version: { major: 1, minor: 2, patch: 3 },
     },
+    ...(itemsAcquired && {
+      player: { farm_name: "Oakhill", items_acquired: itemsAcquired, name: "Bo" },
+    }),
   };
   const encoder = new TextEncoder();
   const parts: Uint8Array[] = [u64(Object.keys(entries).length)];
@@ -290,6 +297,25 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
+/** The IDs published for the save holding `keptId`, which also holds what must be redacted. */
+async function publishedIdsBeside(keptId: string): Promise<string[]> {
+  let ids: string[] | undefined;
+  await vi.waitFor(() => {
+    ids = syncDiagnostics
+      .snapshot("build", "manual")
+      ?.events.flatMap(({ unknownFields }) => unknownFields)
+      .find(({ field, ids: found }) => field === "almanac" && found.includes(keptId))?.ids;
+    expect(ids).toBeDefined();
+  });
+  return ids ?? [];
+}
+const OUTGOING_IMPORT = {
+  farmName: "Old Pines",
+  identity: { creationVersion: null, saveNumber: null },
+  importedAt: 1,
+  playerName: "Priya",
+};
+
 describe("one tab leads", () => {
   it("does not wait for diagnostic hashing to finish before reporting an applied save", async () => {
     let finish: (() => void) | undefined;
@@ -331,17 +357,66 @@ describe("one tab leads", () => {
       expect(
         syncDiagnostics
           .snapshot("build-137", "following")
-          ?.events.some((event) => event.outcome === "applied" && event.playtime === 137),
+          ?.events.some((event) => event.outcome === "applied"),
       ).toBe(true);
     });
     const log = syncDiagnostics.snapshot("build-137", "following");
     const applied = log?.events.findLast((event) => event.outcome === "applied");
-    expect(applied).toMatchObject({ gameVersion: "1.2.3", playtime: 137 });
+    expect(applied).toMatchObject({ gameVersion: "1.2.3" });
     expect(applied?.farmHash).toMatch(/^[a-f0-9]{64}$/u);
     const payload = JSON.stringify(log);
     for (const secret of ["Rosewood", "Pat", "1315159680", KEY, await mailboxIdFor(KEY)]) {
       expect(payload).not.toContain(secret);
     }
+    expect(payload).not.toContain('"playtime":');
+  });
+
+  it("redacts a follower's names & credentials from unknown IDs", async () => {
+    const mailbox = await mailboxIdFor(KEY);
+    const relay = fakeRelay(
+      await envelope(
+        1,
+        saveBytes(SEASON, 137, [
+          "kept_id",
+          "old_pines",
+          "priya_note",
+          KEY,
+          mailbox,
+          "rosewood_x",
+          "pat_note",
+          "bo",
+          "oakhill_x",
+        ]),
+      ),
+    );
+    const { receiver } = await load(
+      blob({ syncLane: FOLLOWING }, { lastImport: OUTGOING_IMPORT }),
+      relay,
+    );
+    receiver.start();
+    await flush();
+    if (receiver.status.kind === "asking") {
+      await receiver.answer(questionId(receiver.status), "new-farm");
+    }
+    expect(await publishedIdsBeside("kept_id")).toEqual(["kept_id", "[redacted]"]);
+  });
+
+  it("redacts a computer's names & credentials from unknown IDs", async () => {
+    const TOKEN = "HxwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEAAAA";
+    const mailbox = await mailboxIdFor(KEY);
+    const { receiver } = await load(
+      blob(
+        { syncLane: { code: { key: KEY, token: TOKEN }, kind: "computer" } },
+        {
+          lastImport: OUTGOING_IMPORT,
+        },
+      ),
+      fakeRelay(),
+    );
+    await receiver.applyLocalSave(
+      file(saveBytes(SEASON, 137, ["kept_pc_id", "old_pines", "priya_note", KEY, TOKEN, mailbox])),
+    );
+    expect(await publishedIdsBeside("kept_pc_id")).toEqual(["kept_pc_id", "[redacted]"]);
   });
 
   it("only the lock's holder reads, & a queued tab takes over when it goes", async () => {

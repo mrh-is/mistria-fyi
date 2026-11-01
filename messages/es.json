@@ -1,7 +1,7 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "feedback_attach_sync_log": "Adjuntar mi registro de sincronización de partidas",
-  "feedback_sync_log_description": "La actividad reciente de sincronización de esta pestaña será pública. Se excluyen los nombres y los enlaces de sincronización; el número de tu granja se convierte en un hash.",
+  "feedback_sync_log_description": "La actividad reciente de sincronización de esta pestaña será pública, incluida tu versión del juego y cualquier ID del juego que no reconozcamos. Quitamos los nombres de tu personaje y de tu granja y los enlaces de sincronización, y el número de tu granja se convierte en un hash.",
   "feedback_show_sync_log": "Mostrar registro de sincronización",
   "feedback_hide_sync_log": "Ocultar registro de sincronización",
   "everything_group_by": "Agrupar por",

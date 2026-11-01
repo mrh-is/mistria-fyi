@@ -13,64 +13,99 @@ import type { SyncApplyOutcome } from "#lib/stores/user-state.svelte.js";
 
 import type { ReadSave } from "./read-save.js";
 
+/** What the device knows beyond the save itself, redacted from any ID that contains it. */
+export interface PrivateValues {
+  credentials: (null | string | undefined)[];
+  farmNames: (null | string | undefined)[];
+  playerNames: (null | string | undefined)[];
+}
+
 interface SyncDiagnostics {
   record: (
     save: ReadSave,
     outcome: SyncApplyOutcome,
-    privateValues: (null | string | undefined)[],
+    privateValues: PrivateValues,
   ) => Promise<void>;
   snapshot: (appBuild: string, lane: SyncLog["lane"]) => SyncLog | undefined;
   status: (outcome: SyncLogEvent["outcome"]) => void;
 }
 
+/** Below this length a name only matches a whole word, so “Al” leaves `almanac` readable. */
+const MIN_SUBSTRING_NAME = 3;
+
+/** Lowercase words without accents, so `Zoë` & `Mary Jane` meet `zoe_note` & `mary-jane`. */
+function nameWords(value: string): string[] {
+  return value
+    .normalize("NFKD")
+    .replaceAll(/\p{M}/gu, "")
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
+}
+
+function isString(value: null | string | undefined): value is string {
+  return typeof value === "string" && value.length > 0;
+}
+
 export function createSyncDiagnostics(): SyncDiagnostics {
-  const events: { event: SyncLogEvent; order: number }[] = [];
+  // Replaced rather than mutated, so an open preview shows each new event.
+  let events = $state.raw<{ event: SyncLogEvent; order: number }[]>([]);
   let nextOrder = 0;
-  // A random, unexported salt prevents enumerating the game's small farm-number space or linking
-  // separate sessions. It is created lazily so server rendering has no per-player state.
+  // A random, unexported salt prevents enumerating the game's small farm-number space. It is
+  // created lazily so server rendering has no per-player state.
   let salt: string | undefined;
 
   function add(event: SyncLogEvent, order = nextOrder++): void {
     if (!syncSwitchOn) return;
-    events.push({ event, order });
-    events.sort((a, b) => a.order - b.order);
+    const next = [...events, { event, order }].toSorted((a, b) => a.order - b.order);
     // Reserve metadata space, and measure UTF-8 bytes rather than string length.
     while (
-      events.length > MAX_SYNC_EVENTS ||
-      new TextEncoder().encode(JSON.stringify(events)).byteLength > MAX_SYNC_LOG_BYTES - 1024
+      next.length > MAX_SYNC_EVENTS ||
+      new TextEncoder().encode(JSON.stringify(next)).byteLength > MAX_SYNC_LOG_BYTES - 1024
     ) {
-      events.shift();
+      next.shift();
     }
+    events = next;
   }
 
   return {
     async record(
       save: ReadSave,
       outcome: SyncApplyOutcome,
-      privateValues: (null | string | undefined)[],
+      { credentials, farmNames, playerNames }: PrivateValues,
     ): Promise<void> {
       if (!syncSwitchOn) return;
       const order = nextOrder++;
       try {
         const { saveNumber } = save.metadata.identity;
-        const privateStrings = privateValues.filter(
-          (value): value is string => typeof value === "string",
-        );
+        const secrets = credentials.filter((value) => isString(value));
         const mailboxes = await Promise.all(
-          privateStrings.filter((value) => isFollowKey(value)).map((key) => mailboxIdFor(key)),
+          secrets.filter((value) => isFollowKey(value)).map((key) => mailboxIdFor(key)),
         );
-        const sensitive = [
-          save.metadata.playerName,
-          save.metadata.farmName,
-          saveNumber,
-          ...privateValues,
-          ...mailboxes,
-        ]
-          .filter((value): value is string => typeof value === "string" && value.length > 0)
+        const exact = [saveNumber, ...secrets, ...mailboxes]
+          .filter((value) => isString(value))
           .map((value) => value.toLowerCase());
+        // A character's whole name & each word of it, since the player may have used a real name.
+        // A farm's name counts only whole: its words are ordinary ones like “rose” or “farm”.
+        const names = [
+          ...[...save.names.player, ...playerNames].flatMap((value) =>
+            isString(value) ? [nameWords(value).join(""), ...nameWords(value)] : [],
+          ),
+          ...[...save.names.farm, ...farmNames]
+            .filter((value) => isString(value))
+            .map((value) => nameWords(value).join("")),
+        ].filter(Boolean);
+        const containsName = (id: string): boolean => {
+          const words = nameWords(id);
+          const joined = words.join("");
+          return names.some((name) =>
+            name.length < MIN_SUBSTRING_NAME ? words.includes(name) : joined.includes(name),
+          );
+        };
         const publicId = (id: string): string =>
           /^[\w.:[\]-]{1,100}$/u.test(id) &&
-          !sensitive.some((value) => id.toLowerCase().includes(value))
+          !exact.some((value) => id.toLowerCase().includes(value)) &&
+          !containsName(id)
             ? id
             : "[redacted]";
         const unknownFields: SyncLogEvent["unknownFields"] = [];
@@ -78,13 +113,12 @@ export function createSyncDiagnostics(): SyncDiagnostics {
         const fields = { ...save.extraction.fields, ...save.extraction.identity };
         for (const [field, extracted] of Object.entries(fields)) {
           if (extracted.completeness !== "unknown") continue;
-          const ids = [
-            ...new Set(
-              extracted.diagnostics.flatMap((diagnostic) =>
-                diagnostic.code === "unknown-id" ? [publicId(diagnostic.id)] : [],
-              ),
-            ),
-          ].slice(0, Math.min(20, remainingIds));
+          const ids = extracted.diagnostics
+            .flatMap((diagnostic) =>
+              diagnostic.code === "unknown-id" ? [publicId(diagnostic.id)] : [],
+            )
+            .filter((id, index, all) => all.indexOf(id) === index)
+            .slice(0, Math.min(20, remainingIds));
           remainingIds -= ids.length;
           unknownFields.push({
             field: field as SyncLogEvent["unknownFields"][number]["field"],
@@ -123,7 +157,6 @@ export function createSyncDiagnostics(): SyncDiagnostics {
             farmHash,
             gameVersion: save.gameVersion,
             outcome: outcome.kind,
-            playtime: save.playtime ?? null,
             policies,
             unknownFields,
           },
@@ -147,7 +180,6 @@ export function createSyncDiagnostics(): SyncDiagnostics {
         farmHash: null,
         gameVersion: null,
         outcome,
-        playtime: null,
         policies: [],
         unknownFields: [],
       });

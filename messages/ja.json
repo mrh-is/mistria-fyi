@@ -1,7 +1,7 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "feedback_attach_sync_log": "セーブファイルの同期ログを添付する",
-  "feedback_sync_log_description": "このタブの最近の同期履歴が公開されます。名前と同期リンクは含まれず、農場番号はハッシュ化されます。",
+  "feedback_sync_log_description": "このタブの最近の同期履歴が公開されます。ゲームのバージョンと、認識できなかったゲーム内IDも含まれます。キャラクター名、農場名、同期リンクは取り除かれ、農場番号はハッシュ化されます。",
   "feedback_show_sync_log": "同期ログを表示",
   "feedback_hide_sync_log": "同期ログを隠す",
   "everything_group_by": "グループ分け",

@@ -203,7 +203,83 @@ function routingFetchMock(
   });
 }
 
+const MAX_BODY_BYTES = 65_536;
+const syncEvent = (id: string) => ({
+  farmHash: null,
+  gameVersion: null,
+  outcome: "applied",
+  policies: [],
+  unknownFields: [
+    { field: "almanac", ids: [id, ...Array.from({ length: 19 }, () => "x".repeat(40))] },
+  ],
+});
+const longSyncLog = (events: number) => ({
+  appBuild: "build",
+  events: Array.from({ length: events }, (_, i) => syncEvent(`event_${String(i)}`)),
+  lane: "manual",
+  protocolVersion: 1,
+});
+/** Fills a list so the compact JSON comes to about `bytes`. */
+const filledSaveData = (bytes: number) => ({
+  almanac: Array.from({ length: Math.floor(bytes / 14) }, () => "item_000000"),
+});
+async function fileIssue(payload: Record<string, unknown>): Promise<string> {
+  const fetchMock = mockGitHubSuccess();
+  const response = await callPost(makeRequest({ ...validPayload, ...payload }), { fetchMock });
+  expect(response.status).toBe(200);
+  const [, options] = getGitHubCall(fetchMock);
+  return (JSON.parse(options.body as string) as { body: string }).body;
+}
+const bytes = (text: string) => new TextEncoder().encode(text).byteLength;
+const fenced = (body: string, heading: string): unknown => {
+  const section = body.slice(body.indexOf(heading));
+  const start = section.indexOf("```json\n") + "```json\n".length;
+  return JSON.parse(section.slice(start, section.indexOf("\n```", start)));
+};
+
 describe("POST /api/feedback", () => {
+  describe("fitting GitHub's issue body limit", () => {
+    it("keeps attachments pretty-printed when they fit", async () => {
+      const body = await fileIssue({ saveData: { renown: 7 }, syncLog: longSyncLog(2) });
+      expect(body).toContain('\n  "renown": 7\n');
+      expect(body).toContain('\n  "appBuild": "build",\n');
+      expect(body).not.toContain("left out");
+    });
+
+    it("compacts before giving up any events", async () => {
+      const log = longSyncLog(20);
+      expect(bytes(JSON.stringify(log, null, 2))).toBeLessThan(MAX_BODY_BYTES);
+      const data = filledSaveData(30_000);
+      const pretty = JSON.stringify(data, null, 2).length + JSON.stringify(log, null, 2).length;
+      expect(pretty).toBeGreaterThan(MAX_BODY_BYTES);
+      const body = await fileIssue({ saveData: data, syncLog: log });
+      expect(bytes(body)).toBeLessThanOrEqual(MAX_BODY_BYTES);
+      expect(body).not.toContain("left out");
+      expect(fenced(body, "<summary>Sync log")).toEqual(log);
+      expect(fenced(body, "<summary>Save data")).toEqual(data);
+    });
+
+    it("gives up the oldest events when compacting isn't enough", async () => {
+      const log = longSyncLog(20);
+      const data = filledSaveData(49_000);
+      expect(bytes(JSON.stringify(data)) + bytes(JSON.stringify(log))).toBeGreaterThan(
+        MAX_BODY_BYTES,
+      );
+      const body = await fileIssue({
+        message: "m".repeat(4000),
+        saveData: data,
+        syncLog: log,
+      });
+      expect(bytes(body)).toBeLessThanOrEqual(MAX_BODY_BYTES);
+      const kept = fenced(body, "<summary>Sync log") as typeof log;
+      const omitted = log.events.length - kept.events.length;
+      expect(omitted).toBeGreaterThan(0);
+      expect(kept.events).toEqual(log.events.slice(omitted));
+      expect(body).toContain(`Older events left out to fit the issue: ${String(omitted)}`);
+      expect(fenced(body, "<summary>Save data")).toEqual(data);
+    });
+  });
+
   it("validates and formats an opted-in sync log, with production gated off", async () => {
     const syncLog = {
       appBuild: "build-123",
@@ -212,7 +288,6 @@ describe("POST /api/feedback", () => {
           farmHash: null,
           gameVersion: null,
           outcome: "unreadable",
-          playtime: null,
           policies: [],
           unknownFields: [],
         },

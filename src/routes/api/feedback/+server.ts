@@ -26,6 +26,8 @@ const MAX_ENTITY_ID_LENGTH = 100;
 const MAX_EXTRA_KEYS = 10;
 const MAX_SAVE_DATA_BYTES = 50 * 1024;
 const MAX_PAYLOAD_BYTES = 100 * 1024;
+/** GitHub counts characters; bytes are the stricter measure, & stay safe if that ever changes. */
+const MAX_ISSUE_BODY_BYTES = 65_536;
 const MAX_GITHUB_ERROR_LOG_LENGTH = 200;
 const GITHUB_TIMEOUT_MS = 10_000;
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
@@ -57,7 +59,27 @@ const GITHUB_APP_VARIABLES = [
 const GITHUB_UNAVAILABLE_MESSAGE =
   "Feedback service temporarily unavailable. Please try again later or copy your message.";
 
+function fitsIssueBody(body: string): boolean {
+  return new TextEncoder().encode(body).byteLength <= MAX_ISSUE_BODY_BYTES;
+}
+
+/**
+ * Pretty-prints attachments when they fit GitHub's body limit, or compacts them when they don't.
+ * Past that, the sync log gives up its oldest events: a report is worth more than its whole log.
+ */
 function buildIssueBody(payload: FeedbackPayload): string {
+  const pretty = composeIssueBody(payload, 2);
+  if (fitsIssueBody(pretty)) return pretty;
+  let body = composeIssueBody(payload);
+  const events = payload.syncLog?.events ?? [];
+  for (let omitted = 1; omitted <= events.length && !fitsIssueBody(body); omitted++) {
+    const syncLog = payload.syncLog && { ...payload.syncLog, events: events.slice(omitted) };
+    body = composeIssueBody({ ...payload, syncLog }, undefined, omitted);
+  }
+  return body;
+}
+
+function composeIssueBody(payload: FeedbackPayload, indent?: number, omittedEvents = 0): string {
   const lines: string[] = [
     escapeMentions(payload.message),
     "",
@@ -80,7 +102,7 @@ function buildIssueBody(payload: FeedbackPayload): string {
       "\u{26A0}\u{FE0F} This data was voluntarily attached by the reporter.",
       "",
       "```json",
-      JSON.stringify(payload.saveData, null, 2),
+      JSON.stringify(payload.saveData, null, indent),
       "```",
       "",
       "</details>",
@@ -93,8 +115,11 @@ function buildIssueBody(payload: FeedbackPayload): string {
       "<details>",
       "<summary>Sync log (names & credentials excluded)</summary>",
       "",
+      ...(omittedEvents > 0
+        ? [`Older events left out to fit the issue: ${String(omittedEvents)}`, ""]
+        : []),
       "```json",
-      JSON.stringify(payload.syncLog, null, 2),
+      JSON.stringify(payload.syncLog, null, indent),
       "```",
       "",
       "</details>",

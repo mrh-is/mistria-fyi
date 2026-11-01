@@ -67,7 +67,6 @@ export const SyncLogSchema = v.pipe(
           farmHash: v.nullable(v.pipe(v.string(), v.regex(/^[a-f0-9]{64}$/u))),
           gameVersion: v.nullable(v.pipe(v.string(), v.regex(/^\d+\.\d+\.\d+$/u), v.maxLength(50))),
           outcome: OutcomeSchema,
-          playtime: v.nullable(v.pipe(v.number(), v.minValue(0))),
           policies: v.pipe(
             v.array(
               v.strictObject({

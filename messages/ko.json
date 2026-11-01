@@ -1,7 +1,7 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "feedback_attach_sync_log": "저장 파일 동기화 로그 첨부",
-  "feedback_sync_log_description": "이 탭의 최근 동기화 활동이 공개됩니다. 이름과 동기화 링크는 제외되며 농장 번호는 해시 처리됩니다.",
+  "feedback_sync_log_description": "이 탭의 최근 동기화 활동이 공개됩니다. 게임 버전과 인식하지 못한 게임 ID도 포함됩니다. 캐릭터 이름, 농장 이름, 동기화 링크는 제거되며 농장 번호는 해시 처리됩니다.",
   "feedback_show_sync_log": "동기화 로그 보기",
   "feedback_hide_sync_log": "동기화 로그 숨기기",
   "everything_group_by": "그룹 기준",

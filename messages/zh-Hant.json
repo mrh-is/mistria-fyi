@@ -1,7 +1,7 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "feedback_attach_sync_log": "附加存檔同步紀錄",
-  "feedback_sync_log_description": "此分頁最近的同步活動將公開。紀錄不含姓名和同步連結；農場編號會經過雜湊處理。",
+  "feedback_sync_log_description": "此分頁最近的同步活動將公開，包括遊戲版本和我們無法識別的遊戲 ID。角色名稱、農場名稱和同步連結會被移除；農場編號會經過雜湊處理。",
   "feedback_show_sync_log": "顯示同步紀錄",
   "feedback_hide_sync_log": "隱藏同步紀錄",
   "everything_group_by": "分組方式",

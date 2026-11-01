@@ -14,7 +14,7 @@ import { receiptCovers } from "#lib/engine/sync-apply.js";
 import { updateHolds } from "#lib/pwa/update-holds.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
-import { syncDiagnostics } from "./diagnostics.js";
+import { syncDiagnostics } from "./diagnostics.svelte.js";
 import {
   deriveFollowKeys,
   FOLLOW_PROTOCOL_VERSION,
@@ -327,13 +327,15 @@ export function createReceiver({
     const outgoingFarm = userState.state.lastImport?.farmName ?? null;
     const outgoingPlayer = userState.state.lastImport?.playerName;
     const lane = userState.syncLane;
-    const privateValues = [
-      outgoingFarm,
-      outgoingPlayer,
-      request.receipt.mailboxId,
-      lane?.kind === "following" ? lane.key : lane?.code?.key,
-      lane?.kind === "computer" ? lane.code?.token : undefined,
-    ];
+    const privateValues = {
+      credentials: [
+        request.receipt.mailboxId,
+        lane?.kind === "following" ? lane.key : lane?.code?.key,
+        lane?.kind === "computer" ? lane.code?.token : undefined,
+      ],
+      farmNames: [outgoingFarm],
+      playerNames: [outgoingPlayer],
+    };
     let outcome: SyncApplyOutcome;
     // An app update's reload waits until the apply has landed.
     const releaseHold = updateHolds.hold();
