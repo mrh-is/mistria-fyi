@@ -553,6 +553,20 @@ KiB in memory in the current tab; reloads clear it. Unknown IDs are limited to 2
 per event. Old events are dropped to fit the byte limit, & again if the finished issue would pass
 GitHub's body limit.
 
+On the gaming computer, the courier also records each upload's result, so a log sent from there
+shows whether saves reached the relay. Each is a bare outcome, with no counter, mailbox ID, hash, or
+size:
+
+- `uploaded`: the relay stored the save.
+- `upload-unreachable`: the relay couldn't be reached, or a counter conflict happened twice.
+- `upload-paused`: the relay's kill switch is on.
+- `upload-rate-limited`: the relay asked the courier to wait.
+- `upload-too-large`: the sealed save was over the relay's size cap.
+- `code-renewed`: the old code had been retired, so the courier made a new one.
+
+A retry that fails the same way as the attempt before it isn't recorded again, so an hour offline
+doesn't push every other event out of the log.
+
 Feedback never carries exact `playtime` values: they only grow, so matching values would link
 reports that the session salt keeps apart, & the game's save slot data keeps it beside the player's
 names. The app still uses it for sync. The log leaves it out, & the progress attachment replaces
