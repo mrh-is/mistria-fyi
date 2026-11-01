@@ -1,5 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "feedback_attach_sync_log": "Joindre mon journal de synchronisation des sauvegardes",
+  "feedback_sync_log_description": "L’activité récente de synchronisation de cet onglet sera publique, y compris votre version du jeu et les identifiants de jeu que nous ne reconnaissons pas. Nous retirons les noms de votre personnage et de votre ferme ainsi que les liens de synchronisation, et le numéro de votre ferme est haché.",
+  "feedback_show_sync_log": "Afficher le journal de synchronisation",
+  "feedback_hide_sync_log": "Masquer le journal de synchronisation",
   "everything_group_by": "Regrouper par",
   "everything_group_category": "Catégorie",
   "everything_group_source": "Source",

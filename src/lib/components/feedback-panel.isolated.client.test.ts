@@ -1,12 +1,18 @@
 import { fireEvent, screen, waitFor } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import FeedbackPanel from "#lib/components/feedback-panel.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
+import type { SyncLog } from "#lib/feedback/sync-log-schema.js";
+
 const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), warning: vi.fn() }));
+const syncSwitch = vi.hoisted(() => ({ syncSwitchOn: true }));
+vi.mock("#lib/sync/sync-switch.js", () => syncSwitch);
 
 vi.mock("svelte-sonner", () => ({ toast }));
 
@@ -27,12 +33,159 @@ function mockTurnstile() {
 
 describe("FeedbackPanel", () => {
   beforeEach(() => {
+    syncSwitch.syncSwitchOn = true;
     toast.mockClear();
     toast.error.mockClear();
     toast.warning.mockClear();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     mockTurnstile();
+  });
+
+  it("only attaches the previewed sync log when opted in, and can undo the choice", async () => {
+    syncDiagnostics.status("unreadable");
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    const checkbox = screen.getByRole("checkbox", { name: "Attach my save file sync log" });
+    expect(checkbox).not.toBeChecked();
+    await fireEvent.click(checkbox);
+    await fireEvent.click(screen.getByRole("button", { name: "Show sync log" }));
+    const preview = document.querySelector("pre")?.textContent ?? "";
+    const previewLog = JSON.parse(preview) as SyncLog;
+    expect(previewLog.protocolVersion).toBe(1);
+    expect(previewLog.events.map((event) => event.outcome)).toContain("unreadable");
+    await fireEvent.click(checkbox);
+    expect(screen.queryByRole("button", { name: "Hide sync log" })).toBeNull();
+    await fireEvent.click(checkbox);
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "Sync trouble" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(options.body as string)).toHaveProperty("syncLog", JSON.parse(preview));
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it("shows & sends sync events that arrive after opting in", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my save file sync log" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Show sync log" }));
+    const before = (JSON.parse(document.querySelector("pre")?.textContent ?? "") as SyncLog).events;
+    syncDiagnostics.status("write-failed");
+    await tick();
+    const preview = document.querySelector("pre")?.textContent ?? "";
+    const previewEvents = (JSON.parse(preview) as SyncLog).events;
+    expect(previewEvents).toHaveLength(before.length + 1);
+    expect(previewEvents.at(-1)?.outcome).toBe("write-failed");
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "Sync trouble" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(options.body as string)).toHaveProperty("syncLog", JSON.parse(preview));
+  });
+
+  it("redacts playtime values in both the progress preview & attachment", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    const backup = vi.spyOn(userState, "exportBackup").mockReturnValue(
+      JSON.stringify({
+        progress: {
+          lastSavePlaytime: 4321,
+          provenance: { renown: { playtime: 4321, source: "save" } },
+          renown: 7,
+        },
+      }),
+    );
+    try {
+      renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+      await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
+      await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+      await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
+      const preview = document.querySelector("pre")?.textContent ?? "";
+      expect(JSON.parse(preview)).toEqual({
+        lastSavePlaytime: "[redacted]",
+        provenance: { renown: { playtime: "[redacted]", source: "save" } },
+        renown: 7,
+      });
+      expect(preview).not.toContain("4321");
+      await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+        target: { value: "A report" },
+      });
+      await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      });
+      const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+      const body = options.body as string;
+      expect(body).not.toContain("4321");
+      expect(JSON.parse(body)).toHaveProperty("saveData", JSON.parse(preview));
+    } finally {
+      backup.mockRestore();
+    }
+  });
+
+  it("shows the same marked summary it submits for a large farm", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(userState, "exportBackup").mockReturnValue(
+      JSON.stringify({
+        progress: {
+          almanac: Array.from({ length: 5000 }, (_, i) => `long_game_item_identifier_${String(i)}`),
+          provenance: Object.fromEntries(
+            Array.from({ length: 4000 }, (_, i) => [
+              `almanac/${String(i)}`,
+              { playtime: 42, source: "save" },
+            ]),
+          ),
+        },
+      }),
+    );
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
+    const preview = JSON.parse(document.querySelector("pre")?.textContent ?? "") as unknown;
+    expect(preview).toHaveProperty("almanac", { count: 5000, summarized: true });
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "A report" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toHaveProperty(
+      "saveData",
+      preview,
+    );
+  });
+
+  it.each([true, false])("omits sync diagnostics unless chosen (switch %s)", async (on) => {
+    syncSwitch.syncSwitchOn = on;
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    expect(screen.queryByRole("checkbox", { name: "Attach my save file sync log" }) !== null).toBe(
+      on,
+    );
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "A report" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(options.body as string)).not.toHaveProperty("syncLog");
   });
 
   it("previews and attaches progress without player or farm names", async () => {

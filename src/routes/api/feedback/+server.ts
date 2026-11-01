@@ -1,11 +1,16 @@
 /* eslint-disable no-console -- server-side error logging */
 import { error as httpError, isHttpError } from "@sveltejs/kit";
 import { env } from "cloudflare:workers";
+import * as v from "valibot";
 
+import { progressAttachment } from "#lib/feedback/progress-attachment.js";
+import { SyncLogSchema } from "#lib/feedback/sync-log-schema.js";
 import { isReportCategory } from "#lib/feedback/types.js";
 import { isProductionDeployment } from "#lib/server/deployment.js";
 import { GitHubAppAuthError, installationTokens } from "#lib/server/github-app-auth.js";
+import { syncSwitchOn } from "#lib/sync/sync-switch.js";
 
+import type { SyncLog } from "#lib/feedback/sync-log-schema.js";
 import type { ReportTarget } from "#lib/feedback/types.js";
 import type { GitHubAppCredentials } from "#lib/server/github-app-auth.js";
 
@@ -22,6 +27,8 @@ const MAX_ENTITY_ID_LENGTH = 100;
 const MAX_EXTRA_KEYS = 10;
 const MAX_SAVE_DATA_BYTES = 50 * 1024;
 const MAX_PAYLOAD_BYTES = 100 * 1024;
+/** GitHub counts characters; bytes are the stricter measure, & stay safe if that ever changes. */
+const MAX_ISSUE_BODY_BYTES = 65_536;
 const MAX_GITHUB_ERROR_LOG_LENGTH = 200;
 const GITHUB_TIMEOUT_MS = 10_000;
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
@@ -34,6 +41,7 @@ interface FeedbackPayload {
   message: string;
   saveData?: Record<string, unknown>;
   selectedElement?: ReportTarget;
+  syncLog?: SyncLog;
 }
 
 interface GitHubFailureDiagnostics {
@@ -52,7 +60,27 @@ const GITHUB_APP_VARIABLES = [
 const GITHUB_UNAVAILABLE_MESSAGE =
   "Feedback service temporarily unavailable. Please try again later or copy your message.";
 
+function fitsIssueBody(body: string): boolean {
+  return new TextEncoder().encode(body).byteLength <= MAX_ISSUE_BODY_BYTES;
+}
+
+/**
+ * Pretty-prints attachments when they fit GitHub's body limit, or compacts them when they don't.
+ * Past that, the sync log gives up its oldest events: a report is worth more than its whole log.
+ */
 function buildIssueBody(payload: FeedbackPayload): string {
+  const pretty = composeIssueBody(payload, 2);
+  if (fitsIssueBody(pretty)) return pretty;
+  let body = composeIssueBody(payload);
+  const events = payload.syncLog?.events ?? [];
+  for (let omitted = 1; omitted <= events.length && !fitsIssueBody(body); omitted++) {
+    const syncLog = payload.syncLog && { ...payload.syncLog, events: events.slice(omitted) };
+    body = composeIssueBody({ ...payload, syncLog }, undefined, omitted);
+  }
+  return body;
+}
+
+function composeIssueBody(payload: FeedbackPayload, indent?: number, omittedEvents = 0): string {
   const lines: string[] = [
     escapeMentions(payload.message),
     "",
@@ -75,7 +103,24 @@ function buildIssueBody(payload: FeedbackPayload): string {
       "\u{26A0}\u{FE0F} This data was voluntarily attached by the reporter.",
       "",
       "```json",
-      JSON.stringify(payload.saveData, null, 2),
+      JSON.stringify(payload.saveData, null, indent),
+      "```",
+      "",
+      "</details>",
+    );
+  }
+
+  if (syncSwitchOn && payload.syncLog) {
+    lines.push(
+      "",
+      "<details>",
+      "<summary>Sync log (names & credentials excluded)</summary>",
+      "",
+      ...(omittedEvents > 0
+        ? [`Older events left out to fit the issue: ${String(omittedEvents)}`, ""]
+        : []),
+      "```json",
+      JSON.stringify(payload.syncLog, null, indent),
       "```",
       "",
       "</details>",
@@ -227,10 +272,15 @@ function validatePayload(body: unknown): FeedbackPayload {
     httpError(400, "Invalid request body");
   }
 
-  const { appVersion, email, gameDataVersion, message, saveData, selectedElement } = body as Record<
-    string,
-    unknown
-  >;
+  const {
+    appVersion,
+    email,
+    gameDataVersion,
+    message,
+    saveData,
+    selectedElement,
+    syncLog: rawSyncLog,
+  } = body as Record<string, unknown>;
 
   if (typeof message !== "string" || message.trim().length === 0) {
     httpError(400, "Message is required");
@@ -265,6 +315,13 @@ function validatePayload(body: unknown): FeedbackPayload {
     }
   }
 
+  let syncLog: SyncLog | undefined;
+  if (syncSwitchOn && rawSyncLog !== undefined) {
+    const parsed = v.safeParse(SyncLogSchema, rawSyncLog);
+    if (!parsed.success) httpError(400, "Invalid sync log");
+    syncLog = parsed.output;
+  }
+
   let validatedSaveData: Record<string, unknown> | undefined;
   if (saveData !== undefined && saveData !== null) {
     if (typeof saveData !== "object" || Array.isArray(saveData)) {
@@ -273,7 +330,13 @@ function validatePayload(body: unknown): FeedbackPayload {
     if (new TextEncoder().encode(JSON.stringify(saveData)).byteLength > MAX_SAVE_DATA_BYTES) {
       httpError(400, "Save data too large");
     }
-    validatedSaveData = saveData as Record<string, unknown>;
+    validatedSaveData = progressAttachment(saveData as Record<string, unknown>);
+    // Older clients send numbers; replacing short values with markers can enlarge the attachment.
+    if (
+      new TextEncoder().encode(JSON.stringify(validatedSaveData)).byteLength > MAX_SAVE_DATA_BYTES
+    ) {
+      httpError(400, "Save data too large");
+    }
   }
 
   return {
@@ -283,6 +346,7 @@ function validatePayload(body: unknown): FeedbackPayload {
     message: message.trim(),
     saveData: validatedSaveData,
     selectedElement: validateSelectedElement(selectedElement),
+    syncLog,
   };
 }
 
@@ -323,7 +387,9 @@ function validateSelectedElement(value: unknown): ReportTarget | undefined {
     }
     if (
       entries.some(
-        ([, extraValue]) =>
+        ([key, extraValue]) =>
+          key.length > MAX_ELEMENT_STRING_LENGTH ||
+          (typeof extraValue === "string" && extraValue.length > MAX_ELEMENT_STRING_LENGTH) ||
           (typeof extraValue !== "string" && typeof extraValue !== "number") ||
           (typeof extraValue === "number" && !Number.isFinite(extraValue)),
       )
@@ -439,6 +505,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
   const title = deriveTitle(payload);
   const body = buildIssueBody(payload);
+  if (!fitsIssueBody(body)) httpError(400, "Feedback too large");
 
   let issueUrl: string;
   let issueNumber: number;

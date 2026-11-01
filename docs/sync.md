@@ -545,11 +545,56 @@ pwa-verification.md & the Public contract section of
 
 ## Diagnostics
 
-Expect iteration from real situations (#137). The feedback form can attach a sync log: app build,
-protocol version, game version, recent sync events with `playtime`, which fields were unknown (with
-their IDs), & which policy fired. Names are stripped & the farm number is hashed, because feedback
-becomes a public issue; a test proves no player or farm name reaches the payload. The game’s own
-`log.txt` records every save path & load.
+The feedback form can optionally attach a previewable sync log (#137): app build, protocol version,
+the device's lane, the save's current numeric game version (`info.version`), recent outcomes,
+unknown fields with their IDs, & counts of each policy by field. It stays behind the sync switch
+until launch. The receiver collects at most 20 events & 24 KiB in memory in the current tab; reloads
+clear it. Unknown IDs are limited to 20 per field & 100 per event. Old events are dropped to fit the
+byte limit, & again if the finished issue would pass GitHub's body limit.
+
+Feedback never carries exact `playtime` values: they only grow, so matching values would link
+reports that the session salt keeps apart, & the game's save slot data keeps it beside the player's
+names. The app still uses it for sync. The log leaves it out, & the progress attachment replaces
+`lastSavePlaytime` & each fact's provenance `playtime` with `[redacted]`, preserving the fact that
+the value was present. The preview & API use the same projection.
+
+Privacy follows the
+[source-based feedback redaction decision](decisions/2026-10-31-source-based-feedback-redaction.md).
+The collector checks each unknown ID’s diagnostic path against an explicit list of game-owned
+sources before retaining it. Unclassified sources produce `[redacted]`, even when the ID looks
+harmless. The extractor’s path type requires each new ID source to be classified. Names, paths, raw
+saves, fact values, question IDs, follow keys, write tokens, & mailbox IDs stay out of events.
+Unknown IDs come from game-owned unlock lists, type keys, & quest IDs; keep them readable without
+guessing personal information from date or phone-number shapes. Player-entered child & pet names
+elsewhere in the save are not ID sources, & their objects are never attached.
+
+The progress attachment uses an exhaustive list of supported progress fields. New fields require an
+explicit public or private decision. Provenance retains only `source`, `obtainedSource`, & a
+redacted `playtime` marker; resolutions retain only `saveValue`. Unknown keys from newer backups are
+excluded by both the client & API.
+
+Attachments have a 32 KiB compact-JSON budget, below the API’s unchanged 50 KiB input limit. Small
+farms retain the selected detail. Larger farms first replace per-fact provenance with counts by
+progress field & source, then replace the largest remaining collections with entry counts until they
+fit. Every replacement includes `summarized: true` & `count`; nothing disappears silently. The same
+projection prepares the preview, payload, & server result. The budget leaves room for the maximum
+message & sync log; unusually large UTF-8 messages can still require dropping older sync events
+under the existing, owner-approved fitting rule.
+
+As a defensive check, known-private matches inside IDs become `[redacted]`. The collector checks
+character & farm names from both `player` & `header`, the outgoing farm's names & number, & sync
+credentials. Names ignore case, accents, & separators; character-name words also count. Names
+shorter than three characters require word boundaries, including capitals, acronyms, & digits. The
+collector remembers these comparison patterns privately for the tab session & rechecks buffered &
+asynchronously prepared events as new values become known. The comparison text has a separate 16 KiB
+budget, never enters the payload or persistent storage, & clears on reload. If it fills, all IDs are
+redacted rather than forgetting private values.
+
+The incoming farm number is SHA-256 hashed with a random, unexported session salt. That hash can
+correlate events & submissions within one tab session without exposing a small enumerable number.
+The API checks a closed, size-limited schema before formatting the public issue; the schema is not a
+general anonymizer. Privacy tests cover the source projection, payload, & receiver path, with the
+switch on & off. The game's own `log.txt` records every save path & load; it is never attached.
 
 ## Privacy
 
