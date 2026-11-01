@@ -1414,6 +1414,70 @@ describe("the sync log", () => {
     expect(relay.upload).toHaveBeenCalledTimes(4);
   });
 
+  it("records a failure again once an upload landed in between", async () => {
+    const { make, relay } = await load();
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload
+      .mockResolvedValueOnce({ kind: "unreachable" })
+      .mockResolvedValueOnce({ kind: "stored" })
+      .mockResolvedValueOnce({ kind: "unreachable" });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes(100)], FILE_NAME), kind: "file" });
+    await until(() => log.mock.calls.length === 2);
+    await courier.take({ file: new File([saveBytes(200)], FILE_NAME), kind: "file" });
+    await until(() => log.mock.calls.length >= 3);
+    expect(log.mock.calls.slice(0, 3).map(([outcome]) => outcome)).toEqual([
+      "upload-unreachable",
+      "uploaded",
+      "upload-unreachable",
+    ]);
+  });
+
+  it("records the same failure again once this window leads again", async () => {
+    const { make, relay } = await load({ options: { firstRetryMs: 60_000 } });
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload.mockResolvedValue({ kind: "unreachable" });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(log).toHaveBeenCalledTimes(1);
+    courier.stop();
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(log.mock.calls.map(([outcome]) => outcome)).toEqual([
+      "upload-unreachable",
+      "upload-unreachable",
+    ]);
+  });
+
+  it("records every envelope too large to send, since none is a retry", async () => {
+    const { make, relay } = await load();
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload.mockResolvedValue({ kind: "too-large" });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes(100)], FILE_NAME), kind: "file" });
+    await courier.take({ file: new File([saveBytes(200)], FILE_NAME), kind: "file" });
+    expect(log.mock.calls.map(([outcome]) => outcome)).toEqual([
+      "upload-too-large",
+      "upload-too-large",
+    ]);
+  });
+
+  it("still uploads when the log throws", async () => {
+    const { last, make, relay } = await load();
+    const courier = make({
+      log: () => {
+        throw new Error("log");
+      },
+    });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(relay.upload).toHaveBeenCalledTimes(1);
+    expect(last()?.upload).toBe("idle");
+  });
+
   it("records an envelope too large to send", async () => {
     const { make, relay } = await load();
     const log = vi.fn<NonNullable<CourierOptions["log"]>>();

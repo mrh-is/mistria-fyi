@@ -558,14 +558,17 @@ shows whether saves reached the relay. Each is a bare outcome, with no counter, 
 size:
 
 - `uploaded`: the relay stored the save.
-- `upload-unreachable`: the relay couldn't be reached, or a counter conflict happened twice.
+- `upload-unreachable`: the relay couldn't be reached while sending or checking the mailbox, a
+  counter conflict happened twice, or a retired code couldn't be renewed (including when this page's
+  store can't hold a new one).
 - `upload-paused`: the relay's kill switch is on.
 - `upload-rate-limited`: the relay asked the courier to wait.
 - `upload-too-large`: the sealed save was over the relay's size cap.
 - `code-renewed`: the old code had been retired, so the courier made a new one.
 
-A retry that fails the same way as the attempt before it isn't recorded again, so an hour offline
-doesn't push every other event out of the log.
+A retry that has to wait the same way as the attempt before it (unreachable, paused, or
+rate-limited) isn't recorded again, so an hour offline doesn't push every other event out of the
+log. The run starts over after any other result, or when this window stops leading.
 
 Feedback never carries exact `playtime` values: they only grow, so matching values would link
 reports that the session salt keeps apart, & the game's save slot data keeps it beside the player's

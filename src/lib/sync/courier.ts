@@ -71,6 +71,13 @@ export type UploadLogOutcome = Extract<
   | "uploaded"
 >;
 
+/** The results a retry can hit over & over while the relay is away, which are logged once a run. */
+const WAITS: ReadonlySet<UploadLogOutcome> = new Set<UploadLogOutcome>([
+  "upload-paused",
+  "upload-rate-limited",
+  "upload-unreachable",
+]);
+
 /** What needs the player. Only one thing at a time does. */
 export type CourierTrouble = "moved" | "other-window" | "reallow" | "unreadable";
 
@@ -294,7 +301,7 @@ export function createCourier({
   let recheck = false;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let retryDelay = firstRetryMs;
-  /** The last upload result logged, so a retry that fails the same way again isn't. */
+  /** The last upload result logged, so a retry that has to wait the same way again isn't. */
   let lastLogged: undefined | UploadLogOutcome;
 
   function setStatus(next: Partial<CourierStatus>): void {
@@ -303,7 +310,7 @@ export function createCourier({
   }
 
   function log(outcome: UploadLogOutcome): void {
-    if (outcome === lastLogged && outcome !== "uploaded") return;
+    if (outcome === lastLogged && WAITS.has(outcome)) return;
     lastLogged = outcome;
     try {
       record(outcome);
@@ -780,6 +787,7 @@ export function createCourier({
     clearRetry();
     pending = undefined;
     recheck = false;
+    lastLogged = undefined;
     failedPolls = 0;
     fingerprint = undefined;
   }
