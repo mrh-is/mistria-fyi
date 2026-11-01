@@ -55,6 +55,7 @@
   let iosAnswered = false;
   let afterGates: (() => void) | undefined;
   let poll: ReturnType<typeof setInterval> | undefined;
+  let retryPoll: (() => void) | undefined;
   let destroyed = false;
   /** Bumped whenever the player leaves the follow flow, so a request already running can't apply. */
   let followGeneration = 0;
@@ -108,7 +109,7 @@
     const result = await followCode(following, current);
     if (!current()) return;
     pending = false;
-    settle(result);
+    settle(result, () => void follow());
   }
 
   /** Leaves the follow flow: forgets the key, stops checking, & orphans any request in flight. */
@@ -120,7 +121,7 @@
     stopPolling();
   }
 
-  function settle(result: FollowOutcome): void {
+  function settle(result: FollowOutcome, retry: () => void): void {
     outcome = result;
     if (result.kind === "applied") {
       stopPolling();
@@ -128,20 +129,25 @@
       void goto(localizedHref(""));
       return;
     }
-    if (result.kind === "empty") startPolling();
-    else stopPolling();
+    if (result.kind === "empty") {
+      retryPoll = retry;
+      startPolling();
+    } else {
+      stopPolling();
+    }
   }
 
   function startPolling(): void {
     if (poll !== undefined) return;
     poll = setInterval(() => {
-      if (!pending) void follow();
+      if (!pending) retryPoll?.();
     }, WAITING_POLL_MS);
   }
 
   function stopPolling(): void {
     if (poll !== undefined) clearInterval(poll);
     poll = undefined;
+    retryPoll = undefined;
   }
 
   function handleKey(next: FollowKey): void {
@@ -165,16 +171,20 @@
     throughGates(() => void follow(), true);
   }
 
+  async function switchFollow(following: FollowKey, generation: number): Promise<void> {
+    const current = () => !destroyed && generation === followGeneration;
+    pending = true;
+    const result = await switchCode(following, current);
+    if (!current()) return;
+    pending = false;
+    settle(result, () => void switchFollow(following, generation));
+  }
+
   async function confirmSwitch(): Promise<void> {
     switchOpen = false;
     if (!switchKey) return;
     const generation = followGeneration;
-    const current = () => !destroyed && generation === followGeneration;
-    pending = true;
-    const result = await switchCode(switchKey, current);
-    if (!current()) return;
-    pending = false;
-    settle(result);
+    await switchFollow(switchKey, generation);
   }
 
   async function stop(): Promise<void> {
