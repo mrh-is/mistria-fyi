@@ -158,3 +158,5 @@ Checked on 2026-10-29 against official documentation:
 8. [SQLite storage recovery](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/):
    point-in-time recovery can restore data from the past 30 days, which the privacy disclosure &
    takedown procedure must state.
+
+<!-- Probe for #328; do not merge. -->
