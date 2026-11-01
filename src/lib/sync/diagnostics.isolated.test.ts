@@ -56,7 +56,7 @@ async function fixture(): Promise<ReadSave> {
   };
 }
 
-const NOTHING_PRIVATE = { credentials: [], farmNames: [], playerNames: [] };
+const NOTHING_PRIVATE = { credentials: [], farmNames: [], farmNumbers: [], playerNames: [] };
 
 /** The IDs a log publishes for a save holding `ids` & these names. */
 async function publishedIds(
@@ -193,6 +193,7 @@ describe("public sync diagnostics", () => {
     ["a sharp s", "Straße", ["strasse_x"]],
     ["a ligature", "Ælfric", ["aelfric_x"]],
     ["a short name beside a capital or digit", "Bo", ["BoNote", "bo2", "2bo"]],
+    ["a short name before an acronym boundary", "Bo", ["BONote"]],
   ])("redacts %s", async (_label, player, ids) => {
     const published = await publishedIds(ids, { farm: [], player: [player] });
     expect(published).toEqual(["[redacted]"]);
@@ -221,6 +222,222 @@ describe("public sync diagnostics", () => {
       outgoing,
     );
     expect(published).toEqual(["[redacted]", "new_item"]);
+  });
+
+  it("keeps game-owned IDs without guessing personal information from their shape", async () => {
+    const ids = ["future_item_2027_01_02", "prototype_15551234567", "192.168.1.10"];
+    expect(await publishedIds(ids, { farm: ["Rose Farm"], player: ["Bo"] })).toEqual(ids);
+  });
+
+  it("redacts buffered IDs as soon as a later save supplies a missing name", async () => {
+    const log = createSyncDiagnostics();
+    const first = {
+      ...(await fixture()),
+      extraction: extractSave({ player: { items_acquired: ["Alicia_note", "kept_id"] } }),
+      metadata: {
+        farmName: null,
+        identity: { creationVersion: null, saveNumber: null },
+        importedAt: 100,
+        playerName: null,
+      },
+      names: { farm: [], player: [] },
+    };
+    await log.record(first, { kind: "skipped" }, NOTHING_PRIVATE);
+    expect(JSON.stringify(log.snapshot("build", "manual"))).toContain("Alicia_note");
+    const pending = log.record(
+      { ...first, names: { farm: [], player: ["Alicia"] } },
+      { kind: "skipped" },
+      NOTHING_PRIVATE,
+    );
+    // The old preview must already be safe while the new event's crypto is pending.
+    expect(JSON.stringify(log.snapshot("build", "manual"))).not.toContain("Alicia");
+    await pending;
+    const snapshot = log.snapshot("build", "manual");
+    expect(v.safeParse(SyncLogSchema, snapshot).success).toBe(true);
+    expect(snapshot?.events).toHaveLength(2);
+    expect(
+      snapshot?.events.every(({ unknownFields }) =>
+        unknownFields.some(
+          ({ field, ids }) =>
+            field === "almanac" &&
+            JSON.stringify(ids) === JSON.stringify(["[redacted]", "kept_id"]),
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("remembers private context across farm and credential changes", async () => {
+    const log = createSyncDiagnostics();
+    const base = {
+      ...(await fixture()),
+      extraction: extractSave({ player: { items_acquired: ["kept_id"] } }),
+    };
+    await log.record(base, { kind: "skipped" }, { ...NOTHING_PRIVATE, credentials: [KEY] });
+    await log.record(
+      { ...base, names: { farm: ["Second Farm"], player: ["Second Player"] } },
+      { kind: "skipped" },
+      NOTHING_PRIVATE,
+    );
+    await log.record(
+      {
+        ...base,
+        extraction: extractSave({
+          player: { items_acquired: ["kept_id", "SecretFarmer_note", KEY] },
+        }),
+        names: { farm: ["Third Farm"], player: ["Third Player"] },
+      },
+      { kind: "skipped" },
+      NOTHING_PRIVATE,
+    );
+    const snapshot = log.snapshot("build", "manual");
+    expect(snapshot?.events).toHaveLength(3);
+    expect(snapshot?.events.at(-1)?.unknownFields).toContainEqual({
+      field: "almanac",
+      ids: ["kept_id", "[redacted]"],
+    });
+    expect(JSON.stringify(snapshot)).not.toContain("SecretFarmer");
+    expect(JSON.stringify(snapshot)).not.toContain(KEY);
+  });
+
+  it("redacts all IDs rather than forgetting private values when its comparison budget fills", async () => {
+    expect(
+      await publishedIds(
+        ["ordinary_new_id"],
+        { farm: [], player: [] },
+        {
+          ...NOTHING_PRIVATE,
+          credentials: ["x".repeat(17 * 1024)],
+        },
+      ),
+    ).toEqual(["[redacted]"]);
+  });
+
+  it("rechecks an event whose hashing finishes after a private name becomes known", async () => {
+    const log = createSyncDiagnostics();
+    const save = {
+      ...(await fixture()),
+      extraction: extractSave({ player: { items_acquired: ["Alicia_note", "kept_id"] } }),
+      names: { farm: [], player: [] },
+    };
+    let finishHash: ((value: ArrayBuffer) => void) | undefined;
+    const hash = vi.spyOn(crypto.subtle, "digest").mockReturnValueOnce(
+      new Promise<ArrayBuffer>((resolve) => {
+        finishHash = resolve;
+      }),
+    );
+    try {
+      const pending = log.record(save, { kind: "skipped" }, NOTHING_PRIVATE);
+      await vi.waitFor(() => {
+        expect(hash).toHaveBeenCalledTimes(1);
+      });
+      await log.record(
+        {
+          ...save,
+          metadata: { ...save.metadata, identity: { creationVersion: null, saveNumber: null } },
+          names: { farm: [], player: ["Alicia"] },
+        },
+        { kind: "skipped" },
+        NOTHING_PRIVATE,
+      );
+      expect(log.snapshot("build", "manual")?.events).toHaveLength(1);
+      expect(finishHash).toBeDefined();
+      finishHash?.(new ArrayBuffer(32));
+      await pending;
+      const snapshot = log.snapshot("build", "manual");
+      expect(snapshot?.events).toHaveLength(2);
+      expect(snapshot?.events[0].unknownFields).toContainEqual({
+        field: "almanac",
+        ids: ["[redacted]", "kept_id"],
+      });
+      expect(JSON.stringify(snapshot)).not.toContain("Alicia");
+    } finally {
+      finishHash?.(new ArrayBuffer(32));
+      hash.mockRestore();
+    }
+  });
+
+  it("exports game ID diagnostics without copying unrelated player-entered values", async () => {
+    const save = await fixture();
+    save.extraction = extractSave({
+      gamedata: { maximum_mines_level: "Private Malformed Value" },
+      player: {
+        children: [{ name: "Private Child Name" }],
+        farm_name: "Private Farm Name",
+        items_acquired: ["new_game_item"],
+        name: "Private Player Name",
+      },
+    });
+    const log = createSyncDiagnostics();
+    await log.record(save, { kind: "skipped" }, NOTHING_PRIVATE);
+    const snapshot = log.snapshot("build", "manual");
+    expect(snapshot?.events[0].unknownFields).toContainEqual({
+      field: "almanac",
+      ids: ["new_game_item"],
+    });
+    const payload = JSON.stringify(snapshot);
+    for (const privateValue of [
+      "Private Child Name",
+      "Private Farm Name",
+      "Private Player Name",
+      "Private Malformed Value",
+    ]) {
+      expect(payload).not.toContain(privateValue);
+    }
+  });
+
+  it("keeps the byte limit during a recheck that expands short IDs into redaction markers", async () => {
+    const log = createSyncDiagnostics();
+    const save = await fixture();
+    save.metadata.identity.saveNumber = null;
+    save.gameVersion = null;
+    save.names = { farm: [], player: [] };
+    const populated = new Set([
+      "almanac",
+      "almanacRecipes",
+      "animalCosmetics",
+      "animals",
+      "cosmetics",
+      "mountAppearances",
+      "museum",
+      "petCosmetics",
+      "petSkins",
+      "questStates",
+      "spells",
+      "unlockedPerks",
+    ]);
+    for (const [field, extracted] of Object.entries(save.extraction.fields)) {
+      extracted.completeness = populated.has(field) ? "unknown" : "complete";
+      extracted.diagnostics = populated.has(field)
+        ? [
+            { code: "unknown-id", id: "a", path: "player.items_acquired" },
+            { code: "unknown-id", id: "x".repeat(48), path: "player.items_acquired" },
+          ]
+        : [];
+    }
+    await Promise.all(
+      Array.from({ length: MAX_SYNC_EVENTS }, () =>
+        log.record(save, { kind: "skipped" }, NOTHING_PRIVATE),
+      ),
+    );
+    const before = log.snapshot("build", "manual");
+    expect(before?.events.length).toBeGreaterThan(0);
+    expect(v.safeParse(SyncLogSchema, before).success).toBe(true);
+    const pending = log.record(
+      { ...save, names: { farm: [], player: ["a"] } },
+      { kind: "skipped" },
+      NOTHING_PRIVATE,
+    );
+    try {
+      const during = log.snapshot("build", "manual");
+      expect(during?.events.length).toBeGreaterThan(0);
+      expect(during?.events[0].unknownFields[0].ids).toContain("[redacted]");
+      expect(new TextEncoder().encode(JSON.stringify(during)).byteLength).toBeLessThanOrEqual(
+        MAX_SYNC_LOG_BYTES,
+      );
+      expect(v.safeParse(SyncLogSchema, during).success).toBe(true);
+    } finally {
+      await pending;
+    }
   });
 
   it("bounds events and returns independent snapshots", () => {

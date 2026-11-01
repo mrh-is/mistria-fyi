@@ -334,6 +334,7 @@ export function createReceiver({
         lane?.kind === "computer" ? lane.code?.token : undefined,
       ],
       farmNames: [outgoingFarm],
+      farmNumbers: [userState.state.lastImport?.identity.saveNumber],
       playerNames: [outgoingPlayer],
     };
     let outcome: SyncApplyOutcome;

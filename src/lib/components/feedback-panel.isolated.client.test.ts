@@ -94,7 +94,7 @@ describe("FeedbackPanel", () => {
     expect(JSON.parse(options.body as string)).toHaveProperty("syncLog", JSON.parse(preview));
   });
 
-  it("leaves playtimes out of the attached progress, & keeps the rest", async () => {
+  it("redacts playtime values in both the progress preview & attachment", async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
     vi.stubGlobal("fetch", fetchMock);
     const backup = vi.spyOn(userState, "exportBackup").mockReturnValue(
@@ -111,7 +111,13 @@ describe("FeedbackPanel", () => {
       await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
       await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
       await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
-      expect(document.querySelector("pre")?.textContent).not.toMatch(/playtime|4321/iu);
+      const preview = document.querySelector("pre")?.textContent ?? "";
+      expect(JSON.parse(preview)).toEqual({
+        lastSavePlaytime: "[redacted]",
+        provenance: { renown: { playtime: "[redacted]", source: "save" } },
+        renown: 7,
+      });
+      expect(preview).not.toContain("4321");
       await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
         target: { value: "A report" },
       });
@@ -121,11 +127,8 @@ describe("FeedbackPanel", () => {
       });
       const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
       const body = options.body as string;
-      expect(body).not.toMatch(/playtime|4321/iu);
-      expect(JSON.parse(body)).toHaveProperty("saveData", {
-        provenance: { renown: { source: "save" } },
-        renown: 7,
-      });
+      expect(body).not.toContain("4321");
+      expect(JSON.parse(body)).toHaveProperty("saveData", JSON.parse(preview));
     } finally {
       backup.mockRestore();
     }

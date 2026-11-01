@@ -311,7 +311,7 @@ async function publishedIdsBeside(keptId: string): Promise<string[]> {
 }
 const OUTGOING_IMPORT = {
   farmName: "Old Pines",
-  identity: { creationVersion: null, saveNumber: null },
+  identity: { creationVersion: null, saveNumber: "2468013579" },
   importedAt: 1,
   playerName: "Priya",
 };
@@ -379,6 +379,7 @@ describe("one tab leads", () => {
         saveBytes(SEASON, 137, [
           "kept_id",
           "old_pines",
+          "2468013579",
           "priya_note",
           KEY,
           mailbox,
@@ -414,7 +415,17 @@ describe("one tab leads", () => {
       fakeRelay(),
     );
     await receiver.applyLocalSave(
-      file(saveBytes(SEASON, 137, ["kept_pc_id", "old_pines", "priya_note", KEY, TOKEN, mailbox])),
+      file(
+        saveBytes(SEASON, 137, [
+          "kept_pc_id",
+          "old_pines",
+          "priya_note",
+          "2468013579",
+          KEY,
+          TOKEN,
+          mailbox,
+        ]),
+      ),
     );
     expect(await publishedIdsBeside("kept_pc_id")).toEqual(["kept_pc_id", "[redacted]"]);
   });

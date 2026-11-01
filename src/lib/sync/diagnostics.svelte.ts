@@ -1,9 +1,11 @@
 /**
  * A tab's bounded, memory-only public diagnostics. Project the useful facts at collection time:
- * never retain saves, filenames, names, receipts, question IDs, fact values, or lane credentials.
+ * never put saves, filenames, names, receipts, question IDs, fact values, or credentials in events.
+ * A separate bounded private comparison context rechecks IDs as more names become known.
  */
 import { MAX_SYNC_EVENTS, MAX_SYNC_LOG_BYTES } from "#lib/feedback/sync-log-schema.js";
 
+import { createDiagnosticRedaction } from "./diagnostic-redaction.js";
 import { FOLLOW_PROTOCOL_VERSION, isFollowKey, mailboxIdFor } from "./follow.js";
 import { syncSwitchOn } from "./sync-switch.js";
 
@@ -11,14 +13,10 @@ import type { SyncDifference } from "#lib/engine/sync-apply.js";
 import type { SyncLog, SyncLogEvent } from "#lib/feedback/sync-log-schema.js";
 import type { SyncApplyOutcome } from "#lib/stores/user-state.svelte.js";
 
+import type { PrivateValues } from "./diagnostic-redaction.js";
 import type { ReadSave } from "./read-save.js";
 
-/** What the device knows beyond the save itself, redacted from any ID that contains it. */
-export interface PrivateValues {
-  credentials: (null | string | undefined)[];
-  farmNames: (null | string | undefined)[];
-  playerNames: (null | string | undefined)[];
-}
+export type { PrivateValues } from "./diagnostic-redaction.js";
 
 interface SyncDiagnostics {
   record: (
@@ -30,42 +28,8 @@ interface SyncDiagnostics {
   status: (outcome: SyncLogEvent["outcome"]) => void;
 }
 
-/** Below this length a name only matches a whole word, so “Al” leaves `almanac` readable. */
-const MIN_SUBSTRING_NAME = 3;
-
-/** Latin letters that Unicode doesn't decompose into a base letter & an accent. */
-const ROMANIZED: Readonly<Record<string, string>> = {
-  æ: "ae",
-  đ: "d",
-  ð: "d",
-  ı: "i",
-  ł: "l",
-  ø: "o",
-  œ: "oe",
-  ß: "ss",
-  þ: "th",
-};
-
-/**
- * Lowercase words without accents, so `Zoë`, `Søren`, & `Mary Jane` meet `zoe_note`, `soren_x`, &
- * `mary-jane`. Words also end at a capital or a digit, so `Bo` meets `BoNote` & `bo2`.
- */
-function nameWords(value: string): string[] {
-  return value
-    .normalize("NFKD")
-    .replaceAll(/\p{M}/gu, "")
-    .replaceAll(/(?<=[\p{Ll}\p{N}])(?=\p{Lu})|(?<=\p{L})(?=\p{N})|(?<=\p{N})(?=\p{L})/gu, " ")
-    .toLowerCase()
-    .replaceAll(/[æðđıłøœßþ]/gu, (letter) => ROMANIZED[letter])
-    .split(/[^\p{L}\p{N}]+/u)
-    .filter(Boolean);
-}
-
-function isString(value: null | string | undefined): value is string {
-  return typeof value === "string" && value.length > 0;
-}
-
 export function createSyncDiagnostics(): SyncDiagnostics {
+  const redaction = createDiagnosticRedaction();
   // Replaced rather than mutated, so an open preview shows each new event.
   let events = $state.raw<{ event: SyncLogEvent; order: number }[]>([]);
   let nextOrder = 0;
@@ -73,9 +37,29 @@ export function createSyncDiagnostics(): SyncDiagnostics {
   // created lazily so server rendering has no per-player state.
   let salt: string | undefined;
 
+  function redactEvent(event: SyncLogEvent): SyncLogEvent {
+    return {
+      ...event,
+      unknownFields: event.unknownFields.map(({ field, ids }) => ({
+        field,
+        ids: ids
+          .map((id) => redaction.id(id))
+          .filter((id, index, all) => all.indexOf(id) === index),
+      })),
+    };
+  }
+
+  function recheckEvents(): void {
+    retain(events.map(({ event, order }) => ({ event: redactEvent(event), order })));
+  }
+
   function add(event: SyncLogEvent, order = nextOrder++): void {
     if (!syncSwitchOn) return;
-    const next = [...events, { event, order }].toSorted((a, b) => a.order - b.order);
+    // Recheck here too: another record can reveal a name while this event's hashing is pending.
+    retain([...events, { event: redactEvent(event), order }].toSorted((a, b) => a.order - b.order));
+  }
+
+  function retain(next: typeof events): void {
     // Reserve metadata space, and measure UTF-8 bytes rather than string length.
     while (
       next.length > MAX_SYNC_EVENTS ||
@@ -90,42 +74,28 @@ export function createSyncDiagnostics(): SyncDiagnostics {
     async record(
       save: ReadSave,
       outcome: SyncApplyOutcome,
-      { credentials, farmNames, playerNames }: PrivateValues,
+      { credentials, farmNames, farmNumbers, playerNames }: PrivateValues,
     ): Promise<void> {
       if (!syncSwitchOn) return;
       const order = nextOrder++;
       try {
         const { saveNumber } = save.metadata.identity;
-        const secrets = credentials.filter((value) => isString(value));
+        redaction.remember({
+          credentials,
+          farmNames: [...save.names.farm, ...farmNames],
+          farmNumbers: [saveNumber, ...farmNumbers],
+          playerNames: [...save.names.player, ...playerNames],
+        });
+        // Update an already-open preview before yielding for any crypto work.
+        recheckEvents();
         const mailboxes = await Promise.all(
-          secrets.filter((value) => isFollowKey(value)).map((key) => mailboxIdFor(key)),
+          credentials
+            .filter((value): value is string => typeof value === "string")
+            .filter((value) => isFollowKey(value))
+            .map((key) => mailboxIdFor(key)),
         );
-        const exact = [saveNumber, ...secrets, ...mailboxes]
-          .filter((value) => isString(value))
-          .map((value) => value.toLowerCase());
-        // A character's whole name & each word of it, since the player may have used a real name.
-        // A farm's name counts only whole: its words are ordinary ones like “rose” or “farm”.
-        const names = [
-          ...[...save.names.player, ...playerNames].flatMap((value) =>
-            isString(value) ? [nameWords(value).join(""), ...nameWords(value)] : [],
-          ),
-          ...[...save.names.farm, ...farmNames]
-            .filter((value) => isString(value))
-            .map((value) => nameWords(value).join("")),
-        ].filter(Boolean);
-        const containsName = (id: string): boolean => {
-          const words = nameWords(id);
-          const joined = words.join("");
-          return names.some((name) =>
-            name.length < MIN_SUBSTRING_NAME ? words.includes(name) : joined.includes(name),
-          );
-        };
-        const publicId = (id: string): string =>
-          /^[\w.:[\]-]{1,100}$/u.test(id) &&
-          !exact.some((value) => id.toLowerCase().includes(value)) &&
-          !containsName(id)
-            ? id
-            : "[redacted]";
+        redaction.remember({ credentials: mailboxes });
+        recheckEvents();
         const unknownFields: SyncLogEvent["unknownFields"] = [];
         let remainingIds = 100;
         const fields = { ...save.extraction.fields, ...save.extraction.identity };
@@ -133,7 +103,7 @@ export function createSyncDiagnostics(): SyncDiagnostics {
           if (extracted.completeness !== "unknown") continue;
           const ids = extracted.diagnostics
             .flatMap((diagnostic) =>
-              diagnostic.code === "unknown-id" ? [publicId(diagnostic.id)] : [],
+              diagnostic.code === "unknown-id" ? [redaction.id(diagnostic.id)] : [],
             )
             .filter((id, index, all) => all.indexOf(id) === index)
             .slice(0, Math.min(20, remainingIds));

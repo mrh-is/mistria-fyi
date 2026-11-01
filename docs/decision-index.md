@@ -289,6 +289,20 @@ them to Antigravity or Copilot.
 
 Evidence: [docs/agent-workflow.md#small-agent-tasks](../docs/agent-workflow.md#small-agent-tasks).
 
+### [Feedback redaction follows the data source](decisions/2026-10-31-source-based-feedback-redaction.md)
+
+ID: 2026-10-31-source-based-feedback-redaction. Status: Current.
+
+Feedback privacy follows each field's source. Keep game-owned IDs readable, redact known private
+values with an explicit marker where the diagnostic structure is useful, & exclude raw private
+containers. Do not guess personal information from an ID's spelling or numeric shape.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/339](https://github.com/mrh-is/mistria-fyi/pull/339),
+[docs/sync.md#diagnostics](../docs/sync.md#diagnostics),
+[src/lib/sync/diagnostic-redaction.ts](../src/lib/sync/diagnostic-redaction.ts),
+[src/lib/feedback/progress-attachment.ts](../src/lib/feedback/progress-attachment.ts).
+
 ### [Timing limits follow the diff](decisions/2026-10-31-timing-limits-follow-the-diff.md)
 
 ID: 2026-10-31-timing-limits-follow-the-diff. Status: Current.

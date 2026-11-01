@@ -331,6 +331,12 @@ function validatePayload(body: unknown): FeedbackPayload {
       httpError(400, "Save data too large");
     }
     validatedSaveData = progressAttachment(saveData as Record<string, unknown>);
+    // Older clients send numbers; replacing short values with markers can enlarge the attachment.
+    if (
+      new TextEncoder().encode(JSON.stringify(validatedSaveData)).byteLength > MAX_SAVE_DATA_BYTES
+    ) {
+      httpError(400, "Save data too large");
+    }
   }
 
   return {

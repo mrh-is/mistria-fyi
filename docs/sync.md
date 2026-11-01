@@ -474,21 +474,34 @@ until launch. The receiver collects at most 20 events & 24 KiB in memory in the 
 clear it. Unknown IDs are limited to 20 per field & 100 per event. Old events are dropped to fit the
 byte limit, & again if the finished issue would pass GitHub's body limit.
 
-Feedback never carries `playtime`: it's exact & only grows, so matching values would link reports
-that the session salt keeps apart, & the game's save slot data keeps it beside the player's names.
-The app still uses it for sync. The log leaves it out, & the progress attachment drops
-`lastSavePlaytime` & each fact's provenance `playtime`.
+Feedback never carries exact `playtime` values: they only grow, so matching values would link
+reports that the session salt keeps apart, & the game's save slot data keeps it beside the player's
+names. The app still uses it for sync. The log leaves it out, & the progress attachment replaces
+`lastSavePlaytime` & each fact's provenance `playtime` with `[redacted]`, preserving the fact that
+the value was present. The preview & API use the same projection.
 
-The collector projects diagnostics before retaining them. Names, paths, raw saves, fact values,
-question IDs, follow keys, write tokens, & mailbox IDs stay out. Unknown IDs come from the save's
-game ID lists, so the save can't hold anything about the player beyond what they typed into the
-game: the character & farm names. An ID containing one of those names is redacted, ignoring case,
-accents, & separators, as is one containing a word of the character's name or a credential. The
-save's `player` & `header` sections are both checked, plus the farm being replaced. The farm number
-is SHA-256 hashed with a random, unexported session salt, so it can correlate events in one log
-without exposing a small enumerable number. The API checks a closed, size-limited schema before
-formatting the public issue. Privacy tests cover the payload & the receiver path, with the switch on
-& off. The game’s own `log.txt` records every save path & load; it is never attached.
+Privacy follows the
+[source-based feedback redaction decision](decisions/2026-10-31-source-based-feedback-redaction.md).
+The collector projects selected fields before retaining events. Names, paths, raw saves, fact
+values, question IDs, follow keys, write tokens, & mailbox IDs stay out of events. Unknown IDs come
+from game-owned unlock lists, type keys, & quest IDs; keep them readable without guessing personal
+information from date or phone-number shapes. Player-entered child & pet names elsewhere in the save
+are not ID sources, & their objects are never attached.
+
+As a defensive check, known-private matches inside IDs become `[redacted]`. The collector checks
+character & farm names from both `player` & `header`, the outgoing farm's names & number, & sync
+credentials. Names ignore case, accents, & separators; character-name words also count. Names
+shorter than three characters require word boundaries, including capitals, acronyms, & digits. The
+collector remembers these comparison patterns privately for the tab session & rechecks buffered &
+asynchronously prepared events as new values become known. The comparison text has a separate 16 KiB
+budget, never enters the payload or persistent storage, & clears on reload. If it fills, all IDs are
+redacted rather than forgetting private values.
+
+The incoming farm number is SHA-256 hashed with a random, unexported session salt. That hash can
+correlate events & submissions within one tab session without exposing a small enumerable number.
+The API checks a closed, size-limited schema before formatting the public issue; the schema is not a
+general anonymizer. Privacy tests cover the source projection, payload, & receiver path, with the
+switch on & off. The game's own `log.txt` records every save path & load; it is never attached.
 
 ## Privacy
 

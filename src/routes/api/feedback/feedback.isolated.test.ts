@@ -239,7 +239,26 @@ const fenced = (body: string, heading: string): unknown => {
 
 describe("POST /api/feedback", () => {
   describe("fitting GitHub's issue body limit", () => {
-    it("strips playtimes a tab on an older build still sends, & tolerates odd shapes", async () => {
+    it("enforces the progress byte limit after redacting an older client's playtimes", async () => {
+      const saveData = {
+        provenance: Object.fromEntries(
+          Array.from({ length: 1110 }, (_, i) => [
+            `almanac/${String(i)}`,
+            { playtime: 0, source: "save" },
+          ]),
+        ),
+      };
+      expect(bytes(JSON.stringify(saveData))).toBeLessThan(50 * 1024);
+      const fetchMock = mockGitHubSuccess();
+      await expect(
+        callPost(makeRequest({ ...validPayload, message: "m".repeat(4000), saveData }), {
+          fetchMock,
+        }),
+      ).rejects.toMatchObject({ body: { message: "Save data too large" }, status: 400 });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("redacts playtimes a tab on an older build still sends, & tolerates odd shapes", async () => {
       const body = await fileIssue({
         saveData: {
           lastSavePlaytime: 4321,
@@ -247,9 +266,10 @@ describe("POST /api/feedback", () => {
           renown: 7,
         },
       });
-      expect(body).not.toMatch(/playtime|4321/iu);
+      expect(body).not.toContain("4321");
       expect(fenced(body, "<summary>Save data")).toEqual({
-        provenance: { odd: "shape", renown: { source: "save" } },
+        lastSavePlaytime: "[redacted]",
+        provenance: { odd: "shape", renown: { playtime: "[redacted]", source: "save" } },
         renown: 7,
       });
     });
