@@ -10,3 +10,5 @@ export function isInside(directory: string, target: string, flavor = path): bool
   const offset = flavor.relative(target, directory);
   return offset !== ".." && !offset.startsWith(`..${flavor.sep}`) && !flavor.isAbsolute(offset);
 }
+
+// Probe for #328; do not merge.
