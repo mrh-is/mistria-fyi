@@ -100,9 +100,16 @@ const INTERPRETER =
   /(?:^|[\s/(])(?:python\d*(?:\.\d+)?|node|ruby|perl|php|deno|bun|tsx|ts-node)(?=\s|$)/;
 
 /** Literal targets of inline file-writing API calls, or undefined when any target isn't literal. */
-function apiWriteTargets(code: string): string[] | undefined {
+function apiWriteTargets(code: string, basenames: boolean): string[] | undefined {
   const calls = [...code.matchAll(new RegExp(API_WRITE.source, "g"))].length;
   const targets = [...code.matchAll(API_WRITE_TARGET)].map((match) => match[2] ?? match[4]);
+  if (basenames) {
+    // A dynamic directory doesn't obscure the filename in join(dir, "file") or
+    // path.resolve(dir, "file"). Only filename guards may discard the unknown directory.
+    const joined =
+      /\bwriteFile\w*\s*\(\s*(?:\w+\.)?(?:join|resolve)\s*\(\s*\w+\s*,\s*(["'])([^"'`/\\\n]+)\1\s*\)\s*[,)]/g;
+    targets.push(...[...code.matchAll(joined)].map((match) => match[2]));
+  }
   return targets.length === calls ? targets : undefined;
 }
 
@@ -312,6 +319,14 @@ function heredocLiterals(heredoc: string): string[] {
   ];
 }
 
+/** A copy from the working directory to the same filename carries the source's version intact. */
+function withoutIdentityCopies(code: string): string {
+  return code.replaceAll(
+    /\bcopyFile\w*\s*\(\s*(["'])([^"'`/\\\n]+)\1\s*,\s*(?:\w+\.)?(?:join|resolve)\s*\(\s*\w+\s*,\s*(["'])\2\3\s*\)\s*\)/g,
+    "",
+  );
+}
+
 /**
  * The paths a shell command may write: per segment, its redirect targets, the arguments of writing
  * commands, the literal targets of inline file-writing API calls, the targets of a shell script fed
@@ -319,8 +334,14 @@ function heredocLiterals(heredoc: string): string[] {
  * segments, or on the read side of a redirect, are ignored. When a write's target can't be read
  * statically (`xargs`, an expansion, or a non-literal API target), or a `cd` precedes a relative
  * target, every path in the command counts.
+ * `versionsOnly` may narrow joined API targets to their literal filename. For heredocs whose API
+ * targets are known, copies from the working directory to the same filename preserve its version.
+ * Use this mode only for guards of file versions, regardless of their directory.
  */
-export function shellWriteTargets(command: string): string[] {
+export function shellWriteTargets(
+  command: string,
+  { versionsOnly = false }: { versionsOnly?: boolean } = {},
+): string[] {
   const segments = shellSegments(command);
   const targets: string[] = [];
   let dynamic = false;
@@ -334,20 +355,25 @@ export function shellWriteTargets(command: string): string[] {
       dynamic ||= /\bxargs\b/.test(rest);
     }
     if (API_WRITE.test(rest)) {
-      const apiTargets = apiWriteTargets(rest);
+      const apiTargets = apiWriteTargets(rest, versionsOnly);
       writes.push(...(apiTargets ?? []));
       dynamic ||= apiTargets === undefined;
     }
     const consumer = heredoc === "" ? "" : rest + pipedCommands(segments, index);
     if (SHELL_PROGRAM.test(consumer)) {
-      writes.push(...shellWriteTargets(heredoc));
+      writes.push(...shellWriteTargets(heredoc, { versionsOnly }));
     } else if (INTERPRETER.test(consumer) && API_WRITE.test(heredoc)) {
-      writes.push(...heredocLiterals(heredoc));
-      // Heredoc code names its target in ways a literal scan can't tell apart from data.
+      const apiTargets = versionsOnly ? apiWriteTargets(heredoc, versionsOnly) : undefined;
+      writes.push(
+        ...(apiTargets ?? []),
+        ...heredocLiterals(apiTargets === undefined ? heredoc : withoutIdentityCopies(heredoc)),
+      );
       relativeTarget = true;
     }
     if (!SHELL_PROGRAM.test(consumer)) {
-      writes.push(...substitutions(expanding).flatMap((sub) => shellWriteTargets(sub)));
+      writes.push(
+        ...substitutions(expanding).flatMap((sub) => shellWriteTargets(sub, { versionsOnly })),
+      );
     }
     const kept = writes.filter((target) => !target.startsWith("/dev/"));
     // A leading backslash is a shell escape, not a root: `\a.svelte` is relative.
@@ -362,7 +388,16 @@ export function shellWriteTargets(command: string): string[] {
   );
   if (dynamic || (targets.length > 0 && relativeTarget && changesDirectory)) {
     // Include assignment values, which an expanded target such as `> $f` may name.
-    return [...targets, ...allShellPaths(segments, false)];
+    const paths = allShellPaths(segments, false);
+    return [
+      ...targets,
+      ...paths,
+      ...(versionsOnly
+        ? paths.flatMap((path) =>
+            [...path.matchAll(QUOTED_LITERAL)].map((match) => match[1] ?? match[2]),
+          )
+        : []),
+    ];
   }
   return targets;
 }

@@ -51,11 +51,16 @@
       <li>
         {m.privacy_feedback_item_progress()}
       </li>
+      {#if syncSwitchOn}
+        <li>{m.privacy_feedback_item_sync_log()}</li>
+      {/if}
       <li>{m.privacy_feedback_item_email()}</li>
     </ul>
     <p>
       {m.privacy_feedback_public_before_bold()} <strong>{m.privacy_feedback_public_bold()}</strong>
-      {m.privacy_feedback_public_middle()}
+      {syncSwitchOn
+        ? m.privacy_feedback_public_middle_sync_log()
+        : m.privacy_feedback_public_middle()}
       <strong>{m.privacy_feedback_public_bold2()}</strong>.
     </p>
     <p>
@@ -99,6 +104,7 @@
     <section class="flex flex-col gap-2">
       {@render sectionHeading(m.privacy_sync_what_heading())}
       <p>{m.privacy_sync_what_body()}</p>
+      <p>{m.privacy_sync_what_feedback_log()}</p>
     </section>
 
     <div class="border-t border-border/50"></div>

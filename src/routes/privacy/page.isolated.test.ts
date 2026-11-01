@@ -69,6 +69,53 @@ describe("privacy page sync sections", () => {
     ).toBe("https://www.cloudflare.com/turnstile-privacy-policy/");
   });
 
+  it("lists the feedback sync log & says it goes in the public issue", () => {
+    const { queries, text } = renderPage();
+
+    const item = queries
+      .getAllByRole("listitem")
+      .find((entry) => entry.textContent.includes("sync log"));
+    expect(item?.textContent).toContain("only if you opt in");
+    expect(item?.textContent).toContain("recent sync activity from the tab you send it from");
+    expect(item?.textContent).toContain("your game version and any game IDs");
+    expect(item?.textContent).toContain(
+      "It leaves out your character and farm names, your code and sync links, and your exact farm number, which gets hashed.",
+    );
+    expect(text).toContain("and your save file sync log (if you opted in)");
+  });
+
+  it("points to the sync log from “With sync”", () => {
+    const { text } = renderPage();
+
+    expect(text).toContain("attach your save file sync log, and that log is public");
+  });
+
+  it("names the feedback section as its heading reads in every locale", () => {
+    for (const locale of locales) {
+      expect(m.privacy_sync_what_feedback_log({}, { locale })).toContain(
+        m.privacy_feedback_heading({}, { locale }),
+      );
+    }
+  });
+
+  it("warns against personal information in the public issue in every locale", () => {
+    const warnings: Record<string, string> = {
+      en: "Avoid including personal information",
+      es: "Evita incluir información personal",
+      fr: "Évitez d'inclure des informations personnelles",
+      ja: "個人情報を含めないでください",
+      ko: "개인정보를 포함하지 마세요",
+      ru: "Не указывайте личную информацию",
+      "zh-Hans": "请不要在留言中包含个人信息",
+      "zh-Hant": "請不要在留言中包含個人資訊",
+    };
+
+    for (const locale of locales) {
+      expect(m.privacy_feedback_public_middle({}, { locale })).toContain(warnings[locale]);
+      expect(m.privacy_feedback_public_middle_sync_log({}, { locale })).toContain(warnings[locale]);
+    }
+  });
+
   it("leaves the page as it was when the switch is off", () => {
     syncSwitch.on = false;
     const { queries, text } = renderPage();
@@ -77,6 +124,8 @@ describe("privacy page sync sections", () => {
     expect(queries.queryByRole("heading", { name: "With sync" })).toBeNull();
     expect(queries.queryByRole("link", { name: "Turnstile Privacy Addendum" })).toBeNull();
     expect(text).not.toContain("end-to-end encrypted");
+    expect(text).not.toContain("sync log");
+    expect(text).toContain("and your progress data (if you opted in)");
     expect(queries.getByRole("heading", { level: 2, name: "The short version" })).toBeTruthy();
   });
 });

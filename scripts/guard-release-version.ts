@@ -171,7 +171,9 @@ export function releaseGuardMessage(
         return ADVICE;
       }
     }
-    return shellWriteTargets(command).some((target) => packagePath(target)) ? ADVICE : undefined;
+    return shellWriteTargets(command, { versionsOnly: true }).some((target) => packagePath(target))
+      ? ADVICE
+      : undefined;
   }
   const cwd = input.cwd ?? process.cwd();
   const targets = editPaths(input).filter(
