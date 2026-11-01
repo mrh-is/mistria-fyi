@@ -76,3 +76,11 @@ it.each([
 ])("shellWriteTargets returns the target directory of: %s", (command) => {
   expect(shellWriteTargets(command)).toEqual(["src/lib/data"]);
 });
+
+it("keeps path guards conservative when version-only analysis is available", () => {
+  const command = `node <<'NODE'\ncopyFileSync("package.json", join(dir, "package.json"));\nwriteFileSync(join(dir, "notes.md"), "text");\nNODE`;
+  expect(shellWriteTargets(command)).toContain("package.json");
+  const versionTargets = shellWriteTargets(command, { versionsOnly: true });
+  expect(versionTargets).toContain("notes.md");
+  expect(versionTargets).not.toContain("package.json");
+});

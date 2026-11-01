@@ -352,6 +352,12 @@ can't be predicted are denied; use a file edit preserving the version instead. A
 directory-changing command, use an absolute body-file path so the guard checks the same file GitHub
 will receive.
 
+For the release guard, a Node heredoc may copy a literal filename from the working directory to
+`join(dir, "same-filename")` or `resolve(dir, "same-filename")` while editing a temporary workspace
+file. The copied bytes preserve the manifest version. The guard recognizes these identity copies
+only when the `writeFile*` targets have literal paths or joined filenames. Other manifest references
+& unresolved writes keep the conservative scan; this isn't an interpreter for arbitrary programs.
+
 ### Formatting & lint hooks
 
 - **Formatter:** `format-agent-edit.ts` formats surviving edit or patch targets with oxfmt.
