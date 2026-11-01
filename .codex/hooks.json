@@ -23,7 +23,7 @@
         ]
       },
       {
-        "matcher": "Read|Bash",
+        "matcher": "Read|Bash|Grep|PowerShell",
         "hooks": [
           {
             "type": "command",

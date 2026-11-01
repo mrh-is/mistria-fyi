@@ -96,7 +96,11 @@ session limits) belong in each contributor’s user config.
 
 - Use pnpm only; the lockfile is pnpm’s. Don’t use `npm`, `npx`, `yarn`, `bun`, or `pnpx`.
 - Run Wrangler from the workspace: `pnpm exec wrangler <command>`, including `login`.
-- Stored OAuth token reads are forbidden; the read guard covers the known gh & Wrangler files.
+- R2 uploads authenticate only with `R2_UPLOAD_TOKEN`, never a login. The upload scripts load it
+  from the main checkout's `.env.r2-upload`; run them, but never read the file or print the token.
+- Stored OAuth token reads are forbidden; the read guard covers the known gh & Wrangler files and
+  `.env.r2-upload`. Never print the environment of a shell that may hold a token. Search with the
+  Grep tool or plain `rg`, never `grep -r` or `rg -uu`, which read gitignored secrets.
 - If a harness or hook refuses an edit, stop & report it. Never route around the refusal with shell
   writes, heredocs, `sed -i`, `perl -i`, or scripts.
 - Dependency commands inject audit guidance. Follow
@@ -217,8 +221,9 @@ follow the procedure below; don’t retry with a workaround.
 When a local tooling or environment problem blocks the task, **stop on the first occurrence and
 report it**. Examples include a missing tool, the wrong runtime version, a broken or unconfigured
 install, & an authentication failure. The preauthorized worktree setup above is an exception.
-Wrangler is the standard example: if `pnpm exec wrangler` is missing, unconfigured, or not logged
-in, report that. Don’t install it, run `wrangler login`, or upload some other way.
+Wrangler is the standard example: if `pnpm exec wrangler` is missing, unconfigured, or an upload
+runs without `R2_UPLOAD_TOKEN`, report that. Don’t install it, run `wrangler login`, or upload some
+other way.
 
 - **Report it immediately,** before anything else. Include the failing command, the relevant error
   (with tokens & other credentials redacted), & the work it blocks.

@@ -18,6 +18,7 @@ const NOT_ALLOWED: Record<string, string> = {
   "generate:brand-assets": "rewrites committed brand assets",
   "housekeeping:install": "installs a persistent launchd agent that deletes merged worktrees",
   "optimize-icons": "rewrites committed icon files",
+  "r2:check": "writes & deletes a probe object in production storage",
   "sprites:upload": "publishes to production storage",
   "sprites:villagers": "rewrites generated sprites from game assets",
   "worktree:cleanup": "a trailing `-- --apply` reaches the same deletion as worktree:cleanup:apply",
@@ -112,6 +113,17 @@ describe("package-manager deny lists", () => {
   });
 });
 
+describe("R2 token file deny rule", () => {
+  // Claude Code applies Read deny rules to Grep & Glob too. Codex has no equivalent rule, so the
+  // shared read guard is its only enforcement.
+  it("denies Claude Code file-tool reads of .env.r2-upload", () => {
+    const { permissions } = JSON.parse(readFileSync(".claude/settings.json", "utf8")) as {
+      permissions: { deny: string[] };
+    };
+    expect(permissions.deny).toContain("Read(**/.env.r2-upload)");
+  });
+});
+
 describe("Claude Code path guard", () => {
   it("registers the PreToolUse hook for every file-writing tool", () => {
     const { hooks } = JSON.parse(readFileSync(".claude/settings.json", "utf8")) as {
@@ -156,7 +168,9 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
   });
 
   it("registers read guards, stop lint, and subagent guidance", () => {
-    expect(find("PreToolUse", "guard-generated-reads.ts")?.matcher).toBe("Read|Bash");
+    expect(find("PreToolUse", "guard-generated-reads.ts")?.matcher).toBe(
+      "Read|Bash|Grep|PowerShell",
+    );
     expect(find("Stop", "lint-agent-stop.ts")).toBeDefined();
     expect(find("SubagentStop", "lint-agent-stop.ts")).toBeDefined();
     expect(find("SubagentStart", "agent-subagent-start.ts")).toBeDefined();
