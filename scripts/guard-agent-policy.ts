@@ -16,6 +16,14 @@ interface PolicyResult {
 const AUDIT_CONTEXT =
   "Dependency change: before adding or bumping a dependency, read docs/agent-reference.md (Package commands), run pnpm audit --audit-level=moderate, and inspect every flagged transitive dependency with pnpm why. Do not add an unpatched advisory; a disputed advisory or one with no fix needs a documented auditConfig.ignoreGhsas exception in pnpm-workspace.yaml.";
 const ATTRIBUTION = /(?:^|\r?\n)Agent: [a-z][a-z0-9-]*\s*$/;
+function githubHelp(args: string[]): boolean {
+  const rest = args.slice(2);
+  // Exempt only bare help requests; mixed options need normal attribution validation.
+  return (
+    rest.some((arg) => arg === "--help" || arg === "-h") &&
+    rest.every((arg) => arg === "--help" || arg === "-h" || !arg.startsWith("-"))
+  );
+}
 
 function optionValue(args: string[], long: string, short: string): string | undefined {
   const index = args.findIndex(
@@ -37,6 +45,7 @@ function githubBody(
   if (!/^(?:issue|pr)$/.test(kind ?? "") || !/^(?:create|comment|edit)$/.test(action ?? "")) {
     return undefined;
   }
+  if (githubHelp(args)) return undefined;
   const file = optionValue(args, "--body-file", "-F");
   const inline = optionValue(args, "--body", "-b");
   if (file === undefined && inline === undefined) {
@@ -61,6 +70,9 @@ function githubBody(
       }
       body = heredoc;
     } else {
+      if (/[$`]/.test(file)) {
+        return "The GitHub body guard cannot expand shell variables or command substitutions. Use a literal path without $ or backticks for --body-file.";
+      }
       if (changesDirectory && !isAbsolute(file)) {
         return "Use an absolute --body-file path when the command changes directory; relative body attribution can't be verified safely.";
       }
@@ -77,7 +89,7 @@ function githubBody(
         }
         body = readFileSync(path, "utf8");
       } catch {
-        return "Cannot read the GitHub body file. Create it before the GitHub command.";
+        return "Cannot read the GitHub body file. The guard reads paths literally, without shell expansion (including ~ and globs). Use an existing literal path for --body-file.";
       }
     }
   }
