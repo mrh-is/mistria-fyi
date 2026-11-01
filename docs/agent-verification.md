@@ -139,7 +139,10 @@ follow the bounded checklist below instead of browsing around.
 1. Start the dev server and navigate to every changed route. From a worktree, start it by URL &
    confirm it serves the branch’s code
    ([Preview from a worktree](development-workflow.md#preview-from-a-worktree)).
-2. Screenshot at desktop width (~1280) & mobile width (~390).
+2. Emulate `prefers-reduced-motion: reduce` before taking screenshots, so a route fade-in can’t wash
+   out the capture. In Playwright, call `page.emulateMedia({ reducedMotion: "reduce" })`; in browser
+   devtools, use the Rendering panel’s emulation. Leave motion on only when the change is about an
+   animation. Then screenshot at desktop width (~1280) & mobile width (~390).
 3. Exercise every changed interaction & one reversal or undo path.
 4. Check light mode & dark mode.
 5. Check the relevant states: empty, loaded, error, & disabled.
