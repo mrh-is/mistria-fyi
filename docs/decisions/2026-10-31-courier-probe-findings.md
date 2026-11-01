@@ -1,5 +1,5 @@
 ---
-id: 2026-11-01-courier-probe-findings
+id: 2026-10-31-courier-probe-findings
 status: current
 summary: >-
   The courier treats an appeared record as a change, observes again after errored, & keeps a
@@ -37,7 +37,7 @@ Android (#341) & the Steam Deck (#238) went untested, for lack of devices.
 - **“Can’t drag?”** In Chrome & Edge it explains pasting the autosave from File Explorer. In
   browsers without file handles it opens the file picker on the save folder. The Desktop copy is
   gone.
-- **Launch.** #291 no longer waits for #238 or #341 (maintainer, 2026-11-01). Each one is checked
+- **Launch.** #291 no longer waits for #238 or #341 (maintainer, 2026-10-31). Each one is checked
   when its hardware is available.
 
 ## Alternatives

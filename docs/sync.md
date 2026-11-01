@@ -80,7 +80,7 @@ The gaming PC with Chrome 156, Edge 156, & Firefox 159, & an iPhone on iOS 18.7,
 
 Two checks wait for hardware: Android opening the installed app from a scanned URL (#341), & Steam
 Deck save access, the SD card, & Flatpak Steam (#238). Launch doesn’t wait for them (see
-[the decision record](decisions/2026-11-01-courier-probe-findings.md)): a failure there changes
+[the decision record](decisions/2026-10-31-courier-probe-findings.md)): a failure there changes
 which device or browser a player is told to use, not the courier, relay, or envelope. Record the
 results in this document & flag any failed assumption on #123. Early- & late-game v1.0.8 field
 presence is recorded in
@@ -107,13 +107,18 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 - **Watching.** A dropped or pasted `.sav` stores its file handle. The game replaces its save rather
   than rewriting it (see [What the probe found](#what-the-probe-found)), so an `appeared` record for
   the watched file counts as a change, like `modified`. Bursts of records are coalesced into one
-  read, & an `unknown` record triggers a recheck. A `disappeared` record waits for the file to come
-  back under its name. An `errored` record ends that observer for good, so the courier observes
-  again once the file reads. The held handle read the replacement directly in the probe, so nothing
-  re-resolves it.
+  read, & an `unknown` record triggers a recheck. A `disappeared` record changes nothing by itself:
+  the courier keeps its observer & waits for the file to come back under its name. An `errored`
+  record ends that observer for good, so the courier starts a new one at the next successful read.
+  The held handle read the replacement directly in the probe, so nothing re-resolves it.
 - **The backstop poll.** While watching, the courier checks the file once a minute & reads it when
-  its size or modification time differs. That catches what an observer misses, including the gap
-  after `errored`. A read’s hash, not its metadata, decides whether the save changed.
+  its size or modification time differs from the last successful read. That catches what an observer
+  misses, including the gap after `errored`. A read’s hash, not its metadata, decides whether the
+  save changed.
+- **A missing file.** A read that finds no file stays silent & waits for the next poll, since the
+  game’s replacement leaves a brief gap. After two failed polls in a row, the PC shows the
+  moved-file notice (`sync_moved_*`); the next successful read clears it & starts a new observer.
+  Permission loss (`NotAllowedError`) shows the access-lost notice at once instead.
 - **Pruning.** The courier drops the three sections the importer never needs (`game_stats`,
   `date_photos`, `farm`) & keeps the save’s own container format, so each follower reuses its
   parser. The epic gives the compressed size of the pruned save: about 161 KB for a late-game farm &

@@ -262,6 +262,20 @@ Evidence:
 [scripts/agent-tool-hook.ts](../scripts/agent-tool-hook.ts),
 [scripts/agent-tool-hook.test.ts](../scripts/agent-tool-hook.test.ts).
 
+### [Courier changes from the probe run](decisions/2026-10-31-courier-probe-findings.md)
+
+ID: 2026-10-31-courier-probe-findings. Status: Current.
+
+The courier treats an appeared record as a change, observes again after errored, & keeps a
+one-minute backstop poll; “Can’t drag?” pastes or picks the live save; launch doesn’t wait for the
+Android & Steam Deck checks.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/130](https://github.com/mrh-is/mistria-fyi/issues/130),
+[https://github.com/mrh-is/mistria-fyi/pull/340](https://github.com/mrh-is/mistria-fyi/pull/340),
+[https://github.com/mrh-is/mistria-fyi/issues/134](https://github.com/mrh-is/mistria-fyi/issues/134),
+[docs/sync.md#what-the-probe-found](../docs/sync.md#what-the-probe-found).
+
 ### [Dependency audits follow the diff](decisions/2026-10-31-dependency-audit-follows-the-diff.md)
 
 ID: 2026-10-31-dependency-audit-follows-the-diff. Status: Current.
@@ -300,20 +314,6 @@ Claude & Codex label small, fully specified issues `delegate: small agent` so th
 them to Antigravity or Copilot.
 
 Evidence: [docs/agent-workflow.md#small-agent-tasks](../docs/agent-workflow.md#small-agent-tasks).
-
-### [Courier changes from the probe run](decisions/2026-11-01-courier-probe-findings.md)
-
-ID: 2026-11-01-courier-probe-findings. Status: Current.
-
-The courier treats an appeared record as a change, observes again after errored, & keeps a
-one-minute backstop poll; “Can’t drag?” pastes or picks the live save; launch doesn’t wait for the
-Android & Steam Deck checks.
-
-Evidence:
-[https://github.com/mrh-is/mistria-fyi/issues/130](https://github.com/mrh-is/mistria-fyi/issues/130),
-[https://github.com/mrh-is/mistria-fyi/pull/340](https://github.com/mrh-is/mistria-fyi/pull/340),
-[https://github.com/mrh-is/mistria-fyi/issues/134](https://github.com/mrh-is/mistria-fyi/issues/134),
-[docs/sync.md#what-the-probe-found](../docs/sync.md#what-the-probe-found).
 
 ## Partially superseded/amended
 
