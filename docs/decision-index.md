@@ -364,6 +364,18 @@ Evidence:
 [.github/workflows/ci.yml](../.github/workflows/ci.yml), [vite.config.ts](../vite.config.ts),
 [docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets).
 
+### [Pin real-save observations](decisions/2026-11-01-real-save-observations.md)
+
+ID: 2026-11-01-real-save-observations. Status: Current.
+
+Pin private snapshots & record player-confirmed expectations independently of the importer.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/333](https://github.com/mrh-is/mistria-fyi/issues/333),
+[src/lib/engine/import-save.assets.test.ts](../src/lib/engine/import-save.assets.test.ts),
+[src/lib/engine/import-save.observations.ts](../src/lib/engine/import-save.observations.ts),
+[docs/save-import-verification.md](../docs/save-import-verification.md).
+
 ### [Keep Vitest retries visible](decisions/2026-11-01-visible-vitest-retries.md)
 
 ID: 2026-11-01-visible-vitest-retries. Status: Current.
