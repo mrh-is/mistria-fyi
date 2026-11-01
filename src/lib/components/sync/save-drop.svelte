@@ -32,7 +32,9 @@
   let fileInput = $state<HTMLInputElement>();
 
   const givesHandles = browserGivesHandles();
-  const cantDragId = "sync-cant-drag-body";
+  const uid = $props.id();
+  const cantDragId = `${uid}-cant-drag`;
+  const lockedId = `${uid}-locked`;
   const cantDragBody = $derived.by(() => {
     if (givesHandles) {
       if (platform === "linux") return m.sync_find_cant_drag_body_linux();
@@ -69,7 +71,8 @@
     if (event.defaultPrevented || isEditing(document.activeElement)) return;
     const { clipboardData } = event;
     if (![...(clipboardData?.items ?? [])].some(({ kind }) => kind === "file")) return;
-    // Another drop box on the page (the status panel's, say) leaves this one to it.
+    // Behind an open panel this box can't take focus or be seen, so the panel's own one takes it.
+    if (box?.closest("[inert]")) return;
     event.preventDefault();
     box?.focus();
     await take(await sourceFromTransfer(clipboardData));
@@ -98,7 +101,7 @@
   aria-label={label}
   aria-disabled={locked ? "true" : undefined}
   aria-describedby={[
-    locked && !reading ? "sync-drop-locked" : undefined,
+    locked && !reading ? lockedId : undefined,
     showCantDrag ? cantDragId : undefined,
   ]
     .filter(Boolean)
@@ -118,7 +121,7 @@
   {:else}
     <IconUpload aria-hidden="true" />
     {#if locked}
-      <span id="sync-drop-locked">{m.sync_find_drop_locked()}</span>
+      <span id={lockedId}>{m.sync_find_drop_locked()}</span>
     {:else}
       <span aria-hidden="true">{label}</span>
     {/if}

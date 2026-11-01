@@ -7,7 +7,13 @@ import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { decodeSavePayload, deriveFollowKeys, mailboxIdFor, openEnvelope } from "./follow.js";
 
 import type { Courier, CourierOptions, CourierStatus, SaveObserver } from "./courier.js";
-import type { FollowKey, RelayClient, SealedEnvelope } from "./follow.js";
+import type {
+  FollowKey,
+  RelayClient,
+  SealedEnvelope,
+  ShareResult,
+  UploadResult,
+} from "./follow.js";
 import type { LocalSaveResult } from "./receiver.js";
 import type { SaveFileHandle, SaveHandleStore } from "./save-source.js";
 
@@ -857,5 +863,224 @@ describe("the sync switch", () => {
     await settle();
     expect(handles.load).not.toHaveBeenCalled();
     expect(relay.read).not.toHaveBeenCalled();
+  });
+});
+
+describe("a step that never settles", () => {
+  it("gives up on an upload, retries it, & lets an update's reload through", async () => {
+    const holds = new UpdateHolds();
+    const { last, make, relay } = await load({
+      options: { firstRetryMs: 60_000, holds, taskTimeoutMs: 10 },
+    });
+    relay.upload.mockReturnValue(Promise.withResolvers<UploadResult>().promise);
+    const courier = make();
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(last()?.upload).toBe("unreachable");
+    expect(holds.held).toBe(false);
+  });
+
+  it("gives up on making a new code the same way", async () => {
+    const holds = new UpdateHolds();
+    const { last, make, relay } = await load({
+      options: {
+        firstRetryMs: 60_000,
+        holds,
+        renewCode: () => Promise.withResolvers<ShareResult>().promise,
+        taskTimeoutMs: 10,
+      },
+    });
+    relay.upload.mockResolvedValue({ kind: "retired" });
+    const courier = make();
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(last()?.upload).toBe("unreachable");
+    expect(holds.held).toBe(false);
+  });
+
+  it("doesn't let an apply that hangs stop the next read", async () => {
+    const { applyLocal, make, relay } = await load({ options: { taskTimeoutMs: 10 } });
+    applyLocal.mockReturnValueOnce(Promise.withResolvers<LocalSaveResult>().promise);
+    const courier = make();
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(relay.upload).toHaveBeenCalledTimes(1);
+    await settle(30);
+    await courier.take({ file: new File([saveBytes(200)], FILE_NAME), kind: "file" });
+    expect(relay.upload).toHaveBeenCalledTimes(2);
+  });
+});
+
+/** A first visit copies the code; the next one finds `blocked` under the progress key. */
+async function visitBlocked(blocked: string) {
+  const first = await load();
+  const file = fakeHandle();
+  await first.handles.save(file.handle);
+  const courier = first.make();
+  courier.start();
+  await until(() => first.relay.upload.mock.calls.length === 1);
+  await settle();
+  courier.stop();
+  expect(JSON.parse(first.storage.getItem(UPLOADS_KEY) ?? "{}")).toMatchObject({
+    code: { key: KEY, token: TOKEN },
+  });
+
+  first.storage.setItem(PROGRESS_KEY, blocked);
+  vi.resetModules();
+  const { userState } = await import("#lib/stores/user-state.svelte.js");
+  userState.loadFromStorage();
+  expect(userState.syncLane).toBeUndefined();
+  expect(userState.syncBlocked).toBe(true);
+  const { createCourier } = await import("./courier.js");
+  first.applyLocal.mockClear();
+  first.relay.upload.mockClear();
+  file.replace(saveBytes(200));
+  const again = createCourier({
+    applyLocal: first.applyLocal,
+    handles: first.handles,
+    holds: new UpdateHolds(),
+    locks: () => undefined,
+    relay: () => first.relay,
+  });
+  open.push(again);
+  return { again, first };
+}
+
+describe("a store that loads blocked", () => {
+  it.each([
+    ["from a newer build", JSON.stringify({ local: {}, version: 999 })],
+    ["unreadable", "{not json"],
+  ])("still uploads when it's %s, & applies nothing", async (_name, blocked) => {
+    const { again, first } = await visitBlocked(blocked);
+    again.start();
+    await until(() => first.relay.upload.mock.calls.length === 1);
+    const sealed = first.relay.upload.mock.calls[0]?.[2];
+    expect(sealed.counter).toBe(2);
+    const { header } = await opened(sealed);
+    expect(header.playtime).toBe(200);
+    expect(first.applyLocal).not.toHaveBeenCalled();
+    // Nothing a blocked page does forgets the handle or the code.
+    expect(first.handles.current).toBeDefined();
+    expect(JSON.parse(first.storage.getItem(UPLOADS_KEY) ?? "{}")).toHaveProperty("code");
+  });
+
+  it("removes its copy of the code when the lane ends", async () => {
+    const { make, storage, userState } = await load();
+    const courier = make();
+    courier.start();
+    await courier.check();
+    expect(JSON.parse(storage.getItem(UPLOADS_KEY) ?? "{}")).toHaveProperty("code");
+    await userState.stopSyncing({
+      code: { key: KEY, token: TOKEN },
+      retire: { mailboxId: await mailboxIdFor(KEY), token: TOKEN },
+    });
+    courier.update();
+    expect(JSON.parse(storage.getItem(UPLOADS_KEY) ?? "{}")).not.toHaveProperty("code");
+  });
+});
+
+describe("races", () => {
+  it("still says a new code was made when storing it reaches `update` first", async () => {
+    const { last, make, relay, userState } = await load();
+    relay.upload.mockResolvedValueOnce({ kind: "retired" });
+    const opening: { courier?: Courier } = {};
+    const renewCode = vi.fn(async () => {
+      const code = { key: OTHER_KEY, token: TOKEN };
+      await userState.setSharedCode(code, {
+        code: { key: KEY, token: TOKEN },
+        retire: { mailboxId: await mailboxIdFor(KEY), token: TOKEN },
+      });
+      opening.courier?.update();
+      return { code, kind: "shared" as const };
+    });
+    const courier = make({ renewCode });
+    opening.courier = courier;
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    await until(() => relay.upload.mock.calls.length === 2);
+    expect(relay.upload.mock.calls[1]?.[0]).toBe(await mailboxIdFor(OTHER_KEY));
+    expect(last()?.codeRenewed).toBe(true);
+  });
+
+  it("keeps the save file just dropped when a stored handle finishes loading after it", async () => {
+    const stale = fakeHandle();
+    const loading = Promise.withResolvers<SaveFileHandle | undefined>();
+    const handles = memoryHandles();
+    vi.spyOn(handles, "load").mockReturnValue(loading.promise);
+    const { make, relay } = await load({ options: { handles } });
+    const courier = make();
+    courier.start();
+    const fresh = fakeHandle(saveBytes(200));
+    const taking = courier.take({ handle: fresh.handle, kind: "handle" });
+    await settle(0);
+    loading.resolve(stale.handle);
+    await taking;
+    await settle();
+    expect(stale.spy.getFile).not.toHaveBeenCalled();
+    expect(fresh.spy.getFile).toHaveBeenCalledWith();
+    const sealed = relay.upload.mock.calls[0]?.[2];
+    const { header } = await opened(sealed);
+    expect(header.playtime).toBe(200);
+  });
+
+  it("leaves nothing stored when the lane ends while a handle is being saved", async () => {
+    const saving = Promise.withResolvers<undefined>();
+    const handles = memoryHandles();
+    vi.spyOn(handles, "save").mockImplementation(async (handle) => {
+      await saving.promise;
+      handles.current = handle;
+    });
+    const { make, relay, userState } = await load({ code: false, options: { handles } });
+    const courier = make();
+    courier.start();
+    await courier.check();
+    const file = fakeHandle();
+    const taking = courier.take({ handle: file.handle, kind: "handle" });
+    await userState.stopSyncing();
+    courier.update();
+    saving.resolve(undefined);
+    await taking;
+    expect(handles.current).toBeUndefined();
+    expect(file.spy.getFile).not.toHaveBeenCalled();
+    expect(relay.upload).not.toHaveBeenCalled();
+  });
+
+  it("drops a save still retrying once the file goes back to what the mailbox holds", async () => {
+    const { make, relay } = await load({ options: { firstRetryMs: 40 } });
+    const bytes = saveBytes();
+    const file = fakeHandle(bytes);
+    const courier = make({ pollMs: 60_000 });
+    courier.start();
+    await courier.take({ handle: file.handle, kind: "handle" });
+
+    relay.upload.mockResolvedValueOnce({ kind: "rate-limited" });
+    relay.read.mockResolvedValue({
+      counter: 1,
+      envelope: new Uint8Array(28),
+      kind: "envelope",
+      version: 1,
+    });
+    file.replace(saveBytes(200));
+    await courier.check();
+    expect(relay.upload).toHaveBeenCalledTimes(2);
+
+    file.replace(bytes);
+    await courier.check();
+    await settle(80);
+    // The newer save's retry never went, so the mailbox & the ledger stay with what's in the file.
+    expect(relay.upload).toHaveBeenCalledTimes(2);
+  });
+
+  it("lets “Try again” read the file again after an envelope too large to send", async () => {
+    const { last, make, relay } = await load();
+    relay.upload.mockResolvedValueOnce({ kind: "too-large" });
+    const courier = make();
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(last()?.upload).toBe("unreachable");
+    courier.retry();
+    await until(() => relay.upload.mock.calls.length === 2);
+    await until(() => last()?.upload === "idle");
+    expect(relay.upload).toHaveBeenCalledTimes(2);
   });
 });

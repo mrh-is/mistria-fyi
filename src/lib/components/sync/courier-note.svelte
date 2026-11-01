@@ -34,6 +34,8 @@
         {m.sync_reallow_action()}
       </Button>
     </div>
+    <SaveFolderPath {platform} />
+    <SaveDrop label={m.sync_find_drop()} onsource={syncCourier.offer} {platform} />
   </SyncNote>
 {:else if status.trouble === "moved"}
   <SyncNote title={m.sync_moved_title()}>

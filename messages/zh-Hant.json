@@ -850,7 +850,7 @@
   "sync_unreachable_body": "我們會繼續嘗試，你也可以再試一次。",
   "sync_unreadable_title": "嗯，我們讀取不了你的存檔",
   "sync_unreadable_safe": "第一：什麼都沒丟。你的進度完全安全。",
-  "sync_unreadable_why": "第二：這不是你的問題。{game} 發布更新時可能會發生這種情況。放心，我們正在處理，這本圖鑑很快就會更新。更新後它會重新讀取你的存檔，並補上你這段時間的所有進度。",
+  "sync_unreadable_why": "第二：這不是你的問題。{game} 發布更新時可能會發生這種情況。放心，我們正在處理，這本指南很快就會更新。更新後它會重新讀取你的存檔，並補上你這段時間的所有進度。",
   "sync_unreadable_game": "Fields of Mistria",
   "sync_unreadable_for_now": "現在只要讓這個分頁開著，然後盡情享受新更新的內容吧！",
   "sync_reallow_title": "能讓我們再讀取一次你的存檔嗎？",

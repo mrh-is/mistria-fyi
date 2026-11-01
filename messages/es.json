@@ -875,7 +875,7 @@
   "sync_unreadable_for_now": "Por ahora, deja esta pestaña abierta y disfruta… ¡de lo que traiga la actualización!",
   "sync_reallow_title": "¿Nos dejas volver a leer tu partida guardada?",
   "sync_reallow_body": "Tu navegador lo pregunta tras reiniciarse.",
-  "sync_reallow_action": "Dejar que la lean",
+  "sync_reallow_action": "Dejar que la leamos",
   "sync_moved_title": "Le hemos perdido la pista a tu partida guardada",
   "sync_moved_body": "Suéltala otra vez y volvemos a estar en marcha.",
   "sync_other_window": "Tu partida guardada ya se está sincronizando en otra ventana.",

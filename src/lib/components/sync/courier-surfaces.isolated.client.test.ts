@@ -213,6 +213,18 @@ describe("the notes", () => {
     expect(fake.reallow).toHaveBeenCalledTimes(1);
   });
 
+  it("gives lost access the folder, the drop box, & “Can’t drag?” too", async () => {
+    await renderNote();
+    report({ trouble: "reallow" });
+    await tick();
+    expect(screen.getByText(/FieldsOfMistria/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Can’t drag?" })).toBeVisible();
+    await dropSave(saveFile(), "Drop your autosave here");
+    await waitFor(() => {
+      expect(fake.take).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("gives a moved file the folder, the drop box, & “Can’t drag?”", async () => {
     await renderNote();
     report({ trouble: "moved" });
@@ -408,6 +420,21 @@ describe("computer setup", () => {
       },
     });
     await fireEvent.click(await screen.findByRole("button", { name: "Yep!" }));
+    await fireEvent.click(
+      await screen.findByRole("button", { name: "No thanks, I’ll track here" }),
+    );
+    expect(screen.getByText(/we’ll sync your save file every time you sleep/)).toBeVisible();
+  });
+});
+
+describe("the done screen", () => {
+  it("doesn't ask for the file again while another window may be watching it", async () => {
+    await loadStore({ syncLane: { kind: "computer" } });
+    await relayWith();
+    const { default: Setup } = await import("../../../routes/sync/computer-setup.svelte");
+    render(Setup, { announce: vi.fn(), linkOrigin: "https://mistria.fyi" });
+    report({ source: "unknown", trouble: "other-window" });
+    await tick();
     await fireEvent.click(
       await screen.findByRole("button", { name: "No thanks, I’ll track here" }),
     );

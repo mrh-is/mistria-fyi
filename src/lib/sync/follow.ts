@@ -26,6 +26,8 @@ export const RELAY_ORIGIN = "https://relay.mistria.fyi";
 
 /** How long a read may take. The receiver reads in turn, so a hung one would hold up what follows. */
 const READ_TIMEOUT_MS = 30_000;
+/** How long an upload may take, well past the 256 KB a slow connection has to send. */
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 const KEY_BYTES = 32;
 const WRITE_TOKEN_BYTES = 32;
@@ -468,6 +470,7 @@ export function createRelayClient(
           "X-Sync-Version": String(version),
         },
         method: "PUT",
+        signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
       });
       if (response === undefined) return { kind: "unreachable" };
       if (response.status === 200) return { kind: "stored" };

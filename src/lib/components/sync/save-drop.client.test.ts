@@ -125,6 +125,36 @@ describe("pasting", () => {
     expect(onsource).not.toHaveBeenCalled();
   });
 
+  it("leaves a paste to the open panel's box when this one sits behind it", async () => {
+    const page = document.createElement("div");
+    page.setAttribute("inert", "");
+    document.body.append(page);
+    const behind = vi.fn<(source: SaveSource) => Promise<void>>(() => Promise.resolve());
+    render(SaveDrop, {
+      props: { label: "Behind", onsource: behind, platform: "windows" },
+      target: page,
+    });
+    const inPanel = renderDrop();
+    paste(transfer());
+    await waitFor(() => {
+      expect(inPanel).toHaveBeenCalledTimes(1);
+    });
+    expect(behind).not.toHaveBeenCalled();
+    page.remove();
+  });
+
+  it("keeps its ids apart with two drop boxes on the page", async () => {
+    render(SaveDrop, { label: "One", onsource: vi.fn(), platform: "windows" });
+    render(SaveDrop, { label: "Two", onsource: vi.fn(), platform: "windows" });
+    const [first, second] = screen.getAllByRole("button", { name: "Can’t drag?" });
+    await fireEvent.click(first);
+    await fireEvent.click(second);
+    const described = ["One", "Two"].map((name) =>
+      screen.getByRole("group", { name }).getAttribute("aria-describedby"),
+    );
+    expect(new Set(described).size).toBe(2);
+  });
+
   it("takes a paste once with two drop boxes on the page", async () => {
     const first = renderDrop();
     const second = renderDrop();

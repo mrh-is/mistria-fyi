@@ -35,7 +35,9 @@
 
   // The copy follows whether this save file is watched, not what the browser could do.
   const watched = $derived(
-    source ? source.kind === "handle" : syncCourier.status.source === "watched",
+    source
+      ? source.kind === "handle"
+      : syncCourier.status.source !== "file" && syncCourier.status.source !== "none",
   );
   const hasCode = $derived(
     userState.syncLane?.kind === "computer" && userState.syncLane.code !== undefined,

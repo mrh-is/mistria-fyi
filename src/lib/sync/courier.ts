@@ -53,6 +53,8 @@ export const BACKSTOP_POLL_MS = 60_000;
 const COALESCE_MS = 500;
 /** How many polls in a row must find no file before the player hears about it. */
 const MOVED_AFTER_FAILED_POLLS = 2;
+/** The longest any one step may hold up the queue, & an update's reload with it. */
+const TASK_TIMEOUT_MS = 60_000;
 const FIRST_RETRY_MS = 5000;
 const MAX_RETRY_MS = 5 * 60_000;
 
@@ -105,6 +107,7 @@ export interface CourierOptions {
   relay?: () => RelayClient;
   /** Makes a new code once the old one turns out to be retired. */
   renewCode?: () => Promise<ShareResult>;
+  taskTimeoutMs?: number;
 }
 
 export interface Courier {
@@ -129,6 +132,11 @@ export interface Courier {
 }
 
 const UploadLedgerSchema = v.object({
+  /**
+   * The shared code, copied from the lane. A store that loads quarantined or from a newer build can't
+   * show its lane, & this is what keeps uploads going until it's sorted out.
+   */
+  code: v.optional(v.object({ key: v.string(), token: v.string() })),
   /** The highest counter ever reserved, in any mailbox. */
   counter: v.pipe(v.number(), v.safeInteger(), v.minValue(0)),
   hash: v.optional(v.string()),
@@ -145,6 +153,10 @@ function readLedger(): UploadLedger {
   } catch {
     return { counter: 0 };
   }
+}
+
+function writeLedger(ledger: UploadLedger): void {
+  trySetItem(SYNC_UPLOADS_STORAGE_KEY, JSON.stringify(ledger));
 }
 
 /** A save file's bytes, pinned, so what's applied & what's uploaded can't differ. */
@@ -179,7 +191,36 @@ function defaultObserver(): SaveObserverConstructor | undefined {
 
 function sharedCode(): DeepReadonly<{ key: string; token: string }> | undefined {
   const lane = userState.syncLane;
-  return lane?.kind === "computer" ? lane.code : undefined;
+  if (lane?.kind === "computer") return lane.code;
+  return userState.syncBlocked ? readLedger().code : undefined;
+}
+
+/** Keeps the ledger's copy of the code in step with the lane, while the lane can be read. */
+function mirrorCode(): void {
+  const lane = userState.syncLane;
+  if (lane?.kind !== "computer" && userState.syncBlocked) return;
+  const code = lane?.kind === "computer" ? lane.code : undefined;
+  const ledger = readLedger();
+  if (code?.key === ledger.code?.key && code?.token === ledger.code?.token) return;
+  const { code: _old, ...rest } = ledger;
+  writeLedger(code ? { ...rest, code: { key: code.key, token: code.token } } : rest);
+}
+
+/** `work`'s result, or `fallback` if it hasn't settled in time. Rejections pass through. */
+async function within<T>(work: Promise<T>, fallback: T, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => {
+          resolve(fallback);
+        }, ms);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function createCourier({
@@ -194,10 +235,13 @@ export function createCourier({
   pollMs = BACKSTOP_POLL_MS,
   relay = relayClient,
   renewCode = makeNewCode,
+  taskTimeoutMs = TASK_TIMEOUT_MS,
 }: CourierOptions): Courier {
   let status: CourierStatus = IDLE_COURIER;
   let started = false;
   let inLane = false;
+  /** Running on the ledger's copy of the code, with no lane to read. */
+  let blockedLane = false;
 
   // Leading: `attempts` orphans any lock request a newer decision replaced.
   let leading = false;
@@ -212,7 +256,9 @@ export function createCourier({
   let queue: Promise<void> = Promise.resolve();
 
   let source: SaveSource | undefined;
-  let taking = false;
+  /** Each {@link Courier.take} under way, & which is the newest. */
+  let taking = 0;
+  let latestTake = 0;
   let watcher: SaveObserver | undefined;
   let pollTimer: ReturnType<typeof setInterval> | undefined;
   let coalesceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -389,8 +435,10 @@ export function createCourier({
   }
 
   async function applyHere(file: File): Promise<LocalSaveResult> {
+    // A store that can't show its lane is never applied to; the upload still goes.
+    if (userState.syncLane?.kind !== "computer") return "blocked";
     try {
-      return await applyLocal(file);
+      return await within(applyLocal(file), "write-failed", taskTimeoutMs);
     } catch {
       return "write-failed";
     }
@@ -403,7 +451,7 @@ export function createCourier({
   function nextCounter(): number {
     const ledger = readLedger();
     highestCounter = Math.max(highestCounter, ledger.counter) + 1;
-    trySetItem(SYNC_UPLOADS_STORAGE_KEY, JSON.stringify({ ...ledger, counter: highestCounter }));
+    writeLedger({ ...ledger, counter: highestCounter });
     return highestCounter;
   }
 
@@ -461,6 +509,11 @@ export function createCourier({
     const mailboxId = await mailboxIdFor(code.key);
     const ledger = readLedger();
     if (ledger.hash === read.hash && ledger.mailboxId === mailboxId) {
+      // The file went back to what the mailbox holds, so a newer save still retrying is out of date.
+      if (pending) {
+        pending = undefined;
+        clearRetry();
+      }
       // Only a start or a shown code looks further: an envelope can expire with nothing changing.
       if (!look || !(await mailboxWantsSave(mailboxId))) return true;
     } else if (pending?.hash === read.hash && pending.sealed?.mailboxId === mailboxId) {
@@ -543,21 +596,23 @@ export function createCourier({
     if (!sealed) return;
     let result: Awaited<ReturnType<RelayClient["upload"]>>;
     try {
-      result = await relay().upload(sealed.mailboxId, sealed.token, sealed);
+      result = await within(
+        relay().upload(sealed.mailboxId, sealed.token, sealed),
+        { kind: "unreachable" },
+        taskTimeoutMs,
+      );
     } catch {
       result = { kind: "unreachable" };
     }
     if (current !== generation || pending !== upload) return;
     switch (result.kind) {
       case "stored":
-        trySetItem(
-          SYNC_UPLOADS_STORAGE_KEY,
-          JSON.stringify({
-            counter: Math.max(readLedger().counter, sealed.counter),
-            hash: upload.hash,
-            mailboxId: sealed.mailboxId,
-          }),
-        );
+        writeLedger({
+          ...readLedger(),
+          counter: Math.max(readLedger().counter, sealed.counter),
+          hash: upload.hash,
+          mailboxId: sealed.mailboxId,
+        });
         pending = undefined;
         retryDelay = firstRetryMs;
         clearRetry();
@@ -575,8 +630,9 @@ export function createCourier({
         await renewAndResend(upload);
         return;
       case "too-large":
-        // No retry can help; the next save tries again.
+        // Only a new save can help, so “Try again” reads the file once more.
         pending = undefined;
+        recheck = true;
         setStatus({ upload: "unreachable" });
     }
   }
@@ -601,20 +657,27 @@ export function createCourier({
 
   async function renewAndResend(upload: PendingUpload): Promise<void> {
     const current = generation;
+    // Only a store that can be written can hold a new code.
+    if (userState.syncLane?.kind !== "computer") {
+      waitOut({ kind: "unreachable" });
+      return;
+    }
     let renewed: ShareResult;
     try {
-      renewed = await renewCode();
+      renewed = await within(renewCode(), { kind: "unreachable" }, taskTimeoutMs);
     } catch {
       renewed = { kind: "unreachable" };
     }
-    if (current !== generation || pending !== upload) return;
+    if (current !== generation) return;
+    // Said first: storing the new code can already have sent `update` to upload under it.
+    if (renewed.kind === "shared") setStatus({ codeRenewed: true });
+    if (pending !== upload) return;
     if (renewed.kind !== "shared") {
       waitOut(renewed);
       return;
     }
     codeKey = renewed.code.key;
     upload.sealed = undefined;
-    setStatus({ codeRenewed: true });
     await send(upload);
   }
 
@@ -638,20 +701,25 @@ export function createCourier({
     fingerprint = undefined;
   }
 
+  /** A stored handle only fills an empty place: a save file dropped meanwhile is the newer one. */
+  function adoptStored(handle: SaveFileHandle): void {
+    source ??= { handle, kind: "handle" };
+  }
+
   function begin(): void {
     leading = true;
     seeking = false;
     abort = undefined;
     codeKey = sharedCode()?.key;
     void enqueue(async () => {
-      // A save file arriving right now brings its own read.
-      if (taking) return;
       const current = generation;
       if (!source) {
         const handle = await handles.load();
         if (current !== generation) return;
-        if (handle) source = { handle, kind: "handle" };
+        if (handle) adoptStored(handle);
       }
+      // A save file arriving right now brings its own read.
+      if (taking > 0) return;
       setStatus({ source: sourceKind(), trouble: undefined });
       startPolling();
       await readAndHandle("check");
@@ -778,7 +846,9 @@ export function createCourier({
       setStatus({ trouble: undefined });
     },
     async take(next) {
-      taking = true;
+      taking += 1;
+      latestTake += 1;
+      const mine = latestTake;
       source = next;
       lastHash = undefined;
       fingerprint = undefined;
@@ -786,13 +856,21 @@ export function createCourier({
       try {
         // A paste that gave only a file means the old handle isn't this save file anymore.
         await (next.kind === "handle" ? handles.save(next.handle) : handles.clear());
+        if (mine !== latestTake) return;
+        // The lane ended while that was stored, so nothing should be left behind.
+        if (userState.syncLane?.kind !== "computer") {
+          source = undefined;
+          await handles.clear();
+          return;
+        }
         if (!leading) await stealLead();
+        if (mine !== latestTake) return;
         stopWatching();
         setStatus({ source: sourceKind(), trouble: undefined });
         startPolling();
         await enqueue(() => readAndHandle("check"));
       } finally {
-        taking = false;
+        taking -= 1;
       }
     },
     update() {
@@ -800,7 +878,11 @@ export function createCourier({
       const receipt = userState.syncReceipt;
       const receiptCleared = lastReceipt !== undefined && receipt === undefined;
       lastReceipt = receipt;
-      if (lane?.kind !== "computer") {
+      mirrorCode();
+      const blocked = lane === undefined && userState.syncBlocked && sharedCode() !== undefined;
+      const unblocked = blockedLane && !blocked;
+      blockedLane = blocked;
+      if (lane?.kind !== "computer" && !blocked) {
         if (!inLane) return;
         inLane = false;
         letGo();
@@ -816,15 +898,15 @@ export function createCourier({
         if (!seeking) seek();
         return;
       }
-      const key = lane.code?.key;
+      const key = sharedCode()?.key;
       if (key !== codeKey) {
         // A new code gets the current save at once, whatever the old one was sending.
         codeKey = key;
         pending = undefined;
         clearRetry();
         if (key !== undefined) void enqueue(() => readAndHandle("check"));
-      } else if (receiptCleared) {
-        // A reset removed the receipt, so the current save applies again.
+      } else if (receiptCleared || unblocked) {
+        // A reset removed the receipt, or the store can take a save again, so the current one applies.
         void enqueue(() => readAndHandle("force"));
       }
     },
