@@ -11,6 +11,10 @@ const { scripts } = JSON.parse(readFileSync("package.json", "utf8")) as {
 const flags = scripts["check:built"].split(" ").slice(1, -1);
 
 describe("built-output runner lifecycle", () => {
+  it("runs preview-bearing test files serially to avoid shared SQLite locks", () => {
+    expect(flags).toContain("--test-concurrency=1");
+  });
+
   it("sets a finite deadline of at most two minutes", () => {
     const timeout = flags.find((flag) => flag.startsWith("--test-timeout="));
     expect(timeout).toBeDefined();
