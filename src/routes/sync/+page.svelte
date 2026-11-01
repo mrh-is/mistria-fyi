@@ -183,7 +183,9 @@
   async function confirmSwitch(): Promise<void> {
     switchOpen = false;
     if (!switchKey) return;
-    const generation = followGeneration;
+    // Each confirmed switch orphans the previous one's retries, so only the newest code can apply.
+    stopPolling();
+    const generation = ++followGeneration;
     await switchFollow(switchKey, generation);
   }
 
