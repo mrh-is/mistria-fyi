@@ -109,31 +109,35 @@ describe("accessibility duration allocation", () => {
 });
 
 describe("supported Playwright selection", () => {
-  it("enumerates every unsharded accessibility test exactly once across the actual test lists", async () => {
-    const directory = mkdtempSync(join(tmpdir(), "mistria-allocation-"));
-    try {
-      const unsharded = await listTests();
-      const measured = JSON.parse(
-        readFileSync("tests/accessibility/duration-weights.json", "utf8"),
-      ) as AllocationWeights;
-      const shards = allocateTests(unsharded, measured, 4);
-      const listed = await Promise.all(
-        shards.map((testsInShard, index) => {
-          const file = join(directory, `shard-${index}.txt`);
-          writeFileSync(file, `${testsInShard.join("\n")}\n`);
-          return listTests([`--test-list=${file}`]);
-        }),
-      );
-      const selected = shards.flatMap((testsInShard, index) => {
-        const actual = listed[index] ?? [];
-        expect(actual.toSorted()).toEqual(testsInShard.toSorted());
-        return actual;
-      });
-      expect(unsharded.length).toBeGreaterThan(0);
-      expect(selected.toSorted()).toEqual(unsharded.toSorted());
-      expect(new Set(selected).size).toBe(unsharded.length);
-    } finally {
-      rmSync(directory, { force: true, recursive: true });
-    }
-  }, 90_000);
+  it.each([1, 2, 4])(
+    "enumerates every accessibility test exactly once across %i actual test lists",
+    async (shardCount) => {
+      const directory = mkdtempSync(join(tmpdir(), "mistria-allocation-"));
+      try {
+        const unsharded = await listTests();
+        const measured = JSON.parse(
+          readFileSync("tests/accessibility/duration-weights.json", "utf8"),
+        ) as AllocationWeights;
+        const shards = allocateTests(unsharded, measured, shardCount);
+        const listed = await Promise.all(
+          shards.map((testsInShard, index) => {
+            const file = join(directory, `shard-${index}.txt`);
+            writeFileSync(file, `${testsInShard.join("\n")}\n`);
+            return listTests([`--test-list=${file}`]);
+          }),
+        );
+        const selected = shards.flatMap((testsInShard, index) => {
+          const actual = listed[index] ?? [];
+          expect(actual.toSorted()).toEqual(testsInShard.toSorted());
+          return actual;
+        });
+        expect(unsharded.length).toBeGreaterThan(0);
+        expect(selected.toSorted()).toEqual(unsharded.toSorted());
+        expect(new Set(selected).size).toBe(unsharded.length);
+      } finally {
+        rmSync(directory, { force: true, recursive: true });
+      }
+    },
+    90_000,
+  );
 });

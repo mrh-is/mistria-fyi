@@ -8,6 +8,14 @@ on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      browser-layout:
+        description: "#335 spike only: browser job layout"
+        type: choice
+        default: four
+        options: [four, two, combined]
+
+run-name: "CI · ${{ inputs.browser-layout || 'four' }} · ${{ github.event_name }}"
 
 permissions:
   contents: read
@@ -15,7 +23,9 @@ permissions:
 # Pushes to main & the schedule share a ref, so the event keeps a merge from cancelling the nightly
 # jobs, & the schedule from cancelling a push's timing sample.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  group:
+    ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' &&
+    github.run_id || github.head_ref || github.ref }}
   cancel-in-progress: true
 
 # pnpm/setup restores the pnpm store, which also holds the devEngines Node runtime, so a warm cache
@@ -33,6 +43,8 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
+      shards: ${{ steps.browser-layout.outputs.shards }}
+      combined: ${{ steps.browser-layout.outputs.combined }}
       browser: ${{ steps.filter.outputs.browser }}
       cleanup: ${{ steps.filter.outputs.cleanup }}
       dependencies: ${{ steps.filter.outputs.dependencies }}
@@ -41,6 +53,22 @@ jobs:
       scripts: ${{ steps.filter.outputs.scripts }}
       tests: ${{ steps.filter.outputs.tests }}
     steps:
+      # Manual benchmarks vary only scheduling. PRs, main, & the schedule keep the current layout.
+      - id: browser-layout
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          LAYOUT: ${{ inputs.browser-layout }}
+        run: |
+          layout=four
+          if [ "$EVENT_NAME" = workflow_dispatch ]; then layout=${LAYOUT:-four}; fi
+          case "$layout" in
+            four) shards='["1/4","2/4","3/4","4/4"]'; combined=false ;;
+            two) shards='["1/2","2/2"]'; combined=false ;;
+            combined) shards='["1/1"]'; combined=true ;;
+            *) echo "Unknown browser layout: $layout" >&2; exit 1 ;;
+          esac
+          echo "shards=$shards" >> "$GITHUB_OUTPUT"
+          echo "combined=$combined" >> "$GITHUB_OUTPUT"
       - if: github.event_name == 'push'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -327,7 +355,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ["1/4", "2/4", "3/4", "4/4"]
+        shard: ${{ fromJSON(needs.changes.outputs.shards) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -388,14 +416,35 @@ jobs:
             .playwright-artifacts/test-list.txt
           retention-days: 14
           if-no-files-found: ignore
+      # Keep PWA separate & readable even when accessibility fails. Both outcomes gate this job.
+      - id: pwa-tests
+        name: PWA (combined benchmark)
+        if: always() && needs.changes.outputs.combined == 'true'
+        continue-on-error: true
+        run: pnpm run verify -- --step=test:pwa
+        env:
+          PLAYWRIGHT_SKIP_BUILD: "true"
+      - if: >-
+          always() && needs.changes.outputs.combined == 'true' && (steps.pwa-tests.outcome ==
+          'failure' || hashFiles('.playwright-pwa-results/**/trace.zip') != '')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pwa-report
+          include-hidden-files: true
+          path: |
+            .playwright-pwa-report/
+            .playwright-pwa-results/
+            .playwright-artifacts/preview-*.log
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Preserve test outcome
-        if: steps.accessibility-tests.outcome == 'failure'
+        if: steps.accessibility-tests.outcome == 'failure' || steps.pwa-tests.outcome == 'failure'
         run: exit 1
 
   pwa:
     name: PWA
     needs: [changes, build]
-    if: needs.changes.outputs.browser == 'true'
+    if: needs.changes.outputs.browser == 'true' && needs.changes.outputs.combined != 'true'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble

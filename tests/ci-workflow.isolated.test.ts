@@ -40,7 +40,7 @@ interface WorkflowJob {
   permissions?: Record<string, string>;
   "runs-on"?: string;
   steps?: WorkflowStep[];
-  strategy?: { matrix?: Record<string, string[]> };
+  strategy?: { matrix?: Record<string, string | string[]> };
   "timeout-minutes"?: number;
 }
 
@@ -100,6 +100,33 @@ function verifySteps(job: undefined | WorkflowJob): string[] {
       (match) => match[1],
     ),
   );
+}
+
+/** Execute the real layout selector, including its rejection of unsupported inputs. */
+function selectLayout(event: string, layout: string): Record<string, string> {
+  const directory = mkdtempSync(join(tmpdir(), "ci-layout-"));
+  const output = join(directory, "output");
+  try {
+    const command = jobs.changes.steps?.find((step) => step.id === "browser-layout")?.run;
+    expect(command).toBeTypeOf("string");
+    if (command === undefined) throw new Error("Missing layout selector");
+    const result = spawnSync("bash", ["-eu", "-o", "pipefail", "-c", command], {
+      encoding: "utf8",
+      env: { ...process.env, EVENT_NAME: event, GITHUB_OUTPUT: output, LAYOUT: layout },
+    });
+    if (result.status !== 0) throw new Error(result.stderr);
+    return Object.fromEntries(
+      readFileSync(output, "utf8")
+        .trim()
+        .split("\n")
+        .map((line): [string, string] => {
+          const separator = line.indexOf("=");
+          return [line.slice(0, separator), line.slice(separator + 1)];
+        }),
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
 }
 
 /** Runs the workflow's real change detector over `files`, returning its outputs. */
@@ -185,7 +212,11 @@ describe("CI workflow jobs", () => {
   // & every step a job runs is in the list. The commands themselves live in verify.ts.
   it("runs each verify step with a job exactly once, in that job", () => {
     const allSteps = Object.entries(jobs).flatMap(([jobName, job]) =>
-      verifySteps(job).map((step) => [jobName, step] as const),
+      // The combined manual experiment moves PWA into accessibility; validate that path below.
+      verifySteps({
+        ...job,
+        steps: job.steps?.filter((step) => step.name !== "PWA (combined benchmark)"),
+      }).map((step) => [jobName, step] as const),
     );
     for (const step of STEPS.filter(({ job }) => job !== undefined)) {
       expect(
@@ -501,19 +532,50 @@ describe("CI workflow browser suites", () => {
     expect(jobs.changes.outputs?.browser).toBe("${{ steps.filter.outputs.browser }}");
     for (const jobName of browserJobs) {
       expect(jobs[jobName].needs).toContain("changes");
-      expect(jobs[jobName].if).toBe("needs.changes.outputs.browser == 'true'");
+      expect(jobs[jobName].if).toBe(
+        `needs.changes.outputs.browser == 'true'${
+          jobName === "pwa" ? " && needs.changes.outputs.combined != 'true'" : ""
+        }`,
+      );
     }
   });
 
   // Each shard allocates across the total its own entry names & runs only its share, so a missing
   // entry would silently skip that share of the tests.
-  it("runs every accessibility shard", () => {
-    const shards = jobs.accessibility.strategy?.matrix?.shard ?? [];
+  it.each(["four", "two", "combined"])("runs every accessibility shard in %s", (layout) => {
+    expect(jobs.changes.outputs?.shards).toBe("${{ steps.browser-layout.outputs.shards }}");
+    expect(jobs.accessibility.strategy?.matrix?.shard).toBe(
+      "${{ fromJSON(needs.changes.outputs.shards) }}",
+    );
+    const shards = JSON.parse(selectLayout("workflow_dispatch", layout).shards) as string[];
     const total = Number(shards[0]?.split("/")[1]);
-    expect(total).toBeGreaterThan(0);
+    const expectedCounts: Record<string, number> = { combined: 1, four: 4, two: 2 };
+    expect(total).toBe(expectedCounts[layout]);
     expect(shards.toSorted()).toEqual(
       Array.from({ length: total }, (_, index) => `${String(index + 1)}/${String(total)}`),
     );
+  });
+
+  it.each(["pull_request", "push", "schedule"])("keeps the current layout on %s", (event) => {
+    expect(selectLayout(event, "combined")).toEqual({
+      combined: "false",
+      shards: '["1/4","2/4","3/4","4/4"]',
+    });
+  });
+
+  it("rejects unknown layouts rather than silently dropping browser coverage", () => {
+    expect(() => selectLayout("workflow_dispatch", "missing")).toThrow("Unknown browser layout");
+  });
+
+  it.each(["four", "two", "combined"])("runs PWA exactly once for %s", (layout) => {
+    const combined = selectLayout("workflow_dispatch", layout).combined;
+    expect(combined).toBe(layout === "combined" ? "true" : "false");
+    expect(jobs.changes.outputs?.combined).toBe("${{ steps.browser-layout.outputs.combined }}");
+    const step = jobs.accessibility.steps?.find((entry) => entry.id === "pwa-tests");
+    expect(step?.run).toBe(verifyCommand("test:pwa"));
+    expect(step?.if).toBe("always() && needs.changes.outputs.combined == 'true'");
+    expect(step?.env?.PLAYWRIGHT_SKIP_BUILD).toBe("true");
+    expect(step?.["continue-on-error"]).toBe(true);
   });
 
   it("runs browser suites in the matching pinned image without browser or apt installation", () => {
@@ -535,7 +597,11 @@ describe("CI workflow browser suites", () => {
   ])("still fails %s when its tests fail", (jobName, stepId) => {
     const steps = jobs[jobName].steps ?? [];
     expect(steps.find((step) => step.id === stepId)?.["continue-on-error"]).toBe(true);
-    expect(steps.at(-1)?.if).toBe(`steps.${stepId}.outcome == 'failure'`);
+    expect(steps.at(-1)?.if).toBe(
+      jobName === "accessibility"
+        ? "steps.accessibility-tests.outcome == 'failure' || steps.pwa-tests.outcome == 'failure'"
+        : `steps.${stepId}.outcome == 'failure'`,
+    );
     expect(steps.at(-1)?.run).toBe("exit 1");
   });
 });
