@@ -146,8 +146,9 @@ at the bottom.
      file picker under `%LOCALAPPDATA%` & a picked file can’t be watched. Windows’s file picker
      can’t open that folder either, so “Can’t drag?” (`sync_find_cant_drag`) explains the way around
      it: copy the save file to the Desktop & choose it there. A copy can’t be watched, so that
-     switches to dropping it in again after each session, with that copy; a keyboard path to the
-     live file is a #130 check.
+     switches to dropping it in again after each session, with that copy. Pasting the autosave
+     copied in File Explorer gives Chrome a watched handle without a mouse (see
+     [sync.md](sync.md#what-the-probe-found)); setup doesn’t offer it yet (#123).
    - **Can’t find it?** A collapsed section, safest first: check the path was pasted into the
      address bar, not the search box; on Linux & Steam Deck, the Steam library fallback; then
      Windows key + R with the same path, noting it’s safe here because it only opens a folder, &
@@ -191,8 +192,8 @@ at the bottom.
 | Mac, CrossOver             | `~/Library/Application Support/CrossOver/Bottles/Steam/drive_c/users/crossover/AppData/Local/FieldsOfMistria/saves` | In Finder, press Shift-Command-G, paste, press Return |
 
 Fields of Mistria’s Steam app ID is 2142790. The Proton & CrossOver paths, Steam Deck’s browser, an
-SD card’s library, & Flatpak Steam are unverified; #130 checks them. The Linux row adds “Not there?
-Look in your Steam library’s steamapps/compatdata/2142790 folder.”
+SD card’s library, & Flatpak Steam are unverified; #238 checks the Proton & Steam Deck ones. The
+Linux row adds “Not there? Look in your Steam library’s steamapps/compatdata/2142790 folder.”
 
 Note: the
 [Steam Cloud manager](https://store.steampowered.com/account/remotestorageapp/?appid=2142790) also
