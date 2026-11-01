@@ -364,6 +364,19 @@ Evidence:
 [.github/workflows/ci.yml](../.github/workflows/ci.yml), [vite.config.ts](../vite.config.ts),
 [docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets).
 
+### [Nonblocking visual comparisons](decisions/2026-11-01-visual-diff-pilot.md)
+
+ID: 2026-11-01-visual-diff-pilot. Status: Current.
+
+Compare two representative routes without gating CI, and isolate PR execution from privileged image
+publication.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/332](https://github.com/mrh-is/mistria-fyi/issues/332),
+[.github/workflows/visual-diff.yml](../.github/workflows/visual-diff.yml),
+[.github/workflows/visual-diff-publish.yml](../.github/workflows/visual-diff-publish.yml),
+[docs/visual-diff-pilot.md](../docs/visual-diff-pilot.md).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)

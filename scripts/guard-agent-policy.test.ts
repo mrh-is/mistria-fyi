@@ -102,6 +102,32 @@ describe("agent shell policy", () => {
     expect(check("cat /tmp/body | gh issue comment 1 --body-file -").message).toContain("stdin");
   });
 
+  it.each([
+    "gh pr comment --help",
+    "gh pr create -h",
+    "gh issue create --help",
+    "gh issue comment -h",
+    "gh pr edit 332 --help",
+    "gh issue edit 332 -h",
+    "gh -R owner/repo pr comment 332 --help",
+  ])("allows read-only GitHub help: %s", (command) => {
+    expect(check(command).message).toBeUndefined();
+  });
+
+  it.each([
+    "gh pr comment 332 --body --help",
+    "gh issue create --title --help",
+    "gh pr comment 332 -- --help",
+    "gh pr comment 332 --body-file --help",
+    "gh pr comment 332 --body=-h",
+  ])("keeps help-like argument values subject to attribution: %s", (command) => {
+    expect(check(command).message).toBeDefined();
+  });
+
+  it("still checks mutations after a help command", () => {
+    expect(check("gh pr comment --help && gh pr comment 332").message).toContain("--body-file");
+  });
+
   it("reads attributed body files, and rejects missing attribution without printing the body", () => {
     const root = mkdtempSync(join(tmpdir(), "agent-body-"));
     roots.push(root);

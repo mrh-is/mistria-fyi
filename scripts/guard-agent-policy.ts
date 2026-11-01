@@ -37,6 +37,15 @@ function githubBody(
   if (!/^(?:issue|pr)$/.test(kind ?? "") || !/^(?:create|comment|edit)$/.test(action ?? "")) {
     return undefined;
   }
+  // Recognize the plain help forms only. A blanket args.includes("--help") would also
+  // exempt a mutation whose title, body, or body-file value happens to be "--help".
+  const helpArgs = args.slice(2);
+  if (
+    (helpArgs.length === 1 && /^(?:--help|-h)$/.test(helpArgs[0])) ||
+    (helpArgs.length === 2 && !helpArgs[0].startsWith("-") && /^(?:--help|-h)$/.test(helpArgs[1]))
+  ) {
+    return undefined;
+  }
   const file = optionValue(args, "--body-file", "-F");
   const inline = optionValue(args, "--body", "-b");
   if (file === undefined && inline === undefined) {
