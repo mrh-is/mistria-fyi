@@ -364,6 +364,18 @@ Evidence:
 [.github/workflows/ci.yml](../.github/workflows/ci.yml), [vite.config.ts](../vite.config.ts),
 [docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets).
 
+### [Keep Vitest retries visible](decisions/2026-11-01-visible-vitest-retries.md)
+
+ID: 2026-11-01-visible-vitest-retries. Status: Current.
+
+CI retries a failing Vitest test once, warns when it recovers, & records every retry for nightly
+reporting. Local tests do not retry by default.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/329](https://github.com/mrh-is/mistria-fyi/issues/329),
+[scripts/vitest-timings.ts](../scripts/vitest-timings.ts),
+[scripts/nightly-report.ts](../scripts/nightly-report.ts).
+
 ### [Nonblocking visual comparisons](decisions/2026-11-01-visual-diff-pilot.md)
 
 ID: 2026-11-01-visual-diff-pilot. Status: Current.
@@ -767,6 +779,13 @@ Evidence:
 [docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets),
 [scripts/vitest-timings.ts](../scripts/vitest-timings.ts),
 [scripts/nightly-report.ts](../scripts/nightly-report.ts).
+
+Amended by [Keep Vitest retries visible](decisions/2026-11-01-visible-vitest-retries.md). Affected
+portion: Files with retried tests warn instead of failing timing limits, & the nightly report also
+tracks every retry in recent main pushes, independently of timing sample counts.
+
+Relationship evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/329](https://github.com/mrh-is/mistria-fyi/issues/329).
 
 Amended by
 [Dependency audits follow the diff](decisions/2026-10-31-dependency-audit-follows-the-diff.md).

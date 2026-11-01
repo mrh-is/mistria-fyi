@@ -40,6 +40,8 @@
     "src/lib/components/ui/*/index.ts": ["exports", "types"],
     // The script passes its own path to Vitest as a reporter, which loads this default export.
     "scripts/vitest-timings.ts": ["exports"],
+    // Ad-hoc Firefox verification scripts import `launchFirefox` from outside the repository (#287).
+    "scripts/lib/playwright-firefox.ts": ["exports"],
     // `page` is `$app/state`'s export name, so the stub exports one object under two names.
     "src/lib/test-utils/page-stub.svelte.ts": ["duplicates"],
   },

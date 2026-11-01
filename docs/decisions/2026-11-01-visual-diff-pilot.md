@@ -32,6 +32,11 @@ default-branch code in a separate workflow. This separates execution of PR code 
 can upload attachments & write comments. Preserve the existing accessibility & manual verification
 gates.
 
+The owner approved one exception to the repository’s `workflow_run` ban for
+`visual-diff-publish.yml`. The hardening test checks that this workflow executes only the trusted
+publisher script, checks out the default branch without saved credentials, & downloads artifacts
+outside the checkout. Every other workflow remains subject to the original trigger ban.
+
 ## Alternatives
 
 A blocking snapshot test would enforce an unproven comparison strategy. An artifact-only report

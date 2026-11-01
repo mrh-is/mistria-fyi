@@ -11,6 +11,14 @@ evidence:
   - scripts/nightly-report.ts
 relationships:
   - type: amended-by
+    target: 2026-11-01-visible-vitest-retries
+    scope: partial
+    portion: >-
+      Files with retried tests warn instead of failing timing limits, & the nightly report also
+      tracks every retry in recent main pushes, independently of timing sample counts.
+    evidence:
+      - https://github.com/mrh-is/mistria-fyi/issues/329
+  - type: amended-by
     target: 2026-10-31-dependency-audit-follows-the-diff
     scope: partial
     portion: >-

@@ -44,11 +44,12 @@ The capture workflow runs PR code with read-only repository access, no injected 
 persisted checkout credentials, & no saved dependency caches. Its workflow is separate from the
 required CI aggregate.
 
-The publisher uses `workflow_run`, checks out the default branch, & installs no PR dependencies. It
-downloads artifacts into runner temporary storage, then reads only known numeric metrics & six
-bounded PNG files. It never executes artifact scripts or publishes artifact Markdown. Both the
-workflow identity & the PR’s current head are checked before publication. Closed PRs & superseded
-commits receive no report.
+The owner approved a narrowly tested exception to the repository’s `workflow_run` ban for this
+publisher. The publisher checks out the default branch & installs no PR dependencies. It downloads
+artifacts into runner temporary storage, then reads only known numeric metrics & six bounded PNG
+files. It never executes artifact scripts or publishes artifact Markdown. Both the workflow identity
+& the PR’s current head are checked before publication. Closed PRs & superseded commits receive no
+report.
 
 GitHub CLI uploads the sheets directly into a PR comment. That operation needs push access, so only
 the trusted publisher receives contents-write & pull-request-write permissions. It preserves
@@ -88,10 +89,10 @@ The artifact contains Playwright’s JSON timings for each revision & preview bu
 cost can be separated from capture cost. It is retained for 14 days. Compare repeated runs before
 expanding routes or states; investigate any nonzero repeat noise first.
 
-The initial local smoke test captured all 16 states per revision. Head captures took 6.5 seconds
-using an existing build; baseline build & captures took 21.3 seconds. All eight base/head
-comparisons & all repeat comparisons were pixel-identical. These local measurements do not predict
-CI cost; record a real runner sample on the implementation PR before considering expansion.
+The initial local smoke test made all 16 captures per revision. Head captures took 6.5 seconds using
+an existing build; baseline build & captures took 21.3 seconds. All eight base/head comparisons &
+all repeat comparisons were pixel-identical. These local measurements do not predict CI cost; record
+a real runner sample on the implementation PR before considering expansion.
 
 The pilot covers only the initial viewport, English, Chromium, empty progress, & one expanded
 category. It cannot judge game artwork because sprites are synthetic. It does not cover
