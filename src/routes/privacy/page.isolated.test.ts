@@ -69,6 +69,19 @@ describe("privacy page sync sections", () => {
     ).toBe("https://www.cloudflare.com/turnstile-privacy-policy/");
   });
 
+  it("lists the feedback sync log & says it goes in the public issue", () => {
+    const { queries, text } = renderPage();
+
+    const item = queries
+      .getAllByRole("listitem")
+      .find((entry) => entry.textContent.includes("sync log"));
+    expect(item?.textContent).toContain("only if you opt in");
+    expect(item?.textContent).toContain("recent sync activity from this tab");
+    expect(item?.textContent).toContain("your character and farm names, your sync links");
+    expect(item?.textContent).toContain("your exact farm number");
+    expect(text).toContain("and your save file sync log (if you opted in)");
+  });
+
   it("leaves the page as it was when the switch is off", () => {
     syncSwitch.on = false;
     const { queries, text } = renderPage();
@@ -77,6 +90,8 @@ describe("privacy page sync sections", () => {
     expect(queries.queryByRole("heading", { name: "With sync" })).toBeNull();
     expect(queries.queryByRole("link", { name: "Turnstile Privacy Addendum" })).toBeNull();
     expect(text).not.toContain("end-to-end encrypted");
+    expect(text).not.toContain("sync log");
+    expect(text).toContain("and your progress data (if you opted in)");
     expect(queries.getByRole("heading", { level: 2, name: "The short version" })).toBeTruthy();
   });
 });
