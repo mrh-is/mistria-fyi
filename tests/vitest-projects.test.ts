@@ -65,34 +65,15 @@ function trackedTestFiles(): string[] {
 const byFile = (a: ListedFile, b: ListedFile) => a.file.localeCompare(b.file);
 
 describe("Vitest projects", () => {
-  const listing = {
-    files: [] as ListedFile[],
-    withoutCleanup: [] as ListedFile[],
-    withoutRelay: [] as ListedFile[],
-    withoutScripts: [] as ListedFile[],
-  };
+  const listing: { files: ListedFile[]; gated: ListedFile[] } = { files: [], gated: [] };
 
-  /** The files a gated listing drops, after checking it keeps every other file in its project. */
-  function skippedBy(gated: ListedFile[]): string[] {
-    const kept = new Set(gated.map(({ file }) => file));
-    expect(gated.toSorted(byFile)).toEqual(
-      listing.files.filter(({ file }) => kept.has(file)).toSorted(byFile),
-    );
-    return listing.files
-      .filter(({ file }) => !kept.has(file))
-      .map(({ file }) => file)
-      .toSorted();
-  }
-
-  // Each listing loads the full Vite config; running them together cuts the probe's wall time.
+  // Both listings load the full Vite config; running them together halves the probe's wall time.
+  // Each extra listing costs about 3 s on CI's two cores, so one listing covers every gate.
   beforeAll(async () => {
-    [listing.files, listing.withoutCleanup, listing.withoutRelay, listing.withoutScripts] =
-      await Promise.all([
-        listProjectFiles([]),
-        listProjectFiles(["VITEST_CLEANUP_CHANGED"]),
-        listProjectFiles(["VITEST_RELAY_CHANGED"]),
-        listProjectFiles(["VITEST_SCRIPTS_CHANGED"]),
-      ]);
+    [listing.files, listing.gated] = await Promise.all([
+      listProjectFiles([]),
+      listProjectFiles(gates),
+    ]);
   }, 60_000);
 
   it("run every tracked test file", () => {
@@ -100,28 +81,34 @@ describe("Vitest projects", () => {
     expect(trackedTestFiles().filter((file) => !listedFiles.has(file))).toEqual([]);
   });
 
-  it("excludes only cleanup when its script is unchanged", () => {
-    expect(skippedBy(listing.withoutCleanup)).toEqual(["scripts/cleanup-merged-worktrees.test.ts"]);
-  });
-
-  it("excludes only the relay tests when the relay is unchanged", () => {
-    const relayTests = trackedTestFiles().filter((file) => file.startsWith("relay/"));
-    expect(relayTests).toContain("relay/worker.test.ts");
-    expect(skippedBy(listing.withoutRelay)).toEqual(relayTests.toSorted());
-  });
-
   // These three load the browser suites' specs, fixtures, or app modules, which app & test changes
   // can break. Every other scripts/ test reads only scripts/, pipeline/, & the CI filter's inputs.
-  it("excludes every other scripts/ test when scripts/ is unchanged", () => {
+  it("exclude only the relay & other scripts/ tests when every gate is off", () => {
     const alwaysRun = [
       "scripts/playwright-allocation.test.ts",
       "scripts/playwright-satoshi.test.ts",
       "scripts/sprites/sprite-manifest.test.ts",
     ];
-    const scriptTests = trackedTestFiles().filter((file) => file.startsWith("scripts/"));
-    expect(scriptTests).toEqual(expect.arrayContaining(alwaysRun));
-    expect(skippedBy(listing.withoutScripts)).toEqual(
-      scriptTests.filter((file) => !alwaysRun.includes(file)).toSorted(),
+    const gatedTests = trackedTestFiles().filter(
+      (file) => file.startsWith("relay/") || file.startsWith("scripts/"),
+    );
+    expect(gatedTests).toEqual(
+      expect.arrayContaining([
+        ...alwaysRun,
+        "relay/worker.test.ts",
+        "scripts/cleanup-merged-worktrees.test.ts",
+      ]),
+    );
+    const kept = new Set(listing.gated.map(({ file }) => file));
+    expect(
+      listing.files
+        .filter(({ file }) => !kept.has(file))
+        .map(({ file }) => file)
+        .toSorted(),
+    ).toEqual(gatedTests.filter((file) => !alwaysRun.includes(file)).toSorted());
+    // Every file the gated listing keeps stays in its project.
+    expect(listing.gated.toSorted(byFile)).toEqual(
+      listing.files.filter(({ file }) => kept.has(file)).toSorted(byFile),
     );
   });
 
