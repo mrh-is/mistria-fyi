@@ -41,13 +41,17 @@ const unsafeTriggers = [
   "workflow_run",
 ];
 const secretReferences = /wrangler|pages deploy|sprites:upload|fonts:upload|CLOUDFLARE_|secrets\./;
+// The one exception (docs/decisions/2026-11-01-gate-production-on-ci.md): this exact line, once, in
+// CI. ci-workflow.isolated.test.ts holds its job to main pushes & the `production` environment.
+// oxlint-disable-next-line no-template-curly-in-string -- literal GitHub Actions expression text
+const productionDeployHook = "DEPLOY_HOOK_URL: ${{ secrets.PRODUCTION_DEPLOY_HOOK }}";
 
 describe("workflow hardening", () => {
   it("finds the workflows", () => {
     expect(files.length).toBeGreaterThan(0);
   });
 
-  describe.each(workflows)("$name", ({ source, workflow }) => {
+  describe.each(workflows)("$name", ({ name, source, workflow }) => {
     it("avoids triggers that give fork-controlled events a write token or secrets", () => {
       for (const trigger of triggers(workflow)) {
         expect(unsafeTriggers).not.toContain(trigger);
@@ -77,7 +81,8 @@ describe("workflow hardening", () => {
     });
 
     it("references no deploy credentials or repository secrets", () => {
-      expect(source).not.toMatch(secretReferences);
+      const checked = name === "ci.yml" ? source.replace(productionDeployHook, "") : source;
+      expect(checked).not.toMatch(secretReferences);
     });
   });
 });

@@ -549,3 +549,30 @@ jobs:
               *) exit 1 ;;
             esac
           done
+
+  # Production waits for the full suite on the merged commit. The hook builds main's tip, so a commit
+  # that's no longer the tip leaves the deployment to the newer commit's run. This is the only job
+  # that holds a secret, & the `production` environment releases it only to main. It checks out no
+  # code & uses no actions.
+  deploy-production:
+    name: Deploy production
+    if:
+      github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci-passed.result ==
+      'success'
+    needs: ci-passed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - env:
+          DEPLOY_HOOK_URL: ${{ secrets.PRODUCTION_DEPLOY_HOOK }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          : "${DEPLOY_HOOK_URL:?The production environment has no PRODUCTION_DEPLOY_HOOK secret}"
+          tip=$(gh api "repos/$REPOSITORY/commits/main" --jq .sha)
+          if [ "$tip" != "$GITHUB_SHA" ]; then
+            echo "main moved on to $tip, so that commit's run decides the deployment."
+            exit 0
+          fi
+          curl --fail --silent --show-error --max-time 30 --output /dev/null --request POST "$DEPLOY_HOOK_URL"

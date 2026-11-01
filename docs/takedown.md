@@ -93,10 +93,11 @@ require taking down the tracker, Pages project, or asset bucket.
 `src/lib/data/tracker-data.json` is bundled into every build; the site can’t run without it, so
 removing the dataset means taking the site down.
 
-1. **Take the site offline.** In Cloudflare Pages, pause automatic deployments, then roll back
-   production to a deployment that serves only a static notice, or remove the `mistria.fyi` custom
-   domain from the Pages project. Delete old preview deployments too, since each `*.pages.dev` URL
-   keeps serving its build.
+1. **Take the site offline.** In Cloudflare Pages, pause automatic deployments & delete the
+   production deploy hook, so that a later merge can’t redeploy. Then roll back production to a
+   deployment that serves only a static notice, or remove the `mistria.fyi` custom domain from the
+   Pages project. Delete old preview deployments too, since each `*.pages.dev` URL keeps serving its
+   build.
 2. **Remove it from the repository.** Delete the file on `main` and add it to `.gitignore`. Past
    commits still contain it, so continue with [Whole repository](#whole-repository) unless the
    request covers only the live site.
