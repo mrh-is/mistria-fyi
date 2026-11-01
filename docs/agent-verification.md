@@ -52,7 +52,8 @@ These CI steps aren’t in the local matrix:
   `pnpm-lock.yaml`, `pnpm-workspace.yaml`, or `.github/workflows/ci.yml` changes (manual dispatches
   always audit),
 - the budgeted test run, which is the complete asset-independent suite with per-file timing limits
-  (its cleanup test runs only when the cleanup script changes),
+  (its cleanup test runs only when the cleanup script changes, and pull requests skip the relay &
+  most `scripts/` tests unless they change those tests’ inputs),
 - the stale-translation check, which runs only on pull requests that touch `messages/`.
 
 The accessibility & PWA suites run against the build job’s output when `src/`, `static/`, `tests/`,
