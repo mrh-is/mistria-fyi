@@ -40,8 +40,9 @@ export function buildWeights(reports: TimedReport[], inventory: string[]): Alloc
     for (const spec of suite.specs ?? []) {
       for (const test of spec.tests) {
         const selector = `[${test.projectName}] › ${[spec.file, ...parents, spec.title].join(" › ")}`;
-        const passed = test.results.find((result) => result.status === "passed");
-        if (passed !== undefined) samples.get(selector)?.push(passed.duration);
+        // A retry records a trace, so only a first attempt that passed is a fair sample.
+        const [first] = test.results;
+        if (first?.status === "passed") samples.get(selector)?.push(first.duration);
       }
     }
     for (const child of suite.suites ?? []) visit(child, [...parents, child.title]);

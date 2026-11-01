@@ -92,8 +92,10 @@ pnpm exec tsx scripts/playwright-allocation-weights.ts <run-id> <run-id> <run-id
 The script keeps only tests that Playwright lists today, and it fails if one has no passing sample.
 
 Balanced weights don’t guarantee equal shards. Across 41 jobs measured on November 1, 2026, the same
-tests ran from 0.65 to 1.25 times their median duration depending on the job, so runner speed
-accounts for most of the gap between two shards.
+tests ran from 0.65 to 1.25 times their median duration depending on the job, and that spread
+appears to account for most of the gap between two shards. Its cause isn’t known. The refresh that
+day left a median gap of 10.5 s, down from 12.9 s over five runs each, so don’t expect one to close
+the gap ([#396](https://github.com/mrh-is/mistria-fyi/pull/396)).
 
 ### Initial local measurement
 
