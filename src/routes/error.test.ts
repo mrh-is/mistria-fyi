@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
-import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
 import ErrorPage from "./+error.svelte";
 
@@ -12,7 +12,7 @@ beforeEach(() => {
 
 describe("error page", () => {
   it("renders a friendly 404 page with a link home", () => {
-    const { queries, text } = renderToFragment(ErrorPage, { props: {} });
+    const { queries, text } = renderToFragmentWithFeedback(ErrorPage, { props: {} });
 
     expect(queries.getByText("404")).toBeTruthy();
     expect(text).toContain("This page doesn’t exist");
@@ -23,7 +23,7 @@ describe("error page", () => {
   it("renders the generic message for non-404 errors", () => {
     pageStub.status = 500;
 
-    const { queries, text } = renderToFragment(ErrorPage, { props: {} });
+    const { queries, text } = renderToFragmentWithFeedback(ErrorPage, { props: {} });
 
     expect(queries.getByText("500")).toBeTruthy();
     expect(text).toContain("Something went wrong.");
