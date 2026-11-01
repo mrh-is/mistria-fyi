@@ -9,6 +9,7 @@ import type { FollowKey, ReadResult, RelayClient } from "./follow.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const OLD_KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
+const OTHER_KEY = "BBECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
 const TOKEN = "__________________________________________8";
 
 function blob(local: Record<string, unknown>): string {
@@ -335,6 +336,27 @@ describe("following a code", () => {
     expect(await sharing.followCode(key)).toEqual({ kind: "empty" });
     expect(await sharing.followCode(key)).toEqual({ kind: "retired" });
     expect(userState.syncLane).toBeUndefined();
+    expect(userState.state.progress.renown).toBe(3);
+  });
+
+  it("switches codes only after an empty mailbox has a readable save", async () => {
+    const currentLane = { key: OTHER_KEY, kind: "following" } as const;
+    const save = savBytes({ player: { name: "Robin" } });
+    const read = vi
+      .fn<RelayClient["read"]>()
+      .mockResolvedValueOnce({ kind: "empty" })
+      .mockResolvedValue(await envelopeRead(key, save));
+    const { sharing, userState } = await load({ syncLane: currentLane }, relay({ read }));
+    const before = localStorage.getItem(PROGRESS_KEY);
+
+    expect(await sharing.switchCode(key)).toEqual({ kind: "empty" });
+    expect(userState.syncLane).toEqual(currentLane);
+    expect(userState.state.progress.renown).toBe(3);
+    expect(localStorage.getItem(PROGRESS_KEY)).toBe(before);
+
+    const switched = await sharing.switchCode(key);
+    expect(switched.kind).toBe("applied");
+    expect(userState.syncLane).toEqual({ key, kind: "following" });
     expect(userState.state.progress.renown).toBe(3);
   });
 
