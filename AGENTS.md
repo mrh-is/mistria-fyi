@@ -46,6 +46,16 @@ session limits) belong in each contributor’s user config.
 - Don’t start an issue that’s blocked by an open issue, or one labeled `status: blocked` or
   `status: needs decision`. If an issue already has `status: in progress` or an `agent:*` label,
   coordinate with its owner.
+- File an issue for anything you find & don’t fix in the current change, without asking first. Extra
+  issues are cheap to close; a problem mentioned only in a session is lost. This includes:
+  - a bug or stale doc you noticed in passing,
+  - a flaky test or CI failure you reran past,
+  - a review finding or follow-up you deferred.
+
+  Search the open issues first, and add your evidence to a match instead of filing a duplicate. Name
+  each issue you filed or updated in your final report. A suggested session or task card doesn’t
+  replace the issue.
+
 - Record a dependency on another issue as a “blocked by” relationship, not a label:
   `gh issue edit <number> --add-blocked-by <other>`. Keep `status: blocked` for blockers outside the
   tracker, such as time, hardware, or a third party, and name the blocker in a comment.
@@ -252,8 +262,8 @@ other way.
   changes, system packages, or a different browser or executable.
 - **Repository bugs count too.** A documented command that fails, or a doc that’s out of date,
   blocks you the same way. While you report it, search the open issues for it. Add your evidence to
-  an existing issue, or offer to file one with the symptom & a guess at the cause. The user decides
-  whether to work around it.
+  an existing issue, or file one with the symptom & a guess at the cause. The user decides whether
+  to work around it.
 
 ## Context economy
 

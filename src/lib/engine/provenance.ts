@@ -57,8 +57,18 @@ export type ResolutionRecord = Record<string, Resolution>;
 export interface ProgressHistory {
   /** The `playtime` of the last applied save, if any. */
   lastSavePlaytime?: number;
+  /**
+   * The last applied save's `playtime` couldn't be read, so `lastSavePlaytime` is only the ordering
+   * baseline: edits made since record no playtime.
+   */
+  lastSaveUnordered?: true;
   provenance: ProvenanceRecord;
   resolutions: ResolutionRecord;
+}
+
+/** The playtime an edit records: the last applied save's, or none if it couldn't be read. */
+export function editPlaytime(history: Readonly<ProgressHistory>): number | undefined {
+  return history.lastSaveUnordered ? undefined : history.lastSavePlaytime;
 }
 
 /**
