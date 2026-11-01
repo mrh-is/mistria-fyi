@@ -573,6 +573,14 @@ explicit public or private decision. Provenance retains only `source`, `obtained
 redacted `playtime` marker; resolutions retain only `saveValue`. Unknown keys from newer backups are
 excluded by both the client & API.
 
+Attachments have a 32 KiB compact-JSON budget, below the API’s unchanged 50 KiB input limit. Small
+farms retain the selected detail. Larger farms first replace per-fact provenance with counts by
+progress field & source, then replace the largest remaining collections with entry counts until they
+fit. Every replacement includes `summarized: true` & `count`; nothing disappears silently. The same
+projection prepares the preview, payload, & server result. The budget leaves room for the maximum
+message & sync log; unusually large UTF-8 messages can still require dropping older sync events
+under the existing, owner-approved fitting rule.
+
 As a defensive check, known-private matches inside IDs become `[redacted]`. The collector checks
 character & farm names from both `player` & `header`, the outgoing farm's names & number, & sync
 credentials. Names ignore case, accents, & separators; character-name words also count. Names

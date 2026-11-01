@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { progressAttachment } from "#lib/feedback/progress-attachment.js";
 import { installationTokens } from "#lib/server/github-app-auth.js";
 import { generateTestRsaKey } from "#lib/test-utils/rsa-test-key.js";
 
@@ -252,7 +253,41 @@ describe("POST /api/feedback", () => {
     });
   });
   describe("fitting GitHub's issue body limit", () => {
-    it("enforces the progress byte limit after redacting an older client's playtimes", async () => {
+    it("rejects unbounded selected-element extras before contacting GitHub", async () => {
+      const fetchMock = mockGitHubSuccess();
+      await expect(
+        callPost(
+          makeRequest({
+            ...validPayload,
+            selectedElement: {
+              category: "almanac-item",
+              displayName: "Turnip",
+              extra: { detail: "x".repeat(70_000) },
+              page: "/almanac",
+            },
+          }),
+          { fetchMock },
+        ),
+      ).rejects.toMatchObject({ status: 400 });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects a final oversized body even when an attachment has an unexpected scalar shape", async () => {
+      const fetchMock = mockGitHubSuccess();
+      await expect(
+        callPost(
+          makeRequest({
+            ...validPayload,
+            message: "漢".repeat(5000),
+            saveData: { almanac: "x".repeat(50 * 1024 - 32) },
+          }),
+          { fetchMock },
+        ),
+      ).rejects.toMatchObject({ status: 400 });
+      expect(countCalls(fetchMock, isIssue)).toBe(0);
+    });
+
+    it("summarizes an older client’s provenance when redaction would exceed the byte limit", async () => {
       const saveData = {
         provenance: Object.fromEntries(
           Array.from({ length: 1110 }, (_, i) => [
@@ -262,13 +297,34 @@ describe("POST /api/feedback", () => {
         ),
       };
       expect(bytes(JSON.stringify(saveData))).toBeLessThan(50 * 1024);
-      const fetchMock = mockGitHubSuccess();
-      await expect(
-        callPost(makeRequest({ ...validPayload, message: "m".repeat(4000), saveData }), {
-          fetchMock,
-        }),
-      ).rejects.toMatchObject({ body: { message: "Save data too large" }, status: 400 });
-      expect(fetchMock).not.toHaveBeenCalled();
+      const body = await fileIssue({ message: "m".repeat(5000), saveData });
+      expect(fenced(body, "<summary>Save data")).toEqual({
+        provenance: {
+          byField: { almanac: { save: 1110 } },
+          count: 1110,
+          summarized: true,
+        },
+      });
+    });
+
+    it("fits summarized progress, a maximum message, & a full sync log together", async () => {
+      const data = progressAttachment({
+        almanac: Array.from({ length: 5000 }, (_, i) => `long_game_item_identifier_${String(i)}`),
+        museum: Array.from({ length: 800 }, (_, i) => `museum_item_identifier_${String(i)}`),
+        provenance: Object.fromEntries(
+          Array.from({ length: 4000 }, (_, i) => [`almanac/${String(i)}`, { source: "save" }]),
+        ),
+      });
+      const log = longSyncLog(20);
+      for (const event of log.events) {
+        event.unknownFields[0].ids = event.unknownFields[0].ids.map((id) => id.padEnd(50, "x"));
+      }
+      expect(bytes(JSON.stringify(log))).toBeGreaterThan(23 * 1024);
+      expect(bytes(JSON.stringify(log))).toBeLessThanOrEqual(24 * 1024);
+      const body = await fileIssue({ message: "m".repeat(5000), saveData: data, syncLog: log });
+      expect(bytes(body)).toBeLessThanOrEqual(MAX_BODY_BYTES);
+      expect(fenced(body, "<summary>Save data")).toEqual(data);
+      expect(fenced(body, "<summary>Sync log")).toEqual(log);
     });
 
     it("redacts playtimes a tab on an older build still sends, & tolerates odd shapes", async () => {
@@ -304,17 +360,20 @@ describe("POST /api/feedback", () => {
       expect(bytes(body)).toBeLessThanOrEqual(MAX_BODY_BYTES);
       expect(body).not.toContain("left out");
       expect(fenced(body, "<summary>Sync log")).toEqual(log);
-      expect(fenced(body, "<summary>Save data")).toEqual(data);
+      expect(fenced(body, "<summary>Save data")).toEqual(progressAttachment(data));
     });
 
     it("gives up the oldest events when compacting isn't enough", async () => {
       const log = longSyncLog(20);
-      const data = filledSaveData(49_000);
-      expect(bytes(JSON.stringify(data)) + bytes(JSON.stringify(log))).toBeGreaterThan(
-        MAX_BODY_BYTES,
-      );
+      for (const event of log.events) {
+        event.unknownFields[0].ids = event.unknownFields[0].ids.map((id) => id.padEnd(50, "x"));
+      }
+      const data = filledSaveData(32_000);
+      expect(
+        bytes(JSON.stringify(data)) + bytes(JSON.stringify(log)) + bytes("漢".repeat(5000)),
+      ).toBeGreaterThan(MAX_BODY_BYTES);
       const body = await fileIssue({
-        message: "m".repeat(4000),
+        message: "漢".repeat(5000),
         saveData: data,
         syncLog: log,
       });
@@ -324,7 +383,7 @@ describe("POST /api/feedback", () => {
       expect(omitted).toBeGreaterThan(0);
       expect(kept.events).toEqual(log.events.slice(omitted));
       expect(body).toContain(`Older events left out to fit the issue: ${String(omitted)}`);
-      expect(fenced(body, "<summary>Save data")).toEqual(data);
+      expect(fenced(body, "<summary>Save data")).toEqual(progressAttachment(data));
     });
   });
 

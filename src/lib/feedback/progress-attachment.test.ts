@@ -3,6 +3,32 @@ import { describe, expect, it } from "vitest";
 import { progressAttachment } from "./progress-attachment.js";
 
 describe("feedback progress redaction", () => {
+  it("summarizes a large farm, marks replaced fields, & projects the same summary again", () => {
+    const progress = {
+      almanac: Array.from({ length: 4000 }, (_, i) => `long_game_item_identifier_${String(i)}`),
+      provenance: Object.fromEntries(
+        Array.from({ length: 4000 }, (_, i) => [
+          `almanac/long_game_item_identifier_${String(i)}`,
+          { playtime: 42, source: "save" },
+        ]),
+      ),
+      renown: 7,
+    };
+    const attachment = progressAttachment(progress);
+    expect(new TextEncoder().encode(JSON.stringify(attachment)).byteLength).toBeLessThanOrEqual(
+      32 * 1024,
+    );
+    expect(attachment.provenance).toMatchObject({
+      byField: { almanac: { save: 4000 } },
+      count: 4000,
+      summarized: true,
+    });
+    expect(attachment.almanac).toEqual({ count: 4000, summarized: true });
+    expect(attachment.renown).toBe(7);
+    expect(progressAttachment(attachment)).toEqual(attachment);
+    expect(progress.almanac).toHaveLength(4000);
+  });
+
   it("drops unclassified top-level and history fields", () => {
     expect(
       progressAttachment({

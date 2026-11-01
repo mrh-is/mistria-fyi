@@ -134,6 +134,41 @@ describe("FeedbackPanel", () => {
     }
   });
 
+  it("shows the same marked summary it submits for a large farm", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(userState, "exportBackup").mockReturnValue(
+      JSON.stringify({
+        progress: {
+          almanac: Array.from({ length: 5000 }, (_, i) => `long_game_item_identifier_${String(i)}`),
+          provenance: Object.fromEntries(
+            Array.from({ length: 4000 }, (_, i) => [
+              `almanac/${String(i)}`,
+              { playtime: 42, source: "save" },
+            ]),
+          ),
+        },
+      }),
+    );
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
+    const preview = JSON.parse(document.querySelector("pre")?.textContent ?? "") as unknown;
+    expect(preview).toHaveProperty("almanac", { count: 5000, summarized: true });
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "A report" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toHaveProperty(
+      "saveData",
+      preview,
+    );
+  });
+
   it.each([true, false])("omits sync diagnostics unless chosen (switch %s)", async (on) => {
     syncSwitch.syncSwitchOn = on;
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));

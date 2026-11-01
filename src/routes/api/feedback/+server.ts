@@ -387,7 +387,9 @@ function validateSelectedElement(value: unknown): ReportTarget | undefined {
     }
     if (
       entries.some(
-        ([, extraValue]) =>
+        ([key, extraValue]) =>
+          key.length > MAX_ELEMENT_STRING_LENGTH ||
+          (typeof extraValue === "string" && extraValue.length > MAX_ELEMENT_STRING_LENGTH) ||
           (typeof extraValue !== "string" && typeof extraValue !== "number") ||
           (typeof extraValue === "number" && !Number.isFinite(extraValue)),
       )
@@ -503,6 +505,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
   const title = deriveTitle(payload);
   const body = buildIssueBody(payload);
+  if (!fitsIssueBody(body)) httpError(400, "Feedback too large");
 
   let issueUrl: string;
   let issueNumber: number;

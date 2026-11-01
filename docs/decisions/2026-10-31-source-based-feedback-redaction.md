@@ -42,24 +42,29 @@ The progress projection selects supported keys explicitly, with a compile-time c
 against `ProgressState`. Provenance entries keep only `source`, `obtainedSource`, & redacted
 `playtime`; resolutions keep only `saveValue`. A newer build’s unknown fields remain private.
 
-| Source                                                                                 | Public treatment                                                                                                          |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Build identifier, numeric `info.version`, protocol version                             | Keep the selected version values. Do not copy the whole metadata object.                                                  |
-| App lane, outcome, field, policy, & counts                                             | Keep the app's enums & aggregate counts. Exclude fact values & question IDs.                                              |
-| Game unlock lists, museum item IDs, animal type/variant keys, & quest IDs              | Keep unknown IDs within the log's shape & size limits. Known-private matches become `[redacted]`.                         |
-| Character & farm names from `player` & `header`, plus the outgoing farm's names        | Use only as private comparison inputs. Never add name fields to the log.                                                  |
-| Child, pet, & other player-entered names elsewhere in the save                         | Exclude their source objects; their text is not an unknown-ID source.                                                     |
-| Incoming & outgoing farm numbers, follow keys, write tokens, & mailbox IDs             | Redact matches inside IDs. Exclude raw identifiers & credentials as fields.                                               |
-| Incoming farm number used to correlate events                                          | Keep only its SHA-256 hash with a random, unexported tab-session salt.                                                    |
-| Filename, device path, file hash, timestamps, raw saves, & raw diagnostic paths/values | Exclude these containers & values from the log.                                                                           |
-| Progress `lastSavePlaytime` & each provenance entry's `playtime`                       | Preserve the field with `[redacted]` in both preview & attachment. The API redacts these source keys too.                 |
-| Other supported progress fields, including retained unknown game IDs                   | Select only explicitly classified progress keys. Exclude unknown keys, local state, save identity, & farm-switch backups. |
+| Source                                                                                 | Public treatment                                                                                                            |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Build identifier, numeric `info.version`, protocol version                             | Keep the selected version values. Do not copy the whole metadata object.                                                    |
+| App lane, outcome, field, policy, & counts                                             | Keep the app's enums & aggregate counts. Exclude fact values & question IDs.                                                |
+| Game unlock lists, museum item IDs, animal type/variant keys, & quest IDs              | Keep unknown IDs within the log's shape & size limits. Known-private matches become `[redacted]`.                           |
+| Character & farm names from `player` & `header`, plus the outgoing farm's names        | Use only as private comparison inputs. Never add name fields to the log.                                                    |
+| Child, pet, & other player-entered names elsewhere in the save                         | Exclude their source objects; their text is not an unknown-ID source.                                                       |
+| Incoming & outgoing farm numbers, follow keys, write tokens, & mailbox IDs             | Redact matches inside IDs. Exclude raw identifiers & credentials as fields.                                                 |
+| Incoming farm number used to correlate events                                          | Keep only its SHA-256 hash with a random, unexported tab-session salt.                                                      |
+| Filename, device path, file hash, timestamps, raw saves, & raw diagnostic paths/values | Exclude these containers & values from the log.                                                                             |
+| Progress `lastSavePlaytime` & each provenance entry's `playtime`                       | Preserve detailed fields with `[redacted]`. Oversized provenance becomes counts by field & source, without playtime values. |
+| Other supported progress fields, including retained unknown game IDs                   | Select only explicitly classified progress keys. Exclude unknown keys, local state, save identity, & farm-switch backups.   |
 
 Use `[redacted]` when it explains that a diagnostic slot had a value deliberately withheld. Omit raw
 private containers altogether; do not add otherwise-unused private fields merely to show a marker.
 Exact playtime values remain excluded from feedback, as the owner previously decided; the marker
 preserves their presence without publishing the values. This changes only feedback, not backups,
 stored progress, or sync's use of playtime.
+
+Large progress attachments use the
+[bounded summary projection](2026-10-31-bounded-feedback-progress.md). The preview, submission, &
+API share its 32 KiB budget. Summaries are explicit, retain only selected counts, & never introduce
+a new private source.
 
 Redaction can enlarge short values. Enforce the attachment byte limit after projecting progress from
 older clients, & enforce the event byte limit after every buffered-ID recheck as well as after
