@@ -22,6 +22,7 @@
   import { deLocalizeHref } from "#lib/paraglide/runtime.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { syncEnabled } from "#lib/sync/enabled.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
   import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
@@ -43,13 +44,22 @@
   let toolbarAccent = $derived(metadata.accent);
 
   let syncing = $derived(syncEnabled && userState.syncLane !== undefined);
-  let syncSpeaksUp = $derived(syncReceiver.needsALook || syncReceiver.gapDays !== undefined);
+  let syncSpeaksUp = $derived(
+    syncReceiver.needsALook || syncReceiver.gapDays !== undefined || syncCourier.speaksUp,
+  );
   let syncStatusLabel = $derived.by(() => {
-    if (syncReceiver.status.kind === "unreadable") return m.sync_status_unreadable();
-    if (syncReceiver.needsALook) return m.sync_status_look();
+    const { trouble, upload } = syncCourier.status;
+    if (syncReceiver.status.kind === "unreadable" || trouble === "unreadable") {
+      return m.sync_status_unreadable();
+    }
+    if (syncReceiver.needsALook || trouble === "moved" || trouble === "reallow") {
+      return m.sync_status_look();
+    }
     if (syncReceiver.gapDays !== undefined) return m.sync_status_late();
-    if (syncReceiver.status.kind === "paused") return m.sync_status_paused();
-    if (syncReceiver.status.kind === "unreachable") return m.sync_status_offline();
+    if (syncReceiver.status.kind === "paused" || upload === "paused") return m.sync_status_paused();
+    if (syncReceiver.status.kind === "unreachable" || upload === "unreachable") {
+      return m.sync_status_offline();
+    }
     return m.sync_status_up_to_date();
   });
 

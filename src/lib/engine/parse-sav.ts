@@ -88,6 +88,62 @@ export async function parseSavArchive(
   return bundle;
 }
 
+/** The sections no importer reads, which sync leaves behind (`docs/sync.md` § The courier). */
+const PRUNED_SECTIONS: ReadonlySet<string> = new Set(["date_photos", "farm", "game_stats"]);
+
+/**
+ * A save without {@link PRUNED_SECTIONS}, in the save's own container format, so every reader reuses
+ * {@link parseSavArchive}. The other entries stay byte for byte in their original order. Throws
+ * {@link SavArchiveError} when `file` isn't a save: it can't be walked, or holds no progress section.
+ */
+export async function pruneSavArchive(
+  file: Blob,
+  limits: ParseSavLimits = DEFAULT_LIMITS,
+): Promise<Uint8Array<ArrayBuffer>> {
+  if (file.size > limits.maxCompressedSize) {
+    throw new SavArchiveError(
+      { code: "too-large", maxBytes: limits.maxCompressedSize, sizeBytes: file.size },
+      `Save file is too large (${formatSize(file.size)}).`,
+    );
+  }
+  let decompressed: Uint8Array;
+  try {
+    decompressed = await decompress(await file.arrayBuffer(), limits.maxDecompressedSize);
+  } catch (error) {
+    if (error instanceof SavArchiveError) throw error;
+    throw corrupt("Save file is not valid compressed data", { cause: error });
+  }
+  const entries = [...savEntries(decompressed)];
+  if (!entries.some(({ name }) => isProgressSection(name))) {
+    throw new SavArchiveError(
+      { code: "no-save-data" },
+      "No recognized save data found in this .sav file.",
+    );
+  }
+  const kept = entries.filter(({ name }) => !PRUNED_SECTIONS.has(name));
+  const length = kept.reduce(
+    (total, { data, nameBytes }) => total + 16 + nameBytes.length + data.length,
+    8,
+  );
+  const pruned = new Uint8Array(length);
+  const view = new DataView(pruned.buffer);
+  const setU64 = (at: number, value: number): void => {
+    view.setBigUint64(at, BigInt(value), true);
+  };
+  setU64(0, kept.length);
+  let offset = 8;
+  for (const { data, nameBytes } of kept) {
+    setU64(offset, nameBytes.length);
+    pruned.set(nameBytes, offset + 8);
+    offset += 8 + nameBytes.length;
+    setU64(offset, data.length);
+    pruned.set(data, offset + 8);
+    offset += 8 + data.length;
+  }
+  const compressed = new Blob([pruned]).stream().pipeThrough(new CompressionStream("deflate"));
+  return new Uint8Array(await new Response(compressed).arrayBuffer());
+}
+
 function corrupt(message: string, options?: ErrorOptions): SavArchiveError {
   return new SavArchiveError({ code: "corrupt" }, message, options);
 }
@@ -140,7 +196,19 @@ async function decompress(
   return result;
 }
 
-function extractBundle(data: Uint8Array): SaveBundle {
+/** One entry of the container, with its bytes unread. */
+interface SavEntry {
+  data: Uint8Array;
+  name: string;
+  nameBytes: Uint8Array;
+}
+
+/**
+ * Walks the container's entries in order, throwing on anything that isn't one.
+ *
+ * @yields {SavEntry} Each entry in the file's order.
+ */
+function* savEntries(data: Uint8Array): Generator<SavEntry> {
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const decoder = new TextDecoder();
 
@@ -150,7 +218,6 @@ function extractBundle(data: Uint8Array): SaveBundle {
   if (entryCount > 10_000) throw corrupt("Not a valid .sav file: implausible entry count");
 
   let offset = 8;
-  const bundle: SaveBundle = {};
 
   for (let i = 0; i < entryCount; i++) {
     if (offset + 8 > data.length) {
@@ -164,7 +231,7 @@ function extractBundle(data: Uint8Array): SaveBundle {
       throw corrupt("Not a valid .sav file: invalid entry name length");
     }
 
-    const name = decoder.decode(data.subarray(offset, offset + nameLen));
+    const nameBytes = data.subarray(offset, offset + nameLen);
     offset += nameLen;
 
     if (offset + 8 > data.length) {
@@ -178,13 +245,27 @@ function extractBundle(data: Uint8Array): SaveBundle {
       throw corrupt("Unexpected end of .sav file: entry data extends past end");
     }
 
+    yield {
+      data: data.subarray(offset, offset + dataLen),
+      name: decoder.decode(nameBytes),
+      nameBytes,
+    };
+    offset += dataLen;
+  }
+}
+
+function extractBundle(data: Uint8Array): SaveBundle {
+  const decoder = new TextDecoder();
+  const bundle: SaveBundle = {};
+
+  for (const { data: entry, name } of savEntries(data)) {
     if (isIdentitySection(name)) {
       // Identity sections only label the save, so an unreadable one never blocks the import:
       // it's left out, and extraction reports its fields absent.
-      const parsed = tryParseJson(decoder.decode(data.subarray(offset, offset + dataLen)));
+      const parsed = tryParseJson(decoder.decode(entry));
       if (isSaveSection(parsed)) bundle[name] = parsed;
     } else if (isProgressSection(name)) {
-      const jsonStr = decoder.decode(data.subarray(offset, offset + dataLen));
+      const jsonStr = decoder.decode(entry);
       let parsed: unknown;
       try {
         parsed = JSON.parse(jsonStr);
@@ -203,8 +284,6 @@ function extractBundle(data: Uint8Array): SaveBundle {
       }
       bundle[name] = parsed;
     }
-
-    offset += dataLen;
   }
 
   if (!hasProgressSection(bundle)) {

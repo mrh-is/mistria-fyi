@@ -10,9 +10,9 @@ the issues that build it, & the reasons behind the main forks are in
 [the follow-the-save record](decisions/2026-10-28-sync-follow-the-save.md). The setup journey,
 screens, & copy are in [sync-setup.md](sync-setup.md).
 
-Status: designed, not built. Following replaced the earlier pairing design (#251) on 2026-10-28.
-Treat each choice as decided; reopen one only with a concrete failure sequence, & record the outcome
-in a decision record.
+Status: partly built, hidden behind the sync switch. Following replaced the earlier pairing design
+(#251) on 2026-10-28. Treat each choice as decided; reopen one only with a concrete failure
+sequence, & record the outcome in a decision record.
 
 ## Why sync
 
@@ -102,15 +102,17 @@ importer reads is present in both, with early progress as empty lists.
 
 ## The courier
 
-Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
+Built in #134: `src/lib/sync/courier.ts`, with its page state in `courier-state.svelte.ts`, its
+sources in `save-source.ts`, & pruning in `pruneSavArchive` (`src/lib/engine/parse-sav.ts`).
 
-- **Watching.** A dropped or pasted `.sav` stores its file handle. The game replaces its save rather
-  than rewriting it (see [What the probe found](#what-the-probe-found)), so an `appeared` record for
-  the watched file counts as a change, like `modified`. Bursts of records are coalesced into one
-  read, & an `unknown` record triggers a recheck. A `disappeared` record changes nothing by itself:
-  the courier keeps its observer & waits for the file to come back under its name. An `errored`
-  record ends that observer for good, so the courier starts a new one at the next successful read.
-  The held handle read the replacement directly in the probe, so nothing re-resolves it.
+- **Watching.** A dropped or pasted `.sav` stores its file handle, in IndexedDB, once “Yep!” starts
+  the lane. The game replaces its save rather than rewriting it (see
+  [What the probe found](#what-the-probe-found)), so an `appeared` record for the watched file
+  counts as a change, like `modified`. Bursts of records are coalesced into one read, & an `unknown`
+  record triggers a recheck. A `disappeared` record changes nothing by itself: the courier keeps its
+  observer & waits for the file to come back under its name. An `errored` record ends that observer
+  for good, so the courier starts a new one at the next successful read. The held handle read the
+  replacement directly in the probe, so nothing re-resolves it.
 - **The backstop poll.** While watching, the courier checks the file once a minute & reads it when
   its size or modification time differs from the last successful read. That catches what an observer
   misses, including the gap after `errored`. A read’s hash, not its metadata, decides whether the
@@ -134,7 +136,19 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 - **Envelope.** The file name, modification time, & `playtime` travel inside the ciphertext, never
   beside it. The protocol version & a counter travel beside it as authenticated data with the
   mailbox ID (see [The follow link](#the-follow-link)), so the relay can order uploads. The counter
-  rises with each upload & never resets, even across new codes.
+  rises with each upload & never resets, even across new codes. It lives with the last upload's hash
+  under its own storage key (`mistria-fyi:sync-uploads`), so a blocked store can't hold an upload
+  back & no erase or stop resets it. That key also copies the shared code while the lane can be
+  read: a page that loads quarantined or from a newer build can’t show its lane, so it uploads with
+  the copy, applying nothing & showing no sync surfaces. A lane that ends removes the copy. A page
+  like that can’t ask for read access again, since it shows no surfaces, so if the browser’s grant
+  didn’t survive, uploads wait until the store is sorted out. Each counter is stored before it's
+  used, & a retry resends the same bytes under it. A mailbox already past the counter means the
+  stored one was lost; the courier jumps to the clock's reading & seals again. Before an upload, the
+  courier clears the ledger's optional confirmed hash & mailbox ID. A successful answer confirms the
+  new save; a definite rejection restores the previous confirmation. A lost answer leaves it
+  unconfirmed, so the next visit sends the current file even if the mailbox holds an envelope. This
+  uses the same ledger format & keeps the reserved counter & shared code.
 - **Sharing starts with the code.** The first “Show code” or “Copy link” creates the link’s mailbox,
   & the code appears only once creation succeeds, so nobody can hold a code whose mailbox someone
   else could claim. A create on an ID that already exists under the same token counts as success,
@@ -154,10 +168,15 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
   receiver path as a follower (see [Followers](#followers)) but without the relay, skipping a save
   whose hash matches its receipt. Check-offs on the PC stay on the PC, like any device’s.
 - **One courier per profile.** Web Locks allow a single courier per browser profile; a second window
-  says “Your save file is already syncing in another window”.
-- **Errors.** A parse failure after a game update shows an error on the PC.
+  says “Your save file is already syncing in another window” & takes over when the first one goes. A
+  save file dropped into the second window takes the lead from the first. An upload being prepared
+  when leadership ends is discarded before it can reserve another counter or reach the relay; an
+  encryption already underway also checks ownership before sending.
+- **Errors.** A parse failure after a game update shows an error on the PC. A save the tracker can't
+  read but the courier can prune still uploads, for a newer build or a follower to read.
 - **App updates.** A waiting update reloads the courier at its own safe moment, for example right
-  after an upload (see [App updates](#app-updates)).
+  after an upload: each read, apply, & upload attempt holds the reload off, & waiting to retry
+  doesn't (see [App updates](#app-updates)).
 - **Firefox** gives no handles, so the save is dropped or picked again each session; each one
   uploads & applies like a watched change. Its file input opens the save folder from a typed path &
   picks the live autosave, so Firefox needs no Desktop copy. A held `File` keeps its old size &
