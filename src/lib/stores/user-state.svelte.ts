@@ -17,6 +17,7 @@ import {
 import {
   changedFacts,
   confirmedBySave,
+  editPlaytime,
   factKey,
   holdsGuess,
   obtainedSourceOf,
@@ -435,7 +436,7 @@ function createUserState() {
    * Runs `mutate` & records provenance for every fact it changed, ticks & unticks alike. A manual
    * change that names its `primary` facts records the rest (an engagement cascade, a quest's recipe
    * rewards) as `inferred`. Each record carries `stamp`'s playtime, by default the last applied
-   * save's. Nested calls record nothing themselves; the outermost call does.
+   * save's, or none if that save's couldn't be read. Nested calls record nothing themselves; the outermost call does.
    */
   function track<T>(
     source: ProvenanceSource,
@@ -444,7 +445,7 @@ function createUserState() {
     stamp?: { playtime: number | undefined },
   ): T {
     if (trackingSource !== undefined) return mutate();
-    const { playtime } = stamp ?? { playtime: history.lastSavePlaytime };
+    const { playtime } = stamp ?? { playtime: editPlaytime(history) };
     const before = progressFacts(state.progress);
     trackingSource = source;
     let result: T;
@@ -1185,10 +1186,14 @@ function createUserState() {
         source = "save",
       }: { metadata?: SaveImportMetadata; playtime?: number; source?: "save" | "unknown" } = {},
     ): MergeResult {
-      if (source === "save" && playtime !== undefined) history.lastSavePlaytime = playtime;
+      if (source === "save" && playtime === undefined) history.lastSaveUnordered = true;
+      if (source === "save" && playtime !== undefined) {
+        history.lastSavePlaytime = playtime;
+        delete history.lastSaveUnordered;
+      }
       // A save's facts carry its own playtime, none if it couldn't be read; a transfer's carry the
       // last applied save's, like an edit.
-      const stamp = { playtime: source === "save" ? playtime : history.lastSavePlaytime };
+      const stamp = { playtime: source === "save" ? playtime : editPlaytime(history) };
       const result = track(source, () => mergeProgress(state.progress, imported), [], stamp);
       if (source === "save") {
         const saveFacts = progressFacts({ ...createDefaultProgress(), ...imported });
@@ -1713,6 +1718,10 @@ function rebaseHistory(
   if (before.lastSavePlaytime !== after.lastSavePlaytime) {
     if (after.lastSavePlaytime === undefined) delete target.lastSavePlaytime;
     else target.lastSavePlaytime = after.lastSavePlaytime;
+  }
+  if (before.lastSaveUnordered !== after.lastSaveUnordered) {
+    if (after.lastSaveUnordered === undefined) delete target.lastSaveUnordered;
+    else target.lastSaveUnordered = after.lastSaveUnordered;
   }
 }
 
