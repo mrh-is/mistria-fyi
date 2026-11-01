@@ -280,6 +280,16 @@ describe("the relay client", () => {
     expect(await relay.retire("id", "token")).toEqual({ kind: "retired" });
     expect(await relay.retire("id", "token")).toEqual({ kind: "unreachable" });
   });
+
+  it.each([401, 403, 404])(
+    "counts a %i retire as refused, which retrying can't change",
+    async (status) => {
+      const relay = createRelayClient("https://relay.test", () =>
+        Promise.resolve(new Response(null, { status })),
+      );
+      expect(await relay.retire("id", "token")).toEqual({ kind: "refused" });
+    },
+  );
 });
 
 describe("sharing a code", () => {
@@ -366,14 +376,17 @@ describe("opening a code", () => {
 });
 
 describe("retiring", () => {
-  it("keeps a retire the relay hasn't confirmed", async () => {
+  it("reports each retire's result in order", async () => {
     const first = await pendingRetireFor({ key: KEY_0_TO_31, token: "a" });
     const second = await pendingRetireFor({ key: KEY_ALL_FF, token: "b" });
     const retire = vi
       .fn<RelayClient["retire"]>()
       .mockResolvedValueOnce({ kind: "unreachable" })
       .mockResolvedValueOnce({ kind: "retired" });
-    expect(await retirePending(relayStub({ retire }), [first, second])).toEqual([second]);
+    expect(await retirePending(relayStub({ retire }), [first, second])).toEqual([
+      { kind: "unreachable" },
+      { kind: "retired" },
+    ]);
     expect(first).toEqual({ mailboxId: "Um4iPaITziwZ-9gBeM0c6g", token: "a" });
   });
 });

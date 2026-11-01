@@ -149,8 +149,7 @@ describe("stopping", () => {
     expect(userState.syncPendingRetires).toEqual([]);
 
     // Nothing pending, so nothing more is scheduled.
-    await vi.advanceTimersByTimeAsync(10 * 60_000);
-    expect(retire).toHaveBeenCalledTimes(2);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("backs off between failed retires & tries again on coming back online", async () => {
@@ -174,6 +173,103 @@ describe("stopping", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(retire).toHaveBeenCalledTimes(calls + 3);
     expect(userState.syncPendingRetires).toEqual([]);
+    stop();
+  });
+
+  it("keeps retrying after a retire throws or its confirmation can't be stored", async () => {
+    vi.useFakeTimers();
+    const retire = vi
+      .fn<RelayClient["retire"]>()
+      .mockResolvedValueOnce({ kind: "unreachable" })
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockResolvedValue({ kind: "retired" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    await sharing.stopSyncing();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(retire).toHaveBeenCalledTimes(2);
+
+    const confirm = vi.spyOn(userState, "confirmRetired").mockResolvedValueOnce(false);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(retire).toHaveBeenCalledTimes(3);
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(userState.syncPendingRetires).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(retire).toHaveBeenCalledTimes(4);
+    expect(userState.syncPendingRetires).toEqual([]);
+  });
+
+  it("waits as long as the relay asks before retrying a rate-limited retire", async () => {
+    vi.useFakeTimers();
+    const retire = vi
+      .fn<RelayClient["retire"]>()
+      .mockResolvedValueOnce({ kind: "rate-limited", retryAfterSeconds: 60 })
+      .mockResolvedValue({ kind: "retired" });
+    const { sharing } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    await sharing.stopSyncing();
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(retire).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(retire).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops retrying a retire the relay refused, until the next visit", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>().mockResolvedValue({ kind: "refused" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    await sharing.stopSyncing();
+    expect(userState.syncPendingRetires).toHaveLength(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("schedules nothing once stopped, even from an attempt already under way", async () => {
+    vi.useFakeTimers();
+    const answer = Promise.withResolvers<{ kind: "unreachable" }>();
+    const retire = vi.fn<RelayClient["retire"]>().mockResolvedValueOnce({ kind: "unreachable" });
+    retire.mockReturnValueOnce(answer.promise);
+    const { sharing } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    await sharing.stopSyncing();
+    const stop = sharing.keepRetiring();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(retire).toHaveBeenCalledTimes(2);
+    stop();
+    answer.resolve({ kind: "unreachable" });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("tries a retire another tab queued, in case that tab closes first", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>().mockResolvedValue({ kind: "unreachable" });
+    const { sharing } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    const stop = sharing.keepRetiring();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(retire).not.toHaveBeenCalled();
+
+    // The other tab stopped syncing & queued the old code's retire.
+    const stored = JSON.parse(localStorage.getItem(PROGRESS_KEY) ?? "{}") as {
+      local: Record<string, unknown>;
+    };
+    const { syncLane: _lane, ...local } = stored.local;
+    const queued = {
+      ...stored,
+      local: {
+        ...local,
+        syncPendingRetires: [{ mailboxId: await mailboxIdFor(OLD_KEY as FollowKey), token: TOKEN }],
+      },
+    };
+    const newValue = JSON.stringify(queued);
+    localStorage.setItem(PROGRESS_KEY, newValue);
+    globalThis.dispatchEvent(new StorageEvent("storage", { key: PROGRESS_KEY, newValue }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(retire).toHaveBeenCalledTimes(1);
+
+    // Its own backoff keeps going from here, & the same retire doesn't wake it again.
+    globalThis.dispatchEvent(new StorageEvent("storage", { key: PROGRESS_KEY, newValue }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(retire).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(retire).toHaveBeenCalledTimes(2);
     stop();
   });
 

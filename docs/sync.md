@@ -228,10 +228,11 @@ One Durable Object per mailbox ID.
   created again. “Make a new code” creates & shows the new code first & retires the old one after;
   if creation fails, the old code keeps working & the PC says so (`sync_new_code_failed`). A retire
   the relay hasn’t confirmed stays pending in `local` (the mailbox ID & token) & retries like an
-  upload: with backoff (five seconds, doubling to five minutes) & on coming back online, for as long
-  as any page is open, in any lane. “Stop syncing” or an erase queues one too. Every follower holds
-  the sealing key, so a follower that could recreate a retired ID with its own token could write
-  saves to the others.
+  upload: with backoff (five seconds, doubling to five minutes, or longer if the relay asks), on
+  coming back online, & in every open tab once any tab queues it, in any lane. A `401`, `403`, or
+  `404` can’t change on retry, so a retire the relay refuses waits for the next visit instead. “Stop
+  syncing” or an erase queues one too. Every follower holds the sealing key, so a follower that
+  could recreate a retired ID with its own token could write saves to the others.
 - **Nothing else.** No confirmations or delivery states; the high-water counter is the relay’s only
   ordering. A follower that misses a save loses nothing, since the next one is a full snapshot.
 
