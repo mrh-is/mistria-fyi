@@ -42,8 +42,7 @@ The gaming PC with Chrome 156, Edge 156, & Firefox 159, & an iPhone on iOS 18.7,
 - **The “every visit” grant survives a browser restart.** In a tab, a handle granted with “Allow on
   every visit” read on load with no prompt after Chrome quit completely, & likewise in Edge; no
   browser process was left running either time. In the installed app, Chrome & Edge both read the
-  handle on load with no prompt after the app was relaunched, but nobody checked that the browser
-  had fully quit before those relaunches.
+  handle on load with no prompt after the browser quit completely & the app was relaunched.
 - **The installed app needed no prompt.** After the site’s permissions were reset & the handle
   forgotten, a save dropped into the newly installed app read as `granted` when the app reopened, in
   both Chrome & Edge, where `prompt` was expected. The probe can’t tell whether the reset left the
