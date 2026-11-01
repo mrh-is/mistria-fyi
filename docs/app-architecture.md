@@ -519,7 +519,13 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
 
 ## 8. Feedback credentials
 
-`/api/feedback` files issues on `mrh-is/mistria-fyi` as a GitHub App installation.
+`/api/feedback` files issues on `mrh-is/mistria-fyi` as a GitHub App installation. The generic error
+page opens this same feedback form with an editable draft containing only the friendly message
+already displayed. It never copies raw errors, stack traces, or URLs. Opening or closing the form
+sends no report; the user must explicitly submit it. Progress & contact details remain opt-in, and
+error reports do not offer the separate sync-log attachment. The form warns that the message becomes
+a public GitHub issue.
+
 `src/lib/server/github-app-auth.ts` signs a nine-minute RS256 App JWT with Web Crypto, exchanges it
 at `POST /app/installations/{id}/access_tokens`, & caches the installation token per isolate until
 five minutes before its `expires_at`. Each exchange asks for only `issues: write` on `mistria-fyi`,
