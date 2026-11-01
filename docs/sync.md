@@ -29,18 +29,61 @@ A Windows laptop with Chrome 155 & Edge, on 2026-10-16:
 - The folder picker, the file picker, & dragging the folder are all refused with “can’t open this
   folder because it contains system files”. Chromium blocks everything under `%LOCALAPPDATA%`.
 - Dragging one `.sav` onto the page works & yields a real file handle. The handle survived the game
-  rewriting the file in place, & `FileSystemObserver` exists, so no polling is needed.
+  saving, & `FileSystemObserver` exists.
 - After a reload the browser offered “Allow this time” or “Allow on every visit”.
 - The game wrote its save on loading & on sleeping at the end of an in-game day (about 31 real
   minutes later, one data point).
 - With the game fullscreen on a single screen, Chrome never reported the tab hidden, & the sleep
   save arrived on time.
 
-Checks still open before the network pieces are built (#130, owner hardware): the “every visit”
-grant across a browser restart & in the installed app; Steam Deck save access; current Firefox
-behavior; Android opening the installed app from a scanned URL; & `FileSystemObserver` when the game
-replaces the file instead of rewriting it. Record the results in this document & flag any failed
-assumption on #123. Early- & late-game v1.0.8 field presence is recorded in
+The gaming PC with Chrome 156, Edge 156, & Firefox 159, & an iPhone on iOS 18.7, on 2026-10-31
+(#130, through the probe in PR #239):
+
+- **The “every visit” grant survives a browser restart.** In a tab, a handle granted with “Allow on
+  every visit” read on load with no prompt after Chrome quit completely, & likewise in Edge; no
+  browser process was left running either time. In the installed app, Chrome & Edge both read the
+  handle on load with no prompt after the browser quit completely & the app was relaunched.
+- **The installed app needed no prompt.** After the site’s permissions were reset & the handle
+  forgotten, a save dropped into the newly installed app read as `granted` when the app reopened, in
+  both Chrome & Edge, where `prompt` was expected. The probe can’t tell whether the reset left the
+  tab’s grant in place or the app kept the drop’s grant.
+- **Pasting is a keyboard path to the live save.** In Chrome, selecting the autosave in File
+  Explorer, pressing Ctrl+C, & pressing Ctrl+V on the page yields a real file handle, & the observer
+  watches it. Typing the save folder into the file picker’s “File name” box is refused with “can’t
+  open files in this folder because it contains system files”, & typing the autosave’s full path
+  opens Windows’s “Select an app to open this .sav file” dialog instead. Pasting wasn’t tried in
+  Edge.
+- **The game replaces its save rather than rewriting it.** The save at the end of the day arrived as
+  an `appeared` event for the file, not `modified`, & the held handle read the new save at once. The
+  observer kept running afterward. The event arrived while the game was fullscreen in front of the
+  installed app’s window.
+- **Loading the farm didn’t write the save this time.** No event & no change seen by the probe’s
+  10-second poll came on loading; the only write came about 22 minutes after watching began, when
+  the day ended. The 2026-10-16 run saw a write on loading.
+- **A file that disappears stops the observer.** Renaming the autosave away gave `disappeared`, then
+  `errored`, & the observer reported nothing after that, including the file’s return. The handle
+  read the file again as soon as it was back under its name, with no new grant.
+- **Firefox gives no handles, but its picker opens the save folder.** It has no drop handles, no
+  file picker API, & no `FileSystemObserver`, so a drop or a pick yields a `File` only. Its file
+  input opened the save folder from a typed path & picked the live autosave, so Firefox needs no
+  Desktop copy. A reload drops the held file, so the save is dropped or picked again each session.
+- **Firefox’s held file reads new contents under old metadata.** After the game saved, reading the
+  held `File` again gave the new save’s contents (its checksum matched a fresh pick) but still
+  reported the size & modification time from when it was picked. One data point: only a read can
+  show a change there.
+- **An iOS Camera scan opens the default browser with the fragment intact.** With Firefox as the
+  default browser, the Camera opened the scanned link in a Firefox tab, with the fragment & no
+  referrer.
+- **The home screen app’s scanner works.** In the tracker added to the home screen from Safari,
+  “Scan the code” opened the camera & read a code, then said that link wasn’t a follow link, as
+  expected for the probe’s link.
+
+Two checks wait for hardware: Android opening the installed app from a scanned URL (#341), & Steam
+Deck save access, the SD card, & Flatpak Steam (#238). Launch doesn’t wait for them (see
+[the decision record](decisions/2026-10-31-courier-probe-findings.md)): a failure there changes
+which device or browser a player is told to use, not the courier, relay, or envelope. Record the
+results in this document & flag any failed assumption on #123. Early- & late-game v1.0.8 field
+presence is recorded in
 [save-file-format.md](save-file-format.md#field-presence-early-vs-late-game-v108): every key the
 importer reads is present in both, with early progress as empty lists.
 
@@ -61,8 +104,21 @@ importer reads is present in both, with early progress as empty lists.
 
 Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 
-- **Watching.** A dropped `.sav` stores its file handle. `FileSystemObserver` bursts are coalesced,
-  an “unknown” event triggers a recheck, & a swapped file re-resolves the handle.
+- **Watching.** A dropped or pasted `.sav` stores its file handle. The game replaces its save rather
+  than rewriting it (see [What the probe found](#what-the-probe-found)), so an `appeared` record for
+  the watched file counts as a change, like `modified`. Bursts of records are coalesced into one
+  read, & an `unknown` record triggers a recheck. A `disappeared` record changes nothing by itself:
+  the courier keeps its observer & waits for the file to come back under its name. An `errored`
+  record ends that observer for good, so the courier starts a new one at the next successful read.
+  The held handle read the replacement directly in the probe, so nothing re-resolves it.
+- **The backstop poll.** While watching, the courier checks the file once a minute & reads it when
+  its size or modification time differs from the last successful read. That catches what an observer
+  misses, including the gap after `errored`. A read’s hash, not its metadata, decides whether the
+  save changed.
+- **A missing file.** A read that finds no file stays silent & waits for the next poll, since the
+  game’s replacement leaves a brief gap. After two failed polls in a row, the PC shows the
+  moved-file notice (`sync_moved_*`); the next successful read clears it & starts a new observer.
+  Permission loss (`NotAllowedError`) shows the access-lost notice at once instead.
 - **Pruning.** The courier drops the three sections the importer never needs (`game_stats`,
   `date_photos`, `farm`) & keeps the save’s own container format, so each follower reuses its
   parser. The epic gives the compressed size of the pruned save: about 161 KB for a late-game farm &
@@ -89,11 +145,11 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 - **Uploading.** Once sharing, the courier uploads every save it reads & can prune, whatever its own
   tracker does with it: a question waiting behind the fullscreen game, a quarantined or newer-data
   store, or an apply that failed never holds an upload back. A save it can’t prune uploads nothing &
-  shows the PC’s error. It also reads the current save when it starts & when it shows the code, &
-  uploads it if its hash differs from the last upload or the mailbox answers “empty”, so an expired
-  envelope fills again even when the save hasn’t changed, & a tracker update after a game update
-  catches up without waiting for the game to save. Nothing waits for a follower, so a device that
-  follows later gets the latest save straight away.
+  shows the PC’s error. It also reads the current save when it starts (loading the farm doesn’t
+  always write it) & when it shows the code, & uploads it if its hash differs from the last upload
+  or the mailbox answers “empty”, so an expired envelope fills again even when the save hasn’t
+  changed, & a tracker update after a game update catches up without waiting for the game to save.
+  Nothing waits for a follower, so a device that follows later gets the latest save straight away.
 - **Applying here.** The PC’s own tracker applies each save the courier reads, through the same
   receiver path as a follower (see [Followers](#followers)) but without the relay, skipping a save
   whose hash matches its receipt. Check-offs on the PC stay on the PC, like any device’s.
@@ -102,8 +158,11 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 - **Errors.** A parse failure after a game update shows an error on the PC.
 - **App updates.** A waiting update reloads the courier at its own safe moment, for example right
   after an upload (see [App updates](#app-updates)).
-- **Firefox** is expected to need the save re-dropped or re-picked per session; each drop uploads &
-  applies like a watched change. Its current behavior is still to be confirmed (#130).
+- **Firefox** gives no handles, so the save is dropped or picked again each session; each one
+  uploads & applies like a watched change. Its file input opens the save folder from a typed path &
+  picks the live autosave, so Firefox needs no Desktop copy. A held `File` keeps its old size &
+  modification time, so the courier never polls one (see
+  [What the probe found](#what-the-probe-found)).
 
 ## The relay
 
@@ -527,8 +586,7 @@ production branch would reveal sync. Launch removes the module & its call sites.
 
 ## Fallbacks
 
-- Firefox is expected to need the save re-dropped or re-picked per session, through the same relay &
-  rules (to be confirmed in #130).
+- Firefox needs the save re-dropped or re-picked per session, through the same relay & rules.
 - No sync at all means manual check-offs.
 - QR transfer is deprecated once sync ships (#138); backup export & restore moves check-offs to a
   new device. Remove the codec, its tests, & the transfer promise in
@@ -539,7 +597,7 @@ production branch would reveal sync. Launch removes the module & its call sites.
 
 1. **Groundwork that needs no network:** the extraction contract (#125), provenance & ordering
    (#126), the single write path (#127), save identity (#128), then the apply rules (#129).
-2. **Feasibility & design:** the hardware checks (#130) & the setup UX design (#131).
+2. **Feasibility & design:** the hardware checks (#130, #238, #341) & the setup UX design (#131).
 3. **The network pieces:** the relay (#132), following (#133), the courier (#134), the receiver
    (#135).
 4. **Launch work:** the privacy rewrite (#136) before launch, diagnostics (#137), then deprecating

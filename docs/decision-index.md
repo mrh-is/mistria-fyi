@@ -262,6 +262,32 @@ Evidence:
 [scripts/agent-tool-hook.ts](../scripts/agent-tool-hook.ts),
 [scripts/agent-tool-hook.test.ts](../scripts/agent-tool-hook.test.ts).
 
+### [Courier changes from the probe run](decisions/2026-10-31-courier-probe-findings.md)
+
+ID: 2026-10-31-courier-probe-findings. Status: Current.
+
+The courier treats an appeared record as a change, observes again after errored, & keeps a
+one-minute backstop poll; “Can’t drag?” pastes or picks the live save; launch doesn’t wait for the
+Android & Steam Deck checks.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/130](https://github.com/mrh-is/mistria-fyi/issues/130),
+[https://github.com/mrh-is/mistria-fyi/pull/340](https://github.com/mrh-is/mistria-fyi/pull/340),
+[https://github.com/mrh-is/mistria-fyi/issues/134](https://github.com/mrh-is/mistria-fyi/issues/134),
+[docs/sync.md#what-the-probe-found](../docs/sync.md#what-the-probe-found).
+
+### [Dependency audits follow the diff](decisions/2026-10-31-dependency-audit-follows-the-diff.md)
+
+ID: 2026-10-31-dependency-audit-follows-the-diff. Status: Current.
+
+Block dependency audits only on dependency or workflow changes. Track new advisories in the nightly
+report, independently of timing samples; failed audits stay red & never close the issue.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/326](https://github.com/mrh-is/mistria-fyi/issues/326),
+[.github/workflows/ci.yml](../.github/workflows/ci.yml),
+[scripts/nightly-report.ts](../scripts/nightly-report.ts).
+
 ### [Issue blocker relationships](decisions/2026-10-31-issue-blocker-relationships.md)
 
 ID: 2026-10-31-issue-blocker-relationships. Status: Current.
@@ -302,19 +328,6 @@ Evidence:
 [docs/sync.md#diagnostics](../docs/sync.md#diagnostics),
 [src/lib/sync/diagnostic-redaction.ts](../src/lib/sync/diagnostic-redaction.ts),
 [src/lib/feedback/progress-attachment.ts](../src/lib/feedback/progress-attachment.ts).
-
-### [Timing limits follow the diff](decisions/2026-10-31-timing-limits-follow-the-diff.md)
-
-ID: 2026-10-31-timing-limits-follow-the-diff. Status: Current.
-
-Test timing fails a pull request only when it changes a test file over 15 s. Everything else about
-timing warns, & a nightly report tracks trends in one issue.
-
-Evidence:
-[https://github.com/mrh-is/mistria-fyi/issues/13](https://github.com/mrh-is/mistria-fyi/issues/13),
-[docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets),
-[scripts/vitest-timings.ts](../scripts/vitest-timings.ts),
-[scripts/nightly-report.ts](../scripts/nightly-report.ts).
 
 ## Partially superseded/amended
 
@@ -693,6 +706,27 @@ Evidence:
 [docs/decisions/2026-10-30-shared-edge-rate-rule.md](../docs/decisions/2026-10-30-shared-edge-rate-rule.md).
 Authorization:
 [https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
+
+### [Timing limits follow the diff](decisions/2026-10-31-timing-limits-follow-the-diff.md)
+
+ID: 2026-10-31-timing-limits-follow-the-diff. Status: Partially superseded/amended.
+
+Test timing fails a pull request only when it changes a test file over 15 s. Everything else about
+timing warns, & a nightly report tracks trends in one issue.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/13](https://github.com/mrh-is/mistria-fyi/issues/13),
+[docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets),
+[scripts/vitest-timings.ts](../scripts/vitest-timings.ts),
+[scripts/nightly-report.ts](../scripts/nightly-report.ts).
+
+Amended by
+[Dependency audits follow the diff](decisions/2026-10-31-dependency-audit-follows-the-diff.md).
+Affected portion: The nightly report also tracks dependency advisories. Incomplete timing samples no
+longer suppress advisory findings, & the issue closes only when both checks are clear.
+
+Relationship evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/326](https://github.com/mrh-is/mistria-fyi/issues/326).
 
 ## Superseded
 

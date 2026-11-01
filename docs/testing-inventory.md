@@ -2,9 +2,8 @@
 
 tl;dr: Interactive Svelte components get happy-dom tests (`*.client.test.ts`) that drive them
 through accessible queries; pure renderers keep server-render tests (`*.test.ts`); route-level
-keyboard, focus, and axe checks live in Playwright. This page lists which layer covers each
-component and what remains uncovered, so new work lands in the right layer instead of duplicating
-another.
+keyboard, focus, and axe checks live in Playwright. This page explains which layer to use & what
+remains uncovered, so new work lands in the right layer instead of duplicating another.
 
 ## Focused checks
 
@@ -42,108 +41,6 @@ context specifically, `renderWithFeedback` & `renderToFragmentWithFeedback` (in
 `src/lib/test-utils/`) wrap any component in one, since `getFeedbackContext()` throws outside a
 provider.
 
-## Coverage by component
-
-"Server" means a `*.test.ts` file exists; "happy-dom" means a `*.client.test.ts` file exists.
-Components marked "via parent" are exercised through a parent's happy-dom test rather than their
-own. `tests/testing-inventory.test.ts` fails when a component is missing from these tables or a
-single-component row's marks disagree with its test files.
-
-### Toolbar & panels
-
-| Component                        | Server | happy-dom  | Notes                                                                             |
-| -------------------------------- | :----: | :--------: | --------------------------------------------------------------------------------- |
-| `toolbar-footer`                 |        |     ✓      | Panel mutual exclusion, Escape/backdrop/close, route change, search, filter reset |
-| `panel-overlay`                  |        | via parent | Shared overlay & focus through toolbar & feedback panel tests                     |
-| `foldout-panel`                  |        |     ✓      | Dialog semantics, Escape, Tab wrap, non-dialog mode                               |
-| `filter-panel`                   |   ✓    |     ✓      | Chips, season/weather strips, source groups, explainer, completed switch          |
-| `quick-settings-panel`           |        |     ✓      | Language list, spoiler confirmation                                               |
-| `quick-settings-language-picker` |        |     ✓      | Offline-unavailable message; locale list through `quick-settings-panel`           |
-| `quick-settings-theme-picker`    |        |            | Gap: theme selection and persistence                                              |
-| `feedback-panel`                 |        |     ✓      | Form, Turnstile, submit states                                                    |
-| `feedback-picker`                |        |     ✓      | Element picking                                                                   |
-| `search-results`                 |        |     ✓      | Toggle & undo across categories; progressive reveal, total, & query changes       |
-| `search-results-loading`         |        |     ✓      |                                                                                   |
-| `source-explainer-dialog`        |        | via parent | Open and dismiss through `filter-panel`                                           |
-| `tag-dialog`                     |        | via parent | Through `source-explainer-dialog` and `quick-settings-panel`                      |
-| `villager-search-result`         |        | via parent | Record link, portrait, & fallback through `search-results`                        |
-| `blocky-switch`                  |        | via parent | Through `filter-panel` and `quick-settings-panel`                                 |
-
-### Tracker rows & controls
-
-| Component                                 | Server | happy-dom  | Notes                                                                   |
-| ----------------------------------------- | :----: | :--------: | ----------------------------------------------------------------------- |
-| `tracker-row`                             |   ✓    |     ✓      | Spoiler, completion, lazy sources, focus, sprite preview                |
-| `tracker-row-stack`                       |   ✓    |            | Layout only                                                             |
-| `tracker-row-list`                        |   ✓    |     ✓      | Prerender, reveal over frames, reserve, busy, undo, empty               |
-| `row-reveal` (controller)                 |        |     ✓      | Height estimate, shared frames, one frame chain                         |
-| `tracker-empty-state`                     |        | via parent | Through `tracker-row-list`                                              |
-| `tracker-checkbox`                        |        |     ✓      | Label, click forwarding, visual states                                  |
-| `tracker-paper`                           |        |            | Layout only; no interaction                                             |
-| `confirm-spoiler-dialog`                  |        |     ✓      | Invertible vs. non-invertible choices, handler routing                  |
-| `spoiler-guard-dialog`                    |        |     ✓      | Renders only while the guard holds a condition                          |
-| `skill-record`                            |        |     ✓      | Level editing, perk drawer                                              |
-| `skill-perks`                             |        |     ✓      | Unlocked & locked counts, tiers, check-off, spoiler guard, unlock notes |
-| `stepper`                                 |        |     ✓      | Grouped controls                                                        |
-| `dialog-close-button`                     |        |     ✓      | Localized close control, dismisses the dialog                           |
-| `status-note`                             |   ✓    |            | Tone classes; alert role for errors & warnings                          |
-| `expandable-section`                      |        |     ✓      | Disclosure, IDs, nesting, reporting                                     |
-| `section-groups`                          |        |     ✓      | Completed grouping, toggle hold window, kept expansion                  |
-| `section-group-item`, `completed-heading` |        | via parent | Through `section-groups`                                                |
-| `completion-section`                      |        | via parent | Everything-page tests cover section & compact-record partitioning       |
-| `spoiler`                                 |        | via parent | Through `tracker-row` & `spoiler-section`                               |
-| `spoiler-section`                         |        |     ✓      | Mask-only reveal, inert row, shared styling, no progress                |
-| `section-trigger`                         |        | via parent | Through `expandable-section` & `spoiler-section`                        |
-| `sprite-preview-button`                   |        | via parent | Through `tracker-row`                                                   |
-| `sprite-slot`                             |        | via parent | Through `tracker-row`                                                   |
-| `source-card`                             |   ✓    |            | Static rendering                                                        |
-| `source-paper`                            |        | via parent | Through `tracker-row`                                                   |
-| `source-segment-text`                     |   ✓    |            | Static rendering                                                        |
-| `source-filtered-content`                 |   ✓    |            | Filtering logic is store-tested                                         |
-| `restriction-badges`                      |        |            | Gap: static; server test would suffice                                  |
-| `mine-floor-record`                       |        |     ✓      |                                                                         |
-| `renown-current-record`                   |        |     ✓      |                                                                         |
-| `villager-record`                         |   ✓    |     ✓      | Server: sprite has no inline handler (CSP)                              |
-| `villagers-content`                       |        |     ✓      |                                                                         |
-| `villager-alphabet-index`                 |        |     ✓      |                                                                         |
-| `rank-record`                             |        |     ✓      |                                                                         |
-
-### Category content
-
-| Component                                                                                                                      | Server | happy-dom | Notes                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------ | :----: | :-------: | --------------------------------------------------------------- |
-| `almanac-content`                                                                                                              |        |     ✓     |                                                                 |
-| `animals-content`, `animal-subcategory`, `animal-*-section`, `pet-collectibles-section`                                        |        |           | Gap: variant/cosmetic toggles; store is tested                  |
-| `mount-appearances-section`                                                                                                    |        |     ✓     | Appearances & Mistmare perks; perk check-off & reversal         |
-| `cosmetics-content`, `mines-content`, `museum-content`, `quests-content`, `recipes-content`, `renown-content`, `dates-section` |        |           | Gap: page compositors; rows and dialogs are tested individually |
-| `skills-content`                                                                                                               |        |     ✓     | A maxed skill stays visible until its perks are bought          |
-
-### Data page
-
-| Component          | Server | happy-dom  | Notes                                                                    |
-| ------------------ | :----: | :--------: | ------------------------------------------------------------------------ |
-| `import-card`      |   ✓    |     ✓      | Oversized-file rejection; atomicity                                      |
-| `transfer-card`    |   ✓    |     ✓      | QR generation (in-flight, success, failure), image & camera scan, errors |
-| `backup-card`      |   ✓    |     ✓      | Export download, restore success and every error kind                    |
-| `danger-zone-card` |   ✓    |     ✓      | Confirm, cancel, reset                                                   |
-| `merge-summary`    |   ✓    |            | Static rendering                                                         |
-| `data-card`        |   ✓    | via parent | Collapsed summaries; expand through the cards                            |
-
-Camera scanning in `transfer-card` is covered with a mocked `startQrCamera`; the real `getUserMedia`
-stream & decoder are not.
-
-### Static & layout
-
-| Component                                                                                                                    | Server  | happy-dom | Notes                                                          |
-| ---------------------------------------------------------------------------------------------------------------------------- | :-----: | :-------: | -------------------------------------------------------------- |
-| `category-card` (with `category-stripe`), `category-grid`, `content-counters`, `overall-progress`, `page-header`, `seo-head` |    ✓    |           | Static                                                         |
-| `welcome-card`                                                                                                               |         |     ✓     |                                                                |
-| `persistence-warning`                                                                                                        |         |           | Gap: store-level lifecycle is tested                           |
-| `ai-disclosure-dialog`                                                                                                       |         |           | Gap: open/dismiss                                              |
-| `app-updater`                                                                                                                |         |     ✓     | Idle reload, busy deferral, & guarded reloads after navigation |
-| `og-share-card`, `pencil-filter`, `icon/*`, `all-completed`                                                                  |         |           | Static; no test needed                                         |
-| Route `+page.svelte` files, `routes/everything/category-section.svelte`                                                      | partial |           | `about`, `data`, `privacy`, `error`, `everything` have tests   |
-
 ## Remaining gaps
 
 Ordered by risk:
@@ -154,6 +51,8 @@ Ordered by risk:
    `confirm-spoiler-dialog` and that "Yes, and update my progress" changes progression.
 4. **Camera stream** in `transfer-card`: the real `getUserMedia` path belongs in the Playwright
    layer with a fake media stream, if it is covered at all.
+5. **`animals-content` & its sections**: variant & cosmetic toggles (the store is tested).
+6. **`restriction-badges`**: static, so a server-render test would suffice.
 
 ## Shared helpers
 
