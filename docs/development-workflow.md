@@ -394,6 +394,10 @@ tests even with a cold timing cache; see [the decision](decisions/2026-10-29-syn
 Coverage runs nightly because local measurements do not establish that it is free in CI. Coverage
 runs can’t fail on timing, because no pull request is involved.
 
+On a failed pull request, “CI passed” notes jobs also failing on `main`’s latest completed,
+non-cancelled push & links that run; this context never changes a check result or establishes a
+shared cause.
+
 ### Nightly report
 
 The scheduled CI run’s `nightly-report` job (`scripts/nightly-report.ts`) reads the `vitest-timings`
