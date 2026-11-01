@@ -17,6 +17,7 @@ const PUBLIC_PROGRESS_KEYS = {
   hasUpperFloor: true,
   heartLevels: true,
   lastSavePlaytime: true,
+  lastSaveUnordered: true,
   mineFloor: true,
   mountAppearances: true,
   museum: true,
@@ -32,7 +33,7 @@ const PUBLIC_PROGRESS_KEYS = {
   unlockedPerks: true,
   villagerRelationships: true,
 } satisfies Record<
-  "lastSavePlaytime" | "provenance" | "resolutions" | keyof ProgressState,
+  "lastSavePlaytime" | "lastSaveUnordered" | "provenance" | "resolutions" | keyof ProgressState,
   boolean
 >;
 

@@ -228,8 +228,11 @@ One Durable Object per mailbox ID.
   created again. “Make a new code” creates & shows the new code first & retires the old one after;
   if creation fails, the old code keeps working & the PC says so (`sync_new_code_failed`). A retire
   the relay hasn’t confirmed stays pending in `local` (the mailbox ID & token) & retries like an
-  upload, through “Stop syncing” or an erase. Every follower holds the sealing key, so a follower
-  that could recreate a retired ID with its own token could write saves to the others.
+  upload: with backoff (five seconds, doubling to five minutes, or longer if the relay asks), on
+  coming back online, & in every open tab once any tab queues it, in any lane. A `401`, `403`, or
+  `404` can’t change on retry, so a retire the relay refuses waits for the next visit instead. “Stop
+  syncing” or an erase queues one too. Every follower holds the sealing key, so a follower that
+  could recreate a retired ID with its own token could write saves to the others.
 - **Nothing else.** No confirmations or delivery states; the high-water counter is the relay’s only
   ordering. A follower that misses a save loses nothing, since the next one is a full snapshot.
 
@@ -447,7 +450,9 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
   `playtime` or lower. A newer save wins & tells.
 - Within a farm, a lower `playtime` asks. Keeping current progress applies nothing from that save.
 - A save whose `playtime` couldn’t be read can’t be ordered: it doesn’t ask as an older save, but
-  every manual edit it disagrees with asks, & the baseline stays where it was.
+  every manual edit it disagrees with asks, & the baseline stays where it was. History records that
+  the last save was unordered (`lastSaveUnordered`), so edits made after it record no `playtime` & a
+  later save that disagrees asks. The next save with a readable `playtime` clears it.
 - Accepting an older save at `playtime` P resets the baseline & re-stamps every manual fact stamped
   above P to P, so ticks survive the rollback itself & the next disagreeing save wins & tells.
   Rollback is supported but rare, so nothing more elaborate.
@@ -456,7 +461,9 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
 
 A memory of resolved diffs makes “keep mine” stick until the save’s value changes. Editing that
 field by hand clears it. A complete field also lapses resolutions for facts it reports at their
-default, so true, then false, then true again asks again.
+default, so true, then false, then true again asks again. A household “keep mine” covers the whole
+household difference, so it lapses when any fact it covered changes its save value, even back to the
+local value.
 
 ### Completeness
 
@@ -552,6 +559,23 @@ until launch, & so does its entry on the privacy page. The receiver collects at 
 KiB in memory in the current tab; reloads clear it. Unknown IDs are limited to 20 per field & 100
 per event. Old events are dropped to fit the byte limit, & again if the finished issue would pass
 GitHub's body limit.
+
+On the gaming computer, the courier also records each upload's result, so a log sent from there
+shows whether saves reached the relay. Each is a bare outcome, with no counter, mailbox ID, hash, or
+size:
+
+- `uploaded`: the relay stored the save.
+- `upload-unreachable`: the relay couldn't be reached while sending or checking the mailbox, a
+  counter conflict happened twice, or a retired code couldn't be renewed (including when this page's
+  store can't hold a new one).
+- `upload-paused`: the relay's kill switch is on.
+- `upload-rate-limited`: the relay asked the courier to wait.
+- `upload-too-large`: the sealed save was over the relay's size cap.
+- `code-renewed`: the old code had been retired, so the courier made a new one.
+
+A retry that has to wait the same way as the attempt before it (unreachable, paused, or
+rate-limited) isn't recorded again, so an hour offline doesn't push every other event out of the
+log. The run starts over after any other result, or when this window stops leading.
 
 Feedback never carries exact `playtime` values: they only grow, so matching values would link
 reports that the session salt keeps apart, & the game's save slot data keeps it beside the player's

@@ -5,6 +5,7 @@ summary: >-
   CI runs accessibility in two duration-balanced shards plus a separate PWA job, trading about nine
   seconds of median turnaround for 18% less all-job runner time.
 evidence:
+  - https://github.com/mrh-is/mistria-fyi/issues/13
   - https://github.com/mrh-is/mistria-fyi/issues/335
   - https://github.com/mrh-is/mistria-fyi/issues/379
   - docs/browser-ci-benchmark.md
@@ -34,9 +35,12 @@ The sample can't show a reliability improvement, so this decision doesn't claim 
 
 Four shards has the shortest measured median turnaround, but repeats two more browser setups. A
 combined job saves the most runner time, but its 282-second median turnaround and 201-second browser
-job miss the goal of fitting browser tests into about two minutes.
+job miss the [#13](https://github.com/mrh-is/mistria-fyi/issues/13) direction of running the full
+browser suite on PRs only if it fits in about two minutes.
 
 ## Revisit if
 
-The accessibility suite shrinks enough for one job to fit that goal, or turnaround on main & PRs
-rises beyond the benchmark's range.
+The accessibility suite shrinks enough for one job to fit that two minutes, or a repeat benchmark
+under comparable conditions shows two shards adding materially more turnaround than four. A single
+slow run isn't enough: the benchmark used manual dispatches, and individual main pushes can already
+run longer than its range.
