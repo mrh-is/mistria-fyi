@@ -8,6 +8,7 @@ import {
   findPendingUploads,
   IMMUTABLE_CACHE_CONTROL,
   listFiles,
+  loadR2UploadEnvFile,
   r2UploadOptionsFromEnv,
   r2UploadTree,
   wranglerEnv,
@@ -106,10 +107,45 @@ describe("wranglerEnv", () => {
     ).toEqual({ CLOUDFLARE_API_TOKEN: "r2-admin", PATH: "/bin", R2_UPLOAD_TOKEN: "r2-admin" });
   });
 
-  it("drops an inherited CLOUDFLARE_API_TOKEN without an upload token, leaving wrangler login", () => {
+  it("drops an inherited CLOUDFLARE_API_TOKEN without an upload token", () => {
     expect(
       wranglerEnv({ CLOUDFLARE_API_TOKEN: "pages-read", PATH: "/bin", R2_UPLOAD_TOKEN: "" }),
     ).toEqual({ PATH: "/bin", R2_UPLOAD_TOKEN: "" });
+  });
+});
+
+describe("loadR2UploadEnvFile", () => {
+  it("fills the token & account ID from the file, ignoring other names", async () => {
+    const dir = tree({
+      ".env.r2-upload":
+        "R2_UPLOAD_TOKEN=r2-admin\nCLOUDFLARE_ACCOUNT_ID=account-id\nCLOUDFLARE_API_TOKEN=other\n",
+    });
+    const env: NodeJS.ProcessEnv = {};
+
+    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+
+    expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "r2-admin" });
+  });
+
+  it("lets a nonempty environment value win over the file", async () => {
+    const dir = tree({
+      ".env.r2-upload": "R2_UPLOAD_TOKEN=from-file\nCLOUDFLARE_ACCOUNT_ID=file\n",
+    });
+    const env: NodeJS.ProcessEnv = { CLOUDFLARE_ACCOUNT_ID: "", R2_UPLOAD_TOKEN: "from-shell" };
+
+    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+
+    expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "file", R2_UPLOAD_TOKEN: "from-shell" });
+  });
+
+  it("leaves the environment alone without the file or with empty values", async () => {
+    const dir = tree({ ".env.r2-upload": "R2_UPLOAD_TOKEN=\n" });
+    const env: NodeJS.ProcessEnv = {};
+
+    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+    await loadR2UploadEnvFile(env, path.join(dir, "missing"));
+
+    expect(env).toEqual({});
   });
 });
 
@@ -344,7 +380,7 @@ describe("r2UploadTree", () => {
     expect(io.puts).toEqual([]);
     expect(io.lines).toEqual([]);
     expect(io.errors).toEqual([
-      "R2_UPLOAD_TOKEN is not set; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
+      "R2_UPLOAD_TOKEN is not set in the environment or .env.r2-upload; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
     ]);
   });
 

@@ -4,13 +4,15 @@ import { accessSync, constants, existsSync, readdirSync, readFileSync } from "no
 import { homedir } from "node:os";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseEnv } from "node:util";
 
 import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from "node:child_process";
 
 /**
  * Machine doctor: reports whether this machine meets the prerequisites in docs/machine-setup.md.
- * It is read-only. It never installs, configures, or authenticates, and it never reads credentials;
- * the login probes inspect an exit code only. Plain Node with no dependencies, so it runs before
+ * It is read-only. It never installs, configures, or authenticates, and it never prints or validates
+ * credentials: the login probes inspect an exit code only, & the R2 token check only whether names
+ * are set. Plain Node with no dependencies, so it runs before
  * `pnpm install` (and before pnpm exists): `node scripts/machine-doctor.ts`. There is deliberately no
  * pnpm script for it: `pnpm run` would verify (or install) dependencies first and substitute the
  * devEngines runtime for the shell's own Node, which is the version this script must check.
@@ -449,11 +451,16 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
 
 /**
  * The R2 API token that `sprites:upload` & `fonts:upload` hand to Wrangler (`R2_UPLOAD_TOKEN`, not
- * `CLOUDFLARE_API_TOKEN`, which may hold an unrelated read-only token). Only presence is checked:
- * the doctor never prints or validates the token itself.
+ * `CLOUDFLARE_API_TOKEN`, which may hold an unrelated read-only token), from the environment or
+ * `.env.r2-upload` at the checkout root, as `loadR2UploadEnvFile` reads them. Only presence is
+ * checked: the doctor never prints or validates the token itself.
  */
 export function checkR2Token(machine: Environment): CheckResult {
-  const unset = ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"].filter((name) => !machine.env[name]);
+  const fileText = machine.read(join(machine.root, ".env.r2-upload"));
+  const fromFile = fileText === undefined ? {} : parseEnv(fileText);
+  const unset = ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"].filter(
+    (name) => !machine.env[name] && !fromFile[name],
+  );
   return unset.length === 0
     ? check("r2-token", "R2 upload token", "ok", "R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID are set")
     : check(
@@ -461,7 +468,7 @@ export function checkR2Token(machine: Environment): CheckResult {
         "R2 upload token",
         "manual",
         `${unset.join(" & ")} ${unset.length === 1 ? "is" : "are"} not set`,
-        "Create an R2 API token & export it with the account ID (docs/machine-setup.md, R2 upload token)",
+        "Create an R2 API token & add it with the account ID to .env.r2-upload (docs/machine-setup.md, R2 upload token)",
       );
 }
 

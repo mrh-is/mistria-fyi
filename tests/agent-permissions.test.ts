@@ -18,6 +18,7 @@ const NOT_ALLOWED: Record<string, string> = {
   "generate:brand-assets": "rewrites committed brand assets",
   "housekeeping:install": "installs a persistent launchd agent that deletes merged worktrees",
   "optimize-icons": "rewrites committed icon files",
+  "r2:check": "writes & deletes a probe object in production storage",
   "sprites:upload": "publishes to production storage",
   "sprites:villagers": "rewrites generated sprites from game assets",
   "worktree:cleanup": "a trailing `-- --apply` reaches the same deletion as worktree:cleanup:apply",

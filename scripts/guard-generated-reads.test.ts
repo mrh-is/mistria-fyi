@@ -127,6 +127,24 @@ describe("generated-data read guard", () => {
     ).toBe(tokenMessage);
   });
 
+  it("denies reads of the R2 upload token file, but not other env files", () => {
+    const tokenMessage =
+      "Blocked read of the R2 upload token file. The upload scripts load it; check it with `node scripts/machine-doctor.ts --for release` or `pnpm run r2:check`.";
+    expect(readGuardMessage({ tool_input: { file_path: "/work/mistria/.env.r2-upload" } })).toBe(
+      tokenMessage,
+    );
+    expect(
+      readGuardMessage({
+        cwd: "/work/mistria",
+        tool_input: { command: "cat .env.r2-upload" },
+        tool_name: "Bash",
+      }),
+    ).toBe(tokenMessage);
+    expect(
+      readGuardMessage({ tool_input: { file_path: "/work/mistria/.env.example" } }),
+    ).toBeUndefined();
+  });
+
   it("denies token paths even when their files are symlinked elsewhere", () => {
     const root = mkdtempSync(join(tmpdir(), "agent-read-"));
     roots.push(root);

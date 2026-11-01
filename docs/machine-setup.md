@@ -95,31 +95,33 @@ Each item names the doctor section that checks it.
       it.
    3. Copy the **Token value**; the S3 access key pair it also shows isn't used. Copy the account ID
       from the R2 overview.
-   4. Export both only in the shell you upload from, from a password manager rather than a shell
-      profile. On macOS or Linux, `export R2_UPLOAD_TOKEN=…` & `export CLOUDFLARE_ACCOUNT_ID=…`; in
-      PowerShell, `$env:R2_UPLOAD_TOKEN = "…"` & `$env:CLOUDFLARE_ACCOUNT_ID = "…"`. Never put the
-      token in a committed file or print it. Every process started from that shell, agent sessions
-      included, can read it, so close the shell after uploading. If you suspect the token was
-      exposed, revoke it in the dashboard & create a new one; that is the expected response, not an
-      emergency.
-   5. Confirm the token can reach R2. On macOS or Linux, run
-      `CLOUDFLARE_API_TOKEN="$R2_UPLOAD_TOKEN" pnpm exec wrangler r2 bucket list`; in PowerShell,
-      run
-      `$env:CLOUDFLARE_API_TOKEN = $env:R2_UPLOAD_TOKEN; pnpm exec wrangler r2 bucket list; Remove-Item Env:CLOUDFLARE_API_TOKEN`.
-      Either should list `mistria-fyi-assets`. A real upload doesn't prove it, because uploads skip
-      every sprite that is already current and so may never call Wrangler. Without
-      `R2_UPLOAD_TOKEN`, a real upload refuses to start rather than falling back to a stored
-      `wrangler login`; a `DRY_RUN=1` preview still works.
+   4. Save both in `.env.r2-upload` at the root of the main checkout:
 
-   Note: Wrangler loads `.env` & `.env.local` from the repository root, where `.worktreeinclude`
-   links them into every worktree. Keep `CLOUDFLARE_API_TOKEN`, `R2_UPLOAD_TOKEN`, &
-   `CLOUDFLARE_ACCOUNT_ID` out of those files: a `CLOUDFLARE_API_TOKEN` there reaches any Wrangler
-   call that doesn't set its own, and an account ID there satisfies Wrangler while the doctor still
-   reports it unset.
+      ```sh
+      R2_UPLOAD_TOKEN=…
+      CLOUDFLARE_ACCOUNT_ID=…
+      ```
 
-   The doctor checks only that both variables are set; it never prints or validates the token. A
-   token has no interactive step, so it can be revoked & replaced in the dashboard at any time.
-   Never run `pnpx wrangler`.
+      `.gitignore` keeps it out of commits, and `.worktreeinclude` links it into every worktree, so
+      agents can run the uploads in the [game version update](game-version-update-protocol.md)
+      without asking. The upload scripts & `r2:check` load it; a nonempty shell variable of the same
+      name wins. The read guard blocks agents from opening the file, and no agent prints the token,
+      but anything running as your user can read it. If you suspect the token was exposed, revoke it
+      in the dashboard & create a new one; that is the expected response, not an emergency.
+
+   5. Run `pnpm run r2:check`. It puts & deletes a probe object in the bucket, which proves the
+      token can write; a real upload doesn't, because it skips every object that is already current
+      and so may never call Wrangler. Without `R2_UPLOAD_TOKEN`, a real upload refuses to start
+      rather than falling back to a stored `wrangler login`; a `DRY_RUN=1` preview still works.
+
+   Note: Wrangler loads `.env` & `.env.local` from the repository root itself, but never
+   `.env.r2-upload`. Keep `CLOUDFLARE_API_TOKEN`, `R2_UPLOAD_TOKEN`, & `CLOUDFLARE_ACCOUNT_ID` out
+   of `.env` & `.env.local`: a `CLOUDFLARE_API_TOKEN` there reaches any Wrangler call that doesn't
+   set its own, and an account ID there satisfies Wrangler while the doctor still reports it unset.
+
+   The doctor checks only that both names are set, in the shell or `.env.r2-upload`; it never prints
+   or validates the token. A token has no interactive step, so it can be revoked & replaced in the
+   dashboard at any time. Never run `pnpx wrangler`.
 
 ## Codex shells
 

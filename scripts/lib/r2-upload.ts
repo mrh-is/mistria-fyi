@@ -4,13 +4,15 @@
 //
 // Env read by `r2UploadOptionsFromEnv`: R2_BUCKET, ASSET_ORIGIN, PARALLEL, FORCE=1 (re-upload
 // everything), DRY_RUN=1 (print what would be uploaded without running Wrangler), & whether
-// R2_UPLOAD_TOKEN is set (a real upload refuses to start without it). Wrangler itself gets
-// R2_UPLOAD_TOKEN as its CLOUDFLARE_API_TOKEN (see `wranglerEnv`).
+// R2_UPLOAD_TOKEN is set (a real upload refuses to start without it). The upload scripts first fill
+// R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID from `.env.r2-upload` (see `loadR2UploadEnvFile`).
+// Wrangler itself gets R2_UPLOAD_TOKEN as its CLOUDFLARE_API_TOKEN (see `wranglerEnv`).
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import { parseEnv } from "node:util";
 
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
@@ -88,6 +90,40 @@ export async function listFiles(dir: string): Promise<string[]> {
 
 /** The repository root, so `pnpm exec` finds the workspace's Wrangler from any working directory. */
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
+
+/**
+ * The gitignored file holding the upload credentials, at the checkout root. `.worktreeinclude`
+ * links it into every worktree; Wrangler never loads it itself (it reads only `.env` &
+ * `.env.local`).
+ */
+export const R2_UPLOAD_ENV_FILE = ".env.r2-upload";
+
+/**
+ * Fills `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` in `env` from `.env.r2-upload`, when the file
+ * exists. A nonempty value already in `env` wins, so a shell can override the file. Other names in
+ * the file are ignored, so it can't replace `CLOUDFLARE_API_TOKEN`.
+ */
+export async function loadR2UploadEnvFile(
+  env: NodeJS.ProcessEnv = process.env,
+  file: string = path.join(REPO_ROOT, R2_UPLOAD_ENV_FILE),
+): Promise<void> {
+  let text: string;
+  try {
+    text = await readFile(file, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return;
+    }
+    throw error;
+  }
+  const values = parseEnv(text);
+  for (const name of ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]) {
+    const value = values[name];
+    if (!env[name] && value) {
+      env[name] = value;
+    }
+  }
+}
 
 /**
  * Wrangler's environment: `R2_UPLOAD_TOKEN` becomes its `CLOUDFLARE_API_TOKEN`, for this child
@@ -308,7 +344,7 @@ export async function r2UploadTree(
   // Without the token, Wrangler would fall back to an account-wide stored login (#115).
   if (!options.dryRun && !options.hasUploadToken) {
     io.logError(
-      "R2_UPLOAD_TOKEN is not set; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
+      "R2_UPLOAD_TOKEN is not set in the environment or .env.r2-upload; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
     );
     return false;
   }

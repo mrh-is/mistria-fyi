@@ -474,6 +474,31 @@ describe("checkR2Token", () => {
     expect(result.fix).toContain("docs/machine-setup.md");
   });
 
+  it("reads either variable from .env.r2-upload, without printing it", () => {
+    const result = checkR2Token(
+      machine({
+        env: { CLOUDFLARE_ACCOUNT_ID: "account-id" },
+        read: (path) =>
+          basename(path) === ".env.r2-upload" ? `R2_UPLOAD_TOKEN=${secret}\n` : undefined,
+      }),
+    );
+    expect(result.status).toBe("ok");
+    expect(result.detail).not.toContain(secret);
+  });
+
+  it("treats an empty .env.r2-upload value as unset", () => {
+    const result = checkR2Token(
+      machine({
+        read: (path) =>
+          basename(path) === ".env.r2-upload"
+            ? "R2_UPLOAD_TOKEN=\nCLOUDFLARE_ACCOUNT_ID=account-id\n"
+            : undefined,
+      }),
+    );
+    expect(result.status).toBe("manual");
+    expect(result.detail).toBe("R2_UPLOAD_TOKEN is not set");
+  });
+
   it("treats an empty variable as unset", () => {
     const result = checkR2Token(
       machine({ env: { CLOUDFLARE_ACCOUNT_ID: "", R2_UPLOAD_TOKEN: "" } }),

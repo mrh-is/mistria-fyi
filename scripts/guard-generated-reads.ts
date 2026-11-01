@@ -32,6 +32,9 @@ export function readGuardMessage(input: HookInput): string | undefined {
   if (paths.some((path) => tokenFilePatterns.some((pattern) => pattern.test(path)))) {
     return "Blocked read of a stored OAuth token file. Use `gh auth status` or `pnpm exec wrangler whoami` instead.";
   }
+  if (paths.some((path) => /(?:^|\/)\.env\.r2-upload$/.test(path))) {
+    return "Blocked read of the R2 upload token file. The upload scripts load it; check it with `node scripts/machine-doctor.ts --for release` or `pnpm run r2:check`.";
+  }
   return undefined;
 }
 
