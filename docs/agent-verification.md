@@ -66,6 +66,16 @@ ceilings.
 A PR merges only when CI passes. Fix CI failures on the branch instead of merging around them (see
 “Monitor CI” in agent-workflow.md).
 
+### Remote setup retry
+
+Remote CI setup has one retry exception: an agent may run `gh run rerun <id> --failed` once when the
+logs identify a transient network or service problem, such as a registry download timeout. Merely
+failing before tests is insufficient. Missing credentials, incompatible runtimes, & broken
+configuration remain stop-&-report conditions. Test, lint, type-check, & build failures never
+qualify. Record the original failure, rerun link, & outcome on the PR. If the retry fails, stop
+dependent work & follow the existing reporting procedure. This exception does not apply to local
+tooling failures or authorize installation, authentication, or runtime changes.
+
 ## Full verification
 
 `pnpm run verify` runs CI’s non-browser matrix: the steps that `STEPS` in

@@ -390,6 +390,7 @@ describe("CI workflow permissions", () => {
   it("keeps every job read-only except its scoped PR metadata & scheduled issue writes", () => {
     const elevated: Record<string, Record<string, string>> = {
       changes: { contents: "read", "pull-requests": "read" },
+      "ci-passed": { actions: "read", contents: "read" },
       "issue-sync": { contents: "read", issues: "write" },
       "nightly-report": { actions: "read", contents: "read", issues: "write" },
     };
@@ -557,6 +558,24 @@ describe("CI workflow audit", () => {
 });
 
 describe("CI workflow gate", () => {
+  it("keeps failure context best-effort & preserves the final result check", () => {
+    const steps = jobs["ci-passed"].steps ?? [];
+    const contextIndex = steps.findIndex(
+      (step) => step.run === "node scripts/ci-failure-context.ts",
+    );
+    expect(contextIndex).toBeGreaterThan(-1);
+    expect(contextIndex).toBeLessThan(steps.length - 1);
+    const contextSteps = steps.slice(0, contextIndex + 1);
+    expect(contextSteps.length).toBeGreaterThan(0);
+    for (const step of contextSteps) {
+      expect(step["continue-on-error"]).toBe(true);
+      expect(step.if).toBe(
+        "github.event_name == 'pull_request' && contains(needs.*.result, 'failure')",
+      );
+    }
+    expect(steps[contextIndex].env?.GH_TOKEN).toBe("${{ github.token }}");
+  });
+
   it("aggregates every merge-relevant job into one always-reported check", () => {
     expect(jobs["ci-passed"].if).toBe("always()");
     expect(jobs["ci-passed"].needs).toEqual(

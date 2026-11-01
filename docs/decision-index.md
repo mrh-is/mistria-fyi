@@ -306,6 +306,18 @@ that requested it.
 
 Evidence: [docs/agent-verification.md#review-records](../docs/agent-verification.md#review-records).
 
+### [Shared CI failure context](decisions/2026-10-31-shared-ci-failure-context.md)
+
+ID: 2026-10-31-shared-ci-failure-context. Status: Current.
+
+Failed pull requests receive informational context when the same job also fails on main; required
+check results remain unchanged.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/330](https://github.com/mrh-is/mistria-fyi/issues/330),
+[.github/workflows/ci.yml](../.github/workflows/ci.yml),
+[scripts/ci-failure-context.ts](../scripts/ci-failure-context.ts).
+
 ### [Small-agent label](decisions/2026-10-31-small-agent-label.md)
 
 ID: 2026-10-31-small-agent-label. Status: Current.
