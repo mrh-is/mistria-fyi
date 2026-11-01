@@ -5,7 +5,7 @@
   import IconRotate from "@tabler/icons-svelte-runes/icons/rotate";
   import IconSearch from "@tabler/icons-svelte-runes/icons/search";
   import IconSettings from "@tabler/icons-svelte-runes/icons/settings";
-  import { flushSync, onDestroy, tick } from "svelte";
+  import { flushSync, onDestroy, tick, untrack } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
   import { fade } from "svelte/transition";
 
@@ -67,6 +67,15 @@
   let panelElement = $state<HTMLElement | null>(null);
   let panelOpener: HTMLElement | null = null;
 
+  $effect(() => {
+    if (feedbackContext.errorReportRequest) {
+      untrack(() => {
+        panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        activePanel = "feedback";
+      });
+    }
+  });
+
   // Keeps toasts (an Undo, say) from covering the open panel's controls. The fixed panel's
   // `offsetTop` is viewport-relative and ignores its fly-in transform, unlike the bounding box.
   $effect(() => {
@@ -93,6 +102,7 @@
   afterNavigate(({ shallow }) => {
     if (shallow) return;
     closePanel(false);
+    feedbackContext.errorReportRequest = undefined;
     clearTimeout(debounceTimer);
     feedbackContext.reset();
   });
@@ -196,13 +206,17 @@
 
 {#if toolbar}
   {#key pathname}
-    <FeedbackPanel
-      accentColor={toolbarAccent}
-      open={activePanel === "feedback"}
-      onClose={closePanel}
-      pickerEnabled
-      restoreFocus={activePanel === null && !toolbarState.searchOpen}
-    />
+    {#key feedbackContext.errorReportRequest}
+      <FeedbackPanel
+        accentColor={toolbarAccent}
+        initialMessage={feedbackContext.errorReportRequest?.message}
+        allowSyncLog={feedbackContext.errorReportRequest === undefined}
+        open={activePanel === "feedback"}
+        onClose={closePanel}
+        pickerEnabled
+        restoreFocus={activePanel === null && !toolbarState.searchOpen}
+      />
+    {/key}
   {/key}
 
   <nav

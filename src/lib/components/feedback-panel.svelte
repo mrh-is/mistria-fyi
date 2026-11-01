@@ -4,7 +4,7 @@
   import IconPointer from "@tabler/icons-svelte-runes/icons/pointer";
   import IconShield from "@tabler/icons-svelte-runes/icons/shield";
   import IconX from "@tabler/icons-svelte-runes/icons/x";
-  import { onDestroy, tick } from "svelte";
+  import { onDestroy, tick, untrack } from "svelte";
   import { toast } from "svelte-sonner";
   import { prefersReducedMotion } from "svelte/motion";
   import { slide } from "svelte/transition";
@@ -34,12 +34,17 @@
 
   let {
     accentColor,
+    allowSyncLog = true,
+    initialMessage = "",
     onClose,
     open,
     pickerEnabled = false,
     restoreFocus = true,
   }: {
     accentColor?: string;
+    allowSyncLog?: boolean;
+    /** Used only when this draft mounts; subsequent edits belong to the user. */
+    initialMessage?: string;
     onClose: () => void;
     open: boolean;
     pickerEnabled?: boolean;
@@ -48,14 +53,14 @@
 
   const CLIENT_TIMEOUT_MS = 15_000;
 
-  let message = $state("");
+  let message = $state(untrack(() => initialMessage));
   let email = $state("");
   let wantsReply = $state(false);
   let includeSaveData = $state(false);
   let includeSyncLog = $state(false);
   let showSyncLog = $state(false);
   let syncLog = $derived(
-    syncSwitchOn && includeSyncLog
+    allowSyncLog && syncSwitchOn && includeSyncLog
       ? syncDiagnostics.snapshot(version, userState.syncLane?.kind ?? "manual")
       : undefined,
   );
@@ -490,7 +495,7 @@
             </div>
           {/if}
 
-          {#if syncSwitchOn}
+          {#if allowSyncLog && syncSwitchOn}
             <div class="flex items-center gap-2">
               <Checkbox
                 class="rounded-sm"
