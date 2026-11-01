@@ -64,7 +64,11 @@ describe("createRowReveal", () => {
     );
     flushSync();
     expect(reveal?.count).toBe(INITIAL_ROW_BUDGET);
-    expect(reveal?.reservedHeight).toBe((total - INITIAL_ROW_BUDGET) * rowHeight);
+
+    runQueuedFrames();
+    flushSync();
+    const measuredCount = reveal?.count ?? 0;
+    expect(reveal?.reservedHeight).toBe((total - measuredCount) * rowHeight);
 
     runQueuedFrames();
     flushSync();
@@ -72,6 +76,68 @@ describe("createRowReveal", () => {
     const count = reveal?.count ?? 0;
     expect(count).toBeGreaterThan(INITIAL_ROW_BUDGET);
     expect(reveal?.reservedHeight).toBe((total - count) * rowHeight);
+  });
+
+  it("defers reservation changes until after the resize notification & keeps the measured count", () => {
+    stepsPerFrame();
+    const total = 300;
+    let reveal: RowReveal | undefined;
+    cleanups.push(
+      $effect.root(() => {
+        reveal = createRowReveal(() => total);
+      }),
+    );
+    flushSync();
+    expect(reveal?.count).toBe(INITIAL_ROW_BUDGET);
+    const before = reveal?.reservedHeight;
+
+    // ResizeObserver measures these rows before the next reveal frame adds more.
+    reveal?.measure(INITIAL_ROW_BUDGET * 17);
+    flushSync();
+    expect(reveal?.reservedHeight).toBe(before);
+
+    runQueuedFrames();
+    flushSync();
+    const count = reveal?.count ?? 0;
+    expect(count).toBeGreaterThan(INITIAL_ROW_BUDGET);
+    expect(reveal?.reservedHeight).toBe((total - count) * 17);
+  });
+
+  it("coalesces resize measurements into one frame using the latest height", () => {
+    stepsPerFrame();
+    const total = 300;
+    let reveal: RowReveal | undefined;
+    cleanups.push(
+      $effect.root(() => {
+        reveal = createRowReveal(() => total);
+      }),
+    );
+    flushSync();
+    expect(queuedFrames).toHaveLength(1);
+
+    reveal?.measure(INITIAL_ROW_BUDGET * 21);
+    reveal?.measure(INITIAL_ROW_BUDGET * 23);
+    expect(queuedFrames).toHaveLength(2);
+    runQueuedFrames();
+    flushSync();
+
+    expect(reveal?.reservedHeight).toBe((total - (reveal?.count ?? 0)) * 23);
+  });
+
+  it("cancels a pending measurement when its list is destroyed", () => {
+    let reveal: RowReveal | undefined;
+    const cleanup = $effect.root(() => {
+      reveal = createRowReveal(() => 300);
+    });
+    flushSync();
+    try {
+      reveal?.measure(INITIAL_ROW_BUDGET * 19);
+      expect(queuedFrames).toHaveLength(2);
+    } finally {
+      cleanup();
+    }
+
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(2);
   });
 
   it("shares each frame between waiting lists instead of finishing the oldest first", async () => {
