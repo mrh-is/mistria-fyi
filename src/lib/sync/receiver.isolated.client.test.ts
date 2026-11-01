@@ -939,8 +939,9 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(2 * SEASON, 100)));
     const { receiver, tells } = await load(mine, relay);
     receiver.start();
-    await flush();
-    expect(tells).toEqual([{ applied: true, kept: false }]);
+    await vi.waitFor(() => {
+      expect(tells).toEqual([{ applied: true, kept: false }]);
+    });
   });
 
   it("tells when a manual edit outlasts the save", async () => {
