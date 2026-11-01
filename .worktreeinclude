@@ -1,5 +1,6 @@
 tests/browser/fixtures/local/
 .env
 .env.*
+!.env.r2-upload
 .dev.vars
 .claude/settings.local.json

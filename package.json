@@ -51,6 +51,7 @@
     "fonts:lint": "pnpm --dir scripts/locale-fonts run lint",
     "fonts:upload": "node scripts/upload-locale-fonts.ts",
     "game-assets:share": "tsx pipeline/src/share-game-assets.ts",
+    "r2:check": "node scripts/r2-check.ts",
     "sprites:manifest": "tsx scripts/sprites/sprite-manifest.ts",
     "sprites:upload": "node scripts/sprites/upload-sprites.ts",
     "sprites:villagers": "pnpm run pipeline -- --villager-sprites-only"

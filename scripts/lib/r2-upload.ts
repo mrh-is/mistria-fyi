@@ -3,13 +3,18 @@
 // `cmd.exe` can resolve to WSL (#727).
 //
 // Env read by `r2UploadOptionsFromEnv`: R2_BUCKET, ASSET_ORIGIN, PARALLEL, FORCE=1 (re-upload
-// everything), & DRY_RUN=1 (print what would be uploaded without running Wrangler).
+// everything), DRY_RUN=1 (print what would be uploaded without running Wrangler), & whether
+// R2_UPLOAD_TOKEN is set (a real upload refuses to start without it). The upload scripts first fill
+// R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID from `.env.r2-upload` (see `loadR2UploadEnvFile`).
+// Wrangler itself gets R2_UPLOAD_TOKEN as its CLOUDFLARE_API_TOKEN (see `wranglerEnv`).
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import { parseEnv } from "node:util";
 
+import { mainCheckoutRoot } from "#scripts/lib/agent-hook";
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 /** Production asset origin; `src/lib/asset-origin.test.ts` keeps it in step with the app's. */
@@ -29,6 +34,8 @@ export interface R2UploadOptions {
   bucket: string;
   dryRun: boolean;
   force: boolean;
+  /** Whether `R2_UPLOAD_TOKEN` is set; never its value. */
+  hasUploadToken: boolean;
   origin: string;
   parallel: number;
 }
@@ -65,6 +72,7 @@ export function r2UploadOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): R2
     bucket: env.R2_BUCKET ?? DEFAULT_BUCKET,
     dryRun: env.DRY_RUN === "1",
     force: env.FORCE === "1",
+    hasUploadToken: Boolean(env.R2_UPLOAD_TOKEN),
     origin: env.ASSET_ORIGIN ?? DEFAULT_ASSET_ORIGIN,
     parallel: Number.isInteger(parallel) && parallel > 0 ? parallel : 8,
   };
@@ -85,6 +93,67 @@ export async function listFiles(dir: string): Promise<string[]> {
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 
 /**
+ * The gitignored file holding the upload credentials, at the root of the main checkout only:
+ * `.worktreeinclude` excludes it, so worktrees never hold a copy that goes stale after a rotation.
+ * Wrangler never loads it itself (it reads only `.env` & `.env.local`).
+ */
+export const R2_UPLOAD_ENV_FILE = ".env.r2-upload";
+
+/**
+ * Parses `.env.r2-upload`. Notepad & Windows PowerShell 5 may save it with a UTF-8 byte-order mark,
+ * which would otherwise become part of the first name; a UTF-16 file can't be parsed at all.
+ */
+export function parseR2UploadEnv(text: string): NodeJS.Dict<string> {
+  if (text.includes("\u0000")) {
+    throw new Error(`${R2_UPLOAD_ENV_FILE} is not UTF-8; save it as UTF-8 & retry.`);
+  }
+  return parseEnv(text.replace(/^﻿/, ""));
+}
+
+/**
+ * Fills `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` in `env` from `.env.r2-upload`, when the file
+ * exists. A nonempty value already in `env` wins, so a shell can override the file. Other names in
+ * the file are ignored, so it can't replace `CLOUDFLARE_API_TOKEN`.
+ */
+export async function loadR2UploadEnvFile(
+  env: NodeJS.ProcessEnv = process.env,
+  file: string = path.join(mainCheckoutRoot(REPO_ROOT), R2_UPLOAD_ENV_FILE),
+): Promise<void> {
+  let text: string;
+  try {
+    text = await readFile(file, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return;
+    }
+    throw error;
+  }
+  const values = parseR2UploadEnv(text);
+  for (const name of ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]) {
+    const value = values[name];
+    if (!env[name] && value) {
+      env[name] = value;
+    }
+  }
+}
+
+/**
+ * Wrangler's environment: `R2_UPLOAD_TOKEN` becomes its `CLOUDFLARE_API_TOKEN`, for this child
+ * only. A separate name keeps the R2 token from replacing the read-only Pages token that
+ * `cloudflare:logs` & cloud agents hold in `CLOUDFLARE_API_TOKEN` (docs/cloud-agent-environments.md).
+ * Wrangler also loads `.env` & `.env.local` from the repository root, but a nonempty process value
+ * wins over them, so the token set here always reaches it. Without `R2_UPLOAD_TOKEN`, the inherited
+ * token is dropped, and `r2UploadTree` refuses to upload, so no upload reaches Wrangler without the
+ * token. A `.env` that defines `CLOUDFLARE_API_TOKEN` would still apply to a direct call then; an
+ * empty value can't block it, because Wrangler's `.env` loader treats an empty process value as
+ * unset.
+ */
+export function wranglerEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const { CLOUDFLARE_API_TOKEN: _inherited, ...rest } = env;
+  return env.R2_UPLOAD_TOKEN ? { ...rest, CLOUDFLARE_API_TOKEN: env.R2_UPLOAD_TOKEN } : rest;
+}
+
+/**
  * Runs the workspace's own Wrangler (installed for `@sveltejs/adapter-cloudflare`, whose native
  * deps `allowBuilds` in pnpm-workspace.yaml already approves) through pnpm's own executable, so no
  * shell shim is involved. `pnpx` would install a separate copy that ignores that approval.
@@ -94,6 +163,7 @@ export function runWrangler(args: string[]): Promise<WranglerResult> {
   return new Promise((resolve) => {
     const child = spawn(pnpm.command, pnpm.args, {
       cwd: REPO_ROOT,
+      env: wranglerEnv(),
       shell: pnpm.shell,
       windowsHide: true,
     });
@@ -275,13 +345,21 @@ async function uploadOne(
 
 /**
  * Uploads every `tree.extension` file under `tree.dir`, keyed as `keyPrefix` + its relative path,
- * up to `options.parallel` at a time. Resolves to whether every upload succeeded.
+ * up to `options.parallel` at a time. Resolves to whether every upload succeeded; a real upload
+ * without `R2_UPLOAD_TOKEN` fails before checking or putting anything.
  */
 export async function r2UploadTree(
   tree: R2UploadTree,
   options: R2UploadOptions,
   io: R2UploadIo = defaultIo,
 ): Promise<boolean> {
+  // Without the token, Wrangler would fall back to an account-wide stored login (#115).
+  if (!options.dryRun && !options.hasUploadToken) {
+    io.logError(
+      "R2_UPLOAD_TOKEN is not set in the environment or .env.r2-upload; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
+    );
+    return false;
+  }
   const allFiles = await listFiles(tree.dir);
   const files = allFiles.filter((file) => file.endsWith(tree.extension));
   let failed = 0;

@@ -28,6 +28,8 @@ export interface HookInput {
         content?: unknown;
         edits?: unknown;
         file_path?: unknown;
+        /** Grep's file filter. */
+        glob?: unknown;
         new_string?: unknown;
         notebook_path?: unknown;
         old_string?: unknown;
@@ -365,8 +367,10 @@ export function shellWriteTargets(command: string): string[] {
   return targets;
 }
 
+// Includes Windows readers (`type`, `findstr`, PowerShell's `Get-Content` & `Select-String`) and
+// PowerShell itself, whose `-c` program names its paths inline.
 const SHELL_READ =
-  /(?:^|[;&|(`{]\s*|\s)(?:cat|tac|head|tail|less|more|bat|nl|jq|sed|awk|rg|grep|cut|wc|sort|diff|cmp|xxd|od|hexdump|strings|base64)\b|\bjson\.tool\b/;
+  /(?:^|[;&|(`{]\s*|\s)(?:cat|tac|head|tail|less|more|bat|nl|jq|sed|awk|rg|grep|cut|wc|sort|diff|cmp|xxd|od|hexdump|strings|base64|type|gc|get-content|select-string|sls|findstr|powershell|pwsh)\b|\bjson\.tool\b/i;
 const API_READ = /\b(?:readFile\w*|read_text|read_bytes|open)\s*\(/;
 const HERE_STRING = /<<<\s*(?:"[^"\n]+"|'[^'\n]+'|[^\s;|&<>()]+)/g;
 // `<file`, `0< file`, & `3<>file`, but not heredocs, here-strings, process substitution, or fd
@@ -445,6 +449,20 @@ export function repositoryRoot(cwd: string): string {
     );
   }
   return canonicalPath(cwd, result.stdout.trim());
+}
+
+/** The main checkout's root, from it or any linked worktree: the parent of Git's common directory. */
+export function mainCheckoutRoot(cwd: string): string {
+  const result = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
+    cwd,
+    encoding: "utf8",
+  });
+  if (result.status !== 0) {
+    throw new Error(
+      result.error?.message ?? (result.stderr.trim() || "Could not resolve Git common directory"),
+    );
+  }
+  return dirname(result.stdout.trim());
 }
 
 /** Hooks apply only to the event checkout & linked worktrees of the configured project. */

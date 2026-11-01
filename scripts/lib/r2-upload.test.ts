@@ -8,8 +8,11 @@ import {
   findPendingUploads,
   IMMUTABLE_CACHE_CONTROL,
   listFiles,
+  loadR2UploadEnvFile,
+  parseR2UploadEnv,
   r2UploadOptionsFromEnv,
   r2UploadTree,
+  wranglerEnv,
 } from "#scripts/lib/r2-upload";
 
 import type {
@@ -78,6 +81,7 @@ const options: R2UploadOptions = {
   bucket: "bucket",
   dryRun: false,
   force: false,
+  hasUploadToken: true,
   origin: "https://assets.example",
   parallel: 2,
 };
@@ -93,12 +97,81 @@ function sprites(dir: string): R2UploadTree {
   };
 }
 
+describe("wranglerEnv", () => {
+  it("hands R2_UPLOAD_TOKEN to Wrangler as its CLOUDFLARE_API_TOKEN", () => {
+    expect(
+      wranglerEnv({
+        CLOUDFLARE_API_TOKEN: "pages-read",
+        PATH: "/bin",
+        R2_UPLOAD_TOKEN: "r2-admin",
+      }),
+    ).toEqual({ CLOUDFLARE_API_TOKEN: "r2-admin", PATH: "/bin", R2_UPLOAD_TOKEN: "r2-admin" });
+  });
+
+  it("drops an inherited CLOUDFLARE_API_TOKEN without an upload token", () => {
+    expect(
+      wranglerEnv({ CLOUDFLARE_API_TOKEN: "pages-read", PATH: "/bin", R2_UPLOAD_TOKEN: "" }),
+    ).toEqual({ PATH: "/bin", R2_UPLOAD_TOKEN: "" });
+  });
+});
+
+describe("loadR2UploadEnvFile", () => {
+  it("fills the token & account ID from the file, ignoring other names", async () => {
+    const dir = tree({
+      ".env.r2-upload":
+        "R2_UPLOAD_TOKEN=r2-admin\nCLOUDFLARE_ACCOUNT_ID=account-id\nCLOUDFLARE_API_TOKEN=other\n",
+    });
+    const env: NodeJS.ProcessEnv = {};
+
+    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+
+    expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "r2-admin" });
+  });
+
+  it("lets a nonempty environment value win over the file", async () => {
+    const dir = tree({
+      ".env.r2-upload": "R2_UPLOAD_TOKEN=from-file\nCLOUDFLARE_ACCOUNT_ID=file\n",
+    });
+    const env: NodeJS.ProcessEnv = { CLOUDFLARE_ACCOUNT_ID: "", R2_UPLOAD_TOKEN: "from-shell" };
+
+    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+
+    expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "file", R2_UPLOAD_TOKEN: "from-shell" });
+  });
+
+  it("ignores a UTF-8 byte-order mark & CRLF line endings", async () => {
+    const dir = tree({
+      ".env.r2-upload": "﻿R2_UPLOAD_TOKEN=r2-admin\r\nCLOUDFLARE_ACCOUNT_ID=account-id\r\n",
+    });
+    const env: NodeJS.ProcessEnv = {};
+
+    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+
+    expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "r2-admin" });
+  });
+
+  it("refuses a file that isn't UTF-8", () => {
+    expect(() => parseR2UploadEnv("R\u0000=\u0000")).toThrow(".env.r2-upload is not UTF-8");
+  });
+
+  it("leaves the environment alone without the file or with empty values", async () => {
+    const dir = tree({ ".env.r2-upload": "R2_UPLOAD_TOKEN=\n" });
+    const env: NodeJS.ProcessEnv = {};
+
+    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+    await loadR2UploadEnvFile(env, path.join(dir, "missing"));
+
+    expect(env).toEqual({});
+  });
+});
+
 describe("r2UploadOptionsFromEnv", () => {
   it("defaults to the production bucket & origin", () => {
     expect(r2UploadOptionsFromEnv({})).toEqual({
       bucket: "mistria-fyi-assets",
       dryRun: false,
       force: false,
+      hasUploadToken: false,
       origin: "https://assets.mistria.fyi",
       parallel: 8,
     });
@@ -112,11 +185,13 @@ describe("r2UploadOptionsFromEnv", () => {
         FORCE: "1",
         PARALLEL: "zero",
         R2_BUCKET: "staging",
+        R2_UPLOAD_TOKEN: "r2-admin",
       }),
     ).toEqual({
       bucket: "staging",
       dryRun: true,
       force: true,
+      hasUploadToken: true,
       origin: "http://localhost:8080",
       parallel: 8,
     });
@@ -308,6 +383,32 @@ describe("r2UploadTree", () => {
     await r2UploadTree(sprites(dir), { ...options, dryRun: true }, dryRun);
     expect(dryRun.puts).toEqual([]);
     expect(dryRun.lines).toContain("would put sprites/a.webp");
+  });
+
+  it("refuses to upload without R2_UPLOAD_TOKEN rather than falling back to wrangler login", async () => {
+    const dir = tree({ "a.webp": "" });
+    const io = fakeIo();
+
+    await expect(
+      r2UploadTree(sprites(dir), { ...options, hasUploadToken: false }, io),
+    ).resolves.toBe(false);
+
+    expect(io.puts).toEqual([]);
+    expect(io.lines).toEqual([]);
+    expect(io.errors).toEqual([
+      "R2_UPLOAD_TOKEN is not set in the environment or .env.r2-upload; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
+    ]);
+  });
+
+  it("previews without R2_UPLOAD_TOKEN", async () => {
+    const dir = tree({ "a.webp": "" });
+    const io = fakeIo();
+
+    await expect(
+      r2UploadTree(sprites(dir), { ...options, dryRun: true, hasUploadToken: false }, io),
+    ).resolves.toBe(true);
+
+    expect(io.lines).toContain("would put sprites/a.webp");
   });
 
   it("treats an unreachable origin as not current", async () => {

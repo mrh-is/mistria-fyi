@@ -100,7 +100,7 @@ describe("planInstall", () => {
 });
 
 describe("planLinks", () => {
-  it("links existing entries & skips missing, tracked, or already-present ones", () => {
+  it("links existing entries & skips missing, tracked, excluded, or already-present ones", () => {
     const root = temporaryDirectory();
     const main = join(root, "main");
     const worktree = join(root, "worktree");
@@ -109,6 +109,7 @@ describe("planLinks", () => {
     mkdirSync(join(worktree, "tests/browser/fixtures/local"), { recursive: true });
     writeFileSync(join(main, ".env.example"), "");
     writeFileSync(join(main, ".env.local"), "");
+    writeFileSync(join(main, ".env.r2-upload"), "");
     writeFileSync(join(worktree, ".env.example"), "");
 
     const plans = planLinks(main, worktree, [
@@ -116,6 +117,7 @@ describe("planLinks", () => {
       "tests/browser/fixtures/local/",
       ".env",
       ".env.*",
+      "!.env.r2-upload",
       ".dev.vars",
       "",
     ]);

@@ -58,13 +58,20 @@ export const SHARED_DIRECTORIES = ["pipeline/input/"];
 /**
  * Resolves `.worktreeinclude` lines to the main-checkout entries that exist and aren't already in
  * the worktree. A trailing `/` names a directory; other lines name files, with `*` & `?` globs in
- * their last segment (e.g. `.env.*`). Missing sources are skipped rather than linked dangling.
+ * their last segment (e.g. `.env.*`). A `!` line excludes the exact path it names, as in
+ * `.gitignore` (e.g. `!.env.r2-upload`). Missing sources are skipped rather than linked dangling.
  */
 export function planLinks(repoRoot: string, worktreeDir: string, patterns: string[]): LinkPlan[] {
   const plans: LinkPlan[] = [];
+  const excluded = new Set(
+    patterns.flatMap((line) => {
+      const pattern = line.trim();
+      return pattern.startsWith("!") ? [pattern.slice(1)] : [];
+    }),
+  );
   for (const line of patterns) {
     const pattern = line.trim();
-    if (!pattern || pattern.startsWith("#")) {
+    if (!pattern || pattern.startsWith("#") || pattern.startsWith("!")) {
       continue;
     }
     const directory = pattern.endsWith("/");
@@ -76,7 +83,7 @@ export function planLinks(repoRoot: string, worktreeDir: string, patterns: strin
       const destination = join(worktreeDir, relativePath);
       // Skip files the checkout already tracks (e.g. `.env.example` matches `.env.*`) and entries
       // the harness already copied or a previous run already linked.
-      if (existsSync(source) && !pathExists(destination)) {
+      if (!excluded.has(relativePath) && existsSync(source) && !pathExists(destination)) {
         plans.push({ destination, directory, source });
       }
     }
