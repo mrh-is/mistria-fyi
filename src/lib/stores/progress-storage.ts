@@ -30,7 +30,12 @@ import {
   MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
 } from "#lib/engine/progress.js";
-import { factKey, progressFacts, PROVENANCE_SOURCES } from "#lib/engine/provenance.js";
+import {
+  editPlaytime,
+  factKey,
+  progressFacts,
+  PROVENANCE_SOURCES,
+} from "#lib/engine/provenance.js";
 import { applyEngagementCascade } from "#lib/engine/relationships.js";
 import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
 import {
@@ -107,6 +112,9 @@ export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   // Version 6 lets a completed quest's provenance name its obtained moment's source. An older
   // quest has no record of that moment, so nothing is backfilled & it draws in its own source.
   6: (document) => document,
+  // Version 7 records that the last applied save's playtime couldn't be read. An older blob has no
+  // such record, so edits after it keep carrying the baseline playtime, as they did.
+  7: (document) => document,
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -253,6 +261,7 @@ const StrictBlobSchema = v.object({
     hasUpperFloor: v.optional(v.boolean()),
     heartLevels: v.optional(strictLevels(trackerData.villagers, LEGACY_MAX_HEART_LEVEL)),
     lastSavePlaytime: v.optional(PlaytimeSchema),
+    lastSaveUnordered: v.optional(v.literal(true)),
     mineFloor: domainInteger(getMaxMineFloor()),
     provenance: v.optional(v.record(v.string(), FactProvenanceSchema)),
     questStates: v.optional(v.record(v.string(), v.picklist(QUEST_STATES))),
@@ -339,6 +348,7 @@ const RepairBlobSchema = v.object({
     hasUpperFloor: v.fallback(v.optional(v.boolean()), undefined),
     heartLevels: v.optional(validEntries(FiniteNumberSchema)),
     lastSavePlaytime: v.fallback(v.optional(PlaytimeSchema), undefined),
+    lastSaveUnordered: v.fallback(v.optional(v.literal(true)), undefined),
     mineFloor: v.fallback(FiniteNumberSchema, 0),
     // History is no reason to quarantine progress, so a malformed container is dropped whole.
     provenance: v.fallback(v.optional(validEntries(FactProvenanceSchema)), undefined),
@@ -620,12 +630,13 @@ function normalizeBlob({
     resolutions: withCanonicalAlmanacKeys((stored.resolutions ?? {}) as ResolutionRecord),
   };
   if (stored.lastSavePlaytime !== undefined) history.lastSavePlaytime = stored.lastSavePlaytime;
+  if (stored.lastSaveUnordered) history.lastSaveUnordered = true;
   const beforeCascade = { ...villagerRelationships };
   applyEngagementCascade(villagerRelationships, stored.breakUpsDisabled ?? false);
   // A relationship changed by the engagement cascade is inferred.
   for (const [id, relationship] of recordEntries(villagerRelationships)) {
     if (beforeCascade[id] === relationship) continue;
-    const { lastSavePlaytime: playtime } = history;
+    const playtime = editPlaytime(history);
     history.provenance[factKey("villagerRelationships", id)] =
       playtime === undefined ? { source: "inferred" } : { playtime, source: "inferred" };
   }
@@ -851,6 +862,7 @@ function serializedState({
       ...(history.lastSavePlaytime === undefined
         ? {}
         : { lastSavePlaytime: history.lastSavePlaytime }),
+      ...(history.lastSaveUnordered ? { lastSaveUnordered: true } : {}),
       almanac: list("almanac"),
       almanacRecipes: list("almanacRecipes"),
       animalCosmetics: mergeAnimalIds(progress.animalCosmetics, retained.animalCosmetics),
