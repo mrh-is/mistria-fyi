@@ -158,6 +158,8 @@ describe("visual report publication", () => {
     await publishVisualDiff({ directory: path, gh, repository, runId: "123" });
     expect(body).not.toContain("Do not publish");
     expect(body).toContain("home-light-1280 | 0 | 0");
+    expect(body).toContain("### Home, before");
+    expect(body).toContain("### Almanac, difference");
     expect(
       gh.mock.calls.find(([args]) => args[0] === "pr")?.[0].filter((arg) => arg === "--attach"),
     ).toHaveLength(6);

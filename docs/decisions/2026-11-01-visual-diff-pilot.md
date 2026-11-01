@@ -6,6 +6,7 @@ summary:
   image publication.
 evidence:
   - https://github.com/mrh-is/mistria-fyi/issues/332
+  - https://github.com/mrh-is/mistria-fyi/pull/369
   - .github/workflows/visual-diff.yml
   - .github/workflows/visual-diff-publish.yml
   - docs/visual-diff-pilot.md

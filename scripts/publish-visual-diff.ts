@@ -3,7 +3,7 @@ import "#scripts/lib/require-pinned-node";
 import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 interface Run {
@@ -257,7 +257,12 @@ export async function publishVisualDiff(options: {
         `| ${entry.id} | ${entry.changedPixels ?? "Capture failed"} | ${entry.noisePixels ?? "Capture failed"} |`,
     ),
     "",
-    ...images.flatMap((path) => [`![Visual comparison](${path})`, ""]),
+    ...images.flatMap((path) => {
+      const caption = basename(path, ".png")
+        .replace(/^home-/, "Home, ")
+        .replace(/^almanac-/, "Almanac, ");
+      return [`### ${caption}`, "", `![${caption}](${path})`, ""];
+    }),
     "Existing accessibility checks & manual interaction verification remain required.",
     "",
     "Agent: codex",

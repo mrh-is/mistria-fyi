@@ -51,8 +51,12 @@ files. It never executes artifact scripts or publishes artifact Markdown. Both t
 & the PR’s current head are checked before publication. Closed PRs & superseded commits receive no
 report.
 
-GitHub CLI uploads the sheets directly into a PR comment. That operation needs push access, so only
-the trusted publisher receives contents-write & pull-request-write permissions. It preserves
+[GitHub’s event documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run)
+describes the separate write-token context & default-branch requirement.
+
+GitHub CLI uploads the sheets directly into a PR comment.
+[Attachment uploads need push access](https://docs.github.com/en/github-cli/github-cli/attaching-files-with-github-cli),
+so only the trusted publisher receives contents-write & pull-request-write permissions. It preserves
 unrelated comments & comments by other authors. The publisher workflow starts automatically only
 after its file exists on the default branch. Before that first merge, the same script can be
 exercised locally against a real capture run with an authenticated CLI.
@@ -91,8 +95,12 @@ expanding routes or states; investigate any nonzero repeat noise first.
 
 The initial local smoke test made all 16 captures per revision. Head captures took 6.5 seconds using
 an existing build; baseline build & captures took 21.3 seconds. All eight base/head comparisons &
-all repeat comparisons were pixel-identical. These local measurements do not predict CI cost; record
-a real runner sample on the implementation PR before considering expansion.
+all repeat comparisons were pixel-identical. These local measurements do not predict CI cost.
+
+The [first hosted sample](https://github.com/mrh-is/mistria-fyi/actions/runs/41331073115) took 197
+seconds overall, including setup & queueing. Base build & captures took 54 seconds; head build &
+captures took 53 seconds. All 32 captures passed, and all eight comparisons reported zero changed
+pixels & zero repeat noise. This is one cold sample, not evidence for expanding coverage.
 
 The pilot covers only the initial viewport, English, Chromium, empty progress, & one expanded
 category. It cannot judge game artwork because sprites are synthetic. It does not cover
