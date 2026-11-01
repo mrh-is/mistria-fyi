@@ -92,9 +92,10 @@ chunk only from that version’s cache.
 - **A new version takes over once installed.** The worker’s install ends with `skipWaiting()`, and
   activation claims every tab. The first-ever install claims the page too; that isn’t an update. A
   page request that reaches the old worker just as Chromium stops it for the takeover restarts it,
-  and the takeover then waits for its idle timeout. Measured with no debugger attached, that’s 30 s,
-  with the page working on the old version throughout. Under Playwright, the wait doesn’t end, so
-  the update tests stop a restarted worker themselves (`stopRestartedWorkers`, #400).
+  and the takeover then waits. Measured with no debugger attached, that’s 30 s, which matches the
+  worker’s idle timeout. Under Playwright, the wait outlasts the test, likely because a debugger
+  turns that timeout off, so the update tests stop a restarted worker themselves
+  (`stopRestartedWorkers`, #400).
 - **Older caches stay while a page runs that version.** Each page reports its version to the active
   worker (`mfg:client-version`) when it loads; the worker records the reports in
   `client-versions-v1`, pruned to the pages still open. Activation deletes an older version’s

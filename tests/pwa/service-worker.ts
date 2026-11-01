@@ -24,11 +24,12 @@ async function disconnect(route: Route): Promise<void> {
 const RESTARTED_WORKER_GRACE_MS = 1000;
 
 /**
- * Stands in for the idle timeout that an attached debugger turns off. Chromium stops the old worker
- * for a takeover. A page request arriving during that stop starts it again, and the takeover then
- * waits for it to go idle: 30 s in an undebugged browser, but never under Playwright. So when an
- * active worker restarts with a new version waiting, this stops it again. A worker still busy with
- * its own work never stopped, so it finishes as it would for a player.
+ * Stands in for the idle timeout, which an attached debugger likely turns off. Chromium stops the
+ * old worker for a takeover. A page request arriving during that stop starts it again, and the
+ * takeover then waits: 30 s in an undebugged browser, but past the test's time under Playwright. So
+ * when an active worker restarts with a new version waiting, this stops it again after a grace
+ * period. A worker that hasn't stopped yet finishes its own work as it would for a player; one that
+ * restarted gets only the grace period, so a test can't catch a restarted worker hanging.
  */
 export async function stopRestartedWorkers(page: Page): Promise<void> {
   const session = await page.context().newCDPSession(page);
@@ -47,8 +48,11 @@ export async function stopRestartedWorkers(page: Page): Promise<void> {
     if (!isHoldingTakeover(versionId)) return;
     try {
       await session.send("ServiceWorker.stopWorker", { versionId });
-    } catch {
-      // The test has ended, closing the session, so nothing is left to take over.
+    } catch (error) {
+      // A closed session means the test ended, so nothing is left to take over. Anything else
+      // would otherwise show only as a takeover timing out.
+      if (error instanceof Error && error.message.includes("closed")) return;
+      throw error;
     }
   };
   session.on("ServiceWorker.workerVersionUpdated", ({ versions: updated }) => {
@@ -68,7 +72,8 @@ export async function stopRestartedWorkers(page: Page): Promise<void> {
 
 /**
  * Waits for hydration. SvelteKit listens for focus & visibility changes, its deploy checks, only
- * from the end of hydration, so an event dispatched earlier is lost and the page never updates.
+ * from the end of hydration, so an event dispatched earlier is lost and the next check is its
+ * 10-minute poll.
  */
 export async function waitForHydration(page: Page): Promise<void> {
   await page.waitForFunction(() => document.documentElement.dataset.hydrated === "true");

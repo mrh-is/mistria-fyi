@@ -299,8 +299,8 @@ test("reloads an uncontrolled page from the network even with an old active work
   await waitForControl(page);
   const oldCache = versionCacheOf(await cacheNames(page));
 
-  // Hydration can finish after `load`, as it does on a busy CI runner. Slowing its entry chunk keeps
-  // that order on every run, so the wait for hydration below stays necessary.
+  // Hydration can finish after `load`. Slowing its entry chunk keeps that order on every run, so
+  // the wait for hydration below stays necessary.
   const hydrationEntry = /\/_app\/immutable\/entry\/start\./;
   await context.route(hydrationEntry, async (route) => {
     await new Promise((resolve) => {
@@ -409,8 +409,9 @@ function lastLocale(page: Page): Promise<unknown> {
   });
 }
 
-// Timed for the instant Chromium stops the old worker, which restarts it to answer. An undebugged
-// browser then waits out the worker's idle timeout, and `stopRestartedWorkers` stands in for that.
+// Timed for the instant Chromium stops the old worker, which restarts it to answer. The window is
+// narrow, so a late request misses it and the takeover simply proceeds; nothing asserts the restart.
+// An undebugged browser waits about 30 s here, and `stopRestartedWorkers` stands in for that.
 test("takes over after a page request restarts the old worker mid-takeover", async ({
   context,
   page,
