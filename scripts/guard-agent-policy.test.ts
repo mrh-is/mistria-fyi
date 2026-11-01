@@ -102,6 +102,71 @@ describe("agent shell policy", () => {
     expect(check("cat /tmp/body | gh issue comment 1 --body-file -").message).toContain("stdin");
   });
 
+  describe.each(["issue", "pr"])("GitHub %s help", (kind) => {
+    it.each(["create", "comment", "edit"])("allows %s help without a body", (action) => {
+      for (const flag of ["--help", "-h"]) {
+        expect(check(`gh ${kind} ${action} ${flag}`).message).toBeUndefined();
+        expect(check(`gh ${kind} ${action} 1 ${flag}`).message).toBeUndefined();
+        expect(check(`gh ${kind} ${action} ${flag} ${flag}`).message).toBeUndefined();
+      }
+    });
+  });
+
+  it.each(["--help", "-h"])("still validates bodies when %s is an option value", (help) => {
+    expect(check(`gh issue create --title '${help}' --body unattributed`).message).toContain(
+      "Agent:",
+    );
+    expect(check(`gh pr comment 1 --body '${help}'`).message).toContain("Agent:");
+    expect(check(`gh issue create -- --help`).message).toContain("--body-file");
+  });
+
+  it.each([
+    "gh issue create -tfoo --body --help",
+    "gh issue create -bunattributed --title --help --body x",
+    "gh issue edit 1 --remove-type --title --help --body unattributed",
+    "gh issue edit 1 --remove-parent --title --help --body unattributed",
+    "gh issue edit 1 --remove-milestone --title --help --body unattributed",
+    "gh issue create --help --help=false --body unattributed",
+    "gh issue create --help=false --help --body unattributed",
+  ])("does not exempt help mixed with other options: %s", (command) => {
+    expect(check(command).message).toContain("Agent:");
+  });
+
+  it.each(["--help", "-h"])("requires normal validation for other options beside %s", (flag) => {
+    expect(check(`gh issue create --editor ${flag} --body-file missing.md`).message).toBeDefined();
+    expect(check(`gh pr create --title test ${flag}`).message).toContain("--body-file");
+  });
+
+  it.each(['"$d/body.md"', `"\${d}/body.md"`, '"$(pwd)/body.md"', '"`pwd`/body.md"'])(
+    "explains unsupported shell expressions in body-file paths: %s",
+    (file) => {
+      for (const option of ["--body-file ", "--body-file=", "-F "]) {
+        for (const prefix of ["", "cd /tmp && "]) {
+          const message = check(`${prefix}gh issue create ${option}${file}`).message;
+          expect(message).toContain("cannot expand shell variables");
+          expect(message).toContain("literal path");
+          expect(message).not.toContain("Create it before");
+        }
+      }
+    },
+  );
+
+  it.each(["~/body.md", "/tmp/*.md"])("explains literal reads for unreadable paths: %s", (file) => {
+    const message = check(`gh issue create --body-file ${file}`).message;
+    expect(message).toContain("reads paths literally");
+    expect(message).toContain("without shell expansion");
+    expect(message).not.toContain("Create it before");
+  });
+
+  it.each(["body$.md", "body`.md"])("explains rejected literal special characters: %s", (name) => {
+    const root = mkdtempSync(join(tmpdir(), "agent-body-literal-"));
+    roots.push(root);
+    const file = join(root, name);
+    writeFileSync(file, "A concrete change.\n\nAgent: codex\n");
+    const message = check(`gh issue create --body-file '${file}'`).message;
+    expect(message).toContain("literal path without $ or backticks");
+  });
+
   it("reads attributed body files, and rejects missing attribution without printing the body", () => {
     const root = mkdtempSync(join(tmpdir(), "agent-body-"));
     roots.push(root);
