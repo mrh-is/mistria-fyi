@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { readGuardMessage } from "./guard-generated-reads.js";
+import { namesR2TokenFile, readGuardMessage } from "./guard-generated-reads.js";
 
 const roots: string[] = [];
 const search = (command: string, cwd: string) =>
@@ -170,6 +170,129 @@ describe("generated-data read guard", () => {
       expect(
         readGuardMessage({ cwd: "/work/mistria", ...input }),
         JSON.stringify(input),
+      ).toBeUndefined();
+    }
+  });
+
+  it("allows jq slices & indexes that only look like dotfile globs", () => {
+    for (const command of [
+      "gh run list --json a --jq '.a | sort | .[0:8]'",
+      "gh api \"a/$ID\" --jq '{type}'; gh run list --jq '.b[0:8]'",
+      "gh run list --json a --jq '.b[0:8]'",
+      "gh run list --json a --jq 'map(.a) | sort | .b'",
+      "gh api \"a/$ID\" --jq '{type}'; gh run list --jq '.b'",
+      "jq '.[]' data.json",
+      "jq '.[].a' data.json",
+      "jq '.[0]' data.json",
+      "jq '.[length-1]' data.json",
+      "jq '.[0:length-1]' data.json",
+      "jq '.foo[1:]' data.json",
+      "jq '.foo[:2]' data.json",
+      "jq '.foo[.n-1]' data.json",
+      "jq '.a[0' data.json",
+      "jq '.b[(.a)]' data.json",
+    ]) {
+      expect(
+        readGuardMessage({ cwd: "/work/mistria", tool_input: { command }, tool_name: "Bash" }),
+        command,
+      ).toBeUndefined();
+    }
+  });
+
+  it("keeps denying a bracket split where the rest could still reach the R2 token file", () => {
+    // These can be fragments of `.["e "]nv.r2-upload`, so a jq computed index shares their fate.
+    for (const command of ["jq '.[(.a)]' data.json", "jq '.[\"key\"]' data.json"]) {
+      expect(
+        readGuardMessage({ cwd: "/work/mistria", tool_input: { command }, tool_name: "Bash" }),
+        command,
+      ).toContain("R2 upload token file");
+    }
+  });
+
+  it("answers quickly on long hostile words, so a hook timeout can't skip the guard", () => {
+    for (const word of [
+      `x${"[".repeat(100_000)}`,
+      `.${"[".repeat(100_000)}`,
+      `.[${"[:".repeat(50_000)}`,
+      `.${"[]".repeat(50_000)}`,
+      `.${"*?".repeat(50_000)}x`,
+      `${".".repeat(100_000)}x`,
+    ]) {
+      const start = performance.now();
+      namesR2TokenFile(word);
+      expect(performance.now() - start, word.slice(0, 8)).toBeLessThan(2000);
+    }
+  });
+
+  it("denies bracket globs that match the R2 token file, even around a colon or separator", () => {
+    for (const input of [
+      { tool_input: { command: "cat .env.r2-uploa[d]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[a:d]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .e[m:n]v.r2-upload" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[[:alpha:]]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[[.d.]]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[d,e]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[c-e]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[!x]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[^x]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[]d]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[d]:$DATA" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[z-a]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .[e]nv*" }, tool_name: "Bash" },
+      // Zsh matches any character with an empty negated bracket.
+      { tool_input: { command: "cat .env.r2-uploa[!]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2[^]upload" }, tool_name: "Bash" },
+      // Lowercasing must not change what a negated or ranged bracket matches.
+      { tool_input: { command: "cat .env.r2-uploa[!D]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[^D]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[!A-Z]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .e[!N]v.r2-upload" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .[E-z]nv.r2-upload" }, tool_name: "Bash" },
+      // Quoted members split the word, leaving an unclosed bracket.
+      { tool_input: { command: 'cat .env.r2-uploa["d e"]' }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa['d e']" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[d' ']" }, tool_name: "Bash" },
+      { tool_input: { command: 'cat .env.r2-uploa[d";"]' }, tool_name: "Bash" },
+      { tool_input: { command: 'cat .e["n "]v.r2-upload' }, tool_name: "Bash" },
+      { tool_input: { command: 'cat .["e "]nv*' }, tool_name: "Bash" },
+      // Collating symbols & equivalence classes can hold punctuation, even a `]`.
+      { tool_input: { command: "cat .env.r2[[.-.]]upload" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env[[...]]r2-upload" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env[[=.=]]r2-upload" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uploa[[.].]d]" }, tool_name: "Bash" },
+      // PowerShell wildcards have no negation, so `!` & `^` are members there.
+      { tool_input: { command: "gc .env.r2-uploa[!d]" }, tool_name: "PowerShell" },
+      { tool_input: { command: 'powershell -c "gc .env.r2-uploa[^d]"' }, tool_name: "Bash" },
+      { tool_input: { command: 'powershell -c "gc a[ .env.r2-uploa[d,e]"' }, tool_name: "Bash" },
+      { tool_input: { glob: ".env.r2-uploa[!D]", pattern: "TOKEN" }, tool_name: "Grep" },
+      {
+        tool_input: { command: 'powershell -c "Get-Content .env.r2-uploa[d,e]"' },
+        tool_name: "Bash",
+      },
+      {
+        tool_input: { command: 'powershell -c "Get-Content .env.r2-uploa[a:d]"' },
+        tool_name: "Bash",
+      },
+      {
+        tool_input: { command: 'powershell -c "gc a[ .env.r2-upload; echo ]"' },
+        tool_name: "Bash",
+      },
+      { tool_input: { command: "gc .env.r2-uploa[d,e]" }, tool_name: "PowerShell" },
+      { tool_input: { glob: ".env.r2-uploa[a:d]", pattern: "TOKEN" }, tool_name: "Grep" },
+    ]) {
+      expect(readGuardMessage({ cwd: "/work/mistria", ...input }), JSON.stringify(input)).toContain(
+        "R2 upload token file",
+      );
+    }
+    for (const command of [
+      "cat .env.r2-uplo[a]",
+      "cat .env.r2-upload[a]",
+      "cat .envrc[0]",
+      "cat .env.example[",
+    ]) {
+      expect(
+        readGuardMessage({ cwd: "/work/mistria", tool_input: { command }, tool_name: "Bash" }),
+        command,
       ).toBeUndefined();
     }
   });
