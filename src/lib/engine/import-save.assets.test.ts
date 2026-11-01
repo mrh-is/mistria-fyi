@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -5,9 +6,10 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { recordEntries } from "#lib/utils/record.js";
+import { recordEntries, recordValues } from "#lib/utils/record.js";
 
 import { extractSave, extractSaveProgress } from "./import-save.js";
+import { SAVE_OBSERVATIONS } from "./import-save.observations.js";
 import { parseSavArchive } from "./parse-sav.js";
 import { readSaveIdentity } from "./save-identity.js";
 import { applySync } from "./sync-apply.js";
@@ -15,21 +17,83 @@ import { applySync } from "./sync-apply.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";
 
 import type { SaveBundle, SaveExtraction } from "./import-save.js";
+import type { GameObservation } from "./import-save.observations.js";
 import type { SyncState } from "./sync-apply.js";
 
 // Real saves for the committed tracker data's game version, read locally & never committed.
-const SAVE_DIR = path.join(
-  fileURLToPath(new URL("../../../pipeline/input", import.meta.url)),
-  `v${trackerData.version}`,
-  "save",
-);
+const INPUT_DIR = fileURLToPath(new URL("../../../pipeline/input", import.meta.url));
+const SAVE_DIR = path.join(INPUT_DIR, `v${trackerData.version}`, "save");
 const SAVE_FILES = readdirSync(SAVE_DIR).filter((name) => name.endsWith(".sav"));
 /** Fields a save never fully determines (see `PARTIAL_FIELDS` in `import-save.ts`). */
 const PARTIAL_KEYS = new Set(["childChoice"]);
 
-async function readSave(name: string): Promise<SaveBundle> {
-  return parseSavArchive(new File([readFileSync(path.join(SAVE_DIR, name))], name));
+async function readSave(name: string, version = trackerData.version): Promise<SaveBundle> {
+  const file = path.join(INPUT_DIR, `v${version}`, "save", name);
+  return parseSavArchive(new File([readFileSync(file)], name));
 }
+
+function confirmedValue<T>(observation: GameObservation<T>): T {
+  if (observation.status !== "confirmed") throw new Error("Game observation is still pending");
+  expect(observation.source.observer.trim()).not.toBe("");
+  expect(observation.source.observedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  expect(observation.source.evidence.trim()).not.toBe("");
+  return observation.value;
+}
+
+describe.each(SAVE_OBSERVATIONS)(
+  "independent game observations: v$gameVersion/$file",
+  (fixture) => {
+    let bundle: SaveBundle;
+    beforeAll(async () => {
+      bundle = await readSave(fixture.file, fixture.gameVersion);
+    });
+
+    it("matches the exact private snapshot & writing game version", () => {
+      const file = path.join(INPUT_DIR, `v${fixture.gameVersion}`, "save", fixture.file);
+      expect(createHash("sha256").update(readFileSync(file)).digest("hex")).toBe(fixture.sha256);
+      const [major, minor, patch] = fixture.gameVersion.split(".").map(Number);
+      expect(bundle.info?.version).toMatchObject({ major, minor, patch });
+    });
+
+    it.skipIf(fixture.mineFloor.status === "pending")(
+      "matches the player’s confirmed mine floor",
+      () => {
+        const observed = confirmedValue(fixture.mineFloor);
+        const { mineFloor } = extractSave(bundle).fields;
+        expect(mineFloor.completeness).toBe("complete");
+        expect(mineFloor.value).toBe(observed);
+      },
+    );
+
+    it.skipIf(fixture.museum.status === "pending")(
+      "matches the player’s confirmed museum donations",
+      () => {
+        const { donated, notDonated } = confirmedValue(fixture.museum);
+        expect(donated.length + notDonated.length).toBeGreaterThan(0);
+        const knownItems = new Set<string>(
+          recordValues(trackerData.museum).flatMap(({ sets }) =>
+            recordValues(sets).flatMap(({ items }) => items),
+          ),
+        );
+        for (const id of [...donated, ...notDonated]) expect(knownItems).toContain(id);
+        const { museum } = extractSave(bundle).fields;
+        expect(museum.completeness).toBe("complete");
+        for (const id of donated) expect(museum.value).toContain(id);
+        for (const id of notDonated) expect(museum.value).not.toContain(id);
+      },
+    );
+
+    it.skipIf(fixture.spouse.status === "pending")("matches the player’s confirmed spouse", () => {
+      const observed = confirmedValue(fixture.spouse);
+      const { villagerRelationships } = extractSave(bundle).fields;
+      expect(villagerRelationships.completeness).toBe("complete");
+      const spouses = Object.entries(villagerRelationships.value ?? {})
+        .filter(([, status]) => status === "married")
+        .map(([id]) => id);
+      expect(spouses).toEqual(observed === null ? [] : [observed]);
+    });
+  },
+);
 
 /** A deep copy of `bundle` with `edit` applied, so each case starts from the real save. */
 function mutated(bundle: SaveBundle, edit: (copy: SaveBundle) => void): SaveBundle {
