@@ -376,6 +376,19 @@ Evidence:
 [src/lib/engine/import-save.observations.ts](../src/lib/engine/import-save.observations.ts),
 [docs/save-import-verification.md](../docs/save-import-verification.md).
 
+### [Record an unordered last save](decisions/2026-11-01-unordered-save-flag.md)
+
+ID: 2026-11-01-unordered-save-flag. Status: Current.
+
+Progress history records when the last applied save's playtime couldn't be read, so edits made after
+it record no playtime & a disagreeing save asks.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/362](https://github.com/mrh-is/mistria-fyi/issues/362),
+[src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts),
+[src/lib/stores/user-state-provenance.test.ts](../src/lib/stores/user-state-provenance.test.ts),
+[src/lib/stores/progress-storage.test.ts](../src/lib/stores/progress-storage.test.ts).
+
 ### [Keep Vitest retries visible](decisions/2026-11-01-visible-vitest-retries.md)
 
 ID: 2026-11-01-visible-vitest-retries. Status: Current.

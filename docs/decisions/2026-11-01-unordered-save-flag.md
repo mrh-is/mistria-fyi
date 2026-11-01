@@ -1,3 +1,17 @@
+---
+id: 2026-11-01-unordered-save-flag
+status: current
+summary: >-
+  Progress history records when the last applied save's playtime couldn't be read, so edits made
+  after it record no playtime & a disagreeing save asks.
+evidence:
+  - https://github.com/mrh-is/mistria-fyi/issues/362
+  - src/lib/engine/sync-apply.test.ts
+  - src/lib/stores/user-state-provenance.test.ts
+  - src/lib/stores/progress-storage.test.ts
+relationships: []
+---
+
 # Record an unordered last save
 
 ## Context
