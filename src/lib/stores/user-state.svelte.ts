@@ -566,6 +566,7 @@ function createUserState() {
             ) &&
             storedFacts.has(key) &&
             storedFacts.get(key) === mergedFacts.get(key),
+          intent.importedSave,
         );
       }
       json = serializeStoredProgress(loaded, loaded.local);
@@ -1705,21 +1706,27 @@ function rebaseProgressEdits(
 /**
  * Rebases history as {@link rebaseProgressEdits} rebases progress: each entry `after` added,
  * changed, or removed since `before` applies to `target`, and every other entry keeps `target`'s.
- * Entries are whole, so a fact's source & playtime always come from the same recording.
+ * Entries are whole, so a fact's source & playtime always come from the same recording. The last
+ * save's baseline is whole too, and `appliedSave` says `after` applied a save.
  */
 function rebaseHistory(
   target: ProgressHistory,
   before: Readonly<ProgressHistory>,
   after: Readonly<ProgressHistory>,
   keepTarget?: (key: string, entry: FactProvenance) => boolean,
+  appliedSave = false,
 ): void {
   rebaseEntries(target.provenance, before.provenance, after.provenance, keepTarget);
   rebaseEntries(target.resolutions, before.resolutions, after.resolutions);
-  if (before.lastSavePlaytime !== after.lastSavePlaytime) {
+  // The baseline's two fields describe one save, so they move together. A save `after` applied
+  // replaces it even when the save left it as it was.
+  if (
+    appliedSave ||
+    before.lastSavePlaytime !== after.lastSavePlaytime ||
+    before.lastSaveUnordered !== after.lastSaveUnordered
+  ) {
     if (after.lastSavePlaytime === undefined) delete target.lastSavePlaytime;
     else target.lastSavePlaytime = after.lastSavePlaytime;
-  }
-  if (before.lastSaveUnordered !== after.lastSaveUnordered) {
     if (after.lastSaveUnordered === undefined) delete target.lastSaveUnordered;
     else target.lastSaveUnordered = after.lastSaveUnordered;
   }
