@@ -26,11 +26,11 @@ import type {
 import type { ReadSave } from "./read-save.js";
 
 /**
- * The invisible Turnstile widget for mailbox creation, with the relay's `sync-create` action. This
- * is Cloudflare's always-passing invisible test key until launch (#291) swaps in the dedicated
- * widget's key (`relay/README.md` § Maintainer launch).
+ * The dedicated invisible Turnstile widget for mailbox creation, with the relay's `sync-create`
+ * action (`relay/README.md` § Maintainer launch). It's separate from the feedback widget, and its
+ * site key is public.
  */
-const SYNC_TURNSTILE_SITE_KEY = "1x00000000000000000000BB";
+const SYNC_TURNSTILE_SITE_KEY = "0x4AAAAAAFtIVmbS8YY4O4dt";
 const SYNC_TURNSTILE_ACTION = "sync-create";
 
 let relay: RelayClient = createRelayClient();
