@@ -238,6 +238,19 @@ const fenced = (body: string, heading: string): unknown => {
 };
 
 describe("POST /api/feedback", () => {
+  it("excludes unclassified progress and provenance fields from older clients", async () => {
+    const body = await fileIssue({
+      saveData: {
+        futureField: { characterName: "private-character" },
+        provenance: { renown: { farmName: "private-farm", source: "save" } },
+        renown: 7,
+      },
+    });
+    expect(fenced(body, "<summary>Save data")).toEqual({
+      provenance: { renown: { source: "save" } },
+      renown: 7,
+    });
+  });
   describe("fitting GitHub's issue body limit", () => {
     it("enforces the progress byte limit after redacting an older client's playtimes", async () => {
       const saveData = {
@@ -269,7 +282,7 @@ describe("POST /api/feedback", () => {
       expect(body).not.toContain("4321");
       expect(fenced(body, "<summary>Save data")).toEqual({
         lastSavePlaytime: "[redacted]",
-        provenance: { odd: "shape", renown: { playtime: "[redacted]", source: "save" } },
+        provenance: { odd: {}, renown: { playtime: "[redacted]", source: "save" } },
         renown: 7,
       });
     });

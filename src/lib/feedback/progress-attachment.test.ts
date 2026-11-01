@@ -3,6 +3,29 @@ import { describe, expect, it } from "vitest";
 import { progressAttachment } from "./progress-attachment.js";
 
 describe("feedback progress redaction", () => {
+  it("drops unclassified top-level and history fields", () => {
+    expect(
+      progressAttachment({
+        almanac: ["future_game_item"],
+        futureField: { characterName: "Private Person" },
+        lastImport: { farmName: "Private Farm" },
+        provenance: {
+          renown: {
+            farmName: "Private Farm",
+            obtainedSource: "manual",
+            playtime: 42,
+            source: "save",
+          },
+        },
+        resolutions: { renown: { privateReceipt: "secret", saveValue: 7 } },
+      }),
+    ).toEqual({
+      almanac: ["future_game_item"],
+      provenance: { renown: { obtainedSource: "manual", playtime: "[redacted]", source: "save" } },
+      resolutions: { renown: { saveValue: 7 } },
+    });
+  });
+
   it("preserves missing playtime fields, game IDs, and non-playtime numeric facts", () => {
     const progress = {
       almanac: ["future_item_2027_01_02"],

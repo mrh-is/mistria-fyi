@@ -7,6 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { readGuardMessage } from "./guard-generated-reads.js";
 
 const roots: string[] = [];
+const search = (command: string, cwd: string) =>
+  readGuardMessage({ cwd, tool_input: { command }, tool_name: "Bash" });
 afterEach(() => {
   for (const root of roots.splice(0)) {
     rmSync(root, { force: true, recursive: true });
@@ -125,6 +127,106 @@ describe("generated-data read guard", () => {
         tool_name: "Bash",
       }),
     ).toBe(tokenMessage);
+  });
+
+  it("denies reads of the R2 upload token file, but not other env files", () => {
+    const tokenMessage =
+      "Blocked read of the R2 upload token file. The upload scripts load it; check it with `node scripts/machine-doctor.ts --for release` or `pnpm run r2:check`. To search the repository, use the Grep tool or plain `rg`, which skip gitignored files.";
+    expect(readGuardMessage({ tool_input: { file_path: "/work/mistria/.env.r2-upload" } })).toBe(
+      tokenMessage,
+    );
+    expect(
+      readGuardMessage({
+        cwd: "/work/mistria",
+        tool_input: { command: "cat .env.r2-upload" },
+        tool_name: "Bash",
+      }),
+    ).toBe(tokenMessage);
+    expect(
+      readGuardMessage({ tool_input: { file_path: "/work/mistria/.env.example" } }),
+    ).toBeUndefined();
+  });
+
+  it("denies other spellings, globs, PowerShell, & Grep filters that reach the R2 token file", () => {
+    for (const input of [
+      { tool_input: { file_path: String.raw`C:\work\mistria\.ENV.R2-UPLOAD` }, tool_name: "Read" },
+      { tool_input: { command: "cat .env.r2-upload." }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-upload::$DATA" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2*" }, tool_name: "Bash" },
+      { tool_input: { command: "type .env.r2-upload" }, tool_name: "Bash" },
+      { tool_input: { command: 'powershell -c "Get-Content .env.r2-upload"' }, tool_name: "Bash" },
+      { tool_input: { command: String.raw`gc .\.env.r2-upload` }, tool_name: "PowerShell" },
+      { tool_input: { glob: ".env*", pattern: "TOKEN" }, tool_name: "Grep" },
+    ]) {
+      expect(readGuardMessage({ cwd: "/work/mistria", ...input }), JSON.stringify(input)).toContain(
+        "R2 upload token file",
+      );
+    }
+    for (const input of [
+      { tool_input: { command: "cat *.md" }, tool_name: "Bash" },
+      { tool_input: { command: "Get-Content README.md" }, tool_name: "PowerShell" },
+      { tool_input: { glob: "*.ts", pattern: "R2_UPLOAD_TOKEN" }, tool_name: "Grep" },
+    ]) {
+      expect(
+        readGuardMessage({ cwd: "/work/mistria", ...input }),
+        JSON.stringify(input),
+      ).toBeUndefined();
+    }
+  });
+
+  it("denies recursive searches that read gitignored files only where the token file is in reach", () => {
+    const root = mkdtempSync(join(tmpdir(), "agent-read-"));
+    roots.push(root);
+    expect(spawnSync("git", ["init", "-q"], { cwd: root }).status).toBe(0);
+    mkdirSync(join(root, "src"));
+    writeFileSync(join(root, ".env.r2-upload"), "R2_UPLOAD_TOKEN=synthetic\n");
+    for (const command of [
+      "grep -rn R2_UPLOAD_TOKEN .",
+      "grep -R TOKEN",
+      "rg -uu R2_UPLOAD_TOKEN",
+      "git grep --no-index TOKEN",
+    ]) {
+      expect(search(command, root), command).toContain("R2 upload token file");
+    }
+    expect(search("rg R2_UPLOAD_TOKEN", root)).toBeUndefined();
+    expect(search("grep -rn R2_UPLOAD_TOKEN src", root)).toBeUndefined();
+    expect(search("grep -rn R2_UPLOAD_TOKEN .", join(root, "src"))).toBeUndefined();
+    expect(search("grep -rn R2_UPLOAD_TOKEN ..", join(root, "src"))).toContain(
+      "R2 upload token file",
+    );
+  });
+
+  it("denies recursive searches that reach the token file through a symlinked path", () => {
+    const parent = mkdtempSync(join(tmpdir(), "agent-read-"));
+    roots.push(parent);
+    const root = join(parent, "checkout");
+    const alias = join(parent, "alias");
+    mkdirSync(join(root, "src"), { recursive: true });
+    expect(spawnSync("git", ["init", "-q"], { cwd: root }).status).toBe(0);
+    writeFileSync(join(root, ".env.r2-upload"), "R2_UPLOAD_TOKEN=synthetic\n");
+    symlinkSync(root, alias);
+
+    expect(search("grep -rn R2_UPLOAD_TOKEN .", alias)).toContain("R2 upload token file");
+    expect(search("grep -R TOKEN", alias)).toContain("R2 upload token file");
+    expect(search("grep -rn R2_UPLOAD_TOKEN ..", join(alias, "src"))).toContain(
+      "R2 upload token file",
+    );
+    expect(search("grep -rn R2_UPLOAD_TOKEN .", join(alias, "src"))).toBeUndefined();
+    expect(search("rg R2_UPLOAD_TOKEN", alias)).toBeUndefined();
+  });
+
+  it("denies recursive searches when the token file itself is a symlink out of the checkout", () => {
+    const parent = mkdtempSync(join(tmpdir(), "agent-read-"));
+    roots.push(parent);
+    const root = join(parent, "checkout");
+    const secret = join(parent, "synthetic-r2-token");
+    mkdirSync(root);
+    expect(spawnSync("git", ["init", "-q"], { cwd: root }).status).toBe(0);
+    writeFileSync(secret, "R2_UPLOAD_TOKEN=synthetic\n");
+    symlinkSync(secret, join(root, ".env.r2-upload"));
+
+    expect(search("grep -R TOKEN .", root)).toContain("R2 upload token file");
+    expect(search("grep -rn TOKEN", root)).toContain("R2 upload token file");
   });
 
   it("denies token paths even when their files are symlinked elsewhere", () => {

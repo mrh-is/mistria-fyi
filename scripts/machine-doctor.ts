@@ -2,15 +2,17 @@ import { CURRENT_GAME_VERSION } from "#game-version";
 import { spawnSync } from "node:child_process";
 import { accessSync, constants, existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseEnv } from "node:util";
 
 import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from "node:child_process";
 
 /**
  * Machine doctor: reports whether this machine meets the prerequisites in docs/machine-setup.md.
- * It is read-only. It never installs, configures, or authenticates, and it never reads credentials;
- * the login probes inspect an exit code only. Plain Node with no dependencies, so it runs before
+ * It is read-only. It never installs, configures, or authenticates, and it never prints or validates
+ * credentials: the login probes inspect an exit code only, & the R2 token check only whether names
+ * are set. Plain Node with no dependencies, so it runs before
  * `pnpm install` (and before pnpm exists): `node scripts/machine-doctor.ts`. There is deliberately no
  * pnpm script for it: `pnpm run` would verify (or install) dependencies first and substitute the
  * devEngines runtime for the shell's own Node, which is the version this script must check.
@@ -447,17 +449,44 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
     : check("pnpm-store", label, "wrong", `pnpm uses ${resolved}, not ${configured}`, fix);
 }
 
-/** Logins no script can perform for the user. */
-export function manualSteps(): CheckResult[] {
-  return [
-    check(
-      "wrangler",
-      "Wrangler login",
-      "manual",
-      "not probed; the login is interactive",
-      "pnpm exec wrangler login, then pnpm exec wrangler whoami",
-    ),
-  ];
+/**
+ * The R2 API token that `sprites:upload` & `fonts:upload` hand to Wrangler (`R2_UPLOAD_TOKEN`, not
+ * `CLOUDFLARE_API_TOKEN`, which may hold an unrelated read-only token), from the environment or
+ * `.env.r2-upload` at the main checkout's root, as `loadR2UploadEnvFile` reads them. Only presence
+ * is checked: the doctor never prints or validates the token itself.
+ */
+export function checkR2Token(machine: Environment): CheckResult {
+  const common = machine.run("git", [
+    "-C",
+    machine.root,
+    "rev-parse",
+    "--path-format=absolute",
+    "--git-common-dir",
+  ]);
+  const mainRoot = common.ok ? dirname(common.stdout.trim()) : machine.root;
+  const fileText = machine.read(join(mainRoot, ".env.r2-upload"));
+  if (fileText?.includes("\u0000")) {
+    return check(
+      "r2-token",
+      "R2 upload token",
+      "wrong",
+      ".env.r2-upload is not UTF-8",
+      "Save .env.r2-upload as UTF-8 (docs/machine-setup.md, R2 upload token)",
+    );
+  }
+  const fromFile = fileText === undefined ? {} : parseEnv(fileText.replace(/^﻿/, ""));
+  const unset = ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"].filter(
+    (name) => !machine.env[name] && !fromFile[name],
+  );
+  return unset.length === 0
+    ? check("r2-token", "R2 upload token", "ok", "R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID are set")
+    : check(
+        "r2-token",
+        "R2 upload token",
+        "manual",
+        `${unset.join(" & ")} ${unset.length === 1 ? "is" : "are"} not set`,
+        "Create an R2 API token & add it with the account ID to .env.r2-upload (docs/machine-setup.md, R2 upload token)",
+      );
 }
 
 /** Work areas. Core always runs; the rest are needed only for specific work. */
@@ -486,7 +515,7 @@ export const SECTIONS = {
     title: "Pipeline (game files)",
   },
   release: {
-    checks: (): CheckResult[] => manualSteps(),
+    checks: (machine: Environment): CheckResult[] => [checkR2Token(machine)],
     title: "Release (R2 uploads)",
   },
 } as const;
@@ -574,7 +603,7 @@ export function formatReport(reports: SectionReport[]): string {
   const results = checked.flatMap((report) => report.results);
   const problems = results.filter((r) => r.status === "missing" || r.status === "wrong").length;
   const todo = results.some((r) => r.status === "manual")
-    ? " Steps marked [todo] are interactive; see docs/machine-setup.md."
+    ? " Steps marked [todo] are manual; see docs/machine-setup.md."
     : "";
   lines.push(
     "",

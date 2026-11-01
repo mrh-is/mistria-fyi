@@ -15,7 +15,12 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { listFiles, r2UploadOptionsFromEnv, r2UploadTree } from "#scripts/lib/r2-upload";
+import {
+  listFiles,
+  loadR2UploadEnvFile,
+  r2UploadOptionsFromEnv,
+  r2UploadTree,
+} from "#scripts/lib/r2-upload";
 
 export const SPRITE_CACHE_CONTROL = "public, max-age=86400, stale-while-revalidate=86400";
 
@@ -53,5 +58,6 @@ export async function uploadSprites(spritesDir: string): Promise<number> {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const defaultDir = path.join(import.meta.dirname, "../../pipeline/output/sprites");
+  await loadR2UploadEnvFile();
   process.exitCode = await uploadSprites(process.argv[2] ?? defaultDir);
 }

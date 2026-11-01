@@ -329,6 +329,18 @@ Evidence:
 [src/lib/sync/diagnostic-redaction.ts](../src/lib/sync/diagnostic-redaction.ts),
 [src/lib/feedback/progress-attachment.ts](../src/lib/feedback/progress-attachment.ts).
 
+### [Tooling tests follow the diff](decisions/2026-10-31-tooling-tests-follow-the-diff.md)
+
+ID: 2026-10-31-tooling-tests-follow-the-diff. Status: Current.
+
+Pull requests run the relay & most scripts/ tests only when they change those tests’ inputs or a
+shared input. Tests coupled to the browser suites always run, and main runs everything.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/328](https://github.com/mrh-is/mistria-fyi/issues/328),
+[.github/workflows/ci.yml](../.github/workflows/ci.yml), [vite.config.ts](../vite.config.ts),
+[docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)

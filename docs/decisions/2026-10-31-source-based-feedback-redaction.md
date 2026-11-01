@@ -34,18 +34,26 @@ Project public diagnostics from explicitly selected sources. An ID this build do
 still comes from a game-ID source; that alone is no reason to suppress or hash it. The public schema
 limits structure & size. It is not a general personal-information detector.
 
-| Source                                                                                 | Public treatment                                                                                                                      |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Build identifier, numeric `info.version`, protocol version                             | Keep the selected version values. Do not copy the whole metadata object.                                                              |
-| App lane, outcome, field, policy, & counts                                             | Keep the app's enums & aggregate counts. Exclude fact values & question IDs.                                                          |
-| Game unlock lists, museum item IDs, animal type/variant keys, & quest IDs              | Keep unknown IDs within the log's shape & size limits. Known-private matches become `[redacted]`.                                     |
-| Character & farm names from `player` & `header`, plus the outgoing farm's names        | Use only as private comparison inputs. Never add name fields to the log.                                                              |
-| Child, pet, & other player-entered names elsewhere in the save                         | Exclude their source objects; their text is not an unknown-ID source.                                                                 |
-| Incoming & outgoing farm numbers, follow keys, write tokens, & mailbox IDs             | Redact matches inside IDs. Exclude raw identifiers & credentials as fields.                                                           |
-| Incoming farm number used to correlate events                                          | Keep only its SHA-256 hash with a random, unexported tab-session salt.                                                                |
-| Filename, device path, file hash, timestamps, raw saves, & raw diagnostic paths/values | Exclude these containers & values from the log.                                                                                       |
-| Progress `lastSavePlaytime` & each provenance entry's `playtime`                       | Preserve the field with `[redacted]` in both preview & attachment. The API redacts these source keys too.                             |
-| Other supported progress fields, including retained unknown game IDs                   | Preserve them through the existing progress projection. Do not attach the backup's local state, save identity, or farm-switch backup. |
+The collector enforces an explicit list of public diagnostic paths, including the animal unlock
+lists’ per-animal paths. IDs from unclassified paths become `[redacted]`. The extractor’s typed
+diagnostics require each new ID source to be classified before it compiles.
+
+The progress projection selects supported keys explicitly, with a compile-time completeness check
+against `ProgressState`. Provenance entries keep only `source`, `obtainedSource`, & redacted
+`playtime`; resolutions keep only `saveValue`. A newer build’s unknown fields remain private.
+
+| Source                                                                                 | Public treatment                                                                                                          |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Build identifier, numeric `info.version`, protocol version                             | Keep the selected version values. Do not copy the whole metadata object.                                                  |
+| App lane, outcome, field, policy, & counts                                             | Keep the app's enums & aggregate counts. Exclude fact values & question IDs.                                              |
+| Game unlock lists, museum item IDs, animal type/variant keys, & quest IDs              | Keep unknown IDs within the log's shape & size limits. Known-private matches become `[redacted]`.                         |
+| Character & farm names from `player` & `header`, plus the outgoing farm's names        | Use only as private comparison inputs. Never add name fields to the log.                                                  |
+| Child, pet, & other player-entered names elsewhere in the save                         | Exclude their source objects; their text is not an unknown-ID source.                                                     |
+| Incoming & outgoing farm numbers, follow keys, write tokens, & mailbox IDs             | Redact matches inside IDs. Exclude raw identifiers & credentials as fields.                                               |
+| Incoming farm number used to correlate events                                          | Keep only its SHA-256 hash with a random, unexported tab-session salt.                                                    |
+| Filename, device path, file hash, timestamps, raw saves, & raw diagnostic paths/values | Exclude these containers & values from the log.                                                                           |
+| Progress `lastSavePlaytime` & each provenance entry's `playtime`                       | Preserve the field with `[redacted]` in both preview & attachment. The API redacts these source keys too.                 |
+| Other supported progress fields, including retained unknown game IDs                   | Select only explicitly classified progress keys. Exclude unknown keys, local state, save identity, & farm-switch backups. |
 
 Use `[redacted]` when it explains that a diagnostic slot had a value deliberately withheld. Omit raw
 private containers altogether; do not add otherwise-unused private fields merely to show a marker.

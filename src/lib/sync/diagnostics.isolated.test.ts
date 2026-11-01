@@ -1,6 +1,7 @@
 import * as v from "valibot";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DIAGNOSTIC_ID_SOURCES } from "#lib/engine/diagnostic-id-sources.js";
 import { extractSave } from "#lib/engine/import-save.js";
 import {
   MAX_SYNC_EVENTS,
@@ -11,6 +12,7 @@ import {
 import { createSyncDiagnostics } from "./diagnostics.svelte.js";
 import { buildFollowLink, mailboxIdFor } from "./follow.js";
 
+import type { SaveImportWarning } from "#lib/engine/import-save.js";
 import type { SyncApplyOutcome } from "#lib/stores/user-state.svelte.js";
 
 import type { PrivateValues } from "./diagnostics.svelte.js";
@@ -57,6 +59,54 @@ async function fixture(): Promise<ReadSave> {
 }
 
 const NOTHING_PRIVATE = { credentials: [], farmNames: [], farmNumbers: [], playerNames: [] };
+
+beforeEach(() => {
+  enabled.syncSwitchOn = true;
+});
+
+it("withholds an ID from an unclassified source even when its text looks harmless", async () => {
+  const save = await fixture();
+  save.extraction.fields.almanac = {
+    completeness: "unknown",
+    diagnostics: [
+      {
+        code: "unknown-id",
+        id: "harmless_game_id",
+        path: "gamedata.pet.name",
+      } as unknown as SaveImportWarning,
+    ],
+    untracked: [],
+    value: new Set(),
+  };
+  const log = createSyncDiagnostics();
+  await log.record(save, { kind: "skipped" }, NOTHING_PRIVATE);
+  expect(
+    log
+      .snapshot("build", "manual")
+      ?.events[0].unknownFields.find(({ field }) => field === "almanac")?.ids,
+  ).toEqual(["[redacted]"]);
+});
+
+it.each([
+  ...DIAGNOSTIC_ID_SOURCES,
+  "player.animal_variant_unlocks.cow",
+  "player.animal_cosmetic_unlocks.cow",
+] as const)("keeps game IDs from classified source %s", async (path) => {
+  const save = await fixture();
+  save.extraction.fields.almanac = {
+    completeness: "unknown",
+    diagnostics: [{ code: "unknown-id", id: "future_game_item", path }],
+    untracked: [],
+    value: new Set(),
+  };
+  const log = createSyncDiagnostics();
+  await log.record(save, { kind: "skipped" }, NOTHING_PRIVATE);
+  expect(
+    log
+      .snapshot("build", "manual")
+      ?.events[0].unknownFields.find(({ field }) => field === "almanac")?.ids,
+  ).toEqual(["future_game_item"]);
+});
 
 /** The IDs a log publishes for a save holding `ids` & these names. */
 async function publishedIds(
@@ -106,10 +156,6 @@ const ASK: SyncApplyOutcome = {
     },
   ],
 };
-
-beforeEach(() => {
-  enabled.syncSwitchOn = true;
-});
 
 describe("public sync diagnostics", () => {
   it("projects useful facts while stripping names, paths, numbers, codes, keys & mailbox IDs", async () => {

@@ -3,6 +3,7 @@
  * never put saves, filenames, names, receipts, question IDs, fact values, or credentials in events.
  * A separate bounded private comparison context rechecks IDs as more names become known.
  */
+import { isDiagnosticIdSource } from "#lib/engine/diagnostic-id-sources.js";
 import { MAX_SYNC_EVENTS, MAX_SYNC_LOG_BYTES } from "#lib/feedback/sync-log-schema.js";
 
 import { createDiagnosticRedaction } from "./diagnostic-redaction.js";
@@ -103,7 +104,13 @@ export function createSyncDiagnostics(): SyncDiagnostics {
           if (extracted.completeness !== "unknown") continue;
           const ids = extracted.diagnostics
             .flatMap((diagnostic) =>
-              diagnostic.code === "unknown-id" ? [redaction.id(diagnostic.id)] : [],
+              diagnostic.code === "unknown-id"
+                ? [
+                    isDiagnosticIdSource(diagnostic.path)
+                      ? redaction.id(diagnostic.id)
+                      : "[redacted]",
+                  ]
+                : [],
             )
             .filter((id, index, all) => all.indexOf(id) === index)
             .slice(0, Math.min(20, remainingIds));

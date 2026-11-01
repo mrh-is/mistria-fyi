@@ -6,6 +6,7 @@
   import { Button } from "#lib/components/ui/button/index.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { stampOf } from "#lib/sync/read-save.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";
@@ -15,6 +16,7 @@
   import SetupStep from "./setup-step.svelte";
 
   import type { ReadSave } from "#lib/sync/read-save.js";
+  import type { SaveSource } from "#lib/sync/save-source.js";
 
   let { announce, linkOrigin }: { announce: (message: string) => void; linkOrigin: string } =
     $props();
@@ -24,13 +26,19 @@
   // A device already in the computer lane resumes at the code.
   let step = $state<Step>(userState.syncLane?.kind === "computer" ? "share" : "find");
   let save = $state.raw<null | ReadSave>(null);
+  let source = $state.raw<null | SaveSource>(null);
   let retryHint = $state<null | string>(null);
   let paused = $state(false);
   let farmTitle = $state<HTMLElement>();
   let shareTitle = $state<HTMLElement>();
   let doneTitle = $state<HTMLElement>();
 
-  const watchable = "FileSystemObserver" in globalThis;
+  // The copy follows whether this save file is watched, not what the browser could do.
+  const watched = $derived(
+    source
+      ? source.kind === "handle"
+      : syncCourier.status.source !== "file" && syncCourier.status.source !== "none",
+  );
   const hasCode = $derived(
     userState.syncLane?.kind === "computer" && userState.syncLane.code !== undefined,
   );
@@ -47,8 +55,9 @@
     target()?.focus();
   }
 
-  function handleRead(read: ReadSave): void {
+  function handleRead(read: ReadSave, from: SaveSource): void {
     save = read;
+    source = from;
     retryHint = null;
     step = "farm";
     void focusStep(() => farmTitle);
@@ -57,7 +66,16 @@
   function confirmFarm(): void {
     if (!save) return;
     // “Yep!” applies the save here, in the write that starts the computer lane.
-    userState.startSyncLane({ kind: "computer" }, save, undefined, stampOf(save));
+    const chosen = source;
+    void (async () => {
+      const started = await userState.startSyncLane(
+        { kind: "computer" },
+        save,
+        undefined,
+        stampOf(save),
+      );
+      if (started && chosen) await syncCourier.take(chosen);
+    })();
     step = "share";
     announce(m.sync_farm_step_title());
     void focusStep(() => shareTitle);
@@ -65,6 +83,7 @@
 
   function rejectFarm(): void {
     save = null;
+    source = null;
     retryHint = m.sync_farm_no_hint();
     step = "find";
   }
@@ -74,7 +93,7 @@
     void focusStep(() => doneTitle);
   }
 
-  const doneCopy = $derived(watchable ? m.sync_done_watched() : m.sync_done_redrop());
+  const doneCopy = $derived(watched ? m.sync_done_watched() : m.sync_done_redrop());
 </script>
 
 {#if step === "done"}

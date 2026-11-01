@@ -37,6 +37,7 @@ import type {
   QuestState,
 } from "#lib/types/user-progress.js";
 
+import type { DiagnosticIdSource } from "./diagnostic-id-sources.js";
 import type { SaveBundle, SaveSection, SaveSectionName } from "./save-bundle.js";
 
 /** `obj_horse_statue.gml` plays this scene as it grants the Mistmare, its default appearance. */
@@ -85,7 +86,7 @@ export type SaveImportWarning =
   | { code: "not-a-list"; path: string }
   | { code: "not-an-object"; path: string }
   | { code: "not-json-object"; file: string }
-  | { code: "unknown-id"; id: string; path: string }
+  | { code: "unknown-id"; id: string; path: DiagnosticIdSource }
   | { code: "unreadable-entries"; count: number; path: string }
   | { code: "unrecognized-player"; file: string };
 
@@ -267,7 +268,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   const collector = createCollector();
   const classify = (
     id: string,
-    path: string,
+    path: DiagnosticIdSource,
     fields: readonly FieldKey[],
     isKnown: (id: string) => boolean,
   ): void => {
@@ -390,7 +391,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   const playerVariantsByAnimal = player.stringListRecord("animal_variant_unlocks", variantFields);
   const animals: ProgressState["animals"] = {};
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    const path = `player.animal_variant_unlocks.${animalId}`;
+    const path = `player.animal_variant_unlocks.${animalId}` as const;
     const validVariants = new Set(animal.variantTiers.flatMap((tier) => Object.keys(tier)));
     const matched = new Set<AnimalVariantId>(
       animal.variantTiers.flatMap((tier) =>
@@ -428,7 +429,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   if (playerCosmeticsByAnimal) {
     animalCosmetics = {};
     for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-      const path = `player.animal_cosmetic_unlocks.${animalId}`;
+      const path = `player.animal_cosmetic_unlocks.${animalId}` as const;
       if (!Object.hasOwn(playerCosmeticsByAnimal, animalId)) {
         collector.report({ code: "absent", path }, ["animalCosmetics"]);
       }
@@ -599,7 +600,11 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     Object.values(trackerData.quests).flatMap((category) => Object.keys(category)),
   );
   const foundQuests: Record<string, QuestState> = {};
-  const importQuests = (ids: string[] | undefined, path: string, questState: QuestState) => {
+  const importQuests = (
+    ids: string[] | undefined,
+    path: DiagnosticIdSource,
+    questState: QuestState,
+  ) => {
     for (const id of ids ?? []) {
       if (!validQuests.has(id)) {
         collector.report({ code: "unknown-id", id, path }, ["questStates"]);
@@ -869,7 +874,7 @@ function createSectionReader(
  */
 function knownIdSet<T extends string>(
   ids: string[] | undefined,
-  path: string,
+  path: DiagnosticIdSource,
   field: FieldKey,
   isTracked: (id: string) => boolean,
   collector: Collector,
@@ -888,7 +893,7 @@ function knownIdSet<T extends string>(
 /** Reports each animal a per-animal record names that the tracker doesn't know. */
 function reportUnknownAnimals(
   byAnimal: Record<string, string[]>,
-  path: string,
+  path: DiagnosticIdSource,
   collector: Collector,
   fields: readonly FieldKey[],
 ): void {

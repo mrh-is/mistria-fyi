@@ -12,6 +12,7 @@ import {
   checkPlaywright,
   checkPnpm,
   checkPnpmStore,
+  checkR2Token,
   exitCode,
   formatReport,
   parseSections,
@@ -446,6 +447,93 @@ describe("checkPnpmStore", () => {
   });
 });
 
+describe("checkR2Token", () => {
+  const secret = "token-value-that-must-not-print";
+
+  it("passes once the token & account ID are set, without printing either", () => {
+    const result = checkR2Token(
+      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: secret } }),
+    );
+    expect(result.status).toBe("ok");
+    expect(result.detail).not.toContain(secret);
+    expect(result.detail).not.toContain("account-id");
+  });
+
+  it("ignores CLOUDFLARE_API_TOKEN, which may hold the read-only Pages token", () => {
+    const result = checkR2Token(
+      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "account-id", CLOUDFLARE_API_TOKEN: secret } }),
+    );
+    expect(result.status).toBe("manual");
+    expect(result.detail).toBe("R2_UPLOAD_TOKEN is not set");
+  });
+
+  it("lists whichever variable is unset as a manual step", () => {
+    const result = checkR2Token(machine({ env: { R2_UPLOAD_TOKEN: secret } }));
+    expect(result.status).toBe("manual");
+    expect(result.detail).toBe("CLOUDFLARE_ACCOUNT_ID is not set");
+    expect(result.fix).toContain("docs/machine-setup.md");
+  });
+
+  it("reads either variable from .env.r2-upload, without printing it", () => {
+    const result = checkR2Token(
+      machine({
+        env: { CLOUDFLARE_ACCOUNT_ID: "account-id" },
+        read: (path) =>
+          basename(path) === ".env.r2-upload" ? `R2_UPLOAD_TOKEN=${secret}\n` : undefined,
+      }),
+    );
+    expect(result.status).toBe("ok");
+    expect(result.detail).not.toContain(secret);
+  });
+
+  it("reads .env.r2-upload from the main checkout, even with a byte-order mark", () => {
+    const result = checkR2Token(
+      machine({
+        commands: {
+          "git -C /repo/.worktrees/a rev-parse --path-format=absolute --git-common-dir":
+            "/repo/.git\n",
+        },
+        read: (path) =>
+          path.replaceAll("\\", "/") === "/repo/.env.r2-upload"
+            ? `﻿R2_UPLOAD_TOKEN=${secret}\r\nCLOUDFLARE_ACCOUNT_ID=account-id\r\n`
+            : undefined,
+        root: "/repo/.worktrees/a",
+      }),
+    );
+    expect(result.status).toBe("ok");
+  });
+
+  it("reports a UTF-16 .env.r2-upload as wrong", () => {
+    const result = checkR2Token(
+      machine({
+        read: (path) => (basename(path) === ".env.r2-upload" ? "��R\u0000=\u0000" : undefined),
+      }),
+    );
+    expect(result).toMatchObject({ detail: ".env.r2-upload is not UTF-8", status: "wrong" });
+  });
+
+  it("treats an empty .env.r2-upload value as unset", () => {
+    const result = checkR2Token(
+      machine({
+        read: (path) =>
+          basename(path) === ".env.r2-upload"
+            ? "R2_UPLOAD_TOKEN=\nCLOUDFLARE_ACCOUNT_ID=account-id\n"
+            : undefined,
+      }),
+    );
+    expect(result.status).toBe("manual");
+    expect(result.detail).toBe("R2_UPLOAD_TOKEN is not set");
+  });
+
+  it("treats an empty variable as unset", () => {
+    const result = checkR2Token(
+      machine({ env: { CLOUDFLARE_ACCOUNT_ID: "", R2_UPLOAD_TOKEN: "" } }),
+    );
+    expect(result.status).toBe("manual");
+    expect(result.detail).toBe("R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID are not set");
+  });
+});
+
 describe("parseSections", () => {
   it("selects every section without a flag", () => {
     expect(parseSections([])).toEqual(SECTION_NAMES);
@@ -511,8 +599,8 @@ describe("report", () => {
     const report = formatReport(runChecks(machine()));
     expect(report).toContain("Core (every contributor):\n[ok]      Node.js");
     expect(report).toContain("[missing] pnpm");
-    expect(report).toContain("Release (R2 uploads):\n[todo]    Wrangler login");
-    expect(report).toContain("fix: pnpm exec wrangler login");
+    expect(report).toContain("Release (R2 uploads):\n[todo]    R2 upload token");
+    expect(report).toContain("fix: Create an R2 API token");
     expect(report).not.toContain("Skipped");
   });
 
@@ -520,14 +608,14 @@ describe("report", () => {
     const report = formatReport(runChecks(ready, ["core", "browser"]));
     expect(report).toContain("Browser tests (accessibility & PWA suites):");
     expect(report).not.toContain("Game assets");
-    expect(report).not.toContain("Wrangler");
+    expect(report).not.toContain("R2 upload token");
     expect(report).toContain("Skipped: pipeline, release.");
   });
 
   it("mentions [todo] steps only when one was printed", () => {
     expect(formatReport(runChecks(ready, ["core"]))).not.toContain("[todo]");
     expect(formatReport(runChecks(ready, ["core", "release"]))).toContain(
-      "All checked prerequisites pass. Steps marked [todo] are interactive",
+      "All checked prerequisites pass. Steps marked [todo] are manual",
     );
   });
 });
