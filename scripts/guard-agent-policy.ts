@@ -16,36 +16,13 @@ interface PolicyResult {
 const AUDIT_CONTEXT =
   "Dependency change: before adding or bumping a dependency, read docs/agent-reference.md (Package commands), run pnpm audit --audit-level=moderate, and inspect every flagged transitive dependency with pnpm why. Do not add an unpatched advisory; a disputed advisory or one with no fix needs a documented auditConfig.ignoreGhsas exception in pnpm-workspace.yaml.";
 const ATTRIBUTION = /(?:^|\r?\n)Agent: [a-z][a-z0-9-]*\s*$/;
-const GITHUB_BOOLEAN_OPTIONS = new Set([
-  "--create-if-none",
-  "--delete-last",
-  "--draft",
-  "--dry-run",
-  "--edit-last",
-  "--editor",
-  "--fill",
-  "--fill-first",
-  "--fill-verbose",
-  "--no-maintainer-edit",
-  "--remove-milestone",
-  "--web",
-  "--yes",
-  "-d",
-  "-e",
-  "-f",
-  "-w",
-]);
-
 function githubHelp(args: string[]): boolean {
-  for (let index = 2; index < args.length; index++) {
-    const arg = args[index];
-    if (arg === "--") return false;
-    if (arg === "--help" || arg === "-h") return true;
-    // Skip option values so a title or body containing "--help" can't bypass attribution.
-    // Treat unknown options as taking a value, keeping help detection conservative.
-    if (arg.startsWith("-") && !arg.includes("=") && !GITHUB_BOOLEAN_OPTIONS.has(arg)) index++;
-  }
-  return false;
+  const rest = args.slice(2);
+  // Exempt only bare help requests; mixed options need normal attribution validation.
+  return (
+    rest.some((arg) => arg === "--help" || arg === "-h") &&
+    rest.every((arg) => arg === "--help" || arg === "-h" || !arg.startsWith("-"))
+  );
 }
 
 function optionValue(args: string[], long: string, short: string): string | undefined {
@@ -94,7 +71,7 @@ function githubBody(
       body = heredoc;
     } else {
       if (/[$`]/.test(file)) {
-        return "The GitHub body guard cannot expand shell variables or command substitutions. Use a literal path for --body-file.";
+        return "The GitHub body guard cannot expand shell variables or command substitutions. Use a literal path without $ or backticks for --body-file.";
       }
       if (changesDirectory && !isAbsolute(file)) {
         return "Use an absolute --body-file path when the command changes directory; relative body attribution can't be verified safely.";
@@ -112,7 +89,7 @@ function githubBody(
         }
         body = readFileSync(path, "utf8");
       } catch {
-        return "Cannot read the GitHub body file. Create it before the GitHub command.";
+        return "Cannot read the GitHub body file. The guard reads paths literally, without shell expansion (including ~ and globs). Use an existing literal path for --body-file.";
       }
     }
   }
