@@ -26,31 +26,100 @@ const R2_TOKEN_MESSAGE =
   "Blocked read of the R2 upload token file. The upload scripts load it; check it with `node scripts/machine-doctor.ts --for release` or `pnpm run r2:check`. To search the repository, use the Grep tool or plain `rg`, which skip gitignored files.";
 
 /**
- * Whether a path or glob names the R2 token file in any spelling Windows opens as that file: any
- * case, trailing dots or spaces, or an NTFS stream suffix such as `::$DATA`. A glob counts only when
- * it starts with `.`, as a shell glob must to match a dotfile.
+ * The index of the `]` closing the bracket expression at `open`, or -1 when it may never close or
+ * when shells disagree about where it closes. A `]` right after the opening is a member. Bash lets
+ * a class such as `[:alpha:]` or `[.].]` hold its own `]`, but zsh & PowerShell close the bracket
+ * at the first `]`, so a word that reads differently in the two can't become one `?`.
+ */
+function bracketEnd(glob: string, open: number): number {
+  let index = open + (/^\[[!^]/.test(glob.slice(open, open + 2)) ? 2 : 1);
+  if (glob[index] === "]") {
+    index += 1;
+  }
+  const firstClose = glob.indexOf("]", index);
+  for (; index < glob.length; index += 1) {
+    if (glob[index] === "]") {
+      return index === firstClose ? index : -1;
+    }
+    if (glob[index] === "]") {
+      return index;
+    }
+    const delimiter = glob[index + 1];
+    if (glob[index] === "[" && (delimiter === ":" || delimiter === "." || delimiter === "=")) {
+      const end = glob.indexOf(`${delimiter}]`, index + 2);
+      if (end === -1) {
+        return -1;
+      }
+      index = end + 1;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Reduce a name to `*` & `?` wildcards, up to an NTFS stream suffix, so that it can only match more
+ * than the shell would. Any closed bracket becomes `?`, which covers negation, classes, & dialects
+ * without modeling them. A `[` that never closes is literal to a shell, but this word may be a
+ * fragment of a bracket split at a quote or a separator, so it becomes `*`. The exception is jq's
+ * `.[]`: with no later `]`, `[]` stays literal. Zsh matches any character with `[!]` & `[^]`.
+ */
+function widenedGlob(name: string): string {
+  let glob = "";
+  for (let index = 0; index < name.length; index += 1) {
+    if (name[index] === ":") {
+      break;
+    }
+    if (name[index] !== "[") {
+      glob += name[index];
+      continue;
+    }
+    const end = bracketEnd(name, index);
+    if (end !== -1) {
+      glob += "?";
+      index = end;
+    } else if (name.startsWith("[]", index) && !name.includes("]", index + 2)) {
+      glob += "[";
+    } else {
+      return `${glob}*`;
+    }
+  }
+  return glob;
+}
+
+/** Whether a glob of `*` & `?` matches all of `text`, in time linear in the glob's length. */
+function globMatches(glob: string, text: string): boolean {
+  // Whether the glob so far can match each prefix of `text`, by the prefix's length.
+  let reachable = Array.from({ length: text.length + 1 }, (_, length) => length === 0);
+  for (const part of glob) {
+    const next = reachable.map(() => false);
+    for (const [length, reached] of reachable.entries()) {
+      if (part === "*") {
+        next[length] = reached || (length > 0 && next[length - 1]);
+      } else if (reached && length < text.length && (part === "?" || part === text[length])) {
+        next[length + 1] = true;
+      }
+    }
+    reachable = next;
+  }
+  return reachable[text.length];
+}
+
+/**
+ * Whether a path or glob could name the R2 token file in any spelling Windows opens as that file:
+ * any case, trailing dots or spaces, or an NTFS stream suffix such as `::$DATA`. A glob counts only
+ * when it starts with `.`, as a shell glob must to match a dotfile.
  */
 export function namesR2TokenFile(target: string): boolean {
   const name = target.replaceAll("\\", "/").split("/").at(-1) ?? "";
-  const plain = name
-    .replace(/:.*$/, "")
-    .replace(/[.\s]+$/, "")
-    .toLowerCase();
-  if (!/[*?[]/.test(plain)) {
-    return plain === R2_TOKEN_FILE;
-  }
-  if (!plain.startsWith(".")) {
+  if (!name.startsWith(".")) {
     return false;
   }
-  const pattern = plain
-    .replaceAll(/[.+^${}()|\\]/g, String.raw`\$&`)
-    .replaceAll("*", ".*")
-    .replaceAll("?", ".");
-  try {
-    return new RegExp(`^${pattern}$`).test(R2_TOKEN_FILE);
-  } catch {
-    return true;
+  const glob = widenedGlob(name).toLowerCase();
+  let end = glob.length;
+  while (end > 0 && /[.\s]/.test(glob[end - 1])) {
+    end -= 1;
   }
+  return globMatches(glob.slice(0, end), R2_TOKEN_FILE);
 }
 
 // Searches that read gitignored files: `grep -r`, `rg -u`/`--no-ignore`, `git grep --no-index`,
