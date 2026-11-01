@@ -21,7 +21,7 @@ admin endpoint fail closed. Never put secrets in `wrangler.toml` or commit a `.d
 
 ## Wire contract
 
-The future courier & follower use `https://relay.mistria.fyi`. There are no cookies or accounts;
+The courier & followers use `https://relay.mistria.fyi`. There are no cookies or accounts;
 cross-origin responses allow `*` without credentials. The mailbox ID is the 22-character base64url
 encoding of the 128-bit derived ID. A write token is the 43-character base64url encoding of 256
 random bits, supplied only as `Authorization: Bearer <write-token>`. Query strings are rejected.

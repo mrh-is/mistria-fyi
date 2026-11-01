@@ -35,6 +35,7 @@ function relay(overrides: Partial<RelayClient>): RelayClient {
     create: vi.fn<RelayClient["create"]>().mockResolvedValue({ kind: "created" }),
     read: vi.fn<RelayClient["read"]>().mockResolvedValue({ kind: "empty" }),
     retire: vi.fn<RelayClient["retire"]>().mockResolvedValue({ kind: "retired" }),
+    upload: vi.fn<RelayClient["upload"]>().mockResolvedValue({ kind: "stored" }),
     ...overrides,
   };
 }
