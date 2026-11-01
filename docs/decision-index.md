@@ -388,6 +388,20 @@ Evidence:
 [scripts/vitest-timings.ts](../scripts/vitest-timings.ts),
 [scripts/nightly-report.ts](../scripts/nightly-report.ts).
 
+### [Nonblocking visual comparisons](decisions/2026-11-01-visual-diff-pilot.md)
+
+ID: 2026-11-01-visual-diff-pilot. Status: Current.
+
+Compare two representative routes without gating CI, and isolate PR execution from privileged image
+publication.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/332](https://github.com/mrh-is/mistria-fyi/issues/332),
+[https://github.com/mrh-is/mistria-fyi/pull/369](https://github.com/mrh-is/mistria-fyi/pull/369),
+[.github/workflows/visual-diff.yml](../.github/workflows/visual-diff.yml),
+[.github/workflows/visual-diff-publish.yml](../.github/workflows/visual-diff-publish.yml),
+[docs/visual-diff-pilot.md](../docs/visual-diff-pilot.md).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)

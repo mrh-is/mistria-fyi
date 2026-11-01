@@ -1,0 +1,87 @@
+name: Visual-diff pilot
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-diff-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+# This independent workflow is deliberately absent from CI’s “CI passed” aggregate.
+# Both app revisions run with a read-only token, no secrets, & no saved credentials or caches.
+jobs:
+  capture:
+    name: Compare base & head
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --ipc=host
+    env:
+      pnpm_config_store_dir: /__w/.pnpm-store
+      VISUAL_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      VISUAL_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .playwright-artifacts/base-app
+          fetch-depth: 0
+          persist-credentials: false
+      - run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.playwright-artifacts/base-app"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+        timeout-minutes: 3
+        with:
+          cache: false
+          install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsx scripts/playwright-satoshi.ts
+      - id: base-install
+        continue-on-error: true
+        run: pnpm --dir .playwright-artifacts/base-app install --frozen-lockfile
+      - id: base
+        if: steps.base-install.outcome == 'success'
+        continue-on-error: true
+        env:
+          VISUAL_APP_DIRECTORY: .playwright-artifacts/base-app
+          VISUAL_REVISION: base
+        run: pnpm exec playwright test --config playwright.visual.config.ts
+      - id: head
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        env:
+          VISUAL_REVISION: head
+        run: pnpm exec playwright test --config playwright.visual.config.ts
+      - id: report
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: pnpm exec tsx scripts/visual-diff.ts
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: visual-diff-report
+          include-hidden-files: true
+          path: |
+            .playwright-artifacts/visual/
+            .playwright-artifacts/preview-*.log
+            .playwright-artifacts/base-app/.playwright-artifacts/preview-*.log
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Preserve capture failures
+        if: >-
+          steps.base-install.outcome == 'failure' || steps.base.outcome == 'failure' ||
+          steps.head.outcome == 'failure' || steps.report.outcome == 'failure'
+        run: exit 1

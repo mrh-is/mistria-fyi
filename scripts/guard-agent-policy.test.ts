@@ -167,6 +167,22 @@ describe("agent shell policy", () => {
     expect(message).toContain("literal path without $ or backticks");
   });
 
+  it("allows help after a global repository option", () => {
+    expect(check("gh -R owner/repo pr comment 332 --help").message).toBeUndefined();
+  });
+
+  it.each([
+    "gh pr comment 332 -- --help",
+    "gh pr comment 332 --body-file --help",
+    "gh pr comment 332 --body=-h",
+  ])("keeps help-like argument values subject to attribution: %s", (command) => {
+    expect(check(command).message).toBeDefined();
+  });
+
+  it("still checks mutations after a help command", () => {
+    expect(check("gh pr comment --help && gh pr comment 332").message).toContain("--body-file");
+  });
+
   it("reads attributed body files, and rejects missing attribution without printing the body", () => {
     const root = mkdtempSync(join(tmpdir(), "agent-body-"));
     roots.push(root);
