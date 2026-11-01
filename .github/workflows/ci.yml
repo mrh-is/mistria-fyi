@@ -508,6 +508,44 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/ci-failure-context.ts
+      # Temporary live probe; removed after checking the rendered draft-PR summary.
+      - if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - name: Probe historical shared failure summary
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync } from "node:fs";
+          import { summarizeFailureContext } from "#scripts/ci-failure-context";
+          import { defaultCommandRunner } from "#scripts/accessibility-monitor";
+          const summary = await summarizeFailureContext({
+            repository: process.env.GITHUB_REPOSITORY,
+            runId: "41230847368",
+            run: async (command, args, input, acceptedExitCodes) => {
+              if (args[0] === "run" && args[1] === "list") {
+                return JSON.stringify([{ conclusion: "failure", databaseId: 40681791009 }]);
+              }
+              return await defaultCommandRunner(command, args, input, acceptedExitCodes);
+            },
+          });
+          if (!summary.includes("- Test\n") || summary.includes("- CI passed")) {
+            throw new Error("Historical shared failure summary did not match the real runs.");
+          }
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+            "# Historical failure probe\n\nThis probe replays historical PR & main runs; it does not describe current main.\n\n" + summary);
+          console.log(summary);
+          NODE
       - env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
