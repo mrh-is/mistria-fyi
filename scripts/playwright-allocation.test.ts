@@ -116,7 +116,7 @@ describe("supported Playwright selection", () => {
       const measured = JSON.parse(
         readFileSync("tests/accessibility/duration-weights.json", "utf8"),
       ) as AllocationWeights;
-      const shards = allocateTests(unsharded, measured, 4);
+      const shards = allocateTests(unsharded, measured, 2);
       const listed = await Promise.all(
         shards.map((testsInShard, index) => {
           const file = join(directory, `shard-${index}.txt`);
