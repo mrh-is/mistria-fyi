@@ -373,6 +373,17 @@ Agents file an issue for anything they find & don't fix, without asking, instead
 Evidence: [AGENTS.md](../AGENTS.md),
 [https://github.com/mrh-is/mistria-fyi/issues/390](https://github.com/mrh-is/mistria-fyi/issues/390).
 
+### [Select focused Node projects](decisions/2026-11-01-focused-node-projects.md)
+
+ID: 2026-11-01-focused-node-projects. Status: Current.
+
+Focused plain-Node Vitest runs select their project explicitly to avoid unrelated Cloudflare proxy
+startup before file filtering.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/394](https://github.com/mrh-is/mistria-fyi/issues/394),
+[vite.config.ts](../vite.config.ts).
+
 ### [Pin real-save observations](decisions/2026-11-01-real-save-observations.md)
 
 ID: 2026-11-01-real-save-observations. Status: Current.
