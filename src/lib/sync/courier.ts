@@ -506,9 +506,13 @@ export function createCourier({
 
   /** Uploads this save if it's new to the mailbox. Resolves `false` only when it can't be pruned. */
   async function uploadHere(read: SaveRead, look: boolean): Promise<boolean> {
+    const current = generation;
     const code = sharedCode();
     if (!code || !isFollowKey(code.key)) return true;
+    const stillCurrent = (): boolean =>
+      leading && current === generation && sharedCode()?.key === code.key;
     const mailboxId = await mailboxIdFor(code.key);
+    if (!stillCurrent()) return true;
     const ledger = readLedger();
     if (ledger.hash === read.hash && ledger.mailboxId === mailboxId) {
       // The file went back to the last upload, so a newer save still retrying is out of date. If an
@@ -527,18 +531,21 @@ export function createCourier({
       await send(pending);
       return true;
     }
+    if (!stillCurrent()) return true;
     let pruned: Uint8Array<ArrayBuffer>;
     try {
       pruned = await pruneSavArchive(read.file);
     } catch {
       return false;
     }
+    if (!stillCurrent()) return true;
     let playtime: number | undefined;
     try {
       ({ playtime } = await readSaveFile(read.file));
     } catch {
       // A save this build can't read but can still prune goes up anyway, for a newer build.
     }
+    if (!stillCurrent()) return true;
     pending = {
       conflicted: false,
       hash: read.hash,
@@ -581,10 +588,15 @@ export function createCourier({
     }
   }
 
-  async function seal(upload: PendingUpload): Promise<boolean> {
+  function ownsUpload(upload: PendingUpload, current: number): boolean {
+    return leading && current === generation && pending === upload;
+  }
+
+  async function seal(upload: PendingUpload, current: number): Promise<boolean> {
     const code = sharedCode();
     if (!code || !isFollowKey(code.key)) return false;
     const keys = await deriveFollowKeys(code.key);
+    if (!ownsUpload(upload, current) || sharedCode()?.key !== code.key) return false;
     const counter = nextCounter();
     const version = FOLLOW_PROTOCOL_VERSION;
     const envelope = await sealEnvelope(
@@ -592,15 +604,22 @@ export function createCourier({
       { counter, version },
       encodeSavePayload({ header: upload.header, save: upload.pruned }),
     );
+    if (!ownsUpload(upload, current) || sharedCode()?.key !== code.key) return false;
     upload.sealed = { counter, envelope, mailboxId: keys.mailboxId, token: code.token, version };
     return true;
   }
 
   async function send(upload: PendingUpload): Promise<void> {
     const current = generation;
-    if (!upload.sealed && !(await seal(upload))) return;
+    if (!ownsUpload(upload, current)) return;
+    if (!upload.sealed && !(await seal(upload, current))) return;
+    if (!ownsUpload(upload, current)) return;
     const sealed = upload.sealed;
     if (!sealed) return;
+    // Until the answer is known, the mailbox may stop holding the last confirmed save. Clear the
+    // optional confirmation before sending so a crash or reload can't reuse that shortcut.
+    const { hash, mailboxId, ...unconfirmed } = readLedger();
+    writeLedger(unconfirmed);
     let result: Awaited<ReturnType<RelayClient["upload"]>>;
     try {
       result = await within(
@@ -611,7 +630,13 @@ export function createCourier({
     } catch {
       result = { kind: "unreachable" };
     }
-    if (current !== generation || pending !== upload) return;
+    if (!ownsUpload(upload, current)) return;
+    if (result.kind !== "stored" && result.kind !== "unreachable") {
+      // A definite rejection changed nothing. Keep the previous confirmation, unless another
+      // courier has reserved a newer counter while this request was away.
+      const ledger = readLedger();
+      if (ledger.counter === sealed.counter) writeLedger({ ...ledger, hash, mailboxId });
+    }
     switch (result.kind) {
       case "stored":
         writeLedger({

@@ -1194,6 +1194,171 @@ describe("races", () => {
   });
 });
 
+describe("upload recovery across leadership & reloads", () => {
+  it.each(["pruning", "keys", "encryption"] as const)(
+    "discards an old leader's save when it resumes during %s",
+    async (stage) => {
+      const locks = fakeLocks();
+      const { make, relay, storage } = await load({
+        options: { locks: () => locks, pollMs: 60_000 },
+      });
+      const gate = Promise.withResolvers<undefined>();
+      let waiting = false;
+      async function pause(): Promise<void> {
+        waiting = true;
+        await gate.promise;
+      }
+      let now = Date.now();
+      let lastUpload = Number.NEGATIVE_INFINITY;
+      let highWater = 0;
+      let storedPlaytime: number | undefined;
+      const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+      relay.upload.mockImplementation(async (_id, _token, sealed) => {
+        if (sealed.counter <= highWater) return { kind: "conflict" };
+        if (now - lastUpload < 60_000) {
+          return { kind: "rate-limited", retryAfterSeconds: 60 };
+        }
+        highWater = sealed.counter;
+        lastUpload = now;
+        const payload = await opened(sealed);
+        storedPlaytime = payload.header.playtime;
+        return { kind: "stored" };
+      });
+      let reads = 0;
+      const readSpy = vi
+        .spyOn(File.prototype, "arrayBuffer")
+        .mockImplementation(async function readSpy(this: File) {
+          const bytes = await new Response(this.stream()).arrayBuffer();
+          reads += 1;
+          if (stage === "pruning" && reads === 2) await pause();
+          return bytes;
+        });
+      const originalImport = crypto.subtle.importKey.bind(crypto.subtle);
+      const importSpy = vi.spyOn(crypto.subtle, "importKey").mockImplementation(async (...args) => {
+        const key = await originalImport(...args);
+        if (stage === "keys" && args[2] === "AES-GCM" && !waiting) await pause();
+        return key;
+      });
+      const originalEncrypt = crypto.subtle.encrypt.bind(crypto.subtle);
+      const encryptSpy = vi.spyOn(crypto.subtle, "encrypt").mockImplementation(async (...args) => {
+        const encrypted = await originalEncrypt(...args);
+        if (stage === "encryption" && !waiting) await pause();
+        return encrypted;
+      });
+      try {
+        const first = make();
+        first.start();
+        const oldTake = first.take({ file: new File([saveBytes(100)], FILE_NAME), kind: "file" });
+        await until(() => waiting);
+        const second = make();
+        second.start();
+        await second.take({ file: new File([saveBytes(200)], FILE_NAME), kind: "file" });
+        expect(relay.upload).toHaveBeenCalledTimes(1);
+        expect(storedPlaytime).toBe(200);
+        const confirmedCounter = highWater;
+        now += 61_000;
+        gate.resolve(undefined);
+        await oldTake;
+        expect(relay.upload).toHaveBeenCalledTimes(1);
+        expect(highWater).toBe(confirmedCounter);
+        expect(storedPlaytime).toBe(200);
+        expect(JSON.parse(storage.getItem(UPLOADS_KEY) ?? "{}")).toHaveProperty(
+          "counter",
+          confirmedCounter,
+        );
+      } finally {
+        gate.resolve(undefined);
+        readSpy.mockRestore();
+        importSpy.mockRestore();
+        encryptSpy.mockRestore();
+        clock.mockRestore();
+      }
+    },
+  );
+
+  it.each(["lost answer", "in flight"] as const)(
+    "reconciles an upload %s across a reload",
+    async (phase) => {
+      const { handles, make, relay, storage } = await load({
+        options: { firstRetryMs: 60_000, pollMs: 60_000 },
+      });
+      const first = make();
+      const bytes = saveBytes(100);
+      const file = fakeHandle(bytes);
+      first.start();
+      await first.take({ handle: file.handle, kind: "handle" });
+      expect(JSON.parse(storage.getItem(UPLOADS_KEY) ?? "{}")).toHaveProperty("hash");
+      file.replace(saveBytes(200));
+      const answer = Promise.withResolvers<UploadResult>();
+      relay.upload.mockReturnValueOnce(answer.promise);
+      const sending = first.check();
+      await until(() => relay.upload.mock.calls.length === 2);
+      if (phase === "lost answer") {
+        answer.resolve({ kind: "unreachable" });
+        await sending;
+      }
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+      const remote = relay.upload.mock.calls[1]?.[2];
+      expect(JSON.parse(storage.getItem(UPLOADS_KEY) ?? "{}")).not.toHaveProperty("hash");
+      relay.read.mockResolvedValue({ kind: "envelope", ...remote });
+      first.stop();
+      file.replace(bytes);
+      expect(handles.current).toBe(file.handle);
+      const second = make();
+      second.start();
+      await second.check();
+      expect(relay.upload).toHaveBeenCalledTimes(3);
+      const repaired = relay.upload.mock.calls[2]?.[2];
+      expect(repaired.counter).toBeGreaterThan(remote.counter);
+      const payload = await opened(repaired);
+      expect(payload.header.playtime).toBe(100);
+      expect(JSON.parse(storage.getItem(UPLOADS_KEY) ?? "{}")).toHaveProperty("hash");
+      // A late answer from the old page can't undo the fresh courier's confirmation.
+      answer.resolve({ kind: "stored" });
+      await sending;
+      expect(JSON.parse(storage.getItem(UPLOADS_KEY) ?? "{}")).toHaveProperty(
+        "counter",
+        repaired.counter,
+      );
+      await second.check();
+      expect(relay.upload).toHaveBeenCalledTimes(3);
+    },
+  );
+
+  it.each(["paused", "rate-limited", "too-large"] as const)(
+    "keeps the confirmed hash across a reload after a definite %s rejection",
+    async (kind) => {
+      const { make, relay, storage } = await load({
+        options: { firstRetryMs: 60_000, pollMs: 60_000 },
+      });
+      const first = make();
+      const bytes = saveBytes(100);
+      const file = fakeHandle(bytes);
+      first.start();
+      await first.take({ handle: file.handle, kind: "handle" });
+      const confirmed = JSON.parse(storage.getItem(UPLOADS_KEY) ?? "{}") as Record<string, unknown>;
+      expect(confirmed).toHaveProperty("hash");
+      const remote = relay.upload.mock.calls[0]?.[2];
+      relay.read.mockResolvedValue({ kind: "envelope", ...remote });
+      relay.upload.mockResolvedValueOnce({ kind });
+      file.replace(saveBytes(200));
+      await first.check();
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+      expect(JSON.parse(storage.getItem(UPLOADS_KEY) ?? "{}")).toMatchObject({
+        hash: confirmed.hash,
+        mailboxId: confirmed.mailboxId,
+      });
+      first.stop();
+      file.replace(bytes);
+      const second = make();
+      second.start();
+      await second.check();
+      expect(relay.read).toHaveBeenCalledWith(await mailboxIdFor(KEY));
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+    },
+  );
+});
+
 describe("a store blocked while the page is open", () => {
   it("makes no new code it couldn't store", async () => {
     const renewCode = vi.fn(() => Promise.resolve<ShareResult>({ kind: "unreachable" }));

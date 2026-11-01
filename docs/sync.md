@@ -144,7 +144,11 @@ sources in `save-source.ts`, & pruning in `pruneSavArchive` (`src/lib/engine/par
   like that can’t ask for read access again, since it shows no surfaces, so if the browser’s grant
   didn’t survive, uploads wait until the store is sorted out. Each counter is stored before it's
   used, & a retry resends the same bytes under it. A mailbox already past the counter means the
-  stored one was lost; the courier jumps to the clock's reading & seals again.
+  stored one was lost; the courier jumps to the clock's reading & seals again. Before an upload, the
+  courier clears the ledger's optional confirmed hash & mailbox ID. A successful answer confirms the
+  new save; a definite rejection restores the previous confirmation. A lost answer leaves it
+  unconfirmed, so the next visit sends the current file even if the mailbox holds an envelope. This
+  uses the same ledger format & keeps the reserved counter & shared code.
 - **Sharing starts with the code.** The first “Show code” or “Copy link” creates the link’s mailbox,
   & the code appears only once creation succeeds, so nobody can hold a code whose mailbox someone
   else could claim. A create on an ID that already exists under the same token counts as success,
@@ -165,7 +169,9 @@ sources in `save-source.ts`, & pruning in `pruneSavArchive` (`src/lib/engine/par
   whose hash matches its receipt. Check-offs on the PC stay on the PC, like any device’s.
 - **One courier per profile.** Web Locks allow a single courier per browser profile; a second window
   says “Your save file is already syncing in another window” & takes over when the first one goes. A
-  save file dropped into the second window takes the lead from the first.
+  save file dropped into the second window takes the lead from the first. An upload being prepared
+  when leadership ends is discarded before it can reserve another counter or reach the relay; an
+  encryption already underway also checks ownership before sending.
 - **Errors.** A parse failure after a game update shows an error on the PC. A save the tracker can't
   read but the courier can prune still uploads, for a newer build or a follower to read.
 - **App updates.** A waiting update reloads the courier at its own safe moment, for example right
