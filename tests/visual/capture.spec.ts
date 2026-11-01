@@ -14,7 +14,6 @@ import { expect, test } from "../browser/test.js";
 
 // Both commits use this one harness, these local assets, & the same serialized state.
 const state = createStoredState({ availabilityWindows: ["now", "anytime", "later"] });
-
 for (const capture of visualCases) {
   test(capture.id, async ({ page }, testInfo) => {
     verifySatoshi(readFileSync(SATOSHI_PATH), SATOSHI_PATH);
@@ -37,6 +36,13 @@ for (const capture of visualCases) {
       }),
       "Visual captures require the pinned Satoshi font",
     ).toBe(true);
+    // The head serializes this state for both builds. A base build that can't load it (such as
+    // after a storage schema bump) shows a persistence toast, which would otherwise read as a diff.
+    await expect(
+      // oxlint-disable-next-line playwright/no-raw-locators -- Sonner exposes toasts only by data attribute
+      page.locator("[data-sonner-toast]"),
+      "Visual captures require the base build to load the shared state",
+    ).toHaveCount(0);
     const directory = join(".playwright-artifacts/visual", process.env.VISUAL_REVISION ?? "head");
     mkdirSync(directory, { recursive: true });
     await page.screenshot({

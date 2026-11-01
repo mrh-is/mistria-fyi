@@ -36,6 +36,27 @@ function directory(): string {
   return path;
 }
 
+/** A report with all six sheets, so publication depends only on the given metrics. */
+function completeReport(reportMetrics: Record<string, unknown>[] | typeof metrics): string {
+  const path = directory();
+  const report = join(path, "visual", "report");
+  mkdirSync(report, { recursive: true });
+  writeFileSync(join(report, "metrics.json"), JSON.stringify(reportMetrics));
+  writeFileSync(
+    join(report, "source.json"),
+    JSON.stringify({ baseSha: "b".repeat(40), headSha: sha }),
+  );
+  for (const route of ["home", "almanac"]) {
+    for (const kind of ["before", "after", "difference"]) {
+      writeFileSync(
+        join(report, `${route}-${kind}.png`),
+        Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      );
+    }
+  }
+  return path;
+}
+
 afterEach(() => {
   for (const path of directories.splice(0)) rmSync(path, { force: true, recursive: true });
 });
@@ -96,7 +117,7 @@ describe("visual report publication", () => {
     expect(body).toContain("Capture workflow: failure");
     expect(body).toContain("captures are unavailable");
     expect(body).toContain("https://github.com/owner/repo/actions/runs/123");
-    expect(body.trim()).toMatch(/Agent: codex$/);
+    expect(body).not.toContain("Agent:");
     expect(gh.mock.calls.find(([args]) => args[0] === "pr")?.[0]).not.toContain("--attach");
   });
 
@@ -163,6 +184,47 @@ describe("visual report publication", () => {
     expect(
       gh.mock.calls.find(([args]) => args[0] === "pr")?.[0].filter((arg) => arg === "--attach"),
     ).toHaveLength(6);
+  });
+
+  it("reports captures as unavailable when a full sheet set holds failed captures", async () => {
+    const path = completeReport(metrics.map((entry) => ({ ...entry, changedPixels: null })));
+    let body = "";
+    const gh = vi.fn((args: string[]) => {
+      if (args[0] === "pr") {
+        body = readFileSync(args[args.indexOf("--body-file") + 1], "utf8");
+        return "https://github.com/owner/repo/pull/332#issuecomment-5";
+      }
+      if (args.includes("--paginate")) return "[[]]";
+      if (args[1].endsWith("/issues/comments/5")) {
+        return JSON.stringify({ body, id: 5, user: { id: 1 } });
+      }
+      return JSON.stringify(args[1].includes("actions/runs") ? run : pr);
+    });
+    await publishVisualDiff({ directory: path, gh, repository, runId: "123" });
+    expect(body).toContain("captures are unavailable");
+    expect(body).not.toContain("Each sheet shows");
+  });
+
+  it("posts the metrics without sheets when the attachment upload is rejected", async () => {
+    const path = completeReport(metrics);
+    let body = "";
+    const gh = vi.fn((args: string[]) => {
+      if (args[0] === "pr") {
+        if (args.includes("--attach")) throw new Error("upload rejected");
+        body = readFileSync(args[args.indexOf("--body-file") + 1], "utf8");
+        return "https://github.com/owner/repo/pull/332#issuecomment-5";
+      }
+      if (args.includes("--paginate")) return "[[]]";
+      if (args[1].endsWith("/issues/comments/5")) {
+        return JSON.stringify({ body, id: 5, user: { id: 1 } });
+      }
+      return JSON.stringify(args[1].includes("actions/runs") ? run : pr);
+    });
+    expect(await publishVisualDiff({ directory: path, gh, repository, runId: "123" })).toBe(true);
+    expect(body).toContain("home-light-1280 | 0 | 0");
+    expect(body).toContain("couldn’t be attached");
+    expect(body).not.toContain("### Home, before");
+    expect(gh.mock.calls.filter(([args]) => args[0] === "pr")).toHaveLength(2);
   });
 
   it("updates only its own marked report & removes its temporary duplicate after the update", async () => {

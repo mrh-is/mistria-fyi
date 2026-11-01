@@ -61,6 +61,10 @@ unrelated comments & comments by other authors. The publisher workflow starts au
 after its file exists on the default branch. Before that first merge, the same script can be
 exercised locally against a real capture run with an authenticated CLI.
 
+Local runs use a personal token, but the workflow uses the job’s `GITHUB_TOKEN`, whose attachment
+upload hasn’t been proven yet. If GitHub rejects the upload, the publisher posts the metrics table
+without sheets and points to the capture run’s downloadable report.
+
 ## Local commands
 
 Obtain the font with `pnpm exec tsx scripts/playwright-satoshi.ts`. Prepare a separate baseline
@@ -105,8 +109,10 @@ pixels & zero repeat noise. This is one cold sample, not evidence for expanding 
 The pilot covers only the initial viewport, English, Chromium, empty progress, & one expanded
 category. It cannot judge game artwork because sprites are synthetic. It does not cover
 below-the-fold content, physical mobile input, populated progress, errors, other browsers, or
-accessibility behavior. A changed state selector or storage contract can cause a capture failure;
-that is reported rather than replaced with a different state.
+accessibility behavior. A changed state selector or storage contract causes a capture failure; that
+is reported rather than replaced with a different state. The head serializes the shared state, so
+after a storage schema bump the base build rejects it as a newer build’s data. The capture treats
+the resulting persistence toast as a failure, not as a visual difference.
 
 The [manual visual checklist](agent-verification.md#visual-checklist), its screenshot cap, existing
 accessibility suites, & interaction checks remain required. This pilot does not authorize replacing

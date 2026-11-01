@@ -74,8 +74,7 @@ async function keepOneReport(
   if (
     !Number.isSafeInteger(previous.id) ||
     !Number.isSafeInteger(created.id) ||
-    !created.body.startsWith("<!-- visual-diff-pilot -->") ||
-    !/\nAgent: codex\s*$/.test(created.body)
+    !created.body.startsWith("<!-- visual-diff-pilot -->")
   ) {
     throw new Error("Invalid managed visual comment");
   }
@@ -226,7 +225,10 @@ export async function publishVisualDiff(options: {
     baseSha = source.baseSha;
     metrics = validatedMetrics(JSON.parse(readFileSync(metricsPath, "utf8")));
     images = reportImages(report);
-    unavailable = images.length !== 6;
+    // Sheets hold placeholders for failed captures, so a complete set can still be incomplete.
+    unavailable =
+      images.length !== 6 ||
+      metrics.some((entry) => entry.changedPixels === null || entry.noisePixels === null);
   } catch {
     unavailable = true;
     images = [];
@@ -234,58 +236,70 @@ export async function publishVisualDiff(options: {
     baseSha = "unavailable";
   }
   const elapsed = Math.round((Date.parse(run.updated_at) - Date.parse(run.created_at)) / 1000);
-  const body = [
-    "<!-- visual-diff-pilot -->",
-    "## Visual-diff pilot",
-    "",
-    `Commit: ${run.head_sha}. [Capture run & downloadable report](${runUrl}).`,
-    "",
-    `Baseline: ${baseSha}, from the PR’s base commit at capture time.`,
-    "",
-    `CI elapsed time, including setup & queueing: ${Number.isFinite(elapsed) && elapsed >= 0 ? `${elapsed} seconds` : "unavailable"}.`,
-    "",
-    `Capture workflow: ${["success", "failure", "cancelled", "timed_out"].includes(run.conclusion) ? run.conclusion : "incomplete"}. This pilot does not gate “CI passed”.`,
-    "",
-    unavailable
-      ? "The report or some captures are unavailable. Inspect the capture run for the setup or capture failure."
-      : "Each sheet shows desktop & mobile columns, with light & dark rows. Magenta marks changed pixels.",
-    "",
-    "| State | Changed pixels | Repeat noise (pixels) |",
-    "| --- | ---: | ---: |",
-    ...metrics.map(
-      (entry) =>
-        `| ${entry.id} | ${entry.changedPixels ?? "Capture failed"} | ${entry.noisePixels ?? "Capture failed"} |`,
-    ),
-    "",
-    ...images.flatMap((path) => {
-      const caption = basename(path, ".png")
-        .replace(/^home-/, "Home, ")
-        .replace(/^almanac-/, "Almanac, ");
-      return [`### ${caption}`, "", `![${caption}](${path})`, ""];
-    }),
-    "Existing accessibility checks & manual interaction verification remain required.",
-    "",
-    "Agent: codex",
-    "",
-  ].join("\n");
+  const reportBody = (attached: string[], uploadFailed: boolean) =>
+    [
+      "<!-- visual-diff-pilot -->",
+      "## Visual-diff pilot",
+      "",
+      `Commit: ${run.head_sha}. [Capture run & downloadable report](${runUrl}).`,
+      "",
+      `Baseline: ${baseSha}, from the PR’s base commit at capture time.`,
+      "",
+      `CI elapsed time, including setup & queueing: ${Number.isFinite(elapsed) && elapsed >= 0 ? `${elapsed} seconds` : "unavailable"}.`,
+      "",
+      `Capture workflow: ${["success", "failure", "cancelled", "timed_out"].includes(run.conclusion) ? run.conclusion : "incomplete"}. This pilot does not gate “CI passed”.`,
+      "",
+      unavailable
+        ? "The report or some captures are unavailable. Inspect the capture run for the setup or capture failure."
+        : "Each sheet shows desktop & mobile columns, with light & dark rows. Magenta marks changed pixels.",
+      "",
+      "| State | Changed pixels | Repeat noise (pixels) |",
+      "| --- | ---: | ---: |",
+      ...metrics.map(
+        (entry) =>
+          `| ${entry.id} | ${entry.changedPixels ?? "Capture failed"} | ${entry.noisePixels ?? "Capture failed"} |`,
+      ),
+      "",
+      ...(uploadFailed
+        ? ["The sheets couldn’t be attached. Download them from the capture run’s report.", ""]
+        : []),
+      ...attached.flatMap((path) => {
+        const caption = basename(path, ".png")
+          .replace(/^home-/, "Home, ")
+          .replace(/^almanac-/, "Almanac, ");
+        return [`### ${caption}`, "", `![${caption}](${path})`, ""];
+      }),
+      "Existing accessibility checks & manual interaction verification remain required.",
+      "",
+    ].join("\n");
   const temporary = mkdtempSync(join(tmpdir(), "visual-comment-"));
   try {
     const file = join(temporary, "body.md");
-    writeFileSync(file, body);
     const current = JSON.parse(
       await gh(["api", `repos/${repository}/pulls/${candidate.number}`]),
     ) as PullRequest;
     if (current.state !== "open" || current.head.sha !== run.head_sha) return false;
-    const posted = await gh([
-      "pr",
-      "comment",
-      String(candidate.number),
-      "--repo",
-      repository,
-      "--body-file",
-      file,
-      ...images.flatMap((path) => ["--attach", path]),
-    ]);
+    const comment = (attached: string[], uploadFailed: boolean) => {
+      writeFileSync(file, reportBody(attached, uploadFailed));
+      return gh([
+        "pr",
+        "comment",
+        String(candidate.number),
+        "--repo",
+        repository,
+        "--body-file",
+        file,
+        ...attached.flatMap((path) => ["--attach", path]),
+      ]);
+    };
+    let posted: string;
+    try {
+      posted = await comment(images, false);
+    } catch (error) {
+      // The job token’s attachment upload is unproven, so a rejected upload still reports metrics.
+      if (images.length === 0) throw error;
+      posted = await comment([], true);
+    }
     await keepOneReport(gh, repository, candidate.number, posted, temporary);
   } finally {
     rmSync(temporary, { force: true, recursive: true });
