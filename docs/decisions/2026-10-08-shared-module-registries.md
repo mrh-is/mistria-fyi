@@ -1,8 +1,24 @@
+---
+id: 2026-10-08-shared-module-registries
+status: needs-review
+summary: >-
+  Historical scope: Shared module registries for Vitest. Current applicability is unverified.
+review: >-
+  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
+  revalidated while seeding issue #268.
+evidence:
+  - docs/decisions/2026-10-08-shared-module-registries.md#decision
+relationships: []
+---
+
 # Shared module registries for Vitest
 
 ## Context
 
-The Vitest step was the CI critical path (#707): 113 s on two-CPU runners against #687’s 60 s
+The Vitest step was the CI critical path
+([mrh-is/mistria-fyi-private#707](https://github.com/mrh-is/mistria-fyi-private/issues/707)): 113 s
+on two-CPU runners against
+[mrh-is/mistria-fyi-private#687](https://github.com/mrh-is/mistria-fyi-private/issues/687)’s 60 s
 target, while test bodies summed to 56 s. Per-file isolation re-imported tracker data, both name
 locales, & Svelte for each of the `app` project’s 102 files; import & setup were most of its time.
 Locally at two workers, `app` took 12.1 s isolated and 2.7 s without isolation.

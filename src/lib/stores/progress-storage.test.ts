@@ -144,6 +144,45 @@ describe("readProgressBlob", () => {
     },
   );
 
+  const quest = "repair_the_general_store";
+  const withQuest = (version: number, record: Record<string, unknown>) => {
+    const stored = fixture(version) as { progress: Record<string, unknown> };
+    return JSON.stringify({
+      ...stored,
+      progress: {
+        ...stored.progress,
+        provenance: { [`questStates/${quest}`]: record },
+        questStates: { [quest]: "completed" },
+      },
+    });
+  };
+
+  it.each(POLICIES)("round-trips a quest's obtained source (%s)", (policy) => {
+    const record = { obtainedSource: "save", playtime: 5, source: "manual" };
+    const loaded = readOk(withQuest(6, record), policy);
+    expect(loaded.history.provenance[`questStates/${quest}`]).toEqual(record);
+
+    const written = serializeProgress(loaded);
+    expect(readOk(written, policy).history.provenance[`questStates/${quest}`]).toEqual(record);
+  });
+
+  it.each(POLICIES)("adds no obtained source to a version 5 quest (%s)", (policy) => {
+    const record = { playtime: 5, source: "save" };
+    const loaded = readOk(withQuest(5, record), policy);
+
+    expect(loaded.history.provenance[`questStates/${quest}`]).toEqual(record);
+    expect(JSON.parse(serializeProgress(loaded))).toMatchObject({ version: 6 });
+  });
+
+  it("drops a malformed obtained source's record in hydration but rejects it in a backup", () => {
+    const json = withQuest(6, { obtainedSource: "stamp", source: "manual" });
+
+    const { history, progress } = readOk(json, "repair");
+    expect(history.provenance[`questStates/${quest}`]).toBeUndefined();
+    expect(progress.questStates[quest as never]).toBe("completed");
+    expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
+  });
+
   it("repairs an invalid setting during hydration but rejects it in a backup", () => {
     const stored = fixture(5) as { progress: Record<string, unknown> };
     const json = JSON.stringify({
@@ -447,6 +486,20 @@ describe("readProgressBlob", () => {
     });
   });
 
+  it.each(POLICIES)("loads the Mistmare's perks as tracked perks under the %s policy", (policy) => {
+    const stored = fixture(5) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...stored,
+      progress: { ...stored.progress, unlockedPerks: ["harvest_horse", "horsepower", "nice_ride"] },
+    });
+    const loaded = readOk(json, policy);
+
+    expect(loaded.progress.unlockedPerks).toEqual(
+      new Set(["harvest_horse", "horsepower", "nice_ride"]),
+    );
+    expect(loaded.retained.lists.unlockedPerks ?? []).toEqual([]);
+  });
+
   it("drops fields the format doesn't declare", () => {
     const loaded = readOk(JSON.stringify(fixture(1)), "strict");
     expect(JSON.parse(serializeProgress(loaded))).not.toHaveProperty("showCompleted");
@@ -533,17 +586,22 @@ function currentFixture(version = CURRENT_SERIALIZATION_VERSION): LoadedProgress
 }
 
 describe("serializeFarmSwitch", () => {
+  const RECEIPT = { counter: 3, hash: "h".repeat(43) };
+
   it("writes the new farm & one backup of the outgoing farm in the same document", () => {
     const outgoing = currentFixture();
     const next = readOk(serializeProgress({ ...currentFixture(), lastImport: null }), "repair");
     next.progress.almanac.clear();
     const earlier = { backup: { nested: true }, farmName: "Earlier farm" };
-    const json = serializeFarmSwitch(next, outgoing, { farmSwitchBackup: earlier, syncReceipt: 7 });
+    const json = serializeFarmSwitch(next, outgoing, {
+      farmSwitchBackup: earlier,
+      syncReceipt: RECEIPT,
+    });
     if (json === null) throw new Error("Expected the switch to serialize");
 
     const stored = readOk(json, "repair");
     expect(stored.progress.almanac.size).toBe(0);
-    expect(stored.local.syncReceipt).toBe(7);
+    expect(stored.local.syncReceipt).toEqual(RECEIPT);
     const { backup, farmName } = stored.local.farmSwitchBackup as FarmSwitchBackup;
     expect(farmName).toBe(outgoing.lastImport?.farmName ?? null);
     // The backup restores as the outgoing farm, & replaced the earlier one rather than nesting it.

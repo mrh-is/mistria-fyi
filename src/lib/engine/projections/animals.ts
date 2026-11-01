@@ -14,6 +14,7 @@ import type {
   AnimalVariantId,
   CosmeticId,
   MountAppearanceId,
+  PerkId,
   PetCosmeticSetId,
   PetSkinId,
 } from "#lib/types/tracker-data.js";
@@ -24,18 +25,19 @@ export type AnimalsRow = ChecklistRow &
     | { animalId: AnimalId; cosmeticId: CosmeticId; kind: "cosmetic" }
     | { animalId: AnimalId; kind: "variant"; variantId: AnimalVariantId }
     | { id: MountAppearanceId; kind: "mountAppearance" }
+    | { id: PerkId; kind: "mountPerk" }
     | { id: PetCosmeticSetId; kind: "petCosmetic" }
     | { id: PetSkinId; kind: "petSkin" }
   );
 
 export interface AnimalsProjection extends CategoryProjection {
-  /** Variants, then animal cosmetics, mount appearances, pet cosmetics, & pet skins. */
+  /** Variants, then animal cosmetics, mount appearances & perks, pet cosmetics, & pet skins. */
   rows: AnimalsRow[];
 }
 
 /**
- * Every variant, cosmetic, appearance, & skin is one step. A variant is in scope only within the
- * context's availability windows; everything else stays in scope until collected.
+ * Every variant, cosmetic, appearance, Mistmare perk, & skin is one step. A variant is in scope
+ * only within the context's availability windows; everything else stays in scope until collected.
  */
 export function projectAnimals(
   ctx: ProgressContext,
@@ -55,7 +57,7 @@ export function projectAnimals(
         rows.push({
           animalId,
           completed,
-          inScope: isVariantInScope(variant, ctx.worldState.season, ctx.availabilityWindows),
+          inScope: isVariantInScope(variant, animal.visibility, ctx, ctx.availabilityWindows),
           kind: "variant",
           spoilered,
           variantId,
@@ -82,6 +84,15 @@ export function projectAnimals(
       inScope: true,
       kind: "mountAppearance",
       spoilered: isSpoilered(appearance.visibility, options.progressionState),
+    });
+  }
+  for (const [id, perk] of recordEntries(trackerData.mount.perks)) {
+    rows.push({
+      completed: progress.unlockedPerks.has(id),
+      id,
+      inScope: true,
+      kind: "mountPerk",
+      spoilered: isSpoilered(perk.visibility, options.progressionState),
     });
   }
   for (const id of recordKeys(trackerData.pets.cosmetics)) {

@@ -406,6 +406,26 @@ describe("extractSaveProgress", () => {
     });
   });
 
+  it("imports the Mistmare's perks from player.perks without warning", () => {
+    const { completed, warnings } = extractSaveProgress({
+      player: { perks: ["horsepower", "harvest_horse", "nice_ride"] },
+    });
+
+    expect(completed.unlockedPerks).toEqual(new Set(["horsepower", "harvest_horse", "nice_ride"]));
+    expect(warnings).toEqual([]);
+  });
+
+  it("imports a bought perk the player has switched off", () => {
+    // Switching a perk off clears its `perks_active` flag & `perk_unlocked_*` world fact, but the
+    // game keeps it in `player.perks`, so it still counts as bought.
+    const bundle = {
+      gamedata: { t2_world_facts: { perk_unlocked_magic_design: 0 } },
+      player: { perks: ["magic_design"], stats: { perks_active: { magic_design: false } } },
+    };
+    const { completed } = extractSaveProgress(bundle);
+    expect(completed.unlockedPerks).toEqual(new Set(["magic_design"]));
+  });
+
   describe("new progression fields from save", () => {
     it("extracts hasUpperFloor from player.upper_floor", () => {
       const bundle: SaveBundle = {
@@ -485,7 +505,7 @@ describe("extractSaveProgress", () => {
     });
 
     it.each([
-      ["a pending child", { pending_child: { due_date: 1, utero: 0 } }],
+      ["a pending child", { pending_child: { due_date: 1, utero: "ari" } }],
       ["a child", { children: [{ name: "Wren" }] }],
     ])("reads %s as wanting children", (_label, fields) => {
       const { completed } = extractSaveProgress({
@@ -774,8 +794,8 @@ describe("malformed save fields", () => {
     expect(completed.museum).toBeUndefined();
     expect(completed.renown).toBeUndefined();
     expect(warnings).toEqual([
-      { code: "not-a-list", path: "gamedata.museum_progress" },
       { code: "not-an-object", path: "gamedata.t2_world_facts" },
+      { code: "not-a-list", path: "gamedata.museum_progress" },
     ]);
   });
 
@@ -792,9 +812,9 @@ describe("malformed save fields", () => {
 
     expect(completed.animals?.[animalId]).toEqual(getDefaultAnimalVariants(animalId));
     expect(warnings).toEqual([
+      { code: "not-an-object", path: "gamedata.t2_world_facts" },
       { code: "not-an-object", path: "player.animal_variant_unlocks" },
       { code: "not-a-list", path: `player.animal_cosmetic_unlocks.${animalId}` },
-      { code: "not-an-object", path: "gamedata.t2_world_facts" },
     ]);
   });
 
@@ -1024,17 +1044,12 @@ describe("extractSave", () => {
     const { fields } = extractSave({
       player: {
         items_acquired: ["cosmetic", `treasure_box_${tier}`],
-        perks: ["horsepower"],
       },
     });
 
     expect(fields.almanac).toMatchObject({
       completeness: "complete",
       untracked: ["cosmetic", `treasure_box_${tier}`],
-    });
-    expect(fields.unlockedPerks).toMatchObject({
-      completeness: "complete",
-      untracked: ["horsepower"],
     });
 
     const renamed = extractSave({ player: { items_acquired: ["renamed_in_a_game_update"] } });
@@ -1070,24 +1085,24 @@ describe("extractSave", () => {
     const allLists = Object.fromEntries(animalIds.map((id) => [id, []]));
     const { horse: _horse, ...withoutHorse } = allLists as Record<string, never[]>;
 
-    it("are never complete, since a renamed reveal scene looks like an unrevealed Mistmare", () => {
+    it("are complete from an explicit reveal fact, independent of scene history", () => {
       const read = extractSave({
-        gamedata: { scene_history: [] },
+        gamedata: { t2_world_facts: { cutscene_seen_reveal_mistmare: 0 } },
         player: { animal_variant_unlocks: allLists },
       });
       expect(read.fields.mountAppearances).toMatchObject({
-        completeness: "unknown",
+        completeness: "complete",
         diagnostics: [],
         value: new Set(),
       });
 
       const renamed = extractSave({
-        gamedata: { scene_history: ["reveal_mistmare_v2"] },
+        gamedata: { t2_world_facts: { cutscene_seen_reveal_mistmare: 1 } },
         player: { animal_variant_unlocks: allLists },
       });
       expect(renamed.fields.mountAppearances).toMatchObject({
-        completeness: "unknown",
-        value: new Set(),
+        completeness: "complete",
+        value: new Set(["mistmare"]),
       });
     });
 
@@ -1112,7 +1127,9 @@ describe("extractSave", () => {
 
       expect(fields.mountAppearances).toMatchObject({
         completeness: "unknown",
-        diagnostics: [{ code: "absent", path: "player.animal_variant_unlocks.horse" }],
+        diagnostics: expect.arrayContaining([
+          { code: "absent", path: "player.animal_variant_unlocks.horse" },
+        ]) as unknown,
         value: new Set(["mistmare"]),
       });
     });
@@ -1157,7 +1174,7 @@ describe("extractSave", () => {
     expect(missing.fields.skillLevels.completeness).toBe("complete");
   });
 
-  it("never treats relationships as complete, since breakups & divorce aren't verified", () => {
+  it("keeps relationships unknown when explicit statuses are missing", () => {
     const { fields } = extractSave({ gamedata: { t2_world_facts: allFacts } });
     expect(fields.villagerRelationships).toMatchObject({ completeness: "unknown", value: {} });
   });

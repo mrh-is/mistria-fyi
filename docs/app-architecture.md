@@ -96,7 +96,7 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `5`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `6`.
   - `lastImport`: the last manual save import's timestamp, identity (filename number plus creation
     version), & player/farm display names, or `null`. Version 1 migrates to `null` without inventing
     history. Missing or malformed game metadata remains unknown and never blocks importing progress.
@@ -106,14 +106,16 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
     filtered to non-default entries, plus each fact's history (see [Provenance](#provenance)):
     `provenance`, `resolutions`, & `lastSavePlaytime`.
   - `worldState`: the in-game season & weather the availability filters read.
-  - `local` (storage only, left out while empty): this device's own section, with slots reserved for
-    sync's receipt & farm-switch backup. Exports never include it; a restore keeps this device's and
-    never brings one in; a progress reset keeps it and a full reset clears it. Provenance & resolved
-    diffs live in `progress`, so they travel with backups.
+  - `local` (storage only, left out while empty): this device's own section, which holds sync's
+    lane, receipt, freshness, pending retires, & farm-switch backup (see [sync.md](sync.md)).
+    Exports never include it; a restore keeps this device's and never brings one in; a progress
+    reset keeps it (all but the receipt) and a full reset clears it. Provenance & resolved diffs
+    live in `progress`, so they travel with backups.
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
-  `now`, `anytime`, & `later`, and `showSpoilers`). These are per-device conveniences: they're never
-  exported, so restoring a backup or resetting progress keeps them, and a missing or invalid field
-  falls back to its default rather than blocking anything.
+  `now`, `anytime`, & `later`, `showSpoilers`, and `everythingGrouping`, either `category` or
+  `source`). The UI labels `anytime` “Whenever”; the stored value keeps its original name. These are
+  per-device conveniences: they're never exported, so restoring a backup or resetting progress keeps
+  them, and a missing or invalid field falls back to its default rather than blocking anything.
 
 `src/lib/stores/progress-storage.ts` owns the blob. Storage hydration & backup restore both read it
 the same way: parse it, dispatch on `version`, run the numbered `MIGRATIONS` that bring it up to
@@ -185,12 +187,13 @@ preserves captured world state & unknown IDs. Its history merges three ways: eac
 resolution, or last save playtime the importing tab recorded since its base (the stored value it
 last read, or its own explicit write still waiting for the lock) overwrites the stored one, and the
 rest keep the history another tab stored meanwhile. A save or transfer agreeing with a fact already
-stored leaves that fact's stored provenance in place. Edits made after confirmation are rebased onto
-the locked merge result for the next auto-save, including removals & decreases, and so is their
-history; a later household edit replaces that household as a unit to preserve the engagement
-cascade. The pagehide flush can't wait for a lock, so it runs the same function synchronously,
-keeping the compare-before-write. A browser without Web Locks runs every write synchronously; see
-the [decision record](decisions/2026-10-20-serialized-progress-writes.md).
+stored leaves that fact's stored provenance in place, unless a save is replacing a guess in it and
+the merge kept the value that save reported. Edits made after confirmation are rebased onto the
+locked merge result for the next auto-save, including removals & decreases, and so is their history;
+a later household edit replaces that household as a unit to preserve the engagement cascade. The
+pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
+compare-before-write. A browser without Web Locks runs every write synchronously; see the
+[decision record](decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Provenance
 
@@ -204,8 +207,17 @@ inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the st
 - **Sources.** Setters & toggles record `manual`. An engagement cascade, a quest's recipe rewards (&
   the undo that takes them back), default unlocks, & “Record prerequisites” record `inferred`. A
   save import records `save`; a device transfer records `unknown`, since its payload carries no
-  provenance. Only facts a call changes record: a save agreeing with a fact leaves its provenance as
-  it was.
+  provenance. Only facts a call changes record, with one exception: a save replaces the app's
+  guesses but never the player's entries, so one agreeing with an `unknown` or `inferred` fact
+  promotes it to `save`, and one agreeing with a `manual` fact leaves it `manual`.
+- **A quest's two moments.** When a different source finishes an obtained quest, its record keeps
+  the obtained moment's source in `obtainedSource` (version 6), and any later change replaces the
+  record. A save reporting `completed` follows the same rule for that moment: it replaces a guess
+  and keeps `manual`, so a pen slash under a stamped X is permanent on purpose. A quest finished
+  before version 6 has none, so it draws in its own source.
+- **Marks.** `provenanceMark` turns a fact's key & sources into its checkbox's mark. The tool is
+  decorative, so it's never announced. See the
+  [decision record](decisions/2026-10-30-provenance-marks.md).
 - **Hydration.** Facts stored before version 3 migrate as `unknown`, read the way hydration reads
   them, so a value it repairs to the default gets no record. A relationship the engagement cascade
   applies on load records `inferred`. History for a historical almanac ID is rekeyed under its
@@ -238,11 +250,12 @@ The app processes save files entirely client-side. No save data is uploaded.
    absent or malformed field is `unknown` with no value, never an empty list or a zero. Every ID is
    tracked, known-but-untracked (a game ID the tracker deliberately leaves out, listed in
    `untracked-save-ids.ts`), or unrecognized; an unrecognized ID or an unreadable entry makes its
-   field `unknown`. Relationships are never `complete`, since absent status flags do not establish a
-   relationship removal; nor is the child choice, since only wanting children leaves evidence; nor
-   are mount appearances, since the Mistmare is inferred from one scene ID in an uncatalogued scene
-   history. It also retains the save’s identity: `info.creation_version` & `header.playtime`. A
-   quest listed as both completed and active imports as `completed`.
+   field `unknown`. Relationships are complete when every dateable villager’s explicit status is
+   readable, including `null` for undecided. Mount appearances use the explicit Mistmare reveal fact
+   & the animal variant lists. Child choice is complete only with positive evidence; a childless
+   save cannot distinguish refusal from postponement. It also retains the save’s identity:
+   `info.creation_version` & `header.playtime`. A quest listed as both completed and active imports
+   as `completed`.
 4. `extractSaveProgress` turns that into the `Partial<ProgressState>` of every value it could read,
    plus the diagnostics the player sees as warnings (`absent` & `invalid-value` are diagnostics
    only). It doesn’t count anything. See the
@@ -306,10 +319,31 @@ Pages are layout compositors. They handle data fetching and composition, not bus
 - **Shared components** — reusable components live in `src/lib/components/` or the project-owned
   `src/lib/components/ui/` (forked from shadcn-svelte).
 - **"Everything" view** — `src/routes/everything/+page.svelte` computes overall completion and
-  renders one `category-section.svelte` per category. That component owns the category-to-content
-  map (which content component, whether it's compact, whether its rows stack), the sticky
-  `section-header.svelte`, and hiding a completed category unless completed content is shown. A new
-  category adds one map entry, not a new section file.
+  renders `category-section.svelte` for outstanding sections & again below a single Completed
+  divider when “Show completed” is on. That component owns the category-to-content map (which
+  content component & whether it's compact), the sticky, collapsible `section-header.svelte`, and
+  hiding categories with no matching sections. A new category adds one map entry, not a new section
+  file.
+
+The Everything page also offers a Source grouping. `controllers/source-checklist.ts` adapts the
+category projections into rows with their original completion identity, presentation, & reversible
+store action. `presentation/source-groups.ts` places each row under all of its source instances,
+merges stock facets within an instance, & classifies availability using only that instance’s
+sources. Source totals & Now/Later/Done rollups precede display filtering; unobtainable rows never
+hold a source open. `source-content.svelte` composes the source types & sections, placing Done
+sections below the same page-wide Completed divider. In both lenses, outstanding groups start open &
+completed groups start closed on each page load; these choices aren't persisted. The divider itself
+never collapses. A source anchor opens its containing type group, including a completed one.
+`controllers/completion-scope.svelte.ts` partitions category sections by the same completion their
+headers show; compact records & masked top-level spoiler sections register individually, & a masked
+section always counts as outstanding. A section changes lists once a completed row has had time to
+leave, the source lens holds its sections the same way, & focus inside a section that leaves moves
+to the nearest visible section trigger. The Completed divider hides while no completed group has
+content. Collapsed groups keep their content mounted so progress edits & filters can update which
+groups have content. Category pages have no completion scope & keep their existing grouping. The
+`group=category|source` query overrides the device’s `everythingGrouping` preference without
+rewriting it; choosing the control updates both the preference & URL. Progress serialization is
+unchanged.
 
 ### Component conventions
 
@@ -340,6 +374,14 @@ Progress calculation and UI row visibility are separate concerns.
   regardless of display filters; `src/lib/engine/progress.ts` holds its types & level rules.
 - **Visibility** is controlled by `availabilityWindows` (`now`, `anytime`, `later`),
   `showCompleted`, and `showSpoilers` at the component level.
+- **Row windows** answer “what can I act on today?”. `classifyItemAvailability` in
+  `engine/availability.ts` puts each incomplete row in one window: “Later” while the row or a source
+  is a spoiler, a progress gate the app records is unmet, or the source is out of season or weather;
+  “Now” when a season or weather restriction holds today; “Whenever” (`anytime`) otherwise. A row
+  takes its best source. Unevaluable gates count as met, & time of day is never filtered on. Every
+  projection reads the rule through `ProgressContext`, which carries the player's
+  `progressionState`, so counts, dimming, & the filter agree. See the
+  [decision record](decisions/2026-10-27-row-windows.md).
 - Hidden completed rows still contribute to progress totals. This ensures the overall percentage
   remains accurate even when the user filters out completed content.
 - **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the
@@ -471,3 +513,81 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
   rename only costs a re-download, forgets which locales a player kept offline, or keeps older
   caches until the open pages report their versions again.
 - Internal identifiers such as category keys, message keys, & component names.
+
+## 8. Feedback credentials
+
+`/api/feedback` files issues on `mrh-is/mistria-fyi` as a GitHub App installation.
+`src/lib/server/github-app-auth.ts` signs a nine-minute RS256 App JWT with Web Crypto, exchanges it
+at `POST /app/installations/{id}/access_tokens`, & caches the installation token per isolate until
+five minutes before its `expires_at`. Each exchange asks for only `issues: write` on `mistria-fyi`,
+so a permission or repository later added to the App never reaches these tokens. Requests share only
+a settled token, never a pending exchange: a Worker's pending I/O belongs to the request that
+started it, so concurrent requests with no fresh cached token each run their own exchange. A `401`
+on the issue request drops the cached token only if it is the one GitHub rejected. The endpoint
+requires all three App settings:
+
+- `GITHUB_APP_ID`: the App ID (or client ID), the JWT issuer. Not secret.
+- `GITHUB_APP_INSTALLATION_ID`: the App's installation on this repository. Not secret.
+- `GITHUB_APP_PRIVATE_KEY`: the App's private key as a PKCS#8 PEM (`BEGIN PRIVATE KEY`). Secret,
+  production only.
+
+In production, missing or blank App settings return `503` & log only the missing variable names. A
+failed exchange returns the same `503` as a failed issue request & logs only GitHub’s status &
+request ID, never the key, the JWT, or a token. Personal access tokens are no longer supported.
+
+`wrangler.toml` is the source of truth for the Pages project's configuration, so plain-text
+variables can't be set in the dashboard. Store all three settings as production **secrets**: the IDs
+aren't sensitive, but a secret keeps them production-only without restating the KV binding in a
+per-environment `wrangler.toml` block.
+
+Only production files issues. `vite.config.ts` sets `isProductionDeployment`
+(`src/lib/server/deployment.ts`) at build time, true only when Cloudflare Pages builds `main`
+(`CF_PAGES_BRANCH`). Every other build (branch previews, local builds, dev, & tests) runs feedback
+as a dry run. It applies the same origin, payload, & Turnstile token checks, verifies Turnstile only
+when `TURNSTILE_SECRET_KEY` is set, then returns `{ dryRun: true }` without reading the App
+settings, calling GitHub, or storing the email. The panel says nothing was filed. No request header,
+host, or body field can switch production into a dry run. If the Pages production branch is ever
+renamed, update `vite.config.ts` in the same change, or production feedback silently becomes a dry
+run. See the [decision record](decisions/2026-10-27-feedback-preview-dry-run.md).
+
+### Setting up the App (maintainer)
+
+1. On GitHub, open **Settings → Developer settings → GitHub Apps → New GitHub App** for the account
+   that owns `mrh-is/mistria-fyi`. Set the homepage URL to `https://mistria.fyi`, clear **Webhook →
+   Active**, & under **Repository permissions** set only **Issues: Read and write** (GitHub adds
+   **Metadata: Read-only** itself). Leave every other permission at **No access**, choose **Only on
+   this account**, & create the App. Note its **App ID**.
+2. **Install App → Only select repositories →** `mistria-fyi`. The installation ID is the number at
+   the end of the installation's settings URL (`…/settings/installations/<id>`).
+3. **Generate a private key.** GitHub downloads it as PKCS#1 (`BEGIN RSA PRIVATE KEY`), which Web
+   Crypto can't import, so convert it:
+   `openssl pkcs8 -topk8 -nocrypt -in app.pem -out app-pkcs8.pem`.
+4. Store the settings as production secrets. Each command prompts for the value, or reads it from
+   standard input:
+
+   ```sh
+   pnpm exec wrangler pages secret put GITHUB_APP_ID --project-name mistria-fyi
+   pnpm exec wrangler pages secret put GITHUB_APP_INSTALLATION_ID --project-name mistria-fyi
+   pnpm exec wrangler pages secret put GITHUB_APP_PRIVATE_KEY --project-name mistria-fyi < app-pkcs8.pem
+   ```
+
+   The dashboard works too: **Workers & Pages → mistria-fyi → Settings → Variables and Secrets →
+   Production → Add**, type **Secret**. Confirm that none of the three appear under **Preview**,
+   then delete both local `.pem` files; GitHub can't re-download a key, but you can generate
+   another.
+
+5. Redeploy production (secrets apply to new deployments), submit feedback, & confirm the issue's
+   author is the App's bot account.
+6. Remove the legacy token, then revoke it under **Settings → Developer settings → Personal access
+   tokens → Fine-grained tokens**:
+   `pnpm exec wrangler pages secret delete GITHUB_FEEDBACK_TOKEN --project-name mistria-fyi`. That
+   command takes no environment flag, so confirm in the dashboard (**Settings → Variables and
+   Secrets**) that `GITHUB_FEEDBACK_TOKEN` is gone from both **Production** & **Preview**, and
+   delete any copy that remains. The endpoint ignores this obsolete binding; preview builds run
+   feedback as a dry run without App credentials.
+
+The App key doesn't expire, so there is no rotation schedule. To replace it, generate a second key,
+store it as above, redeploy, then delete the old key in the App's settings. If the key leaks, delete
+it there first: GitHub rejects JWTs signed with a deleted key immediately, though an installation
+token already issued stays valid for up to an hour unless you also suspend the installation. See the
+[decision record](decisions/2026-10-22-feedback-github-app.md).

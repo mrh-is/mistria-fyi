@@ -106,7 +106,6 @@ test.describe("stateful accessibility", () => {
   test("spoiler-hidden and revealed rows pass axe", critical, async ({ page }, testInfo) => {
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
-    await page.getByRole("button", { name: /Show \d+ more/ }).click();
     const spoiler = page.getByRole("button", { name: "Reveal spoiler" }).first();
     await expect(spoiler).toBeVisible();
     const spoilerText = await spoiler.textContent();
@@ -145,7 +144,7 @@ test.describe("stateful accessibility", () => {
     );
 
     await openVisibilityPanel(page);
-    await page.getByRole("switch", { name: "Show completed?" }).click();
+    await page.getByRole("switch", { name: "Completed" }).click();
     await expect(page.getByRole("button", { name: /^Uncheck / }).first()).toBeVisible();
     await analyzeAccessibility(
       page,

@@ -1,4 +1,30 @@
+---
+id: 2026-10-12-public-cutover-planning
+status: amended
+summary: >-
+  The Feedback personal-token & rotation plan was replaced by the App transition, whose temporary
+  fallback was later removed.
+review: >-
+  Completion of the one-time Pages & account-scope cutover tasks is not established by this
+  authentication reconciliation.
+evidence:
+  - docs/decisions/2026-10-22-feedback-github-app.md
+  - https://github.com/mrh-is/mistria-fyi/pull/243
+relationships:
+  - type: superseded-by
+    target: 2026-10-22-feedback-github-app
+    scope: partial
+    portion: >-
+      Only the Feedback bullet. The other cutover choices are not superseded by this relationship.
+    evidence:
+      - docs/decisions/2026-10-22-feedback-github-app.md
+      - https://github.com/mrh-is/mistria-fyi/pull/243
+---
+
 # Public cutover planning
+
+Superseded in part by [2026-10-22-feedback-github-app.md](2026-10-22-feedback-github-app.md): the
+feedback endpoint authenticates as a GitHub App, so the token rotation below ends once it ships.
 
 ## Context
 

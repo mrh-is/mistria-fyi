@@ -12,8 +12,8 @@ import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
+import RelayFirstSequencer from "./scripts/vitest-relay-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
-import { cliProbeFiles } from "./scripts/vitest-timings.js";
 import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
 import { withBarePathStubs } from "./src/lib/build/bare-path-stubs.js";
@@ -44,6 +44,13 @@ const spriteAssetBase = resolveSpriteAssetBase(
   loadEnv("", import.meta.dirname, "PUBLIC_ASSET_ORIGIN").PUBLIC_ASSET_ORIGIN,
 );
 const contentSecurityPolicy = cspDirectives(spriteAssetBase);
+
+/**
+ * Whether this is a Cloudflare Pages build of the production branch. Pages sets `CF_PAGES_BRANCH`
+ * in the build environment only, so it's fixed here: anything else (previews, local builds, dev, &
+ * tests) runs feedback as a dry run.
+ */
+const isProductionDeployment = process.env.CF_PAGES_BRANCH === "main";
 
 /**
  * Vite resolves `#lib/*` through the nearest package.json's `imports` field. For files under
@@ -127,7 +134,10 @@ export default defineConfig({
     },
   },
   define: {
+    __PRODUCTION_DEPLOYMENT__: JSON.stringify(isProductionDeployment),
     __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
+    // Save file sync stays hidden on the production site until it launches (#291).
+    __SYNC_ENABLED__: JSON.stringify(!isProductionDeployment),
   },
   plugins: [
     tailwindcss(),
@@ -262,12 +272,16 @@ export default defineConfig({
             ...sharedTestExcludes,
             "**/*.assets.test.ts",
             "**/*.isolated.test.ts",
-            ...(process.env.VITEST_EXCLUDE_CLI_PROBES === "true" ? cliProbeFiles : []),
             ...(process.env.VITEST_CLEANUP_CHANGED === "false"
               ? ["scripts/cleanup-merged-worktrees.test.ts"]
               : []),
           ],
-          include: ["eslint-rules/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
+          include: [
+            "eslint-rules/**/*.test.ts",
+            "scripts/**/*.test.ts",
+            "tests/**/*.test.ts",
+            "relay/**/*.test.ts",
+          ],
           name: "node",
           ...sharedRegistry,
         },
@@ -331,6 +345,7 @@ export default defineConfig({
       },
     ],
     restoreMocks: true,
+    sequence: { sequencer: RelayFirstSequencer },
     testTimeout: loadTolerantTimeoutMs,
     unstubEnvs: true,
     unstubGlobals: true,

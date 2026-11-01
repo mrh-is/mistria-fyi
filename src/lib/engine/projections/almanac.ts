@@ -14,7 +14,7 @@ import type { AlmanacCategoryId, AlmanacEntry, Item, ItemId } from "#lib/types/t
 
 interface AlmanacProjectionOptions extends CategoryProjectionOptions {
   hideSpoilered?: boolean;
-  matchesEntry?: (itemIds: ItemId[]) => boolean;
+  matchesEntry?: (entry: AlmanacEntry) => boolean;
   matchesSources?: (sources: Source[]) => boolean;
   recentlyCompleted?: ReadonlySet<ItemId>;
   showCompleted?: boolean;
@@ -76,19 +76,20 @@ export function projectAlmanac(
       const sources = trackerIndex.getAggregatedAlmanacSources(canonicalId);
       const completed = ctx.progress.almanac.has(canonicalId);
       const obtainable = isAlmanacEntryObtainable(entry.itemIds, ctx.progress);
-      const available = isItemAvailable(sources, ctx.worldState, ctx.availabilityWindows);
+      const windowed = { sources, visibility: item.visibility };
+      const available = isItemAvailable(windowed, ctx, ctx.availabilityWindows);
       const spoilered = isSpoilered(item.visibility, options.progressionState);
       const matchesBaseFilters =
         (obtainable || options.showUnobtainable === true) &&
         (completed || available) &&
         (!options.hideSpoilered || !spoilered) &&
-        (options.matchesEntry?.(entry.itemIds) ?? true);
+        (options.matchesEntry?.(entry) ?? true);
       const matchesFilters = matchesBaseFilters && (options.matchesSources?.(sources) ?? true);
       return {
         available,
         canonicalId,
         completed,
-        dimmed: isItemDimmed(sources, completed, ctx.worldState, ctx.availabilityWindows),
+        dimmed: isItemDimmed(windowed, completed, ctx, ctx.availabilityWindows),
         entry,
         item,
         matchesBaseFilters,

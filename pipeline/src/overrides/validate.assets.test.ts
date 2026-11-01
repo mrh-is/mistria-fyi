@@ -36,6 +36,17 @@ describe("reviewed game facts against installed assets", () => {
     expect(gml).toContain('create_default_mount("mistmare")');
   });
 
+  it("sells the Mistmare's perks only once the player has the mount", () => {
+    const gml = readFileSync(
+      join(requireGameAssetsDir(), "gml", "objects", "obj_horse_statue.gml"),
+      "utf8",
+    );
+    // `extractMount` names the Mistmare as each perk's prerequisite on the strength of this gate.
+    expect(gml).toMatch(
+      /ShrineMenuVariant\.Horse\);\s*\},\s*function\(\) \{\s*return ARI\.mount != undefined;/,
+    );
+  });
+
   it("fails when a reviewed mount appearance becomes acquirable", () => {
     const data = installedFacts();
     const horse = (data.ranching as Record<string, Record<string, Record<string, unknown>>>).animals

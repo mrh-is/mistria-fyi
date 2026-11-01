@@ -4,6 +4,8 @@ import { SvelteMap } from "svelte/reactivity";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
 export interface SectionGrouping<Key> {
+  /** The completion a current hold keeps `key` at, or `undefined` when it isn't held. */
+  heldCompletion: (key: Key) => boolean | undefined;
   /**
    * Keeps `key` in the group it renders in now until the row-leaving window passes, so a toggle
    * inside a section never moves it mid-interaction. Holding again restarts the window.
@@ -50,6 +52,7 @@ export function createSectionGrouping<Key>(
   }
 
   return {
+    heldCompletion: (key) => held.get(key),
     hold(key): void {
       clearTimeout(timers.get(key));
       if (!held.has(key)) held.set(key, isGroupedComplete(key));

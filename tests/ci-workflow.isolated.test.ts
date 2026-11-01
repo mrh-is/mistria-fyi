@@ -7,18 +7,25 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
 
+import { TIMING_ARTIFACT } from "../scripts/nightly-report.js";
 import { STEPS } from "../scripts/verify.js";
+
+/**
+ * These tests hold what a broken workflow wouldn't otherwise reveal: a check that silently stops
+ * running or stops failing, a security property, or a version that has drifted. They don't restate
+ * the workflow's shape, since a wrong shape fails CI on its own and a restatement only has to be
+ * edited alongside every intended change.
+ */
 
 interface Workflow {
   concurrency?: { "cancel-in-progress"?: boolean; group?: string };
+  env?: Record<string, string>;
   jobs?: Record<string, WorkflowJob>;
   on?: {
-    pull_request?: null | { paths?: string[] };
-    push?: {
-      branches?: string[];
-    };
+    pull_request?: unknown;
+    pull_request_target?: unknown;
+    push?: { branches?: string[] };
     schedule?: { cron: string }[];
-    workflow_dispatch?: unknown;
   };
   permissions?: Record<string, string>;
 }
@@ -26,13 +33,14 @@ interface Workflow {
 interface WorkflowJob {
   concurrency?: Workflow["concurrency"];
   container?: string | { image?: string; options?: string };
+  env?: Record<string, string>;
   if?: string;
   needs?: string | string[];
   outputs?: Record<string, string>;
   permissions?: Record<string, string>;
   "runs-on"?: string;
   steps?: WorkflowStep[];
-  strategy?: { "fail-fast"?: boolean; matrix?: Record<string, string[]> };
+  strategy?: { matrix?: Record<string, string[]> };
   "timeout-minutes"?: number;
 }
 
@@ -52,8 +60,9 @@ const pinnedAction = /^[^@]+@[a-f0-9]{40}$/;
 const workflow = parse(readFileSync(".github/workflows/ci.yml", "utf8")) as Workflow;
 const jobs = workflow.jobs ?? {};
 const browserJobs = ["accessibility", "pwa"] as const;
-const requiredJobs = ["changes", "lint", "check", "test", "build", "ci-passed"] as const;
 const installJobs = ["lint", "check", "test", "build", ...browserJobs, "issue-sync"] as const;
+// Scheduled housekeeping: it reports on the repository rather than deciding whether code can merge.
+const unrequiredJobs = ["issue-sync", "nightly-report"];
 
 describe("browser selection", () => {
   it.each(["true", "false", undefined])("selects pinned Chromium when CI is %s", async (ci) => {
@@ -93,53 +102,82 @@ function verifySteps(job: undefined | WorkflowJob): string[] {
   );
 }
 
+/** Runs the workflow's real change detector over `files`, returning its outputs. */
+function detectChanges(event: string, ...files: string[]): Record<string, string> {
+  const directory = mkdtempSync(join(tmpdir(), "ci-filter-"));
+  const output = join(directory, "output");
+  try {
+    const filter = jobs.changes.steps?.find((step) => step.id === "filter")?.run ?? "";
+    const result = spawnSync(
+      "bash",
+      [
+        "-eu",
+        "-o",
+        "pipefail",
+        "-c",
+        `
+        gh() { printf '%s\\n' "$CHANGED_FILES"; }
+        git() { if [[ $1 == diff ]]; then printf '%s\\n' "$CHANGED_FILES"; fi; }
+        ${filter}
+      `,
+      ],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          BASE_SHA: "base",
+          CHANGED_FILES: files.join("\n"),
+          EVENT_NAME: event,
+          GITHUB_OUTPUT: output,
+          PR_NUMBER: "689",
+          REPOSITORY: "owner/repo",
+        },
+      },
+    );
+    expect(result.status, result.stderr).toBe(0);
+    return Object.fromEntries(
+      readFileSync(output, "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => {
+          const separator = line.indexOf("=");
+          return [line.slice(0, separator), line.slice(separator + 1)];
+        }),
+    );
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+}
+
 describe("CI workflow triggers", () => {
-  it("runs for pull requests, main pushes, nightly, and manual dispatch", () => {
-    expect(workflow.on).toEqual({
-      pull_request: null,
-      push: { branches: ["main"] },
-      schedule: [{ cron: "17 3 * * *" }],
-      workflow_dispatch: null,
-    });
+  it("never runs pull request code with the base repository's privileges", () => {
     expect(workflow.on).not.toHaveProperty("pull_request_target");
   });
 
-  it("has a cancel-in-progress concurrency group", () => {
-    expect(workflow.concurrency).toEqual({
-      "cancel-in-progress": true,
-      group: "${{ github.workflow }}-${{ github.head_ref || github.ref }}",
-    });
+  // Losing one of these stops its checks without failing anything: the schedule runs the nightly
+  // jobs, & pushes to main run the full suite & produce the nightly report's samples.
+  it("runs for pull requests, main pushes, & the nightly schedule", () => {
+    expect(workflow.on).toHaveProperty("pull_request");
+    expect(workflow.on?.push?.branches).toContain("main");
+    expect(workflow.on?.schedule).not.toHaveLength(0);
+  });
+
+  // Main pushes & the schedule both run on refs/heads/main, so sharing a group would let a merge
+  // cancel the nightly jobs, or the schedule cancel a push's timing sample, with nothing going red.
+  it("keeps scheduled runs & main pushes from cancelling each other", () => {
+    expect(workflow.concurrency?.["cancel-in-progress"]).toBe(true);
+    expect(workflow.concurrency?.group).toContain("github.event_name");
   });
 });
 
 describe("CI workflow jobs", () => {
-  it("runs lint, check, test, and build as independent parallel jobs", () => {
-    expect(Object.keys(jobs)).toEqual(expect.arrayContaining([...requiredJobs, ...browserJobs]));
-    // Each job restores the pnpm cache and installs on its own, so a shared setup job would only
-    // add a serial step to the critical path.
-    for (const jobName of ["changes", "lint", "check", "build"] as const) {
-      expect(jobs[jobName].needs).toBeUndefined();
-    }
-
-    expect(jobs.test.needs).toBe("changes");
-
-    for (const jobName of ["check", "test", "build"] as const) {
-      expect(runCommands(jobs[jobName])).not.toContain("pnpm exec svelte-kit sync");
-    }
-
-    // Lint needs its own sync step: it runs on a separate runner from `check`, which is the
-    // only script that generates .svelte-kit/tsconfig.json (required by oxlint's type-aware rules).
+  // Lint runs on a separate runner from `check`, which is the only script that generates
+  // .svelte-kit/tsconfig.json (required by oxlint's type-aware rules).
+  it("generates SvelteKit's config before linting", () => {
     const lintCommands = runCommands(jobs.lint);
     expect(lintCommands.indexOf("pnpm exec svelte-kit sync")).toBeGreaterThan(-1);
     expect(lintCommands.indexOf("pnpm exec svelte-kit sync")).toBeLessThan(
       lintCommands.findIndex((command) => command.includes("--step=lint")),
-    );
-    // One pass runs the complete suite with budgets, never the plain local `test` step; scheduled
-    // runs also collect coverage.
-    const testCommands = runCommands(jobs.test);
-    expect(testCommands).not.toContain(verifyCommand("test"));
-    expect(testCommands.indexOf(verifyCommand("test:budgets"))).toBeLessThan(
-      testCommands.indexOf('node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"'),
     );
   });
 
@@ -188,29 +226,6 @@ describe("CI workflow jobs", () => {
     expect(direct.test("pnpm run verify -- --step=lint")).toBe(false);
   });
 
-  it("collects coverage only nightly & publishes timing evidence after failures", () => {
-    const steps = jobs.test.steps ?? [];
-    const testStep = steps.find((step) => step.run === verifyCommand("test:budgets"));
-    expect(testStep?.env?.VITEST_COVERAGE).toBe("${{ github.event_name == 'schedule' }}");
-    expect(testStep?.["continue-on-error"]).toBeUndefined();
-    const coverageSummary = steps.find((step) => step.name === "Summarize coverage");
-    expect(coverageSummary?.if).toBe("github.event_name == 'schedule'");
-    const timings = steps.find((step) => step.name === "Publish Vitest timings");
-    expect(timings?.if).toBe("always()");
-    expect(timings?.with?.path).toBe(".vitest-artifacts/");
-    expect(timings?.with?.["if-no-files-found"]).toBe("error");
-  });
-
-  it("runs cleanup tests only when the corresponding script changes", () => {
-    expect(jobs.changes.outputs?.cleanup).toBe("${{ steps.filter.outputs.cleanup }}");
-    const filter = jobs.changes.steps?.find((step) => step.id === "filter")?.run ?? "";
-    expect(filter).toContain("cleanup=false");
-    expect(filter).toContain("scripts/cleanup-merged-worktrees.ts) cleanup=true");
-    expect(filter).toContain('git diff --no-renames --name-only "$BASE_SHA" HEAD');
-    const testStep = jobs.test.steps?.find((step) => step.run === verifyCommand("test:budgets"));
-    expect(testStep?.env?.VITEST_CLEANUP_CHANGED).toBe("${{ needs.changes.outputs.cleanup }}");
-  });
-
   it.each([
     ["pull_request", "scripts/cleanup-merged-worktrees.ts", true],
     ["pull_request", "scripts/cleanup-merged-worktrees.test.ts", false],
@@ -218,42 +233,46 @@ describe("CI workflow jobs", () => {
     ["push", "src/app.css", false],
     ["schedule", "scripts/cleanup-merged-worktrees.ts", false],
     ["workflow_dispatch", "scripts/cleanup-merged-worktrees.ts", false],
-  ] as const)("detects cleanup script changes for %s: %s", (event, files, expected) => {
-    const directory = mkdtempSync(join(tmpdir(), "ci-filter-"));
-    const output = join(directory, "output");
-    try {
-      const filter = jobs.changes.steps?.find((step) => step.id === "filter")?.run ?? "";
-      const result = spawnSync(
-        "bash",
-        [
-          "-eu",
-          "-o",
-          "pipefail",
-          "-c",
-          `
-        gh() { printf '%s\\n' "$CHANGED_FILES"; }
-        git() { if [[ $1 == diff ]]; then printf '%s\\n' "$CHANGED_FILES"; fi; }
-        ${filter}
-      `,
-        ],
-        {
-          encoding: "utf8",
-          env: {
-            ...process.env,
-            BASE_SHA: "base",
-            CHANGED_FILES: files,
-            EVENT_NAME: event,
-            GITHUB_OUTPUT: output,
-            PR_NUMBER: "689",
-            REPOSITORY: "owner/repo",
-          },
-        },
-      );
-      expect(result.status, result.stderr).toBe(0);
-      expect(readFileSync(output, "utf8")).toContain(`cleanup=${String(expected)}`);
-    } finally {
-      rmSync(directory, { force: true, recursive: true });
-    }
+  ] as const)("detects cleanup script changes for %s: %s", (event, file, expected) => {
+    expect(detectChanges(event, file).cleanup).toBe(String(expected));
+  });
+
+  it("gives the test step every test file a pull request changes, & nothing else", () => {
+    expect(
+      detectChanges("pull_request", "src/a.test.ts", "src/a.ts", "scripts/b.test.ts", "c.spec.ts")
+        .tests,
+    ).toBe("src/a.test.ts scripts/b.test.ts");
+    expect(detectChanges("pull_request", "src/a.ts").tests).toBe("");
+  });
+
+  it.each(["push", "schedule", "workflow_dispatch"])(
+    "never holds %s runs to the changed-file timing limit",
+    (event) => {
+      expect(detectChanges(event, "src/a.test.ts").tests).toBe("");
+    },
+  );
+
+  // Without this wiring the changed-file timing limit & the cleanup test's exclusion would silently
+  // stop applying, and nothing else would fail.
+  it("passes the change detector's results to the test step", () => {
+    const testStep = jobs.test.steps?.find((step) => step.run === verifyCommand("test:budgets"));
+    expect(jobs.test.needs).toBe("changes");
+    expect(jobs.changes.outputs?.tests).toBe("${{ steps.filter.outputs.tests }}");
+    expect(testStep?.env?.VITEST_TOUCHED_TEST_FILES).toBe("${{ needs.changes.outputs.tests }}");
+    expect(jobs.changes.outputs?.cleanup).toBe("${{ steps.filter.outputs.cleanup }}");
+    expect(testStep?.env?.VITEST_CLEANUP_CHANGED).toBe("${{ needs.changes.outputs.cleanup }}");
+  });
+
+  it("lets a test failure fail the test job", () => {
+    const testStep = jobs.test.steps?.find((step) => step.run === verifyCommand("test:budgets"));
+    expect(testStep).toBeDefined();
+    expect(testStep?.["continue-on-error"]).toBeUndefined();
+  });
+
+  // A renamed artifact would leave the nightly report with nothing to read.
+  it("uploads the timing artifact under the name the nightly report downloads", () => {
+    const upload = jobs.test.steps?.find((step) => step.with?.name === TIMING_ARTIFACT);
+    expect(upload?.uses).toMatch(/^actions\/upload-artifact@/u);
   });
 
   it("bounds every job with a timeout shorter than the 6 hour default", () => {
@@ -263,14 +282,16 @@ describe("CI workflow jobs", () => {
     }
   });
 
-  it("restores Vitest's module cache before running the tests", () => {
-    const steps = jobs.test.steps ?? [];
-    const cacheIndex = steps.findIndex((step) => step.uses?.startsWith("actions/cache@"));
-    const testIndex = steps.findIndex((step) => step.run === verifyCommand("test:budgets"));
-    expect(cacheIndex).toBeGreaterThan(-1);
-    expect(cacheIndex).toBeLessThan(testIndex);
-    expect(steps[cacheIndex].with?.path).toBe("node_modules/.vitest-cache");
-    expect(steps[cacheIndex].with?.["restore-keys"]).toBeTruthy();
+  it("fails a stalled pnpm/setup quickly instead of waiting out the job timeout", () => {
+    const setupJobs = Object.entries(jobs).filter(([, job]) =>
+      job.steps?.some((step) => step.uses?.startsWith("pnpm/setup@")),
+    );
+    expect(setupJobs.map(([jobName]) => jobName)).toEqual(expect.arrayContaining([...installJobs]));
+    for (const [jobName, job] of setupJobs) {
+      const step = job.steps?.find((entry) => entry.uses?.startsWith("pnpm/setup@"));
+      expect(step?.["timeout-minutes"], jobName).toBe(3);
+      expect(step?.["timeout-minutes"], jobName).toBeLessThan(job["timeout-minutes"] ?? 0);
+    }
   });
 
   it("uses pinned tooling without asset-dependent commands", () => {
@@ -318,6 +339,30 @@ describe("CI workflow jobs", () => {
     }
   });
 
+  it("restores the store that holds the pnpm-managed Node in every pnpm/setup job", () => {
+    // The cache archive's paths are relative to the workspace, which the container mounts
+    // elsewhere, so container jobs keep a store of their own that one of them saves.
+    const savers: Record<string, string> = { build: "host", pwa: "container" };
+    const mainPush = "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}";
+    const setupJobs = Object.entries(jobs).filter(([, job]) =>
+      job.steps?.some((step) => step.uses?.startsWith("pnpm/setup@")),
+    );
+    expect(setupJobs.map(([name]) => name)).toEqual(
+      expect.arrayContaining(["audit", ...installJobs]),
+    );
+    expect(workflow.env?.pnpm_config_store_dir).toBeUndefined();
+    for (const [name, job] of setupJobs) {
+      const inContainer = job.container !== undefined;
+      expect(job.env?.pnpm_config_store_dir).toBe(inContainer ? "/__w/.pnpm-store" : undefined);
+      const setup = job.steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
+      expect(setup?.with?.cache).toBe(true);
+      expect(setup?.with?.["save-cache"]).toBe(name in savers ? mainPush : false);
+    }
+    for (const [name, kind] of Object.entries(savers)) {
+      expect(jobs[name].container !== undefined).toBe(kind === "container");
+    }
+  });
+
   it("has pnpm download and run the .node-version release for every script", () => {
     const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
       devEngines?: { runtime?: { name?: string; onFail?: string; version?: string } };
@@ -342,16 +387,18 @@ describe("CI workflow jobs", () => {
 });
 
 describe("CI workflow permissions", () => {
-  it("keeps every job read-only except scoped PR metadata and scheduled issue writes", () => {
+  it("keeps every job read-only except its scoped PR metadata & scheduled issue writes", () => {
+    const elevated: Record<string, Record<string, string>> = {
+      changes: { contents: "read", "pull-requests": "read" },
+      "issue-sync": { contents: "read", issues: "write" },
+      "nightly-report": { actions: "read", contents: "read", issues: "write" },
+    };
     expect(workflow.permissions).toEqual({ contents: "read" });
-    expect(jobs.changes.permissions).toEqual({ contents: "read", "pull-requests": "read" });
-    expect(jobs["issue-sync"].permissions).toEqual({ contents: "read", issues: "write" });
-    expect(jobs["issue-sync"].if).toContain("github.event_name == 'schedule'");
-    const unprivilegedJobs = Object.entries(jobs).filter(
-      ([jobName]) => jobName !== "changes" && jobName !== "issue-sync",
-    );
-    for (const [, job] of unprivilegedJobs) {
-      expect(job.permissions).toBeUndefined();
+    for (const [jobName, job] of Object.entries(jobs)) {
+      expect(job.permissions, jobName).toEqual(elevated[jobName]);
+    }
+    for (const jobName of unrequiredJobs) {
+      expect(jobs[jobName].if).toContain("github.event_name == 'schedule'");
     }
     for (const job of Object.values(jobs)) {
       for (const step of job.steps?.filter((entry) =>
@@ -364,71 +411,53 @@ describe("CI workflow permissions", () => {
 });
 
 describe("CI workflow browser suites", () => {
-  it("runs the browser suites only when the change detector says they are relevant", () => {
-    const filter = jobs.changes.steps?.find((step) => step.id === "filter");
-    expect(jobs.changes.outputs?.browser).toBe("${{ steps.filter.outputs.browser }}");
-    // Every input that changes browser results: the app, its assets & headers, translations
-    // (specs select by accessible name), the Playwright web server & config, and the toolchain.
-    for (const pattern of [
-      "src/*",
-      "static/*",
-      "tests/*",
-      "messages/*",
-      "project.inlang/*",
-      "_headers",
-      "scripts/playwright-*",
-      "playwright*.config.ts",
-      "svelte.config.*",
-      "vite.config.*",
-      "package.json",
-      "pnpm-lock.yaml",
-      ".node-version",
-      ".github/workflows/ci.yml",
-    ]) {
-      expect(filter?.run).toContain(` ${pattern}`);
-    }
-    // Tailwind 4 has no config file, so a tailwind.* pattern would be dead.
-    expect(filter?.run).not.toContain("tailwind.*");
-    // Only pull requests are filtered; every other event runs the suites.
-    expect(filter?.run).toMatch(
-      /browser=true[\s\S]*if \[ "\$EVENT_NAME" = "pull_request" \]; then\n\s*browser=false/,
-    );
+  it.each([
+    "src/routes/+page.svelte",
+    "static/icon.png",
+    "tests/accessibility/routes.spec.ts",
+    "messages/en.json",
+    "project.inlang/settings.json",
+    "_headers",
+    "scripts/playwright-preview.ts",
+    "playwright.config.ts",
+    "svelte.config.js",
+    "vite.config.ts",
+    "package.json",
+    "pnpm-lock.yaml",
+    ".node-version",
+    ".github/workflows/ci.yml",
+  ])("runs on a pull request that changes %s", (file) => {
+    expect(detectChanges("pull_request", file).browser).toBe("true");
+  });
 
+  it.each(["docs/styling.md", "AGENTS.md", "scripts/verify.ts", "pipeline/src/main.ts"])(
+    "skips a pull request that only changes %s",
+    (file) => {
+      expect(detectChanges("pull_request", file).browser).toBe("false");
+    },
+  );
+
+  it.each(["push", "schedule", "workflow_dispatch"])("always runs for %s", (event) => {
+    expect(detectChanges(event, "docs/styling.md").browser).toBe("true");
+  });
+
+  it("passes the change detector's result to the browser jobs", () => {
+    expect(jobs.changes.outputs?.browser).toBe("${{ steps.filter.outputs.browser }}");
     for (const jobName of browserJobs) {
-      expect(jobs[jobName].needs).toEqual(["changes", "build"]);
+      expect(jobs[jobName].needs).toContain("changes");
       expect(jobs[jobName].if).toBe("needs.changes.outputs.browser == 'true'");
     }
   });
 
-  it("builds once and shares the output with the browser suites", () => {
-    const buildUpload = jobs.build.steps?.find((step) =>
-      step.uses?.startsWith("actions/upload-artifact@"),
+  // Each shard allocates across the total its own entry names & runs only its share, so a missing
+  // entry would silently skip that share of the tests.
+  it("runs every accessibility shard", () => {
+    const shards = jobs.accessibility.strategy?.matrix?.shard ?? [];
+    const total = Number(shards[0]?.split("/")[1]);
+    expect(total).toBeGreaterThan(0);
+    expect(shards.toSorted()).toEqual(
+      Array.from({ length: total }, (_, index) => `${String(index + 1)}/${String(total)}`),
     );
-    expect(buildUpload?.with?.name).toBe("build-output");
-    expect(buildUpload?.with?.path).toBe(".svelte-kit/output/");
-
-    for (const jobName of browserJobs) {
-      const steps = jobs[jobName].steps ?? [];
-      expect(verifySteps(jobs[jobName])).not.toContain("build");
-      const download = steps.find((step) => step.uses?.startsWith("actions/download-artifact@"));
-      expect(download?.with?.name).toBe("build-output");
-      expect(download?.with?.path).toBe(".svelte-kit/output/");
-    }
-
-    const accessibilityStep = jobs.accessibility.steps?.find(
-      (step) => step.id === "accessibility-tests",
-    );
-    const pwaStep = jobs.pwa.steps?.find((step) => step.id === "pwa-tests");
-    expect(accessibilityStep?.run).toContain(
-      "pnpm exec tsx scripts/playwright-allocation.ts ${{ matrix.shard }}",
-    );
-    expect(accessibilityStep?.run).toContain(
-      "pnpm run verify -- --step=test:accessibility --test-list=.playwright-artifacts/test-list.txt",
-    );
-    expect(accessibilityStep?.run).not.toContain("--shard=");
-    expect(accessibilityStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
-    expect(pwaStep?.run).toBe(verifyCommand("test:pwa"));
-    expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
   });
 
   it("runs browser suites in the matching pinned image without browser or apt installation", () => {
@@ -437,87 +466,25 @@ describe("CI workflow browser suites", () => {
         image: `mcr.microsoft.com/playwright:v${playwrightPackage.version}-noble`,
         options: "--ipc=host",
       });
-      const steps = jobs[jobName].steps ?? [];
-      expect(steps.find((step) => step.id === "playwright-cache")).toBeUndefined();
-      expect(steps.find((step) => step.env?.PLAYWRIGHT_INSTALL !== undefined)).toBeUndefined();
       expect(runCommands(jobs[jobName]).join("\n")).not.toMatch(
         /playwright install|install-deps|--with-deps|apt-get/,
-      );
-      const commands = runCommands(jobs[jobName]);
-      expect(commands).toContain('git config --global --add safe.directory "$GITHUB_WORKSPACE"');
-      expect(commands.indexOf('git config --global --add safe.directory "$GITHUB_WORKSPACE"')).toBe(
-        0,
       );
     }
   });
 
-  it("shards accessibility across parallel matrix jobs without sharding PWA", () => {
-    const shards = jobs.accessibility.strategy?.matrix?.shard ?? [];
-    expect(jobs.accessibility.strategy?.["fail-fast"]).toBe(false);
-    expect(shards).toEqual(["1/4", "2/4", "3/4", "4/4"]);
-    expect(jobs.pwa.strategy).toBeUndefined();
-  });
-
-  it("retains per-test timings from successful and failed accessibility runs", () => {
-    const timingUpload = jobs.accessibility.steps?.find(
-      (step) => step.name === "Publish accessibility timings",
-    );
-    expect(timingUpload?.if).toBe("always()");
-    expect(timingUpload?.with?.name).toBe("accessibility-timings-${{ strategy.job-index }}");
-    expect(timingUpload?.with?.path).toContain(".playwright-artifacts/results.json");
-    expect(timingUpload?.with?.path).toContain(".playwright-artifacts/allocation.json");
-    expect(timingUpload?.with?.path).toContain(".playwright-artifacts/test-list.txt");
-    expect(timingUpload?.with?.["include-hidden-files"]).toBe(true);
-  });
-
-  it("publishes failure and recovered-retry evidence before preserving the failed outcome", () => {
-    const accessibilitySteps = jobs.accessibility.steps ?? [];
-    expect(
-      accessibilitySteps.find((step) => step.id === "accessibility-tests")?.["continue-on-error"],
-    ).toBe(true);
-    const accessibilityUpload = accessibilitySteps.find((step) =>
-      step.uses?.startsWith("actions/upload-artifact@"),
-    );
-    expect(accessibilityUpload?.if).toContain("steps.accessibility-tests.outcome == 'failure'");
-    expect(accessibilityUpload?.if).toContain(
-      "hashFiles('.playwright-results/**/trace.zip') != ''",
-    );
-    expect(accessibilityUpload?.with?.name).toBe("accessibility-report-${{ strategy.job-index }}");
-    expect(accessibilityUpload?.with?.path).toContain(".playwright-artifacts/");
-    expect(accessibilityUpload?.with?.path).toContain(".playwright-results/");
-    expect(accessibilityUpload?.with?.["if-no-files-found"]).toBe("ignore");
-    expect(accessibilityUpload?.with?.["include-hidden-files"]).toBe(true);
-    expect(accessibilitySteps.at(-1)?.run).toBe("exit 1");
-
-    const pwaSteps = jobs.pwa.steps ?? [];
-    expect(pwaSteps.find((step) => step.id === "pwa-tests")?.["continue-on-error"]).toBe(true);
-    const pwaUpload = pwaSteps.find((step) => step.uses?.startsWith("actions/upload-artifact@"));
-    expect(pwaUpload?.if).toContain("steps.pwa-tests.outcome == 'failure'");
-    expect(pwaUpload?.if).toContain("hashFiles('.playwright-pwa-results/**/trace.zip') != ''");
-    expect(pwaUpload?.with?.path).toContain(".playwright-pwa-report/");
-    expect(pwaUpload?.with?.path).toContain(".playwright-pwa-results/");
-    expect(pwaUpload?.with?.path).toContain(".playwright-artifacts/preview-*.log");
-    expect(pwaUpload?.with?.["if-no-files-found"]).toBe("ignore");
-    expect(pwaUpload?.with?.["include-hidden-files"]).toBe(true);
-    expect(pwaSteps.at(-1)?.run).toBe("exit 1");
-  });
-
-  it("downloads every shard's failure reports into distinct directories for issue-sync", () => {
-    expect(jobs["issue-sync"].needs).toBe("accessibility");
-    const download = jobs["issue-sync"].steps?.find((step) =>
-      step.uses?.startsWith("actions/download-artifact@"),
-    );
-    expect(download?.with?.pattern).toBe("accessibility-report-*");
-    expect(download?.with?.path).toBe("playwright-shard-reports");
-    expect(download?.with?.["merge-multiple"]).toBeUndefined();
+  // These steps continue past a failure to publish its evidence, so a job would pass without this.
+  it.each([
+    ["accessibility", "accessibility-tests"],
+    ["pwa", "pwa-tests"],
+  ])("still fails %s when its tests fail", (jobName, stepId) => {
+    const steps = jobs[jobName].steps ?? [];
+    expect(steps.find((step) => step.id === stepId)?.["continue-on-error"]).toBe(true);
+    expect(steps.at(-1)?.if).toBe(`steps.${stepId}.outcome == 'failure'`);
+    expect(steps.at(-1)?.run).toBe("exit 1");
   });
 });
 
 describe("CI workflow locale sync", () => {
-  it("exposes the change detector's messages output", () => {
-    expect(jobs.changes.outputs?.messages).toBe("${{ steps.filter.outputs.messages }}");
-  });
-
   it.each([
     ["pull_request", "messages/fr.json", true],
     ["pull_request", "scripts/locale-sync-allowlist.json", true],
@@ -526,55 +493,66 @@ describe("CI workflow locale sync", () => {
     ["push", "messages/fr.json", false],
     ["schedule", "messages/fr.json", false],
     ["workflow_dispatch", "messages/fr.json", false],
-  ] as const)("detects message changes for %s: %s", (event, files, expected) => {
-    const directory = mkdtempSync(join(tmpdir(), "ci-filter-"));
-    const output = join(directory, "output");
-    try {
-      const filter = jobs.changes.steps?.find((step) => step.id === "filter")?.run ?? "";
-      const result = spawnSync(
-        "bash",
-        [
-          "-eu",
-          "-o",
-          "pipefail",
-          "-c",
-          `
-        gh() { printf '%s\\n' "$CHANGED_FILES"; }
-        git() { if [[ $1 == diff ]]; then printf '%s\\n' "$CHANGED_FILES"; fi; }
-        ${filter}
-      `,
-        ],
-        {
-          encoding: "utf8",
-          env: {
-            ...process.env,
-            BASE_SHA: "base",
-            CHANGED_FILES: files,
-            EVENT_NAME: event,
-            GITHUB_OUTPUT: output,
-            PR_NUMBER: "689",
-            REPOSITORY: "owner/repo",
-          },
-        },
-      );
-      expect(result.status, result.stderr).toBe(0);
-      expect(readFileSync(output, "utf8")).toContain(`messages=${String(expected)}`);
-    } finally {
-      rmSync(directory, { force: true, recursive: true });
-    }
+  ] as const)("detects message changes for %s: %s", (event, file, expected) => {
+    expect(detectChanges(event, file).messages).toBe(String(expected));
   });
 
-  it("runs the check on pull requests that change messages, against the merge checkout's base", () => {
-    const job = jobs["locale-sync"];
-    expect(job.needs).toBe("changes");
-    expect(job.if).toBe(
+  // “CI passed” accepts a skipped job, so broken wiring would turn this check off with CI green.
+  it("passes the change detector's result to the locale sync job", () => {
+    expect(jobs.changes.outputs?.messages).toBe("${{ steps.filter.outputs.messages }}");
+    expect(jobs["locale-sync"].needs).toBe("changes");
+    expect(jobs["locale-sync"].if).toBe(
       "github.event_name == 'pull_request' && needs.changes.outputs.messages == 'true'",
     );
-    const checkout = job.steps?.find((step) => step.uses?.startsWith("actions/checkout@"));
-    // HEAD^1 of the PR's merge commit is the base branch tip, so two commits of history suffice.
-    expect(checkout?.with?.["fetch-depth"]).toBe(2);
-    expect(runCommands(job)).toContain("pnpm run verify -- --step=check:locale-sync --base HEAD^1");
-    expect(jobs["ci-passed"].needs).toContain("locale-sync");
+  });
+});
+
+describe("CI workflow audit", () => {
+  it.each(["pull_request", "push"])("detects dependency changes on %s", (event) => {
+    for (const file of [
+      "package.json",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      ".github/workflows/ci.yml",
+    ]) {
+      expect(detectChanges(event, file).dependencies, file).toBe("true");
+    }
+    expect(detectChanges(event, "src/app.css", "docs/development-workflow.md").dependencies).toBe(
+      "false",
+    );
+    expect(detectChanges(event).dependencies).toBe("false");
+  });
+
+  it("leaves scheduled audits to the report & keeps manual audits available", () => {
+    expect(detectChanges("schedule").dependencies).toBe("false");
+    expect(jobs.changes.outputs?.dependencies).toBe("${{ steps.filter.outputs.dependencies }}");
+    expect(jobs.audit.needs).toBe("changes");
+    expect(jobs.audit.if).toBe(
+      "needs.changes.outputs.dependencies == 'true' || github.event_name == 'workflow_dispatch'",
+    );
+  });
+
+  it("keeps the blocking audit at moderate & never masks its failure", () => {
+    const step = jobs.audit.steps?.find(
+      (entry) => entry.run === "node scripts/verify.ts --step=audit",
+    );
+    expect(step).toBeDefined();
+    expect(step?.["continue-on-error"]).toBeUndefined();
+    expect(STEPS.find(({ name }) => name === "audit")?.command).toEqual({
+      args: ["audit", "--audit-level=moderate"],
+      kind: "pnpm",
+    });
+  });
+
+  it("sets up pnpm before the install-free nightly audit", () => {
+    const steps = jobs["nightly-report"].steps ?? [];
+    const setup = steps.findIndex((step) => step.uses?.startsWith("pnpm/setup@"));
+    expect(setup).toBeGreaterThan(-1);
+    expect(steps[setup].with?.install).toBe(false);
+    expect(setup).toBeLessThan(
+      steps.findIndex((step) => step.run === "node scripts/nightly-report.ts"),
+    );
+    expect(runCommands(jobs["nightly-report"])).not.toContain("pnpm install --frozen-lockfile");
   });
 });
 
@@ -582,13 +560,30 @@ describe("CI workflow gate", () => {
   it("aggregates every merge-relevant job into one always-reported check", () => {
     expect(jobs["ci-passed"].if).toBe("always()");
     expect(jobs["ci-passed"].needs).toEqual(
-      Object.keys(jobs).filter((jobName) => jobName !== "issue-sync" && jobName !== "ci-passed"),
+      Object.keys(jobs).filter(
+        (jobName) => !unrequiredJobs.includes(jobName) && jobName !== "ci-passed",
+      ),
     );
     const check = jobs["ci-passed"].steps?.at(-1);
+    expect(check?.if).toBeUndefined();
+    expect(check?.["continue-on-error"]).toBeUndefined();
     expect(check?.env?.RESULTS).toBe("${{ join(needs.*.result, ' ') }}");
-    // Skipped browser jobs pass; failures and cancellations do not.
-    expect(check?.run).toContain("success | skipped) ;;");
-    expect(check?.run).toContain("*) exit 1 ;;");
+  });
+
+  it.each([
+    ["success success skipped", 0],
+    ["success failure skipped", 1],
+    ["success cancelled skipped", 1],
+  ])("executes the actual aggregate gate for %s", (results, status) => {
+    const command = jobs["ci-passed"].steps?.at(-1)?.run;
+    expect(command).toBeTypeOf("string");
+    if (command === undefined) throw new Error("Missing aggregate gate command");
+    const result = spawnSync("bash", ["-e", "-c", command], {
+      encoding: "utf8",
+      env: { ...process.env, RESULTS: results },
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(status);
   });
 });
 

@@ -6,25 +6,31 @@
   import { Icon } from "#lib/components/icon/index.js";
   import OverallProgress from "#lib/components/overall-progress.svelte";
   import SearchResults from "#lib/components/search-results.svelte";
+  import GotItNote from "#lib/components/sync/got-it-note.svelte";
+  import SyncTroubleNote from "#lib/components/sync/sync-trouble-note.svelte";
   import WelcomeCard from "#lib/components/welcome-card.svelte";
   import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncEnabled } from "#lib/sync/enabled.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
+  let content = $state<HTMLDivElement>();
 
-  let allProgress = $derived(
-    getAllProgress({
-      availabilityWindows: userState.state.availabilityWindows,
-      progress: userState.state.progress,
-      worldState: userState.state.worldState,
-    }),
-  );
+  // A replacement query reveals from the beginning. Keep its first screenful visible rather
+  // than preserving a deep offset over reserved space; completion & undo keep the same query.
+  $effect.pre(() => {
+    const _query = toolbarState.searchQuery;
+    const _locale = data.locale;
+    if (content) content.scrollTop = 0;
+  });
+
+  let allProgress = $derived(getAllProgress(userState.progressContext));
 
   let overall = $derived(getOverallProgress(allProgress));
   let overallPct = $derived(overall.total > 0 ? (overall.completed / overall.total) * 100 : 0);
@@ -48,10 +54,14 @@
     <span class="overall-progress-rule" aria-hidden="true"><i></i></span>
   </header>
 
-  <div class="home-content flex flex-col gap-3 px-4 pb-4">
+  <div class="home-content flex flex-col gap-3 px-4 pb-4" bind:this={content}>
     {#if toolbarState.searchQuery}
       <SearchResults locale={data.locale} query={toolbarState.searchQuery} />
     {:else}
+      {#if syncEnabled}
+        <GotItNote locale={data.locale} />
+        <SyncTroubleNote />
+      {/if}
       <WelcomeCard />
       <h2 class="px-1 font-controls text-2xs tracking-[0.14em] text-muted-foreground uppercase">
         {m.home_index_heading()}

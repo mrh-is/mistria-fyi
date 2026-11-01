@@ -23,6 +23,11 @@ export type ProvenanceSource = (typeof PROVENANCE_SOURCES)[number];
 
 export interface FactProvenance {
   /**
+   * On a completed quest, where its obtained moment came from, when that differs from `source`.
+   * Absent when both moments share a source, and on quests completed before this was recorded.
+   */
+  obtainedSource?: ProvenanceSource;
+  /**
    * The `playtime` of the last applied save when the fact was recorded: a save's own playtime for
    * `save`, or the playtime an edit came after. Absent before any save was applied, and for a save
    * whose playtime couldn't be read.
@@ -62,6 +67,11 @@ export interface ProgressHistory {
  */
 export function factKey(field: string, ...ids: string[]): string {
   return [field, ...ids].join("/");
+}
+
+/** The `ProgressState` field a {@link factKey} belongs to. */
+export function factFieldOf(key: string): string {
+  return key.split("/", 1)[0];
 }
 
 const LIST_FIELDS = [
@@ -125,6 +135,57 @@ export function changedFacts(
     if (!after.has(key)) changed.push(key);
   }
   return changed;
+}
+
+/**
+ * The `obtainedSource` a fact records as `source` changes its value: the previous source, when this
+ * change finishes a quest that source had obtained. A quest with no record counts as `unknown`, as
+ * its mark does. A save finishing a quest replaces a guessed obtained moment, so it records none.
+ * Only quest facts hold these values.
+ */
+export function obtainedSourceOf(
+  previous: FactProvenance | undefined,
+  source: ProvenanceSource,
+  beforeValue: string | undefined,
+  afterValue: string | undefined,
+): ProvenanceSource | undefined {
+  if (beforeValue !== "obtained" || afterValue !== "completed") return undefined;
+  const obtainedSource = previous?.source ?? "unknown";
+  if (source === "save" && isGuess(obtainedSource)) return undefined;
+  return obtainedSource === source ? undefined : obtainedSource;
+}
+
+/** Whether `source` is the app guessing, which a save replaces. `manual` is the player's own. */
+function isGuess(source: ProvenanceSource): boolean {
+  return source === "inferred" || source === "unknown";
+}
+
+/** Whether a save agreeing with this fact would replace a guess in its record. */
+export function holdsGuess({ obtainedSource, source }: FactProvenance): boolean {
+  return isGuess(source) || (obtainedSource !== undefined && isGuess(obtainedSource));
+}
+
+/**
+ * A fact's record once a save with `playtime` agrees with its value: each guessed moment becomes
+ * the save's, and a `manual` moment stays, so a pen slash under a stamped X is permanent. Only a
+ * promoted fact takes the save's playtime, so sync still orders a manual edit by its own.
+ */
+export function confirmedBySave(
+  record: FactProvenance,
+  playtime: number | undefined,
+): FactProvenance {
+  const promoted = isGuess(record.source);
+  const source = promoted ? "save" : record.source;
+  const obtainedSource =
+    record.obtainedSource !== undefined && isGuess(record.obtainedSource)
+      ? "save"
+      : record.obtainedSource;
+  const kept = promoted ? playtime : record.playtime;
+  return {
+    ...(obtainedSource === undefined || obtainedSource === source ? {} : { obtainedSource }),
+    ...(kept === undefined ? {} : { playtime: kept }),
+    source,
+  };
 }
 
 /** Whether a “keep mine” still applies to a save that now reports `saveValue` for the fact. */

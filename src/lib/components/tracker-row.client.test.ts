@@ -3,13 +3,100 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { SPRITE_PREVIEW_FADE_MS, SPRITE_PREVIEW_HOLD_MS } from "#lib/utils/row-timing.js";
 
+import type { LocaleCode } from "#lib/types/locale.js";
+
+describe("TrackerRow localized checkbox labels", () => {
+  const originalGetLocale = getLocale;
+
+  afterEach(() => {
+    overwriteGetLocale(originalGetLocale);
+  });
+
+  it.each<{
+    locale: LocaleCode;
+    plain: string;
+    variant: string;
+  }>([
+    { locale: "en", plain: "Check Window", variant: "Check Window, Oak" },
+    { locale: "es", plain: "Marcar Window", variant: "Marcar Window, Oak" },
+    { locale: "fr", plain: "Cocher Window", variant: "Cocher Window, Oak" },
+    { locale: "ja", plain: "Windowをチェック", variant: "Window（Oak）をチェック" },
+    { locale: "ko", plain: "Window 선택", variant: "Window(Oak) 선택" },
+    { locale: "ru", plain: "Отметить «Window»", variant: "Отметить «Window, Oak»" },
+    { locale: "zh-Hans", plain: "勾选Window", variant: "勾选Window，Oak" },
+    { locale: "zh-Hant", plain: "勾選Window", variant: "勾選Window，Oak" },
+  ])("includes the variant only when present in $locale", async ({ locale, plain, variant }) => {
+    overwriteGetLocale(() => locale);
+    const view = renderWithFeedback(TrackerRow, {
+      display: { mode: "incomplete" },
+      fact: "almanac/window",
+      name: "Window",
+      onToggle: vi.fn(),
+      reportCategory: "almanac-item",
+      reportEntityId: "window",
+      subtitle: "Oak",
+      variant: "Oak",
+    });
+
+    expect(view.getByRole("button", { name: variant })).toBeInTheDocument();
+    await view.rerender({ variant: undefined });
+    expect(view.getByRole("button", { name: plain })).toBeInTheDocument();
+  });
+});
+
 describe("TrackerRow reportable metadata", () => {
+  it("names the variant when checking & unchecking a row", async () => {
+    const onToggle = vi.fn();
+    const view = renderWithFeedback(TrackerRow, {
+      display: { mode: "incomplete" },
+      fact: "almanac/animated_clouds_window_oak",
+      name: "Animated Clouds Window",
+      onToggle,
+      reportCategory: "almanac-item",
+      reportEntityId: "animated_clouds_window_oak",
+      subtitle: "Oak",
+      variant: "Oak",
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Check Animated Clouds Window, Oak" }),
+    );
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    await view.rerender({ display: { mode: "completed" } });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Uncheck Animated Clouds Window, Oak" }),
+    );
+    expect(onToggle).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a variant behind the spoiler guard until the row is revealed", async () => {
+    renderWithFeedback(TrackerRow, {
+      display: { mode: "spoilered" },
+      fact: "almanac/animated_clouds_window_oak",
+      name: "Animated Clouds Window",
+      onToggle: vi.fn(),
+      reportCategory: "almanac-item",
+      reportEntityId: "animated_clouds_window_oak",
+      subtitle: "Oak",
+      variant: "Oak",
+    });
+
+    expect(screen.getByRole("button", { name: "Check spoilered item" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Check Animated Clouds Window/ })).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
+    expect(
+      screen.getByRole("button", { name: "Check Animated Clouds Window, Oak" }),
+    ).toBeInTheDocument();
+  });
+
   it("reveals a ready sprite with the spoiler name", async () => {
     const view = renderWithFeedback(TrackerRow, {
       display: { mode: "spoilered" },
+      fact: "almanac/turnip",
       name: "Turnip",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -32,6 +119,7 @@ describe("TrackerRow reportable metadata", () => {
       TrackerRow,
       {
         display: { mode: "incomplete" },
+        fact: "almanacRecipes/turnip",
         name: "Tomato Soup",
         onToggle,
         reportCategory: "recipe",
@@ -59,6 +147,7 @@ describe("TrackerRow reportable metadata", () => {
   it("keeps one source paper and control while toggling its content", async () => {
     const view = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "Amberjack",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -71,6 +160,7 @@ describe("TrackerRow reportable metadata", () => {
     const contentId = sourceButton.getAttribute("aria-controls");
 
     expect(sourcePaper).toBeTruthy();
+    expect(view.container.querySelector(".source-card")).toBeNull();
     expect(row?.dataset.sourceState).toBe("closed");
     expect(sourceButton.getAttribute("aria-expanded")).toBe("false");
     expect(contentId).toBeTruthy();
@@ -82,7 +172,8 @@ describe("TrackerRow reportable metadata", () => {
     await fireEvent.click(sourceButton);
     expect(sourceButton.getAttribute("aria-expanded")).toBe("true");
     expect(row?.dataset.sourceState).toBe("open");
-    expect(view.container.querySelector(".source-card")).toBeTruthy();
+    const sourceCard = view.container.querySelector(".source-card");
+    expect(sourceCard).toBeTruthy();
     expect(view.container.querySelector(".source-paper__panel")?.getAttribute("aria-hidden")).toBe(
       "false",
     );
@@ -103,11 +194,16 @@ describe("TrackerRow reportable metadata", () => {
     );
     expect(view.container.querySelector("[data-source-paper]")).toBe(sourcePaper);
     expect(view.container.querySelector("[data-source-paper-stationary-control]")).toBeNull();
+    expect(view.container.querySelector(".source-card")).toBe(sourceCard);
+    await fireEvent.click(sourceButton);
+    expect(sourceButton.getAttribute("aria-expanded")).toBe("true");
+    expect(view.container.querySelector(".source-card")).toBe(sourceCard);
   });
 
   it("keeps multiple source papers expanded independently", async () => {
     const first = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "Amberjack",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -116,6 +212,7 @@ describe("TrackerRow reportable metadata", () => {
     });
     const second = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "Cod",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -147,10 +244,12 @@ describe("TrackerRow reportable metadata", () => {
     document.body.append(list);
     const first = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "First item",
       onToggle: () => {
         void first.rerender({
           display: { leaving: true, mode: "completed" },
+          fact: "almanac/turnip",
           name: "First item",
           onToggle: vi.fn(),
           reportCategory: "almanac-item",
@@ -162,6 +261,7 @@ describe("TrackerRow reportable metadata", () => {
     });
     const second = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
+      fact: "almanac/turnip",
       name: "Second item",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -195,6 +295,7 @@ function previewLayer(container: HTMLElement): Element | null {
 describe("TrackerRow sprite preview", () => {
   const props = {
     display: { mode: "incomplete" },
+    fact: "almanac/turnip",
     name: "Animated Clouds Window",
     reportCategory: "almanac-item",
     reportEntityId: "animated_clouds_window_blue",

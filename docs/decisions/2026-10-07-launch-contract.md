@@ -1,13 +1,41 @@
+---
+id: 2026-10-07-launch-contract
+status: amended
+summary: >-
+  The promised-slug contract was amended by the owner-approved retirement of the beta settings route
+  without a redirect.
+review: >-
+  Other launch-format details, including the original version 1 shape, require comparison with later
+  migrations before reuse.
+evidence:
+  - docs/decisions/2026-10-20-retire-settings-route.md
+relationships:
+  - type: amended-by
+    target: 2026-10-20-retire-settings-route
+    scope: partial
+    portion: >-
+      Only the /settings promised-slug & redirect policy. This exception does not authorize removing
+      other public routes.
+    evidence:
+      - docs/decisions/2026-10-20-retire-settings-route.md
+---
+
 # Launch contract for stored data & public URLs
 
 ## Context
 
-The pre-launch audit (#641) found two surfaces that become permanent once the launch posts (#219)
-link into the site. The persisted progress format (#644) still carried readers for pre-launch
-shapes, a `mistria-fyi-v1` key holding a version `"2"` blob, a `completed` wrapper holding facts
-that aren't completions, & device preferences inside the backup. The public URLs & client-side
-identifiers (#646) had no record of which were promises. The only players with stored data are the
-maintainer & one tester, so a one-time break costs nothing now and a lot later.
+The pre-launch audit
+([mrh-is/mistria-fyi-private#641](https://github.com/mrh-is/mistria-fyi-private/issues/641)) found
+two surfaces that become permanent once the launch posts
+([mrh-is/mistria-fyi-private#219](https://github.com/mrh-is/mistria-fyi-private/issues/219)) link
+into the site. The persisted progress format
+([mrh-is/mistria-fyi-private#644](https://github.com/mrh-is/mistria-fyi-private/issues/644)) still
+carried readers for pre-launch shapes, a `mistria-fyi-v1` key holding a version `"2"` blob, a
+`completed` wrapper holding facts that aren't completions, & device preferences inside the backup.
+The public URLs & client-side identifiers
+([mrh-is/mistria-fyi-private#646](https://github.com/mrh-is/mistria-fyi-private/issues/646)) had no
+record of which were promises. The only players with stored data are the maintainer & one tester, so
+a one-time break costs nothing now and a lot later.
 
 ## Decision
 

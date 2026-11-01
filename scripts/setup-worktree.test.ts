@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -13,7 +13,14 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { planInstall, planLinks } from "./setup-worktree.js";
+import {
+  modeOf,
+  planInstall,
+  planLinks,
+  resolveEvent,
+  sameRepository,
+  withSetupLock,
+} from "./setup-worktree.js";
 
 const script = fileURLToPath(new URL("setup-worktree.ts", import.meta.url));
 const directories: string[] = [];
@@ -164,10 +171,17 @@ function fixture() {
   const pnpm = join(root, "fake-pnpm.mjs");
   writeFileSync(
     pnpm,
-    `import { appendFileSync } from "node:fs";
+    `import { appendFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
 appendFileSync(${JSON.stringify(log)}, process.argv.slice(2).join(" ") + "\\n");
 const fails = process.env.FAKE_PNPM_FAIL;
 process.exitCode = fails && process.argv.slice(2).join(" ").startsWith(fails) ? 1 : 0;
+const stale = process.env.FAKE_PNPM_STALE;
+if (stale && process.argv[2] === "exec" && existsSync(stale)) process.exitCode = 1;
+if (stale && process.argv[2] === "install" && !process.exitCode) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
+  mkdirSync("node_modules", { recursive: true });
+  rmSync(stale, { force: true });
+}
 `,
   );
   const run = (env: NodeJS.ProcessEnv = {}, args: string[] = [], cwd = worktree, input = "") =>
@@ -177,8 +191,37 @@ process.exitCode = fails && process.argv.slice(2).join(" ").startsWith(fails) ? 
       env: { ...withFakePnpm(pnpm), CODEX_THREAD_ID: "", ...env },
       input,
     });
-  return { log, main, run, worktree };
+  const toolOptions = (env: NodeJS.ProcessEnv = {}) => ({
+    cwd: main,
+    encoding: "utf8" as const,
+    env: { ...withFakePnpm(pnpm), CODEX_THREAD_ID: "", ...env },
+  });
+  const toolArgs = [
+    "--input-type=module",
+    "-e",
+    `
+import { setupBeforeTool } from ${JSON.stringify(script)};
+try { console.log(JSON.stringify(setupBeforeTool(process.argv[1]))); }
+catch (error) { console.error(String(error)); process.exitCode = 2; }
+`,
+    worktree,
+  ];
+  const toolSetup = (env: NodeJS.ProcessEnv = {}, directory = worktree) =>
+    spawnSync(process.execPath, [...toolArgs.slice(0, -1), directory], toolOptions(env));
+  const concurrentSetup = (env: NodeJS.ProcessEnv) =>
+    new Promise<null | number>((resolve, reject) => {
+      const child = spawn(process.execPath, toolArgs, { ...toolOptions(env), stdio: "ignore" });
+      child.once("error", reject);
+      child.once("exit", resolve);
+    });
+  return { concurrentSetup, log, main, run, toolSetup, worktree };
 }
+
+const changed = (file_path: string, event = "change") =>
+  JSON.stringify({ event, file_path, hook_event_name: "FileChanged" });
+
+const moved = (old_cwd: string, new_cwd: string) =>
+  JSON.stringify({ hook_event_name: "CwdChanged", new_cwd, old_cwd });
 
 describe("setup-worktree", () => {
   it.skipIf(process.platform !== "darwin")(
@@ -327,10 +370,246 @@ describe("setup-worktree", () => {
     );
   });
 
+  describe("FileChanged", () => {
+    const settle = { MISTRIA_SETUP_SETTLE_MS: "0" };
+
+    it("reinstalls stale dependencies after a lockfile change, run from the main checkout", () => {
+      const { log, main, run, worktree } = fixture();
+      mkdirSync(join(worktree, "node_modules"));
+      writeFileSync(join(worktree, "pnpm-lock.yaml"), "lockfileVersion: 9\n");
+      expect(run({}, ["--session-start"], worktree).status).toBe(0);
+      rmSync(log);
+      const result = run(
+        { ...settle, FAKE_PNPM_FAIL: "exec" },
+        ["--file-changed"],
+        main,
+        changed(join(worktree, "pnpm-lock.yaml")),
+      );
+      expect(result.status, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual({
+        systemMessage: expect.stringContaining("installed dependencies") as string,
+      });
+      expect(readFileSync(log, "utf8")).toBe(
+        "exec node --version\ninstall --frozen-lockfile\nrun prepare\n",
+      );
+    });
+
+    it("stays silent & installs nothing when dependencies are current", () => {
+      const { log, main, run, worktree } = fixture();
+      mkdirSync(join(worktree, "node_modules"));
+      expect(run({}, ["--session-start"]).status).toBe(0);
+      rmSync(log);
+      writeFileSync(join(worktree, "package.json"), "{}\n");
+      const result = run(settle, ["--file-changed"], main, changed(join(worktree, "package.json")));
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toBe("");
+      expect(readFileSync(log, "utf8")).toBe("exec node --version\n");
+    });
+
+    it("ignores deletions, unwatched names, nested manifests, & other repositories", () => {
+      const { log, main, run, worktree } = fixture();
+      mkdirSync(join(worktree, "nested"));
+      writeFileSync(join(worktree, "nested/package.json"), "{}\n");
+      writeFileSync(join(worktree, "package.json"), "{}\n");
+      const foreign = temporaryDirectory();
+      git(foreign, "init");
+      writeFileSync(join(foreign, "package.json"), "{}\n");
+      for (const input of [
+        changed(join(worktree, "package.json"), "unlink"),
+        changed(join(worktree, "README.md")),
+        changed(join(worktree, "nested/package.json")),
+        changed(join(foreign, "package.json")),
+        "",
+      ]) {
+        const result = run(settle, ["--file-changed"], main, input);
+        expect(result.status, result.stderr).toBe(0);
+        expect(result.stdout).toBe("");
+      }
+      expect(existsSync(log)).toBe(false);
+    });
+
+    it("reports a failed install as a message & still exits 0", () => {
+      const { main, run, worktree } = fixture();
+      writeFileSync(join(worktree, "package.json"), "{}\n");
+      const result = run(
+        { ...settle, FAKE_PNPM_FAIL: "install" },
+        ["--file-changed"],
+        main,
+        changed(join(worktree, "package.json")),
+      );
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual({
+        systemMessage: expect.stringContaining("Automatic worktree setup failed") as string,
+      });
+    });
+  });
+
+  describe("CwdChanged", () => {
+    it("sets up a worktree the session moves into & points the watch at its manifests", () => {
+      const { log, main, run, worktree } = fixture();
+      writeFileSync(join(worktree, "package.json"), "{}\n");
+      writeFileSync(join(worktree, "pnpm-lock.yaml"), "lockfileVersion: 9\n");
+      const result = run({}, ["--cwd-changed"], main, moved(main, worktree));
+      expect(result.status, result.stderr).toBe(0);
+      const output = JSON.parse(result.stdout) as { systemMessage: string; watchPaths: string[] };
+      expect(output.watchPaths).toEqual([
+        join(realpathSync(worktree), "pnpm-lock.yaml"),
+        join(realpathSync(worktree), "package.json"),
+      ]);
+      expect(output.systemMessage).toContain("linked 2 entries");
+      expect(readFileSync(join(worktree, ".env"), "utf8")).toBe("SECRET=1\n");
+      expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
+    });
+
+    it("does no setup for a move within one checkout, but still reports the watch", () => {
+      const { log, main, run, worktree } = fixture();
+      mkdirSync(join(worktree, "src"));
+      writeFileSync(join(worktree, "package.json"), "{}\n");
+      const result = run({}, ["--cwd-changed"], main, moved(worktree, join(worktree, "src")));
+      expect(result.status, result.stderr).toBe(0);
+      const watchPaths = [join(realpathSync(worktree), "package.json")];
+      expect(JSON.parse(result.stdout)).toEqual({
+        hookSpecificOutput: { hookEventName: "CwdChanged", watchPaths },
+        watchPaths,
+      });
+      expect(existsSync(log)).toBe(false);
+    });
+
+    it("clears the watch & does nothing outside this repository", () => {
+      const { log, main, run } = fixture();
+      const elsewhere = temporaryDirectory();
+      const result = run({}, ["--cwd-changed"], main, moved(main, elsewhere));
+      expect(result.status, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toMatchObject({ watchPaths: [] });
+      expect(existsSync(log)).toBe(false);
+    });
+  });
+
+  describe("Codex tool setup", () => {
+    it("repairs stale dependencies & links in the target checkout, leaving the original cwd alone", () => {
+      const { log, main, toolSetup, worktree } = fixture();
+      mkdirSync(join(worktree, "node_modules"));
+      const stale = join(worktree, "stale");
+      writeFileSync(stale, "changed lockfile");
+      const result = toolSetup({ FAKE_PNPM_STALE: stale });
+      expect(result.status, result.stderr).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual({ installed: true, linked: 2, status: 0 });
+      expect(readFileSync(log, "utf8")).toBe(
+        "exec node --version\ninstall --frozen-lockfile\nrun prepare\n",
+      );
+      expect(existsSync(join(main, "node_modules"))).toBe(false);
+      expect(readFileSync(join(worktree, ".env"), "utf8")).toBe("SECRET=1\n");
+      expect(toolSetup().status).toBe(0);
+      expect(readFileSync(log, "utf8")).toBe(
+        "exec node --version\ninstall --frozen-lockfile\nrun prepare\nexec node --version\n",
+      );
+    });
+
+    it.each(["install", "run prepare"])(
+      "stops after a failed %s until a successful manual repair",
+      (step) => {
+        const { log, run, toolSetup } = fixture();
+        const failure = toolSetup({ FAKE_PNPM_FAIL: step });
+        expect(failure.status).toBe(2);
+        expect(failure.stderr).toContain("failed with exit status 1");
+        const calls = readFileSync(log, "utf8");
+        const repeated = toolSetup();
+        expect(repeated.status).toBe(2);
+        expect(repeated.stderr).toContain("Previous automatic setup failed");
+        expect(readFileSync(log, "utf8")).toBe(calls);
+        const session = run({}, ["--session-start"]);
+        expect(session.status).toBe(0);
+        expect(session.stdout).toContain("Automatic worktree setup");
+        expect(readFileSync(log, "utf8")).toBe(calls);
+        expect(run().status).toBe(0);
+        expect(toolSetup().status).toBe(0);
+      },
+    );
+
+    it("forces install & prepare during an explicit main-checkout repair after prepare failed", () => {
+      const { log, main, run, toolSetup } = fixture();
+      const stale = join(main, "stale");
+      writeFileSync(stale, "stale dependencies");
+      expect(
+        toolSetup({ FAKE_PNPM_FAIL: "run prepare", FAKE_PNPM_STALE: stale }, main).status,
+      ).toBe(2);
+      expect(existsSync(join(main, "node_modules"))).toBe(true);
+      rmSync(log);
+      const repair = run({}, ["--repair"], main);
+      expect(repair.status, repair.stderr).toBe(0);
+      expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
+      expect(toolSetup({}, main).status).toBe(0);
+      expect(existsSync(join(main, ".git/mistria-tool-setup.failure"))).toBe(false);
+    });
+
+    it("serializes concurrent tool setups & rechecks dependencies inside the shared lock", async () => {
+      const { concurrentSetup, log, worktree } = fixture();
+      const stale = join(worktree, "stale");
+      writeFileSync(stale, "changed lockfile");
+      const env = { FAKE_PNPM_STALE: stale };
+      expect(await Promise.all([concurrentSetup(env), concurrentSetup(env)])).toEqual([0, 0]);
+      expect(readFileSync(log, "utf8")).toBe(
+        "install --frozen-lockfile\nrun prepare\nexec node --version\n",
+      );
+    });
+  });
+
   it("refuses to run in the main checkout", () => {
     const { main } = fixture();
     const result = spawnSync(process.execPath, [script], { cwd: main, encoding: "utf8" });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("is the main checkout");
+  });
+});
+
+describe("modeOf", () => {
+  it("selects the mode from the flag", () => {
+    expect(modeOf(["node", "x"])).toBe("manual");
+    expect(modeOf(["node", "x", "--session-start"])).toBe("session-start");
+    expect(modeOf(["node", "x", "--file-changed"])).toBe("file-changed");
+    expect(modeOf(["node", "x", "--cwd-changed"])).toBe("cwd-changed");
+  });
+});
+
+describe("resolveEvent", () => {
+  it("resolves no target without a path", () => {
+    expect(resolveEvent("file-changed", {}, process.cwd())).toEqual({});
+    expect(resolveEvent("cwd-changed", {}, process.cwd())).toEqual({ watchPaths: [] });
+  });
+});
+
+describe("sameRepository", () => {
+  it("is false for a directory outside the repository", () => {
+    expect(sameRepository(process.cwd(), temporaryDirectory())).toBe(false);
+    expect(sameRepository(process.cwd(), process.cwd())).toBe(true);
+  });
+});
+
+describe("withSetupLock", () => {
+  it("releases the lock after the work, even when it throws", () => {
+    const root = temporaryDirectory();
+    expect(withSetupLock(root, () => existsSync(join(root, "mistria-setup.lock")))).toBe(true);
+    expect(existsSync(join(root, "mistria-setup.lock"))).toBe(false);
+    expect(() =>
+      withSetupLock(root, () => {
+        throw new Error("boom");
+      }),
+    ).toThrow("boom");
+    expect(existsSync(join(root, "mistria-setup.lock"))).toBe(false);
+  });
+
+  it("takes over a lock whose owner is gone", () => {
+    const root = temporaryDirectory();
+    mkdirSync(join(root, "mistria-setup.lock"));
+    writeFileSync(join(root, "mistria-setup.lock/pid"), "2147483646");
+    expect(withSetupLock(root, () => "done")).toBe("done");
+  });
+
+  it("times out behind a live owner", () => {
+    const root = temporaryDirectory();
+    mkdirSync(join(root, "mistria-setup.lock"));
+    writeFileSync(join(root, "mistria-setup.lock/pid"), String(process.pid));
+    expect(() => withSetupLock(root, () => "done", 300)).toThrow("timed out");
+    expect(existsSync(join(root, "mistria-setup.lock"))).toBe(true);
   });
 });

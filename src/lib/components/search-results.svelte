@@ -4,16 +4,20 @@
   import { Icon } from "#lib/components/icon/index.js";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import VillagerSearchResult from "#lib/components/villager-search-result.svelte";
-  import { categoryNameForKey } from "#lib/data/categories.js";
+  import { createRowReveal } from "#lib/controllers/row-reveal.svelte.js";
+  import { categoryColor, categoryNameForKey } from "#lib/data/categories.js";
   import { trackerData } from "#lib/data/index.js";
   import { hasNames, loadNames, NAME_CHUNKS } from "#lib/data/names.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { searchAllCategories } from "#lib/engine/search.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
+
+  import type { Attachment } from "svelte/attachments";
 
   import type { SearchCategoryKey } from "#lib/engine/categories.js";
   import type { SearchResult } from "#lib/engine/search.js";
@@ -26,6 +30,7 @@
     CosmeticId,
     ItemId,
     MountAppearanceId,
+    PerkId,
     PetCosmeticSetId,
     PetSkinId,
     QuestId,
@@ -93,6 +98,27 @@
     ),
   );
 
+  // The same timed reveal as category lists: all matches arrive without scrolling or a button.
+  // Gate the total too, so creating the controller cannot read names before their chunks load.
+  const reveal = createRowReveal(
+    () => (namesReady ? results.length : 0),
+    () => `${locale}:${query}`,
+  );
+  let shown = $derived(results.slice(0, reveal.count));
+
+  const measureRows: Attachment<HTMLElement> = (list) => {
+    const observer = new ResizeObserver(() => {
+      const reserve = list.querySelector("[data-search-result-reserve]");
+      const listBox = list.getBoundingClientRect();
+      const rowsEnd = reserve ? reserve.getBoundingClientRect().top : listBox.bottom;
+      reveal.measure(rowsEnd - listBox.top);
+    });
+    observer.observe(list);
+    return () => {
+      observer.disconnect();
+    };
+  };
+
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
   let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
@@ -119,6 +145,32 @@
     });
   }
 
+  /** The `factKey` a result toggles, mirroring {@link toggleResult}. */
+  function resultFact(result: SearchResult): string {
+    switch (result.category) {
+      case "almanac":
+        return factKey("almanac", result.id);
+      case "animals": {
+        const [kind, id] = result.id.split(":");
+        if (kind === "pet-cosmetic") return factKey("petCosmetics", id);
+        if (kind === "mount-appearance") return factKey("mountAppearances", id);
+        if (kind === "mount-perk") return factKey("unlockedPerks", id);
+        if (kind === "pet-skin") return factKey("petSkins", id);
+        return factKey(result.fullName ? "animalCosmetics" : "animals", kind, id);
+      }
+      case "cosmetics":
+        return factKey("cosmetics", result.id);
+      case "museum":
+        return factKey("museum", result.id);
+      case "quests":
+        return factKey("questStates", result.id);
+      case "recipes":
+        return factKey("almanacRecipes", result.id);
+      case "villagers":
+        return factKey("villagerRelationships", result.id);
+    }
+  }
+
   function toggleResult(result: SearchResult): void {
     switch (result.category) {
       case "almanac":
@@ -131,6 +183,9 @@
         } else if (result.id.startsWith("mount-appearance:")) {
           const appearanceId = result.id.slice("mount-appearance:".length);
           userState.toggleMountAppearance(appearanceId as MountAppearanceId);
+        } else if (result.id.startsWith("mount-perk:")) {
+          const perkId = result.id.slice("mount-perk:".length);
+          userState.togglePerk(perkId as PerkId);
         } else if (result.id.startsWith("pet-skin:")) {
           const petSkinId = result.id.slice("pet-skin:".length);
           userState.togglePetSkin(petSkinId as PetSkinId);
@@ -192,56 +247,75 @@
         : m.search_results_count({ count: results.length })}
     </p>
 
-    {#each results as result (result.category + result.id)}
-      {@const label = result.fullName ?? result.name}
-      <div class="search-result">
-        <div class="min-w-0 flex-1">
-          {#if result.category === "villagers"}
-            <VillagerSearchResult
-              completed={result.completed}
-              id={result.id as VillagerId}
-              name={label}
-            />
-          {:else}
-            <TrackerRow
-              display={trackerRowDisplay({
-                completed: result.completed,
-                dimmed: !result.available,
-              })}
-              segmentLookups={baseLookups}
-              name={result.detail ? `${label} ${result.detail}` : label}
-              reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
-              reportEntityId={result.id}
-              sources={getSources(result)}
-              onToggle={() => {
-                if (result.category === "quests") {
-                  handleQuestToggle(result);
-                } else {
-                  toggleResult(result);
-                  showUndoToast(result.name, !result.completed, () => {
+    <div
+      class="search-results__rows"
+      aria-busy={reveal.count < results.length}
+      {@attach measureRows}
+    >
+      {#each shown as result (result.category + result.id)}
+        {@const label = result.fullName ?? result.name}
+        <div class="search-result">
+          <!-- Each row takes its category's accent, as under its category page's layout, so a
+             pictured row's silhouette has that page's tint. -->
+          <div class="min-w-0 flex-1" style="--primary: {categoryColor(result.category)}">
+            {#if result.category === "villagers"}
+              <VillagerSearchResult
+                completed={result.completed}
+                id={result.id as VillagerId}
+                name={label}
+              />
+            {:else}
+              <TrackerRow
+                fact={resultFact(result)}
+                display={trackerRowDisplay({
+                  completed: result.completed,
+                  dimmed: !result.available,
+                })}
+                segmentLookups={baseLookups}
+                name={result.detail ? `${label} ${result.detail}` : label}
+                subtitle={result.subtitle}
+                variant={result.category === "almanac" ? result.subtitle : undefined}
+                reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
+                reportEntityId={result.id}
+                sources={getSources(result)}
+                sprite={result.sprite}
+                onToggle={() => {
+                  if (result.category === "quests") {
+                    handleQuestToggle(result);
+                  } else {
                     toggleResult(result);
-                  });
-                }
-              }}
+                    showUndoToast(result.name, !result.completed, () => {
+                      toggleResult(result);
+                    });
+                  }
+                }}
+              />
+            {/if}
+          </div>
+          <span
+            class="search-result__category"
+            style="--result-category-color: var(--color-category-{result.category}, var(--color-ink-muted))"
+          >
+            <Icon.Category
+              category={result.category}
+              class="search-result__category-icon"
+              aria-hidden="true"
+              size={16}
             />
-          {/if}
-        </div>
-        <span
-          class="search-result__category"
-          style="--result-category-color: var(--color-category-{result.category}, var(--color-ink-muted))"
-        >
-          <Icon.Category
-            category={result.category}
-            class="search-result__category-icon"
-            aria-hidden="true"
-            size={16}
-          />
-          <span class="search-result__category-name">
-            {categoryNameForKey(result.category, locale)}
+            <span class="search-result__category-name">
+              {categoryNameForKey(result.category, locale)}
+            </span>
           </span>
-        </span>
-      </div>
-    {/each}
+        </div>
+      {/each}
+      {#if reveal.reservedHeight > 0}
+        <div
+          aria-hidden="true"
+          data-search-result-reserve
+          style:block-size="{reveal.reservedHeight}px"
+        ></div>
+      {/if}
+    </div>
 
     {#if results.length === 0}
       <p class="search-results__empty">{m.search_no_results()}</p>
@@ -250,7 +324,8 @@
 {/if}
 
 <style>
-  .search-results {
+  .search-results,
+  .search-results__rows {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -264,6 +339,10 @@
   }
 
   .search-result {
+    /* Keep every row in the DOM, while the browser skips offscreen layout & paint. The
+       estimate is one touch row; `auto` remembers each row's actual height once visited. */
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 48px;
     display: flex;
     align-items: center;
     gap: 8px;

@@ -6,8 +6,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/format-agent-edit.ts\"",
-            "timeout": 10
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/agent-tool-hook.ts\"",
+            "timeout": 600,
+            "statusMessage": "Checking worktree setup & formatting"
           }
         ]
       },
@@ -30,16 +31,37 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/guard-agent-policy.ts\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "apply_patch|Edit|MultiEdit|NotebookEdit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/guard-release-version.ts\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "apply_patch|Edit|Write|Bash",
+        "matcher": "apply_patch|Edit|MultiEdit|NotebookEdit|Write|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/format-agent-edit.ts\"",
-            "timeout": 60
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/agent-tool-hook.ts\"",
+            "timeout": 600,
+            "statusMessage": "Checking worktree setup & formatting"
           }
         ]
       }
@@ -85,6 +107,17 @@
             "command": "bash \"$(git rev-parse --show-toplevel)/scripts/refresh-default-branch.sh\"",
             "statusMessage": "Refreshing local main",
             "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/lint-agent-stop.ts\"",
+            "timeout": 120
           }
         ]
       }

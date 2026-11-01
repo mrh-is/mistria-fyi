@@ -7,7 +7,12 @@ import { pathToFileURL } from "node:url";
 const MARKER = "<!-- mistria-accessibility-monitor -->";
 const TITLE = "Automated accessibility regression detected";
 
-export type CommandRunner = (command: string, args: string[], input?: string) => Promise<string>;
+export type CommandRunner = (
+  command: string,
+  args: string[],
+  input?: string,
+  acceptedExitCodes?: readonly number[],
+) => Promise<string>;
 
 interface IssueSummary {
   body: string;
@@ -18,6 +23,7 @@ export async function defaultCommandRunner(
   command: string,
   args: string[],
   input?: string,
+  acceptedExitCodes: readonly number[] = [0],
 ): Promise<string> {
   return await new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ["pipe", "pipe", "inherit"] });
@@ -26,7 +32,7 @@ export async function defaultCommandRunner(
     child.stdout.on("data", (chunk: string) => (output += chunk));
     child.on("error", reject);
     child.on("close", (code) => {
-      if (code === 0) resolve(output);
+      if (code !== null && acceptedExitCodes.includes(code)) resolve(output);
       else reject(new Error(`${command} exited with status ${code}`));
     });
     child.stdin.end(input);
@@ -46,7 +52,12 @@ export async function synchronizeAccessibilityIssue(options: {
   workflowUrl: string;
 }): Promise<void> {
   const run = options.run ?? defaultCommandRunner;
-  const issueNumber = await findOpenIssue(run);
+  const issue = await findMarkedIssue(run, {
+    label: "type: bug",
+    marker: MARKER,
+    title: TITLE,
+  });
+  const issueNumber = issue?.number;
 
   if (options.result === "success") {
     if (issueNumber === undefined) return;
@@ -121,21 +132,24 @@ function collectErrors(value: unknown, errors: string[]): void {
 
 // GitHub search drops the marker's comment punctuation and matches its words anywhere, so the
 // query only narrows candidates; the exact marker in the body is what identifies a monitor issue.
-async function findOpenIssue(run: CommandRunner): Promise<number | undefined> {
+export async function findMarkedIssue(
+  run: CommandRunner,
+  { label, marker, title }: { label: string; marker: string; title: string },
+): Promise<IssueSummary | undefined> {
   const output = await run("gh", [
     "issue",
     "list",
     "--state",
     "open",
     "--label",
-    "type: bug",
+    label,
     "--search",
-    `"${TITLE}" in:title`,
+    `"${title}" in:title`,
     "--json",
     "number,body",
   ]);
   const issues = JSON.parse(output) as IssueSummary[];
-  return issues.find((issue) => issue.body.includes(MARKER))?.number;
+  return issues.find((issue) => issue.body.includes(marker));
 }
 
 async function main(): Promise<void> {

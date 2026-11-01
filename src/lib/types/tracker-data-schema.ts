@@ -5,7 +5,7 @@ import {
   DATE_INSPIRATION_DROP_ACTIVITIES,
   UPGRADE_IDS,
 } from "./acquisition.js";
-import { SEASONS, STORE_UPGRADE_ACTIONS, WEATHERS } from "./tracker-data.js";
+import { ITEM_VARIANTS, SEASONS, STORE_UPGRADE_ACTIONS, WEATHERS } from "./tracker-data.js";
 
 import type { AvailabilityCondition, JsonValue } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
@@ -104,7 +104,7 @@ export const SourceSchema = v.variant("type", [
   source("bug_catch", { locationIds: v.optional(nonEmpty(id("LocationId"))) }),
   source("chicken_statue", { cost: number }),
   source("chicken_statue", { unlockCondition: v.literal("breed_all_chicken_tiers") }),
-  source("crop", { seedItemId: id("ItemId") }),
+  source("crop", { greenhouse: v.optional(v.literal(true)), seedItemId: id("ItemId") }),
   source("cutscene", { cutsceneId: v.picklist(CUTSCENE_SOURCE_IDS) }),
   source("date", { dateId: id("DateId") }),
   source("date_inspiration", { itemId: id("ItemId") }),
@@ -127,6 +127,7 @@ export const SourceSchema = v.variant("type", [
   source("fish_trap", { baitItemIds: nonEmpty(id("ItemId")) }),
   source("forage", { locationIds: v.optional(nonEmpty(id("LocationId"))) }),
   source("horse_statue", { cost: number, questId: id("QuestId") }),
+  source("horse_statue", { cost: number, mountAppearanceId: id("MountAppearanceId") }),
   source("letter", { letterId: v.string(), trigger: v.picklist(["birthday", "condition"]) }),
   source("lost_and_found", {}),
   source("mine", { biomeId: id("MinesBiomeId") }),
@@ -186,6 +187,8 @@ export const SourcedEntitySchema = v.strictObject({
 export const AlmanacEntrySchema = v.strictObject({
   itemIds: v.array(id("ItemId")),
   recipeId: v.optional(id("RecipeId")),
+  /** Tells this row apart from same-named rows in its category; absent when no name differs. */
+  variant: v.optional(v.picklist(ITEM_VARIANTS)),
 });
 export const AlmanacCategorySchema = v.strictObject({ items: v.array(AlmanacEntrySchema) });
 export const AnimalVariantSchema = v.strictObject({
@@ -255,6 +258,7 @@ export const MinesBiomeSchema = v.strictObject({
 });
 export const MountSchema = v.strictObject({
   appearances: v.record(id("MountAppearanceId"), SourcedEntitySchema),
+  perks: v.record(id("PerkId"), SourcedEntitySchema),
 });
 export const MuseumWingSetSchema = v.strictObject({ items: v.array(id("ItemId")) });
 export const MuseumWingSchema = v.strictObject({

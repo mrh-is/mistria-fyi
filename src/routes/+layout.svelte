@@ -10,6 +10,7 @@
   import PencilFilter from "#lib/components/pencil-filter.svelte";
   import PersistenceWarning from "#lib/components/persistence-warning.svelte";
   import SeoHead from "#lib/components/seo-head.svelte";
+  import SyncReceiverHost from "#lib/components/sync/sync-receiver-host.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
   import { Toaster } from "#lib/components/ui/sonner/index.js";
   import { errorPageMetadata } from "#lib/data/page-metadata.js";
@@ -20,6 +21,8 @@
   import { keepLocaleOffline } from "#lib/pwa/offline-locales.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncEnabled } from "#lib/sync/enabled.js";
+  import { retryPendingRetires } from "#lib/sync/sharing.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
@@ -37,6 +40,8 @@
 
   onMount(() => {
     userState.loadFromStorage();
+    // A retire the relay hasn't confirmed yet tries again on every visit.
+    if (syncEnabled) void retryPendingRetires();
     // Browser tests wait for this before interacting: a server-rendered control clicked before
     // hydration silently drops the event. Root `onMount` runs after every child has mounted.
     document.documentElement.dataset.hydrated = "true";
@@ -49,6 +54,11 @@
   let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
   let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
+  // Toasts sit just above the toolbar, or above an open toolbar panel so they never cover it.
+  const toastOffset = "calc(56px + env(safe-area-inset-bottom))";
+  let toastLift = $derived(
+    toolbarState.panelClearance > 0 ? `${toolbarState.panelClearance + 8}px` : null,
+  );
 
   // The server stamps `<html lang>`/`dir` for the first paint; a client-side locale switch (the
   // picker navigates without a reload) has to keep them in step.
@@ -97,9 +107,21 @@
 
   <ToolbarFooter {metadata} bind:this={toolbarFooter} />
 
-  <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
+  <Toaster
+    position="bottom-center"
+    offset={{
+      bottom: toastLift ? `max(${toastOffset}, ${toastLift})` : toastOffset,
+      left: toastOffset,
+      right: toastOffset,
+      top: toastOffset,
+    }}
+    mobileOffset={toastLift ? { bottom: `max(16px, ${toastLift})` } : undefined}
+  />
 
   <PersistenceWarning />
+  {#if syncEnabled}
+    <SyncReceiverHost />
+  {/if}
   <PencilFilter />
 {/key}
 

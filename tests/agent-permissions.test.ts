@@ -133,18 +133,23 @@ describe("Claude Code path guard", () => {
 
 describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", (file) => {
   const { hooks } = JSON.parse(readFileSync(file, "utf8")) as {
-    hooks: Record<string, { hooks: { command: string }[]; matcher?: string }[]>;
+    hooks: Partial<
+      Record<string, { hooks: { command: string; onFailure?: string }[]; matcher?: string }[]>
+    >;
   };
   const find = (event: string, script: string) =>
     hooks[event]?.find((entry) => entry.hooks.some((hook) => hook.command.includes(script)));
+  const formatter = "agent-tool-hook.ts";
 
   it("registers edit guards & formatting for patches, file tools, and shell commands", () => {
     for (const [event, script] of [
       ["PreToolUse", "guard-generated-paths.ts"],
-      ["PostToolUse", "format-agent-edit.ts"],
+      ["PostToolUse", formatter],
     ]) {
       const matcher = new RegExp(`^(?:${find(event, script)?.matcher ?? ""})$`);
-      for (const tool of ["apply_patch", "Edit", "Write", "Bash"]) {
+      const tools = ["apply_patch", "Edit", "Write", "Bash"];
+      if (event === "PostToolUse") tools.push("MultiEdit", "NotebookEdit");
+      for (const tool of tools) {
         expect(matcher.test(tool), `${event}: ${tool}`).toBe(true);
       }
     }
@@ -153,7 +158,48 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
   it("registers read guards, stop lint, and subagent guidance", () => {
     expect(find("PreToolUse", "guard-generated-reads.ts")?.matcher).toBe("Read|Bash");
     expect(find("Stop", "lint-agent-stop.ts")).toBeDefined();
+    expect(find("SubagentStop", "lint-agent-stop.ts")).toBeDefined();
     expect(find("SubagentStart", "agent-subagent-start.ts")).toBeDefined();
-    expect(find("PreToolUse", "format-agent-edit.ts")?.matcher).toBe("Bash");
+    expect(find("PreToolUse", formatter)?.matcher).toBe("Bash");
+  });
+
+  it("registers matching policy guards, and only Claude guard failures block", () => {
+    expect(find("PreToolUse", "guard-agent-policy.ts")?.matcher).toBe("Bash");
+    const release = find("PreToolUse", "guard-release-version.ts");
+    expect(release).toBeDefined();
+    for (const tool of ["apply_patch", "Edit", "Write", "MultiEdit", "NotebookEdit", "Bash"]) {
+      expect(new RegExp(`^(?:${release?.matcher ?? ""})$`).test(tool)).toBe(true);
+    }
+    const guards = (hooks.PreToolUse ?? [])
+      .flatMap((entry) => entry.hooks)
+      .filter((hook) => hook.command.includes("guard-"));
+    expect(guards).toHaveLength(4);
+    for (const hook of guards) {
+      expect(hook.onFailure).toBe(file.startsWith(".claude") ? "block" : undefined);
+    }
+    const upkeep = Object.values(hooks)
+      .flatMap((entries) => entries ?? [])
+      .flatMap((entry) => entry.hooks)
+      .filter((hook) => !hook.command.includes("guard-"));
+    expect(upkeep.length).toBeGreaterThan(0);
+    for (const hook of upkeep) expect(hook.onFailure).toBeUndefined();
+  });
+
+  it("has exactly one formatting handler per event, so setup cannot race formatting", () => {
+    for (const event of ["PreToolUse", "PostToolUse"]) {
+      const handlers = (hooks[event] ?? [])
+        .flatMap((entry) => entry.hooks)
+        .filter((hook) =>
+          /(?:format-agent-edit|codex-tool-hook|agent-tool-hook)\.ts/.test(hook.command),
+        );
+      expect(handlers).toHaveLength(1);
+      expect(handlers[0].command).toContain(formatter);
+    }
+  });
+
+  it("preserves Claude’s shell-failure formatting without adding an unsupported Codex event", () => {
+    const claude = file.startsWith(".claude");
+    expect(find("PostToolUseFailure", formatter)?.matcher).toBe(claude ? "Bash" : undefined);
+    expect(hooks.PostToolUseFailure?.length ?? 0).toBe(claude ? 1 : 0);
   });
 });

@@ -1,10 +1,11 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { sortCategoryKeysByName } from "#lib/data/categories.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { CATEGORY_KEYS, getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
 import { getMaxRenownLevel } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 import { formatNumber } from "#lib/utils/format.js";
 
@@ -19,6 +20,13 @@ const props = {
 };
 
 beforeEach(() => {
+  userState.resetAll();
+  pageStub.reset();
+});
+
+// Files in a shared-registry project also share `userState`, so a later file must not inherit this
+// file's grouping & progress.
+afterAll(() => {
   userState.resetAll();
 });
 
@@ -49,11 +57,7 @@ describe("/everything page", () => {
     });
 
     it("reconciles the header total with every rendered category, recipes included", () => {
-      const progress = getAllProgress({
-        availabilityWindows: userState.state.availabilityWindows,
-        progress: userState.state.progress,
-        worldState: userState.state.worldState,
-      });
+      const progress = getAllProgress(userState.progressContext);
       const overall = getOverallProgress(progress);
       expect(progress.recipes.total).toBeGreaterThan(0);
 
@@ -68,22 +72,28 @@ describe("/everything page", () => {
       for (const key of CATEGORY_KEYS) {
         const section = view.container.querySelector(`section[aria-labelledby="category-${key}"]`);
         expect(section, key).not.toBeNull();
-        expect(section?.getAttribute("style"), key).toContain(
+        expect(section?.parentElement?.getAttribute("style"), key).toContain(
           `--primary: var(--color-category-${key})`,
         );
       }
     });
   });
 
-  it("hides a completed category unless completed content is shown", () => {
+  it("hides completed categories & respects a category URL override when showing them", () => {
     userState.setRenown(getMaxRenownLevel());
 
     const hidden = renderToFragmentWithFeedback(AllPage, { props });
-    expect(hidden.container.querySelector("#category-renown")).toBeNull();
+    expect(hidden.container.querySelector("#category-renown")?.closest("section")?.hidden).toBe(
+      true,
+    );
     expect(hidden.container.querySelector("#category-skills")).not.toBeNull();
 
+    userState.setEverythingGrouping("source");
+    pageStub.navigate("/en/everything?group=category");
     userState.toggleShowCompleted();
     const shown = renderToFragmentWithFeedback(AllPage, { props });
-    expect(shown.container.querySelector("#category-renown")).not.toBeNull();
+    expect(shown.container.querySelector("#category-renown-completed")).not.toBeNull();
+    expect(shown.container.querySelector("#sources-stores")).toBeNull();
+    expect(userState.state.everythingGrouping).toBe("source");
   });
 });

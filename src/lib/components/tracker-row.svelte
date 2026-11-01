@@ -10,12 +10,14 @@
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildSourceSegments } from "#lib/sources/source-segments.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
   import { ROW_LEAVE_DELAY_MS, ROW_LEAVE_FADE_MS } from "#lib/utils/row-timing.js";
   import { page } from "$app/state";
 
   import type { SpriteSlotState } from "#lib/components/sprite-slot.svelte";
   import type { CheckboxState } from "#lib/components/tracker-checkbox.svelte";
   import type { DisplayBadges } from "#lib/engine/availability-condition.js";
+  import type { CategoryKey } from "#lib/engine/categories.js";
   import type { ReportCategory } from "#lib/feedback/types.js";
   import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
   import type { Source } from "#lib/types/acquisition.js";
@@ -24,7 +26,9 @@
   const feedbackContext = getFeedbackContext();
 
   let {
+    category,
     display,
+    fact,
     name,
     onToggle,
     reportCategory,
@@ -35,8 +39,12 @@
     sprite,
     spriteClass = "text-primary",
     subtitle,
+    variant,
   }: {
+    category?: CategoryKey;
     display: TrackerRowDisplay;
+    /** The `factKey` the row toggles, whose provenance picks its checkbox's mark. */
+    fact: string;
     name: string;
     onToggle: () => void;
     reportCategory: ReportCategory;
@@ -47,6 +55,8 @@
     sprite?: string;
     spriteClass?: string;
     subtitle?: string;
+    /** Distinguishes same-name rows in the checkbox label, independently of the subtitle. */
+    variant?: string;
   } = $props();
 
   const rawInstanceId = $props.id();
@@ -66,6 +76,7 @@
   );
 
   let isCompleted = $derived(display.mode === "completed");
+  let checkboxName = $derived(variant ? m.tracker_row_variant_name({ name, variant }) : name);
   let isObtained = $derived(display.mode === "obtained");
   let isSpoilered = $derived(display.mode === "spoilered" && !spoilerDismissed);
   let isLeaving = $derived(display.mode === "completed" && (display.leaving ?? false));
@@ -168,6 +179,7 @@
 </script>
 
 <div
+  style:--primary={category ? `var(--color-category-${category})` : undefined}
   data-tracker-row
   data-source-state={sourceState}
   out:leaveTransition
@@ -179,12 +191,14 @@
 >
   <TrackerPaper hasCutout={hasSources}>
     <TrackerCheckbox
+      {fact}
+      provenance={userState.provenanceOf(fact)}
       state={checkboxState}
       label={isCompleted
-        ? m.tracker_row_uncheck({ name })
+        ? m.tracker_row_uncheck({ name: checkboxName })
         : isSpoilered
           ? m.tracker_row_check_spoilered()
-          : m.tracker_row_check({ name })}
+          : m.tracker_row_check({ name: checkboxName })}
       onclick={handleToggle}
     />
 

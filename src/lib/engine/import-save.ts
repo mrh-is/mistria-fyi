@@ -10,8 +10,9 @@ import {
 import { getSpouseId } from "#lib/engine/relationships.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
+import { trackedPerkIds } from "./perk-ids.js";
 import { hasProgressSection, isSaveSection } from "./save-bundle.js";
-import { isKnownItemId, isUntrackedPerkId } from "./untracked-save-ids.js";
+import { isKnownItemId } from "./untracked-save-ids.js";
 
 import type { LevelIssue } from "#lib/engine/progress.js";
 import type {
@@ -153,21 +154,13 @@ export interface SaveExtraction {
 type FieldKey = ExtractedProgressKey | keyof SaveIdentity;
 
 /**
- * Fields the save can't fully determine, so they never support a removal:
+ * Fields whose readable source can still leave the choice unknown:
  *
- * - **Relationships:** the status flags are read, but absent flags do not establish a relationship
- *   removal, so a villager the save leaves undecided may not be.
- * - **Child choice:** only wanting children leaves evidence (a child, a pending child, or the
- *   spouse's pregnancy quest); choosing none looks the same as not choosing yet.
- * - **Mount appearances:** the Mistmare is inferred from one cutscene in `scene_history`, a list of
- *   ~150 scene IDs in a late-game save with no catalog to check them against, so a renamed reveal
- *   scene would look exactly like a Mistmare not yet revealed.
+ * - **Child choice:** only wanting children leaves evidence (a child, a pending child or visit, or the
+ *   spouse's pregnancy quest); choosing none looks the same as not choosing yet. A positive
+ *   choice is definitive; the undeclared value remains partial.
  */
-const PARTIAL_FIELDS: ReadonlySet<FieldKey> = new Set<FieldKey>([
-  "childChoice",
-  "mountAppearances",
-  "villagerRelationships",
-]);
+const PARTIAL_FIELDS: ReadonlySet<FieldKey> = new Set<FieldKey>(["childChoice"]);
 
 function makesUnknown(diagnostic: SaveDiagnostic): boolean {
   return !(diagnostic.code === "level" && diagnostic.issue === "above-max");
@@ -195,7 +188,7 @@ function createCollector() {
       const { diagnostics: fieldDiagnostics, untracked } = recordFor(field);
       const complete =
         value !== undefined &&
-        !PARTIAL_FIELDS.has(field) &&
+        (!PARTIAL_FIELDS.has(field) || (field === "childChoice" && value === "yes")) &&
         !fieldDiagnostics.some((diagnostic) => makesUnknown(diagnostic));
       return {
         completeness: complete ? "complete" : "unknown",
@@ -244,7 +237,15 @@ export function extractSaveProgress(bundle: SaveBundle): {
   playtime: number | undefined;
   warnings: SaveImportWarning[];
 } {
-  const extraction = extractSave(bundle);
+  return progressOfExtraction(extractSave(bundle));
+}
+
+/** What {@link extractSaveProgress} returns, for a save that's already extracted. */
+export function progressOfExtraction(extraction: SaveExtraction): {
+  completed: Partial<ProgressState>;
+  playtime: number | undefined;
+  warnings: SaveImportWarning[];
+} {
   const completed: Partial<Record<ExtractedProgressKey, unknown>> = {};
   for (const [key, field] of Object.entries(extraction.fields)) {
     if (field.value !== undefined) completed[key as ExtractedProgressKey] = field.value;
@@ -354,10 +355,28 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   ]);
 
   // ── Mount appearances ──
+  const facts = gamedata.record("t2_world_facts", [
+    "heartLevels",
+    "renown",
+    "questStates",
+    "skillLevels",
+    "villagerRelationships",
+    "mountAppearances",
+  ]);
   // The game files the mount's appearances under the horse's variant unlocks, beside the breeds.
-  const sceneHistory = gamedata.stringList("scene_history", ["mountAppearances"]);
+  // Unlike absence from an uncatalogued scene list, the explicit 0/1 fact establishes a removal.
+  const revealed = readScalar(
+    facts?.cutscene_seen_reveal_mistmare,
+    "gamedata.t2_world_facts.cutscene_seen_reveal_mistmare",
+    "mountAppearances",
+    (value): value is boolean | number =>
+      value === true || value === false || value === 0 || value === 1,
+    collector,
+  );
+  const sceneHistory =
+    revealed === undefined ? gamedata.stringList("scene_history", ["mountAppearances"]) : undefined;
   const mountAppearances = new Set<MountAppearanceId>();
-  if (sceneHistory?.includes(MISTMARE_REVEAL_CUTSCENE)) {
+  if (revealed === true || revealed === 1 || sceneHistory?.includes(MISTMARE_REVEAL_CUTSCENE)) {
     mountAppearances.add(MISTMARE_APPEARANCE);
   }
 
@@ -449,18 +468,13 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     (id) => Object.hasOwn(trackerData.mines.spells, id),
     collector,
   );
-  const validPerks = new Set<string>(
-    recordValues(trackerData.skills).flatMap((skill) =>
-      skill.perkTiers.flatMap((tier) => recordKeys(tier)),
-    ),
-  );
+  const validPerks = new Set<string>(trackedPerkIds(trackerData));
   const unlockedPerks = knownIdSet<PerkId>(
     player.stringList("perks", ["unlockedPerks"]),
     "player.perks",
     "unlockedPerks",
     (id) => validPerks.has(id),
     collector,
-    isUntrackedPerkId,
   );
 
   // ── Museum donations (from gamedata.json → museum_progress) ──
@@ -516,13 +530,6 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   const mineFloor = mineIndex === undefined ? undefined : mineIndex + 1;
 
   // Heart levels, skill levels, renown, & dating (from gamedata.json → t2_world_facts)
-  const facts = gamedata.record("t2_world_facts", [
-    "heartLevels",
-    "renown",
-    "questStates",
-    "skillLevels",
-    "villagerRelationships",
-  ]);
   let heartLevels: Record<string, number> | undefined;
   let skillLevels: Record<string, number> | undefined;
   let renown: number | undefined;
@@ -641,10 +648,9 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   }
   const questStates = readCompleted || readActive || readRankCompletion ? foundQuests : undefined;
 
-  // ── Villager relationships (from gamedata.json → t2_world_facts → {villager}_is_{status}) ──
-  // The game writes one flag per status (`Npc.report_relationship`); a spouse flag beats stale
-  // dating for the same villager. Only a spouse's pregnancy quest can be listed, so it names the
-  // spouse when no flag does. Other relationships stay as stored.
+  // ── Villager relationships (from gamedata.json → t2_world_facts → {villager}_status) ──
+  // Explicit statuses include null for undecided. Legacy flags still add partial evidence, with
+  // a spouse beating dating. A pregnancy quest can name the spouse only without an explicit status.
   const pregnancyVillagerId = recordEntries(trackerData.pregnancyQuestByVillager).find(
     ([, questId]) => Object.hasOwn(foundQuests, questId),
   )?.[0];
@@ -653,14 +659,37 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     villagerRelationships = {};
     for (const [villagerId, villager] of recordEntries(trackerData.villagers)) {
       if (villager.dateable !== true || !facts) continue;
+      const key = `${villagerId}_status`;
+      const raw = facts[key];
+      const explicit = RELATIONSHIP_FACTS.find(([suffix]) => suffix === raw);
+      if (raw === null || explicit) {
+        if (explicit) villagerRelationships[villagerId] = explicit[1];
+        continue;
+      }
+      collector.report(
+        {
+          code: raw === undefined ? "absent" : "invalid-value",
+          path: `gamedata.t2_world_facts.${key}`,
+        },
+        ["villagerRelationships"],
+      );
       const status = RELATIONSHIP_FACTS.find(([suffix]) => {
         const val = facts[`${villagerId}_is_${suffix}`];
         return val === true || val === 1;
       });
       if (status) villagerRelationships[villagerId] = status[1];
     }
-    if (pregnancyVillagerId && getSpouseId(villagerRelationships) === null) {
-      villagerRelationships[pregnancyVillagerId] = "married";
+    if (pregnancyVillagerId) {
+      const key = `${pregnancyVillagerId}_status`;
+      const raw = facts?.[key];
+      const explicit = raw === null || RELATIONSHIP_FACTS.some(([suffix]) => suffix === raw);
+      if (explicit && raw !== "spouse") {
+        collector.report({ code: "invalid-value", path: `gamedata.t2_world_facts.${key}` }, [
+          "villagerRelationships",
+        ]);
+      } else if (!explicit && getSpouseId(villagerRelationships) === null) {
+        villagerRelationships[pregnancyVillagerId] = "married";
+      }
     }
   }
 
@@ -672,15 +701,48 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     collector,
   );
 
-  // ── Child choice (from player.json → pending_child & children, or a pregnancy quest) ──
+  // ── Child choice (children, a pending child or stork visit, or a pregnancy quest) ──
   // Only wanting children leaves evidence; a household that chose none reads as undeclared.
   let childChoice: ChildChoice | undefined;
-  if (playerSection || pregnancyVillagerId) {
+  const pendingStorkVisit = facts?.pending_stork_visit === 1 || facts?.pending_stork_visit === true;
+  if (playerSection || pregnancyVillagerId || pendingStorkVisit) {
     const children = player.value("children");
+    const pending = player.value("pending_child");
+    const validPending =
+      isSaveSection(pending) &&
+      typeof pending.due_date === "number" &&
+      Number.isFinite(pending.due_date) &&
+      pending.due_date >= 0 &&
+      (pending.utero === "ari" || pending.utero === "spouse" || pending.utero === "stork");
     const hasChild =
-      (player.value("pending_child") ?? null) !== null ||
-      (Array.isArray(children) && children.length > 0);
-    childChoice = hasChild || pregnancyVillagerId ? "yes" : "undeclared";
+      validPending ||
+      (Array.isArray(children) &&
+        children.some((child: unknown) => isSaveSection(child) && typeof child.name === "string"));
+    if (hasChild || pregnancyVillagerId || pendingStorkVisit) {
+      childChoice = "yes";
+    } else if (pending === null && Array.isArray(children) && children.length === 0) {
+      childChoice = "undeclared";
+    }
+    for (const [key, valid] of [
+      ["pending_child", pending === null || validPending],
+      [
+        "children",
+        Array.isArray(children) &&
+          children.every(
+            (child: unknown) => isSaveSection(child) && typeof child.name === "string",
+          ),
+      ],
+    ] as const) {
+      if (!valid && !pregnancyVillagerId && !pendingStorkVisit) {
+        collector.report(
+          {
+            code: player.value(key) === undefined ? "absent" : "invalid-value",
+            path: `player.${key}`,
+          },
+          ["childChoice"],
+        );
+      }
+    }
   }
 
   // ── Identity (from info.json & header.json) ──
@@ -714,7 +776,9 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     mineFloor: collector.finish("mineFloor", mineFloor),
     mountAppearances: collector.finish(
       "mountAppearances",
-      sceneHistory || playerVariantsByAnimal ? mountAppearances : undefined,
+      revealed !== undefined || sceneHistory || playerVariantsByAnimal
+        ? mountAppearances
+        : undefined,
     ),
     museum: collector.finish("museum", museum),
     petCosmetics: collector.finish("petCosmetics", petCosmetics),
@@ -898,7 +962,8 @@ export type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 // ─── Season derivation ─────────────────────────────────────────────
 
-const GAME_DAY = 259_200;
+/** One in-game day on the save's calendar (`gamedata.date`). */
+export const GAME_DAY = 259_200;
 const GAME_SEASON = 28 * GAME_DAY;
 
 function deriveReachedSeason(date: unknown): Season {

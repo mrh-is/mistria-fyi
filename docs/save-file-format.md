@@ -43,6 +43,32 @@ The checked-in fixture is exactly 298,271 bytes compressed and 3,216,869 bytes d
 browser importer caps input at 8 MiB and expanded output at 64 MiB, leaving more than 20x headroom
 over this measured late-game save while bounding memory use on constrained devices.
 
+### Field presence, early vs. late game (v1.0.8)
+
+Compared on 2026-10-22 between two local v1.0.8 autosaves: an early-game farm created in 1.0.8 (107
+KB compressed, 1.2 MB decompressed, 34 entries) & a late-game farm created in 0.11.7 & last written
+by 1.0.8 (333 KB compressed, 3.7 MB decompressed, 42 entries).
+
+- **Entries.** Both saves hold every global state entry the importer reads: `player`, `gamedata`,
+  `quests`, `header`, & `info`. Per-villager state lives in an `npcs` entry, which the importer
+  doesn’t read. Neither save has a `villagers` entry, & nor do the v1.0.2 & v1.0.4 autosaves under
+  `pipeline/input/`, which carry `npcs` too. The late-game save’s extra entries are all
+  `DynamicGrid_*` scene grids.
+- **Keys.** `player` (68 keys), `gamedata` (27), `quests` (7), `header` (8), & `info` (3) carry the
+  same key set in both saves; no key the importer reads is absent early. Early-game progress shows
+  up as empty arrays & objects rather than missing keys: for example `perks`, `spells_learned`,
+  `museum_progress`, `completed_quests`, & `pet_skin_unlocks` are all `[]`. Note: `game_stats` is
+  the one compared entry whose key set differs (`progressions` appears only late), but the importer
+  doesn’t read it & sync prunes it.
+- **Null until reached.** Six keys are `null` early & populated late: `player.mount`,
+  `player.pinned_spell`, `player.crown_cooldown`, `player.proposal_date`, `player.wedding_date`, &
+  `gamedata.active_mist_sight`. The importer reads none of them.
+- **World facts.** `gamedata.t2_world_facts` grows from about 6,600 to 9,300 entries, &
+  `t2_world_facts.renown` (the fact the importer reads) is present in both.
+
+`import-save.assets.test.ts` runs both saves through the importer: neither reports an unrecognized
+ID, & every field the save fully records extracts as complete.
+
 ## Entries
 
 A save contains a mix of **global state entries** and **per-location entries**. The importer only
@@ -61,7 +87,7 @@ These are the entries relevant to progress tracking:
 | `header`     | Summary metadata: player name, farm name, playtime, appearance      |
 | `info`       | Save format version (`creation_version`, `version`)                 |
 | `game_stats` | Detailed gameplay statistics (largest entry; not used by tracker)   |
-| `villagers`  | Per-Villager state: schedules, gift history, dialogue flags         |
+| `npcs`       | Per-Villager state: schedules, gift history, dialogue flags         |
 
 ### Per-location entries
 
@@ -140,7 +166,13 @@ field’s completeness unknown.
 The Mistmare’s appearances share the horse’s list: `animal_variant_unlocks.horse` holds breeds and
 mount appearances (`giant_chicken_white` & `giant_chicken_gold`, from the Big Egg) side by side, so
 the import routes an ID to mount appearances when it isn’t a horse breed. The default `mistmare`
-appearance never appears there; the import infers it from `gamedata.scene_history` (below).
+appearance never appears there; the import reads the explicit
+`gamedata.t2_world_facts.cutscene_seen_reveal_mistmare` fact (`0`/`1`, or a boolean).
+`Mist.mark_scene_seen` writes it, and `obj_horse_statue` requests the scene as it grants the mount.
+Both local v1.0.8 saves contain the fact, zero early & one late. An explicit zero establishes that
+the Mistmare is not unlocked. Missing or malformed facts leave the field unknown; scene-history
+evidence can still add the Mistmare, but never establish a removal. The animal variant lists must
+also be readable for the combined field to be complete.
 
 Starting player cosmetics can be absent from `cosmetic_unlocks`; import unions every cosmetic with a
 native `default` source into the saved unlocks. It also seeds animal variants with a `default`
@@ -161,7 +193,13 @@ evidence.
 | ---------------- | ------------------------ | -------------------------------------------------------- |
 | `skill_xp`       | `Record<string, number>` | XP totals per skill (not levels; levels are in gamedata) |
 | `spells_learned` | `string[]`               | Spell IDs the player has unlocked                        |
-| `perks`          | `string[]`               | Perk IDs the player has selected                         |
+| `perks`          | `string[]`               | Perk IDs the player has bought                           |
+
+`perks` keeps a bought perk after the player switches it off in the perk menu. Switching off clears
+the perk's `stats.perks_active` flag and its `perk_unlocked_<id>` world fact, so neither records
+ownership: `perks_active` lists every perk as `true` in a fresh save, and in the late-game v1.0.8
+save nine bought perks read `false` in both. The importer reads `perks` alone, so a switched-off
+perk still counts toward its skill's completion.
 
 ### Other notable fields
 
@@ -197,10 +235,26 @@ game locks the setting after engagement; the tracker leaves it editable so playe
 imported progress. `disable_break_up_letters` suppresses letters only, not status changes. No v1.0.8
 GML implements divorce.
 
-A non-null `pending_child` or non-empty `children` array means the household chose children
-(`childChoice: "yes"`). Choosing no children leaves no trace, so a childless save reads as
-`"undeclared"` & the child choice is never complete. The dates aren’t tracked; who the player
-proposed to or married comes from the status flags in `t2_world_facts` (below).
+A valid `pending_child`, a readable child in `children`, an explicitly true `pending_stork_visit`
+world fact, or a pregnancy quest means the household chose children (`childChoice: "yes"`), which is
+definitive evidence. `Serialization/SaveGame.gml` writes `pending_child` as `{ due_date, utero }`;
+`Children.gml` & `etc/magic_enums.meta.toml` establish that `utero` is serialized as `"ari"`,
+`"spouse"`, or `"stork"`, not its runtime numeric enum. Malformed evidence stays unknown, never a
+manufactured positive choice.
+
+Choosing no children leaves no durable choice the tracker can read. Both full v1.0.8 archives have
+`children: []` & `pending_child: null`, including the married late-game farm. `par_NPC.gml` offers
+the family-planning conversation while holding the Mystical Feather & removes it only when
+`pending_stork_visit` is true. The game’s `TEST_STORK_CYCLE` explicitly declines, verifies that the
+feather remains, then repeats the conversation & accepts. `great_bird_1` then creates
+`pending_child` & clears `utero_choice` (`Mist.gml`). The family-planning gate & seen-scene facts
+record an offer or a visit, not a permanent refusal. Thus a valid childless save reads as
+`"undeclared"` with unknown completeness; it cannot erase a manually recorded `"no"`. The supplied
+saves contain no pending or born children, so those positive cases use serializer-backed synthetic
+fixtures.
+
+The dates aren’t tracked; who the player proposed to or married comes from the explicit statuses in
+`t2_world_facts` (below).
 
 ---
 
@@ -233,11 +287,16 @@ world state. Keys follow naming conventions:
 - **`{npc_id}_heart_level`** → `number`: Villager relationship level (0–10+)
 - **`{skill_id}_level`** → `number`: Skill level
 - **`renown`** → `number`: Player's renown level
-- **`{npc_id}_status`** → `string | undefined`: the relationship status, `best_friend`, `dating`,
+- **`{npc_id}_status`** → `string | null`: the relationship status, `best_friend`, `dating`,
   `fiance`, or `spouse`. `Npc.report_relationship` mirrors it into `{npc_id}_is_best_friend`,
   `_is_dating`, `_is_fiance`, & `_is_spouse` (`0`/`1`), plus `has_spouse` & `has_fiance`. The
-  importer reads the flags as platonic, romantic, proposed, & married. A spouse takes precedence
-  over a stale dating flag for the same villager. Other dating relationships remain as stored; the
+  importer reads each explicit status as platonic, romantic, proposed, or married; an explicitly
+  present `null` establishes undecided. Every dateable villager’s status must be present &
+  recognized for relationships to be complete. A missing or unrecognized status leaves the field
+  unknown; readable legacy flags can still add evidence, with a spouse taking precedence over
+  dating. Explicit statuses take precedence over stale flags & pregnancy-quest inference. A
+  pregnancy quest that contradicts an explicit status leaves that status untouched & relationships
+  unknown, with an `invalid-value` diagnostic. Other dating relationships remain as stored; the
   v1.0.8 married save has break-ups disabled and retains seven other partners. No v1.0.8 script
   writes `ari_is_married` or `ari_is_engaged`, so the importer ignores them.
 - **Various flags** → `boolean | number | string`: quest triggers, event flags, world unlocks
@@ -328,9 +387,10 @@ versions, though new items, recipes, and quests are added in content updates.
    the save is incomplete for that field, not that the level is zero.
 7. Saves list game IDs the tracker deliberately doesn't track: items outside the almanac, the
    cosmetic token items (`cosmetic`, `animal_cosmetic`, `pet_cosmetic`), treasure chests
-   (`treasure_box_<tier>`, tracked as chest tiers), and the Mistmare's perks (`horsepower`,
-   `harvest_horse`, `nice_ride`). The importer counts these as known-but-untracked; anything else it
-   doesn't recognize marks its field incomplete.
+   (`treasure_box_<tier>`, tracked as chest tiers). The importer counts these as
+   known-but-untracked; anything else it doesn't recognize marks its field incomplete. The
+   Mistmare's perks (`horsepower`, `harvest_horse`, `nice_ride`) share `perks` with the skill perks
+   and import into the same `unlockedPerks` set.
 8. A farm's identity is the number in `game-<number>-<autosave or slot>.sav` plus
    `info.creation_version`. Both are optional when importing: renamed files, extracted JSON, & old
    saves may omit them. `header.playtime` only grows as the save is played. The manual importer also

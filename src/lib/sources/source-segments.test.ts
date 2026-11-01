@@ -20,6 +20,7 @@ import type {
   LocationId,
   MinesBiomeId,
   MonsterId,
+  MountAppearanceId,
   MuseumWingId,
   PerkId,
   QuestId,
@@ -64,6 +65,7 @@ const BASE_LOOKUPS: SegmentLookups = {
   locale: "en",
   locationNames: {},
   monsterNames: {},
+  mountNames: { ["mistmare" as MountAppearanceId]: "Mistmare" },
   museumWingNames: {},
   perks: {
     ["taste_maker" as PerkId]: {
@@ -432,6 +434,17 @@ describe("buildSourceSegments — simple types", () => {
     };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
       "Obtain from the Chicken Statue after breeding every chicken tier",
+    ]);
+  });
+
+  it("horse statue mount perk, bought once the player has the mount", () => {
+    const source: Source = {
+      type: "horse_statue",
+      cost: 200,
+      mountAppearanceId: "mistmare" as MountAppearanceId,
+    };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
+      "Buy at the Horse Statue (200 essence) once you have the Mistmare",
     ]);
   });
 
@@ -969,6 +982,20 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     const result = buildSourceSegments(source, lookups);
     expect(result[0]).toContain("Grow");
     expect(result).toEqual(["Grow from Turnip Seeds"]);
+  });
+
+  it("distinguishes greenhouse growing from seasonal growing", () => {
+    const source: Source = {
+      type: "crop",
+      greenhouse: true,
+      seedItemId: "seed_carrot" as ItemId,
+    };
+    expect(
+      buildSourceSegments(source, {
+        ...BASE_LOOKUPS,
+        itemNames: { ["seed_carrot" as ItemId]: "Carrot Seeds" },
+      }),
+    ).toEqual(["Grow in the greenhouse from Carrot Seeds"]);
   });
 
   it("date", () => {

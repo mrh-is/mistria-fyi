@@ -185,7 +185,7 @@ describe("Windows pnpm probe", () => {
         signal: null,
         status: 0,
         stderr: "",
-        stdout: "C:\\pnpm.cmd",
+        stdout: String.raw`C:\pnpm.cmd`,
       })
       .mockReturnValueOnce({
         output: [null, "", "database unavailable"],

@@ -4,6 +4,7 @@
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
   import {
     getVariantSeason,
+    isAnimalVariantSpoilered,
     isVariantInScope as isVariantInScopeEngine,
   } from "#lib/engine/animal-availability.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -42,9 +43,9 @@
     return someVariant(animalId, ([variantId, variant]) => {
       const completed = hasCompletedVariant(animalId, variantId);
       if (isAnimalVisible) {
-        return isVariantVisible(variant, completed);
+        return isVariantVisible(animalId, variant, completed);
       }
-      return isVariantInScope(variant, completed);
+      return isVariantInScope(animalId, variant, completed);
     });
   }
 
@@ -68,45 +69,36 @@
     tier: number;
   }
 
-  function isVariantInScope(variant: AnimalVariant, completed: boolean): boolean {
+  function isVariantInScope(
+    animalId: AnimalId,
+    variant: AnimalVariant,
+    completed: boolean,
+  ): boolean {
     if (!toolbarState.matchesSourceFilters([variant.source])) return false;
     if (completed) return true;
     return isVariantInScopeEngine(
       variant,
-      userState.state.worldState.season,
+      trackerData.animals[animalId].visibility,
+      userState.progressContext,
       userState.state.availabilityWindows,
     );
   }
 
   function isVariantSpoilered(animalId: AnimalId, variantId: AnimalVariantId): boolean {
-    if (userState.state.showSpoilers) return false;
-
-    const completedVariants = userState.state.progress.animals[animalId];
-    if (completedVariants?.has(variantId)) return false;
-
-    const animal = trackerData.animals[animalId];
-
-    let foundThisVariant = false;
-    let wasThisVariantLastTier: boolean;
-    // Search tiers from the top
-    for (const tier of animal.variantTiers.toReversed()) {
-      wasThisVariantLastTier = foundThisVariant;
-      for (const vid of Object.keys(tier)) {
-        // If we find a completed one, this tier is unspoilered
-        if (completedVariants?.has(vid as AnimalVariantId)) return false;
-        // If we find this variant, set a flag, and only check one more tier down
-        if (vid === variantId) foundThisVariant = true;
-      }
-      if (wasThisVariantLastTier) return true;
-    }
-
-    // Never found the desired variant on this animal
-    // This shouldn't happen, but fail gracefully
-    return true;
+    return isAnimalVariantSpoilered(
+      animalId,
+      variantId,
+      userState.state.progress.animals[animalId],
+      userState.state.showSpoilers,
+    );
   }
 
-  function isVariantVisible(variant: AnimalVariant, completed: boolean): boolean {
-    if (!isVariantInScope(variant, completed)) return false;
+  function isVariantVisible(
+    animalId: AnimalId,
+    variant: AnimalVariant,
+    completed: boolean,
+  ): boolean {
+    if (!isVariantInScope(animalId, variant, completed)) return false;
     return !completed || userState.state.showCompleted;
   }
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<AnimalVariantId> {
@@ -115,7 +107,7 @@
     const visibleItems: VariantRowConfig[] = [];
     forEachVariant(animalId, ([vid, variant], tier) => {
       const completed = hasCompletedVariant(animalId, vid);
-      if (!isVariantInScope(variant, completed)) return;
+      if (!isVariantInScope(animalId, variant, completed)) return;
       displayableItemCount++;
       if (completed) displayableCompletedItemCount++;
 
@@ -165,6 +157,7 @@
 </script>
 
 <AnimalSubcategory
+  factField="animals"
   {areAllAnimalsComplete}
   completionCheck={hasCompletedVariant}
   hasDisplayableItem={hasDisplayableVariant}

@@ -192,9 +192,12 @@ Mistria Field Guide uses explicit planning and approval gates for changes that n
 
 Status labels show where an issue stands: `status: ready`, `status: blocked`,
 `status: needs decision`, or `status: in progress`. Do not start a blocked or needs-decision issue.
-An issue with `status: in progress` or an `agent:*` label already has an owner; coordinate on the
-issue instead of starting duplicate work. Applying these labels requires triage access, so outside
-contributors say on the issue that they are taking it.
+A dependency on another issue is a “blocked by” relationship instead of a label, and an issue is
+blocked while any issue blocking it is open; `status: blocked` covers blockers outside the tracker.
+See [Issue triage](agent-workflow.md#issue-triage) for both rules & for the `delegate: small agent`
+label. An issue with `status: in progress` or an `agent:*` label already has an owner; coordinate on
+the issue instead of starting duplicate work. Applying these labels requires triage access, so
+outside contributors say on the issue that they are taking it.
 
 ### Attribute agent-authored content
 
@@ -253,7 +256,29 @@ Tests sit next to the module they cover, so moving or deleting a module takes it
   builder or stub. [The testing inventory](testing-inventory.md#shared-helpers) lists them.
 
 The committed `.vscode/settings.json` nests each test under its source in the VS Code explorer, so
-colocated tests don’t double the length of directory listings.
+colocated tests don’t double the length of directory listings. It also points the Vitest extension
+at `node_modules/.bin/node`, the pinned Node that `pnpm install` links from `devEngines.runtime`.
+Without it, the extension starts Vitest with whatever `node` is first on `PATH`, and
+`require-pinned-node` (the first import in `vite.config.ts`) exits on any other release, which the
+extension reports only as “There were errors during config load.” The ESLint extension gets the same
+runtime through `eslint.runtime`: it otherwise runs on VS Code’s bundled Node, and
+`eslint.config.js` loads `vite.config.ts` for the SvelteKit config, so the guard stops the ESLint
+server too (“Server process exited with code 1”).
+
+- Run `pnpm install` (or `node scripts/setup-worktree.ts` in a worktree) before opening the folder.
+  Until the link exists, the extension fails to spawn `node_modules/.bin/node` (`ENOENT`).
+- The extension honors `vitest.nodeExecutable` only with its default `vitest.shellType`,
+  `child_process`. With `"vitest.shellType": "terminal"` in your user settings, it runs the
+  terminal’s `PATH` node instead and fails the same way.
+- On Windows, pnpm usually links the runtime in `node_modules\.bin` as shims (`node.cmd`,
+  `node.ps1`, and an extensionless shell script), which the extension can’t spawn without a shell,
+  so the committed value likely fails there. A user-level `vitest.nodeExecutable` can’t fix it,
+  because VS Code applies the workspace’s `.vscode/settings.json` over user settings. Instead, edit
+  the committed file locally & keep the edit out of commits:
+  1. Print the pinned runtime’s real path with `pnpm exec node -p process.execPath`.
+  2. Set `vitest.nodeExecutable` & `eslint.runtime` in `.vscode/settings.json` to that path.
+  3. Run `git update-index --skip-worktree .vscode/settings.json`, so Git ignores the local edit.
+     Undo it with `--no-skip-worktree` before pulling a change to that file, then reapply.
 
 ### Executing Tests
 
@@ -274,8 +299,8 @@ commands are references for CI or the explicit full-local-matrix exceptions in
   pnpm run test
   ```
   This command passes in a fresh clone without `pipeline/input/`. CI runs the same suite through its
-  `test:budgets` step (`node scripts/vitest-timings.ts`), which reports per-file timings & enforces
-  budgets.
+  `test:budgets` step (`node scripts/vitest-timings.ts`), which reports per-file timings & applies
+  the [timing limits](#vitest-time-budgets).
 - **Measure coverage** (opt-in; the same suite plus v8 coverage):
   ```sh
   pnpm run test:coverage
@@ -322,30 +347,58 @@ project. The cleanup test runs only when `scripts/cleanup-merged-worktrees.ts` c
 their complete changed-file list, & main pushes compare the event’s before/after commits. Scheduled
 & manual runs omit it. Direct local runs still include it, so test-only edits can be verified with
 the focused command. It publishes all per-file test & hook durations, slowest first, in the job
-summary & the `vitest-timings` artifact. On two-CPU noncoverage runs, ordinary files use both
-workers; the allocation, lint-ownership, & project-configuration CLI probes run separately with one
-worker, reserving a CPU for their subprocesses. Both invocations share one wall-time budget & their
-file timings are combined. Coverage & other runner classes use half the available CPUs (at least one
-worker, capped at four). The JSON also records CPU count, coverage mode, whole-command wall time, &
-the enforced ceilings. Imports, environment setup, transforms, startup, & report generation count
-toward the wall budget. Missing timing reports & unsuccessful tests fail the step independently of
-the budgets.
+summary & the `vitest-timings` artifact. Vitest uses half the available CPUs (at least one worker,
+capped at four). The JSON also records CPU count, coverage mode, & whole-command wall time, which
+includes imports, environment setup, transforms, startup, & report generation.
 
-| Runner class                               | Per-file ceiling | Whole-command ceiling | Nightly coverage ceiling |
-| ------------------------------------------ | ---------------- | --------------------- | ------------------------ |
-| Two CPUs (current private `ubuntu-latest`) | 10 s             | 120 s                 | 300 s                    |
-| Four or more CPUs (public `ubuntu-latest`) | 5 s              | 90 s                  | 300 s                    |
+A slow test costs time, not correctness, so timing fails a run only when the pull request can fix
+it:
 
-The two-CPU ceilings account for the measured runner class, not local Mac timings: before #689, the
-cleanup file took 5.524 s, the allocation test 9.855 s, & the coverage step 216 s on run
-[37692535010](https://github.com/mrh-is/mistria-fyi/actions/runs/37692535010). After #707 shared
-module registries, warm two-CPU runs took 52–79 s (the same files ran up to 1.7× slower on some
-runners) and a run with a cold transform cache, as after a `vite.config.ts` change, took 105 s; the
-120 s wall ceiling clears that cold run. The lint-ownership probe reached 8.3 s on a slow runner, so
-the 10 s file ceiling stays. The four-CPU ceilings haven’t been re-measured since. The four-CPU wall
-ceiling leaves startup headroom above #687’s 60 s target. Budget changes require measurements on the
-same runner class & an explanation in the PR; do not raise ceilings merely to silence a failure.
-Coverage runs nightly because local measurements do not establish that it is free in CI.
+| A test file’s tests & hooks take                 | Pull request that changes the file | Anything else |
+| ------------------------------------------------ | ---------------------------------- | ------------- |
+| Up to 5 s                                        | Nothing                            | Nothing       |
+| Over 5 s                                         | Warning                            | Warning       |
+| Over 15 s (over 30 s for `relay/worker.test.ts`) | **Fails**                          | Warning       |
+
+“Changes the file” means the test file itself is in the pull request’s changed files, so a new or
+renamed file counts, as does each file that a slow one is split into. A source change that slows a
+test it doesn’t edit only warns; the nightly report covers that case. The 15 s line sits well clear
+of runner noise: one file measured 5.1–11.4 s across #13’s runs. Nothing else about timing fails a
+run or kills Vitest. The job’s 10-minute timeout is the only bound on a hung suite. Missing timing
+reports, invalid measurements, & unsuccessful tests still fail the step. Before this rule, ceilings
+on wall time & every file failed 22 of 51 failed runs with no failed assertion; see
+[the decision](decisions/2026-10-31-timing-limits-follow-the-diff.md).
+
+The local Workers integration file, `relay/worker.test.ts`, has its own 30 s line for both warnings
+& failures. It runs real workerd eviction, hibernating WebSocket closure, & SQLite runtime restarts,
+with measured provider-runtime waits totaling about 20 seconds. Its sequencer starts this file first
+within its pool, preserving the default order for all other files, so runtime waits overlap ordinary
+tests even with a cold timing cache; see [the decision](decisions/2026-10-29-sync-relay.md).
+
+Coverage runs nightly because local measurements do not establish that it is free in CI. Coverage
+runs can’t fail on timing, because no pull request is involved.
+
+### Nightly report
+
+The scheduled CI run’s `nightly-report` job (`scripts/nightly-report.ts`) reads the `vitest-timings`
+artifacts from up to 10 recent pushes to `main`, which run without coverage, & compares medians, so
+one slow runner can’t raise a finding. It reports a file with at least 3 samples over its warning
+line, or a median wall time over 120 s.
+
+The job also runs `pnpm audit --audit-level=moderate --json` without installing dependencies. It
+reports moderate-or-higher advisory entries after pnpm applies `auditConfig.ignoreGhsas`. The raw
+metadata counts include accepted exceptions, so those counts don’t determine findings. An advisory
+is a finding, not a scheduled-job failure; an audit that can’t run or returns unusable JSON fails
+the job before changing the issue.
+
+Findings live in one “Nightly CI report” issue. The job files it, edits it in place, & closes it
+only when both checks are clear. With one or two timing samples, it skips timing findings but still
+reports advisories, retaining the earlier timing warnings with a note that they haven’t been
+rechecked. Repeated incomplete updates replace old advisories & status notes without duplicating the
+retained warnings. A complete timing check replaces the earlier warnings with fresh findings.
+Without advisories, it leaves the issue alone. With no readable timing samples, it publishes any
+advisories & then fails, because the timing report can’t read its data. A failure to list timing
+runs also publishes any advisories before failing. This job doesn’t count toward “CI passed”.
 
 ### Test projects
 
@@ -443,15 +496,21 @@ other full-suite command during development.
 `STEPS` lists in [scripts/verify.ts](../scripts/verify.ts), each naming its CI job; a job runs a
 step with `pnpm run verify -- --step=<name>`. Add or change a step there, not by copying a command
 into the workflow, & give a new step both a `STEPS` entry & its `--step` line in `ci.yml` (the CI
-test fails until both exist). Some steps run only in CI: the audit, the budgeted Vitest run (file &
-wall-time budgets, coverage only nightly), & the pull-request-only stale-translation check are
+test fails until both exist). Some steps run only in CI: the scoped audit, the budgeted Vitest run
+(file timing limits, coverage only nightly), & the pull-request-only stale-translation check are
 outside the default `verify` matrix.
+
+The audit blocks pull requests & main pushes only when they change `package.json`, `pnpm-lock.yaml`,
+`pnpm-workspace.yaml`, or `.github/workflows/ci.yml`. For example, a CSS-only pull request skips the
+audit; a lockfile change still fails on a moderate-or-higher advisory. Manual dispatches always
+audit. Scheduled advisories go to the [nightly report](#nightly-report). The local opt-in audit
+step, `pnpm run verify -- --step=audit`, stays available.
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see
 [accessibility testing](accessibility-testing.md) and [PWA verification](pwa-verification.md). Its
-"CI passed" job fails when any other job fails and passes when the browser jobs were skipped, so it
-is the one check to require for merging.
+“CI passed” job aggregates the merge checks & accepts skipped audits, locale-sync, & browser jobs.
+Scheduled reporting jobs stay outside that gate, so it is the one check to require for merging.
 
 ### Linting & formatting
 
@@ -751,6 +810,13 @@ removes a local branch only when its current commit exactly matches the head com
 GitHub pull request, and it has no open pull request. It removes an associated worktree only when
 that worktree is clean; Git itself still must accept the removal. It leaves every other branch and
 worktree alone.
+
+Before checking branches, it prunes unlocked worktree registrations whose directory no longer exists
+(such as Codex worktrees under a cleared `/tmp`), so their branches get the same checks as any
+other. If a stale registration's parent directory is also missing, as on an unmounted volume, it
+prunes nothing and says so; lock that worktree or prune by hand. A tip that GitHub has never
+received is unpushed work and stays, unless it is a conflict-free two-parent merge (typically
+`origin/main` merged into a PR head for a local check) whose parents both count as merged.
 
 It also keeps any worktree in use: one that a running process (an agent session or its shell) has as
 its working directory, or, with `--idle-minutes <n>`, one whose `HEAD` changed in the last `n`

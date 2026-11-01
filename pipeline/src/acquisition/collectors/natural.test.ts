@@ -17,6 +17,17 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
   });
 }
 
+function cropFixture(prototype: unknown) {
+  return makeFiddle({
+    items: {
+      other: {
+        crops_and_forage: { seed_carrot: { crop_object: "carrot", tags: ["seed"] } },
+      },
+    },
+    object_prototypes: { crop: { carrot: prototype } },
+  });
+}
+
 describe("collectNaturalSources", () => {
   it("rejects mines forageables without a biome", () => {
     const fiddle = makeFiddle({
@@ -378,7 +389,7 @@ describe("collectNaturalSources", () => {
   });
 
   describe("crops", () => {
-    it("adds a crop source referencing the seed", () => {
+    it("reads the prototype season, ignoring seed seasons, and adds a greenhouse route", () => {
       const fiddle = makeFiddle({
         items: {
           other: {
@@ -392,24 +403,102 @@ describe("collectNaturalSources", () => {
               tomato_seeds: {
                 crop_object: "tomato",
                 name: "Tomato Seeds",
-                seasons: ["summer"],
+                seasons: ["winter"],
                 tags: ["seed"],
               },
             },
           },
         },
+        object_prototypes: { crop: { tomato: { seasons: "summer" } } },
       });
 
       const acc = new ItemSourceAccumulator();
       collectNaturalSources(fiddle, acc);
 
-      expect(acc.get("tomato" as ItemId)).toEqual([
-        {
-          type: "crop",
-          availability: { type: "season", seasons: ["summer"] },
-          seedItemId: "tomato_seeds",
+      expect(acc.get("tomato" as ItemId)).toHaveLength(2);
+      expect(acc.get("tomato" as ItemId)).toEqual(
+        expect.arrayContaining([
+          {
+            type: "crop",
+            availability: { type: "season", seasons: ["summer"] },
+            seedItemId: "tomato_seeds",
+          },
+          {
+            type: "crop",
+            availability: {
+              type: "quest",
+              questId: "upgrade_the_carpenters_shop",
+              state: "completed",
+            },
+            greenhouse: true,
+            seedItemId: "tomato_seeds",
+          },
+        ]),
+      );
+    });
+
+    it.each([
+      { expected: { type: "season", seasons: ["spring", "fall"] }, seasons: ["spring", "fall"] },
+      { expected: undefined, seasons: ["spring", "summer", "fall", "winter"] },
+    ])("handles prototype season arrays: $seasons", ({ expected, seasons }) => {
+      const acc = new ItemSourceAccumulator();
+      collectNaturalSources(cropFixture({ seasons }), acc);
+      const sources = acc.get("carrot" as ItemId);
+      expect(sources).toHaveLength(2);
+      expect(sources.find((source) => source.type === "crop" && !source.greenhouse)).toEqual({
+        type: "crop",
+        seedItemId: "seed_carrot",
+        ...(expected ? { availability: expected } : {}),
+      });
+    });
+
+    it.each([undefined, null, "carrot"])(
+      "rejects a missing or invalid crop prototype: %j",
+      (prototype) => {
+        expect(() => {
+          collectNaturalSources(cropFixture(prototype), new ItemSourceAccumulator());
+        }).toThrow(/seed_carrot.*carrot.*prototype/);
+      },
+    );
+
+    it.each([
+      undefined,
+      -1,
+      0,
+      false,
+      null,
+      [],
+      "monsoon",
+      ["spring", 3],
+      ["spring", "spring", "spring", "spring"],
+    ])("rejects missing, sentinel, or malformed prototype seasons: %j", (seasons) => {
+      expect(() => {
+        collectNaturalSources(cropFixture({ seasons }), new ItemSourceAccumulator());
+      }).toThrow(/seed_carrot.*carrot.*seasons/);
+    });
+
+    it("rejects a seed without a crop_object", () => {
+      const fiddle = makeFiddle({
+        items: { other: { crops_and_forage: { seed_carrot: { tags: ["seed"] } } } },
+      });
+      expect(() => {
+        collectNaturalSources(fiddle, new ItemSourceAccumulator());
+      }).toThrow(/seed_carrot.*crop_object/);
+    });
+
+    it("does not treat seed-tagged native saplings as crops", () => {
+      const fiddle = makeFiddle({
+        items: {
+          other: {
+            crops_and_forage: {
+              sapling_apple: { sapling: "tree_apple", tags: ["seed"] },
+            },
+          },
         },
-      ]);
+      });
+      const acc = new ItemSourceAccumulator();
+      collectNaturalSources(fiddle, acc);
+      expect(acc.entries()).toEqual([]);
     });
   });
 

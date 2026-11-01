@@ -4,7 +4,7 @@ import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 
 import type { userState } from "#lib/stores/user-state.svelte.js";
-import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
+import type { ItemId, QuestId, VillagerId } from "#lib/types/tracker-data.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const WRITE_LOCK = "mistria-fyi:progress-write";
@@ -426,6 +426,99 @@ describe("serialized progress writes", () => {
     });
   });
 
+  it("stores the promotion when an importing tab's save agrees with an unknown fact", async () => {
+    const { locks } = sharedLocks();
+    const stored = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    stored.progress.almanac = ["turnip"];
+    stored.progress.provenance = { "almanac/turnip": { source: "unknown" } };
+    const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(stored) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+
+    tab.userState.mergeFromSave({ almanac: new Set(["turnip"] as ItemId[]) }, { playtime: 50 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { provenance: { "almanac/turnip": { playtime: 50, source: "save" } } },
+    });
+    expect(tab.userState.provenanceOf("almanac/turnip")).toEqual({ playtime: 50, source: "save" });
+  });
+
+  it("keeps another tab's manual edit over a promotion the importing tab made", async () => {
+    const { locks } = sharedLocks();
+    const stored = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    stored.progress.almanac = ["turnip"];
+    stored.progress.provenance = { "almanac/turnip": { source: "unknown" } };
+    const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(stored) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    stored.progress.provenance = { "almanac/turnip": { source: "manual" } };
+    storage.setItem(PROGRESS_KEY, JSON.stringify(stored));
+
+    tab.userState.mergeFromSave({ almanac: new Set(["turnip"] as ItemId[]) }, { playtime: 50 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      progress: { provenance: { "almanac/turnip": { source: "manual" } } },
+    });
+  });
+
+  it("stores a guessed slash's replacement when an importing tab's save agrees", async () => {
+    const { locks } = sharedLocks();
+    const stored = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+      progress: Record<string, unknown>;
+    };
+    const quest = "bell_berry_bakewell_tart_challenge" as QuestId;
+    const key = `questStates/${quest}`;
+    stored.progress.questStates = { [quest]: "completed" };
+    stored.progress.provenance = {
+      [key]: { obtainedSource: "unknown", playtime: 40, source: "save" },
+    };
+    const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(stored) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+
+    tab.userState.mergeFromSave({ questStates: { [quest]: "completed" } }, { playtime: 50 });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+
+    const written = JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null") as {
+      progress: { provenance: Record<string, unknown> };
+    };
+    expect(written.progress.provenance[key]).toEqual({ playtime: 40, source: "save" });
+  });
+
+  it.each(["inferred", "unknown"])(
+    "doesn't stamp a %s fact's promotion on a value another tab raised",
+    async (source) => {
+      const { locks } = sharedLocks();
+      const stored = JSON.parse(buildState(1, {}, CURRENT_SERIALIZATION_VERSION)) as {
+        progress: Record<string, unknown>;
+      };
+      stored.progress.mineFloor = 3;
+      stored.progress.provenance = { mineFloor: { source } };
+      const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(stored) });
+      vi.stubGlobal("localStorage", storage);
+      vi.stubGlobal("navigator", { locks });
+      const tab = await openTab();
+      stored.progress.mineFloor = 5;
+      storage.setItem(PROGRESS_KEY, JSON.stringify(stored));
+
+      tab.userState.mergeFromSave({ mineFloor: 3 }, { playtime: 50 });
+      await settle(tab.PERSIST_DEBOUNCE_MS);
+
+      expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+        progress: { mineFloor: 5, provenance: { mineFloor: { source } } },
+      });
+    },
+  );
+
   it("merges an import queued behind a reset against the reset, not the old value", async () => {
     const { locks } = sharedLocks();
     const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
@@ -551,6 +644,9 @@ describe("serialized progress writes", () => {
     expect(storedRenown(storage)).toBe(20);
     expect(writes.map(({ value }) => storedRenownOf(value))).toEqual([20]);
     expect(stale.userState.state.progress.renown).toBe(20);
+
+    const reloaded = await openTab();
+    expect(reloaded.userState.state.progress.renown).toBe(20);
   });
 
   it("lets a restore win over the same tab's pending auto-save", async () => {
@@ -560,13 +656,30 @@ describe("serialized progress writes", () => {
     vi.stubGlobal("navigator", { locks });
 
     const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
     tab.userState.setRenown(5);
-    await vi.advanceTimersByTimeAsync(0);
+    // Let the debounce expire while a different operation holds the lock. The auto-save is
+    // already queued when the player confirms the restore, rather than merely scheduled.
+    await vi.advanceTimersByTimeAsync(tab.PERSIST_DEBOUNCE_MS);
+    expect(state.requests).toEqual([WRITE_LOCK, WRITE_LOCK]);
     expect(tab.userState.restoreBackup(buildState(20))).toEqual({ ok: true });
+    expect(state.requests).toEqual([WRITE_LOCK, WRITE_LOCK, WRITE_LOCK]);
+    expect(writes).toEqual([]);
+    expect(tab.userState.state.progress.renown).toBe(20);
+    // A later edit must follow the captured restore, never leak through the superseded write.
+    tab.userState.setRenown(21);
+    gate.resolve(undefined);
+    await held;
     await settle(tab.PERSIST_DEBOUNCE_MS);
 
-    expect(writes.map(({ value }) => storedRenownOf(value))).toEqual([20]);
-    expect(tab.userState.state.progress.renown).toBe(20);
+    expect(writes.map(({ value }) => storedRenownOf(value))).toEqual([20, 21]);
+    expect(storedRenown(storage)).toBe(21);
+    expect(tab.userState.state.progress.renown).toBe(21);
+
+    const reloaded = await openTab();
+    expect(reloaded.userState.state.progress.renown).toBe(21);
   });
 
   it("refuses to replace a newer build's data that another tab wrote meanwhile", async () => {
@@ -626,7 +739,7 @@ describe("serialized progress writes", () => {
 describe("this device's local section", () => {
   const local = {
     farmSwitchBackup: { note: "progress before switching farms" },
-    syncReceipt: { appliedPlaytime: 3600 },
+    syncReceipt: { counter: 3600, hash: "h".repeat(43) },
   };
 
   it("is written back with progress but never exported", async () => {
@@ -659,7 +772,9 @@ describe("this device's local section", () => {
     vi.stubGlobal("localStorage", storage);
 
     const tab = await openTab();
-    const foreign = buildState(12, { local: { syncReceipt: { appliedPlaytime: 1 } } });
+    const foreign = buildState(12, {
+      local: { syncReceipt: { counter: 1, hash: "h".repeat(43) } },
+    });
     expect(tab.userState.restoreBackup(foreign)).toEqual({ ok: true });
     await settle(0);
 
@@ -668,14 +783,20 @@ describe("this device's local section", () => {
     expect(JSON.parse(tab.userState.exportBackup())).not.toHaveProperty("local");
   });
 
-  it("is kept by a progress reset & cleared by a full reset", async () => {
+  it("is kept by a progress reset, all but the receipt, & cleared by a full reset", async () => {
     const { storage } = recordingStorage({ [PROGRESS_KEY]: buildState(1, { local }) });
     vi.stubGlobal("localStorage", storage);
 
     const tab = await openTab();
     tab.userState.resetProgress();
     await settle(0);
-    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({ local });
+    // The receipt goes, so the latest save file applies again (docs/sync.md § Following).
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      local: { farmSwitchBackup: local.farmSwitchBackup },
+    });
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).not.toHaveProperty(
+      "local.syncReceipt",
+    );
 
     tab.userState.resetAll();
     await settle(0);

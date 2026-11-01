@@ -19,6 +19,8 @@
   "ignorePatterns": [
     // Lint-ownership probes violate rules on purpose; tests/lint-ownership.test.ts lints them.
     "tests/lint-probes/",
+    // Throwaway mockup generators kept beside a design package for reference, not app code.
+    "docs/design/*/generator/",
     "**/node_modules",
     ".worktrees/",
     ".claude/worktrees/",

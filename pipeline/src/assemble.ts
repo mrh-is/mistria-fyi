@@ -1,5 +1,6 @@
 import { getDotPath, safeParse } from "valibot";
 
+import { skillPerkIds } from "#lib/engine/perk-ids.js";
 import { TrackerDataSchema } from "#lib/types/tracker-data-schema.js";
 /**
  * Assembles `tracker-data.json` and its locale chunks from an evaluated fiddle. Reads no files and
@@ -70,6 +71,7 @@ import {
   validateItemExclusionSources,
 } from "./overrides/exclusions.js";
 import { isPregnancyQuest } from "./overrides/game-facts.js";
+import { ITEM_VARIANT_SETS } from "./overrides/item-variants.js";
 import { createRequirementContext } from "./parse/requirements.js";
 import { REVIEWED_PIPELINE_DIAGNOSTICS } from "./reviewed-diagnostics.js";
 
@@ -81,11 +83,14 @@ import type { ReviewedPipelineDiagnostic } from "./diagnostics.js";
 import type { ItemIconSpriteIndex } from "./extract/almanac.js";
 import type { VillagerIconSpriteIndex } from "./extract/villagers.js";
 import type { Localizer } from "./localize/localize.js";
+import type { ItemVariantSet } from "./overrides/item-variants.js";
 import type { ParsedGameData } from "./parse/parse-fiddle.js";
 
 export interface AssembleOptions {
   /** Exact diagnostics this run may raise. Defaults to the installed game's reviewed list. */
   reviewedDiagnostics?: readonly ReviewedPipelineDiagnostic[];
+  /** Names for same-name almanac rows. Defaults to the installed game's reviewed table. */
+  reviewedItemVariants?: readonly ItemVariantSet[];
   /** Hand-reviewed acquisition sources. Defaults to the installed game's reviewed overrides. */
   reviewedOverrides?: ReviewedOverrides;
   version: string;
@@ -136,7 +141,12 @@ export function assembleTrackerData(
     iconSpritesByItemId,
     items: itemMetadata,
     localeNames: itemLocaleNames,
-  } = extractAlmanac(fiddle, localizer, diagnostics);
+  } = extractAlmanac(
+    fiddle,
+    localizer,
+    diagnostics,
+    options.reviewedItemVariants ?? ITEM_VARIANT_SETS,
+  );
   const recipeLocaleNames = deriveRecipeLocaleNames(recipeNameSources, itemLocaleNames);
   const { animals: animalDrafts, localeNames: animalLocaleNames } = extractAnimals(
     fiddle,
@@ -208,11 +218,15 @@ export function assembleTrackerData(
     fiddle.requirements as Record<string, unknown> | undefined,
     cutsceneQuestMap,
   );
-  const { localeNames: mountLocaleNames, mount } = extractMount(
-    fiddle,
-    localizer,
-    requirementContext,
-  );
+  const {
+    localeNames: mountLocaleNames,
+    mount,
+    perkLocaleNames: mountPerkLocaleNames,
+  } = extractMount(fiddle, localizer, requirementContext, new Set(skillPerkIds({ skills })));
+  const allPerkLocaleNames = recordMap(perkLocaleNames, (names, locale) => ({
+    ...names,
+    ...mountPerkLocaleNames[locale],
+  }));
 
   const itemSources = new ItemSourceAccumulator();
   const cosmeticSources = new CosmeticSourceAccumulator();
@@ -416,7 +430,7 @@ export function assembleTrackerData(
       { byLocale: dateLocaleNames, category: "dates" },
       { byLocale: festivalLocaleNames, category: "festivals" },
       { byLocale: museumLocaleNames, category: "museum_wings" },
-      { byLocale: perkLocaleNames, category: "perks" },
+      { byLocale: allPerkLocaleNames, category: "perks" },
       { byLocale: petCosmeticLocaleNames, category: "pets/cosmetic_sets" },
       { byLocale: questLocaleNames, category: "quests" },
       { byLocale: skillLocaleNames, category: "skills" },
@@ -463,7 +477,8 @@ function buildAcquisitionReferences(
       animals: trackerData.animals,
       biomes: trackerData.mines.biomes,
       festivals: trackerData.festivals,
-      perks: collectPerkIds(trackerData),
+      mountAppearances: trackerData.mount.appearances,
+      perks: skillPerkIds(trackerData),
       questTypes: Object.keys(trackerData.quests),
       skills: trackerData.skills,
       stores: trackerData.stores,
@@ -472,10 +487,4 @@ function buildAcquisitionReferences(
     },
     reviewed: REVIEWED_NON_NATIVE_REFERENCES,
   });
-}
-
-function collectPerkIds(trackerData: TrackerData): string[] {
-  return Object.values(trackerData.skills).flatMap((skill) =>
-    skill.perkTiers.flatMap((tier) => Object.keys(tier)),
-  );
 }

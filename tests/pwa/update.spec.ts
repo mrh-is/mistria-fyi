@@ -192,7 +192,7 @@ test("activates a new version on its own, reloading idle tabs at once & a busy o
     expect(await cacheNames(page)).toContain(oldCache);
     await expect.poll(() => reportedVersions(page).then((versions) => versions.length)).toBe(2);
     for (const tab of [page, busyTab]) {
-      // oxlint-disable-next-line no-await-in-loop -- Reports are sent one tab at a time.
+      // Reports are sent one tab at a time.
       await reportVersion(tab, newVersion);
     }
     await expect.poll(() => cacheNames(page)).not.toContain(oldCache);
@@ -540,7 +540,7 @@ test("precaches `/` & each offline locale's pages when a new version installs", 
     await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
     await waitForTakeover(context, newCache);
     for (const path of ["/", "/en", "/fr", "/fr/museum", "/ja", "/ja/museum", "/ja/everything"]) {
-      // oxlint-disable-next-line no-await-in-loop -- One assertion per page, for its message.
+      // One assertion per page, for its message.
       expect(await cacheHolds(page, newCache, path), path).toBe(true);
     }
     expect(await cacheHolds(page, newCache, "/ko")).toBe(false);

@@ -15,18 +15,19 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { recipePlacements } from "#lib/engine/projections/recipes.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
-  import { recordForEach } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { Item, ItemId, RecipeId } from "#lib/types/tracker-data.js";
+  import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
   import type { VisibilityCondition } from "#lib/types/visibility.js";
 
   let { locale }: { locale: LocaleCode } = $props();
@@ -37,10 +38,6 @@
   const sectionGrouping = createSectionGrouping<string>();
 
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
-
-  function recipeForItem(item: Item): RecipeId | undefined {
-    return item.sources.find((source) => source.type === "recipe")?.recipeId;
-  }
 
   // The current recipe condition is added when each tree is built.
   let baseSegmentLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
@@ -54,37 +51,23 @@
     visibility?: VisibilityCondition;
   }
 
-  let recipesByCategory = $derived.by(() => {
-    const groups: { entries: RecipeEntry[]; id: string; name: string }[] = [];
-    recordForEach(trackerData.almanac, ([catId, cat]) => {
-      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Local deduplication is discarded within this derived calculation.
-      const seen = new Set<string>();
-      const entries: RecipeEntry[] = [];
-      for (const entry of cat.items) {
-        const canonicalId = entry.itemIds[0];
-        const item = trackerData.items[canonicalId];
-        const recipeId = recipeForItem(item);
-        if (!recipeId || seen.has(recipeId)) continue;
-        seen.add(recipeId);
+  let recipesByCategory = $derived.by(() =>
+    recipePlacements().map(({ categoryId, recipes }) => {
+      const entries = recipes.map(({ itemId, recipeId }): RecipeEntry => {
         const recipe = trackerData.recipes[recipeId];
-        const visibility = recipe.visibility;
-        const sources = recipe.sources;
-        entries.push({
+        return {
           id: recipeId,
-          itemId: canonicalId,
-          name: getName("items", canonicalId, locale),
-          sources,
-          spoilered: !isConditionVisible(visibility, userState.progressionState),
-          visibility,
-        });
-      }
-      if (entries.length > 0) {
-        entries.sort((a, b) => nameCollator(locale).compare(a.name, b.name));
-        groups.push({ entries, id: catId, name: getName("ui", catId, locale) });
-      }
-    });
-    return groups;
-  });
+          itemId,
+          name: getName("items", itemId, locale),
+          sources: recipe.sources,
+          spoilered: !isConditionVisible(recipe.visibility, userState.progressionState),
+          visibility: recipe.visibility,
+        };
+      });
+      entries.sort((a, b) => nameCollator(locale).compare(a.name, b.name));
+      return { entries, id: categoryId, name: getName("ui", categoryId, locale) };
+    }),
+  );
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
@@ -99,7 +82,7 @@
   }
 
   function isAllComplete(): boolean {
-    return isCategoryComplete("recipes", userState.state);
+    return isCategoryComplete("recipes", userState.progressContext);
   }
 
   function matchesFilter(entry: RecipeEntry): boolean {
@@ -140,8 +123,6 @@
     }),
   );
 
-  const expandedSections = $state<Record<string, boolean>>({});
-
   function toggleRecipe(entry: RecipeEntry, sectionId: string, sectionRecipeIds: RecipeId[]): void {
     sectionGrouping.hold(sectionId);
     userState.toggleAlmanacRecipe(entry.id);
@@ -170,18 +151,11 @@
         reportEntityId={group.id}
         total={scopedEntries.length}
       >
-        <TrackerRowList
-          expanded={expandedSections[group.id] ?? false}
-          getKey={(entry) => entry.id}
-          items={filteredEntries}
-          limited
-          onShowMore={() => {
-            expandedSections[group.id] = true;
-          }}
-        >
+        <TrackerRowList getKey={(entry) => entry.id} items={filteredEntries}>
           {#snippet row(entry)}
             {@const completed = userState.state.progress.almanacRecipes.has(entry.id)}
             <TrackerRow
+              fact={factKey("almanacRecipes", entry.id)}
               display={trackerRowDisplay({
                 completed,
                 leaving: recentlyCompleted.has(entry.id),
