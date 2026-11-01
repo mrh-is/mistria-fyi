@@ -3,12 +3,22 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { builtLocaleChunks } from "../../scripts/built-locale-chunks.js";
 import { PRERENDERED_ROUTES } from "../../src/lib/i18n/prerender-entries.js";
 import { expect, test } from "../browser/test.js";
-import { goOffline, goOnline, waitForControl } from "./service-worker.js";
+import {
+  goOffline,
+  goOnline,
+  stopRestartedWorkers,
+  waitForControl,
+  waitForHydration,
+} from "./service-worker.js";
 
 import type { BrowserContext, Page } from "@playwright/test";
 
 const WORKER_PATH = ".svelte-kit/output/client/service-worker.js";
 const VERSION_PATH = ".svelte-kit/output/client/_app/version.json";
+
+test.beforeEach(async ({ page }) => {
+  await stopRestartedWorkers(page);
+});
 
 function cacheNames(page: Page): Promise<string[]> {
   return page.evaluate(() => caches.keys());
@@ -289,12 +299,24 @@ test("reloads an uncontrolled page from the network even with an old active work
   await waitForControl(page);
   const oldCache = versionCacheOf(await cacheNames(page));
 
+  // Hydration can finish after `load`, as it does on a busy CI runner. Slowing its entry chunk keeps
+  // that order on every run, so the wait for hydration below stays necessary.
+  const hydrationEntry = /\/_app\/immutable\/entry\/start\./;
+  await context.route(hydrationEntry, async (route) => {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
+    await route.fallback();
+  });
+
   // Model a hard reload that bypassed the worker, while its registration remains active.
   const session = await context.newCDPSession(page);
   await Promise.all([
     page.waitForEvent("load"),
     session.send("Page.reload", { ignoreCache: true }),
   ]);
+  await waitForHydration(page);
+  await context.unroute(hydrationEntry);
   expect(await page.evaluate(() => navigator.serviceWorker.controller)).toBeNull();
   expect(
     await page.evaluate(async () => {
@@ -386,6 +408,37 @@ function lastLocale(page: Page): Promise<unknown> {
     return record?.json() as Promise<unknown>;
   });
 }
+
+// Timed for the instant Chromium stops the old worker, which restarts it to answer. An undebugged
+// browser then waits out the worker's idle timeout, and `stopRestartedWorkers` stands in for that.
+test("takes over after a page request restarts the old worker mid-takeover", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/en");
+  await waitForControl(page);
+  const oldCache = versionCacheOf(await cacheNames(page));
+  const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
+
+  try {
+    const reloaded = page.waitForEvent("load");
+    await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready;
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+        worker?.addEventListener("statechange", () => {
+          if (worker.state === "installed") void fetch("/robots.txt?mid-takeover");
+        });
+      });
+      globalThis.dispatchEvent(new Event("focus"));
+    });
+    await waitForTakeover(context, `cache-${newVersion}`);
+    await reloaded;
+    await waitForControl(page);
+  } finally {
+    restore();
+  }
+});
 
 // A new version reads the last-used locale partway through its install. A language switch after
 // that read, but before the install finishes, must still reach it: the next launch may be offline
@@ -537,8 +590,11 @@ test("precaches `/` & each offline locale's pages when a new version installs", 
   const newCache = `cache-${newVersion}`;
 
   try {
+    // The idle page reloads onto the new version once it takes over, destroying any read in flight.
+    const reloaded = page.waitForEvent("load");
     await page.evaluate(() => globalThis.dispatchEvent(new Event("focus")));
     await waitForTakeover(context, newCache);
+    await reloaded;
     for (const path of ["/", "/en", "/fr", "/fr/museum", "/ja", "/ja/museum", "/ja/everything"]) {
       // One assertion per page, for its message.
       expect(await cacheHolds(page, newCache, path), path).toBe(true);
