@@ -250,6 +250,17 @@ visual checks or screenshots.
 Evidence: [AGENTS.md](../AGENTS.md), [docs/agent-verification.md](../docs/agent-verification.md),
 [https://github.com/mrh-is/mistria-fyi/pull/318](https://github.com/mrh-is/mistria-fyi/pull/318).
 
+### [Bound feedback progress attachments](decisions/2026-10-31-bounded-feedback-progress.md)
+
+ID: 2026-10-31-bounded-feedback-progress. Status: Current.
+
+Keep small feedback progress attachments detailed. Summarize oversized provenance by field & source,
+then the largest collections by entry count, within a shared 32 KiB budget.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/339](https://github.com/mrh-is/mistria-fyi/pull/339),
+[src/lib/feedback/progress-attachment.ts](../src/lib/feedback/progress-attachment.ts).
+
 ### [Copilot hook upkeep](decisions/2026-10-31-copilot-hook-upkeep.md)
 
 ID: 2026-10-31-copilot-hook-upkeep. Status: Current.
@@ -326,6 +337,20 @@ Claude & Codex label small, fully specified issues `delegate: small agent` so th
 them to Antigravity or Copilot.
 
 Evidence: [docs/agent-workflow.md#small-agent-tasks](../docs/agent-workflow.md#small-agent-tasks).
+
+### [Feedback redaction follows the data source](decisions/2026-10-31-source-based-feedback-redaction.md)
+
+ID: 2026-10-31-source-based-feedback-redaction. Status: Current.
+
+Feedback privacy follows each field's source. Keep game-owned IDs readable, redact known private
+values with an explicit marker where the diagnostic structure is useful, & exclude raw private
+containers. Do not guess personal information from an ID's spelling or numeric shape.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/pull/339](https://github.com/mrh-is/mistria-fyi/pull/339),
+[docs/sync.md#diagnostics](../docs/sync.md#diagnostics),
+[src/lib/sync/diagnostic-redaction.ts](../src/lib/sync/diagnostic-redaction.ts),
+[src/lib/feedback/progress-attachment.ts](../src/lib/feedback/progress-attachment.ts).
 
 ### [Tooling tests follow the diff](decisions/2026-10-31-tooling-tests-follow-the-diff.md)
 

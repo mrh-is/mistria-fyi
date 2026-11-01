@@ -3,6 +3,7 @@
  * followed code's envelope. Both read the save's own container format with the importer's parser.
  */
 import { extractSave, progressOfExtraction, unpackSavFile } from "#lib/engine/import-save.js";
+import { isSaveSection } from "#lib/engine/save-bundle.js";
 import { readSaveIdentity } from "#lib/engine/save-identity.js";
 import { readGameDate } from "#lib/engine/sync-freshness.js";
 
@@ -20,10 +21,18 @@ export interface ReadSave extends SyncedSave {
   extraction: SaveExtraction;
   fileName: string;
   gameDate: GameDate | undefined;
+  /** Numeric current version from `info.version`, rather than the farm's creation version. */
+  gameVersion: null | string;
   /** The SHA-256 of the file's bytes, in base64url; what a receipt remembers it by. */
   hash: string;
   /** The file's modification time, in Unix milliseconds. */
   modified: number;
+  /** Every name the save holds, which can differ by section; only ever used to redact them. */
+  names: { farm: string[]; player: string[] };
+}
+
+function strings(...values: unknown[]): string[] {
+  return values.filter((value) => typeof value === "string");
 }
 
 async function hashFile(file: File): Promise<string> {
@@ -36,14 +45,28 @@ export async function readSaveFile(file: File, now = Date.now()): Promise<ReadSa
   const bundle = await unpackSavFile(file);
   const extraction = extractSave(bundle);
   const { completed, playtime } = progressOfExtraction(extraction);
+  const rawVersion = bundle.info?.version;
+  const parts = isSaveSection(rawVersion)
+    ? [rawVersion.major, rawVersion.minor, rawVersion.patch]
+    : [];
+  const gameVersion =
+    parts.length === 3 &&
+    parts.every((part) => typeof part === "number" && Number.isSafeInteger(part) && part >= 0)
+      ? parts.join(".")
+      : null;
   return {
     completed,
     extraction,
     fileName: file.name,
     gameDate: readGameDate(bundle),
+    gameVersion,
     hash: await hashFile(file),
     metadata: { ...readSaveIdentity(bundle), importedAt: now },
     modified: file.lastModified,
+    names: {
+      farm: strings(bundle.player?.farm_name, bundle.header?.farm_name),
+      player: strings(bundle.player?.name, bundle.header?.name),
+    },
     playtime,
   };
 }

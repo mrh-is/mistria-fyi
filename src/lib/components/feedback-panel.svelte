@@ -15,8 +15,11 @@
   import { Checkbox } from "#lib/components/ui/checkbox/index.js";
   import { trackerData } from "#lib/data/index.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import { progressAttachment } from "#lib/feedback/progress-attachment.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
+  import { syncSwitchOn } from "#lib/sync/sync-switch.js";
   import { ensureTurnstileScript } from "#lib/turnstile.js";
   import { version } from "$app/env";
 
@@ -49,6 +52,13 @@
   let email = $state("");
   let wantsReply = $state(false);
   let includeSaveData = $state(false);
+  let includeSyncLog = $state(false);
+  let showSyncLog = $state(false);
+  let syncLog = $derived(
+    syncSwitchOn && includeSyncLog
+      ? syncDiagnostics.snapshot(version, userState.syncLane?.kind ?? "manual")
+      : undefined,
+  );
   let showProgressInfo = $state(false);
   let showSaveDataPreview = $state(false);
   let submitting = $state(false);
@@ -90,7 +100,7 @@
     if (!includeSaveData) return "";
     try {
       const exported = JSON.parse(userState.exportBackup()) as SerializedState;
-      return JSON.stringify(exported.progress, null, 2);
+      return JSON.stringify(progressAttachment(exported.progress), null, 2);
     } catch {
       return "(could not load progress data)";
     }
@@ -253,7 +263,7 @@
       if (includeSaveData) {
         try {
           const exported = JSON.parse(userState.exportBackup()) as SerializedState;
-          saveData = exported.progress;
+          saveData = progressAttachment(exported.progress);
         } catch {
           // Serialization failed; submit without save data
         }
@@ -267,6 +277,7 @@
           message: message.trim(),
           saveData,
           selectedElement,
+          syncLog,
           turnstileToken,
         }),
         headers: { "Content-Type": "application/json" },
@@ -295,6 +306,8 @@
       messageTouched = false;
       emailTouched = false;
       includeSaveData = false;
+      includeSyncLog = false;
+      showSyncLog = false;
       showProgressInfo = false;
       showSaveDataPreview = false;
       selectedElement = undefined;
@@ -475,6 +488,49 @@
                 >{saveDataPreview}</pre>
               {/if}
             </div>
+          {/if}
+
+          {#if syncSwitchOn}
+            <div class="flex items-center gap-2">
+              <Checkbox
+                class="rounded-sm"
+                id="include-sync-log"
+                checked={includeSyncLog}
+                onCheckedChange={(checked) => {
+                  includeSyncLog = checked;
+                  if (!checked) showSyncLog = false;
+                }}
+              />
+              <label for="include-sync-log" class="flex-1 text-xs select-none">
+                {m.feedback_attach_sync_log()}
+              </label>
+            </div>
+            {#if includeSyncLog}
+              <div class="space-y-1 pl-7">
+                <p class="text-2xs leading-relaxed text-muted-foreground">
+                  {m.feedback_sync_log_description()}
+                </p>
+                <button
+                  class="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground"
+                  type="button"
+                  aria-expanded={showSyncLog}
+                  onclick={() => {
+                    showSyncLog = !showSyncLog;
+                  }}
+                >
+                  <IconChevronDown class="size-3" />
+                  {showSyncLog ? m.feedback_hide_sync_log() : m.feedback_show_sync_log()}
+                </button>
+                {#if showSyncLog}
+                  <pre
+                    class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-2xs leading-tight">{JSON.stringify(
+                      syncLog,
+                      null,
+                      2,
+                    )}</pre>
+                {/if}
+              </div>
+            {/if}
           {/if}
 
           <div class="flex items-center gap-2">

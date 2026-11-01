@@ -1,5 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "feedback_attach_sync_log": "Attach my save file sync log",
+  "feedback_sync_log_description": "Recent sync activity from this tab will be public, including your game version and any game IDs we didn’t recognize. We take out your character and farm names and your sync links, and your farm number is hashed.",
+  "feedback_show_sync_log": "Show sync log",
+  "feedback_hide_sync_log": "Hide sync log",
   "everything_group_by": "Group by",
   "everything_group_category": "Category",
   "everything_group_source": "Source",
