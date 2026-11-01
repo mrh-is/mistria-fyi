@@ -6,11 +6,14 @@
   import IconSparkles from "@tabler/icons-svelte-runes/icons/sparkles";
 
   import StatusNote from "#lib/components/status-note.svelte";
+  import SaveDrop from "#lib/components/sync/save-drop.svelte";
   import SyncTagDialog from "#lib/components/sync/sync-tag-dialog.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import { getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncCourier } from "#lib/sync/courier-state.svelte.js";
+  import { guessPlatform } from "#lib/sync/save-folders.js";
   import { makeNewCode, stopSyncing } from "#lib/sync/sharing.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
@@ -34,6 +37,10 @@
   let newCodeFailed = $state(false);
   let working = $state(false);
 
+  const courier = $derived(syncCourier.status);
+  // Where the save file isn't watched, this card takes each new one.
+  const takesSaves = $derived(courier.source === "file" || courier.source === "none");
+  const platform = guessPlatform();
   const lastImport = $derived(userState.state.lastImport);
   const lastSaveAt = $derived(userState.syncFreshness?.modified ?? lastImport?.importedAt);
   const lastSaveTime = $derived(
@@ -82,10 +89,15 @@
   {:else}
     <div class="sync-card">
       <dl class="sync-card__facts">
-        <dt>{m.sync_panel_from()}</dt>
-        <dd>
-          {lane.kind === "computer" ? m.sync_panel_from_here() : m.sync_panel_from_computer()}
-        </dd>
+        {#if lane.kind === "computer" && courier.fileName}
+          <dt>{m.sync_panel_file()}</dt>
+          <dd>{courier.fileName}</dd>
+        {:else}
+          <dt>{m.sync_panel_from()}</dt>
+          <dd>
+            {lane.kind === "computer" ? m.sync_panel_from_here() : m.sync_panel_from_computer()}
+          </dd>
+        {/if}
         {#if lastSaveTime}
           <dt>{m.sync_panel_last()}</dt>
           <dd>{lastSaveTime}</dd>
@@ -104,7 +116,12 @@
         {/if}
       </dl>
 
-      {#if lane.kind === "computer"}
+      {#if lane.kind === "computer" && takesSaves}
+        <p class="sync-card__note">{m.sync_done_redrop()}</p>
+        <div class="sync-card__drop">
+          <SaveDrop label={m.sync_redrop_label()} onsource={syncCourier.offer} {platform} />
+        </div>
+      {:else if lane.kind === "computer"}
         <p class="sync-card__note">{m.sync_status_keep_open()}</p>
       {/if}
 
@@ -228,6 +245,12 @@
 
   .sync-card__code {
     margin-inline: -1rem;
+  }
+
+  .sync-card__drop {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   /* Each action carries a line saying what it's for. */

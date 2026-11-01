@@ -111,6 +111,9 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
     Exports never include it; a restore keeps this device's and never brings one in; a progress
     reset keeps it (all but the receipt) and a full reset clears it. Provenance & resolved diffs
     live in `progress`, so they travel with backups.
+- **`mistria-fyi:sync-uploads`** holds the sync courier's upload counter & the mailbox & hash of its
+  last upload, apart from progress so nothing that blocks or erases progress touches them
+  ([sync.md](sync.md#the-courier)).
 - **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
   `now`, `anytime`, & `later`, `showSpoilers`, and `everythingGrouping`, either `category` or
   `source`). The UI labels `anytime` “Whenever”; the stored value keeps its original name. These are
@@ -486,7 +489,7 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
 - **Unlocalized paths:** `/api/feedback`, `/sitemap.xml`, & `/licenses.txt` (the build-generated
   open-source notices, linked from the About page; see `src/lib/build/licenses.ts`).
 - **Storage keys:** `mistria-fyi:progress`, `mistria-fyi:progress-quarantine`,
-  `mistria-fyi:preferences`, & `mistria-fyi:theme`.
+  `mistria-fyi:preferences`, `mistria-fyi:sync-uploads`, & `mistria-fyi:theme`.
 - **Stored progress & backups:** whatever any earlier build stored or exported keeps loading in
   every later build, and a build never overwrites or quarantines data a newer build wrote (see
   [localStorage](#localstorage)).

@@ -15,3 +15,8 @@ export const PROGRESS_WRITE_LOCK = "mistria-fyi:progress-write";
 export const QUARANTINE_STORAGE_KEY = "mistria-fyi:progress-quarantine";
 /** This device's display preferences, kept out of backups. */
 export const PREFERENCES_STORAGE_KEY = "mistria-fyi:preferences";
+/**
+ * The courier's upload counter & what it last uploaded. It lives apart from progress, so a blocked
+ * store never holds an upload back & no erase, stop, or new code resets the counter.
+ */
+export const SYNC_UPLOADS_STORAGE_KEY = "mistria-fyi:sync-uploads";

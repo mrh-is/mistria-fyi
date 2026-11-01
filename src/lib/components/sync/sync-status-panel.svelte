@@ -1,11 +1,13 @@
 <script lang="ts">
   import IconSettings from "@tabler/icons-svelte-runes/icons/settings";
+  import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
 
   import StatusNote from "#lib/components/status-note.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import { getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
@@ -66,7 +68,12 @@
     {/if}
   </dl>
 
-  {#if lane?.kind === "computer"}
+  {#if lane?.kind === "computer" && (syncCourier.status.source === "file" || syncCourier.status.source === "none")}
+    <a class="sync-panel__link" href={localizedHref("data")}>
+      <IconUpload class="size-4" aria-hidden="true" />
+      {m.sync_redrop_label()}
+    </a>
+  {:else if lane?.kind === "computer"}
     <p class="sync-panel__note">{m.sync_status_keep_open()}</p>
   {/if}
 

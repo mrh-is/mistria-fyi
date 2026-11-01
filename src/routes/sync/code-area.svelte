@@ -3,11 +3,13 @@
   import IconLink from "@tabler/icons-svelte-runes/icons/link";
   import IconLoader2 from "@tabler/icons-svelte-runes/icons/loader-2";
   import IconPlayerPause from "@tabler/icons-svelte-runes/icons/player-pause";
+  import { onMount } from "svelte";
 
   import StatusNote from "#lib/components/status-note.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { buildFollowLink } from "#lib/sync/follow.js";
   import { shareCode, shareFailureCopy } from "#lib/sync/sharing.js";
 
@@ -61,14 +63,23 @@
     };
   });
 
+  // A code shown again might be getting scanned right now, so it's worth checking what it holds.
+  onMount(() => {
+    if (revealed && sharedKey) void syncCourier.check();
+  });
+
   /** Makes the code on first use; reveals it only once its mailbox exists. */
   async function ensureCode(): Promise<boolean> {
-    if (sharedKey) return true;
+    if (sharedKey) {
+      void syncCourier.check();
+      return true;
+    }
     codeState = "making";
     failure = null;
     const result = await shareCode();
     if (result.kind === "shared") {
       onshared?.();
+      void syncCourier.check();
       return true;
     }
     failure = shareFailureCopy(result);

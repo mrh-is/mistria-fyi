@@ -26,6 +26,8 @@ export const RELAY_ORIGIN = "https://relay.mistria.fyi";
 
 /** How long a read may take. The receiver reads in turn, so a hung one would hold up what follows. */
 const READ_TIMEOUT_MS = 30_000;
+/** How long an upload may take, well past the 256 KB a slow connection has to send. */
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 const KEY_BYTES = 32;
 const WRITE_TOKEN_BYTES = 32;
@@ -342,10 +344,31 @@ export type ReadResult =
 
 export type RetireResult = RelayFailure | { kind: "retired" };
 
+/**
+ * What an upload did. `conflict` is a counter at or below the mailbox's high-water mark that isn't
+ * an identical retry; `retired` covers a mailbox that's gone for any reason.
+ */
+export type UploadResult =
+  | RelayFailure
+  | { kind: "conflict" }
+  | { kind: "retired" }
+  | { kind: "stored" }
+  | { kind: "too-large" };
+
+/** One sealed envelope, as it's sent & what its additional data authenticated. */
+export interface SealedEnvelope extends EnvelopeContext {
+  envelope: Uint8Array<ArrayBuffer>;
+}
+
 export interface RelayClient {
   create: (mailboxId: MailboxId, token: WriteToken, turnstile: string) => Promise<CreateResult>;
   read: (mailboxId: MailboxId) => Promise<ReadResult>;
   retire: (mailboxId: MailboxId, token: WriteToken) => Promise<RetireResult>;
+  upload: (
+    mailboxId: MailboxId,
+    token: WriteToken,
+    sealed: SealedEnvelope,
+  ) => Promise<UploadResult>;
 }
 
 async function stateOf(response: Response): Promise<{ state?: unknown; until?: unknown }> {
@@ -435,6 +458,25 @@ export function createRelayClient(
       if (response === undefined) return { kind: "unreachable" };
       // A `410` is also a terminal acknowledgment: an earlier attempt landed.
       if (response.status === 200 || response.status === 410) return { kind: "retired" };
+      return failureOf(response);
+    },
+    async upload(mailboxId, token, { counter, envelope, version }) {
+      const response = await send(`${mailboxUrl(mailboxId)}/envelope`, {
+        body: envelope,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/octet-stream",
+          "X-Sync-Counter": String(counter),
+          "X-Sync-Version": String(version),
+        },
+        method: "PUT",
+        signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
+      });
+      if (response === undefined) return { kind: "unreachable" };
+      if (response.status === 200) return { kind: "stored" };
+      if (response.status === 404 || response.status === 410) return { kind: "retired" };
+      if (response.status === 409) return { kind: "conflict" };
+      if (response.status === 413) return { kind: "too-large" };
       return failureOf(response);
     },
   };

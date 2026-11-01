@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { MAX_COMPRESSED_SIZE, parseSavArchive, SavArchiveError } from "./parse-sav.js";
+import {
+  MAX_COMPRESSED_SIZE,
+  parseSavArchive,
+  pruneSavArchive,
+  SavArchiveError,
+} from "./parse-sav.js";
 
 import type { SavArchiveErrorDetail } from "./parse-sav.js";
 
@@ -280,5 +285,53 @@ describe("parseSavArchive size bounds", () => {
     const file = await compressToFile(buildRawSav({ quests: text }));
 
     await expectSavArchiveError(parseSavArchive(file), { code: "invalid-entry", entry: "quests" });
+  });
+});
+
+// ─── pruneSavArchive ──────────────────────────────────────────────────
+
+async function pruned(entries: Record<string, object | string>): Promise<File> {
+  const file = await compressToFile(buildRawSav(entries), "game-123456-autosave.sav");
+  return new File([await pruneSavArchive(file)], file.name);
+}
+
+describe("pruneSavArchive", () => {
+  it("drops the sections no importer reads, keeping the format & the rest", async () => {
+    const keptQuests = { completed_quests: ["a"] };
+    const result = await pruned({
+      date_photos: { photos: 1 },
+      farm: { tiles: 2 },
+      game_stats: { stats: 3 },
+      gamedata: { date: 4 },
+      quests: keptQuests,
+      unknown_section: { kept: true },
+    });
+
+    const bundle = await parseSavArchive(result);
+    expect(bundle.gamedata).toEqual({ date: 4 });
+    expect(bundle.quests).toEqual(keptQuests);
+
+    const stream = result.stream().pipeThrough(new DecompressionStream("deflate"));
+    const text = new TextDecoder().decode(await new Response(stream).arrayBuffer());
+    expect(text).toContain("unknown_section");
+    expect(text).not.toContain("game_stats");
+    expect(text).not.toContain("date_photos");
+    expect(text).not.toContain("tiles");
+    // Five entries went in & the count says three came out.
+    expect(new DataView(new TextEncoder().encode(text).buffer).getUint8(0)).toBe(3);
+  });
+
+  it("keeps entries it can't parse as they were", async () => {
+    const result = await pruned({ gamedata: { date: 4 }, opaque: "{not json" });
+    const stream = result.stream().pipeThrough(new DecompressionStream("deflate"));
+    expect(new TextDecoder().decode(await new Response(stream).arrayBuffer())).toContain(
+      "{not json",
+    );
+  });
+
+  it("refuses what isn't a save", async () => {
+    await expectSavArchiveError(pruneSavArchive(new File(["nope"], "a.sav")), { code: "corrupt" });
+    const noProgress = await compressToFile(buildRawSav({ farm: {} }));
+    await expectSavArchiveError(pruneSavArchive(noProgress), { code: "no-save-data" });
   });
 });

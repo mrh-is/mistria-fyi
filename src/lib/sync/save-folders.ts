@@ -8,6 +8,15 @@ export const SAVE_FOLDERS: Readonly<Record<SaveFolderPlatform, string>> = {
   windows: String.raw`%LOCALAPPDATA%\FieldsOfMistria\saves`,
 };
 
+/** The platform whose copy a surface with no platform picker of its own shows. */
+export function guessPlatform(
+  userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent,
+): SaveFolderPlatform {
+  if (userAgent.includes("Macintosh")) return "mac";
+  if (userAgent.includes("Linux") || userAgent.includes("X11")) return "linux";
+  return "windows";
+}
+
 /** An example file name, shown as the folder's contents. */
 export const AUTOSAVE_EXAMPLE = "game-[numbers]-autosave.sav";
 

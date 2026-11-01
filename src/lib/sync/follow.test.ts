@@ -46,6 +46,7 @@ function relayStub(overrides: Partial<RelayClient> = {}): RelayClient {
     create: vi.fn(() => Promise.resolve({ kind: "created" as const })),
     read: vi.fn(() => Promise.resolve({ kind: "empty" as const })),
     retire: vi.fn(() => Promise.resolve({ kind: "retired" as const })),
+    upload: vi.fn(() => Promise.resolve({ kind: "stored" as const })),
     ...overrides,
   };
 }
@@ -231,6 +232,43 @@ describe("the relay client", () => {
     });
     expect(await relay.read("id")).toEqual({ kind: "empty" });
     expect(await relay.read("id")).toEqual({ kind: "retired" });
+  });
+
+  it("uploads with only the protocol version & counter beside the envelope", async () => {
+    const envelope = new Uint8Array([1, 2, 3]);
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}", { status: 200 }));
+    const relay = createRelayClient("https://relay.test", fetcher);
+    expect(await relay.upload("id", "token", { counter: 7, envelope, version: 1 })).toEqual({
+      kind: "stored",
+    });
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://relay.test/v1/mailboxes/id/envelope",
+      expect.objectContaining({
+        body: envelope,
+        headers: {
+          Authorization: "Bearer token",
+          "Content-Type": "application/octet-stream",
+          "X-Sync-Counter": "7",
+          "X-Sync-Version": "1",
+        },
+        method: "PUT",
+      }),
+    );
+  });
+
+  it.each([
+    [404, "retired"],
+    [410, "retired"],
+    [409, "conflict"],
+    [413, "too-large"],
+    [500, "unreachable"],
+  ])("reads an upload's %i as %s", async (status, kind) => {
+    const relay = createRelayClient("https://relay.test", () =>
+      Promise.resolve(new Response("{}", { status })),
+    );
+    expect(
+      await relay.upload("id", "token", { counter: 1, envelope: new Uint8Array(), version: 1 }),
+    ).toEqual({ kind });
   });
 
   it("counts a 410 as a confirmed retire & a network failure as unreachable", async () => {
