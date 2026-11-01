@@ -34,7 +34,25 @@ interface Comment {
   user: { id: number };
 }
 
-/** Upload first, then replace our existing report with its rewritten attachment URLs. */
+const MARKER = "<!-- visual-diff-pilot -->";
+
+/** Every marked report on the PR, oldest first, whoever wrote it. */
+async function markedComments(gh: Gh, repository: string, number: number): Promise<Comment[]> {
+  const pages = JSON.parse(
+    await gh([
+      "api",
+      "--paginate",
+      "--slurp",
+      `repos/${repository}/issues/${number}/comments?per_page=100`,
+    ]),
+  ) as Comment[][];
+  return pages.flat().filter((comment) => comment.body.startsWith(MARKER));
+}
+
+/**
+ * Upload first, then replace our oldest report with its rewritten attachment URLs. Any other
+ * report by the same author, such as one left by an interrupted run, is removed too.
+ */
 async function keepOneReport(
   gh: Gh,
   repository: string,
@@ -54,27 +72,16 @@ async function keepOneReport(
   const created = JSON.parse(
     await gh(["api", `repos/${repository}/issues/comments/${match[1]}`]),
   ) as Comment;
-  const pages = JSON.parse(
-    await gh([
-      "api",
-      "--paginate",
-      "--slurp",
-      `repos/${repository}/issues/${number}/comments?per_page=100`,
-    ]),
-  ) as Comment[][];
-  const previous = pages
-    .flat()
-    .find(
-      (comment) =>
-        comment.id !== created.id &&
-        comment.user.id === created.user.id &&
-        comment.body.startsWith("<!-- visual-diff-pilot -->"),
-    );
+  const marked = await markedComments(gh, repository, number);
+  const own = marked.filter(
+    (comment) => comment.id !== created.id && comment.user.id === created.user.id,
+  );
+  const [previous, ...orphans] = own;
   if (!previous) return;
   if (
-    !Number.isSafeInteger(previous.id) ||
+    own.some((comment) => !Number.isSafeInteger(comment.id)) ||
     !Number.isSafeInteger(created.id) ||
-    !created.body.startsWith("<!-- visual-diff-pilot -->")
+    !created.body.startsWith(MARKER)
   ) {
     throw new Error("Invalid managed visual comment");
   }
@@ -88,8 +95,12 @@ async function keepOneReport(
     "--input",
     file,
   ]);
-  // The stable comment now contains the uploaded images. Remove only our temporary duplicate.
-  await gh(["api", "--method", "DELETE", `repos/${repository}/issues/comments/${created.id}`]);
+  // The stable comment now contains the uploaded images. Remove only our own duplicates.
+  await Promise.all(
+    [...orphans, created].map(async (comment) => {
+      await gh(["api", "--method", "DELETE", `repos/${repository}/issues/comments/${comment.id}`]);
+    }),
+  );
 }
 
 /** Artifact text is never executed or copied into Markdown. Only bounded numeric metrics survive. */
@@ -238,7 +249,7 @@ export async function publishVisualDiff(options: {
   const elapsed = Math.round((Date.parse(run.updated_at) - Date.parse(run.created_at)) / 1000);
   const reportBody = (attached: string[], uploadFailed: boolean) =>
     [
-      "<!-- visual-diff-pilot -->",
+      MARKER,
       "## Visual-diff pilot",
       "",
       `Commit: ${run.head_sha}. [Capture run & downloadable report](${runUrl}).`,
@@ -292,13 +303,28 @@ export async function publishVisualDiff(options: {
         ...attached.flatMap((path) => ["--attach", path]),
       ]);
     };
+    const before = await markedComments(gh, repository, candidate.number);
+    const existing = new Set(before.map((entry) => entry.id));
     let posted: string;
     try {
       posted = await comment(images, false);
     } catch (error) {
-      // The job token’s attachment upload is unproven, so a rejected upload still reports metrics.
-      if (images.length === 0) throw error;
-      posted = await comment([], true);
+      // A failed command may still have created the comment; adopt it instead of posting twice.
+      const after = await markedComments(gh, repository, candidate.number);
+      const landed = after.find(
+        (entry) => !existing.has(entry.id) && entry.body.includes(`Commit: ${run.head_sha}.`),
+      );
+      if (landed) {
+        posted = `https://github.com/${repository}/pull/${candidate.number}#issuecomment-${landed.id}`;
+      } else {
+        // The job token’s attachment upload is unproven, so a rejected upload still reports metrics.
+        if (images.length === 0) throw error;
+        const latest = JSON.parse(
+          await gh(["api", `repos/${repository}/pulls/${candidate.number}`]),
+        ) as PullRequest;
+        if (latest.state !== "open" || latest.head.sha !== run.head_sha) return false;
+        posted = await comment([], true);
+      }
     }
     await keepOneReport(gh, repository, candidate.number, posted, temporary);
   } finally {

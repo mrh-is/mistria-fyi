@@ -63,7 +63,9 @@ exercised locally against a real capture run with an authenticated CLI.
 
 Local runs use a personal token, but the workflow uses the job’s `GITHUB_TOKEN`, whose attachment
 upload hasn’t been proven yet. If GitHub rejects the upload, the publisher posts the metrics table
-without sheets and points to the capture run’s downloadable report.
+without sheets and points to the capture run’s downloadable report. If the failed command created
+the comment anyway, the publisher adopts that comment instead of posting again. Each publication
+also removes any earlier duplicate reports by the same author.
 
 ## Local commands
 
@@ -111,8 +113,9 @@ category. It cannot judge game artwork because sprites are synthetic. It does no
 below-the-fold content, physical mobile input, populated progress, errors, other browsers, or
 accessibility behavior. A changed state selector or storage contract causes a capture failure; that
 is reported rather than replaced with a different state. The head serializes the shared state, so
-after a storage schema bump the base build rejects it as a newer build’s data. The capture treats
-the resulting persistence toast as a failure, not as a visual difference.
+after a storage schema bump the base build rejects it as a newer build’s data. The capture records
+any toast from page start and fails when one appeared before the screenshot finished, so the
+resulting persistence toast is a failure, not a visual difference. A failed capture saves no image.
 
 The [manual visual checklist](agent-verification.md#visual-checklist), its screenshot cap, existing
 accessibility suites, & interaction checks remain required. This pilot does not authorize replacing

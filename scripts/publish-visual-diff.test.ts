@@ -227,6 +227,74 @@ describe("visual report publication", () => {
     expect(gh.mock.calls.filter(([args]) => args[0] === "pr")).toHaveLength(2);
   });
 
+  it("adopts a comment the failed command already created instead of posting twice", async () => {
+    const previous = { body: "<!-- visual-diff-pilot --> previous", id: 3, user: { id: 1 } };
+    let created: undefined | { body: string; id: number; user: { id: number } };
+    const gh = vi.fn((args: string[]) => {
+      if (args[0] === "pr") {
+        const body = readFileSync(args[args.indexOf("--body-file") + 1], "utf8");
+        created = { body, id: 7, user: { id: 1 } };
+        throw new Error("response timed out");
+      }
+      if (args.includes("--paginate")) {
+        return JSON.stringify([created ? [previous, created] : [previous]]);
+      }
+      if (args.includes("PATCH") || args.includes("DELETE")) return "";
+      if (args[1].endsWith("/issues/comments/7")) return JSON.stringify(created);
+      return JSON.stringify(args[1].includes("actions/runs") ? run : pr);
+    });
+    await publishVisualDiff({ directory: completeReport(metrics), gh, repository, runId: "123" });
+    expect(gh.mock.calls.filter(([args]) => args[0] === "pr")).toHaveLength(1);
+    expect(gh.mock.calls.at(-2)?.[0]).toContain("repos/owner/repo/issues/comments/3");
+    expect(gh.mock.calls.at(-1)?.[0]).toContain("repos/owner/repo/issues/comments/7");
+  });
+
+  it("rethrows a failed post that had no sheets to drop", async () => {
+    const gh = vi.fn((args: string[]) => {
+      if (args[0] === "pr") throw new Error("rate limited");
+      if (args.includes("--paginate")) return "[[]]";
+      return JSON.stringify(args[1].includes("actions/runs") ? run : pr);
+    });
+    await expect(
+      publishVisualDiff({ directory: directory(), gh, repository, runId: "123" }),
+    ).rejects.toThrow("rate limited");
+    expect(gh.mock.calls.filter(([args]) => args[0] === "pr")).toHaveLength(1);
+  });
+
+  it("removes its own reports orphaned by an interrupted run", async () => {
+    let body = "";
+    const gh = vi.fn((args: string[]) => {
+      if (args[0] === "pr") {
+        body = readFileSync(args[args.indexOf("--body-file") + 1], "utf8");
+        return "https://github.com/owner/repo/pull/332#issuecomment-5";
+      }
+      if (args.includes("--paginate")) {
+        return JSON.stringify([
+          [
+            { body: "<!-- visual-diff-pilot --> stable", id: 3, user: { id: 1 } },
+            { body: "<!-- visual-diff-pilot --> other author", id: 4, user: { id: 2 } },
+            { body: "<!-- visual-diff-pilot --> orphan", id: 6, user: { id: 1 } },
+          ],
+        ]);
+      }
+      if (args.includes("PATCH") || args.includes("DELETE")) return "";
+      if (args[1].endsWith("/issues/comments/5")) {
+        return JSON.stringify({ body, id: 5, user: { id: 1 } });
+      }
+      return JSON.stringify(args[1].includes("actions/runs") ? run : pr);
+    });
+    await publishVisualDiff({ directory: directory(), gh, repository, runId: "123" });
+    const mutated = gh.mock.calls
+      .map(([args]) => args)
+      .filter((args) => args.includes("PATCH") || args.includes("DELETE"))
+      .map((args) => `${args[2]} ${args[3]}`);
+    expect(mutated).toEqual([
+      "PATCH repos/owner/repo/issues/comments/3",
+      "DELETE repos/owner/repo/issues/comments/6",
+      "DELETE repos/owner/repo/issues/comments/5",
+    ]);
+  });
+
   it("updates only its own marked report & removes its temporary duplicate after the update", async () => {
     let body = "";
     let updated = "";

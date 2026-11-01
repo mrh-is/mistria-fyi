@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { SATOSHI_PATH, verifySatoshi } from "../../scripts/playwright-satoshi.js";
@@ -20,6 +20,16 @@ for (const capture of visualCases) {
     await page.setViewportSize({ height: 720, width: capture.width });
     await page.emulateMedia({ colorScheme: capture.theme, reducedMotion: "reduce" });
     await page.clock.setFixedTime(new Date("2026-01-15T12:00:00Z"));
+    // The head serializes this state for both builds. A base build that can't load it (such as
+    // after a storage schema bump) shows a persistence toast, which would otherwise read as a diff.
+    // Record any toast from the first paint, since one could appear after a single DOM check.
+    await page.addInitScript(() => {
+      new MutationObserver((_records, observer) => {
+        if (!document.querySelector("[data-sonner-toast]")) return;
+        sessionStorage.setItem("visual-toast-seen", "true");
+        observer.disconnect();
+      }).observe(document, { childList: true, subtree: true });
+    });
     await initializeApplication(page, capture.theme, state);
     await gotoRenderedApplication(page, capture.route === "home" ? "/en" : "/en/almanac");
     await expectResolvedTheme(page, capture.theme);
@@ -36,20 +46,14 @@ for (const capture of visualCases) {
       }),
       "Visual captures require the pinned Satoshi font",
     ).toBe(true);
-    // The head serializes this state for both builds. A base build that can't load it (such as
-    // after a storage schema bump) shows a persistence toast, which would otherwise read as a diff.
-    await expect(
-      // oxlint-disable-next-line playwright/no-raw-locators -- Sonner exposes toasts only by data attribute
-      page.locator("[data-sonner-toast]"),
+    const image = await page.screenshot({ animations: "disabled", caret: "hide", scale: "css" });
+    // Checked after the capture, and before it's saved, so a toast in the image always fails.
+    expect(
+      await page.evaluate(() => sessionStorage.getItem("visual-toast-seen")),
       "Visual captures require the base build to load the shared state",
-    ).toHaveCount(0);
+    ).toBeNull();
     const directory = join(".playwright-artifacts/visual", process.env.VISUAL_REVISION ?? "head");
     mkdirSync(directory, { recursive: true });
-    await page.screenshot({
-      animations: "disabled",
-      caret: "hide",
-      path: join(directory, `${capture.id}-${testInfo.repeatEachIndex}.png`),
-      scale: "css",
-    });
+    writeFileSync(join(directory, `${capture.id}-${testInfo.repeatEachIndex}.png`), image);
   });
 }
