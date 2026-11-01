@@ -7,6 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { readGuardMessage } from "./guard-generated-reads.js";
 
 const roots: string[] = [];
+const search = (command: string, cwd: string) =>
+  readGuardMessage({ cwd, tool_input: { command }, tool_name: "Bash" });
 afterEach(() => {
   for (const root of roots.splice(0)) {
     rmSync(root, { force: true, recursive: true });
@@ -178,23 +180,53 @@ describe("generated-data read guard", () => {
     expect(spawnSync("git", ["init", "-q"], { cwd: root }).status).toBe(0);
     mkdirSync(join(root, "src"));
     writeFileSync(join(root, ".env.r2-upload"), "R2_UPLOAD_TOKEN=synthetic\n");
-    const search = (command: string, cwd = root) =>
-      readGuardMessage({ cwd, tool_input: { command }, tool_name: "Bash" });
-
     for (const command of [
       "grep -rn R2_UPLOAD_TOKEN .",
       "grep -R TOKEN",
       "rg -uu R2_UPLOAD_TOKEN",
       "git grep --no-index TOKEN",
     ]) {
-      expect(search(command), command).toContain("R2 upload token file");
+      expect(search(command, root), command).toContain("R2 upload token file");
     }
-    expect(search("rg R2_UPLOAD_TOKEN")).toBeUndefined();
-    expect(search("grep -rn R2_UPLOAD_TOKEN src")).toBeUndefined();
+    expect(search("rg R2_UPLOAD_TOKEN", root)).toBeUndefined();
+    expect(search("grep -rn R2_UPLOAD_TOKEN src", root)).toBeUndefined();
     expect(search("grep -rn R2_UPLOAD_TOKEN .", join(root, "src"))).toBeUndefined();
     expect(search("grep -rn R2_UPLOAD_TOKEN ..", join(root, "src"))).toContain(
       "R2 upload token file",
     );
+  });
+
+  it("denies recursive searches that reach the token file through a symlinked path", () => {
+    const parent = mkdtempSync(join(tmpdir(), "agent-read-"));
+    roots.push(parent);
+    const root = join(parent, "checkout");
+    const alias = join(parent, "alias");
+    mkdirSync(join(root, "src"), { recursive: true });
+    expect(spawnSync("git", ["init", "-q"], { cwd: root }).status).toBe(0);
+    writeFileSync(join(root, ".env.r2-upload"), "R2_UPLOAD_TOKEN=synthetic\n");
+    symlinkSync(root, alias);
+
+    expect(search("grep -rn R2_UPLOAD_TOKEN .", alias)).toContain("R2 upload token file");
+    expect(search("grep -R TOKEN", alias)).toContain("R2 upload token file");
+    expect(search("grep -rn R2_UPLOAD_TOKEN ..", join(alias, "src"))).toContain(
+      "R2 upload token file",
+    );
+    expect(search("grep -rn R2_UPLOAD_TOKEN .", join(alias, "src"))).toBeUndefined();
+    expect(search("rg R2_UPLOAD_TOKEN", alias)).toBeUndefined();
+  });
+
+  it("denies recursive searches when the token file itself is a symlink out of the checkout", () => {
+    const parent = mkdtempSync(join(tmpdir(), "agent-read-"));
+    roots.push(parent);
+    const root = join(parent, "checkout");
+    const secret = join(parent, "synthetic-r2-token");
+    mkdirSync(root);
+    expect(spawnSync("git", ["init", "-q"], { cwd: root }).status).toBe(0);
+    writeFileSync(secret, "R2_UPLOAD_TOKEN=synthetic\n");
+    symlinkSync(secret, join(root, ".env.r2-upload"));
+
+    expect(search("grep -R TOKEN .", root)).toContain("R2 upload token file");
+    expect(search("grep -rn TOKEN", root)).toContain("R2 upload token file");
   });
 
   it("denies token paths even when their files are symlinked elsewhere", () => {

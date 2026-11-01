@@ -79,7 +79,10 @@ function r2TokenFiles(cwd: string): string[] {
       // Outside a Git checkout, there is no token file to reach.
     }
   }
-  return roots.map((root) => join(root, R2_TOKEN_FILE)).filter((file) => existsSync(file));
+  // Canonicalize the root, not the file: a symlinked token file still sits in the checkout.
+  return roots
+    .map((root) => join(canonicalPath(root, "."), R2_TOKEN_FILE))
+    .filter((file) => existsSync(file));
 }
 
 /** Whether a recursive search in `command` would read an existing R2 token file. */
@@ -91,13 +94,14 @@ function searchesR2TokenFile(command: string, cwd: string): boolean {
     return false;
   }
   const files = r2TokenFiles(cwd);
+  // Compare physical paths: Git reports roots through symlinks such as macOS's `/var` → `/private/var`.
   return searches.some(({ command: segment }) => {
     const directories = shellPaths(segment)
       // Skip options, including `findstr`'s `/s` style.
       .filter((arg) => !arg.startsWith("-") && !/^\/[a-z]$/i.test(arg))
-      .map((arg) => resolve(cwd, arg))
+      .map((arg) => canonicalPath(cwd, arg))
       .filter((path) => existsSync(path) && statSync(path).isDirectory());
-    const roots = directories.length > 0 ? directories : [cwd];
+    const roots = directories.length > 0 ? directories : [canonicalPath(cwd, ".")];
     return roots.some((root) => files.some((file) => within(root, file)));
   });
 }
