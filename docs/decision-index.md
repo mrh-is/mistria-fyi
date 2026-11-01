@@ -364,6 +364,15 @@ Evidence:
 [.github/workflows/ci.yml](../.github/workflows/ci.yml), [vite.config.ts](../vite.config.ts),
 [docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets).
 
+### [File issues by default](decisions/2026-11-01-file-issues-by-default.md)
+
+ID: 2026-11-01-file-issues-by-default. Status: Current.
+
+Agents file an issue for anything they find & don't fix, without asking, instead of offering to.
+
+Evidence: [AGENTS.md](../AGENTS.md),
+[https://github.com/mrh-is/mistria-fyi/issues/390](https://github.com/mrh-is/mistria-fyi/issues/390).
+
 ### [Gate production on CI](decisions/2026-11-01-gate-production-on-ci.md)
 
 ID: 2026-11-01-gate-production-on-ci. Status: Current.
@@ -378,14 +387,6 @@ Evidence:
 [tests/ci-workflow.isolated.test.ts](../tests/ci-workflow.isolated.test.ts),
 [tests/workflow-hardening.test.ts](../tests/workflow-hardening.test.ts),
 [docs/development-workflow.md#production-deployment](../docs/development-workflow.md#production-deployment).
-### [File issues by default](decisions/2026-11-01-file-issues-by-default.md)
-
-ID: 2026-11-01-file-issues-by-default. Status: Current.
-
-Agents file an issue for anything they find & don't fix, without asking, instead of offering to.
-
-Evidence: [AGENTS.md](../AGENTS.md),
-[https://github.com/mrh-is/mistria-fyi/issues/390](https://github.com/mrh-is/mistria-fyi/issues/390).
 
 ### [Pin real-save observations](decisions/2026-11-01-real-save-observations.md)
 
