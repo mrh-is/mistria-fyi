@@ -75,7 +75,10 @@ Each item names the doctor section that checks it.
 1. **Playwright browsers** (`browser`) for the accessibility & PWA suites, which only CI installs by
    default: `pnpm exec playwright install chromium`, which includes the headless shell that headless
    runs launch. The suites use Chromium only. The doctor checks the exact revisions the installed
-   Playwright expects.
+   Playwright expects. For an ad-hoc Firefox check (`pnpm exec playwright install firefox`), launch
+   it with `launchFirefox()` from `scripts/lib/playwright-firefox.ts`, not `firefox.launch()`. On
+   macOS, Firefox otherwise reads `~/Library/Application Support/Firefox`, which macOS denies to
+   processes without Full Disk Access, and it exits with “Could not find profile folder” (#287).
 2. **Game assets** (`pipeline`) for pipeline work: place or link them at `pipeline/input/` (see
    [game-version-update-protocol.md](game-version-update-protocol.md)). `pnpm run game-assets:share`
    copies them to the maintainer's shared drive.
