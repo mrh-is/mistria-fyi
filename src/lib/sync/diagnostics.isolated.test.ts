@@ -508,6 +508,37 @@ describe("public sync diagnostics", () => {
     ]);
   });
 
+  it("records the computer's upload results as bare outcomes", () => {
+    const log = createSyncDiagnostics();
+    const uploads = [
+      "uploaded",
+      "upload-paused",
+      "upload-rate-limited",
+      "upload-too-large",
+      "upload-unreachable",
+      "code-renewed",
+    ] as const;
+    for (const outcome of uploads) log.status(outcome);
+    const snapshot = log.snapshot("build", "computer");
+    expect(v.safeParse(SyncLogSchema, snapshot).success).toBe(true);
+    expect(snapshot?.events).toEqual(
+      uploads.map((outcome) => ({
+        farmHash: null,
+        gameVersion: null,
+        outcome,
+        policies: [],
+        unknownFields: [],
+      })),
+    );
+    // The closed schema takes no counter, mailbox ID, hash, or size beside an upload's outcome.
+    const [event] = snapshot?.events ?? [];
+    for (const extra of [{ counter: 3 }, { mailboxId: "m" }, { hash: "h" }, { size: 10 }]) {
+      expect(
+        v.safeParse(SyncLogSchema, { ...snapshot, events: [{ ...event, ...extra }] }).success,
+      ).toBe(false);
+    }
+  });
+
   it("collects and exports nothing with the production switch off", async () => {
     const log = createSyncDiagnostics();
     enabled.syncSwitchOn = false;

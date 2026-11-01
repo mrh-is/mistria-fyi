@@ -50,6 +50,13 @@ const OutcomeSchema = v.picklist([
   "update-computer",
   "update-here",
   "waiting",
+  // The courier's uploads, on the gaming computer.
+  "code-renewed",
+  "uploaded",
+  "upload-paused",
+  "upload-rate-limited",
+  "upload-too-large",
+  "upload-unreachable",
 ]);
 
 export const MAX_SYNC_EVENTS = 20;

@@ -401,8 +401,11 @@ export function applySync(
       history.resolutions[key] = { saveValue: save ?? null };
     }
   }
-  if (playtime !== undefined) {
+  if (playtime === undefined) {
+    history.lastSaveUnordered = true;
+  } else {
     history.lastSavePlaytime = playtime;
+    delete history.lastSaveUnordered;
     // Edits stamped after the save rolled back to keep beating it (they survived it), but the next
     // save that disagrees with them wins.
     if (rollback === "accepted") {
@@ -440,6 +443,8 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
   const local = progressFacts(progress);
   const resolved = Object.keys(history.resolutions);
   const comparison: Comparison = { differences: [], promotions: [], settled: [] };
+  // A household “keep mine” lapses when any fact it covered changes its save value, even to local.
+  let householdLapsed = false;
 
   for (const field of SYNC_FIELDS) {
     const extracted = extraction.fields[field];
@@ -465,7 +470,12 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
       const provenance = ownEntry(history.provenance, key);
       if (localValue === saveValue) {
         if (provenance && holdsGuess(provenance)) comparison.promotions.push(key);
-        if (resolution) comparison.settled.push(key);
+        if (resolution) {
+          comparison.settled.push(key);
+          if (isHouseholdFact(field, id) && !resolutionHolds(resolution, saveValue ?? null)) {
+            householdLapsed = true;
+          }
+        }
         continue;
       }
       const direction = rank(field, saveValue) > rank(field, localValue) ? "forward" : "backward";
@@ -512,6 +522,7 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
     isHouseholdFact(field, key.split("/")[1]),
   );
   if (
+    !householdLapsed &&
     household.length > 0 &&
     household.every(({ key, save }) =>
       resolutionHolds(ownEntry(history.resolutions, key), save ?? null),

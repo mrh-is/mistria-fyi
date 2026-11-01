@@ -364,6 +364,15 @@ Evidence:
 [.github/workflows/ci.yml](../.github/workflows/ci.yml), [vite.config.ts](../vite.config.ts),
 [docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets).
 
+### [File issues by default](decisions/2026-11-01-file-issues-by-default.md)
+
+ID: 2026-11-01-file-issues-by-default. Status: Current.
+
+Agents file an issue for anything they find & don't fix, without asking, instead of offering to.
+
+Evidence: [AGENTS.md](../AGENTS.md),
+[https://github.com/mrh-is/mistria-fyi/issues/390](https://github.com/mrh-is/mistria-fyi/issues/390).
+
 ### [Pin real-save observations](decisions/2026-11-01-real-save-observations.md)
 
 ID: 2026-11-01-real-save-observations. Status: Current.
@@ -376,6 +385,33 @@ Evidence:
 [src/lib/engine/import-save.observations.ts](../src/lib/engine/import-save.observations.ts),
 [docs/save-import-verification.md](../docs/save-import-verification.md).
 
+### [Run accessibility in two CI shards](decisions/2026-11-01-two-accessibility-shards.md)
+
+ID: 2026-11-01-two-accessibility-shards. Status: Current.
+
+CI runs accessibility in two duration-balanced shards plus a separate PWA job, trading about nine
+seconds of median turnaround for 18% less all-job runner time.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/13](https://github.com/mrh-is/mistria-fyi/issues/13),
+[https://github.com/mrh-is/mistria-fyi/issues/335](https://github.com/mrh-is/mistria-fyi/issues/335),
+[https://github.com/mrh-is/mistria-fyi/issues/379](https://github.com/mrh-is/mistria-fyi/issues/379),
+[docs/browser-ci-benchmark.md](../docs/browser-ci-benchmark.md),
+[.github/workflows/ci.yml](../.github/workflows/ci.yml).
+
+### [Record an unordered last save](decisions/2026-11-01-unordered-save-flag.md)
+
+ID: 2026-11-01-unordered-save-flag. Status: Current.
+
+Progress history records when the last applied save's playtime couldn't be read, so edits made after
+it record no playtime & a disagreeing save asks.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/362](https://github.com/mrh-is/mistria-fyi/issues/362),
+[src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts),
+[src/lib/stores/user-state-provenance.test.ts](../src/lib/stores/user-state-provenance.test.ts),
+[src/lib/stores/progress-storage.test.ts](../src/lib/stores/progress-storage.test.ts).
+
 ### [Keep Vitest retries visible](decisions/2026-11-01-visible-vitest-retries.md)
 
 ID: 2026-11-01-visible-vitest-retries. Status: Current.
@@ -387,6 +423,20 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/329](https://github.com/mrh-is/mistria-fyi/issues/329),
 [scripts/vitest-timings.ts](../scripts/vitest-timings.ts),
 [scripts/nightly-report.ts](../scripts/nightly-report.ts).
+
+### [Nonblocking visual comparisons](decisions/2026-11-01-visual-diff-pilot.md)
+
+ID: 2026-11-01-visual-diff-pilot. Status: Current.
+
+Compare two representative routes without gating CI, and isolate PR execution from privileged image
+publication.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/332](https://github.com/mrh-is/mistria-fyi/issues/332),
+[https://github.com/mrh-is/mistria-fyi/pull/369](https://github.com/mrh-is/mistria-fyi/pull/369),
+[.github/workflows/visual-diff.yml](../.github/workflows/visual-diff.yml),
+[.github/workflows/visual-diff-publish.yml](../.github/workflows/visual-diff-publish.yml),
+[docs/visual-diff-pilot.md](../docs/visual-diff-pilot.md).
 
 ## Partially superseded/amended
 

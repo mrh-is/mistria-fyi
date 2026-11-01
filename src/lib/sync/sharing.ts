@@ -20,6 +20,7 @@ import type {
   OpenResult,
   RelayClient,
   RelayFailure,
+  RetireResult,
   SharedCode,
   ShareResult,
 } from "./follow.js";
@@ -81,12 +82,123 @@ export function setTurnstileTokenSource(source: () => Promise<string>): void {
   turnstileToken = source;
 }
 
-/** Retries every pending retire once, & forgets the ones the relay confirmed. */
-export async function retryPendingRetires(): Promise<void> {
+const FIRST_RETIRE_RETRY_MS = 5000;
+const MAX_RETIRE_RETRY_MS = 5 * 60_000;
+
+let retireTimer: ReturnType<typeof setTimeout> | undefined;
+let retireDelay = FIRST_RETIRE_RETRY_MS;
+/** Attempts run one at a time, so a retire queued meanwhile is tried after the one under way. */
+let retiring: Promise<void> = Promise.resolve();
+/** Bumped by {@link keepRetiring}'s stop, so an attempt still under way schedules nothing after. */
+let retireGeneration = 0;
+/** The pending mailboxes this tab last knew of, so another tab's new retire wakes the retries. */
+let knownPending = "";
+
+function pendingIds(): string {
+  return userState.syncPendingRetires
+    .map(({ mailboxId }) => mailboxId)
+    .toSorted()
+    .join(",");
+}
+
+/**
+ * How long to wait before trying the failures again, or `undefined` when no retry can help: the
+ * relay refused every one, so only the next visit tries them again.
+ */
+function retireWait(failures: readonly RetireResult[]): number | undefined {
+  if (failures.length > 0 && failures.every(({ kind }) => kind === "refused")) return undefined;
+  let wait = retireDelay;
+  for (const failure of failures) {
+    if (failure.kind === "rate-limited" && failure.retryAfterSeconds !== undefined) {
+      wait = Math.max(wait, failure.retryAfterSeconds * 1000);
+    } else if (failure.kind === "paused" && failure.until !== undefined) {
+      wait = Math.max(wait, failure.until - Date.now());
+    }
+  }
+  return Math.min(wait, MAX_RETIRE_RETRY_MS);
+}
+
+async function attemptRetires(): Promise<void> {
+  const generation = retireGeneration;
+  clearTimeout(retireTimer);
+  retireTimer = undefined;
   const pending = userState.syncPendingRetires;
-  if (pending.length === 0) return;
-  const confirmed = await retirePending(relay, pending);
-  if (confirmed.length > 0) await userState.confirmRetired(confirmed);
+  let failures: RetireResult[] = [];
+  if (pending.length > 0) {
+    try {
+      const results = await retirePending(relay, pending);
+      const confirmed = pending.filter((_, index) => results[index]?.kind === "retired");
+      failures = results.filter(({ kind }) => kind !== "retired");
+      if (confirmed.length > 0) await userState.confirmRetired(confirmed);
+    } catch {
+      // The scheduled retry tries again.
+    }
+  }
+  knownPending = pendingIds();
+  if (generation !== retireGeneration) return;
+  if (userState.syncPendingRetires.length === 0) {
+    retireDelay = FIRST_RETIRE_RETRY_MS;
+    return;
+  }
+  const wait = retireWait(failures);
+  if (wait === undefined) return;
+  // A leaked code keeps working until this lands, so it retries like an upload does.
+  retireTimer = setTimeout(() => {
+    void queueAttempt();
+  }, wait);
+  retireDelay = Math.min(retireDelay * 2, MAX_RETIRE_RETRY_MS);
+}
+
+/**
+ * Retries every pending retire now, & forgets the ones the relay confirmed. Any still pending
+ * retry with backoff for as long as the page stays open.
+ */
+export function retryPendingRetires(): Promise<void> {
+  retireDelay = FIRST_RETIRE_RETRY_MS;
+  return queueAttempt();
+}
+
+function queueAttempt(): Promise<void> {
+  const previous = retiring;
+  retiring = (async () => {
+    await previous;
+    try {
+      await attemptRetires();
+    } catch {
+      // A failed attempt mustn't stop the ones queued behind it.
+    }
+  })();
+  return retiring;
+}
+
+function retryOnline(): void {
+  void retryPendingRetires();
+}
+
+/** Another tab queued a retire: this one tries it too, in case that tab closes first. */
+function retryNewlyPending(): void {
+  const ids = pendingIds();
+  if (ids === knownPending) return;
+  knownPending = ids;
+  if (ids !== "") void retryPendingRetires();
+}
+
+/**
+ * Retries pending retires now, whenever the browser comes back online, & whenever another tab
+ * queues one. Returns what stops it.
+ */
+export function keepRetiring(): () => void {
+  globalThis.addEventListener("online", retryOnline);
+  // The store's own listener, added first, has already read the other tab's write.
+  globalThis.addEventListener("storage", retryNewlyPending);
+  retryOnline();
+  return () => {
+    globalThis.removeEventListener("online", retryOnline);
+    globalThis.removeEventListener("storage", retryNewlyPending);
+    retireGeneration += 1;
+    clearTimeout(retireTimer);
+    retireTimer = undefined;
+  };
 }
 
 /**
