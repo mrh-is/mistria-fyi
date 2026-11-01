@@ -9,6 +9,7 @@ import {
   IMMUTABLE_CACHE_CONTROL,
   listFiles,
   loadR2UploadEnvFile,
+  parseR2UploadEnv,
   r2UploadOptionsFromEnv,
   r2UploadTree,
   wranglerEnv,
@@ -136,6 +137,21 @@ describe("loadR2UploadEnvFile", () => {
     await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
 
     expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "file", R2_UPLOAD_TOKEN: "from-shell" });
+  });
+
+  it("ignores a UTF-8 byte-order mark & CRLF line endings", async () => {
+    const dir = tree({
+      ".env.r2-upload": "﻿R2_UPLOAD_TOKEN=r2-admin\r\nCLOUDFLARE_ACCOUNT_ID=account-id\r\n",
+    });
+    const env: NodeJS.ProcessEnv = {};
+
+    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+
+    expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "r2-admin" });
+  });
+
+  it("refuses a file that isn't UTF-8", () => {
+    expect(() => parseR2UploadEnv("R\u0000=\u0000")).toThrow(".env.r2-upload is not UTF-8");
   });
 
   it("leaves the environment alone without the file or with empty values", async () => {

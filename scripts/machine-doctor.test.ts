@@ -486,6 +486,32 @@ describe("checkR2Token", () => {
     expect(result.detail).not.toContain(secret);
   });
 
+  it("reads .env.r2-upload from the main checkout, even with a byte-order mark", () => {
+    const result = checkR2Token(
+      machine({
+        commands: {
+          "git -C /repo/.worktrees/a rev-parse --path-format=absolute --git-common-dir":
+            "/repo/.git\n",
+        },
+        read: (path) =>
+          path.replaceAll("\\", "/") === "/repo/.env.r2-upload"
+            ? `﻿R2_UPLOAD_TOKEN=${secret}\r\nCLOUDFLARE_ACCOUNT_ID=account-id\r\n`
+            : undefined,
+        root: "/repo/.worktrees/a",
+      }),
+    );
+    expect(result.status).toBe("ok");
+  });
+
+  it("reports a UTF-16 .env.r2-upload as wrong", () => {
+    const result = checkR2Token(
+      machine({
+        read: (path) => (basename(path) === ".env.r2-upload" ? "��R\u0000=\u0000" : undefined),
+      }),
+    );
+    expect(result).toMatchObject({ detail: ".env.r2-upload is not UTF-8", status: "wrong" });
+  });
+
   it("treats an empty .env.r2-upload value as unset", () => {
     const result = checkR2Token(
       machine({

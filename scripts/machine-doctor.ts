@@ -2,7 +2,7 @@ import { CURRENT_GAME_VERSION } from "#game-version";
 import { spawnSync } from "node:child_process";
 import { accessSync, constants, existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
 
@@ -452,12 +452,29 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
 /**
  * The R2 API token that `sprites:upload` & `fonts:upload` hand to Wrangler (`R2_UPLOAD_TOKEN`, not
  * `CLOUDFLARE_API_TOKEN`, which may hold an unrelated read-only token), from the environment or
- * `.env.r2-upload` at the checkout root, as `loadR2UploadEnvFile` reads them. Only presence is
- * checked: the doctor never prints or validates the token itself.
+ * `.env.r2-upload` at the main checkout's root, as `loadR2UploadEnvFile` reads them. Only presence
+ * is checked: the doctor never prints or validates the token itself.
  */
 export function checkR2Token(machine: Environment): CheckResult {
-  const fileText = machine.read(join(machine.root, ".env.r2-upload"));
-  const fromFile = fileText === undefined ? {} : parseEnv(fileText);
+  const common = machine.run("git", [
+    "-C",
+    machine.root,
+    "rev-parse",
+    "--path-format=absolute",
+    "--git-common-dir",
+  ]);
+  const mainRoot = common.ok ? dirname(common.stdout.trim()) : machine.root;
+  const fileText = machine.read(join(mainRoot, ".env.r2-upload"));
+  if (fileText?.includes("\u0000")) {
+    return check(
+      "r2-token",
+      "R2 upload token",
+      "wrong",
+      ".env.r2-upload is not UTF-8",
+      "Save .env.r2-upload as UTF-8 (docs/machine-setup.md, R2 upload token)",
+    );
+  }
+  const fromFile = fileText === undefined ? {} : parseEnv(fileText.replace(/^﻿/, ""));
   const unset = ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"].filter(
     (name) => !machine.env[name] && !fromFile[name],
   );

@@ -32,11 +32,15 @@ export async function checkR2Upload(
   try {
     await writeFile(file, "probe\n");
     const put = await run(["r2", "object", "put", target, "--remote", "--file", file]);
+    // Delete even after a failed put, which may have written the object before failing.
+    const removed = await run(["r2", "object", "delete", target, "--remote"]);
     if (!put.ok) {
       console.error(`Could not put ${target}:\n${put.output}`);
+      if (!removed.ok) {
+        console.error(`If ${target} exists, remove it by hand.`);
+      }
       return 1;
     }
-    const removed = await run(["r2", "object", "delete", target, "--remote"]);
     if (!removed.ok) {
       console.error(`Put ${target} but could not delete it; remove it by hand:\n${removed.output}`);
       return 1;

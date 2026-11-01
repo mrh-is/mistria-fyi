@@ -102,12 +102,16 @@ Each item names the doctor section that checks it.
       CLOUDFLARE_ACCOUNT_ID=…
       ```
 
-      `.gitignore` keeps it out of commits, and `.worktreeinclude` links it into every worktree, so
-      agents can run the uploads in the [game version update](game-version-update-protocol.md)
-      without asking. The upload scripts & `r2:check` load it; a nonempty shell variable of the same
-      name wins. The read guard blocks agents from opening the file, and no agent prints the token,
-      but anything running as your user can read it. If you suspect the token was exposed, revoke it
-      in the dashboard & create a new one; that is the expected response, not an emergency.
+      Save it as UTF-8; a byte-order mark is fine. `.gitignore` keeps it out of commits, and
+      `.worktreeinclude` excludes it, so worktrees never hold a copy that goes stale after a
+      rotation: the upload scripts & `r2:check` read it from the main checkout, from any worktree. A
+      nonempty shell variable of the same name wins. Agents can then run the uploads in the
+      [game version update](game-version-update-protocol.md) without a dedicated shell; each upload
+      still asks for permission. Claude Code's `Read(**/.env.r2-upload)` deny rule and the shared
+      read guard keep agents from opening or recursively searching the file, but anything running as
+      your user can read it. If you suspect the token was exposed, revoke it in the dashboard &
+      create a new one; that is the expected response, not an emergency. A worktree made before this
+      exclusion may hold a copy or hard link; delete that worktree's `.env.r2-upload`.
 
    5. Run `pnpm run r2:check`. It puts & deletes a probe object in the bucket, which proves the
       token can write; a real upload doesn't, because it skips every object that is already current
@@ -119,9 +123,9 @@ Each item names the doctor section that checks it.
    of `.env` & `.env.local`: a `CLOUDFLARE_API_TOKEN` there reaches any Wrangler call that doesn't
    set its own, and an account ID there satisfies Wrangler while the doctor still reports it unset.
 
-   The doctor checks only that both names are set, in the shell or `.env.r2-upload`; it never prints
-   or validates the token. A token has no interactive step, so it can be revoked & replaced in the
-   dashboard at any time. Never run `pnpx wrangler`.
+   The doctor checks only that both names are set, in the shell or the main checkout's
+   `.env.r2-upload`; it never prints or validates the token. A token has no interactive step, so it
+   can be revoked & replaced in the dashboard at any time. Never run `pnpx wrangler`.
 
 ## Codex shells
 

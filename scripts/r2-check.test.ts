@@ -46,7 +46,7 @@ describe("checkR2Upload", () => {
     expect(errors).toHaveBeenCalledWith(expect.stringContaining("R2_UPLOAD_TOKEN is not set"));
   });
 
-  it("fails, skipping the delete, when the put fails", async () => {
+  it("still deletes the probe when the put fails, since the put may have written it", async () => {
     vi.stubEnv("R2_UPLOAD_TOKEN", "r2-admin");
     quiet();
     const run = vi.fn((_args: string[]) =>
@@ -55,6 +55,18 @@ describe("checkR2Upload", () => {
 
     await expect(checkR2Upload(run)).resolves.toBe(1);
 
-    expect(run).toHaveBeenCalledTimes(1);
+    expect(run.mock.calls.map(([args]) => args[2])).toEqual(["put", "delete"]);
+  });
+
+  it("fails & names the probe when the put succeeds but the delete fails", async () => {
+    vi.stubEnv("R2_UPLOAD_TOKEN", "r2-admin");
+    const errors = quiet();
+    const run = vi.fn((args: string[]) =>
+      Promise.resolve<WranglerResult>({ ok: args[2] === "put", output: "" }),
+    );
+
+    await expect(checkR2Upload(run)).resolves.toBe(1);
+
+    expect(errors).toHaveBeenCalledWith(expect.stringContaining("could not delete it"));
   });
 });

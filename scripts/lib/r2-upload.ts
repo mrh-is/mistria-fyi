@@ -14,6 +14,7 @@ import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseEnv } from "node:util";
 
+import { mainCheckoutRoot } from "#scripts/lib/agent-hook";
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 /** Production asset origin; `src/lib/asset-origin.test.ts` keeps it in step with the app's. */
@@ -92,11 +93,22 @@ export async function listFiles(dir: string): Promise<string[]> {
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 
 /**
- * The gitignored file holding the upload credentials, at the checkout root. `.worktreeinclude`
- * links it into every worktree; Wrangler never loads it itself (it reads only `.env` &
- * `.env.local`).
+ * The gitignored file holding the upload credentials, at the root of the main checkout only:
+ * `.worktreeinclude` excludes it, so worktrees never hold a copy that goes stale after a rotation.
+ * Wrangler never loads it itself (it reads only `.env` & `.env.local`).
  */
 export const R2_UPLOAD_ENV_FILE = ".env.r2-upload";
+
+/**
+ * Parses `.env.r2-upload`. Notepad & Windows PowerShell 5 may save it with a UTF-8 byte-order mark,
+ * which would otherwise become part of the first name; a UTF-16 file can't be parsed at all.
+ */
+export function parseR2UploadEnv(text: string): NodeJS.Dict<string> {
+  if (text.includes("\u0000")) {
+    throw new Error(`${R2_UPLOAD_ENV_FILE} is not UTF-8; save it as UTF-8 & retry.`);
+  }
+  return parseEnv(text.replace(/^﻿/, ""));
+}
 
 /**
  * Fills `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` in `env` from `.env.r2-upload`, when the file
@@ -105,7 +117,7 @@ export const R2_UPLOAD_ENV_FILE = ".env.r2-upload";
  */
 export async function loadR2UploadEnvFile(
   env: NodeJS.ProcessEnv = process.env,
-  file: string = path.join(REPO_ROOT, R2_UPLOAD_ENV_FILE),
+  file: string = path.join(mainCheckoutRoot(REPO_ROOT), R2_UPLOAD_ENV_FILE),
 ): Promise<void> {
   let text: string;
   try {
@@ -116,7 +128,7 @@ export async function loadR2UploadEnvFile(
     }
     throw error;
   }
-  const values = parseEnv(text);
+  const values = parseR2UploadEnv(text);
   for (const name of ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]) {
     const value = values[name];
     if (!env[name] && value) {
