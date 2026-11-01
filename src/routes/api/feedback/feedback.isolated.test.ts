@@ -398,6 +398,13 @@ describe("POST /api/feedback", () => {
           policies: [],
           unknownFields: [],
         },
+        ...(["code-renewed", "uploaded", "upload-unreachable"] as const).map((outcome) => ({
+          farmHash: null,
+          gameVersion: null,
+          outcome,
+          policies: [],
+          unknownFields: [],
+        })),
       ],
       lane: "following",
       protocolVersion: 1,
@@ -408,6 +415,7 @@ describe("POST /api/feedback", () => {
     const issue = JSON.parse(options.body as string) as { body: string };
     expect(issue.body).toContain("<summary>Sync log");
     expect(issue.body).toContain('"outcome": "unreadable"');
+    expect(issue.body).toContain('"outcome": "upload-unreachable"');
     await expect(
       callPost(makeRequest({ ...validPayload, syncLog: { ...syncLog, key: "secret" } })),
     ).rejects.toMatchObject({ status: 400 });

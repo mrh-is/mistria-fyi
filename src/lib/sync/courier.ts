@@ -17,6 +17,7 @@ import { SYNC_UPLOADS_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 
+import { syncDiagnostics } from "./diagnostics.svelte.js";
 import {
   deriveFollowKeys,
   encodeSavePayload,
@@ -30,6 +31,7 @@ import { readSaveFile } from "./read-save.js";
 import { fileOf, indexedDbHandleStore } from "./save-source.js";
 import { makeNewCode, relayClient } from "./sharing.js";
 
+import type { SyncLogEvent } from "#lib/feedback/sync-log-schema.js";
 import type { UpdateHolds } from "#lib/pwa/update-holds.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -57,6 +59,24 @@ const MOVED_AFTER_FAILED_POLLS = 2;
 const TASK_TIMEOUT_MS = 60_000;
 const FIRST_RETRY_MS = 5000;
 const MAX_RETRY_MS = 5 * 60_000;
+
+/** What the sync log records about an upload: the relay's answer, & nothing it was sent. */
+export type UploadLogOutcome = Extract<
+  SyncLogEvent["outcome"],
+  | "code-renewed"
+  | "upload-paused"
+  | "upload-rate-limited"
+  | "upload-too-large"
+  | "upload-unreachable"
+  | "uploaded"
+>;
+
+/** The results a retry can hit over & over while the relay is away, which are logged once a run. */
+const WAITS: ReadonlySet<UploadLogOutcome> = new Set<UploadLogOutcome>([
+  "upload-paused",
+  "upload-rate-limited",
+  "upload-unreachable",
+]);
 
 /** What needs the player. Only one thing at a time does. */
 export type CourierTrouble = "moved" | "other-window" | "reallow" | "unreadable";
@@ -101,6 +121,8 @@ export interface CourierOptions {
   handles?: SaveHandleStore;
   holds?: Pick<UpdateHolds, "hold">;
   locks?: () => LockManager | undefined;
+  /** Records an upload's result in the sync log. */
+  log?: (outcome: UploadLogOutcome) => void;
   observer?: () => SaveObserverConstructor | undefined;
   onstatus?: (status: CourierStatus) => void;
   pollMs?: number;
@@ -232,6 +254,9 @@ export function createCourier({
   handles = indexedDbHandleStore,
   holds = updateHolds,
   locks: lockManager = defaultLocks,
+  log: record = (outcome) => {
+    syncDiagnostics.status(outcome);
+  },
   observer: observerClass = defaultObserver,
   onstatus,
   pollMs = BACKSTOP_POLL_MS,
@@ -276,10 +301,22 @@ export function createCourier({
   let recheck = false;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let retryDelay = firstRetryMs;
+  /** The last upload result logged, so a retry that has to wait the same way again isn't. */
+  let lastLogged: undefined | UploadLogOutcome;
 
   function setStatus(next: Partial<CourierStatus>): void {
     status = { ...status, ...next };
     onstatus?.(status);
+  }
+
+  function log(outcome: UploadLogOutcome): void {
+    if (outcome === lastLogged && WAITS.has(outcome)) return;
+    lastLogged = outcome;
+    try {
+      record(outcome);
+    } catch {
+      // Diagnostics must never hold up an upload.
+    }
   }
 
   function enqueue(task: () => Promise<void>): Promise<void> {
@@ -473,6 +510,7 @@ export function createCourier({
 
   /** A relay that said no for now: what the player sees, & when to ask again. */
   function waitOut(failure: RelayFailure): void {
+    log(`upload-${failure.kind}`);
     switch (failure.kind) {
       case "paused":
         setStatus({ upload: "paused" });
@@ -649,6 +687,7 @@ export function createCourier({
         retryDelay = firstRetryMs;
         clearRetry();
         setStatus({ upload: "idle" });
+        log("uploaded");
         return;
       case "unreachable":
         upload.uncertain = true;
@@ -669,6 +708,7 @@ export function createCourier({
         pending = undefined;
         recheck = true;
         setStatus({ upload: "unreachable" });
+        log("upload-too-large");
     }
   }
 
@@ -722,7 +762,10 @@ export function createCourier({
   async function noteRenewal(renewal: Promise<ShareResult>, current: number): Promise<void> {
     try {
       const renewed = await renewal;
-      if (renewed.kind === "shared" && current === generation) setStatus({ codeRenewed: true });
+      if (renewed.kind === "shared" && current === generation) {
+        setStatus({ codeRenewed: true });
+        log("code-renewed");
+      }
     } catch {
       // The attempt that asked reports this one.
     }
@@ -744,6 +787,7 @@ export function createCourier({
     clearRetry();
     pending = undefined;
     recheck = false;
+    lastLogged = undefined;
     failedPolls = 0;
     fingerprint = undefined;
   }
