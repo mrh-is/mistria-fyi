@@ -81,12 +81,72 @@ export function setTurnstileTokenSource(source: () => Promise<string>): void {
   turnstileToken = source;
 }
 
-/** Retries every pending retire once, & forgets the ones the relay confirmed. */
-export async function retryPendingRetires(): Promise<void> {
+const FIRST_RETIRE_RETRY_MS = 5000;
+const MAX_RETIRE_RETRY_MS = 5 * 60_000;
+
+let retireTimer: ReturnType<typeof setTimeout> | undefined;
+let retireDelay = FIRST_RETIRE_RETRY_MS;
+/** Attempts run one at a time, so a retire queued meanwhile is tried after the one under way. */
+let retiring: Promise<void> = Promise.resolve();
+
+async function attemptRetires(): Promise<void> {
+  clearTimeout(retireTimer);
+  retireTimer = undefined;
   const pending = userState.syncPendingRetires;
-  if (pending.length === 0) return;
-  const confirmed = await retirePending(relay, pending);
-  if (confirmed.length > 0) await userState.confirmRetired(confirmed);
+  if (pending.length > 0) {
+    try {
+      const confirmed = await retirePending(relay, pending);
+      if (confirmed.length > 0) await userState.confirmRetired(confirmed);
+    } catch {
+      // The scheduled retry tries again.
+    }
+  }
+  if (userState.syncPendingRetires.length === 0) {
+    retireDelay = FIRST_RETIRE_RETRY_MS;
+    return;
+  }
+  // A leaked code keeps working until this lands, so it retries like an upload does.
+  retireTimer = setTimeout(() => {
+    void queueAttempt();
+  }, retireDelay);
+  retireDelay = Math.min(retireDelay * 2, MAX_RETIRE_RETRY_MS);
+}
+
+/**
+ * Retries every pending retire now, & forgets the ones the relay confirmed. Any still pending
+ * retry with backoff for as long as the page stays open.
+ */
+export function retryPendingRetires(): Promise<void> {
+  retireDelay = FIRST_RETIRE_RETRY_MS;
+  return queueAttempt();
+}
+
+function queueAttempt(): Promise<void> {
+  const previous = retiring;
+  retiring = (async () => {
+    await previous;
+    try {
+      await attemptRetires();
+    } catch {
+      // A failed attempt mustn't stop the ones queued behind it.
+    }
+  })();
+  return retiring;
+}
+
+function retryOnline(): void {
+  void retryPendingRetires();
+}
+
+/** Retries pending retires now & whenever the browser comes back online. Returns what stops it. */
+export function keepRetiring(): () => void {
+  globalThis.addEventListener("online", retryOnline);
+  retryOnline();
+  return () => {
+    globalThis.removeEventListener("online", retryOnline);
+    clearTimeout(retireTimer);
+    retireTimer = undefined;
+  };
 }
 
 /**

@@ -133,6 +133,50 @@ describe("stopping", () => {
     expect(userState.syncPendingRetires).toEqual([]);
   });
 
+  it("retries a failed retire on a timer, without a reload", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>().mockResolvedValueOnce({ kind: "unreachable" });
+    retire.mockResolvedValue({ kind: "retired" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    await sharing.makeNewCode();
+    expect(retire).toHaveBeenCalledTimes(1);
+    expect(userState.syncPendingRetires).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(4999);
+    expect(retire).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(retire).toHaveBeenCalledTimes(2);
+    expect(userState.syncPendingRetires).toEqual([]);
+
+    // Nothing pending, so nothing more is scheduled.
+    await vi.advanceTimersByTimeAsync(10 * 60_000);
+    expect(retire).toHaveBeenCalledTimes(2);
+  });
+
+  it("backs off between failed retires & tries again on coming back online", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>().mockResolvedValue({ kind: "unreachable" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    const stop = sharing.keepRetiring();
+    await sharing.stopSyncing();
+    const calls = retire.mock.calls.length;
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(retire).toHaveBeenCalledTimes(calls + 1);
+    // The next gap doubles.
+    await vi.advanceTimersByTimeAsync(9999);
+    expect(retire).toHaveBeenCalledTimes(calls + 1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(retire).toHaveBeenCalledTimes(calls + 2);
+
+    retire.mockResolvedValue({ kind: "retired" });
+    globalThis.dispatchEvent(new Event("online"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(retire).toHaveBeenCalledTimes(calls + 3);
+    expect(userState.syncPendingRetires).toEqual([]);
+    stop();
+  });
+
   it("retires nothing when a following device stops", async () => {
     const retire = vi.fn<RelayClient["retire"]>();
     const { sharing, userState } = await load(
