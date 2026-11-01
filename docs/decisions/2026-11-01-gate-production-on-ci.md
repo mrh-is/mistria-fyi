@@ -59,7 +59,7 @@ keeps the secret from same-repository branches that edit the workflow.
 - **Require branches to be up to date before merging:** rejected as a substitute; it closes only the
   stale-branch gap, & every merge would force the other open pull requests to rerun.
 - **A separate workflow triggered by `workflow_run`:** rejected; the hardening rules ban that
-  trigger.
+  trigger for everything except the visual-diff publisher approved in #332.
 
 ## Revisit if
 

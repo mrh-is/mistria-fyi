@@ -548,9 +548,10 @@ pwa-verification.md & the Public contract section of
 The feedback form can optionally attach a previewable sync log (#137): app build, protocol version,
 the device's lane, the save's current numeric game version (`info.version`), recent outcomes,
 unknown fields with their IDs, & counts of each policy by field. It stays behind the sync switch
-until launch. The receiver collects at most 20 events & 24 KiB in memory in the current tab; reloads
-clear it. Unknown IDs are limited to 20 per field & 100 per event. Old events are dropped to fit the
-byte limit, & again if the finished issue would pass GitHub's body limit.
+until launch, & so does its entry on the privacy page. The receiver collects at most 20 events & 24
+KiB in memory in the current tab; reloads clear it. Unknown IDs are limited to 20 per field & 100
+per event. Old events are dropped to fit the byte limit, & again if the finished issue would pass
+GitHub's body limit.
 
 Feedback never carries exact `playtime` values: they only grow, so matching values would link
 reports that the session salt keeps apart, & the game's save slot data keeps it beside the player's
