@@ -104,6 +104,7 @@
     <section class="flex flex-col gap-2">
       {@render sectionHeading(m.privacy_sync_what_heading())}
       <p>{m.privacy_sync_what_body()}</p>
+      <p>{m.privacy_sync_what_feedback_log()}</p>
     </section>
 
     <div class="border-t border-border/50"></div>
