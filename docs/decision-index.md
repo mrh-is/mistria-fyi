@@ -376,6 +376,19 @@ Evidence:
 [src/lib/engine/import-save.observations.ts](../src/lib/engine/import-save.observations.ts),
 [docs/save-import-verification.md](../docs/save-import-verification.md).
 
+### [Run accessibility in two CI shards](decisions/2026-11-01-two-accessibility-shards.md)
+
+ID: 2026-11-01-two-accessibility-shards. Status: Current.
+
+CI runs accessibility in two duration-balanced shards plus a separate PWA job, trading about nine
+seconds of median turnaround for 18% less all-job runner time.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/335](https://github.com/mrh-is/mistria-fyi/issues/335),
+[https://github.com/mrh-is/mistria-fyi/issues/379](https://github.com/mrh-is/mistria-fyi/issues/379),
+[docs/browser-ci-benchmark.md](../docs/browser-ci-benchmark.md),
+[.github/workflows/ci.yml](../.github/workflows/ci.yml).
+
 ### [Keep Vitest retries visible](decisions/2026-11-01-visible-vitest-retries.md)
 
 ID: 2026-11-01-visible-vitest-retries. Status: Current.
