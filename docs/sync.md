@@ -78,10 +78,12 @@ The gaming PC with Chrome 156, Edge 156, & Firefox 159, & an iPhone on iOS 18.7,
   “Scan the code” opened the camera & read a code, then said that link wasn’t a follow link, as
   expected for the probe’s link.
 
-Checks still open before the network pieces are built: Android opening the installed app from a
-scanned URL, which this run had no device for (#341); & Steam Deck save access, the SD card, &
-Flatpak Steam (#238). Record the results in this document & flag any failed assumption on #123.
-Early- & late-game v1.0.8 field presence is recorded in
+Two checks wait for hardware: Android opening the installed app from a scanned URL (#341), & Steam
+Deck save access, the SD card, & Flatpak Steam (#238). Launch doesn’t wait for them (see
+[the decision record](decisions/2026-11-01-courier-probe-findings.md)): a failure there changes
+which device or browser a player is told to use, not the courier, relay, or envelope. Record the
+results in this document & flag any failed assumption on #123. Early- & late-game v1.0.8 field
+presence is recorded in
 [save-file-format.md](save-file-format.md#field-presence-early-vs-late-game-v108): every key the
 importer reads is present in both, with early progress as empty lists.
 
@@ -102,8 +104,16 @@ importer reads is present in both, with early progress as empty lists.
 
 Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 
-- **Watching.** A dropped `.sav` stores its file handle. `FileSystemObserver` bursts are coalesced,
-  an “unknown” event triggers a recheck, & a swapped file re-resolves the handle.
+- **Watching.** A dropped or pasted `.sav` stores its file handle. The game replaces its save rather
+  than rewriting it (see [What the probe found](#what-the-probe-found)), so an `appeared` record for
+  the watched file counts as a change, like `modified`. Bursts of records are coalesced into one
+  read, & an `unknown` record triggers a recheck. A `disappeared` record waits for the file to come
+  back under its name. An `errored` record ends that observer for good, so the courier observes
+  again once the file reads. The held handle read the replacement directly in the probe, so nothing
+  re-resolves it.
+- **The backstop poll.** While watching, the courier checks the file once a minute & reads it when
+  its size or modification time differs. That catches what an observer misses, including the gap
+  after `errored`. A read’s hash, not its metadata, decides whether the save changed.
 - **Pruning.** The courier drops the three sections the importer never needs (`game_stats`,
   `date_photos`, `farm`) & keeps the save’s own container format, so each follower reuses its
   parser. The epic gives the compressed size of the pruned save: about 161 KB for a late-game farm &
@@ -130,11 +140,11 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 - **Uploading.** Once sharing, the courier uploads every save it reads & can prune, whatever its own
   tracker does with it: a question waiting behind the fullscreen game, a quarantined or newer-data
   store, or an apply that failed never holds an upload back. A save it can’t prune uploads nothing &
-  shows the PC’s error. It also reads the current save when it starts & when it shows the code, &
-  uploads it if its hash differs from the last upload or the mailbox answers “empty”, so an expired
-  envelope fills again even when the save hasn’t changed, & a tracker update after a game update
-  catches up without waiting for the game to save. Nothing waits for a follower, so a device that
-  follows later gets the latest save straight away.
+  shows the PC’s error. It also reads the current save when it starts (loading the farm doesn’t
+  always write it) & when it shows the code, & uploads it if its hash differs from the last upload
+  or the mailbox answers “empty”, so an expired envelope fills again even when the save hasn’t
+  changed, & a tracker update after a game update catches up without waiting for the game to save.
+  Nothing waits for a follower, so a device that follows later gets the latest save straight away.
 - **Applying here.** The PC’s own tracker applies each save the courier reads, through the same
   receiver path as a follower (see [Followers](#followers)) but without the relay, skipping a save
   whose hash matches its receipt. Check-offs on the PC stay on the PC, like any device’s.
@@ -143,8 +153,10 @@ Built in #134. Planned location (not yet created): src/lib/sync/courier.ts.
 - **Errors.** A parse failure after a game update shows an error on the PC.
 - **App updates.** A waiting update reloads the courier at its own safe moment, for example right
   after an upload (see [App updates](#app-updates)).
-- **Firefox** needs the save re-dropped or re-picked per session; each drop uploads & applies like a
-  watched change. Its file input can open the save folder (see
+- **Firefox** gives no handles, so the save is dropped or picked again each session; each one
+  uploads & applies like a watched change. Its file input opens the save folder from a typed path &
+  picks the live autosave, so Firefox needs no Desktop copy. A held `File` keeps its old size &
+  modification time, so the courier never polls one (see
   [What the probe found](#what-the-probe-found)).
 
 ## The relay

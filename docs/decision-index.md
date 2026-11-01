@@ -301,6 +301,20 @@ them to Antigravity or Copilot.
 
 Evidence: [docs/agent-workflow.md#small-agent-tasks](../docs/agent-workflow.md#small-agent-tasks).
 
+### [Courier changes from the probe run](decisions/2026-11-01-courier-probe-findings.md)
+
+ID: 2026-11-01-courier-probe-findings. Status: Current.
+
+The courier treats an appeared record as a change, observes again after errored, & keeps a
+one-minute backstop poll; “Can’t drag?” pastes or picks the live save; launch doesn’t wait for the
+Android & Steam Deck checks.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/130](https://github.com/mrh-is/mistria-fyi/issues/130),
+[https://github.com/mrh-is/mistria-fyi/pull/340](https://github.com/mrh-is/mistria-fyi/pull/340),
+[https://github.com/mrh-is/mistria-fyi/issues/134](https://github.com/mrh-is/mistria-fyi/issues/134),
+[docs/sync.md#what-the-probe-found](../docs/sync.md#what-the-probe-found).
+
 ## Partially superseded/amended
 
 ### [Canonical domain terms](decisions/2026-10-06-canonical-domain-terms.md)

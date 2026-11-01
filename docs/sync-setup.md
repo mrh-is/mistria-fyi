@@ -142,13 +142,19 @@ at the bottom.
      found it.
    - **Open it.** “Now open File Explorer and paste that into the address bar at the top.” It should
      show files like `game-[numbers]-autosave.sav`.
-   - **Drag in the autosave.** Drag only where the save file is watched, since Windows refuses the
-     file picker under `%LOCALAPPDATA%` & a picked file can’t be watched. Windows’s file picker
-     can’t open that folder either, so “Can’t drag?” (`sync_find_cant_drag`) explains the way around
-     it: copy the save file to the Desktop & choose it there. A copy can’t be watched, so that
-     switches to dropping it in again after each session, with that copy. Pasting the autosave
-     copied in File Explorer gives Chrome a watched handle without a mouse (see
-     [sync.md](sync.md#what-the-probe-found)); setup doesn’t offer it yet (#123).
+   - **Drag in the autosave.** Chrome & Edge refuse their file picker under `%LOCALAPPDATA%`, so
+     dragging is the main way in. “Can’t drag?” (`sync_find_cant_drag`) gives the keyboard way,
+     which depends on the browser (see [sync.md](sync.md#what-the-probe-found)):
+     - **Chrome & Edge:** select the autosave in File Explorer, press Ctrl+C, & press Ctrl+V on the
+       page (`sync_find_cant_drag_body`, or `sync_find_cant_drag_body_mac` with Command on a Mac). A
+       paste anywhere on the step outside a text field counts, & the drop box takes focus, so a
+       keyboard player has somewhere to paste. A paste that gives a handle is watched like a drop.
+       One that gives only a file (Edge, Linux, & Mac are unverified) is treated like a file chosen
+       in Firefox: it applies & uploads, & Data’s sync card asks for the save file again after each
+       session.
+     - **Browsers without file handles, like Firefox:** “Choose the save file” (`sync_find_choose`)
+       opens the file picker, which can open the save folder (`sync_find_cant_drag_body_pick`). No
+       Desktop copy is needed.
    - **Can’t find it?** A collapsed section, safest first: check the path was pasted into the
      address bar, not the search box; on Linux & Steam Deck, the Steam library fallback; then
      Windows key + R with the same path, noting it’s safe here because it only opens a folder, &
@@ -178,10 +184,10 @@ at the bottom.
   drop-it-in-again copy (`sync_find_open_redrop`, `sync_done_redrop`) appears only after the first
   save file is read.
 - **Showing the code again** is one tap from Data or the status button.
-- **Dropping it in again.** Where the save file isn’t watched (another browser, or a copy chosen
-  through “Can’t drag?”), Data’s sync card holds the drop box for each new save file, with “Can’t
-  drag?” too, & the status button’s panel links there (`sync_redrop_label`). A drop stays in the
-  lane & skips the farm question unless the farm changed, which switches with a backup as usual.
+- **Dropping it in again.** Where the save file isn’t watched (a browser without file handles, or a
+  paste that gave only a file), Data’s sync card holds the drop box for each new save file, with
+  “Can’t drag?” too, & the status button’s panel links there (`sync_redrop_label`). A drop stays in
+  the lane & skips the farm question unless the farm changed, which switches with a backup as usual.
 
 ### Save folders
 
@@ -369,50 +375,52 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 
 ### On the gaming computer
 
-| Key                        | Text                                                                                                                                                                                        |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sync_find_title`          | Find your save file                                                                                                                                                                         |
-| `sync_find_intro`          | Gonna be honest, this is the weirdest part of the setup. But once you’re done here, it’s smooth sailing!                                                                                    |
-| `sync_find_copy_lead`      | First, copy this folder location:                                                                                                                                                           |
-| `sync_find_copy`           | Copy                                                                                                                                                                                        |
-| `sync_find_copied`         | Copied!                                                                                                                                                                                     |
-| `sync_find_other_os`       | On Linux, Steam Deck, or a Mac?                                                                                                                                                             |
-| `sync_find_linux_hint`     | Not there? Look in your Steam library’s steamapps/compatdata/2142790 folder.                                                                                                                |
-| `sync_find_open`           | Now open File Explorer and paste that into the address bar at the top. It should take you to a folder with files like `game-[numbers]-autosave.sav`. Drag that autosave file into this box: |
-| `sync_find_open_redrop`    | Open it in File Explorer and drag your newest autosave in.                                                                                                                                  |
-| `sync_redrop_label`        | Drop in your latest save file                                                                                                                                                               |
-| `sync_find_drop`           | Drop your autosave here                                                                                                                                                                     |
-| `sync_find_drop_locked`    | Copy the folder first, and this box will wake up.                                                                                                                                           |
-| `sync_find_cant_drag`      | Can’t drag?                                                                                                                                                                                 |
-| `sync_find_cant_drag_body` | Copy the save file to your Desktop, then choose it from there. We can’t watch a copy, though, so you’ll need to do that again after you play.                                               |
-| `sync_find_choose`         | Choose a copy                                                                                                                                                                               |
-| `sync_find_help`           | Can’t find it?                                                                                                                                                                              |
-| `sync_find_help_bar`       | Make sure you pasted it into the address bar at the very top of File Explorer, not the search box.                                                                                          |
-| `sync_find_help_run`       | Still nothing? Press the Windows key + R, paste the same folder location, and press Enter. (That only opens a folder. Never paste anything else into that box, from us or anyone.)          |
-| `sync_farm_title`          | Perfect! Looks like that save file is for {farmer} on {farm}, is that right?                                                                                                                |
-| `sync_farm_title_unnamed`  | Perfect! We found a farm in that save file. Is it yours?                                                                                                                                    |
-| `sync_farm_yes`            | Yep!                                                                                                                                                                                        |
-| `sync_farm_no`             | Hmm, no, try that again                                                                                                                                                                     |
-| `sync_farm_no_hint`        | No worries! Pick the newest file that ends in “autosave”.                                                                                                                                   |
-| `sync_phone_title`         | Wanna track this on your phone?                                                                                                                                                             |
-| `sync_phone_body`          | Or another device. Scan this code with it, and it’ll sync your save file from here on out.                                                                                                  |
-| `sync_phone_show`          | Show code                                                                                                                                                                                   |
-| `sync_phone_copy_link`     | Copy link                                                                                                                                                                                   |
-| `sync_phone_copy_link_sub` | For a computer with no camera                                                                                                                                                               |
-| `sync_phone_stream`        | Live on stream? Maybe don’t show this bit.                                                                                                                                                  |
-| `sync_phone_no`            | No thanks, I’ll track here                                                                                                                                                                  |
-| `sync_phone_later`         | Okay, I’ll set it up later                                                                                                                                                                  |
-| `sync_making_code`         | Generating the code…                                                                                                                                                                        |
-| `sync_done_title`          | Nice, you’re all set!                                                                                                                                                                       |
-| `sync_done_watched`        | While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!                                                                                     |
-| `sync_done_redrop`         | Whenever you’re done playing, drop your save file in again and we’ll sync it.                                                                                                               |
-| `sync_done_home`           | Go to my field guide                                                                                                                                                                        |
-| `sync_share_skipped`       | Skipped. Show a code any time from Data.                                                                                                                                                    |
-| `sync_tip_chrome`          | Let Chrome do this for you                                                                                                                                                                  |
-| `sync_tip_chrome_body`     | In Chrome or Edge, we can sync your save file every time you sleep, no dropping it in again.                                                                                                |
-| `sync_tip_chrome_after`    | Copy this page’s link, then paste it into Chrome or Edge.                                                                                                                                   |
-| `sync_tip_chrome_copy`     | Copy this page’s link                                                                                                                                                                       |
-| `sync_tip_chrome_dismiss`  | I’ll stick with this browser                                                                                                                                                                |
+| Key                             | Text                                                                                                                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sync_find_title`               | Find your save file                                                                                                                                                                         |
+| `sync_find_intro`               | Gonna be honest, this is the weirdest part of the setup. But once you’re done here, it’s smooth sailing!                                                                                    |
+| `sync_find_copy_lead`           | First, copy this folder location:                                                                                                                                                           |
+| `sync_find_copy`                | Copy                                                                                                                                                                                        |
+| `sync_find_copied`              | Copied!                                                                                                                                                                                     |
+| `sync_find_other_os`            | On Linux, Steam Deck, or a Mac?                                                                                                                                                             |
+| `sync_find_linux_hint`          | Not there? Look in your Steam library’s steamapps/compatdata/2142790 folder.                                                                                                                |
+| `sync_find_open`                | Now open File Explorer and paste that into the address bar at the top. It should take you to a folder with files like `game-[numbers]-autosave.sav`. Drag that autosave file into this box: |
+| `sync_find_open_redrop`         | Open it in File Explorer and drag your newest autosave in.                                                                                                                                  |
+| `sync_redrop_label`             | Drop in your latest save file                                                                                                                                                               |
+| `sync_find_drop`                | Drop your autosave here                                                                                                                                                                     |
+| `sync_find_drop_locked`         | Copy the folder first, and this box will wake up.                                                                                                                                           |
+| `sync_find_cant_drag`           | Can’t drag?                                                                                                                                                                                 |
+| `sync_find_cant_drag_body`      | Click the autosave in File Explorer and press Ctrl+C. Then come back here and press Ctrl+V. That works just like dragging it in!                                                            |
+| `sync_find_cant_drag_body_mac`  | Click the autosave in Finder and press Command-C. Then come back here and press Command-V. That works just like dragging it in!                                                             |
+| `sync_find_cant_drag_body_pick` | Click “Choose the save file”, paste the folder location into the File name box, and press Enter. Then pick the autosave.                                                                    |
+| `sync_find_choose`              | Choose the save file                                                                                                                                                                        |
+| `sync_find_help`                | Can’t find it?                                                                                                                                                                              |
+| `sync_find_help_bar`            | Make sure you pasted it into the address bar at the very top of File Explorer, not the search box.                                                                                          |
+| `sync_find_help_run`            | Still nothing? Press the Windows key + R, paste the same folder location, and press Enter. (That only opens a folder. Never paste anything else into that box, from us or anyone.)          |
+| `sync_farm_title`               | Perfect! Looks like that save file is for {farmer} on {farm}, is that right?                                                                                                                |
+| `sync_farm_title_unnamed`       | Perfect! We found a farm in that save file. Is it yours?                                                                                                                                    |
+| `sync_farm_yes`                 | Yep!                                                                                                                                                                                        |
+| `sync_farm_no`                  | Hmm, no, try that again                                                                                                                                                                     |
+| `sync_farm_no_hint`             | No worries! Pick the newest file that ends in “autosave”.                                                                                                                                   |
+| `sync_phone_title`              | Wanna track this on your phone?                                                                                                                                                             |
+| `sync_phone_body`               | Or another device. Scan this code with it, and it’ll sync your save file from here on out.                                                                                                  |
+| `sync_phone_show`               | Show code                                                                                                                                                                                   |
+| `sync_phone_copy_link`          | Copy link                                                                                                                                                                                   |
+| `sync_phone_copy_link_sub`      | For a computer with no camera                                                                                                                                                               |
+| `sync_phone_stream`             | Live on stream? Maybe don’t show this bit.                                                                                                                                                  |
+| `sync_phone_no`                 | No thanks, I’ll track here                                                                                                                                                                  |
+| `sync_phone_later`              | Okay, I’ll set it up later                                                                                                                                                                  |
+| `sync_making_code`              | Generating the code…                                                                                                                                                                        |
+| `sync_done_title`               | Nice, you’re all set!                                                                                                                                                                       |
+| `sync_done_watched`             | While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!                                                                                     |
+| `sync_done_redrop`              | Whenever you’re done playing, drop your save file in again and we’ll sync it.                                                                                                               |
+| `sync_done_home`                | Go to my field guide                                                                                                                                                                        |
+| `sync_share_skipped`            | Skipped. Show a code any time from Data.                                                                                                                                                    |
+| `sync_tip_chrome`               | Let Chrome do this for you                                                                                                                                                                  |
+| `sync_tip_chrome_body`          | In Chrome or Edge, we can sync your save file every time you sleep, no dropping it in again.                                                                                                |
+| `sync_tip_chrome_after`         | Copy this page’s link, then paste it into Chrome or Edge.                                                                                                                                   |
+| `sync_tip_chrome_copy`          | Copy this page’s link                                                                                                                                                                       |
+| `sync_tip_chrome_dismiss`       | I’ll stick with this browser                                                                                                                                                                |
 
 ### On another device
 
@@ -595,3 +603,6 @@ On other devices:
 - After the second mockup pass: the inactive half of “Find your save file” dims its text & controls;
   field-note highlighters run under each line at that line’s length; a bad link’s error sits under
   the paste field; Data shows the farmer & farm on separate lines (maintainer).
+- After the #130 probe run: “Can’t drag?” pastes the live save file in Chrome & Edge & picks it from
+  the save folder in browsers without file handles, replacing the Desktop copy, which can’t be
+  watched (maintainer, 2026-11-01).
