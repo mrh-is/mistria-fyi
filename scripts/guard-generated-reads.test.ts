@@ -260,6 +260,10 @@ describe("generated-data read guard", () => {
       { tool_input: { command: "cat .env[[...]]r2-upload" }, tool_name: "Bash" },
       { tool_input: { command: "cat .env[[=.=]]r2-upload" }, tool_name: "Bash" },
       { tool_input: { command: "cat .env.r2-uploa[[.].]d]" }, tool_name: "Bash" },
+      // Zsh has no collating symbols, so `[[.]` closes at its first `]` there.
+      { tool_input: { command: "cat .env[[.]r2-uplo[a.][d]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env[[=]r2-uplo[a=][d]" }, tool_name: "Bash" },
+      { tool_input: { command: "cat .env.r2-uplo[]a[.]d" }, tool_name: "Bash" },
       // PowerShell wildcards have no negation, so `!` & `^` are members there.
       { tool_input: { command: "gc .env.r2-uploa[!d]" }, tool_name: "PowerShell" },
       { tool_input: { command: 'powershell -c "gc .env.r2-uploa[^d]"' }, tool_name: "Bash" },

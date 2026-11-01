@@ -26,15 +26,21 @@ const R2_TOKEN_MESSAGE =
   "Blocked read of the R2 upload token file. The upload scripts load it; check it with `node scripts/machine-doctor.ts --for release` or `pnpm run r2:check`. To search the repository, use the Grep tool or plain `rg`, which skip gitignored files.";
 
 /**
- * The index of the `]` closing the bracket expression at `open`, or -1 when it may never close. A
- * `]` right after the opening is a member, & a class such as `[:alpha:]` or `[.].]` holds its own.
+ * The index of the `]` closing the bracket expression at `open`, or -1 when it may never close or
+ * when shells disagree about where it closes. A `]` right after the opening is a member. Bash lets
+ * a class such as `[:alpha:]` or `[.].]` hold its own `]`, but zsh & PowerShell close the bracket
+ * at the first `]`, so a word that reads differently in the two can't become one `?`.
  */
 function bracketEnd(glob: string, open: number): number {
   let index = open + (/^\[[!^]/.test(glob.slice(open, open + 2)) ? 2 : 1);
   if (glob[index] === "]") {
     index += 1;
   }
+  const firstClose = glob.indexOf("]", index);
   for (; index < glob.length; index += 1) {
+    if (glob[index] === "]") {
+      return index === firstClose ? index : -1;
+    }
     if (glob[index] === "]") {
       return index;
     }
@@ -71,7 +77,7 @@ function widenedGlob(name: string): string {
     if (end !== -1) {
       glob += "?";
       index = end;
-    } else if (name.startsWith("[]", index)) {
+    } else if (name.startsWith("[]", index) && !name.includes("]", index + 2)) {
       glob += "[";
     } else {
       return `${glob}*`;
