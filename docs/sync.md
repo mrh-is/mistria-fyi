@@ -447,7 +447,9 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
   `playtime` or lower. A newer save wins & tells.
 - Within a farm, a lower `playtime` asks. Keeping current progress applies nothing from that save.
 - A save whose `playtime` couldn’t be read can’t be ordered: it doesn’t ask as an older save, but
-  every manual edit it disagrees with asks, & the baseline stays where it was.
+  every manual edit it disagrees with asks, & the baseline stays where it was. History records that
+  the last save was unordered (`lastSaveUnordered`), so edits made after it record no `playtime` & a
+  later save that disagrees asks. The next save with a readable `playtime` clears it.
 - Accepting an older save at `playtime` P resets the baseline & re-stamps every manual fact stamped
   above P to P, so ticks survive the rollback itself & the next disagreeing save wins & tells.
   Rollback is supported but rare, so nothing more elaborate.
@@ -456,7 +458,9 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
 
 A memory of resolved diffs makes “keep mine” stick until the save’s value changes. Editing that
 field by hand clears it. A complete field also lapses resolutions for facts it reports at their
-default, so true, then false, then true again asks again.
+default, so true, then false, then true again asks again. A household “keep mine” covers the whole
+household difference, so it lapses when any fact it covered changes its save value, even back to the
+local value.
 
 ### Completeness
 

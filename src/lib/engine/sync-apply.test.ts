@@ -4,7 +4,7 @@ import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import { PREGNANCY_QUEST_IDS } from "./craving-quest.js";
-import { progressFacts } from "./provenance.js";
+import { editPlaytime, progressFacts } from "./provenance.js";
 import {
   applySync,
   POLICY_TABLE,
@@ -344,6 +344,30 @@ describe("applySync: manual edits & playtime ordering", () => {
       );
       expect(question).toMatchObject({ kind: "facts", reason: "local-disagrees" });
     }
+  });
+
+  it("asks about an edit made after a save whose playtime couldn't be read", () => {
+    const ordered = applied(
+      applySync(syncState(), bundle({ almanac: set() }, { playtime: 100 }), { fresh: FRESH }),
+    );
+    const unordered = applied(
+      applySync(ordered.state, bundle({ almanac: set() }), { fresh: FRESH }),
+    ).state;
+    expect(unordered.history).toMatchObject({ lastSavePlaytime: 100, lastSaveUnordered: true });
+
+    // The player ticks the turnip by hand, stamped as the store's edits are.
+    const playtime = editPlaytime(unordered.history);
+    expect(playtime).toBeUndefined();
+    unordered.progress.almanac.add(TURNIP as never);
+    unordered.history.provenance[`almanac/${TURNIP}`] = { source: "manual" };
+
+    const [question] = asked(
+      applySync(unordered, bundle({ almanac: set() }, { playtime: 110 }), { fresh: FRESH }),
+    );
+    expect(question).toMatchObject({ kind: "facts", reason: "local-disagrees" });
+    const later = settle(unordered, bundle({ almanac: set() }, { playtime: 110 }), () => "keep");
+    expect(later.state.history).not.toHaveProperty("lastSaveUnordered");
+    expect(editPlaytime(later.state.history)).toBe(110);
   });
 });
 
@@ -724,6 +748,30 @@ describe("applySync: quests & household facts", () => {
     });
     expect(result.state.progress.childChoice).toBe("yes");
     expect(result.state.history.resolutions).toEqual({});
+  });
+
+  it("reopens the kept household when one dependent save value changes back to local", () => {
+    const state = syncState({
+      provenance: { breakUpsDisabled: { source: "manual" }, childChoice: { source: "manual" } },
+    });
+    const first = settle(
+      state,
+      bundle({ breakUpsDisabled: true, childChoice: "yes" }, { playtime: 100 }),
+      () => "keep",
+    );
+    expect(Object.keys(first.state.history.resolutions)).toEqual(
+      expect.arrayContaining(["breakUpsDisabled", "childChoice"]),
+    );
+    const [question] = asked(
+      applySync(
+        first.state,
+        bundle({ breakUpsDisabled: false, childChoice: "yes" }, { playtime: 130 }),
+        {
+          fresh: FRESH,
+        },
+      ),
+    );
+    expect(question).toMatchObject({ field: "household", kind: "facts" });
   });
 
   it("preserves an unordered manual household when any dependent fact would be kept", () => {

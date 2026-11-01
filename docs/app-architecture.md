@@ -104,7 +104,7 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
     this section. Backup restore carries it; a progress or full reset clears it.
   - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
     filtered to non-default entries, plus each fact's history (see [Provenance](#provenance)):
-    `provenance`, `resolutions`, & `lastSavePlaytime`.
+    `provenance`, `resolutions`, `lastSavePlaytime`, & `lastSaveUnordered` (version 7).
   - `worldState`: the in-game season & weather the availability filters read.
   - `local` (storage only, left out while empty): this device's own section, which holds sync's
     lane, receipt, freshness, pending retires, & farm-switch backup (see [sync.md](sync.md)).

@@ -93,6 +93,28 @@ describe("migration table", () => {
     expect(MIGRATIONS[1]?.(document)).toBe(document);
   });
 
+  it.each(POLICIES)("round-trips an unordered last save from version 7 (%s)", (policy) => {
+    const loaded = readOk(JSON.stringify(fixture(7)), policy);
+    expect(loaded.history).toMatchObject({ lastSavePlaytime: 7200.5, lastSaveUnordered: true });
+    expect(JSON.parse(serializeProgress(loaded))).toHaveProperty(
+      "progress.lastSaveUnordered",
+      true,
+    );
+    expect(readOk(JSON.stringify(fixture(6)), policy).history).not.toHaveProperty(
+      "lastSaveUnordered",
+    );
+  });
+
+  it("drops a malformed unordered flag in hydration but rejects it in a backup", () => {
+    const document = fixture(7) as { progress: Record<string, unknown> };
+    const json = JSON.stringify({
+      ...document,
+      progress: { ...document.progress, lastSaveUnordered: "yes" },
+    });
+    expect(readOk(json, "repair").history).not.toHaveProperty("lastSaveUnordered");
+    expect(readProgressBlob(json, "strict").kind).toBe("unreadable");
+  });
+
   it("pins the retired-checklist format as version four", () => {
     expect(fixture(4)).not.toHaveProperty("progress.dates");
     expect(fixture(4)).toHaveProperty("progress.almanac", ["inn_menu", "turnip"]);
@@ -171,7 +193,9 @@ describe("readProgressBlob", () => {
     const loaded = readOk(withQuest(5, record), policy);
 
     expect(loaded.history.provenance[`questStates/${quest}`]).toEqual(record);
-    expect(JSON.parse(serializeProgress(loaded))).toMatchObject({ version: 6 });
+    expect(JSON.parse(serializeProgress(loaded))).toMatchObject({
+      version: CURRENT_SERIALIZATION_VERSION,
+    });
   });
 
   it("drops a malformed obtained source's record in hydration but rejects it in a backup", () => {
