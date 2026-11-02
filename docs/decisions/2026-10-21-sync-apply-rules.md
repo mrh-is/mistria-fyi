@@ -2,9 +2,10 @@
 id: 2026-10-21-sync-apply-rules
 status: amended
 summary: >-
-  Sync apply rules now compare household facts, settling dependent differences together.
+  Sync applies household differences together & lets saves advance manual facts without playtime.
 review: >-
-  Issue 277 revalidates household comparison only. Other portions retain the earlier review caveat.
+  Issues 277 & 310 revalidate household comparison & manual facts without playtime only. Other
+  portions retain the earlier review caveat.
 evidence:
   - docs/decisions/2026-10-21-sync-apply-rules.md#decision
 relationships:
@@ -16,6 +17,15 @@ relationships:
       together under the existing provenance table.
     evidence:
       - docs/decisions/2026-10-29-household-save-facts.md
+      - src/lib/engine/sync-apply.test.ts
+  - type: amended-by
+    target: 2026-11-01-manual-sync-without-playtime
+    scope: partial
+    portion: >-
+      Manual facts without playtime accept forward progress with a notice; backward changes still
+      ask, and stamped manual facts retain playtime ordering.
+    evidence:
+      - https://github.com/mrh-is/mistria-fyi/issues/310
       - src/lib/engine/sync-apply.test.ts
 ---
 

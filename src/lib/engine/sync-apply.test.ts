@@ -334,16 +334,79 @@ describe("applySync: manual edits & playtime ordering", () => {
     expect(result.state.progress.almanac).toEqual(set(TURNIP));
   });
 
-  it("asks when a manual edit or the save has no playtime to order by", () => {
-    for (const [state, playtime] of [
-      [unticked(), 130],
-      [unticked(100), undefined],
-    ] as const) {
-      const [question] = asked(
-        applySync(state, bundle({ almanac: set(TURNIP) }, { playtime }), { fresh: FRESH }),
+  it.each([undefined, 130])(
+    "lets a save advance manual facts without playtime, & tells (save playtime: %s)",
+    (playtime) => {
+      const state = syncState({
+        mineFloor: 10,
+        provenance: {
+          [`almanac/${TURNIP}`]: { source: "manual" },
+          [`questStates/${STORY_QUEST}`]: { source: "manual" },
+          mineFloor: { source: "manual" },
+        },
+        questStates: { [STORY_QUEST]: "obtained" },
+      });
+      const result = applied(
+        applySync(
+          state,
+          bundle(
+            { almanac: set(TURNIP), mineFloor: 20, questStates: { [STORY_QUEST]: "completed" } },
+            { playtime },
+          ),
+          { fresh: FRESH },
+        ),
       );
-      expect(question).toMatchObject({ kind: "facts", reason: "local-disagrees" });
-    }
+      expect(policies(result)).toEqual({
+        [`almanac/${TURNIP}`]: "apply-and-tell",
+        [`questStates/${STORY_QUEST}`]: "apply-and-tell",
+        mineFloor: "apply-and-tell",
+      });
+      expect(result.state.progress).toMatchObject({
+        almanac: set(TURNIP),
+        mineFloor: 20,
+        questStates: { [STORY_QUEST]: "completed" },
+      });
+      const stamp = playtime === undefined ? { source: "save" } : { playtime, source: "save" };
+      expect(result.state.history.provenance).toEqual({
+        [`almanac/${TURNIP}`]: stamp,
+        [`questStates/${STORY_QUEST}`]: { ...stamp, obtainedSource: "manual" },
+        mineFloor: stamp,
+      });
+    },
+  );
+
+  it.each([undefined, 130])(
+    "asks before moving manual facts without playtime backward (save playtime: %s)",
+    (playtime) => {
+      const state = syncState({
+        almanac: set(TURNIP),
+        mineFloor: 20,
+        provenance: {
+          [`almanac/${TURNIP}`]: { source: "manual" },
+          [`questStates/${STORY_QUEST}`]: { source: "manual" },
+          mineFloor: { source: "manual" },
+        },
+        questStates: { [STORY_QUEST]: "completed" },
+      });
+      const incoming = bundle(
+        { almanac: set(), mineFloor: 10, questStates: { [STORY_QUEST]: "obtained" } },
+        { playtime },
+      );
+      const questions = asked(applySync(state, incoming, { fresh: FRESH }));
+      expect(questions).toMatchObject([
+        { field: "almanac", kind: "facts", reason: "local-disagrees" },
+        { field: "mineFloor", kind: "facts", reason: "level-decrease" },
+        { field: "questStates", kind: "facts", reason: "local-disagrees" },
+      ]);
+      expect(settle(state, incoming, () => "keep").state.progress).toEqual(state.progress);
+    },
+  );
+
+  it("asks when a stamped manual edit disagrees with a save without playtime", () => {
+    const [question] = asked(
+      applySync(unticked(100), bundle({ almanac: set(TURNIP) }), { fresh: FRESH }),
+    );
+    expect(question).toMatchObject({ kind: "facts", reason: "local-disagrees" });
   });
 
   it("asks about an edit made after a save whose playtime couldn't be read", () => {
@@ -622,9 +685,9 @@ describe("applySync: resolutions", () => {
   it("lapses “keep mine” once the save reports the default, so a later change asks again", () => {
     const state = syncState({
       lastSavePlaytime: 100,
-      provenance: { hasUpperFloor: { source: "manual" } },
+      provenance: { hasUpperFloor: { playtime: 100, source: "manual" } },
     });
-    const kept = settle(state, bundle({ hasUpperFloor: true }, { playtime: 130 }), () => "keep");
+    const kept = settle(state, bundle({ hasUpperFloor: true }), () => "keep");
     expect(kept.state.history.resolutions).toEqual({ hasUpperFloor: { saveValue: "1" } });
 
     const lapsed = applied(
@@ -633,7 +696,7 @@ describe("applySync: resolutions", () => {
     expect(lapsed.state.history.resolutions).toEqual({});
 
     const [question] = asked(
-      applySync(lapsed.state, bundle({ hasUpperFloor: true }, { playtime: 190 }), {
+      applySync(lapsed.state, bundle({ hasUpperFloor: true }), {
         fresh: FRESH,
       }),
     );
@@ -641,8 +704,10 @@ describe("applySync: resolutions", () => {
   });
 
   it("keeps “keep mine” when the field couldn't be read in full", () => {
-    const state = syncState({ provenance: { [`almanac/${TURNIP}`]: { source: "manual" } } });
-    const kept = settle(state, bundle({ almanac: set(TURNIP) }, { playtime: 100 }), () => "keep");
+    const state = syncState({
+      provenance: { [`almanac/${TURNIP}`]: { playtime: 100, source: "manual" } },
+    });
+    const kept = settle(state, bundle({ almanac: set(TURNIP) }), () => "keep");
     const partial = applied(
       applySync(kept.state, bundle({ almanac: field(set(), "unknown") }, { playtime: 130 }), {
         fresh: FRESH,
@@ -752,24 +817,23 @@ describe("applySync: quests & household facts", () => {
 
   it("reopens the kept household when one dependent save value changes back to local", () => {
     const state = syncState({
-      provenance: { breakUpsDisabled: { source: "manual" }, childChoice: { source: "manual" } },
+      provenance: {
+        breakUpsDisabled: { playtime: 100, source: "manual" },
+        childChoice: { playtime: 100, source: "manual" },
+      },
     });
     const first = settle(
       state,
-      bundle({ breakUpsDisabled: true, childChoice: "yes" }, { playtime: 100 }),
+      bundle({ breakUpsDisabled: true, childChoice: "yes" }),
       () => "keep",
     );
     expect(Object.keys(first.state.history.resolutions)).toEqual(
       expect.arrayContaining(["breakUpsDisabled", "childChoice"]),
     );
     const [question] = asked(
-      applySync(
-        first.state,
-        bundle({ breakUpsDisabled: false, childChoice: "yes" }, { playtime: 130 }),
-        {
-          fresh: FRESH,
-        },
-      ),
+      applySync(first.state, bundle({ breakUpsDisabled: false, childChoice: "yes" }), {
+        fresh: FRESH,
+      }),
     );
     expect(question).toMatchObject({ field: "household", kind: "facts" });
   });
@@ -794,7 +858,7 @@ describe("applySync: quests & household facts", () => {
 
   it("forgets a kept break-ups disagreement after an explicit return to the default", () => {
     const state = syncState();
-    state.history.provenance.breakUpsDisabled = { source: "manual" };
+    state.history.provenance.breakUpsDisabled = { playtime: 100, source: "manual" };
     const first = settle(state, bundle({ breakUpsDisabled: true }), () => "keep");
     expect(first.state.history.resolutions.breakUpsDisabled).toEqual({ saveValue: "1" });
     const reset = settle(first.state, bundle({ breakUpsDisabled: false }), () => "keep");

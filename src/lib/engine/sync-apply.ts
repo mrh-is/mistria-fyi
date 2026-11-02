@@ -188,7 +188,8 @@ export function receiptCovers(
  *
  * `by-playtime` is settled by ordering on `playtime`: a manual edit records the last applied save's playtime and
  * beats any save with that playtime or lower (`keep-local-and-tell`), while a newer save wins
- * (`apply-and-tell`). An edit or save without a readable playtime can't be ordered, so it asks.
+ * (`apply-and-tell`). An edit without playtime lets the save advance it (`apply-and-tell`), but asks
+ * before going backward. A stamped edit asks when the save has no readable playtime.
  */
 type PolicyRule = "add-if-default" | "by-playtime" | SyncPolicy;
 type PolicyRow = Record<FactKind, Record<SyncDirection, PolicyRule>>;
@@ -202,9 +203,9 @@ const SAVE_AUTHORITY: PolicyRow = {
 /**
  * The policy for each difference, by the stored fact's provenance (`none` for a fact with no
  * history) & kind, before the guardrails. A save or inference is superseded by the save. A manual
- * edit is ordered by playtime. A fact from before provenance existed (`unknown`) is treated like a
- * manual one that can't be ordered: the save may add a fact still at its default, but replacing or
- * removing a value asks.
+ * edit is ordered by playtime; without a playtime, it lets the save advance it but asks before going
+ * backward. A fact from before provenance existed (`unknown`) lets the save add a fact still at its
+ * default, but replacing or removing a value asks.
  */
 export const POLICY_TABLE: Readonly<Record<"none" | ProvenanceSource, PolicyRow>> = {
   inferred: SAVE_AUTHORITY,
@@ -486,7 +487,7 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
 
       const kind = factKind(field);
       const rule = POLICY_TABLE[provenance?.source ?? "none"][kind][direction];
-      let policy = settleRule(rule, localValue, provenance?.playtime, playtime);
+      let policy = settleRule(rule, localValue, provenance?.playtime, playtime, direction);
       // Guardrail: whatever the table says, a level is never lowered without asking.
       const decrease = kind === "level" && direction === "backward";
       if (decrease && policy !== "keep-local-and-tell") policy = "ask-first";
@@ -573,9 +574,12 @@ function settleRule(
   local: string | undefined,
   edited: number | undefined,
   playtime: number | undefined,
+  direction: SyncDirection,
 ): SyncPolicy {
   if (rule === "add-if-default") return local === undefined ? "apply-silently" : "ask-first";
-  return rule === "by-playtime" ? byPlaytime(edited, playtime) : rule;
+  if (rule !== "by-playtime") return rule;
+  if (edited === undefined) return direction === "forward" ? "apply-and-tell" : "ask-first";
+  return byPlaytime(edited, playtime);
 }
 
 function byPlaytime(edited: number | undefined, playtime: number | undefined): SyncPolicy {
