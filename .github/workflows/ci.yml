@@ -419,10 +419,7 @@ jobs:
           path: .svelte-kit/output/
       - id: pwa-tests
         continue-on-error: true
-        # TEMPORARY (#390): 10 consecutive runs of the update spec, no retries.
-        run:
-          pnpm exec playwright test --config playwright.pwa.config.ts tests/pwa/update.spec.ts
-          --repeat-each=10 --retries=0
+        run: pnpm run verify -- --step=test:pwa
         env:
           PLAYWRIGHT_SKIP_BUILD: "true"
       - if: >-
