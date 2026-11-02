@@ -138,27 +138,27 @@ another language’s names, since the server no longer has it.
 ### Extra Chromium install under network interception
 
 The language-switch relaunch test can install a third worker, with the same script as the second
-(#432). This comes from Chromium's DevTools network interception, rather than a second deploy or the
+(#432). This comes from Chromium’s DevTools network interception, rather than a second deploy or the
 page/worker version mismatch in `deployNewVersion`.
 
 The investigation used Playwright 1.64.1 & Chromium 156.0.8078.4
 (`f842f52ef39fd97b449eb27cff414bf05a98ddce`). CDP `ServiceWorker.workerVersionUpdated` recorded
 versions 0, 1, & 2 entering `installing`. The second & third HTTP responses had identical SHA-256
-hashes. Wrapping the page's `register()` & `update()` showed no extra call before version 2's
+hashes. Wrapping the page’s `register()` & `update()` showed no extra call before version 2’s
 install. A browser trace in the `ServiceWorker` category showed:
 
 1. The ordinary update compared the script & reported `Different`, then installed version 1.
-2. As the old worker stopped, its DevTools Fetch handler was destroyed. Chromium's
+2. As the old worker stopped, its DevTools Fetch handler was destroyed. Chromium’s
    [Fetch-handler cleanup](https://github.com/chromium/chromium/blob/f842f52ef39fd97b449eb27cff414bf05a98ddce/content/browser/devtools/protocol/fetch_handler.cc)
    calls a callback when requests were modified. This suite fulfills sprite requests & aborts
    fallback-font requests through the worker.
-3. The worker's
+3. The worker’s
    [cleanup callback](https://github.com/chromium/chromium/blob/f842f52ef39fd97b449eb27cff414bf05a98ddce/content/browser/devtools/service_worker_devtools_agent_host.cc)
    enables force-update-on-reload. The automatic reload of `/ja` then logged
    `ServiceWorkerControlleeRequestHandler::ContinueWithRegistration`, `Info: Need to update`,
    followed by `DidUpdateRegistration`. That
    [navigation path](https://github.com/chromium/chromium/blob/f842f52ef39fd97b449eb27cff414bf05a98ddce/content/browser/service_worker/service_worker_controllee_request_handler.cc)
-   skips script comparison, explaining the identical worker's second precache round.
+   skips script comparison, explaining the identical worker’s second precache round.
 
 A controlled probe moved the English-home install delay from `context.route` into the preview
 server, so it also worked without worker interception. With worker-network instrumentation on, three
@@ -166,11 +166,11 @@ versions installed; with `PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK=1`, only two
 `version.json` matched to the original page, starting directly at `/en`, & omitting
 `stopRestartedWorkers` did not remove the third install with interception enabled.
 
-Ordinary player sessions don't have this DevTools interception or its cleanup callback. A player
-using network overrides in DevTools can encounter the same intentional forced update; it doesn't
+Ordinary player sessions don’t have this DevTools interception or its cleanup callback. A player
+using network overrides in DevTools can encounter the same intentional forced update; it doesn’t
 need an app fix. Keep worker-network instrumentation enabled in the real suite: routing is needed
 for its fixtures, install delays, & offline checks, including workers started after going offline.
-The disabled-network probe establishes the cause only; it isn't offline-verification evidence.
+The disabled-network probe establishes the cause only; it isn’t offline-verification evidence.
 
 ### Commands
 

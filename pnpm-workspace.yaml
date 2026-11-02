@@ -41,11 +41,3 @@ peerDependencyRules:
     # SvelteKit in `useSearchParams`, which bits-ui & svelte-toolbelt never call. Drop it once bits-ui
     # depends on runed 0.38 or later, which allows SvelteKit 3.
     "runed@0.35>@sveltejs/kit": "^3.0.0"
-
-patchedDependencies:
-  # Kit's analysis/prerender workers must honor NO_COLOR & explicit FORCE_COLOR values (#403).
-  # Remove once forked() preserves the parent's color controls.
-  "@sveltejs/kit@3.1.0": patches/@sveltejs__kit@3.1.0.patch
-  # Vite's CSS URL substitution must use the environment's sourcemap setting: SvelteKit enables
-  # server maps while leaving client maps off. Remove once Vite fixes cssPostPlugin (#403).
-  vite@8.3.5: patches/vite@8.3.5.patch
