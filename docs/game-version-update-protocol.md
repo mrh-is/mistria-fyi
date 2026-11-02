@@ -110,10 +110,11 @@ from the staged files.
 
 Treat the regenerated data as a candidate until the semantic review is complete. Run
 `pnpm run data:diff HEAD` for a path-level listing of what changed; the committed file is
-pretty-printed, so its Git diff is readable too, though GitHub collapses it as generated. Agent
-hooks deny direct reads of the generated tracker data, but `data:diff` reads it through Git, so
-agents use it instead. The locale chunks are pretty-printed, so their Git diff is reviewable; check
-that no keys were added or removed and that changed values are new translations.
+pretty-printed, so its Git diff is readable too, though GitHub collapses it as generated. Claude
+Code’s permissions deny direct reads of the generated tracker data, and Codex & Copilot follow the
+same rule. `data:diff` reads it through Git, so agents use it instead. The locale chunks are
+pretty-printed, so their Git diff is reviewable; check that no keys were added or removed and that
+changed values are new translations.
 
 ### Upload sprites
 

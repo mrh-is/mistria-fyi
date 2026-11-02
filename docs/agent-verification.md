@@ -10,9 +10,9 @@ verification”.
 - Run only the test that covers your change: `pnpm exec vitest run path/to/file.test.ts`. For
   plain-Node tests under `eslint-rules/`, `scripts/`, & `tests/`, add `--project node`, or
   `--project node-isolated` for `*.isolated.test.ts`. For example:
-  `pnpm exec vitest run --project node scripts/guard-generated-reads.test.ts`. A path selects the
-  right tests, but can still start the app projects’ Cloudflare proxy & workerd before filtering.
-  Use `--project pipeline` for asset-independent `pipeline/` tests. App tests, including
+  `pnpm exec vitest run --project node scripts/check-attribution.test.ts`. A path selects the right
+  tests, but can still start the app projects’ Cloudflare proxy & workerd before filtering. Use
+  `--project pipeline` for asset-independent `pipeline/` tests. App tests, including
   `*.client.test.ts` & `*.cold.test.ts`, can use the path-only command.
 - After a TypeScript or Svelte contract edit, run `pnpm run check`.
 - Before committing, run `pnpm run lint:fix`. Lint must report zero errors & zero warnings. If a
@@ -56,8 +56,7 @@ These CI steps aren’t in the local matrix:
   `pnpm-lock.yaml`, `pnpm-workspace.yaml`, or `.github/workflows/ci.yml` changes (manual dispatches
   always audit),
 - the budgeted test run, which is the complete asset-independent suite with per-file timing limits
-  (its cleanup test runs only when the cleanup script changes, and pull requests skip the relay &
-  most `scripts/` tests unless they change those tests’ inputs),
+  (pull requests skip the relay & most `scripts/` tests unless they change those tests’ inputs),
 - the stale-translation check, which runs only on pull requests that touch `messages/`.
 
 The accessibility & PWA suites run against the build job’s output when `src/`, `static/`, `tests/`,

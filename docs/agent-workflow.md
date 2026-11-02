@@ -202,8 +202,7 @@ documents only the first two steps.
 
 A PR that regenerates `tracker-data.json` includes `pnpm run data:diff` output in its description.
 Put the full listing in a collapsed `<details>` block. When the listing is long, include its summary
-line & the representative changes instead. The script reads the file through Git, so the read guard
-doesn’t block it.
+line & the representative changes instead.
 
 ### Draft or ready
 
