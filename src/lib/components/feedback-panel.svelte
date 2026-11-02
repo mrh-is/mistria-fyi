@@ -19,7 +19,6 @@
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
-  import { syncSwitchOn } from "#lib/sync/sync-switch.js";
   import { ensureTurnstileScript } from "#lib/turnstile.js";
   import { version } from "$app/env";
 
@@ -60,7 +59,7 @@
   let includeSyncLog = $state(false);
   let showSyncLog = $state(false);
   let syncLog = $derived(
-    allowSyncLog && syncSwitchOn && includeSyncLog
+    allowSyncLog && includeSyncLog
       ? syncDiagnostics.snapshot(version, userState.syncLane?.kind ?? "manual")
       : undefined,
   );
@@ -495,7 +494,7 @@
             </div>
           {/if}
 
-          {#if allowSyncLog && syncSwitchOn}
+          {#if allowSyncLog}
             <div class="flex items-center gap-2">
               <Checkbox
                 class="rounded-sm"

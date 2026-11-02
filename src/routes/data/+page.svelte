@@ -6,7 +6,6 @@
   import { trackerData } from "#lib/data/index.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { syncEnabled } from "#lib/sync/enabled.js";
   import { version } from "$app/env";
   import { page } from "$app/state";
 
@@ -24,7 +23,7 @@
   let importOpen = $state(false);
   let transferOpen = $state(false);
   // A syncing lane already gets the save file by itself, so manual import & transfer step aside.
-  let syncing = $derived(syncEnabled && userState.syncLane !== undefined);
+  let syncing = $derived(userState.syncLane !== undefined);
 
   function scrollToTransfer(): void {
     void openThenScroll(
@@ -65,14 +64,12 @@
 <PageHeader title={m.data_title()} backLabel={m.common_go_back()} historyBack />
 
 <div class="data-page">
-  <p class="data-page__intro">{syncEnabled ? m.sync_data_intro() : m.data_intro()}</p>
+  <p class="data-page__intro">{m.sync_data_intro()}</p>
 
-  {#if syncEnabled}
-    <section aria-labelledby="data-sync-heading">
-      <h2 id="data-sync-heading">{m.sync_card_title()}</h2>
-      <SyncCard />
-    </section>
-  {/if}
+  <section aria-labelledby="data-sync-heading">
+    <h2 id="data-sync-heading">{m.sync_card_title()}</h2>
+    <SyncCard />
+  </section>
 
   <section aria-labelledby="data-tools-heading">
     <h2 id="data-tools-heading">{m.data_field_kit_heading()}</h2>

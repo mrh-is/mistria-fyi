@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { DIAGNOSTIC_ID_SOURCES } from "#lib/engine/diagnostic-id-sources.js";
 import { extractSave } from "#lib/engine/import-save.js";
@@ -19,8 +19,6 @@ import type { PrivateValues } from "./diagnostics.svelte.js";
 import type { FollowKey } from "./follow.js";
 import type { ReadSave } from "./read-save.js";
 
-const enabled = vi.hoisted(() => ({ syncSwitchOn: true }));
-vi.mock("./sync-switch.js", () => enabled);
 const KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8" as FollowKey;
 const TOKEN = "HxwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEAAAA";
 
@@ -60,10 +58,6 @@ async function fixture(): Promise<ReadSave> {
 
 const NOTHING_PRIVATE = { credentials: [], farmNames: [], farmNumbers: [], playerNames: [] };
 
-beforeEach(() => {
-  enabled.syncSwitchOn = true;
-});
-
 it("withholds an ID from an unclassified source even when its text looks harmless", async () => {
   const save = await fixture();
   save.extraction.fields.almanac = {
@@ -81,9 +75,8 @@ it("withholds an ID from an unclassified source even when its text looks harmles
   const log = createSyncDiagnostics();
   await log.record(save, { kind: "skipped" }, NOTHING_PRIVATE);
   expect(
-    log
-      .snapshot("build", "manual")
-      ?.events[0].unknownFields.find(({ field }) => field === "almanac")?.ids,
+    log.snapshot("build", "manual").events[0].unknownFields.find(({ field }) => field === "almanac")
+      ?.ids,
   ).toEqual(["[redacted]"]);
 });
 
@@ -102,9 +95,8 @@ it.each([
   const log = createSyncDiagnostics();
   await log.record(save, { kind: "skipped" }, NOTHING_PRIVATE);
   expect(
-    log
-      .snapshot("build", "manual")
-      ?.events[0].unknownFields.find(({ field }) => field === "almanac")?.ids,
+    log.snapshot("build", "manual").events[0].unknownFields.find(({ field }) => field === "almanac")
+      ?.ids,
   ).toEqual(["future_game_item"]);
 });
 
@@ -129,7 +121,7 @@ async function publishedIds(
   await log.record(save, { kind: "skipped" }, privateValues);
   return log
     .snapshot("build", "manual")
-    ?.events[0].unknownFields.find(({ field }) => field === "almanac")?.ids;
+    .events[0].unknownFields.find(({ field }) => field === "almanac")?.ids;
 }
 
 const ASK: SyncApplyOutcome = {
@@ -176,7 +168,7 @@ describe("public sync diagnostics", () => {
       lane: "following",
       protocolVersion: 1,
     });
-    expect(snapshot?.events[0].unknownFields).toContainEqual({
+    expect(snapshot.events[0].unknownFields).toContainEqual({
       field: "almanac",
       ids: ["unknown_turnip_v2", "[redacted]"],
     });
@@ -195,15 +187,13 @@ describe("public sync diagnostics", () => {
     ]) {
       expect(body).not.toContain(secret);
     }
-    expect(snapshot?.events[0].farmHash).toMatch(/^[a-f0-9]{64}$/u);
+    expect(snapshot.events[0].farmHash).toMatch(/^[a-f0-9]{64}$/u);
     await log.record(save, { kind: "skipped" }, NOTHING_PRIVATE);
-    expect(log.snapshot("build", "computer")?.events[1].farmHash).toBe(
-      snapshot?.events[0].farmHash,
-    );
+    expect(log.snapshot("build", "computer").events[1].farmHash).toBe(snapshot.events[0].farmHash);
     const otherSession = createSyncDiagnostics();
     await otherSession.record(save, { kind: "skipped" }, NOTHING_PRIVATE);
-    expect(otherSession.snapshot("build", "computer")?.events[0].farmHash).not.toBe(
-      snapshot?.events[0].farmHash,
+    expect(otherSession.snapshot("build", "computer").events[0].farmHash).not.toBe(
+      snapshot.events[0].farmHash,
     );
   });
 
@@ -211,14 +201,14 @@ describe("public sync diagnostics", () => {
     const log = createSyncDiagnostics();
     await log.record(await fixture(), ASK, NOTHING_PRIVATE);
     log.status("waiting");
-    const events = log.snapshot("build", "manual")?.events;
+    const events = log.snapshot("build", "manual").events;
     expect(events).toHaveLength(2);
     // Naming `playtime` as an unknown field is fine: that says it couldn't be read, not its value.
     expect(JSON.stringify(events)).not.toContain('"playtime":');
     expect(
       v.safeParse(SyncLogSchema, {
         appBuild: "build",
-        events: events?.map((event) => ({ ...event, playtime: 123 })),
+        events: events.map((event) => ({ ...event, playtime: 123 })),
         lane: "manual",
         protocolVersion: 1,
       }).success,
@@ -300,9 +290,9 @@ describe("public sync diagnostics", () => {
     await pending;
     const snapshot = log.snapshot("build", "manual");
     expect(v.safeParse(SyncLogSchema, snapshot).success).toBe(true);
-    expect(snapshot?.events).toHaveLength(2);
+    expect(snapshot.events).toHaveLength(2);
     expect(
-      snapshot?.events.every(({ unknownFields }) =>
+      snapshot.events.every(({ unknownFields }) =>
         unknownFields.some(
           ({ field, ids }) =>
             field === "almanac" &&
@@ -336,8 +326,8 @@ describe("public sync diagnostics", () => {
       NOTHING_PRIVATE,
     );
     const snapshot = log.snapshot("build", "manual");
-    expect(snapshot?.events).toHaveLength(3);
-    expect(snapshot?.events.at(-1)?.unknownFields).toContainEqual({
+    expect(snapshot.events).toHaveLength(3);
+    expect(snapshot.events.at(-1)?.unknownFields).toContainEqual({
       field: "almanac",
       ids: ["kept_id", "[redacted]"],
     });
@@ -385,13 +375,13 @@ describe("public sync diagnostics", () => {
         { kind: "skipped" },
         NOTHING_PRIVATE,
       );
-      expect(log.snapshot("build", "manual")?.events).toHaveLength(1);
+      expect(log.snapshot("build", "manual").events).toHaveLength(1);
       expect(finishHash).toBeDefined();
       finishHash?.(new ArrayBuffer(32));
       await pending;
       const snapshot = log.snapshot("build", "manual");
-      expect(snapshot?.events).toHaveLength(2);
-      expect(snapshot?.events[0].unknownFields).toContainEqual({
+      expect(snapshot.events).toHaveLength(2);
+      expect(snapshot.events[0].unknownFields).toContainEqual({
         field: "almanac",
         ids: ["[redacted]", "kept_id"],
       });
@@ -416,7 +406,7 @@ describe("public sync diagnostics", () => {
     const log = createSyncDiagnostics();
     await log.record(save, { kind: "skipped" }, NOTHING_PRIVATE);
     const snapshot = log.snapshot("build", "manual");
-    expect(snapshot?.events[0].unknownFields).toContainEqual({
+    expect(snapshot.events[0].unknownFields).toContainEqual({
       field: "almanac",
       ids: ["new_game_item"],
     });
@@ -466,7 +456,7 @@ describe("public sync diagnostics", () => {
       ),
     );
     const before = log.snapshot("build", "manual");
-    expect(before?.events.length).toBeGreaterThan(0);
+    expect(before.events.length).toBeGreaterThan(0);
     expect(v.safeParse(SyncLogSchema, before).success).toBe(true);
     const pending = log.record(
       { ...save, names: { farm: [], player: ["a"] } },
@@ -475,8 +465,8 @@ describe("public sync diagnostics", () => {
     );
     try {
       const during = log.snapshot("build", "manual");
-      expect(during?.events.length).toBeGreaterThan(0);
-      expect(during?.events[0].unknownFields[0].ids).toContain("[redacted]");
+      expect(during.events.length).toBeGreaterThan(0);
+      expect(during.events[0].unknownFields[0].ids).toContain("[redacted]");
       expect(new TextEncoder().encode(JSON.stringify(during)).byteLength).toBeLessThanOrEqual(
         MAX_SYNC_LOG_BYTES,
       );
@@ -491,10 +481,10 @@ describe("public sync diagnostics", () => {
     log.status("unreadable");
     for (let i = 0; i < MAX_SYNC_EVENTS; i++) log.status("waiting");
     const snapshot = log.snapshot("build", "manual");
-    expect(snapshot?.events).toHaveLength(MAX_SYNC_EVENTS);
-    expect(snapshot?.events.every((event) => event.outcome === "waiting")).toBe(true);
-    snapshot?.events.pop();
-    expect(log.snapshot("build", "manual")?.events).toHaveLength(MAX_SYNC_EVENTS);
+    expect(snapshot.events).toHaveLength(MAX_SYNC_EVENTS);
+    expect(snapshot.events.every((event) => event.outcome === "waiting")).toBe(true);
+    snapshot.events.pop();
+    expect(log.snapshot("build", "manual").events).toHaveLength(MAX_SYNC_EVENTS);
   });
 
   it("keeps event order when hashing finishes after a later status", async () => {
@@ -502,7 +492,7 @@ describe("public sync diagnostics", () => {
     const pending = log.record(await fixture(), ASK, NOTHING_PRIVATE);
     log.status("waiting");
     await pending;
-    expect(log.snapshot("build", "following")?.events.map((event) => event.outcome)).toEqual([
+    expect(log.snapshot("build", "following").events.map((event) => event.outcome)).toEqual([
       "ask",
       "waiting",
     ]);
@@ -521,7 +511,7 @@ describe("public sync diagnostics", () => {
     for (const outcome of uploads) log.status(outcome);
     const snapshot = log.snapshot("build", "computer");
     expect(v.safeParse(SyncLogSchema, snapshot).success).toBe(true);
-    expect(snapshot?.events).toEqual(
+    expect(snapshot.events).toEqual(
       uploads.map((outcome) => ({
         farmHash: null,
         gameVersion: null,
@@ -531,22 +521,12 @@ describe("public sync diagnostics", () => {
       })),
     );
     // The closed schema takes no counter, mailbox ID, hash, or size beside an upload's outcome.
-    const [event] = snapshot?.events ?? [];
+    const [event] = snapshot.events;
     for (const extra of [{ counter: 3 }, { mailboxId: "m" }, { hash: "h" }, { size: 10 }]) {
       expect(
         v.safeParse(SyncLogSchema, { ...snapshot, events: [{ ...event, ...extra }] }).success,
       ).toBe(false);
     }
-  });
-
-  it("collects and exports nothing with the production switch off", async () => {
-    const log = createSyncDiagnostics();
-    enabled.syncSwitchOn = false;
-    log.status("unreadable");
-    await log.record(await fixture(), ASK, { ...NOTHING_PRIVATE, credentials: [KEY] });
-    expect(log.snapshot("build", "following")).toBeUndefined();
-    enabled.syncSwitchOn = true;
-    expect(log.snapshot("build", "manual")?.events).toEqual([]);
   });
 
   it("keeps large unknown-ID reports within the payload byte limit", async () => {
@@ -566,8 +546,8 @@ describe("public sync diagnostics", () => {
       ),
     );
     const snapshot = log.snapshot("build", "following");
-    expect(snapshot?.events.length).toBeGreaterThan(0);
-    expect(snapshot?.events.length).toBeLessThan(MAX_SYNC_EVENTS);
+    expect(snapshot.events.length).toBeGreaterThan(0);
+    expect(snapshot.events.length).toBeLessThan(MAX_SYNC_EVENTS);
     expect(new TextEncoder().encode(JSON.stringify(snapshot)).byteLength).toBeLessThanOrEqual(
       MAX_SYNC_LOG_BYTES,
     );
@@ -575,7 +555,7 @@ describe("public sync diagnostics", () => {
     expect(
       v.safeParse(SyncLogSchema, {
         ...snapshot,
-        events: Array.from({ length: MAX_SYNC_EVENTS }, () => snapshot?.events[0]),
+        events: Array.from({ length: MAX_SYNC_EVENTS }, () => snapshot.events[0]),
       }).success,
     ).toBe(false);
   });

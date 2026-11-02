@@ -22,7 +22,6 @@
   import { keepLocaleOffline } from "#lib/pwa/offline-locales.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { syncEnabled } from "#lib/sync/enabled.js";
   import { keepRetiring } from "#lib/sync/sharing.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
@@ -43,11 +42,11 @@
     userState.loadFromStorage();
     // A retire the relay hasn't confirmed yet tries again on every visit, then with backoff & on
     // coming back online for as long as the page is open.
-    const stopRetiring = syncEnabled ? keepRetiring() : undefined;
+    const stopRetiring = keepRetiring();
     // Browser tests wait for this before interacting: a server-rendered control clicked before
     // hydration silently drops the event. Root `onMount` runs after every child has mounted.
     document.documentElement.dataset.hydrated = "true";
-    return () => stopRetiring?.();
+    return () => stopRetiring();
   });
 
   let metadata = $derived(
@@ -117,9 +116,7 @@
   />
 
   <PersistenceWarning />
-  {#if syncEnabled}
-    <SyncReceiverHost />
-  {/if}
+  <SyncReceiverHost />
   <PencilFilter />
 {/key}
 

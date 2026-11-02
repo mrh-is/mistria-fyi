@@ -13,7 +13,6 @@
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { syncEnabled } from "#lib/sync/enabled.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
@@ -58,10 +57,8 @@
     {#if toolbarState.searchQuery}
       <SearchResults locale={data.locale} query={toolbarState.searchQuery} />
     {:else}
-      {#if syncEnabled}
-        <GotItNote locale={data.locale} />
-        <SyncTroubleNote />
-      {/if}
+      <GotItNote locale={data.locale} />
+      <SyncTroubleNote />
       <WelcomeCard />
       <h2 class="px-1 font-controls text-2xs tracking-[0.14em] text-muted-foreground uppercase">
         {m.home_index_heading()}

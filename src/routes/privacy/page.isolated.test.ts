@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import * as m from "#lib/paraglide/messages.js";
 import { locales } from "#lib/paraglide/runtime.js";
@@ -6,24 +6,12 @@ import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import PrivacyPage from "./+page.svelte";
 
-const syncSwitch = vi.hoisted(() => ({ on: true }));
-
-vi.mock("#lib/sync/sync-switch.js", () => ({
-  get syncSwitchOn() {
-    return syncSwitch.on;
-  },
-}));
-
 function renderPage() {
   return renderToFragment(PrivacyPage, { props: {} });
 }
 
 describe("privacy page sync sections", () => {
-  beforeEach(() => {
-    syncSwitch.on = true;
-  });
-
-  it("splits into “Without sync” & “With sync” when the switch is on", () => {
+  it("splits into “Without sync” & “With sync”", () => {
     const { queries } = renderPage();
 
     expect(queries.getByRole("heading", { level: 2, name: "Without sync" })).toBeTruthy();
@@ -111,21 +99,7 @@ describe("privacy page sync sections", () => {
     };
 
     for (const locale of locales) {
-      expect(m.privacy_feedback_public_middle({}, { locale })).toContain(warnings[locale]);
       expect(m.privacy_feedback_public_middle_sync_log({}, { locale })).toContain(warnings[locale]);
     }
-  });
-
-  it("leaves the page as it was when the switch is off", () => {
-    syncSwitch.on = false;
-    const { queries, text } = renderPage();
-
-    expect(queries.queryByRole("heading", { name: "Without sync" })).toBeNull();
-    expect(queries.queryByRole("heading", { name: "With sync" })).toBeNull();
-    expect(queries.queryByRole("link", { name: "Turnstile Privacy Addendum" })).toBeNull();
-    expect(text).not.toContain("end-to-end encrypted");
-    expect(text).not.toContain("sync log");
-    expect(text).toContain("and your progress data (if you opted in)");
-    expect(queries.getByRole("heading", { level: 2, name: "The short version" })).toBeTruthy();
   });
 });

@@ -16,7 +16,6 @@ import type * as GitHubAuth from "#lib/server/github-app-auth.js";
 import type { SyncApplyOutcome } from "#lib/stores/user-state.svelte.js";
 import type { ReadSave } from "#lib/sync/read-save.js";
 
-vi.mock("#lib/sync/sync-switch.js", () => ({ syncSwitchOn: true }));
 vi.mock("#lib/server/deployment.js", () => ({ isProductionDeployment: true }));
 vi.mock("#lib/server/github-app-auth.js", async (importOriginal) => ({
   ...(await importOriginal<typeof GitHubAuth>()),
