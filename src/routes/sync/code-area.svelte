@@ -13,12 +13,12 @@
   import { buildFollowLink } from "#lib/sync/follow.js";
   import { shareCode, shareFailureCopy } from "#lib/sync/sharing.js";
 
-  import { generateTransferQr } from "../data/transfer-qr.js";
+  import { generateFollowQr } from "./qr.js";
 
   import type { FollowKey } from "#lib/sync/follow.js";
   import type { ShareFailureCopy } from "#lib/sync/sharing.js";
 
-  import type { TransferQr } from "../data/transfer-qr.js";
+  import type { FollowQr } from "./qr.js";
 
   let {
     linkOrigin,
@@ -39,7 +39,7 @@
   // svelte-ignore state_referenced_locally
   let codeState = $state<CodeState>(revealed ? "shown" : "covered");
   let failure = $state<null | ShareFailureCopy>(null);
-  let qr = $state<null | TransferQr>(null);
+  let qr = $state<FollowQr | null>(null);
   let copied = $state(false);
 
   const sharedKey = $derived.by(() => {
@@ -55,7 +55,7 @@
     }
     let current = true;
     void (async () => {
-      const generated = await generateTransferQr(link);
+      const generated = await generateFollowQr(link);
       if (current) qr = generated;
     })();
     return () => {

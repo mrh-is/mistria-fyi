@@ -304,9 +304,9 @@ in
   `farmSwitchBackup`, which no export carries, & any pending retire. Restoring a backup & a new farm
   stay inside a lane. See [sync-setup.md](sync-setup.md#lanes).
 - **Opening a link.** A device opens the link, scans its QR code with the tracker’s own scanner (the
-  one the transfer card uses), or pastes it. The page strips the fragment from its address bar,
-  holds the key in the page (see Lanes), & fetches the latest envelope. An “empty” mailbox shows
-  `sync_waiting` & changes nothing; a “retired” one shows `sync_retired_*`.
+  scanner in `src/routes/sync/qr.ts`), or pastes it. The page strips the fragment from its address
+  bar, holds the key in the page (see Lanes), & fetches the latest envelope. An “empty” mailbox
+  shows `sync_waiting` & changes nothing; a “retired” one shows `sync_retired_*`.
 - **Nothing is spent.** Opening a link only reads, so a chat app’s link preview or a stream viewer
   can’t take anything from the player. A leaked link can read saves until the PC makes a new one;
   that’s accepted, since a save holds nothing close to personal data.
@@ -536,8 +536,7 @@ plus `info.creation_version`, parsed tolerantly (#128).
 The envelope carries a protocol version, & both sides are strict: a follower accepts only its own
 version. An older envelope says the tracker on the computer needs a refresh, & a newer one that this
 tracker does (`sync_update_computer` & `sync_update_here` in [sync-setup.md](sync-setup.md#copy)); a
-reload fixes either. App builds do not matter. (Transfer QR codes, by contrast, bind to the exact
-app build; see [transfer-format.md](transfer-format.md).)
+reload fixes either. App builds do not matter.
 
 ## App updates
 
@@ -643,10 +642,9 @@ The rewrite ships before or with sync, in all locales.
 
 - Firefox needs the save re-dropped or re-picked per session, through the same relay & rules.
 - No sync at all means manual check-offs.
-- QR transfer is deprecated once sync ships (#138); backup export & restore moves check-offs to a
-  new device. Remove the codec, its tests, & the transfer promise in
-  [app-architecture.md](app-architecture.md#7-public-contract), & leave no orphaned messages. Keep
-  the camera scanner, which following reuses.
+- Progress-transfer QR codes are retired (#138). Backup export & restore moves hand check-offs to a
+  new device; sync follows the gaming computer's save. The camera scanner & QR renderer live in
+  `src/routes/sync/qr.ts`.
 
 ## Build order
 

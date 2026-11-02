@@ -38,15 +38,12 @@ describe("merge summary integration", () => {
     setup?.();
     const { counts } = userState.mergeFromSave(imported);
 
-    for (const kind of ["import", "transfer"] as const) {
-      const { text } = renderToFragment(MergeSummary, {
-        props: { counts, filesUsed: ["player.json"], kind },
-      });
+    const { text } = renderToFragment(MergeSummary, {
+      props: { counts, filesUsed: ["player.json"] },
+    });
 
-      expect(text).toContain(expected);
-      expect(text).not.toContain("No new data to import");
-      expect(text).not.toContain("no new items to add");
-    }
+    expect(text).toContain(expected);
+    expect(text).not.toContain("No new data to import");
   });
 });
 
@@ -58,7 +55,7 @@ describe("merge summary household conflicts", () => {
     });
 
     const { container, text } = renderToFragment(MergeSummary, {
-      props: { conflicts, counts, kind: "transfer" },
+      props: { conflicts, counts },
     });
 
     expect(text).toContain("Adeline");
@@ -76,7 +73,7 @@ describe("merge summary household conflicts", () => {
     });
 
     const { text } = renderToFragment(MergeSummary, {
-      props: { conflicts, counts, kind: "transfer" },
+      props: { conflicts, counts },
     });
 
     expect(text).toContain("Adeline");

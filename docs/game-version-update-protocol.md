@@ -30,9 +30,8 @@ Keep the existing versions conceptually separate:
   Changing the key (or otherwise abandoning state) needs an explicit decision record in
   `docs/decisions/`.
 - The Mistria Field Guide application version identifies the exact deployed commit. Production
-  builds derive it deterministically from the commit date and abbreviated SHA. Transfer codes carry
-  a fingerprint of it, so a code only decodes on the build that created it. `package.json`'s version
-  and Git version tags identify intentional product releases rather than routine deploys.
+  builds derive it deterministically from the commit date and abbreviated SHA. `package.json`'s
+  version and Git version tags identify intentional product releases rather than routine deploys.
 
 Do not add another version axis speculatively. Introduce one when a concrete release demonstrates
 that the existing versions cannot distinguish states the application must handle.
@@ -270,12 +269,6 @@ domains. Verify imports from both the preceding and new game versions when playe
 have either save format. Update warnings and fixtures for any changed native fields or identifiers.
 
 State explicitly when support for importing an older game save is dropped.
-
-### Progress transfer
-
-Transfer codes need no review. Each code carries a fingerprint of the app build that created it, and
-only the same build decodes it, so a game update can’t reinterpret an outstanding code. See
-[the progress transfer format](transfer-format.md#build-binding).
 
 ### User communication
 

@@ -75,8 +75,8 @@ For sync in particular:
 - **Within a lane, nothing is lost.** Scanning a different code, a new farm, & restoring a backup
   all stay in the lane; the next save file applies with the usual rules (a new farm switches with a
   backup of the old one).
-- **What a syncing lane hides.** Data’s “Import from Save File” & the transfer card, since the save
-  file already arrives by itself. Backup & restore, & check-offs by hand, stay.
+- **What a syncing lane hides.** Data’s “Import from Save File”, since the save file already arrives
+  by itself. Backup & restore, & check-offs by hand, stay.
 
 ### What stays by hand
 
