@@ -28,8 +28,13 @@ Agent-authored Git & GitHub content must say which agent wrote it.
 - **PR labels:** give every agent-authored PR exactly one matching `agent:*` label. The established
   labels are `agent: claude`, `agent: codex`, `agent: antigravity`, `agent: kilo`, `agent: copilot`,
   & `agent: lm studio`. Don’t create a parallel `agent/...` label family.
-- **Issues:** an agent that files an issue includes the `Agent:` line. An `agent:*` label on an
-  issue marks who is working on it now, not who wrote it.
+- **Issues:** include the `Agent:` line, exactly one `type:` label, exactly one `status:` label, an
+  `area:` label when one fits, a milestone, & an “Acceptance criteria” section (or a “Done when”
+  line for investigations). Use the [task](../.github/ISSUE_TEMPLATE/task.md) or
+  [bug](../.github/ISSUE_TEMPLATE/bug.md) template. With `gh issue create --body-file`, pass labels
+  & the milestone explicitly through `--label` & `--milestone`; template defaults don't apply. List
+  current milestones with `gh api repos/mrh-is/mistria-fyi/milestones --jq '.[].title'`. An
+  `agent:*` label marks who is working on the issue now, not who wrote it.
 - **Comments:** end every substantive agent-authored GitHub comment with the same `Agent:` line.
   This still applies when the issue or PR already has an agent label, because several agents may
   take part in one thread.
