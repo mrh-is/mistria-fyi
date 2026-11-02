@@ -39,6 +39,7 @@ export async function stopRestartedWorkers(context: BrowserContext): Promise<voi
   const sessions = new Set<CDPSession>();
   const versions = new Map<string, { runningStatus: string; status: string }>();
   const stoppedWhileActive = new Set<string>();
+  const stopping = new Set<string>();
   const isHoldingTakeover = (versionId: string): boolean => {
     const version = versions.get(versionId);
     return (
@@ -49,17 +50,21 @@ export async function stopRestartedWorkers(context: BrowserContext): Promise<voi
     );
   };
   const stopIfHoldingTakeover = async (versionId: string): Promise<void> => {
-    for (const session of sessions) {
-      if (!isHoldingTakeover(versionId)) return;
-      try {
-        await session.send("ServiceWorker.stopWorker", { versionId });
-        return;
-      } catch (error) {
-        // A closed session means its page closed; another page's may still be open. Anything
-        // else would otherwise show only as a takeover timing out.
-        if (!isClosedError(error)) throw error;
-        sessions.delete(session);
+    try {
+      for (const session of sessions) {
+        if (!isHoldingTakeover(versionId)) return;
+        try {
+          await session.send("ServiceWorker.stopWorker", { versionId });
+          return;
+        } catch (error) {
+          // A closed session means its page closed; another page's may still be open. Anything
+          // else would otherwise show only as a takeover timing out.
+          if (!isClosedError(error)) throw error;
+          sessions.delete(session);
+        }
       }
+    } finally {
+      stopping.delete(versionId);
     }
   };
   const follow = async (page: Page): Promise<void> => {
@@ -73,7 +78,9 @@ export async function stopRestartedWorkers(context: BrowserContext): Promise<voi
           if (version.status === "activated" && version.runningStatus === "stopped") {
             stoppedWhileActive.add(version.versionId);
           }
-          if (!isHoldingTakeover(version.versionId)) continue;
+          // Every open page's session reports the same update, so only the first schedules a stop.
+          if (!isHoldingTakeover(version.versionId) || stopping.has(version.versionId)) continue;
+          stopping.add(version.versionId);
           setTimeout(() => {
             void stopIfHoldingTakeover(version.versionId);
           }, RESTARTED_WORKER_GRACE_MS);
