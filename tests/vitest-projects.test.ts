@@ -22,7 +22,7 @@ interface ListedFile {
 }
 
 /** The environment variables CI sets to skip test files a pull request can't affect. */
-const gates = ["VITEST_CLEANUP_CHANGED", "VITEST_RELAY_CHANGED", "VITEST_SCRIPTS_CHANGED"] as const;
+const gates = ["VITEST_RELAY_CHANGED", "VITEST_SCRIPTS_CHANGED"] as const;
 
 /**
  * Every test file Vitest's projects collect, as repo-relative paths with their project names. Each
@@ -92,13 +92,7 @@ describe("Vitest projects", () => {
     const gatedTests = trackedTestFiles().filter(
       (file) => file.startsWith("relay/") || file.startsWith("scripts/"),
     );
-    expect(gatedTests).toEqual(
-      expect.arrayContaining([
-        ...alwaysRun,
-        "relay/worker.test.ts",
-        "scripts/cleanup-merged-worktrees.test.ts",
-      ]),
-    );
+    expect(gatedTests).toEqual(expect.arrayContaining([...alwaysRun, "relay/worker.test.ts"]));
     const kept = new Set(listing.gated.map(({ file }) => file));
     expect(
       listing.files
