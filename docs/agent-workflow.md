@@ -35,6 +35,11 @@ Agent-authored Git & GitHub content must say which agent wrote it.
   & the milestone explicitly through `--label` & `--milestone`; template defaults don't apply. List
   current milestones with `gh api repos/mrh-is/mistria-fyi/milestones --jq '.[].title'`. An
   `agent:*` label marks who is working on the issue now, not who wrote it.
+- **Issue & PR assignees:** when taking on work, assign the issue & its PR to the GitHub user you
+  represent. Check the authenticated account with `gh api user --jq .login`; use
+  `gh issue edit <number> --add-assignee @me` & `gh pr edit <number> --add-assignee @me`, or
+  `--assignee @me` when creating a PR. The assignee identifies the human responsible; the `agent:*`
+  label identifies the agent. Keep assignments current when handing work off.
 - **Comments:** end every substantive agent-authored GitHub comment with the same `Agent:` line.
   This still applies when the issue or PR already has an agent label, because several agents may
   take part in one thread.
@@ -67,11 +72,12 @@ harness reminder may inject model-versioned trailer text; correct it before comm
 ## Task sequence
 
 1. **Read the issue, comments, & relationships.** Use
-   `gh issue view <number> --json title,body,labels,comments,blockedBy,parent`. The `--comments`
-   flag prints nothing when there are no comments, while `--json` works in every case. Don’t start
-   an issue that an open issue blocks (see “Blockers” below), or one labeled `status: blocked` or
-   `status: needs decision`. If an issue has `status: in progress` or an `agent:*` label, coordinate
-   with its current owner instead of duplicating the work.
+   `gh issue view <number> --json title,body,labels,comments,blockedBy,parent,assignees`. The
+   `--comments` flag prints nothing when there are no comments, while `--json` works in every case.
+   Don’t start an issue that an open issue blocks (see “Blockers” below), or one labeled
+   `status: blocked` or `status: needs decision`. If an issue has an assignee,
+   `status: in progress`, or an `agent:*` label, coordinate with its current owner instead of
+   duplicating the work.
 2. **Resolve open questions before starting.** If the issue already has clear acceptance criteria,
    go ahead without asking for approval again. Ask the user only about scope the criteria leave
    open, requirements that conflict, or decisions the criteria don’t settle.
@@ -79,7 +85,8 @@ harness reminder may inject model-versioned trailer text; correct it before comm
    deliverables. A nontrivial feature without clear acceptance criteria needs a short acceptance
    checklist: three to seven items, each describing a state the finished feature must satisfy. Get
    the user’s approval of that checklist before implementing. Clear existing criteria count as the
-   approval, so don’t ask a second time or write a duplicate checklist.
+   approval, so don’t ask a second time or write a duplicate checklist. When starting work, assign
+   the issue to the GitHub user you represent (see “Issue & PR assignees” above).
 4. **Branch.** Work on a branch cut from the freshly fetched remote tip. A worktree is optional (see
    “Worktrees” in AGENTS.md).
 5. **Check the baseline.** Install dependencies with `pnpm install --frozen-lockfile`, which also
@@ -98,7 +105,8 @@ harness reminder may inject model-versioned trailer text; correct it before comm
    - a reference to the issue (`Closes #N`),
    - the branch preview URL on the template’s “Preview” line (see “Preview URL” below),
    - `data:diff` output, if the PR regenerates tracker data (see “Tracker data changes” below),
-   - the matching `agent:*` label.
+   - the matching `agent:*` label,
+   - the GitHub user you represent as its assignee (`--assignee @me`).
 
    Open it as a draft or as ready according to “Draft or ready” below.
 
