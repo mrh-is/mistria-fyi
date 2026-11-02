@@ -1,15 +1,26 @@
 ---
 id: 2026-11-01-file-issues-by-default
-status: current
+status: amended
 summary:
   Agents file an issue for anything they find & don't fix, without asking, instead of offering to.
 evidence:
   - AGENTS.md
   - https://github.com/mrh-is/mistria-fyi/issues/390
-relationships: []
+relationships:
+  - type: amended-by
+    target: 2026-11-02-friction-log
+    scope: partial
+    portion: >-
+      Only the small frictions an agent works around, such as a flaky command or a stale doc. They
+      now go on the friction log; product bugs, blockers, & deferred review findings still get their
+      own issues.
+    evidence:
+      - docs/decisions/2026-11-02-friction-log.md
 ---
 
 # File issues by default
+
+Amended by [the friction log decision](2026-11-02-friction-log.md).
 
 ## Context
 

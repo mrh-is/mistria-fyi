@@ -145,6 +145,42 @@ To delegate one piece of a larger issue, file that piece as a sub-issue
 not the parent. When pieces must land in order, link them with “blocked by” relationships. Remove
 the label if the task grows past these conditions.
 
+### Friction log
+
+The pinned “Agent friction log” issue collects small frictions that agents work around without being
+blocked. One issue covers each month. Find the current one with
+`gh issue list --search "Agent friction log in:title" --state open`.
+
+- **What goes there:** a flaky command, a stale or confusing doc, a guard that blocked a harmless
+  command, or any other workaround that didn’t stop the task. Product bugs, blockers, & deferred
+  review findings still get their own issues.
+- **Borderline cases:** a test that fails & then passes on a rerun is friction. It becomes an issue
+  when it fails again on rerun, or when it blocks a merge. A stale doc you didn’t fix is friction,
+  unless following it would break something; then it’s a bug.
+- **Format:** one comment per friction, with “What”, “Workaround”, “Where”, & “Task” lines and the
+  `Agent:` line. The log issue’s body has an example.
+- **Repeats:** log a friction again even when someone already has. The repeat count is the signal.
+- **Monthly review:** when the month ends, the owner (or an agent the owner asks) tallies the
+  comments. Anything logged about three times becomes an issue, linked from the tally. The tally is
+  the old log’s closing comment, and a new log issue replaces it.
+
+## Recording decisions
+
+Each kind of “why” has one home. Pick the narrowest one that fits:
+
+1. **PR “Decisions” section:** the default. List each choice the change made & its reason, one line
+   each, or “None”. It’s tied to the diff, and `git blame` leads back to it.
+2. **Code comment:** when the code would look wrong, or tempt a cleanup, without the reason next to
+   it.
+3. **Living docs** such as [sync.md](sync.md) & [app-architecture.md](app-architecture.md): the
+   current design. Edit them in place when the design changes; don’t append a history.
+4. **Decision record** in `docs/decisions/`: only when a capable newcomer would propose the rejected
+   alternative, so the record’s “Revisit if” section stops the question from being reopened.
+   Save-driven sync with no logins is the model case. Expect a handful a year.
+
+Most changes need only the first. A decision record that would merely log a choice belongs in the PR
+instead. See [the decision on decision records](decisions/2026-11-02-decision-record-scope.md).
+
 ## Pull request details
 
 ### Preview URL
