@@ -28,7 +28,8 @@ no metadata headers, and nothing generates an index from them.
 Agents still file their own issues for product bugs, blockers, & deferred review findings. Every
 other workaround becomes one comment on the pinned “Agent friction log” issue, which covers a month.
 Repeats are logged again, because the count is the signal. At the end of the month, the owner (or an
-agent the owner asks) tallies the comments; anything logged about three times becomes an issue.
+agent the owner asks) tallies the comments; anything logged about three times becomes an issue, and
+a new log replaces the old one.
 
 ## Alternatives
 
@@ -41,6 +42,8 @@ agent the owner asks) tallies the comments; anything logged about three times be
 - **Keep filing an issue for everything.** Rejected: the volume buried the product work.
 - **Mention frictions only in the final report.** Rejected: findings mentioned only in a session get
   lost.
+- **One friction log forever.** Rejected: GitHub collapses the middle of long threads, so old
+  entries would disappear from view.
 
 ## Revisit if
 
