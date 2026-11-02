@@ -384,6 +384,16 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/394](https://github.com/mrh-is/mistria-fyi/issues/394),
 [vite.config.ts](../vite.config.ts).
 
+### [Manual facts without playtime](decisions/2026-11-01-manual-sync-without-playtime.md)
+
+ID: 2026-11-01-manual-sync-without-playtime. Status: Current.
+
+Saves advance manual facts without playtime with a notice; backward changes still ask.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/310](https://github.com/mrh-is/mistria-fyi/issues/310),
+[src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts).
+
 ### [Pin real-save observations](decisions/2026-11-01-real-save-observations.md)
 
 ID: 2026-11-01-real-save-observations. Status: Current.
@@ -742,7 +752,7 @@ v1.0.8 saves and the serializer. Other extraction details remain outside that au
 
 ID: 2026-10-21-sync-apply-rules. Status: Partially superseded/amended.
 
-Sync apply rules now compare household facts, settling dependent differences together.
+Sync applies household differences together & lets saves advance manual facts without playtime.
 
 Evidence:
 [docs/decisions/2026-10-21-sync-apply-rules.md#decision](../docs/decisions/2026-10-21-sync-apply-rules.md#decision).
@@ -755,8 +765,16 @@ Relationship evidence:
 [docs/decisions/2026-10-29-household-save-facts.md](../docs/decisions/2026-10-29-household-save-facts.md),
 [src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts).
 
-Unresolved applicability: Issue 277 revalidates household comparison only. Other portions retain the
-earlier review caveat.
+Amended by [Manual facts without playtime](decisions/2026-11-01-manual-sync-without-playtime.md).
+Affected portion: Manual facts without playtime accept forward progress with a notice; backward
+changes still ask, and stamped manual facts retain playtime ordering.
+
+Relationship evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/310](https://github.com/mrh-is/mistria-fyi/issues/310),
+[src/lib/engine/sync-apply.test.ts](../src/lib/engine/sync-apply.test.ts).
+
+Unresolved applicability: Issues 277 & 310 revalidate household comparison & manual facts without
+playtime only. Other portions retain the earlier review caveat.
 
 ### [Feedback GitHub App](decisions/2026-10-22-feedback-github-app.md)
 

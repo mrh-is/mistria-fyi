@@ -427,7 +427,10 @@ dependent difference; a changed reason or effect requires a new answer.
 - A save or inference is superseded by the save: an addition applies silently, a removal applies &
   tells. An `inferred` fact is promoted to `save` when the save agrees.
 - A manual edit is ordered by `playtime` (below). One with no playtime to order by (made before any
-  save was applied, or against a save whose playtime couldn’t be read) asks.
+  save was applied, or against a save whose playtime couldn’t be read) lets a save advance it &
+  tells, but asks before moving backward. For example, a save may finish a quest obtained by hand
+  without asking; the finish records `save`, while `obtainedSource` stays `manual`. See
+  [the amendment](decisions/2026-11-01-manual-sync-without-playtime.md).
 - An `unknown` fact lets the save add a fact still at its default & is promoted to `save` when the
   save agrees. Replacing an existing value (raising a level, advancing a quest), removing, or
   lowering asks, once per field.
@@ -439,8 +442,8 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
 [app-architecture.md](app-architecture.md#provenance)).
 
 - “Record prerequisites” writes are `inferred` (#126).
-- Facts stored before provenance existed get `unknown`, treated like manual ones. A save may add
-  them, or agree & promote them to `save`. A disagreeing save asks once per category, not per fact.
+- Facts stored before provenance existed get `unknown`. A save may add them at their default, or
+  agree & promote them to `save`. Replacing an existing value asks once per category, not per fact.
 - Unticks are stamped manual facts too.
 - Backups carry provenance & resolutions; restoring an older backup migrates forward.
 
@@ -450,9 +453,10 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
   `playtime` or lower. A newer save wins & tells.
 - Within a farm, a lower `playtime` asks. Keeping current progress applies nothing from that save.
 - A save whose `playtime` couldn’t be read can’t be ordered: it doesn’t ask as an older save, but
-  every manual edit it disagrees with asks, & the baseline stays where it was. History records that
-  the last save was unordered (`lastSaveUnordered`), so edits made after it record no `playtime` & a
-  later save that disagrees asks. The next save with a readable `playtime` clears it.
+  every stamped manual edit it disagrees with asks, & the baseline stays where it was. History
+  records that the last save was unordered (`lastSaveUnordered`), so edits made after it record no
+  `playtime`. Saves may advance those edits & tell, but moving them backward still asks. The next
+  save with a readable `playtime` clears the unordered flag.
 - Accepting an older save at `playtime` P resets the baseline & re-stamps every manual fact stamped
   above P to P, so ticks survive the rollback itself & the next disagreeing save wins & tells.
   Rollback is supported but rare, so nothing more elaborate.
