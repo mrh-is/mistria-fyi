@@ -10,8 +10,13 @@ session limits) belong in each contributor’s user config.
 
 ## Focused verification
 
-- Run the test that covers your change: `pnpm exec vitest run path/to/file.test.ts`. The path picks
-  the right Vitest project, including for `*.client.test.ts` & `*.cold.test.ts` files.
+- Run the test that covers your change: `pnpm exec vitest run path/to/file.test.ts`. For plain-Node
+  tests under `eslint-rules/`, `scripts/`, & `tests/`, also select `--project node`, or
+  `--project node-isolated` for `*.isolated.test.ts`. For example:
+  `pnpm exec vitest run --project node scripts/guard-generated-reads.test.ts`. A path alone selects
+  the right tests, but can still start the app projects’ Cloudflare proxy & workerd before
+  filtering. Use `--project pipeline` for asset-independent `pipeline/` tests. App tests, including
+  `*.client.test.ts` & `*.cold.test.ts`, can use the path-only command.
 - Add or update tests when behavior changes, ideally before the implementation.
 - Run focused tests during development. CI runs the complete matrix on each PR, so don’t default to
   `pnpm run test`, coverage, builds, browser matrices, or `pnpm run verify`.
