@@ -242,7 +242,7 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
 
 ### Hooks
 
-- **Shared hooks:** Claude Code & Codex share the same command hooks, configured in
+- **Shared hooks:** Claude Code & Codex share the same upkeep hooks, configured in
   `.claude/settings.json` & `.codex/hooks.json`:
   - `PreToolUse`,
   - `PostToolUse`,
@@ -250,113 +250,70 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   - `SubagentStop`,
   - `SubagentStart`,
   - worktree `SessionStart`.
+- **No blocking hooks:** none of these hooks blocks a tool call when it fails. The repository
+  enforces file boundaries with permission rules & CI instead (see below). Shell-command guards were
+  removed in #417, after they refused legitimate commands dozens of times and caught no real
+  violation.
 - **Copilot CLI:** in a trusted folder, Copilot also reads `.claude/settings.json`.
   [Its reference](https://docs.github.com/en/copilot/reference/hooks-reference) documents
-  Claude-style payloads for PascalCase events, alongside native camelCase payloads. The guards
-  inspect the former; native payloads aren't parsed. Setup & formatting compatibility is separate
-  from guard enforcement. CLI 1.0.105 sets `$CLAUDE_PROJECT_DIR`, but omits `tool_use_id` from its
-  Claude-compatible events. The upkeep handler skips native payloads & those ID-less events;
-  timestamps change between events and cannot pair formatter snapshots. See
-  [Copilot hook upkeep](decisions/2026-10-31-copilot-hook-upkeep.md).
-- **Guard crashes:** Claude Code v2.1.295+ uses `onFailure: "block"` on all four `PreToolUse`
-  guards; an exit-1 crash, missing command, invalid output, or timeout blocks the call. Setup,
-  formatting, & stop lint keep their existing failure behavior. See
-  [Claude's failure contract](https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails).
-  A live v2.1.316 probe blocked exit 1 & named the guard; its control without `onFailure` ran the
-  tool.
-- **Codex failures:** a live 0.163.0-alpha.11.2 probe recorded the guard's invocation & exit 1, but
-  the tool still ran. [Codex's hook contract](https://learn.chatgpt.com/docs/hooks) documents
-  explicit exit-2/JSON denials, but no `onFailure` equivalent. Don't rely on a crash as a denial in
-  Codex.
-- **Copilot failures:** fresh, trusted CLI 1.0.105 sessions loaded all four `onFailure` fields & ran
-  a harmless command. The real policy guard's exit-2 denial & a temporary guard's exit-1 crash both
-  blocked the call. A timed-out guard let the command run despite `onFailure: "block"`, matching its
-  reference. These probes establish decisions, not timeout process cleanup: the timeout log also
-  reported a process-group signaling error. See
-  [the live test record](https://github.com/mrh-is/mistria-fyi/pull/323#pullrequestreview-5724777517).
-  Don't rely on the Claude timeout guarantee in Copilot.
+  Claude-style payloads for PascalCase events, alongside native camelCase payloads. CLI 1.0.105 sets
+  `$CLAUDE_PROJECT_DIR`, but omits `tool_use_id` from its Claude-compatible events. The upkeep
+  handler skips native payloads & those ID-less events; timestamps change between events and cannot
+  pair formatter snapshots. See [Copilot hook upkeep](decisions/2026-10-31-copilot-hook-upkeep.md).
 - **Codex trust:** Codex skips new or changed hooks until they’re trusted again in its hook review
-  (`/hooks`). Review & trust them before relying on their enforcement.
+  (`/hooks`).
 - **Mid-session setup:** both clients sequence setup & formatting in one tool handler. Claude Code
   also uses `FileChanged` & `CwdChanged` (see Mid-session upkeep above).
 - **When hook changes apply:** hook changes take effect in the next session. Claude Code runs each
   hook from `$CLAUDE_PROJECT_DIR`, which is fixed at session start to the session’s original
   checkout. So an edit to a hook script or its settings in a worktree, including a subagent’s,
-  doesn’t change the hooks guarding that session. Hooks deliberately don’t re-exec from the tool
-  call’s tree, which would let a branch weaken its own guard.
-- **Changing a guard:** a PR may change a guard & also need the edit that the change newly permits.
-  Land the hook change first, then make the guarded edit in a later session. Record the deferred
-  criterion in the PR.
+  doesn’t change the hooks of that session.
 - **Hooks aren’t evidence:** run the required checks directly before committing. Without `--files`,
   `pnpm run lint` & `pnpm run lint:fix` still cover the full repository. Changed-file mode uses the
   same lint tools, scopes, & zero-warning checks.
 
-### Generated tracker data
+### File deny rules
 
-- **Edits:** `guard-generated-paths.ts` denies edits that refer to the generated tracker data. That
-  covers file-tool edits, patch headers (including deletions & moves), & direct shell writes. To
-  recover, run the pipeline.
-- **Reviews & labels:** CODEOWNERS & the “Guarded paths” workflow still enforce PR ownership & the
-  `generated-data` label. `src/lib/components/ui/` is project-owned & isn’t guarded.
-- **Gaps:** the hook matches the exact tracker-data file. It doesn’t catch a directory-level or
-  `cd`-relative write that reaches the file, but the “Guarded paths” CI check does.
-- **Reads:** `guard-generated-reads.ts` denies file-tool & direct shell reads of the generated
-  tracker data. Read `src/lib/types/tracker-data.ts` or the pipeline source instead. The guard
-  resolves existing symlinks.
+Claude Code’s `permissions.deny` in `.claude/settings.json` blocks these paths for its file tools:
 
-### Shell guards
+| Rule                                      | Covers                                                               |
+| ----------------------------------------- | -------------------------------------------------------------------- |
+| `Read(**/.env.r2-upload)`                 | Read, Grep, & Glob of the R2 upload token                            |
+| `Read(**/src/lib/data/tracker-data.json)` | Reading the generated tracker data into context                      |
+| `Edit(**/src/lib/data/tracker-data.json)` | Edit, Write, MultiEdit, & NotebookEdit on the generated tracker data |
+| `Edit(**/docs/superpowers/**)`            | Edits to the historical plans & specs                                |
 
-- **Segments:** shell guards check each command segment on its own, splitting at `;`, `&&`, `||`,
-  `|`, & newlines. A path counts only in a segment that reads or writes it.
-- **Heredocs:** heredoc bodies & here-strings count as text, with one exception. They count as code
-  when they’re fed, directly or through a pipe, to a shell or to an interpreter (Python, Node, &
-  similar) whose code calls a file-reading or file-writing API. An unquoted heredoc’s `$(…)` &
-  backtick substitutions are always checked as commands.
-- **Dynamic targets:** when a target is dynamic, such as an expansion, `xargs`, or a non-literal API
-  target, every path in the command counts. A `cd` or `pushd` widens writes the same way, but only
-  when a write target is relative.
-- **Limits:** shell guards recognize direct path arguments & common read & write commands. They
-  don’t recognize arbitrary shell programs, dynamically constructed paths, or every MCP tool. They
-  supplement the repository’s rules and aren’t a filesystem sandbox. Pipeline commands stay
-  permitted.
+The `**/` prefix also matches the copies in nested `.worktrees/<name>/` checkouts, which a session
+rooted at the original checkout would otherwise miss.
 
-### Policy guards
+These rules don’t cover shell commands while Claude Code’s sandbox is off, and Codex & Copilot have
+no equivalent. Both Claude Code (`sandbox.enabled` merges `Read` deny rules into the sandbox) &
+Codex (a `[permissions.<name>]` profile with `"deny"` paths) can deny shell reads; turning either on
+is tracked in #417. Until then, the rules in `AGENTS.md` stand for every client.
 
-Both clients register `guard-agent-policy.ts` for shell commands & `guard-release-version.ts` for
-shell commands, file tools, & patches. The generated-path & read guards also cover history & known
-token files. These guards supplement instructions; client crashes, unsupported tools, & arbitrary
-programs can still bypass them.
+### CI checks
 
-| Rule          | Enforcement & permitted alternative                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| History       | The edit guard denies `docs/superpowers/`, including its directory root. Update current docs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| OAuth         | The read guard denies `.config/gh/hosts.yml` & `.wrangler/config/*.toml` suffixes, including literal `~/` paths. Use `gh auth status` or `pnpm exec wrangler whoami`. Other secret locations remain forbidden by instruction.                                                                                                                                                                                                                                                                                                                                                                      |
-| R2 token      | For Read, Bash, Grep, & PowerShell, the read guard denies `.env.r2-upload` in any Windows spelling (case, trailing dots, `::$DATA`), dot-globs that match it, Grep `glob` filters, and recursive searches that read gitignored files (`grep -r`, `rg -u`, `git grep --no-index`, `findstr /s`, recursive `Select-String`) when the file is under the search root. Claude Code also denies `Read(**/.env.r2-upload)`, which covers Grep & Glob; Codex has only the guard. Use the doctor or `pnpm run r2:check`. A program that opens the file itself still can, so the rule in `AGENTS.md` stands. |
-| Assets        | Common `unzip`, `tar`, `7z`, & Python zipfile extraction forms require named entries/subtrees. Listing & archive tests stay allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| Releases      | File tools compare the top-level package version before/after the proposed edit. Patches must be predictable; opaque shell writes to `package.json`, `pnpm version`, & tag mutations are denied. Normal dependency commands & tag inspection stay allowed.                                                                                                                                                                                                                                                                                                                                         |
-| Shared stash  | Bare `git stash`, `pop`, unnamed `push`, & `apply` without a commit SHA are denied. Use `push -m <name>` or `apply <sha>`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| GitHub bodies | `gh issue\|pr create\|comment\|edit` bodies must end in `Agent: <agent-id>`. Multiline text needs `--body-file`; label-only edits & bare `--help` or `-h` requests stay allowed. The guard catches slips in the usual spellings and isn't a boundary: options before the action, attached short values, repeated body options, the `new` aliases, & options from shell expansion can get past it.                                                                                                                                                                                                  |
-| Dependencies  | `pnpm add`, `update`, & `remove` add the audit procedure as context and remain allowed. The hook doesn't prove an audit ran.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+- **Generated tracker data:** CODEOWNERS & the “Guarded paths” workflow require the `generated-data`
+  label & `pnpm run data:diff` output on any PR that changes the tracker data.
+  `src/lib/components/ui/` is project-owned & isn’t guarded.
+- **Attribution:** the “Attribution” workflow checks PR bodies (the `Agent:` line & the preview
+  URL), commit trailers, & the `agent:*` label. It doesn’t check issues or comments.
 
-Only the user may enable inherited `MISTRIA_ALLOW_FULL_ASSETS=1` after approving full extraction, or
-`MISTRIA_RELEASE=1` after approving a release version. Assigning either variable in the inspected
-command doesn't opt in. These aren't authorization tokens: an arbitrary program or separate tool can
-evade a command guard, so the underlying approval rules still apply.
+### Rules without enforcement
 
-Policy commands use the shared segment/heredoc splitter, check shell-fed heredocs & literal shell
-`-c` programs, & inspect command substitutions. They don't evaluate variables, aliases, arbitrary
-interpreter programs, or every archive option. Body files must exist before the GitHub command;
-dynamic stdin can't be verified, so use a file or a heredoc. Body-file inspection refuses known
-guarded read targets and never prints body content in diagnostics. Package patches whose application
-can't be predicted are denied; use a file edit preserving the version instead. After a
-directory-changing command, use an absolute body-file path so the guard checks the same file GitHub
-will receive.
+These rules rest on `AGENTS.md` alone:
 
-For the release guard, a Node heredoc may copy a literal filename from the working directory to
-`join(dir, "same-filename")` or `resolve(dir, "same-filename")` while editing a temporary workspace
-file. The copied bytes preserve the manifest version. The guard recognizes these identity copies
-only when the `writeFile*` targets have literal paths or joined filenames. Other manifest references
-& unresolved writes keep the conservative scan; this isn't an interpreter for arbitrary programs.
+- **OAuth tokens:** never read gh’s `hosts.yml` or Wrangler’s config. Use `gh auth status` or
+  `pnpm exec wrangler whoami`.
+- **Assets:** list `assets.zip` or extract named entries; extracting the whole archive needs the
+  user’s approval.
+- **Releases:** change `package.json`’s version or create tags only for an approved release.
+- **Shared stash:** never use bare `git stash` or `git stash pop`.
+- **GitHub bodies:** end issue, PR, & comment bodies with `Agent: <agent-id>`, and pass multiline
+  text with `--body-file`.
+- **History:** don’t edit `docs/superpowers/`; update the current `docs/*.md` instead. Only Claude
+  Code’s deny rule covers it.
+- **Dependencies:** follow [Package commands](#package-commands) before adding or bumping one.
 
 ### Formatting & lint hooks
 

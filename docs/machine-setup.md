@@ -110,11 +110,11 @@ Each item names the doctor section that checks it.
       rotation: the upload scripts & `r2:check` read it from the main checkout, from any worktree. A
       nonempty shell variable of the same name wins. Agents can then run the uploads in the
       [game version update](game-version-update-protocol.md) without a dedicated shell; each upload
-      still asks for permission. Claude Code's `Read(**/.env.r2-upload)` deny rule and the shared
-      read guard keep agents from opening or recursively searching the file, but anything running as
-      your user can read it. If you suspect the token was exposed, revoke it in the dashboard &
-      create a new one; that is the expected response, not an emergency. A worktree made before this
-      exclusion may hold a copy or hard link; delete that worktree's `.env.r2-upload`.
+      still asks for permission. Claude Code's `Read(**/.env.r2-upload)` deny rule keeps its file
+      tools from opening or searching the file, but shell commands & anything running as your user
+      can read it. If you suspect the token was exposed, revoke it in the dashboard & create a new
+      one; that is the expected response, not an emergency. A worktree made before this exclusion
+      may hold a copy or hard link; delete that worktree's `.env.r2-upload`.
 
    5. Run `pnpm run r2:check`. It puts & deletes a probe object in the bucket, which proves the
       token can write; a real upload doesn't, because it skips every object that is already current

@@ -23,12 +23,12 @@
   `vite.config.ts` and the Playwright configs) imports `#scripts/lib/require-pinned-node` first, so
   a bare `node scripts/….ts` on another release exits with a message pointing at `pnpm run` or
   `pnpm exec node` instead of running silently. `scripts/lib/pinned-node.test.ts` finds those entry
-  points and fails when one lacks the guard; the Claude edit-guard hook and the machine doctor
-  (which must run on any Node to report a wrong one) are the exemptions. To move the pin, edit both
-  files and run `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails when they disagree. Check
-  with `pnpm exec node -v`. `package.json`'s `engines` accepts 24.15 up to (not including) 27, so
-  Codex cloud can use its preinstalled patch release & contributors can keep a newer system Node;
-  the machine doctor checks the shell's own `node` against that range only.
+  points and fails when one lacks the guard; the agent hooks and the machine doctor (which must run
+  on any Node to report a wrong one) are the exemptions. To move the pin, edit both files and run
+  `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails when they disagree. Check with
+  `pnpm exec node -v`. `package.json`'s `engines` accepts 24.15 up to (not including) 27, so Codex
+  cloud can use its preinstalled patch release & contributors can keep a newer system Node; the
+  machine doctor checks the shell's own `node` against that range only.
 - **ShellCheck**: `pnpm run lint` runs the system `shellcheck`. CI uses the runner image's copy, and
   `scripts/setup-cloud-agent.sh` installs it with apt. Local install: see machine-setup.md.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.
@@ -293,7 +293,7 @@ For plain-Node tests under `eslint-rules/`, `scripts/`, & `tests/`, also select 
 unrelated app projects don’t start their Cloudflare proxy & workerd before file filtering:
 
 ```sh
-pnpm exec vitest run --project node scripts/guard-generated-reads.test.ts
+pnpm exec vitest run --project node scripts/check-attribution.test.ts
 ```
 
 Use `--project node-isolated` for `*.isolated.test.ts` in those directories, and

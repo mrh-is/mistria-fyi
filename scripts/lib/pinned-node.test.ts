@@ -4,15 +4,11 @@ import { describe, expect, it } from "vitest";
 
 import { pinnedNodeMismatch, readPinnedNodeVersion } from "#scripts/lib/pinned-node";
 
-// Entry points that skip the guard, with the reason. The Claude PreToolUse hook runs on every edit
-// with the shell's Node, before dependencies exist in a fresh worktree; failing there would turn
-// a version mismatch into a broken edit guard, and the hook doesn't depend on Node's version. The
-// machine doctor runs on whatever Node is installed, before pnpm exists, so it can report it.
+// Entry points that skip the guard, with the reason. Agent hooks run on every tool call with the
+// shell's Node, before dependencies exist in a fresh worktree; failing there would turn a version
+// mismatch into a broken tool call, and the hooks don't depend on Node's version. The machine
+// doctor runs on whatever Node is installed, before pnpm exists, so it can report it.
 const unguarded = new Map([
-  ["scripts/guard-generated-paths.ts", "Claude edit-guard hook"],
-  ["scripts/guard-generated-reads.ts", "Dependency-free read guard on the shell runtime"],
-  ["scripts/guard-agent-policy.ts", "Dependency-free policy guard on the shell runtime"],
-  ["scripts/guard-release-version.ts", "Dependency-free release guard on the shell runtime"],
   ["scripts/agent-tool-hook.ts", "Hook delegates formatter execution to pnpm’s pinned runtime"],
   ["scripts/lint-agent-stop.ts", "Hook delegates lint execution to pnpm’s pinned runtime"],
   ["scripts/agent-subagent-start.ts", "Dependency-free subagent context hook"],
@@ -96,7 +92,7 @@ describe("require-pinned-node coverage", () => {
     expect(entries).toContain("scripts/verify.ts");
     expect(entries).toContain("pipeline/src/main.ts");
     expect(entries).toContain("scripts/check-attribution.ts");
-    expect(entries).toContain("scripts/guard-generated-paths.ts");
+    expect(entries).toContain("scripts/agent-tool-hook.ts");
   });
 
   it.each(entries.filter((entry) => !unguarded.has(entry)))(
