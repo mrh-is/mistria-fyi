@@ -1,5 +1,5 @@
 import localeManifest from "../data/locales.json" with { type: "json" };
-import { SITE_NAME, SITE_ORIGIN } from "../data/page-metadata.js";
+import { SITE_NAME, SITE_ORIGIN } from "../data/site.js";
 import { LOCALE_CODES } from "../types/locale.js";
 import { PARAGLIDE_OPTIONS } from "./paraglide-options.js";
 import { PRERENDERED_ROUTES } from "./prerender-entries.js";
