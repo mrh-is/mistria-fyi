@@ -4,8 +4,8 @@ Read the relevant heading before implementation, dependency changes, asset work,
 configuration. Architecture, localization, styling, save formats, wiki APIs, & cloud setup each keep
 their own canonical guide.
 
-The [decision index](decision-index.md) says which decisions still apply and links each replaced one
-to its replacement. It’s generated from each record’s [metadata header](decision-metadata.md).
+`docs/decisions/` holds the few choices a newcomer would propose reversing. Each record says what
+was decided, what was rejected, & when to revisit it.
 
 ## Worktree mechanics
 
@@ -257,7 +257,7 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   from guard enforcement. CLI 1.0.105 sets `$CLAUDE_PROJECT_DIR`, but omits `tool_use_id` from its
   Claude-compatible events. The upkeep handler skips native payloads & those ID-less events;
   timestamps change between events and cannot pair formatter snapshots. See
-  [Copilot hook upkeep](decisions/2026-10-31-copilot-hook-upkeep.md).
+  [Copilot hook upkeep](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-31-copilot-hook-upkeep.md).
 - **Guard crashes:** Claude Code v2.1.295+ uses `onFailure: "block"` on all four `PreToolUse`
   guards; an exit-1 crash, missing command, invalid output, or timeout blocks the call. Setup,
   formatting, & stop lint keep their existing failure behavior. See
@@ -420,7 +420,8 @@ only when the `writeFile*` targets have literal paths or joined filenames. Other
 - **Paths:** manipulate paths with `node:path`, never by splitting, joining, or slicing strings, and
   keep them working on Windows. Use the default functions for filesystem paths. Use `path.posix` for
   paths that are `/`-separated everywhere: repo-relative doc paths, git pathspecs, URLs, & zip
-  entries. See [the decision record](decisions/2026-10-13-path-apis.md).
+  entries. See
+  [the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-13-path-apis.md).
 - **Styling:** Tailwind utilities & scoped `<style>` blocks, both built on the design tokens in
   `src/app.css`. Stylelint rejects literal colors, type sizes, shadows, & radii in scoped CSS. See
   [docs/styling.md](styling.md).

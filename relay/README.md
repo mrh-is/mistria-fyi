@@ -128,7 +128,7 @@ removes the envelope, owner hash, & other metadata, retaining only the tombstone
    enabling sync by sending more than 10 requests in a burst & checking “Security”, then “Events”,
    for its blocks. Keep an emergency hostname block available; bindings, the WAF limit, & the pause
    are layered mitigations, not a hard daily request-budget guarantee. See
-   [the shared edge rate rule](../docs/decisions/2026-10-30-shared-edge-rate-rule.md).
+   [the shared edge rate rule](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-30-shared-edge-rate-rule.md).
 
 ## Cloudflare sources
 

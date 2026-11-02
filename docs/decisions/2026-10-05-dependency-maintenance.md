@@ -1,19 +1,3 @@
----
-id: 2026-10-05-dependency-maintenance
-status: needs-review
-summary: >-
-  Disable routine Dependabot version-update PRs for npm & GitHub Actions; retain security alerts &
-  security-update PRs. Batch routine upgrades with compatibility checks. Refresh the intended
-  starting branch before creating agent worktrees, defaulting to `main`; fetch its remote tip
-  without modifying the shared checkout.
-review: >-
-  Does this decision still apply unchanged? Its owning implementation & later resolutions were not
-  revalidated while seeding issue #268.
-evidence:
-  - https://github.com/dependabot/dependabot-core/issues/15904
-relationships: []
----
-
 # Dependency maintenance
 
 ## Context

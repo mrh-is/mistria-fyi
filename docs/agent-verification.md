@@ -249,8 +249,8 @@ or approval gate.
   [agent-workflow.md](agent-workflow.md#agent-attribution) requires.
 
 A collector script that aggregates findings across PRs is
-[deferred](decisions/2026-10-28-review-record-format.md). It waits until a second survey shows that
-this format isn’t enough for aggregation.
+[deferred](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-28-review-record-format.md).
+It waits until a second survey shows that this format isn’t enough for aggregation.
 
 ### Review prompts
 

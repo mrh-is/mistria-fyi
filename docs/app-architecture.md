@@ -63,7 +63,7 @@ category's rows and its progress `totals`; a route and a search provider are opt
 search runs only the categories that declare `search`, whose providers
 (`engine/search-providers.ts`) read their own projection. `data/categories.ts` adds each category's
 localized name & description, which the engine can't import. See the
-[decision record](decisions/2026-10-21-category-registry.md).
+[decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-21-category-registry.md).
 
 `engine/projections/almanac.ts` supplies the almanac page, progress counters, and search with one
 row policy. It returns section membership, canonical rows, applicability, spoiler and filter flags,
@@ -153,7 +153,7 @@ resolutions, without mapping it into Almanac progress. It duplicated Date Inspir
 canonical entries are already tracked by save import. Existing Almanac progress is preserved;
 unknown IDs in supported fields still follow the retention policy above. Hydration & backup restore
 both apply this removal, including when obsolete Dates values are malformed. See the
-[decision record](decisions/2026-10-20-date-inspiration-migration.md).
+[decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-date-inspiration-migration.md).
 
 Version 5 adds `breakUpsDisabled`, defaulting to `false` for older blobs. Hydration and transfer
 preserve other dating relationships when it is true. With break-ups enabled, an engagement or
@@ -166,7 +166,8 @@ persisted. A shape change adds a migration: bump `CURRENT_SERIALIZATION_VERSION`
 `MIGRATIONS` step that produces the new version from the previous one, and add that version's
 fixture under `src/lib/stores/progress-storage-fixtures/`. `progress-storage.test.ts` fails until
 all three exist. `user-state-golden.test.ts` pins the launch shape, what it migrates to, & the
-storage keys. See the [decision record](decisions/2026-10-20-storage-migrations-valibot.md).
+storage keys. See the
+[decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-storage-migrations-valibot.md).
 
 ### One write path
 
@@ -196,7 +197,7 @@ locked merge result for the next auto-save, including removals & decreases, and 
 a later household edit replaces that household as a unit to preserve the engagement cascade. The
 pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
 compare-before-write. A browser without Web Locks runs every write synchronously; see the
-[decision record](decisions/2026-10-20-serialized-progress-writes.md).
+[decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Provenance
 
@@ -220,7 +221,7 @@ inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the st
   before version 6 has none, so it draws in its own source.
 - **Marks.** `provenanceMark` turns a fact's key & sources into its checkbox's mark. The tool is
   decorative, so it's never announced. See the
-  [decision record](decisions/2026-10-30-provenance-marks.md).
+  [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-30-provenance-marks.md).
 - **Hydration.** Facts stored before version 3 migrate as `unknown`, read the way hydration reads
   them, so a value it repairs to the default gets no record. A relationship the engagement cascade
   applies on load records `inferred`. History for a historical almanac ID is rekeyed under its
@@ -233,7 +234,7 @@ inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the st
 - **Resolutions.** A “keep mine” remembers the save's value the player declined, holding until a
   save reports a different value (`resolutionHolds`). A manual edit of that fact clears it.
 - **Lifetime.** Backups carry the history, a restore replaces it, & both resets clear it. See the
-  [decision record](decisions/2026-10-21-progress-provenance.md).
+  [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-21-progress-provenance.md).
 
 ### Save File Import
 
@@ -262,7 +263,7 @@ The app processes save files entirely client-side. No save data is uploaded.
 4. `extractSaveProgress` turns that into the `Partial<ProgressState>` of every value it could read,
    plus the diagnostics the player sees as warnings (`absent` & `invalid-value` are diagnostics
    only). It doesn’t count anything. See the
-   [decision record](decisions/2026-10-20-save-extraction-completeness.md).
+   [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-save-extraction-completeness.md).
 5. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
    values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
    quest state (`none` → `obtained` → `completed`). Relationships, the break-ups setting, & child
@@ -384,19 +385,19 @@ Progress calculation and UI row visibility are separate concerns.
   takes its best source. Unevaluable gates count as met, & time of day is never filtered on. Every
   projection reads the rule through `ProgressContext`, which carries the player's
   `progressionState`, so counts, dimming, & the filter agree. See the
-  [decision record](decisions/2026-10-27-row-windows.md).
+  [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-27-row-windows.md).
 - Hidden completed rows still contribute to progress totals. This ensures the overall percentage
   remains accurate even when the user filters out completed content.
 - **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the
   category's progress at 100%. The header, the all-completed banner, & `celebrateCategory()` all
   read it; components don't re-derive completion. See the
-  [decision record](decisions/2026-10-06-category-completion.md).
+  [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-06-category-completion.md).
 
 ## Domain glossary
 
 Three concepts had several names across modules. Each now has one term, used for identifiers,
 persisted keys, generated condition types, CSS hooks, & prose. See the
-[decision record](decisions/2026-10-06-canonical-domain-terms.md).
+[decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-06-canonical-domain-terms.md).
 
 - **Spoilered:** a name or section the player hasn't unlocked, hidden behind a cover until revealed
   or unlocked by progress. Use `spoilered` (`isSpoilered`, `spoilered` props, `spoileredStoreIds`);
@@ -446,7 +447,7 @@ would block hydration. Each prerendered route therefore gets its own `_headers` 
 (`! Content-Security-Policy`) and sets the same directives plus that route's start-script hashes.
 The header keeps `frame-ancestors`, which a `<meta>` policy can't carry. A prerendered page can't
 read its query on the server, so `?section=` is handled in the browser. See
-[the decision record](decisions/2026-10-20-prerender-csp.md).
+[the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-prerender-csp.md).
 
 ### Bare paths & routing
 
@@ -462,7 +463,7 @@ gets a `_headers` rule allowing its one inline script by hash. It also writes `_
 `barePathStub` hook in `hooks.server.ts` serves the same stub & the same redirect there. An offline
 launch at a bare path is handled by the service worker before the stub (see
 [PWA verification](pwa-verification.md)). See
-[the decision record](decisions/2026-10-21-bare-path-stubs.md).
+[the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-21-bare-path-stubs.md).
 
 `security-headers.test.ts` pins the full production policy, so any change to it shows up in review.
 The asset origin lives in `src/lib/asset-origin.ts`; `asset-origin.test.ts` holds the copies that
@@ -472,7 +473,8 @@ can't import it (CSS & upload scripts) to the same value.
 
 Shared links, bookmarks, search indexes, installed apps, & players' stored data all depend on the
 identifiers below. Changing a promised one needs a redirect, a migration, or an accepted loss, so
-treat each as an API. See [the decision record](decisions/2026-10-07-launch-contract.md).
+treat each as an API. See
+[the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-07-launch-contract.md).
 
 ### Promised
 
@@ -507,7 +509,7 @@ treat each as an API. See [the decision record](decisions/2026-10-07-launch-cont
 
 - The retired beta route `/settings` returns the not-found page; use `/data?section=import|transfer`
   for data-management links. Its removal without a redirect was explicitly approved in #156; see
-  [the decision record](decisions/2026-10-20-retire-settings-route.md).
+  [the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-retire-settings-route.md).
 - **The not-found page's content:** an unknown path gets the adapter's plain-text `404.html`, not
   the app's styled error page, since only `/api` reaches the Function. A locale prefix in a mixed
   casing other than all lowercase or all uppercase (`/zh-HaNs/…`) gets it too.
@@ -557,7 +559,8 @@ when `TURNSTILE_SECRET_KEY` is set, then returns `{ dryRun: true }` without read
 settings, calling GitHub, or storing the email. The panel says nothing was filed. No request header,
 host, or body field can switch production into a dry run. If the Pages production branch is ever
 renamed, update `vite.config.ts` in the same change, or production feedback silently becomes a dry
-run. See the [decision record](decisions/2026-10-27-feedback-preview-dry-run.md).
+run. See the
+[decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-27-feedback-preview-dry-run.md).
 
 ### Setting up the App (maintainer)
 
@@ -599,4 +602,4 @@ The App key doesn't expire, so there is no rotation schedule. To replace it, gen
 store it as above, redeploy, then delete the old key in the App's settings. If the key leaks, delete
 it there first: GitHub rejects JWTs signed with a deleted key immediately, though an installation
 token already issued stays valid for up to an hour unless you also suspend the installation. See the
-[decision record](decisions/2026-10-22-feedback-github-app.md).
+[decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-22-feedback-github-app.md).
