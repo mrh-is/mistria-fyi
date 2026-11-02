@@ -191,6 +191,10 @@ describe("generated-data read guard", () => {
       "cat ?env.r2-upload",
       "cat [.]env.r2-upload",
       "cat *",
+      "rg pwsh *",
+      "echo pwsh *",
+      "rg powershell *",
+      String.raw`printf '%s\n' 'pwsh -c' *`,
       "pwsh -c 'Get-Content README.md'; cat ?env.r2-upload",
       "cat *; powershell -c 'Get-Content README.md'",
     ]) {
@@ -203,6 +207,23 @@ describe("generated-data read guard", () => {
         tool_name: "PowerShell",
       }),
     ).toBeUndefined();
+  });
+
+  it.each(["command", "exec", "env", "sudo", "MODE=test", "env MODE=test command"])(
+    "denies PowerShell wildcard reads after the %s prefix",
+    (prefix) => {
+      expect(search(`${prefix} pwsh -c 'Get-Content *'`, "/work/mistria")).toContain(
+        "R2 upload token file",
+      );
+    },
+  );
+
+  it.each([
+    `bash -c "pwsh -c 'Get-Content *'"`,
+    "bash <<'EOF'\npwsh -c 'Get-Content *'\nEOF",
+    `cat "$(pwsh -c 'Get-Content *')"`,
+  ])("denies PowerShell wildcard reads inside shell programs: %s", (command) => {
+    expect(search(command, "/work/mistria")).toContain("R2 upload token file");
   });
 
   it("allows jq slices & indexes that only look like dotfile globs", () => {

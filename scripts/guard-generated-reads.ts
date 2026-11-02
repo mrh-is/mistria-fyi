@@ -13,6 +13,7 @@ import {
   shellReadTargets,
   shellSegments,
 } from "#scripts/lib/agent-hook";
+import { policySegments, programWords } from "#scripts/lib/agent-policy-shell";
 
 import type { HookInput } from "#scripts/lib/agent-hook";
 
@@ -213,11 +214,9 @@ export function readGuardMessage(input: HookInput): string | undefined {
   if (typeof powershell === "string") {
     powershellTargets = targets;
   } else if (command !== undefined) {
-    powershellTargets = shellSegments(command)
+    powershellTargets = policySegments(command)
       .filter(({ command: segment }) =>
-        readTargetWords(shellPaths(segment)).some((word) =>
-          /(?:^|[/\\])(?:powershell|pwsh)(?:\.exe)?$/i.test(word),
-        ),
+        /(?:^|[/\\])(?:powershell|pwsh)(?:\.exe)?$/i.test(programWords(segment)[0] ?? ""),
       )
       .flatMap(({ command: segment }) => shellPaths(segment));
   }
