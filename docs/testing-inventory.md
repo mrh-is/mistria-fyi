@@ -49,7 +49,7 @@ Ordered by risk:
 2. **`ai-disclosure-dialog`** & **`persistence-warning`**: open, dismiss, and dismissal memory.
 3. **Category compositors** (`*-content.svelte`): a smoke test per page that a spoilered row opens
    `confirm-spoiler-dialog` and that "Yes, and update my progress" changes progression.
-4. **Camera stream** in `transfer-card`: the real `getUserMedia` path belongs in the Playwright
+4. **Camera stream** in sync’s `qr-scanner`: the real `getUserMedia` path belongs in the Playwright
    layer with a fake media stream, if it is covered at all.
 5. **`animals-content` & its sections**: variant & cosmetic toggles (the store is tested).
 6. **`restriction-badges`**: static, so a server-render test would suffice.

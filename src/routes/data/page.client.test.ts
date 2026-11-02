@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/svelte";
+import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -28,6 +28,11 @@ describe("data management deep links", () => {
 
     expect(trigger("Transfer to Another Device")).toHaveAttribute("aria-expanded", "true");
     expect(trigger("Import from Save File")).toHaveAttribute("aria-expanded", "false");
+    const backupTrigger = trigger("Backup & Restore.*Export");
+    await fireEvent.click(screen.getByRole("button", { name: "Backup & Restore" }));
+    expect(backupTrigger).toHaveAttribute("aria-expanded", "true");
+    await fireEvent.click(backupTrigger);
+    expect(backupTrigger).toHaveAttribute("aria-expanded", "false");
   });
 
   it("opens the import tool for `?section=import`", async () => {

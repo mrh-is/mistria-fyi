@@ -4,7 +4,7 @@ import type { CspDirectives } from "./csp-directives.js";
  * Response headers every route carries alongside the CSP. Cloudflare Pages applies `_headers` to
  * static files only, so `hooks.server.ts` adds the same set to server-rendered responses.
  *
- * - `Permissions-Policy` keeps the camera for the transfer QR scanner (same origin only) and turns
+ * - `Permissions-Policy` keeps the camera for the sync QR scanner (same origin only) and turns
  *   off the other powerful features the app never uses.
  * - `Referrer-Policy` sends only the origin cross-origin; Turnstile checks the embedding hostname,
  *   so `no-referrer` would break the feedback form.

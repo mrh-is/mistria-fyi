@@ -1,13 +1,12 @@
 import { encodeQR } from "qr";
-import { decodeQR } from "qr/decode.js";
 import { frameLoop, QRCamera, QRCanvas, svgToPng } from "qr/dom.js";
 
 import type { QrOpts } from "qr";
 
-import type { ClosableScanner } from "./data-effects.js";
+import type { ClosableScanner } from "../data/data-effects.js";
 
-/** Transfer payloads are long, so low error correction keeps the code at the smallest version. */
-export const TRANSFER_QR_OPTIONS = { border: 2, ecc: "low" } as const satisfies QrOpts;
+/** Low error correction keeps follow links at the smallest QR version. */
+export const QR_OPTIONS = { border: 2, ecc: "low" } as const satisfies QrOpts;
 
 /** Smallest displayed edge, in CSS pixels, so a short payload doesn't render as a speck. */
 const MIN_QR_CSS_PIXELS = 192;
@@ -20,7 +19,7 @@ const TARGET_CSS_PIXELS_PER_MODULE = 5;
 
 /**
  * Camera resolution to request. The library's default asks for the screen's CSS size, which leaves
- * a dense transfer code about one camera pixel per module.
+ * a dense code about one camera pixel per module.
  */
 const CAMERA_CONSTRAINTS = {
   facingMode: "environment",
@@ -31,8 +30,8 @@ const CAMERA_CONSTRAINTS = {
 /** PNG pixels per CSS pixel, so the code stays sharp on high-density displays. */
 const PNG_PIXEL_DENSITY = 2;
 
-/** A rendered transfer code and the edge length, in CSS pixels, to display it at. */
-export interface TransferQr {
+/** A rendered follow code and the edge length, in CSS pixels, to display it at. */
+export interface FollowQr {
   dataUrl: string;
   displayPixels: number;
 }
@@ -41,36 +40,16 @@ export interface TransferQr {
  * Preferred display edge, in CSS pixels, for a code `modules` wide: a whole number of pixels per
  * module, at least `TARGET_CSS_PIXELS_PER_MODULE`, and never smaller than `MIN_QR_CSS_PIXELS`.
  */
-export function transferQrDisplayPixels(modules: number): number {
+export function qrDisplayPixels(modules: number): number {
   return modules * Math.max(TARGET_CSS_PIXELS_PER_MODULE, Math.ceil(MIN_QR_CSS_PIXELS / modules));
 }
 
-/** Decodes the QR code in an image file. Throws when the image has none. */
-export async function decodeQrImage(file: Blob): Promise<string> {
-  const bitmap = await createImageBitmap(file);
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    const context = canvas.getContext("2d", { willReadFrequently: true });
-    if (!context) throw new Error("Canvas 2D context unavailable");
-    context.drawImage(bitmap, 0, 0);
-    // A still image has no frame budget, so let the decoder try every retry.
-    return decodeQR(context.getImageData(0, 0, bitmap.width, bitmap.height), {
-      effort: Infinity,
-      timeLimit: Infinity,
-    });
-  } finally {
-    bitmap.close();
-  }
-}
-
 /** Renders the payload as a PNG data URL, sized so each module spans whole pixels. */
-export async function generateTransferQr(payload: string): Promise<TransferQr> {
-  const modules = encodeQR(payload, "raw", TRANSFER_QR_OPTIONS).length;
-  const displayPixels = transferQrDisplayPixels(modules);
+export async function generateFollowQr(payload: string): Promise<FollowQr> {
+  const modules = encodeQR(payload, "raw", QR_OPTIONS).length;
+  const displayPixels = qrDisplayPixels(modules);
   const pngPixels = displayPixels * PNG_PIXEL_DENSITY;
-  const svg = encodeQR(payload, "svg", TRANSFER_QR_OPTIONS);
+  const svg = encodeQR(payload, "svg", QR_OPTIONS);
   return { dataUrl: await svgToPng(svg, pngPixels, pngPixels), displayPixels };
 }
 

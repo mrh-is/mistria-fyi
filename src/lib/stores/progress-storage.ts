@@ -11,7 +11,6 @@
  * - **Backup restore is strict** (`"strict"`): any malformed or out-of-domain value rejects the whole
  *   document, so a restore never half-applies.
  * - **Save import warns** (`#lib/engine/import-save.js`): it reads the game's save, not this blob.
- * - **Transfer is all-or-nothing** (`#lib/engine/transfer.js`): a build-bound binary payload.
  *
  * Neither policy drops an ID this build's tracker data doesn't know: those entries are retained
  * beside the progress & written back, so a renamed or newer ID survives until a migration or a

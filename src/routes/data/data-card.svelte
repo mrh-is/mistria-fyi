@@ -63,7 +63,7 @@
 
 <style>
   .data-card {
-    /* Horizontal content padding; full-bleed children (like the transfer QR) cancel it. */
+    /* Horizontal content padding; full-bleed children (like sync codes) cancel it. */
     --data-card-inset: 14px;
 
     border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);

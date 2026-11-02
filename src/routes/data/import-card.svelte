@@ -362,12 +362,7 @@
 
     {#if importResult}
       <StatusNote class="mt-3" tone="success">
-        <MergeSummary
-          conflicts={importResult.conflicts}
-          counts={importResult.counts}
-          {filesUsed}
-          kind="import"
-        />
+        <MergeSummary conflicts={importResult.conflicts} counts={importResult.counts} {filesUsed} />
 
         {#if importResult.warnings.length > 0}
           <Separator class="my-2" />

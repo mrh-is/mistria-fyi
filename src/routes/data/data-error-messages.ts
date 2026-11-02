@@ -4,9 +4,8 @@ import { formatNumber } from "#lib/utils/format.js";
 
 import type { ExtractedSaveFilesError, SaveImportWarning } from "#lib/engine/import-save.js";
 import type { SavArchiveErrorDetail } from "#lib/engine/parse-sav.js";
-import type { TransferDecodeErrorCode } from "#lib/engine/transfer.js";
 
-// Localized text for the structured errors & warnings the save import and transfer engines return.
+// Localized text for the structured errors & warnings the save import engine returns.
 // Save paths, file names, and IDs are save-format identifiers and stay untranslated.
 
 export function formatSavArchiveError(detail: SavArchiveErrorDetail): string {
@@ -58,18 +57,6 @@ export function formatSaveImportWarning(warning: SaveImportWarning): string {
       });
     case "unrecognized-player":
       return m.import_warning_unrecognized_player({ file: warning.file });
-  }
-}
-
-/** The message for a rejected transfer payload. `version-mismatch` has its own recovery panel. */
-export function formatTransferDecodeError(
-  code: Exclude<TransferDecodeErrorCode, "version-mismatch">,
-): string {
-  switch (code) {
-    case "corrupt":
-      return m.transfer_error_corrupt();
-    case "not-transfer-code":
-      return m.transfer_error_not_transfer_code();
   }
 }
 

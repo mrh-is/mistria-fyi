@@ -18,11 +18,13 @@
 
   let importSection = $state<HTMLElement | null>(null);
   let transferSection = $state<HTMLElement | null>(null);
+  let backupSection = $state<HTMLElement | null>(null);
+  let backupOpen = $state(false);
   // `?section=` opens a tool once the page is in the browser (the effect below). The page is
   // prerendered, and a prerendered page can't read its query on the server.
   let importOpen = $state(false);
   let transferOpen = $state(false);
-  // A syncing lane already gets the save file by itself, so manual import & transfer step aside.
+  // A syncing lane already gets the save file by itself, so manual import steps aside.
   let syncing = $derived(userState.syncLane !== undefined);
 
   function scrollToTransfer(): void {
@@ -32,6 +34,20 @@
       },
       () =>
         transferSection?.scrollIntoView({
+          behavior: prefersReducedMotion.current ? "auto" : "smooth",
+          block: "start",
+        }),
+      tick,
+    );
+  }
+
+  function scrollToBackup(): void {
+    void openThenScroll(
+      () => {
+        backupOpen = true;
+      },
+      () =>
+        backupSection?.scrollIntoView({
           behavior: prefersReducedMotion.current ? "auto" : "smooth",
           block: "start",
         }),
@@ -78,11 +94,13 @@
         <div bind:this={importSection}>
           <ImportCard bind:open={importOpen} onScrollToTransfer={scrollToTransfer} />
         </div>
-        <div bind:this={transferSection}>
-          <TransferCard bind:open={transferOpen} />
-        </div>
       {/if}
-      <BackupCard />
+      <div bind:this={transferSection}>
+        <TransferCard bind:open={transferOpen} onOpenBackup={scrollToBackup} />
+      </div>
+      <div bind:this={backupSection}>
+        <BackupCard bind:open={backupOpen} />
+      </div>
     </div>
   </section>
 

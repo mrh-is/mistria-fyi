@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
@@ -23,12 +23,14 @@ describe("data cards", () => {
   });
 
   it("summarizes device transfer while collapsed", () => {
-    const { container, text } = renderToFragment(TransferCard, { props: { open: false } });
+    const { container, text } = renderToFragment(TransferCard, {
+      props: { onOpenBackup: vi.fn(), open: false },
+    });
 
     expect(
       container.querySelector("[data-slot='collapsible-trigger']")?.getAttribute("aria-expanded"),
     ).toBe("false");
-    expect(text).toContain("Move progress between devices with a QR code.");
+    expect(text).toContain("Sync your save or move hand-tracked progress with a backup.");
   });
 
   it("summarizes backup and restore while collapsed", () => {

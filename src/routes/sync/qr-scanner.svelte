@@ -6,7 +6,7 @@
   import * as m from "#lib/paraglide/messages.js";
 
   import { closeScanner } from "../data/data-effects.js";
-  import { startQrCamera } from "../data/transfer-qr.js";
+  import { startQrCamera } from "./qr.js";
 
   import type { ClosableScanner } from "../data/data-effects.js";
 
@@ -28,7 +28,7 @@
 
   async function start(): Promise<void> {
     if (!video || !overlay) {
-      onerror(m.transfer_error_camera_init());
+      onerror(m.sync_error_camera_init());
       return;
     }
     let started: ClosableScanner;
@@ -41,7 +41,7 @@
       const denied =
         (error instanceof Error || error instanceof DOMException) &&
         error.name === "NotAllowedError";
-      onerror(denied ? m.transfer_error_camera_denied() : m.transfer_error_camera_init());
+      onerror(denied ? m.sync_error_camera_denied() : m.sync_error_camera_init());
       return;
     }
     // The scanner closed while the camera permission prompt was open.
@@ -69,7 +69,7 @@
   }}
 />
 
-<!-- Full-screen, as the transfer card's scanner is, so the code can fill the scan region. -->
+<!-- Full-screen so the code can fill the scan region. -->
 <div
   class="fixed inset-0 z-50 grid place-items-center bg-black"
   role="dialog"
@@ -80,7 +80,7 @@
     <video
       bind:this={video}
       class="block max-h-dvh max-w-full"
-      aria-label={m.transfer_camera_feed_aria()}
+      aria-label={m.sync_camera_feed_aria()}
       autoplay
       muted
       playsinline
@@ -97,7 +97,7 @@
     size="icon"
     variant="secondary"
     onclick={onclose}
-    aria-label={m.transfer_close_camera_aria()}
+    aria-label={m.sync_close_camera_aria()}
   >
     <Icon.UI type="dismiss" />
   </Button>
