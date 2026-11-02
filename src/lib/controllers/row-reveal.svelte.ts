@@ -22,7 +22,7 @@ const FALLBACK_ROW_HEIGHT_PX = 48;
 export interface RowReveal {
   /** How many of the list's rows to render now. */
   readonly count: number;
-  /** Record the rendered rows' total height, from which the reserved height is estimated. */
+  /** Estimate the reserved height from the rendered rows, applying it next frame. */
   measure: (renderedHeight: number) => void;
   /** Height to reserve for the rows not yet rendered, so the page does not grow as they arrive. */
   readonly reservedHeight: number;
@@ -105,6 +105,8 @@ export function createRowReveal(
   let revealed = $state(claimInitialRows(untrack(getTotal)));
   let rowHeight = $state<number | undefined>(undefined);
   let count = $derived(Math.min(getTotal(), revealed));
+  let measurementFrame: number | undefined;
+  let measuredRowHeight: number | undefined;
 
   const list: PendingList = {
     step() {
@@ -134,6 +136,7 @@ export function createRowReveal(
 
   $effect(() => () => {
     dequeue(list);
+    if (measurementFrame !== undefined) cancelAnimationFrame(measurementFrame);
   });
 
   return {
@@ -146,8 +149,15 @@ export function createRowReveal(
       // measurement) would divide the old height by the new count & shrink the reserved space.
       const rendered = untrack(() => count);
       if (rendered === 0 || renderedHeight <= 0) return;
-      rowHeight = renderedHeight / rendered;
-      lastRowHeight = rowHeight;
+      measuredRowHeight = renderedHeight / rendered;
+      // The reservation is inside the observed list. Writing it during ResizeObserver delivery
+      // resizes that list again in the same cycle. Capture the estimate now (before more rows
+      // render), but commit it next frame; multiple measurements keep only the newest estimate.
+      measurementFrame ??= requestAnimationFrame(() => {
+        measurementFrame = undefined;
+        rowHeight = measuredRowHeight;
+        if (rowHeight !== undefined) lastRowHeight = rowHeight;
+      });
     },
     get reservedHeight() {
       return Math.max(0, getTotal() - count) * (rowHeight ?? lastRowHeight);
