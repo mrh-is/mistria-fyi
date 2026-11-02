@@ -396,6 +396,7 @@ Evidence:
 [tests/ci-workflow.isolated.test.ts](../tests/ci-workflow.isolated.test.ts),
 [tests/workflow-hardening.test.ts](../tests/workflow-hardening.test.ts),
 [docs/development-workflow.md#production-deployment](../docs/development-workflow.md#production-deployment).
+
 ### [Manual facts without playtime](decisions/2026-11-01-manual-sync-without-playtime.md)
 
 ID: 2026-11-01-manual-sync-without-playtime. Status: Current.
