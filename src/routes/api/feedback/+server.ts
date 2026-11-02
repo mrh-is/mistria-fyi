@@ -8,7 +8,6 @@ import { SyncLogSchema } from "#lib/feedback/sync-log-schema.js";
 import { isReportCategory } from "#lib/feedback/types.js";
 import { isProductionDeployment } from "#lib/server/deployment.js";
 import { GitHubAppAuthError, installationTokens } from "#lib/server/github-app-auth.js";
-import { syncSwitchOn } from "#lib/sync/sync-switch.js";
 
 import type { SyncLog } from "#lib/feedback/sync-log-schema.js";
 import type { ReportTarget } from "#lib/feedback/types.js";
@@ -110,7 +109,7 @@ function composeIssueBody(payload: FeedbackPayload, indent?: number, omittedEven
     );
   }
 
-  if (syncSwitchOn && payload.syncLog) {
+  if (payload.syncLog) {
     lines.push(
       "",
       "<details>",
@@ -316,7 +315,7 @@ function validatePayload(body: unknown): FeedbackPayload {
   }
 
   let syncLog: SyncLog | undefined;
-  if (syncSwitchOn && rawSyncLog !== undefined) {
+  if (rawSyncLog !== undefined) {
     const parsed = v.safeParse(SyncLogSchema, rawSyncLog);
     if (!parsed.success) httpError(400, "Invalid sync log");
     syncLog = parsed.output;

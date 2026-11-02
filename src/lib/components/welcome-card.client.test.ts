@@ -1,10 +1,9 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import WelcomeCard from "#lib/components/welcome-card.svelte";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { syncEnabled } from "#lib/sync/enabled.js";
 
 beforeEach(() => {
   userState.resetAll();
@@ -15,11 +14,7 @@ afterEach(async () => {
   await tick();
 });
 
-describe("WelcomeCard with sync", () => {
-  it("is on in tests, as on branch previews & in dev", () => {
-    expect(syncEnabled).toBe(true);
-  });
-
+describe("WelcomeCard", () => {
   it("asks how to work, with sync or by hand", async () => {
     render(WelcomeCard);
 
@@ -32,5 +27,17 @@ describe("WelcomeCard with sync", () => {
 
     expect(userState.hasAnyProgress).toBe(true);
     expect(screen.queryByRole("region", { name: "Getting started" })).toBeNull();
+  });
+
+  it("returns after a full reset leaves no tracked progress", async () => {
+    render(WelcomeCard);
+    await fireEvent.click(screen.getByRole("button", { name: /I’ll track it all by hand/ }));
+
+    userState.resetAll();
+
+    await waitFor(() => {
+      expect(screen.getByRole("region", { name: "Getting started" })).toBeVisible();
+    });
+    expect(userState.hasAnyProgress).toBe(false);
   });
 });

@@ -9,12 +9,6 @@ import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import type { CourierOptions, CourierStatus } from "#lib/sync/courier.js";
 import type { RelayClient } from "#lib/sync/follow.js";
 
-const enabled = vi.hoisted(() => ({ syncEnabled: true }));
-vi.mock("#lib/sync/enabled.js", () => ({
-  get syncEnabled() {
-    return enabled.syncEnabled;
-  },
-}));
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 vi.mock("$app/navigation", () => ({ afterNavigate: vi.fn(), goto: vi.fn() }));
 // Drawing a code needs a canvas, which the test environment doesn't have.
@@ -171,7 +165,6 @@ async function renderCodeArea(local: Record<string, unknown>, overrides = {}) {
 }
 
 beforeEach(async () => {
-  enabled.syncEnabled = true;
   pageStub.reset();
   pageStub.navigate("/en/data");
   for (const mock of [fake.check, fake.reallow, fake.retry, fake.start, fake.take, fake.update]) {
@@ -439,18 +432,5 @@ describe("the done screen", () => {
       await screen.findByRole("button", { name: "No thanks, I’ll track here" }),
     );
     expect(screen.getByText(/we’ll sync your save file every time you sleep/)).toBeVisible();
-  });
-});
-
-describe("the sync switch", () => {
-  it("keeps the Data page's card, & so its drop box, off the production site", async () => {
-    enabled.syncEnabled = false;
-    await loadStore({ syncLane: SHARING });
-    report({ source: "file" });
-    const { default: DataPage } = await import("../../../routes/data/+page.svelte");
-    render(DataPage);
-    await tick();
-    expect(screen.queryByRole("group", { name: "Drop in your latest save file" })).toBeNull();
-    expect(screen.queryByText(/Save file sync/)).toBeNull();
   });
 });

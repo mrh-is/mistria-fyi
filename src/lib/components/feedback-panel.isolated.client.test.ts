@@ -11,8 +11,6 @@ import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import type { SyncLog } from "#lib/feedback/sync-log-schema.js";
 
 const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), warning: vi.fn() }));
-const syncSwitch = vi.hoisted(() => ({ syncSwitchOn: true }));
-vi.mock("#lib/sync/sync-switch.js", () => syncSwitch);
 
 vi.mock("svelte-sonner", () => ({ toast }));
 
@@ -33,7 +31,6 @@ function mockTurnstile() {
 
 describe("FeedbackPanel", () => {
   beforeEach(() => {
-    syncSwitch.syncSwitchOn = true;
     toast.mockClear();
     toast.error.mockClear();
     toast.warning.mockClear();
@@ -169,14 +166,11 @@ describe("FeedbackPanel", () => {
     );
   });
 
-  it.each([true, false])("omits sync diagnostics unless chosen (switch %s)", async (on) => {
-    syncSwitch.syncSwitchOn = on;
+  it("omits sync diagnostics unless chosen", async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
     vi.stubGlobal("fetch", fetchMock);
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
-    expect(screen.queryByRole("checkbox", { name: "Attach my save file sync log" }) !== null).toBe(
-      on,
-    );
+    expect(screen.getByRole("checkbox", { name: "Attach my save file sync log" })).toBeVisible();
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "A report" },
     });

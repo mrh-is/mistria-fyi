@@ -317,7 +317,7 @@ describe("service-worker runtime request path", () => {
     expect(await response.text()).toBe("offline page");
   });
 
-  // The welcome card links `/en/data?section=import`, and an offline reload keeps the query.
+  // Data opens a tool from `?section=import`, and an offline reload keeps the query.
   it("serves an offline page's cached copy for a navigation to it with a query", async () => {
     const cache = new MemoryCache();
     await cache.put(`${ORIGIN}/en/data`, new Response("data page"));

@@ -1,21 +1,11 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { readFileSync } from "node:fs";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
-/**
- * Nothing from the receiver reaches the production site before launch (#291). Each surface renders
- * with the switch on & off, against a device that has every reason to show it.
- */
-const enabled = vi.hoisted(() => ({ syncEnabled: true }));
-vi.mock("#lib/sync/enabled.js", () => ({
-  get syncEnabled() {
-    return enabled.syncEnabled;
-  },
-}));
+// The receiver's surfaces, against a following device that has every reason to show them.
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 vi.mock("$app/navigation", () => ({ afterNavigate: vi.fn(), goto: vi.fn() }));
 
@@ -91,7 +81,6 @@ afterEach(async () => {
 
 describe("the status button", () => {
   it("appears on a syncing device, with its dot & slip after a long gap", async () => {
-    enabled.syncEnabled = true;
     await loadStore();
     await renderToolbar();
     const button = screen.getByRole("button", { name: /^Save file sync:/ });
@@ -109,7 +98,6 @@ describe("the status button", () => {
   });
 
   it("closes its panel when the lane ends (F8)", async () => {
-    enabled.syncEnabled = true;
     await loadStore();
     await renderToolbar();
     await fireEvent.click(screen.getByRole("button", { name: /^Save file sync:/ }));
@@ -125,19 +113,10 @@ describe("the status button", () => {
       expect(screen.queryByText("Save file from")).toBeNull();
     });
   });
-
-  it("stays off the production site", async () => {
-    enabled.syncEnabled = false;
-    await loadStore();
-    await renderToolbar();
-    expect(screen.queryByRole("button", { name: /^Save file sync:/ })).toBeNull();
-    expect(screen.queryByText(/Haven’t heard from your game/)).toBeNull();
-  });
 });
 
 describe("the farm-switch backup", () => {
   it("is offered by name, confirms, & restores", async () => {
-    enabled.syncEnabled = true;
     await loadStore();
     await renderCard();
     const offer = screen.getByRole("button", { name: /^Backup of Old Acres, from / });
@@ -147,28 +126,5 @@ describe("the farm-switch backup", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Restore it" }));
     await tick();
     expect(screen.getAllByText("Restored that backup.").length).toBeGreaterThan(0);
-  });
-
-  it("stays off the production site", async () => {
-    enabled.syncEnabled = false;
-    await loadStore();
-    await renderCard();
-    expect(screen.queryByRole("button", { name: /^Backup of / })).toBeNull();
-    // The ordinary restore is still there.
-    expect(screen.getAllByRole("button", { name: /Restore/ }).length).toBeGreaterThan(0);
-  });
-});
-
-describe("what the switch guards in the page shells", () => {
-  // Rendering the root layout or Home here would pull in every category; their one guard is plain.
-  it.each([
-    ["src/routes/+layout.svelte", "<SyncReceiverHost />"],
-    ["src/routes/+page.svelte", "<SyncTroubleNote />"],
-  ])("%s mounts it only inside the switch", (path, mount) => {
-    const source = readFileSync(path, "utf8");
-    const at = source.indexOf(mount);
-    expect(at).toBeGreaterThan(-1);
-    expect(source.lastIndexOf("{#if syncEnabled}", at)).toBeGreaterThan(-1);
-    expect(source.slice(source.lastIndexOf("{#if syncEnabled}", at), at)).not.toContain("{/if}");
   });
 });

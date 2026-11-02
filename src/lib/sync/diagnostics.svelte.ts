@@ -8,7 +8,6 @@ import { MAX_SYNC_EVENTS, MAX_SYNC_LOG_BYTES } from "#lib/feedback/sync-log-sche
 
 import { createDiagnosticRedaction } from "./diagnostic-redaction.js";
 import { FOLLOW_PROTOCOL_VERSION, isFollowKey, mailboxIdFor } from "./follow.js";
-import { syncSwitchOn } from "./sync-switch.js";
 
 import type { SyncDifference } from "#lib/engine/sync-apply.js";
 import type { SyncLog, SyncLogEvent } from "#lib/feedback/sync-log-schema.js";
@@ -25,7 +24,7 @@ interface SyncDiagnostics {
     outcome: SyncApplyOutcome,
     privateValues: PrivateValues,
   ) => Promise<void>;
-  snapshot: (appBuild: string, lane: SyncLog["lane"]) => SyncLog | undefined;
+  snapshot: (appBuild: string, lane: SyncLog["lane"]) => SyncLog;
   status: (outcome: SyncLogEvent["outcome"]) => void;
 }
 
@@ -55,7 +54,6 @@ export function createSyncDiagnostics(): SyncDiagnostics {
   }
 
   function add(event: SyncLogEvent, order = nextOrder++): void {
-    if (!syncSwitchOn) return;
     // Recheck here too: another record can reveal a name while this event's hashing is pending.
     retain([...events, { event: redactEvent(event), order }].toSorted((a, b) => a.order - b.order));
   }
@@ -77,7 +75,6 @@ export function createSyncDiagnostics(): SyncDiagnostics {
       outcome: SyncApplyOutcome,
       { credentials, farmNames, farmNumbers, playerNames }: PrivateValues,
     ): Promise<void> {
-      if (!syncSwitchOn) return;
       const order = nextOrder++;
       try {
         const { saveNumber } = save.metadata.identity;
@@ -161,8 +158,7 @@ export function createSyncDiagnostics(): SyncDiagnostics {
         // Diagnostics must never prevent applying a save or reporting feedback.
       }
     },
-    snapshot(appBuild: string, lane: SyncLog["lane"]): SyncLog | undefined {
-      if (!syncSwitchOn) return undefined;
+    snapshot(appBuild: string, lane: SyncLog["lane"]): SyncLog {
       return {
         appBuild,
         events: structuredClone(events.map(({ event }) => event)),

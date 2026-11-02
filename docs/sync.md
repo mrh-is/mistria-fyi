@@ -10,9 +10,9 @@ the issues that build it, & the reasons behind the main forks are in
 [the follow-the-save record](decisions/2026-10-28-sync-follow-the-save.md). The setup journey,
 screens, & copy are in [sync-setup.md](sync-setup.md).
 
-Status: partly built, hidden behind the sync switch. Following replaced the earlier pairing design
-(#251) on 2026-10-28. Treat each choice as decided; reopen one only with a concrete failure
-sequence, & record the outcome in a decision record.
+Status: launched on 2026-11-01 (#291). Following replaced the earlier pairing design (#251) on
+2026-10-28. Treat each choice as decided; reopen one only with a concrete failure sequence, & record
+the outcome in a decision record.
 
 ## Why sync
 
@@ -284,8 +284,7 @@ Built in #133: `src/lib/sync/follow.ts` (keys, link, envelope, & relay client) &
 `src/lib/sync/sharing.ts` (the writes around them). The UI is in [sync-setup.md](sync-setup.md)
 (#131), on `/sync` & Data's sync card. See
 [the decision record](decisions/2026-10-28-sync-follow-the-save.md); the envelope's byte layout is
-in [the format record](decisions/2026-10-30-follow-envelope-format.md). Until launch (#291), every
-sync entry point is hidden on the production site behind `src/lib/sync/enabled.ts`.
+in [the format record](decisions/2026-10-30-follow-envelope-format.md).
 
 - **Lanes.** Each device is in exactly one lane: its save is on this computer (the courier), its
   save is on another device (a follower), or it tracks by hand, the default. Joining a syncing lane
@@ -558,11 +557,10 @@ pwa-verification.md & the Public contract section of
 
 The feedback form can optionally attach a previewable sync log (#137): app build, protocol version,
 the device's lane, the save's current numeric game version (`info.version`), recent outcomes,
-unknown fields with their IDs, & counts of each policy by field. It stays behind the sync switch
-until launch, & so does its entry on the privacy page. The receiver collects at most 20 events & 24
-KiB in memory in the current tab; reloads clear it. Unknown IDs are limited to 20 per field & 100
-per event. Old events are dropped to fit the byte limit, & again if the finished issue would pass
-GitHub's body limit.
+unknown fields with their IDs, & counts of each policy by field. The privacy page lists it under
+feedback. The receiver collects at most 20 events & 24 KiB in memory in the current tab; reloads
+clear it. Unknown IDs are limited to 20 per field & 100 per event. Old events are dropped to fit the
+byte limit, & again if the finished issue would pass GitHub's body limit.
 
 On the gaming computer, the courier also records each upload's result, so a log sent from there
 shows whether saves reached the relay. Each is a bare outcome, with no counter, mailbox ID, hash, or
@@ -640,13 +638,6 @@ per-code record that outlives a deleted save & the tombstone left after it. It a
 Cloudflare’s Turnstile Privacy Addendum, a condition of the invisible mode the creation check uses.
 The rewrite ships before or with sync, in all locales.
 
-## The sync switch
-
-Until launch (#291), every sync surface checks `syncSwitchOn` (`src/lib/sync/sync-switch.ts`), which
-hides it on the production site & shows it on branch previews, local builds, dev, & tests. It comes
-from the same `CF_PAGES_BRANCH === "main"` check as the feedback dry run, so renaming the Pages
-production branch would reveal sync. Launch removes the module & its call sites.
-
 ## Fallbacks
 
 - Firefox needs the save re-dropped or re-picked per session, through the same relay & rules.
@@ -663,5 +654,5 @@ production branch would reveal sync. Launch removes the module & its call sites.
 2. **Feasibility & design:** the hardware checks (#130, #238, #341) & the setup UX design (#131).
 3. **The network pieces:** the relay (#132), following (#133), the courier (#134), the receiver
    (#135).
-4. **Launch work:** the privacy rewrite (#136) before launch, diagnostics (#137), then deprecating
-   QR transfer (#138).
+4. **Launch work:** the privacy rewrite (#136), diagnostics (#137), & the launch itself (#291), then
+   deprecating QR transfer (#138).
