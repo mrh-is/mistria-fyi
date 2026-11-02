@@ -13,9 +13,9 @@ session limits) belong in each contributor’s user config.
 - Run the test that covers your change: `pnpm exec vitest run path/to/file.test.ts`. For plain-Node
   tests under `eslint-rules/`, `scripts/`, & `tests/`, also select `--project node`, or
   `--project node-isolated` for `*.isolated.test.ts`. For example:
-  `pnpm exec vitest run --project node scripts/guard-generated-reads.test.ts`. A path alone selects
-  the right tests, but can still start the app projects’ Cloudflare proxy & workerd before
-  filtering. Use `--project pipeline` for asset-independent `pipeline/` tests. App tests, including
+  `pnpm exec vitest run --project node scripts/check-attribution.test.ts`. A path alone selects the
+  right tests, but can still start the app projects’ Cloudflare proxy & workerd before filtering.
+  Use `--project pipeline` for asset-independent `pipeline/` tests. App tests, including
   `*.client.test.ts` & `*.cold.test.ts`, can use the path-only command.
 - Add or update tests when behavior changes, ideally before the implementation.
 - Run focused tests during development. CI runs the complete matrix on each PR, so don’t default to
@@ -118,21 +118,20 @@ session limits) belong in each contributor’s user config.
 - Run Wrangler from the workspace: `pnpm exec wrangler <command>`, including `login`.
 - R2 uploads authenticate only with `R2_UPLOAD_TOKEN`, never a login. The upload scripts load it
   from the main checkout's `.env.r2-upload`; run them, but never read the file or print the token.
-- Stored OAuth token reads are forbidden; the read guard covers the known gh & Wrangler files and
-  `.env.r2-upload`. Never print the environment of a shell that may hold a token. Search with the
-  Grep tool or plain `rg`, never `grep -r` or `rg -uu`, which read gitignored secrets.
+- Never read stored OAuth tokens, such as gh’s `hosts.yml` or Wrangler’s config, and never print the
+  environment of a shell that may hold a token. Search with the Grep tool or plain `rg`, never
+  `grep -r` or `rg -uu`, which read gitignored secrets.
 - If a harness or hook refuses an edit, stop & report it. Never route around the refusal with shell
   writes, heredocs, `sed -i`, `perl -i`, or scripts.
-- Dependency commands inject audit guidance. Follow
-  [Package commands](docs/agent-reference.md#package-commands) before adding or bumping
-  dependencies.
+- Before adding or bumping dependencies, follow
+  [Package commands](docs/agent-reference.md#package-commands).
+- Never use bare `git stash` or `git stash pop`; every worktree shares one stash stack. Prefer a WIP
+  commit, or `git stash push -m <name>` & `git stash apply <sha>`.
 
-- The existing guards each enforce only the surface they name: guarded paths, attribution,
-  permission parity, & shell rules. Hooks don’t replace policy, verification, or the harness’s
-  consent prompts. Read [agent-reference.md](docs/agent-reference.md#enforcement-boundaries) before
-  changing agent permissions or guarded paths.
-- Inspect `assets.zip` entries or extract named subtrees. Full extraction needs user approval &
-  inherited `MISTRIA_ALLOW_FULL_ASSETS=1` (see “Policy guards” in agent-reference.md).
+- Read [agent-reference.md](docs/agent-reference.md#enforcement-boundaries) before changing agent
+  permissions, hooks, or guarded paths.
+- Inspect `assets.zip` entries or extract named subtrees. Extracting the whole archive needs the
+  user’s explicit approval.
 - Before declaring the game assets unavailable, look in `pipeline/input/`. The “needs game
   installation” label alone doesn’t block a task.
 - Before pipeline work, read [pipeline/README.md](pipeline/README.md) & the “Asset inputs” section
@@ -140,8 +139,8 @@ session limits) belong in each contributor’s user config.
 
 ## Architecture boundaries
 
-- `src/lib/data/tracker-data.json` is generated, and hooks deny edits to it. Regenerate it instead.
-  Its shared contract is in `src/lib/types/tracker-data.ts`.
+- `src/lib/data/tracker-data.json` is generated; regenerate it instead of editing it. Its shared
+  contract is in `src/lib/types/tracker-data.ts`.
 - `src/lib/components/ui/` started as shadcn-svelte code, but the project owns it now. Edit it
   directly, and keep its MIT notice in `THIRD-PARTY-NOTICES.md`.
 - Pipeline extractors throw on unexpected source data. Never invent fallback display text to cover a
@@ -161,8 +160,8 @@ session limits) belong in each contributor’s user config.
   strict protocol version.
 - Category pages compose layouts. Put shared or stateful concerns in focused components. Split a
   complex component by logical concern, even with one caller, so it’s easier to reason about.
-- `docs/superpowers/` is guarded history, hidden from ripgrep by `.ignore`. Read it only when a task
-  names a file; update the current `docs/*.md` for later changes.
+- `docs/superpowers/` is read-only history, hidden from ripgrep by `.ignore`. Read it only when a
+  task names a file; update the current `docs/*.md` for later changes.
 - Before implementation, read [agent-reference.md](docs/agent-reference.md#code-conventions), which
   covers naming, imports, path handling, Svelte, lint, formatting, & colocated tests.
 - Read these guides when your work touches their area:
@@ -223,15 +222,14 @@ session limits) belong in each contributor’s user config.
 - Record each decision in the narrowest home that fits, usually the PR’s “Decisions” section. Add a
   record to `docs/decisions/` only when a newcomer would propose the rejected alternative; see
   [Recording decisions](docs/agent-workflow.md#recording-decisions).
-- GitHub body guards require `--body-file` for multiline text & a final `Agent:` line. Re-read the
-  published result.
+- Pass multiline GitHub bodies with `--body-file`, and re-read the published result.
 - An open PR’s state is your merge recommendation. Keep it a draft while any manual step, question,
   gap, or review remains. Mark it ready only when you would merge it yourself, and return it to
   draft if that changes.
 - Watch CI & fix failures on the branch. Don’t merge around failing CI. If no “CI” run starts a few
   minutes after you open the PR, follow the workflow’s empty-commit recovery.
-- Release metadata is guarded. For an approved release version, the user enables inherited
-  `MISTRIA_RELEASE=1`. Production versions come from Git metadata.
+- Never change `package.json`’s version or create Git tags without an approved release. Production
+  versions come from Git metadata.
 
 ## Tooling failures
 
@@ -280,8 +278,8 @@ other way.
 
 ## Context economy
 
-- Read only the sections you need, using Read’s `offset` & `limit`. Hooks deny reads of the
-  generated tracker data, so read its types or the pipeline source instead.
+- Read only the sections you need, using Read’s `offset` & `limit`. Don’t read the generated tracker
+  data; Claude Code’s permissions deny it. Read its types or the pipeline source instead.
 - Don’t reread context you already have. After context compression, reread only the section you
   need.
 - Don’t pin a model or reasoning effort in the repository’s harness settings. Each contributor’s own
