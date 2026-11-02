@@ -8,7 +8,6 @@ import { describe, expect, it } from "vitest";
  */
 
 const NOT_ALLOWED: Record<string, string> = {
-  "accessibility:monitor": "files GitHub issues from CI evidence",
   "check:watch": "never exits",
   "cloudflare:logs": "reads production logs with stored Cloudflare credentials",
   "fonts:build": "regenerates committed font subsets",
