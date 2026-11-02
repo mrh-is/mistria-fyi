@@ -56,7 +56,10 @@
       "Bash(pnpx *)",
       "Bash(yarn *)",
       "Bash(bun *)",
-      "Read(**/.env.r2-upload)"
+      "Read(**/.env.r2-upload)",
+      "Read(/src/lib/data/tracker-data.json)",
+      "Edit(/src/lib/data/tracker-data.json)",
+      "Edit(/docs/superpowers/**)"
     ]
   },
   "hooks": {
@@ -69,50 +72,6 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/agent-tool-hook.ts\"",
             "timeout": 600,
             "statusMessage": "Checking worktree setup & formatting"
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Bash|Grep|PowerShell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-generated-reads.ts\"",
-            "timeout": 10,
-            "onFailure": "block"
-          }
-        ]
-      },
-      {
-        "matcher": "apply_patch|Edit|MultiEdit|NotebookEdit|Write|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-generated-paths.ts\"",
-            "timeout": 10,
-            "onFailure": "block"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-agent-policy.ts\"",
-            "timeout": 10,
-            "onFailure": "block"
-          }
-        ]
-      },
-      {
-        "matcher": "apply_patch|Edit|MultiEdit|NotebookEdit|Write|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-release-version.ts\"",
-            "timeout": 10,
-            "onFailure": "block"
           }
         ]
       }

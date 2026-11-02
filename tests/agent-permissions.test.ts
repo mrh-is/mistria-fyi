@@ -113,33 +113,21 @@ describe("package-manager deny lists", () => {
   });
 });
 
-describe("R2 token file deny rule", () => {
-  // Claude Code applies Read deny rules to Grep & Glob too. Codex has no equivalent rule, so the
-  // shared read guard is its only enforcement.
-  it("denies Claude Code file-tool reads of .env.r2-upload", () => {
+describe("Claude Code file deny rules", () => {
+  // Claude Code applies Read deny rules to Grep & Glob, and Edit deny rules to every file-editing
+  // tool. Shell commands aren't covered unless the sandbox is enabled; Codex has no equivalent rule.
+  it("denies the R2 token, tracker-data reads & edits, and history edits", () => {
     const { permissions } = JSON.parse(readFileSync(".claude/settings.json", "utf8")) as {
       permissions: { deny: string[] };
     };
-    expect(permissions.deny).toContain("Read(**/.env.r2-upload)");
-  });
-});
-
-describe("Claude Code path guard", () => {
-  it("registers the PreToolUse hook for every file-writing tool", () => {
-    const { hooks } = JSON.parse(readFileSync(".claude/settings.json", "utf8")) as {
-      hooks: { PreToolUse?: { hooks: { command: string }[]; matcher: string }[] };
-    };
-    const guard = hooks.PreToolUse?.find((entry) =>
-      entry.hooks.some((hook) => hook.command.includes("guard-generated-paths.ts")),
+    expect(permissions.deny).toEqual(
+      expect.arrayContaining([
+        "Read(**/.env.r2-upload)",
+        "Read(/src/lib/data/tracker-data.json)",
+        "Edit(/src/lib/data/tracker-data.json)",
+        "Edit(/docs/superpowers/**)",
+      ]),
     );
-    expect(guard?.matcher.split("|").toSorted()).toEqual([
-      "Bash",
-      "Edit",
-      "MultiEdit",
-      "NotebookEdit",
-      "Write",
-      "apply_patch",
-    ]);
   });
 });
 
@@ -153,50 +141,27 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
     hooks[event]?.find((entry) => entry.hooks.some((hook) => hook.command.includes(script)));
   const formatter = "agent-tool-hook.ts";
 
-  it("registers edit guards & formatting for patches, file tools, and shell commands", () => {
-    for (const [event, script] of [
-      ["PreToolUse", "guard-generated-paths.ts"],
-      ["PostToolUse", formatter],
-    ]) {
-      const matcher = new RegExp(`^(?:${find(event, script)?.matcher ?? ""})$`);
-      const tools = ["apply_patch", "Edit", "Write", "Bash"];
-      if (event === "PostToolUse") tools.push("MultiEdit", "NotebookEdit");
-      for (const tool of tools) {
-        expect(matcher.test(tool), `${event}: ${tool}`).toBe(true);
-      }
+  it("registers formatting for patches, file tools, and shell commands", () => {
+    const matcher = new RegExp(`^(?:${find("PostToolUse", formatter)?.matcher ?? ""})$`);
+    for (const tool of ["apply_patch", "Edit", "Write", "Bash", "MultiEdit", "NotebookEdit"]) {
+      expect(matcher.test(tool), `PostToolUse: ${tool}`).toBe(true);
     }
   });
 
-  it("registers read guards, stop lint, and subagent guidance", () => {
-    expect(find("PreToolUse", "guard-generated-reads.ts")?.matcher).toBe(
-      "Read|Bash|Grep|PowerShell",
-    );
+  it("registers stop lint & subagent guidance", () => {
     expect(find("Stop", "lint-agent-stop.ts")).toBeDefined();
     expect(find("SubagentStop", "lint-agent-stop.ts")).toBeDefined();
     expect(find("SubagentStart", "agent-subagent-start.ts")).toBeDefined();
     expect(find("PreToolUse", formatter)?.matcher).toBe("Bash");
   });
 
-  it("registers matching policy guards, and only Claude guard failures block", () => {
-    expect(find("PreToolUse", "guard-agent-policy.ts")?.matcher).toBe("Bash");
-    const release = find("PreToolUse", "guard-release-version.ts");
-    expect(release).toBeDefined();
-    for (const tool of ["apply_patch", "Edit", "Write", "MultiEdit", "NotebookEdit", "Bash"]) {
-      expect(new RegExp(`^(?:${release?.matcher ?? ""})$`).test(tool)).toBe(true);
-    }
-    const guards = (hooks.PreToolUse ?? [])
-      .flatMap((entry) => entry.hooks)
-      .filter((hook) => hook.command.includes("guard-"));
-    expect(guards).toHaveLength(4);
-    for (const hook of guards) {
-      expect(hook.onFailure).toBe(file.startsWith(".claude") ? "block" : undefined);
-    }
-    const upkeep = Object.values(hooks)
+  it("registers no blocking hooks: upkeep failures never stop a tool call", () => {
+    const all = Object.values(hooks)
       .flatMap((entries) => entries ?? [])
-      .flatMap((entry) => entry.hooks)
-      .filter((hook) => !hook.command.includes("guard-"));
-    expect(upkeep.length).toBeGreaterThan(0);
-    for (const hook of upkeep) expect(hook.onFailure).toBeUndefined();
+      .flatMap((entry) => entry.hooks);
+    expect(all.length).toBeGreaterThan(0);
+    for (const hook of all) expect(hook.onFailure).toBeUndefined();
+    expect(all.filter((hook) => hook.command.includes("guard-"))).toEqual([]);
   });
 
   it("has exactly one formatting handler per event, so setup cannot race formatting", () => {

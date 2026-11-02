@@ -11,46 +11,6 @@
             "statusMessage": "Checking worktree setup & formatting"
           }
         ]
-      },
-      {
-        "matcher": "apply_patch|Edit|Write|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/guard-generated-paths.ts\"",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Bash|Grep|PowerShell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/guard-generated-reads.ts\"",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/guard-agent-policy.ts\"",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "apply_patch|Edit|MultiEdit|NotebookEdit|Write|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/guard-release-version.ts\"",
-            "timeout": 10
-          }
-        ]
       }
     ],
     "PostToolUse": [

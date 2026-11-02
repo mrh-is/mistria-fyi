@@ -293,7 +293,7 @@ For plain-Node tests under `eslint-rules/`, `scripts/`, & `tests/`, also select 
 unrelated app projects don’t start their Cloudflare proxy & workerd before file filtering:
 
 ```sh
-pnpm exec vitest run --project node scripts/guard-generated-reads.test.ts
+pnpm exec vitest run --project node scripts/check-attribution.test.ts
 ```
 
 Use `--project node-isolated` for `*.isolated.test.ts` in those directories, and
