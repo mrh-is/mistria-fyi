@@ -396,6 +396,16 @@ Evidence:
 [tests/ci-workflow.isolated.test.ts](../tests/ci-workflow.isolated.test.ts),
 [tests/workflow-hardening.test.ts](../tests/workflow-hardening.test.ts),
 [docs/development-workflow.md#production-deployment](../docs/development-workflow.md#production-deployment).
+### [Select focused Node projects](decisions/2026-11-01-focused-node-projects.md)
+
+ID: 2026-11-01-focused-node-projects. Status: Current.
+
+Focused plain-Node Vitest runs select their project explicitly to avoid unrelated Cloudflare proxy
+startup before file filtering.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/394](https://github.com/mrh-is/mistria-fyi/issues/394),
+[vite.config.ts](../vite.config.ts).
 
 ### [Manual facts without playtime](decisions/2026-11-01-manual-sync-without-playtime.md)
 

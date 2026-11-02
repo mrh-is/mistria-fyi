@@ -289,6 +289,18 @@ Start with the test file that covers the change, for every agent and every Vites
   pnpm exec vitest run path/to/file.test.ts
   ```
 
+For plain-Node tests under `eslint-rules/`, `scripts/`, & `tests/`, also select the project so
+unrelated app projects don’t start their Cloudflare proxy & workerd before file filtering:
+
+```sh
+pnpm exec vitest run --project node scripts/guard-generated-reads.test.ts
+```
+
+Use `--project node-isolated` for `*.isolated.test.ts` in those directories, and
+`--project pipeline` for asset-independent `pipeline/` tests. App tests, including
+`*.client.test.ts` & `*.cold.test.ts`, can use the path-only command. The
+[project table](#test-projects) lists every project.
+
 Broaden only when the changed contracts require it. `test:changed` is a related-test helper, not a
 guarantee of a focused run: its documented fallbacks below can run the complete suite. Full-suite
 commands are references for CI or the explicit full-local-matrix exceptions in
@@ -435,8 +447,10 @@ This job doesn’t count toward “CI passed”.
 
 ### Test projects
 
-`vite.config.ts` splits Vitest into projects by what each test needs to run. Vitest assigns a file
-to its project, so a file path alone selects the right environment. Select a whole project with
+`vite.config.ts` splits Vitest into projects by what each test needs to run. A file path selects the
+right tests, but does not prevent unrelated app projects from starting their Cloudflare proxy &
+workerd before filtering. For focused plain-Node runs, pass both the file path & `--project` as
+described [above](#executing-tests). Select a whole project with
 `pnpm exec vitest run --project=<name>`.
 
 | Project           | Files                                                              | Environment & setup                                          |

@@ -7,9 +7,13 @@ verification”.
 
 ## Focused checks
 
-- Run only the test that covers your change: `pnpm exec vitest run path/to/file.test.ts`. This works
-  for every test file, including `*.client.test.ts` & `*.cold.test.ts`, because Vitest picks the
-  project from the path.
+- Run only the test that covers your change: `pnpm exec vitest run path/to/file.test.ts`. For
+  plain-Node tests under `eslint-rules/`, `scripts/`, & `tests/`, add `--project node`, or
+  `--project node-isolated` for `*.isolated.test.ts`. For example:
+  `pnpm exec vitest run --project node scripts/guard-generated-reads.test.ts`. A path selects the
+  right tests, but can still start the app projects’ Cloudflare proxy & workerd before filtering.
+  Use `--project pipeline` for asset-independent `pipeline/` tests. App tests, including
+  `*.client.test.ts` & `*.cold.test.ts`, can use the path-only command.
 - After a TypeScript or Svelte contract edit, run `pnpm run check`.
 - Before committing, run `pnpm run lint:fix`. Lint must report zero errors & zero warnings. If a
   warning needs an `oxlint-disable`, `eslint-disable`, or `stylelint-disable` comment, use the
