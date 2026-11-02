@@ -1,7 +1,7 @@
 /* oxlint-disable no-template-curly-in-string -- these tests assert literal GitHub Actions `${{ }}` expression text */
 import playwrightPackage from "@playwright/test/package.json";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -34,6 +34,7 @@ interface WorkflowJob {
   concurrency?: Workflow["concurrency"];
   container?: string | { image?: string; options?: string };
   env?: Record<string, string>;
+  environment?: string;
   if?: string;
   needs?: string | string[];
   outputs?: Record<string, string>;
@@ -63,6 +64,7 @@ const browserJobs = ["accessibility", "pwa"] as const;
 const installJobs = ["lint", "check", "test", "build", ...browserJobs, "issue-sync"] as const;
 // Scheduled housekeeping: it reports on the repository rather than deciding whether code can merge.
 const unrequiredJobs = ["issue-sync", "nightly-report"];
+const deployJob = "deploy-production";
 
 describe("browser selection", () => {
   it.each(["true", "false", undefined])("selects pinned Chromium when CI is %s", async (ci) => {
@@ -635,7 +637,8 @@ describe("CI workflow gate", () => {
     expect(jobs["ci-passed"].if).toBe("always()");
     expect(jobs["ci-passed"].needs).toEqual(
       Object.keys(jobs).filter(
-        (jobName) => !unrequiredJobs.includes(jobName) && jobName !== "ci-passed",
+        (jobName) =>
+          !unrequiredJobs.includes(jobName) && jobName !== "ci-passed" && jobName !== deployJob,
       ),
     );
     const check = jobs["ci-passed"].steps?.at(-1);
@@ -658,6 +661,107 @@ describe("CI workflow gate", () => {
     });
     expect(result.error).toBeUndefined();
     expect(result.status, result.stderr).toBe(status);
+  });
+});
+
+describe("production deployment", () => {
+  const sha = "a".repeat(40);
+
+  function runDeploy(env: { DEPLOY_HOOK_URL: string; tip?: string }) {
+    const command = jobs[deployJob].steps?.at(-1)?.run;
+    if (command === undefined) throw new Error("Missing deploy command");
+    const bin = mkdtempSync(join(tmpdir(), "deploy-production-"));
+    try {
+      const curlLog = join(bin, "curl.log");
+      const ghLog = join(bin, "gh.log");
+      const gh = env.tip === undefined ? "exit 1" : `echo ${env.tip}`;
+      writeFileSync(join(bin, "gh"), `#!/bin/sh\necho "$@" > "${ghLog}"\n${gh}\n`, { mode: 0o755 });
+      writeFileSync(join(bin, "curl"), `#!/bin/sh\necho "$@" > "${curlLog}"\n`, { mode: 0o755 });
+      const result = spawnSync("bash", ["-e", "-c", command], {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          DEPLOY_HOOK_URL: env.DEPLOY_HOOK_URL,
+          GITHUB_SHA: sha,
+          PATH: `${bin}:${process.env.PATH}`,
+          REPOSITORY: "owner/repo",
+        },
+      });
+      return {
+        looked: existsSync(ghLog) ? readFileSync(ghLog, "utf8") : undefined,
+        posted: existsSync(curlLog) ? readFileSync(curlLog, "utf8") : undefined,
+        status: result.status,
+      };
+    } finally {
+      rmSync(bin, { force: true, recursive: true });
+    }
+  }
+
+  // Main pushes always skip locale-sync, one of the gate's needs. Without a status function, GitHub's
+  // implicit `success()` would then skip this job too, leaving the run green & production stale.
+  it("deploys only after the gate passes on a main push, despite skipped gate needs", () => {
+    const job = jobs[deployJob];
+    expect(jobs["locale-sync"].if).toContain("github.event_name == 'pull_request'");
+    expect(job.needs).toBe("ci-passed");
+    expect(job.if).toBe(
+      "${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci-passed.result == 'success' }}",
+    );
+  });
+
+  it("gives the deploy step the values its script reads", () => {
+    expect(jobs[deployJob].steps).toHaveLength(1);
+    expect(jobs[deployJob].steps?.[0].env).toEqual({
+      DEPLOY_HOOK_URL: "${{ secrets.PRODUCTION_DEPLOY_HOOK }}",
+      GH_TOKEN: "${{ github.token }}",
+      REPOSITORY: "${{ github.repository }}",
+    });
+  });
+
+  // The hook URL needs no other authentication, so anyone who reads it can trigger a deployment.
+  it("keeps the hook secret away from every other job & from repository code", () => {
+    const job = jobs[deployJob];
+    expect(job.environment).toBe("production");
+    expect(job.steps?.filter((step) => step.uses !== undefined)).toEqual([]);
+    const holders = Object.entries(jobs)
+      .filter(([, entry]) => /\bsecrets\b/.test(JSON.stringify(entry)))
+      .map(([jobName]) => jobName);
+    expect(holders).toEqual([deployJob]);
+    const environments = Object.entries(jobs)
+      .filter(([, entry]) => entry.environment !== undefined)
+      .map(([jobName]) => jobName);
+    expect(environments).toEqual([deployJob]);
+  });
+
+  it("posts to the hook when the passing commit is still main's tip", () => {
+    const { looked, posted, status } = runDeploy({
+      DEPLOY_HOOK_URL: "https://hook.test/x",
+      tip: sha,
+    });
+    expect(status).toBe(0);
+    expect(looked).toContain("repos/owner/repo/commits/main");
+    expect(looked).toContain("--jq .sha");
+    expect(posted).toContain("https://hook.test/x");
+    expect(posted).toContain("POST");
+    expect(posted).toContain("--fail");
+  });
+
+  // The hook builds main's tip, which this run hasn't verified. The newer commit's run decides.
+  it("leaves the deployment to the newer run when main has moved on", () => {
+    const { posted, status } = runDeploy({ DEPLOY_HOOK_URL: "https://hook.test/x", tip: "b" });
+    expect(status).toBe(0);
+    expect(posted).toBeUndefined();
+  });
+
+  it("fails loudly rather than skipping production when the secret is missing", () => {
+    const { posted, status } = runDeploy({ DEPLOY_HOOK_URL: "", tip: sha });
+    expect(status).not.toBe(0);
+    expect(posted).toBeUndefined();
+  });
+
+  it("doesn't deploy when it can't confirm main's tip", () => {
+    const { posted, status } = runDeploy({ DEPLOY_HOOK_URL: "https://hook.test/x" });
+    expect(status).not.toBe(0);
+    expect(posted).toBeUndefined();
   });
 });
 

@@ -393,6 +393,21 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/394](https://github.com/mrh-is/mistria-fyi/issues/394),
 [vite.config.ts](../vite.config.ts).
 
+### [Gate production on CI](decisions/2026-11-01-gate-production-on-ci.md)
+
+ID: 2026-11-01-gate-production-on-ci. Status: Current.
+
+Production deploys only after “CI passed” succeeds for a push to `main`. A CI job calls a Cloudflare
+Pages deploy hook, so Cloudflare still does the build. The hook URL is the one secret any workflow
+may reference, held in a `production` environment that only `main` can use.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/325](https://github.com/mrh-is/mistria-fyi/issues/325),
+[.github/workflows/ci.yml](../.github/workflows/ci.yml),
+[tests/ci-workflow.isolated.test.ts](../tests/ci-workflow.isolated.test.ts),
+[tests/workflow-hardening.test.ts](../tests/workflow-hardening.test.ts),
+[docs/development-workflow.md#production-deployment](../docs/development-workflow.md#production-deployment).
+
 ### [Manual facts without playtime](decisions/2026-11-01-manual-sync-without-playtime.md)
 
 ID: 2026-11-01-manual-sync-without-playtime. Status: Current.

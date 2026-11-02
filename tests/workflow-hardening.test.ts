@@ -45,7 +45,12 @@ const unsafeTriggers = new Set([
   "pull_request_target",
   "workflow_run",
 ]);
-const secretReferences = /wrangler|pages deploy|sprites:upload|fonts:upload|CLOUDFLARE_|secrets\./;
+const secretReferences =
+  /wrangler|pages deploy|sprites:upload|fonts:upload|CLOUDFLARE_|\bsecrets\b/;
+// The one exception (docs/decisions/2026-11-01-gate-production-on-ci.md): this exact line, once, in
+// CI. ci-workflow.isolated.test.ts holds its job to main pushes & the `production` environment.
+// oxlint-disable-next-line no-template-curly-in-string -- literal GitHub Actions expression text
+const productionDeployHook = "DEPLOY_HOOK_URL: ${{ secrets.PRODUCTION_DEPLOY_HOOK }}";
 
 describe("workflow hardening", () => {
   it("finds the workflows", () => {
@@ -122,7 +127,10 @@ describe("workflow hardening", () => {
     });
 
     it("references no deploy credentials or repository secrets", () => {
-      expect(source).not.toMatch(secretReferences);
+      // A whole-line comment can't read a secret, & “no secrets” is a fair thing for one to say.
+      const code = source.replaceAll(/^\s*#.*$/gm, "");
+      const checked = name === "ci.yml" ? code.replace(productionDeployHook, "") : code;
+      expect(checked).not.toMatch(secretReferences);
     });
   });
 });
