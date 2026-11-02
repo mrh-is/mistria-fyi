@@ -10,12 +10,6 @@ import { factsQuestionBody, FIELD_CATEGORIES } from "./sync-question-copy.js";
 import type { FactsQuestion } from "#lib/engine/sync-apply.js";
 import type { ReceiverOptions, ReceiverStatus } from "#lib/sync/receiver.js";
 
-const enabled = vi.hoisted(() => ({ syncEnabled: true }));
-vi.mock("#lib/sync/enabled.js", () => ({
-  get syncEnabled() {
-    return enabled.syncEnabled;
-  },
-}));
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 const toast = vi.hoisted(() => vi.fn());
 vi.mock("svelte-sonner", () => ({ toast }));
@@ -102,7 +96,6 @@ function question(field: FactsQuestion["field"], reason: FactsQuestion["reason"]
 
 beforeEach(async () => {
   vi.setSystemTime(NOW);
-  enabled.syncEnabled = true;
   pageStub.reset();
   pageStub.navigate("/en");
   fake.answer.mockClear();

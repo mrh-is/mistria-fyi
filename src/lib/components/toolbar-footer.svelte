@@ -23,7 +23,6 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
-  import { syncEnabled } from "#lib/sync/enabled.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
   import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
   import { afterNavigate } from "$app/navigation";
@@ -43,7 +42,7 @@
   let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);
   let toolbarAccent = $derived(metadata.accent);
 
-  let syncing = $derived(syncEnabled && userState.syncLane !== undefined);
+  let syncing = $derived(userState.syncLane !== undefined);
   let syncSpeaksUp = $derived(
     syncReceiver.needsALook || syncReceiver.gapDays !== undefined || syncCourier.speaksUp,
   );

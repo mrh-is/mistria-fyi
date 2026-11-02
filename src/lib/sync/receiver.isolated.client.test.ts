@@ -303,7 +303,7 @@ async function publishedIdsBeside(keptId: string): Promise<string[]> {
   await vi.waitFor(() => {
     ids = syncDiagnostics
       .snapshot("build", "manual")
-      ?.events.flatMap(({ unknownFields }) => unknownFields)
+      .events.flatMap(({ unknownFields }) => unknownFields)
       .find(({ field, ids: found }) => field === "almanac" && found.includes(keptId))?.ids;
     expect(ids).toBeDefined();
   });
@@ -357,11 +357,11 @@ describe("one tab leads", () => {
       expect(
         syncDiagnostics
           .snapshot("build-137", "following")
-          ?.events.some((event) => event.outcome === "applied"),
+          .events.some((event) => event.outcome === "applied"),
       ).toBe(true);
     });
     const log = syncDiagnostics.snapshot("build-137", "following");
-    const applied = log?.events.findLast((event) => event.outcome === "applied");
+    const applied = log.events.findLast((event) => event.outcome === "applied");
     expect(applied).toMatchObject({ gameVersion: "1.2.3" });
     expect(applied?.farmHash).toMatch(/^[a-f0-9]{64}$/u);
     const payload = JSON.stringify(log);

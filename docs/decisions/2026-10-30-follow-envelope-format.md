@@ -1,14 +1,24 @@
 ---
 id: 2026-10-30-follow-envelope-format
-status: current
+status: amended
 summary: >-
   Version 1 envelopes authenticate a fixed 26-byte additional-data layout & carry a length-prefixed
-  JSON header before the pruned save; sync stays behind one build-time switch until launch.
+  JSON header before the pruned save. The build-time sync switch was removed at launch.
 evidence:
   - https://github.com/mrh-is/mistria-fyi/issues/133
   - src/lib/sync/follow.ts
-  - src/lib/sync/enabled.ts
-relationships: []
+relationships:
+  - type: superseded-by
+    target: 2026-11-01-sync-launch
+    scope: partial
+    portion: Only the sync switch; the envelope format is unchanged.
+    evidence:
+      - docs/decisions/2026-11-01-sync-launch.md
+      - https://github.com/mrh-is/mistria-fyi/issues/291
+    revisit:
+      condition: Launch (#291) removes the switch.
+      evidence: https://github.com/mrh-is/mistria-fyi/issues/291
+      authorization: https://github.com/mrh-is/mistria-fyi/issues/291
 ---
 
 # Follow envelope format & the sync switch
@@ -34,7 +44,8 @@ in pieces (#133 to #137) but must appear on the production site all at once (#29
   container format.
 - **The switch.** `__SYNC_ENABLED__`, defined in `vite.config.ts` as the inverse of the production
   check, is read only through `src/lib/sync/enabled.ts`. Every sync entry point checks it; the sync
-  page redirects to Home when it's off. #291 removes it.
+  page redirects to Home when it's off. #291 removes it. Launch removed it; see
+  [the sync launch record](2026-11-01-sync-launch.md).
 
 ## Alternatives
 

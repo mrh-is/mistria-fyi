@@ -6,7 +6,6 @@
   import { Button } from "#lib/components/ui/button/index.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { syncEnabled } from "#lib/sync/enabled.js";
 
   import DataCard from "./data-card.svelte";
 
@@ -39,7 +38,7 @@
         <AlertDialog.Title>{m.danger_zone_confirm_title()}</AlertDialog.Title>
         <AlertDialog.Description>
           {m.danger_zone_confirm_description()}
-          {#if syncEnabled && userState.syncLane !== undefined}
+          {#if userState.syncLane !== undefined}
             {m.sync_reset_note()}
           {/if}
         </AlertDialog.Description>
