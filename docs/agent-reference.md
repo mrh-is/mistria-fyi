@@ -95,18 +95,14 @@ serializes setups; it does not lock every pnpm command across sessions.
   preauthorized.
 
 **Failure recovery:** automatic setup records a failed install, `prepare`, or link operation in
-`mistria-tool-setup.failure` in the checkout’s git directory. Later automatic hooks report the
-failure without retrying. Follow AGENTS.md’s stop & report procedure;
-`node scripts/machine-doctor.ts --for core` remains available through the shared handler. After
-explicit direction, run `node scripts/setup-worktree.ts --repair` in the affected checkout. This
-forces the frozen install & `prepare`, permits dependency repair in the main checkout, & clears the
-marker only on success. The main checkout still receives no worktree links. Ordinary manual worktree
-setup also clears the marker on success.
-
-Note: the standalone Codex CLI 0.165.0 drops unified exec’s `workdir` from hook input; its `cwd`
-remains the session directory. Use the session directory or a literal directory in the command on
-that runtime. Newer upstream code supplies the resolved command directory as `cwd`; fixture tests
-cover that contract, but a trusted live session still needs to verify the installed client.
+`mistria-tool-setup.failure` in the checkout’s git directory. Later automatic setup (session start,
+a directory change, a watched-file change, or a root-manifest edit) reports the failure without
+retrying. Follow AGENTS.md’s stop & report procedure, and run
+`node scripts/machine-doctor.ts --for core` directly to diagnose. After explicit direction, run
+`node scripts/setup-worktree.ts --repair` in the affected checkout. This forces the frozen install &
+`prepare`, permits dependency repair in the main checkout, & clears the marker only on success. The
+main checkout still receives no worktree links. Ordinary manual worktree setup also clears the
+marker on success.
 
 **No shared dependencies:** a worktree never links `node_modules` from another checkout, for two
 reasons:

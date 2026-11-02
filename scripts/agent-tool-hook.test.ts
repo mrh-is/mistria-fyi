@@ -182,7 +182,8 @@ describe("Shared agent tool upkeep", () => {
     expect(run).not.toHaveBeenCalled();
   });
 
-  // Copilot 1.0.105 sends Claude-compatible events without a tool ID; edits don't need one.
+  // Copilot 1.0.105 sends Claude-compatible events without a tool ID. The handler never reads the
+  // ID; this guards against restoring the old early return for ID-less events with a session ID.
   it("formats Copilot’s Claude-compatible edit without a tool ID", () => {
     const { root, worktree } = fixture();
     writeFileSync(join(worktree, "new.ts"), "const value=1");

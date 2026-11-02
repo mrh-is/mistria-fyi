@@ -1,13 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { dirname, relative, resolve } from "node:path";
 
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 export interface HookInput {
-  agent_id?: string;
-  agent_transcript_path?: string;
-  agent_type?: string;
   cwd?: string;
   /** `FileChanged`: `"change"`, `"add"`, or `"unlink"`. */
   event?: string;
@@ -18,7 +15,6 @@ export interface HookInput {
   new_cwd?: string;
   old_cwd?: string;
   session_id?: string;
-  stop_hook_active?: boolean;
   /** Copilot’s Claude-compatible events include a timestamp, but no stable `tool_use_id`. */
   timestamp?: string;
   tool_input?:
@@ -152,47 +148,6 @@ export function hookRepositoryRoot(cwd: string): string | undefined {
     }
   }
   return root;
-}
-
-/** Include staged, unstaged, untracked, & committed branch changes, with NUL-safe filenames. */
-export function changedFiles(cwd: string, branch: boolean | string = false): string[] {
-  const root = repositoryRoot(cwd);
-  const queries = [
-    ["diff", "--name-only", "--diff-filter=ACMR", "-z", "HEAD"],
-    ["ls-files", "--others", "--exclude-standard", "-z"],
-  ];
-  if (branch) {
-    queries.push([
-      "diff",
-      "--name-only",
-      "--diff-filter=ACMR",
-      "-z",
-      typeof branch === "string" ? `${branch}..HEAD` : "origin/main...HEAD",
-    ]);
-  }
-  const paths = new Set<string>();
-  for (const args of queries) {
-    const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
-    if (result.status !== 0) {
-      throw new Error(
-        result.error?.message ?? (result.stderr.trim() || "Could not list changed files"),
-      );
-    }
-    for (const file of result.stdout.split("\0").filter(Boolean)) {
-      const absolute = resolve(root, file);
-      const rel = relative(root, canonicalPath(root, file));
-      if (
-        !isAbsolute(rel) &&
-        rel !== ".." &&
-        !rel.startsWith(`..${sep}`) &&
-        existsSync(absolute) &&
-        statSync(absolute).isFile()
-      ) {
-        paths.add(file);
-      }
-    }
-  }
-  return [...paths].toSorted();
 }
 
 /**
