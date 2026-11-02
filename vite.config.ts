@@ -131,7 +131,7 @@ const alwaysRunScriptTests = [
   "scripts/sprites/sprite-manifest.test.ts",
 ];
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   build: {
     // tracker-data.json is the largest chunk: ~844 kB minified, ~75 kB gzipped as of the 1.0.5
     // data. Lazy-loading isn't viable because the user-state store and engine layer import it
@@ -185,6 +185,9 @@ export default defineConfig({
       appDir: APP_DIRECTORY,
       csp: { directives: contentSecurityPolicy },
       prerender: { entries: PRERENDER_ENTRIES },
+      // Dev previews must fetch the current source, without a caching worker (#398).
+      // Keep registration in every build, including local & branch previews.
+      serviceWorker: { register: command === "build" },
       version: { name: getAppVersion(), pollInterval: 600_000 },
     }),
     localeNameChunksPlugin(),
@@ -371,4 +374,4 @@ export default defineConfig({
     unstubEnvs: true,
     unstubGlobals: true,
   },
-});
+}));
