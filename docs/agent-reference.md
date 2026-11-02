@@ -60,8 +60,8 @@ or stale, instead of installing them implicitly.
 Install output goes to the hook’s stderr, and the outcome arrives as session context. A failed setup
 never blocks the session, but its context message is a tooling failure to report under AGENTS.md.
 
-**Mid-session upkeep:** both clients share synchronous setup & formatting through
-`scripts/agent-tool-hook.ts`. Claude Code also watches manifests & directory changes.
+**Mid-session upkeep:** Claude Code watches manifests & directory changes, and both clients run
+setup after a file edit to a root manifest.
 
 - `FileChanged` with matcher `pnpm-lock.yaml|package.json|pnpm-workspace.yaml` runs
   `setup-worktree.ts --file-changed`. Claude Code’s file watcher fires it for any writer (a merge, a
@@ -78,53 +78,31 @@ never blocks the session, but its context message is a tooling failure to report
   conversation; whether the harness’s own move into a worktree fires it is unconfirmed.
 
 Neither Claude event can add context for the agent or block anything. The hooks always exit 0, & an
-install or failure reaches the user as a `systemMessage` terminal notification. The shared tool
-handler also reports a previous setup failure to the agent at the next command boundary. The frozen
-install is preauthorized, & AGENTS.md’s stop & report rule still applies to a failed setup. Setups
-of one checkout (session start, file change, directory change, or tool call) serialize on a
-`mistria-setup.lock` directory in that checkout’s git directory, & a waiter re-probes after
-acquiring it. The lock serializes setups; it does not lock every pnpm command across sessions.
+install or failure reaches the user as a `systemMessage` terminal notification. The frozen install
+is preauthorized, & AGENTS.md’s stop & report rule still applies to a failed setup. Setups of one
+checkout (session start, file change, directory change, or edit) serialize on a `mistria-setup.lock`
+directory in that checkout’s git directory, & a waiter re-probes after acquiring it. The lock
+serializes setups; it does not lock every pnpm command across sessions.
 
-- Both clients’ `PreToolUse` hook matches `Bash`, including Codex’s unified `exec_command`. It
-  checks the target checkout before taking the formatter’s snapshot, so a stale lockfile or a new
-  worktree is repaired before the command starts. It probes on every shell call; there is no
-  HEAD-only cache that could miss uncommitted manifest changes.
-- Both clients’ `PostToolUse` hook matches shell calls & file edits, including `MultiEdit` &
-  `NotebookEdit`. Claude’s `PostToolUseFailure` also reaches the shared handler for failed shell
-  calls. The handler runs setup before formatting. Separate matching hooks run concurrently, so
-  adding another setup handler beside the formatter would leave a race.
-- The handler probes around shell calls & edits to root dependency manifests only. A root
-  `package.json` edit triggers setup; a nested fixture manifest, an ordinary source edit, or a
-  manifest name in patch content does not. Ordinary edits still get formatted.
-- Both hooks validate the target against the configured script’s Git common directory. They use the
-  payload’s `cwd`, including a per-call directory on runtimes that expose it, & support literal
-  `cd … &&` plus pnpm’s directory options. They never evaluate shell text. Dynamic pnpm directory
-  options remain unsupported.
-- An unresolved `cd` only blocks a call when a later segment runs pnpm. Otherwise, directory
-  resolution stops & the formatter keeps its last known checkout. Ordinary navigation such as
-  `cd "$TMPDIR" && ls` or `cd scripts; ls` stays available.
-- Commands such as `pnpm run lint:fix && pnpm run lint` & `pnpm exec vitest run … | tail` stay
-  allowed. An earlier manifest-changing Git operation still blocks a later pnpm segment, such as
-  `git pull && pnpm exec vitest`; split that call so setup can run between the operations. A
-  compound call spanning checkouts keeps separate formatter snapshots.
-- Both clients receive event-specific context when setup changes anything. A setup or formatter
-  failure exits 2, preventing a pending command or returning feedback after a completed command.
-  Hooks cannot undo a completed command, & an asynchronous command’s post-hook arrives when it
-  finishes.
+- Both clients’ `PostToolUse` hook matches file edits & patches, including `MultiEdit` &
+  `NotebookEdit`, but not shell commands. The handler, `scripts/agent-tool-hook.ts`, runs setup
+  before formatting when the edit touched a root `package.json`, `pnpm-lock.yaml`, or
+  `pnpm-workspace.yaml`. A nested fixture manifest or a manifest name in patch content doesn’t
+  trigger setup. Separate matching hooks run concurrently, so adding another setup handler beside
+  the formatter would leave a race.
+- Codex has no `FileChanged` event. After a merge, pull, or rebase that changes the lockfile, `pnpm`
+  fails with `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`; run `pnpm install --frozen-lockfile`, which is
+  preauthorized.
 
 **Failure recovery:** automatic setup records a failed install, `prepare`, or link operation in
-`mistria-tool-setup.failure` in the checkout’s git directory. Later automatic hooks report the
-failure without retrying. Follow AGENTS.md’s stop & report procedure;
-`node scripts/machine-doctor.ts --for core` remains available through the shared handler. After
-explicit direction, run `node scripts/setup-worktree.ts --repair` in the affected checkout. This
-forces the frozen install & `prepare`, permits dependency repair in the main checkout, & clears the
-marker only on success. The main checkout still receives no worktree links. Ordinary manual worktree
-setup also clears the marker on success.
-
-Note: the standalone Codex CLI 0.165.0 drops unified exec’s `workdir` from hook input; its `cwd`
-remains the session directory. Use the session directory or a literal directory in the command on
-that runtime. Newer upstream code supplies the resolved command directory as `cwd`; fixture tests
-cover that contract, but a trusted live session still needs to verify the installed client.
+`mistria-tool-setup.failure` in the checkout’s git directory. Later automatic setup (session start,
+a directory change, a watched-file change, or a root-manifest edit) reports the failure without
+retrying. Follow AGENTS.md’s stop & report procedure, and run
+`node scripts/machine-doctor.ts --for core` directly to diagnose. After explicit direction, run
+`node scripts/setup-worktree.ts --repair` in the affected checkout. This forces the frozen install &
+`prepare`, permits dependency repair in the main checkout, & clears the marker only on success. The
+main checkout still receives no worktree links. Ordinary manual worktree setup also clears the
+marker on success.
 
 **No shared dependencies:** a worktree never links `node_modules` from another checkout, for two
 reasons:
@@ -241,29 +219,20 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
 
 ### Hooks
 
-- **Shared hooks:** Claude Code & Codex share the same upkeep hooks, configured in
-  `.claude/settings.json` & `.codex/hooks.json`:
-  - `PreToolUse`,
-  - `PostToolUse`,
-  - `Stop`,
-  - `SubagentStop`,
-  - `SubagentStart`,
-  - worktree `SessionStart`.
+- **Shared hooks:** Claude Code & Codex share two upkeep hooks, configured in
+  `.claude/settings.json` & `.codex/hooks.json`: worktree setup at `SessionStart`, and edit
+  formatting at `PostToolUse`. Claude Code also runs setup on `FileChanged` & `CwdChanged`.
 - **No blocking hooks:** none of these hooks blocks a tool call when it fails. The repository
   enforces file boundaries with permission rules & CI instead (see below). Shell-command guards were
   removed in #417, after they refused legitimate commands dozens of times and caught no real
   violation.
 - **Copilot CLI:** in a trusted folder, Copilot also reads `.claude/settings.json`.
   [Its reference](https://docs.github.com/en/copilot/reference/hooks-reference) documents
-  Claude-style payloads for PascalCase events, alongside native camelCase payloads. CLI 1.0.105 sets
-  `$CLAUDE_PROJECT_DIR`, but omits `tool_use_id` from its Claude-compatible events. The upkeep
-  handler skips native payloads & those ID-less events; timestamps change between events and cannot
-  pair formatter snapshots. See
-  [Copilot hook upkeep](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-31-copilot-hook-upkeep.md).
+  Claude-style payloads for PascalCase events, alongside native camelCase payloads. The upkeep
+  handler formats Claude-style edits, which need no tool ID, and skips native payloads.
 - **Codex trust:** Codex skips new or changed hooks until they’re trusted again in its hook review
   (`/hooks`).
-- **Mid-session setup:** both clients sequence setup & formatting in one tool handler. Claude Code
-  also uses `FileChanged` & `CwdChanged` (see Mid-session upkeep above).
+- **Mid-session setup:** see Mid-session upkeep above.
 - **When hook changes apply:** hook changes take effect in the next session. Claude Code runs each
   hook from `$CLAUDE_PROJECT_DIR`, which is fixed at session start to the session’s original
   checkout. So an edit to a hook script or its settings in a worktree, including a subagent’s,
@@ -315,36 +284,20 @@ These rules rest on `AGENTS.md` alone:
   Code’s deny rule covers it.
 - **Dependencies:** follow [Package commands](#package-commands) before adding or bumping one.
 
-### Formatting & lint hooks
+### Formatting hook
 
-- **Formatter:** `format-agent-edit.ts` formats surviving edit or patch targets with oxfmt.
+- **Formatter:** `format-agent-edit.ts` formats surviving edit or patch targets with oxfmt. Shell
+  commands aren’t formatted; `pnpm run lint:fix` & the pre-commit `lint-staged` hook cover them.
   - It skips files with unresolved index stages, so it never rewrites conflict markers. Those files
     get formatted once they’re resolved & staged.
-  - For Bash, a snapshot taken before the tool call identifies the files that call changed,
-    including changes committed during it. Shell reads leave existing edits untouched.
   - It excludes deleted files, symlink targets outside the worktree, & guarded paths.
   - Report formatter failures before continuing.
-- **Stop-time lint:** `lint-agent-stop.ts` runs `lint:fix --files <paths...>`, then
-  `lint --files <paths...>`. It covers every existing file changed relative to `origin/main`,
-  whether staged, unstaged, untracked, or committed on the branch.
-  - Lint errors block the first stop & return diagnostics.
-  - On the next stop, `stop_hook_active` lets the stop proceed with a visible failure report,
-    instead of another continuation.
-  - Fix the errors or report the blocker.
-- **Subagent lint:** both clients also register `SubagentStop`, using the same one-continuation
-  rule. Claude Code v2.1.316's live worktree probe confirmed that `cwd` is the subagent's worktree,
-  with `stop_hook_active: false` followed by `true` after a block. A second live probe used the real
-  lint hook & oxlint: `probe.ts`'s `no-debugger` error reached the subagent once, then the hook let
-  it finish with a failure report. Tests run the hook against linked parent/child worktrees & prove
-  that only the child's changed files are linted. Codex exposes a separate `SubagentStop` event in
-  its hook contract; its `Stop` entry alone doesn't cover this case.
-- **Repository root:** Git enumeration & lint run from the repository root, even when a client
-  starts below it.
+- **Repository root:** formatting runs from the repository root, even when a client starts below it.
 
 ### Subagents & permissions
 
-- **Subagent start:** `agent-subagent-start.ts` injects the focused-test command & a file-ownership
-  reminder in both clients. If the hook isn’t available, put both in the delegation prompt yourself.
+- **Subagent prompts:** put the focused-test command & the subagent’s file ownership in its
+  delegation prompt.
 - **Permission parity:** `.claude/settings.json` & `.codex/rules/default.rules` allow the same
   `pnpm` scripts. `tests/agent-permissions.test.ts` fails when a `package.json` script is in neither
   the allowlists nor the test’s explicit exclusion list.

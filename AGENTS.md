@@ -20,7 +20,7 @@ session limits) belong in each contributor’s user config.
 - Add or update tests when behavior changes, ideally before the implementation.
 - Run focused tests during development. CI runs the complete matrix on each PR, so don’t default to
   `pnpm run test`, coverage, builds, browser matrices, or `pnpm run verify`.
-- Hooks format edits, and they fix & check changed files when you stop. If a hook fails, fix or
+- A hook formats files you edit with the file tools, but not shell edits. If a hook fails, fix or
   report it. Run `pnpm run lint:fix` directly before committing; it must show zero errors &
   warnings.
 - After editing a TypeScript or Svelte contract, run `pnpm run check`.

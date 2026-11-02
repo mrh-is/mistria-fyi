@@ -853,17 +853,11 @@ gone, such as Codex worktrees under a cleared `/tmp`.
 
 ### Automatic housekeeping
 
-Two mechanisms keep the primary checkout current & the worktree list short:
-
-- **Session start:** Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`) run
-  `scripts/refresh-default-branch.sh` when a session starts. It fast-forwards local `main` (in
-  whichever worktree has it checked out, or as a bare ref) and never fails the session. Codex skips
-  a new or changed project hook until you trust it in its hook review.
-- **Hourly on macOS:** `pnpm run housekeeping:install`, run from the primary checkout, installs a
-  launchd agent that runs `scripts/housekeeping.sh` hourly, which runs the cleanup helper above with
-  `--apply`. It needs only `git` & `gh`, whose directories the agent's `PATH` records. It logs to
-  `~/Library/Logs/mistria-housekeeping.log` and holds a lock so overlapping runs skip. Remove it
-  with `pnpm run housekeeping:install -- --uninstall`.
+An hourly macOS job keeps the worktree list short. `pnpm run housekeeping:install`, run from the
+primary checkout, installs a launchd agent that runs `scripts/housekeeping.sh` hourly, which runs
+the cleanup helper above with `--apply`. It needs only `git` & `gh`, whose directories the agent's
+`PATH` records. It logs to `~/Library/Logs/mistria-housekeeping.log` and holds a lock so overlapping
+runs skip. Remove it with `pnpm run housekeeping:install -- --uninstall`.
 
 ---
 

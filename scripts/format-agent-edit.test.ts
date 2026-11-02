@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { formatEdit, snapshotShellEdit } from "./format-agent-edit.js";
+import { formatEdit } from "./format-agent-edit.js";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -33,57 +33,32 @@ function fixture() {
 }
 
 describe("format after agent edit", () => {
-  it.each(["PostToolUse", "PostToolUseFailure"])(
-    "skips %s when Bash returns from outside to the project",
-    (hook_event_name) => {
-      const cwd = fixture();
-      const outside = realpathSync(mkdtempSync(join(tmpdir(), "agent-format-return-")));
-      roots.push(outside);
-      const tool_use_id = `return-${hook_event_name}-${cwd}`;
-      snapshotShellEdit({ cwd: outside, tool_name: "Bash", tool_use_id });
-      writeFileSync(join(cwd, "a file.ts"), "const a=9");
-      const run = vi.fn();
-      expect(
-        formatEdit({ cwd, hook_event_name, tool_name: "Bash", tool_use_id }, run),
-      ).toBeUndefined();
-      expect(run).not.toHaveBeenCalled();
-    },
-  );
-
-  it.each(["PreToolUse", "PostToolUse", "PostToolUseFailure"])(
-    "silently skips %s outside a repository without a snapshot",
-    (hook_event_name) => {
-      const cwd = realpathSync(mkdtempSync(join(tmpdir(), "agent-format-outside-")));
-      roots.push(cwd);
-      const result = spawnSync(
-        process.execPath,
-        [fileURLToPath(new URL("format-agent-edit.ts", import.meta.url))],
-        {
+  it("silently skips a file edit outside a repository", () => {
+    const cwd = realpathSync(mkdtempSync(join(tmpdir(), "agent-format-outside-")));
+    roots.push(cwd);
+    const result = spawnSync(
+      process.execPath,
+      [fileURLToPath(new URL("format-agent-edit.ts", import.meta.url))],
+      {
+        cwd,
+        encoding: "utf8",
+        input: JSON.stringify({
           cwd,
-          encoding: "utf8",
-          input: JSON.stringify({
-            cwd,
-            hook_event_name,
-            tool_name: "Bash",
-            tool_use_id: `outside-${cwd}`,
-          }),
-        },
-      );
-      expect(result.status, result.stderr).toBe(0);
-      expect(result.stdout).toBe("");
-      expect(result.stderr).toBe("");
-    },
-  );
+          hook_event_name: "PostToolUse",
+          tool_input: { file_path: "a.ts" },
+          tool_name: "Edit",
+        }),
+      },
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("");
+  });
 
-  it("skips unrelated repositories for shell & file edits", () => {
+  it("skips unrelated repositories", () => {
     vi.stubEnv("CLAUDE_PROJECT_DIR", fixture());
     const cwd = fixture();
-    const input = { cwd, tool_name: "Bash", tool_use_id: `unrelated-${cwd}` };
-    expect(() => {
-      snapshotShellEdit(input);
-    }).not.toThrow();
     const run = vi.fn();
-    expect(formatEdit(input, run)).toBeUndefined();
     expect(formatEdit({ cwd, tool_input: { file_path: "a file.ts" } }, run)).toBeUndefined();
     expect(run).not.toHaveBeenCalled();
   });
@@ -102,69 +77,6 @@ describe("format after agent edit", () => {
     formatEdit({ cwd, tool_input: { file_path: "new.md" } }, run);
     expect(run).toHaveBeenCalledWith(
       ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "new.md"],
-      cwd,
-    );
-  });
-
-  it("includes edits committed by the Bash invocation, without reformatting unchanged files", () => {
-    const cwd = fixture();
-    const input = { cwd, tool_name: "Bash", tool_use_id: `commit-${cwd}` };
-    snapshotShellEdit(input);
-    writeFileSync(join(cwd, "a file.ts"), "const a=3");
-    for (const args of [
-      ["add", "."],
-      ["commit", "-m", "edited"],
-    ]) {
-      const result = spawnSync("git", args, { cwd, encoding: "utf8" });
-      expect(result.status, result.stderr).toBe(0);
-    }
-    const run = vi.fn(() => ({ output: "", status: 0 }));
-    formatEdit(input, run);
-    expect(run).toHaveBeenCalledWith(
-      ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "a file.ts"],
-      cwd,
-    );
-  });
-
-  it("does not format preexisting changes after a read-only Bash call", () => {
-    const cwd = fixture();
-    const input = {
-      cwd,
-      tool_input: { command: "git status --short" },
-      tool_name: "Bash",
-      tool_use_id: `read-${cwd}`,
-    };
-    snapshotShellEdit(input);
-    const run = vi.fn();
-    expect(formatEdit(input, run)).toBeUndefined();
-    expect(run).not.toHaveBeenCalled();
-  });
-
-  it("formats only files whose contents changed during Bash, including new files", () => {
-    const cwd = fixture();
-    const input = { cwd, tool_name: "Bash", tool_use_id: `write-${cwd}` };
-    snapshotShellEdit(input);
-    writeFileSync(join(cwd, "a file.ts"), "const a=2");
-    writeFileSync(join(cwd, "new.md"), "new");
-    const run = vi.fn(() => ({ output: "", status: 0 }));
-    formatEdit(input, run);
-    expect(run).toHaveBeenCalledWith(
-      ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "a file.ts", "new.md"],
-      expect.any(String),
-    );
-  });
-
-  it("formats the snapshotted repository when the Bash command changes the reported cwd", () => {
-    const cwd = fixture();
-    const elsewhere = realpathSync(mkdtempSync(join(tmpdir(), "agent-format-elsewhere-")));
-    roots.push(elsewhere);
-    const id = `cd-${cwd}`;
-    snapshotShellEdit({ cwd, tool_name: "Bash", tool_use_id: id });
-    writeFileSync(join(cwd, "a file.ts"), "const a=4");
-    const run = vi.fn(() => ({ output: "", status: 0 }));
-    expect(formatEdit({ cwd: elsewhere, tool_name: "Bash", tool_use_id: id }, run)).toBeUndefined();
-    expect(run).toHaveBeenCalledWith(
-      ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "a file.ts"],
       cwd,
     );
   });
@@ -225,18 +137,8 @@ describe("format after agent edit", () => {
     writeFileSync(join(cwd, "list.md"), "- a\n- d\n");
     git("commit", "-am", "main");
 
-    // The Bash call that merges both leaves the conflict & edits another file.
-    const input = { cwd, tool_name: "Bash", tool_use_id: `conflict-${cwd}` };
-    snapshotShellEdit(input);
     expect(git("merge", "other").status).not.toBe(0);
-    writeFileSync(join(cwd, "other.md"), "edited");
     const run = vi.fn(() => ({ output: "", status: 0 }));
-    formatEdit(input, run);
-    expect(run).toHaveBeenCalledWith(
-      ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", "other.md"],
-      cwd,
-    );
-    run.mockClear();
     expect(formatEdit({ cwd, tool_input: { file_path: "list.md" } }, run)).toBeUndefined();
     expect(run).not.toHaveBeenCalled();
 
