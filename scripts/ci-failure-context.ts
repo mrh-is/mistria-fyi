@@ -3,9 +3,9 @@ import "#scripts/lib/require-pinned-node";
 import { appendFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
-import { defaultCommandRunner } from "#scripts/accessibility-monitor";
+import { defaultCommandRunner } from "#scripts/lib/github-issue";
 
-import type { CommandRunner } from "#scripts/accessibility-monitor";
+import type { CommandRunner } from "#scripts/lib/github-issue";
 
 interface RunJobs {
   jobs: { conclusion: string; name: string }[];

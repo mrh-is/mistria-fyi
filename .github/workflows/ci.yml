@@ -439,11 +439,15 @@ jobs:
         if: steps.pwa-tests.outcome == 'failure'
         run: exit 1
 
-  issue-sync:
-    name: Synchronize scheduled accessibility issue
+  # Timing trends & dependency advisories stay in one issue, and accessibility regressions get a
+  # bug issue of their own. Timing reads main's recent artifacts, so this waits only for tonight's
+  # accessibility job, not the test job.
+  nightly-report:
+    name: Report nightly findings
     if: always() && github.event_name == 'schedule'
     needs: accessibility
     permissions:
+      actions: read
       contents: read
       issues: write
     runs-on: ubuntu-latest
@@ -461,7 +465,6 @@ jobs:
           cache: true
           save-cache: false
           install: false
-      - run: pnpm install --frozen-lockfile
       - if: needs.accessibility.result == 'failure'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -469,36 +472,6 @@ jobs:
           path: playwright-shard-reports
       - env:
           ACCESSIBILITY_RESULT: ${{ needs.accessibility.result }}
-          GH_TOKEN: ${{ github.token }}
-          WORKFLOW_URL:
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: pnpm run accessibility:monitor
-
-  # Timing trends & dependency advisories stay in one issue. It reads main's recent timing
-  # artifacts, so this runs on its own instead of waiting for tonight's test job.
-  nightly-report:
-    name: Report nightly findings
-    if: github.event_name == 'schedule'
-    permissions:
-      actions: read
-      contents: read
-      issues: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .node-version
-      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
-        timeout-minutes: 3
-        with:
-          cache: true
-          save-cache: false
-          install: false
-      - env:
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_URL:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

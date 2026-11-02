@@ -1,15 +1,20 @@
 import "#scripts/lib/require-pinned-node";
 
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { glob, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { defaultCommandRunner, findMarkedIssue } from "#scripts/accessibility-monitor";
+import { defaultCommandRunner, findMarkedIssue } from "#scripts/lib/github-issue";
 import { fileLimits } from "#scripts/vitest-timings";
 
-import type { CommandRunner } from "#scripts/accessibility-monitor";
+import type { CommandRunner } from "#scripts/lib/github-issue";
 import type { FileTiming } from "#scripts/vitest-timings";
+
+// An accessibility regression is a product bug, so it keeps its own issue instead of a line here.
+const ACCESSIBILITY_MARKER = "<!-- mistria-accessibility-monitor -->";
+const ACCESSIBILITY_TITLE = "Automated accessibility regression detected";
 
 const MARKER = "<!-- mistria-nightly-report -->";
 const TITLE = "Nightly CI report";
@@ -286,6 +291,120 @@ export async function reportNightly(options: {
   });
 }
 
+export function summarizePlaywrightReport(report: unknown): string[] {
+  const errors: string[] = [];
+  collectErrors(report, errors);
+  return [...new Set(errors)].slice(0, 10).map((error) => error.slice(0, 2000));
+}
+
+function collectErrors(value: unknown, errors: string[]): void {
+  if (Array.isArray(value)) {
+    for (const entry of value) collectErrors(entry, errors);
+    return;
+  }
+  if (typeof value !== "object" || value === null) return;
+  const record = value as Record<string, unknown>;
+  if (typeof record.message === "string" && record.message.includes("Accessibility violations")) {
+    errors.push(record.message);
+  }
+  for (const nested of Object.values(record)) collectErrors(nested, errors);
+}
+
+export async function synchronizeAccessibilityIssue(options: {
+  report?: unknown;
+  result: string;
+  run?: CommandRunner;
+  workflowUrl: string;
+}): Promise<void> {
+  const run = options.run ?? defaultCommandRunner;
+  const issue = await findMarkedIssue(run, {
+    label: "type: bug",
+    marker: ACCESSIBILITY_MARKER,
+    title: ACCESSIBILITY_TITLE,
+  });
+  const issueNumber = issue?.number;
+
+  if (options.result === "success") {
+    if (issueNumber === undefined) return;
+    await run(
+      "gh",
+      ["issue", "comment", String(issueNumber), "--body-file", "-"],
+      [
+        "The scheduled accessibility suite has recovered.",
+        "",
+        `[Workflow run](${options.workflowUrl})`,
+        "",
+        "Agent: codex",
+      ].join("\n"),
+    );
+    await run("gh", ["issue", "close", String(issueNumber)]);
+    return;
+  }
+
+  if (options.result !== "failure" || options.report === undefined) {
+    throw new Error("Accessibility setup failed without a usable Playwright report");
+  }
+
+  const failures = summarizePlaywrightReport(options.report);
+  if (failures.length === 0) {
+    throw new Error("Playwright failed without an accessibility assertion in its report");
+  }
+  const body = [
+    ACCESSIBILITY_MARKER,
+    "The scheduled browser accessibility suite found a regression.",
+    "",
+    ...failures.map((failure) => `\`\`\`text\n${failure}\n\`\`\``),
+    "",
+    `[Workflow run](${options.workflowUrl})`,
+    "Artifact: `accessibility-report-*`",
+    "Reproduce: `pnpm run test:accessibility`",
+    "",
+    "Agent: codex",
+  ].join("\n");
+
+  const args =
+    issueNumber === undefined
+      ? [
+          "issue",
+          "create",
+          "--title",
+          ACCESSIBILITY_TITLE,
+          "--label",
+          "type: bug",
+          "--label",
+          "status: ready",
+          "--label",
+          "agent: codex",
+          "--body-file",
+          "-",
+        ]
+      : ["issue", "comment", String(issueNumber), "--body-file", "-"];
+  await run("gh", args, body);
+}
+
+async function reportAccessibility(workflowUrl: string): Promise<void> {
+  const result = process.env.ACCESSIBILITY_RESULT ?? "";
+  let report: unknown;
+  if (result === "failure") {
+    const reports: unknown[] = [];
+    for await (const path of glob(
+      "playwright-shard-reports/*/.playwright-artifacts/results.json",
+    )) {
+      reports.push(JSON.parse(await readFile(path, "utf8")));
+    }
+    report = reports;
+  }
+  await synchronizeAccessibilityIssue({ report, result, workflowUrl });
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  await reportNightly({ workflowUrl: process.env.WORKFLOW_URL ?? "" });
+  const workflowUrl = process.env.WORKFLOW_URL ?? "";
+  // Each report still runs when the other fails, and the job fails if either did.
+  const results = await Promise.allSettled([
+    reportAccessibility(workflowUrl),
+    reportNightly({ workflowUrl }),
+  ]);
+  const failures = results.filter((result) => result.status === "rejected");
+  for (const { reason } of failures) console.error(reason);
+  if (failures.length > 0) process.exitCode = 1;
 }
