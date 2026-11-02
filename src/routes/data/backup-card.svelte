@@ -9,7 +9,6 @@
   import * as m from "#lib/paraglide/messages.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { syncEnabled } from "#lib/sync/enabled.js";
   import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
   import { page } from "$app/state";
 
@@ -117,7 +116,7 @@
       <IconUpload />
       {m.backup_restore_action()}
     </Button>
-    {#if syncEnabled && farmBackupLabel}
+    {#if farmBackupLabel}
       <Button
         variant="outline"
         onclick={() => {
@@ -143,19 +142,17 @@
   </div>
 </DataCard>
 
-{#if syncEnabled}
-  <SyncTagDialog
-    bind:open={farmBackupOpen}
-    title={m.sync_backup_restore_title()}
-    body={m.sync_backup_restore_body()}
-    actions={[
-      {
-        label: m.sync_backup_restore_cancel(),
-        onclick: () => {
-          farmBackupOpen = false;
-        },
+<SyncTagDialog
+  bind:open={farmBackupOpen}
+  title={m.sync_backup_restore_title()}
+  body={m.sync_backup_restore_body()}
+  actions={[
+    {
+      label: m.sync_backup_restore_cancel(),
+      onclick: () => {
+        farmBackupOpen = false;
       },
-      { label: m.sync_backup_restore_confirm(), onclick: restoreFarmBackup, primary: true },
-    ]}
-  />
-{/if}
+    },
+    { label: m.sync_backup_restore_confirm(), onclick: restoreFarmBackup, primary: true },
+  ]}
+/>

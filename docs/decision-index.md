@@ -184,18 +184,6 @@ Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048](https://github.com/mrh-is/mistria-fyi/issues/145#issuecomment-6451364048),
 [src/lib/presentation/source-groups.ts](../src/lib/presentation/source-groups.ts).
 
-### [Follow envelope format & the sync switch](decisions/2026-10-30-follow-envelope-format.md)
-
-ID: 2026-10-30-follow-envelope-format. Status: Current.
-
-Version 1 envelopes authenticate a fixed 26-byte additional-data layout & carry a length-prefixed
-JSON header before the pruned save; sync stays behind one build-time switch until launch.
-
-Evidence:
-[https://github.com/mrh-is/mistria-fyi/issues/133](https://github.com/mrh-is/mistria-fyi/issues/133),
-[src/lib/sync/follow.ts](../src/lib/sync/follow.ts),
-[src/lib/sync/enabled.ts](../src/lib/sync/enabled.ts).
-
 ### [Provenance marks: one X, four tools](decisions/2026-10-30-provenance-marks.md)
 
 ID: 2026-10-30-provenance-marks. Status: Current.
@@ -414,6 +402,18 @@ Evidence:
 [src/lib/engine/import-save.assets.test.ts](../src/lib/engine/import-save.assets.test.ts),
 [src/lib/engine/import-save.observations.ts](../src/lib/engine/import-save.observations.ts),
 [docs/save-import-verification.md](../docs/save-import-verification.md).
+
+### [Sync launch](decisions/2026-11-01-sync-launch.md)
+
+ID: 2026-11-01-sync-launch. Status: Current.
+
+Launch removes both sync switch modules & every call site, so sync shows on every build; the
+sync-first welcome card replaces the import-or-transfer card.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291),
+[https://github.com/mrh-is/mistria-fyi/issues/360](https://github.com/mrh-is/mistria-fyi/issues/360),
+[src/lib/components/welcome-card.svelte](../src/lib/components/welcome-card.svelte).
 
 ### [Run accessibility in two CI shards](decisions/2026-11-01-two-accessibility-shards.md)
 
@@ -851,6 +851,29 @@ Relationship evidence:
 Revisit condition: The zone’s Free plan allows one rate-limiting rule, which feedback already used.
 Evidence:
 [docs/decisions/2026-10-30-shared-edge-rate-rule.md](../docs/decisions/2026-10-30-shared-edge-rate-rule.md).
+Authorization:
+[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
+
+### [Follow envelope format & the sync switch](decisions/2026-10-30-follow-envelope-format.md)
+
+ID: 2026-10-30-follow-envelope-format. Status: Partially superseded/amended.
+
+Version 1 envelopes authenticate a fixed 26-byte additional-data layout & carry a length-prefixed
+JSON header before the pruned save. The build-time sync switch was removed at launch.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/133](https://github.com/mrh-is/mistria-fyi/issues/133),
+[src/lib/sync/follow.ts](../src/lib/sync/follow.ts).
+
+Superseded by [Sync launch](decisions/2026-11-01-sync-launch.md). Affected portion: Only the sync
+switch; the envelope format is unchanged.
+
+Relationship evidence:
+[docs/decisions/2026-11-01-sync-launch.md](../docs/decisions/2026-11-01-sync-launch.md),
+[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
+
+Revisit condition: Launch (#291) removes the switch. Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
 Authorization:
 [https://github.com/mrh-is/mistria-fyi/issues/291](https://github.com/mrh-is/mistria-fyi/issues/291).
 

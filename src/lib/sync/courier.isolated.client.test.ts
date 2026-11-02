@@ -1506,8 +1506,8 @@ describe("the sync log", () => {
     const courier = make({ firstRetryMs: 10, renewCode });
     courier.start();
     await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
-    await until(() => syncDiagnostics.snapshot("build", "computer")?.events.length === 3);
-    const events = syncDiagnostics.snapshot("build", "computer")?.events ?? [];
+    await until(() => syncDiagnostics.snapshot("build", "computer").events.length === 3);
+    const events = syncDiagnostics.snapshot("build", "computer").events;
     // The renewal & the resend under the new code both land after the retire, in either order.
     expect(events.map((event) => event.outcome).toSorted()).toEqual([
       "code-renewed",

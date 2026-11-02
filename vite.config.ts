@@ -156,8 +156,6 @@ export default defineConfig(({ command }) => ({
   define: {
     __PRODUCTION_DEPLOYMENT__: JSON.stringify(isProductionDeployment),
     __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
-    // Save file sync stays hidden on the production site until it launches (#291).
-    __SYNC_ENABLED__: JSON.stringify(!isProductionDeployment),
   },
   plugins: [
     tailwindcss(),

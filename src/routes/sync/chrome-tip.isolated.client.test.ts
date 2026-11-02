@@ -5,12 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
-const enabled = vi.hoisted(() => ({ syncEnabled: true }));
-vi.mock("#lib/sync/enabled.js", () => ({
-  get syncEnabled() {
-    return enabled.syncEnabled;
-  },
-}));
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 vi.mock("$app/navigation", () => ({ goto: vi.fn(), replaceState: vi.fn() }));
 vi.mock("#lib/sync/device.js", () => ({
@@ -33,7 +27,6 @@ async function startComputer() {
 }
 
 beforeEach(async () => {
-  enabled.syncEnabled = true;
   pageStub.reset();
   pageStub.navigate("/en/sync?from=setup");
   vi.stubGlobal("DataTransferItem", { prototype: {} });
@@ -105,13 +98,5 @@ describe("the Chrome tip", () => {
     );
     expect(screen.queryByRole("heading", { name: "Find your save file" })).toBeNull();
     expect(screen.queryByRole("dialog", { name: TITLE })).toBeNull();
-  });
-
-  it("doesn’t render the added surface with sync switched off", async () => {
-    enabled.syncEnabled = false;
-    await startComputer();
-    expect(screen.getByRole("heading", { name: "Find your save file" })).toBeVisible();
-    expect(screen.queryByRole("dialog", { name: TITLE })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Copy this page’s link" })).toBeNull();
   });
 });

@@ -10,7 +10,6 @@
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { currentDevice } from "#lib/sync/device.js";
-  import { syncEnabled } from "#lib/sync/enabled.js";
   import { parseFollowLink } from "#lib/sync/follow.js";
   import { syncNotice } from "#lib/sync/notice.svelte.js";
   import { browserGivesHandles } from "#lib/sync/save-source.js";
@@ -68,7 +67,7 @@
 
   function startComputer(): void {
     view = "computer";
-    chromeTipOpen = syncEnabled && !browserGivesHandles();
+    chromeTipOpen = !browserGivesHandles();
   }
 
   async function copyPageLink(): Promise<void> {
@@ -314,24 +313,22 @@
   {/if}
 </div>
 
-{#if syncEnabled}
-  <SyncTagDialog
-    bind:open={chromeTipOpen}
-    title={m.sync_tip_chrome()}
-    body={m.sync_tip_chrome_body()}
-    actions={[
-      {
-        label: m.sync_tip_chrome_dismiss(),
-        onclick: () => {
-          chromeTipOpen = false;
-        },
+<SyncTagDialog
+  bind:open={chromeTipOpen}
+  title={m.sync_tip_chrome()}
+  body={m.sync_tip_chrome_body()}
+  actions={[
+    {
+      label: m.sync_tip_chrome_dismiss(),
+      onclick: () => {
+        chromeTipOpen = false;
       },
-      { label: m.sync_tip_chrome_copy(), onclick: () => void copyPageLink(), primary: true },
-    ]}
-  >
-    <p>{m.sync_tip_chrome_after()}</p>
-  </SyncTagDialog>
-{/if}
+    },
+    { label: m.sync_tip_chrome_copy(), onclick: () => void copyPageLink(), primary: true },
+  ]}
+>
+  <p>{m.sync_tip_chrome_after()}</p>
+</SyncTagDialog>
 
 <SyncTagDialog
   bind:open={freshOpen}
