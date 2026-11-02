@@ -31,7 +31,6 @@ prefix_rule(
             "test:accessibility",
             "test:accessibility:critical",
             "test:app",
-            "test:changed",
             "test:client",
             "test:coverage",
             "test:pipeline",

@@ -17,7 +17,6 @@
       "Bash(pnpm run test:accessibility *)",
       "Bash(pnpm run test:accessibility:critical *)",
       "Bash(pnpm run test:app *)",
-      "Bash(pnpm run test:changed *)",
       "Bash(pnpm run test:pipeline *)",
       "Bash(pnpm run test:pipeline:assets *)",
       "Bash(pnpm run test:pwa *)",
@@ -57,9 +56,9 @@
       "Bash(yarn *)",
       "Bash(bun *)",
       "Read(**/.env.r2-upload)",
-      "Read(/src/lib/data/tracker-data.json)",
-      "Edit(/src/lib/data/tracker-data.json)",
-      "Edit(/docs/superpowers/**)"
+      "Read(**/src/lib/data/tracker-data.json)",
+      "Edit(**/src/lib/data/tracker-data.json)",
+      "Edit(**/docs/superpowers/**)"
     ]
   },
   "hooks": {

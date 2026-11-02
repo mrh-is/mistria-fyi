@@ -23,12 +23,12 @@
   `vite.config.ts` and the Playwright configs) imports `#scripts/lib/require-pinned-node` first, so
   a bare `node scripts/….ts` on another release exits with a message pointing at `pnpm run` or
   `pnpm exec node` instead of running silently. `scripts/lib/pinned-node.test.ts` finds those entry
-  points and fails when one lacks the guard; the Claude edit-guard hook and the machine doctor
-  (which must run on any Node to report a wrong one) are the exemptions. To move the pin, edit both
-  files and run `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails when they disagree. Check
-  with `pnpm exec node -v`. `package.json`'s `engines` accepts 24.15 up to (not including) 27, so
-  Codex cloud can use its preinstalled patch release & contributors can keep a newer system Node;
-  the machine doctor checks the shell's own `node` against that range only.
+  points and fails when one lacks the guard; the agent hooks and the machine doctor (which must run
+  on any Node to report a wrong one) are the exemptions. To move the pin, edit both files and run
+  `pnpm install`; `tests/ci-workflow.isolated.test.ts` fails when they disagree. Check with
+  `pnpm exec node -v`. `package.json`'s `engines` accepts 24.15 up to (not including) 27, so Codex
+  cloud can use its preinstalled patch release & contributors can keep a newer system Node; the
+  machine doctor checks the shell's own `node` against that range only.
 - **ShellCheck**: `pnpm run lint` runs the system `shellcheck`. CI uses the runner image's copy, and
   `scripts/setup-cloud-agent.sh` installs it with apt. Local install: see machine-setup.md.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.
@@ -301,10 +301,9 @@ Use `--project node-isolated` for `*.isolated.test.ts` in those directories, and
 `*.client.test.ts` & `*.cold.test.ts`, can use the path-only command. The
 [project table](#test-projects) lists every project.
 
-Broaden only when the changed contracts require it. `test:changed` is a related-test helper, not a
-guarantee of a focused run: its documented fallbacks below can run the complete suite. Full-suite
-commands are references for CI or the explicit full-local-matrix exceptions in
-[agent-verification.md](agent-verification.md); do not run them as a session baseline.
+Broaden only when the changed contracts require it. Full-suite commands are references for CI or the
+explicit full-local-matrix exceptions in [agent-verification.md](agent-verification.md); do not run
+them as a session baseline.
 
 - **Run All Unit Tests** (asset-independent):
   ```sh
@@ -320,26 +319,8 @@ commands are references for CI or the explicit full-local-matrix exceptions in
   Coverage covers `src/lib/engine/`, `src/lib/stores/`, & `pipeline/src/`. It's reported, not gated:
   the terminal prints a summary, `coverage/index.html` has per-line detail, and CI writes a per-area
   table with the least-covered files to the nightly test job's summary. PRs & main pushes run the
-  suite without coverage (the cleanup test requires a change to its script); scheduled runs collect
-  coverage. Plain `pnpm run test` and single-file runs don't measure coverage, so they cost nothing
-  extra.
-- **Run tests affected by branch changes**:
-
-  ```sh
-  pnpm run test:changed
-  ```
-
-  This compares committed, staged, modified, and untracked files with the local `origin/main` ref,
-  then lets Vitest select related tests. If the comparison ref is unavailable, Git cannot enumerate
-  the changes, or test configuration changes, the command explains why and runs the complete
-  asset-independent suite instead. A branch with no changes prints that state explicitly instead of
-  relying on Vitest's successful zero-test exit.
-
-  `origin/main` is a local remote-tracking ref, so refresh it with `git fetch origin main` when it
-  may be stale. A stale behind ref is conservative because it includes extra changed files, but
-  `pnpm run test` remains the authoritative local fallback and the suite CI runs. Pass another
-  comparison ref when needed, for example `pnpm run test:changed -- main`.
-
+  suite without coverage; scheduled runs collect coverage. Plain `pnpm run test` and single-file
+  runs don't measure coverage, so they cost nothing extra.
 - **Run application tests only** (`src/`: the `app`, `isolated`, `cold`, `client`, &
   `client-isolated` projects):
   ```sh
@@ -355,9 +336,7 @@ commands are references for CI or the explicit full-local-matrix exceptions in
 ### Vitest time budgets
 
 CI runs the `test:budgets` step (`node scripts/vitest-timings.ts`) over every asset-independent
-project. The cleanup test runs only when `scripts/cleanup-merged-worktrees.ts` changes: PRs use
-their complete changed-file list, & main pushes compare the event’s before/after commits. Scheduled
-& manual runs omit it. Pull requests also skip two groups of tests that they can’t affect:
+project. Pull requests skip two groups of tests that they can’t affect:
 
 | Tests                                | A pull request runs them when it changes                                                                                                                                         |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -847,48 +826,38 @@ Keep useful prototype code available to reviewers in a collapsed `<details>` ele
 
 ### Clean merged local branches & worktrees
 
-Run the cleanup helper from the repository root to preview eligible removals:
+Run the cleanup helper from any checkout to preview eligible removals:
 
 ```sh
 pnpm run worktree:cleanup
 ```
 
-Pass `--apply` (`pnpm run worktree:cleanup -- --apply`) only after reviewing the preview. The helper
-removes a local branch only when its current commit exactly matches the head commit of a merged
-GitHub pull request, and it has no open pull request. It removes an associated worktree only when
-that worktree is clean; Git itself still must accept the removal. It leaves every other branch and
-worktree alone.
+Run `pnpm run worktree:cleanup:apply` only after reviewing the preview.
+`scripts/cleanup-worktrees.sh` removes a linked worktree when all of these hold:
 
-Before checking branches, it prunes unlocked worktree registrations whose directory no longer exists
-(such as Codex worktrees under a cleared `/tmp`), so their branches get the same checks as any
-other. If a stale registration's parent directory is also missing, as on an unmounted volume, it
-prunes nothing and says so; lock that worktree or prune by hand. A tip that GitHub has never
-received is unpushed work and stays, unless it is a conflict-free two-parent merge (typically
-`origin/main` merged into a PR head for a local check) whose parents both count as merged.
+- it isn’t locked, the primary checkout, or the worktree the helper runs from,
+- it doesn’t hold another worktree (a nested one lives in an ignored folder that removal would
+  delete),
+- it has no uncommitted or untracked changes,
+- its ignored files are only links, build & dependency output, Claude Code’s copied
+  `.claude/settings.local.json`, or unchanged copies of the primary checkout’s files,
+- nothing in it changed in the last two hours (`MISTRIA_CLEANUP_IDLE_MINUTES` overrides that),
+- its branch’s most recent same-repository pull request is merged or closed.
 
-It also keeps any worktree in use: one that a running process (an agent session or its shell) has as
-its working directory, or, with `--idle-minutes <n>`, one whose `HEAD` changed in the last `n`
-minutes. A fresh agent worktree's tip is already in `origin/main`, so unattended runs rely on this.
-
-On Windows the helper queries `Win32_Process` through noninteractive PowerShell & keeps worktrees
-referenced by absolute executable or command-line argument paths, including dev servers & workerd.
-This cannot discover a process whose only connection is its working directory, or whose paths are
-inaccessible, so also pass `--idle-minutes` to spare recent live sessions. If process enumeration
-fails, the helper reports that only the invoking worktree & idle window protect live sessions. Git
-for Windows deregisters a removed worktree but leaves its junctions & pnpm's `node_modules` links
-behind; the helper then deletes what's left without following those links. It also enables
-`core.longpaths` for the removal, so deep `node_modules` paths don't stop it.
+Removal deletes the ignored files that the fourth condition allows, such as `node_modules/`. A
+worktree with any other ignored file, such as an edited `.env`, stays & the preview names the file.
+`git worktree remove` still refuses anything Git considers unsafe, and a failed removal makes the
+helper exit nonzero. The helper deletes the local branch too, but only when its tip is the pull
+request’s head commit, so unpushed commits survive. It then prunes registrations whose folders are
+gone, such as Codex worktrees under a cleared `/tmp`.
 
 ### Automatic housekeeping
 
-Two mechanisms keep the primary checkout current without manual cleanup:
-
-- **Hourly on macOS:** `pnpm run housekeeping:install`, run from the primary checkout, installs a
-  launchd agent that runs `scripts/housekeeping.sh` hourly: refresh `main`, then
-  `cleanup-merged-worktrees.ts --apply --idle-minutes 120`. It logs to
-  `~/Library/Logs/mistria-housekeeping.log` and holds a lock so overlapping runs skip. The agent's
-  `PATH` records the directory of the `node` that installed it; rerun the install after removing
-  that Node version. Remove it with `pnpm run housekeeping:install -- --uninstall`.
+An hourly macOS job keeps the worktree list short. `pnpm run housekeeping:install`, run from the
+primary checkout, installs a launchd agent that runs `scripts/housekeeping.sh` hourly, which runs
+the cleanup helper above with `--apply`. It needs only `git` & `gh`, whose directories the agent's
+`PATH` records. It logs to `~/Library/Logs/mistria-housekeeping.log` and holds a lock so overlapping
+runs skip. Remove it with `pnpm run housekeeping:install -- --uninstall`.
 
 ---
 

@@ -160,8 +160,8 @@ session limits) belong in each contributor’s user config.
   strict protocol version.
 - Category pages compose layouts. Put shared or stateful concerns in focused components. Split a
   complex component by logical concern, even with one caller, so it’s easier to reason about.
-- `docs/superpowers/` is guarded history, hidden from ripgrep by `.ignore`. Read it only when a task
-  names a file; update the current `docs/*.md` for later changes.
+- `docs/superpowers/` is read-only history, hidden from ripgrep by `.ignore`. Read it only when a
+  task names a file; update the current `docs/*.md` for later changes.
 - Before implementation, read [agent-reference.md](docs/agent-reference.md#code-conventions), which
   covers naming, imports, path handling, Svelte, lint, formatting, & colocated tests.
 - Read these guides when your work touches their area:

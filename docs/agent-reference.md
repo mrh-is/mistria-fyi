@@ -198,7 +198,6 @@ package ships no license text. Instead of weakening that check, list the package
 | `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, directive reasons, & ShellCheck  |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                                         |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)                          |
-| `pnpm run test:changed`       | Vitest tests affected by branch changes                            |
 | `pnpm run test:coverage`      | Complete suite plus coverage (opt-in)                              |
 | `pnpm run test:app`           | App tests (`src/`)                                                 |
 | `pnpm run test:client`        | App component tests (`*.client.test.ts`)                           |
@@ -246,12 +245,15 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
 
 Claude Code’s `permissions.deny` in `.claude/settings.json` blocks these paths for its file tools:
 
-| Rule                                    | Covers                                                   |
-| --------------------------------------- | -------------------------------------------------------- |
-| `Read(**/.env.r2-upload)`               | Read, Grep, & Glob of the R2 upload token                |
-| `Read(/src/lib/data/tracker-data.json)` | Reading the generated tracker data into context          |
-| `Edit(/src/lib/data/tracker-data.json)` | Edit, Write, & patch tools on the generated tracker data |
-| `Edit(/docs/superpowers/**)`            | Edits to the historical plans & specs                    |
+| Rule                                      | Covers                                                               |
+| ----------------------------------------- | -------------------------------------------------------------------- |
+| `Read(**/.env.r2-upload)`                 | Read, Grep, & Glob of the R2 upload token                            |
+| `Read(**/src/lib/data/tracker-data.json)` | Reading the generated tracker data into context                      |
+| `Edit(**/src/lib/data/tracker-data.json)` | Edit, Write, MultiEdit, & NotebookEdit on the generated tracker data |
+| `Edit(**/docs/superpowers/**)`            | Edits to the historical plans & specs                                |
+
+The `**/` prefix also matches the copies in nested `.worktrees/<name>/` checkouts, which a session
+rooted at the original checkout would otherwise miss.
 
 These rules don’t cover shell commands while Claude Code’s sandbox is off, and Codex & Copilot have
 no equivalent. Both Claude Code (`sandbox.enabled` merges `Read` deny rules into the sandbox) &
@@ -278,6 +280,8 @@ These rules rest on `AGENTS.md` alone:
 - **Shared stash:** never use bare `git stash` or `git stash pop`.
 - **GitHub bodies:** end issue, PR, & comment bodies with `Agent: <agent-id>`, and pass multiline
   text with `--body-file`.
+- **History:** don’t edit `docs/superpowers/`; update the current `docs/*.md` instead. Only Claude
+  Code’s deny rule covers it.
 - **Dependencies:** follow [Package commands](#package-commands) before adding or bumping one.
 
 ### Formatting hook

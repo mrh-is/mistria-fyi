@@ -123,9 +123,9 @@ describe("Claude Code file deny rules", () => {
     expect(permissions.deny).toEqual(
       expect.arrayContaining([
         "Read(**/.env.r2-upload)",
-        "Read(/src/lib/data/tracker-data.json)",
-        "Edit(/src/lib/data/tracker-data.json)",
-        "Edit(/docs/superpowers/**)",
+        "Read(**/src/lib/data/tracker-data.json)",
+        "Edit(**/src/lib/data/tracker-data.json)",
+        "Edit(**/docs/superpowers/**)",
       ]),
     );
   });
