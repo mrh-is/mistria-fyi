@@ -51,15 +51,20 @@ session limits) belong in each contributor’s user config.
 - Don’t start an issue that’s blocked by an open issue, or one labeled `status: blocked` or
   `status: needs decision`. If an issue already has `status: in progress` or an `agent:*` label,
   coordinate with its owner.
-- File an issue for anything you find & don’t fix in the current change, without asking first. Extra
-  issues are cheap to close; a problem mentioned only in a session is lost. This includes:
-  - a bug or stale doc you noticed in passing,
-  - a flaky test or CI failure you reran past,
+- File an issue, without asking first, for these findings you don’t fix in the current change:
+  - a product bug,
+  - something that blocks your task,
   - a review finding or follow-up you deferred.
 
-  Search the open issues first, and add your evidence to a match instead of filing a duplicate. Name
-  each issue you filed or updated in your final report. A suggested session or task card doesn’t
-  replace the issue.
+  Search the open issues first, and add your evidence to a match instead of filing a duplicate. A
+  suggested session or task card doesn’t replace the issue.
+
+- Log smaller frictions you worked around, such as a flaky command, a stale doc, or a guard that
+  blocked a harmless read, as one comment on the pinned “Agent friction log” issue. Don’t file a
+  separate issue for them. The format & monthly review are in
+  [agent-workflow.md](docs/agent-workflow.md#friction-log).
+- Name each issue you filed, updated, or commented on in your final report, including friction-log
+  entries.
 
 - Record a dependency on another issue as a “blocked by” relationship, not a label:
   `gh issue edit <number> --add-blocked-by <other>`. Keep `status: blocked` for blockers outside the
@@ -215,6 +220,9 @@ session limits) belong in each contributor’s user config.
 - The “Attribution” check covers commits, PR bodies (including the preview URL), & labels. It
   doesn’t check issues or comments.
 - Commit, push, & open an attributed PR. Its body includes `Closes #N` & the branch-preview URL.
+- Record each decision in the narrowest home that fits, usually the PR’s “Decisions” section. Add a
+  record to `docs/decisions/` only when a newcomer would propose the rejected alternative; see
+  [Recording decisions](docs/agent-workflow.md#recording-decisions).
 - GitHub body guards require `--body-file` for multiline text & a final `Agent:` line. Re-read the
   published result.
 - An open PR’s state is your merge recommendation. Keep it a draft while any manual step, question,

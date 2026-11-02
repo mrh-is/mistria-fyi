@@ -361,15 +361,6 @@ Only builds register service workers; dev servers serve current source without w
 Evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/398](https://github.com/mrh-is/mistria-fyi/issues/398).
 
-### [File issues by default](decisions/2026-11-01-file-issues-by-default.md)
-
-ID: 2026-11-01-file-issues-by-default. Status: Current.
-
-Agents file an issue for anything they find & don't fix, without asking, instead of offering to.
-
-Evidence: [AGENTS.md](../AGENTS.md),
-[https://github.com/mrh-is/mistria-fyi/issues/390](https://github.com/mrh-is/mistria-fyi/issues/390).
-
 ### [Select focused Node projects](decisions/2026-11-01-focused-node-projects.md)
 
 ID: 2026-11-01-focused-node-projects. Status: Current.
@@ -467,6 +458,27 @@ Evidence:
 [.github/workflows/visual-diff.yml](../.github/workflows/visual-diff.yml),
 [.github/workflows/visual-diff-publish.yml](../.github/workflows/visual-diff-publish.yml),
 [docs/visual-diff-pilot.md](../docs/visual-diff-pilot.md).
+
+### [Decision records only for reversible-looking choices](decisions/2026-11-02-decision-record-scope.md)
+
+ID: 2026-11-02-decision-record-scope. Status: Current.
+
+Record decisions in the PR by default; keep decision records for choices a newcomer would reverse.
+
+Evidence:
+[docs/agent-workflow.md#recording-decisions](../docs/agent-workflow.md#recording-decisions),
+[https://github.com/mrh-is/mistria-fyi/issues/417](https://github.com/mrh-is/mistria-fyi/issues/417).
+
+### [Log small frictions in one issue](decisions/2026-11-02-friction-log.md)
+
+ID: 2026-11-02-friction-log. Status: Current.
+
+Agents log small workarounds as comments on a monthly friction-log issue; only product bugs,
+blockers, & deferred review findings get their own issues.
+
+Evidence: [AGENTS.md](../AGENTS.md),
+[docs/agent-workflow.md#friction-log](../docs/agent-workflow.md#friction-log),
+[https://github.com/mrh-is/mistria-fyi/issues/420](https://github.com/mrh-is/mistria-fyi/issues/420).
 
 ## Partially superseded/amended
 
@@ -904,6 +916,23 @@ longer suppress advisory findings, & the issue closes only when both checks are 
 
 Relationship evidence:
 [https://github.com/mrh-is/mistria-fyi/issues/326](https://github.com/mrh-is/mistria-fyi/issues/326).
+
+### [File issues by default](decisions/2026-11-01-file-issues-by-default.md)
+
+ID: 2026-11-01-file-issues-by-default. Status: Partially superseded/amended.
+
+Agents file an issue for anything they find & don't fix, without asking, instead of offering to.
+
+Evidence: [AGENTS.md](../AGENTS.md),
+[https://github.com/mrh-is/mistria-fyi/issues/390](https://github.com/mrh-is/mistria-fyi/issues/390).
+
+Amended by [Log small frictions in one issue](decisions/2026-11-02-friction-log.md). Affected
+portion: Only the small frictions an agent works around, such as a flaky command or a stale doc.
+They now go on the friction log; product bugs, blockers, & deferred review findings still get their
+own issues.
+
+Relationship evidence:
+[docs/decisions/2026-11-02-friction-log.md](../docs/decisions/2026-11-02-friction-log.md).
 
 ## Superseded
 
