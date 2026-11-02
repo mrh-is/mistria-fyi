@@ -220,7 +220,6 @@ package ships no license text. Instead of weakening that check, list the package
 | `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, directive reasons, & ShellCheck  |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                                         |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)                          |
-| `pnpm run test:changed`       | Vitest tests affected by branch changes                            |
 | `pnpm run test:coverage`      | Complete suite plus coverage (opt-in)                              |
 | `pnpm run test:app`           | App tests (`src/`)                                                 |
 | `pnpm run test:client`        | App component tests (`*.client.test.ts`)                           |

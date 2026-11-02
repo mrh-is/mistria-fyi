@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
-# Scheduled repository housekeeping: fast-forward the local default branch, then remove worktrees &
-# branches whose work has merged. The launchd agent from install-housekeeping-agent.sh runs this
-# hourly from the primary checkout. Output goes to a log trimmed to its most recent lines.
+# Scheduled repository housekeeping: remove worktrees & branches whose work has merged or closed.
+# The launchd agent from install-housekeeping-agent.sh runs this hourly from the primary checkout.
+# Output goes to a log trimmed to its most recent lines.
 set -uo pipefail
 
 repository_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 log=${MISTRIA_HOUSEKEEPING_LOG:-$HOME/Library/Logs/mistria-housekeeping.log}
-# Spare worktrees whose HEAD moved recently, even if no process sits in them right now.
-idle_minutes=${MISTRIA_HOUSEKEEPING_IDLE_MINUTES:-120}
 
 mkdir -p "$(dirname "$log")"
 if [ -f "$log" ]; then
@@ -29,9 +27,4 @@ fi
 echo $$ >"$lock/pid"
 trap 'rm -rf "$lock"' EXIT
 
-bash scripts/refresh-default-branch.sh
-if ! command -v node >/dev/null; then
-  echo "node isn't on this job's PATH; rerun pnpm run housekeeping:install to add it."
-  exit 1
-fi
-node scripts/cleanup-merged-worktrees.ts --apply --idle-minutes "$idle_minutes"
+bash scripts/cleanup-worktrees.sh --apply

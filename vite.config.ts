@@ -288,15 +288,8 @@ export default defineConfig(({ command }) => ({
         resolve: { alias: libAlias },
         test: {
           ...plainNodeTestOptions,
-          // CLI exclusions are overridden by inline projects, so gate this file here.
-          exclude: [
-            ...sharedTestExcludes,
-            "**/*.assets.test.ts",
-            "**/*.isolated.test.ts",
-            ...(process.env.VITEST_CLEANUP_CHANGED === "false"
-              ? ["scripts/cleanup-merged-worktrees.test.ts"]
-              : []),
-          ],
+          // CLI exclusions are overridden by inline projects, so exclude here.
+          exclude: [...sharedTestExcludes, "**/*.assets.test.ts", "**/*.isolated.test.ts"],
           include: [
             "eslint-rules/**/*.test.ts",
             ...(scriptsChanged ? ["scripts/**/*.test.ts"] : alwaysRunScriptTests),
