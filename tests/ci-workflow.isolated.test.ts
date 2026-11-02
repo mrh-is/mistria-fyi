@@ -226,17 +226,6 @@ describe("CI workflow jobs", () => {
     expect(direct.test("pnpm run verify -- --step=lint")).toBe(false);
   });
 
-  it.each([
-    ["pull_request", "scripts/cleanup-merged-worktrees.ts", true],
-    ["pull_request", "scripts/cleanup-merged-worktrees.test.ts", false],
-    ["push", "scripts/cleanup-merged-worktrees.ts", true],
-    ["push", "src/app.css", false],
-    ["schedule", "scripts/cleanup-merged-worktrees.ts", false],
-    ["workflow_dispatch", "scripts/cleanup-merged-worktrees.ts", false],
-  ] as const)("detects cleanup script changes for %s: %s", (event, file, expected) => {
-    expect(detectChanges(event, file).cleanup).toBe(String(expected));
-  });
-
   // Skipping a suite can hide a failure, so each case below proves a skip safe or runs the suite.
   it.each([
     [["relay/worker.ts"], true, false],
@@ -308,8 +297,6 @@ describe("CI workflow jobs", () => {
     expect(jobs.test.needs).toBe("changes");
     expect(jobs.changes.outputs?.tests).toBe("${{ steps.filter.outputs.tests }}");
     expect(testStep?.env?.VITEST_TOUCHED_TEST_FILES).toBe("${{ needs.changes.outputs.tests }}");
-    expect(jobs.changes.outputs?.cleanup).toBe("${{ steps.filter.outputs.cleanup }}");
-    expect(testStep?.env?.VITEST_CLEANUP_CHANGED).toBe("${{ needs.changes.outputs.cleanup }}");
     for (const gate of ["relay", "scripts"]) {
       expect(jobs.changes.outputs?.[gate]).toBe(`\${{ steps.filter.outputs.${gate} }}`);
       expect(testStep?.env?.[`VITEST_${gate.toUpperCase()}_CHANGED`]).toBe(

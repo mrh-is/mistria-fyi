@@ -34,7 +34,6 @@ jobs:
       pull-requests: read
     outputs:
       browser: ${{ steps.filter.outputs.browser }}
-      cleanup: ${{ steps.filter.outputs.cleanup }}
       dependencies: ${{ steps.filter.outputs.dependencies }}
       messages: ${{ steps.filter.outputs.messages }}
       relay: ${{ steps.filter.outputs.relay }}
@@ -58,7 +57,6 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           browser=true
-          cleanup=false
           dependencies=false
           messages=false
           relay=true
@@ -83,9 +81,6 @@ jobs:
             fi
           fi
           while IFS= read -r file; do
-            case "$file" in
-              scripts/cleanup-merged-worktrees.ts) cleanup=true ;;
-            esac
             case "$file" in
               package.json | pnpm-lock.yaml | pnpm-workspace.yaml | .github/workflows/ci.yml) dependencies=true ;;
             esac
@@ -128,7 +123,6 @@ jobs:
           # Only a pull request can fail on a slow test file it changes; other events just warn.
           [ "$EVENT_NAME" = "pull_request" ] || tests=
           echo "browser=$browser" >> "$GITHUB_OUTPUT"
-          echo "cleanup=$cleanup" >> "$GITHUB_OUTPUT"
           echo "dependencies=$dependencies" >> "$GITHUB_OUTPUT"
           echo "messages=$messages" >> "$GITHUB_OUTPUT"
           echo "relay=$relay" >> "$GITHUB_OUTPUT"
@@ -265,7 +259,6 @@ jobs:
       - name: Test with timing budgets
         env:
           VITEST_COVERAGE: ${{ github.event_name == 'schedule' }}
-          VITEST_CLEANUP_CHANGED: ${{ needs.changes.outputs.cleanup }}
           VITEST_RELAY_CHANGED: ${{ needs.changes.outputs.relay }}
           VITEST_SCRIPTS_CHANGED: ${{ needs.changes.outputs.scripts }}
           VITEST_TOUCHED_TEST_FILES: ${{ needs.changes.outputs.tests }}
