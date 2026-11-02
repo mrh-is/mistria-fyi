@@ -174,6 +174,58 @@ describe("generated-data read guard", () => {
     }
   });
 
+  it.each(
+    ["gc ?env.r2-upload", "gc [.]env.r2-upload", "Get-Content *"].flatMap((command) => [
+      { tool_input: { command }, tool_name: "PowerShell" },
+      ...["powershell", "pwsh", "PowerShell.exe", "pwsh.exe", '"/usr/bin/pwsh"'].map((shell) => ({
+        tool_input: { command: `${shell} -c '${command}'` },
+        tool_name: "Bash",
+      })),
+    ]),
+  )("denies PowerShell dotfile wildcards: $tool_name $tool_input.command", (input) => {
+    expect(readGuardMessage({ cwd: "/work/mistria", ...input })).toContain("R2 upload token file");
+  });
+
+  it("keeps POSIX wildcard rules outside PowerShell command segments", () => {
+    for (const command of [
+      "cat ?env.r2-upload",
+      "cat [.]env.r2-upload",
+      "cat *",
+      "rg pwsh *",
+      "echo pwsh *",
+      "rg powershell *",
+      String.raw`printf '%s\n' 'pwsh -c' *`,
+      "pwsh -c 'Get-Content README.md'; cat ?env.r2-upload",
+      "cat *; powershell -c 'Get-Content README.md'",
+    ]) {
+      expect(search(command, "/work/mistria"), command).toBeUndefined();
+    }
+    expect(
+      readGuardMessage({
+        cwd: "/work/mistria",
+        tool_input: { command: "Get-Content *.md" },
+        tool_name: "PowerShell",
+      }),
+    ).toBeUndefined();
+  });
+
+  it.each(["command", "exec", "env", "sudo", "MODE=test", "env MODE=test command"])(
+    "denies PowerShell wildcard reads after the %s prefix",
+    (prefix) => {
+      expect(search(`${prefix} pwsh -c 'Get-Content *'`, "/work/mistria")).toContain(
+        "R2 upload token file",
+      );
+    },
+  );
+
+  it.each([
+    `bash -c "pwsh -c 'Get-Content *'"`,
+    "bash <<'EOF'\npwsh -c 'Get-Content *'\nEOF",
+    `cat "$(pwsh -c 'Get-Content *')"`,
+  ])("denies PowerShell wildcard reads inside shell programs: %s", (command) => {
+    expect(search(command, "/work/mistria")).toContain("R2 upload token file");
+  });
+
   it("allows jq slices & indexes that only look like dotfile globs", () => {
     for (const command of [
       "gh run list --json a --jq '.a | sort | .[0:8]'",

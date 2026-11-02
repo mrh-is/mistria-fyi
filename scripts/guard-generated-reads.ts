@@ -13,6 +13,7 @@ import {
   shellReadTargets,
   shellSegments,
 } from "#scripts/lib/agent-hook";
+import { policySegments, programWords } from "#scripts/lib/agent-policy-shell";
 
 import type { HookInput } from "#scripts/lib/agent-hook";
 
@@ -106,12 +107,12 @@ function globMatches(glob: string, text: string): boolean {
 
 /**
  * Whether a path or glob could name the R2 token file in any spelling Windows opens as that file:
- * any case, trailing dots or spaces, or an NTFS stream suffix such as `::$DATA`. A glob counts only
- * when it starts with `.`, as a shell glob must to match a dotfile.
+ * any case, trailing dots or spaces, or an NTFS stream suffix such as `::$DATA`. POSIX shell globs
+ * need a literal leading dot to match a dotfile; PowerShell wildcards don't.
  */
-export function namesR2TokenFile(target: string): boolean {
+export function namesR2TokenFile(target: string, shell: "posix" | "powershell" = "posix"): boolean {
   const name = target.replaceAll("\\", "/").split("/").at(-1) ?? "";
-  if (!name.startsWith(".")) {
+  if (shell === "posix" && !name.startsWith(".")) {
     return false;
   }
   const glob = widenedGlob(name).toLowerCase();
@@ -175,6 +176,11 @@ function searchesR2TokenFile(command: string, cwd: string): boolean {
   });
 }
 
+/** Include the words inside inline programs as well as direct path arguments. */
+function readTargetWords(targets: string[]): string[] {
+  return targets.flatMap((target) => target.split(/[\s"'`;|&(),]+/));
+}
+
 export function readGuardMessage(input: HookInput): string | undefined {
   const cwd = input.cwd ?? process.cwd();
   const powershell =
@@ -203,9 +209,20 @@ export function readGuardMessage(input: HookInput): string | undefined {
     return "Blocked read of a stored OAuth token file. Use `gh auth status` or `pnpm exec wrangler whoami` instead.";
   }
   // A read target may hold a whole inline program (`powershell -c "Get-Content …"`).
-  const words = targets.flatMap((target) => target.split(/[\s"'`;|&(),]+/));
+  // Apply PowerShell rules only to its segments, so a neighboring `cat *` keeps POSIX semantics.
+  let powershellTargets: string[] = [];
+  if (typeof powershell === "string") {
+    powershellTargets = targets;
+  } else if (command !== undefined) {
+    powershellTargets = policySegments(command)
+      .filter(({ command: segment }) =>
+        /(?:^|[/\\])(?:powershell|pwsh)(?:\.exe)?$/i.test(programWords(segment)[0] ?? ""),
+      )
+      .flatMap(({ command: segment }) => shellPaths(segment));
+  }
   if (
-    [...paths, ...words].some((word) => namesR2TokenFile(word)) ||
+    [...paths, ...readTargetWords(targets)].some((word) => namesR2TokenFile(word)) ||
+    readTargetWords(powershellTargets).some((word) => namesR2TokenFile(word, "powershell")) ||
     (command !== undefined && searchesR2TokenFile(command, cwd))
   ) {
     return R2_TOKEN_MESSAGE;
