@@ -13,6 +13,6 @@ it("points players to sync and backup restore instead of progress codes", async 
   expect(screen.getByText(/anything you check off by hand/)).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Generate QR Code" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Scan QR Code" })).not.toBeInTheDocument();
-  await fireEvent.click(screen.getByRole("button", { name: "Backup & Restore" }));
+  await fireEvent.click(screen.getByRole("button", { name: "Open Backup & Restore" }));
   expect(onOpenBackup).toHaveBeenCalledTimes(1);
 });

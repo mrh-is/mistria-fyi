@@ -1,7 +1,13 @@
 import { encodeQR } from "qr";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { generateFollowQr, QR_OPTIONS, qrDisplayPixels, startQrCamera } from "./qr.js";
+import {
+  closeScanner,
+  generateFollowQr,
+  QR_OPTIONS,
+  qrDisplayPixels,
+  startQrCamera,
+} from "./qr.js";
 
 const svgToPng = vi.hoisted(() => vi.fn(() => Promise.resolve("data:image/png;base64,QUJD")));
 const camera = vi.hoisted(() => ({
@@ -46,6 +52,20 @@ describe("generateFollowQr", () => {
       displayPixels * 2,
       displayPixels * 2,
     );
+  });
+});
+
+describe("closeScanner", () => {
+  it("stops and destroys an active scanner", () => {
+    const scanner = { destroy: vi.fn(), stop: vi.fn() };
+
+    expect(closeScanner(scanner)).toBeNull();
+    expect(scanner.stop).toHaveBeenCalledTimes(1);
+    expect(scanner.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts an already cleared scanner", () => {
+    expect(closeScanner(null)).toBeNull();
   });
 });
 

@@ -5,10 +5,9 @@
   import { Button } from "#lib/components/ui/button/index.js";
   import * as m from "#lib/paraglide/messages.js";
 
-  import { closeScanner } from "../data/data-effects.js";
-  import { startQrCamera } from "./qr.js";
+  import { closeScanner, startQrCamera } from "./qr.js";
 
-  import type { ClosableScanner } from "../data/data-effects.js";
+  import type { ClosableScanner } from "./qr.js";
 
   let {
     onclose,

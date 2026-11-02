@@ -14,6 +14,6 @@
     <p class="text-sm text-muted-foreground">{m.transfer_sync_guidance()}</p>
     <Button href={localizedHref("sync")}>{m.transfer_sync_action()}</Button>
     <p class="text-sm text-muted-foreground">{m.transfer_backup_guidance()}</p>
-    <Button variant="outline" onclick={onOpenBackup}>{m.backup_card_title()}</Button>
+    <Button variant="outline" onclick={onOpenBackup}>{m.transfer_open_backup_action()}</Button>
   </div>
 </DataCard>

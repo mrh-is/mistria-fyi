@@ -219,7 +219,7 @@ test.describe("stateful accessibility", () => {
       { route: "/data", state: "device-guidance", theme: "light" },
       testInfo,
     );
-    await page.getByRole("button", { exact: true, name: "Backup & Restore" }).click();
+    await page.getByRole("button", { exact: true, name: "Open Backup & Restore" }).click();
     await expect(page.getByRole("button", { name: "Export backup" })).toBeVisible();
   });
 

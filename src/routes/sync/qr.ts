@@ -3,7 +3,18 @@ import { frameLoop, QRCamera, QRCanvas, svgToPng } from "qr/dom.js";
 
 import type { QrOpts } from "qr";
 
-import type { ClosableScanner } from "../data/data-effects.js";
+/** A running camera scanner: `stop` ends decoding & the stream, `destroy` clears the overlay. */
+export interface ClosableScanner {
+  destroy: () => void;
+  stop: () => void;
+}
+
+/** Stops & destroys `scanner` if one is running; returns `null` to clear the caller's reference. */
+export function closeScanner(scanner: ClosableScanner | null): null {
+  scanner?.stop();
+  scanner?.destroy();
+  return null;
+}
 
 /** Low error correction keeps follow links at the smallest QR version. */
 export const QR_OPTIONS = { border: 2, ecc: "low" } as const satisfies QrOpts;
