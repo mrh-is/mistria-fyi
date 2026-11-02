@@ -176,10 +176,11 @@ Each kind of “why” has one home. Pick the narrowest one that fits:
    current design. Edit them in place when the design changes; don’t append a history.
 4. **Decision record** in `docs/decisions/`: only when a capable newcomer would propose the rejected
    alternative, so the record’s “Revisit if” section stops the question from being reopened.
-   Save-driven sync with no logins is the model case. Expect a handful a year.
+   Save-driven sync with no logins is the model case. Expect a handful a year. A record is plain
+   Markdown with Context, Decision, Alternatives, & Revisit if sections, and no metadata header.
 
 Most changes need only the first. A decision record that would merely log a choice belongs in the PR
-instead. See [the decision on decision records](decisions/2026-11-02-decision-record-scope.md).
+instead. See [the decision on decision records](decisions/2026-11-02-agents-report-less.md).
 
 ## Pull request details
 

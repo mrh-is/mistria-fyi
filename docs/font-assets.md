@@ -26,7 +26,7 @@ ignored to prevent accidental recommits.
 CI copies the hosted font to the gitignored `tests/browser/fixtures/local/` and checks it against a
 pinned SHA-256, so the geometry suite measures Satoshi’s production metrics without the font
 entering the repository. See `tests/browser/fixtures/README.md` and
-`docs/decisions/2026-10-08-browser-font-fidelity.md`.
+`https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-08-browser-font-fidelity.md`.
 
 ### Production hosting
 

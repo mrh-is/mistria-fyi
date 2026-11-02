@@ -1,25 +1,3 @@
----
-id: 2026-10-07-public-launch-posture
-status: amended
-summary: >-
-  The takedown-ready posture gained a precise allowance for independently removable, coarse farm
-  geometry.
-review: >-
-  NPC Studio correspondence & current permission were not independently rechecked; this index infers
-  no response.
-evidence:
-  - docs/decisions/2026-10-20-farm-planner-geometry.md
-relationships:
-  - type: amended-by
-    target: 2026-10-20-farm-planner-geometry
-    scope: partial
-    portion: >-
-      Only the boundary for derived farm geometry beyond sprites & the factual dataset. Launch
-      history & takedown posture keep their original scope.
-    evidence:
-      - docs/decisions/2026-10-20-farm-planner-geometry.md
----
-
 # Public launch posture & takedown readiness
 
 Amended by [the farm planner geometry decision](2026-10-20-farm-planner-geometry.md).

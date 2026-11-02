@@ -1,37 +1,3 @@
----
-id: 2026-10-29-sync-relay
-status: amended
-summary: >-
-  The standalone SQLite relay supplements Cloudflare’s minute-only rate binding with rotating hourly
-  shared 16-bit HMAC buckets & prefix read limits, preserving address privacy & permanent
-  retirement.
-evidence:
-  - https://github.com/mrh-is/mistria-fyi/issues/132
-  - relay/README.md
-  - relay/worker.ts
-relationships:
-  - type: amended-by
-    target: 2026-10-31-timing-limits-follow-the-diff
-    scope: partial
-    portion: >-
-      The timing check around the relay’s tests: wall time no longer fails a run, & its 30 s line
-      fails only a pull request that changes the file.
-    evidence:
-      - docs/decisions/2026-10-31-timing-limits-follow-the-diff.md
-  - type: amended-by
-    target: 2026-10-30-shared-edge-rate-rule
-    scope: partial
-    portion: >-
-      The required zone WAF rule’s threshold & scope: it shares the Free plan’s one rate-limiting
-      rule with feedback, at 10 requests per 10 seconds.
-    evidence:
-      - docs/decisions/2026-10-30-shared-edge-rate-rule.md
-    revisit:
-      authorization: https://github.com/mrh-is/mistria-fyi/issues/291
-      condition: The zone’s Free plan allows one rate-limiting rule, which feedback already used.
-      evidence: docs/decisions/2026-10-30-shared-edge-rate-rule.md
----
-
 # Sync relay admission
 
 ## Context

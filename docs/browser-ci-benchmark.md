@@ -1,8 +1,9 @@
 # Browser CI layout spike (#335)
 
 This is the record of the #335 experiment, written while its spike PR ran. The owner chose two
-shards plus PWA, and [the decision record](decisions/2026-11-01-two-accessibility-shards.md) has the
-outcome.
+shards plus PWA, and
+[the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-11-01-two-accessibility-shards.md)
+has the outcome.
 
 Everything below describes the unmerged
 [spike branch](https://github.com/mrh-is/mistria-fyi/tree/codex/335-browser-ci-spike), not current

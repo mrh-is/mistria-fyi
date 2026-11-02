@@ -1,16 +1,3 @@
----
-id: 2026-10-28-sync-follow-the-save
-status: current
-summary: >-
-  Devices follow the PC’s save through one long-lived link; only the save travels, so pairing, PC
-  roles, & carried progress are gone.
-evidence:
-  - docs/sync.md
-  - docs/sync-setup.md
-  - https://github.com/mrh-is/mistria-fyi/pull/251
-relationships: []
----
-
 # Follow the save, not a pairing
 
 ## Context
@@ -69,9 +56,9 @@ made on.
   hidden Data actions, all to stop PC check-offs from silently not reaching the phone. The copy now
   says check-offs stay on their device.
 - **Holding each bundle until the phone confirms**
-  ([save-driven sync](2026-10-20-save-driven-sync.md)). Rejected: it needs the phone to authenticate
-  to the relay & a delivery state per bundle, while each save is a full snapshot, so the latest one
-  is all a follower needs.
+  ([save-driven sync](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-save-driven-sync.md)).
+  Rejected: it needs the phone to authenticate to the relay & a delivery state per bundle, while
+  each save is a full snapshot, so the latest one is all a follower needs.
 - **Accounts.** Still rejected, as on #251: an auth system & its liabilities, for device moves that
   following now covers without one.
 - **Ephemeral keys with forward secrecy.** Rejected: the data isn’t sensitive enough to pay for a
