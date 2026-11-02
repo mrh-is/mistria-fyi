@@ -364,6 +364,15 @@ Evidence:
 [.github/workflows/ci.yml](../.github/workflows/ci.yml), [vite.config.ts](../vite.config.ts),
 [docs/development-workflow.md#vitest-time-budgets](../docs/development-workflow.md#vitest-time-budgets).
 
+### [Register workers in builds](decisions/2026-11-01-build-only-service-workers.md)
+
+ID: 2026-11-01-build-only-service-workers. Status: Current.
+
+Only builds register service workers; dev servers serve current source without worker caching.
+
+Evidence:
+[https://github.com/mrh-is/mistria-fyi/issues/398](https://github.com/mrh-is/mistria-fyi/issues/398).
+
 ### [File issues by default](decisions/2026-11-01-file-issues-by-default.md)
 
 ID: 2026-11-01-file-issues-by-default. Status: Current.

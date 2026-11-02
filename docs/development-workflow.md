@@ -775,9 +775,10 @@ changed. Any agent previewing from a worktree starts its own dev server instead:
 1. From the worktree, start Vite in the background on a port no other session uses
    (`pnpm exec vite dev --port 5180 --strictPort`; pick another port if it's taken).
 2. Open it with `preview_start` and a `url` (`http://localhost:5180`), never a `name`.
-3. Before checking anything, unregister stale service workers. A worker another dev or preview
-   server registered on the same origin can serve its own cached pages, including the offline
-   fallback. Run this in the page with `javascript_tool`, then reload:
+3. Before checking anything, unregister stale service workers. Dev servers don’t register workers;
+   local builds & deployed previews do. A worker previously registered on the same origin can still
+   serve its cached pages, including the offline fallback. Run this in the page with
+   `javascript_tool`, then reload:
 
    ```js
    for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
