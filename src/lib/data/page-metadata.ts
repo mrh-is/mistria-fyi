@@ -3,9 +3,7 @@ import * as m from "#lib/paraglide/messages.js";
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 
-export const SITE_ORIGIN = "https://mistria.fyi";
-/** The product name; a proper noun that reads the same in every locale (`app_name` in each). */
-export const SITE_NAME = "Mistria Field Guide";
+export { SITE_NAME, SITE_ORIGIN } from "./site.js";
 
 /** A CSS color, as a `var()` reference to a token, that the page chrome reads as `--primary`. */
 export type PageAccent = "var(--color-home-accent)" | `var(--color-category-${CategoryKey})`;
