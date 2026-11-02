@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { closeScanner, openThenScroll } from "./data-effects.js";
+import { openThenScroll } from "./data-effects.js";
 
 describe("data effects", () => {
   it("waits for the opened content to settle before scrolling", async () => {
@@ -19,22 +19,5 @@ describe("data effects", () => {
     await completed;
 
     expect(events).toEqual(["open", "scroll"]);
-  });
-
-  it("stops and destroys an active scanner", () => {
-    const scanner = {
-      destroy: vi.fn(),
-      stop: vi.fn(),
-    };
-
-    const cleared = closeScanner(scanner);
-
-    expect(scanner.stop).toHaveBeenCalledTimes(1);
-    expect(scanner.destroy).toHaveBeenCalledTimes(1);
-    expect(cleared).toBeNull();
-  });
-
-  it("accepts an already cleared scanner", () => {
-    expect(closeScanner(null)).toBeNull();
   });
 });

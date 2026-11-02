@@ -6,7 +6,6 @@ import {
   formatExtractedSaveFilesError,
   formatSavArchiveError,
   formatSaveImportWarning,
-  formatTransferDecodeError,
 } from "./data-error-messages.js";
 
 const defaultGetLocale = getLocale;
@@ -59,10 +58,5 @@ describe("data error messages", () => {
     );
     overwriteGetLocale(() => "fr");
     expect(formatSavArchiveError(detail)).toMatch(/\(9,3\s?Mo\)/);
-  });
-
-  it("formats transfer decode errors", () => {
-    expect(formatTransferDecodeError("corrupt")).toMatch(/damaged or incomplete/);
-    expect(formatTransferDecodeError("not-transfer-code")).toMatch(/isn’t a Mistria Field Guide/);
   });
 });

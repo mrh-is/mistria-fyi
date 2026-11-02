@@ -125,12 +125,11 @@ the same way: parse it, dispatch on `version`, run the numbered `MIGRATIONS` tha
 this build's version, validate it with Valibot, then normalize it against tracker data. Each path
 keeps its own policy above that validation:
 
-| Ingress           | Policy         | A malformed value                                        |
-| ----------------- | -------------- | -------------------------------------------------------- |
-| Storage hydration | Repairs        | Falls back to its default, or its entry is dropped       |
-| Backup restore    | Strict         | Rejects the whole document, which changes nothing        |
-| Save import       | Warns          | Is skipped with a warning (see below)                    |
-| Device transfer   | All-or-nothing | Rejects the whole payload ([format](transfer-format.md)) |
+| Ingress           | Policy  | A malformed value                                  |
+| ----------------- | ------- | -------------------------------------------------- |
+| Storage hydration | Repairs | Falls back to its default, or its entry is dropped |
+| Backup restore    | Strict  | Rejects the whole document, which changes nothing  |
+| Save import       | Warns   | Is skipped with a warning (see below)              |
 
 Outcomes by stored version:
 
@@ -155,10 +154,10 @@ unknown IDs in supported fields still follow the retention policy above. Hydrati
 both apply this removal, including when obsolete Dates values are malformed. See the
 [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-date-inspiration-migration.md).
 
-Version 5 adds `breakUpsDisabled`, defaulting to `false` for older blobs. Hydration and transfer
-preserve other dating relationships when it is true. With break-ups enabled, an engagement or
-marriage makes only existing romantic/proposed relationships platonic; absent and undecided paths
-remain undecided. Transfer codes use progression bit `0x10` for the setting.
+Version 5 adds `breakUpsDisabled`, defaulting to `false` for older blobs. Hydration and backup
+restore preserve other dating relationships when it is true. With break-ups enabled, an engagement
+or marriage makes only existing romantic/proposed relationships platonic; absent and undecided paths
+remain undecided.
 
 The serializer writes exactly the fields `SerializedState` declares, plus those retained entries;
 unrecognized fields in a loaded blob are dropped. The ephemeral UI-only `showCompleted` field is not
@@ -175,12 +174,12 @@ Every progress write goes through the store's `writeProgress`, run under the
 `mistria-fyi:progress-write` Web Lock so tabs write one at a time. Inside the lock it re-reads the
 stored value & validates it before writing:
 
-| Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset) | Additive import (save, transfer) |
-| ---------------------------------------- | ---------------------------- | --------------------------------- | -------------------------------- |
-| Unchanged, or cleared                    | Writes                       | Writes captured replacement       | Writes merged progress           |
-| Another tab's readable write             | Adopts it, writes nothing    | Writes captured replacement       | Unions with stored progress      |
-| Unreadable                               | Quarantines it               | Quarantines, then writes          | Quarantines, then writes         |
-| A newer build's                          | Blocks writes                | Blocks writes                     | Blocks writes                    |
+| Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset) | Additive import (save)      |
+| ---------------------------------------- | ---------------------------- | --------------------------------- | --------------------------- |
+| Unchanged, or cleared                    | Writes                       | Writes captured replacement       | Writes merged progress      |
+| Another tab's readable write             | Adopts it, writes nothing    | Writes captured replacement       | Unions with stored progress |
+| Unreadable                               | Quarantines it               | Quarantines, then writes          | Quarantines, then writes    |
+| A newer build's                          | Blocks writes                | Blocks writes                     | Blocks writes               |
 
 Auto-saves wait for a 300 ms quiet period; explicit writes skip it but still take the lock. Explicit
 writes capture their payload at confirmation & invalidate auto-saves already waiting for the lock.
@@ -190,11 +189,11 @@ locked merge applies the same household conflict policy to the latest stored hou
 preserves captured world state & unknown IDs. Its history merges three ways: each provenance entry,
 resolution, or last save playtime the importing tab recorded since its base (the stored value it
 last read, or its own explicit write still waiting for the lock) overwrites the stored one, and the
-rest keep the history another tab stored meanwhile. A save or transfer agreeing with a fact already
-stored leaves that fact's stored provenance in place, unless a save is replacing a guess in it and
-the merge kept the value that save reported. Edits made after confirmation are rebased onto the
-locked merge result for the next auto-save, including removals & decreases, and so is their history;
-a later household edit replaces that household as a unit to preserve the engagement cascade. The
+rest keep the history another tab stored meanwhile. A save agreeing with a fact already stored
+leaves that fact's stored provenance in place, unless a save is replacing a guess in it and the
+merge kept the value that save reported. Edits made after confirmation are rebased onto the locked
+merge result for the next auto-save, including removals & decreases, and so is their history; a
+later household edit replaces that household as a unit to preserve the engagement cascade. The
 pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
 compare-before-write. A browser without Web Locks runs every write synchronously; see the
 [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-serialized-progress-writes.md).
@@ -210,9 +209,9 @@ inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the st
   the player made is remembered.
 - **Sources.** Setters & toggles record `manual`. An engagement cascade, a quest's recipe rewards (&
   the undo that takes them back), default unlocks, & “Record prerequisites” record `inferred`. A
-  save import records `save`; a device transfer records `unknown`, since its payload carries no
-  provenance. Only facts a call changes record, with one exception: a save replaces the app's
-  guesses but never the player's entries, so one agreeing with an `unknown` or `inferred` fact
+  save import records `save`; retired device transfers recorded `unknown`, since their payloads
+  carried no provenance. Only facts a call changes record, with one exception: a save replaces the
+  app's guesses but never the player's entries, so one agreeing with an `unknown` or `inferred` fact
   promotes it to `save`, and one agreeing with a `manual` fact leaves it `manual`.
 - **A quest's two moments.** When a different source finishes an obtained quest, its record keeps
   the obtained moment's source in `obtainedSource` (version 6), and any later change replaces the
@@ -295,19 +294,22 @@ Renown is the exception: it never warns, since nothing in ordinary play produces
 value. Above its maximum it clamps; a negative or non-numeric renown is left unknown with only a
 diagnostic. Backup restore (`restoreBackup`) uses the same domain maximums but rejects the whole
 document when a mine floor, heart level, or skill level is out of domain; renown is clamped there
-too rather than rejected. See [Backup Restore vs Transfer](#backup-restore-vs-transfer).
+too rather than rejected. See [Backup restore vs save import](#backup-restore-vs-save-import).
 
-### Backup Restore vs Transfer
+### Backup restore vs save import
 
 These flows are not interchangeable:
 
 - **Backup restore** (`restoreBackup`) replaces progress & world state with the imported JSON. It is
   a full overwrite of everything the backup holds; this device's preferences aren't part of it.
-- **Save import / device transfer** (`mergeFromSave`) unions imported progress into the current
-  state. It is additive and never removes existing entries. The versioned binary contract and
-  failure behavior are documented in [the progress transfer format](transfer-format.md).
-- **Save-driven sync** (planned, #123) will apply a save from the game as a policy-driven diff
-  through one serialized write path, rather than through either flow above. See [sync.md](sync.md).
+- **Save import** (`mergeFromSave`) unions imported progress into the current state. It is additive
+  and never removes existing entries.
+- **Save-driven sync** applies a save from the game as a policy-driven diff through one serialized
+  write path. See [sync.md](sync.md).
+
+Progress-transfer QR codes are retired. Data points players to sync for following a save and backup
+export & restore for moving hand-tracked progress. The camera scanner & QR renderer live in
+`src/routes/sync/qr.ts`.
 
 ## 4. Route Composition
 
@@ -486,8 +488,8 @@ treat each as an API. See
 - **Route slugs:** `almanac`, `animals`, `cosmetics`, `mines`, `museum`, `quests`, `recipes`,
   `renown`, `skills`, `villagers`, `everything`, `about`, `data`, & `privacy`. A rename needs a
   redirect from the old slug.
-- **Query & fragment links:** `/data?section=import|transfer` (the welcome card) and
-  `/villagers#villager-<id>` (search results, keyed by game villager IDs).
+- **Query & fragment links:** `/data?section=import` and `/villagers#villager-<id>` (search results,
+  keyed by game villager IDs).
 - **Unlocalized paths:** `/api/feedback`, `/sitemap.xml`, & `/licenses.txt` (the build-generated
   open-source notices, linked from the About page; see `src/lib/build/licenses.ts`).
 - **Storage keys:** `mistria-fyi:progress`, `mistria-fyi:progress-quarantine`,
@@ -507,8 +509,11 @@ treat each as an API. See
 
 ### Not promised
 
-- The retired beta route `/settings` returns the not-found page; use `/data?section=import|transfer`
-  for data-management links. Its removal without a redirect was explicitly approved in #156; see
+- **Progress-transfer QR codes:** the build-bound codec is retired (#138). The old
+  `/data?section=transfer` link opens guidance to sync & backups.
+
+- The retired beta route `/settings` returns the not-found page; use `/data?section=import` for
+  data-management links. Its removal without a redirect was explicitly approved in #156; see
   [the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-retire-settings-route.md).
 - **The not-found page's content:** an unknown path gets the adapter's plain-text `404.html`, not
   the app's styled error page, since only `/api` reaches the Function. A locale prefix in a mixed

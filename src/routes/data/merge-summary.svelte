@@ -17,12 +17,10 @@
     conflicts = [],
     counts,
     filesUsed = [],
-    kind,
   }: {
     conflicts?: MergeConflict[];
     counts: MergeCounts;
     filesUsed?: string[];
-    kind: "import" | "transfer";
   } = $props();
 
   let total = $derived(totalMergeCounts(counts));
@@ -73,9 +71,7 @@
 
 {#if total > 0}
   <p class="text-base font-medium">
-    {kind === "import"
-      ? m.merge_imported_from({ files: filesUsed.join(", ") })
-      : m.merge_transferred_items({ count: total })}
+    {m.merge_imported_from({ files: filesUsed.join(", ") })}
   </p>
   <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
     {#each Object.keys(MERGE_COUNT_LABELS) as key (key)}
@@ -87,7 +83,7 @@
   </ul>
 {:else}
   <p class="text-base font-medium">
-    {kind === "import" ? m.data_no_new_data_import() : m.merge_qr_no_new_items()}
+    {m.data_no_new_data_import()}
   </p>
 {/if}
 

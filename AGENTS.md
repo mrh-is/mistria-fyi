@@ -151,13 +151,11 @@ session limits) belong in each contributor’s user config.
   - Save import merges progress additively: it adds progress and never removes existing entries.
   - Backup restore replaces the serialized state.
 - Assume real players have saved progress. A change to the storage or backup schema needs a version
-  bump, a migration, & compatibility tests, and it never ships as a compatibility break. Transfer
-  codes are tied to the exact app build, so they need none of these.
+  bump, a migration, & compatibility tests, and it never ships as a compatibility break.
 - When the running build finds data that a newer build wrote, it shows a “newer data” state. Writes
   are blocked, and nothing is quarantined. Quarantine is only for data that is unreadable or fails
   validation.
-- The progress-transfer QR code stays tied to the app build until sync deprecates it. Sync uses a
-  strict protocol version.
+- Sync uses a strict protocol version.
 - Category pages compose layouts. Put shared or stateful concerns in focused components. Split a
   complex component by logical concern, even with one caller, so it’s easier to reason about.
 - `docs/superpowers/` is read-only history, hidden from ripgrep by `.ignore`. Read it only when a

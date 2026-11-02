@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { encodeQR } from "qr";
 
 import { expect, test } from "../browser/test.js";
 import {
@@ -153,7 +152,7 @@ test.describe("stateful accessibility", () => {
     );
   });
 
-  // Result semantics live in colocated ImportCard/TransferCard/BackupCard client tests.
+  // Result semantics live in colocated ImportCard/BackupCard client tests.
   // These browser probes wait for each result before scanning its distinct assembled DOM.
   test("settings dialog and import results pass axe", async ({ page }, testInfo) => {
     await gotoApplication(page, "/data");
@@ -212,75 +211,16 @@ test.describe("stateful accessibility", () => {
     );
   });
 
-  test("transfer generation, success, and failure pass axe", async ({ page }, testInfo) => {
-    await initializeApplication(page, "light", null);
-    await gotoApplication(page, "/data");
-    await openSettingsCard(page, "Transfer to Another Device");
-    await page.getByRole("button", { name: "Generate QR Code" }).click();
-    const generatedQr = page.getByRole("img", { name: "Transfer QR Code" });
-    await expect(generatedQr).toBeVisible();
+  test("replacement device guidance passes axe", async ({ page }, testInfo) => {
+    await gotoApplication(page, "/data?section=transfer");
+    await expect(page.getByRole("link", { exact: true, name: "Set up sync" })).toBeVisible();
     await analyzeAccessibility(
       page,
-      { route: "/data", state: "transfer-generated", theme: "light" },
+      { route: "/data", state: "device-guidance", theme: "light" },
       testInfo,
     );
-
-    const dataUrl = await generatedQr.getAttribute("src");
-    if (!dataUrl) throw new Error("Generated transfer QR code had no source");
-    const generatedBuffer = Buffer.from(dataUrl.split(",")[1] ?? "", "base64");
-    const successChooser = page.waitForEvent("filechooser");
-    await page.getByRole("button", { name: /scan from a screenshot/i }).click();
-    const successChooserDialog = await successChooser;
-    await successChooserDialog.setFiles({
-      buffer: generatedBuffer,
-      mimeType: "image/png",
-      name: "transfer.png",
-    });
-    await expect(page.getByText(/QR code scanned successfully/).last()).toBeVisible();
-    await analyzeAccessibility(
-      page,
-      { route: "/data", state: "transfer-success", theme: "light" },
-      testInfo,
-    );
-
-    // A marked code too short to hold a build fingerprint: recognized, but damaged.
-    const invalidBuffer = Buffer.from(encodeQR("MFGTAQ", "gif", { scale: 4 }));
-    const errorChooser = page.waitForEvent("filechooser");
-    await page.getByRole("button", { name: /scan from a screenshot/i }).click();
-    const errorChooserDialog = await errorChooser;
-    await errorChooserDialog.setFiles({
-      buffer: invalidBuffer,
-      mimeType: "image/gif",
-      name: "invalid-transfer.gif",
-    });
-    await expect(page.getByRole("alert")).toContainText(
-      "This QR code’s data is damaged or incomplete.",
-    );
-    await analyzeAccessibility(
-      page,
-      { route: "/data", state: "transfer-error", theme: "light" },
-      testInfo,
-    );
-
-    // A marked code with an all-zero build fingerprint: recognized, but from another build.
-    const mismatchBuffer = Buffer.from(encodeQR("MFGTAAAAAA", "gif", { scale: 4 }));
-    const mismatchChooser = page.waitForEvent("filechooser");
-    await page.getByRole("button", { name: /scan from a screenshot/i }).click();
-    const mismatchChooserDialog = await mismatchChooser;
-    await mismatchChooserDialog.setFiles({
-      buffer: mismatchBuffer,
-      mimeType: "image/gif",
-      name: "other-build-transfer.gif",
-    });
-    await expect(page.getByRole("alert")).toContainText(
-      "This QR code was created by a different version of Mistria Field Guide.",
-    );
-    await expect(page.getByRole("button", { name: "Copy recovery steps" })).toBeVisible();
-    await analyzeAccessibility(
-      page,
-      { route: "/data", state: "transfer-version-mismatch", theme: "light" },
-      testInfo,
-    );
+    await page.getByRole("button", { exact: true, name: "Open Backup & Restore" }).click();
+    await expect(page.getByRole("button", { name: "Export backup" })).toBeVisible();
   });
 
   test("backup restore failure passes axe", async ({ page }, testInfo) => {
