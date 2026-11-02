@@ -1,23 +1,11 @@
----
-id: 2026-10-27-feedback-app-only
-status: current
-summary: >-
-  Production requires three App settings; previews retain dry runs. Personal token revocation is not
-  claimed.
-evidence:
-  - https://github.com/mrh-is/mistria-fyi/pull/243
-  - src/routes/api/feedback/+server.ts
-relationships: []
----
-
 # App-only feedback authentication
 
 ## Context
 
 PR #226 merged the GitHub App authentication path. The owner then requested removal of the temporary
 personal access token fallback. The
-[earlier decision record](2026-10-22-feedback-github-app.md#revisit-if) permits removal after the
-App cutover; the owner’s request authorizes this follow-up.
+[earlier decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-22-feedback-github-app.md#revisit-if)
+permits removal after the App cutover; the owner’s request authorizes this follow-up.
 [Issue #242](https://github.com/mrh-is/mistria-fyi/issues/242), filed by the feedback App on October
 27, 2026, confirms that the App files issues in production. Personal token revocation remains
 unverified.
@@ -29,8 +17,9 @@ with only the missing variable names logged. Remove the legacy token binding fro
 contract & environment example; retain the App token cache, rejection invalidation, & safe error
 handling.
 
-Preview builds retain the [dry-run behavior](2026-10-27-feedback-preview-dry-run.md) added on main:
-they do not require App settings, file GitHub issues, or persist contact emails.
+Preview builds retain the
+[dry-run behavior](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-27-feedback-preview-dry-run.md)
+added on main: they do not require App settings, file GitHub issues, or persist contact emails.
 
 ## Alternatives
 

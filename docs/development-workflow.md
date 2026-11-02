@@ -364,7 +364,7 @@ passes on retry, lists all retries in the summary, & records their counts & fina
 `timings.json`. A file with retries keeps its full duration but only warns on timing, since that
 duration includes repeated attempts & hooks. Other files keep the limits below. For a focused
 reporter run, pass a test path to `pnpm exec node scripts/vitest-timings.ts`. See
-[the retry decision](decisions/2026-11-01-visible-vitest-retries.md).
+[the retry decision](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-11-01-visible-vitest-retries.md).
 
 A slow test costs time, not correctness, so timing fails a run only when the pull request can fix
 it:
@@ -382,7 +382,7 @@ of runner noise: one file measured 5.1–11.4 s across #13’s runs. Nothing els
 run or kills Vitest. The job’s 10-minute timeout is the only bound on a hung suite. Missing timing
 reports, invalid measurements, & unsuccessful tests still fail the step. Before this rule, ceilings
 on wall time & every file failed 22 of 51 failed runs with no failed assertion; see
-[the decision](decisions/2026-10-31-timing-limits-follow-the-diff.md).
+[the decision](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-31-timing-limits-follow-the-diff.md).
 
 The local Workers integration file, `relay/worker.test.ts`, has its own 30 s line for both warnings
 & failures. It runs real workerd eviction, hibernating WebSocket closure, & SQLite runtime restarts,

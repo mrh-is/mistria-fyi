@@ -1,13 +1,3 @@
----
-id: 2026-11-01-build-only-service-workers
-status: current
-summary: >-
-  Only builds register service workers; dev servers serve current source without worker caching.
-evidence:
-  - https://github.com/mrh-is/mistria-fyi/issues/398
-relationships: []
----
-
 # Register workers in builds
 
 ## Context
