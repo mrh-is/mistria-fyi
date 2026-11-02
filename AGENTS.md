@@ -61,7 +61,7 @@ session limits) belong in each contributor’s user config.
 
 - Log smaller frictions you worked around, such as a flaky command, a stale doc, or a guard that
   blocked a harmless read, as one comment on the pinned “Agent friction log” issue. Don’t file a
-  separate issue for them. The format & monthly review are in
+  separate issue for them. The format, borderline cases, & monthly review are in
   [agent-workflow.md](docs/agent-workflow.md#friction-log).
 - Name each issue you filed, updated, or commented on in your final report, including friction-log
   entries.

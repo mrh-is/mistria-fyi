@@ -154,6 +154,9 @@ blocked. One issue covers each month. Find the current one with
 - **What goes there:** a flaky command, a stale or confusing doc, a guard that blocked a harmless
   command, or any other workaround that didn’t stop the task. Product bugs, blockers, & deferred
   review findings still get their own issues.
+- **Borderline cases:** a test that fails & then passes on a rerun is friction. It becomes an issue
+  when it fails again on rerun, or when it blocks a merge. A stale doc you didn’t fix is friction,
+  unless following it would break something; then it’s a bug.
 - **Format:** one comment per friction, with “What”, “Workaround”, “Where”, & “Task” lines and the
   `Agent:` line. The log issue’s body has an example.
 - **Repeats:** log a friction again even when someone already has. The repeat count is the signal.
