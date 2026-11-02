@@ -1,49 +1,14 @@
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/agent-tool-hook.ts\"",
-            "timeout": 600,
-            "statusMessage": "Checking worktree setup & formatting"
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
-        "matcher": "apply_patch|Edit|MultiEdit|NotebookEdit|Write|Bash",
+        "matcher": "apply_patch|Edit|MultiEdit|NotebookEdit|Write",
         "hooks": [
           {
             "type": "command",
             "command": "node \"$(git rev-parse --show-toplevel)/scripts/agent-tool-hook.ts\"",
             "timeout": 600,
-            "statusMessage": "Checking worktree setup & formatting"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/lint-agent-stop.ts\"",
-            "timeout": 120
-          }
-        ]
-      }
-    ],
-    "SubagentStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/agent-subagent-start.ts\"",
-            "timeout": 10
+            "statusMessage": "Formatting the edit"
           }
         ]
       }
@@ -56,28 +21,6 @@
             "command": "node \"$(git rev-parse --show-toplevel)/scripts/setup-worktree.ts\" --session-start",
             "statusMessage": "Initializing worktree",
             "timeout": 600
-          }
-        ]
-      },
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/refresh-default-branch.sh\"",
-            "statusMessage": "Refreshing local main",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/scripts/lint-agent-stop.ts\"",
-            "timeout": 120
           }
         ]
       }

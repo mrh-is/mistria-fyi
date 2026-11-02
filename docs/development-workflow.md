@@ -883,10 +883,6 @@ behind; the helper then deletes what's left without following those links. It al
 
 Two mechanisms keep the primary checkout current without manual cleanup:
 
-- **Session start:** Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`) run
-  `scripts/refresh-default-branch.sh` when a session starts. It fast-forwards local `main` (in
-  whichever worktree has it checked out, or as a bare ref) and never fails the session. Codex skips
-  a new or changed project hook until you trust it in its hook review.
 - **Hourly on macOS:** `pnpm run housekeeping:install`, run from the primary checkout, installs a
   launchd agent that runs `scripts/housekeeping.sh` hourly: refresh `main`, then
   `cleanup-merged-worktrees.ts --apply --idle-minutes 120`. It logs to

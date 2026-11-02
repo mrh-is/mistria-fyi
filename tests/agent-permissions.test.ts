@@ -141,18 +141,21 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
     hooks[event]?.find((entry) => entry.hooks.some((hook) => hook.command.includes(script)));
   const formatter = "agent-tool-hook.ts";
 
-  it("registers formatting for patches, file tools, and shell commands", () => {
+  it("formats file-tool edits & patches, but not shell commands", () => {
     const matcher = new RegExp(`^(?:${find("PostToolUse", formatter)?.matcher ?? ""})$`);
-    for (const tool of ["apply_patch", "Edit", "Write", "Bash", "MultiEdit", "NotebookEdit"]) {
+    for (const tool of ["apply_patch", "Edit", "Write", "MultiEdit", "NotebookEdit"]) {
       expect(matcher.test(tool), `PostToolUse: ${tool}`).toBe(true);
     }
+    expect(matcher.test("Bash")).toBe(false);
   });
 
-  it("registers stop lint & subagent guidance", () => {
-    expect(find("Stop", "lint-agent-stop.ts")).toBeDefined();
-    expect(find("SubagentStop", "lint-agent-stop.ts")).toBeDefined();
-    expect(find("SubagentStart", "agent-subagent-start.ts")).toBeDefined();
-    expect(find("PreToolUse", formatter)?.matcher).toBe("Bash");
+  it("registers only upkeep: worktree setup & edit formatting", () => {
+    expect(Object.keys(hooks).toSorted()).toEqual(
+      file.startsWith(".claude")
+        ? ["CwdChanged", "FileChanged", "PostToolUse", "SessionStart"]
+        : ["PostToolUse", "SessionStart"],
+    );
+    expect(find("SessionStart", "setup-worktree.ts")).toBeDefined();
   });
 
   it("registers no blocking hooks: upkeep failures never stop a tool call", () => {
@@ -161,24 +164,13 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
       .flatMap((entry) => entry.hooks);
     expect(all.length).toBeGreaterThan(0);
     for (const hook of all) expect(hook.onFailure).toBeUndefined();
-    expect(all.filter((hook) => hook.command.includes("guard-"))).toEqual([]);
   });
 
-  it("has exactly one formatting handler per event, so setup cannot race formatting", () => {
-    for (const event of ["PreToolUse", "PostToolUse"]) {
-      const handlers = (hooks[event] ?? [])
-        .flatMap((entry) => entry.hooks)
-        .filter((hook) =>
-          /(?:format-agent-edit|codex-tool-hook|agent-tool-hook)\.ts/.test(hook.command),
-        );
-      expect(handlers).toHaveLength(1);
-      expect(handlers[0].command).toContain(formatter);
-    }
-  });
-
-  it("preserves Claude’s shell-failure formatting without adding an unsupported Codex event", () => {
-    const claude = file.startsWith(".claude");
-    expect(find("PostToolUseFailure", formatter)?.matcher).toBe(claude ? "Bash" : undefined);
-    expect(hooks.PostToolUseFailure?.length ?? 0).toBe(claude ? 1 : 0);
+  it("has exactly one formatting handler, so setup cannot race formatting", () => {
+    const handlers = (hooks.PostToolUse ?? [])
+      .flatMap((entry) => entry.hooks)
+      .filter((hook) => /(?:format-agent-edit|agent-tool-hook)\.ts/.test(hook.command));
+    expect(handlers).toHaveLength(1);
+    expect(handlers[0].command).toContain(formatter);
   });
 });
