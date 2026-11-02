@@ -6,6 +6,8 @@ import {
   mkdtempSync,
   realpathSync,
   rmSync,
+  symlinkSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -25,20 +27,28 @@ function gitIn(cwd: string, ...args: string[]) {
   return execFileSync("git", ["-C", cwd, ...args], { encoding: "utf8" }).trim();
 }
 
-function commit(cwd: string, message: string) {
+function commit(cwd: string, message: string, date = "") {
   writeFileSync(join(cwd, "file"), message);
   gitIn(cwd, "add", ".");
-  gitIn(
-    cwd,
-    "-c",
-    "user.name=t",
-    "-c",
-    "user.email=t@example.invalid",
-    "-c",
-    "commit.gpgsign=false",
-    "commit",
-    "-qm",
-    message,
+  const env = date
+    ? { ...process.env, GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date }
+    : undefined;
+  execFileSync(
+    "git",
+    [
+      "-C",
+      cwd,
+      "-c",
+      "user.name=t",
+      "-c",
+      "user.email=t@example.invalid",
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "-qm",
+      message,
+    ],
+    { env },
   );
 }
 
@@ -57,7 +67,16 @@ function fixture() {
   commit(primary, "base");
   writeFileSync(
     join(bin, "gh"),
-    `#!/usr/bin/env bash\nwhile [ $# -gt 0 ]; do [ "$1" = --head ] && cat "${prs}/$2" 2>/dev/null; shift; done\nexit 0\n`,
+    // It drains stdin first, as the real gh can, so a missing `</dev/null` loses later worktrees.
+    `#!/usr/bin/env bash
+cat >/dev/null
+while [ $# -gt 0 ]; do
+  [ "$1" = --head ] && [ "$2" = broken ] && { echo "gh: HTTP 502" >&2; exit 1; }
+  [ "$1" = --head ] && cat "${prs}/$2" 2>/dev/null
+  shift
+done
+exit 0
+`,
   );
   chmodSync(join(bin, "gh"), 0o755);
 
@@ -65,17 +84,17 @@ function fixture() {
   const worktree = (
     branch: string,
     state?: "CLOSED" | "MERGED" | "OPEN",
-    { headMatches = true, path = join(directory, branch) } = {},
+    { commitDate = "", headMatches = true, path = join(directory, branch) } = {},
   ) => {
     gitIn(primary, "worktree", "add", "-q", "-b", branch, path);
-    commit(path, branch);
+    commit(path, branch, commitDate);
     const head = headMatches ? gitIn(path, "rev-parse", "HEAD") : "0".repeat(40);
     if (state) writeFileSync(join(prs, branch), `${state} ${head}\n`);
     return path;
   };
-  const run = (args: string[] = [], idleMinutes = "0") =>
+  const run = (args: string[] = [], idleMinutes = "0", cwd = primary) =>
     spawnSync("bash", [script, ...args], {
-      cwd: primary,
+      cwd,
       encoding: "utf8",
       env: {
         ...process.env,
@@ -84,7 +103,7 @@ function fixture() {
       },
     });
   const branches = () => gitIn(primary, "branch", "--format=%(refname:short)").split("\n");
-  return { branches, primary, run, worktree };
+  return { branches, directory, primary, prs, run, worktree };
 }
 
 describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
@@ -98,7 +117,9 @@ describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
   });
 
   it("removes every finished worktree & its branch, and keeps the primary checkout", () => {
-    const { branches, primary, run, worktree } = fixture();
+    const { branches, primary, prs, run, worktree } = fixture();
+    // A merged PR for main too, so only the primary-checkout guard keeps it.
+    writeFileSync(join(prs, "main"), `MERGED ${gitIn(primary, "rev-parse", "HEAD")}\n`);
     const merged = worktree("merged", "MERGED");
     const closed = worktree("closed", "CLOSED");
     const result = run(["--apply"]);
@@ -122,6 +143,59 @@ describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
     for (const path of [open, none, dirty]) expect(existsSync(path)).toBe(true);
   });
 
+  it("never lists locked or detached worktrees", () => {
+    const { directory, primary, run, worktree } = fixture();
+    const locked = worktree("locked", "MERGED");
+    gitIn(primary, "worktree", "lock", locked);
+    const detached = join(directory, "detached");
+    gitIn(primary, "worktree", "add", "-q", "--detach", detached);
+    const result = run();
+    expect(result.stdout).not.toContain(locked);
+    expect(result.stdout).not.toContain(detached);
+  });
+
+  it("handles a worktree path with a space", () => {
+    const { directory, run, worktree } = fixture();
+    const path = worktree("spaced", "MERGED", { path: join(directory, "with space") });
+    expect(run().stdout).toContain(`would remove ${path} (spaced, PR MERGED)`);
+  });
+
+  it("keeps a worktree when gh fails", () => {
+    const { run, worktree } = fixture();
+    const path = worktree("broken", "MERGED");
+    const result = run(["--apply"]);
+    expect(result.stdout).toContain(`keep ${path}: PR not found`);
+    expect(existsSync(path)).toBe(true);
+  });
+
+  it("keeps the worktree it runs from", () => {
+    const { run, worktree } = fixture();
+    const path = worktree("here", "MERGED");
+    const result = run(["--apply"], "0", path);
+    expect(result.stdout).toContain(`keep ${path}: current worktree`);
+    expect(existsSync(path)).toBe(true);
+  });
+
+  it("keeps ignored local files, but not links, build output, or unchanged copies", () => {
+    const { primary, run, worktree } = fixture();
+    writeFileSync(join(primary, ".gitignore"), "/.worktrees/\n.env\nbuild/\nnode_modules/\nlink\n");
+    gitIn(primary, "add", ".gitignore");
+    commit(primary, "ignore");
+    writeFileSync(join(primary, ".env"), "SHARED=1\n");
+    const local = worktree("local", "MERGED");
+    writeFileSync(join(local, ".env"), "LOCAL=1\n");
+    const disposable = worktree("disposable", "MERGED");
+    writeFileSync(join(disposable, ".env"), "SHARED=1\n");
+    mkdirSync(join(disposable, "build"));
+    writeFileSync(join(disposable, "build", "out.js"), "");
+    mkdirSync(join(disposable, "node_modules"));
+    writeFileSync(join(disposable, "node_modules", "dep.js"), "");
+    symlinkSync(join(primary, "file"), join(disposable, "link"));
+    const result = run();
+    expect(result.stdout).toContain(`keep ${local}: ignored local file .env`);
+    expect(result.stdout).toContain(`would remove ${disposable} (disposable, PR MERGED)`);
+  });
+
   it("keeps a worktree that holds another worktree in an ignored folder", () => {
     const { run, worktree } = fixture();
     const outer = worktree("outer", "MERGED");
@@ -133,6 +207,18 @@ describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
   it("keeps recently active worktrees", () => {
     const { run, worktree } = fixture();
     const path = worktree("recent", "MERGED");
+    expect(run(["--apply"], "120").stdout).toContain(`keep ${path}: active recently`);
+    expect(existsSync(path)).toBe(true);
+  });
+
+  it("counts a recent index change as activity, even with an old commit", () => {
+    const { run, worktree } = fixture();
+    const path = worktree("touched", "MERGED", { commitDate: "2000-01-01T00:00:00Z" });
+    utimesSync(
+      join(gitIn(path, "rev-parse", "--absolute-git-dir"), "index"),
+      new Date(),
+      new Date(),
+    );
     expect(run(["--apply"], "120").stdout).toContain(`keep ${path}: active recently`);
     expect(existsSync(path)).toBe(true);
   });

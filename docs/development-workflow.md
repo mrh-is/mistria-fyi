@@ -835,14 +835,21 @@ pnpm run worktree:cleanup
 Run `pnpm run worktree:cleanup:apply` only after reviewing the preview.
 `scripts/cleanup-worktrees.sh` removes a linked worktree when all of these hold:
 
-- it isn’t locked or the primary checkout,
+- it isn’t locked, the primary checkout, or the worktree the helper runs from,
+- it doesn’t hold another worktree (a nested one lives in an ignored folder that removal would
+  delete),
 - it has no uncommitted or untracked changes,
+- its ignored files are only links, build & dependency output, Claude Code’s copied
+  `.claude/settings.local.json`, or unchanged copies of the primary checkout’s files,
 - nothing in it changed in the last two hours (`MISTRIA_CLEANUP_IDLE_MINUTES` overrides that),
-- its branch’s most recent pull request is merged or closed.
+- its branch’s most recent same-repository pull request is merged or closed.
 
-`git worktree remove` still refuses anything Git considers unsafe. The helper deletes the local
-branch too, but only when its tip is the pull request’s head commit, so unpushed commits survive. It
-then prunes registrations whose folders are gone, such as Codex worktrees under a cleared `/tmp`.
+Removal deletes the ignored files that the fourth condition allows, such as `node_modules/`. A
+worktree with any other ignored file, such as an edited `.env`, stays & the preview names the file.
+`git worktree remove` still refuses anything Git considers unsafe, and a failed removal makes the
+helper exit nonzero. The helper deletes the local branch too, but only when its tip is the pull
+request’s head commit, so unpushed commits survive. It then prunes registrations whose folders are
+gone, such as Codex worktrees under a cleared `/tmp`.
 
 ### Automatic housekeeping
 
