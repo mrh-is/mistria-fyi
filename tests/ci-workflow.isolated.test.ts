@@ -60,9 +60,9 @@ const pinnedAction = /^[^@]+@[a-f0-9]{40}$/;
 const workflow = parse(readFileSync(".github/workflows/ci.yml", "utf8")) as Workflow;
 const jobs = workflow.jobs ?? {};
 const browserJobs = ["accessibility", "pwa"] as const;
-const installJobs = ["lint", "check", "test", "build", ...browserJobs, "issue-sync"] as const;
+const installJobs = ["lint", "check", "test", "build", ...browserJobs] as const;
 // Scheduled housekeeping: it reports on the repository rather than deciding whether code can merge.
-const unrequiredJobs = ["issue-sync", "nightly-report"];
+const unrequiredJobs = ["nightly-report"];
 
 describe("browser selection", () => {
   it.each(["true", "false", undefined])("selects pinned Chromium when CI is %s", async (ci) => {
@@ -433,7 +433,6 @@ describe("CI workflow permissions", () => {
     const elevated: Record<string, Record<string, string>> = {
       changes: { contents: "read", "pull-requests": "read" },
       "ci-passed": { actions: "read", contents: "read" },
-      "issue-sync": { contents: "read", issues: "write" },
       "nightly-report": { actions: "read", contents: "read", issues: "write" },
     };
     expect(workflow.permissions).toEqual({ contents: "read" });

@@ -34,7 +34,6 @@
     "worktree:cleanup": "bash scripts/cleanup-worktrees.sh",
     "worktree:cleanup:apply": "bash scripts/cleanup-worktrees.sh --apply",
     "housekeeping:install": "bash scripts/install-housekeeping-agent.sh",
-    "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
     "generate:brand-assets": "tsx scripts/generate-brand-assets.ts",
     "test:accessibility": "playwright test",
     "test:accessibility:critical": "playwright test --grep @critical",
