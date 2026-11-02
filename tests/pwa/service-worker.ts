@@ -1,4 +1,4 @@
-import type { BrowserContext, Page, Route } from "@playwright/test";
+import type { BrowserContext, CDPSession, Page, Route } from "@playwright/test";
 
 /**
  * Takes the context offline, service workers included. `setOffline` alone doesn't reach a worker
@@ -30,11 +30,16 @@ const RESTARTED_WORKER_GRACE_MS = 1000;
  * when an active worker restarts with a new version waiting, this stops it again after a grace
  * period. A worker that hasn't stopped yet finishes its own work as it would for a player; one that
  * restarted gets only the grace period, so a test can't catch a restarted worker hanging.
+ *
+ * Each page gets its own debugging session, so a page opened after the first closes, such as a
+ * relaunch, stays covered. Worker versions are browser-wide, so the sessions share what they've
+ * seen, and any session still open can stop a worker.
  */
-export async function stopRestartedWorkers(page: Page): Promise<void> {
-  const session = await page.context().newCDPSession(page);
+export async function stopRestartedWorkers(context: BrowserContext): Promise<void> {
+  const sessions = new Set<CDPSession>();
   const versions = new Map<string, { runningStatus: string; status: string }>();
   const stoppedWhileActive = new Set<string>();
+  const stopping = new Set<string>();
   const isHoldingTakeover = (versionId: string): boolean => {
     const version = versions.get(versionId);
     return (
@@ -45,29 +50,56 @@ export async function stopRestartedWorkers(page: Page): Promise<void> {
     );
   };
   const stopIfHoldingTakeover = async (versionId: string): Promise<void> => {
-    if (!isHoldingTakeover(versionId)) return;
     try {
-      await session.send("ServiceWorker.stopWorker", { versionId });
-    } catch (error) {
-      // A closed session means the test ended, so nothing is left to take over. Anything else
-      // would otherwise show only as a takeover timing out.
-      if (error instanceof Error && error.message.includes("closed")) return;
-      throw error;
+      for (const session of sessions) {
+        if (!isHoldingTakeover(versionId)) return;
+        try {
+          await session.send("ServiceWorker.stopWorker", { versionId });
+          return;
+        } catch (error) {
+          // A closed session means its page closed; another page's may still be open. Anything
+          // else would otherwise show only as a takeover timing out.
+          if (!isClosedError(error)) throw error;
+          sessions.delete(session);
+        }
+      }
+    } finally {
+      stopping.delete(versionId);
     }
   };
-  session.on("ServiceWorker.workerVersionUpdated", ({ versions: updated }) => {
-    for (const version of updated) {
-      versions.set(version.versionId, version);
-      if (version.status === "activated" && version.runningStatus === "stopped") {
-        stoppedWhileActive.add(version.versionId);
-      }
-      if (!isHoldingTakeover(version.versionId)) continue;
-      setTimeout(() => {
-        void stopIfHoldingTakeover(version.versionId);
-      }, RESTARTED_WORKER_GRACE_MS);
+  const follow = async (page: Page): Promise<void> => {
+    try {
+      const session = await context.newCDPSession(page);
+      sessions.add(session);
+      page.once("close", () => sessions.delete(session));
+      session.on("ServiceWorker.workerVersionUpdated", ({ versions: updated }) => {
+        for (const version of updated) {
+          versions.set(version.versionId, version);
+          if (version.status === "activated" && version.runningStatus === "stopped") {
+            stoppedWhileActive.add(version.versionId);
+          }
+          // Every open page's session reports the same update, so only the first schedules a stop.
+          if (!isHoldingTakeover(version.versionId) || stopping.has(version.versionId)) continue;
+          stopping.add(version.versionId);
+          setTimeout(() => {
+            void stopIfHoldingTakeover(version.versionId);
+          }, RESTARTED_WORKER_GRACE_MS);
+        }
+      });
+      await session.send("ServiceWorker.enable");
+    } catch (error) {
+      // The page closed before its session attached, so it has no requests to cover.
+      if (!isClosedError(error)) throw error;
     }
+  };
+  context.on("page", (page) => {
+    void follow(page);
   });
-  await session.send("ServiceWorker.enable");
+  await Promise.all(context.pages().map(async (page) => follow(page)));
+}
+
+function isClosedError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes("closed");
 }
 
 /**

@@ -16,8 +16,8 @@ import type { BrowserContext, Page } from "@playwright/test";
 const WORKER_PATH = ".svelte-kit/output/client/service-worker.js";
 const VERSION_PATH = ".svelte-kit/output/client/_app/version.json";
 
-test.beforeEach(async ({ page }) => {
-  await stopRestartedWorkers(page);
+test.beforeEach(async ({ context }) => {
+  await stopRestartedWorkers(context);
 });
 
 function cacheNames(page: Page): Promise<string[]> {
@@ -411,35 +411,45 @@ function lastLocale(page: Page): Promise<unknown> {
 
 // Timed for the instant Chromium stops the old worker, which restarts it to answer. The window is
 // narrow, so a late request misses it and the takeover simply proceeds; nothing asserts the restart.
-// An undebugged browser waits about 30 s here, and `stopRestartedWorkers` stands in for that.
-test("takes over after a page request restarts the old worker mid-takeover", async ({
-  context,
-  page,
-}) => {
-  await page.goto("/en");
-  await waitForControl(page);
-  const oldCache = versionCacheOf(await cacheNames(page));
-  const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
-
-  try {
-    const reloaded = page.waitForEvent("load");
-    await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.ready;
-      registration.addEventListener("updatefound", () => {
-        const worker = registration.installing;
-        worker?.addEventListener("statechange", () => {
-          if (worker.state === "installed") void fetch("/robots.txt?mid-takeover");
-        });
-      });
-      globalThis.dispatchEvent(new Event("focus"));
-    });
-    await waitForTakeover(context, `cache-${newVersion}`);
-    await reloaded;
+// An undebugged browser waits about 30 s here, and `stopRestartedWorkers` stands in for that. The
+// relaunch case makes the request from a page opened after the first closed.
+for (const relaunch of [false, true]) {
+  test(`takes over after a page request restarts the old worker mid-takeover${relaunch ? ", after a relaunch" : ""}`, async ({
+    context,
+    page: firstPage,
+  }) => {
+    let page = firstPage;
+    await page.goto("/en");
     await waitForControl(page);
-  } finally {
-    restore();
-  }
-});
+    if (relaunch) {
+      await page.close();
+      page = await context.newPage();
+      await page.goto("/en");
+      await waitForControl(page);
+    }
+    const oldCache = versionCacheOf(await cacheNames(page));
+    const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
+
+    try {
+      const reloaded = page.waitForEvent("load");
+      await page.evaluate(async () => {
+        const registration = await navigator.serviceWorker.ready;
+        registration.addEventListener("updatefound", () => {
+          const worker = registration.installing;
+          worker?.addEventListener("statechange", () => {
+            if (worker.state === "installed") void fetch("/robots.txt?mid-takeover");
+          });
+        });
+        globalThis.dispatchEvent(new Event("focus"));
+      });
+      await waitForTakeover(context, `cache-${newVersion}`);
+      await reloaded;
+      await waitForControl(page);
+    } finally {
+      restore();
+    }
+  });
+}
 
 // A new version reads the last-used locale partway through its install. A language switch after
 // that read, but before the install finishes, must still reach it: the next launch may be offline
