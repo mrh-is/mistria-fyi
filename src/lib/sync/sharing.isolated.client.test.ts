@@ -1,5 +1,5 @@
 import { deflateSync } from "node:zlib";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 
@@ -45,8 +45,10 @@ async function load(local: Record<string, unknown>, client: RelayClient) {
   vi.stubGlobal("localStorage", memoryStorage({ [PROGRESS_KEY]: blob(local) }));
   vi.stubGlobal("navigator", {});
   vi.resetModules();
-  const { userState } = await import("#lib/stores/user-state.svelte.js");
+  const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
   userState.loadFromStorage();
+  // Finish the fixture's migration write before a test captures its storage baseline.
+  await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS);
   const sharing = await import("./sharing.js");
   sharing.setRelayClient(client);
   sharing.setTurnstileTokenSource(() => Promise.resolve("challenge"));
@@ -56,6 +58,10 @@ async function load(local: Record<string, unknown>, client: RelayClient) {
 const COMPUTER = { code: { key: OLD_KEY, token: TOKEN }, kind: "computer" };
 
 beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
   vi.useRealTimers();
 });
 
@@ -389,12 +395,25 @@ describe("following a code", () => {
 
   it("changes nothing when the player left before the save arrived", async () => {
     const save = savBytes({ player: { name: "Robin" } });
-    const read = vi.fn<RelayClient["read"]>().mockResolvedValue(await envelopeRead(key, save));
+    const response = await envelopeRead(key, save);
+    const pendingRead = Promise.withResolvers<ReadResult>();
+    const read = vi.fn<RelayClient["read"]>().mockReturnValue(pendingRead.promise);
     const { sharing, userState } = await load({}, relay({ read }));
+    const { PERSIST_DEBOUNCE_MS } = await import("#lib/stores/user-state.svelte.js");
     const before = localStorage.getItem(PROGRESS_KEY);
-    expect(await sharing.followCode(key, () => false)).toEqual({ kind: "unreachable" });
+    let stillWanted = true;
+    const following = sharing.followCode(key, () => stillWanted);
+    await vi.waitFor(() => {
+      expect(read).toHaveBeenCalledTimes(1);
+    });
+    stillWanted = false;
+    // A slow relay must not let hydration's auto-save look like a cancelled follow's write.
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS);
+    pendingRead.resolve(response);
+    expect(await following).toEqual({ kind: "unreachable" });
     expect(localStorage.getItem(PROGRESS_KEY)).toBe(before);
     expect(userState.syncLane).toBeUndefined();
+    expect(userState.state.progress.renown).toBe(3);
   });
 
   it("changes nothing when the save inside can't be read", async () => {
