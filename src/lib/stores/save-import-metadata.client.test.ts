@@ -10,6 +10,7 @@ const metadata = {
 };
 
 beforeEach(() => {
+  userState.loadFromStorage();
   userState.resetAll();
 });
 

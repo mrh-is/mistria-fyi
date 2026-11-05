@@ -52,18 +52,13 @@ export function factRank(field: ProgressField, value: string | undefined): numbe
 }
 
 /** Sets one fact to a `progressFacts` value, or to its default for `undefined`. */
-export function writeFact(
-  progress: ProgressState,
-  key: string,
-  value: string | undefined,
-  createSet = () => new Set<string>(),
-): void {
+export function writeFact(progress: ProgressState, key: string, value: string | undefined): void {
   const [field, id = "", member = ""] = key.split("/") as [ProgressField, string?, string?];
   switch (field) {
     case "animalCosmetics":
     case "animals": {
       const byAnimal = progress[field] as Record<string, Set<string>>;
-      const ids = getOrCreate(byAnimal, id, createSet);
+      const ids = getOrCreate(byAnimal, id, () => new Set<string>());
       if (value === undefined) ids.delete(member);
       else ids.add(member);
       return;
@@ -156,7 +151,6 @@ const NORMALIZE_LEVEL: Partial<Record<ProgressField, (value: number) => number>>
 export function mergeProgress(
   progress: ProgressState,
   imported: Partial<ProgressState>,
-  createSet?: () => Set<string>,
 ): MergeResult {
   const counts = emptyMergeCounts();
   const before = progressFacts(progress);
@@ -173,7 +167,7 @@ export function mergeProgress(
     const value = normalize ? String(normalize(Number(raw))) : raw;
     const increase = factRank(field, value) - factRank(field, before.get(key));
     if (!(increase > 0)) continue;
-    writeFact(progress, key, value, createSet);
+    writeFact(progress, key, value);
     if (field === "mineFloor" || field === "renown") counts[field] = increase;
     else if (field === "questStates") counts.quests++;
     else if (field === "unlockedPerks") counts.perks++;
@@ -194,12 +188,11 @@ export function applyAdditiveSave(
   imported: Partial<ProgressState>,
   source: "save" | "unknown",
   playtime: number | undefined,
-  createSet?: () => Set<string>,
 ): MergeResult {
   if (source === "save") recordSavePlaytime(history, playtime);
   const stamp = source === "save" ? playtime : editPlaytime(history);
   const before = progressFacts(progress);
-  const result = mergeProgress(progress, imported, createSet);
+  const result = mergeProgress(progress, imported);
   const after = progressFacts(progress);
   for (const key of changedFacts(before, after)) {
     history.provenance[key] = appliedFact(

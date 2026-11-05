@@ -267,9 +267,10 @@ The app processes save files entirely client-side. No save data is uploaded.
 5. `mergeFromSave` refuses the import if this device is syncing. It compares the incoming farm with
    the tracked farm using the same save number & creation version rules as sync. If the import would
    combine known different farms, it asks the player to cancel or explicitly merge. The write
-   rechecks the farms when the player confirms. Renamed saves & extracted JSON may lack a save
-   number. An unidentified save leaves an existing known identity in place. Each tab accepts one
-   import at a time.
+   rechecks the farms when the player confirms. A confirmed merge keeps the combined progress and
+   tracks the identified farm from the most recent import. Renamed saves & extracted JSON may lack a
+   save number. An unidentified save leaves an existing known identity in place. Each tab accepts
+   one import at a time.
 6. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
    values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
    quest state (`none` → `obtained` → `completed`). Relationships, the break-ups setting, & child

@@ -4,8 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
+import { PROGRESS_STORAGE_KEY, QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
+import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import ImportCard from "./import-card.svelte";
@@ -235,6 +237,32 @@ describe("save import", () => {
 });
 
 describe("save import atomicity", () => {
+  it.each([true, false])(
+    "asks the player to update when newer data blocks import (loaded before import: %s)",
+    async (loaded) => {
+      const newer = JSON.stringify({
+        progress: { renown: 17 },
+        version: CURRENT_SERIALIZATION_VERSION + 1,
+      });
+      const quarantine = localStorage.getItem(QUARANTINE_STORAGE_KEY);
+      localStorage.setItem(PROGRESS_STORAGE_KEY, newer);
+      if (loaded) userState.loadFromStorage();
+
+      try {
+        await importFiles([new File(['{"items_acquired":["turnip"]}'], "player.json")]);
+        expect(await screen.findByRole("alert")).toHaveTextContent(
+          "Your progress was saved by a newer version. Update to continue.",
+        );
+        expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(newer);
+        expect(localStorage.getItem(QUARANTINE_STORAGE_KEY)).toBe(quarantine);
+        expect(userState.state.progress.almanac.size).toBe(0);
+      } finally {
+        localStorage.removeItem(PROGRESS_STORAGE_KEY);
+        userState.loadFromStorage();
+      }
+    },
+  );
+
   it("rejects an oversized save before reading it and preserves tracker state", async () => {
     enableSpoilers();
     const before = userState.exportBackup();

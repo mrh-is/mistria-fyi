@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
 
@@ -7,6 +7,11 @@ import type { VillagerId } from "#lib/types/tracker-data.js";
 const ADELINE = "adeline" as VillagerId;
 const BALOR = "balor" as VillagerId;
 const CELINE = "celine" as VillagerId;
+
+beforeEach(() => {
+  userState.loadFromStorage();
+  userState.resetAll();
+});
 
 afterEach(() => {
   userState.resetAll();

@@ -209,6 +209,9 @@
       case "busy":
         importError = m.import_error_busy();
         break;
+      case "newer-data":
+        importError = m.persistence_warning_newer_data();
+        break;
       case "sync-active":
         importError = m.import_error_sync_active();
         break;

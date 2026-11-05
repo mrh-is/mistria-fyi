@@ -291,7 +291,7 @@ interface ManualImportOptions {
 export type ManualImportOutcome =
   | { farm: string; kind: "ask" }
   | { kind: "applied"; result: MergeResult }
-  | { kind: "busy" | "sync-active" | "write-failed" };
+  | { kind: "busy" | "newer-data" | "sync-active" | "write-failed" };
 
 /** What an applied save leaves in `local`: its receipt & when it came. */
 export interface SyncApplyStamp {
@@ -513,7 +513,10 @@ function createUserState() {
    */
   function writeProgress(intent: WriteIntent): boolean {
     if (intent.kind === "auto-save" && intent.generation !== saveGeneration) return false;
-    if (!_persistenceReady && !(intent.kind === "merge" && quarantineAvailable)) return false;
+    if (!_persistenceReady && !(intent.kind === "merge" && quarantineAvailable)) {
+      if (intent.kind === "merge" && newerDataBlocked) intent.settle({ kind: "newer-data" });
+      return false;
+    }
     const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
     if (!storedResult.ok) {
       reportStorageUnavailable();
@@ -532,6 +535,7 @@ function createUserState() {
     if (stored !== null && stored !== lastKnownStoredValue) {
       if (read?.kind === "newer" || intent.kind === "auto-save") {
         applyStorageValue(stored);
+        if (intent.kind === "merge") intent.settle({ kind: "newer-data" });
         return false;
       }
       if (read?.kind === "unreadable") {
@@ -1223,22 +1227,6 @@ function createUserState() {
       options: ManualImportOptions = {},
     ): Promise<ManualImportOutcome> {
       if (local.syncLane) return { kind: "sync-active" };
-      if (!("window" in globalThis)) {
-        const { confirmedFarm, metadata, playtime, source = "save" } = options;
-        const tracked = state.lastImport?.identity ?? null;
-        const farm = manualFarmQuestion(tracked, null, metadata?.identity ?? null);
-        if (farm !== undefined && farm !== confirmedFarm) return { farm, kind: "ask" };
-        const result = applyAdditiveSave(
-          state.progress,
-          history,
-          imported,
-          source,
-          playtime,
-          () => new SvelteSet(),
-        );
-        if (metadata) state.lastImport = importMetadata(tracked, metadata);
-        return { kind: "applied", result };
-      }
       if (pendingManualProgress) return { kind: "busy" };
       pendingManualProgress = state.progress;
       try {

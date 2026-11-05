@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { render } from "@testing-library/svelte";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import MergeSummary from "./merge-summary.svelte";
 
@@ -29,6 +29,11 @@ const CASES: { expected: string; imported: Partial<ProgressState>; setup?: () =>
   },
 ];
 
+beforeEach(() => {
+  userState.loadFromStorage();
+  userState.resetAll();
+});
+
 afterEach(() => {
   userState.resetAll();
 });
@@ -42,12 +47,12 @@ describe("merge summary integration", () => {
       if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
       const { counts } = outcome.result;
 
-      const { text } = renderToFragment(MergeSummary, {
+      const { container } = render(MergeSummary, {
         props: { counts, filesUsed: ["player.json"] },
       });
 
-      expect(text).toContain(expected);
-      expect(text).not.toContain("No new data to import");
+      expect(container).toHaveTextContent(expected);
+      expect(container).not.toHaveTextContent("No new data to import");
     },
   );
 });
@@ -61,12 +66,12 @@ describe("merge summary household conflicts", () => {
     if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
     const { conflicts, counts } = outcome.result;
 
-    const { container, text } = renderToFragment(MergeSummary, {
+    const { container } = render(MergeSummary, {
       props: { conflicts, counts },
     });
 
-    expect(text).toContain("Adeline");
-    expect(text).toContain("Balor");
+    expect(container).toHaveTextContent("Adeline");
+    expect(container).toHaveTextContent("Balor");
     const link = container.querySelector("a[href$='/villagers']");
     expect(link?.textContent).toContain("Correct this manually");
   });
@@ -81,12 +86,12 @@ describe("merge summary household conflicts", () => {
     if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
     const { conflicts, counts } = outcome.result;
 
-    const { text } = renderToFragment(MergeSummary, {
+    const { container } = render(MergeSummary, {
       props: { conflicts, counts },
     });
 
-    expect(text).toContain("Adeline");
-    expect(text).toContain("Kids");
-    expect(text).toContain("Child-free");
+    expect(container).toHaveTextContent("Adeline");
+    expect(container).toHaveTextContent("Kids");
+    expect(container).toHaveTextContent("Child-free");
   });
 });

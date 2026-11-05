@@ -174,6 +174,9 @@ describe("serialized progress writes", () => {
     const reloaded = await openTab();
     expect(reloaded.userState.state.progress).toMatchObject({ mineFloor: 10, renown: 12 });
     expect(reloaded.userState.state.lastImport).toEqual(secondFarm);
+    await expect(
+      reloaded.userState.mergeFromSave({}, { metadata: firstFarm }),
+    ).resolves.toMatchObject({ kind: "ask" });
   });
 
   it("refuses an import when a sync lane starts while the import waits for the lock", async () => {

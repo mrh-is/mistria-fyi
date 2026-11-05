@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { resolutionHolds } from "#lib/engine/provenance.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -9,6 +9,11 @@ const TURNIP = "turnip" as ItemId;
 const POTATO = "potato" as ItemId;
 const ONE_REWARD_QUEST = "bell_berry_bakewell_tart_challenge" as QuestId;
 const ONE_REWARD_RECIPE = "kitchen_herb_planter" as RecipeId;
+
+beforeEach(() => {
+  userState.loadFromStorage();
+  userState.resetAll();
+});
 
 afterEach(() => {
   userState.resetAll();
