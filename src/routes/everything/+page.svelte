@@ -8,12 +8,13 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import PageSearchStatus from "#lib/components/page-search-status.svelte";
   import { createSharedReveals } from "#lib/controllers/completion-scope.svelte.js";
-  import { showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { showsCompletedRows, visibleWindows } from "#lib/controllers/page-search.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
   import { CATEGORY_KEYS, getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { building } from "$app/env";
   import { goto } from "$app/navigation";
@@ -50,7 +51,12 @@
     };
   });
 
-  let progress = $derived(getAllProgress(userState.progressContext));
+  let progress = $derived(
+    getAllProgress(
+      { ...userState.progressContext, availabilityWindows: visibleWindows() },
+      { matchesSources: (sources) => toolbarState.matchesSourceFilters(sources) },
+    ),
+  );
 
   let overallProgress = $derived(getOverallProgress(progress));
   let grouping = $derived.by(() => {

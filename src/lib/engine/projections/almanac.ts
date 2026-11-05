@@ -110,7 +110,9 @@ export function projectAlmanac(
     const applicableRows = rows.filter((row) => row.obtainable);
     const progress: CategoryProgress = {
       completed: applicableRows.filter((row) => row.completed).length,
-      remainingInScope: applicableRows.filter((row) => !row.completed && row.available).length,
+      remainingInScope: applicableRows.filter(
+        (row) => !row.completed && row.available && (options.matchesSources?.(row.sources) ?? true),
+      ).length,
       total: applicableRows.length,
     };
     const scopedRows = rows.filter((row) => row.matchesFilters);

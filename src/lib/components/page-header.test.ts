@@ -18,7 +18,8 @@ describe("PageHeader", () => {
     expect(header?.getAttribute("style")).toContain("--category-progress-percent: 35%");
     expect(queries.getByRole("heading", { level: 1, name: "Almanac" })).toBeTruthy();
     expect(queries.getByText("7 / 20")).toBeTruthy();
-    expect(queries.getByText("7 of 20 completed")).toBeTruthy();
+    expect(queries.getByText("7 of 20 completed, 3 for now")).toBeTruthy();
+    expect(queries.getByText("3 for now")).toBeTruthy();
     expect(header?.querySelector("[data-page-header-ribbon]")).not.toBeNull();
   });
 

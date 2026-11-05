@@ -47,6 +47,8 @@
   "toolbar_filters_cleared": "모든 필터 해제됨",
   "page_header_back_to_home": "홈으로 돌아가기",
   "page_header_progress": "{total}개 중 {completed}개 완료",
+  "progress_for_now": "지금 {count}개",
+  "progress_done_for_now": "지금은 완료",
   "home_index_heading": "색인",
   "home_everything_label": "전체",
   "home_page_description": "Fields of Mistria의 박물관 기증, 알마낙 발견, 레시피, 관계, 스킬, 퀘스트 등을 기록하며 100% 달성을 향해 나아가세요.",

@@ -47,6 +47,8 @@
   "toolbar_filters_cleared": "フィルターをすべて解除しました",
   "page_header_back_to_home": "ホームに戻る",
   "page_header_progress": "{total}件中{completed}件完了",
+  "progress_for_now": "今は{count}件",
+  "progress_done_for_now": "今はすべて完了",
   "home_index_heading": "目次",
   "home_everything_label": "すべて",
   "home_page_description": "Fields of Mistriaの博物館への寄贈、アルマナックの発見、レシピ、交流、スキル、クエストなどを記録して、100%コンプリートを目指しましょう。",

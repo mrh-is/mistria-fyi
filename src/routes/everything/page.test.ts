@@ -63,7 +63,10 @@ describe("/everything page", () => {
 
       expect(
         view.queries.getByText(
-          `${formatNumber(overall.completed, "en")} of ${formatNumber(overall.total, "en")} completed`,
+          new RegExp(
+            `^${formatNumber(overall.completed, "en")} of ${formatNumber(overall.total, "en")} completed`,
+            "u",
+          ),
         ),
       ).toBeTruthy();
     });

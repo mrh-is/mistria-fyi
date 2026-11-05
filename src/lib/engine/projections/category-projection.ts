@@ -2,6 +2,7 @@ import { isConditionVisible } from "#lib/engine/visibility.js";
 
 import type { CategoryProgress } from "#lib/engine/progress.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
+import type { Source } from "#lib/types/acquisition.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 /**
@@ -15,6 +16,8 @@ export interface CategoryProjection {
 
 /** Options every projection accepts. Categories may accept more, such as the almanac's filters. */
 export interface CategoryProjectionOptions {
+  /** Narrows what counts as remaining to these sources: a page's source type filters. */
+  matchesSources?: (sources: Source[]) => boolean;
   /** Flags rows whose visibility condition is unmet; omitted, no row is spoilered. */
   progressionState?: UserProgressionState;
 }

@@ -2,7 +2,9 @@
   import IconArrowLeft from "@tabler/icons-svelte-runes/icons/arrow-left";
 
   import { Icon } from "#lib/components/icon/index.js";
+  import ProgressScopeNote from "#lib/components/progress-scope-note.svelte";
   import * as m from "#lib/paraglide/messages.js";
+  import { progressScope, withProgressScope } from "#lib/presentation/progress-scope.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
@@ -40,6 +42,8 @@
       : undefined,
   );
 
+  const scope = $derived(progress === undefined ? undefined : progressScope(progress));
+
   function goBack(event: MouseEvent): void {
     if (history.length <= 1) return;
     event.preventDefault();
@@ -72,10 +76,14 @@
   {#if pct !== undefined && progress !== undefined}
     <span class="page-header__count">
       <span class="sr-only" aria-live="polite"
-        >{m.page_header_progress({
-          completed: formatNumber(progress.completed, page.data.locale),
-          total: formatNumber(progress.total, page.data.locale),
-        })}</span
+        >{withProgressScope(
+          m.page_header_progress({
+            completed: formatNumber(progress.completed, page.data.locale),
+            total: formatNumber(progress.total, page.data.locale),
+          }),
+          scope,
+          page.data.locale,
+        )}</span
       >
       <span aria-hidden="true"
         >{formatNumber(progress.completed, page.data.locale)} / {formatNumber(
@@ -83,6 +91,9 @@
           page.data.locale,
         )}</span
       >
+      {#if scope}
+        <span aria-hidden="true"><ProgressScopeNote locale={page.data.locale} {scope} /></span>
+      {/if}
     </span>
   {/if}
   {#if category !== undefined}
@@ -156,7 +167,9 @@
   .page-header__count {
     position: relative;
     z-index: 2;
+    display: grid;
     flex-shrink: 0;
+    justify-items: end;
     color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-xs);

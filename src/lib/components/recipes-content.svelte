@@ -19,6 +19,7 @@
   import { recipePlacements } from "#lib/engine/projections/recipes.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
+  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -98,7 +99,7 @@
 
   /**
    * Each group's entries narrowed in three steps: `namedEntries` (search; the group renders only
-   * when non-empty), `scopedEntries` (plus source filters; the counter), and `filteredEntries`
+   * when non-empty), `scopedEntries` (plus source filters), and `filteredEntries`
    * (plus completed-row hiding; what renders).
    */
   let groupViews = $derived(
@@ -108,13 +109,16 @@
         toolbarState.matchesSourceFilters(sources),
       );
       return {
-        completedCount: scopedEntries.filter((e) => isRecipeCompleted(e.id)).length,
         filteredEntries: scopedEntries.filter((e) =>
           isRowVisible(e.id, isRecipeCompleted(e.id), showsCompletedRows(), recentlyCompleted.ids),
         ),
         group,
         namedEntries,
-        scopedEntries,
+        progress: countProgress(
+          group.entries,
+          (e) => isRecipeCompleted(e.id),
+          (e) => toolbarState.matchesSourceFilters(e.sources),
+        ),
       };
     }),
   );
@@ -142,16 +146,17 @@
 <SpoilerGuardDialog guard={spoilerGuard} />
 
 <SectionGroups getKey={(view) => view.group.id} grouping={sectionGrouping} items={groupViews}>
-  {#snippet section({ completedCount, filteredEntries, group, namedEntries, scopedEntries })}
+  {#snippet section({ filteredEntries, group, namedEntries, progress })}
     {#if namedEntries.length > 0 && (!nameFilter || filteredEntries.length > 0)}
       <ExpandableSection
         {locale}
-        count={completedCount}
+        count={progress.completed}
         forceOpen={!!nameFilter || toolbarState.isSourceFilterNarrowing}
         name={group.name}
         reportCategory="recipe-category"
         reportEntityId={group.id}
-        total={scopedEntries.length}
+        remaining={progress.remainingInScope}
+        total={progress.total}
       >
         <TrackerRowList getKey={(entry) => entry.id} items={filteredEntries}>
           {#snippet row(entry)}

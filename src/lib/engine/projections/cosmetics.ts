@@ -26,7 +26,7 @@ export function projectCosmetics(
   const rows = recordEntries(trackerData.cosmetics).map(([id, cosmetic]): CosmeticRow => ({
     completed: ctx.progress.cosmetics.has(id),
     id,
-    inScope: true,
+    inScope: options.matchesSources?.(cosmetic.sources) ?? true,
     spoilered: isSpoilered(cosmetic.visibility, options.progressionState),
   }));
   return { rows, totals: countChecklist(rows) };

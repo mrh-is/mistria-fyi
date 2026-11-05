@@ -10,7 +10,8 @@ import type {
   CategoryProjectionOptions,
   ChecklistRow,
 } from "#lib/engine/projections/category-projection.js";
-import type { QuestId } from "#lib/types/tracker-data.js";
+import type { Source } from "#lib/types/acquisition.js";
+import type { QuestId, QuestType } from "#lib/types/tracker-data.js";
 
 export interface QuestRow extends ChecklistRow {
   id: QuestId;
@@ -28,13 +29,13 @@ export function projectQuests(
   options: CategoryProjectionOptions = {},
 ): QuestsProjection {
   const rows: QuestRow[] = [];
-  for (const byType of Object.values(trackerData.quests)) {
+  for (const [questType, byType] of recordEntries(trackerData.quests)) {
     for (const [id, quest] of recordEntries(byType)) {
       if (PREGNANCY_QUEST_IDS.has(id)) continue;
       rows.push({
         completed: ctx.progress.questStates[id] === "completed",
         id,
-        inScope: true,
+        inScope: options.matchesSources?.(questSources(questType, id)) ?? true,
         spoilered: isSpoilered(quest.visibility, options.progressionState),
       });
     }
@@ -44,4 +45,17 @@ export function projectQuests(
     ? [...rows, { completed: craving.completed, inScope: true, spoilered: false }]
     : rows;
   return { craving, rows, totals: countChecklist(counted) };
+}
+
+export function questSources(questType: QuestType, questId: QuestId): Source[] {
+  if (questType === "fetch") {
+    const { itemId } = trackerData.quests.fetch[questId];
+    return [...trackerData.items[itemId].sources];
+  }
+  if (questType === "cooking") {
+    const quest = trackerData.quests.cooking[questId];
+    const recipe = "recipeId" in quest ? trackerData.recipes[quest.recipeId] : undefined;
+    if (recipe) return [...recipe.sources];
+  }
+  return [];
 }

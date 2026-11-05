@@ -155,7 +155,7 @@ test.describe("interactive target geometry", () => {
 
   test("fine-pointer tracker controls retain compact accessible targets", async ({ page }) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
     expect(
       await page.evaluate(() => matchMedia("(pointer: fine) and (hover: hover)").matches),
     ).toBe(true);
@@ -183,7 +183,7 @@ test.describe("tracker paper geometry", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light");
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
   });
 
   test(
@@ -282,7 +282,7 @@ test.describe("tracker paper touch geometry", () => {
   test("coarse-pointer targets and expanded sources fit at 320 pixels", async ({ page }) => {
     await initializeApplication(page, "light");
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
 
     expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia("(any-pointer: coarse)").matches)).toBe(true);
@@ -313,7 +313,7 @@ test.describe("tracker paper touch geometry", () => {
       createStoredState({ availabilityWindows: ["now", "anytime", "later"] }),
     );
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
 
     await expect(page.getByRole("button", { name: "Reveal spoiler" }).first()).toBeVisible();
     // Long names wrap at 320 pixels; measure a cover that fits on one line.

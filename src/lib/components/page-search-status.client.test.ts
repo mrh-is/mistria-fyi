@@ -5,10 +5,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import MuseumContent from "#lib/components/museum-content.svelte";
 import PageSearchStatus from "#lib/components/page-search-status.svelte";
 import SearchGuideLink from "#lib/components/search-guide-link.svelte";
+import { visibleWindows } from "#lib/controllers/page-search.svelte.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
+import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
 const KEY = Symbol("test");
 
@@ -95,6 +96,17 @@ describe("PageSearchStatus", () => {
     await fireEvent.click(view.getByRole("button", { name: "Turn them back on" }));
 
     expect(toolbarState.searchShowsAll).toBe(false);
+  });
+
+  it("opens every availability window while filters are paused", () => {
+    userState.setAvailabilityWindows(DEFAULT_AVAILABILITY_WINDOWS);
+    expect(visibleWindows()).toEqual(DEFAULT_AVAILABILITY_WINDOWS);
+
+    toolbarState.setSearchQuery("bass");
+    toolbarState.searchShowsAll = true;
+
+    expect(visibleWindows()).toEqual(AVAILABILITY_WINDOWS);
+    expect(userState.state.availabilityWindows).toEqual(DEFAULT_AVAILABILITY_WINDOWS);
   });
 
   it("ends the pause with the search", () => {

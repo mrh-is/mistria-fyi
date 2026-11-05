@@ -35,6 +35,6 @@ describe("source-filtered content", () => {
 
     expect(
       renderToFragmentWithFeedback(CosmeticsContent, { props: { locale: "en" } }).text,
-    ).toContain(`${slotLabel} 0 / 0`);
+    ).toMatch(new RegExp(`${slotLabel} 0 / [1-9]\\d* done for now`, "u"));
   });
 });

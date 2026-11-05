@@ -70,7 +70,7 @@ describe("CategoryGrid", () => {
   it.each([
     { completed: 1686, remainingInScope: 114, total: 1800, width: 5 },
     { completed: 12_345, remainingInScope: 0, total: 12_345, width: 6 },
-    { completed: 1, remainingInScope: 1, total: 1_000_000, width: 4 },
+    { completed: 1, remainingInScope: 1, total: 1_000_000, width: 9 },
   ])(
     "shares enough count space across active and completed stripes: $width ch",
     ({ width, ...almanac }) => {

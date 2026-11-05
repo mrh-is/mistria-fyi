@@ -68,7 +68,7 @@ describe("ExpandableSection", () => {
       total: 4,
     });
 
-    expect(view.getByText("4 / 4")).toHaveAttribute("aria-hidden", "true");
+    expect(view.getByText("4 / 4").closest("[aria-hidden]")).toHaveAttribute("aria-hidden", "true");
     expect(view.getByRole("button", { name: "Crops, 4 of 4 completed" })).toBeInTheDocument();
     expect(view.getByTestId("section-progress")).toHaveAttribute("aria-hidden", "true");
     expect(view.getByTestId("section-progress-fill")).toHaveStyle("width: 100%");

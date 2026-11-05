@@ -3,7 +3,10 @@ import { getMaxMineFloor } from "#lib/engine/progress.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
-import type { CategoryProjection } from "#lib/engine/projections/category-projection.js";
+import type {
+  CategoryProjection,
+  CategoryProjectionOptions,
+} from "#lib/engine/projections/category-projection.js";
 import type { SpellId } from "#lib/types/tracker-data.js";
 
 export interface SpellRow {
@@ -19,7 +22,10 @@ export interface MinesProjection extends CategoryProjection {
 }
 
 /** Each mine floor & each spell is one step. */
-export function projectMines(ctx: ProgressContext): MinesProjection {
+export function projectMines(
+  ctx: ProgressContext,
+  options: CategoryProjectionOptions = {},
+): MinesProjection {
   const maxFloor = getMaxMineFloor();
   const spells = recordKeys(trackerData.mines.spells).map((id): SpellRow => ({
     completed: ctx.progress.spells.has(id),
@@ -27,10 +33,18 @@ export function projectMines(ctx: ProgressContext): MinesProjection {
   }));
   const total = maxFloor + spells.length;
   const completed = ctx.progress.mineFloor + spells.filter((spell) => spell.completed).length;
+  const spellsInScope = spells.filter(
+    ({ completed: done, id }) =>
+      !done && (options.matchesSources?.(trackerData.mines.spells[id].sources) ?? true),
+  );
   return {
     floor: ctx.progress.mineFloor,
     maxFloor,
     spells,
-    totals: { completed, remainingInScope: total - completed, total },
+    totals: {
+      completed,
+      remainingInScope: maxFloor - ctx.progress.mineFloor + spellsInScope.length,
+      total,
+    },
   };
 }

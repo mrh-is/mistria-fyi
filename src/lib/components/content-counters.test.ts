@@ -8,6 +8,7 @@ import RecipesContent from "#lib/components/recipes-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
+import { getCategoryProgress } from "#lib/engine/categories.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -15,12 +16,6 @@ import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment
 import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
 import type { ItemId, SpellId } from "#lib/types/tracker-data.js";
-
-/** A filtered counter either shrinks below `bound` or the section shows the empty-filter message. */
-function isFilteredTotalBelow(text: string, counter: RegExp, bound: number): boolean {
-  const match = counter.exec(text);
-  return match ? Number(match[2]) < bound : text.includes("No items match the current filters");
-}
 
 afterEach(() => {
   userState.resetAll();
@@ -49,7 +44,7 @@ describe("subsection counters", () => {
     expect(text).toContain(`Spells ${spellCount.toString()} / ${spellCount.toString()}`);
   });
 
-  it("limits almanac counters to the search scope", () => {
+  it("keeps the full section total during a search", () => {
     userState.toggleAlmanacItem("axe_copper" as ItemId);
     userState.toggleAlmanacItem("copper_armor" as ItemId);
     userState.toggleShowCompleted();
@@ -57,7 +52,7 @@ describe("subsection counters", () => {
 
     const { text } = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });
 
-    expect(text).toContain("Blacksmithing 1 / 1");
+    expect(text).toMatch(/Blacksmithing 2 \/ \d{2,}/u);
   });
 
   it("does not return spoilered almanac rows from search", () => {
@@ -115,7 +110,7 @@ describe("subsection counters", () => {
     expect(text).not.toContain(itemName);
   });
 
-  it("reduces mine spell count when source groups are hidden", () => {
+  it("keeps the spell total & narrows the in-scope count when source groups are hidden", () => {
     const spellCount = Object.keys(trackerData.mines.spells).length;
 
     const unfiltered = renderToFragmentWithFeedback(MinesContent, { props: { locale: "en" } });
@@ -125,10 +120,15 @@ describe("subsection counters", () => {
     toolbarState.hideAllSourceFilters();
 
     const { text } = renderToFragmentWithFeedback(MinesContent, { props: { locale: "en" } });
-    expect(isFilteredTotalBelow(text, /Spells (\d+) \/ (\d+)/, spellCount)).toBe(true);
+    expect(text).toMatch(
+      new RegExp(
+        `Spells 0 / ${spellCount.toString()} (\\d+ for now|done for now)|No items match`,
+        "u",
+      ),
+    );
   });
 
-  it("reduces fetch quest count when source groups are hidden", () => {
+  it("keeps the fetch quest total & narrows the in-scope count when source groups are hidden", () => {
     userState.toggleShowSpoilers();
 
     const unfilteredBody = renderToFragmentWithFeedback(QuestsContent, {
@@ -136,7 +136,7 @@ describe("subsection counters", () => {
     }).text;
     const unfilteredMatch = /Fetch Quests (\d+) \/ (\d+)/.exec(unfilteredBody);
     if (!unfilteredMatch) throw new Error("Expected Fetch Quests counter in unfiltered render");
-    const unfilteredTotal = Number(unfilteredMatch[2]);
+    const unfilteredTotal = unfilteredMatch[2];
 
     toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
@@ -144,9 +144,24 @@ describe("subsection counters", () => {
     const filteredBody = renderToFragmentWithFeedback(QuestsContent, {
       props: { locale: "en" },
     }).text;
-    expect(isFilteredTotalBelow(filteredBody, /Fetch Quests (\d+) \/ (\d+)/, unfilteredTotal)).toBe(
-      true,
+    expect(filteredBody).toMatch(
+      new RegExp(`Fetch Quests 0 / ${unfilteredTotal} (\\d+ for now|done for now)`, "u"),
     );
+  });
+
+  it("narrows the quests header with the sources its sections filter by", () => {
+    toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
+    const unfiltered = getCategoryProgress("quests", userState.progressContext, {
+      matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
+    });
+    toolbarState.hideAllSourceFilters();
+
+    const filtered = getCategoryProgress("quests", userState.progressContext, {
+      matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
+    });
+
+    expect(filtered.remainingInScope).toBeLessThan(unfiltered.remainingInScope);
+    expect(filtered.total).toBe(unfiltered.total);
   });
 
   it("hides almanac rows whose covered sources all belong to hidden groups", () => {
