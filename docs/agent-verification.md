@@ -130,9 +130,6 @@ zero, read enough of the log to diagnose it.
 
 ## Visual checks
 
-The [visual-diff pilot](visual-diff-pilot.md) adds informational PR comparisons for two
-representative routes. Its captures do not replace the checklist below or the accessibility suites.
-
 When a task changes `.svelte` files, CSS, layout, or routes, verify it visually before calling it
 done, unless it meets a [visual exemption](#visual-exemptions). Screenshots add up quickly, so
 follow the bounded checklist below instead of browsing around.
@@ -152,6 +149,14 @@ Note: feedback runs as a dry run everywhere except production, including branch 
 servers. Submitting it checks the form & Turnstile (Cloudflare’s bot check) but files no issue.
 Instead, the page shows a “Preview build” notice, and that notice is the expected result
 ([Feedback credentials](app-architecture.md#8-feedback-credentials)).
+
+### One-off comparisons
+
+When a before & after would help review a visual change, open the PR’s base & head revisions in
+[separate local previews](development-workflow.md#preview-from-a-worktree). Use the same browser,
+viewport, theme, & app state in both. Capture the changed route at the same scroll position and
+compare the images side by side. For example, compare the expanded sync panel in both revisions when
+a change affects its spacing.
 
 ### Screenshot limits
 
