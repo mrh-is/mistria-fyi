@@ -30,7 +30,7 @@
       {#each messageParts( (slot) => m.about_maintainer( { maintainer: slot("maintainer"), studio: slot("studio") } ) ) as part, index (index)}
         {#if typeof part === "string"}{part}{:else if part.slot === "maintainer"}<a
             href="https://mrh.is/">Michael Helmbrecht</a
-          >{:else}<a href="https://www.villagerstudio.com/">Villager Studio</a>{/if}
+          >{:else}<a href="https://www.npcstudio.com/">NPC Studio</a>{/if}
       {/each}
     </p>
   </section>

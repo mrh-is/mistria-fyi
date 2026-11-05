@@ -474,7 +474,7 @@
   "import_step_drag_autosave_after": "のファイルを上のドロップゾーンにドラッグします。",
   "import_fallback_before_vaultc": "代替手段として、",
   "import_fallback_between": "(Windows用)または",
-  "import_fallback_after_vaultgo": "(macOSまたはLinux用)を使ってJSONファイルを手動で抽出することもできます。",
+  "import_fallback_after_vaultgo": "(Linux用)を使ってJSONファイルを手動で抽出することもできます。",
   "import_fallback_files": "その後、生成された{player}、{gamedata}、{quests}ファイルからインポートしてください。",
   "import_playing_on_phone": "スマートフォンでプレイしていますか?",
   "import_transfer_to_mobile": "別の端末で同期やバックアップを使う →",

@@ -474,7 +474,7 @@
   "import_step_drag_autosave_after": "結尾的檔案拖到上方的放置區域。",
   "import_fallback_before_vaultc": "作為備用方案，你可以使用",
   "import_fallback_between": "（Windows 上）或",
-  "import_fallback_after_vaultgo": "（macOS 或 Linux 上）手動擷取 JSON 檔案。",
+  "import_fallback_after_vaultgo": "（Linux 上）手動擷取 JSON 檔案。",
   "import_fallback_files": "然後從產生的{player}、{gamedata}和{quests}檔案匯入。",
   "import_playing_on_phone": "在手機上遊玩？",
   "import_transfer_to_mobile": "在其他裝置上使用同步或備份 →",

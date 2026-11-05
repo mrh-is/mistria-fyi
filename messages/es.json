@@ -484,7 +484,7 @@
   "import_step_drag_autosave_after": "hasta la zona de destino de arriba.",
   "import_fallback_before_vaultc": "Como alternativa, puedes extraer los archivos JSON manualmente con",
   "import_fallback_between": "(en Windows) o",
-  "import_fallback_after_vaultgo": "(en macOS o Linux).",
+  "import_fallback_after_vaultgo": "(en Linux).",
   "import_fallback_files": "Luego importa desde los archivos {player}, {gamedata} y {quests} resultantes.",
   "import_playing_on_phone": "¿Juegas desde tu teléfono?",
   "import_transfer_to_mobile": "Usa la sincronización o una copia en tu otro dispositivo →",

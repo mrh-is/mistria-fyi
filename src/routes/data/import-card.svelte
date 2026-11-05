@@ -330,7 +330,7 @@
             {m.import_fallback_before_vaultc()}
             <!-- eslint-disable local/no-hardcoded-ui-text -- proper noun, same in every locale -->
             <a
-              href="https://github.com/Villager-Studio/vaultc"
+              href="https://github.com/NPC-Studio/vaultc"
               target="_blank"
               rel="noopener noreferrer"
               class="underline">vaultc</a
@@ -339,7 +339,7 @@
             {m.import_fallback_between()}
             <!-- eslint-disable local/no-hardcoded-ui-text -- proper noun, same in every locale -->
             <a
-              href="https://github.com/Villager-Studio/vaultgo"
+              href="https://github.com/lordp/VaultGo"
               target="_blank"
               rel="noopener noreferrer"
               class="underline">VaultGo</a
