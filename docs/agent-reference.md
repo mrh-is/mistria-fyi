@@ -54,10 +54,16 @@ or stale, instead of installing them implicitly.
 
 - A new editing worktree runs `node scripts/setup-worktree.ts` once, before the first edit.
 - A read-only session runs nothing. It can read, search, & use `git` & `gh` without dependencies.
+  Its `pipeline/input/` link may be absent, so it looks in the main checkout’s instead.
 - The main checkout & cloud environments use `pnpm install --frozen-lockfile`. Cloud environments
   have no linked worktrees, so they need no links.
-- After a merge, pull, rebase, or manifest edit, `pnpm run` & `pnpm exec` fail with
-  `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`. Run `pnpm install --frozen-lockfile`, which is preauthorized.
+- When dependencies are absent, or a merge, pull, or rebase changes the lockfile, `pnpm run` &
+  `pnpm exec` fail with `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`. In a linked worktree, run
+  `node scripts/setup-worktree.ts`, which also restores missing links. Elsewhere, run
+  `pnpm install --frozen-lockfile`. Both are preauthorized. A deliberate dependency edit follows
+  [Package commands](#package-commands) instead, because a frozen install rejects it.
+- Until setup runs, a linked worktree may have no Git hooks, because `prepare` generates them. CI
+  still runs the checks they would have run.
 - If setup fails, follow AGENTS.md’s stop & report procedure, and run
   `node scripts/machine-doctor.ts --for core` directly to diagnose. Rerunning setup is safe: it
   skips entries that are already linked.
@@ -93,7 +99,8 @@ you must stash, address your entry by its commit ID (see
 
 **Check `pipeline/input/` before assuming a machine has no game files.** Worktree setup symlinks it
 from the main checkout (`SHARED_DIRECTORIES` in `scripts/setup-worktree.ts`), so `ls pipeline/input`
-settles the question. A `needs game installation` label alone doesn’t block a task.
+settles the question once setup has run. Before setup, look in the main checkout’s
+`pipeline/input/`. A `needs game installation` label alone doesn’t block a task.
 
 When present, `pipeline/input/` holds one `vX.Y.Z/` folder per release. Each has `assets/`, `save/`,
 or both. The `assets/` folder holds:
@@ -179,7 +186,8 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
 
 - **Shared hooks:** Claude Code & Codex share one upkeep hook, configured in `.claude/settings.json`
   & `.codex/hooks.json`: edit formatting at `PostToolUse`. Claude Code also exposes the cloud Node
-  runtime at `SessionStart`. No hook installs dependencies.
+  runtime at `SessionStart`, which reinstalls only when the cloud Node is out of date. No other hook
+  installs dependencies.
 - **No blocking hooks:** none of these hooks blocks a tool call when it fails. The repository
   enforces file boundaries with permission rules & CI instead (see below). Shell-command guards were
   removed in #417, after they refused legitimate commands dozens of times and caught no real

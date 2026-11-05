@@ -57,7 +57,9 @@ interference when several sessions work at once; see [Worktrees](../AGENTS.md#wo
 
 ### Worktree creation
 
-Create and set up a worktree from any checkout with one command:
+Create and set up a worktree with one command. The checkout you run it from needs current
+dependencies, so after a `git pull` that changes the lockfile, run `pnpm install --frozen-lockfile`
+first:
 
 ```sh
 pnpm run worktree:new <issue-number>-<short-description> [starting-branch]

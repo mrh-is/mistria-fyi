@@ -228,6 +228,17 @@ describe("setup-worktree", () => {
     expect(readFileSync(log, "utf8").startsWith("install --frozen-lockfile\n")).toBe(true);
   });
 
+  it("rejects arguments, such as a flag from a retired hook", () => {
+    const { log, worktree } = fixture();
+    const result = spawnSync(process.execPath, [script, "--cwd-changed"], {
+      cwd: worktree,
+      encoding: "utf8",
+    });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("setup takes no arguments");
+    expect(existsSync(log)).toBe(false);
+  });
+
   it("refuses to run in the main checkout", () => {
     const { main } = fixture();
     const result = spawnSync(process.execPath, [script], { cwd: main, encoding: "utf8" });

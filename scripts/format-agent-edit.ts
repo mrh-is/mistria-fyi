@@ -51,7 +51,7 @@ export function formatEdit(input: HookInput, run: RunCommand = runPnpm): string 
     return undefined;
   }
   return result.output.includes("ERR_PNPM_VERIFY_DEPS_BEFORE_RUN")
-    ? "Dependencies are missing or stale, so this edit wasn’t formatted. Run `node scripts/setup-worktree.ts` in a new worktree, or `pnpm install --frozen-lockfile` otherwise."
+    ? "Dependencies are missing or stale, so this edit wasn’t formatted. In a linked worktree, run `node scripts/setup-worktree.ts`. Elsewhere, run `pnpm install --frozen-lockfile`. After a deliberate dependency edit, follow Package commands in docs/agent-reference.md instead."
     : `Formatting failed. Report the failure before proceeding.\n${result.output}`;
 }
 

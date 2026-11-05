@@ -12,7 +12,7 @@ const project = dirname(import.meta.dirname);
 
 /**
  * After a file edit: formats it, when the event belongs to a checkout of this repository. Returns
- * the formatter's own instructions for the agent, and throws only on an unexpected payload.
+ * the formatter's own instructions for the agent, and throws on an unexpected payload or Git failure.
  */
 export function agentToolHook(
   input: HookInput,

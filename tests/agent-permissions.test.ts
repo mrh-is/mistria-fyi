@@ -148,7 +148,7 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
     expect(matcher.test("Bash")).toBe(false);
   });
 
-  it("registers only edit formatting & the cloud runtime, and never installs dependencies", () => {
+  it("registers only edit formatting & the cloud runtime, and never worktree setup", () => {
     expect(Object.keys(hooks).toSorted()).toEqual(
       file.startsWith(".claude") ? ["PostToolUse", "SessionStart"] : ["PostToolUse"],
     );

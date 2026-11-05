@@ -1,7 +1,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -145,6 +145,28 @@ describe("Shared agent tool upkeep", () => {
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe("");
+  });
+
+  it("exits 2 with the formatter’s instructions when pnpm reports stale dependencies", () => {
+    const { root } = fixture();
+    const pnpm = join(root, "fake-pnpm.mjs");
+    writeFileSync(
+      pnpm,
+      'console.error("[ERR_PNPM_VERIFY_DEPS_BEFORE_RUN] stale");\nprocess.exitCode = 1;\n',
+    );
+    const env = Object.fromEntries(
+      Object.entries(process.env).filter(([key]) => key.toLowerCase() !== "npm_execpath"),
+    );
+    const project = dirname(dirname(hookScript));
+    const result = spawnSync(process.execPath, [hookScript], {
+      cwd: project,
+      encoding: "utf8",
+      env: { ...env, CLAUDE_PROJECT_DIR: project, npm_execpath: pnpm },
+      input: JSON.stringify(edit(project, "README.md")),
+    });
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("node scripts/setup-worktree.ts");
+    expect(result.stderr).not.toContain("Report this before other work");
   });
 
   it("exits 2 with agent-visible diagnostics for a payload without a cwd", () => {

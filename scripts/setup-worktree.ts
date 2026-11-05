@@ -184,6 +184,11 @@ function git(...args: string[]): string {
 }
 
 function main(): number {
+  // A session keeps its hooks until it restarts, so an old hook's flag can still arrive here.
+  if (process.argv.length > 2) {
+    console.error("error: setup takes no arguments. Usage: node scripts/setup-worktree.ts");
+    return 1;
+  }
   const worktreeDir = resolve(git("rev-parse", "--show-toplevel"));
   // `git worktree list` lists the main worktree first.
   const repoRoot = resolve(
