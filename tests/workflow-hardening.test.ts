@@ -72,11 +72,17 @@ describe("workflow hardening", () => {
     });
 
     it("pins every action to a full commit SHA with a version comment", () => {
-      const unpinned = source
+      const unpinnedSteps = Object.values(workflow.jobs ?? {})
+        .flatMap((job) => job.steps ?? [])
+        .map((step) => step.uses)
+        .filter((uses) => uses !== undefined && !/^[^@]+@[a-f0-9]{40}$/u.test(uses));
+      expect(unpinnedSteps).toEqual([]);
+
+      const missingPinOrComment = source
         .split("\n")
         .filter((line) => /^\s*-?\s*uses:/.test(line))
         .filter((line) => !/@[a-f0-9]{40} # v\d+(\.\d+)*$/.test(line));
-      expect(unpinned).toEqual([]);
+      expect(missingPinOrComment).toEqual([]);
     });
 
     it("references no deploy credentials or repository secrets", () => {
