@@ -21,6 +21,12 @@ admin endpoint fail closed. Never put secrets in `wrangler.toml` or commit a `.d
 
 ## Wire contract
 
+[`wire.ts`](wire.ts) holds the protocol version, paths, headers, & state strings, and both the
+Worker & `src/lib/sync/follow.ts` import it. `worker.test.ts` drives the app’s real client against
+the Worker. The two deploy separately, so a shared file can’t stop a running pair from disagreeing:
+an upload under another protocol version gets `400 { "state": "unsupported-version" }`, which the
+courier shows as a request to refresh the page.
+
 The courier & followers use `https://relay.mistria.fyi`. There are no cookies or accounts;
 cross-origin responses allow `*` without credentials. The mailbox ID is the 22-character base64url
 encoding of the 128-bit derived ID. A write token is the 43-character base64url encoding of 256
@@ -36,7 +42,8 @@ random bits, supplied only as `Authorization: Bearer <write-token>`. Query strin
 | `PUT /v1/admin/pause`                           | `Authorization: Bearer <ADMIN_TOKEN>`; JSON `{}` or `{ "until": <Unix milliseconds> }`                                                 | `{ "until": <Unix milliseconds> }`; defaults to one day; a past end time resumes writes                                                           |
 
 All responses carry `Cache-Control: no-store`. Missing or malformed write authorization is `401`; a
-wrong token is `403`. A missing secret, upstream verification failure, or unexpected runtime failure
+wrong token or a failed Turnstile check is `403`. The client reports both as a refusal, never as
+“unreachable”. A missing secret, upstream verification failure, or unexpected runtime failure
 returns `503` without error details. A paused relay returns `503` with state `paused`, its end time,
 & `Retry-After`. Only retirement bypasses the pause; new reads & WebSocket handshakes are paused
 too. An admin request may pause at most seven days ahead; a past end time resumes the relay.

@@ -215,6 +215,7 @@ describe("CI workflow jobs", () => {
   it.each([
     [["relay/worker.ts"], true, false],
     [["relay/wrangler.toml"], true, false],
+    [["src/lib/sync/follow.ts"], true, false],
     [["scripts/verify.ts"], false, true],
     [["scripts/sprites/sprite-manifest.ts"], false, true],
     [["pipeline/src/main.ts"], false, true],

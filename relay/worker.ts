@@ -1,3 +1,14 @@
+import {
+  ENVELOPE_CONTENT_TYPE,
+  FOLLOW_PROTOCOL_VERSION,
+  isEnvelopeSuffix,
+  MAILBOX_ROUTE,
+  SYNC_COUNTER_HEADER,
+  SYNC_VERSION_HEADER,
+} from "./wire.js";
+
+import type { MailboxPushMessage, RelayState } from "./wire.js";
+
 interface Env {
   ADMIN_TOKEN: string;
   CONTROL: DurableObjectNamespace;
@@ -35,18 +46,15 @@ const MAILBOX_TTL = 365 * DAY;
 const MAX_ENVELOPE = 256 * 1024;
 const encoder = new TextEncoder();
 
-function json(state: string, status = 200): Response {
+function json(state: RelayState, status = 200): Response {
   return Response.json({ state }, { status });
 }
 
 function rateLimited(retryAt: number): Response {
-  return Response.json(
-    { state: "rate-limited" },
-    {
-      headers: { "Retry-After": String(Math.max(1, Math.ceil((retryAt - Date.now()) / 1000))) },
-      status: 429,
-    },
-  );
+  return Response.json({ state: "rate-limited" } satisfies { state: RelayState }, {
+    headers: { "Retry-After": String(Math.max(1, Math.ceil((retryAt - Date.now()) / 1000))) },
+    status: 429,
+  });
 }
 
 function bearer(request: Request): string | undefined {
@@ -185,10 +193,10 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (!body) return json("too-large", 413);
     return control(env).fetch(new Request("https://control/pause", { body, method: "PUT" }));
   }
-  const match = /^\/v1\/mailboxes\/([A-Za-z0-9_-]{22})(\/envelope)?$/u.exec(url.pathname);
+  const match = MAILBOX_ROUTE.exec(url.pathname);
   if (!match) return json("not-found", 404);
   const create = request.method === "POST" && !match[2];
-  const upload = request.method === "PUT" && match[2] === "/envelope";
+  const upload = request.method === "PUT" && isEnvelopeSuffix(match[2]);
   const read = request.method === "GET" && !match[2];
   const retire = request.method === "DELETE" && !match[2];
   if (!create && !upload && !read && !retire) return json("method-not-allowed", 405);
@@ -211,8 +219,8 @@ async function route(request: Request, env: Env): Promise<Response> {
   for (const name of [
     "Authorization",
     "Content-Type",
-    "X-Sync-Version",
-    "X-Sync-Counter",
+    SYNC_VERSION_HEADER,
+    SYNC_COUNTER_HEADER,
     "If-None-Match",
     "Upgrade",
   ]) {
@@ -262,11 +270,11 @@ export default {
     headers.set("Access-Control-Max-Age", "7200");
     headers.set(
       "Access-Control-Allow-Headers",
-      "Authorization, Content-Type, X-Sync-Version, X-Sync-Counter, If-None-Match",
+      `Authorization, Content-Type, ${SYNC_VERSION_HEADER}, ${SYNC_COUNTER_HEADER}, If-None-Match`,
     );
     headers.set(
       "Access-Control-Expose-Headers",
-      "ETag, X-Sync-Version, X-Sync-Counter, Retry-After",
+      `ETag, ${SYNC_VERSION_HEADER}, ${SYNC_COUNTER_HEADER}, Retry-After`,
     );
     return new Response(response.body, {
       headers,
@@ -379,13 +387,15 @@ export class Mailbox implements DurableObject {
   }
 
   private async upload(request: Request, meta: LiveMailbox): Promise<Response> {
-    if (request.headers.get("X-Sync-Version") !== "1") return json("unsupported-version", 400);
-    const rawCounter = request.headers.get("X-Sync-Counter") ?? "";
+    if (request.headers.get(SYNC_VERSION_HEADER) !== String(FOLLOW_PROTOCOL_VERSION)) {
+      return json("unsupported-version", 400);
+    }
+    const rawCounter = request.headers.get(SYNC_COUNTER_HEADER) ?? "";
     const counter = Number(rawCounter);
     if (!/^[1-9]\d{0,15}$/u.test(rawCounter) || !Number.isSafeInteger(counter)) {
       return json("bad-request", 400);
     }
-    if (request.headers.get("Content-Type") !== "application/octet-stream") {
+    if (request.headers.get("Content-Type") !== ENVELOPE_CONTENT_TYPE) {
       return json("bad-request", 400);
     }
     if (counter < meta.counter) return json("stale-counter", 409);
@@ -428,17 +438,15 @@ export class Mailbox implements DurableObject {
     if (request.headers.get("Upgrade")?.toLowerCase() === "websocket") {
       const pair = new WebSocketPair();
       this.ctx.acceptWebSocket(pair[1]);
-      pair[1].send(
-        bytes ? Mailbox.envelopeMessage(meta, bytes) : JSON.stringify({ state: "empty" }),
-      );
+      pair[1].send(bytes ? Mailbox.envelopeMessage(meta, bytes) : Mailbox.push({ state: "empty" }));
       return new Response(null, { status: 101, webSocket: pair[0] });
     }
     if (!bytes) return json("empty");
     const headers = {
-      "Content-Type": "application/octet-stream",
+      "Content-Type": ENVELOPE_CONTENT_TYPE,
       ETag: `"${meta.counter}-${meta.digest}"`,
-      "X-Sync-Counter": String(meta.counter),
-      "X-Sync-Version": "1",
+      [SYNC_COUNTER_HEADER]: String(meta.counter),
+      [SYNC_VERSION_HEADER]: String(FOLLOW_PROTOCOL_VERSION),
     };
     if (request.headers.get("If-None-Match") === headers.ETag) {
       return new Response(null, { headers, status: 304 });
@@ -446,15 +454,19 @@ export class Mailbox implements DurableObject {
     return new Response(bytes, { headers });
   }
 
+  private static push(message: MailboxPushMessage): string {
+    return JSON.stringify(message);
+  }
+
   private static envelopeMessage(meta: LiveMailbox, bytes: ArrayBuffer): string {
     // A loop avoids spreading a 256 KiB array onto the JavaScript call stack.
     let binary = "";
     for (const byte of new Uint8Array(bytes)) binary += String.fromCodePoint(byte);
-    return JSON.stringify({
+    return Mailbox.push({
       counter: meta.counter,
       envelope: btoa(binary),
       state: "envelope",
-      version: 1,
+      version: FOLLOW_PROTOCOL_VERSION,
     });
   }
 
@@ -476,7 +488,7 @@ export class Mailbox implements DurableObject {
       await storage.delete("envelope");
       await storage.deleteAlarm();
     });
-    this.broadcast(JSON.stringify({ state: "retired" }), true);
+    this.broadcast(Mailbox.push({ state: "retired" }), true);
   }
 
   alarm(): Promise<void> {
@@ -491,7 +503,7 @@ export class Mailbox implements DurableObject {
         const expiresAt = meta.lastUpload + ENVELOPE_TTL;
         if (now >= expiresAt) {
           await this.ctx.storage.delete("envelope");
-          this.broadcast(JSON.stringify({ state: "empty" }));
+          this.broadcast(Mailbox.push({ state: "empty" }));
         }
         await this.ctx.storage.setAlarm(now < expiresAt ? expiresAt : retireAt);
       }
@@ -542,7 +554,7 @@ export class RelayControl implements DurableObject {
       const pausedUntil = await this.ctx.storage.get<number>("pausedUntil");
       if (pausedUntil && pausedUntil > now) {
         return Response.json(
-          { state: "paused", until: pausedUntil },
+          { state: "paused", until: pausedUntil } satisfies { state: RelayState; until: number },
           {
             headers: { "Retry-After": String(Math.ceil((pausedUntil - now) / 1000)) },
             status: 503,

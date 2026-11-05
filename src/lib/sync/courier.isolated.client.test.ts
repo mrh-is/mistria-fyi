@@ -1451,6 +1451,93 @@ describe("the sync log", () => {
     ]);
   });
 
+  it.each([
+    ["refused", "refused", "upload-refused"],
+    ["unsupported-version", "update", "upload-update-needed"],
+  ] as const)("stops retrying after a %s answer until asked", async (kind, upload, outcome) => {
+    const { last, make, relay } = await load({ options: { firstRetryMs: 10 } });
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload.mockResolvedValueOnce({ kind });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(last()?.upload).toBe(upload);
+    expect(log).toHaveBeenLastCalledWith(outcome);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    courier.resume();
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect(relay.upload).toHaveBeenCalledTimes(1);
+
+    courier.retry();
+    await vi.waitFor(() => {
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+      expect(last()?.upload).toBe("idle");
+    });
+  });
+
+  it.each([
+    ["refused", "refused"],
+    ["unsupported-version", "update"],
+  ] as const)(
+    "clears a %s answer once the file returns to the confirmed save",
+    async (kind, upload) => {
+      const { last, make, relay } = await load();
+      const courier = make({ pollMs: 60_000 });
+      const file = fakeHandle(saveBytes(100));
+      courier.start();
+      await courier.take({ handle: file.handle, kind: "handle" });
+      expect(last()?.upload).toBe("idle");
+
+      relay.upload.mockResolvedValueOnce({ kind });
+      file.replace(saveBytes(200));
+      await courier.take({ handle: file.handle, kind: "handle" });
+      expect(last()?.upload).toBe(upload);
+
+      file.replace(saveBytes(100));
+      relay.read.mockResolvedValue({ kind: "envelope", ...relay.upload.mock.calls[0]?.[2] });
+      await courier.take({ handle: file.handle, kind: "handle" });
+      expect(last()?.upload).toBe("idle");
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it.each(["refused", "unsupported-version"] as const)(
+    "cancels an earlier save's retry on a %s answer, & a changed save still recovers",
+    async (kind) => {
+      const { last, make, relay } = await load({ options: { firstRetryMs: 30 } });
+      relay.upload.mockResolvedValueOnce({ kind: "unreachable" });
+      relay.upload.mockResolvedValueOnce({ kind });
+      const courier = make();
+      courier.start();
+      await courier.take({ file: new File([saveBytes(100)], FILE_NAME), kind: "file" });
+      await courier.take({ file: new File([saveBytes(200)], FILE_NAME), kind: "file" });
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+
+      await courier.take({ file: new File([saveBytes(300)], FILE_NAME), kind: "file" });
+      expect(relay.upload).toHaveBeenCalledTimes(3);
+      expect(last()?.upload).toBe("idle");
+    },
+  );
+
+  it("shows a refusal when a retired code's replacement is refused", async () => {
+    const renewCode = vi.fn<NonNullable<CourierOptions["renewCode"]>>();
+    renewCode.mockResolvedValue({ kind: "refused" });
+    const { last, make, relay } = await load();
+    relay.upload.mockResolvedValueOnce({ kind: "retired" });
+    const courier = make({ renewCode });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(last()?.upload).toBe("refused");
+  });
+
   it("records every envelope too large to send, since none is a retry", async () => {
     const { make, relay } = await load();
     const log = vi.fn<NonNullable<CourierOptions["log"]>>();

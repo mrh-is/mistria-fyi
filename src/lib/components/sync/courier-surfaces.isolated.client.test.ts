@@ -23,6 +23,7 @@ const fake = vi.hoisted(() => ({
   check: vi.fn(() => Promise.resolve()),
   options: undefined as CourierOptions | undefined,
   reallow: vi.fn(() => Promise.resolve()),
+  resume: vi.fn(),
   retry: vi.fn(),
   stop: vi.fn(),
   take: vi.fn(() => Promise.resolve()),
@@ -167,7 +168,15 @@ async function renderCodeArea(local: Record<string, unknown>, overrides = {}) {
 beforeEach(async () => {
   pageStub.reset();
   pageStub.navigate("/en/data");
-  for (const mock of [fake.check, fake.reallow, fake.retry, fake.start, fake.take, fake.update]) {
+  for (const mock of [
+    fake.check,
+    fake.reallow,
+    fake.resume,
+    fake.retry,
+    fake.start,
+    fake.take,
+    fake.update,
+  ]) {
     mock.mockClear();
   }
   await import("#lib/sync/courier-state.svelte.js");
@@ -259,6 +268,54 @@ describe("the notes", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(fake.retry).toHaveBeenCalledTimes(1);
   });
+
+  it("says the relay said no, not that it couldn't connect, & offers “Try again”", async () => {
+    await renderNote();
+    report({ upload: "refused" });
+    await tick();
+    expect(screen.getByText("Sync said no to that one")).toBeVisible();
+    expect(screen.queryByText("We can’t connect right now")).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(fake.retry).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves coming back online to the courier's resume, & “Try again” to its retry", async () => {
+    const { syncCourier } = await import("#lib/sync/courier-state.svelte.js");
+    const stop = syncCourier.start();
+    globalThis.dispatchEvent(new Event("online"));
+    expect(fake.resume).toHaveBeenCalledTimes(1);
+    expect(fake.retry).not.toHaveBeenCalled();
+    stop();
+  });
+
+  it("asks for a refresh when the relay speaks another protocol version", async () => {
+    await renderNote();
+    report({ upload: "update" });
+    await tick();
+    expect(screen.getByText(/This tracker needs a refresh/u)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Refresh" })).toBeVisible();
+    expect(screen.queryByText("We can’t connect right now")).toBeNull();
+  });
+
+  it.each(["refused", "update"] as const)(
+    "asks for a look in the toolbar when an upload is %s",
+    async (upload) => {
+      await loadStore({ syncLane: SHARING });
+      const [{ default: Harness }, { FeedbackContext }] = await Promise.all([
+        import("#lib/components/toolbar-footer.test-harness.svelte"),
+        import("#lib/feedback/context.svelte.js"),
+      ]);
+      render(Harness, {
+        feedbackContext: new FeedbackContext(),
+        metadata: { description: "Test page.", title: "Test", toolbar: {} },
+      });
+      report({ upload });
+      await tick();
+      expect(screen.getByRole("button", { name: /^Save file sync:/ })).toHaveAccessibleName(
+        "Save file sync: needs a look",
+      );
+    },
+  );
 
   it("keeps a follower out of it", async () => {
     await renderNote({ key: KEY, kind: "following" });
@@ -359,6 +416,19 @@ describe("sharing", () => {
     });
     expect(screen.queryByRole("img")).toBeNull();
     expect(fake.check).not.toHaveBeenCalled();
+  });
+
+  it("says the relay turned the code down, & offers “Try again”", async () => {
+    await renderCodeArea(
+      { syncLane: { kind: "computer" } },
+      { create: vi.fn().mockResolvedValue({ kind: "refused" }) },
+    );
+    await fireEvent.click(screen.getByRole("button", { name: "Show code" }));
+    await waitFor(() => {
+      expect(screen.getByText("Sync said no to that one")).toBeVisible();
+    });
+    expect(screen.queryByText("We can’t connect right now")).toBeNull();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
   });
 
   it("makes a code at the first “Copy link” too", async () => {

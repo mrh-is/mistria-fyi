@@ -119,6 +119,7 @@
   "imports": {
     "#game-version": "./pipeline/src/game-version.ts",
     "#lib/*": "./src/lib/*",
+    "#relay/*": "./relay/*.ts",
     "#scripts/*": "./scripts/*.ts"
   },
   "devEngines": {

@@ -1,3 +1,11 @@
+import {
+  ENVELOPE_CONTENT_TYPE,
+  envelopePath,
+  FOLLOW_PROTOCOL_VERSION,
+  mailboxPath,
+  SYNC_COUNTER_HEADER,
+  SYNC_VERSION_HEADER,
+} from "#relay/wire";
 /**
  * Following a save file through one long-lived code: the follow link, the keys it derives, the
  * sealed envelope, & the relay's mailbox API. See `docs/sync.md` § The follow link, § Mailboxes, &
@@ -12,8 +20,9 @@
  */
 import * as v from "valibot";
 
-/** The protocol version every envelope authenticates; the relay's `X-Sync-Version`. */
-export const FOLLOW_PROTOCOL_VERSION = 1;
+import type { RelayState } from "#relay/wire";
+
+export { FOLLOW_PROTOCOL_VERSION } from "#relay/wire";
 
 /** The production origin a follow link names. */
 export const FOLLOW_LINK_ORIGIN = "https://mistria.fyi";
@@ -329,8 +338,14 @@ export type RelayFailure =
   | { kind: "rate-limited"; retryAfterSeconds?: number }
   | { kind: "unreachable" };
 
+/** The relay answered & said no, so the connection is fine & retrying the same request won't help. */
+export interface RelayRefusal {
+  kind: "refused";
+}
+
 export type CreateResult =
   | RelayFailure
+  | RelayRefusal
   | { kind: "conflict" }
   | { kind: "created" }
   | { kind: "retired" };
@@ -343,18 +358,21 @@ export type ReadResult =
   | { kind: "retired" };
 
 /** `refused` is a token or mailbox the relay won't retire, which retrying can't change. */
-export type RetireResult = RelayFailure | { kind: "refused" } | { kind: "retired" };
+export type RetireResult = RelayFailure | RelayRefusal | { kind: "retired" };
 
 /**
  * What an upload did. `conflict` is a counter at or below the mailbox's high-water mark that isn't
- * an identical retry; `retired` covers a mailbox that's gone for any reason.
+ * an identical retry; `retired` covers a mailbox that's gone for any reason; `unsupported-version`
+ * is a relay that no longer speaks this build's protocol, which only an update can fix.
  */
 export type UploadResult =
   | RelayFailure
+  | RelayRefusal
   | { kind: "conflict" }
   | { kind: "retired" }
   | { kind: "stored" }
-  | { kind: "too-large" };
+  | { kind: "too-large" }
+  | { kind: "unsupported-version" };
 
 /** One sealed envelope, as it's sent & what its additional data authenticated. */
 export interface SealedEnvelope extends EnvelopeContext {
@@ -372,7 +390,7 @@ export interface RelayClient {
   ) => Promise<UploadResult>;
 }
 
-async function stateOf(response: Response): Promise<{ state?: unknown; until?: unknown }> {
+async function stateOf(response: Response): Promise<{ state?: RelayState; until?: unknown }> {
   try {
     const body: unknown = await response.json();
     return typeof body === "object" && body !== null ? body : {};
@@ -399,12 +417,17 @@ async function failureOf(response: Response): Promise<RelayFailure> {
   return { kind: "unreachable" };
 }
 
+/** A missing or wrong token, or a failed Turnstile check: an answer, not a lost connection. */
+function isRefusal(response: Response): boolean {
+  return response.status === 401 || response.status === 403;
+}
+
 /** The relay's wire contract (`relay/README.md` § Wire contract) as plain results. */
 export function createRelayClient(
   origin: string = RELAY_ORIGIN,
   fetcher: typeof fetch = (...args) => fetch(...args),
 ): RelayClient {
-  const mailboxUrl = (id: MailboxId) => `${origin}/v1/mailboxes/${id}`;
+  const mailboxUrl = (id: MailboxId) => `${origin}${mailboxPath(id)}`;
   async function send(url: string, init: RequestInit): Promise<Response | undefined> {
     try {
       return await fetcher(url, { cache: "no-store", credentials: "omit", ...init });
@@ -424,6 +447,7 @@ export function createRelayClient(
       if (response.status === 200 || response.status === 201) return { kind: "created" };
       if (response.status === 409) return { kind: "conflict" };
       if (response.status === 410) return { kind: "retired" };
+      if (isRefusal(response)) return { kind: "refused" };
       return failureOf(response);
     },
     async read(mailboxId) {
@@ -435,9 +459,9 @@ export function createRelayClient(
       if (response.status === 404) return { kind: "absent" };
       if (response.status === 410) return { kind: "retired" };
       if (response.status !== 200) return failureOf(response);
-      if (response.headers.get("Content-Type")?.startsWith("application/octet-stream")) {
-        const counter = Number(response.headers.get("X-Sync-Counter"));
-        const version = Number(response.headers.get("X-Sync-Version"));
+      if (response.headers.get("Content-Type")?.startsWith(ENVELOPE_CONTENT_TYPE)) {
+        const counter = Number(response.headers.get(SYNC_COUNTER_HEADER));
+        const version = Number(response.headers.get(SYNC_VERSION_HEADER));
         if (!Number.isSafeInteger(counter) || counter < 1 || !Number.isInteger(version)) {
           return { kind: "unreachable" };
         }
@@ -459,19 +483,17 @@ export function createRelayClient(
       if (response === undefined) return { kind: "unreachable" };
       // A `410` is also a terminal acknowledgment: an earlier attempt landed.
       if (response.status === 200 || response.status === 410) return { kind: "retired" };
-      if (response.status === 401 || response.status === 403 || response.status === 404) {
-        return { kind: "refused" };
-      }
+      if (isRefusal(response) || response.status === 404) return { kind: "refused" };
       return failureOf(response);
     },
     async upload(mailboxId, token, { counter, envelope, version }) {
-      const response = await send(`${mailboxUrl(mailboxId)}/envelope`, {
+      const response = await send(`${origin}${envelopePath(mailboxId)}`, {
         body: envelope,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/octet-stream",
-          "X-Sync-Counter": String(counter),
-          "X-Sync-Version": String(version),
+          "Content-Type": ENVELOPE_CONTENT_TYPE,
+          [SYNC_COUNTER_HEADER]: String(counter),
+          [SYNC_VERSION_HEADER]: String(version),
         },
         method: "PUT",
         signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
@@ -481,6 +503,11 @@ export function createRelayClient(
       if (response.status === 404 || response.status === 410) return { kind: "retired" };
       if (response.status === 409) return { kind: "conflict" };
       if (response.status === 413) return { kind: "too-large" };
+      if (isRefusal(response)) return { kind: "refused" };
+      if (response.status === 400) {
+        const body = await stateOf(response);
+        if (body.state === "unsupported-version") return { kind: "unsupported-version" };
+      }
       return failureOf(response);
     },
   };
@@ -492,7 +519,7 @@ export type MailboxPush = Extract<ReadResult, { kind: "empty" | "envelope" | "re
 /** A push's JSON, or `undefined` when it isn't one this client understands. */
 export function parseMailboxPush(data: unknown): MailboxPush | undefined {
   if (typeof data !== "string") return undefined;
-  let message: { counter?: unknown; envelope?: unknown; state?: unknown; version?: unknown };
+  let message: { counter?: unknown; envelope?: unknown; state?: RelayState; version?: unknown };
   try {
     message = JSON.parse(data) as typeof message;
   } catch {
@@ -530,7 +557,7 @@ export function subscribeToMailbox(
   origin: string = RELAY_ORIGIN,
   Socket: typeof WebSocket = WebSocket,
 ): () => void {
-  const url = `${origin.replace(/^http/u, "ws")}/v1/mailboxes/${mailboxId}`;
+  const url = `${origin.replace(/^http/u, "ws")}${mailboxPath(mailboxId)}`;
   let closed = false;
   let socket: WebSocket;
   const end = (): void => {
@@ -568,7 +595,7 @@ export interface SharedCode {
   token: WriteToken;
 }
 
-export type ShareResult = RelayFailure | { code: SharedCode; kind: "shared" };
+export type ShareResult = RelayFailure | RelayRefusal | { code: SharedCode; kind: "shared" };
 
 /** How many fresh keys a share tries when a mailbox ID is already someone else's. */
 const SHARE_ATTEMPTS = 3;

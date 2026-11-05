@@ -281,6 +281,33 @@ describe("the relay client", () => {
     expect(await relay.retire("id", "token")).toEqual({ kind: "unreachable" });
   });
 
+  it.each([401, 403])(
+    "reads a %i on create or upload as a refusal, not a lost connection",
+    async (status) => {
+      const relay = createRelayClient("https://relay.test", () =>
+        Promise.resolve(new Response(null, { status })),
+      );
+      const sealed = { counter: 1, envelope: new Uint8Array(32), version: 1 };
+      expect(await relay.create("id", "token", "challenge")).toEqual({ kind: "refused" });
+      expect(await relay.upload("id", "token", sealed)).toEqual({ kind: "refused" });
+    },
+  );
+
+  it("reads an upload's unsupported-version answer, & no other 400, as a version mismatch", async () => {
+    const answers = [
+      Response.json({ state: "unsupported-version" }, { status: 400 }),
+      Response.json({ state: "bad-request" }, { status: 400 }),
+    ];
+    const relay = createRelayClient("https://relay.test", () => {
+      const answer = answers.shift();
+      if (!answer) throw new Error("No answer left");
+      return Promise.resolve(answer);
+    });
+    const sealed = { counter: 1, envelope: new Uint8Array(32), version: 1 };
+    expect(await relay.upload("id", "token", sealed)).toEqual({ kind: "unsupported-version" });
+    expect(await relay.upload("id", "token", sealed)).toEqual({ kind: "unreachable" });
+  });
+
   it.each([401, 403, 404])(
     "counts a %i retire as refused, which retrying can't change",
     async (status) => {
