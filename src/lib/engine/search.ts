@@ -1,7 +1,7 @@
 import { nameCollator } from "#lib/data/names.js";
 import { CATEGORY_DEFINITIONS } from "#lib/engine/categories.js";
 import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
-import { foldName, matchesTerms } from "#lib/utils/name-match.js";
+import { matchesTerms, matchKey } from "#lib/utils/name-match.js";
 
 import type { SearchCategoryKey } from "#lib/engine/categories.js";
 import type { ProgressContext } from "#lib/engine/progress.js";
@@ -61,8 +61,8 @@ export function searchAllCategories(
   progressionState: UserProgressionState,
   locale: LocaleCode,
 ): SearchResult[] {
-  const q = foldName(query.trim(), locale);
-  const englishQ = foldName(query.trim(), "en");
+  const q = matchKey(query, locale);
+  const englishQ = matchKey(query, "en");
   if (!q) return [];
 
   // Search's own context, independent of page filters and completed-row retention: default
@@ -86,8 +86,8 @@ export function searchAllCategories(
       const localizedNames = [candidate.localizedName, ...(candidate.otherLocalizedNames ?? [])];
       const englishNames = [candidate.englishName, ...(candidate.otherEnglishNames ?? [])];
       if (
-        localizedNames.some((name) => foldName(name, locale).includes(q)) ||
-        englishNames.some((name) => foldName(name, "en").includes(englishQ))
+        localizedNames.some((name) => matchKey(name, locale).includes(q)) ||
+        englishNames.some((name) => matchKey(name, "en").includes(englishQ))
       ) {
         results.push(candidate.result());
       } else if (
@@ -107,7 +107,7 @@ export function searchAllCategories(
 
 /**
  * Name matches before `termMatches`, then prefix matches first, then available before
- * unavailable, then alphabetical. `foldedQuery` is already folded per `foldName`.
+ * unavailable, then alphabetical. `foldedQuery` is already folded per `matchKey`.
  */
 function rankResults(
   results: SearchResult[],
@@ -120,7 +120,7 @@ function rankResults(
     const name = result.fullName ?? result.name;
     return {
       name,
-      prefix: foldName(name, locale).startsWith(foldedQuery),
+      prefix: matchKey(name, locale).startsWith(foldedQuery),
       result,
       term: termMatches.has(result),
     };

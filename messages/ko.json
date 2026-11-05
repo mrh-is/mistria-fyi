@@ -67,6 +67,28 @@
     }
   ],
   "search_no_results": "항목을 찾을 수 없습니다",
+  "search_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "필터 밖에 {count}개가 있습니다"
+      }
+    }
+  ],
+  "search_more_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "필터 밖에 {count}개가 더 있습니다"
+      }
+    }
+  ],
+  "search_show_outside_filters": "그래도 표시",
+  "search_filters_paused": "이 검색에서는 필터가 일시 중지되었습니다.",
+  "search_filters_resume": "필터 다시 적용",
+  "search_everything": "전체에서 “{query}” 검색",
   "search_loading": "검색 불러오는 중…",
   "search_error": "검색 결과를 불러오지 못했습니다.",
   "action_retry": "다시 시도",

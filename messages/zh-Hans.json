@@ -67,6 +67,28 @@
     }
   ],
   "search_no_results": "未找到任何物品",
+  "search_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "筛选条件之外有 {count} 项"
+      }
+    }
+  ],
+  "search_more_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "筛选条件之外还有 {count} 项"
+      }
+    }
+  ],
+  "search_show_outside_filters": "仍然显示",
+  "search_filters_paused": "本次搜索已暂停筛选条件。",
+  "search_filters_resume": "恢复筛选条件",
+  "search_everything": "在全部内容中搜索“{query}”",
   "search_loading": "正在加载搜索…",
   "search_error": "无法加载搜索结果。",
   "action_retry": "重试",

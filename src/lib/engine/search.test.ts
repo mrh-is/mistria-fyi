@@ -119,6 +119,16 @@ describe("empty and whitespace queries", () => {
 
 // ─── Basic matching ────────────────────────────────────────────────
 
+describe("spaces & hyphens", () => {
+  it("finds a spaced name written as one word", () => {
+    expect(search("flatheadcatfish").map(({ name }) => name)).toContain("Flathead Catfish");
+  });
+
+  it("returns nothing for a query of only separators", () => {
+    expect(search(" - ")).toEqual([]);
+  });
+});
+
 describe("basic matching", () => {
   it("finds items by name substring", () => {
     const [firstItemId] = recordEntries(trackerData.items)[0];

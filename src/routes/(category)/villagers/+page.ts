@@ -9,4 +9,5 @@ export const load: PageLoad = localizedPageLoad(["villagers"], (locale) => ({
   accent: categoryColor("villagers"),
   description: m.villagers_page_description({}, { locale }),
   title: getName("ui", "villagers", locale),
+  toolbar: { search: true },
 }));

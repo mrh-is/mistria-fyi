@@ -70,6 +70,34 @@
     }
   ],
   "search_no_results": "Ничего не найдено",
+  "search_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} совпадение вне ваших фильтров",
+        "countPlural=few": "{count} совпадения вне ваших фильтров",
+        "countPlural=many": "{count} совпадений вне ваших фильтров",
+        "countPlural=other": "{count} совпадения вне ваших фильтров"
+      }
+    }
+  ],
+  "search_more_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Ещё {count} совпадение вне ваших фильтров",
+        "countPlural=few": "Ещё {count} совпадения вне ваших фильтров",
+        "countPlural=many": "Ещё {count} совпадений вне ваших фильтров",
+        "countPlural=other": "Ещё {count} совпадения вне ваших фильтров"
+      }
+    }
+  ],
+  "search_show_outside_filters": "Всё равно показать",
+  "search_filters_paused": "Фильтры приостановлены на время этого поиска.",
+  "search_filters_resume": "Вернуть фильтры",
+  "search_everything": "Искать «{query}» везде",
   "search_loading": "Загрузка поиска…",
   "search_error": "Не удалось загрузить результаты поиска.",
   "action_retry": "Повторить",

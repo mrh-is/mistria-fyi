@@ -3,6 +3,14 @@ import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
 import type { Source } from "#lib/types/acquisition.js";
 
+/** What one part of a page found for the current search. */
+export interface PageSearchCount {
+  /** Rows the player could see that match the search, whatever the page's filters say. */
+  matches: number;
+  /** The matching rows on screen now. */
+  visible: number;
+}
+
 /** The filter-panel sections that collapse into disclosures on phones. */
 export type FilterSectionId = "availability" | "show" | "sources";
 
@@ -16,11 +24,26 @@ export class ToolbarState {
 
   searchQuery = $state("");
 
+  // Shows every match for the current search; the player's filters themselves never change.
+  searchShowsAll = $state(false);
+
   // A temporary page filter, like source selection; never part of saved progress.
   showUnobtainable = $state(false);
 
   get hasAlmanacFilters(): boolean {
     return this.sourceFilterRegistrations.has("almanac");
+  }
+
+  /** The current search's totals across the page; `hidden` counts matches filters keep off it. */
+  get pageSearchCount(): { hidden: number; visible: number } {
+    let matches = 0;
+    let visible = 0;
+    for (const count of this.pageSearchCounters.values()) {
+      const part = count();
+      matches += part.matches;
+      visible += part.visible;
+    }
+    return { hidden: Math.max(matches - visible, 0), visible };
   }
 
   sourceFilters = $state<readonly SourceFilter[]>([]);
@@ -31,11 +54,26 @@ export class ToolbarState {
     );
   }
 
+  private carriesSearch = false;
+  private readonly pageSearchCounters = new SvelteMap<symbol, () => PageSearchCount>();
   private readonly sourceFilterRegistrations = new SvelteMap<string, readonly SourceFilter[]>();
+
+  /** Keeps the current search open through the next navigation, for “search everything”. */
+  carrySearchToNextPage(): void {
+    this.carriesSearch = true;
+    this.searchShowsAll = false;
+  }
 
   closeSearch(): void {
     this.searchOpen = false;
     this.searchQuery = "";
+    this.searchShowsAll = false;
+  }
+
+  /** Ends the search a navigation leaves behind, unless it was carried to the new page. */
+  finishSearchAfterNavigation(): void {
+    if (!this.carriesSearch) this.closeSearch();
+    this.carriesSearch = false;
   }
 
   hideAllSourceFilters(): void {
@@ -43,7 +81,7 @@ export class ToolbarState {
   }
 
   matchesSourceFilters(sources: Source[]): boolean {
-    if (!this.isSourceFilterNarrowing) return true;
+    if (this.searchShowsAll || !this.isSourceFilterNarrowing) return true;
     return (
       sources.length === 0 ||
       sources.some((source) => {
@@ -57,6 +95,10 @@ export class ToolbarState {
     this.searchOpen = true;
   }
 
+  registerPageSearch(key: symbol, count: () => PageSearchCount): void {
+    this.pageSearchCounters.set(key, count);
+  }
+
   registerSourceFilters(owner: string, filters: readonly SourceFilter[]): void {
     this.sourceFilterRegistrations.set(owner, filters);
     this.rebuildSourceFilters();
@@ -68,6 +110,7 @@ export class ToolbarState {
 
   setSearchQuery(query: string): void {
     this.searchQuery = query;
+    if (!query) this.searchShowsAll = false;
   }
 
   toggleFilterSection(section: FilterSectionId): void {
@@ -84,6 +127,10 @@ export class ToolbarState {
     } else {
       this.enabledSourceFilterIds.add(filter.id);
     }
+  }
+
+  unregisterPageSearch(key: symbol): void {
+    this.pageSearchCounters.delete(key);
   }
 
   unregisterSourceFilters(owner: string): void {

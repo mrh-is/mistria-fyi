@@ -7,6 +7,7 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -23,6 +24,7 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { QuestRow, QuestSection } from "#lib/presentation/quest-sections.js";
@@ -46,30 +48,51 @@
   interface SectionView {
     categorySpoilered: boolean;
     completedCount: number;
+    /** The rows the search matches, whatever the page's filters say. */
+    namedRows: QuestRow[];
     scopedRows: QuestRow[];
     section: QuestSection;
     visibleRows: QuestRow[];
   }
 
+  let nameFilter = $derived(toolbarState.searchQuery);
+
+  function matchesSearch(row: QuestRow): boolean {
+    const spoilered =
+      row.kind === "craving"
+        ? !row.villagerId
+        : !isConditionVisible(row.visibility, userState.progressionState);
+    return !spoilered && matchesName(row.displayName, nameFilter, locale);
+  }
+
   let sectionViews = $derived(
     sections.map((section): SectionView => {
-      const scopedRows = section.rows.filter(
+      const categorySpoilered = !isConditionVisible(
+        trackerData.categoryVisibility[section.questType],
+        userState.progressionState,
+      );
+      let namedRows = section.rows;
+      if (nameFilter) namedRows = categorySpoilered ? [] : section.rows.filter(matchesSearch);
+      const scopedRows = namedRows.filter(
         (row) => row.kind === "craving" || toolbarState.matchesSourceFilters(row.sources),
       );
       return {
-        categorySpoilered: !isConditionVisible(
-          trackerData.categoryVisibility[section.questType],
-          userState.progressionState,
-        ),
+        categorySpoilered,
         completedCount: scopedRows.filter((row) => isRowCompleted(row)).length,
+        namedRows,
         scopedRows,
         section,
         visibleRows: scopedRows.filter((row) =>
-          isRowCompleted(row) ? userState.state.showCompleted : true,
+          isRowCompleted(row) ? showsCompletedRows() : true,
         ),
       };
     }),
   );
+
+  registerPageSearch(() => ({
+    matches: sectionViews.reduce((sum, view) => sum + view.namedRows.length, 0),
+    visible: sectionViews.reduce((sum, view) => sum + view.visibleRows.length, 0),
+  }));
 
   registerSourceFilters("quests", () => trackerIndex.categorySourceTypes.quests);
 
@@ -133,62 +156,72 @@
     section: questSection,
     visibleRows,
   })}
-    <SpoilerSection name={typeLabel(questSection.questType)} spoilered={categorySpoilered} topLevel>
-      <ExpandableSection
-        {locale}
-        count={completedCount}
+    {#if !nameFilter || visibleRows.length > 0}
+      <SpoilerSection
         name={typeLabel(questSection.questType)}
-        reportCategory="quest-section"
-        reportEntityId={questSection.questType}
-        total={scopedRows.length}
+        spoilered={categorySpoilered}
+        topLevel
       >
-        {#if visibleRows.length === 0 && scopedRows.length > 0}
-          <TrackerEmptyState message={m.all_completed_message()} />
-        {:else}
-          <TrackerRowList getKey={(row) => row.id} items={visibleRows}>
-            {#snippet row(row)}
-              {#if row.kind === "craving"}
-                <TrackerRow
-                  fact={factKey("questStates", row.questId ?? row.id)}
-                  display={questRowDisplay(row.completed ? "completed" : "none", !row.villagerId)}
-                  segmentLookups={baseLookups}
-                  name={row.displayName}
-                  reportCategory="craving-quest"
-                  reportEntityId={row.id}
-                  sources={[]}
-                  subtitle={row.subtitle}
-                  onToggle={() => {
-                    if (row.questId) completeQuest(row.questId, row.displayName, questSection);
-                  }}
-                />
-              {:else}
-                {@const questState = getQuestState(row.id)}
-                {@const spoilered = !isConditionVisible(row.visibility, userState.progressionState)}
-                <TrackerRow
-                  fact={factKey("questStates", row.id)}
-                  display={questRowDisplay(questState, spoilered)}
-                  segmentLookups={{ ...baseLookups, entityVisibility: row.visibility }}
-                  name={row.displayName}
-                  reportCategory="quest"
-                  reportEntityId={row.id}
-                  sources={row.sources}
-                  subtitle={row.subtitle}
-                  onToggle={() => {
-                    if (!spoilered || questState !== "none") {
-                      completeQuest(row.id, row.displayName, questSection);
-                    } else {
-                      spoilerGuard.requestGuardedAction(row.visibility, () => {
+        <ExpandableSection
+          {locale}
+          count={completedCount}
+          forceOpen={!!nameFilter}
+          name={typeLabel(questSection.questType)}
+          reportCategory="quest-section"
+          reportEntityId={questSection.questType}
+          total={scopedRows.length}
+        >
+          {#if visibleRows.length === 0 && scopedRows.length > 0}
+            <TrackerEmptyState message={m.all_completed_message()} />
+          {:else}
+            <TrackerRowList getKey={(row) => row.id} items={visibleRows}>
+              {#snippet row(row)}
+                {#if row.kind === "craving"}
+                  <TrackerRow
+                    fact={factKey("questStates", row.questId ?? row.id)}
+                    display={questRowDisplay(row.completed ? "completed" : "none", !row.villagerId)}
+                    segmentLookups={baseLookups}
+                    name={row.displayName}
+                    reportCategory="craving-quest"
+                    reportEntityId={row.id}
+                    sources={[]}
+                    subtitle={row.subtitle}
+                    onToggle={() => {
+                      if (row.questId) completeQuest(row.questId, row.displayName, questSection);
+                    }}
+                  />
+                {:else}
+                  {@const questState = getQuestState(row.id)}
+                  {@const spoilered = !isConditionVisible(
+                    row.visibility,
+                    userState.progressionState,
+                  )}
+                  <TrackerRow
+                    fact={factKey("questStates", row.id)}
+                    display={questRowDisplay(questState, spoilered)}
+                    segmentLookups={{ ...baseLookups, entityVisibility: row.visibility }}
+                    name={row.displayName}
+                    reportCategory="quest"
+                    reportEntityId={row.id}
+                    sources={row.sources}
+                    subtitle={row.subtitle}
+                    onToggle={() => {
+                      if (!spoilered || questState !== "none") {
                         completeQuest(row.id, row.displayName, questSection);
-                      });
-                    }
-                  }}
-                />
-              {/if}
-            {/snippet}
-          </TrackerRowList>
-        {/if}
-      </ExpandableSection>
-    </SpoilerSection>
+                      } else {
+                        spoilerGuard.requestGuardedAction(row.visibility, () => {
+                          completeQuest(row.id, row.displayName, questSection);
+                        });
+                      }
+                    }}
+                  />
+                {/if}
+              {/snippet}
+            </TrackerRowList>
+          {/if}
+        </ExpandableSection>
+      </SpoilerSection>
+    {/if}
   {/snippet}
 </SectionGroups>
 

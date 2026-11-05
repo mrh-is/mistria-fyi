@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { foldName, matchesName, matchesTerms } from "./name-match.js";
+import { foldName, matchesName, matchesTerms, matchKey } from "./name-match.js";
 
 describe("foldName", () => {
   it("preserves ASCII punctuation and spacing in every supported locale", () => {
@@ -51,10 +51,40 @@ describe("matchesName", () => {
     expect(matchesName("Apple Pie", "", "en")).toBe(true);
     expect(matchesName("Apple Pie", "  ", "en")).toBe(true);
   });
+
+  it("ignores spaces & hyphens on both sides", () => {
+    expect(matchesName("Blue Gill", "bluegill", "en")).toBe(true);
+    expect(matchesName("Bluegill", "blue gill", "en")).toBe(true);
+    expect(matchesName("Sea-Bass", "sea bass", "en")).toBe(true);
+    expect(matchesName("Jack-o’-Lantern", "jacko", "en")).toBe(true);
+  });
+
+  it("ignores full-width spaces & Unicode dashes", () => {
+    expect(matchesName("青い　魚", "青い魚", "ja")).toBe(true);
+    expect(matchesName("Blue–Gill", "bluegill", "en")).toBe(true);
+    expect(matchesName("Blue－Gill", "bluegill", "ja")).toBe(true);
+  });
+
+  it("keeps the katakana long-vowel mark, which is a letter", () => {
+    expect(matchKey("ガーデン", "ja")).toBe("がーでん");
+    expect(matchesName("ガーデン", "がでん", "ja")).toBe(false);
+  });
+
+  it("treats a query of only separators as blank", () => {
+    expect(matchesName("Apple Pie", " - ", "en")).toBe(true);
+  });
 });
 
 describe("matchesTerms", () => {
   const name = ["Animated Clouds Window"];
+
+  it("matches a spaced name with a query word written as one", () => {
+    expect(matchesTerms(["Blue Gill"], ["White"], "white bluegill", "en")).toBe(true);
+  });
+
+  it("splits query words on hyphens as well as spaces", () => {
+    expect(matchesTerms(name, ["White"], "white-window", "en")).toBe(true);
+  });
 
   it("matches query words split across the name & a term", () => {
     expect(matchesTerms(name, ["White"], "white window", "en")).toBe(true);

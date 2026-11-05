@@ -6,6 +6,7 @@
   import CompletedHeading from "#lib/components/completed-heading.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import PageHeader from "#lib/components/page-header.svelte";
+  import PageSearchStatus from "#lib/components/page-search-status.svelte";
   import { createSharedReveals } from "#lib/controllers/completion-scope.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
@@ -110,6 +111,7 @@
       <option value="source">{m.everything_group_source()}</option>
     </select>
   </label>
+  <PageSearchStatus locale={data.locale} />
   {#if grouping === "source"}
     <SourceContent locale={data.locale} {anchor} />
   {:else}

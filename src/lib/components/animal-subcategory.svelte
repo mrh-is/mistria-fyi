@@ -45,6 +45,7 @@
   <ExpandableSection
     locale={props.locale}
     count={completedCount}
+    forceOpen={!!toolbarState.searchQuery}
     name={props.name}
     reportCategory={props.reportCategory}
     total={totalCount}
@@ -52,13 +53,14 @@
     {#each animals as animal (animal.id)}
       {@const { displayableCompletedItemCount, displayableItemCount, isVisible, visibleItems } =
         props.sectionConfig(animal.id)}
-      {#if displayableItemCount > 0}
+      {#if displayableItemCount > 0 && (!toolbarState.searchQuery || visibleItems.length > 0)}
         <SpoilerSection name={animal.name} spoilered={!isVisible}>
           {#if visibleItems.length > 0}
             <ExpandableSection
               locale={props.locale}
               depth={1}
               count={displayableCompletedItemCount}
+              forceOpen={!!toolbarState.searchQuery}
               name={animal.name}
               reportCategory={props.reportCategory}
               reportEntityId={animal.id}
@@ -105,6 +107,6 @@
       {/if}
     {/each}
   </ExpandableSection>
-{:else if toolbarState.isSourceFilterNarrowing}
+{:else if !toolbarState.searchQuery && toolbarState.isSourceFilterNarrowing}
   <TrackerEmptyState />
 {/if}

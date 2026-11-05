@@ -11,5 +11,6 @@ export const load: PageLoad = localizedPageLoad(
     accent: categoryColor("quests"),
     description: m.quests_page_description({}, { locale }),
     title: m.category_quests_name({}, { locale }),
+    toolbar: { search: true },
   }),
 );

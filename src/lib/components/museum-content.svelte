@@ -6,6 +6,11 @@
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import {
+    registerPageSearch,
+    showsCompletedRows,
+    visibleWindows,
+  } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -58,7 +63,7 @@
         { sources, visibility: trackerData.items[itemId].visibility },
         completed,
         userState.progressContext,
-        userState.state.availabilityWindows,
+        visibleWindows(),
       ),
       leaving: recentlyCompleted.has(itemId),
       spoilered: isItemSpoilered(itemId),
@@ -110,7 +115,7 @@
       trackerData.items[itemId],
       isItemComplete(itemId),
       userState.progressContext,
-      userState.state.availabilityWindows,
+      visibleWindows(),
     );
   }
 
@@ -126,7 +131,7 @@
     return isRowVisible(
       itemId,
       isItemComplete(itemId),
-      userState.state.showCompleted,
+      showsCompletedRows(),
       recentlyCompleted.ids,
     );
   }
@@ -171,10 +176,13 @@
   function wingConfig(wingId: MuseumWingId, wing: MuseumWing): WingConfig {
     const setConfigs = recordEntries(wing.sets)
       .map(([id, set]) => ({ setId: id, ...setConfig(wingId, id, set) }))
-      .filter(({ baseItemCount }) => baseItemCount > 0);
+      .filter(
+        ({ baseItemCount, visibleItems }) =>
+          baseItemCount > 0 && (!nameFilter || visibleItems.length > 0),
+      );
     return {
       baseItemCount: setConfigs.reduce((sum, { baseItemCount }) => sum + baseItemCount, 0),
-      isVisible: setConfigs.some(({ baseItemCount }) => baseItemCount > 0),
+      isVisible: setConfigs.length > 0,
       scopedCompletedItemCount: setConfigs.reduce(
         (sum, { scopedCompletedItemCount }) => sum + scopedCompletedItemCount,
         0,
@@ -190,6 +198,18 @@
       wingId,
     })),
   );
+
+  registerPageSearch(() => {
+    const itemIds = new Set(
+      recordValues(trackerData.museum).flatMap((wing) =>
+        recordValues(wing.sets).flatMap((set) => set.items),
+      ),
+    );
+    return {
+      matches: [...itemIds].filter((itemId) => matchesFilter(itemId)).length,
+      visible: [...itemIds].filter((itemId) => isItemVisible(itemId)).length,
+    };
+  });
 </script>
 
 <SpoilerGuardDialog guard={spoilerGuard} />

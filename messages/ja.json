@@ -67,6 +67,28 @@
     }
   ],
   "search_no_results": "アイテムが見つかりません",
+  "search_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "フィルター外に{count}件あります"
+      }
+    }
+  ],
+  "search_more_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "フィルター外にあと{count}件あります"
+      }
+    }
+  ],
+  "search_show_outside_filters": "表示する",
+  "search_filters_paused": "この検索ではフィルターを一時停止しています。",
+  "search_filters_resume": "フィルターを戻す",
+  "search_everything": "すべてから「{query}」を検索",
   "search_loading": "検索を読み込み中…",
   "search_error": "検索結果を読み込めませんでした。",
   "action_retry": "再試行",

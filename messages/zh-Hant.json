@@ -67,6 +67,28 @@
     }
   ],
   "search_no_results": "找不到任何物品",
+  "search_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "篩選條件之外有 {count} 項"
+      }
+    }
+  ],
+  "search_more_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "篩選條件之外還有 {count} 項"
+      }
+    }
+  ],
+  "search_show_outside_filters": "仍然顯示",
+  "search_filters_paused": "本次搜尋已暫停篩選條件。",
+  "search_filters_resume": "恢復篩選條件",
+  "search_everything": "在全部內容中搜尋「{query}」",
   "search_loading": "正在載入搜尋…",
   "search_error": "無法載入搜尋結果。",
   "action_retry": "重試",

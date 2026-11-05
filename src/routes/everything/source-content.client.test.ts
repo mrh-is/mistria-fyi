@@ -39,3 +39,15 @@ it("keeps the Unobtainable display control available while the source lens rende
   await tick();
   expect(toolbarState.hasAlmanacFilters).toBe(false);
 });
+
+it("leaves the mine floor record out of a search", async () => {
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  await tick();
+  expect(view.queryByText("Upper Mines")).toBeInTheDocument();
+
+  toolbarState.setSearchQuery("acorn");
+  await tick();
+  expect(view.queryByText("Upper Mines")).toBeNull();
+
+  toolbarState.closeSearch();
+});
