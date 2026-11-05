@@ -109,8 +109,9 @@ export class ToolbarState {
   }
 
   setSearchQuery(query: string): void {
-    this.searchQuery = query;
-    if (!query) this.searchShowsAll = false;
+    // Spaces alone aren't a search, so they can't keep filters paused with no notice on screen.
+    this.searchQuery = query.trim() ? query : "";
+    if (!this.searchQuery) this.searchShowsAll = false;
   }
 
   toggleFilterSection(section: FilterSectionId): void {

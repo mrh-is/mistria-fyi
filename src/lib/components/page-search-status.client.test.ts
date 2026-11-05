@@ -104,6 +104,16 @@ describe("PageSearchStatus", () => {
     expect(toolbarState.searchShowsAll).toBe(false);
   });
 
+  it("ends the pause when only spaces are left", () => {
+    toolbarState.setSearchQuery("bass");
+    toolbarState.searchShowsAll = true;
+
+    toolbarState.setSearchQuery("   ");
+
+    expect(toolbarState.searchQuery).toBe("");
+    expect(toolbarState.searchShowsAll).toBe(false);
+  });
+
   it("carries the search through one navigation only", () => {
     toolbarState.openSearch();
     toolbarState.setSearchQuery("bass");

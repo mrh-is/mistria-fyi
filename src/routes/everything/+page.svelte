@@ -8,6 +8,7 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import PageSearchStatus from "#lib/components/page-search-status.svelte";
   import { createSharedReveals } from "#lib/controllers/completion-scope.svelte.js";
+  import { showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
@@ -118,7 +119,7 @@
     {#each orderedCategories as category (category)}
       <CategorySection key={category} locale={data.locale} progress={progress[category]} />
     {/each}
-    {#if userState.state.showCompleted}
+    {#if showsCompletedRows()}
       <!-- Stays mounted while hidden, since its categories report whether they have content. -->
       <div
         class="flex flex-col gap-6"

@@ -232,7 +232,7 @@
 
 <SpoilerGuardDialog {guard} />
 
-{#each userState.state.showCompleted ? [false, true] : [false] as completed (completed)}
+{#each showsCompletedRows() ? [false, true] : [false] as completed (completed)}
   <div
     class="flex flex-col gap-6"
     data-testid={completed ? "everything-completed" : undefined}
