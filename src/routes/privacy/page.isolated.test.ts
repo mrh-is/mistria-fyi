@@ -43,6 +43,15 @@ describe("privacy page sync sections", () => {
     expect(text).toContain("That record isn’t encrypted");
   });
 
+  it("says what encryption covers & that players still trust the code they’re served", () => {
+    const { queries, text } = renderPage();
+
+    expect(queries.getByRole("heading", { level: 3, name: "What you’re trusting" })).toBeTruthy();
+    expect(text).toContain("Encryption protects what the server stores");
+    expect(text).toContain("you’re trusting the code your browser gets from us");
+    expect(text).toContain("the Cloudflare Turnstile script");
+  });
+
   it("keeps the addendum link's slot in every locale", () => {
     for (const locale of locales) {
       expect(m.privacy_sync_turnstile_body({ addendum: "SLOT" }, { locale })).toContain("SLOT");
