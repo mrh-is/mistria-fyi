@@ -23,10 +23,10 @@ orientation, result, observation, exception, and linked issue.
 | Result  | Platform         | Browser           | Technology                   | Route and task                                                                   | Observation, exception, or issue |
 | ------- | ---------------- | ----------------- | ---------------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
 | Not run | macOS            | Safari            | VoiceOver                    | Complete a tracker row, use Undo, search, and operate Settings dialogs           |                                  |
-| Not run | iOS              | Safari            | VoiceOver                    | Import or transfer progress, navigate categories, and complete a row             |                                  |
+| Not run | iOS              | Safari            | VoiceOver                    | Import a save or restore a backup, navigate categories, and complete a row       |                                  |
 | Not run | Windows          | Firefox           | NVDA                         | Navigate headings and landmarks, change villager and mine values, and use search |                                  |
 | Not run | Windows          | Chrome            | NVDA                         | Operate dialogs, validation, disclosures, tracker rows, and Undo                 |                                  |
-| Not run | Android          | Chrome            | TalkBack                     | Navigate categories, search, complete a row, and use transfer controls           |                                  |
+| Not run | Android          | Chrome            | TalkBack                     | Navigate categories, search, complete a row, and use Backup & Restore            |                                  |
 | Not run | Desktop platform | Supported browser | Voice Control or equivalent  | Activate repeated tracker controls by their spoken names                         |                                  |
 | Not run | Apple platform   | Supported browser | Switch Control or equivalent | Sequentially scan dense tracker rows, toolbar controls, and dialogs              |                                  |
 
