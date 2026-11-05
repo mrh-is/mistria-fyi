@@ -5,7 +5,7 @@ import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 
 import { deriveFollowKeys, encodeSavePayload, mailboxIdFor, sealEnvelope } from "./follow.js";
 
-import type { FollowKey, ReadResult, RelayClient } from "./follow.js";
+import type { FollowKey, ReadResult, RelayClient, RetireResult } from "./follow.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const OLD_KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
@@ -227,6 +227,26 @@ describe("stopping", () => {
     await sharing.stopSyncing();
     expect(userState.syncPendingRetires).toHaveLength(1);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("retires & confirms each code on its own while another request never settles", async () => {
+    const retire = vi.fn<RelayClient["retire"]>();
+    retire.mockReturnValueOnce(Promise.withResolvers<RetireResult>().promise);
+    retire.mockResolvedValue({ kind: "retired" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    void sharing.makeNewCode();
+    await vi.waitFor(() => {
+      expect(retire).toHaveBeenCalledTimes(1);
+    });
+    const [stuck] = userState.syncPendingRetires;
+
+    await sharing.makeNewCode();
+    expect(retire).toHaveBeenCalledTimes(2);
+    expect(userState.syncPendingRetires).toEqual([stuck]);
+
+    // An attempt leaves the stalled mailbox alone rather than stacking a second request on it.
+    await sharing.retryPendingRetires();
+    expect(retire).toHaveBeenCalledTimes(2);
   });
 
   it("schedules nothing once stopped, even from an attempt already under way", async () => {

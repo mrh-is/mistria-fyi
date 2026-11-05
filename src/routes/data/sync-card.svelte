@@ -25,9 +25,12 @@
   let open = $state(false);
   let wasSyncing = false;
 
-  // Stored progress loads after the page mounts, so the card opens once a lane appears.
+  const oldCodeActive = $derived(userState.syncPendingRetires.length > 0);
+
+  // Stored progress loads after the page mounts, so the card opens once a lane appears, or once
+  // an old code that still works does, which can outlast the lane.
   $effect(() => {
-    const syncing = lane !== undefined;
+    const syncing = lane !== undefined || oldCodeActive;
     if (syncing && !wasSyncing) open = true;
     wasSyncing = syncing;
   });
@@ -78,6 +81,11 @@
 </script>
 
 <DataCard bind:open title={m.sync_card_title()} summary={m.sync_card_summary()}>
+  {#if oldCodeActive && !working}
+    <div class="sync-card__old-code">
+      <StatusNote tone="warning">{m.sync_old_code_active()}</StatusNote>
+    </div>
+  {/if}
   {#if lane === undefined}
     <div class="sync-card">
       <p class="sync-card__note">{m.sync_card_setup_sub()}</p>
@@ -214,6 +222,10 @@
 />
 
 <style>
+  .sync-card__old-code {
+    margin-block-end: 12px;
+  }
+
   .sync-card {
     display: flex;
     flex-direction: column;

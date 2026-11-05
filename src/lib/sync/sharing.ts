@@ -6,18 +6,16 @@
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { ensureTurnstileScript } from "#lib/turnstile.js";
 
-import {
-  createRelayClient,
-  openFollowKey,
-  pendingRetireFor,
-  retirePending,
-  shareNewCode,
-} from "./follow.js";
+import { createRelayClient, openFollowKey, pendingRetireFor, shareNewCode } from "./follow.js";
 import { readSavePayload, stampOf } from "./read-save.js";
+
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 import type {
   FollowKey,
+  MailboxId,
   OpenResult,
+  PendingRetire,
   RelayClient,
   RelayFailure,
   RelayRefusal,
@@ -88,8 +86,8 @@ const MAX_RETIRE_RETRY_MS = 5 * 60_000;
 
 let retireTimer: ReturnType<typeof setTimeout> | undefined;
 let retireDelay = FIRST_RETIRE_RETRY_MS;
-/** Attempts run one at a time, so a retire queued meanwhile is tried after the one under way. */
-let retiring: Promise<void> = Promise.resolve();
+/** The mailboxes with a retire under way, so a stalled request holds up only its own mailbox. */
+const retiring = new Set<MailboxId>();
 /** Bumped by {@link keepRetiring}'s stop, so an attempt still under way schedules nothing after. */
 let retireGeneration = 0;
 /** The pending mailboxes this tab last knew of, so another tab's new retire wakes the retries. */
@@ -119,57 +117,52 @@ function retireWait(failures: readonly RetireResult[]): number | undefined {
   return Math.min(wait, MAX_RETIRE_RETRY_MS);
 }
 
+/** Retires one code & confirms it on its own, whatever the others are doing. Never rejects. */
+async function retireOne(pending: DeepReadonly<PendingRetire>): Promise<RetireResult> {
+  retiring.add(pending.mailboxId);
+  try {
+    const result = await relay.retire(pending.mailboxId, pending.token);
+    if (result.kind === "retired") await userState.confirmRetired([pending]);
+    return result;
+  } catch {
+    return { kind: "unreachable" };
+  } finally {
+    retiring.delete(pending.mailboxId);
+  }
+}
+
 async function attemptRetires(): Promise<void> {
   const generation = retireGeneration;
   clearTimeout(retireTimer);
   retireTimer = undefined;
-  const pending = userState.syncPendingRetires;
-  let failures: RetireResult[] = [];
-  if (pending.length > 0) {
-    try {
-      const results = await retirePending(relay, pending);
-      const confirmed = pending.filter((_, index) => results[index]?.kind === "retired");
-      failures = results.filter(({ kind }) => kind !== "retired");
-      if (confirmed.length > 0) await userState.confirmRetired(confirmed);
-    } catch {
-      // The scheduled retry tries again.
-    }
-  }
+  const idle = userState.syncPendingRetires.filter(({ mailboxId }) => !retiring.has(mailboxId));
+  const results = await Promise.all(idle.map((pending) => retireOne(pending)));
   knownPending = pendingIds();
   if (generation !== retireGeneration) return;
   if (userState.syncPendingRetires.length === 0) {
     retireDelay = FIRST_RETIRE_RETRY_MS;
     return;
   }
-  const wait = retireWait(failures);
+  // Every one left is already under way, & that attempt schedules what follows.
+  if (idle.length === 0 && retiring.size > 0) return;
+  const wait = retireWait(results.filter(({ kind }) => kind !== "retired"));
   if (wait === undefined) return;
   // A leaked code keeps working until this lands, so it retries like an upload does.
+  clearTimeout(retireTimer);
   retireTimer = setTimeout(() => {
-    void queueAttempt();
+    void attemptRetires();
   }, wait);
   retireDelay = Math.min(retireDelay * 2, MAX_RETIRE_RETRY_MS);
 }
 
 /**
  * Retries every pending retire now, & forgets the ones the relay confirmed. Any still pending
- * retry with backoff for as long as the page stays open.
+ * retry with backoff for as long as the page stays open. A retire already under way is left to
+ * finish, so one that stalls can't hold up any other.
  */
 export function retryPendingRetires(): Promise<void> {
   retireDelay = FIRST_RETIRE_RETRY_MS;
-  return queueAttempt();
-}
-
-function queueAttempt(): Promise<void> {
-  const previous = retiring;
-  retiring = (async () => {
-    await previous;
-    try {
-      await attemptRetires();
-    } catch {
-      // A failed attempt mustn't stop the ones queued behind it.
-    }
-  })();
-  return retiring;
+  return attemptRetires();
 }
 
 function retryOnline(): void {

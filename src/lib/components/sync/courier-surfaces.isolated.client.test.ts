@@ -126,11 +126,12 @@ async function renderNote(lane: Record<string, unknown> = SHARING) {
   await tick();
 }
 
-async function renderCard() {
-  await loadStore({ syncLane: SHARING });
+async function renderCard(local: Record<string, unknown> = {}) {
+  const userState = await loadStore({ syncLane: SHARING, ...local });
   const { default: Card } = await import("../../../routes/data/sync-card.svelte");
   render(Card);
   await tick();
+  return userState;
 }
 
 async function relayWith(overrides: Partial<RelayClient> = {}) {
@@ -326,6 +327,27 @@ describe("the notes", () => {
 });
 
 describe("Data's sync card", () => {
+  it("says a stored retire's old code still works, until the relay confirms it", async () => {
+    const retire = { mailboxId: "AAAAAAAAAAAAAAAAAAAAAA", token: TOKEN };
+    const userState = await renderCard({ syncPendingRetires: [retire] });
+    expect(screen.getByText(/Your old code still works for now/u)).toBeVisible();
+
+    await userState.confirmRetired([retire]);
+    await tick();
+    expect(screen.queryByText(/Your old code still works for now/u)).toBeNull();
+  });
+
+  it("opens to show an old code that outlasted its lane", async () => {
+    const retire = { mailboxId: "AAAAAAAAAAAAAAAAAAAAAA", token: TOKEN };
+    await renderCard({ syncLane: undefined, syncPendingRetires: [retire] });
+    expect(screen.getByText(/Your old code still works for now/u)).toBeVisible();
+  });
+
+  it("says nothing about an old code when none is waiting", async () => {
+    await renderCard();
+    expect(screen.queryByText(/Your old code still works for now/u)).toBeNull();
+  });
+
   it("takes each new save file where it isn't watched", async () => {
     await renderCard();
     report({ source: "file" });
