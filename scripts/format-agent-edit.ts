@@ -47,8 +47,11 @@ export function formatEdit(input: HookInput, run: RunCommand = runPnpm): string 
     return undefined;
   }
   const result = run(["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", ...files], cwd);
-  return result.status === 0
-    ? undefined
+  if (result.status === 0) {
+    return undefined;
+  }
+  return result.output.includes("ERR_PNPM_VERIFY_DEPS_BEFORE_RUN")
+    ? "Dependencies are missing or stale, so this edit wasn’t formatted. In a linked worktree, run `node scripts/setup-worktree.ts`. Elsewhere, run `pnpm install --frozen-lockfile`. After a deliberate dependency edit, follow Package commands in docs/agent-reference.md instead."
     : `Formatting failed. Report the failure before proceeding.\n${result.output}`;
 }
 

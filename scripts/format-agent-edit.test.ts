@@ -123,6 +123,17 @@ describe("format after agent edit", () => {
     ).toContain("parse error");
   });
 
+  it("names the setup command when pnpm reports absent or stale dependencies", () => {
+    const cwd = fixture();
+    const message = formatEdit({ cwd, tool_input: { file_path: "a file.ts" } }, () => ({
+      output: "[ERR_PNPM_VERIFY_DEPS_BEFORE_RUN] Cannot check whether dependencies are outdated",
+      status: 1,
+    }));
+    expect(message).toContain("node scripts/setup-worktree.ts");
+    expect(message).toContain("pnpm install --frozen-lockfile");
+    expect(message).not.toContain("Report the failure");
+  });
+
   it("leaves files with unresolved merge conflicts untouched until they are staged", () => {
     const cwd = fixture();
     const git = (...args: string[]) =>

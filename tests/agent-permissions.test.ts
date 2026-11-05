@@ -148,13 +148,11 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
     expect(matcher.test("Bash")).toBe(false);
   });
 
-  it("registers only upkeep: worktree setup & edit formatting", () => {
+  it("registers only edit formatting & the cloud runtime, and never worktree setup", () => {
     expect(Object.keys(hooks).toSorted()).toEqual(
-      file.startsWith(".claude")
-        ? ["CwdChanged", "FileChanged", "PostToolUse", "SessionStart"]
-        : ["PostToolUse", "SessionStart"],
+      file.startsWith(".claude") ? ["PostToolUse", "SessionStart"] : ["PostToolUse"],
     );
-    expect(find("SessionStart", "setup-worktree.ts")).toBeDefined();
+    expect(JSON.stringify(hooks)).not.toContain("setup-worktree");
   });
 
   it("registers no blocking hooks: upkeep failures never stop a tool call", () => {
@@ -165,7 +163,7 @@ describe.each([".claude/settings.json", ".codex/hooks.json"])("%s hook parity", 
     for (const hook of all) expect(hook.onFailure).toBeUndefined();
   });
 
-  it("has exactly one formatting handler, so setup cannot race formatting", () => {
+  it("has exactly one formatting handler", () => {
     const handlers = (hooks.PostToolUse ?? [])
       .flatMap((entry) => entry.hooks)
       .filter((hook) => /(?:format-agent-edit|agent-tool-hook)\.ts/.test(hook.command));
