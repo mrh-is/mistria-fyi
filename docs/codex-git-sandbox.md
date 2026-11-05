@@ -44,9 +44,9 @@ The relevant layers have different responsibilities:
    explains why the external worktree metadata directory appears as read-only.
 3. The project’s “.codex/rules/default.rules” governs command approval. An “allow” rule does not
    make a protected path writable.
-4. The “SessionStart” hook runs “scripts/setup-worktree.ts”. It links inputs & installs
-   dependencies; it cannot change the already selected sandbox policy. Setup itself can need Git
-   metadata writes for its lock & hook installation.
+4. An agent runs “scripts/setup-worktree.ts” before editing; no hook does. It links inputs &
+   installs dependencies; it cannot change the already selected sandbox policy. Setup itself can
+   need Git metadata writes for hook installation.
 
 An approved “require_escalated” retry uses different filesystem permissions. Its success explains
 the original denial; it does not prove the ordinary sandbox is fixed.

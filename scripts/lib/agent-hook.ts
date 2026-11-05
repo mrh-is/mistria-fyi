@@ -6,14 +6,7 @@ import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 export interface HookInput {
   cwd?: string;
-  /** `FileChanged`: `"change"`, `"add"`, or `"unlink"`. */
-  event?: string;
-  /** `FileChanged`: absolute path of the changed file. */
-  file_path?: string;
   hook_event_name?: string;
-  /** `CwdChanged`: the directories before & after the move. */
-  new_cwd?: string;
-  old_cwd?: string;
   session_id?: string;
   /** Copilot’s Claude-compatible events include a timestamp, but no stable `tool_use_id`. */
   timestamp?: string;
@@ -112,6 +105,20 @@ export function mainCheckoutRoot(cwd: string): string {
   return dirname(result.stdout.trim());
 }
 
+function commonDirOf(directory: string): string | undefined {
+  const result = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
+    cwd: directory,
+    encoding: "utf8",
+  });
+  return result.status === 0 ? realpathSync(result.stdout.trim()) : undefined;
+}
+
+/** Whether `directory` is a checkout (main or linked) of the repository holding `origin`. */
+export function sameRepository(origin: string, directory: string): boolean {
+  const target = commonDirOf(directory);
+  return target !== undefined && target === commonDirOf(origin);
+}
+
 /** Hooks apply only to the event checkout & linked worktrees of the configured project. */
 export function hookRepositoryRoot(cwd: string): string | undefined {
   const result = spawnSync("git", ["rev-parse", "--show-toplevel"], {
@@ -165,8 +172,4 @@ export function unmergedFiles(cwd: string): Set<string> {
     );
   }
   return new Set(result.stdout.split("\0").filter(Boolean));
-}
-
-export function contextOutput(event: string, additionalContext: string): string {
-  return JSON.stringify({ hookSpecificOutput: { additionalContext, hookEventName: event } });
 }

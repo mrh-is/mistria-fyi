@@ -100,6 +100,12 @@ through `$CLAUDE_ENV_FILE` so every Bash call in the session uses it. The hook e
 the setup script, so when the cached Node doesn’t match `.node-version`, the hook reruns the setup
 script before exporting `PATH`.
 
+No hook refreshes dependencies on its own, apart from that setup rerun. If a cached environment’s
+dependencies are stale for the branch, `pnpm run` & `pnpm exec` fail with
+`ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`; the agent runs `pnpm install --frozen-lockfile`, which is
+preauthorized. Cloud sessions don’t run `scripts/setup-worktree.ts`: each is a plain checkout, not a
+linked worktree.
+
 A setup script that exits with `scripts/setup-cloud-agent.sh: No such file or directory` is using
 the checkout-relative path; add the `mistria-fyi/` prefix. Claude does not cache a setup that exits
 unsuccessfully, so no cache reset is required after fixing it. If an older successful setup is
