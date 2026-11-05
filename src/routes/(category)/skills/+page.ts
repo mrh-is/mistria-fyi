@@ -9,4 +9,5 @@ export const load: PageLoad = localizedPageLoad(["perks", "skills"], (locale) =>
   accent: categoryColor("skills"),
   description: m.skills_page_description({}, { locale }),
   title: getName("ui", "skills", locale),
+  toolbar: { search: true },
 }));

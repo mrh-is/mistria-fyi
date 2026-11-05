@@ -6,6 +6,7 @@
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -109,12 +110,7 @@
       return {
         completedCount: scopedEntries.filter((e) => isRecipeCompleted(e.id)).length,
         filteredEntries: scopedEntries.filter((e) =>
-          isRowVisible(
-            e.id,
-            isRecipeCompleted(e.id),
-            userState.state.showCompleted,
-            recentlyCompleted.ids,
-          ),
+          isRowVisible(e.id, isRecipeCompleted(e.id), showsCompletedRows(), recentlyCompleted.ids),
         ),
         group,
         namedEntries,
@@ -122,6 +118,12 @@
       };
     }),
   );
+
+  // A recipe can sit in several groups, but it's still one match.
+  registerPageSearch(() => ({
+    matches: new Set(groupViews.flatMap((view) => view.namedEntries.map(({ id }) => id))).size,
+    visible: new Set(groupViews.flatMap((view) => view.filteredEntries.map(({ id }) => id))).size,
+  }));
 
   function toggleRecipe(entry: RecipeEntry, sectionId: string, sectionRecipeIds: RecipeId[]): void {
     sectionGrouping.hold(sectionId);
@@ -141,7 +143,7 @@
 
 <SectionGroups getKey={(view) => view.group.id} grouping={sectionGrouping} items={groupViews}>
   {#snippet section({ completedCount, filteredEntries, group, namedEntries, scopedEntries })}
-    {#if namedEntries.length > 0}
+    {#if namedEntries.length > 0 && (!nameFilter || filteredEntries.length > 0)}
       <ExpandableSection
         {locale}
         count={completedCount}

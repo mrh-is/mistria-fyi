@@ -7,16 +7,20 @@
  */
 import { recordEntries } from "#lib/utils/record.js";
 
+import { PROGRESS_FIELD_SPECS, PROGRESS_FIELDS } from "./progress-fields.js";
+
 import type { JsonValue } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
+
+import type { FieldSpec } from "./progress-fields.js";
 
 /**
  * - `manual`: the player set it.
  * - `inferred`: the app set it as a consequence (recorded prerequisites, a quest's recipe rewards,
  *   default unlocks, a marriage cascade).
  * - `save`: an applied save set it.
- * - `unknown`: recorded before provenance existed, or carried in by a device transfer.
+ * - `unknown`: a stored fact whose original source is unavailable.
  */
 export const PROVENANCE_SOURCES = ["inferred", "manual", "save", "unknown"] as const;
 export type ProvenanceSource = (typeof PROVENANCE_SOURCES)[number];
@@ -84,52 +88,46 @@ export function factFieldOf(key: string): string {
   return key.split("/", 1)[0];
 }
 
-const LIST_FIELDS = [
-  "almanac",
-  "almanacRecipes",
-  "cosmetics",
-  "mountAppearances",
-  "museum",
-  "petCosmetics",
-  "petSkins",
-  "spells",
-  "unlockedPerks",
-] as const satisfies readonly (keyof ProgressState)[];
-
 /**
  * Every non-default fact in `progress`, as its {@link factKey} & a comparable value. A fact absent
  * here is at its default: unticked, level zero, quest `none`, relationship `undecided`.
  */
-export function progressFacts(progress: DeepReadonly<ProgressState>): Map<string, string> {
+export function progressFacts(progress: DeepReadonly<Partial<ProgressState>>): Map<string, string> {
   const facts = new Map<string, string>();
-  for (const field of LIST_FIELDS) {
-    for (const id of progress[field]) facts.set(factKey(field, id), "1");
-  }
-  for (const field of ["animalCosmetics", "animals"] as const) {
-    for (const [animalId, ids] of Object.entries(progress[field])) {
-      for (const id of (ids ?? []) as Iterable<string>) {
-        facts.set(factKey(field, animalId, id), "1");
-      }
+  for (const field of PROGRESS_FIELDS) {
+    const value = progress[field];
+    if (value === undefined) continue;
+    const spec: FieldSpec = PROGRESS_FIELD_SPECS[field];
+    switch (spec.shape) {
+      case "list":
+        for (const id of value as ReadonlySet<string>) facts.set(factKey(field, id), "1");
+        break;
+      case "animal-lists":
+        for (const [animalId, ids] of recordEntries(value as Record<string, ReadonlySet<string>>)) {
+          for (const id of ids) facts.set(factKey(field, animalId, id), "1");
+        }
+        break;
+      case "choices":
+        for (const [id, choice] of recordEntries(value as Record<string, string>)) {
+          if (choice !== spec.default) facts.set(factKey(field, id), choice);
+        }
+        break;
+      case "levels":
+        for (const [id, level] of recordEntries(value as Record<string, number>)) {
+          if (typeof level === "number" && level > 0) facts.set(factKey(field, id), String(level));
+        }
+        break;
+      case "choice":
+        if (value !== spec.default) facts.set(field, value as string);
+        break;
+      case "flag":
+        if (value) facts.set(field, "1");
+        break;
+      case "level":
+        if (typeof value === "number" && value > 0) facts.set(field, String(value));
+        break;
     }
   }
-  for (const field of ["heartLevels", "skillLevels"] as const) {
-    const levels: Readonly<Partial<Record<string, number>>> = progress[field];
-    for (const [id, level] of recordEntries(levels)) {
-      if (level > 0) facts.set(factKey(field, id), String(level));
-    }
-  }
-  for (const [id, questState] of recordEntries(progress.questStates)) {
-    if (questState !== "none") facts.set(factKey("questStates", id), questState);
-  }
-  for (const [id, relationship] of recordEntries(progress.villagerRelationships)) {
-    if (relationship !== "undecided") facts.set(factKey("villagerRelationships", id), relationship);
-  }
-  if (progress.childChoice !== "undeclared") facts.set("childChoice", progress.childChoice);
-  if (progress.breakUpsDisabled) facts.set("breakUpsDisabled", "1");
-  if (progress.hasUpperFloor) facts.set("hasUpperFloor", "1");
-  if (progress.mineFloor > 0) facts.set("mineFloor", String(progress.mineFloor));
-  if (progress.reachedSeason !== "spring") facts.set("reachedSeason", progress.reachedSeason);
-  if (progress.renown > 0) facts.set("renown", String(progress.renown));
   return facts;
 }
 

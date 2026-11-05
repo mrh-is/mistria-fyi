@@ -1,5 +1,10 @@
 <script lang="ts">
   import AnimalSubcategory from "#lib/components/animal-subcategory.svelte";
+  import {
+    registerPageSearch,
+    showsCompletedRows,
+    visibleWindows,
+  } from "#lib/controllers/page-search.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
   import {
@@ -9,6 +14,8 @@
   } from "#lib/engine/animal-availability.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
+  import { recordKeys } from "#lib/utils/record.js";
 
   import type {
     AnimalSubcategoryRowProps,
@@ -41,6 +48,7 @@
   function hasDisplayableVariant(animalId: AnimalId): boolean {
     const isAnimalVisible = isSpeciesVisible(animalId);
     return someVariant(animalId, ([variantId, variant]) => {
+      if (!matchesSearch(animalId, variantId)) return false;
       const completed = hasCompletedVariant(animalId, variantId);
       if (isAnimalVisible) {
         return isVariantVisible(animalId, variant, completed);
@@ -80,7 +88,17 @@
       variant,
       trackerData.animals[animalId].visibility,
       userState.progressContext,
-      userState.state.availabilityWindows,
+      visibleWindows(),
+    );
+  }
+
+  /** A variant matches through its own name or its animal's, so “cow” finds every cow. */
+  function matchesSearch(animalId: AnimalId, variantId: AnimalVariantId): boolean {
+    const query = toolbarState.searchQuery;
+    if (!query) return true;
+    if (!isSpeciesVisible(animalId) || isVariantSpoilered(animalId, variantId)) return false;
+    return [animalNameId(animalId, "core"), animalNameId(animalId, "variants", variantId)].some(
+      (nameId) => matchesName(getName("animals", nameId, locale), query, locale),
     );
   }
 
@@ -99,19 +117,20 @@
     completed: boolean,
   ): boolean {
     if (!isVariantInScope(animalId, variant, completed)) return false;
-    return !completed || userState.state.showCompleted;
+    return !completed || showsCompletedRows();
   }
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<AnimalVariantId> {
     let displayableCompletedItemCount = 0;
     let displayableItemCount = 0;
     const visibleItems: VariantRowConfig[] = [];
     forEachVariant(animalId, ([vid, variant], tier) => {
+      if (!matchesSearch(animalId, vid)) return;
       const completed = hasCompletedVariant(animalId, vid);
       if (!isVariantInScope(animalId, variant, completed)) return;
       displayableItemCount++;
       if (completed) displayableCompletedItemCount++;
 
-      if (!completed || userState.state.showCompleted) {
+      if (!completed || showsCompletedRows()) {
         const totalTiers = trackerData.animals[animalId].variantTiers.length;
         visibleItems.push({
           completed,
@@ -154,6 +173,24 @@
     isSpeciesVisible: (animalId: AnimalId) => boolean;
     locale: LocaleCode;
   } = $props();
+
+  function countMatches(animalId: AnimalId): number {
+    let matches = 0;
+    forEachVariant(animalId, ([variantId]) => {
+      if (matchesSearch(animalId, variantId)) matches++;
+    });
+    return matches;
+  }
+
+  registerPageSearch(() => {
+    let matches = 0;
+    let visible = 0;
+    for (const animalId of recordKeys(trackerData.animals)) {
+      matches += countMatches(animalId);
+      visible += sectionConfig(animalId).visibleItems.length;
+    }
+    return { matches, visible };
+  });
 </script>
 
 <AnimalSubcategory

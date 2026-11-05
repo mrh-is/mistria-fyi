@@ -1,31 +1,13 @@
 import * as v from "valibot";
 
+import { FEEDBACK_PROGRESS_FIELDS } from "#lib/engine/progress-fields.js";
+
 /** Deliberately closed: neither save paths nor arbitrary object keys belong in public feedback. */
 const FieldSchema = v.picklist([
-  "almanac",
-  "almanacRecipes",
-  "animalCosmetics",
-  "animals",
-  "breakUpsDisabled",
-  "childChoice",
-  "cosmetics",
-  "hasUpperFloor",
-  "heartLevels",
-  "mineFloor",
-  "mountAppearances",
-  "museum",
-  "petCosmetics",
-  "petSkins",
-  "questStates",
-  "reachedSeason",
-  "renown",
-  "skillLevels",
-  "spells",
-  "unlockedPerks",
-  "villagerRelationships",
+  ...FEEDBACK_PROGRESS_FIELDS,
   "creationVersion",
   "playtime",
-]);
+] as const);
 const PolicySchema = v.picklist([
   "apply-and-tell",
   "apply-silently",
@@ -84,7 +66,7 @@ export const SyncLogSchema = v.pipe(
                 policy: PolicySchema,
               }),
             ),
-            v.maxLength(84),
+            v.maxLength(FEEDBACK_PROGRESS_FIELDS.length * PolicySchema.options.length),
           ),
           unknownFields: v.pipe(
             v.array(
@@ -96,7 +78,7 @@ export const SyncLogSchema = v.pipe(
                 ),
               }),
             ),
-            v.maxLength(23),
+            v.maxLength(FieldSchema.options.length),
           ),
         }),
       ),

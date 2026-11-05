@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import SkillsContent from "#lib/components/skills-content.svelte";
 import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { perksOfSkill } from "#lib/engine/projections/skills.js";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
@@ -18,6 +19,7 @@ function miningRecord() {
 
 describe("SkillsContent", () => {
   beforeEach(() => {
+    toolbarState.closeSearch();
     userState.resetAll();
   });
   afterEach(() => {

@@ -598,7 +598,7 @@ describe("persistence lifecycle", () => {
 
     const first = await import("#lib/stores/user-state.svelte.js");
     first.userState.loadFromStorage();
-    first.userState.mergeFromSave({ mineFloor: 10, renown: 25 });
+    void first.userState.mergeFromSave({ mineFloor: 10, renown: 25 });
     vi.advanceTimersByTime(first.PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
@@ -624,7 +624,7 @@ describe("persistence lifecycle", () => {
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
-    userState.mergeFromSave({ renown: 25 });
+    void userState.mergeFromSave({ renown: 25 });
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 

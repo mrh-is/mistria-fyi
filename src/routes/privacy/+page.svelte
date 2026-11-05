@@ -2,6 +2,16 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import * as m from "#lib/paraglide/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
+  import { page } from "$app/state";
+
+  /** Bump this whenever the policy's meaning changes. */
+  const LAST_UPDATED = Date.UTC(2026, 10, 5);
+
+  const lastUpdated = $derived(
+    new Intl.DateTimeFormat(page.data.locale, { dateStyle: "long", timeZone: "UTC" }).format(
+      LAST_UPDATED,
+    ),
+  );
 </script>
 
 {#snippet sectionHeading(text: string)}
@@ -13,6 +23,8 @@
 <PageHeader title={m.privacy_title()} backHref="about" backLabel={m.privacy_back_to_about()} />
 
 <div class="flex flex-col gap-6 p-4 text-sm">
+  <p class="text-muted-foreground">{m.privacy_last_updated({ date: lastUpdated })}</p>
+
   <h2 class="text-lg font-semibold">{m.privacy_without_sync_heading()}</h2>
 
   <section class="flex flex-col gap-2">
@@ -137,6 +149,13 @@
           >{/if}
       {/each}
     </p>
+  </section>
+
+  <div class="border-t border-border/50"></div>
+
+  <section class="flex flex-col gap-2">
+    {@render sectionHeading(m.privacy_sync_trust_heading())}
+    <p>{m.privacy_sync_trust_body()}</p>
   </section>
 
   <div class="border-t border-border/50"></div>

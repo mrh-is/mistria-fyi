@@ -9,4 +9,5 @@ export const load: PageLoad = localizedPageLoad(["town-ranks"], (locale) => ({
   accent: categoryColor("renown"),
   description: m.renown_page_description({}, { locale }),
   title: getName("ui", "renown", locale),
+  toolbar: { search: true },
 }));

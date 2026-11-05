@@ -12,6 +12,7 @@ import { recordKeys } from "#lib/utils/record.js";
 
 describe("QuestsContent empty sections", () => {
   beforeEach(() => {
+    userState.loadFromStorage();
     userState.resetAll();
     userState.toggleShowSpoilers();
     toolbarState.closeSearch();
@@ -33,7 +34,7 @@ describe("QuestsContent empty sections", () => {
       ...recordKeys(trackerData.quests.cooking),
       ...recordKeys(trackerData.quests.story).slice(0, 48),
     ];
-    userState.mergeFromSave(
+    await userState.mergeFromSave(
       extractSaveProgress({ quests: { completed_quests: completedQuestIds } }).completed,
     );
     const view = renderWithFeedback(QuestsContent, { locale: "en" });

@@ -34,7 +34,7 @@
     if (shallow) return;
 
     feedbackContext.reset();
-    toolbarState.closeSearch();
+    toolbarState.finishSearchAfterNavigation();
     toolbarState.resetSourceFilters();
   });
 

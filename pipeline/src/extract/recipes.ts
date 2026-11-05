@@ -1,9 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { collectExplorationSources } from "../acquisition/collectors/exploration.js";
-import { collectRecipeOnlySources } from "../acquisition/collectors/recipe-only.js";
-import { collectRewardSources } from "../acquisition/collectors/rewards.js";
-import { collectStoreSources } from "../acquisition/collectors/stores.js";
+import { collectRecipeAcquisitionSources } from "../acquisition/collectors/recipe-acquisition.js";
 import {
   AnimalCosmeticSourceAccumulator,
   CosmeticSourceAccumulator,
@@ -118,26 +115,16 @@ export function extractRecipes(
   }
 
   if (!sharedSources) {
-    const items = new ItemSourceAccumulator();
-    const cosmetics = new CosmeticSourceAccumulator();
-    const animalCosmetics = new AnimalCosmeticSourceAccumulator();
-    const petCosmetics = new PetCosmeticSourceAccumulator();
     const requirements = createRequirementContext(
       fiddle.requirements as Record<string, unknown> | undefined,
       cutsceneMap,
     );
-    collectRewardSources(
-      fiddle,
-      items,
-      cosmetics,
-      animalCosmetics,
-      petCosmetics,
-      context,
-      requirements,
-    );
-    collectStoreSources(fiddle, requirements, items, cosmetics, animalCosmetics, context);
-    collectExplorationSources(fiddle, items, cosmetics, context);
-    collectRecipeOnlySources(fiddle, context);
+    collectRecipeAcquisitionSources(fiddle, context, requirements, {
+      animalCosmeticSources: new AnimalCosmeticSourceAccumulator(),
+      cosmeticSources: new CosmeticSourceAccumulator(),
+      itemSources: new ItemSourceAccumulator(),
+      petCosmeticSources: new PetCosmeticSourceAccumulator(),
+    });
     for (const recipeId of Object.keys(recipes) as RecipeId[]) {
       recipes[recipeId].sources = sources.get(recipeId);
     }

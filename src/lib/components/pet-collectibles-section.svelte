@@ -3,6 +3,7 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
@@ -14,8 +15,10 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
+  import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { PetCosmeticSetId, PetSkinId } from "#lib/types/tracker-data.js";
 
@@ -56,13 +59,15 @@
       .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
-  let scopedPetCosmeticEntries = $derived(
-    petCosmeticEntries.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
-  );
+  let nameFilter = $derived(toolbarState.searchQuery);
 
-  let scopedPetSkinEntries = $derived(
-    petSkinEntries.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
-  );
+  function isScoped({ name, sources }: { name: string; sources: Source[] }): boolean {
+    return matchesName(name, nameFilter, locale) && toolbarState.matchesSourceFilters(sources);
+  }
+
+  let scopedPetCosmeticEntries = $derived(petCosmeticEntries.filter((entry) => isScoped(entry)));
+
+  let scopedPetSkinEntries = $derived(petSkinEntries.filter((entry) => isScoped(entry)));
 
   let cosmeticCompletedCount = $derived(
     scopedPetCosmeticEntries.filter((entry) => userState.state.progress.petCosmetics.has(entry.id))
@@ -76,16 +81,25 @@
   let visibleCosmeticEntries = $derived(
     scopedPetCosmeticEntries.filter((e) => {
       const done = userState.state.progress.petCosmetics.has(e.id);
-      return done ? userState.state.showCompleted : true;
+      return done ? showsCompletedRows() : true;
     }),
   );
 
   let visibleSkinEntries = $derived(
     scopedPetSkinEntries.filter((e) => {
       const done = userState.state.progress.petSkins.has(e.id);
-      return done ? userState.state.showCompleted : true;
+      return done ? showsCompletedRows() : true;
     }),
   );
+
+  registerPageSearch(() => {
+    const isCosmetics = collection === "cosmetics";
+    const named = (isCosmetics ? petCosmeticEntries : petSkinEntries).filter(({ name }) =>
+      matchesName(name, nameFilter, locale),
+    );
+    const visible = isCosmetics ? visibleCosmeticEntries : visibleSkinEntries;
+    return { matches: named.length, visible: visible.length };
+  });
 
   function arePetsComplete(): boolean {
     return (
@@ -99,6 +113,7 @@
   <ExpandableSection
     {locale}
     count={cosmeticCompletedCount}
+    forceOpen={!!nameFilter}
     name={m.animals_pet_cosmetics_section_name()}
     reportCategory="pet-cosmetics"
     total={scopedPetCosmeticEntries.length}
@@ -138,6 +153,7 @@
   <ExpandableSection
     {locale}
     count={skinCompletedCount}
+    forceOpen={!!nameFilter}
     name={m.animals_pet_skins_section_name()}
     reportCategory="pet-skins"
     total={scopedPetSkinEntries.length}
@@ -174,6 +190,6 @@
 {/if}
 
 <!-- One empty state covers both pet collections. -->
-{#if collection === "skins" && toolbarState.isSourceFilterNarrowing && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
+{#if collection === "skins" && !nameFilter && toolbarState.isSourceFilterNarrowing && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
   <TrackerEmptyState />
 {/if}

@@ -6,6 +6,7 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -21,6 +22,7 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -117,6 +119,33 @@
 
   registerSourceFilters("cosmetics", () => trackerIndex.categorySourceTypes.cosmetics);
 
+  let nameFilter = $derived(toolbarState.searchQuery);
+
+  function matchesSearch(cosmetic: CosmeticEntry): boolean {
+    if (!nameFilter) return true;
+    if (!isConditionVisible(cosmetic.visibility, userState.progressionState)) return false;
+    return matchesName(cosmetic.name, nameFilter, locale);
+  }
+
+  function isScoped(cosmetic: CosmeticEntry): boolean {
+    return matchesSearch(cosmetic) && toolbarState.matchesSourceFilters(cosmetic.sources);
+  }
+
+  function isVisible(cosmetic: CosmeticEntry): boolean {
+    if (!isScoped(cosmetic)) return false;
+    return !userState.state.progress.cosmetics.has(cosmetic.id) || showsCompletedRows();
+  }
+
+  registerPageSearch(() => {
+    const cosmetics = groups().flatMap(({ subCategories }) =>
+      subCategories.flatMap((subCategory) => subCategory.cosmetics),
+    );
+    return {
+      matches: cosmetics.filter((cosmetic) => matchesSearch(cosmetic)).length,
+      visible: cosmetics.filter((cosmetic) => isVisible(cosmetic)).length,
+    };
+  });
+
   function toggleCosmetic(
     cosmetic: CosmeticEntry,
     slot: CosmeticSlot,
@@ -143,11 +172,8 @@
 <SectionGroups getKey={(group) => group.slot} grouping={sectionGrouping} items={groups()}>
   {#snippet section({ name, nested, slot, subCategories })}
     {@const allInSlot = subCategories.flatMap(({ cosmetics }) => cosmetics)}
-    {@const scopedInSlot = allInSlot.filter((c) => toolbarState.matchesSourceFilters(c.sources))}
-    {@const visibleInSlot = scopedInSlot.filter((c) => {
-      const done = userState.state.progress.cosmetics.has(c.id);
-      return done ? userState.state.showCompleted : true;
-    })}
+    {@const scopedInSlot = allInSlot.filter(isScoped)}
+    {@const visibleInSlot = allInSlot.filter(isVisible)}
     {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
       {@const completed = userState.state.progress.cosmetics.has(cosmetic.id)}
       {@const spoilered = !isConditionVisible(cosmetic.visibility, userState.progressionState)}
@@ -170,9 +196,10 @@
         }}
       />
     {/snippet}
-    {#if visibleInSlot.length > 0 || toolbarState.isSourceFilterNarrowing}
+    {#if visibleInSlot.length > 0 || (!nameFilter && toolbarState.isSourceFilterNarrowing)}
       <ExpandableSection
         {locale}
+        forceOpen={!!nameFilter}
         count={scopedInSlot.filter((c) => userState.state.progress.cosmetics.has(c.id)).length}
         {name}
         reportCategory="cosmetic-slot"
@@ -180,25 +207,20 @@
         total={scopedInSlot.length}
       >
         {#each subCategories as { cosmetics, key: subCategory, name: subCategoryName } (subCategory)}
-          {@const visibleCosmetics = cosmetics.filter((c) => {
-            if (!toolbarState.matchesSourceFilters(c.sources)) return false;
-            const done = userState.state.progress.cosmetics.has(c.id);
-            return done ? userState.state.showCompleted : true;
-          })}
+          {@const visibleCosmetics = cosmetics.filter(isVisible)}
           {#if visibleCosmetics.length > 0}
             {#if nested}
               <ExpandableSection
                 {locale}
                 count={cosmetics.filter(
-                  (c) =>
-                    toolbarState.matchesSourceFilters(c.sources) &&
-                    userState.state.progress.cosmetics.has(c.id),
+                  (c) => isScoped(c) && userState.state.progress.cosmetics.has(c.id),
                 ).length}
                 depth={1}
+                forceOpen={!!nameFilter}
                 name={subCategoryName}
                 reportCategory="cosmetic"
                 reportEntityId={`${slot}:${subCategory}`}
-                total={cosmetics.filter((c) => toolbarState.matchesSourceFilters(c.sources)).length}
+                total={cosmetics.filter(isScoped).length}
               >
                 <TrackerRowList
                   getKey={(cosmetic) => cosmetic.id}

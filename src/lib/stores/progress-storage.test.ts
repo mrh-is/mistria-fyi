@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { progressOfExtraction } from "#lib/engine/import-save.js";
+import { createDefaultProgress } from "#lib/engine/progress-fields.js";
+import { applyAdditiveSave } from "#lib/engine/save-progress.js";
+import { applySync } from "#lib/engine/sync-apply.js";
 import {
+  emptyProgressHistory,
+  emptyRetainedProgress,
   migrateDocument,
   MIGRATIONS,
   readProgressBlob,
@@ -10,12 +16,14 @@ import {
 } from "#lib/stores/progress-storage.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 
+import type { ExtractedField, SaveExtraction, SaveFields } from "#lib/engine/import-save.js";
 import type {
   FarmSwitchBackup,
   IngressPolicy,
   LoadedProgress,
   StoredDocument,
 } from "#lib/stores/progress-storage.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 
 const FIXTURES = import.meta.glob<StoredDocument>("./progress-storage-fixtures/v*.json", {
   eager: true,
@@ -34,6 +42,84 @@ function readOk(json: string, policy: IngressPolicy): LoadedProgress {
   if (result.kind !== "ok") throw new Error(`Expected a readable blob, got ${result.kind}`);
   return result.loaded;
 }
+
+function extracted<T>(value: T): ExtractedField<T> {
+  return { completeness: "complete", diagnostics: [], untracked: [], value };
+}
+
+it("carries a non-default value for every progress field through sync, import, & backup", () => {
+  // Use real game IDs so a strict restore must recognize every value as live progress.
+  const incoming = {
+    almanac: new Set(["turnip"]),
+    almanacRecipes: new Set(["basic_wood_chest"]),
+    animalCosmetics: { chicken: new Set(["ribbon_red"]) },
+    animals: { chicken: new Set(["red"]) },
+    breakUpsDisabled: true,
+    childChoice: "yes",
+    cosmetics: new Set(["back_gear_ancient_witch_broom"]),
+    hasUpperFloor: true,
+    heartLevels: { balor: 4 },
+    mineFloor: 20,
+    mountAppearances: new Set(["mistmare"]),
+    museum: new Set(["turnip"]),
+    petCosmetics: new Set(["flower_crown"]),
+    petSkins: new Set(["sapling"]),
+    questStates: { repair_the_general_store: "completed" },
+    reachedSeason: "fall",
+    renown: 17,
+    skillLevels: { farming: 7 },
+    spells: new Set(["summon_rain"]),
+    unlockedPerks: new Set(["museum_quality_one"]),
+    villagerRelationships: { balor: "married" },
+  } satisfies Record<keyof ProgressState, unknown>;
+
+  const creationVersion = { major: 1, minor: 0, patch: 8, pre: null };
+  const farm = { creationVersion, saveNumber: "1315159680" };
+  const blank = () => ({
+    farm,
+    history: emptyProgressHistory(),
+    progress: createDefaultProgress(),
+  });
+  const extraction: SaveExtraction = {
+    diagnostics: [],
+    fields: Object.fromEntries(
+      Object.entries(incoming).map(([field, value]) => [field, extracted(value)]),
+    ) as unknown as SaveFields,
+    identity: { creationVersion: extracted(creationVersion), playtime: extracted(30) },
+  };
+  const outcome = applySync(blank(), { extraction, farm }, { fresh: blank() });
+  if (outcome.kind !== "applied") throw new Error(`Expected sync to apply, got ${outcome.kind}`);
+  const synced = outcome.result;
+  expect(synced.state.progress).toEqual(incoming);
+  expect(synced.differences).toHaveLength(Object.keys(incoming).length);
+  expect(synced.differences.every(({ applied: wrote }) => wrote)).toBe(true);
+
+  const imported = blank();
+  const { completed, playtime } = progressOfExtraction(extraction);
+  const merge = applyAdditiveSave(imported.progress, imported.history, completed, playtime);
+  expect(merge.conflicts).toEqual([]);
+  expect(imported.progress).toEqual(incoming);
+  expect(imported.history.provenance).toEqual(synced.state.history.provenance);
+
+  const json = serializeProgress({
+    ...imported,
+    retained: emptyRetainedProgress(),
+    worldState: { season: "spring", weather: "calm" },
+  });
+  const stored = JSON.parse(json) as { progress: Record<string, unknown> };
+  expect(Object.keys(stored.progress)).toEqual([
+    "lastSavePlaytime",
+    ...[...Object.keys(incoming), "provenance", "resolutions"].toSorted(),
+  ]);
+  const restored = readOk(json, "strict");
+  // Storage backfills empty sets for every other animal.
+  const { animalCosmetics, animals, ...restoredFields } = restored.progress;
+  const { animalCosmetics: expectedCosmetics, animals: expectedAnimals, ...expected } = incoming;
+  expect(animalCosmetics).toMatchObject(expectedCosmetics);
+  expect(animals).toMatchObject(expectedAnimals);
+  expect(restoredFields).toEqual(expected);
+  expect(restored.history).toEqual(imported.history);
+});
 
 function withVersion(version: unknown): string {
   return JSON.stringify({ ...fixture(CURRENT_SERIALIZATION_VERSION), version });
