@@ -14,9 +14,11 @@ server stores, and that players still trust the code they’re served, including
 
 Cloudflare already serves the whole app, so isolating its script removes no trusted party. It would
 shrink the attack surface, though: a bad Turnstile release needn’t reach this project’s deployment,
-and in the app document it could read those secrets. We accept that risk. The script loads only on
-demand, when a player makes a sync code or opens the feedback form, and it then stays until the page
-reloads. The Content Security Policy limits scripts to the app & `challenges.cloudflare.com`.
+and in the app document it could read those secrets. The maintainer accepted that risk on November
+5: those secrets guard game saves, not personal data, and the app can’t avoid trusting Cloudflare.
+The script loads only on demand, when a player makes a sync code or opens the feedback form, and it
+then stays until the page reloads. The Content Security Policy limits scripts to the app &
+`challenges.cloudflare.com`.
 
 ## Alternatives
 
