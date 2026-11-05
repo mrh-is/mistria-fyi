@@ -1,5 +1,5 @@
 import { tick } from "svelte";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -12,6 +12,7 @@ import type { StoreId } from "#lib/types/tracker-data.js";
 
 beforeEach(() => {
   userState.resetAll();
+  toolbarState.closeSearch();
   // The registration doesn't depend on how many rows render, and rendering every row took this file
   // past its CI time budget. This per-test spy restores automatically.
   vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
@@ -28,6 +29,11 @@ beforeEach(() => {
       toggle: vi.fn(() => vi.fn()),
     },
   ]);
+});
+
+// Client test files share this store, so a search left open would filter their pages.
+afterEach(() => {
+  toolbarState.closeSearch();
 });
 
 it("keeps the Unobtainable display control available while the source lens renders almanac rows", async () => {
@@ -48,6 +54,4 @@ it("leaves the mine floor record out of a search", async () => {
   toolbarState.setSearchQuery("acorn");
   await tick();
   expect(view.queryByText("Upper Mines")).toBeNull();
-
-  toolbarState.closeSearch();
 });
