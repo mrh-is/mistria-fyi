@@ -1,41 +1,18 @@
+import { FEEDBACK_PROGRESS_FIELDS } from "#lib/engine/progress-fields.js";
 import { PROVENANCE_SOURCES } from "#lib/engine/provenance.js";
-
-import type { ProgressState } from "#lib/types/user-progress.js";
 
 /** Leaves room for a 24 KiB sync log, the maximum message, & issue formatting. */
 export const MAX_PROGRESS_ATTACHMENT_BYTES = 32 * 1024;
 
-// Exhaustive by design: a new progress field needs an explicit public/private classification.
-const PUBLIC_PROGRESS_KEYS = {
-  almanac: true,
-  almanacRecipes: true,
-  animalCosmetics: true,
-  animals: true,
-  breakUpsDisabled: true,
-  childChoice: true,
-  cosmetics: true,
-  hasUpperFloor: true,
-  heartLevels: true,
-  lastSavePlaytime: true,
-  lastSaveUnordered: true,
-  mineFloor: true,
-  mountAppearances: true,
-  museum: true,
-  petCosmetics: true,
-  petSkins: true,
-  provenance: true,
-  questStates: true,
-  reachedSeason: true,
-  renown: true,
-  resolutions: true,
-  skillLevels: true,
-  spells: true,
-  unlockedPerks: true,
-  villagerRelationships: true,
-} satisfies Record<
-  "lastSavePlaytime" | "lastSaveUnordered" | "provenance" | "resolutions" | keyof ProgressState,
-  boolean
->;
+const PUBLIC_PROGRESS_KEYS = new Set<string>(
+  [
+    ...FEEDBACK_PROGRESS_FIELDS,
+    "lastSavePlaytime",
+    "lastSaveUnordered",
+    "provenance",
+    "resolutions",
+  ].toSorted(),
+);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -56,7 +33,7 @@ function projectSummary(value: unknown, field: string): Record<string, unknown> 
   if (field === "provenance" && isRecord(value.byField)) {
     const byField = value.byField;
     summary.byField = Object.fromEntries(
-      Object.keys(PUBLIC_PROGRESS_KEYS).flatMap((key) => {
+      [...PUBLIC_PROGRESS_KEYS].flatMap((key) => {
         const counts = byField[key];
         if (!isRecord(counts)) return [];
         return [
@@ -80,7 +57,7 @@ function summarizeProvenance(provenance: Record<string, unknown>): Record<string
   const byField: Record<string, Partial<Record<(typeof PROVENANCE_SOURCES)[number], number>>> = {};
   for (const [key, fact] of Object.entries(provenance)) {
     const field = key.split("/")[0];
-    if (!Object.hasOwn(PUBLIC_PROGRESS_KEYS, field) || !isRecord(fact)) continue;
+    if (!PUBLIC_PROGRESS_KEYS.has(field) || !isRecord(fact)) continue;
     const source = PROVENANCE_SOURCES.find((candidate) => candidate === fact.source);
     if (!source) continue;
     const counts = byField[field] ?? {};
@@ -112,7 +89,7 @@ function fitAttachment(attachment: Record<string, unknown>): Record<string, unkn
 export function progressAttachment(progress: Record<string, unknown>): Record<string, unknown> {
   const { provenance, resolutions } = progress;
   const redacted = Object.fromEntries(
-    Object.keys(PUBLIC_PROGRESS_KEYS)
+    [...PUBLIC_PROGRESS_KEYS]
       .filter((key) => Object.hasOwn(progress, key))
       .map((key) => [key, progress[key]]),
   );

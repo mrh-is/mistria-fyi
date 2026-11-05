@@ -14,21 +14,17 @@ import { trackerData } from "#lib/data/index.js";
 import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
+import { fieldFactKind, PROGRESS_FIELD_SPECS, PROGRESS_FIELDS } from "./progress-fields.js";
 import { confirmedBySave, holdsGuess, progressFacts, resolutionHolds } from "./provenance.js";
 import { compareFarms, mergeFarmIdentity } from "./save-identity.js";
-import {
-  appliedFact,
-  factRank,
-  isLevelField,
-  recordSavePlaytime,
-  writeFact,
-} from "./save-progress.js";
+import { appliedFact, factRank, recordSavePlaytime, writeFact } from "./save-progress.js";
 
 import type { FarmIdentity } from "#lib/types/save-identity.js";
 import type { QuestId, QuestType } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 
 import type { ExtractedProgressKey, SaveExtraction } from "./import-save.js";
+import type { FactKind, FieldSpec } from "./progress-fields.js";
 import type { ProgressHistory, ProvenanceSource } from "./provenance.js";
 
 // ─── Inputs & outputs ───────────────────────────────────────────────
@@ -52,9 +48,6 @@ export interface SyncBundle {
  * `ask-first` waits for an answer before anything it covers changes.
  */
 export type SyncPolicy = "apply-and-tell" | "apply-silently" | "ask-first" | "keep-local-and-tell";
-
-/** A fact's shape: ticked or not, an ordered level (a season counts), or a quest's state. */
-export type FactKind = "level" | "quest" | "tick";
 
 /** `forward` when the save holds more progress than stored: a tick, a higher level, a later state. */
 export type SyncDirection = "backward" | "forward";
@@ -253,41 +246,10 @@ const QUEST_KIND = new Map<string, QuestType>(
  * These facts describe one household; a decision must keep or apply its dependent changes together.
  */
 function isHouseholdFact(field: SyncField, id: string | undefined): boolean {
+  const spec: FieldSpec = PROGRESS_FIELD_SPECS[field];
   return (
-    field === "villagerRelationships" ||
-    field === "breakUpsDisabled" ||
-    field === "childChoice" ||
-    (field === "questStates" && PREGNANCY_QUEST_IDS.has(id as QuestId))
+    spec.household === true || (field === "questStates" && PREGNANCY_QUEST_IDS.has(id as QuestId))
   );
-}
-
-const SYNC_FIELDS: readonly SyncField[] = [
-  "almanac",
-  "almanacRecipes",
-  "animalCosmetics",
-  "animals",
-  "breakUpsDisabled",
-  "childChoice",
-  "cosmetics",
-  "hasUpperFloor",
-  "heartLevels",
-  "mineFloor",
-  "mountAppearances",
-  "museum",
-  "petCosmetics",
-  "petSkins",
-  "questStates",
-  "reachedSeason",
-  "renown",
-  "skillLevels",
-  "spells",
-  "unlockedPerks",
-  "villagerRelationships",
-];
-
-function factKind(field: SyncField): FactKind {
-  if (field === "questStates") return "quest";
-  return isLevelField(field) ? "level" : "tick";
 }
 
 // ─── Applying ───────────────────────────────────────────────────────
@@ -420,9 +382,10 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
   // A household “keep mine” lapses when any fact it covered changes its save value, even to local.
   let householdLapsed = false;
 
-  for (const field of SYNC_FIELDS) {
+  for (const field of PROGRESS_FIELDS) {
     const extracted = extraction.fields[field];
     if (extracted.value === undefined) continue;
+    const kind = fieldFactKind(PROGRESS_FIELD_SPECS[field]);
     const save = progressFacts({ [field]: extracted.value });
     const complete = extracted.completeness === "complete";
     // A complete field speaks for every fact it holds; an unknown one only for what it lists.
@@ -459,7 +422,6 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
       if (!isHouseholdFact(field, id) && resolutionHolds(resolution, saveValue ?? null)) continue;
       if (resolution) comparison.settled.push(key);
 
-      const kind = factKind(field);
       const rule = POLICY_TABLE[provenance?.source ?? "none"][kind][direction];
       let policy = settleRule(rule, localValue, provenance?.playtime, playtime, direction);
       // Guardrail: whatever the table says, a level is never lowered without asking.
