@@ -49,60 +49,18 @@ The setup script is deliberately not a pnpm script. `verifyDepsBeforeRun: error`
 `pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse to start when dependencies are missing
 or stale, instead of installing them implicitly.
 
-**Automatic initialization:** Claude Code & Codex `SessionStart` hooks run
-`node scripts/setup-worktree.ts --session-start`, the harness entry point:
+**No automatic setup:** no hook links files or installs dependencies, so setup is one explicit step
+(see the [decision record](decisions/2026-11-05-explicit-worktree-setup.md)).
 
-- In a linked worktree, it links any missing `pipeline/input/` & `.worktreeinclude` entries.
-- In any checkout, including the main one, it runs the frozen install & `prepare` when dependencies
-  are missing or stale. It detects that with pnpm’s own `verifyDepsBeforeRun` check.
-- It leaves a current checkout alone.
-
-Install output goes to the hook’s stderr, and the outcome arrives as session context. A failed setup
-never blocks the session, but its context message is a tooling failure to report under AGENTS.md.
-
-**Mid-session upkeep:** Claude Code watches manifests & directory changes, and both clients run
-setup after a file edit to a root manifest.
-
-- `FileChanged` with matcher `pnpm-lock.yaml|package.json|pnpm-workspace.yaml` runs
-  `setup-worktree.ts --file-changed`. Claude Code’s file watcher fires it for any writer (a merge, a
-  pull, or an external process), so a lockfile change starts a repair. The matcher is also the watch
-  list (literal names in the working directory). The script acts only on a manifest at the root of a
-  checkout of this repository, skips deletions, waits three seconds (`MISTRIA_SETUP_SETTLE_MS`) for
-  a burst of manifest writes such as `pnpm add` to finish, then runs the session-start probe: a
-  frozen install & `prepare` only when pnpm reports stale dependencies.
-- `CwdChanged` runs `setup-worktree.ts --cwd-changed` with `new_cwd` & `old_cwd`. When the move
-  crosses into a different checkout of this repository, it links & installs as at session start. It
-  always returns `watchPaths` (both top-level & under `hookSpecificOutput`, since the docs don’t say
-  which nesting applies) for the new checkout’s manifests (`[]` outside this repository), so the
-  `FileChanged` watch follows the session. Per the docs it fires for shell `cd` in the main
-  conversation; whether the harness’s own move into a worktree fires it is unconfirmed.
-
-Neither Claude event can add context for the agent or block anything. The hooks always exit 0, & an
-install or failure reaches the user as a `systemMessage` terminal notification. The frozen install
-is preauthorized, & AGENTS.md’s stop & report rule still applies to a failed setup. Setups of one
-checkout (session start, file change, directory change, or edit) serialize on a `mistria-setup.lock`
-directory in that checkout’s git directory, & a waiter re-probes after acquiring it. The lock
-serializes setups; it does not lock every pnpm command across sessions.
-
-- Both clients’ `PostToolUse` hook matches file edits & patches, including `MultiEdit` &
-  `NotebookEdit`, but not shell commands. The handler, `scripts/agent-tool-hook.ts`, runs setup
-  before formatting when the edit touched a root `package.json`, `pnpm-lock.yaml`, or
-  `pnpm-workspace.yaml`. A nested fixture manifest or a manifest name in patch content doesn’t
-  trigger setup. Separate matching hooks run concurrently, so adding another setup handler beside
-  the formatter would leave a race.
-- Codex has no `FileChanged` event. After a merge, pull, or rebase that changes the lockfile, `pnpm`
-  fails with `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`; run `pnpm install --frozen-lockfile`, which is
-  preauthorized.
-
-**Failure recovery:** automatic setup records a failed install, `prepare`, or link operation in
-`mistria-tool-setup.failure` in the checkout’s git directory. Later automatic setup (session start,
-a directory change, a watched-file change, or a root-manifest edit) reports the failure without
-retrying. Follow AGENTS.md’s stop & report procedure, and run
-`node scripts/machine-doctor.ts --for core` directly to diagnose. After explicit direction, run
-`node scripts/setup-worktree.ts --repair` in the affected checkout. This forces the frozen install &
-`prepare`, permits dependency repair in the main checkout, & clears the marker only on success. The
-main checkout still receives no worktree links. Ordinary manual worktree setup also clears the
-marker on success.
+- A new editing worktree runs `node scripts/setup-worktree.ts` once, before the first edit.
+- A read-only session runs nothing. It can read, search, & use `git` & `gh` without dependencies.
+- The main checkout & cloud environments use `pnpm install --frozen-lockfile`. Cloud environments
+  have no linked worktrees, so they need no links.
+- After a merge, pull, rebase, or manifest edit, `pnpm run` & `pnpm exec` fail with
+  `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`. Run `pnpm install --frozen-lockfile`, which is preauthorized.
+- If setup fails, follow AGENTS.md’s stop & report procedure, and run
+  `node scripts/machine-doctor.ts --for core` directly to diagnose. Rerunning setup is safe: it
+  skips entries that are already linked.
 
 **No shared dependencies:** a worktree never links `node_modules` from another checkout, for two
 reasons:
@@ -219,9 +177,9 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
 
 ### Hooks
 
-- **Shared hooks:** Claude Code & Codex share two upkeep hooks, configured in
-  `.claude/settings.json` & `.codex/hooks.json`: worktree setup at `SessionStart`, and edit
-  formatting at `PostToolUse`. Claude Code also runs setup on `FileChanged` & `CwdChanged`.
+- **Shared hooks:** Claude Code & Codex share one upkeep hook, configured in `.claude/settings.json`
+  & `.codex/hooks.json`: edit formatting at `PostToolUse`. Claude Code also exposes the cloud Node
+  runtime at `SessionStart`. No hook installs dependencies.
 - **No blocking hooks:** none of these hooks blocks a tool call when it fails. The repository
   enforces file boundaries with permission rules & CI instead (see below). Shell-command guards were
   removed in #417, after they refused legitimate commands dozens of times and caught no real
@@ -232,7 +190,6 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   handler formats Claude-style edits, which need no tool ID, and skips native payloads.
 - **Codex trust:** Codex skips new or changed hooks until they’re trusted again in its hook review
   (`/hooks`).
-- **Mid-session setup:** see Mid-session upkeep above.
 - **When hook changes apply:** hook changes take effect in the next session. Claude Code runs each
   hook from `$CLAUDE_PROJECT_DIR`, which is fixed at session start to the session’s original
   checkout. So an edit to a hook script or its settings in a worktree, including a subagent’s,
@@ -291,7 +248,9 @@ These rules rest on `AGENTS.md` alone:
   - It skips files with unresolved index stages, so it never rewrites conflict markers. Those files
     get formatted once they’re resolved & staged.
   - It excludes deleted files, symlink targets outside the worktree, & guarded paths.
-  - Report formatter failures before continuing.
+  - Report formatter failures before continuing. The exception is pnpm’s stale-dependency error,
+    which fires in a worktree that hasn’t been set up or after a manifest edit. The hook then names
+    the setup command to run.
 - **Repository root:** formatting runs from the repository root, even when a client starts below it.
 
 ### Subagents & permissions

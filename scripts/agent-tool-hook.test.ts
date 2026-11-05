@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,7 +38,6 @@ function fixture() {
   return { root, worktree };
 }
 
-const current = () => ({ installed: false, linked: 0, status: 0 });
 const formatted = (file: string) => [
   ["exec", "oxfmt", "--no-error-on-unmatched-pattern", "--", file],
 ];
@@ -51,113 +50,51 @@ const edit = (cwd: string, file_path: string, tool_name = "Edit"): HookInput => 
 const hookScript = fileURLToPath(new URL("agent-tool-hook.ts", import.meta.url));
 
 describe("Shared agent tool upkeep", () => {
-  it.each(["Edit", "Write", "MultiEdit"])(
-    "formats a %s without probing for ordinary source edits",
-    (tool_name) => {
+  it.each(["Edit", "Write", "MultiEdit"])("formats a %s", (tool_name) => {
+    const { root, worktree } = fixture();
+    writeFileSync(join(worktree, "new.ts"), "const value=1");
+    const run = vi.fn(() => ({ output: "", status: 0 }));
+    agentToolHook(edit(worktree, "new.ts", tool_name), run, root);
+    expect(run).toHaveBeenCalledExactlyOnceWith(...formatted("new.ts"), worktree);
+  });
+
+  it.each(["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"])(
+    "only formats an edit to %s, with no install",
+    (file_path) => {
       const { root, worktree } = fixture();
-      writeFileSync(join(worktree, "new.ts"), "const value=1");
-      const setup = vi.fn(current);
+      writeFileSync(join(worktree, file_path), "{}");
       const run = vi.fn(() => ({ output: "", status: 0 }));
-      agentToolHook(edit(worktree, "new.ts", tool_name), setup, run, root);
-      expect(setup).not.toHaveBeenCalled();
-      expect(run).toHaveBeenCalledExactlyOnceWith(...formatted("new.ts"), worktree);
+      agentToolHook(edit(worktree, file_path), run, root);
+      expect(run).toHaveBeenCalledExactlyOnceWith(...formatted(file_path), worktree);
     },
   );
 
-  it.each([
-    ["Edit", "package.json"],
-    ["Write", "pnpm-lock.yaml"],
-    ["MultiEdit", "pnpm-workspace.yaml"],
-  ])("sets up before formatting %s to %s", (tool_name, file_path) => {
+  it("hands back the formatter’s instructions without the stop & report wrapper", () => {
     const { root, worktree } = fixture();
-    writeFileSync(join(worktree, file_path), "{}");
-    const setup = vi.fn(current);
-    const run = vi.fn(() => {
-      expect(setup).toHaveBeenCalledExactlyOnceWith(worktree);
-      return { output: "", status: 0 };
-    });
-    agentToolHook(edit(worktree, file_path, tool_name), setup, run, root);
-    expect(run).toHaveBeenCalledTimes(1);
+    writeFileSync(join(worktree, "new.ts"), "const value=1");
+    const run = vi.fn(() => ({ output: "ERR_PNPM_VERIFY_DEPS_BEFORE_RUN", status: 1 }));
+    const message = agentToolHook(edit(worktree, "new.ts"), run, root);
+    expect(message).toContain("node scripts/setup-worktree.ts");
+    expect(message).not.toContain("Report");
   });
 
-  it("sets up before formatting a manifest patch, and reports the setup", () => {
-    const { root, worktree } = fixture();
-    writeFileSync(join(worktree, "package.json"), "{}");
-    const setup = vi.fn(() => ({ installed: true, linked: 2, status: 0 }));
-    const run = vi.fn(() => {
-      expect(setup).toHaveBeenCalledTimes(1);
-      return { output: "", status: 0 };
-    });
-    const messages = agentToolHook(
-      {
-        cwd: worktree,
-        hook_event_name: "PostToolUse",
-        tool_input: { command: "*** Update File: package.json\n" },
-        tool_name: "apply_patch",
-      },
-      setup,
-      run,
-      root,
-    );
-    expect(messages).toEqual([expect.stringContaining("installed dependencies")]);
-    expect(run).toHaveBeenCalledTimes(1);
-    expect(readFileSync(join(worktree, "package.json"), "utf8")).toBe("{}");
-  });
-
-  it("reports setup failures without invoking the formatter", () => {
-    const { root, worktree } = fixture();
-    writeFileSync(join(worktree, "package.json"), "{}");
-    const run = vi.fn();
-    const setup = vi.fn(() => {
-      throw new Error("frozen install failed");
-    });
-    expect(() => agentToolHook(edit(worktree, "package.json"), setup, run, root)).toThrow(
-      "frozen install failed",
-    );
-    expect(run).not.toHaveBeenCalled();
-  });
-
-  it("does not probe for a nested manifest or a manifest name in patch content", () => {
-    const { root, worktree } = fixture();
-    mkdirSync(join(worktree, "nested"));
-    writeFileSync(join(worktree, "nested/package.json"), "{}");
-    writeFileSync(join(worktree, "new.ts"), "// package.json\n");
-    const setup = vi.fn(current);
-    const run = vi.fn(() => ({ output: "", status: 0 }));
-    agentToolHook(edit(worktree, "nested/package.json"), setup, run, root);
-    agentToolHook(
-      {
-        cwd: worktree,
-        hook_event_name: "PostToolUse",
-        tool_input: { command: "*** Update File: new.ts\n+// package.json\n" },
-        tool_name: "apply_patch",
-      },
-      setup,
-      run,
-      root,
-    );
-    expect(setup).not.toHaveBeenCalled();
-    expect(run).toHaveBeenCalledTimes(2);
-  });
-
-  it("accepts a notebook edit without probing", () => {
+  it("accepts a notebook edit", () => {
     const { root, worktree } = fixture();
     writeFileSync(join(worktree, "notes.ipynb"), "{}");
-    const setup = vi.fn(current);
     const input = {
       cwd: worktree,
       hook_event_name: "PostToolUse",
       tool_input: { notebook_path: "notes.ipynb" },
       tool_name: "NotebookEdit",
     };
-    expect(agentToolHook(input, setup, undefined, root)).toEqual([]);
-    expect(setup).not.toHaveBeenCalled();
+    expect(() => {
+      agentToolHook(input, undefined, root);
+    }).not.toThrow();
   });
 
   it("formats nothing for a shell command", () => {
     const { root, worktree } = fixture();
     writeFileSync(join(worktree, "new.ts"), "const value=1");
-    const setup = vi.fn(current);
     const run = vi.fn();
     const input = {
       cwd: worktree,
@@ -165,8 +102,7 @@ describe("Shared agent tool upkeep", () => {
       tool_input: { command: "echo x > new.ts" },
       tool_name: "Bash",
     };
-    expect(agentToolHook(input, setup, run, root)).toEqual([]);
-    expect(setup).not.toHaveBeenCalled();
+    agentToolHook(input, run, root);
     expect(run).not.toHaveBeenCalled();
   });
 
@@ -174,11 +110,9 @@ describe("Shared agent tool upkeep", () => {
     const { root } = fixture();
     const foreign = fixture().root;
     writeFileSync(join(foreign, "package.json"), "{}");
-    const setup = vi.fn(current);
     const run = vi.fn();
-    expect(agentToolHook(edit(foreign, "package.json"), setup, run, root)).toEqual([]);
-    expect(agentToolHook(edit(tmpdir(), "a.ts"), setup, run, root)).toEqual([]);
-    expect(setup).not.toHaveBeenCalled();
+    agentToolHook(edit(foreign, "package.json"), run, root);
+    agentToolHook(edit(tmpdir(), "a.ts"), run, root);
     expect(run).not.toHaveBeenCalled();
   });
 
@@ -193,7 +127,7 @@ describe("Shared agent tool upkeep", () => {
       session_id: "copilot-session",
       timestamp: "2026-10-31T17:33:07.053Z",
     };
-    agentToolHook(input, current, run, root);
+    agentToolHook(input, run, root);
     expect(run).toHaveBeenCalledExactlyOnceWith(...formatted("new.ts"), worktree);
   });
 
@@ -230,13 +164,8 @@ describe("Shared agent tool upkeep", () => {
 
   it("still rejects a named event it doesn’t handle", () => {
     const { root, worktree } = fixture();
-    expect(() =>
-      agentToolHook(
-        { ...edit(worktree, "a.ts"), hook_event_name: "PreToolUse" },
-        current,
-        undefined,
-        root,
-      ),
-    ).toThrow("Unsupported agent tool hook event");
+    expect(() => {
+      agentToolHook({ ...edit(worktree, "a.ts"), hook_event_name: "PreToolUse" }, undefined, root);
+    }).toThrow("Unsupported agent tool hook event");
   });
 });

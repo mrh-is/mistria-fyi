@@ -94,9 +94,11 @@ session limits) belong in each contributor’s user config.
   - links the game assets & the `.worktreeinclude` entries (env files),
   - installs dependencies with the frozen lockfile,
   - runs `prepare`.
-- Standard setup in an isolated, harness-created worktree is preauthorized. `SessionStart` hooks run
-  it automatically. If dependencies or setup’s links are still missing, run it yourself, even after
-  a missing-dependency preflight failure.
+- Run setup before editing in a harness-created worktree; no hook runs it, and a read-only session
+  needs none. Standard setup in an isolated, harness-created worktree is preauthorized, even after a
+  missing-dependency preflight failure.
+- After a merge, pull, or rebase changes the lockfile, pnpm fails with
+  `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`. Run `pnpm install --frozen-lockfile`.
 - Use the configured global pnpm store & dependencies local to the worktree. Request any sandbox
   access you need. If setup itself fails, follow “Tooling failures” below.
 - Some platforms give a session a fresh, ephemeral container with its own assigned branch. Work
