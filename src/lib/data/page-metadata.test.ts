@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { CATEGORY_KEYS } from "#lib/engine/categories.js";
+
 import { _pageEntries, GET as getSitemap } from "../../routes/sitemap.xml/+server.js";
 import { locales, localizeUrl } from "../paraglide/runtime.js";
 import { categoryKeyForPathname } from "./categories.js";
@@ -84,6 +86,16 @@ describe("page metadata", () => {
     }
   });
 
+  it("offers search on every tracker page", async () => {
+    const entries = await pageMetadataEntries();
+    const trackerPaths = ["", "everything", ...CATEGORY_KEYS];
+
+    for (const path of trackerPaths) {
+      const toolbar = entries.find((entry) => entry.path === path)?.metadata.toolbar;
+      expect(toolbar, path).toMatchObject({ search: true });
+    }
+  });
+
   it("hides the toolbar on utility pages and keeps it on the tracker", async () => {
     const entries = await pageMetadataEntries();
     const toolbarFor = (path: string) =>
@@ -92,7 +104,7 @@ describe("page metadata", () => {
     expect(toolbarFor("about")).toBe("hidden");
     expect(toolbarFor("data")).toBe("hidden");
     expect(toolbarFor("")).toEqual({ search: true, worldState: true });
-    expect(toolbarFor("mines")).toEqual({ search: false, worldState: false });
+    expect(toolbarFor("mines")).toEqual({ search: true, worldState: false });
     expect(errorPageMetadata(404, "en").toolbar).toEqual({ search: false, worldState: false });
   });
 

@@ -10,6 +10,11 @@
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import {
+    registerPageSearch,
+    showsCompletedRows,
+    visibleWindows,
+  } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
@@ -90,9 +95,7 @@
               }
               if (!entry.obtainable && !toolbarState.showUnobtainable) return false;
               if (leaving.has(entry.key)) return true;
-              return entry.completed
-                ? userState.state.showCompleted
-                : userState.state.availabilityWindows.includes(window);
+              return entry.completed ? showsCompletedRows() : visibleWindows().includes(window);
             })
             .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
         }))
@@ -100,7 +103,7 @@
           ({ section, spoilered, visibleRows }) =>
             (!toolbarState.searchQuery || (!spoilered && visibleRows.length > 0)) &&
             (section.state !== "done" ||
-              userState.state.showCompleted ||
+              showsCompletedRows() ||
               section.rows.some(({ entry }) => leaving.has(entry.key))),
         )
         .toSorted((a, b) => compareSourceSections(a, b, locale)),
@@ -159,6 +162,29 @@
     );
   }
 
+  // A row can sit under several sources, but it's still one match.
+  registerPageSearch(() => {
+    const matches = projectSourceGroups(entries, userState.progressContext, () => true)
+      .filter(
+        (section) => !sourceSectionLabel(section, lookups, userState.progressionState).spoilered,
+      )
+      .flatMap(({ rows }) => rows)
+      .filter(
+        ({ entry }) =>
+          !entry.spoilered &&
+          isConditionVisible(entry.visibility, userState.progressionState) &&
+          (entry.obtainable || toolbarState.showUnobtainable) &&
+          matchesSearch(entry),
+      );
+    const visible = groups.flatMap((group) =>
+      group.sections.flatMap(({ visibleRows }) => visibleRows),
+    );
+    return {
+      matches: new Set(matches.map(({ entry }) => entry.key)).size,
+      visible: new Set(visible.map(({ entry }) => entry.key)).size,
+    };
+  });
+
   function toggle(entry: SourceChecklistRow): void {
     const perform = () => {
       const completesSource = sections.some(({ rows }) => {
@@ -206,7 +232,7 @@
 
 <SpoilerGuardDialog {guard} />
 
-{#each userState.state.showCompleted ? [false, true] : [false] as completed (completed)}
+{#each showsCompletedRows() ? [false, true] : [false] as completed (completed)}
   <div
     class="flex flex-col gap-6"
     data-testid={completed ? "everything-completed" : undefined}
@@ -309,7 +335,7 @@
 
           {#if group === "progress"}
             <div class="mt-2 flex flex-col gap-6">
-              {#if completed === userState.state.progress.mineFloor >= getMaxMineFloor()}
+              {#if !toolbarState.searchQuery && completed === userState.state.progress.mineFloor >= getMaxMineFloor()}
                 <MineFloorRecord
                   compact
                   biomes={trackerData.mines.biomes}

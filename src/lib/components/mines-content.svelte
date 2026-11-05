@@ -8,6 +8,7 @@
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -22,6 +23,7 @@
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -109,21 +111,33 @@
 
   registerSourceFilters("mines", () => trackerIndex.categorySourceTypes.mines);
 
+  let nameFilter = $derived(toolbarState.searchQuery);
+
+  let namedSpells = $derived(
+    nameFilter
+      ? spells.filter(
+          ({ id, name }) => !isSpellSpoilered(id) && matchesName(name, nameFilter, locale),
+        )
+      : spells,
+  );
+
   let scopedSpells = $derived(
-    spells.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
+    namedSpells.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
   );
 
   let visibleSpells = $derived(
     scopedSpells.filter((spell) => {
       const completed = userState.state.progress.spells.has(spell.id);
-      return completed ? userState.state.showCompleted || leavingSpells.has(spell.id) : true;
+      return completed ? showsCompletedRows() || leavingSpells.has(spell.id) : true;
     }),
   );
+
+  registerPageSearch(() => ({ matches: namedSpells.length, visible: visibleSpells.length }));
 </script>
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#if compact}
+{#if compact && !nameFilter}
   <CompletionSection complete={userState.state.progress.mineFloor >= maxFloors}>
     <MineFloorRecord
       {biomes}
@@ -139,7 +153,7 @@
 <SectionGroups
   getKey={(key) => key}
   grouping={sectionGrouping}
-  items={compact ? (["spells"] as const) : (["floors", "spells"] as const)}
+  items={compact || nameFilter ? (["spells"] as const) : (["floors", "spells"] as const)}
 >
   {#snippet section(key)}
     {#if key === "floors"}
@@ -164,9 +178,10 @@
           onChange={setFloorWithCelebration}
         />
       </ExpandableSection>
-    {:else if scopedSpells.length > 0}
+    {:else if scopedSpells.length > 0 && (!nameFilter || visibleSpells.length > 0)}
       <ExpandableSection
         {locale}
+        forceOpen={!!nameFilter}
         count={scopedSpells.filter((spell) => userState.state.progress.spells.has(spell.id)).length}
         name={getName("ui", "magic_spells", locale)}
         reportCategory="mines"
@@ -204,7 +219,7 @@
           {/snippet}
         </TrackerRowList>
       </ExpandableSection>
-    {:else if toolbarState.isSourceFilterNarrowing}
+    {:else if !nameFilter && toolbarState.isSourceFilterNarrowing}
       <TrackerEmptyState />
     {/if}
   {/snippet}

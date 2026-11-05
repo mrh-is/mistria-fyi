@@ -12,6 +12,8 @@
   import SkillsContent from "#lib/components/skills-content.svelte";
   import VillagersContent from "#lib/components/villagers-content.svelte";
   import { createCompletionScope } from "#lib/controllers/completion-scope.svelte.js";
+  import { createSearchGroup } from "#lib/controllers/page-search.svelte.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 
   import SectionHeader from "./section-header.svelte";
 
@@ -58,10 +60,12 @@
   } = $props();
 
   const scope = createCompletionScope(untrack(() => completed));
+  const searchGroup = createSearchGroup();
 
   let content = $derived(CONTENT[key]);
   let visible = $derived(
-    scope.hasContent(completed ? progress.completed > 0 : progress.completed < progress.total),
+    scope.hasContent(completed ? progress.completed > 0 : progress.completed < progress.total) &&
+      !(toolbarState.searchQuery && searchGroup.isEmpty),
   );
 
   $effect(() => {

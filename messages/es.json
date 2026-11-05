@@ -69,6 +69,31 @@
     }
   ],
   "search_no_results": "No se encontraron elementos",
+  "search_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} coincidencia fuera de tus filtros",
+        "countPlural=other": "{count} coincidencias fuera de tus filtros"
+      }
+    }
+  ],
+  "search_more_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} coincidencia más fuera de tus filtros",
+        "countPlural=other": "{count} coincidencias más fuera de tus filtros"
+      }
+    }
+  ],
+  "search_turn_off_filters": "Desactivar filtros para esta búsqueda",
+  "search_filters_off": "Tus filtros están desactivados para esta búsqueda.",
+  "search_filters_resume": "Volver a activarlos",
+  "search_guide_prompt": "¿No ves lo que buscas?",
+  "search_guide_link": "Buscar “{query}” en toda la guía de campo",
   "search_loading": "Cargando la búsqueda…",
   "search_error": "No se pudieron cargar los resultados de la búsqueda.",
   "action_retry": "Reintentar",

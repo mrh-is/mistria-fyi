@@ -210,9 +210,11 @@ takes only a few options as flags and would emit a runtime with the default stra
 1. Add the English string to `messages/en.json` under a descriptive key (snake_case, prefixed by
    feature area — e.g. `feedback_submit_button`, `about_maintainer_intro`).
 2. Add the same key to all 7 other `messages/<locale>.json` files (`es`, `fr`, `ja`, `ko`, `ru`,
-   `zh-Hans`, `zh-Hant`), translated. Machine translation is acceptable to start — see
-   [Improving a translation](#improving-a-translation-humans) below for how these get refined. Match
-   the game's regional variant and terminology; see [Regional variants](#regional-variants).
+   `zh-Hans`, `zh-Hant`), translated. Machine translation & review is the finished translation,
+   because the project has no native speakers of anything but English. Don't list a missing
+   native-speaker review as a gap in a PR. Reports from players are the one later correction; see
+   [Improving a translation](#improving-a-translation-humans). Match the game's regional variant and
+   terminology; see [Regional variants](#regional-variants).
 3. Run `pnpm run paraglide:compile` to regenerate `src/lib/paraglide`.
 4. Use the generated message in your component: `import * as m from "#lib/paraglide/messages.js"`,
    then `{m.feedback_submit_button()}` in the template. Never hardcode the English string directly
@@ -397,6 +399,9 @@ specimen. When adding UI that sets `font-family` directly, use the `--font-*` ro
 will render tofu or system fallbacks on non-Latin locales.
 
 ## Improving a translation (humans)
+
+Nobody on the project reads these languages natively, so machine translation & review are the only
+process there is. A player's report is how a wrong translation gets found.
 
 - **Game data & names** (items, villagers, festival text, ...): this content comes from the game
   itself, not from us. Report it to Fields of Mistria's own
