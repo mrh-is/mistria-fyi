@@ -425,7 +425,7 @@
   "privacy_sync_turnstile_body": "當你產生新代碼時，Cloudflare Turnstile 會確認你不是機器人，你無需做任何操作。此驗證受 Cloudflare 的{addendum}約束。",
   "privacy_sync_turnstile_link": "Turnstile 隱私權附錄",
   "privacy_sync_trust_heading": "你信任的是什麼",
-  "privacy_sync_trust_body": "加密保護的是伺服器儲存的內容，但它無法防範應用程式本身接觸你的代碼。你的代碼儲存在裝置上本應用程式的儲存空間中，所以你信任的是瀏覽器從我們這裡收到的程式。其中也包括 Cloudflare Turnstile 指令碼：當你產生新代碼或傳送回饋時，它會和應用程式一起執行。整個應用程式本來就由 Cloudflare 傳遞，所以這並沒有增加新的信任對象。",
+  "privacy_sync_trust_body": "加密保護的是伺服器儲存的存檔檔案，但它無法防範應用程式本身接觸你的代碼。你的代碼儲存在裝置上本應用程式的儲存空間中，所以你信任的是瀏覽器從我們這裡收到的程式。其中也包括 Cloudflare Turnstile 指令碼：一旦你產生新代碼或開啟回饋表單，它就會和應用程式一起執行。整個應用程式本來就由 Cloudflare 傳遞，所以這並沒有增加新的信任對象。",
   "data_title": "資料管理",
   "data_page_description": "匯入、同步、備份、還原或重設你的 Mistria Field Guide 紀錄進度。",
   "data_field_kit_heading": "田野工具包",

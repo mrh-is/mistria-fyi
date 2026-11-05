@@ -430,7 +430,7 @@
   "privacy_sync_turnstile_body": "When you make a new code, Cloudflare Turnstile checks that you’re not a bot, with nothing for you to solve. That check is covered by Cloudflare’s {addendum}.",
   "privacy_sync_turnstile_link": "Turnstile Privacy Addendum",
   "privacy_sync_trust_heading": "What you’re trusting",
-  "privacy_sync_trust_body": "Encryption protects what the server stores. It can’t protect your code from the app itself, though. Your code lives in this app’s storage on your device, so you’re trusting the code your browser gets from us. That includes the Cloudflare Turnstile script, which runs right alongside the app when you make a new code or send feedback. Cloudflare already delivers the whole app, so that’s not a new party to trust.",
+  "privacy_sync_trust_body": "Encryption protects the save file the server stores. It can’t protect your code from the app itself, though. Your code lives in this app’s storage on your device, so you’re trusting the app your browser gets from us. That includes the Cloudflare Turnstile script, which runs right alongside the app once you make a new code or open the feedback form. Cloudflare already delivers the whole app, so that’s not a new party to trust.",
   "data_title": "Data management",
   "data_page_description": "Import, sync, back up, restore, or reset your Mistria Field Guide tracking progress.",
   "data_field_kit_heading": "Field kit",

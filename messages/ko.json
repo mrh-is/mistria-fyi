@@ -425,7 +425,7 @@
   "privacy_sync_turnstile_body": "새 코드를 만들 때 Cloudflare Turnstile이 봇이 아닌지 확인하며, 직접 풀어야 할 것은 없어요. 이 확인에는 Cloudflare의 {addendum}이 적용돼요.",
   "privacy_sync_turnstile_link": "Turnstile 개인정보 보호 부록",
   "privacy_sync_trust_heading": "믿고 맡기는 것",
-  "privacy_sync_trust_body": "암호화는 서버에 저장되는 내용을 보호해요. 하지만 앱 자체로부터 코드를 보호할 수는 없어요. 코드는 기기의 이 앱 저장소에 있으므로, 브라우저가 저희에게서 받는 프로그램을 믿으셔야 해요. 여기에는 새 코드를 만들거나 피드백을 보낼 때 앱과 나란히 실행되는 Cloudflare Turnstile 스크립트도 포함돼요. Cloudflare는 이미 앱 전체를 전달하고 있으므로, 새로 믿어야 할 상대가 늘어나는 것은 아니에요.",
+  "privacy_sync_trust_body": "암호화는 서버에 저장되는 저장 파일을 보호해요. 하지만 앱 자체로부터 코드를 보호할 수는 없어요. 코드는 기기의 이 앱 저장소에 있으므로, 브라우저가 저희에게서 받는 프로그램을 믿으셔야 해요. 여기에는 새 코드를 만들거나 피드백 양식을 열면 앱과 나란히 실행되는 Cloudflare Turnstile 스크립트도 포함돼요. Cloudflare는 이미 앱 전체를 전달하고 있으므로, 새로 믿어야 할 상대가 늘어나는 것은 아니에요.",
   "data_title": "데이터 관리",
   "data_page_description": "Mistria Field Guide 진행도를 가져오고, 동기화하고, 백업하고, 복원하거나 초기화하세요.",
   "data_field_kit_heading": "필드 키트",

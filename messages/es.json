@@ -435,7 +435,7 @@
   "privacy_sync_turnstile_body": "Cuando creas un código nuevo, Cloudflare Turnstile comprueba que no eres un bot, sin que tengas que resolver nada. Esa comprobación está cubierta por el {addendum} de Cloudflare.",
   "privacy_sync_turnstile_link": "Anexo de privacidad de Turnstile",
   "privacy_sync_trust_heading": "En qué confías",
-  "privacy_sync_trust_body": "El cifrado protege lo que guarda el servidor. Pero no puede proteger tu código de la propia aplicación. Tu código se guarda en el almacenamiento de esta aplicación en tu dispositivo, así que confías en el código que tu navegador recibe de nosotros. Eso incluye el script de Cloudflare Turnstile, que se ejecuta junto a la aplicación cuando creas un código nuevo o envías comentarios. Cloudflare ya entrega toda la aplicación, así que no es un tercero nuevo en el que confiar.",
+  "privacy_sync_trust_body": "El cifrado protege el archivo de guardado que almacena el servidor. Pero no puede proteger tu código de la propia aplicación. Tu código se guarda en el almacenamiento de esta aplicación en tu dispositivo, así que confías en la aplicación que tu navegador recibe de nosotros. Eso incluye el script de Cloudflare Turnstile, que se ejecuta junto a la aplicación desde que creas un código nuevo o abres el formulario de comentarios. Cloudflare ya entrega toda la aplicación, así que no es un tercero nuevo en el que confiar.",
   "data_title": "Gestión de datos",
   "data_page_description": "Importa, sincroniza, guarda, restaura o reinicia tu progreso en Mistria Field Guide.",
   "data_field_kit_heading": "Kit de campo",

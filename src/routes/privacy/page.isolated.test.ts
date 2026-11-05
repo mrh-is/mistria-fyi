@@ -47,9 +47,17 @@ describe("privacy page sync sections", () => {
     const { queries, text } = renderPage();
 
     expect(queries.getByRole("heading", { level: 3, name: "What you’re trusting" })).toBeTruthy();
-    expect(text).toContain("Encryption protects what the server stores");
-    expect(text).toContain("you’re trusting the code your browser gets from us");
+    expect(text).toContain("Encryption protects the save file the server stores");
+    expect(text).toContain("you’re trusting the app your browser gets from us");
     expect(text).toContain("the Cloudflare Turnstile script");
+    expect(text).toContain("open the feedback form");
+  });
+
+  it("keeps the date & the email retention period in every locale", () => {
+    for (const locale of locales) {
+      expect(m.privacy_last_updated({ date: "SLOT" }, { locale })).toContain("SLOT");
+      expect(m.privacy_feedback_email_storage({}, { locale })).toContain("90");
+    }
   });
 
   it("keeps the addendum link's slot in every locale", () => {
