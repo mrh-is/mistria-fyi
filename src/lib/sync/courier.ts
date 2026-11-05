@@ -306,6 +306,8 @@ export function createCourier({
   let recheck = false;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let retryDelay = firstRetryMs;
+  /** Bumped when the courier gives up, so a retry already timed or queued sends nothing. */
+  let retryEpoch = 0;
   /** The last upload result logged, so a retry that has to wait the same way again isn't. */
   let lastLogged: undefined | UploadLogOutcome;
 
@@ -506,9 +508,12 @@ export function createCourier({
 
   function scheduleRetry(afterMs?: number): void {
     clearRetry();
+    const epoch = retryEpoch;
     retryTimer = setTimeout(() => {
       retryTimer = undefined;
-      void enqueue(retryWaiting);
+      void enqueue(async () => {
+        if (epoch === retryEpoch) await retryWaiting();
+      });
     }, afterMs ?? retryDelay);
     if (afterMs === undefined) retryDelay = Math.min(retryDelay * 2, MAX_RETRY_MS);
   }
@@ -542,6 +547,9 @@ export function createCourier({
   function giveUp(next: CourierStatus["upload"], outcome: UploadLogOutcome): void {
     pending = undefined;
     recheck = true;
+    retryEpoch += 1;
+    retryDelay = firstRetryMs;
+    clearRetry();
     setStatus({ upload: next });
     log(outcome);
   }

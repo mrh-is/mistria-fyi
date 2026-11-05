@@ -1505,6 +1505,28 @@ describe("the sync log", () => {
     },
   );
 
+  it.each(["refused", "unsupported-version"] as const)(
+    "cancels an earlier save's retry on a %s answer, & a changed save still recovers",
+    async (kind) => {
+      const { last, make, relay } = await load({ options: { firstRetryMs: 30 } });
+      relay.upload.mockResolvedValueOnce({ kind: "unreachable" });
+      relay.upload.mockResolvedValueOnce({ kind });
+      const courier = make();
+      courier.start();
+      await courier.take({ file: new File([saveBytes(100)], FILE_NAME), kind: "file" });
+      await courier.take({ file: new File([saveBytes(200)], FILE_NAME), kind: "file" });
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+
+      await courier.take({ file: new File([saveBytes(300)], FILE_NAME), kind: "file" });
+      expect(relay.upload).toHaveBeenCalledTimes(3);
+      expect(last()?.upload).toBe("idle");
+    },
+  );
+
   it("shows a refusal when a retired code's replacement is refused", async () => {
     const renewCode = vi.fn<NonNullable<CourierOptions["renewCode"]>>();
     renewCode.mockResolvedValue({ kind: "refused" });
