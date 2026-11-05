@@ -86,7 +86,7 @@ test.describe("@readiness application readiness", () => {
     await gotoApplication(page, "/almanac");
     await expectResolvedTheme(page, "dark");
     await expect(
-      page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }),
+      page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }),
     ).toBeVisible();
     await openVisibilityPanel(page);
     await expect(page.getByRole("button", { exact: true, name: "Later" })).toHaveAttribute(

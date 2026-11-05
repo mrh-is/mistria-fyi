@@ -60,7 +60,7 @@ test.describe("browser accessibility preferences", () => {
       createStoredState({ availabilityWindows: ["now", "anytime", "later"] }),
     );
     await gotoApplication(page, "/almanac");
-    const artifacts = page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ });
+    const artifacts = page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ });
     await artifacts.focus();
     await artifacts.press("Enter");
     await expect(artifacts).toHaveAttribute("aria-expanded", "true");

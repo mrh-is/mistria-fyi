@@ -86,7 +86,7 @@ test.describe("keyboard and focus accessibility", () => {
 
   test("row removal moves focus and Undo is keyboard operable", critical, async ({ page }) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
     const rows = page.getByRole("button", { name: /^Check (?!spoilered item)/ });
     const nextName = await rows.nth(1).getAttribute("aria-label");
     await rows.first().focus();
