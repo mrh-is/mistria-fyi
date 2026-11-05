@@ -91,10 +91,11 @@
       }
     }
   ],
-  "search_show_outside_filters": "Mostrar igualmente",
-  "search_filters_paused": "Tus filtros están en pausa durante esta búsqueda.",
+  "search_turn_off_filters": "Desactivar filtros para esta búsqueda",
+  "search_filters_off": "Tus filtros están desactivados para esta búsqueda.",
   "search_filters_resume": "Volver a activarlos",
-  "search_everything": "Buscar “{query}” en todo",
+  "search_guide_prompt": "¿No ves lo que buscas?",
+  "search_guide_link": "Buscar “{query}” en toda la guía de campo",
   "search_loading": "Cargando la búsqueda…",
   "search_error": "No se pudieron cargar los resultados de la búsqueda.",
   "action_retry": "Reintentar",

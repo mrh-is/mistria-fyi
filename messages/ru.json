@@ -96,10 +96,11 @@
       }
     }
   ],
-  "search_show_outside_filters": "Всё равно показать",
-  "search_filters_paused": "Фильтры приостановлены на время этого поиска.",
+  "search_turn_off_filters": "Отключить фильтры для этого поиска",
+  "search_filters_off": "Фильтры отключены для этого поиска.",
   "search_filters_resume": "Вернуть фильтры",
-  "search_everything": "Искать «{query}» везде",
+  "search_guide_prompt": "Не нашли, что искали?",
+  "search_guide_link": "Искать «{query}» во всём полевом справочнике",
   "search_loading": "Загрузка поиска…",
   "search_error": "Не удалось загрузить результаты поиска.",
   "action_retry": "Повторить",
