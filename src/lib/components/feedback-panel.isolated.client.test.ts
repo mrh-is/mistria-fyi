@@ -7,6 +7,7 @@ import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import { holdTurnstileScripts } from "#lib/test-utils/turnstile-script.js";
 
 import type { SyncLog } from "#lib/feedback/sync-log-schema.js";
 
@@ -598,6 +599,29 @@ describe("FeedbackPanel", () => {
       "Could not connect. Please try again or copy your message.",
     );
     expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+  });
+
+  it("downloads Turnstile again after a failed attempt, without a reload", async () => {
+    vi.stubGlobal("turnstile", undefined);
+    const held = holdTurnstileScripts();
+    const view = renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    await waitFor(() => {
+      expect(held.scripts()).toHaveLength(1);
+    });
+    held.fail();
+    expect(await screen.findByRole("link", { name: /GitHub/ })).toBeInTheDocument();
+
+    await view.rerender({ onClose: vi.fn(), open: false });
+    await view.rerender({ onClose: vi.fn(), open: true });
+    await waitFor(() => {
+      expect(held.scripts()).toHaveLength(1);
+    });
+    const render = vi.fn(() => "1");
+    held.load({ remove: vi.fn(), render, reset: vi.fn() });
+    await waitFor(() => {
+      expect(render).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.queryByRole("link", { name: /GitHub/ })).toBeNull();
   });
 
   it("offers the GitHub fallback as a link when Turnstile fails", async () => {
