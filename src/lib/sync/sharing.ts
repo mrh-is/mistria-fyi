@@ -115,7 +115,7 @@ function isPending(mailboxId: MailboxId): boolean {
   return userState.syncPendingRetires.some((pending) => pending.mailboxId === mailboxId);
 }
 
-/** How long to wait before trying again, or `undefined` when only the next visit can help. */
+/** How long to wait before trying again, or `undefined` when only the player coming back can help. */
 function retireWait(result: RetireResult, delay: number): number | undefined {
   if (result.kind === "refused") return undefined;
   let wait = delay;
@@ -183,6 +183,21 @@ export async function retryPendingRetires(): Promise<void> {
   knownPending = pendingIds();
 }
 
+/**
+ * Tries the retires that stopped, which no timer will. Waits a relay asked for keep running, so
+ * this is safe to call whenever the player comes back.
+ */
+export async function resumeStoppedRetires(): Promise<void> {
+  const stopped = userState.syncPendingRetires.filter(
+    ({ mailboxId }) => !retiring.has(mailboxId) && !retireTimers.has(mailboxId),
+  );
+  await Promise.all(stopped.map((pending) => retireOne(pending)));
+}
+
+function resumeWhenVisible(): void {
+  if (document.visibilityState === "visible") void resumeStoppedRetires();
+}
+
 function retryOnline(): void {
   void retryPendingRetires();
 }
@@ -203,10 +218,14 @@ export function keepRetiring(): () => void {
   globalThis.addEventListener("online", retryOnline);
   // The store's own listener, added first, has already read the other tab's write.
   globalThis.addEventListener("storage", retryNewlyPending);
+  globalThis.addEventListener("pageshow", resumeWhenVisible);
+  document.addEventListener("visibilitychange", resumeWhenVisible);
   retryOnline();
   return () => {
     globalThis.removeEventListener("online", retryOnline);
     globalThis.removeEventListener("storage", retryNewlyPending);
+    globalThis.removeEventListener("pageshow", resumeWhenVisible);
+    document.removeEventListener("visibilitychange", resumeWhenVisible);
     retireGeneration += 1;
     for (const timer of retireTimers.values()) clearTimeout(timer);
     retireTimers.clear();

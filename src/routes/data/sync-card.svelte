@@ -5,6 +5,7 @@
   import IconQrcode from "@tabler/icons-svelte-runes/icons/qrcode";
   import IconRefresh from "@tabler/icons-svelte-runes/icons/refresh";
   import IconSparkles from "@tabler/icons-svelte-runes/icons/sparkles";
+  import { onMount } from "svelte";
 
   import StatusNote from "#lib/components/status-note.svelte";
   import SaveDrop from "#lib/components/sync/save-drop.svelte";
@@ -16,7 +17,7 @@
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { retireStatus } from "#lib/sync/retire-status.svelte.js";
   import { guessPlatform } from "#lib/sync/save-folders.js";
-  import { makeNewCode, stopSyncing } from "#lib/sync/sharing.js";
+  import { makeNewCode, resumeStoppedRetires, stopSyncing } from "#lib/sync/sharing.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
@@ -37,6 +38,27 @@
     if (syncing && !wasSyncing) open = true;
     wasSyncing = syncing;
   });
+
+  // Finishing has nothing to see, since the status just goes, so it's only announced.
+  let oldCodeDone = $state(false);
+  let wasOldCodeActive = false;
+  $effect(() => {
+    if (oldCodeActive) oldCodeDone = false;
+    else if (wasOldCodeActive) oldCodeDone = true;
+    wasOldCodeActive = oldCodeActive;
+  });
+
+  // The stuck note's own alert speaks for itself.
+  const oldCodeAnnouncement = $derived.by(() => {
+    if (oldCodeDone) return m.sync_old_code_off();
+    if (!oldCodeActive || working || oldCodeStuck) return "";
+    return `${m.sync_old_code_turning_off()} ${m.sync_old_code_still_works()}`;
+  });
+
+  onMount(() => {
+    void resumeStoppedRetires();
+  });
+
   let showCode = $state(false);
   let newCodeOpen = $state(false);
   let stopOpen = $state(false);
@@ -83,14 +105,17 @@
   }
 </script>
 
+<!-- Always here, so a screen reader announces each change to it. -->
+<div class="sr-only" role="status">{oldCodeAnnouncement}</div>
+
 <DataCard bind:open title={m.sync_card_title()} summary={m.sync_card_summary()}>
   {#if oldCodeActive && !working}
     <div class="sync-card__old-code">
       {#if oldCodeStuck}
         <StatusNote tone="warning">{m.sync_old_code_stuck()}</StatusNote>
       {:else}
-        <div class="sync-card__turning-off" role="status">
-          <IconLoader2 class="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+        <div class="sync-card__turning-off" aria-hidden="true">
+          <IconLoader2 class="size-4 animate-spin motion-reduce:animate-none" />
           <div>
             <p class="sync-card__turning-off-title">{m.sync_old_code_turning_off()}</p>
             <p>{m.sync_old_code_still_works()}</p>

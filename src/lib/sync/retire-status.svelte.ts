@@ -1,6 +1,6 @@
 /**
  * Which pending retires the relay refused, so the sync card can stop saying it's still working on
- * them. It lives in memory: a refused retire tries again on the next visit, which starts over here.
+ * them. It lives in memory: a refused retire tries again when the player comes back.
  */
 import { SvelteSet } from "svelte/reactivity";
 
