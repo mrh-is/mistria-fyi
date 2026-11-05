@@ -575,7 +575,7 @@ size:
 - `upload-too-large`: the sealed save was over the relay's size cap.
 - `upload-refused`: the relay answered with a `401` or `403`, such as a wrong write token, or it
   refused the replacement for a retired code. The courier stops retrying until the next save or “Try
-  again”.
+  again”, even when the page comes back online or into view.
 - `upload-update-needed`: the relay rejected this build's protocol version. The courier asks the
   player to refresh, with `sync_update_here`.
 - `code-renewed`: the old code had been retired, so the courier made a new one.
