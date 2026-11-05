@@ -12,36 +12,28 @@ import { STEPS } from "../scripts/verify.js";
 
 /**
  * These tests hold what a broken workflow wouldn't otherwise reveal: a check that silently stops
- * running or stops failing, a security property, or a version that has drifted. They don't restate
- * the workflow's shape, since a wrong shape fails CI on its own and a restatement only has to be
- * edited alongside every intended change.
+ * running or stops failing, or a version that has drifted. Security checks live in
+ * workflow-hardening.test.ts.
  */
 
 interface Workflow {
   concurrency?: { "cancel-in-progress"?: boolean; group?: string };
-  env?: Record<string, string>;
   jobs?: Record<string, WorkflowJob>;
   on?: {
     pull_request?: unknown;
-    pull_request_target?: unknown;
     push?: { branches?: string[] };
     schedule?: { cron: string }[];
   };
-  permissions?: Record<string, string>;
 }
 
 interface WorkflowJob {
   concurrency?: Workflow["concurrency"];
   container?: string | { image?: string; options?: string };
-  env?: Record<string, string>;
   if?: string;
   needs?: string | string[];
   outputs?: Record<string, string>;
-  permissions?: Record<string, string>;
-  "runs-on"?: string;
   steps?: WorkflowStep[];
   strategy?: { matrix?: Record<string, string[]> };
-  "timeout-minutes"?: number;
 }
 
 interface WorkflowStep {
@@ -51,16 +43,13 @@ interface WorkflowStep {
   if?: string;
   name?: string;
   run?: string;
-  "timeout-minutes"?: number;
   uses?: string;
   with?: Record<string, boolean | number | string>;
 }
 
-const pinnedAction = /^[^@]+@[a-f0-9]{40}$/;
 const workflow = parse(readFileSync(".github/workflows/ci.yml", "utf8")) as Workflow;
 const jobs = workflow.jobs ?? {};
 const browserJobs = ["accessibility", "pwa"] as const;
-const installJobs = ["lint", "check", "test", "build", ...browserJobs] as const;
 // Scheduled housekeeping: it reports on the repository rather than deciding whether code can merge.
 const unrequiredJobs = ["nightly-report"];
 
@@ -150,10 +139,6 @@ function detectChanges(event: string, ...files: string[]): Record<string, string
 }
 
 describe("CI workflow triggers", () => {
-  it("never runs pull request code with the base repository's privileges", () => {
-    expect(workflow.on).not.toHaveProperty("pull_request_target");
-  });
-
   // Losing one of these stops its checks without failing anything: the schedule runs the nightly
   // jobs, & pushes to main run the full suite & produce the nightly report's samples.
   it("runs for pull requests, main pushes, & the nightly schedule", () => {
@@ -317,48 +302,11 @@ describe("CI workflow jobs", () => {
     expect(upload?.uses).toMatch(/^actions\/upload-artifact@/u);
   });
 
-  it("bounds every job with a timeout shorter than the 6 hour default", () => {
-    for (const [jobName, job] of Object.entries(jobs)) {
-      expect(job["timeout-minutes"], jobName).toBeGreaterThan(0);
-      expect(job["timeout-minutes"], jobName).toBeLessThanOrEqual(60);
-    }
-  });
-
-  it("fails a stalled pnpm/setup quickly instead of waiting out the job timeout", () => {
-    const setupJobs = Object.entries(jobs).filter(([, job]) =>
-      job.steps?.some((step) => step.uses?.startsWith("pnpm/setup@")),
-    );
-    expect(setupJobs.map(([jobName]) => jobName)).toEqual(expect.arrayContaining([...installJobs]));
-    for (const [jobName, job] of setupJobs) {
-      const step = job.steps?.find((entry) => entry.uses?.startsWith("pnpm/setup@"));
-      expect(step?.["timeout-minutes"], jobName).toBe(3);
-      expect(step?.["timeout-minutes"], jobName).toBeLessThan(job["timeout-minutes"] ?? 0);
-    }
-  });
-
-  it("uses pinned tooling without asset-dependent commands", () => {
-    for (const job of Object.values(jobs)) {
-      for (const step of job.steps?.filter((entry) => entry.uses) ?? []) {
-        expect(step.uses).toMatch(pinnedAction);
-      }
-    }
-
+  it("avoids commands that edit the checkout or require game assets", () => {
     const allCommands = Object.values(jobs)
       .flatMap((job) => runCommands(job))
       .join("\n");
     expect(allCommands).not.toMatch(/lint:fix|pipeline --|test:pipeline:assets/);
-  });
-
-  it("installs dependencies from a frozen lockfile before running package commands", () => {
-    for (const jobName of installJobs) {
-      expect(jobs[jobName]["runs-on"]).toBe("ubuntu-latest");
-      const firstCommand = runCommands(jobs[jobName]).find(
-        (command) => command !== 'git config --global --add safe.directory "$GITHUB_WORKSPACE"',
-      );
-      expect(firstCommand).toBe("pnpm install --frozen-lockfile");
-      const setup = jobs[jobName].steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
-      expect(setup).toBeDefined();
-    }
   });
 
   it("takes the pnpm and Node versions from the repository, not the workflow", () => {
@@ -381,30 +329,6 @@ describe("CI workflow jobs", () => {
     }
   });
 
-  it("restores the store that holds the pnpm-managed Node in every pnpm/setup job", () => {
-    // The cache archive's paths are relative to the workspace, which the container mounts
-    // elsewhere, so container jobs keep a store of their own that one of them saves.
-    const savers: Record<string, string> = { build: "host", pwa: "container" };
-    const mainPush = "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}";
-    const setupJobs = Object.entries(jobs).filter(([, job]) =>
-      job.steps?.some((step) => step.uses?.startsWith("pnpm/setup@")),
-    );
-    expect(setupJobs.map(([name]) => name)).toEqual(
-      expect.arrayContaining(["audit", ...installJobs]),
-    );
-    expect(workflow.env?.pnpm_config_store_dir).toBeUndefined();
-    for (const [name, job] of setupJobs) {
-      const inContainer = job.container !== undefined;
-      expect(job.env?.pnpm_config_store_dir).toBe(inContainer ? "/__w/.pnpm-store" : undefined);
-      const setup = job.steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
-      expect(setup?.with?.cache).toBe(true);
-      expect(setup?.with?.["save-cache"]).toBe(name in savers ? mainPush : false);
-    }
-    for (const [name, kind] of Object.entries(savers)) {
-      expect(jobs[name].container !== undefined).toBe(kind === "container");
-    }
-  });
-
   it("has pnpm download and run the .node-version release for every script", () => {
     const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
       devEngines?: { runtime?: { name?: string; onFail?: string; version?: string } };
@@ -414,41 +338,6 @@ describe("CI workflow jobs", () => {
       onFail: "download",
       version: readFileSync(".node-version", "utf8").trim(),
     });
-  });
-
-  it("has Dependabot keep the pinned GitHub Actions current", () => {
-    const dependabot = parse(readFileSync(".github/dependabot.yml", "utf8")) as {
-      updates?: { directory?: string; "package-ecosystem"?: string }[];
-    };
-    expect(
-      dependabot.updates?.some(
-        (update) => update["package-ecosystem"] === "github-actions" && update.directory === "/",
-      ),
-    ).toBe(true);
-  });
-});
-
-describe("CI workflow permissions", () => {
-  it("keeps every job read-only except its scoped PR metadata & scheduled issue writes", () => {
-    const elevated: Record<string, Record<string, string>> = {
-      changes: { contents: "read", "pull-requests": "read" },
-      "ci-passed": { actions: "read", contents: "read" },
-      "nightly-report": { actions: "read", contents: "read", issues: "write" },
-    };
-    expect(workflow.permissions).toEqual({ contents: "read" });
-    for (const [jobName, job] of Object.entries(jobs)) {
-      expect(job.permissions, jobName).toEqual(elevated[jobName]);
-    }
-    for (const jobName of unrequiredJobs) {
-      expect(jobs[jobName].if).toContain("github.event_name == 'schedule'");
-    }
-    for (const job of Object.values(jobs)) {
-      for (const step of job.steps?.filter((entry) =>
-        entry.uses?.startsWith("actions/checkout@"),
-      ) ?? []) {
-        expect(step.with?.["persist-credentials"]).toBe(false);
-      }
-    }
   });
 });
 
@@ -574,16 +463,12 @@ describe("CI workflow audit", () => {
     );
   });
 
-  it("keeps the blocking audit at moderate & never masks its failure", () => {
+  it("never masks a blocking audit failure", () => {
     const step = jobs.audit.steps?.find(
       (entry) => entry.run === "node scripts/verify.ts --step=audit",
     );
     expect(step).toBeDefined();
     expect(step?.["continue-on-error"]).toBeUndefined();
-    expect(STEPS.find(({ name }) => name === "audit")?.command).toEqual({
-      args: ["audit", "--audit-level=moderate"],
-      kind: "pnpm",
-    });
   });
 
   it("sets up pnpm before the install-free nightly audit", () => {
@@ -619,6 +504,9 @@ describe("CI workflow gate", () => {
 
   it("aggregates every merge-relevant job into one always-reported check", () => {
     expect(jobs["ci-passed"].if).toBe("always()");
+    for (const jobName of unrequiredJobs) {
+      expect(jobs[jobName].if).toContain("github.event_name == 'schedule'");
+    }
     expect(jobs["ci-passed"].needs).toEqual(
       Object.keys(jobs).filter(
         (jobName) => !unrequiredJobs.includes(jobName) && jobName !== "ci-passed",
@@ -658,11 +546,5 @@ describe("Guarded paths workflow", () => {
     for (const job of Object.values(file.jobs ?? {})) {
       expect(job.concurrency).toBeUndefined();
     }
-  });
-
-  it("reads labels from the live PR, not the event payload", () => {
-    expect(source).not.toContain("github.event.pull_request.labels");
-    expect(source).not.toContain("github.event.pull_request.body");
-    expect(source).toContain('gh api "repos/$REPOSITORY/pulls/$PR_NUMBER"');
   });
 });

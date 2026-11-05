@@ -15,6 +15,7 @@ interface Workflow {
     {
       if?: string;
       permissions?: Record<string, string>;
+      steps?: { uses?: string; with?: { "persist-credentials"?: boolean } }[];
     }
   >;
   on?: Record<string, unknown> | string | string[];
@@ -81,5 +82,29 @@ describe("workflow hardening", () => {
     it("references no deploy credentials or repository secrets", () => {
       expect(source).not.toMatch(secretReferences);
     });
+  });
+
+  it("limits CI to the permissions its jobs need & keeps checkout credentials out of git config", () => {
+    const ci = workflows.find(({ name }) => name === "ci.yml")?.workflow;
+    const elevated: Record<string, Record<string, string>> = {
+      changes: { contents: "read", "pull-requests": "read" },
+      "ci-passed": { actions: "read", contents: "read" },
+      "nightly-report": { actions: "read", contents: "read", issues: "write" },
+    };
+    expect(ci?.permissions).toEqual({ contents: "read" });
+    for (const [jobName, job] of Object.entries(ci?.jobs ?? {})) {
+      expect(job.permissions, jobName).toEqual(elevated[jobName]);
+      const checkoutSteps = job.steps?.filter((step) => step.uses?.startsWith("actions/checkout@"));
+      for (const step of checkoutSteps ?? []) {
+        expect(step.with?.["persist-credentials"], jobName).toBe(false);
+      }
+    }
+  });
+
+  it("reads Guarded paths approvals from the live PR", () => {
+    const source = workflows.find(({ name }) => name === "guarded-paths.yml")?.source;
+    expect(source).toContain('gh api "repos/$REPOSITORY/pulls/$PR_NUMBER"');
+    expect(source).not.toContain("github.event.pull_request.labels");
+    expect(source).not.toContain("github.event.pull_request.body");
   });
 });
