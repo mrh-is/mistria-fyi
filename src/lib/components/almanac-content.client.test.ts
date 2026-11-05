@@ -23,6 +23,8 @@ describe("AlmanacContent", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    // Client test files share this store, so a search left open would filter their pages.
+    toolbarState.closeSearch();
   });
 
   it("shows Date Inspiration without a duplicate Dates checklist", async () => {

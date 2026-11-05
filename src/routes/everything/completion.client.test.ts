@@ -28,6 +28,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  // Client test files share this store, so a search left open would filter their pages.
+  toolbarState.closeSearch();
 });
 
 it("shows one fixed Completed divider, only once a completed group has content", async () => {
@@ -55,6 +57,4 @@ it("shows the completed list while a search pauses filters, without changing the
 
   expect(view.getByTestId("everything-completed")).toBeInTheDocument();
   expect(userState.state.showCompleted).toBe(false);
-
-  toolbarState.closeSearch();
 });
