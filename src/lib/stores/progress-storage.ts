@@ -116,6 +116,9 @@ export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   // Version 7 records that the last applied save's playtime couldn't be read. An older blob has no
   // such record, so edits after it keep carrying the baseline playtime, as they did.
   7: (document) => document,
+  // Version 8 retires the row windows & the “Completed” switch, which the shelves replace. Launch
+  // blobs carried `showCompleted`; no later format declares either field.
+  8: ({ availabilityWindows: _windows, showCompleted: _completed, ...document }) => document,
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

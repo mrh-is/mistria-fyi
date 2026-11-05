@@ -70,9 +70,9 @@ describe("source projection", () => {
     const sections = projectSourceGroups(rows, userState.progressContext);
     expect(sections.map((s) => s.id)).toEqual(["store-balor", "store-merri"]);
     expect(sections[0].rows).toHaveLength(1);
-    expect(sections[0].rows[0].window).toBe("later");
+    expect(sections[0].rows[0].doable).toBe(false);
     expect(sections[0].state).toBe("later");
-    expect(sections[1].rows[0].window).toBe("anytime");
+    expect(sections[1].rows[0].doable).toBe(true);
     expect(sections[1].state).toBe("now");
     rows[0].completed = true;
     expect(

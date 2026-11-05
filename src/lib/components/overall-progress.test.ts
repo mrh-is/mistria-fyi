@@ -31,9 +31,7 @@ describe("OverallProgress", () => {
 
     expect(
       queries.getByRole("img", {
-        name: new RegExp(
-          `^0 of ${formatNumber(expectedTotal, "en")} completed overall, 0%, [\\d,]+ for now$`,
-        ),
+        name: new RegExp(`^0 of ${formatNumber(expectedTotal, "en")} completed overall, 0%$`),
       }),
     ).toBeTruthy();
   });
@@ -61,7 +59,7 @@ describe("OverallProgress", () => {
 
     expect(
       queries.getByRole("img", {
-        name: new RegExp(`^全体で${formatNumber(expectedTotal, "ja")}件中0件完了、0%, 今は`),
+        name: new RegExp(`^全体で${formatNumber(expectedTotal, "ja")}件中0件完了、0%$`),
       }),
     ).toBeTruthy();
   });
@@ -79,9 +77,7 @@ describe("OverallProgress", () => {
 
     expect(
       queries.getByRole("img", {
-        name: new RegExp(
-          `^Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00A0%, .+ пока$`,
-        ),
+        name: new RegExp(`^Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00A0%$`),
       }),
     ).toBeTruthy();
   });

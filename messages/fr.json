@@ -47,16 +47,11 @@
   "toolbar_filters_cleared": "Tous les filtres effacés",
   "page_header_back_to_home": "Retour à l’accueil",
   "page_header_progress": "{completed} sur {total} terminés",
-  "progress_for_now": "{count} pour l’instant",
-  "progress_done_for_now": "fini pour l’instant",
-  "home_index_heading": "Index",
   "home_everything_label": "Tout",
   "home_page_description": "Suivez les dons au musée, les trouvailles de l’almanach, les recettes, les relations, les compétences, les quêtes et plus encore dans Fields of Mistria, en route vers les 100 % de complétion.",
   "all_page_title": "Liste de tout",
   "all_page_description": "Consultez et suivez chaque catégorie de complétion de Fields of Mistria dans une seule liste.",
-  "home_active_categories_label": "Catégories en cours",
   "common_completed_heading": "Terminé",
-  "home_completed_categories_label": "Catégories terminées",
   "overall_progress_label": "{completed} sur {total} terminés au total, {pct}",
   "foldout_close": "Fermer {title}",
   "search_results_count": [
@@ -71,27 +66,6 @@
     }
   ],
   "search_no_results": "Aucun élément trouvé",
-  "search_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{count} résultat hors de vos filtres",
-        "countPlural=other": "{count} résultats hors de vos filtres"
-      }
-    }
-  ],
-  "search_more_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{count} résultat de plus hors de vos filtres",
-        "countPlural=other": "{count} résultats de plus hors de vos filtres"
-      }
-    }
-  ],
-  "search_turn_off_filters": "Désactiver les filtres pour cette recherche",
   "search_filters_off": "Vos filtres sont désactivés pour cette recherche.",
   "search_filters_resume": "Les réactiver",
   "search_guide_prompt": "Vous ne trouvez pas ce que vous cherchez ?",
@@ -268,25 +242,17 @@
   "settings_theme_auto": "Auto",
   "settings_theme_light": "Clair",
   "settings_theme_dark": "Sombre",
-  "visibility_when_to_find": "Quand trouver",
-  "availability_whenever": "Quand vous voulez",
-  "availability_later": "Plus tard",
-  "availability_now": "Maintenant",
   "visibility_season_label": "Saison",
   "visibility_weather_label": "Météo",
   "visibility_source_types": "Types de source",
   "visibility_source_types_about_aria": "À propos des types de source",
   "visibility_source_types_summary": "{enabled} sur {total}",
   "visibility_show_heading": "Afficher",
-  "visibility_when_everything": "Tout",
   "visibility_sources_all": "Tous les types",
   "visibility_sources_none": "Aucun type",
   "visibility_sources_only": "Seulement {type}",
-  "visibility_show_todo": "À faire",
   "visibility_show_obtainable": "Obtenables",
-  "visibility_show_uncompleted": "Non terminés",
   "visibility_show_everything": "Tout",
-  "visibility_completed_toggle": "Terminés",
   "visibility_unobtainable_toggle": "Impossibles à obtenir",
   "source_explainer_overline": "Inventaire du guide",
   "source_explainer_description": "Les types de source affichés dans le panneau de filtres.",
@@ -1051,5 +1017,30 @@
   "sync_backup_restore_body": "Elle remplace ce qui se trouve sur cet appareil. La synchro continue, donc votre prochaine sauvegarde s’appliquera selon les règles habituelles.",
   "sync_backup_restore_confirm": "La restaurer",
   "sync_backup_restore_cancel": "Annuler",
-  "sync_backup_restored": "Copie restaurée."
+  "sync_backup_restored": "Copie restaurée.",
+  "filter_note": [
+    {
+      "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} élément {shelf} est masqué par les filtres.",
+        "countPlural=many": "{count} éléments {shelf} sont masqués par les filtres.",
+        "countPlural=other": "{count} éléments {shelf} sont masqués par les filtres."
+      }
+    }
+  ],
+  "filter_note_show": "Afficher quand même",
+  "filter_note_nothing_left": "Tes filtres ne laissent rien sur cette page.",
+  "shelf_to_do": "À faire",
+  "shelf_not_now": "Pas maintenant",
+  "shelf_categories_label": "Catégories : {shelf}",
+  "shelf_explainer_open": "À propos de l’étagère {shelf}",
+  "shelf_explainer_title": "À quoi servent les étagères",
+  "shelf_explainer_description": "Ce que contient chaque étagère et le jour pour lequel elle est triée.",
+  "shelf_explainer_day": "Trié pour {season}, {weather}",
+  "shelf_explainer_todo": "Tu peux faire au moins l’une de ces choses aujourd’hui.",
+  "shelf_explainer_not_now": "Rien de tout cela n’est possible aujourd’hui. Il faut attendre une saison, une météo ou ta progression.",
+  "shelf_explainer_completed": "Tu as tout terminé ici. Bravo !",
+  "toolbar_clock": "Saison et météo : {season}, {weather}",
+  "toolbar_clock_title": "Saison et météo"
 }

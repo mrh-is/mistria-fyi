@@ -58,6 +58,8 @@ export interface SourceChecklistRow extends SourceGroupRow {
 export function buildSourceChecklist(
   ctx: ProgressContext,
   locale: LocaleCode,
+  /** Decides each row's spoiler mask. Availability never reads it. */
+  showSpoilers = false,
 ): SourceChecklistRow[] {
   const rows: SourceChecklistRow[] = [];
   function add(
@@ -173,12 +175,18 @@ export function buildSourceChecklist(
             userState.toggleAnimalVariant(row.animalId, row.variantId);
           },
           {
+            locked: isAnimalVariantSpoilered(
+              row.animalId,
+              row.variantId,
+              ctx.progress.animals[row.animalId],
+              false,
+            ),
             searchNames: [species],
             spoilered: isAnimalVariantSpoilered(
               row.animalId,
               row.variantId,
               ctx.progress.animals[row.animalId],
-              ctx.progressionState.showSpoilers,
+              showSpoilers,
             ),
             subtitle: [
               species,

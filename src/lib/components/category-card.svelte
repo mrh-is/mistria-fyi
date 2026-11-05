@@ -6,7 +6,11 @@
   import type { CategoryKey } from "#lib/engine/categories.js";
   import type { CategoryProgress } from "#lib/engine/progress.js";
 
-  let { key, progress }: { key: CategoryKey; progress: CategoryProgress } = $props();
+  let {
+    key,
+    progress,
+    quiet = false,
+  }: { key: CategoryKey; progress: CategoryProgress; quiet?: boolean } = $props();
 
   const { color, description, href, name } = $derived(categoryForKey(key, page.data.locale));
 </script>
@@ -19,5 +23,6 @@
   {href}
   icon={key}
   {name}
-  remainingInScope={progress.remainingInScope}
+  {quiet}
+  todo={progress.todo}
 />

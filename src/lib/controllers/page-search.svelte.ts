@@ -2,12 +2,13 @@ import { getContext, setContext, untrack } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
 import { getCompletionScope } from "#lib/controllers/completion-scope.svelte.js";
+import { shelfFacts } from "#lib/engine/shelves.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
+import type { AvailabilityRow } from "#lib/engine/availability.js";
+import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { PageSearchCount } from "#lib/stores/toolbar-state.svelte.js";
-import type { AvailabilityWindow } from "#lib/types/availability.js";
 
 const SEARCH_GROUP = Symbol("page-search-group");
 
@@ -28,8 +29,8 @@ export function createSearchGroup(): { readonly isEmpty: boolean } {
 }
 
 /**
- * Reports what this part of the page found, for the page's search status. `count` runs only during
- * a search, so it can afford to look past the page's filters.
+ * Reports what this part of the page holds, for the page's status note. `count` runs only during a
+ * search or while filters narrow the page, so it can afford to look past them.
  */
 export function registerPageSearch(count: () => PageSearchCount): void {
   const group = getContext<SearchGroup | undefined>(SEARCH_GROUP);
@@ -50,12 +51,7 @@ export function registerPageSearch(count: () => PageSearchCount): void {
   });
 }
 
-/** Whether completed rows render, given the player's setting & any paused filters. */
-export function showsCompletedRows(): boolean {
-  return userState.state.showCompleted || toolbarState.searchShowsAll;
-}
-
-/** The availability windows rows render in, given the player's setting & any paused filters. */
-export function visibleWindows(): readonly AvailabilityWindow[] {
-  return toolbarState.searchShowsAll ? AVAILABILITY_WINDOWS : userState.state.availabilityWindows;
+/** A row's shelf facts under the page's filters. */
+export function pageShelfFacts(row: AvailabilityRow, completed: boolean): ShelfRow {
+  return shelfFacts(row, completed, userState.progressContext, toolbarState.showsSource);
 }

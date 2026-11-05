@@ -2,9 +2,7 @@
   import IconArrowLeft from "@tabler/icons-svelte-runes/icons/arrow-left";
 
   import { Icon } from "#lib/components/icon/index.js";
-  import ProgressScopeNote from "#lib/components/progress-scope-note.svelte";
   import * as m from "#lib/paraglide/messages.js";
-  import { progressScope, withProgressScope } from "#lib/presentation/progress-scope.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
@@ -42,7 +40,9 @@
       : undefined,
   );
 
-  const scope = $derived(progress === undefined ? undefined : progressScope(progress));
+  const todoPct = $derived(
+    progress !== undefined && progress.total > 0 ? (progress.todo / progress.total) * 100 : 0,
+  );
 
   function goBack(event: MouseEvent): void {
     if (history.length <= 1) return;
@@ -58,7 +58,7 @@
   class:page-header--complete={pct === 100}
   data-page-header={category === undefined ? "generic" : "category"}
   style={category !== undefined && pct !== undefined
-    ? `--category-progress-percent: ${pct}%;`
+    ? `--category-progress-percent: ${pct}%; --category-todo-percent: ${todoPct}%;`
     : undefined}
 >
   <a
@@ -76,14 +76,10 @@
   {#if pct !== undefined && progress !== undefined}
     <span class="page-header__count">
       <span class="sr-only" aria-live="polite"
-        >{withProgressScope(
-          m.page_header_progress({
-            completed: formatNumber(progress.completed, page.data.locale),
-            total: formatNumber(progress.total, page.data.locale),
-          }),
-          scope,
-          page.data.locale,
-        )}</span
+        >{m.page_header_progress({
+          completed: formatNumber(progress.completed, page.data.locale),
+          total: formatNumber(progress.total, page.data.locale),
+        })}</span
       >
       <span aria-hidden="true"
         >{formatNumber(progress.completed, page.data.locale)} / {formatNumber(
@@ -91,9 +87,6 @@
           page.data.locale,
         )}</span
       >
-      {#if scope}
-        <span aria-hidden="true"><ProgressScopeNote locale={page.data.locale} {scope} /></span>
-      {/if}
     </span>
   {/if}
   {#if category !== undefined}
@@ -102,7 +95,7 @@
     >
 
     <span class="page-header__edge-mask" aria-hidden="true"></span>
-    <span class="page-header__progress" aria-hidden="true"><i></i></span>
+    <span class="page-header__progress" aria-hidden="true"><i></i><b></b></span>
   {/if}
 </header>
 
@@ -228,6 +221,7 @@
     bottom: 0;
     left: 0;
     z-index: 2;
+    display: flex;
     height: 3px;
     background: color-mix(in srgb, var(--primary) 13%, transparent);
   }
@@ -237,6 +231,15 @@
     width: var(--category-progress-percent);
     height: 100%;
     background: var(--primary);
+    transition: width 300ms ease-out;
+  }
+
+  /* The To do share: a quiet tint, because the shelf already says something's doable. */
+  .page-header__progress b {
+    display: block;
+    width: var(--category-todo-percent);
+    height: 100%;
+    background: color-mix(in srgb, var(--primary) 34%, transparent);
     transition: width 300ms ease-out;
   }
 
@@ -284,7 +287,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .page-header__progress i {
+    .page-header__progress i,
+    .page-header__progress b {
       transition-duration: 0.01ms;
     }
   }

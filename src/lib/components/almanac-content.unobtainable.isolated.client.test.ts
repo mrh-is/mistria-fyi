@@ -35,7 +35,7 @@ it("reveals an unobtainable row with the filter and hides it again", async () =>
   toolbarState.setSearchQuery("Turnip");
   const view = renderWithFeedback(AlmanacContent, { locale: "en" });
   await tick();
-  const filters = renderWithFeedback(FilterPanel, { showWorldStateFilters: true });
+  const filters = renderWithFeedback(FilterPanel, {});
   const toggle = filters.getByRole("switch", { name: "Unobtainable" });
   expect(toggle).not.toBeChecked();
   expect(view.queryByText("Turnip", { exact: true })).toBeNull();

@@ -1,5 +1,6 @@
 import { trackerData } from "#lib/data/index.js";
 import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
+import { alwaysToDo } from "#lib/engine/shelves.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
@@ -51,5 +52,5 @@ export function projectSkills(ctx: ProgressContext): SkillsProjection {
   });
   const total = rows.reduce((sum, row) => sum + MAX_SKILL_LEVEL + row.perkTotal, 0);
   const completed = rows.reduce((sum, row) => sum + row.level + row.perks, 0);
-  return { rows, totals: { completed, remainingInScope: total - completed, total } };
+  return { rows, totals: alwaysToDo(completed, total) };
 }

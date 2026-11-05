@@ -18,10 +18,8 @@
 {#each categories as category (category)}
   <CategorySection key={category} locale="en" progress={progress[category]} />
 {/each}
-{#if userState.state.showCompleted}
-  <div data-testid="everything-completed">
-    {#each categories as category (category)}
-      <CategorySection completed key={category} locale="en" progress={progress[category]} />
-    {/each}
-  </div>
-{/if}
+<div data-testid="everything-completed">
+  {#each categories as category (category)}
+    <CategorySection completed key={category} locale="en" progress={progress[category]} />
+  {/each}
+</div>

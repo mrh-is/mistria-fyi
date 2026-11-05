@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { untrack } from "svelte";
+
   import { Icon } from "#lib/components/icon/index.js";
   import SectionTrigger from "#lib/components/section-trigger.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
@@ -6,6 +8,7 @@
     getSharedReveals,
     registerCompletionSection,
   } from "#lib/controllers/completion-scope.svelte.js";
+  import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
 
   import type { Snippet } from "svelte";
 
@@ -32,6 +35,21 @@
     () => false,
     () => topLevel && isSpoilered,
   );
+
+  // A masked section is locked, so it waits on Not now. Once revealed, its own header reports.
+  const sectionGroupItem = getSectionGroupItem();
+  $effect(() => {
+    if (!topLevel || !isSpoilered || !sectionGroupItem) return;
+    const { report } = sectionGroupItem;
+    untrack(() => {
+      report("notNow");
+    });
+    return () => {
+      untrack(() => {
+        report(undefined);
+      });
+    };
+  });
 </script>
 
 {#if !isSpoilered}

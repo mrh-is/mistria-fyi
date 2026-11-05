@@ -36,7 +36,7 @@
       ? 0
       : trackerData.townRanks.filter((rank, index) => matchesSearch(rank.levels.start, index))
           .length;
-    return { matches, visible: matches };
+    return { filtered: { completed: 0, notNow: 0, todo: 0 }, visible: matches };
   });
 </script>
 

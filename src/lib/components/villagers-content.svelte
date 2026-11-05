@@ -1,18 +1,22 @@
 <script lang="ts">
   import BlockySwitch from "#lib/components/blocky-switch.svelte";
   import CompletionSection from "#lib/components/completion-section.svelte";
+  import ShelfGroups from "#lib/components/shelf-groups.svelte";
   import VillagerAlphabetIndex from "#lib/components/villager-alphabet-index.svelte";
   import VillagerRecord from "#lib/components/villager-record.svelte";
-  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { getName } from "#lib/data/names.js";
   import { isVillagerComplete } from "#lib/engine/progress.js";
-  import { buildVillagerRoster, filterVillagerRoster } from "#lib/engine/villager-roster.js";
+  import { buildVillagerRoster } from "#lib/engine/villager-roster.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { page } from "$app/state";
 
+  import type { Shelf } from "#lib/engine/shelves.js";
+  import type { VillagerRosterEntry } from "#lib/engine/villager-roster.js";
   import type { LocaleCode } from "#lib/types/locale.js";
 
   let {
@@ -30,7 +34,7 @@
   );
 
   let villagers = $derived(buildVillagerRoster(locale));
-  // A villager linked by hash (e.g. from search) stays rendered even when completed ones are hidden.
+  // A villager linked by hash (e.g. from search) opens the fold they sit in.
   let targetedId = $derived(page.url.hash.replace(/^#villager-/, ""));
   let nameFilter = $derived(toolbarState.searchQuery);
   // Spoilered villagers render without their name, so a search can't find them.
@@ -43,17 +47,16 @@
         )
       : villagers,
   );
-  let visibleVillagers = $derived(
-    filterVillagerRoster(
-      namedVillagers,
-      userState.state.progress,
-      showsCompletedRows(),
-      targetedId,
-    ),
-  );
+  let visibleVillagers = $derived(namedVillagers);
+
+  function villagerShelf(villager: VillagerRosterEntry): Shelf {
+    if (isVillagerComplete(villager.id, userState.state.progress)) return "completed";
+    const met = isConditionVisible(villager.visibility, userState.progressContext.progressionState);
+    return met ? "todo" : "notNow";
+  }
 
   registerPageSearch(() => ({
-    matches: namedVillagers.length,
+    filtered: { completed: 0, notNow: 0, todo: 0 },
     visible: visibleVillagers.length,
   }));
 
@@ -67,6 +70,27 @@
       })),
   );
 </script>
+
+{#snippet roster(rows: readonly VillagerRosterEntry[])}
+  <ul
+    class="villager-roster"
+    data-testid="villager-roster"
+    aria-label={m.villagers_roster_aria()}
+    tabindex="-1"
+  >
+    {#each rows as villager (villager.id)}
+      <CompletionSection complete={isVillagerComplete(villager.id, userState.state.progress)}>
+        <VillagerRecord
+          {compact}
+          id={villager.id}
+          name={villager.name}
+          spoilered={!userState.progressionState.knownVillagers.has(villager.id)}
+          {villager}
+        />
+      </CompletionSection>
+    {/each}
+  </ul>
+{/snippet}
 
 {#if !compact && showBreakUpsSetting && !nameFilter}
   <div class="break-ups-setting">
@@ -82,24 +106,19 @@
 {/if}
 
 <div class:villager-roster-shell={indexed}>
-  <ul
-    class="villager-roster"
-    data-testid="villager-roster"
-    aria-label={m.villagers_roster_aria()}
-    tabindex="-1"
-  >
-    {#each visibleVillagers as villager (villager.id)}
-      <CompletionSection complete={isVillagerComplete(villager.id, userState.state.progress)}>
-        <VillagerRecord
-          {compact}
-          id={villager.id}
-          name={villager.name}
-          spoilered={!userState.progressionState.knownVillagers.has(villager.id)}
-          {villager}
-        />
-      </CompletionSection>
-    {/each}
-  </ul>
+  {#if compact}
+    {@render roster(visibleVillagers)}
+  {:else}
+    <div class="min-w-0">
+      <ShelfGroups
+        forceOpen={!!nameFilter || Boolean(targetedId)}
+        getKey={(villager) => villager.id}
+        getShelf={villagerShelf}
+        group={roster}
+        items={visibleVillagers}
+      />
+    </div>
+  {/if}
 
   {#if indexed}
     <VillagerAlphabetIndex entries={indexEntries} {locale} />

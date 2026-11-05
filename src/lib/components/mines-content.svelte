@@ -3,12 +3,11 @@
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
+  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
-  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
-  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -19,9 +18,9 @@
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { getMaxMineFloor } from "#lib/engine/progress.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import { alwaysToDo, countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -47,7 +46,7 @@
       userState.toggleSpell(spellId);
     });
     if (completed) {
-      if (!userState.state.showCompleted) leavingSpells.markLeaving(spellId);
+      leavingSpells.markLeaving(spellId);
       if (isMinesComplete()) {
         celebrateCategory();
       } else if (allSpellsComplete()) {
@@ -106,6 +105,7 @@
         id: id as SpellId,
         name: getName("spells", id as SpellId, locale),
         sources: spell.sources,
+        ...pageShelfFacts(spell, userState.state.progress.spells.has(id as SpellId)),
       }))
       .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
@@ -122,26 +122,14 @@
       : spells,
   );
 
-  let scopedSpells = $derived(
-    namedSpells.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
-  );
+  let visibleSpells = $derived(namedSpells.filter(({ shown }) => shown));
 
-  let visibleSpells = $derived(
-    scopedSpells.filter((spell) => {
-      const completed = userState.state.progress.spells.has(spell.id);
-      return completed ? showsCompletedRows() || leavingSpells.has(spell.id) : true;
-    }),
-  );
+  let spellProgress = $derived(countShelfRows(spells));
 
-  let spellProgress = $derived(
-    countProgress(
-      spells,
-      ({ id }) => userState.state.progress.spells.has(id),
-      ({ sources }) => toolbarState.matchesSourceFilters(sources),
-    ),
-  );
-
-  registerPageSearch(() => ({ matches: namedSpells.length, visible: visibleSpells.length }));
+  registerPageSearch(() => ({
+    filtered: filteredCounts(namedSpells),
+    visible: visibleSpells.length,
+  }));
 </script>
 
 <SpoilerGuardDialog guard={spoilerGuard} />
@@ -160,6 +148,7 @@
 
 <!-- The compact floor stepper sits above the sections rather than in one. -->
 <SectionGroups
+  forceOpen={!!nameFilter}
   getKey={(key) => key}
   grouping={sectionGrouping}
   items={compact || nameFilter ? (["spells"] as const) : (["floors", "spells"] as const)}
@@ -168,8 +157,8 @@
     {#if key === "floors"}
       <ExpandableSection
         {locale}
-        count={userState.state.progress.mineFloor}
         name={m.mines_floor_progress_section()}
+        progress={alwaysToDo(userState.state.progress.mineFloor, maxFloors)}
         reportCategory="mines"
         reportEntityId="floors"
         reportExtra={{
@@ -177,7 +166,6 @@
           floor: userState.state.progress.mineFloor,
         }}
         {defaultOpen}
-        total={maxFloors}
       >
         <MineFloorRecord
           {biomes}
@@ -187,19 +175,23 @@
           onChange={setFloorWithCelebration}
         />
       </ExpandableSection>
-    {:else if scopedSpells.length > 0 && (!nameFilter || visibleSpells.length > 0)}
+    {:else if !nameFilter || visibleSpells.length > 0}
       <ExpandableSection
         {locale}
         forceOpen={!!nameFilter}
-        count={spellProgress.completed}
         name={getName("ui", "magic_spells", locale)}
+        progress={spellProgress}
         reportCategory="mines"
         reportEntityId="spells"
         {defaultOpen}
-        remaining={spellProgress.remainingInScope}
-        total={spellProgress.total}
       >
-        <TrackerRowList getKey={(spell) => spell.id} items={visibleSpells}>
+        <ShelfRows
+          forceOpen={!!nameFilter}
+          getKey={(spell) => spell.id}
+          getShelf={rowShelf}
+          isLeaving={(spell) => leavingSpells.has(spell.id)}
+          items={visibleSpells}
+        >
           {#snippet row(spell)}
             {@const completed = userState.state.progress.spells.has(spell.id)}
             <TrackerRow
@@ -227,10 +219,8 @@
               }}
             />
           {/snippet}
-        </TrackerRowList>
+        </ShelfRows>
       </ExpandableSection>
-    {:else if !nameFilter && toolbarState.isSourceFilterNarrowing}
-      <TrackerEmptyState />
     {/if}
   {/snippet}
 </SectionGroups>

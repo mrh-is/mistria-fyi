@@ -47,16 +47,11 @@
   "toolbar_filters_cleared": "フィルターをすべて解除しました",
   "page_header_back_to_home": "ホームに戻る",
   "page_header_progress": "{total}件中{completed}件完了",
-  "progress_for_now": "今は{count}件",
-  "progress_done_for_now": "今はすべて完了",
-  "home_index_heading": "目次",
   "home_everything_label": "すべて",
   "home_page_description": "Fields of Mistriaの博物館への寄贈、アルマナックの発見、レシピ、交流、スキル、クエストなどを記録して、100%コンプリートを目指しましょう。",
   "all_page_title": "すべてのチェックリスト",
   "all_page_description": "Fields of Mistriaのすべてのコンプリート項目を1つのチェックリストで確認・記録できます。",
-  "home_active_categories_label": "進行中のカテゴリー",
   "common_completed_heading": "完了済み",
-  "home_completed_categories_label": "完了済みのカテゴリー",
   "overall_progress_label": "全体で{total}件中{completed}件完了、{pct}",
   "foldout_close": "{title}を閉じる",
   "search_results_count": [
@@ -69,25 +64,6 @@
     }
   ],
   "search_no_results": "アイテムが見つかりません",
-  "search_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=other": "フィルター外に{count}件あります"
-      }
-    }
-  ],
-  "search_more_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=other": "フィルター外にあと{count}件あります"
-      }
-    }
-  ],
-  "search_turn_off_filters": "この検索ではフィルターをオフにする",
   "search_filters_off": "この検索ではフィルターがオフです。",
   "search_filters_resume": "フィルターを戻す",
   "search_guide_prompt": "お探しのものが見つかりませんか？",
@@ -256,25 +232,17 @@
   "settings_theme_auto": "自動",
   "settings_theme_light": "ライト",
   "settings_theme_dark": "ダーク",
-  "visibility_when_to_find": "入手可能な時期",
-  "availability_whenever": "いつでも",
-  "availability_later": "後で",
-  "availability_now": "今すぐ",
   "visibility_season_label": "季節",
   "visibility_weather_label": "天気",
   "visibility_source_types": "入手方法の種類",
   "visibility_source_types_about_aria": "入手方法の種類について",
   "visibility_source_types_summary": "{enabled}/{total}",
   "visibility_show_heading": "表示",
-  "visibility_when_everything": "すべて",
   "visibility_sources_all": "すべての種類",
   "visibility_sources_none": "種類なし",
   "visibility_sources_only": "{type}のみ",
-  "visibility_show_todo": "やること",
   "visibility_show_obtainable": "入手可能",
-  "visibility_show_uncompleted": "未完了",
   "visibility_show_everything": "すべて",
-  "visibility_completed_toggle": "完了済み",
   "visibility_unobtainable_toggle": "入手不可",
   "source_explainer_overline": "フィールドガイドの持ち物",
   "source_explainer_description": "フィルターパネルに表示される入手方法の種類。",
@@ -1029,5 +997,28 @@
   "sync_backup_restore_body": "この端末の内容が置き換えられます。同期は続くので、次のセーブデータはいつものルールで適用されます。",
   "sync_backup_restore_confirm": "復元する",
   "sync_backup_restore_cancel": "キャンセル",
-  "sync_backup_restored": "バックアップを復元しました。"
+  "sync_backup_restored": "バックアップを復元しました。",
+  "filter_note": [
+    {
+      "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "{shelf}の項目{count}件がフィルターで非表示になっています。"
+      }
+    }
+  ],
+  "filter_note_show": "それでも表示",
+  "filter_note_nothing_left": "フィルターにより、このページには何も表示されません。",
+  "shelf_to_do": "やること",
+  "shelf_not_now": "今はできない",
+  "shelf_categories_label": "{shelf}のカテゴリー",
+  "shelf_explainer_open": "{shelf}の棚について",
+  "shelf_explainer_title": "棚の見かた",
+  "shelf_explainer_description": "それぞれの棚の内容と、並べ替えの基準になる日です。",
+  "shelf_explainer_day": "{season}・{weather}で並べ替え",
+  "shelf_explainer_todo": "今日できるものが少なくとも1つあります。",
+  "shelf_explainer_not_now": "今日できるものはありません。季節、天気、または進行状況を待っています。",
+  "shelf_explainer_completed": "ここはすべて完了しました！",
+  "toolbar_clock": "季節と天気：{season}、{weather}",
+  "toolbar_clock_title": "季節と天気"
 }

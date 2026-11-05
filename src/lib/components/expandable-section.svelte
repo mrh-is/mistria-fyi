@@ -4,18 +4,18 @@
   import { slide } from "svelte/transition";
 
   import { Icon } from "#lib/components/icon/index.js";
-  import ProgressScopeNote from "#lib/components/progress-scope-note.svelte";
   import SectionTrigger from "#lib/components/section-trigger.svelte";
   import { registerCompletionSection } from "#lib/controllers/completion-scope.svelte.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
+  import { progressShelf } from "#lib/engine/shelves.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { progressScope, withProgressScope } from "#lib/presentation/progress-scope.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
   import type { Snippet } from "svelte";
 
+  import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { ReportCategory } from "#lib/feedback/types.js";
   import type { LocaleCode } from "#lib/types/locale.js";
 
@@ -24,31 +24,26 @@
 
   let {
     children,
-    count,
     defaultOpen = false,
     depth = 0,
     forceOpen = false,
     locale,
     name,
-    remaining,
+    progress,
     reportCategory,
     reportEntityId,
     reportExtra,
-    total,
   }: {
     children: Snippet;
-    count?: number;
     defaultOpen?: boolean;
     depth?: number;
     forceOpen?: boolean;
     locale: LocaleCode;
     name: string;
-    /** Unfinished rows the filters leave in scope, for the line under the fraction. */
-    remaining?: number;
+    progress?: CategoryProgress;
     reportCategory?: ReportCategory;
     reportEntityId?: string;
     reportExtra?: Record<string, number | string>;
-    total?: number;
   } = $props();
   let reportable = $derived(
     reportCategory
@@ -67,19 +62,23 @@
   let expanded = $state(untrack(() => defaultOpen));
   let hydrated = $state(false);
   let isOpen = $derived(expanded || forceOpen);
+  let total = $derived(progress?.total);
   let boundedCount = $derived(
-    total === undefined || count === undefined ? undefined : Math.min(Math.max(count, 0), total),
+    progress === undefined ? undefined : Math.min(Math.max(progress.completed, 0), progress.total),
   );
-  let progress = $derived(
-    total !== undefined && total > 0 && boundedCount !== undefined
-      ? Math.min(100, Math.max(0, (boundedCount / total) * 100))
+  let percent = $derived(
+    progress !== undefined && progress.total > 0 && boundedCount !== undefined
+      ? (boundedCount / progress.total) * 100
       : 0,
   );
-  let scope = $derived(
-    total === undefined || boundedCount === undefined || remaining === undefined
-      ? undefined
-      : progressScope({ completed: boundedCount, remainingInScope: remaining, total }),
+  let todoPercent = $derived(
+    progress !== undefined && progress.total > 0 ? (progress.todo / progress.total) * 100 : 0,
   );
+  let shelf = $derived(progress === undefined ? undefined : progressShelf(progress));
+  // A section with progress & no shelf has nothing the filters show, so it leaves the page.
+  let leavesPage = $derived(progress !== undefined && shelf === undefined);
+  // Derived apart from `progress`, whose object can change while the shelf doesn't.
+  let reportedShelf = $derived(progress === undefined ? "todo" : shelf);
   let complete = $derived(total !== undefined && total > 0 && boundedCount === total);
   const completionSection = registerCompletionSection(
     () => complete,
@@ -101,10 +100,10 @@
   $effect(() => {
     if (depth !== 0 || !sectionGroupItem) return;
     const { report } = sectionGroupItem;
-    const reportedComplete = complete;
+    const current = reportedShelf;
     // Reporting writes the grouping's state; reading it here would re-run this effect forever.
     untrack(() => {
-      report(reportedComplete);
+      report(current);
     });
     return () => {
       untrack(() => {
@@ -120,7 +119,7 @@
 
 <div
   class="section"
-  hidden={!completionSection.visible}
+  hidden={!completionSection.visible || leavesPage}
   data-tracker-section
   data-section-depth={depth}
   style="--section-depth: {depth}"
@@ -134,15 +133,11 @@
       aria-expanded={isOpen}
       aria-controls={contentId}
       aria-label={total !== undefined && boundedCount !== undefined
-        ? withProgressScope(
-            m.section_progress_label({
-              completed: formatNumber(boundedCount, locale),
-              name,
-              total: formatNumber(total, locale),
-            }),
-            scope,
-            locale,
-          )
+        ? m.section_progress_label({
+            completed: formatNumber(boundedCount, locale),
+            name,
+            total: formatNumber(total, locale),
+          })
         : undefined}
       {@attach reportable}
     >
@@ -152,22 +147,20 @@
           ? 'rotate-90'
           : ''}"
       />
-      <span class="section-name" class:section-name--done-for-now={scope?.kind === "done"}
-        >{name}</span
-      >
+      <span class="section-name" class:section-name--waiting={shelf === "notNow"}>{name}</span>
       {#if total !== undefined && boundedCount !== undefined}
         <span class="section-count" aria-hidden="true">
-          <span>{formatNumber(boundedCount, locale)} / {formatNumber(total, locale)}</span>
-          {#if scope}<ProgressScopeNote {locale} {scope} />{/if}
+          {formatNumber(boundedCount, locale)} / {formatNumber(total, locale)}
         </span>
         <span class="section-progress" data-testid="section-progress" aria-hidden="true">
-          <i data-testid="section-progress-fill" style="width: {progress}%"></i>
+          <i data-testid="section-progress-fill" style="width: {percent}%"></i>
+          <b data-testid="section-progress-todo" style="width: {todoPercent}%"></b>
         </span>
       {/if}
     </SectionTrigger>
   </svelte:element>
 
-  {#if isOpen && completionSection.visible}
+  {#if isOpen && completionSection.visible && !leavesPage}
     <div
       id={contentId}
       class="section-content"
@@ -200,7 +193,7 @@
     white-space: nowrap;
   }
 
-  .section-name--done-for-now {
+  .section-name--waiting {
     color: var(--color-ink-muted);
     font-weight: 400;
   }
@@ -219,6 +212,7 @@
     right: 0;
     bottom: 0;
     left: 0;
+    display: flex;
     height: 2px;
     overflow: hidden;
     background: color-mix(in srgb, var(--primary) 13%, transparent);
@@ -228,6 +222,14 @@
     display: block;
     height: 100%;
     background: var(--primary);
+    transition: width 300ms ease-out;
+  }
+
+  /* The To do share: a quiet tint, because the shelf already says something's doable. */
+  .section-progress b {
+    display: block;
+    height: 100%;
+    background: color-mix(in srgb, var(--primary) 34%, transparent);
     transition: width 300ms ease-out;
   }
 
@@ -242,7 +244,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .section-progress i {
+    .section-progress i,
+    .section-progress b {
       transition-duration: 0.01ms;
     }
   }

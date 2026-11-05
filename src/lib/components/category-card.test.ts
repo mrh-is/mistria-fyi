@@ -15,7 +15,7 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 7, remainingInScope: 13, total: 20 },
+        progress: { completed: 7, completedShown: 7, todo: 13, total: 20, waiting: 0 },
       },
     });
 
@@ -30,48 +30,38 @@ describe("CategoryCard", () => {
     ).toBe("7 / 20");
   });
 
-  it("uses the full total for the fraction & bar, with the in-scope count beneath", () => {
+  it("uses the full total for the fraction & bar, with a To do tint & no second line", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "museum",
-        progress: { completed: 4, remainingInScope: 6, total: 20 },
+        progress: { completed: 4, completedShown: 4, todo: 6, total: 20, waiting: 10 },
       },
     });
 
-    const stripe = queries.getByRole("link", { name: "Museum, 4 of 20 completed, 6 for now" });
+    const stripe = queries.getByRole("link", { name: "Museum, 4 of 20 completed" });
     expect(stripe.getAttribute("style")).toContain("--category-progress-percent: 20%");
-    expect(stripe.textContent).toContain("6 for now");
+    expect(stripe.getAttribute("style")).toContain("--category-todo-percent: 30%");
+    expect(stripe.textContent).not.toContain("for now");
   });
 
-  it("mutes a category with nothing left in scope", () => {
+  it("quiets a category on the Not now shelf", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "quests",
-        progress: { completed: 88, remainingInScope: 0, total: 140 },
+        progress: { completed: 88, completedShown: 88, todo: 0, total: 140, waiting: 52 },
+        quiet: true,
       },
     });
 
-    const stripe = queries.getByRole("link", { name: "Quests, 88 of 140 completed, done for now" });
-    expect(stripe.classList.contains("category-stripe--done-for-now")).toBe(true);
-  });
-
-  it("leaves out the second line when filters exclude nothing", () => {
-    const { queries } = renderToFragment(CategoryCard, {
-      props: {
-        key: "skills",
-        progress: { completed: 48, remainingInScope: 12, total: 60 },
-      },
-    });
-
-    const stripe = queries.getByRole("link", { name: "Skills, 48 of 60 completed" });
-    expect(stripe.querySelector("[data-progress-scope]")).toBeNull();
+    const stripe = queries.getByRole("link", { name: "Quests, 88 of 140 completed" });
+    expect(stripe.classList.contains("category-stripe--quiet")).toBe(true);
   });
 
   it("retains grouped four-digit counts", () => {
     const { container } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 1686, remainingInScope: 114, total: 1800 },
+        progress: { completed: 1686, completedShown: 1686, todo: 114, total: 1800, waiting: 0 },
       },
     });
 
@@ -84,7 +74,7 @@ describe("CategoryCard", () => {
     const { container } = renderToFragment(CategoryCard, {
       props: {
         key: "animals",
-        progress: { completed: 20, remainingInScope: 0, total: 20 },
+        progress: { completed: 20, completedShown: 20, todo: 0, total: 20, waiting: 0 },
       },
     });
 
@@ -101,7 +91,7 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 7, remainingInScope: 13, total: 20 },
+        progress: { completed: 7, completedShown: 7, todo: 13, total: 20, waiting: 0 },
       },
     });
 
@@ -114,7 +104,7 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 7, remainingInScope: 13, total: 20 },
+        progress: { completed: 7, completedShown: 7, todo: 13, total: 20, waiting: 0 },
       },
     });
 

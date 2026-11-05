@@ -1,17 +1,16 @@
 <script lang="ts">
   import ExpandableSection from "#lib/components/expandable-section.svelte";
-  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
-  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
+  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -19,7 +18,6 @@
   import { matchesName } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
-  import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { PetCosmeticSetId, PetSkinId } from "#lib/types/tracker-data.js";
 
@@ -46,6 +44,10 @@
         id: id as PetCosmeticSetId,
         ...entry,
         name: getName("pets/cosmetic_sets", id as PetCosmeticSetId, locale),
+        ...pageShelfFacts(
+          { sources: entry.sources },
+          userState.state.progress.petCosmetics.has(id as PetCosmeticSetId),
+        ),
       }))
       .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
@@ -56,57 +58,39 @@
         id: id as PetSkinId,
         ...entry,
         name: getName("pets/skins", id as PetSkinId, locale),
+        ...pageShelfFacts(
+          { sources: entry.sources },
+          userState.state.progress.petSkins.has(id as PetSkinId),
+        ),
       }))
       .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
-  function isScoped({ name, sources }: { name: string; sources: Source[] }): boolean {
-    return matchesName(name, nameFilter, locale) && toolbarState.matchesSourceFilters(sources);
+  function matchesSearch({ name }: { name: string }): boolean {
+    return matchesName(name, nameFilter, locale);
   }
 
-  let scopedPetCosmeticEntries = $derived(petCosmeticEntries.filter((entry) => isScoped(entry)));
-
-  let scopedPetSkinEntries = $derived(petSkinEntries.filter((entry) => isScoped(entry)));
-
-  let cosmeticProgress = $derived(
-    countProgress(
-      petCosmeticEntries,
-      ({ id }) => userState.state.progress.petCosmetics.has(id),
-      ({ sources }) => toolbarState.matchesSourceFilters(sources),
-    ),
-  );
-
-  let skinProgress = $derived(
-    countProgress(
-      petSkinEntries,
-      ({ id }) => userState.state.progress.petSkins.has(id),
-      ({ sources }) => toolbarState.matchesSourceFilters(sources),
-    ),
-  );
+  let cosmeticProgress = $derived(countShelfRows(petCosmeticEntries));
+  let skinProgress = $derived(countShelfRows(petSkinEntries));
 
   let visibleCosmeticEntries = $derived(
-    scopedPetCosmeticEntries.filter((e) => {
-      const done = userState.state.progress.petCosmetics.has(e.id);
-      return done ? showsCompletedRows() : true;
-    }),
+    petCosmeticEntries.filter((entry) => entry.shown && matchesSearch(entry)),
   );
-
   let visibleSkinEntries = $derived(
-    scopedPetSkinEntries.filter((e) => {
-      const done = userState.state.progress.petSkins.has(e.id);
-      return done ? showsCompletedRows() : true;
-    }),
+    petSkinEntries.filter((entry) => entry.shown && matchesSearch(entry)),
   );
 
   registerPageSearch(() => {
     const isCosmetics = collection === "cosmetics";
-    const named = (isCosmetics ? petCosmeticEntries : petSkinEntries).filter(({ name }) =>
-      matchesName(name, nameFilter, locale),
+    const named = (isCosmetics ? petCosmeticEntries : petSkinEntries).filter((entry) =>
+      matchesSearch(entry),
     );
-    const visible = isCosmetics ? visibleCosmeticEntries : visibleSkinEntries;
-    return { matches: named.length, visible: visible.length };
+    return {
+      filtered: filteredCounts(named),
+      visible: (isCosmetics ? visibleCosmeticEntries : visibleSkinEntries).length,
+    };
   });
 
   function arePetsComplete(): boolean {
@@ -117,17 +101,20 @@
   }
 </script>
 
-{#if collection === "cosmetics" && visibleCosmeticEntries.length > 0}
+{#if collection === "cosmetics" && (!nameFilter || visibleCosmeticEntries.length > 0)}
   <ExpandableSection
     {locale}
-    count={cosmeticProgress.completed}
     forceOpen={!!nameFilter}
     name={m.animals_pet_cosmetics_section_name()}
+    progress={cosmeticProgress}
     reportCategory="pet-cosmetics"
-    remaining={cosmeticProgress.remainingInScope}
-    total={cosmeticProgress.total}
   >
-    <TrackerRowList getKey={(entry) => entry.id} items={visibleCosmeticEntries}>
+    <ShelfRows
+      forceOpen={!!nameFilter}
+      getKey={(entry) => entry.id}
+      getShelf={rowShelf}
+      items={visibleCosmeticEntries}
+    >
       {#snippet row(entry)}
         <TrackerRow
           fact={factKey("petCosmetics", entry.id)}
@@ -154,21 +141,24 @@
           }}
         />
       {/snippet}
-    </TrackerRowList>
+    </ShelfRows>
   </ExpandableSection>
 {/if}
 
-{#if collection === "skins" && visibleSkinEntries.length > 0}
+{#if collection === "skins" && (!nameFilter || visibleSkinEntries.length > 0)}
   <ExpandableSection
     {locale}
-    count={skinProgress.completed}
     forceOpen={!!nameFilter}
     name={m.animals_pet_skins_section_name()}
+    progress={skinProgress}
     reportCategory="pet-skins"
-    remaining={skinProgress.remainingInScope}
-    total={skinProgress.total}
   >
-    <TrackerRowList getKey={(entry) => entry.id} items={visibleSkinEntries}>
+    <ShelfRows
+      forceOpen={!!nameFilter}
+      getKey={(entry) => entry.id}
+      getShelf={rowShelf}
+      items={visibleSkinEntries}
+    >
       {#snippet row(entry)}
         <TrackerRow
           fact={factKey("petSkins", entry.id)}
@@ -195,11 +185,6 @@
           }}
         />
       {/snippet}
-    </TrackerRowList>
+    </ShelfRows>
   </ExpandableSection>
-{/if}
-
-<!-- One empty state covers both pet collections. -->
-{#if collection === "skins" && !nameFilter && toolbarState.isSourceFilterNarrowing && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
-  <TrackerEmptyState />
 {/if}

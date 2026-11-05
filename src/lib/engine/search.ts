@@ -1,6 +1,5 @@
 import { nameCollator } from "#lib/data/names.js";
 import { CATEGORY_DEFINITIONS } from "#lib/engine/categories.js";
-import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { matchesTerms, matchKey } from "#lib/utils/name-match.js";
 
 import type { SearchCategoryKey } from "#lib/engine/categories.js";
@@ -65,14 +64,12 @@ export function searchAllCategories(
   const englishQ = matchKey(query, "en");
   if (!q) return [];
 
-  // Search's own context, independent of page filters and completed-row retention: default
-  // availability windows, with spoilers flagged from the player's progression. Registry order is
-  // the stable order for equally ranked results.
+  // Search's own context, independent of page filters, with spoilers flagged from the player's
+  // progression. Registry order is the stable order for equally ranked results.
   const context: SearchContext = {
     locale,
     progressionState,
     projectionContext: {
-      availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
       progress: completed,
       progressionState,
       worldState,

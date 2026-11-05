@@ -1,4 +1,4 @@
-import { within } from "@testing-library/svelte";
+import { fireEvent, within } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
@@ -32,29 +32,44 @@ afterEach(() => {
   toolbarState.closeSearch();
 });
 
-it("shows one fixed Completed divider, only once a completed group has content", async () => {
-  userState.toggleShowCompleted();
-  const view = renderWithFeedback(AllPage, props);
-  await tick();
-  const completed = view.getByTestId("everything-completed");
-  expect(completed.hidden).toBe(true);
-  userState.setRenown(getMaxRenownLevel());
-  await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS);
-  await tick();
-  expect(completed.hidden).toBe(false);
-  expect(within(completed).getByRole("heading", { name: "Completed" })).toBeInTheDocument();
-  expect(within(completed).queryByRole("button", { name: "Completed" })).not.toBeInTheDocument();
-});
-
-it("shows the completed list while a search pauses filters, without changing the setting", async () => {
+it("offers one closed Completed fold, only once something's finished", async () => {
   const view = renderWithFeedback(AllPage, props);
   await tick();
   expect(view.queryByTestId("everything-completed")).toBeNull();
 
-  toolbarState.setSearchQuery("restore");
-  toolbarState.searchShowsAll = true;
+  userState.setRenown(getMaxRenownLevel());
+  await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS);
   await tick();
 
-  expect(view.getByTestId("everything-completed")).toBeInTheDocument();
-  expect(userState.state.showCompleted).toBe(false);
+  const completed = view.getByTestId("everything-completed");
+  const fold = within(completed).getByRole("button", { expanded: false, name: "Completed" });
+  expect(within(completed).queryByRole("button", { name: "Renown" })).toBeNull();
+
+  await fireEvent.click(fold);
+  expect(within(completed).getByRole("button", { name: "Renown" })).toBeInTheDocument();
+});
+
+it("opens the Completed fold for a search, then closes it again", async () => {
+  userState.setRenown(getMaxRenownLevel());
+  const view = renderWithFeedback(AllPage, props);
+  await tick();
+  const completed = view.getByTestId("everything-completed");
+  expect(within(completed).getByRole("button", { name: "Completed" })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+
+  toolbarState.setSearchQuery("restore");
+  await tick();
+  expect(within(completed).getByRole("button", { name: "Completed" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+
+  toolbarState.setSearchQuery("");
+  await tick();
+  expect(within(completed).getByRole("button", { name: "Completed" })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
 });

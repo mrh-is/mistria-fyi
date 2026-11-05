@@ -1,5 +1,6 @@
 import { trackerData } from "#lib/data/index.js";
-import { countChecklist, isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
@@ -18,16 +19,15 @@ export interface CosmeticsProjection extends CategoryProjection {
   rows: CosmeticRow[];
 }
 
-/** Every cosmetic is one step, in scope until collected. */
+/** Every cosmetic is one step. */
 export function projectCosmetics(
   ctx: ProgressContext,
   options: CategoryProjectionOptions = {},
 ): CosmeticsProjection {
   const rows = recordEntries(trackerData.cosmetics).map(([id, cosmetic]): CosmeticRow => ({
-    completed: ctx.progress.cosmetics.has(id),
+    ...shelfFacts(cosmetic, ctx.progress.cosmetics.has(id), ctx, options.showsSource),
     id,
-    inScope: options.matchesSources?.(cosmetic.sources) ?? true,
     spoilered: isSpoilered(cosmetic.visibility, options.progressionState),
   }));
-  return { rows, totals: countChecklist(rows) };
+  return { rows, totals: countShelfRows(rows) };
 }

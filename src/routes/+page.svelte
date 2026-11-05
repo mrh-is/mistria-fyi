@@ -5,14 +5,12 @@
   import CategoryGrid from "#lib/components/category-grid.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import OverallProgress from "#lib/components/overall-progress.svelte";
-  import ProgressScopeNote from "#lib/components/progress-scope-note.svelte";
   import SearchResults from "#lib/components/search-results.svelte";
   import GotItNote from "#lib/components/sync/got-it-note.svelte";
   import SyncTroubleNote from "#lib/components/sync/sync-trouble-note.svelte";
   import WelcomeCard from "#lib/components/welcome-card.svelte";
   import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { progressScope, withProgressScope } from "#lib/presentation/progress-scope.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { formatNumber } from "#lib/utils/format.js";
@@ -34,8 +32,8 @@
   let allProgress = $derived(getAllProgress(userState.progressContext));
 
   let overall = $derived(getOverallProgress(allProgress));
-  let overallScope = $derived(progressScope(overall));
   let overallPct = $derived(overall.total > 0 ? (overall.completed / overall.total) * 100 : 0);
+  let overallTodoPct = $derived(overall.total > 0 ? (overall.todo / overall.total) * 100 : 0);
   let totalCompleted = $derived(formatNumber(overall.completed, data.locale));
   let grandTotal = $derived(formatNumber(overall.total, data.locale));
 </script>
@@ -47,13 +45,16 @@
   class:home-page--searching={toolbarState.searchOpen}
   {@attach toolbarState.searchOpen ? trackVisualViewport : undefined}
 >
-  <header class="home-header" style="--overall-progress-percent: {overallPct}%">
+  <header
+    class="home-header"
+    style="--overall-progress-percent: {overallPct}%; --overall-todo-percent: {overallTodoPct}%"
+  >
     <h1 class="flex min-w-0 items-center gap-2 font-brand text-2xl leading-none">
       <IconNotebook class="size-5 shrink-0 text-(--color-brand-mark)" />
       {m.app_name()}
     </h1>
     <OverallProgress progress={allProgress} />
-    <span class="overall-progress-rule" aria-hidden="true"><i></i></span>
+    <span class="overall-progress-rule" aria-hidden="true"><i></i><b></b></span>
   </header>
 
   <div class="home-content flex flex-col gap-3 px-4 pb-4" bind:this={content}>
@@ -63,29 +64,19 @@
       <GotItNote locale={data.locale} />
       <SyncTroubleNote />
       <WelcomeCard />
-      <h2 class="px-1 font-controls text-2xs tracking-[0.14em] text-muted-foreground uppercase">
-        {m.home_index_heading()}
-      </h2>
       <CategoryGrid progress={allProgress} />
       <a
         class="everything-link"
         href={localizedHref("everything")}
-        aria-label={withProgressScope(
-          m.section_progress_label({
-            completed: totalCompleted,
-            name: m.home_everything_label(),
-            total: grandTotal,
-          }),
-          overallScope,
-          data.locale,
-        )}
+        aria-label={m.section_progress_label({
+          completed: totalCompleted,
+          name: m.home_everything_label(),
+          total: grandTotal,
+        })}
       >
         <Icon.Category category="all" class="size-4 shrink-0" />
         <span class="flex-1">{m.home_everything_label()}</span>
-        <span class="grid justify-items-end font-data text-xs" aria-hidden="true">
-          <span>{totalCompleted} / {grandTotal}</span>
-          {#if overallScope}<ProgressScopeNote locale={data.locale} scope={overallScope} />{/if}
-        </span>
+        <span class="font-data text-xs" aria-hidden="true">{totalCompleted} / {grandTotal}</span>
       </a>
     {/if}
   </div>
@@ -141,6 +132,7 @@
     right: 0;
     bottom: 0;
     left: 0;
+    display: flex;
     height: 3px;
     background: var(--color-paper-sunken);
   }
@@ -150,6 +142,14 @@
     width: var(--overall-progress-percent);
     height: 100%;
     background: var(--color-home-accent);
+    transition: width 300ms ease-out;
+  }
+
+  .overall-progress-rule b {
+    display: block;
+    width: var(--overall-todo-percent);
+    height: 100%;
+    background: color-mix(in srgb, var(--color-home-accent) 34%, transparent);
     transition: width 300ms ease-out;
   }
 
@@ -178,7 +178,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .overall-progress-rule i {
+    .overall-progress-rule i,
+    .overall-progress-rule b {
       transition-duration: 0.01ms;
     }
   }

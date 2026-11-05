@@ -1,6 +1,8 @@
 import { trackerData } from "#lib/data/index.js";
 import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
-import { countChecklist, isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
+import { isConditionVisible } from "#lib/engine/visibility.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { CravingQuest } from "#lib/engine/craving-quest.js";
@@ -30,21 +32,29 @@ export function projectQuests(
 ): QuestsProjection {
   const rows: QuestRow[] = [];
   for (const [questType, byType] of recordEntries(trackerData.quests)) {
+    const typeOpen = isConditionVisible(
+      trackerData.categoryVisibility[questType],
+      ctx.progressionState,
+    );
     for (const [id, quest] of recordEntries(byType)) {
       if (PREGNANCY_QUEST_IDS.has(id)) continue;
+      const completed = ctx.progress.questStates[id] === "completed";
+      const row = { sources: questSources(questType, id), visibility: quest.visibility };
+      const facts = shelfFacts(row, completed, ctx, options.showsSource);
       rows.push({
-        completed: ctx.progress.questStates[id] === "completed",
+        ...facts,
+        doable: facts.doable && typeOpen,
+        doableAnywhere: facts.doableAnywhere && typeOpen,
         id,
-        inScope: options.matchesSources?.(questSources(questType, id)) ?? true,
         spoilered: isSpoilered(quest.visibility, options.progressionState),
       });
     }
   }
   const craving = getCravingQuest(ctx.progress);
   const counted = craving.applicable
-    ? [...rows, { completed: craving.completed, inScope: true, spoilered: false }]
+    ? [...rows, shelfFacts({ sources: [] }, craving.completed, ctx)]
     : rows;
-  return { craving, rows, totals: countChecklist(counted) };
+  return { craving, rows, totals: countShelfRows(counted) };
 }
 
 export function questSources(questType: QuestType, questId: QuestId): Source[] {

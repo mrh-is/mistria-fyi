@@ -25,9 +25,7 @@ const progressPlayerPath = fileURLToPath(
 
 test.describe("stateful accessibility", () => {
   test.beforeEach(async ({ page }, testInfo) => {
-    const state = testInfo.title.includes("spoiler-hidden")
-      ? createStoredState({ availabilityWindows: ["now", "anytime", "later"] })
-      : null;
+    const state = testInfo.title.includes("spoiler-hidden") ? createStoredState() : null;
     await initializeApplication(page, "light", state);
   });
 
@@ -142,8 +140,7 @@ test.describe("stateful accessibility", () => {
       testInfo,
     );
 
-    await openVisibilityPanel(page);
-    await page.getByRole("switch", { name: "Completed" }).click();
+    await page.getByRole("button", { expanded: false, name: "Completed" }).first().click();
     await expect(page.getByRole("button", { name: /^Uncheck / }).first()).toBeVisible();
     await analyzeAccessibility(
       page,

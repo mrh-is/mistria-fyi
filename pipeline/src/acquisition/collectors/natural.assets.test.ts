@@ -1,6 +1,6 @@
 import { assert, describe, expect, it } from "vitest";
 
-import { classifyItemAvailability, classifySourceAvailability } from "#lib/engine/availability.js";
+import { isDoableToday, isSourceDoable } from "#lib/engine/availability.js";
 
 import { PipelineDiagnostics } from "../../diagnostics.js";
 import { buildCutsceneQuestMap } from "../../extract/cutscene-quest-map.js";
@@ -17,7 +17,7 @@ import {
 import { collectNaturalSources } from "./natural.js";
 import { collectStoreSources } from "./stores.js";
 
-import type { RowWindowContext } from "#lib/engine/availability.js";
+import type { DayContext } from "#lib/engine/availability.js";
 import type { ItemId, QuestId } from "#lib/types/tracker-data.js";
 
 describe("crop acquisition with real assets", () => {
@@ -73,7 +73,7 @@ describe("crop acquisition with real assets", () => {
     const greenhouse = carrot.find((source) => source.type === "crop" && source.greenhouse);
     assert(seasonal);
     assert(greenhouse);
-    const ctx: RowWindowContext = {
+    const ctx: DayContext = {
       progressionState: {
         hasUpperFloor: false,
         heartLevels: {},
@@ -90,14 +90,14 @@ describe("crop acquisition with real assets", () => {
       },
       worldState: { season: "spring", weather: "calm" },
     };
-    expect(classifySourceAvailability(seasonal, ctx)).toBe("now");
-    expect(classifySourceAvailability(greenhouse, ctx)).toBe("later");
-    expect(classifyItemAvailability({ sources: carrot }, ctx)).toBe("now");
+    expect(isSourceDoable(seasonal, ctx)).toBe(true);
+    expect(isSourceDoable(greenhouse, ctx)).toBe(false);
+    expect(isDoableToday({ sources: carrot }, ctx)).toBe(true);
     ctx.worldState.season = "summer";
-    expect(classifyItemAvailability({ sources: carrot }, ctx)).toBe("later");
+    expect(isDoableToday({ sources: carrot }, ctx)).toBe(false);
     ctx.progressionState.questVisibility["upgrade_the_carpenters_shop" as QuestId] = "completed";
-    expect(classifySourceAvailability(greenhouse, ctx)).toBe("anytime");
-    expect(classifyItemAvailability({ sources: carrot }, ctx)).toBe("anytime");
+    expect(isSourceDoable(greenhouse, ctx)).toBe(true);
+    expect(isDoableToday({ sources: carrot }, ctx)).toBe(true);
 
     // Balor's rotating crop & seed stock is already collected without a season restriction.
     collectStoreSources(
@@ -130,8 +130,6 @@ describe("crop acquisition with real assets", () => {
       });
     }
     ctx.progressionState.questVisibility["repair_the_general_store" as QuestId] = "completed";
-    expect(classifyItemAvailability({ sources: items.get("carrot" as ItemId) }, ctx)).toBe(
-      "anytime",
-    );
+    expect(isDoableToday({ sources: items.get("carrot" as ItemId) }, ctx)).toBe(true);
   });
 });

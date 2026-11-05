@@ -5,7 +5,6 @@ import {
   PROGRESS_STORAGE_KEY,
 } from "../../../src/lib/stores/storage-keys.js";
 import { THEME_STORAGE_KEY } from "../../../src/lib/theme.js";
-import { DEFAULT_AVAILABILITY_WINDOWS } from "../../../src/lib/types/availability.js";
 import { CURRENT_SERIALIZATION_VERSION } from "../../../src/lib/types/user-progress.js";
 
 import type { Page, Response } from "@playwright/test";
@@ -65,7 +64,6 @@ export function createStoredState(
 
   return {
     preferences: {
-      availabilityWindows: overrides.availabilityWindows ?? [...DEFAULT_AVAILABILITY_WINDOWS],
       everythingGrouping: "category",
       showSpoilers: overrides.showSpoilers ?? false,
     },

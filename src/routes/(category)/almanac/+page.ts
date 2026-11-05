@@ -12,6 +12,6 @@ export const load: PageLoad = localizedPageLoad(
     accent: categoryColor("almanac"),
     description: m.almanac_page_description({}, { locale }),
     title: getName("ui", "almanac", locale),
-    toolbar: { search: true, worldState: true },
+    toolbar: { clock: true, filter: true, search: true },
   }),
 );

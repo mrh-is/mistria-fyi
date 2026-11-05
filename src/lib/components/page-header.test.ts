@@ -8,7 +8,7 @@ describe("PageHeader", () => {
     const { container, queries } = renderToFragment(PageHeader, {
       props: {
         category: "almanac",
-        progress: { completed: 7, remainingInScope: 3, total: 20 },
+        progress: { completed: 7, completedShown: 7, todo: 3, total: 20, waiting: 10 },
         title: "Almanac",
       },
     });
@@ -18,8 +18,8 @@ describe("PageHeader", () => {
     expect(header?.getAttribute("style")).toContain("--category-progress-percent: 35%");
     expect(queries.getByRole("heading", { level: 1, name: "Almanac" })).toBeTruthy();
     expect(queries.getByText("7 / 20")).toBeTruthy();
-    expect(queries.getByText("7 of 20 completed, 3 for now")).toBeTruthy();
-    expect(queries.getByText("3 for now")).toBeTruthy();
+    expect(queries.getByText("7 of 20 completed")).toBeTruthy();
+    expect(header?.getAttribute("style")).toContain("--category-todo-percent: 15%");
     expect(header?.querySelector("[data-page-header-ribbon]")).not.toBeNull();
   });
 
@@ -37,7 +37,7 @@ describe("PageHeader", () => {
     const { container } = renderToFragment(PageHeader, {
       props: {
         category: "museum",
-        progress: { completed: 20, remainingInScope: 0, total: 20 },
+        progress: { completed: 20, completedShown: 20, todo: 0, total: 20, waiting: 0 },
         title: "Museum",
       },
     });

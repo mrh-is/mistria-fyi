@@ -40,7 +40,7 @@ export function* searchAlmanac({
       otherEnglishNames,
       otherLocalizedNames,
       result: () => ({
-        available: row.available,
+        available: row.completed || row.doable,
         category: "almanac",
         completed: row.completed,
         id: row.canonicalId,
@@ -157,7 +157,7 @@ export function* searchMuseum({
       englishName: getName("items", row.id, "en"),
       localizedName: name,
       result: () => ({
-        available: row.available,
+        available: row.completed || row.doable,
         category: "museum",
         completed: row.completed,
         id: row.id,

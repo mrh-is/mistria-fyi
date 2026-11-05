@@ -2,12 +2,11 @@
   import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
+  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
-  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
-  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -16,10 +15,11 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showQuestToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { projectQuests } from "#lib/engine/projections/quests.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import { countShelfRows, filteredCounts, rowShelf, shelfFacts } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { buildQuestSections } from "#lib/presentation/quest-sections.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
@@ -29,6 +29,7 @@
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { CategoryProgress } from "#lib/engine/progress.js";
+  import type { ShelfRow } from "#lib/engine/shelves.js";
   import type { QuestRow, QuestSection } from "#lib/presentation/quest-sections.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { QuestId, QuestType } from "#lib/types/tracker-data.js";
@@ -46,15 +47,35 @@
 
   let sections = $derived(buildQuestSections(userState.state.progress, locale));
 
+  type ShelvedQuestRow = QuestRow & ShelfRow;
+
   /** A section's rows within the source filters, with their counter values. */
   interface SectionView {
     categorySpoilered: boolean;
     /** The rows the search matches, whatever the page's filters say. */
-    namedRows: QuestRow[];
+    namedRows: ShelvedQuestRow[];
     progress: CategoryProgress;
-    scopedRows: QuestRow[];
     section: QuestSection;
-    visibleRows: QuestRow[];
+    visibleRows: ShelvedQuestRow[];
+  }
+
+  let questFacts = $derived(
+    new Map(
+      projectQuests(userState.progressContext, { showsSource: toolbarState.showsSource }).rows.map(
+        (row) => [row.id, row],
+      ),
+    ),
+  );
+
+  function withShelf(row: QuestRow): ShelvedQuestRow {
+    if (row.kind === "quest") {
+      const facts = questFacts.get(row.id);
+      if (!facts) throw new Error(`Quest row without a projection: ${row.id}`);
+      return { ...row, ...facts };
+    }
+    const facts = shelfFacts({ sources: [] }, row.completed, userState.progressContext);
+    // Before marriage the row stands in for a quest that doesn't exist yet.
+    return row.questId ? { ...row, ...facts } : { ...row, ...facts, doable: false };
   }
 
   let nameFilter = $derived(toolbarState.searchQuery);
@@ -73,30 +94,21 @@
         trackerData.categoryVisibility[section.questType],
         userState.progressionState,
       );
-      let namedRows = section.rows;
-      if (nameFilter) namedRows = categorySpoilered ? [] : section.rows.filter(matchesSearch);
-      const scopedRows = namedRows.filter(
-        (row) => row.kind === "craving" || toolbarState.matchesSourceFilters(row.sources),
-      );
+      const rows = section.rows.map((row) => withShelf(row));
+      let namedRows = rows;
+      if (nameFilter) namedRows = categorySpoilered ? [] : rows.filter((row) => matchesSearch(row));
       return {
         categorySpoilered,
         namedRows,
-        progress: countProgress(
-          section.rows,
-          (row) => isRowCompleted(row),
-          (row) => row.kind === "craving" || toolbarState.matchesSourceFilters(row.sources),
-        ),
-        scopedRows,
+        progress: countShelfRows(rows),
         section,
-        visibleRows: scopedRows.filter((row) =>
-          isRowCompleted(row) ? showsCompletedRows() : true,
-        ),
+        visibleRows: namedRows.filter(({ shown }) => shown),
       };
     }),
   );
 
   registerPageSearch(() => ({
-    matches: sectionViews.reduce((sum, view) => sum + view.namedRows.length, 0),
+    filtered: filteredCounts(sectionViews.flatMap((view) => view.namedRows)),
     visible: sectionViews.reduce((sum, view) => sum + view.visibleRows.length, 0),
   }));
 
@@ -104,10 +116,6 @@
 
   function getQuestState(id: QuestId): QuestState {
     return userState.state.progress.questStates[id] ?? "none";
-  }
-
-  function isRowCompleted(row: QuestRow): boolean {
-    return row.kind === "craving" ? row.completed : getQuestState(row.id) === "completed";
   }
 
   function questRowDisplay(questState: QuestState, spoilered: boolean): TrackerRowDisplay {
@@ -151,17 +159,12 @@
 <SpoilerGuardDialog guard={spoilerGuard} />
 
 <SectionGroups
+  forceOpen={!!nameFilter}
   getKey={(view) => view.section.questType}
   grouping={sectionGrouping}
   items={sectionViews}
 >
-  {#snippet section({
-    categorySpoilered,
-    progress,
-    scopedRows,
-    section: questSection,
-    visibleRows,
-  })}
+  {#snippet section({ categorySpoilered, progress, section: questSection, visibleRows })}
     {#if !nameFilter || visibleRows.length > 0}
       <SpoilerSection
         name={typeLabel(questSection.questType)}
@@ -170,62 +173,58 @@
       >
         <ExpandableSection
           {locale}
-          count={progress.completed}
           forceOpen={!!nameFilter}
           name={typeLabel(questSection.questType)}
+          {progress}
           reportCategory="quest-section"
           reportEntityId={questSection.questType}
-          remaining={progress.remainingInScope}
-          total={progress.total}
         >
-          {#if visibleRows.length === 0 && scopedRows.length > 0}
-            <TrackerEmptyState message={m.all_completed_message()} />
-          {:else}
-            <TrackerRowList getKey={(row) => row.id} items={visibleRows}>
-              {#snippet row(row)}
-                {#if row.kind === "craving"}
-                  <TrackerRow
-                    fact={factKey("questStates", row.questId ?? row.id)}
-                    display={questRowDisplay(row.completed ? "completed" : "none", !row.villagerId)}
-                    segmentLookups={baseLookups}
-                    name={row.displayName}
-                    reportCategory="craving-quest"
-                    reportEntityId={row.id}
-                    sources={[]}
-                    subtitle={row.subtitle}
-                    onToggle={() => {
-                      if (row.questId) completeQuest(row.questId, row.displayName, questSection);
-                    }}
-                  />
-                {:else}
-                  {@const questState = getQuestState(row.id)}
-                  {@const spoilered = !isConditionVisible(
-                    row.visibility,
-                    userState.progressionState,
-                  )}
-                  <TrackerRow
-                    fact={factKey("questStates", row.id)}
-                    display={questRowDisplay(questState, spoilered)}
-                    segmentLookups={{ ...baseLookups, entityVisibility: row.visibility }}
-                    name={row.displayName}
-                    reportCategory="quest"
-                    reportEntityId={row.id}
-                    sources={row.sources}
-                    subtitle={row.subtitle}
-                    onToggle={() => {
-                      if (!spoilered || questState !== "none") {
+          <ShelfRows
+            forceOpen={!!nameFilter}
+            getKey={(row) => row.id}
+            getShelf={rowShelf}
+            items={visibleRows}
+          >
+            {#snippet row(row)}
+              {#if row.kind === "craving"}
+                <TrackerRow
+                  fact={factKey("questStates", row.questId ?? row.id)}
+                  display={questRowDisplay(row.completed ? "completed" : "none", !row.villagerId)}
+                  segmentLookups={baseLookups}
+                  name={row.displayName}
+                  reportCategory="craving-quest"
+                  reportEntityId={row.id}
+                  sources={[]}
+                  subtitle={row.subtitle}
+                  onToggle={() => {
+                    if (row.questId) completeQuest(row.questId, row.displayName, questSection);
+                  }}
+                />
+              {:else}
+                {@const questState = getQuestState(row.id)}
+                {@const spoilered = !isConditionVisible(row.visibility, userState.progressionState)}
+                <TrackerRow
+                  fact={factKey("questStates", row.id)}
+                  display={questRowDisplay(questState, spoilered)}
+                  segmentLookups={{ ...baseLookups, entityVisibility: row.visibility }}
+                  name={row.displayName}
+                  reportCategory="quest"
+                  reportEntityId={row.id}
+                  sources={row.sources}
+                  subtitle={row.subtitle}
+                  onToggle={() => {
+                    if (!spoilered || questState !== "none") {
+                      completeQuest(row.id, row.displayName, questSection);
+                    } else {
+                      spoilerGuard.requestGuardedAction(row.visibility, () => {
                         completeQuest(row.id, row.displayName, questSection);
-                      } else {
-                        spoilerGuard.requestGuardedAction(row.visibility, () => {
-                          completeQuest(row.id, row.displayName, questSection);
-                        });
-                      }
-                    }}
-                  />
-                {/if}
-              {/snippet}
-            </TrackerRowList>
-          {/if}
+                      });
+                    }
+                  }}
+                />
+              {/if}
+            {/snippet}
+          </ShelfRows>
         </ExpandableSection>
       </SpoilerSection>
     {/if}

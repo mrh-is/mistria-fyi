@@ -12,6 +12,6 @@ export const load: PageLoad = localizedPageLoad(
     accent: categoryColor("animals"),
     description: m.animals_page_description({}, { locale }),
     title: getName("ui", "animals", locale),
-    toolbar: { search: true, worldState: true },
+    toolbar: { clock: true, filter: true, search: true },
   }),
 );

@@ -1,7 +1,7 @@
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { isAlmanacEntryObtainable } from "#lib/engine/applicability.js";
-import { isItemAvailable, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
 import { isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { addProgress, countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { CategoryProgress, ProgressContext } from "#lib/engine/progress.js";
@@ -9,45 +9,34 @@ import type {
   CategoryProjection,
   CategoryProjectionOptions,
 } from "#lib/engine/projections/category-projection.js";
+import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { AlmanacCategoryId, AlmanacEntry, Item, ItemId } from "#lib/types/tracker-data.js";
 
 interface AlmanacProjectionOptions extends CategoryProjectionOptions {
   hideSpoilered?: boolean;
   matchesEntry?: (entry: AlmanacEntry) => boolean;
-  matchesSources?: (sources: Source[]) => boolean;
-  recentlyCompleted?: ReadonlySet<ItemId>;
-  showCompleted?: boolean;
   showUnobtainable?: boolean;
 }
 
-export interface AlmanacRow {
-  available: boolean;
+export interface AlmanacRow extends ShelfRow {
   canonicalId: ItemId;
-  completed: boolean;
-  dimmed: boolean;
   entry: AlmanacEntry;
   item: Item;
-  matchesBaseFilters: boolean;
-  matchesFilters: boolean;
+  /** Passes the page's search & the unobtainable filter, whatever the source filters show. */
+  matchesSearch: boolean;
   obtainable: boolean;
   sources: Source[];
   spoilered: boolean;
+  /** Passes every filter, so the page renders it. */
   visible: boolean;
 }
 
 interface AlmanacSection {
-  baseRows: AlmanacRow[];
   canonicalIds: ItemId[];
-  /** Completed rows among `scopedRows`. */
-  completedCount: number;
   id: AlmanacCategoryId;
   progress: CategoryProgress;
   rows: AlmanacRow[];
-  /** Rows matching the filters, including unobtainable rows the filter reveals. */
-  scopedRows: AlmanacRow[];
-  /** Obtainable rows among `scopedRows`: revealed unobtainable rows never count toward a total. */
-  scopedTotal: number;
   visibleRows: AlmanacRow[];
 }
 
@@ -60,10 +49,6 @@ export interface AlmanacProjection extends CategoryProjection {
  * One almanac row policy for progress, search and pages. Totals count obtainable entries,
  * independently of spoilers and display filters; showing unobtainable rows reveals them without
  * counting them, in section totals as well. Completed entries remain applicable.
- *
- * Callers choose context explicitly: search projects with default availability windows and offers
- * obtainable, unspoilered rows whatever their availability (`searchAlmanac`); pages pass user
- * windows, name/source filters and temporary completed-row retention.
  */
 export function projectAlmanac(
   ctx: ProgressContext,
@@ -76,64 +61,42 @@ export function projectAlmanac(
       const sources = trackerIndex.getAggregatedAlmanacSources(canonicalId);
       const completed = ctx.progress.almanac.has(canonicalId);
       const obtainable = isAlmanacEntryObtainable(entry.itemIds, ctx.progress);
-      const windowed = { sources, visibility: item.visibility };
-      const available = isItemAvailable(windowed, ctx, ctx.availabilityWindows);
+      const facts = shelfFacts(
+        { sources, visibility: item.visibility },
+        completed,
+        ctx,
+        options.showsSource,
+      );
       const spoilered = isSpoilered(item.visibility, options.progressionState);
-      const matchesBaseFilters =
+      const matchesSearch =
         (obtainable || options.showUnobtainable === true) &&
-        (completed || available) &&
         (!options.hideSpoilered || !spoilered) &&
         (options.matchesEntry?.(entry) ?? true);
-      const matchesFilters = matchesBaseFilters && (options.matchesSources?.(sources) ?? true);
       return {
-        available,
+        ...facts,
         canonicalId,
-        completed,
-        dimmed: isItemDimmed(windowed, completed, ctx, ctx.availabilityWindows),
+        // An unobtainable row can only be revealed; it's never something to do.
+        doable: facts.doable && obtainable,
+        doableAnywhere: facts.doableAnywhere && obtainable,
         entry,
         item,
-        matchesBaseFilters,
-        matchesFilters,
+        matchesSearch,
         obtainable,
         sources,
         spoilered,
-        visible:
-          matchesFilters &&
-          isRowVisible(
-            canonicalId,
-            completed,
-            options.showCompleted ?? true,
-            options.recentlyCompleted,
-          ),
+        visible: matchesSearch && facts.shown,
       };
     });
     const applicableRows = rows.filter((row) => row.obtainable);
-    const progress: CategoryProgress = {
-      completed: applicableRows.filter((row) => row.completed).length,
-      remainingInScope: applicableRows.filter(
-        (row) => !row.completed && row.available && (options.matchesSources?.(row.sources) ?? true),
-      ).length,
-      total: applicableRows.length,
-    };
-    const scopedRows = rows.filter((row) => row.matchesFilters);
     return {
-      baseRows: rows.filter((row) => row.matchesBaseFilters),
       canonicalIds: applicableRows.map((row) => row.canonicalId),
-      completedCount: scopedRows.filter((row) => row.completed).length,
       id,
-      progress,
+      progress: countShelfRows(applicableRows),
       rows,
-      scopedRows,
-      scopedTotal: scopedRows.filter((row) => row.obtainable).length,
       visibleRows: rows.filter((row) => row.visible),
     };
   });
-  const totals: CategoryProgress = { completed: 0, remainingInScope: 0, total: 0 };
-  for (const { progress } of sections) {
-    totals.completed += progress.completed;
-    totals.remainingInScope += progress.remainingInScope;
-    totals.total += progress.total;
-  }
+  const totals = addProgress(sections.map(({ progress }) => progress));
   // Some entries occur in several sections. Search addresses each canonical row once;
   // section progress intentionally counts every in-game section membership.
   const rows = [

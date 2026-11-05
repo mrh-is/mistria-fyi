@@ -93,9 +93,8 @@ describe("/everything page", () => {
 
     userState.setEverythingGrouping("source");
     pageStub.navigate("/en/everything?group=category");
-    userState.toggleShowCompleted();
     const shown = renderToFragmentWithFeedback(AllPage, { props });
-    expect(shown.container.querySelector("#category-renown-completed")).not.toBeNull();
+    expect(shown.queries.getByTestId("everything-completed")).toBeTruthy();
     expect(shown.container.querySelector("#sources-stores")).toBeNull();
     expect(userState.state.everythingGrouping).toBe("source");
   });

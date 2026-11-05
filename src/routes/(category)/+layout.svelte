@@ -2,7 +2,6 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import PageSearchStatus from "#lib/components/page-search-status.svelte";
   import SearchGuideLink from "#lib/components/search-guide-link.svelte";
-  import { visibleWindows } from "#lib/controllers/page-search.svelte.js";
   import { categoryForKey, categoryKeyForPathname } from "#lib/data/categories.js";
   import { getCategoryProgress } from "#lib/engine/categories.js";
   import { deLocalizeHref } from "#lib/paraglide/runtime.js";
@@ -22,15 +21,9 @@
   });
   const { color, name } = $derived(categoryForKey(key, data.locale));
 
-  // The header agrees with the sections below it, so it follows this page's filters, paused or not.
+  // The fraction ignores the filters. The bar's To do tint follows them, like the sections below.
   let progress = $derived(
-    getCategoryProgress(
-      key,
-      { ...userState.progressContext, availabilityWindows: visibleWindows() },
-      {
-        matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
-      },
-    ),
+    getCategoryProgress(key, userState.progressContext, { showsSource: toolbarState.showsSource }),
   );
 </script>
 

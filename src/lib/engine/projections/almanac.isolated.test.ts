@@ -4,9 +4,9 @@ import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { getCategoryProgress } from "#lib/engine/categories.js";
 import { searchAlmanac } from "#lib/engine/search-providers.js";
 import { searchAllCategories } from "#lib/engine/search.js";
+import { addProgress } from "#lib/engine/shelves.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import { projectAlmanac } from "./almanac.js";
@@ -37,7 +37,6 @@ function context() {
     ),
   });
   return {
-    availabilityWindows: AVAILABILITY_WINDOWS,
     progress,
     progressionState: deriveProgressionState(progress, trackerData, false),
     worldState,
@@ -59,11 +58,11 @@ describe("projectAlmanac", () => {
     ).toBe(true);
     expect(shown.totals).toEqual(hidden.totals);
     // Revealed rows render but never count, so section totals match too.
-    expect(shown.sections.map(({ scopedTotal }) => scopedTotal)).toEqual(
-      hidden.sections.map(({ scopedTotal }) => scopedTotal),
+    expect(shown.sections.map(({ progress }) => progress.total)).toEqual(
+      hidden.sections.map(({ progress }) => progress.total),
     );
     expect(
-      shown.sections.some(({ scopedRows, scopedTotal }) => scopedRows.length > scopedTotal),
+      shown.sections.some(({ progress, visibleRows }) => visibleRows.length > progress.total),
     ).toBe(true);
     const id = unobtainable[0].canonicalId;
     ctx.progress.almanac.add(id);
@@ -77,19 +76,14 @@ describe("projectAlmanac", () => {
     const ctx = context();
     const id = "turnip" as ItemId;
     ctx.progress.almanac.add(id);
-    const options = {
-      matchesEntry: (entry: AlmanacEntry) => entry.itemIds.includes(id),
-      showCompleted: false,
-    };
-    const hidden = projectAlmanac(ctx, options);
-    expect(hidden.sections.flatMap(({ visibleRows }) => visibleRows)).toHaveLength(0);
-    const retained = projectAlmanac(ctx, { ...options, recentlyCompleted: new Set([id]) });
+    const options = { matchesEntry: (entry: AlmanacEntry) => entry.itemIds.includes(id) };
+    const shown = projectAlmanac(ctx, options);
     expect(
-      retained.sections.flatMap(({ visibleRows }) => visibleRows).map((row) => row.canonicalId),
+      shown.sections.flatMap(({ visibleRows }) => visibleRows).map((row) => row.canonicalId),
     ).toEqual([id]);
-    expect(retained.totals).toEqual(hidden.totals);
-    const noSources = projectAlmanac(ctx, { ...options, matchesSources: () => false });
-    expect(noSources.sections.flatMap(({ scopedRows }) => scopedRows)).toHaveLength(0);
+    const noSources = projectAlmanac(ctx, { ...options, showsSource: () => false });
+    expect(noSources.sections.flatMap(({ visibleRows }) => visibleRows)).toHaveLength(0);
+    expect(noSources.totals.completed).toBe(shown.totals.completed);
   });
 
   it("search hides unobtainable entries and ignores page availability and completion filters", () => {
@@ -101,24 +95,16 @@ describe("projectAlmanac", () => {
       );
     expect(search()).toHaveLength(0);
     ctx.progress.almanac.add("turnip" as ItemId);
-    expect(
-      projectAlmanac({ ...ctx, availabilityWindows: [] }, { showCompleted: false }).rows.filter(
-        (row) => row.visible,
-      ),
-    ).toHaveLength(0);
     expect(search()).toMatchObject([{ available: true, completed: true, id: "turnip" }]);
   });
 
-  it("search can include out-of-window rows while page context excludes them", () => {
-    const ctx = { ...context(), availabilityWindows: [] };
+  it("search offers rows that aren't doable today, marked as such", () => {
+    const ctx = { ...context(), worldState: { season: "winter", weather: "calm" } as const };
     const progressionState = deriveProgressionState(ctx.progress, trackerData, true);
-    const page = projectAlmanac(ctx);
-    expect(page.rows.filter((row) => row.visible)).toHaveLength(0);
     const offered = [
       ...searchAlmanac({ locale: "en", progressionState, projectionContext: ctx }),
     ].map((candidate) => candidate.result());
-    expect(offered.length).toBeGreaterThan(0);
-    expect(offered.every((result) => !result.available)).toBe(true);
+    expect(offered.some((result) => !result.available)).toBe(true);
   });
 
   it("marks spoilers and excludes them only when the caller requests it", () => {
@@ -153,26 +139,19 @@ describe("projectAlmanac", () => {
       }
       const projectionContext = {
         ...ctx,
-        availabilityWindows: AVAILABILITY_WINDOWS.filter(() => random() < 0.5),
         worldState: {
           season: (["spring", "summer", "fall", "winter"] as const)[sample % 4],
           weather: (["calm", "inclement", "heavy_inclement", "special"] as const)[sample % 4],
         },
       };
-      const matchesSources = (): boolean => sample % 2 === 0;
+      const showsSource = (): boolean => sample % 2 === 0;
       const projection = projectAlmanac(projectionContext, {
-        matchesSources,
-        showCompleted: random() < 0.5,
+        showsSource,
         showUnobtainable: random() < 0.5,
       });
-      const sum = { completed: 0, remainingInScope: 0, total: 0 };
-      for (const { progress: section } of projection.sections) {
-        sum.completed += section.completed;
-        sum.remainingInScope += section.remainingInScope;
-        sum.total += section.total;
-      }
+      const sum = addProgress(projection.sections.map(({ progress }) => progress));
       expect(sum).toEqual(projection.totals);
-      expect(sum).toEqual(getCategoryProgress("almanac", projectionContext, { matchesSources }));
+      expect(sum).toEqual(getCategoryProgress("almanac", projectionContext, { showsSource }));
       const applicableRows = projection.sections
         .flatMap(({ rows }) => rows)
         .filter((row) => row.obtainable);

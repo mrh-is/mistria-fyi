@@ -17,6 +17,7 @@ import {
   searchRecipes,
   searchVillagers,
 } from "#lib/engine/search-providers.js";
+import { addProgress } from "#lib/engine/shelves.js";
 import { recordKeys, recordMap, recordValues } from "#lib/utils/record.js";
 
 import type { CategoryProgress, ProgressContext } from "#lib/engine/progress.js";
@@ -92,15 +93,7 @@ export function getCategoryProgress(
 
 /** Sums every category's progress into one overall total (home page, `/everything`). */
 export function getOverallProgress(allProgress: AllProgress): CategoryProgress {
-  let completed = 0;
-  let remainingInScope = 0;
-  let total = 0;
-  for (const p of recordValues(allProgress)) {
-    completed += p.completed;
-    remainingInScope += p.remainingInScope;
-    total += p.total;
-  }
-  return { completed, remainingInScope, total };
+  return addProgress(recordValues(allProgress));
 }
 
 /**

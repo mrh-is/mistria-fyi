@@ -134,10 +134,4 @@ describe("world state & availability", () => {
 
     expect(userState.state.worldState.weather).toBe("inclement");
   });
-
-  it("stores availability windows in canonical order without duplicates", () => {
-    userState.setAvailabilityWindows(["later", "now", "later"]);
-
-    expect(userState.state.availabilityWindows).toEqual(["now", "later"]);
-  });
 });

@@ -2,11 +2,11 @@
   import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
+  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
-  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -14,12 +14,11 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { recipePlacements } from "#lib/engine/projections/recipes.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -97,37 +96,32 @@
     return userState.state.progress.almanacRecipes.has(id);
   }
 
-  /**
-   * Each group's entries narrowed in three steps: `namedEntries` (search; the group renders only
-   * when non-empty), `scopedEntries` (plus source filters), and `filteredEntries`
-   * (plus completed-row hiding; what renders).
-   */
+  /** Each group's rows: `namedEntries` match the search, & `filteredEntries` also pass the filters. */
   let groupViews = $derived(
     recipesByCategory.map((group) => {
-      const namedEntries = group.entries.filter(matchesFilter);
-      const scopedEntries = namedEntries.filter(({ sources }) =>
-        toolbarState.matchesSourceFilters(sources),
-      );
+      const facts = group.entries.map((entry) => ({
+        ...entry,
+        ...pageShelfFacts(entry, isRecipeCompleted(entry.id)),
+      }));
+      const namedEntries = facts.filter((entry) => matchesFilter(entry));
       return {
-        filteredEntries: scopedEntries.filter((e) =>
-          isRowVisible(e.id, isRecipeCompleted(e.id), showsCompletedRows(), recentlyCompleted.ids),
-        ),
+        filteredEntries: namedEntries.filter(({ shown }) => shown),
         group,
         namedEntries,
-        progress: countProgress(
-          group.entries,
-          (e) => isRecipeCompleted(e.id),
-          (e) => toolbarState.matchesSourceFilters(e.sources),
-        ),
+        progress: countShelfRows(facts),
       };
     }),
   );
 
   // A recipe can sit in several groups, but it's still one match.
-  registerPageSearch(() => ({
-    matches: new Set(groupViews.flatMap((view) => view.namedEntries.map(({ id }) => id))).size,
-    visible: new Set(groupViews.flatMap((view) => view.filteredEntries.map(({ id }) => id))).size,
-  }));
+  registerPageSearch(() => {
+    const named = groupViews.flatMap((view) => view.namedEntries);
+    const rows = [...new Map(named.map((entry) => [entry.id, entry])).values()];
+    return {
+      filtered: filteredCounts(rows),
+      visible: rows.filter(({ shown }) => shown).length,
+    };
+  });
 
   function toggleRecipe(entry: RecipeEntry, sectionId: string, sectionRecipeIds: RecipeId[]): void {
     sectionGrouping.hold(sectionId);
@@ -137,7 +131,7 @@
       userState.toggleAlmanacRecipe(entry.id);
     });
     if (nowCompleted) {
-      if (!userState.state.showCompleted) recentlyCompleted.markLeaving(entry.id);
+      recentlyCompleted.markLeaving(entry.id);
       checkCelebration(sectionRecipeIds);
     }
   }
@@ -145,20 +139,29 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-<SectionGroups getKey={(view) => view.group.id} grouping={sectionGrouping} items={groupViews}>
-  {#snippet section({ filteredEntries, group, namedEntries, progress })}
-    {#if namedEntries.length > 0 && (!nameFilter || filteredEntries.length > 0)}
+<SectionGroups
+  forceOpen={!!nameFilter}
+  getKey={(view) => view.group.id}
+  grouping={sectionGrouping}
+  items={groupViews}
+>
+  {#snippet section({ filteredEntries, group, progress })}
+    {#if !nameFilter || filteredEntries.length > 0}
       <ExpandableSection
         {locale}
-        count={progress.completed}
         forceOpen={!!nameFilter || toolbarState.isSourceFilterNarrowing}
         name={group.name}
         reportCategory="recipe-category"
         reportEntityId={group.id}
-        remaining={progress.remainingInScope}
-        total={progress.total}
+        {progress}
       >
-        <TrackerRowList getKey={(entry) => entry.id} items={filteredEntries}>
+        <ShelfRows
+          forceOpen={!!nameFilter}
+          getKey={(entry) => entry.id}
+          getShelf={rowShelf}
+          isLeaving={(entry) => recentlyCompleted.has(entry.id)}
+          items={filteredEntries}
+        >
           {#snippet row(entry)}
             {@const completed = userState.state.progress.almanacRecipes.has(entry.id)}
             <TrackerRow
@@ -194,7 +197,7 @@
               }}
             />
           {/snippet}
-        </TrackerRowList>
+        </ShelfRows>
       </ExpandableSection>
     {/if}
   {/snippet}

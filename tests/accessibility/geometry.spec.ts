@@ -78,7 +78,6 @@ test.describe("320-pixel reflow", () => {
       page,
       "light",
       createStoredState({
-        availabilityWindows: ["now", "anytime", "later"],
         progress: {
           heartLevels: { adeline: 10 },
           mineFloor: 21,
@@ -307,11 +306,7 @@ test.describe("tracker paper touch geometry", () => {
   });
 
   test("spoiler covers stay text-height while their targets reach 44 pixels", async ({ page }) => {
-    await initializeApplication(
-      page,
-      "light",
-      createStoredState({ availabilityWindows: ["now", "anytime", "later"] }),
-    );
+    await initializeApplication(page, "light", createStoredState());
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
 
@@ -346,7 +341,6 @@ test.describe("tracker paper touch geometry", () => {
       page,
       "light",
       createStoredState({
-        availabilityWindows: ["now", "anytime", "later"],
         progress: {
           heartLevels: { adeline: 10 },
           villagerRelationships: { adeline: "romantic" },

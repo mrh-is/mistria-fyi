@@ -119,10 +119,8 @@ describe("ExpandableSection", () => {
       "aria-expanded",
       "true",
     );
-    expect(empty.getByRole("button", { name: "Empty, 0 of 0 completed" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    // A section with nothing to count sits on no shelf, so it leaves the page.
+    expect(empty.queryByRole("button", { name: /^Empty/ })).toBeNull();
   });
 
   it("registers when reportCategory is provided", async () => {

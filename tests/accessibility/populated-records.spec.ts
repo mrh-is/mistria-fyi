@@ -9,7 +9,6 @@ import { analyzeAccessibility, themeSensitiveRules } from "./support/axe.js";
 import { criticalWhen } from "./support/tags.js";
 
 const specializedState = createStoredState({
-  availabilityWindows: ["now", "anytime", "later"],
   progress: {
     heartLevels: { adeline: 10 },
     mineFloor: 21,

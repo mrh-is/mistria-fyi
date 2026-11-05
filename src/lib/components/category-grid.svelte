@@ -1,9 +1,11 @@
 <script lang="ts">
   import CategoryCard from "#lib/components/category-card.svelte";
-  import CompletedHeading from "#lib/components/completed-heading.svelte";
+  import ShelfHeading from "#lib/components/shelf-heading.svelte";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { CATEGORY_KEYS } from "#lib/engine/categories.js";
+  import { progressShelf, SHELVES } from "#lib/engine/shelves.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { shelfLabel } from "#lib/presentation/shelves.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
@@ -22,44 +24,30 @@
     ),
   );
 
-  let activeCategories = $derived(
-    sortCategoryKeysByName(
-      CATEGORY_KEYS.filter((key) => {
-        const p = progress[key];
-        return p.total === 0 || p.completed < p.total;
-      }),
-      page.data.locale,
-    ),
-  );
-
-  let completedCategories = $derived(
-    sortCategoryKeysByName(
-      CATEGORY_KEYS.filter((key) => {
-        const p = progress[key];
-        return p.total > 0 && p.completed >= p.total;
-      }),
-      page.data.locale,
-    ),
+  let shelves = $derived(
+    SHELVES.map((shelf) => ({
+      keys: sortCategoryKeysByName(
+        CATEGORY_KEYS.filter((key) => progressShelf(progress[key]) === shelf),
+        page.data.locale,
+      ),
+      shelf,
+    })).filter(({ keys }) => keys.length > 0),
   );
 </script>
 
+<!-- Home is the index, so every shelf stays open. -->
 <div class="flex flex-col gap-5" style="--category-count-width: {countWidth}ch">
-  {#if activeCategories.length > 0}
-    <ul class="flex flex-col gap-1.5" aria-label={m.home_active_categories_label()}>
-      {#each activeCategories as key (key)}
-        <li><CategoryCard {key} progress={progress[key]} /></li>
-      {/each}
-    </ul>
-  {/if}
-
-  {#if completedCategories.length > 0}
+  {#each shelves as { keys, shelf } (shelf)}
     <section class="flex flex-col gap-2">
-      <CompletedHeading class="px-1" />
-      <ul class="flex flex-col gap-1.5" aria-label={m.home_completed_categories_label()}>
-        {#each completedCategories as key (key)}
-          <li><CategoryCard {key} progress={progress[key]} /></li>
+      <ShelfHeading class="px-1" {shelf} />
+      <ul
+        class="flex flex-col gap-1.5"
+        aria-label={m.shelf_categories_label({ shelf: shelfLabel(shelf) })}
+      >
+        {#each keys as key (key)}
+          <li><CategoryCard {key} progress={progress[key]} quiet={shelf === "notNow"} /></li>
         {/each}
       </ul>
     </section>
-  {/if}
+  {/each}
 </div>

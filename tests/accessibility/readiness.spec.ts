@@ -78,11 +78,7 @@ test.describe("@readiness application readiness", () => {
   });
 
   test("interactive readiness includes restored state and theme", async ({ page }) => {
-    await initializeApplication(
-      page,
-      "dark",
-      createStoredState({ availabilityWindows: ["now", "anytime", "later"], showSpoilers: true }),
-    );
+    await initializeApplication(page, "dark", createStoredState({ showSpoilers: true }));
     await gotoApplication(page, "/almanac");
     await expectResolvedTheme(page, "dark");
     await expect(

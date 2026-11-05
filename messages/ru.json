@@ -47,16 +47,11 @@
   "toolbar_filters_cleared": "Все фильтры сброшены",
   "page_header_back_to_home": "Назад на главную",
   "page_header_progress": "Выполнено {completed} из {total}",
-  "progress_for_now": "{count} пока",
-  "progress_done_for_now": "пока всё",
-  "home_index_heading": "Указатель",
   "home_everything_label": "Всё",
   "home_page_description": "Отслеживайте пожертвования музею, находки альманаха, рецепты, отношения, умения, задания и многое другое в Fields of Mistria на пути к 100% прохождения.",
   "all_page_title": "Список всего",
   "all_page_description": "Просматривайте и отслеживайте все категории прохождения Fields of Mistria в одном списке.",
-  "home_active_categories_label": "Категории в процессе",
   "common_completed_heading": "Выполнено",
-  "home_completed_categories_label": "Выполненные категории",
   "overall_progress_label": "Выполнено {completed} из {total} всего, {pct}",
   "foldout_close": "Закрыть {title}",
   "search_results_count": [
@@ -72,31 +67,6 @@
     }
   ],
   "search_no_results": "Ничего не найдено",
-  "search_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{count} совпадение вне ваших фильтров",
-        "countPlural=few": "{count} совпадения вне ваших фильтров",
-        "countPlural=many": "{count} совпадений вне ваших фильтров",
-        "countPlural=other": "{count} совпадения вне ваших фильтров"
-      }
-    }
-  ],
-  "search_more_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "Ещё {count} совпадение вне ваших фильтров",
-        "countPlural=few": "Ещё {count} совпадения вне ваших фильтров",
-        "countPlural=many": "Ещё {count} совпадений вне ваших фильтров",
-        "countPlural=other": "Ещё {count} совпадения вне ваших фильтров"
-      }
-    }
-  ],
-  "search_turn_off_filters": "Отключить фильтры для этого поиска",
   "search_filters_off": "Фильтры отключены для этого поиска.",
   "search_filters_resume": "Вернуть фильтры",
   "search_guide_prompt": "Не нашли, что искали?",
@@ -277,25 +247,17 @@
   "settings_theme_auto": "Авто",
   "settings_theme_light": "Светлая",
   "settings_theme_dark": "Тёмная",
-  "visibility_when_to_find": "Когда доступно",
-  "availability_whenever": "Когда угодно",
-  "availability_later": "Позже",
-  "availability_now": "Сейчас",
   "visibility_season_label": "Сезон",
   "visibility_weather_label": "Погода",
   "visibility_source_types": "Типы источников",
   "visibility_source_types_about_aria": "О типах источников",
   "visibility_source_types_summary": "{enabled} из {total}",
   "visibility_show_heading": "Показать",
-  "visibility_when_everything": "Всё",
   "visibility_sources_all": "Все типы",
   "visibility_sources_none": "Нет типов",
   "visibility_sources_only": "Только {type}",
-  "visibility_show_todo": "Нужно сделать",
   "visibility_show_obtainable": "Доступные",
-  "visibility_show_uncompleted": "Незавершённые",
   "visibility_show_everything": "Всё",
-  "visibility_completed_toggle": "Завершённые",
   "visibility_unobtainable_toggle": "Недоступные",
   "source_explainer_overline": "Инвентарь путеводителя",
   "source_explainer_description": "Типы источников, отображаемые на панели фильтров.",
@@ -1065,5 +1027,31 @@
   "sync_backup_restore_body": "Она заменит данные на этом устройстве. Синхронизация продолжится, поэтому следующее сохранение применится по обычным правилам.",
   "sync_backup_restore_confirm": "Восстановить",
   "sync_backup_restore_cancel": "Отмена",
-  "sync_backup_restored": "Копия восстановлена."
+  "sync_backup_restored": "Копия восстановлена.",
+  "filter_note": [
+    {
+      "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Фильтры скрывают {count} элемент полки «{shelf}».",
+        "countPlural=few": "Фильтры скрывают элементы полки «{shelf}»: {count}.",
+        "countPlural=many": "Фильтры скрывают элементы полки «{shelf}»: {count}.",
+        "countPlural=other": "Фильтры скрывают элементы полки «{shelf}»: {count}."
+      }
+    }
+  ],
+  "filter_note_show": "Всё равно показать",
+  "filter_note_nothing_left": "С такими фильтрами на этой странице ничего не осталось.",
+  "shelf_to_do": "Сделать",
+  "shelf_not_now": "Не сейчас",
+  "shelf_categories_label": "Категории: {shelf}",
+  "shelf_explainer_open": "О полке «{shelf}»",
+  "shelf_explainer_title": "Что значат полки",
+  "shelf_explainer_description": "Что лежит на каждой полке и для какого дня она разобрана.",
+  "shelf_explainer_day": "Разобрано для: {season}, {weather}",
+  "shelf_explainer_todo": "Сегодня можно сделать хотя бы что-то одно отсюда.",
+  "shelf_explainer_not_now": "Сегодня здесь ничего не сделать. Нужно дождаться сезона, погоды или прогресса.",
+  "shelf_explainer_completed": "Здесь всё готово. Отлично!",
+  "toolbar_clock": "Сезон и погода: {season}, {weather}",
+  "toolbar_clock_title": "Сезон и погода"
 }

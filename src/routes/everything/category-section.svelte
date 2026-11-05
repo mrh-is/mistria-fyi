@@ -46,14 +46,11 @@
 
   let {
     completed = false,
-    hasContent = $bindable(),
     key,
     locale,
     progress,
   }: {
     completed?: boolean;
-    /** Whether this category shows anything in its list, for a page's Completed divider. */
-    hasContent?: boolean;
     key: CategoryKey;
     locale: LocaleCode;
     progress: CategoryProgress;
@@ -67,10 +64,6 @@
     scope.hasContent(completed ? progress.completed > 0 : progress.completed < progress.total) &&
       !(toolbarState.searchQuery && searchGroup.isEmpty),
   );
-
-  $effect(() => {
-    hasContent = visible;
-  });
 </script>
 
 <div class="contents" style="--primary: var(--color-category-{key})">

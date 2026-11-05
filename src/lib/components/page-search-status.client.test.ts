@@ -5,16 +5,20 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import MuseumContent from "#lib/components/museum-content.svelte";
 import PageSearchStatus from "#lib/components/page-search-status.svelte";
 import SearchGuideLink from "#lib/components/search-guide-link.svelte";
-import { visibleWindows } from "#lib/controllers/page-search.svelte.js";
+import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
+
+import type { FilteredCounts } from "#lib/engine/shelves.js";
 
 const KEY = Symbol("test");
 
-function report(matches: number, visible: number): void {
-  toolbarState.registerPageSearch(KEY, () => ({ matches, visible }));
+function report(visible: number, filtered: Partial<FilteredCounts> = {}): void {
+  toolbarState.registerPageSearch(KEY, () => ({
+    filtered: { completed: 0, notNow: 0, todo: 0, ...filtered },
+    visible,
+  }));
 }
 
 async function search(query: string) {
@@ -44,38 +48,61 @@ describe("PageSearchStatus", () => {
   });
 
   it("says when nothing matches at all", async () => {
-    report(0, 0);
+    report(0);
     const view = await search("zzz");
 
     expect(view.getAllByText("No items found")).not.toHaveLength(0);
-    expect(view.getByRole("status")).toHaveTextContent("No items found");
   });
 
-  it("counts matches the filters hide when none are visible", async () => {
-    report(3, 0);
+  it("names the shelf that lost rows, in its heading's typeface", async () => {
+    report(0, { todo: 1 });
     const view = await search("bass");
 
-    expect(view.getByRole("status")).toHaveTextContent("3 match outside your filters");
-    expect(
-      view.getByRole("button", { name: "Turn off filters for this search" }),
-    ).toBeInTheDocument();
+    expect(view.getByRole("status")).toHaveTextContent("1 To do item is being filtered out.");
+    expect(view.container.querySelector(".page-search-status__shelf")).toHaveTextContent("To do");
+    expect(view.getByRole("button", { name: "Show anyway" })).toBeInTheDocument();
   });
 
-  it("counts hidden matches beside visible ones", async () => {
-    report(3, 1);
+  it("gives one note, for the most actionable shelf", async () => {
+    report(1, { completed: 4, notNow: 2 });
     const view = await search("bass");
 
     expect(view.getByRole("status")).toHaveTextContent(
-      "1 result. 2 more match outside your filters",
+      "1 result. 2 Not now items are being filtered out.",
     );
   });
 
+  it("notes what filters take away without a search", async () => {
+    report(3, { todo: 2 });
+    toolbarState.registerSourceFilters("test", [SOURCE_FILTERS[0], SOURCE_FILTERS[1]]);
+    toolbarState.toggleSourceFilter(SOURCE_FILTERS[0]);
+    const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+    await tick();
+
+    expect(view.getByRole("status")).toHaveTextContent("2 To do items are being filtered out.");
+
+    await fireEvent.click(view.getByRole("button", { name: "Show anyway" }));
+    expect(toolbarState.isSourceFilterNarrowing).toBe(false);
+    toolbarState.unregisterSourceFilters("test");
+  });
+
+  it("says so when filters leave nothing on the page", async () => {
+    report(0);
+    toolbarState.registerSourceFilters("test", [SOURCE_FILTERS[0], SOURCE_FILTERS[1]]);
+    toolbarState.toggleSourceFilter(SOURCE_FILTERS[0]);
+    const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+    await tick();
+
+    expect(view.getByRole("status")).toHaveTextContent("Your filters leave nothing on this page.");
+    toolbarState.unregisterSourceFilters("test");
+  });
+
   it("announces a changed query", async () => {
-    report(2, 2);
+    report(2);
     const view = await search("bass");
     expect(view.getByRole("status")).toHaveTextContent("2 results");
 
-    report(1, 1);
+    report(1);
     toolbarState.setSearchQuery("sea bass");
     await tick();
 
@@ -83,30 +110,17 @@ describe("PageSearchStatus", () => {
   });
 
   it("pauses filters for the search without changing them, & can undo that", async () => {
-    userState.setAvailabilityWindows(DEFAULT_AVAILABILITY_WINDOWS);
-    report(3, 0);
+    report(0, { todo: 3 });
     const view = await search("bass");
 
-    await fireEvent.click(view.getByRole("button", { name: "Turn off filters for this search" }));
+    await fireEvent.click(view.getByRole("button", { name: "Show anyway" }));
 
     expect(toolbarState.searchShowsAll).toBe(true);
-    expect(userState.state.availabilityWindows).toEqual(DEFAULT_AVAILABILITY_WINDOWS);
     expect(view.getByText(/Your filters are off for this search/u)).toBeInTheDocument();
 
     await fireEvent.click(view.getByRole("button", { name: "Turn them back on" }));
 
     expect(toolbarState.searchShowsAll).toBe(false);
-  });
-
-  it("opens every availability window while filters are paused", () => {
-    userState.setAvailabilityWindows(DEFAULT_AVAILABILITY_WINDOWS);
-    expect(visibleWindows()).toEqual(DEFAULT_AVAILABILITY_WINDOWS);
-
-    toolbarState.setSearchQuery("bass");
-    toolbarState.searchShowsAll = true;
-
-    expect(visibleWindows()).toEqual(AVAILABILITY_WINDOWS);
-    expect(userState.state.availabilityWindows).toEqual(DEFAULT_AVAILABILITY_WINDOWS);
   });
 
   it("ends the pause with the search", () => {
@@ -162,19 +176,11 @@ describe("PageSearchStatus", () => {
     expect(toolbarState.searchQuery).toBe("");
   });
 
-  it("finds a winter fish from the Museum in spring through its hidden count", async () => {
-    userState.setAvailabilityWindows(DEFAULT_AVAILABILITY_WINDOWS);
+  it("finds a winter fish in spring, because availability never hides a row", async () => {
     toolbarState.openSearch();
     toolbarState.setSearchQuery("catfish");
     const museum = renderWithFeedback(MuseumContent, { locale: "en" });
-    const status = renderWithFeedback(PageSearchStatus, { locale: "en" });
     await tick();
-    await tick();
-
-    expect(museum.queryByText("Flathead Catfish")).toBeNull();
-    expect(status.getByRole("status")).toHaveTextContent("1 match outside your filters");
-
-    await fireEvent.click(status.getByRole("button", { name: "Turn off filters for this search" }));
     await tick();
 
     expect(await museum.findByText("Flathead Catfish")).toBeInTheDocument();

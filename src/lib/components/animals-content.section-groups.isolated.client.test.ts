@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/svelte";
+import { fireEvent, screen, within } from "@testing-library/svelte";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import AnimalsContent from "#lib/components/animals-content.svelte";
@@ -26,7 +26,6 @@ afterEach(() => {
 it("holds a sub-section finished by a row toggle, then moves it under Completed", async () => {
   userState.toggleShowSpoilers();
   // Finished rows stay listed, so the finished section keeps rendering & can move.
-  userState.toggleShowCompleted();
   const appearanceIds = recordKeys(trackerData.mount.appearances).toSorted((a, b) =>
     nameCollator("en").compare(getName("mount", a, "en"), getName("mount", b, "en")),
   );
@@ -46,10 +45,11 @@ it("holds a sub-section finished by a row toggle, then moves it under Completed"
   vi.useFakeTimers();
   await fireEvent.click(toggle);
   await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 10);
-  expect(screen.queryByRole("heading", { name: "Completed" })).toBeNull();
+  expect(screen.queryByRole("heading", { level: 2, name: "Completed" })).toBeNull();
 
   await vi.advanceTimersByTimeAsync(10);
-  const completedHeading = screen.getByRole("heading", { name: "Completed" });
+  const completedHeading = screen.getByRole("heading", { level: 2, name: "Completed" });
+  await fireEvent.click(within(completedHeading).getByRole("button"));
   const mountTrigger = screen.getByRole("button", { name: mountName });
   const petSkinsTrigger = screen.getByRole("button", { name: /^Pet skins,/ });
   expect(

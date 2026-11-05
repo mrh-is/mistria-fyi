@@ -9,7 +9,6 @@ import { getName } from "#lib/data/names.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { ItemId } from "#lib/types/tracker-data.js";
@@ -17,7 +16,6 @@ import type { ItemId } from "#lib/types/tracker-data.js";
 describe("AlmanacContent", () => {
   beforeEach(() => {
     userState.resetAll();
-    userState.setAvailabilityWindows(AVAILABILITY_WINDOWS);
     toolbarState.closeSearch();
   });
 
@@ -62,6 +60,11 @@ describe("AlmanacContent", () => {
     const section = trigger.closest("[data-tracker-section]");
     if (!section) throw new Error("Expected the trigger inside its section");
     expect(section.querySelectorAll("[data-tracker-row]").length).toBeGreaterThan(0);
+    await Promise.all(
+      [...section.querySelectorAll('[data-shelf-heading] [aria-expanded="false"]')].map((fold) =>
+        fireEvent.click(fold),
+      ),
+    );
     await waitFor(
       () => {
         expect(section.querySelectorAll("[data-tracker-row]")).toHaveLength(total);

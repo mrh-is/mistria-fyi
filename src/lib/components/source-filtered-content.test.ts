@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 describe("source-filtered content", () => {
-  it("keeps an empty cosmetic slot when every row is excluded by covered source groups", () => {
+  it("takes a cosmetic slot off the page when every row is excluded by source groups", () => {
     const coveredTypes = new Set(SOURCE_FILTERS.flatMap(({ types }) => types));
     const cosmeticsBySlot = Object.groupBy(
       Object.values(trackerData.cosmetics),
@@ -33,8 +33,10 @@ describe("source-filtered content", () => {
     toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    expect(
-      renderToFragmentWithFeedback(CosmeticsContent, { props: { locale: "en" } }).text,
-    ).toMatch(new RegExp(`${slotLabel} 0 / [1-9]\\d* done for now`, "u"));
+    const { container } = renderToFragmentWithFeedback(CosmeticsContent, {
+      props: { locale: "en" },
+    });
+    const shown = [...container.querySelectorAll("[data-tracker-section]:not([hidden])")];
+    expect(shown.map((section) => section.textContent).join(" ")).not.toContain(slotLabel);
   });
 });
