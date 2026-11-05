@@ -474,7 +474,7 @@
   "import_step_drag_autosave_after": "로 끝나는 파일을 위의 드롭 영역으로 드래그하세요.",
   "import_fallback_before_vaultc": "대안으로",
   "import_fallback_between": "(Windows) 또는",
-  "import_fallback_after_vaultgo": "(macOS 또는 Linux)를 사용해 JSON 파일을 직접 추출할 수도 있습니다.",
+  "import_fallback_after_vaultgo": "(Linux)를 사용해 JSON 파일을 직접 추출할 수도 있습니다.",
   "import_fallback_files": "그런 다음 생성된 {player}, {gamedata} 및 {quests} 파일에서 가져오세요.",
   "import_playing_on_phone": "휴대폰으로 플레이하시나요?",
   "import_transfer_to_mobile": "다른 기기에서 동기화 또는 백업 사용 →",
