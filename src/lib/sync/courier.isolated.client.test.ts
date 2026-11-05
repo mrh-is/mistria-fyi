@@ -1486,7 +1486,7 @@ describe("the sync log", () => {
     "clears a %s answer once the file returns to the confirmed save",
     async (kind, upload) => {
       const { last, make, relay } = await load();
-      const courier = make();
+      const courier = make({ pollMs: 60_000 });
       const file = fakeHandle(saveBytes(100));
       courier.start();
       await courier.take({ handle: file.handle, kind: "handle" });
