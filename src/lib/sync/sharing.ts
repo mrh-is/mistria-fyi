@@ -6,18 +6,17 @@
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { ensureTurnstileScript } from "#lib/turnstile.js";
 
-import {
-  createRelayClient,
-  openFollowKey,
-  pendingRetireFor,
-  retirePending,
-  shareNewCode,
-} from "./follow.js";
+import { createRelayClient, openFollowKey, pendingRetireFor, shareNewCode } from "./follow.js";
 import { readSavePayload, stampOf } from "./read-save.js";
+import { retireStatus } from "./retire-status.svelte.js";
+
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 import type {
   FollowKey,
+  MailboxId,
   OpenResult,
+  PendingRetire,
   RelayClient,
   RelayFailure,
   RelayRefusal,
@@ -92,11 +91,14 @@ export function setTurnstileTokenSource(source: () => Promise<string>): void {
 
 const FIRST_RETIRE_RETRY_MS = 5000;
 const MAX_RETIRE_RETRY_MS = 5 * 60_000;
+/** How long “Make a new code” waits on the old code's retire before moving on without it. */
+const RETIRE_SETTLE_MS = 3000;
 
-let retireTimer: ReturnType<typeof setTimeout> | undefined;
-let retireDelay = FIRST_RETIRE_RETRY_MS;
-/** Attempts run one at a time, so a retire queued meanwhile is tried after the one under way. */
-let retiring: Promise<void> = Promise.resolve();
+/** Each mailbox retries on its own clock, so nothing about one can delay or shorten another's. */
+const retireTimers = new Map<MailboxId, ReturnType<typeof setTimeout>>();
+const retireDelays = new Map<MailboxId, number>();
+/** The mailboxes with a retire under way, so a stalled request holds up only its own mailbox. */
+const retiring = new Set<MailboxId>();
 /** Bumped by {@link keepRetiring}'s stop, so an attempt still under way schedules nothing after. */
 let retireGeneration = 0;
 /** The pending mailboxes this tab last knew of, so another tab's new retire wakes the retries. */
@@ -109,74 +111,91 @@ function pendingIds(): string {
     .join(",");
 }
 
-/**
- * How long to wait before trying the failures again, or `undefined` when no retry can help: the
- * relay refused every one, so only the next visit tries them again.
- */
-function retireWait(failures: readonly RetireResult[]): number | undefined {
-  if (failures.length > 0 && failures.every(({ kind }) => kind === "refused")) return undefined;
-  let wait = retireDelay;
-  for (const failure of failures) {
-    if (failure.kind === "rate-limited" && failure.retryAfterSeconds !== undefined) {
-      wait = Math.max(wait, failure.retryAfterSeconds * 1000);
-    } else if (failure.kind === "paused" && failure.until !== undefined) {
-      wait = Math.max(wait, failure.until - Date.now());
-    }
+function isPending(mailboxId: MailboxId): boolean {
+  return userState.syncPendingRetires.some((pending) => pending.mailboxId === mailboxId);
+}
+
+/** How long to wait before trying again, or `undefined` when only the player coming back can help. */
+function retireWait(result: RetireResult, delay: number): number | undefined {
+  if (result.kind === "refused") return undefined;
+  let wait = delay;
+  if (result.kind === "rate-limited" && result.retryAfterSeconds !== undefined) {
+    wait = Math.max(wait, result.retryAfterSeconds * 1000);
+  } else if (result.kind === "paused" && result.until !== undefined) {
+    wait = Math.max(wait, result.until - Date.now());
   }
   return Math.min(wait, MAX_RETIRE_RETRY_MS);
 }
 
-async function attemptRetires(): Promise<void> {
-  const generation = retireGeneration;
-  clearTimeout(retireTimer);
-  retireTimer = undefined;
-  const pending = userState.syncPendingRetires;
-  let failures: RetireResult[] = [];
-  if (pending.length > 0) {
-    try {
-      const results = await retirePending(relay, pending);
-      const confirmed = pending.filter((_, index) => results[index]?.kind === "retired");
-      failures = results.filter(({ kind }) => kind !== "retired");
-      if (confirmed.length > 0) await userState.confirmRetired(confirmed);
-    } catch {
-      // The scheduled retry tries again.
-    }
-  }
-  knownPending = pendingIds();
-  if (generation !== retireGeneration) return;
-  if (userState.syncPendingRetires.length === 0) {
-    retireDelay = FIRST_RETIRE_RETRY_MS;
+function clearRetireTimer(mailboxId: MailboxId): void {
+  clearTimeout(retireTimers.get(mailboxId));
+  retireTimers.delete(mailboxId);
+}
+
+/** A leaked code keeps working until its retire lands, so it retries like an upload does. */
+function scheduleRetire(pending: DeepReadonly<PendingRetire>, result: RetireResult): void {
+  const { mailboxId } = pending;
+  if (!isPending(mailboxId)) {
+    retireDelays.delete(mailboxId);
     return;
   }
-  const wait = retireWait(failures);
+  const delay = retireDelays.get(mailboxId) ?? FIRST_RETIRE_RETRY_MS;
+  const wait = retireWait(result, delay);
   if (wait === undefined) return;
-  // A leaked code keeps working until this lands, so it retries like an upload does.
-  retireTimer = setTimeout(() => {
-    void queueAttempt();
-  }, wait);
-  retireDelay = Math.min(retireDelay * 2, MAX_RETIRE_RETRY_MS);
+  retireDelays.set(mailboxId, Math.min(delay * 2, MAX_RETIRE_RETRY_MS));
+  clearRetireTimer(mailboxId);
+  retireTimers.set(
+    mailboxId,
+    setTimeout(() => {
+      retireTimers.delete(mailboxId);
+      if (isPending(mailboxId)) void retireOne(pending);
+    }, wait),
+  );
+}
+
+/** Retires, confirms, & reschedules one code, whatever the others are doing. Never rejects. */
+async function retireOne(pending: DeepReadonly<PendingRetire>): Promise<void> {
+  const generation = retireGeneration;
+  retiring.add(pending.mailboxId);
+  let result: RetireResult;
+  try {
+    result = await relay.retire(pending.mailboxId, pending.token);
+    if (result.kind === "retired") await userState.confirmRetired([pending]);
+  } catch {
+    result = { kind: "unreachable" };
+  }
+  retiring.delete(pending.mailboxId);
+  retireStatus.note(pending.mailboxId, result.kind === "refused");
+  knownPending = pendingIds();
+  if (generation === retireGeneration) scheduleRetire(pending, result);
 }
 
 /**
  * Retries every pending retire now, & forgets the ones the relay confirmed. Any still pending
- * retry with backoff for as long as the page stays open.
+ * retry with backoff for as long as the page stays open. A retire already under way is left to
+ * finish, so one that stalls can't hold up any other.
  */
-export function retryPendingRetires(): Promise<void> {
-  retireDelay = FIRST_RETIRE_RETRY_MS;
-  return queueAttempt();
+export async function retryPendingRetires(): Promise<void> {
+  retireDelays.clear();
+  const idle = userState.syncPendingRetires.filter(({ mailboxId }) => !retiring.has(mailboxId));
+  for (const { mailboxId } of idle) clearRetireTimer(mailboxId);
+  await Promise.all(idle.map((pending) => retireOne(pending)));
+  knownPending = pendingIds();
 }
 
-function queueAttempt(): Promise<void> {
-  const previous = retiring;
-  retiring = (async () => {
-    await previous;
-    try {
-      await attemptRetires();
-    } catch {
-      // A failed attempt mustn't stop the ones queued behind it.
-    }
-  })();
-  return retiring;
+/**
+ * Tries the retires that stopped, which no timer will. Waits a relay asked for keep running, so
+ * this is safe to call whenever the player comes back.
+ */
+export async function resumeStoppedRetires(): Promise<void> {
+  const stopped = userState.syncPendingRetires.filter(
+    ({ mailboxId }) => !retiring.has(mailboxId) && !retireTimers.has(mailboxId),
+  );
+  await Promise.all(stopped.map((pending) => retireOne(pending)));
+}
+
+function resumeWhenVisible(): void {
+  if (document.visibilityState === "visible") void resumeStoppedRetires();
 }
 
 function retryOnline(): void {
@@ -199,13 +218,17 @@ export function keepRetiring(): () => void {
   globalThis.addEventListener("online", retryOnline);
   // The store's own listener, added first, has already read the other tab's write.
   globalThis.addEventListener("storage", retryNewlyPending);
+  globalThis.addEventListener("pageshow", resumeWhenVisible);
+  document.addEventListener("visibilitychange", resumeWhenVisible);
   retryOnline();
   return () => {
     globalThis.removeEventListener("online", retryOnline);
     globalThis.removeEventListener("storage", retryNewlyPending);
+    globalThis.removeEventListener("pageshow", resumeWhenVisible);
+    document.removeEventListener("visibilitychange", resumeWhenVisible);
     retireGeneration += 1;
-    clearTimeout(retireTimer);
-    retireTimer = undefined;
+    for (const timer of retireTimers.values()) clearTimeout(timer);
+    retireTimers.clear();
   };
 }
 
@@ -216,6 +239,21 @@ export function keepRetiring(): () => void {
 async function abandon(code: SharedCode): Promise<void> {
   const { mailboxId, token } = await pendingRetireFor(code);
   await relay.retire(mailboxId, token);
+}
+
+/**
+ * Gives a retire a moment to land, so a quick relay shows no warning. A slow one mustn't hold back
+ * the new code, or hide that the old one still works.
+ */
+async function settleRetires(): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    retryPendingRetires(),
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, RETIRE_SETTLE_MS);
+    }),
+  ]);
+  clearTimeout(timer);
 }
 
 /** The first code the computer lane shares; stored only once its mailbox exists. */
@@ -243,7 +281,7 @@ export async function makeNewCode(): Promise<ShareResult> {
     await abandon(result.code);
     return { kind: "unreachable" };
   }
-  await retryPendingRetires();
+  await settleRetires();
   return result;
 }
 
