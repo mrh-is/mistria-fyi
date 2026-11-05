@@ -4,6 +4,7 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData } from "#lib/data/index.js";
@@ -17,6 +18,7 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -65,15 +67,29 @@
       .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
   ]);
 
+  let nameFilter = $derived(toolbarState.searchQuery);
+
+  let namedEntries = $derived(
+    nameFilter
+      ? entries.filter(
+          ({ name, visibility }) =>
+            isConditionVisible(visibility, userState.progressionState) &&
+            matchesName(name, nameFilter, locale),
+        )
+      : entries,
+  );
+
   let scopedEntries = $derived(
-    entries.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
+    namedEntries.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
   );
 
   let completedCount = $derived(scopedEntries.filter((entry) => isCompleted(entry)).length);
 
   let visibleEntries = $derived(
-    scopedEntries.filter((entry) => (isCompleted(entry) ? userState.state.showCompleted : true)),
+    scopedEntries.filter((entry) => (isCompleted(entry) ? showsCompletedRows() : true)),
   );
+
+  registerPageSearch(() => ({ matches: namedEntries.length, visible: visibleEntries.length }));
 
   function isCompleted(entry: MountEntry): boolean {
     return entry.kind === "appearance"
@@ -111,6 +127,7 @@
   <ExpandableSection
     {locale}
     count={completedCount}
+    forceOpen={!!nameFilter}
     name={getName("ui", "mount", locale)}
     reportCategory="mount-appearances"
     total={scopedEntries.length}
@@ -122,6 +139,7 @@
         <ExpandableSection
           {locale}
           depth={1}
+          forceOpen={!!nameFilter}
           count={scopedGroupEntries.filter((entry) => isCompleted(entry)).length}
           name={group.name}
           total={scopedGroupEntries.length}
@@ -160,6 +178,6 @@
       {/if}
     {/each}
   </ExpandableSection>
-{:else if toolbarState.isSourceFilterNarrowing}
+{:else if !nameFilter && toolbarState.isSourceFilterNarrowing}
   <TrackerEmptyState />
 {/if}

@@ -3,11 +3,14 @@
   import CompletionSection from "#lib/components/completion-section.svelte";
   import VillagerAlphabetIndex from "#lib/components/villager-alphabet-index.svelte";
   import VillagerRecord from "#lib/components/villager-record.svelte";
+  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
   import { getName } from "#lib/data/names.js";
   import { isVillagerComplete } from "#lib/engine/progress.js";
   import { buildVillagerRoster, filterVillagerRoster } from "#lib/engine/villager-roster.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { page } from "$app/state";
 
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -29,14 +32,31 @@
   let villagers = $derived(buildVillagerRoster(locale));
   // A villager linked by hash (e.g. from search) stays rendered even when completed ones are hidden.
   let targetedId = $derived(page.url.hash.replace(/^#villager-/, ""));
+  let nameFilter = $derived(toolbarState.searchQuery);
+  // Spoilered villagers render without their name, so a search can't find them.
+  let namedVillagers = $derived(
+    nameFilter
+      ? villagers.filter(
+          ({ id, name }) =>
+            userState.progressionState.knownVillagers.has(id) &&
+            matchesName(name, nameFilter, locale),
+        )
+      : villagers,
+  );
   let visibleVillagers = $derived(
     filterVillagerRoster(
-      villagers,
+      namedVillagers,
       userState.state.progress,
-      userState.state.showCompleted,
+      showsCompletedRows(),
       targetedId,
     ),
   );
+
+  registerPageSearch(() => ({
+    matches: namedVillagers.length,
+    visible: visibleVillagers.length,
+  }));
+
   // Spoilered villagers render without their name, so their initials stay out of the index too.
   let indexEntries = $derived(
     visibleVillagers
@@ -48,7 +68,7 @@
   );
 </script>
 
-{#if !compact && showBreakUpsSetting}
+{#if !compact && showBreakUpsSetting && !nameFilter}
   <div class="break-ups-setting">
     <BlockySwitch
       checked={userState.state.progress.breakUpsDisabled}

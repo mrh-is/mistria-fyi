@@ -6,6 +6,11 @@
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import {
+    registerPageSearch,
+    showsCompletedRows,
+    visibleWindows,
+  } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -21,12 +26,13 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { AlmanacRow } from "#lib/engine/projections/almanac.js";
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { AlmanacCategoryId, ItemId } from "#lib/types/tracker-data.js";
+  import type { AlmanacCategoryId, AlmanacEntry, ItemId } from "#lib/types/tracker-data.js";
   import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
   let { locale }: { locale: LocaleCode } = $props();
@@ -69,25 +75,44 @@
 
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
 
+  function matchesEntry(entry: AlmanacEntry): boolean {
+    const names = getAlmanacEntryNames(entry, locale);
+    const variant = getAlmanacEntryVariant(entry, locale);
+    return (
+      names.some((name) => matchesName(name, nameFilter, locale)) ||
+      matchesTerms(names, variant ? [variant] : [], nameFilter, locale)
+    );
+  }
+
   // Page context includes user filters and the animation's temporary completed-row retention.
   let projection = $derived(
-    projectAlmanac(userState.progressContext, {
-      hideSpoilered: Boolean(nameFilter),
-      matchesEntry: (entry) => {
-        const names = getAlmanacEntryNames(entry, locale);
-        const variant = getAlmanacEntryVariant(entry, locale);
-        return (
-          names.some((name) => matchesName(name, nameFilter, locale)) ||
-          matchesTerms(names, variant ? [variant] : [], nameFilter, locale)
-        );
+    projectAlmanac(
+      { ...userState.progressContext, availabilityWindows: visibleWindows() },
+      {
+        hideSpoilered: Boolean(nameFilter),
+        matchesEntry,
+        matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
+        progressionState: userState.progressionState,
+        recentlyCompleted: recentlyCompleted.ids,
+        showCompleted: showsCompletedRows(),
+        showUnobtainable: toolbarState.showUnobtainable,
       },
-      matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
-      progressionState: userState.progressionState,
-      recentlyCompleted: recentlyCompleted.ids,
-      showCompleted: userState.state.showCompleted,
-      showUnobtainable: toolbarState.showUnobtainable,
-    }),
+    ),
   );
+
+  registerPageSearch(() => ({
+    matches: projectAlmanac(
+      { ...userState.progressContext, availabilityWindows: AVAILABILITY_WINDOWS },
+      {
+        hideSpoilered: true,
+        matchesEntry,
+        progressionState: userState.progressionState,
+        showCompleted: true,
+        showUnobtainable: toolbarState.showUnobtainable,
+      },
+    ).rows.filter((row) => row.visible).length,
+    visible: projection.rows.filter((row) => row.visible).length,
+  }));
 
   let sectionViews = $derived(
     projection.sections.map((section) => ({
@@ -125,7 +150,7 @@
 
 <SectionGroups getKey={(view) => view.id} grouping={sectionGrouping} items={sectionViews}>
   {#snippet section({ baseRows, canonicalIds, completedCount, id, scopedTotal, visibleRows })}
-    {#if baseRows.length > 0}
+    {#if baseRows.length > 0 && (!nameFilter || visibleRows.length > 0)}
       <ExpandableSection
         {locale}
         count={completedCount}

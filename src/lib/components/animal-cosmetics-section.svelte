@@ -1,5 +1,6 @@
 <script lang="ts">
   import AnimalSubcategory from "#lib/components/animal-subcategory.svelte";
+  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -7,7 +8,8 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { recordEntries } from "#lib/utils/record.js";
+  import { matchesName } from "#lib/utils/name-match.js";
+  import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
   import type {
     AnimalSubcategoryRowProps,
@@ -22,7 +24,7 @@
 
   function hasDisplayableCosmetic(animalId: AnimalId): boolean {
     const cosmeticIds = Object.keys(trackerData.animals[animalId].cosmetics) as CosmeticId[];
-    if (isSpeciesVisible(animalId)) {
+    if (toolbarState.searchQuery || isSpeciesVisible(animalId)) {
       return cosmeticIds.some((cid) => isCosmeticVisible(animalId, cid));
     }
     return cosmeticIds.some((cosmeticId) =>
@@ -32,15 +34,26 @@
     );
   }
 
+  /** A cosmetic matches through its own name or its animal's, so “cow” finds every cow's. */
+  function matchesSearch(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
+    const query = toolbarState.searchQuery;
+    if (!query) return true;
+    if (!isSpeciesVisible(animalId)) return false;
+    return [animalNameId(animalId, "core"), animalNameId(animalId, "cosmetics", cosmeticId)].some(
+      (nameId) => matchesName(getName("animals", nameId, locale), query, locale),
+    );
+  }
+
   function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
     if (
+      !matchesSearch(animalId, cosmeticId) ||
       !toolbarState.matchesSourceFilters(
         trackerData.animals[animalId].cosmetics[cosmeticId].sources,
       )
     ) {
       return false;
     }
-    return !hasCompletedCosmetic(animalId, cosmeticId) || userState.state.showCompleted;
+    return !hasCompletedCosmetic(animalId, cosmeticId) || showsCompletedRows();
   }
 
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<CosmeticId> {
@@ -49,6 +62,7 @@
     let displayableCount = 0;
     const visibleCosmetics: AnimalSubcategoryRowProps<CosmeticId>[] = [];
     for (const [cid] of recordEntries(animal.cosmetics)) {
+      if (!matchesSearch(animalId, cid)) continue;
       if (!toolbarState.matchesSourceFilters(animal.cosmetics[cid].sources)) continue;
       displayableCount++;
       const cosmeticId = cid;
@@ -87,6 +101,17 @@
   } = $props();
 
   let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
+
+  registerPageSearch(() => {
+    let matches = 0;
+    let visible = 0;
+    for (const animalId of recordKeys(trackerData.animals)) {
+      const cosmeticIds = Object.keys(trackerData.animals[animalId].cosmetics) as CosmeticId[];
+      matches += cosmeticIds.filter((id) => matchesSearch(animalId, id)).length;
+      visible += sectionConfig(animalId).visibleItems.length;
+    }
+    return { matches, visible };
+  });
 </script>
 
 <AnimalSubcategory

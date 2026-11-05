@@ -68,6 +68,31 @@
     }
   ],
   "search_no_results": "No items found",
+  "search_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} match outside your filters",
+        "countPlural=other": "{count} match outside your filters"
+      }
+    }
+  ],
+  "search_more_outside_filters": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} more match outside your filters",
+        "countPlural=other": "{count} more match outside your filters"
+      }
+    }
+  ],
+  "search_turn_off_filters": "Turn off filters for this search",
+  "search_filters_off": "Your filters are off for this search.",
+  "search_filters_resume": "Turn them back on",
+  "search_guide_prompt": "Don’t see what you’re looking for?",
+  "search_guide_link": "Search the entire Field Guide for “{query}”",
   "search_loading": "Loading search…",
   "search_error": "Couldn’t load search results.",
   "action_retry": "Try again",

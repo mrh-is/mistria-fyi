@@ -2,6 +2,7 @@
   import { onMount, untrack } from "svelte";
 
   import { Icon } from "#lib/components/icon/index.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 
   import type { Snippet } from "svelte";
 
@@ -31,6 +32,8 @@
   onMount(() => {
     hydrated = true;
   });
+  // A search has to reach rows inside a closed group, as it does inside closed sections.
+  let isOpen = $derived(open || Boolean(toolbarState.searchQuery));
   const instanceId = $props.id();
   let contentId = $derived(`group-${instanceId}`);
   $effect(() => {
@@ -52,7 +55,7 @@
       aria-describedby={description ? `${contentId}-description` : undefined}
       disabled={!hydrated}
       aria-busy={!hydrated}
-      aria-expanded={open}
+      aria-expanded={isOpen}
       aria-controls={contentId}
       onclick={() => {
         open = !open;
@@ -60,7 +63,7 @@
     >
       <Icon.UI
         type="disclosure"
-        class="size-4 shrink-0 transition-transform motion-reduce:transition-none {open
+        class="size-4 shrink-0 transition-transform motion-reduce:transition-none {isOpen
           ? 'rotate-90'
           : ''}"
       />
@@ -70,7 +73,7 @@
     </button>
   </h2>
   {#if description}<span id="{contentId}-description" class="sr-only">{description}</span>{/if}
-  <div id={contentId} hidden={!open} class="flex flex-col gap-1">
+  <div id={contentId} hidden={!isOpen} class="flex flex-col gap-1">
     {@render children()}
   </div>
 </section>

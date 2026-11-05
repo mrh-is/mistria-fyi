@@ -5,6 +5,9 @@ const DIACRITICS = /(?![\u{3099}\u{309A}])\p{M}/gu;
 /** Katakana ァ–ヶ, which sit exactly 0x60 above their hiragana counterparts. */
 const KATAKANA = /[\u{30A1}-\u{30F6}]/gu;
 const KATAKANA_TO_HIRAGANA_OFFSET = 0x60;
+/** Whitespace & dashes. The katakana long-vowel mark (ー) is a letter, so it isn't one of these. */
+const WORD_SEPARATOR = /[\s\p{Pd}]/gu;
+const WORD_SEPARATORS = /[\s\p{Pd}]+/u;
 
 /**
  * Folds `text` into the form name filters compare: compatibility forms and full-width Latin
@@ -29,12 +32,20 @@ export function foldName(text: string, locale: LocaleCode): string {
 }
 
 /**
- * Whether `name` contains `query` once both are folded per {@link foldName}. A blank query matches
- * every name.
+ * The form name matching compares: {@link foldName} without spaces or hyphens, so “bluegill” finds
+ * “Blue Gill” & “blue gill” finds “Bluegill”.
+ */
+export function matchKey(text: string, locale: LocaleCode): string {
+  return foldName(text, locale).replaceAll(WORD_SEPARATOR, "");
+}
+
+/**
+ * Whether `name` contains `query` once both are folded per {@link matchKey}. A query with nothing
+ * left to match, such as a blank one, matches every name.
  */
 export function matchesName(name: string, query: string, locale: LocaleCode): boolean {
-  const folded = foldName(query.trim(), locale);
-  return !folded || foldName(name, locale).includes(folded);
+  const key = matchKey(query, locale);
+  return !key || matchKey(name, locale).includes(key);
 }
 
 /**
@@ -49,10 +60,10 @@ export function matchesTerms(
   query: string,
   locale: LocaleCode,
 ): boolean {
-  const words = foldName(query.trim(), locale).split(/\s+/u).filter(Boolean);
+  const words = foldName(query, locale).split(WORD_SEPARATORS).filter(Boolean);
   if (words.length === 0 || terms.length === 0) return false;
-  const foldedNames = names.map((name) => foldName(name, locale));
-  const foldedTerms = terms.map((term) => foldName(term, locale));
+  const foldedNames = names.map((name) => matchKey(name, locale));
+  const foldedTerms = terms.map((term) => matchKey(term, locale));
   const inTerm = (word: string): boolean => foldedTerms.some((term) => term.includes(word));
   return (
     words.some((word) => inTerm(word)) &&

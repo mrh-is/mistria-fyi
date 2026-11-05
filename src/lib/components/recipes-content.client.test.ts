@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import RecipesContent from "#lib/components/recipes-content.svelte";
 import { trackerData } from "#lib/data/index.js";
@@ -14,6 +14,11 @@ import type { ItemId } from "#lib/types/tracker-data.js";
 describe("RecipesContent", () => {
   beforeEach(() => {
     userState.resetAll();
+    toolbarState.closeSearch();
+  });
+
+  // Client test files share this store, so a search left open would filter their pages.
+  afterEach(() => {
     toolbarState.closeSearch();
   });
 
