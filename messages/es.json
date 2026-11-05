@@ -853,7 +853,7 @@
   "sync_unreadable_away_body": "¡Tu progreso está a salvo! Para más información, mira Mistria Field Guide en tu ordenador.",
   "sync_unreachable_title": "Ahora mismo no podemos conectar",
   "sync_unreachable_body": "Seguiremos intentándolo, o puedes volver a probar tú.",
-  "sync_refused_title": "Sync dijo que no esta vez",
+  "sync_refused_title": "La sincronización dijo que no esta vez",
   "sync_refused_share_body": "Conseguimos conectar, pero no quiso crear tu código esta vez. No se ha perdido nada, y no es culpa tuya. Volver a intentarlo suele arreglarlo.",
   "sync_refused_upload_body": "Conseguimos conectar, pero no quiso aceptar tu último archivo de guardado con este código. Tu progreso aquí está a salvo, y no es culpa tuya. Si volver a intentarlo no ayuda, crea un código nuevo desde Datos.",
   "sync_unreadable_title": "Vaya, no podemos leer tu partida guardada",

@@ -140,7 +140,9 @@ export interface Courier {
   check: () => Promise<void>;
   /** Asks the browser for read access again. Must run inside the player's click. */
   reallow: () => Promise<void>;
-  /** Tries whatever's waiting again now, for “Try again”, coming back online or into view. */
+  /** Tries whatever's waiting again now, unless only the player can decide to, for coming back. */
+  resume: () => void;
+  /** Tries whatever's waiting again now, for “Try again”. */
   retry: () => void;
   /** Starts acting on the lane, which {@link Courier.update} keeps it told about. */
   start: () => void;
@@ -572,6 +574,10 @@ export function createCourier({
         retryDelay = firstRetryMs;
         clearRetry();
         setStatus({ upload: "idle" });
+      } else if (status.upload === "refused" || status.upload === "update") {
+        // The mailbox holds this save, so the upload the relay turned down no longer matters.
+        recheck = false;
+        setStatus({ upload: "idle" });
       }
       // Only a start or a shown code looks further: an envelope can expire with nothing changing.
       if (!overtaken && (!look || !(await mailboxWantsSave(mailboxId)))) return true;
@@ -939,6 +945,10 @@ export function createCourier({
       if (source?.kind !== "handle") return;
       const granted = await source.handle.requestPermission?.({ mode: "read" });
       if (granted === undefined || granted === "granted") await this.check();
+    },
+    resume() {
+      // Alt-tabbing back mustn't spend a counter, or a create, on an answer that won't change.
+      if (status.upload !== "refused" && status.upload !== "update") this.retry();
     },
     retry() {
       if (!leading) return;

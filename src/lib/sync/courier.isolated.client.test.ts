@@ -1466,6 +1466,10 @@ describe("the sync log", () => {
     await new Promise((resolve) => {
       setTimeout(resolve, 50);
     });
+    courier.resume();
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
     expect(relay.upload).toHaveBeenCalledTimes(1);
 
     courier.retry();
@@ -1474,6 +1478,32 @@ describe("the sync log", () => {
       expect(last()?.upload).toBe("idle");
     });
   });
+
+  it.each([
+    ["refused", "refused"],
+    ["unsupported-version", "update"],
+  ] as const)(
+    "clears a %s answer once the file returns to the confirmed save",
+    async (kind, upload) => {
+      const { last, make, relay } = await load();
+      const courier = make();
+      const file = fakeHandle(saveBytes(100));
+      courier.start();
+      await courier.take({ handle: file.handle, kind: "handle" });
+      expect(last()?.upload).toBe("idle");
+
+      relay.upload.mockResolvedValueOnce({ kind });
+      file.replace(saveBytes(200));
+      await courier.take({ handle: file.handle, kind: "handle" });
+      expect(last()?.upload).toBe(upload);
+
+      file.replace(saveBytes(100));
+      relay.read.mockResolvedValue({ kind: "envelope", ...relay.upload.mock.calls[0]?.[2] });
+      await courier.take({ handle: file.handle, kind: "handle" });
+      expect(last()?.upload).toBe("idle");
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+    },
+  );
 
   it("shows a refusal when a retired code's replacement is refused", async () => {
     const renewCode = vi.fn<NonNullable<CourierOptions["renewCode"]>>();

@@ -23,6 +23,7 @@ const fake = vi.hoisted(() => ({
   check: vi.fn(() => Promise.resolve()),
   options: undefined as CourierOptions | undefined,
   reallow: vi.fn(() => Promise.resolve()),
+  resume: vi.fn(),
   retry: vi.fn(),
   stop: vi.fn(),
   take: vi.fn(() => Promise.resolve()),
@@ -167,7 +168,15 @@ async function renderCodeArea(local: Record<string, unknown>, overrides = {}) {
 beforeEach(async () => {
   pageStub.reset();
   pageStub.navigate("/en/data");
-  for (const mock of [fake.check, fake.reallow, fake.retry, fake.start, fake.take, fake.update]) {
+  for (const mock of [
+    fake.check,
+    fake.reallow,
+    fake.resume,
+    fake.retry,
+    fake.start,
+    fake.take,
+    fake.update,
+  ]) {
     mock.mockClear();
   }
   await import("#lib/sync/courier-state.svelte.js");
@@ -268,6 +277,15 @@ describe("the notes", () => {
     expect(screen.queryByText("We can’t connect right now")).toBeNull();
     await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(fake.retry).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves coming back online to the courier's resume, & “Try again” to its retry", async () => {
+    const { syncCourier } = await import("#lib/sync/courier-state.svelte.js");
+    const stop = syncCourier.start();
+    globalThis.dispatchEvent(new Event("online"));
+    expect(fake.resume).toHaveBeenCalledTimes(1);
+    expect(fake.retry).not.toHaveBeenCalled();
+    stop();
   });
 
   it("asks for a refresh when the relay speaks another protocol version", async () => {
