@@ -13,7 +13,7 @@ session limits) belong in each contributor’s user config.
 - Run the test that covers your change: `pnpm exec vitest run path/to/file.test.ts`. For plain-Node
   tests under `eslint-rules/`, `scripts/`, & `tests/`, also select `--project node`, or
   `--project node-isolated` for `*.isolated.test.ts`. For example:
-  `pnpm exec vitest run --project node scripts/check-attribution.test.ts`. A path alone selects the
+  `pnpm exec vitest run --project node scripts/lib/pinned-node.test.ts`. A path alone selects the
   right tests, but can still start the app projects’ Cloudflare proxy & workerd before filtering.
   Use `--project pipeline` for asset-independent `pipeline/` tests. App tests, including
   `*.client.test.ts` & `*.cold.test.ts`, can use the path-only command.
@@ -219,11 +219,9 @@ session limits) belong in each contributor’s user config.
 - Keep the owner’s commit identity & any existing attribution.
 - Every commit an agent materially wrote needs that agent’s stable product `Co-Authored-By` trailer,
   such as `Co-Authored-By: Codex <codex@openai.com>`.
-- Every issue body, PR body, & substantive GitHub comment ends with `Agent: <agent-id>`.
-- An agent-authored PR gets exactly one matching `agent:*` label from the established set.
-- The “Attribution” check covers commits, PR bodies (including the preview URL), & labels. It
-  doesn’t check issues or comments.
-- Commit, push, & open an attributed PR. Its body includes `Closes #N` & the branch-preview URL.
+- Every agent-authored issue body & substantive GitHub comment ends with `Agent: <agent-id>`.
+- Commit, push, & open a PR. Its body includes `Closes #N` & a preview URL from the deployment
+  integration or the PR template when a preview is available.
 - Record each decision in the narrowest home that fits, usually the PR’s “Decisions” section. Add a
   record to `docs/decisions/` only when a newcomer would propose the rejected alternative; see
   [Recording decisions](docs/agent-workflow.md#recording-decisions).

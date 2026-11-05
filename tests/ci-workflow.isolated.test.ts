@@ -647,23 +647,22 @@ describe("CI workflow gate", () => {
   });
 });
 
-describe("PR metadata workflows", () => {
-  const metadataWorkflows = ["attribution", "guarded-paths"] as const;
+describe("Guarded paths workflow", () => {
+  const source = readFileSync(".github/workflows/guarded-paths.yml", "utf8");
 
   // `opened` & multiple `labeled` events can arrive together. Even cancel-in-progress: false
   // replaces an existing pending run, leaving a cancelled required check that blocks merges.
-  it.each(metadataWorkflows)("%s lets every required-check run finish independently", (name) => {
-    const file = parse(readFileSync(`.github/workflows/${name}.yml`, "utf8")) as Workflow;
+  it("lets every required-check run finish independently", () => {
+    const file = parse(source) as Workflow;
     expect(file.concurrency).toBeUndefined();
     for (const job of Object.values(file.jobs ?? {})) {
       expect(job.concurrency).toBeUndefined();
     }
   });
 
-  it.each(metadataWorkflows)("%s reads labels from the live PR, not the event payload", (name) => {
-    const text = readFileSync(`.github/workflows/${name}.yml`, "utf8");
-    expect(text).not.toContain("github.event.pull_request.labels");
-    expect(text).not.toContain("github.event.pull_request.body");
-    expect(text).toContain('gh api "repos/$REPOSITORY/pulls/$PR_NUMBER"');
+  it("reads labels from the live PR, not the event payload", () => {
+    expect(source).not.toContain("github.event.pull_request.labels");
+    expect(source).not.toContain("github.event.pull_request.body");
+    expect(source).toContain('gh api "repos/$REPOSITORY/pulls/$PR_NUMBER"');
   });
 });

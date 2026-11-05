@@ -22,8 +22,10 @@ covered.
 
 - **Tooling over prose, always.** Rejected: that was the previous rule, and it produced guards that
   cost more in false positives than the mistakes they were meant to stop.
-- **No new tooling at all.** Rejected: some checks pay for themselves. The “Attribution” & “Guarded
-  paths” CI checks caught 16 real mistakes in three weeks.
+- **No new tooling at all.** Rejected because checks such as “Guarded paths” protect generated data.
+  The “Attribution” check caught violations of its own conventions for trailers, PR footers, &
+  labels. Nothing downstream needed those fields to agree. Issue #474 removes the check and keeps
+  the commit trailers.
 - **One incident is enough.** Rejected: a single incident can’t tell a pattern from a fluke, and
   most of the removed guards had zero.
 
