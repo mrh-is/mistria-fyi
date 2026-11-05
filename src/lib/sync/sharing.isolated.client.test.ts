@@ -2,6 +2,7 @@ import { deflateSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
+import { holdTurnstileScripts } from "#lib/test-utils/turnstile-script.js";
 
 import { deriveFollowKeys, encodeSavePayload, mailboxIdFor, sealEnvelope } from "./follow.js";
 
@@ -63,6 +64,52 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+});
+
+/** The Turnstile global, whose widget answers with `token`, or never answers without one. */
+function widget(token?: string) {
+  return {
+    remove: vi.fn(),
+    render: (_container: HTMLElement, options: { callback: (token: string) => void }) => {
+      if (token !== undefined) options.callback(token);
+      return "1";
+    },
+  };
+}
+
+describe("the sync widget", () => {
+  it("downloads Turnstile again after a failed attempt, without a reload", async () => {
+    const held = holdTurnstileScripts();
+    vi.stubGlobal("turnstile", undefined);
+    const { sharing } = await load({ syncLane: { kind: "computer" } }, relay({}));
+    sharing.setTurnstileTokenSource(sharing.syncTurnstileToken);
+
+    const failed = sharing.shareCode();
+    await vi.waitFor(() => {
+      expect(held.scripts()).toHaveLength(1);
+    });
+    held.fail();
+    expect(await failed).toEqual({ kind: "unreachable" });
+    expect(held.scripts()).toEqual([]);
+
+    const shared = sharing.shareCode();
+    await vi.waitFor(() => {
+      expect(held.scripts()).toHaveLength(1);
+    });
+    held.load(widget("challenge"));
+    const result = await shared;
+    expect(result.kind).toBe("shared");
+  });
+
+  it("gives up on a widget that never calls back", async () => {
+    vi.stubGlobal("turnstile", widget());
+    const { sharing } = await load({ syncLane: { kind: "computer" } }, relay({}));
+    const attempt = Promise.allSettled([sharing.syncTurnstileToken()]);
+    await vi.advanceTimersByTimeAsync(30_000);
+    const [result] = await attempt;
+    expect(result.status).toBe("rejected");
+    expect(document.querySelector("body > div[hidden]")).toBeNull();
+  });
 });
 
 describe("sharing codes", () => {
