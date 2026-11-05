@@ -260,8 +260,7 @@ describe("mergeFromSave household policy", () => {
   it("does not falsely flag a conflict for a villager the marriage cascade will flatten anyway", async () => {
     userState.setVillagerRelationship(CELINE, "proposed");
 
-    // A real transfer payload is normalized before merge, so a non-spouse villager already
-    // carries the post-cascade "platonic" value the incoming marriage will force everyone else to.
+    // The imported save already reports Celine as platonic, which the marriage cascade will apply.
     const { conflicts } = await mergeFromSave({
       villagerRelationships: { [ADELINE]: "married", [CELINE]: "platonic" },
     });

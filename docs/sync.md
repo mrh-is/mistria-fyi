@@ -642,9 +642,7 @@ The rewrite ships before or with sync, in all locales.
 
 - Firefox needs the save re-dropped or re-picked per session, through the same relay & rules.
 - No sync at all means manual check-offs.
-- Progress-transfer QR codes are retired (#138). Backup export & restore moves hand check-offs to a
-  new device; sync follows the gaming computer's save. The camera scanner & QR renderer live in
-  `src/routes/sync/qr.ts`.
+- Backup export & restore moves hand check-offs to a new device.
 
 ## Build order
 
@@ -653,5 +651,4 @@ The rewrite ships before or with sync, in all locales.
 2. **Feasibility & design:** the hardware checks (#130, #238, #341) & the setup UX design (#131).
 3. **The network pieces:** the relay (#132), following (#133), the courier (#134), the receiver
    (#135).
-4. **Launch work:** the privacy rewrite (#136), diagnostics (#137), & the launch itself (#291), then
-   deprecating QR transfer (#138).
+4. **Launch work:** the privacy rewrite (#136), diagnostics (#137), & the launch itself (#291).

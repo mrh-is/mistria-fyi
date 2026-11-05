@@ -189,7 +189,7 @@ reading the diff cold catches mistakes that the implementing context has come to
 PRs that touch these surfaces need full local verification & an especially careful review. The
 contributor chooses the reviewer: another agent, another model, or a human.
 
-- Engine logic, state machines, or transfer encoding
+- Engine logic or state machines
 - Data pipeline extractors or schema changes
 - Store persistence or save, import, & export flows
 - Authentication, abuse controls, or security boundaries
@@ -206,8 +206,7 @@ without it.
 - Successive sync bundles whose incoming value returns to its default between disagreements
 - Cancellation or a failed recovery followed by a reload or readback, keeping the last recoverable
   data
-- An update that waits through asynchronous transfer decoding & merge, until it completes or is
-  cancelled
+- An update that waits through asynchronous save import until it completes or is canceled
 
 Review once, against a deterministic target: the merge-base diff (the branch’s changes since it left
 its base branch). Don’t run separate spec, plan, & implementation reviews. If the review finds

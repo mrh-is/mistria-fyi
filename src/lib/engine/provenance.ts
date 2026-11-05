@@ -16,7 +16,7 @@ import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
  * - `inferred`: the app set it as a consequence (recorded prerequisites, a quest's recipe rewards,
  *   default unlocks, a marriage cascade).
  * - `save`: an applied save set it.
- * - `unknown`: recorded before provenance existed, or carried in by a device transfer.
+ * - `unknown`: a stored fact whose original source is unavailable.
  */
 export const PROVENANCE_SOURCES = ["inferred", "manual", "save", "unknown"] as const;
 export type ProvenanceSource = (typeof PROVENANCE_SOURCES)[number];
