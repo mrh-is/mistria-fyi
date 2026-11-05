@@ -103,8 +103,10 @@ session limits) belong in each contributor’s user config.
   dependency edit follows [Package commands](docs/agent-reference.md#package-commands) instead.
 - Use the configured global pnpm store & dependencies local to the worktree. Request any sandbox
   access you need. If setup itself fails, follow “Tooling failures” below.
-- Some platforms give a session a fresh, ephemeral container with its own assigned branch. Work
-  directly in that checkout. Don’t create a nested worktree or replace that branch.
+- Some platforms give a session a fresh, ephemeral container with its own assigned branch, such as a
+  cloud session. Work directly in that checkout. Don’t create a nested worktree or replace that
+  branch. Worktree setup doesn’t apply there; if pnpm reports stale dependencies, run
+  `pnpm install --frozen-lockfile`.
 - Start from the freshly fetched remote tip of the intended branch. Never reset existing work,
   switch a shared checkout, or discard changes to get there.
 - Each editing subagent needs a worktree that its harness lets it edit. In Claude Code, spawn it
