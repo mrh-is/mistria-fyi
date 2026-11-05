@@ -4,6 +4,7 @@
   import { categoryForKey, categoryKeyForPathname } from "#lib/data/categories.js";
   import { getCategoryProgress } from "#lib/engine/categories.js";
   import { deLocalizeHref } from "#lib/paraglide/runtime.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { page } from "$app/state";
 
@@ -19,7 +20,12 @@
   });
   const { color, name } = $derived(categoryForKey(key, data.locale));
 
-  let progress = $derived(getCategoryProgress(key, userState.progressContext));
+  // The header agrees with the sections below it, so it follows this page's source filters.
+  let progress = $derived(
+    getCategoryProgress(key, userState.progressContext, {
+      matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
+    }),
+  );
 </script>
 
 <div class="min-w-0" style="--primary: {color}">

@@ -10,6 +10,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import { addProgress } from "#lib/presentation/progress-scope.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -29,42 +30,39 @@
       .toSorted((a, b) => nameCollator(props.locale).compare(a.name, b.name)),
   );
 
-  let { completedCount, totalCount } = $derived.by(() => {
-    let completed = 0;
-    let total = 0;
-    for (const a of animals) {
-      const { displayableCompletedItemCount, displayableItemCount } = props.sectionConfig(a.id);
-      completed += displayableCompletedItemCount;
-      total += displayableItemCount;
-    }
-    return { completedCount: completed, totalCount: total };
-  });
+  let progress = $derived(addProgress(animals.map((a) => props.sectionConfig(a.id).progress)));
 </script>
 
 {#if animals.some((a) => props.hasDisplayableItem(a.id))}
   <ExpandableSection
     locale={props.locale}
-    count={completedCount}
+    count={progress.completed}
     forceOpen={!!toolbarState.searchQuery}
     name={props.name}
     reportCategory={props.reportCategory}
-    total={totalCount}
+    remaining={progress.remainingInScope}
+    total={progress.total}
   >
     {#each animals as animal (animal.id)}
-      {@const { displayableCompletedItemCount, displayableItemCount, isVisible, visibleItems } =
-        props.sectionConfig(animal.id)}
+      {@const {
+        displayableItemCount,
+        isVisible,
+        progress: animalProgress,
+        visibleItems,
+      } = props.sectionConfig(animal.id)}
       {#if displayableItemCount > 0 && (!toolbarState.searchQuery || visibleItems.length > 0)}
         <SpoilerSection name={animal.name} spoilered={!isVisible}>
           {#if visibleItems.length > 0}
             <ExpandableSection
               locale={props.locale}
               depth={1}
-              count={displayableCompletedItemCount}
+              count={animalProgress.completed}
               forceOpen={!!toolbarState.searchQuery}
               name={animal.name}
               reportCategory={props.reportCategory}
               reportEntityId={animal.id}
-              total={displayableItemCount}
+              remaining={animalProgress.remainingInScope}
+              total={animalProgress.total}
             >
               <TrackerRowList getKey={(itemRow) => itemRow.id} items={visibleItems}>
                 {#snippet row(itemRow)}

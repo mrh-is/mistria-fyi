@@ -280,6 +280,10 @@
                   {locale}
                   depth={1}
                   count={section.completed}
+                  remaining={section.rows.filter(
+                    ({ entry, window }) =>
+                      entry.obtainable && !entry.completed && visibleWindows().includes(window),
+                  ).length}
                   total={section.total}
                   forceOpen={anchor === section.id ||
                     (section.id === "progress" && anchor === "source-progress") ||

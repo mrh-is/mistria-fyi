@@ -159,8 +159,9 @@ describe("projectAlmanac", () => {
           weather: (["calm", "inclement", "heavy_inclement", "special"] as const)[sample % 4],
         },
       };
+      const matchesSources = (): boolean => sample % 2 === 0;
       const projection = projectAlmanac(projectionContext, {
-        matchesSources: () => sample % 2 === 0,
+        matchesSources,
         showCompleted: random() < 0.5,
         showUnobtainable: random() < 0.5,
       });
@@ -171,7 +172,7 @@ describe("projectAlmanac", () => {
         sum.total += section.total;
       }
       expect(sum).toEqual(projection.totals);
-      expect(sum).toEqual(getCategoryProgress("almanac", projectionContext));
+      expect(sum).toEqual(getCategoryProgress("almanac", projectionContext, { matchesSources }));
       const applicableRows = projection.sections
         .flatMap(({ rows }) => rows)
         .filter((row) => row.obtainable);

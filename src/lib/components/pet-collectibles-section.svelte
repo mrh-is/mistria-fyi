@@ -11,6 +11,7 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -69,13 +70,20 @@
 
   let scopedPetSkinEntries = $derived(petSkinEntries.filter((entry) => isScoped(entry)));
 
-  let cosmeticCompletedCount = $derived(
-    scopedPetCosmeticEntries.filter((entry) => userState.state.progress.petCosmetics.has(entry.id))
-      .length,
+  let cosmeticProgress = $derived(
+    countProgress(
+      petCosmeticEntries,
+      ({ id }) => userState.state.progress.petCosmetics.has(id),
+      ({ sources }) => toolbarState.matchesSourceFilters(sources),
+    ),
   );
 
-  let skinCompletedCount = $derived(
-    scopedPetSkinEntries.filter((entry) => userState.state.progress.petSkins.has(entry.id)).length,
+  let skinProgress = $derived(
+    countProgress(
+      petSkinEntries,
+      ({ id }) => userState.state.progress.petSkins.has(id),
+      ({ sources }) => toolbarState.matchesSourceFilters(sources),
+    ),
   );
 
   let visibleCosmeticEntries = $derived(
@@ -112,11 +120,12 @@
 {#if collection === "cosmetics" && visibleCosmeticEntries.length > 0}
   <ExpandableSection
     {locale}
-    count={cosmeticCompletedCount}
+    count={cosmeticProgress.completed}
     forceOpen={!!nameFilter}
     name={m.animals_pet_cosmetics_section_name()}
     reportCategory="pet-cosmetics"
-    total={scopedPetCosmeticEntries.length}
+    remaining={cosmeticProgress.remainingInScope}
+    total={cosmeticProgress.total}
   >
     <TrackerRowList getKey={(entry) => entry.id} items={visibleCosmeticEntries}>
       {#snippet row(entry)}
@@ -152,11 +161,12 @@
 {#if collection === "skins" && visibleSkinEntries.length > 0}
   <ExpandableSection
     {locale}
-    count={skinCompletedCount}
+    count={skinProgress.completed}
     forceOpen={!!nameFilter}
     name={m.animals_pet_skins_section_name()}
     reportCategory="pet-skins"
-    total={scopedPetSkinEntries.length}
+    remaining={skinProgress.remainingInScope}
+    total={skinProgress.total}
   >
     <TrackerRowList getKey={(entry) => entry.id} items={visibleSkinEntries}>
       {#snippet row(entry)}

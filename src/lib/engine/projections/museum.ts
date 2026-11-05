@@ -54,8 +54,14 @@ export function projectMuseum(
   for (const row of rows) {
     if (!row.obtainable) continue;
     totals.total++;
-    if (row.completed) totals.completed++;
-    else if (row.available) totals.remainingInScope++;
+    if (row.completed) {
+      totals.completed++;
+    } else if (
+      row.available &&
+      (options.matchesSources?.(trackerData.items[row.id].sources) ?? true)
+    ) {
+      totals.remainingInScope++;
+    }
   }
   return { rows, totals };
 }

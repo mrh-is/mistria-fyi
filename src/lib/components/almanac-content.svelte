@@ -149,16 +149,17 @@
 <SpoilerGuardDialog guard={spoilerGuard} />
 
 <SectionGroups getKey={(view) => view.id} grouping={sectionGrouping} items={sectionViews}>
-  {#snippet section({ baseRows, canonicalIds, completedCount, id, scopedTotal, visibleRows })}
+  {#snippet section({ baseRows, canonicalIds, id, progress, visibleRows })}
     {#if baseRows.length > 0 && (!nameFilter || visibleRows.length > 0)}
       <ExpandableSection
         {locale}
-        count={completedCount}
+        count={progress.completed}
         forceOpen={!!nameFilter}
         name={getName("ui", id, locale)}
         reportCategory="almanac"
         reportEntityId={id}
-        total={scopedTotal}
+        remaining={progress.remainingInScope}
+        total={progress.total}
       >
         <TrackerRowList getKey={(item) => item.canonicalId} items={visibleRows}>
           {#snippet row(row)}

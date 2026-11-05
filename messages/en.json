@@ -47,6 +47,8 @@
   "toolbar_filters_cleared": "All filters cleared",
   "page_header_back_to_home": "Back to home",
   "page_header_progress": "{completed} of {total} completed",
+  "progress_for_now": "{count} for now",
+  "progress_done_for_now": "done for now",
   "home_index_heading": "Index",
   "home_everything_label": "Everything",
   "home_page_description": "Track museum donations, almanac finds, recipes, relationships, skills, quests, & more in Fields of Mistria, as you work toward 100% completion.",

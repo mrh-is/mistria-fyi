@@ -4,6 +4,7 @@
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -58,16 +59,20 @@
 
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<CosmeticId> {
     const animal = trackerData.animals[animalId];
-    let completedCount = 0;
     let displayableCount = 0;
     const visibleCosmetics: AnimalSubcategoryRowProps<CosmeticId>[] = [];
-    for (const [cid] of recordEntries(animal.cosmetics)) {
+    const cosmeticEntries = recordEntries(animal.cosmetics);
+    const progress = countProgress(
+      cosmeticEntries,
+      ([cid]) => hasCompletedCosmetic(animalId, cid),
+      ([, { sources }]) => toolbarState.matchesSourceFilters(sources),
+    );
+    for (const [cid] of cosmeticEntries) {
       if (!matchesSearch(animalId, cid)) continue;
       if (!toolbarState.matchesSourceFilters(animal.cosmetics[cid].sources)) continue;
       displayableCount++;
       const cosmeticId = cid;
       const completed = hasCompletedCosmetic(animalId, cosmeticId);
-      if (completed) completedCount++;
       if (isCosmeticVisible(animalId, cosmeticId)) {
         visibleCosmetics.push({
           completed,
@@ -79,9 +84,9 @@
       }
     }
     return {
-      displayableCompletedItemCount: completedCount,
       displayableItemCount: displayableCount,
       isVisible: isSpeciesVisible(animalId),
+      progress,
       visibleItems: visibleCosmetics,
     };
   }

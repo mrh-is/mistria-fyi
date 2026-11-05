@@ -21,6 +21,7 @@
   import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -132,6 +133,14 @@
     }),
   );
 
+  let spellProgress = $derived(
+    countProgress(
+      spells,
+      ({ id }) => userState.state.progress.spells.has(id),
+      ({ sources }) => toolbarState.matchesSourceFilters(sources),
+    ),
+  );
+
   registerPageSearch(() => ({ matches: namedSpells.length, visible: visibleSpells.length }));
 </script>
 
@@ -182,12 +191,13 @@
       <ExpandableSection
         {locale}
         forceOpen={!!nameFilter}
-        count={scopedSpells.filter((spell) => userState.state.progress.spells.has(spell.id)).length}
+        count={spellProgress.completed}
         name={getName("ui", "magic_spells", locale)}
         reportCategory="mines"
         reportEntityId="spells"
         {defaultOpen}
-        total={scopedSpells.length}
+        remaining={spellProgress.remainingInScope}
+        total={spellProgress.total}
       >
         <TrackerRowList getKey={(spell) => spell.id} items={visibleSpells}>
           {#snippet row(spell)}

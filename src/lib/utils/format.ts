@@ -118,6 +118,11 @@ export function formatPercent(value: number, locale: LocaleCode): string {
   return new Intl.NumberFormat(locale, { style: "percent" }).format(value / 100);
 }
 
+/** {@link formatPercent} in pieces, so a page can style the sign wherever the locale puts it. */
+export function formatPercentParts(value: number, locale: LocaleCode): Intl.NumberFormatPart[] {
+  return new Intl.NumberFormat(locale, { style: "percent" }).formatToParts(value / 100);
+}
+
 export function seasonLabelAbbr(season: Season): string {
   return SEASON_LABEL_ABBR[season]();
 }

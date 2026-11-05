@@ -16,10 +16,8 @@
     Math.max(
       4,
       ...CATEGORY_KEYS.flatMap((key) => {
-        const { completed, remainingInScope } = progress[key];
-        return [completed, completed + remainingInScope].map(
-          (count) => formatNumber(count, page.data.locale).length,
-        );
+        const { completed, total } = progress[key];
+        return [completed, total].map((count) => formatNumber(count, page.data.locale).length);
       }),
     ),
   );

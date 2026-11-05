@@ -4,11 +4,13 @@
   import { slide } from "svelte/transition";
 
   import { Icon } from "#lib/components/icon/index.js";
+  import ProgressScopeNote from "#lib/components/progress-scope-note.svelte";
   import SectionTrigger from "#lib/components/section-trigger.svelte";
   import { registerCompletionSection } from "#lib/controllers/completion-scope.svelte.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { progressScope, withProgressScope } from "#lib/presentation/progress-scope.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
@@ -28,6 +30,7 @@
     forceOpen = false,
     locale,
     name,
+    remaining,
     reportCategory,
     reportEntityId,
     reportExtra,
@@ -40,6 +43,8 @@
     forceOpen?: boolean;
     locale: LocaleCode;
     name: string;
+    /** Unfinished rows the filters leave in scope, for the line under the fraction. */
+    remaining?: number;
     reportCategory?: ReportCategory;
     reportEntityId?: string;
     reportExtra?: Record<string, number | string>;
@@ -70,7 +75,11 @@
       ? Math.min(100, Math.max(0, (boundedCount / total) * 100))
       : 0,
   );
-  // A filter that leaves nothing in scope is not a finished section.
+  let scope = $derived(
+    total === undefined || boundedCount === undefined || remaining === undefined
+      ? undefined
+      : progressScope({ completed: boundedCount, remainingInScope: remaining, total }),
+  );
   let complete = $derived(total !== undefined && total > 0 && boundedCount === total);
   const completionSection = registerCompletionSection(
     () => complete,
@@ -125,11 +134,15 @@
       aria-expanded={isOpen}
       aria-controls={contentId}
       aria-label={total !== undefined && boundedCount !== undefined
-        ? m.section_progress_label({
-            completed: formatNumber(boundedCount, locale),
-            name,
-            total: formatNumber(total, locale),
-          })
+        ? withProgressScope(
+            m.section_progress_label({
+              completed: formatNumber(boundedCount, locale),
+              name,
+              total: formatNumber(total, locale),
+            }),
+            scope,
+            locale,
+          )
         : undefined}
       {@attach reportable}
     >
@@ -139,11 +152,14 @@
           ? 'rotate-90'
           : ''}"
       />
-      <span class="section-name">{name}</span>
+      <span class="section-name" class:section-name--done-for-now={scope?.kind === "done"}
+        >{name}</span
+      >
       {#if total !== undefined && boundedCount !== undefined}
-        <span class="section-count" aria-hidden="true"
-          >{formatNumber(boundedCount, locale)} / {formatNumber(total, locale)}</span
-        >
+        <span class="section-count" aria-hidden="true">
+          <span>{formatNumber(boundedCount, locale)} / {formatNumber(total, locale)}</span>
+          {#if scope}<ProgressScopeNote {locale} {scope} />{/if}
+        </span>
         <span class="section-progress" data-testid="section-progress" aria-hidden="true">
           <i data-testid="section-progress-fill" style="width: {progress}%"></i>
         </span>
@@ -182,6 +198,11 @@
     line-height: 1.2;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .section-name--done-for-now {
+    color: var(--color-ink-muted);
+    font-weight: 400;
   }
 
   .section-count {

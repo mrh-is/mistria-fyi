@@ -14,6 +14,7 @@
   import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -22,6 +23,7 @@
   import { recordEntries } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
+  import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {
     MountAppearance,
@@ -83,7 +85,15 @@
     namedEntries.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
   );
 
-  let completedCount = $derived(scopedEntries.filter((entry) => isCompleted(entry)).length);
+  function mountProgress(mountEntries: MountEntry[]): CategoryProgress {
+    return countProgress(
+      mountEntries,
+      (entry) => isCompleted(entry),
+      ({ sources }) => toolbarState.matchesSourceFilters(sources),
+    );
+  }
+
+  let progress = $derived(mountProgress(entries));
 
   let visibleEntries = $derived(
     scopedEntries.filter((entry) => (isCompleted(entry) ? showsCompletedRows() : true)),
@@ -126,23 +136,25 @@
 {#if visibleEntries.length > 0}
   <ExpandableSection
     {locale}
-    count={completedCount}
+    count={progress.completed}
     forceOpen={!!nameFilter}
     name={getName("ui", "mount", locale)}
     reportCategory="mount-appearances"
-    total={scopedEntries.length}
+    remaining={progress.remainingInScope}
+    total={progress.total}
   >
     {#each [{ kind: "appearance", name: m.animals_mount_appearances() }, { kind: "perk", name: m.animals_mount_perks() }] as group (group.kind)}
-      {@const scopedGroupEntries = scopedEntries.filter((entry) => entry.kind === group.kind)}
+      {@const groupProgress = mountProgress(entries.filter((entry) => entry.kind === group.kind))}
       {@const visibleGroupEntries = visibleEntries.filter((entry) => entry.kind === group.kind)}
       {#if visibleGroupEntries.length > 0}
         <ExpandableSection
           {locale}
           depth={1}
           forceOpen={!!nameFilter}
-          count={scopedGroupEntries.filter((entry) => isCompleted(entry)).length}
+          count={groupProgress.completed}
           name={group.name}
-          total={scopedGroupEntries.length}
+          remaining={groupProgress.remainingInScope}
+          total={groupProgress.total}
         >
           <TrackerRowList
             getKey={(entry) => `${entry.kind}:${entry.id}`}

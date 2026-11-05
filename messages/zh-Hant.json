@@ -47,6 +47,8 @@
   "toolbar_filters_cleared": "已清除所有篩選",
   "page_header_back_to_home": "返回首頁",
   "page_header_progress": "已完成 {completed}/{total}",
+  "progress_for_now": "目前 {count} 項",
+  "progress_done_for_now": "目前已完成",
   "home_index_heading": "索引",
   "home_everything_label": "全部",
   "home_page_description": "追蹤《Fields of Mistria》中的博物館捐贈、年鑑發現、食譜、關係、技能、任務等內容，向 100% 完成度邁進。",

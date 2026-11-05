@@ -34,7 +34,7 @@ export function projectQuests(
       rows.push({
         completed: ctx.progress.questStates[id] === "completed",
         id,
-        inScope: true,
+        inScope: options.matchesSources?.(quest.sources) ?? true,
         spoilered: isSpoilered(quest.visibility, options.progressionState),
       });
     }

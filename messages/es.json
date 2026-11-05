@@ -47,6 +47,8 @@
   "toolbar_filters_cleared": "Todos los filtros borrados",
   "page_header_back_to_home": "Volver al inicio",
   "page_header_progress": "{completed} de {total} completados",
+  "progress_for_now": "{count} por ahora",
+  "progress_done_for_now": "listo por ahora",
   "home_index_heading": "Índice",
   "home_everything_label": "Todo",
   "home_page_description": "Sigue las donaciones al museo, los hallazgos del almanaque, las recetas, las relaciones, las habilidades, las misiones y más en Fields of Mistria mientras avanzas hacia el 100 % de completado.",

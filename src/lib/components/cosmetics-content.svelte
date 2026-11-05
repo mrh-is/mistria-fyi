@@ -18,6 +18,7 @@
   import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -26,6 +27,7 @@
   import { recordEntries } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
+  import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { CosmeticId, CosmeticSlot } from "#lib/types/tracker-data.js";
@@ -136,6 +138,14 @@
     return !userState.state.progress.cosmetics.has(cosmetic.id) || showsCompletedRows();
   }
 
+  function cosmeticsProgress(cosmetics: CosmeticEntry[]): CategoryProgress {
+    return countProgress(
+      cosmetics,
+      ({ id }) => userState.state.progress.cosmetics.has(id),
+      ({ sources }) => toolbarState.matchesSourceFilters(sources),
+    );
+  }
+
   registerPageSearch(() => {
     const cosmetics = groups().flatMap(({ subCategories }) =>
       subCategories.flatMap((subCategory) => subCategory.cosmetics),
@@ -172,7 +182,7 @@
 <SectionGroups getKey={(group) => group.slot} grouping={sectionGrouping} items={groups()}>
   {#snippet section({ name, nested, slot, subCategories })}
     {@const allInSlot = subCategories.flatMap(({ cosmetics }) => cosmetics)}
-    {@const scopedInSlot = allInSlot.filter(isScoped)}
+    {@const slotProgress = cosmeticsProgress(allInSlot)}
     {@const visibleInSlot = allInSlot.filter(isVisible)}
     {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
       {@const completed = userState.state.progress.cosmetics.has(cosmetic.id)}
@@ -200,27 +210,28 @@
       <ExpandableSection
         {locale}
         forceOpen={!!nameFilter}
-        count={scopedInSlot.filter((c) => userState.state.progress.cosmetics.has(c.id)).length}
+        count={slotProgress.completed}
         {name}
         reportCategory="cosmetic-slot"
         reportEntityId={slot}
-        total={scopedInSlot.length}
+        remaining={slotProgress.remainingInScope}
+        total={slotProgress.total}
       >
         {#each subCategories as { cosmetics, key: subCategory, name: subCategoryName } (subCategory)}
           {@const visibleCosmetics = cosmetics.filter(isVisible)}
           {#if visibleCosmetics.length > 0}
             {#if nested}
+              {@const subCategoryProgress = cosmeticsProgress(cosmetics)}
               <ExpandableSection
                 {locale}
-                count={cosmetics.filter(
-                  (c) => isScoped(c) && userState.state.progress.cosmetics.has(c.id),
-                ).length}
+                count={subCategoryProgress.completed}
                 depth={1}
                 forceOpen={!!nameFilter}
                 name={subCategoryName}
                 reportCategory="cosmetic"
                 reportEntityId={`${slot}:${subCategory}`}
-                total={cosmetics.filter(isScoped).length}
+                remaining={subCategoryProgress.remainingInScope}
+                total={subCategoryProgress.total}
               >
                 <TrackerRowList
                   getKey={(cosmetic) => cosmetic.id}

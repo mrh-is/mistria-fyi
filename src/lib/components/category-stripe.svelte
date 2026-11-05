@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Icon } from "#lib/components/icon/index.js";
+  import ProgressScopeNote from "#lib/components/progress-scope-note.svelte";
   import * as m from "#lib/paraglide/messages.js";
+  import { progressScope, withProgressScope } from "#lib/presentation/progress-scope.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
@@ -19,42 +21,52 @@
     completed,
     completedLabel,
     description,
-    filteredTotal,
     href,
     icon,
     mobileRibbon = false,
     name,
+    remainingInScope,
   }: {
-    /** Everything in the category, filters aside; reaching it earns the gold-leaf edge. */
+    /** Everything in the category, filters aside: the fraction's denominator. */
     categoryTotal: number;
     color: string;
     completed: number;
     /** Replaces the visible completed count (the share image shows "??"). */
     completedLabel?: string;
     description: string;
-    /** The count shown after the slash: what's completed plus what the filters still show. */
-    filteredTotal: number;
     href: Path;
     icon: "all" | CategoryKey;
     mobileRibbon?: boolean;
     name: string;
+    /** Unfinished rows the filters leave in scope; omitted, no second line shows. */
+    remainingInScope?: number;
   } = $props();
 
-  let pct = $derived(filteredTotal > 0 ? (completed / filteredTotal) * 100 : 0);
+  let pct = $derived(categoryTotal > 0 ? (completed / categoryTotal) * 100 : 0);
+  let scope = $derived(
+    remainingInScope === undefined
+      ? undefined
+      : progressScope({ completed, remainingInScope, total: categoryTotal }),
+  );
   let isComplete = $derived(categoryTotal > 0 && completed >= categoryTotal);
 </script>
 
 <a
   class="category-stripe"
   class:category-stripe--complete={isComplete}
+  class:category-stripe--done-for-now={scope?.kind === "done"}
   class:category-stripe--mobile-ribbon={mobileRibbon}
   data-category-stripe
   href={localizedHref(href)}
-  aria-label={m.section_progress_label({
-    completed: formatNumber(completed, page.data.locale),
-    name,
-    total: formatNumber(filteredTotal, page.data.locale),
-  })}
+  aria-label={withProgressScope(
+    m.section_progress_label({
+      completed: formatNumber(completed, page.data.locale),
+      name,
+      total: formatNumber(categoryTotal, page.data.locale),
+    }),
+    scope,
+    page.data.locale,
+  )}
   style="--category-color: {color}; --category-progress-percent: {pct}%"
 >
   <span class="category-copy">
@@ -65,7 +77,10 @@
   <span class="category-count" aria-hidden="true">
     <span>{completedLabel ?? formatNumber(completed, page.data.locale)}</span>
     <span class="category-slash">/</span>
-    <span>{formatNumber(filteredTotal, page.data.locale)}</span>
+    <span>{formatNumber(categoryTotal, page.data.locale)}</span>
+    {#if scope}
+      <span class="category-scope"><ProgressScopeNote locale={page.data.locale} {scope} /></span>
+    {/if}
   </span>
 
   <span class="category-ribbon" data-category-ribbon aria-hidden="true">
@@ -159,11 +174,25 @@
     white-space: nowrap;
   }
 
+  .category-scope {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+  }
+
+  .category-stripe--done-for-now .category-name,
+  .category-stripe--done-for-now .category-count {
+    color: var(--color-ink-muted);
+  }
+
+  .category-stripe--done-for-now .category-name {
+    font-weight: 400;
+  }
+
   .category-count > :first-child {
     text-align: right;
   }
 
-  .category-count > :last-child {
+  .category-count > :nth-child(3) {
     text-align: left;
   }
 

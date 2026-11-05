@@ -31,9 +31,21 @@ describe("OverallProgress", () => {
 
     expect(
       queries.getByRole("img", {
-        name: `0 of ${formatNumber(expectedTotal, "en")} completed overall, 0%`,
+        name: new RegExp(
+          `^0 of ${formatNumber(expectedTotal, "en")} completed overall, 0%, [\\d,]+ for now$`,
+        ),
       }),
     ).toBeTruthy();
+  });
+
+  it("raises the percent sign wherever the locale puts it", () => {
+    page.data.locale = "fr";
+    const { container } = renderToFragment(OverallProgress, {
+      props: { progress: getAllProgress(userState.progressContext) },
+    });
+
+    expect(container.querySelector(".overall-percent__sign")?.textContent).toBe("%");
+    expect(container.querySelector(".overall-percent")?.textContent.trim()).toMatch(/^0\s%$/u);
   });
 
   it("localizes the overall progress label for Japanese", () => {
@@ -49,7 +61,7 @@ describe("OverallProgress", () => {
 
     expect(
       queries.getByRole("img", {
-        name: `全体で${formatNumber(expectedTotal, "ja")}件中0件完了、0%`,
+        name: new RegExp(`^全体で${formatNumber(expectedTotal, "ja")}件中0件完了、0%, 今は`),
       }),
     ).toBeTruthy();
   });
@@ -67,7 +79,9 @@ describe("OverallProgress", () => {
 
     expect(
       queries.getByRole("img", {
-        name: `Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00A0%`,
+        name: new RegExp(
+          `^Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00A0%, .+ пока$`,
+        ),
       }),
     ).toBeTruthy();
   });

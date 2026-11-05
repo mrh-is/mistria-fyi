@@ -47,6 +47,8 @@
   "toolbar_filters_cleared": "Все фильтры сброшены",
   "page_header_back_to_home": "Назад на главную",
   "page_header_progress": "Выполнено {completed} из {total}",
+  "progress_for_now": "{count} пока",
+  "progress_done_for_now": "пока всё",
   "home_index_heading": "Указатель",
   "home_everything_label": "Всё",
   "home_page_description": "Отслеживайте пожертвования музею, находки альманаха, рецепты, отношения, умения, задания и многое другое в Fields of Mistria на пути к 100% прохождения.",

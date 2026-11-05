@@ -21,6 +21,7 @@
     AnimalSubcategoryRowProps,
     AnimalSubcategorySectionConfig,
   } from "#lib/components/animal-subcategory.types.js";
+  import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {
     AnimalId,
@@ -120,15 +121,17 @@
     return !completed || showsCompletedRows();
   }
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<AnimalVariantId> {
-    let displayableCompletedItemCount = 0;
     let displayableItemCount = 0;
+    const progress: CategoryProgress = { completed: 0, remainingInScope: 0, total: 0 };
     const visibleItems: VariantRowConfig[] = [];
     forEachVariant(animalId, ([vid, variant], tier) => {
-      if (!matchesSearch(animalId, vid)) return;
       const completed = hasCompletedVariant(animalId, vid);
-      if (!isVariantInScope(animalId, variant, completed)) return;
+      const inScope = isVariantInScope(animalId, variant, completed);
+      progress.total++;
+      if (completed) progress.completed++;
+      else if (inScope) progress.remainingInScope++;
+      if (!inScope || !matchesSearch(animalId, vid)) return;
       displayableItemCount++;
-      if (completed) displayableCompletedItemCount++;
 
       if (!completed || showsCompletedRows()) {
         const totalTiers = trackerData.animals[animalId].variantTiers.length;
@@ -155,9 +158,9 @@
       return nameCollator(locale).compare(a.name, b.name);
     });
     return {
-      displayableCompletedItemCount,
       displayableItemCount,
       isVisible: isSpeciesVisible(animalId),
+      progress,
       visibleItems,
     };
   }

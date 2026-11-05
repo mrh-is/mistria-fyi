@@ -26,7 +26,7 @@ export function projectRecipes(
   const rows = recordEntries(trackerData.recipes).map(([id, recipe]): RecipeRow => ({
     completed: ctx.progress.almanacRecipes.has(id),
     id,
-    inScope: true,
+    inScope: options.matchesSources?.(recipe.sources) ?? true,
     spoilered: isSpoilered(recipe.visibility, options.progressionState),
   }));
   return { rows, totals: countChecklist(rows) };

@@ -1,7 +1,7 @@
 import { trackerData } from "#lib/data/index.js";
 import { isVariantInScope } from "#lib/engine/animal-availability.js";
 import { countChecklist, isSpoilered } from "#lib/engine/projections/category-projection.js";
-import { recordEntries, recordKeys } from "#lib/utils/record.js";
+import { recordEntries } from "#lib/utils/record.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
 import type {
@@ -9,6 +9,7 @@ import type {
   CategoryProjectionOptions,
   ChecklistRow,
 } from "#lib/engine/projections/category-projection.js";
+import type { Source } from "#lib/types/acquisition.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -44,6 +45,7 @@ export function projectAnimals(
   options: CategoryProjectionOptions = {},
 ): AnimalsProjection {
   const { progress } = ctx;
+  const matchesSources = (sources: Source[]): boolean => options.matchesSources?.(sources) ?? true;
   const animals = recordEntries(trackerData.animals).map(([animalId, animal]) => ({
     animal,
     animalId,
@@ -57,7 +59,9 @@ export function projectAnimals(
         rows.push({
           animalId,
           completed,
-          inScope: isVariantInScope(variant, animal.visibility, ctx, ctx.availabilityWindows),
+          inScope:
+            matchesSources([variant.source]) &&
+            isVariantInScope(variant, animal.visibility, ctx, ctx.availabilityWindows),
           kind: "variant",
           spoilered,
           variantId,
@@ -66,12 +70,12 @@ export function projectAnimals(
     }
   }
   for (const { animal, animalId, spoilered } of animals) {
-    for (const cosmeticId of recordKeys(animal.cosmetics)) {
+    for (const [cosmeticId, cosmetic] of recordEntries(animal.cosmetics)) {
       rows.push({
         animalId,
         completed: progress.animalCosmetics[animalId]?.has(cosmeticId) ?? false,
         cosmeticId,
-        inScope: true,
+        inScope: matchesSources(cosmetic.sources),
         kind: "cosmetic",
         spoilered,
       });
@@ -81,7 +85,7 @@ export function projectAnimals(
     rows.push({
       completed: progress.mountAppearances.has(id),
       id,
-      inScope: true,
+      inScope: matchesSources(appearance.sources),
       kind: "mountAppearance",
       spoilered: isSpoilered(appearance.visibility, options.progressionState),
     });
@@ -90,25 +94,25 @@ export function projectAnimals(
     rows.push({
       completed: progress.unlockedPerks.has(id),
       id,
-      inScope: true,
+      inScope: matchesSources(perk.sources),
       kind: "mountPerk",
       spoilered: isSpoilered(perk.visibility, options.progressionState),
     });
   }
-  for (const id of recordKeys(trackerData.pets.cosmetics)) {
+  for (const [id, cosmetic] of recordEntries(trackerData.pets.cosmetics)) {
     rows.push({
       completed: progress.petCosmetics.has(id),
       id,
-      inScope: true,
+      inScope: matchesSources(cosmetic.sources),
       kind: "petCosmetic",
       spoilered: false,
     });
   }
-  for (const id of recordKeys(trackerData.pets.skins)) {
+  for (const [id, skin] of recordEntries(trackerData.pets.skins)) {
     rows.push({
       completed: progress.petSkins.has(id),
       id,
-      inScope: true,
+      inScope: matchesSources(skin.sources),
       kind: "petSkin",
       spoilered: false,
     });

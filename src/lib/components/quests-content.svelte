@@ -19,6 +19,7 @@
   import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { countProgress } from "#lib/presentation/progress-scope.js";
   import { buildQuestSections } from "#lib/presentation/quest-sections.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
@@ -27,6 +28,7 @@
   import { matchesName } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
+  import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { QuestRow, QuestSection } from "#lib/presentation/quest-sections.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { QuestId, QuestType } from "#lib/types/tracker-data.js";
@@ -47,9 +49,9 @@
   /** A section's rows within the source filters, with their counter values. */
   interface SectionView {
     categorySpoilered: boolean;
-    completedCount: number;
     /** The rows the search matches, whatever the page's filters say. */
     namedRows: QuestRow[];
+    progress: CategoryProgress;
     scopedRows: QuestRow[];
     section: QuestSection;
     visibleRows: QuestRow[];
@@ -78,8 +80,12 @@
       );
       return {
         categorySpoilered,
-        completedCount: scopedRows.filter((row) => isRowCompleted(row)).length,
         namedRows,
+        progress: countProgress(
+          section.rows,
+          (row) => isRowCompleted(row),
+          (row) => row.kind === "craving" || toolbarState.matchesSourceFilters(row.sources),
+        ),
         scopedRows,
         section,
         visibleRows: scopedRows.filter((row) =>
@@ -151,7 +157,7 @@
 >
   {#snippet section({
     categorySpoilered,
-    completedCount,
+    progress,
     scopedRows,
     section: questSection,
     visibleRows,
@@ -164,12 +170,13 @@
       >
         <ExpandableSection
           {locale}
-          count={completedCount}
+          count={progress.completed}
           forceOpen={!!nameFilter}
           name={typeLabel(questSection.questType)}
           reportCategory="quest-section"
           reportEntityId={questSection.questType}
-          total={scopedRows.length}
+          remaining={progress.remainingInScope}
+          total={progress.total}
         >
           {#if visibleRows.length === 0 && scopedRows.length > 0}
             <TrackerEmptyState message={m.all_completed_message()} />

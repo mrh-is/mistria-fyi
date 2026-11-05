@@ -12,6 +12,7 @@
   import FeedbackPanel from "#lib/components/feedback-panel.svelte";
   import FilterPanel from "#lib/components/filter-panel.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
+  import { Icon } from "#lib/components/icon/index.js";
   import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
   import SyncStatusPanel from "#lib/components/sync/sync-status-panel.svelte";
@@ -318,7 +319,9 @@
             </button>
           {/if}
           <button
-            class="floating-tool {activePanel === 'visibility'
+            class="floating-tool {toolbar.worldState
+              ? 'floating-tool--tabbed'
+              : ''} {activePanel === 'visibility'
               ? 'floating-tool--active'
               : filtersActive
                 ? 'floating-tool--filtered'
@@ -332,6 +335,17 @@
             }}
           >
             <IconFilter class="size-5" />
+            {#if toolbar.worldState}
+              <!-- Sits behind the button's edge, & stays neutral when the button turns amber. -->
+              <span class="filter-world-tab" data-filter-world-tab aria-hidden="true">
+                <Icon.Season season={userState.state.worldState.season} class="size-3" />
+                <Icon.Weather
+                  season={userState.state.worldState.season}
+                  weather={userState.state.worldState.weather}
+                  class="size-3"
+                />
+              </span>
+            {/if}
           </button>
         </div>
       </div>
@@ -409,6 +423,30 @@
       box-shadow 150ms ease-out,
       color 150ms ease-out,
       transform 150ms ease-out;
+  }
+
+  .floating-tool--tabbed {
+    position: relative;
+    margin-right: 20px;
+  }
+
+  .filter-world-tab {
+    position: absolute;
+    /* Offsets start inside the button's 1px border, so these sit 2px in from its outer edge. */
+    top: 1px;
+    bottom: 1px;
+    left: 100%;
+    z-index: -1;
+    display: grid;
+    width: 20px;
+    place-items: center;
+    align-content: center;
+    gap: 2px;
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
+    border-left: 0;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    background: var(--color-paper-sunken);
+    color: var(--color-ink-muted);
   }
 
   .floating-tool:is(:hover, :focus-visible),

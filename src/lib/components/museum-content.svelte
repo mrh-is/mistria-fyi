@@ -18,10 +18,17 @@
   import { getName } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { isInProgressScope, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
+  import { isItemObtainable } from "#lib/engine/applicability.js";
+  import {
+    isInProgressScope,
+    isItemAvailable,
+    isItemDimmed,
+    isRowVisible,
+  } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
+  import { addProgress, countProgress } from "#lib/presentation/progress-scope.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -30,6 +37,7 @@
   import { recordEntries, recordValues } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
+  import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {
@@ -96,16 +104,14 @@
   interface SetConfig {
     baseItemCount: number;
     name: string;
-    scopedCompletedItemCount: number;
-    scopedItemCount: number;
+    progress: CategoryProgress;
     visibleItems: (Item & { itemId: ItemId })[];
   }
 
   interface WingConfig {
     baseItemCount: number;
     isVisible: boolean;
-    scopedCompletedItemCount: number;
-    scopedItemCount: number;
+    progress: CategoryProgress;
     setConfigs: (SetConfig & { setId: MuseumWingSetId })[];
   }
 
@@ -141,14 +147,26 @@
     return matchesName(getName("items", itemId, locale), nameFilter, locale);
   }
 
+  /** Every obtainable item in the set, whatever the page shows, as the page header counts them. */
+  function setProgress(set: MuseumWingSet): CategoryProgress {
+    return countProgress(
+      set.items.filter((itemId) => isItemObtainable(itemId, userState.state.progress)),
+      (itemId) => isItemComplete(itemId),
+      (itemId) => {
+        const item = trackerData.items[itemId];
+        return (
+          isItemAvailable(item, userState.progressContext, visibleWindows()) &&
+          toolbarState.matchesSourceFilters(item.sources)
+        );
+      },
+    );
+  }
+
   function setConfig(wingId: MuseumWingId, setId: MuseumWingSetId, set: MuseumWingSet): SetConfig {
     return {
       baseItemCount: set.items.filter(isItemBaseScoped).length,
       name: getName("museum_wings", `${wingId}/sets/${setId}`, locale),
-      scopedCompletedItemCount: set.items.filter(
-        (itemId) => isItemScoped(itemId) && isItemComplete(itemId),
-      ).length,
-      scopedItemCount: set.items.filter(isItemScoped).length,
+      progress: setProgress(set),
       visibleItems: set.items
         .filter(isItemVisible)
         .map((itemId) => ({ itemId, ...trackerData.items[itemId] })),
@@ -183,11 +201,7 @@
     return {
       baseItemCount: setConfigs.reduce((sum, { baseItemCount }) => sum + baseItemCount, 0),
       isVisible: setConfigs.length > 0,
-      scopedCompletedItemCount: setConfigs.reduce(
-        (sum, { scopedCompletedItemCount }) => sum + scopedCompletedItemCount,
-        0,
-      ),
-      scopedItemCount: setConfigs.reduce((sum, { scopedItemCount }) => sum + scopedItemCount, 0),
+      progress: addProgress(recordValues(wing.sets).map((set) => setProgress(set))),
       setConfigs,
     };
   }
@@ -219,23 +233,25 @@
     {#if config.isVisible}
       <ExpandableSection
         {locale}
-        count={config.scopedCompletedItemCount}
+        count={config.progress.completed}
         forceOpen={!!nameFilter}
         name={getName("museum_wings", wingId, locale)}
         reportCategory="museum-wing"
         reportEntityId={wingId}
-        total={config.scopedItemCount}
+        remaining={config.progress.remainingInScope}
+        total={config.progress.total}
       >
         {#each config.setConfigs as set (set.setId)}
           <ExpandableSection
             {locale}
             depth={1}
-            count={set.scopedCompletedItemCount}
+            count={set.progress.completed}
             forceOpen={!!nameFilter}
             name={set.name}
             reportCategory="museum-set"
             reportEntityId={set.setId}
-            total={set.scopedItemCount}
+            remaining={set.progress.remainingInScope}
+            total={set.progress.total}
           >
             <TrackerRowList getKey={(item) => item.itemId} items={set.visibleItems}>
               {#snippet row(item)}
