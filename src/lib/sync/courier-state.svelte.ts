@@ -20,8 +20,12 @@ const courier = createCourier({
   },
 });
 
+function resumeWhenVisible(): void {
+  if (document.visibilityState === "visible") courier.resume();
+}
+
 function resume(): void {
-  if (document.visibilityState === "visible") courier.retry();
+  courier.resume();
 }
 
 function retry(): void {
@@ -39,13 +43,13 @@ export const syncCourier = {
     const returned = (event: PageTransitionEvent): void => {
       if (event.persisted) courier.start();
     };
-    document.addEventListener("visibilitychange", resume);
-    globalThis.addEventListener("online", retry);
+    document.addEventListener("visibilitychange", resumeWhenVisible);
+    globalThis.addEventListener("online", resume);
     globalThis.addEventListener("pagehide", leave);
     globalThis.addEventListener("pageshow", returned);
     return () => {
-      document.removeEventListener("visibilitychange", resume);
-      globalThis.removeEventListener("online", retry);
+      document.removeEventListener("visibilitychange", resumeWhenVisible);
+      globalThis.removeEventListener("online", resume);
       globalThis.removeEventListener("pagehide", leave);
       globalThis.removeEventListener("pageshow", returned);
       courier.stop();

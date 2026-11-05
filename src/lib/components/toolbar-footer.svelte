@@ -51,7 +51,13 @@
     if (syncReceiver.status.kind === "unreadable" || trouble === "unreadable") {
       return m.sync_status_unreadable();
     }
-    if (syncReceiver.needsALook || trouble === "moved" || trouble === "reallow") {
+    if (
+      syncReceiver.needsALook ||
+      trouble === "moved" ||
+      trouble === "reallow" ||
+      upload === "refused" ||
+      upload === "update"
+    ) {
       return m.sync_status_look();
     }
     if (syncReceiver.gapDays !== undefined) return m.sync_status_late();

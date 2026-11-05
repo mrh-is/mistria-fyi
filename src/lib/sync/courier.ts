@@ -66,8 +66,10 @@ export type UploadLogOutcome = Extract<
   | "code-renewed"
   | "upload-paused"
   | "upload-rate-limited"
+  | "upload-refused"
   | "upload-too-large"
   | "upload-unreachable"
+  | "upload-update-needed"
   | "uploaded"
 >;
 
@@ -92,7 +94,8 @@ export interface CourierStatus {
    */
   source: "file" | "none" | "unknown" | "watched";
   trouble: CourierTrouble | undefined;
-  upload: "idle" | "paused" | "unreachable";
+  /** `refused` & `update` are answers no retry can change, unlike `paused` & `unreachable`. */
+  upload: "idle" | "paused" | "refused" | "unreachable" | "update";
 }
 
 export const IDLE_COURIER: CourierStatus = {
@@ -137,7 +140,9 @@ export interface Courier {
   check: () => Promise<void>;
   /** Asks the browser for read access again. Must run inside the player's click. */
   reallow: () => Promise<void>;
-  /** Tries whatever's waiting again now, for “Try again”, coming back online or into view. */
+  /** Tries whatever's waiting again now, unless only the player can decide to, for coming back. */
+  resume: () => void;
+  /** Tries whatever's waiting again now, for “Try again”. */
   retry: () => void;
   /** Starts acting on the lane, which {@link Courier.update} keeps it told about. */
   start: () => void;
@@ -301,6 +306,8 @@ export function createCourier({
   let recheck = false;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let retryDelay = firstRetryMs;
+  /** Bumped when the courier gives up, so a retry already timed or queued sends nothing. */
+  let retryEpoch = 0;
   /** The last upload result logged, so a retry that has to wait the same way again isn't. */
   let lastLogged: undefined | UploadLogOutcome;
 
@@ -501,9 +508,12 @@ export function createCourier({
 
   function scheduleRetry(afterMs?: number): void {
     clearRetry();
+    const epoch = retryEpoch;
     retryTimer = setTimeout(() => {
       retryTimer = undefined;
-      void enqueue(retryWaiting);
+      void enqueue(async () => {
+        if (epoch === retryEpoch) await retryWaiting();
+      });
     }, afterMs ?? retryDelay);
     if (afterMs === undefined) retryDelay = Math.min(retryDelay * 2, MAX_RETRY_MS);
   }
@@ -533,6 +543,17 @@ export function createCourier({
     }
   }
 
+  /** The relay's answer won't change on its own, so only a new save or “Try again” sends again. */
+  function giveUp(next: CourierStatus["upload"], outcome: UploadLogOutcome): void {
+    pending = undefined;
+    recheck = true;
+    retryEpoch += 1;
+    retryDelay = firstRetryMs;
+    clearRetry();
+    setStatus({ upload: next });
+    log(outcome);
+  }
+
   async function retryWaiting(): Promise<void> {
     if (pending) {
       await send(pending);
@@ -560,6 +581,10 @@ export function createCourier({
         pending = undefined;
         retryDelay = firstRetryMs;
         clearRetry();
+        setStatus({ upload: "idle" });
+      } else if (status.upload === "refused" || status.upload === "update") {
+        // The mailbox holds this save, so the upload the relay turned down no longer matters.
+        recheck = false;
         setStatus({ upload: "idle" });
       }
       // Only a start or a shown code looks further: an envelope can expire with nothing changing.
@@ -703,12 +728,15 @@ export function createCourier({
       case "retired":
         await renewAndResend(upload);
         return;
+      case "refused":
+        giveUp("refused", "upload-refused");
+        return;
       case "too-large":
         // Only a new save can help, so “Try again” reads the file once more.
-        pending = undefined;
-        recheck = true;
-        setStatus({ upload: "unreachable" });
-        log("upload-too-large");
+        giveUp("unreachable", "upload-too-large");
+        return;
+      case "unsupported-version":
+        giveUp("update", "upload-update-needed");
     }
   }
 
@@ -746,6 +774,10 @@ export function createCourier({
       renewed = { kind: "unreachable" };
     }
     if (current !== generation || pending !== upload) return;
+    if (renewed.kind === "refused") {
+      giveUp("refused", "upload-refused");
+      return;
+    }
     if (renewed.kind !== "shared") {
       waitOut(renewed);
       return;
@@ -921,6 +953,10 @@ export function createCourier({
       if (source?.kind !== "handle") return;
       const granted = await source.handle.requestPermission?.({ mode: "read" });
       if (granted === undefined || granted === "granted") await this.check();
+    },
+    resume() {
+      // Alt-tabbing back mustn't spend a counter, or a create, on an answer that won't change.
+      if (status.upload !== "refused" && status.upload !== "update") this.retry();
     },
     retry() {
       if (!leading) return;

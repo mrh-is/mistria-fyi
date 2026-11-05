@@ -51,6 +51,28 @@
   <SyncNote title={m.sync_paused_title()} tone="quiet">
     <p>{m.sync_paused_body()}</p>
   </SyncNote>
+{:else if status.upload === "update"}
+  <SyncNote title={m.sync_update_here()}>
+    <div>
+      <Button
+        size="sm"
+        onclick={() => {
+          globalThis.location.reload();
+        }}
+      >
+        {m.sync_update_refresh()}
+      </Button>
+    </div>
+  </SyncNote>
+{:else if status.upload === "refused"}
+  <SyncNote title={m.sync_refused_title()}>
+    <p>{m.sync_refused_upload_body()}</p>
+    <div>
+      <Button size="sm" variant="outline" onclick={syncCourier.retry}>
+        {m.sync_try_again()}
+      </Button>
+    </div>
+  </SyncNote>
 {:else if status.upload === "unreachable"}
   <SyncNote title={m.sync_unreachable_title()} tone="quiet">
     <p>{m.sync_unreachable_body()}</p>
