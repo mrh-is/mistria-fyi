@@ -12,10 +12,27 @@ describe("privacy policy", () => {
 
     expect(queries.getByRole("heading", { name: "AI in development" })).toBeTruthy();
     expect(text).toContain("AI coding tools");
-    expect(text).toContain("your email address");
+    expect(text).toContain("AI tools never get your email address");
+    expect(text).toContain("save file sync log");
+    expect(text).not.toContain("any information about how you use the app");
     expect(queries.getByRole("link", { name: "Back to About" }).getAttribute("href")).toBe(
       "/en/about",
     );
+  });
+
+  it("shows when the policy last changed", () => {
+    const { text } = renderToFragment(PrivacyPage, { props: {} });
+
+    expect(text).toMatch(/Last updated November 5, 2026/u);
+  });
+
+  it("says what feedback is for & how long a reply address is kept", () => {
+    const { text } = renderToFragment(PrivacyPage, { props: {} });
+
+    expect(text).toContain("used only to fix the app");
+    expect(text).toContain("it isn’t shared with anyone");
+    expect(text).toContain("never used to optimize engagement");
+    expect(text).toContain("deleted automatically after 90 days");
   });
 });
 
