@@ -166,7 +166,14 @@ describe("save import", () => {
         "This file isn’t a readable Fields of Mistria save. It may be corrupt.",
       );
     });
-    expect(screen.getByRole("link", { name: "vaultc" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "vaultc" })).toHaveAttribute(
+      "href",
+      "https://github.com/NPC-Studio/vaultc",
+    );
+    expect(screen.getByRole("link", { name: "VaultGo" })).toHaveAttribute(
+      "href",
+      "https://github.com/lordp/VaultGo",
+    );
     const fallback = screen.getByText(/Then import from the resulting/);
     expect(fallback).toHaveTextContent(
       "Then import from the resulting player.json, gamedata.json, and quests.json files.",

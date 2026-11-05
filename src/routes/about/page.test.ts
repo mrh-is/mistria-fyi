@@ -13,7 +13,10 @@ describe("about and legal page", () => {
     expect(text).toContain("affiliated with, endorsed by, supported by, or sponsored by");
     expect(text).toMatch(/progress in\s+Fields of Mistria\./u);
     expect(text).toMatch(/maintained by\s+Michael Helmbrecht\./u);
-    expect(text).toMatch(/sponsored by\s+Villager Studio\s+\(though, call me!\)\./u);
+    expect(text).toMatch(/sponsored by\s+NPC Studio\s+\(though, call me!\)\./u);
+    expect(queries.getByRole("link", { name: "NPC Studio" }).getAttribute("href")).toBe(
+      "https://www.npcstudio.com/",
+    );
     expect(text).toContain("all the content therein");
     expect(text).toContain(`game version ${trackerData.version}`);
     expect(text).toContain("briefly be out of date");
