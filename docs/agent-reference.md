@@ -265,8 +265,6 @@ is tracked in #417. Until then, the rules in `AGENTS.md` stand for every client.
 - **Generated tracker data:** CODEOWNERS & the “Guarded paths” workflow require the `generated-data`
   label & `pnpm run data:diff` output on any PR that changes the tracker data.
   `src/lib/components/ui/` is project-owned & isn’t guarded.
-- **Attribution:** the “Attribution” workflow checks PR bodies (the `Agent:` line & the preview
-  URL), commit trailers, & the `agent:*` label. It doesn’t check issues or comments.
 
 ### Rules without enforcement
 
@@ -278,8 +276,9 @@ These rules rest on `AGENTS.md` alone:
   user’s approval.
 - **Releases:** change `package.json`’s version or create tags only for an approved release.
 - **Shared stash:** never use bare `git stash` or `git stash pop`.
-- **GitHub bodies:** end issue, PR, & comment bodies with `Agent: <agent-id>`, and pass multiline
-  text with `--body-file`.
+- **Agent authorship:** add a `Co-Authored-By` trailer to agent-authored commits. Sign
+  agent-authored issue bodies & substantive comments with `Agent: <agent-id>`.
+- **GitHub bodies:** pass multiline text with `--body-file`.
 - **History:** don’t edit `docs/superpowers/`; update the current `docs/*.md` instead. Only Claude
   Code’s deny rule covers it.
 - **Dependencies:** follow [Package commands](#package-commands) before adding or bumping one.

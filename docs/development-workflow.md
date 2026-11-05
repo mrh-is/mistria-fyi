@@ -201,9 +201,8 @@ outside contributors say on the issue that they are taking it.
 
 ### Attribute agent-authored content
 
-Attribution records authorship separately from active ownership, particularly when multiple agents
-participate in one issue or PR. Follow the canonical commit, footer, label, comment, & handoff rules
-in [agent attribution](agent-workflow.md#agent-attribution).
+Commit trailers record who wrote the change. Issue labels track which agent is working on it. See
+[agent attribution](agent-workflow.md#agent-attribution) for trailer & signature formats.
 
 ### Explicit approval & planning gates
 
@@ -293,7 +292,7 @@ For plain-Node tests under `eslint-rules/`, `scripts/`, & `tests/`, also select 
 unrelated app projects don’t start their Cloudflare proxy & workerd before file filtering:
 
 ```sh
-pnpm exec vitest run --project node scripts/check-attribution.test.ts
+pnpm exec vitest run --project node scripts/lib/pinned-node.test.ts
 ```
 
 Use `--project node-isolated` for `*.isolated.test.ts` in those directories, and
@@ -802,17 +801,14 @@ changed. Any agent previewing from a worktree starts its own dev server instead:
 ### Attach visual evidence & prototype code
 
 Use `--attach` when adding screenshots to GitHub CLI-created issues, pull requests, or pull-request
-comments. The flag can be repeated. On its own, `--attach` appends each image to the end of the
-body, after the final `Agent:` line, which fails the "Attribution" check. Reference every attached
-file in the body above that line instead; GitHub CLI rewrites each local reference to the uploaded
-asset and appends nothing:
+comments. The flag can be repeated. Reference each file where the image should appear. GitHub CLI
+replaces the path with the uploaded asset URL. Unreferenced attachments go at the end, so include
+all attachment paths in issue bodies & comments that end with an `Agent:` signature.
 
 ```markdown
 ## Screenshots
 
 ![Desktop tracker view](./desktop.png) ![Mobile tracker view](./mobile.png)
-
-Agent: claude-code
 ```
 
 ```sh
@@ -903,15 +899,14 @@ offline fallback, registration, or activation behavior.
 
 - **Symptom**: Pre-commit hooks fail or block commits inside isolated worktree environments.
 - **Recovery**: Prefer fixing hook execution. If a Git hook must be bypassed
-  (`git commit --no-verify`), first run `pnpm run lint:fix`, the focused checks from §5, and
-  `node scripts/check-attribution.ts --commit-msg <message-file>` directly, and confirm clean exit
-  status. Keep the required attribution trailer; CI still runs the full matrix on the PR. This does
-  not authorize bypassing a refused harness edit or weakening an approval policy.
+  (`git commit --no-verify`), first run `pnpm run lint:fix` & the focused checks from §5 and confirm
+  clean exit status. Keep the required attribution trailer. CI still runs the full matrix on the PR.
+  This does not authorize bypassing a refused harness edit or weakening an approval policy.
 
 ### CI Doesn't Start on a New PR
 
-- **Symptom**: A newly opened PR shows only "Attribution" and "Guarded paths"; no "CI" run exists
-  and the PR stays blocked.
+- **Symptom**: A newly opened PR shows other workflows, such as “Guarded paths”, but no “CI” run
+  exists and the PR stays blocked.
 - **Cause**: Unconfirmed. On #622–#625, opened within minutes of each other, GitHub started the
   other workflows for the `opened` event but not `ci.yml` (#626).
 - **Recovery**: Push an empty commit; its `synchronize` event starts CI.

@@ -22,16 +22,14 @@ The squash commit takes the PR title (GitHub appends the PR number) and the conc
 commit messages as its body, which keeps each commit’s `Co-Authored-By` trailer on `main`. A
 single-commit PR uses that commit’s own message instead, trailer included.
 
-The “Attribution” check is unaffected: it validates a PR’s own commits before merge, never `main`.
-
 ## Alternatives
 
 - **Keep merge commits.** Rejected: it preserves original SHAs & signatures, but those buy little
   when branch commits are WIP, and the merge-main-into-branch commits make `main` hard to read.
 - **Rebase merging.** Rejected: it rewrites every SHA, drops local signatures, and lands each
   unbuilt WIP commit on `main` individually, which is worse for bisect than either alternative.
-- **Squash with the PR body as the commit message.** Rejected for now: the body ends with `Agent:`
-  rather than the commit trailers, so agent co-authorship would vanish from `main`.
+- **Squash with the PR body as the commit message.** Rejected because copying the description would
+  discard the branch commits’ co-author trailers.
 
 ## Revisit if
 
