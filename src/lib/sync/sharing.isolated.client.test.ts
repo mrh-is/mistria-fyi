@@ -249,6 +249,42 @@ describe("stopping", () => {
     expect(retire).toHaveBeenCalledTimes(2);
   });
 
+  it("hands over the new code after a moment, even while the old one's retire stalls", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>();
+    retire.mockReturnValue(Promise.withResolvers<RetireResult>().promise);
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    const made = sharing.makeNewCode();
+    await vi.waitFor(() => {
+      expect(retire).toHaveBeenCalledTimes(1);
+    });
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(await made).toMatchObject({ kind: "shared" });
+    expect(userState.syncPendingRetires).toHaveLength(1);
+  });
+
+  it("keeps the wait the relay asked for when a stalled attempt ends later", async () => {
+    vi.useFakeTimers();
+    const stalled = Promise.withResolvers<RetireResult>();
+    const retire = vi.fn<RelayClient["retire"]>();
+    retire.mockReturnValueOnce(stalled.promise);
+    retire.mockResolvedValueOnce({ kind: "rate-limited", retryAfterSeconds: 60 });
+    retire.mockResolvedValue({ kind: "unreachable" });
+    const { sharing } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    void sharing.makeNewCode();
+    await vi.waitFor(() => {
+      expect(retire).toHaveBeenCalledTimes(1);
+    });
+    await sharing.makeNewCode();
+    expect(retire).toHaveBeenCalledTimes(2);
+
+    stalled.resolve({ kind: "unreachable" });
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(retire).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(retire).toHaveBeenCalledTimes(4);
+  });
+
   it("schedules nothing once stopped, even from an attempt already under way", async () => {
     vi.useFakeTimers();
     const answer = Promise.withResolvers<{ kind: "unreachable" }>();

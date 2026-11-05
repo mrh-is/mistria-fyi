@@ -233,9 +233,10 @@ One Durable Object per mailbox ID.
   `404` can’t change on retry, so a retire the relay refuses waits for the next visit instead. Each
   pending retire runs & confirms on its own under a 30-second deadline, so one that stalls holds up
   nothing else. Until the relay confirms, Data’s sync card says the old code still works
-  (`sync_old_code_active`), including after a reload. “Stop syncing” or an erase queues one too.
-  Every follower holds the sealing key, so a follower that could recreate a retired ID with its own
-  token could write saves to the others.
+  (`sync_old_code_active`), including after a reload. “Make a new code” waits at most three seconds
+  for the retire, so a stall never holds back the new code. “Stop syncing” or an erase queues one
+  too. Every follower holds the sealing key, so a follower that could recreate a retired ID with its
+  own token could write saves to the others.
 - **Nothing else.** No confirmations or delivery states; the high-water counter is the relay’s only
   ordering. A follower that misses a save loses nothing, since the next one is a full snapshot.
 

@@ -83,9 +83,13 @@ export function setTurnstileTokenSource(source: () => Promise<string>): void {
 
 const FIRST_RETIRE_RETRY_MS = 5000;
 const MAX_RETIRE_RETRY_MS = 5 * 60_000;
+/** How long “Make a new code” waits on the old code's retire before moving on without it. */
+const RETIRE_SETTLE_MS = 3000;
 
 let retireTimer: ReturnType<typeof setTimeout> | undefined;
 let retireDelay = FIRST_RETIRE_RETRY_MS;
+/** When the next timed retry may run, so a later attempt can't undercut what the relay asked for. */
+let retireNotBefore = 0;
 /** The mailboxes with a retire under way, so a stalled request holds up only its own mailbox. */
 const retiring = new Set<MailboxId>();
 /** Bumped by {@link keepRetiring}'s stop, so an attempt still under way schedules nothing after. */
@@ -141,6 +145,7 @@ async function attemptRetires(): Promise<void> {
   if (generation !== retireGeneration) return;
   if (userState.syncPendingRetires.length === 0) {
     retireDelay = FIRST_RETIRE_RETRY_MS;
+    retireNotBefore = 0;
     return;
   }
   // Every one left is already under way, & that attempt schedules what follows.
@@ -148,10 +153,11 @@ async function attemptRetires(): Promise<void> {
   const wait = retireWait(results.filter(({ kind }) => kind !== "retired"));
   if (wait === undefined) return;
   // A leaked code keeps working until this lands, so it retries like an upload does.
+  retireNotBefore = Math.max(retireNotBefore, Date.now() + wait);
   clearTimeout(retireTimer);
   retireTimer = setTimeout(() => {
     void attemptRetires();
-  }, wait);
+  }, retireNotBefore - Date.now());
   retireDelay = Math.min(retireDelay * 2, MAX_RETIRE_RETRY_MS);
 }
 
@@ -162,6 +168,7 @@ async function attemptRetires(): Promise<void> {
  */
 export function retryPendingRetires(): Promise<void> {
   retireDelay = FIRST_RETIRE_RETRY_MS;
+  retireNotBefore = 0;
   return attemptRetires();
 }
 
@@ -204,6 +211,21 @@ async function abandon(code: SharedCode): Promise<void> {
   await relay.retire(mailboxId, token);
 }
 
+/**
+ * Gives a retire a moment to land, so a quick relay shows no warning. A slow one mustn't hold back
+ * the new code, or hide that the old one still works.
+ */
+async function settleRetires(): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    retryPendingRetires(),
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, RETIRE_SETTLE_MS);
+    }),
+  ]);
+  clearTimeout(timer);
+}
+
 /** The first code the computer lane shares; stored only once its mailbox exists. */
 export async function shareCode(): Promise<ShareResult> {
   const result = await shareNewCode(relay, turnstileToken);
@@ -229,7 +251,7 @@ export async function makeNewCode(): Promise<ShareResult> {
     await abandon(result.code);
     return { kind: "unreachable" };
   }
-  await retryPendingRetires();
+  await settleRetires();
   return result;
 }
 
