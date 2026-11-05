@@ -86,10 +86,9 @@ const MAX_RETIRE_RETRY_MS = 5 * 60_000;
 /** How long “Make a new code” waits on the old code's retire before moving on without it. */
 const RETIRE_SETTLE_MS = 3000;
 
-let retireTimer: ReturnType<typeof setTimeout> | undefined;
-let retireDelay = FIRST_RETIRE_RETRY_MS;
-/** When the next timed retry may run, so a later attempt can't undercut what the relay asked for. */
-let retireNotBefore = 0;
+/** Each mailbox retries on its own clock, so nothing about one can delay or shorten another's. */
+const retireTimers = new Map<MailboxId, ReturnType<typeof setTimeout>>();
+const retireDelays = new Map<MailboxId, number>();
 /** The mailboxes with a retire under way, so a stalled request holds up only its own mailbox. */
 const retiring = new Set<MailboxId>();
 /** Bumped by {@link keepRetiring}'s stop, so an attempt still under way schedules nothing after. */
@@ -104,61 +103,62 @@ function pendingIds(): string {
     .join(",");
 }
 
-/**
- * How long to wait before trying the failures again, or `undefined` when no retry can help: the
- * relay refused every one, so only the next visit tries them again.
- */
-function retireWait(failures: readonly RetireResult[]): number | undefined {
-  if (failures.length > 0 && failures.every(({ kind }) => kind === "refused")) return undefined;
-  let wait = retireDelay;
-  for (const failure of failures) {
-    if (failure.kind === "rate-limited" && failure.retryAfterSeconds !== undefined) {
-      wait = Math.max(wait, failure.retryAfterSeconds * 1000);
-    } else if (failure.kind === "paused" && failure.until !== undefined) {
-      wait = Math.max(wait, failure.until - Date.now());
-    }
+function isPending(mailboxId: MailboxId): boolean {
+  return userState.syncPendingRetires.some((pending) => pending.mailboxId === mailboxId);
+}
+
+/** How long to wait before trying again, or `undefined` when only the next visit can help. */
+function retireWait(result: RetireResult, delay: number): number | undefined {
+  if (result.kind === "refused") return undefined;
+  let wait = delay;
+  if (result.kind === "rate-limited" && result.retryAfterSeconds !== undefined) {
+    wait = Math.max(wait, result.retryAfterSeconds * 1000);
+  } else if (result.kind === "paused" && result.until !== undefined) {
+    wait = Math.max(wait, result.until - Date.now());
   }
   return Math.min(wait, MAX_RETIRE_RETRY_MS);
 }
 
-/** Retires one code & confirms it on its own, whatever the others are doing. Never rejects. */
-async function retireOne(pending: DeepReadonly<PendingRetire>): Promise<RetireResult> {
-  retiring.add(pending.mailboxId);
-  try {
-    const result = await relay.retire(pending.mailboxId, pending.token);
-    if (result.kind === "retired") await userState.confirmRetired([pending]);
-    return result;
-  } catch {
-    return { kind: "unreachable" };
-  } finally {
-    retiring.delete(pending.mailboxId);
-  }
+function clearRetireTimer(mailboxId: MailboxId): void {
+  clearTimeout(retireTimers.get(mailboxId));
+  retireTimers.delete(mailboxId);
 }
 
-async function attemptRetires(): Promise<void> {
-  const generation = retireGeneration;
-  clearTimeout(retireTimer);
-  retireTimer = undefined;
-  const idle = userState.syncPendingRetires.filter(({ mailboxId }) => !retiring.has(mailboxId));
-  const results = await Promise.all(idle.map((pending) => retireOne(pending)));
-  knownPending = pendingIds();
-  if (generation !== retireGeneration) return;
-  if (userState.syncPendingRetires.length === 0) {
-    retireDelay = FIRST_RETIRE_RETRY_MS;
-    retireNotBefore = 0;
+/** A leaked code keeps working until its retire lands, so it retries like an upload does. */
+function scheduleRetire(pending: DeepReadonly<PendingRetire>, result: RetireResult): void {
+  const { mailboxId } = pending;
+  if (!isPending(mailboxId)) {
+    retireDelays.delete(mailboxId);
     return;
   }
-  // Every one left is already under way, & that attempt schedules what follows.
-  if (idle.length === 0 && retiring.size > 0) return;
-  const wait = retireWait(results.filter(({ kind }) => kind !== "retired"));
+  const delay = retireDelays.get(mailboxId) ?? FIRST_RETIRE_RETRY_MS;
+  const wait = retireWait(result, delay);
   if (wait === undefined) return;
-  // A leaked code keeps working until this lands, so it retries like an upload does.
-  retireNotBefore = Math.max(retireNotBefore, Date.now() + wait);
-  clearTimeout(retireTimer);
-  retireTimer = setTimeout(() => {
-    void attemptRetires();
-  }, retireNotBefore - Date.now());
-  retireDelay = Math.min(retireDelay * 2, MAX_RETIRE_RETRY_MS);
+  retireDelays.set(mailboxId, Math.min(delay * 2, MAX_RETIRE_RETRY_MS));
+  clearRetireTimer(mailboxId);
+  retireTimers.set(
+    mailboxId,
+    setTimeout(() => {
+      retireTimers.delete(mailboxId);
+      if (isPending(mailboxId)) void retireOne(pending);
+    }, wait),
+  );
+}
+
+/** Retires, confirms, & reschedules one code, whatever the others are doing. Never rejects. */
+async function retireOne(pending: DeepReadonly<PendingRetire>): Promise<void> {
+  const generation = retireGeneration;
+  retiring.add(pending.mailboxId);
+  let result: RetireResult;
+  try {
+    result = await relay.retire(pending.mailboxId, pending.token);
+    if (result.kind === "retired") await userState.confirmRetired([pending]);
+  } catch {
+    result = { kind: "unreachable" };
+  }
+  retiring.delete(pending.mailboxId);
+  knownPending = pendingIds();
+  if (generation === retireGeneration) scheduleRetire(pending, result);
 }
 
 /**
@@ -166,10 +166,12 @@ async function attemptRetires(): Promise<void> {
  * retry with backoff for as long as the page stays open. A retire already under way is left to
  * finish, so one that stalls can't hold up any other.
  */
-export function retryPendingRetires(): Promise<void> {
-  retireDelay = FIRST_RETIRE_RETRY_MS;
-  retireNotBefore = 0;
-  return attemptRetires();
+export async function retryPendingRetires(): Promise<void> {
+  retireDelays.clear();
+  const idle = userState.syncPendingRetires.filter(({ mailboxId }) => !retiring.has(mailboxId));
+  for (const { mailboxId } of idle) clearRetireTimer(mailboxId);
+  await Promise.all(idle.map((pending) => retireOne(pending)));
+  knownPending = pendingIds();
 }
 
 function retryOnline(): void {
@@ -197,8 +199,8 @@ export function keepRetiring(): () => void {
     globalThis.removeEventListener("online", retryOnline);
     globalThis.removeEventListener("storage", retryNewlyPending);
     retireGeneration += 1;
-    clearTimeout(retireTimer);
-    retireTimer = undefined;
+    for (const timer of retireTimers.values()) clearTimeout(timer);
+    retireTimers.clear();
   };
 }
 

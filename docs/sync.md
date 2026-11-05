@@ -231,8 +231,8 @@ One Durable Object per mailbox ID.
   upload: with backoff (five seconds, doubling to five minutes, or longer if the relay asks), on
   coming back online, & in every open tab once any tab queues it, in any lane. A `401`, `403`, or
   `404` can’t change on retry, so a retire the relay refuses waits for the next visit instead. Each
-  pending retire runs & confirms on its own under a 30-second deadline, so one that stalls holds up
-  nothing else. Until the relay confirms, Data’s sync card says the old code still works
+  pending retire runs, confirms, & retries on its own under a 30-second deadline, so one that stalls
+  holds up nothing else. Until the relay confirms, Data’s sync card says the old code still works
   (`sync_old_code_active`), including after a reload. “Make a new code” waits at most three seconds
   for the retire, so a stall never holds back the new code. “Stop syncing” or an erase queues one
   too. Every follower holds the sealing key, so a follower that could recreate a retired ID with its

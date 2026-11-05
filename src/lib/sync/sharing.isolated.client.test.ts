@@ -263,14 +263,14 @@ describe("stopping", () => {
     expect(userState.syncPendingRetires).toHaveLength(1);
   });
 
-  it("keeps the wait the relay asked for when a stalled attempt ends later", async () => {
+  it("retries one code on time while another stalls, & keeps each code's own wait", async () => {
     vi.useFakeTimers();
     const stalled = Promise.withResolvers<RetireResult>();
     const retire = vi.fn<RelayClient["retire"]>();
     retire.mockReturnValueOnce(stalled.promise);
     retire.mockResolvedValueOnce({ kind: "rate-limited", retryAfterSeconds: 60 });
-    retire.mockResolvedValue({ kind: "unreachable" });
-    const { sharing } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    retire.mockResolvedValue({ kind: "retired" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
     void sharing.makeNewCode();
     await vi.waitFor(() => {
       expect(retire).toHaveBeenCalledTimes(1);
@@ -278,11 +278,37 @@ describe("stopping", () => {
     await sharing.makeNewCode();
     expect(retire).toHaveBeenCalledTimes(2);
 
+    // The stalled request ending mustn't move the wait the relay asked for on the other code.
     stalled.resolve({ kind: "unreachable" });
-    await vi.advanceTimersByTimeAsync(59_999);
+    await vi.advanceTimersByTimeAsync(4999);
     expect(retire).toHaveBeenCalledTimes(2);
     await vi.advanceTimersByTimeAsync(1);
+    expect(retire).toHaveBeenCalledTimes(3);
+    expect(userState.syncPendingRetires).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(55_000);
     expect(retire).toHaveBeenCalledTimes(4);
+    expect(userState.syncPendingRetires).toEqual([]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("retries a failed code on time while another request stays stalled", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>();
+    retire.mockReturnValueOnce(Promise.withResolvers<RetireResult>().promise);
+    retire.mockResolvedValueOnce({ kind: "unreachable" });
+    retire.mockResolvedValue({ kind: "retired" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    void sharing.makeNewCode();
+    await vi.waitFor(() => {
+      expect(retire).toHaveBeenCalledTimes(1);
+    });
+    await sharing.makeNewCode();
+    expect(userState.syncPendingRetires).toHaveLength(2);
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(retire).toHaveBeenCalledTimes(3);
+    expect(userState.syncPendingRetires).toHaveLength(1);
   });
 
   it("schedules nothing once stopped, even from an attempt already under way", async () => {
