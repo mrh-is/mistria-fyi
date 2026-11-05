@@ -34,6 +34,8 @@ import type { ReadSave } from "./read-save.js";
  */
 const SYNC_TURNSTILE_SITE_KEY = "0x4AAAAAAFtIVmbS8YY4O4dt";
 const SYNC_TURNSTILE_ACTION = "sync-create";
+/** How long the invisible widget may take, so a widget that never calls back can't hang a share. */
+const SYNC_TURNSTILE_TIMEOUT_MS = 30_000;
 
 let relay: RelayClient = createRelayClient();
 
@@ -56,8 +58,12 @@ export async function syncTurnstileToken(): Promise<string> {
   container.hidden = true;
   document.body.append(container);
   let widgetId: string | undefined;
+  let deadline: ReturnType<typeof setTimeout> | undefined;
   try {
     return await new Promise<string>((resolve, reject) => {
+      deadline = setTimeout(() => {
+        reject(new Error("Turnstile timed out"));
+      }, SYNC_TURNSTILE_TIMEOUT_MS);
       widgetId = turnstile.render(container, {
         action: SYNC_TURNSTILE_ACTION,
         callback: resolve,
@@ -71,6 +77,7 @@ export async function syncTurnstileToken(): Promise<string> {
       });
     });
   } finally {
+    clearTimeout(deadline);
     if (widgetId !== undefined) turnstile.remove(widgetId);
     container.remove();
   }
