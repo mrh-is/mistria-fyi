@@ -110,14 +110,14 @@ chunk only from that version’s cache.
   reports when a newer version takes control (`controllerchange` on a page that was already
   controlled). The root layout’s `AppUpdater` then reloads at once if the page isn’t busy, and
   otherwise waits (`src/lib/pwa/safe-reload.ts`). Busy means a task holds updates off
-  (`holdUpdatesWhile`, used by save import, backup restore, & transfer), a dialog or panel is open,
-  or a text field has focus. A waiting page re-checks when a hold is released, focus leaves a field,
+  (`holdUpdatesWhile`, used by save import & backup restore), a dialog or panel is open, or a text
+  field has focus. A waiting page re-checks when a hold is released, focus leaves a field,
   visibility changes, the browser comes online, & every second. Before reloading, it probes its own
   URL through the worker, as the reload would: offline, a 5xx, or a page no cache holds keeps it as
   it is, with the next probe 30 s later or on `online`. Client-side navigation finishes normally,
   then the destination is probed before the same guarded reload (links, back, forward, & `goto`).
-  Offline navigation stays client-side, with the update pending. QR reception holds updates through
-  image decoding, payload decoding, & the merge, then while its result is shown.
+  Offline navigation stays client-side, with the update pending. Save import holds updates while it
+  reads the save, asks for farm confirmation, or shows the result.
 - **Long-lived tabs still find updates.** SvelteKit’s `updated` state checks `/_app/version.json`
   every 10 minutes, and on focus & visibility changes. The worker leaves that file to the browser,
   so an offline check can’t mistake cached metadata for a deploy. Detection calls

@@ -125,6 +125,7 @@
     const progress: CategoryProgress = { completed: 0, remainingInScope: 0, total: 0 };
     const visibleItems: VariantRowConfig[] = [];
     forEachVariant(animalId, ([vid, variant], tier) => {
+      if (!matchesSearch(animalId, vid)) return;
       const completed = hasCompletedVariant(animalId, vid);
       const inScope = isVariantInScope(animalId, variant, completed);
       progress.total++;

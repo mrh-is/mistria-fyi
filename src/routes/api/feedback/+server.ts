@@ -31,6 +31,8 @@ const MAX_ISSUE_BODY_BYTES = 65_536;
 const MAX_GITHUB_ERROR_LOG_LENGTH = 200;
 const GITHUB_TIMEOUT_MS = 10_000;
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+/** How long a reply address stays in KV. The privacy page states this period, so change both. */
+const EMAIL_RETENTION_SECONDS = 90 * 24 * 60 * 60;
 const TURNSTILE_TIMEOUT_MS = 5000;
 
 interface FeedbackPayload {
@@ -569,6 +571,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
       await emailStore.put(
         String(issueNumber),
         JSON.stringify({ email: payload.email, timestamp: new Date().toISOString() }),
+        { expirationTtl: EMAIL_RETENTION_SECONDS },
       );
       emailSaved = true;
     } catch (error) {

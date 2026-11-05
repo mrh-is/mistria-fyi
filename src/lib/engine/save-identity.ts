@@ -48,3 +48,14 @@ export function compareFarms(tracked: FarmIdentity | null, incoming: FarmIdentit
     (a.major !== b.major || a.minor !== b.minor || a.patch !== b.patch || a.pre !== b.pre);
   return differs ? "different" : "same";
 }
+
+/** The incoming identity, keeping any part only the stored one could read. */
+export function mergeFarmIdentity(
+  tracked: FarmIdentity | null,
+  incoming: FarmIdentity,
+): FarmIdentity {
+  return {
+    creationVersion: incoming.creationVersion ?? tracked?.creationVersion ?? null,
+    saveNumber: incoming.saveNumber ?? tracked?.saveNumber ?? null,
+  };
+}

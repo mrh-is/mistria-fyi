@@ -205,7 +205,7 @@ session limits) belong in each contributor’s user config.
   an issue comment when there’s no PR), even when it has no findings. Don’t leave it only in the
   session. The format is under “Review records” in agent-verification.md.
 - High-risk surfaces need full local verification & an especially careful review. They are:
-  - engine, state-machine, or transfer logic,
+  - engine or state-machine logic,
   - pipeline extractors or schemas,
   - persistence, or the save, import, & export flows,
   - auth, abuse, or security boundaries,

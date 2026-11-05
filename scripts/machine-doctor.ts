@@ -2,9 +2,11 @@ import { CURRENT_GAME_VERSION } from "#game-version";
 import { spawnSync } from "node:child_process";
 import { accessSync, constants, existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
+
+import { isInside } from "#scripts/lib/paths";
 
 import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from "node:child_process";
 
@@ -50,11 +52,6 @@ export interface Environment {
   root: string;
   run: (command: string, args: string[]) => CommandOutput;
   writable: (path: string) => boolean;
-}
-
-function isInside(root: string, path: string): boolean {
-  const offset = relative(resolve(root), resolve(path));
-  return offset === "" || (!offset.startsWith("..") && !isAbsolute(offset));
 }
 
 export function parseVersion(text: string): [number, number, number] | undefined {
@@ -416,7 +413,7 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
       : "pnpm_config_store_dir is unset; pnpm may create a repo-local .pnpm-store";
     return check("pnpm-store", label, "wrong", detail, fix);
   }
-  if (!isAbsolute(configured) || isInside(machine.root, configured)) {
+  if (!isAbsolute(configured) || isInside(configured, machine.root)) {
     return check("pnpm-store", label, "wrong", `${configured} is not outside the repo`, fix);
   }
   const database = join(configured, "v11", "index.db");

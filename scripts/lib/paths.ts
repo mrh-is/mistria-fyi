@@ -5,8 +5,8 @@ export function toPosixPath(value: string, flavor = path): string {
   return value.split(flavor.sep).join("/");
 }
 
-/** Includes the target itself, but excludes siblings, parent traversals, & other Windows drives. */
-export function isInside(directory: string, target: string, flavor = path): boolean {
-  const offset = flavor.relative(target, directory);
+/** Includes the root itself, but excludes siblings, parent traversals, & other Windows drives. */
+export function isInside(candidate: string, root: string, flavor = path): boolean {
+  const offset = flavor.relative(root, candidate);
   return offset !== ".." && !offset.startsWith(`..${flavor.sep}`) && !flavor.isAbsolute(offset);
 }

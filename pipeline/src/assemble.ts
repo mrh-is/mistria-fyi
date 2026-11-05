@@ -9,11 +9,8 @@ import { TrackerDataSchema } from "#lib/types/tracker-data-schema.js";
  */
 import { isNonEmptyArray, recordEntries, recordMap } from "#lib/utils/record.js";
 
-import { collectExplorationSources } from "./acquisition/collectors/exploration.js";
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";
-import { collectRecipeOnlySources } from "./acquisition/collectors/recipe-only.js";
-import { collectRewardSources } from "./acquisition/collectors/rewards.js";
-import { collectStoreSources } from "./acquisition/collectors/stores.js";
+import { collectRecipeAcquisitionSources } from "./acquisition/collectors/recipe-acquisition.js";
 import { getExcludedCosmeticIds } from "./acquisition/exclusions.js";
 import { collectNativeReferenceRegistries } from "./acquisition/native-references.js";
 import { assertNoStockGates } from "./acquisition/pipeline-source.js";
@@ -240,25 +237,12 @@ export function assembleTrackerData(
   };
   deriveRecipeProductSources(fiddle, recipeMemberItems, itemSources);
   collectNaturalSources(fiddle, itemSources, cosmeticSources, petCosmeticSources, diagnostics);
-  collectRewardSources(
-    fiddle,
-    itemSources,
-    cosmeticSources,
+  collectRecipeAcquisitionSources(fiddle, recipeContext, requirementContext, {
     animalCosmeticSources,
+    cosmeticSources,
+    itemSources,
     petCosmeticSources,
-    recipeContext,
-    requirementContext,
-  );
-  collectStoreSources(
-    fiddle,
-    requirementContext,
-    itemSources,
-    cosmeticSources,
-    animalCosmeticSources,
-    recipeContext,
-  );
-  collectExplorationSources(fiddle, itemSources, cosmeticSources, recipeContext);
-  collectRecipeOnlySources(fiddle, recipeContext);
+  });
   for (const recipeId of Object.keys(recipeDrafts) as (keyof typeof recipeDrafts)[]) {
     recipeDrafts[recipeId].sources = recipeSources.get(recipeId);
   }

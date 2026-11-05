@@ -35,6 +35,7 @@
   import MergeSummary from "./merge-summary.svelte";
 
   import type { SaveImportReport, SaveImportWarning } from "#lib/engine/import-save.js";
+  import type { SyncedSave } from "#lib/stores/user-state.svelte.js";
 
   let {
     onScrollToTransfer,
@@ -65,6 +66,11 @@
   let importing = $state(false);
   let importStatus = $state("");
   let filesUsed = $state<string[]>([]);
+  let farmPrompt = $state.raw<null | {
+    farm: string;
+    save: SyncedSave;
+    warnings: SaveImportWarning[];
+  }>(null);
 
   // ── Drag-and-drop state ──
   let dragCounter = $state(0);
@@ -74,7 +80,7 @@
   let fileInput = $state<HTMLInputElement | null>(null);
 
   // An app update's reload waits while an import applies and while its summary is on screen.
-  $effect(() => holdUpdatesWhile(importing || importResult !== null));
+  $effect(() => holdUpdatesWhile(importing || farmPrompt !== null || importResult !== null));
 
   // ── Save location dialog ──
   const SAV_PATH = String.raw`%LOCALAPPDATA%\FieldsOfMistria\saves`;
@@ -116,7 +122,7 @@
   }
 
   async function importFiles(files: File[] | null) {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || importing || farmPrompt) return;
 
     importing = true;
     importResult = null;
@@ -166,16 +172,10 @@
 
       importStatus = m.import_status_importing();
       const { completed, playtime, warnings } = extractSaveProgress(bundle);
-      const merged = userState.mergeFromSave(completed, {
-        metadata: { ...readSaveIdentity(bundle), importedAt: Date.now() },
-        playtime,
-      });
-
-      importResult = {
-        conflicts: merged.conflicts,
-        counts: merged.counts,
-        warnings: [...parseWarnings, ...warnings],
-      };
+      await applyImport(
+        { completed, metadata: { ...readSaveIdentity(bundle), importedAt: Date.now() }, playtime },
+        [...parseWarnings, ...warnings],
+      );
     } catch {
       importError = m.import_error_unexpected();
     } finally {
@@ -185,6 +185,53 @@
       if (fileInput) {
         fileInput.value = "";
       }
+    }
+  }
+
+  async function applyImport(
+    save: SyncedSave,
+    warnings: SaveImportWarning[],
+    confirmedFarm?: string,
+  ) {
+    const { completed, metadata, playtime } = save;
+    const outcome = await userState.mergeFromSave(completed, {
+      confirmedFarm,
+      metadata,
+      playtime,
+    });
+    switch (outcome.kind) {
+      case "ask":
+        farmPrompt = { farm: outcome.farm, save, warnings };
+        break;
+      case "applied":
+        importResult = { ...outcome.result, warnings };
+        break;
+      case "busy":
+        importError = m.import_error_busy();
+        break;
+      case "newer-data":
+        importError = m.persistence_warning_newer_data();
+        break;
+      case "sync-active":
+        importError = m.import_error_sync_active();
+        break;
+      case "write-failed":
+        importError = m.import_error_write();
+        break;
+    }
+  }
+
+  async function confirmFarm() {
+    if (!farmPrompt || importing) return;
+    const { farm, save, warnings } = farmPrompt;
+    importing = true;
+    farmPrompt = null;
+    try {
+      await applyImport(save, warnings, farm);
+    } catch {
+      importError = m.import_error_unexpected();
+    } finally {
+      importing = false;
     }
   }
 
@@ -224,6 +271,7 @@
       type="file"
       aria-label={m.import_file_input_aria()}
       accept={acceptSaveTypes}
+      disabled={importing || farmPrompt !== null}
       multiple
       class="hidden"
       onchange={handleInputChange}
@@ -359,6 +407,28 @@
         {/if}
       </StatusNote>
     {/if}
+
+    <Dialog.Root
+      open={farmPrompt !== null}
+      onOpenChange={(open) => {
+        if (!open) farmPrompt = null;
+      }}
+    >
+      <Dialog.Content class="sm:max-w-sm" showCloseButton={false}>
+        <Dialog.Header>
+          <Dialog.Title>{m.import_farm_title()}</Dialog.Title>
+          <Dialog.Description>{m.import_farm_description()}</Dialog.Description>
+        </Dialog.Header>
+        <Dialog.Footer>
+          <Dialog.Close>
+            {#snippet child({ props })}
+              <Button variant="outline" {...props}>{m.import_farm_cancel()}</Button>
+            {/snippet}
+          </Dialog.Close>
+          <Button onclick={() => void confirmFarm()}>{m.import_farm_merge()}</Button>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Root>
 
     {#if importResult}
       <StatusNote class="mt-3" tone="success">
