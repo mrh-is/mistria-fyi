@@ -152,6 +152,14 @@
           {m.sync_try_again()}
         </Button>
       </StatusNote>
+    {:else if failure === "refused"}
+      <StatusNote tone="warning">
+        <p class="font-semibold">{m.sync_refused_title()}</p>
+        <p>{m.sync_refused_share_body()}</p>
+        <Button class="mt-2" size="sm" variant="outline" onclick={show}>
+          {m.sync_try_again()}
+        </Button>
+      </StatusNote>
     {:else if failure === "too-many"}
       <StatusNote tone="warning">{m.sync_too_many()}</StatusNote>
     {/if}

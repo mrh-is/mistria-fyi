@@ -55,8 +55,10 @@ const OutcomeSchema = v.picklist([
   "uploaded",
   "upload-paused",
   "upload-rate-limited",
+  "upload-refused",
   "upload-too-large",
   "upload-unreachable",
+  "upload-update-needed",
 ]);
 
 export const MAX_SYNC_EVENTS = 20;

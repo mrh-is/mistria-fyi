@@ -1451,6 +1451,41 @@ describe("the sync log", () => {
     ]);
   });
 
+  it.each([
+    ["refused", "refused", "upload-refused"],
+    ["unsupported-version", "update", "upload-update-needed"],
+  ] as const)("stops retrying after a %s answer until asked", async (kind, upload, outcome) => {
+    const { last, make, relay } = await load({ options: { firstRetryMs: 10 } });
+    const log = vi.fn<NonNullable<CourierOptions["log"]>>();
+    relay.upload.mockResolvedValueOnce({ kind });
+    const courier = make({ log });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(last()?.upload).toBe(upload);
+    expect(log).toHaveBeenLastCalledWith(outcome);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect(relay.upload).toHaveBeenCalledTimes(1);
+
+    courier.retry();
+    await vi.waitFor(() => {
+      expect(relay.upload).toHaveBeenCalledTimes(2);
+      expect(last()?.upload).toBe("idle");
+    });
+  });
+
+  it("shows a refusal when a retired code's replacement is refused", async () => {
+    const renewCode = vi.fn<NonNullable<CourierOptions["renewCode"]>>();
+    renewCode.mockResolvedValue({ kind: "refused" });
+    const { last, make, relay } = await load();
+    relay.upload.mockResolvedValueOnce({ kind: "retired" });
+    const courier = make({ renewCode });
+    courier.start();
+    await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
+    expect(last()?.upload).toBe("refused");
+  });
+
   it("records every envelope too large to send, since none is a retry", async () => {
     const { make, relay } = await load();
     const log = vi.fn<NonNullable<CourierOptions["log"]>>();

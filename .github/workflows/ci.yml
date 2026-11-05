@@ -99,8 +99,12 @@ jobs:
                 ;;
             esac
             # The Vitest config loads the relay test's sequencer & worker environment from scripts/.
+            # The relay test also drives the real client in follow.ts.
             case "$file" in
-              relay/* | scripts/vitest-relay-sequencer.ts | scripts/vitest-*-env.ts) relay=true ;;
+              relay/* | scripts/vitest-relay-sequencer.ts | scripts/vitest-*-env.ts | \
+                src/lib/sync/follow.ts)
+                relay=true
+                ;;
             esac
             # Pipeline code imports from scripts/. The policy tests read the workflows, hooks, agent
             # settings, & Playwright configs, and the stylelint test imports its config.

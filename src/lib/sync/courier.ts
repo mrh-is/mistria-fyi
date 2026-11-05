@@ -66,8 +66,10 @@ export type UploadLogOutcome = Extract<
   | "code-renewed"
   | "upload-paused"
   | "upload-rate-limited"
+  | "upload-refused"
   | "upload-too-large"
   | "upload-unreachable"
+  | "upload-update-needed"
   | "uploaded"
 >;
 
@@ -92,7 +94,8 @@ export interface CourierStatus {
    */
   source: "file" | "none" | "unknown" | "watched";
   trouble: CourierTrouble | undefined;
-  upload: "idle" | "paused" | "unreachable";
+  /** `refused` & `update` are answers no retry can change, unlike `paused` & `unreachable`. */
+  upload: "idle" | "paused" | "refused" | "unreachable" | "update";
 }
 
 export const IDLE_COURIER: CourierStatus = {
@@ -533,6 +536,14 @@ export function createCourier({
     }
   }
 
+  /** The relay's answer won't change on its own, so only a new save or “Try again” sends again. */
+  function giveUp(next: CourierStatus["upload"], outcome: UploadLogOutcome): void {
+    pending = undefined;
+    recheck = true;
+    setStatus({ upload: next });
+    log(outcome);
+  }
+
   async function retryWaiting(): Promise<void> {
     if (pending) {
       await send(pending);
@@ -703,12 +714,15 @@ export function createCourier({
       case "retired":
         await renewAndResend(upload);
         return;
+      case "refused":
+        giveUp("refused", "upload-refused");
+        return;
       case "too-large":
         // Only a new save can help, so “Try again” reads the file once more.
-        pending = undefined;
-        recheck = true;
-        setStatus({ upload: "unreachable" });
-        log("upload-too-large");
+        giveUp("unreachable", "upload-too-large");
+        return;
+      case "unsupported-version":
+        giveUp("update", "upload-update-needed");
     }
   }
 
@@ -746,6 +760,10 @@ export function createCourier({
       renewed = { kind: "unreachable" };
     }
     if (current !== generation || pending !== upload) return;
+    if (renewed.kind === "refused") {
+      giveUp("refused", "upload-refused");
+      return;
+    }
     if (renewed.kind !== "shared") {
       waitOut(renewed);
       return;

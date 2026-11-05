@@ -5,12 +5,25 @@ import path from "node:path";
 import ts from "typescript";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import {
+  createRelayClient,
+  deriveFollowKeys,
+  encodeSavePayload,
+  FOLLOW_PROTOCOL_VERSION,
+  generateFollowKey,
+  generateWriteToken,
+  openFollowKey,
+  sealEnvelope,
+  shareNewCode,
+} from "#lib/sync/follow.js";
+
 let mailboxId: string;
 const TOKEN = "a".repeat(43);
 const OTHER_TOKEN = "b".repeat(43);
 const ADMIN = "placeholder-admin-token-for-local-tests";
 const DAY = 86_400_000;
-let script: string;
+let workerModule: string;
+let wireModule: string;
 const runtimes: Miniflare[] = [];
 const directories: string[] = [];
 let verifications: number;
@@ -67,10 +80,8 @@ export class TestControl extends RelayControl {
 beforeAll(async () => {
   verifications = 0;
   caseIndex = 0;
-  script =
-    ts.transpileModule(await readFile(new URL("worker.ts", import.meta.url), "utf8"), {
-      compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2024 },
-    }).outputText + testSubclass;
+  workerModule = (await transpile("worker.ts")) + testSubclass;
+  wireModule = await transpile("wire.ts");
   shared = runtime();
 });
 
@@ -86,6 +97,12 @@ afterAll(async () => {
     directories.splice(0).map((directory) => rm(directory, { force: true, recursive: true })),
   );
 });
+
+async function transpile(file: string): Promise<string> {
+  return ts.transpileModule(await readFile(new URL(file, import.meta.url), "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2024 },
+  }).outputText;
+}
 
 function runtime(persist?: string): Miniflare {
   if (!persist && shared) return shared;
@@ -103,7 +120,10 @@ function runtime(persist?: string): Miniflare {
         CONTROL: { className: "TestControl", useSQLite: true },
         MAILBOXES: { className: "TestMailbox", useSQLite: true },
       },
-      modules: true,
+      modules: [
+        { type: "ESModule", contents: workerModule, path: "worker.js" },
+        { type: "ESModule", contents: wireModule, path: "wire.js" },
+      ],
       outboundService: async (verification) => {
         expect(verification.url).toBe("https://challenges.cloudflare.com/turnstile/v0/siteverify");
         const form = new URLSearchParams(await verification.text());
@@ -126,7 +146,6 @@ function runtime(persist?: string): Miniflare {
         READ_RATE: { namespace_id: "133", simple: { limit: 60, period: 60 } },
       },
       resourcePersistencePath: persist,
-      script,
     }),
   );
   runtimes.push(mf);
@@ -699,5 +718,106 @@ describe("sync relay in the local Workers runtime", () => {
     await request(second, "DELETE", `mailboxes/${mailboxId}`, TOKEN);
     await second.unsafeEvictDurableObject("", "TestMailbox", { name: mailboxId });
     expect(await status(create(second))).toBe(410);
+  });
+});
+
+describe("the app's relay client against the real worker", () => {
+  const ORIGIN = "https://relay.mistria.fyi";
+  const save = new Uint8Array([1, 2, 3, 4, 5]);
+
+  /** The real client over Miniflare, plus the address Cloudflare would add at the edge. */
+  function client() {
+    const mf = runtime();
+    const fetcher = (async (url: string, init: RequestInit) => {
+      const headers = new Headers(init.headers);
+      headers.set("CF-Connecting-IP", `192.0.2.${caseIndex}`);
+      const { body, method } = init;
+      return mf.dispatchFetch(url, { body, headers, method } as never);
+    }) as unknown as typeof fetch;
+    return createRelayClient(ORIGIN, fetcher);
+  }
+
+  async function sealed(key: Parameters<typeof deriveFollowKeys>[0], counter = 1) {
+    const version = FOLLOW_PROTOCOL_VERSION;
+    const header = { fileName: "game-1-autosave.sav", modified: 1000 };
+    const envelope = await sealEnvelope(
+      await deriveFollowKeys(key),
+      { counter, version },
+      encodeSavePayload({ header, save }),
+    );
+    return { counter, envelope, version };
+  }
+
+  it("creates a mailbox, uploads a sealed save, reads it back, opens it, & retires it", async () => {
+    const relay = client();
+    const share = await shareNewCode(relay, () => Promise.resolve("valid"));
+    if (share.kind !== "shared") throw new Error(`Couldn't share: ${share.kind}`);
+    const { key, token } = share.code;
+    const { mailboxId: id } = await deriveFollowKeys(key);
+
+    expect(await openFollowKey(relay, key)).toEqual({ kind: "empty" });
+    expect(await relay.upload(id, token, await sealed(key))).toEqual({ kind: "stored" });
+
+    const opened = await openFollowKey(relay, key);
+    if (opened.kind !== "save") throw new Error(`Couldn't open: ${opened.kind}`);
+    expect(opened).toMatchObject({ counter: 1, mailboxId: id });
+    expect(opened.payload.save).toEqual(save);
+    expect(opened.payload.header.fileName).toBe("game-1-autosave.sav");
+
+    expect(await relay.retire(id, token)).toEqual({ kind: "retired" });
+    expect(await openFollowKey(relay, key)).toEqual({ kind: "retired" });
+    expect(await relay.upload(id, token, await sealed(key, 2))).toEqual({ kind: "retired" });
+  });
+
+  it("reports a failed Turnstile check as a refusal", async () => {
+    const relay = client();
+    const { mailboxId: id } = await deriveFollowKeys(generateFollowKey());
+    expect(await relay.create(id, generateWriteToken(), "invalid")).toEqual({ kind: "refused" });
+    expect(await shareNewCode(relay, () => Promise.resolve("invalid"))).toEqual({
+      kind: "refused",
+    });
+  });
+
+  it("reports a wrong token as a refusal on upload & retire", async () => {
+    const relay = client();
+    const key = generateFollowKey();
+    const { mailboxId: id } = await deriveFollowKeys(key);
+    expect(await relay.create(id, generateWriteToken(), "valid")).toEqual({ kind: "created" });
+    const stranger = generateWriteToken();
+    expect(await relay.upload(id, stranger, await sealed(key))).toEqual({ kind: "refused" });
+    expect(await relay.retire(id, stranger)).toEqual({ kind: "refused" });
+  });
+
+  it("reports a malformed token as a refusal", async () => {
+    const relay = client();
+    const key = generateFollowKey();
+    const { mailboxId: id } = await deriveFollowKeys(key);
+    expect(await relay.upload(id, "short", await sealed(key))).toEqual({ kind: "refused" });
+  });
+
+  it("reports a protocol the relay doesn't speak as a version mismatch", async () => {
+    const relay = client();
+    const key = generateFollowKey();
+    const token = generateWriteToken();
+    const { mailboxId: id } = await deriveFollowKeys(key);
+    await relay.create(id, token, "valid");
+    const envelope = await sealed(key);
+    expect(await relay.upload(id, token, { ...envelope, version: 2 })).toEqual({
+      kind: "unsupported-version",
+    });
+  });
+
+  it("reports a stale counter, a too-large envelope, & a mailbox that never existed", async () => {
+    const relay = client();
+    const key = generateFollowKey();
+    const token = generateWriteToken();
+    const { mailboxId: id } = await deriveFollowKeys(key);
+    expect(await openFollowKey(relay, key)).toEqual({ kind: "invalid" });
+    expect(await relay.upload(id, token, await sealed(key))).toEqual({ kind: "retired" });
+    await relay.create(id, token, "valid");
+    expect(await relay.upload(id, token, await sealed(key, 5))).toEqual({ kind: "stored" });
+    expect(await relay.upload(id, token, await sealed(key, 4))).toEqual({ kind: "conflict" });
+    const tooLarge = { counter: 6, envelope: new Uint8Array(256 * 1024 + 1), version: 1 };
+    expect(await relay.upload(id, token, tooLarge)).toEqual({ kind: "too-large" });
   });
 });

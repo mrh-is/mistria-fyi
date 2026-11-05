@@ -20,6 +20,7 @@ import type {
   OpenResult,
   RelayClient,
   RelayFailure,
+  RelayRefusal,
   RetireResult,
   SharedCode,
   ShareResult,
@@ -251,10 +252,11 @@ export async function stopSyncing(): Promise<void> {
 }
 
 /** The copy a failed share shows. */
-export type ShareFailureCopy = "paused" | "too-many" | "unreachable";
+export type ShareFailureCopy = "paused" | "refused" | "too-many" | "unreachable";
 
-export function shareFailureCopy(failure: RelayFailure): ShareFailureCopy {
+export function shareFailureCopy(failure: RelayFailure | RelayRefusal): ShareFailureCopy {
   if (failure.kind === "paused") return "paused";
+  if (failure.kind === "refused") return "refused";
   if (failure.kind === "rate-limited") return "too-many";
   return "unreachable";
 }

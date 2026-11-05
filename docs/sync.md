@@ -154,8 +154,8 @@ sources in `save-source.ts`, & pruning in `pruneSavArchive` (`src/lib/engine/par
   else could claim. A create on an ID that already exists under the same token counts as success,
   which covers a lost response. One under another token means the PC silently makes a fresh key,
   since nobody has seen the code yet. A failed create keeps the code hidden & says why
-  (`sync_unreachable_*`, `sync_paused_setup`, `sync_too_many`). A wrong file, or “No thanks, I’ll
-  track here”, creates nothing.
+  (`sync_unreachable_*`, `sync_paused_setup`, `sync_too_many`, `sync_refused_*`). A wrong file, or
+  “No thanks, I’ll track here”, creates nothing.
 - **Uploading.** Once sharing, the courier uploads every save it reads & can prune, whatever its own
   tracker does with it: a question waiting behind the fullscreen game, a quarantined or newer-data
   store, or an apply that failed never holds an upload back. A save it can’t prune uploads nothing &
@@ -573,6 +573,11 @@ size:
 - `upload-paused`: the relay's kill switch is on.
 - `upload-rate-limited`: the relay asked the courier to wait.
 - `upload-too-large`: the sealed save was over the relay's size cap.
+- `upload-refused`: the relay answered with a `401` or `403`, such as a wrong write token, or it
+  refused the replacement for a retired code. The courier stops retrying until the next save or “Try
+  again”.
+- `upload-update-needed`: the relay rejected this build's protocol version. The courier asks the
+  player to refresh, with `sync_update_here`.
 - `code-renewed`: the old code had been retired, so the courier made a new one.
 
 A retry that has to wait the same way as the attempt before it (unreachable, paused, or
