@@ -89,10 +89,11 @@
       }
     }
   ],
-  "search_show_outside_filters": "Afficher quand même",
-  "search_filters_paused": "Vos filtres sont en pause pour cette recherche.",
+  "search_turn_off_filters": "Désactiver les filtres pour cette recherche",
+  "search_filters_off": "Vos filtres sont désactivés pour cette recherche.",
   "search_filters_resume": "Les réactiver",
-  "search_everything": "Chercher « {query} » partout",
+  "search_guide_prompt": "Vous ne trouvez pas ce que vous cherchez ?",
+  "search_guide_link": "Chercher « {query} » dans tout le guide de terrain",
   "search_loading": "Chargement de la recherche…",
   "search_error": "Impossible de charger les résultats de recherche.",
   "action_retry": "Réessayer",

@@ -85,10 +85,11 @@
       }
     }
   ],
-  "search_show_outside_filters": "表示する",
-  "search_filters_paused": "この検索ではフィルターを一時停止しています。",
+  "search_turn_off_filters": "この検索ではフィルターをオフにする",
+  "search_filters_off": "この検索ではフィルターがオフです。",
   "search_filters_resume": "フィルターを戻す",
-  "search_everything": "すべてから「{query}」を検索",
+  "search_guide_prompt": "お探しのものが見つかりませんか？",
+  "search_guide_link": "フィールドガイド全体から「{query}」を検索",
   "search_loading": "検索を読み込み中…",
   "search_error": "検索結果を読み込めませんでした。",
   "action_retry": "再試行",

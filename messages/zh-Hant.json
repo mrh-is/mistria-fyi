@@ -85,10 +85,11 @@
       }
     }
   ],
-  "search_show_outside_filters": "仍然顯示",
-  "search_filters_paused": "本次搜尋已暫停篩選條件。",
+  "search_turn_off_filters": "本次搜尋關閉篩選條件",
+  "search_filters_off": "本次搜尋已關閉篩選條件。",
   "search_filters_resume": "恢復篩選條件",
-  "search_everything": "在全部內容中搜尋「{query}」",
+  "search_guide_prompt": "沒有找到想要的內容？",
+  "search_guide_link": "在整本田野指南中搜尋「{query}」",
   "search_loading": "正在載入搜尋…",
   "search_error": "無法載入搜尋結果。",
   "action_retry": "重試",

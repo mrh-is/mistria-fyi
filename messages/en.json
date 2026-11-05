@@ -88,10 +88,11 @@
       }
     }
   ],
-  "search_show_outside_filters": "Show anyway",
-  "search_filters_paused": "Your filters are paused for this search.",
+  "search_turn_off_filters": "Turn off filters for this search",
+  "search_filters_off": "Your filters are off for this search.",
   "search_filters_resume": "Turn them back on",
-  "search_everything": "Search everything for “{query}”",
+  "search_guide_prompt": "Don’t see what you’re looking for?",
+  "search_guide_link": "Search the entire Field Guide for “{query}”",
   "search_loading": "Loading search…",
   "search_error": "Couldn’t load search results.",
   "action_retry": "Try again",

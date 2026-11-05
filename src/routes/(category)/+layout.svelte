@@ -1,6 +1,7 @@
 <script lang="ts">
   import PageHeader from "#lib/components/page-header.svelte";
   import PageSearchStatus from "#lib/components/page-search-status.svelte";
+  import SearchGuideLink from "#lib/components/search-guide-link.svelte";
   import { categoryForKey, categoryKeyForPathname } from "#lib/data/categories.js";
   import { getCategoryProgress } from "#lib/engine/categories.js";
   import { deLocalizeHref } from "#lib/paraglide/runtime.js";
@@ -27,5 +28,6 @@
   <div class="flex flex-col gap-4 px-4 pt-4 pb-4">
     <PageSearchStatus locale={data.locale} />
     {@render children()}
+    <SearchGuideLink locale={data.locale} />
   </div>
 </div>
