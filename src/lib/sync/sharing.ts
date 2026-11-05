@@ -8,6 +8,7 @@ import { ensureTurnstileScript } from "#lib/turnstile.js";
 
 import { createRelayClient, openFollowKey, pendingRetireFor, shareNewCode } from "./follow.js";
 import { readSavePayload, stampOf } from "./read-save.js";
+import { retireStatus } from "./retire-status.svelte.js";
 
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -164,6 +165,7 @@ async function retireOne(pending: DeepReadonly<PendingRetire>): Promise<void> {
     result = { kind: "unreachable" };
   }
   retiring.delete(pending.mailboxId);
+  retireStatus.note(pending.mailboxId, result.kind === "refused");
   knownPending = pendingIds();
   if (generation === retireGeneration) scheduleRetire(pending, result);
 }

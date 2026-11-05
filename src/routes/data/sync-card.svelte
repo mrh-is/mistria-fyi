@@ -1,5 +1,6 @@
 <script lang="ts">
   import IconCamera from "@tabler/icons-svelte-runes/icons/camera";
+  import IconLoader2 from "@tabler/icons-svelte-runes/icons/loader-2";
   import IconPlayerPause from "@tabler/icons-svelte-runes/icons/player-pause";
   import IconQrcode from "@tabler/icons-svelte-runes/icons/qrcode";
   import IconRefresh from "@tabler/icons-svelte-runes/icons/refresh";
@@ -13,6 +14,7 @@
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
+  import { retireStatus } from "#lib/sync/retire-status.svelte.js";
   import { guessPlatform } from "#lib/sync/save-folders.js";
   import { makeNewCode, stopSyncing } from "#lib/sync/sharing.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
@@ -26,6 +28,7 @@
   let wasSyncing = false;
 
   const oldCodeActive = $derived(userState.syncPendingRetires.length > 0);
+  const oldCodeStuck = $derived(retireStatus.stuck(userState.syncPendingRetires));
 
   // Stored progress loads after the page mounts, so the card opens once a lane appears, or once
   // an old code that still works does, which can outlast the lane.
@@ -83,7 +86,17 @@
 <DataCard bind:open title={m.sync_card_title()} summary={m.sync_card_summary()}>
   {#if oldCodeActive && !working}
     <div class="sync-card__old-code">
-      <StatusNote tone="warning">{m.sync_old_code_active()}</StatusNote>
+      {#if oldCodeStuck}
+        <StatusNote tone="warning">{m.sync_old_code_stuck()}</StatusNote>
+      {:else}
+        <div class="sync-card__turning-off" role="status">
+          <IconLoader2 class="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+          <div>
+            <p class="sync-card__turning-off-title">{m.sync_old_code_turning_off()}</p>
+            <p>{m.sync_old_code_still_works()}</p>
+          </div>
+        </div>
+      {/if}
     </div>
   {/if}
   {#if lane === undefined}
@@ -224,6 +237,24 @@
 <style>
   .sync-card__old-code {
     margin-block-end: 12px;
+  }
+
+  .sync-card__turning-off {
+    display: flex;
+    gap: 8px;
+    color: var(--color-ink-muted);
+    font-family: var(--font-annotation);
+    font-size: var(--text-xs);
+  }
+
+  .sync-card__turning-off :global(svg) {
+    flex: none;
+    margin-block-start: 1px;
+  }
+
+  .sync-card__turning-off-title {
+    color: var(--color-ink);
+    font-weight: 600;
   }
 
   .sync-card {

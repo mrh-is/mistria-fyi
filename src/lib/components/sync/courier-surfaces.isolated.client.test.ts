@@ -330,22 +330,35 @@ describe("Data's sync card", () => {
   it("says a stored retire's old code still works, until the relay confirms it", async () => {
     const retire = { mailboxId: "AAAAAAAAAAAAAAAAAAAAAA", token: TOKEN };
     const userState = await renderCard({ syncPendingRetires: [retire] });
-    expect(screen.getByText(/Your old code still works for now/u)).toBeVisible();
+    expect(screen.getByText("Turning off your old code…")).toBeVisible();
 
     await userState.confirmRetired([retire]);
     await tick();
-    expect(screen.queryByText(/Your old code still works for now/u)).toBeNull();
+    expect(screen.queryByText("Turning off your old code…")).toBeNull();
   });
 
   it("opens to show an old code that outlasted its lane", async () => {
     const retire = { mailboxId: "AAAAAAAAAAAAAAAAAAAAAA", token: TOKEN };
     await renderCard({ syncLane: undefined, syncPendingRetires: [retire] });
-    expect(screen.getByText(/Your old code still works for now/u)).toBeVisible();
+    expect(screen.getByText("Turning off your old code…")).toBeVisible();
+  });
+
+  it("stops showing progress once the relay refuses, & says it'll try again", async () => {
+    const retire = { mailboxId: "AAAAAAAAAAAAAAAAAAAAAA", token: TOKEN };
+    await renderCard({ syncPendingRetires: [retire] });
+    await relayWith({
+      retire: vi.fn<RelayClient["retire"]>().mockResolvedValue({ kind: "refused" }),
+    });
+    const { retryPendingRetires } = await import("#lib/sync/sharing.js");
+    await retryPendingRetires();
+    await tick();
+    expect(screen.getByText(/We couldn’t turn off your old code yet/u)).toBeVisible();
+    expect(screen.queryByText("Turning off your old code…")).toBeNull();
   });
 
   it("says nothing about an old code when none is waiting", async () => {
     await renderCard();
-    expect(screen.queryByText(/Your old code still works for now/u)).toBeNull();
+    expect(screen.queryByText("Turning off your old code…")).toBeNull();
   });
 
   it("takes each new save file where it isn't watched", async () => {
