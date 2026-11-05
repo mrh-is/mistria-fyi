@@ -2,6 +2,7 @@ import { SvelteSet } from "svelte/reactivity";
 
 import { trackerData } from "#lib/data/index.js";
 import { nextQuestState, questStateRank, seasonOrdinal } from "#lib/engine/domain-primitives.js";
+import { createDefaultProgress } from "#lib/engine/progress-fields.js";
 import {
   clampLevel,
   clampMineFloor,
@@ -217,38 +218,7 @@ function addDefaultUnlocks(progress: ProgressState): void {
   }
 }
 
-function createDefaultProgress(): ProgressState {
-  const animals: Record<string, Set<AnimalVariantId>> = {};
-  const animalCosmetics: Record<string, Set<CosmeticId>> = {};
-  for (const animalId of recordKeys(trackerData.animals)) {
-    animals[animalId] = new SvelteSet<AnimalVariantId>();
-    animalCosmetics[animalId] = new SvelteSet<CosmeticId>();
-  }
-
-  return {
-    almanac: new SvelteSet<ItemId>(),
-    almanacRecipes: new SvelteSet<RecipeId>(),
-    animalCosmetics,
-    animals,
-    breakUpsDisabled: false,
-    childChoice: "undeclared",
-    cosmetics: new SvelteSet<CosmeticId>(),
-    hasUpperFloor: false,
-    heartLevels: {},
-    mineFloor: 0,
-    mountAppearances: new SvelteSet<MountAppearanceId>(),
-    museum: new SvelteSet<ItemId>(),
-    petCosmetics: new SvelteSet<PetCosmeticSetId>(),
-    petSkins: new SvelteSet<PetSkinId>(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown: 0,
-    skillLevels: {},
-    spells: new SvelteSet<SpellId>(),
-    unlockedPerks: new SvelteSet<PerkId>(),
-    villagerRelationships: {},
-  };
-}
+const ANIMAL_IDS = recordKeys(trackerData.animals);
 
 // ─── Store ──────────────────────────────────────────────────────────
 
@@ -264,7 +234,7 @@ function createDefaultState(): UserState {
   return {
     ...createDefaultPreferences(),
     lastImport: null,
-    progress: createDefaultProgress(),
+    progress: createDefaultProgress(SvelteSet, ANIMAL_IDS),
     showCompleted: false,
     worldState: createDefaultWorldState(),
   };
@@ -339,7 +309,7 @@ function emptyLoadedProgress(): Omit<LoadedProgress, "local"> {
   return {
     history: emptyProgressHistory(),
     lastImport: null,
-    progress: createDefaultProgress(),
+    progress: createDefaultProgress(SvelteSet, ANIMAL_IDS),
     retained: emptyRetainedProgress(),
     worldState: createDefaultWorldState(),
   };

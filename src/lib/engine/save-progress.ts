@@ -1,13 +1,7 @@
 import { getOrCreate } from "#lib/utils/record.js";
 
-import { emptyMergeCounts, questStateRank, seasonOrdinal } from "./domain-primitives.js";
-import {
-  clampLevel,
-  clampMineFloor,
-  clampRenownLevel,
-  MAX_HEART_LEVEL,
-  MAX_SKILL_LEVEL,
-} from "./progress.js";
+import { emptyMergeCounts } from "./domain-primitives.js";
+import { PROGRESS_FIELD_SPECS } from "./progress-fields.js";
 import {
   changedFacts,
   confirmedBySave,
@@ -18,101 +12,65 @@ import {
 } from "./provenance.js";
 import { mergeHousehold } from "./relationships.js";
 
-import type { Season, VillagerRelationship } from "#lib/types/tracker-data.js";
-import type {
-  ChildChoice,
-  MergeResult,
-  ProgressState,
-  QuestState,
-} from "#lib/types/user-progress.js";
+import type { MergeCounts, MergeResult, ProgressState } from "#lib/types/user-progress.js";
 
+import type { FieldSpec, ProgressField } from "./progress-fields.js";
 import type { FactProvenance, ProgressHistory, ProvenanceSource } from "./provenance.js";
-
-type ProgressField = keyof ProgressState;
-
-const LEVEL_FIELDS: ReadonlySet<ProgressField> = new Set<ProgressField>([
-  "heartLevels",
-  "mineFloor",
-  "reachedSeason",
-  "renown",
-  "skillLevels",
-]);
 
 /** A fact value's place in its field's order; `undefined` is the default. */
 export function factRank(field: ProgressField, value: string | undefined): number {
-  if (field === "villagerRelationships") {
-    if (value === "married") return 3;
-    if (value === "proposed") return 2;
-    return value === undefined ? 0 : 1;
+  const spec: FieldSpec = PROGRESS_FIELD_SPECS[field];
+  if (spec.shape === "level" || spec.shape === "levels") return Number(value ?? 0);
+  if ((spec.shape === "choice" || spec.shape === "choices") && spec.rank) {
+    return spec.rank(value ?? spec.default);
   }
-  if (field === "questStates") return questStateRank((value ?? "none") as QuestState);
-  if (field === "reachedSeason") return seasonOrdinal((value ?? "spring") as Season);
-  return LEVEL_FIELDS.has(field) ? Number(value ?? 0) : Number(value !== undefined);
+  return Number(value !== undefined);
 }
 
 /** Sets one fact to a `progressFacts` value, or to its default for `undefined`. */
 export function writeFact(progress: ProgressState, key: string, value: string | undefined): void {
   const [field, id = "", member = ""] = key.split("/") as [ProgressField, string?, string?];
-  switch (field) {
-    case "animalCosmetics":
-    case "animals": {
-      const byAnimal = progress[field] as Record<string, Set<string>>;
+  if (!Object.hasOwn(PROGRESS_FIELD_SPECS, field)) return;
+  const spec: FieldSpec = PROGRESS_FIELD_SPECS[field];
+  // The field spec describes the matching value's shape for this dynamic key.
+  const fields: Record<ProgressField, unknown> = progress;
+  switch (spec.shape) {
+    case "animal-lists": {
+      const byAnimal = fields[field] as Record<string, Set<string>>;
       const ids = getOrCreate(byAnimal, id, () => new Set<string>());
       if (value === undefined) ids.delete(member);
       else ids.add(member);
       return;
     }
-    case "hasUpperFloor":
-      progress.hasUpperFloor = value !== undefined;
+    case "flag":
+      fields[field] = value !== undefined;
       return;
-    case "breakUpsDisabled":
-      progress.breakUpsDisabled = value !== undefined;
+    case "choice":
+      fields[field] = value ?? spec.default;
       return;
-    case "childChoice":
-      progress.childChoice = (value ?? "undeclared") as ChildChoice;
-      return;
-    case "villagerRelationships":
-      if (value === undefined) {
-        progress.villagerRelationships = Object.fromEntries(
-          Object.entries(progress.villagerRelationships).filter(([villager]) => villager !== id),
+    case "choices": {
+      const choices = fields[field] as Record<string, string>;
+      if (value === undefined && spec.removeDefault) {
+        fields[field] = Object.fromEntries(
+          Object.entries(choices).filter(([entry]) => entry !== id),
         );
       } else {
-        (progress.villagerRelationships as Record<string, VillagerRelationship>)[id] =
-          value as VillagerRelationship;
+        choices[id] = value ?? spec.default;
       }
       return;
-    case "heartLevels":
-    case "skillLevels":
-      (progress[field] as Record<string, number>)[id] = Number(value ?? 0);
+    }
+    case "levels":
+      (fields[field] as Record<string, number>)[id] = Number(value ?? 0);
       return;
-    case "questStates":
-      (progress.questStates as Record<string, QuestState>)[id] = (value ?? "none") as QuestState;
+    case "level":
+      fields[field] = Number(value ?? 0);
       return;
-    case "mineFloor":
-    case "renown":
-      progress[field] = Number(value ?? 0);
-      return;
-    case "reachedSeason":
-      progress.reachedSeason = (value ?? "spring") as Season;
-      return;
-    case "almanac":
-    case "almanacRecipes":
-    case "cosmetics":
-    case "mountAppearances":
-    case "museum":
-    case "petCosmetics":
-    case "petSkins":
-    case "spells":
-    case "unlockedPerks": {
-      const ids = progress[field] as Set<string>;
+    case "list": {
+      const ids = fields[field] as Set<string>;
       if (value === undefined) ids.delete(id);
       else ids.add(id);
     }
   }
-}
-
-export function isLevelField(field: ProgressField): boolean {
-  return LEVEL_FIELDS.has(field);
 }
 
 export function appliedFact(
@@ -139,13 +97,6 @@ export function recordSavePlaytime(history: ProgressHistory, playtime: number | 
   }
 }
 
-const NORMALIZE_LEVEL: Partial<Record<ProgressField, (value: number) => number>> = {
-  heartLevels: (value) => clampLevel(value, MAX_HEART_LEVEL),
-  mineFloor: clampMineFloor,
-  renown: clampRenownLevel,
-  skillLevels: (value) => clampLevel(value, MAX_SKILL_LEVEL),
-};
-
 /** The additive policy, used for the import preview and again when reconciling storage. */
 export function mergeProgress(
   progress: ProgressState,
@@ -155,22 +106,14 @@ export function mergeProgress(
   const before = progressFacts(progress);
   for (const [key, raw] of progressFacts(imported)) {
     const field = factFieldOf(key) as ProgressField;
-    if (
-      field === "breakUpsDisabled" ||
-      field === "childChoice" ||
-      field === "villagerRelationships"
-    ) {
-      continue;
-    }
-    const normalize = NORMALIZE_LEVEL[field];
-    const value = normalize ? String(normalize(Number(raw))) : raw;
+    const spec: FieldSpec = PROGRESS_FIELD_SPECS[field];
+    if (spec.household) continue;
+    const value = "clamp" in spec ? String(spec.clamp(Number(raw))) : raw;
     const increase = factRank(field, value) - factRank(field, before.get(key));
     if (!(increase > 0)) continue;
     writeFact(progress, key, value);
-    if (field === "mineFloor" || field === "renown") counts[field] = increase;
-    else if (field === "questStates") counts.quests++;
-    else if (field === "unlockedPerks") counts.perks++;
-    else counts[field]++;
+    const count = spec.mergeCount ?? (field as keyof MergeCounts);
+    counts[count] += spec.shape === "level" ? increase : 1;
   }
 
   const household = mergeHousehold(progress, imported);
