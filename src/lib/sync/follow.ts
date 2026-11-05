@@ -33,8 +33,12 @@ export const FOLLOW_LINK_PATH = "/sync";
 /** The relay's origin; `connect-src` allows it for HTTPS & WSS. */
 export const RELAY_ORIGIN = "https://relay.mistria.fyi";
 
+/** How long a create may take, past the relay's own five seconds for checking Turnstile. */
+const CREATE_TIMEOUT_MS = 30_000;
 /** How long a read may take. The receiver reads in turn, so a hung one would hold up what follows. */
 const READ_TIMEOUT_MS = 30_000;
+/** How long a retire may take. A relay that never answers mustn't leave a code looking retired. */
+const RETIRE_TIMEOUT_MS = 30_000;
 /** How long an upload may take, well past the 256 KB a slow connection has to send. */
 const UPLOAD_TIMEOUT_MS = 60_000;
 
@@ -442,6 +446,7 @@ export function createRelayClient(
         body: JSON.stringify({ turnstile }),
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         method: "POST",
+        signal: AbortSignal.timeout(CREATE_TIMEOUT_MS),
       });
       if (response === undefined) return { kind: "unreachable" };
       if (response.status === 200 || response.status === 201) return { kind: "created" };
@@ -479,6 +484,7 @@ export function createRelayClient(
       const response = await send(mailboxUrl(mailboxId), {
         headers: { Authorization: `Bearer ${token}` },
         method: "DELETE",
+        signal: AbortSignal.timeout(RETIRE_TIMEOUT_MS),
       });
       if (response === undefined) return { kind: "unreachable" };
       // A `410` is also a terminal acknowledgment: an earlier attempt landed.
@@ -696,15 +702,4 @@ export async function pendingRetireFor(code: {
 }): Promise<PendingRetire> {
   if (!isFollowKey(code.key)) throw new Error("Malformed follow key");
   return { mailboxId: await mailboxIdFor(code.key), token: code.token };
-}
-
-/**
- * Tries to retire every pending code, & reports each one's result in the same order. A pause
- * doesn't hold one back, since retiring bypasses it.
- */
-export async function retirePending(
-  relay: RelayClient,
-  pending: readonly PendingRetire[],
-): Promise<RetireResult[]> {
-  return Promise.all(pending.map((retire) => relay.retire(retire.mailboxId, retire.token)));
 }

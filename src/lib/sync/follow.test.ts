@@ -19,7 +19,6 @@ import {
   parseFollowLink,
   parseMailboxPush,
   pendingRetireFor,
-  retirePending,
   sealEnvelope,
   shareNewCode,
   subscribeToMailbox,
@@ -293,6 +292,23 @@ describe("the relay client", () => {
     },
   );
 
+  it("gives every request a deadline, & reads one that passes as unreachable", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    const signals: (AbortSignal | null | undefined)[] = [];
+    const relay = createRelayClient("https://relay.test", (_url, init) => {
+      signals.push(init?.signal);
+      return Promise.reject(new DOMException("Timed out", "TimeoutError"));
+    });
+    const sealed = { counter: 1, envelope: new Uint8Array(32), version: 1 };
+    expect(await relay.create("id", "token", "challenge")).toEqual({ kind: "unreachable" });
+    expect(await relay.read("id")).toEqual({ kind: "unreachable" });
+    expect(await relay.retire("id", "token")).toEqual({ kind: "unreachable" });
+    expect(await relay.upload("id", "token", sealed)).toEqual({ kind: "unreachable" });
+    expect(signals).toHaveLength(4);
+    expect(signals.every((signal) => signal instanceof AbortSignal)).toBe(true);
+    expect(timeout.mock.calls.map(([ms]) => ms)).toEqual([30_000, 30_000, 30_000, 60_000]);
+  });
+
   it("reads an upload's unsupported-version answer, & no other 400, as a version mismatch", async () => {
     const answers = [
       Response.json({ state: "unsupported-version" }, { status: 400 }),
@@ -403,18 +419,11 @@ describe("opening a code", () => {
 });
 
 describe("retiring", () => {
-  it("reports each retire's result in order", async () => {
-    const first = await pendingRetireFor({ key: KEY_0_TO_31, token: "a" });
-    const second = await pendingRetireFor({ key: KEY_ALL_FF, token: "b" });
-    const retire = vi
-      .fn<RelayClient["retire"]>()
-      .mockResolvedValueOnce({ kind: "unreachable" })
-      .mockResolvedValueOnce({ kind: "retired" });
-    expect(await retirePending(relayStub({ retire }), [first, second])).toEqual([
-      { kind: "unreachable" },
-      { kind: "retired" },
-    ]);
-    expect(first).toEqual({ mailboxId: "Um4iPaITziwZ-9gBeM0c6g", token: "a" });
+  it("keeps only what the relay needs, never the key", async () => {
+    expect(await pendingRetireFor({ key: KEY_0_TO_31, token: "a" })).toEqual({
+      mailboxId: "Um4iPaITziwZ-9gBeM0c6g",
+      token: "a",
+    });
   });
 });
 

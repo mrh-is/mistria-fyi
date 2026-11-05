@@ -1,9 +1,11 @@
 <script lang="ts">
   import IconCamera from "@tabler/icons-svelte-runes/icons/camera";
+  import IconLoader2 from "@tabler/icons-svelte-runes/icons/loader-2";
   import IconPlayerPause from "@tabler/icons-svelte-runes/icons/player-pause";
   import IconQrcode from "@tabler/icons-svelte-runes/icons/qrcode";
   import IconRefresh from "@tabler/icons-svelte-runes/icons/refresh";
   import IconSparkles from "@tabler/icons-svelte-runes/icons/sparkles";
+  import { onMount } from "svelte";
 
   import StatusNote from "#lib/components/status-note.svelte";
   import SaveDrop from "#lib/components/sync/save-drop.svelte";
@@ -13,8 +15,9 @@
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
+  import { retireStatus } from "#lib/sync/retire-status.svelte.js";
   import { guessPlatform } from "#lib/sync/save-folders.js";
-  import { makeNewCode, stopSyncing } from "#lib/sync/sharing.js";
+  import { makeNewCode, resumeStoppedRetires, stopSyncing } from "#lib/sync/sharing.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
@@ -25,12 +28,37 @@
   let open = $state(false);
   let wasSyncing = false;
 
-  // Stored progress loads after the page mounts, so the card opens once a lane appears.
+  const oldCodeActive = $derived(userState.syncPendingRetires.length > 0);
+  const oldCodeStuck = $derived(retireStatus.stuck(userState.syncPendingRetires));
+
+  // Stored progress loads after the page mounts, so the card opens once a lane appears, or once
+  // an old code that still works does, which can outlast the lane.
   $effect(() => {
-    const syncing = lane !== undefined;
+    const syncing = lane !== undefined || oldCodeActive;
     if (syncing && !wasSyncing) open = true;
     wasSyncing = syncing;
   });
+
+  // Finishing has nothing to see, since the status just goes, so it's only announced.
+  let oldCodeDone = $state(false);
+  let wasOldCodeActive = false;
+  $effect(() => {
+    if (oldCodeActive) oldCodeDone = false;
+    else if (wasOldCodeActive) oldCodeDone = true;
+    wasOldCodeActive = oldCodeActive;
+  });
+
+  // The stuck note's own alert speaks for itself.
+  const oldCodeAnnouncement = $derived.by(() => {
+    if (oldCodeDone) return m.sync_old_code_off();
+    if (!oldCodeActive || working || oldCodeStuck) return "";
+    return `${m.sync_old_code_turning_off()} ${m.sync_old_code_still_works()}`;
+  });
+
+  onMount(() => {
+    void resumeStoppedRetires();
+  });
+
   let showCode = $state(false);
   let newCodeOpen = $state(false);
   let stopOpen = $state(false);
@@ -77,7 +105,25 @@
   }
 </script>
 
+<!-- Always here, so a screen reader announces each change to it. -->
+<div class="sr-only" role="status">{oldCodeAnnouncement}</div>
+
 <DataCard bind:open title={m.sync_card_title()} summary={m.sync_card_summary()}>
+  {#if oldCodeActive && !working}
+    <div class="sync-card__old-code">
+      {#if oldCodeStuck}
+        <StatusNote tone="warning">{m.sync_old_code_stuck()}</StatusNote>
+      {:else}
+        <div class="sync-card__turning-off" aria-hidden="true">
+          <IconLoader2 class="size-4 animate-spin motion-reduce:animate-none" />
+          <div>
+            <p class="sync-card__turning-off-title">{m.sync_old_code_turning_off()}</p>
+            <p>{m.sync_old_code_still_works()}</p>
+          </div>
+        </div>
+      {/if}
+    </div>
+  {/if}
   {#if lane === undefined}
     <div class="sync-card">
       <p class="sync-card__note">{m.sync_card_setup_sub()}</p>
@@ -214,6 +260,28 @@
 />
 
 <style>
+  .sync-card__old-code {
+    margin-block-end: 12px;
+  }
+
+  .sync-card__turning-off {
+    display: flex;
+    gap: 8px;
+    color: var(--color-ink-muted);
+    font-family: var(--font-annotation);
+    font-size: var(--text-xs);
+  }
+
+  .sync-card__turning-off :global(svg) {
+    flex: none;
+    margin-block-start: 1px;
+  }
+
+  .sync-card__turning-off-title {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
   .sync-card {
     display: flex;
     flex-direction: column;

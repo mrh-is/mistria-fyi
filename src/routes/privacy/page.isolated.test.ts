@@ -28,7 +28,7 @@ describe("privacy page sync sections", () => {
     expect(text).toContain("the server that passes it along");
     expect(text).toContain("only the latest save file for each code");
     expect(text).toContain("30 days after it was sent");
-    expect(text).toContain("until you make a new one");
+    expect(text).toContain("until that code stops working");
     expect(text).toContain("off stream");
     expect(text).toContain("Cloudflare processes IP addresses");
     expect(text).toContain("we don’t log them");

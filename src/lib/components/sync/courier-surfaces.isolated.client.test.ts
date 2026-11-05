@@ -7,7 +7,7 @@ import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 import type { CourierOptions, CourierStatus } from "#lib/sync/courier.js";
-import type { RelayClient } from "#lib/sync/follow.js";
+import type { RelayClient, RetireResult } from "#lib/sync/follow.js";
 
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 vi.mock("$app/navigation", () => ({ afterNavigate: vi.fn(), goto: vi.fn() }));
@@ -126,11 +126,13 @@ async function renderNote(lane: Record<string, unknown> = SHARING) {
   await tick();
 }
 
-async function renderCard() {
-  await loadStore({ syncLane: SHARING });
+async function renderCard(local: Record<string, unknown> = {}, relay: Partial<RelayClient> = {}) {
+  const userState = await loadStore({ syncLane: SHARING, ...local });
+  await relayWith(relay);
   const { default: Card } = await import("../../../routes/data/sync-card.svelte");
   render(Card);
   await tick();
+  return userState;
 }
 
 async function relayWith(overrides: Partial<RelayClient> = {}) {
@@ -326,6 +328,50 @@ describe("the notes", () => {
 });
 
 describe("Data's sync card", () => {
+  it("shows a stored retire as under way until the relay confirms, then announces it", async () => {
+    const retire = { mailboxId: "AAAAAAAAAAAAAAAAAAAAAA", token: TOKEN };
+    const answer = Promise.withResolvers<RetireResult>();
+    const userState = await renderCard(
+      { syncPendingRetires: [retire] },
+      { retire: () => answer.promise },
+    );
+    expect(screen.getByText("Turning off your old code…")).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent("It still works until this finishes.");
+
+    await userState.confirmRetired([retire]);
+    await tick();
+    expect(screen.queryByText("Turning off your old code…")).toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent("Your old code is off.");
+  });
+
+  it("opens to show an old code that outlasted its lane", async () => {
+    const retire = { mailboxId: "AAAAAAAAAAAAAAAAAAAAAA", token: TOKEN };
+    const answer = Promise.withResolvers<RetireResult>();
+    await renderCard(
+      { syncLane: undefined, syncPendingRetires: [retire] },
+      { retire: () => answer.promise },
+    );
+    expect(screen.getByText("Turning off your old code…")).toBeVisible();
+  });
+
+  it("stops showing progress once the relay refuses, & says it'll try again", async () => {
+    // The tests above leave their own mailbox's request open, so this one needs another mailbox.
+    const retire = { mailboxId: "BBBBBBBBBBBBBBBBBBBBBB", token: TOKEN };
+    await renderCard(
+      { syncPendingRetires: [retire] },
+      { retire: vi.fn<RelayClient["retire"]>().mockResolvedValue({ kind: "refused" }) },
+    );
+    await waitFor(() => {
+      expect(screen.getByText(/We couldn’t turn off your old code yet/u)).toBeVisible();
+    });
+    expect(screen.queryByText("Turning off your old code…")).toBeNull();
+  });
+
+  it("says nothing about an old code when none is waiting", async () => {
+    await renderCard();
+    expect(screen.queryByText("Turning off your old code…")).toBeNull();
+  });
+
   it("takes each new save file where it isn't watched", async () => {
     await renderCard();
     report({ source: "file" });

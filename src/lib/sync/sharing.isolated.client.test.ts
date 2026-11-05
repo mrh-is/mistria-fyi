@@ -6,7 +6,7 @@ import { holdTurnstileScripts } from "#lib/test-utils/turnstile-script.js";
 
 import { deriveFollowKeys, encodeSavePayload, mailboxIdFor, sealEnvelope } from "./follow.js";
 
-import type { FollowKey, ReadResult, RelayClient } from "./follow.js";
+import type { FollowKey, ReadResult, RelayClient, RetireResult } from "./follow.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const OLD_KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
@@ -267,13 +267,157 @@ describe("stopping", () => {
     expect(retire).toHaveBeenCalledTimes(2);
   });
 
-  it("stops retrying a retire the relay refused, until the next visit", async () => {
+  it("stops retrying a retire the relay refused", async () => {
     vi.useFakeTimers();
     const retire = vi.fn<RelayClient["retire"]>().mockResolvedValue({ kind: "refused" });
     const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
     await sharing.stopSyncing();
     expect(userState.syncPendingRetires).toHaveLength(1);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("retires & confirms each code on its own while another request never settles", async () => {
+    const retire = vi.fn<RelayClient["retire"]>();
+    retire.mockReturnValueOnce(Promise.withResolvers<RetireResult>().promise);
+    retire.mockResolvedValue({ kind: "retired" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    void sharing.makeNewCode();
+    await vi.waitFor(() => {
+      expect(retire).toHaveBeenCalledTimes(1);
+    });
+    const [stuck] = userState.syncPendingRetires;
+
+    await sharing.makeNewCode();
+    expect(retire).toHaveBeenCalledTimes(2);
+    expect(userState.syncPendingRetires).toEqual([stuck]);
+
+    // An attempt leaves the stalled mailbox alone rather than stacking a second request on it.
+    await sharing.retryPendingRetires();
+    expect(retire).toHaveBeenCalledTimes(2);
+  });
+
+  it("hands over the new code after a moment, even while the old one's retire stalls", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>();
+    retire.mockReturnValue(Promise.withResolvers<RetireResult>().promise);
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    const made = sharing.makeNewCode();
+    await vi.waitFor(() => {
+      expect(retire).toHaveBeenCalledTimes(1);
+    });
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(await made).toMatchObject({ kind: "shared" });
+    expect(userState.syncPendingRetires).toHaveLength(1);
+  });
+
+  it("retries one code on time while another stalls, & keeps each code's own wait", async () => {
+    vi.useFakeTimers();
+    const stalled = Promise.withResolvers<RetireResult>();
+    const retire = vi.fn<RelayClient["retire"]>();
+    retire.mockReturnValueOnce(stalled.promise);
+    retire.mockResolvedValueOnce({ kind: "rate-limited", retryAfterSeconds: 60 });
+    retire.mockResolvedValue({ kind: "retired" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    void sharing.makeNewCode();
+    await vi.waitFor(() => {
+      expect(retire).toHaveBeenCalledTimes(1);
+    });
+    await sharing.makeNewCode();
+    expect(retire).toHaveBeenCalledTimes(2);
+
+    // The stalled request ending mustn't move the wait the relay asked for on the other code.
+    stalled.resolve({ kind: "unreachable" });
+    await vi.advanceTimersByTimeAsync(4999);
+    expect(retire).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(retire).toHaveBeenCalledTimes(3);
+    expect(userState.syncPendingRetires).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(55_000);
+    expect(retire).toHaveBeenCalledTimes(4);
+    expect(userState.syncPendingRetires).toEqual([]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("retries a failed code on time while another request stays stalled", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>();
+    retire.mockReturnValueOnce(Promise.withResolvers<RetireResult>().promise);
+    retire.mockResolvedValueOnce({ kind: "unreachable" });
+    retire.mockResolvedValue({ kind: "retired" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    void sharing.makeNewCode();
+    await vi.waitFor(() => {
+      expect(retire).toHaveBeenCalledTimes(1);
+    });
+    await sharing.makeNewCode();
+    expect(userState.syncPendingRetires).toHaveLength(2);
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(retire).toHaveBeenCalledTimes(3);
+    expect(userState.syncPendingRetires).toHaveLength(1);
+  });
+
+  it("tries a refused retire again when the player comes back, & no sooner", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>().mockResolvedValueOnce({ kind: "refused" });
+    retire.mockResolvedValue({ kind: "retired" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    const stop = sharing.keepRetiring();
+    await sharing.stopSyncing();
+    await vi.advanceTimersByTimeAsync(600_000);
+    expect(retire).toHaveBeenCalledTimes(1);
+
+    document.dispatchEvent(new Event("visibilitychange"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(retire).toHaveBeenCalledTimes(2);
+    expect(userState.syncPendingRetires).toEqual([]);
+    stop();
+  });
+
+  it("leaves a wait the relay asked for alone when the player comes back", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>();
+    retire.mockResolvedValue({ kind: "rate-limited", retryAfterSeconds: 60 });
+    const { sharing } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    const stop = sharing.keepRetiring();
+    await sharing.stopSyncing();
+    const calls = retire.mock.calls.length;
+
+    document.dispatchEvent(new Event("visibilitychange"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(retire).toHaveBeenCalledTimes(calls);
+    stop();
+  });
+
+  it("is stuck only once every pending code was refused", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>().mockResolvedValue({ kind: "refused" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    const { retireStatus } = await import("./retire-status.svelte.js");
+    await sharing.makeNewCode();
+    expect(retireStatus.stuck(userState.syncPendingRetires)).toBe(true);
+    const [refused] = userState.syncPendingRetires;
+
+    retire.mockImplementation((mailboxId) =>
+      Promise.resolve({ kind: mailboxId === refused.mailboxId ? "refused" : "unreachable" }),
+    );
+    await sharing.makeNewCode();
+    expect(userState.syncPendingRetires).toHaveLength(2);
+    expect(retireStatus.stuck(userState.syncPendingRetires)).toBe(false);
+  });
+
+  it("goes back to trying when a refused code gets another answer", async () => {
+    vi.useFakeTimers();
+    const retire = vi.fn<RelayClient["retire"]>().mockResolvedValueOnce({ kind: "refused" });
+    retire.mockResolvedValue({ kind: "unreachable" });
+    const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
+    const { retireStatus } = await import("./retire-status.svelte.js");
+    await sharing.stopSyncing();
+    expect(retireStatus.stuck(userState.syncPendingRetires)).toBe(true);
+
+    await sharing.retryPendingRetires();
+    expect(retireStatus.stuck(userState.syncPendingRetires)).toBe(false);
   });
 
   it("schedules nothing once stopped, even from an attempt already under way", async () => {
