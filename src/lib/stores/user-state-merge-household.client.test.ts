@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
 
@@ -8,9 +8,20 @@ const ADELINE = "adeline" as VillagerId;
 const BALOR = "balor" as VillagerId;
 const CELINE = "celine" as VillagerId;
 
+beforeEach(() => {
+  userState.loadFromStorage();
+  userState.resetAll();
+});
+
 afterEach(() => {
   userState.resetAll();
 });
+
+async function mergeFromSave(...args: Parameters<typeof userState.mergeFromSave>) {
+  const outcome = await userState.mergeFromSave(...args);
+  if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
+  return outcome.result;
+}
 
 describe("mergeFromSave household policy", () => {
   it("records the setting as manual and its engagement cascade as inferred", () => {
@@ -26,11 +37,11 @@ describe("mergeFromSave household policy", () => {
     expect(userState.state.progress.villagerRelationships[BALOR]).toBe("platonic");
   });
 
-  it("corrects a prior cascade from a disabled-break-ups save", () => {
+  it("corrects a prior cascade from a disabled-break-ups save", async () => {
     userState.setVillagerRelationship(BALOR, "romantic");
     userState.setVillagerRelationship(ADELINE, "married");
     expect(userState.state.progress.villagerRelationships[BALOR]).toBe("platonic");
-    const result = userState.mergeFromSave({
+    const result = await mergeFromSave({
       breakUpsDisabled: true,
       villagerRelationships: { [ADELINE]: "married", [BALOR]: "romantic" },
     });
@@ -39,10 +50,10 @@ describe("mergeFromSave household policy", () => {
     expect(userState.state.progress.breakUpsDisabled).toBe(true);
   });
 
-  it("silently applies an incoming marriage when no local spouse exists", () => {
+  it("silently applies an incoming marriage when no local spouse exists", async () => {
     userState.setVillagerRelationship(CELINE, "proposed");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       childChoice: "yes",
       villagerRelationships: { [ADELINE]: "married" },
     });
@@ -55,11 +66,11 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("flags a same-spouse child-choice conflict and keeps the local choice", () => {
+  it("flags a same-spouse child-choice conflict and keeps the local choice", async () => {
     userState.setVillagerRelationship(ADELINE, "married");
     userState.setChildChoice("yes");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       childChoice: "no",
       villagerRelationships: { [ADELINE]: "married" },
     });
@@ -76,10 +87,10 @@ describe("mergeFromSave household policy", () => {
     ]);
   });
 
-  it("applies an undeclared-to-declared child choice silently for the existing spouse", () => {
+  it("applies an undeclared-to-declared child choice silently for the existing spouse", async () => {
     userState.setVillagerRelationship(ADELINE, "married");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       childChoice: "yes",
       villagerRelationships: { [ADELINE]: "married" },
     });
@@ -89,11 +100,11 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("no-ops when the incoming child choice is undeclared", () => {
+  it("no-ops when the incoming child choice is undeclared", async () => {
     userState.setVillagerRelationship(ADELINE, "married");
     userState.setChildChoice("yes");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       childChoice: "undeclared",
       villagerRelationships: { [ADELINE]: "married" },
     });
@@ -103,11 +114,11 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("treats a different incoming spouse as one household conflict and keeps the local marriage", () => {
+  it("treats a different incoming spouse as one household conflict and keeps the local marriage", async () => {
     userState.setVillagerRelationship(ADELINE, "married");
     userState.setChildChoice("yes");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       childChoice: "no",
       villagerRelationships: { [BALOR]: "married" },
     });
@@ -122,10 +133,10 @@ describe("mergeFromSave household policy", () => {
     ]);
   });
 
-  it("flags a downgrade of the local spouse as a relationship conflict", () => {
+  it("flags a downgrade of the local spouse as a relationship conflict", async () => {
     userState.setVillagerRelationship(ADELINE, "married");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       villagerRelationships: { [ADELINE]: "romantic" },
     });
 
@@ -141,11 +152,11 @@ describe("mergeFromSave household policy", () => {
     ]);
   });
 
-  it("no-ops for a villager omitted from the incoming data", () => {
+  it("no-ops for a villager omitted from the incoming data", async () => {
     userState.setBreakUpsDisabled(true);
     userState.setVillagerRelationship(BALOR, "proposed");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       villagerRelationships: { [CELINE]: "romantic" },
     });
 
@@ -155,11 +166,11 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("no-ops when the local spouse is omitted from the incoming data", () => {
+  it("no-ops when the local spouse is omitted from the incoming data", async () => {
     userState.setVillagerRelationship(ADELINE, "married");
     userState.setChildChoice("yes");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       villagerRelationships: { [CELINE]: "platonic" },
     });
 
@@ -170,18 +181,18 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("ignores a child choice when neither side has a spouse", () => {
-    const { conflicts, counts } = userState.mergeFromSave({ childChoice: "yes" });
+  it("ignores a child choice when neither side has a spouse", async () => {
+    const { conflicts, counts } = await mergeFromSave({ childChoice: "yes" });
 
     expect(userState.state.progress.childChoice).toBe("undeclared");
     expect(counts.childChoice).toBe(0);
     expect(conflicts).toEqual([]);
   });
 
-  it("applies a forward move within a branch silently when no spouse is involved", () => {
+  it("applies a forward move within a branch silently when no spouse is involved", async () => {
     userState.setVillagerRelationship(CELINE, "romantic");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       villagerRelationships: { [CELINE]: "proposed" },
     });
 
@@ -190,10 +201,10 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("flags a cross-branch move as a conflict without a spouse involved", () => {
+  it("flags a cross-branch move as a conflict without a spouse involved", async () => {
     userState.setVillagerRelationship(CELINE, "romantic");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       villagerRelationships: { [CELINE]: "platonic" },
     });
 
@@ -209,10 +220,10 @@ describe("mergeFromSave household policy", () => {
     ]);
   });
 
-  it("never treats an incoming undecided relationship as a downgrade", () => {
+  it("never treats an incoming undecided relationship as a downgrade", async () => {
     userState.setVillagerRelationship(CELINE, "proposed");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       villagerRelationships: { [CELINE]: "undecided" },
     });
 
@@ -221,8 +232,8 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("merges nonconflicting additive relationship data alongside other progress", () => {
-    const { conflicts, counts } = userState.mergeFromSave({
+  it("merges nonconflicting additive relationship data alongside other progress", async () => {
+    const { conflicts, counts } = await mergeFromSave({
       renown: 5,
       villagerRelationships: { [CELINE]: "romantic" },
     });
@@ -234,10 +245,10 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("cascades a new marriage over a locally proposed villager, allowing that one downgrade", () => {
+  it("cascades a new marriage over a locally proposed villager, allowing that one downgrade", async () => {
     userState.setVillagerRelationship(CELINE, "proposed");
 
-    const { conflicts } = userState.mergeFromSave({
+    const { conflicts } = await mergeFromSave({
       villagerRelationships: { [ADELINE]: "married" },
     });
 
@@ -246,12 +257,12 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("does not falsely flag a conflict for a villager the marriage cascade will flatten anyway", () => {
+  it("does not falsely flag a conflict for a villager the marriage cascade will flatten anyway", async () => {
     userState.setVillagerRelationship(CELINE, "proposed");
 
     // A real transfer payload is normalized before merge, so a non-spouse villager already
     // carries the post-cascade "platonic" value the incoming marriage will force everyone else to.
-    const { conflicts } = userState.mergeFromSave({
+    const { conflicts } = await mergeFromSave({
       villagerRelationships: { [ADELINE]: "married", [CELINE]: "platonic" },
     });
 
@@ -260,10 +271,10 @@ describe("mergeFromSave household policy", () => {
     expect(conflicts).toEqual([]);
   });
 
-  it("never applies a child choice when the local spouse's marriage is itself disputed", () => {
+  it("never applies a child choice when the local spouse's marriage is itself disputed", async () => {
     userState.setVillagerRelationship(ADELINE, "married");
 
-    const { conflicts, counts } = userState.mergeFromSave({
+    const { conflicts, counts } = await mergeFromSave({
       childChoice: "yes",
       villagerRelationships: { [ADELINE]: "romantic" },
     });

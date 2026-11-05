@@ -187,7 +187,8 @@ describe("FeedbackPanel", () => {
       .fn()
       .mockResolvedValue(Response.json({ issueUrl: "https://example.com/issues/1" }));
     vi.stubGlobal("fetch", fetchMock);
-    userState.mergeFromSave(
+    userState.loadFromStorage();
+    await userState.mergeFromSave(
       { renown: 7 },
       {
         metadata: {

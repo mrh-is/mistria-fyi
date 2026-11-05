@@ -100,36 +100,44 @@ const LIST_FIELDS = [
  * Every non-default fact in `progress`, as its {@link factKey} & a comparable value. A fact absent
  * here is at its default: unticked, level zero, quest `none`, relationship `undecided`.
  */
-export function progressFacts(progress: DeepReadonly<ProgressState>): Map<string, string> {
+export function progressFacts(progress: DeepReadonly<Partial<ProgressState>>): Map<string, string> {
   const facts = new Map<string, string>();
   for (const field of LIST_FIELDS) {
-    for (const id of progress[field]) facts.set(factKey(field, id), "1");
+    for (const id of progress[field] ?? []) facts.set(factKey(field, id), "1");
   }
   for (const field of ["animalCosmetics", "animals"] as const) {
-    for (const [animalId, ids] of Object.entries(progress[field])) {
+    for (const [animalId, ids] of Object.entries(progress[field] ?? {})) {
       for (const id of (ids ?? []) as Iterable<string>) {
         facts.set(factKey(field, animalId, id), "1");
       }
     }
   }
   for (const field of ["heartLevels", "skillLevels"] as const) {
-    const levels: Readonly<Partial<Record<string, number>>> = progress[field];
+    const levels: Readonly<Partial<Record<string, number>>> = progress[field] ?? {};
     for (const [id, level] of recordEntries(levels)) {
-      if (level > 0) facts.set(factKey(field, id), String(level));
+      if (typeof level === "number" && level > 0) facts.set(factKey(field, id), String(level));
     }
   }
-  for (const [id, questState] of recordEntries(progress.questStates)) {
+  for (const [id, questState] of recordEntries(progress.questStates ?? {})) {
     if (questState !== "none") facts.set(factKey("questStates", id), questState);
   }
-  for (const [id, relationship] of recordEntries(progress.villagerRelationships)) {
+  for (const [id, relationship] of recordEntries(progress.villagerRelationships ?? {})) {
     if (relationship !== "undecided") facts.set(factKey("villagerRelationships", id), relationship);
   }
-  if (progress.childChoice !== "undeclared") facts.set("childChoice", progress.childChoice);
+  if (progress.childChoice !== undefined && progress.childChoice !== "undeclared") {
+    facts.set("childChoice", progress.childChoice);
+  }
   if (progress.breakUpsDisabled) facts.set("breakUpsDisabled", "1");
   if (progress.hasUpperFloor) facts.set("hasUpperFloor", "1");
-  if (progress.mineFloor > 0) facts.set("mineFloor", String(progress.mineFloor));
-  if (progress.reachedSeason !== "spring") facts.set("reachedSeason", progress.reachedSeason);
-  if (progress.renown > 0) facts.set("renown", String(progress.renown));
+  if (typeof progress.mineFloor === "number" && progress.mineFloor > 0) {
+    facts.set("mineFloor", String(progress.mineFloor));
+  }
+  if (progress.reachedSeason !== undefined && progress.reachedSeason !== "spring") {
+    facts.set("reachedSeason", progress.reachedSeason);
+  }
+  if (typeof progress.renown === "number" && progress.renown > 0) {
+    facts.set("renown", String(progress.renown));
+  }
   return facts;
 }
 

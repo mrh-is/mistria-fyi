@@ -164,7 +164,7 @@ describe("animal map backfill on merge", () => {
       ) as Record<AnimalId, Set<AnimalVariantId>>,
     };
 
-    userState.mergeFromSave(partialImport);
+    await userState.mergeFromSave(partialImport);
 
     for (const animalId of OMITTED_ANIMALS) {
       expect(

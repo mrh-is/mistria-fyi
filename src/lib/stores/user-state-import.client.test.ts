@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { extractSaveProgress } from "#lib/engine/import-save.js";
@@ -10,11 +10,16 @@ import type { SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
 const MAX_MINE_FLOOR = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
 
-describe("restoreBackup validation", () => {
-  afterEach(() => {
-    userState.resetAll();
-  });
+beforeEach(() => {
+  userState.loadFromStorage();
+  userState.resetAll();
+});
 
+afterEach(() => {
+  userState.resetAll();
+});
+
+describe("restoreBackup validation", () => {
   it("succeeds with a valid backup", () => {
     const json = userState.exportBackup();
     expect(JSON.parse(json)).toMatchObject({ version: CURRENT_SERIALIZATION_VERSION });
@@ -249,18 +254,14 @@ describe("restoreBackup validation", () => {
 });
 
 describe("mergeFromSave numeric domains", () => {
-  afterEach(() => {
-    userState.resetAll();
-  });
-
-  it("never installs out-of-domain levels from a native save", () => {
+  it("never installs out-of-domain levels from a native save", async () => {
     const { completed, warnings } = extractSaveProgress({
       gamedata: {
         maximum_mines_level: 9999,
         t2_world_facts: { adeline_heart_level: 99, farming_level: 999, renown: 9999 },
       },
     });
-    userState.mergeFromSave(completed);
+    await userState.mergeFromSave(completed);
 
     expect(userState.state.progress.mineFloor).toBe(MAX_MINE_FLOOR);
     expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(MAX_HEART_LEVEL);
@@ -269,8 +270,8 @@ describe("mergeFromSave numeric domains", () => {
     expect(warnings).toHaveLength(3);
   });
 
-  it("clamps levels handed directly to the merge", () => {
-    userState.mergeFromSave({
+  it("clamps levels handed directly to the merge", async () => {
+    await userState.mergeFromSave({
       heartLevels: { adeline: 10.7 } as never,
       mineFloor: 9999,
       renown: Number.POSITIVE_INFINITY,
@@ -283,7 +284,7 @@ describe("mergeFromSave numeric domains", () => {
     expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(10);
   });
 
-  it("preserves higher existing progress across an additive import", () => {
+  it("preserves higher existing progress across an additive import", async () => {
     userState.setHeartLevel("adeline" as VillagerId, 8);
     userState.setSkillLevel("farming" as SkillId, 30);
     userState.setRenown(5);
@@ -295,7 +296,9 @@ describe("mergeFromSave numeric domains", () => {
         t2_world_facts: { adeline_heart_level: 3, farming_level: 10, renown: 2 },
       },
     });
-    const { counts } = userState.mergeFromSave(completed);
+    const outcome = await userState.mergeFromSave(completed);
+    if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
+    const { counts } = outcome.result;
 
     expect(userState.state.progress.heartLevels["adeline" as VillagerId]).toBe(8);
     expect(userState.state.progress.skillLevels["farming" as SkillId]).toBe(30);

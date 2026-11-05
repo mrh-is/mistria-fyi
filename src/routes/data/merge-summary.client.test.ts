@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { render } from "@testing-library/svelte";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import MergeSummary from "./merge-summary.svelte";
 
@@ -29,55 +29,69 @@ const CASES: { expected: string; imported: Partial<ProgressState>; setup?: () =>
   },
 ];
 
+beforeEach(() => {
+  userState.loadFromStorage();
+  userState.resetAll();
+});
+
 afterEach(() => {
   userState.resetAll();
 });
 
 describe("merge summary integration", () => {
-  it.each(CASES)("reports $expected after an actual merge", ({ expected, imported, setup }) => {
-    setup?.();
-    const { counts } = userState.mergeFromSave(imported);
+  it.each(CASES)(
+    "reports $expected after an actual merge",
+    async ({ expected, imported, setup }) => {
+      setup?.();
+      const outcome = await userState.mergeFromSave(imported);
+      if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
+      const { counts } = outcome.result;
 
-    const { text } = renderToFragment(MergeSummary, {
-      props: { counts, filesUsed: ["player.json"] },
-    });
+      const { container } = render(MergeSummary, {
+        props: { counts, filesUsed: ["player.json"] },
+      });
 
-    expect(text).toContain(expected);
-    expect(text).not.toContain("No new data to import");
-  });
+      expect(container).toHaveTextContent(expected);
+      expect(container).not.toHaveTextContent("No new data to import");
+    },
+  );
 });
 
 describe("merge summary household conflicts", () => {
-  it("renders a spouse conflict with both villager names and a correction link", () => {
+  it("renders a spouse conflict with both villager names and a correction link", async () => {
     userState.setVillagerRelationship("adeline" as VillagerId, "married");
-    const { conflicts, counts } = userState.mergeFromSave({
+    const outcome = await userState.mergeFromSave({
       villagerRelationships: { ["balor" as VillagerId]: "married" },
     });
+    if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
+    const { conflicts, counts } = outcome.result;
 
-    const { container, text } = renderToFragment(MergeSummary, {
+    const { container } = render(MergeSummary, {
       props: { conflicts, counts },
     });
 
-    expect(text).toContain("Adeline");
-    expect(text).toContain("Balor");
+    expect(container).toHaveTextContent("Adeline");
+    expect(container).toHaveTextContent("Balor");
     const link = container.querySelector("a[href$='/villagers']");
     expect(link?.textContent).toContain("Correct this manually");
   });
 
-  it("renders a child-choice conflict", () => {
+  it("renders a child-choice conflict", async () => {
     userState.setVillagerRelationship("adeline" as VillagerId, "married");
     userState.setChildChoice("yes");
-    const { conflicts, counts } = userState.mergeFromSave({
+    const outcome = await userState.mergeFromSave({
       childChoice: "no",
       villagerRelationships: { ["adeline" as VillagerId]: "married" },
     });
+    if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
+    const { conflicts, counts } = outcome.result;
 
-    const { text } = renderToFragment(MergeSummary, {
+    const { container } = render(MergeSummary, {
       props: { conflicts, counts },
     });
 
-    expect(text).toContain("Adeline");
-    expect(text).toContain("Kids");
-    expect(text).toContain("Child-free");
+    expect(container).toHaveTextContent("Adeline");
+    expect(container).toHaveTextContent("Kids");
+    expect(container).toHaveTextContent("Child-free");
   });
 });
