@@ -403,13 +403,19 @@ describe("checkPnpmStore", () => {
     });
   });
 
-  it("rejects a store inside the repository", () => {
-    const local = machine({
-      commands: { [getStore]: "/repo/.pnpm-store\n" },
-      env: { CODEX_THREAD_ID: "x", pnpm_config_store_dir: "/repo/.pnpm-store" },
-    });
-    expect(checkPnpmStore(local)?.status).toBe("wrong");
-  });
+  it.each(["/repo/.pnpm-store", "/repo/..cache"])(
+    "rejects a store inside the repository: %s",
+    (path) => {
+      const local = machine({
+        commands: { [getStore]: `${path}\n` },
+        env: { CODEX_THREAD_ID: "x", pnpm_config_store_dir: path },
+      });
+      expect(checkPnpmStore(local)).toMatchObject({
+        detail: `${path} is not outside the repo`,
+        status: "wrong",
+      });
+    },
+  );
 
   it("rejects relative stores", () => {
     expect(
