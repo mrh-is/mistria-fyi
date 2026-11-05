@@ -130,6 +130,80 @@ afterEach(() => {
 });
 
 describe("serialized progress writes", () => {
+  const firstFarm = {
+    farmName: "Fern",
+    identity: { creationVersion: null, saveNumber: "123" },
+    importedAt: 1000,
+    playerName: "Ada",
+  };
+  const secondFarm = {
+    ...firstFarm,
+    farmName: "Moss",
+    identity: { creationVersion: null, saveNumber: "456" },
+  };
+
+  it("waits for a decision before merging another farm's save", async () => {
+    const initial = buildState(1, { lastImport: firstFarm }, CURRENT_SERIALIZATION_VERSION);
+    const storage = memoryStorage({ [PROGRESS_KEY]: initial });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", {});
+    const { userState } = await openTab();
+    const before = userState.exportBackup();
+    const outcome = await userState.mergeFromSave({ mineFloor: 10 }, { metadata: secondFarm });
+    if (outcome.kind !== "ask") throw new Error(`Import returned ${outcome.kind}`);
+    expect(userState.exportBackup()).toBe(before);
+    expect(storage.getItem(PROGRESS_KEY)).toBe(initial);
+
+    const thirdFarm = { ...firstFarm, identity: { creationVersion: null, saveNumber: "789" } };
+    const other = buildState(12, { lastImport: thirdFarm }, CURRENT_SERIALIZATION_VERSION);
+    storage.setItem(PROGRESS_KEY, other);
+    const stale = await userState.mergeFromSave(
+      { mineFloor: 10 },
+      { confirmedFarm: outcome.farm, metadata: secondFarm },
+    );
+    if (stale.kind !== "ask") throw new Error(`Import returned ${stale.kind}`);
+    expect(stale.farm).not.toBe(outcome.farm);
+    expect(storage.getItem(PROGRESS_KEY)).toBe(other);
+    expect(userState.exportBackup()).toBe(before);
+
+    const applied = await userState.mergeFromSave(
+      { mineFloor: 10 },
+      { confirmedFarm: stale.farm, metadata: secondFarm },
+    );
+    expect(applied.kind).toBe("applied");
+    const reloaded = await openTab();
+    expect(reloaded.userState.state.progress).toMatchObject({ mineFloor: 10, renown: 12 });
+    expect(reloaded.userState.state.lastImport).toEqual(secondFarm);
+  });
+
+  it("refuses an import when a sync lane starts while the import waits for the lock", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    const before = tab.userState.exportBackup();
+    const pending = tab.userState.mergeFromSave({ mineFloor: 10 }, { metadata: firstFarm });
+    const synced = buildState(
+      12,
+      { local: { syncLane: { kind: "computer" } } },
+      CURRENT_SERIALIZATION_VERSION,
+    );
+    storage.setItem(PROGRESS_KEY, synced);
+    gate.resolve(undefined);
+    await held;
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await pending).toEqual({ kind: "sync-active" });
+    expect(tab.userState.exportBackup()).toBe(before);
+    expect(storage.getItem(PROGRESS_KEY)).toBe(synced);
+    const reloaded = await openTab();
+    expect(reloaded.userState.state.progress).toMatchObject({ mineFloor: 0, renown: 12 });
+    expect(reloaded.userState.syncLane).toEqual({ kind: "computer" });
+  });
+
   it("persists captured import metadata with the locked merge and hydrates it", async () => {
     const { locks } = sharedLocks();
     const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
@@ -145,7 +219,7 @@ describe("serialized progress writes", () => {
       importedAt: 1000,
       playerName: "Ada",
     };
-    tab.userState.mergeFromSave({ mineFloor: 10 }, { metadata });
+    void tab.userState.mergeFromSave({ mineFloor: 10 }, { metadata });
     metadata.farmName = "Mutated after confirmation";
     storage.setItem(PROGRESS_KEY, buildState(12));
     gate.resolve(undefined);
@@ -174,7 +248,7 @@ describe("serialized progress writes", () => {
       playerName: null,
     };
     storage.setItem(PROGRESS_KEY, buildState(12, { lastImport: metadata }, 2));
-    tab.userState.mergeFromSave({ mineFloor: 10 });
+    void tab.userState.mergeFromSave({ mineFloor: 10 });
     await settle(tab.PERSIST_DEBOUNCE_MS);
     expect(tab.userState.state.lastImport).toEqual(metadata);
     expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toHaveProperty(
@@ -200,7 +274,7 @@ describe("serialized progress writes", () => {
       other.progress.almanac = ["turnip"];
       storage.setItem(PROGRESS_KEY, JSON.stringify(other));
       tab.userState.toggleMuseumItem("turnip" as ItemId);
-      tab.userState.mergeFromSave({ mineFloor: 10 });
+      void tab.userState.mergeFromSave({ mineFloor: 10 });
       await settle(tab.PERSIST_DEBOUNCE_MS);
       expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
         progress: { almanac: ["turnip"], mineFloor: 10, museum: ["turnip"], renown: 12 },
@@ -247,7 +321,7 @@ describe("serialized progress writes", () => {
     const held = locks.request(WRITE_LOCK, () => gate.promise);
     await vi.advanceTimersByTimeAsync(1);
     const imported = { mineFloor: 10 };
-    tab.userState.mergeFromSave(imported);
+    void tab.userState.mergeFromSave(imported);
     imported.mineFloor = 99;
     tab.userState.setRenown(8);
     const other = JSON.parse(buildState(5)) as { progress: { almanac: string[] } };
@@ -258,6 +332,86 @@ describe("serialized progress writes", () => {
     await settle(tab.PERSIST_DEBOUNCE_MS);
     expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
       progress: { almanac: ["future-item", "turnip"], mineFloor: 10, renown: 8 },
+    });
+  });
+
+  it("refuses an overlapping import in the same tab and keeps later edits", async () => {
+    const { locks } = sharedLocks();
+    vi.stubGlobal("localStorage", memoryStorage({ [PROGRESS_KEY]: buildState(1) }));
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    const first = tab.userState.mergeFromSave({ mineFloor: 10 }, { metadata: firstFarm });
+    const overlapping = tab.userState.mergeFromSave(
+      { hasUpperFloor: true },
+      { metadata: firstFarm },
+    );
+    tab.userState.setRenown(7);
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    await expect(first).resolves.toMatchObject({ kind: "applied" });
+    await expect(overlapping).resolves.toEqual({ kind: "busy" });
+    const retry = tab.userState.mergeFromSave({ hasUpperFloor: true }, { metadata: firstFarm });
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    await expect(retry).resolves.toMatchObject({ kind: "applied" });
+    const reloaded = await openTab();
+    expect(reloaded.userState.state.progress).toMatchObject({
+      hasUpperFloor: true,
+      mineFloor: 10,
+      renown: 7,
+    });
+  });
+
+  it("keeps a later edit when a queued reset lands before an import", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    tab.userState.resetProgress();
+    const between = Promise.withResolvers<undefined>();
+    const beforeImport = locks.request(WRITE_LOCK, () => between.promise);
+    const pending = tab.userState.mergeFromSave({ mineFloor: 10 }, { metadata: firstFarm });
+
+    gate.resolve(undefined);
+    await held;
+    await vi.advanceTimersByTimeAsync(5);
+    expect(storedRenown(storage)).toBe(0);
+    tab.userState.setRenown(7);
+    between.resolve(undefined);
+    await beforeImport;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    await expect(pending).resolves.toMatchObject({ kind: "applied" });
+    const reloaded = await openTab();
+    expect(reloaded.userState.state.progress).toMatchObject({ mineFloor: 10, renown: 7 });
+  });
+
+  it("keeps an imported marriage when a later edit marks another villager platonic", async () => {
+    const { locks } = sharedLocks();
+    vi.stubGlobal("localStorage", memoryStorage({ [PROGRESS_KEY]: buildState(1) }));
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    const pending = tab.userState.mergeFromSave({
+      villagerRelationships: { ["adeline" as VillagerId]: "married" },
+    });
+    tab.userState.setVillagerRelationship("balor" as VillagerId, "platonic");
+    gate.resolve(undefined);
+    await held;
+    await settle(tab.PERSIST_DEBOUNCE_MS);
+    await expect(pending).resolves.toMatchObject({ kind: "applied" });
+    const reloaded = await openTab();
+    expect(reloaded.userState.state.progress.villagerRelationships).toEqual({
+      adeline: "married",
+      balor: "platonic",
     });
   });
 
@@ -288,7 +442,7 @@ describe("serialized progress writes", () => {
     const gate = Promise.withResolvers<undefined>();
     const held = locks.request(WRITE_LOCK, () => gate.promise);
     await vi.advanceTimersByTimeAsync(1);
-    tab.userState.mergeFromSave({ mineFloor: 10 });
+    void tab.userState.mergeFromSave({ mineFloor: 10 });
     tab.userState.setVillagerRelationship("adeline" as VillagerId, "married");
     const other = JSON.parse(buildState(5)) as {
       progress: { villagerRelationships: Record<string, string> };
@@ -318,7 +472,7 @@ describe("serialized progress writes", () => {
     tab.userState.setSeason("fall");
     tab.userState.setWeather("inclement");
     storage.setItem(PROGRESS_KEY, buildState(5));
-    tab.userState.mergeFromSave({ mineFloor: 10 });
+    void tab.userState.mergeFromSave({ mineFloor: 10 });
     await settle(tab.PERSIST_DEBOUNCE_MS);
     expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
       progress: { almanac: ["future-item"], mineFloor: 10, renown: 5 },
@@ -339,7 +493,7 @@ describe("serialized progress writes", () => {
     const gate = Promise.withResolvers<undefined>();
     const held = locks.request(WRITE_LOCK, () => gate.promise);
     await vi.advanceTimersByTimeAsync(1);
-    tab.userState.mergeFromSave({ mineFloor: 10 });
+    void tab.userState.mergeFromSave({ mineFloor: 10 });
     tab.userState.toggleMuseumItem("turnip" as ItemId);
     tab.userState.setRenown(7);
     tab.userState.setVillagerRelationship("adeline" as VillagerId, "undecided");
@@ -376,7 +530,7 @@ describe("serialized progress writes", () => {
     storage.setItem(PROGRESS_KEY, JSON.stringify(other));
 
     tab.userState.toggleMuseumItem("turnip" as ItemId);
-    tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
+    void tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
     await settle(tab.PERSIST_DEBOUNCE_MS);
 
     const history = {
@@ -418,7 +572,7 @@ describe("serialized progress writes", () => {
       importedAt: 1000,
       playerName: "Ada",
     };
-    tab.userState.mergeFromSave({ mineFloor: 10 }, { metadata });
+    void tab.userState.mergeFromSave({ mineFloor: 10 }, { metadata });
     await settle(tab.PERSIST_DEBOUNCE_MS);
 
     expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
@@ -441,7 +595,7 @@ describe("serialized progress writes", () => {
     other.progress.provenance = { "almanac/turnip": { source: "manual" } };
     storage.setItem(PROGRESS_KEY, JSON.stringify(other));
 
-    tab.userState.mergeFromSave(
+    void tab.userState.mergeFromSave(
       { almanac: new Set(["potato", "turnip"] as ItemId[]) },
       { playtime: 50 },
     );
@@ -470,7 +624,10 @@ describe("serialized progress writes", () => {
     vi.stubGlobal("navigator", { locks });
     const tab = await openTab();
 
-    tab.userState.mergeFromSave({ almanac: new Set(["turnip"] as ItemId[]) }, { playtime: 50 });
+    void tab.userState.mergeFromSave(
+      { almanac: new Set(["turnip"] as ItemId[]) },
+      { playtime: 50 },
+    );
     await settle(tab.PERSIST_DEBOUNCE_MS);
 
     expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
@@ -493,7 +650,10 @@ describe("serialized progress writes", () => {
     stored.progress.provenance = { "almanac/turnip": { source: "manual" } };
     storage.setItem(PROGRESS_KEY, JSON.stringify(stored));
 
-    tab.userState.mergeFromSave({ almanac: new Set(["turnip"] as ItemId[]) }, { playtime: 50 });
+    void tab.userState.mergeFromSave(
+      { almanac: new Set(["turnip"] as ItemId[]) },
+      { playtime: 50 },
+    );
     await settle(tab.PERSIST_DEBOUNCE_MS);
 
     expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
@@ -517,7 +677,7 @@ describe("serialized progress writes", () => {
     vi.stubGlobal("navigator", { locks });
     const tab = await openTab();
 
-    tab.userState.mergeFromSave({ questStates: { [quest]: "completed" } }, { playtime: 50 });
+    void tab.userState.mergeFromSave({ questStates: { [quest]: "completed" } }, { playtime: 50 });
     await settle(tab.PERSIST_DEBOUNCE_MS);
 
     const written = JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null") as {
@@ -542,7 +702,7 @@ describe("serialized progress writes", () => {
       stored.progress.mineFloor = 5;
       storage.setItem(PROGRESS_KEY, JSON.stringify(stored));
 
-      tab.userState.mergeFromSave({ mineFloor: 3 }, { playtime: 50 });
+      void tab.userState.mergeFromSave({ mineFloor: 3 }, { playtime: 50 });
       await settle(tab.PERSIST_DEBOUNCE_MS);
 
       expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
@@ -557,7 +717,7 @@ describe("serialized progress writes", () => {
     vi.stubGlobal("localStorage", storage);
     vi.stubGlobal("navigator", { locks });
     const tab = await openTab();
-    tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
+    void tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
     await settle(tab.PERSIST_DEBOUNCE_MS);
     const gate = Promise.withResolvers<undefined>();
     const held = locks.request(WRITE_LOCK, () => gate.promise);
@@ -565,7 +725,7 @@ describe("serialized progress writes", () => {
 
     tab.userState.resetProgress();
     // Re-importing the same save records exactly what the old stored value held.
-    tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
+    void tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
     gate.resolve(undefined);
     await held;
     await settle(tab.PERSIST_DEBOUNCE_MS);
@@ -590,7 +750,7 @@ describe("serialized progress writes", () => {
     const gate = Promise.withResolvers<undefined>();
     const held = locks.request(WRITE_LOCK, () => gate.promise);
     await vi.advanceTimersByTimeAsync(1);
-    tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
+    void tab.userState.mergeFromSave({ mineFloor: 10 }, { playtime: 50 });
     tab.userState.setRenown(7);
     const other = JSON.parse(buildState(5, {}, CURRENT_SERIALIZATION_VERSION)) as {
       progress: Record<string, unknown>;

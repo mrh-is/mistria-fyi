@@ -181,21 +181,22 @@ stored value & validates it before writing:
 | Unreadable                               | Quarantines it               | Quarantines, then writes          | Quarantines, then writes    |
 | A newer build's                          | Blocks writes                | Blocks writes                     | Blocks writes               |
 
-Auto-saves wait for a 300 ms quiet period; explicit writes skip it but still take the lock. Explicit
-writes capture their payload at confirmation & invalidate auto-saves already waiting for the lock.
-Imports carry the additive preview, including unsaved local progress, and merge it with the stored
-progress inside the lock. Their synchronous counts & conflicts describe that immediate preview; the
-locked merge applies the same household conflict policy to the latest stored household. An import
-preserves captured world state & unknown IDs. Its history merges three ways: each provenance entry,
-resolution, or last save playtime the importing tab recorded since its base (the stored value it
-last read, or its own explicit write still waiting for the lock) overwrites the stored one, and the
-rest keep the history another tab stored meanwhile. A save agreeing with a fact already stored
-leaves that fact's stored provenance in place, unless a save is replacing a guess in it and the
-merge kept the value that save reported. Edits made after confirmation are rebased onto the locked
-merge result for the next auto-save, including removals & decreases, and so is their history; a
-later household edit replaces that household as a unit to preserve the engagement cascade. The
-pagehide flush can't wait for a lock, so it runs the same function synchronously, keeping the
-compare-before-write. A browser without Web Locks runs every write synchronously; see the
+Auto-saves wait for a 300 ms quiet period. Explicit writes skip it but still take the lock.
+Replacements capture their payload at confirmation & invalidate auto-saves already waiting for the
+lock. Imports capture the save & unsaved local progress, then check both against storage under the
+lock. They publish progress only after the write succeeds. Their counts & conflicts describe the
+captured preview. The locked merge applies the same household conflict policy to the latest stored
+household. An import preserves captured world state & unknown IDs. Its history merges three ways:
+each provenance entry, resolution, or last save playtime the importing tab recorded since its base
+(the stored value it last read, or its own explicit write still waiting for the lock) overwrites the
+stored one, and the rest keep the history another tab stored meanwhile. A save agreeing with a fact
+already stored leaves that fact's stored provenance in place, unless a save is replacing a guess in
+it and the merge kept the value that save reported. Edits made after confirmation are rebased onto
+the locked merge result for the next auto-save, including removals & decreases, and so is their
+history. Later partner changes keep their household together. Other relationship edits apply on top
+of the merged household. The pagehide flush can't wait for a lock, so it runs the same function
+synchronously, keeping the compare-before-write. Browsers without Web Locks run every write
+synchronously. See the
 [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-serialized-progress-writes.md).
 
 ### Provenance
@@ -263,7 +264,13 @@ The app processes save files entirely client-side. No save data is uploaded.
    plus the diagnostics the player sees as warnings (`absent` & `invalid-value` are diagnostics
    only). It doesn’t count anything. See the
    [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-save-extraction-completeness.md).
-5. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
+5. `mergeFromSave` refuses the import if this device is syncing. It compares the incoming farm with
+   the tracked farm using the same save number & creation version rules as sync. If the import would
+   combine known different farms, it asks the player to cancel or explicitly merge. The write
+   rechecks the farms when the player confirms. Renamed saves & extracted JSON may lack a save
+   number. An unidentified save leaves an existing known identity in place. Each tab accepts one
+   import at a time.
+6. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
    values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
    quest state (`none` → `obtained` → `completed`). Relationships, the break-ups setting, & child
    choice merge as one household through the pure `mergeHousehold` in
@@ -272,6 +279,12 @@ The app processes save files entirely client-side. No save data is uploaded.
    household that already had a partner, incoming romantic values may correct platonic values left
    by the old cascade. Other branch changes still conflict. The merge’s counts are the ones the
    import summary shows.
+
+Manual import & sync share farm comparison, fact ordering, fact writes, & save provenance in
+`save-identity.ts` & `save-progress.ts`. Manual import keeps its additive merge & household cascade.
+It can recover quarantined progress after the unreadable copy is safe. Sync uses its provenance &
+completeness policy to decide when to remove facts or ask. It can switch farms with a backup, and
+records a sync receipt when it applies a bundle. See [Applying a bundle](sync.md#applying-a-bundle).
 
 Numeric levels are normalized by `normalizeLevel` in `src/lib/engine/progress.ts` at extraction
 time, and `mergeFromSave` clamps them again before installing. Import stays additive, so an invalid

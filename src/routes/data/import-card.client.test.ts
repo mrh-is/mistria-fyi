@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { deflateSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
@@ -11,6 +12,7 @@ import ImportCard from "./import-card.svelte";
 
 // Client files share one store per worker, so each test starts from defaults (#174).
 beforeEach(() => {
+  userState.loadFromStorage();
   userState.resetAll();
 });
 
@@ -26,6 +28,50 @@ async function importFiles(files: File[]) {
 }
 
 describe("save import", () => {
+  it("can cancel a different farm, then explicitly merge it without losing progress", async () => {
+    const encoder = new TextEncoder();
+    const name = encoder.encode("player");
+    const data = encoder.encode(JSON.stringify({ items_acquired: ["animated_waterfall_v2"] }));
+    const raw = new Uint8Array(24 + name.length + data.length);
+    const view = new DataView(raw.buffer);
+    view.setBigUint64(0, 1n, true);
+    view.setBigUint64(8, BigInt(name.length), true);
+    raw.set(name, 16);
+    view.setBigUint64(16 + name.length, BigInt(data.length), true);
+    raw.set(data, 24 + name.length);
+    const save = new File([new Uint8Array(deflateSync(raw))], "game-456-autosave.sav");
+
+    await userState.mergeFromSave(
+      { renown: 7 },
+      {
+        metadata: {
+          farmName: "Fern",
+          identity: { creationVersion: null, saveNumber: "123" },
+          importedAt: Date.now(),
+          playerName: null,
+        },
+      },
+    );
+    const before = userState.exportBackup();
+    await importFiles([save]);
+    const dialog = await screen.findByRole("dialog", { name: "This save is for a different farm" });
+    expect(userState.exportBackup()).toBe(before);
+    await fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(userState.exportBackup()).toBe(before);
+
+    await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
+      target: { files: [save] },
+    });
+    const retry = await screen.findByRole("dialog");
+    await fireEvent.click(within(retry).getByRole("button", { name: "Merge progress" }));
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+    });
+    expect(userState.state.progress.renown).toBe(7);
+    expect(userState.state.lastImport?.identity.saveNumber).toBe("456");
+  });
+
   it("records a manual import and shows its display even when creation_version is absent", async () => {
     await importFiles([
       new File(
@@ -53,7 +99,7 @@ describe("save import", () => {
       importedAt: Date.now() - 120_000,
       playerName: "Ada",
     };
-    userState.mergeFromSave({}, { metadata });
+    await userState.mergeFromSave({}, { metadata });
     render(ImportCard, { open: true });
     expect(screen.getByTestId("last-import")).toHaveTextContent("Save #123456 · Created in 0.11.7");
     expect(screen.getByTestId("last-import")).toHaveTextContent("Last imported 2 minutes ago");

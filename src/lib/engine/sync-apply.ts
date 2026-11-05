@@ -12,24 +12,24 @@
  */
 import { trackerData } from "#lib/data/index.js";
 import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
-import { questStateRank, seasonOrdinal } from "#lib/engine/domain-primitives.js";
-import { getOrCreate, recordEntries, recordKeys } from "#lib/utils/record.js";
+import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
+import { confirmedBySave, holdsGuess, progressFacts, resolutionHolds } from "./provenance.js";
+import { compareFarms, mergeFarmIdentity } from "./save-identity.js";
 import {
-  confirmedBySave,
-  holdsGuess,
-  obtainedSourceOf,
-  progressFacts,
-  resolutionHolds,
-} from "./provenance.js";
-import { compareFarms } from "./save-identity.js";
+  appliedFact,
+  factRank,
+  isLevelField,
+  recordSavePlaytime,
+  writeFact,
+} from "./save-progress.js";
 
 import type { FarmIdentity } from "#lib/types/save-identity.js";
-import type { QuestId, QuestType, Season, VillagerRelationship } from "#lib/types/tracker-data.js";
-import type { ChildChoice, ProgressState, QuestState } from "#lib/types/user-progress.js";
+import type { QuestId, QuestType } from "#lib/types/tracker-data.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 
 import type { ExtractedProgressKey, SaveExtraction } from "./import-save.js";
-import type { FactProvenance, ProgressHistory, ProvenanceSource } from "./provenance.js";
+import type { ProgressHistory, ProvenanceSource } from "./provenance.js";
 
 // ─── Inputs & outputs ───────────────────────────────────────────────
 
@@ -261,14 +261,6 @@ function isHouseholdFact(field: SyncField, id: string | undefined): boolean {
   );
 }
 
-const LEVEL_FIELDS: ReadonlySet<SyncField> = new Set<SyncField>([
-  "heartLevels",
-  "mineFloor",
-  "reachedSeason",
-  "renown",
-  "skillLevels",
-]);
-
 const SYNC_FIELDS: readonly SyncField[] = [
   "almanac",
   "almanacRecipes",
@@ -295,19 +287,7 @@ const SYNC_FIELDS: readonly SyncField[] = [
 
 function factKind(field: SyncField): FactKind {
   if (field === "questStates") return "quest";
-  return LEVEL_FIELDS.has(field) ? "level" : "tick";
-}
-
-/** A fact value's place in its field's order; `undefined` is the default. */
-function rank(field: SyncField, value: string | undefined): number {
-  if (field === "villagerRelationships") {
-    if (value === "married") return 3;
-    if (value === "proposed") return 2;
-    return value === undefined ? 0 : 1;
-  }
-  if (field === "questStates") return questStateRank((value ?? "none") as QuestState);
-  if (field === "reachedSeason") return seasonOrdinal((value ?? "spring") as Season);
-  return LEVEL_FIELDS.has(field) ? Number(value ?? 0) : Number(value !== undefined);
+  return isLevelField(field) ? "level" : "tick";
 }
 
 // ─── Applying ───────────────────────────────────────────────────────
@@ -339,7 +319,7 @@ export function applySync(
     farmSwitch = { backup: cloneState(state) };
   }
   if (farmSwitch) base = cloneState(fresh);
-  base.farm = mergeFarm(farmSwitch ? null : state.farm, bundle.farm);
+  base.farm = mergeFarmIdentity(farmSwitch ? null : state.farm, bundle.farm);
 
   const playtime = bundle.extraction.identity.playtime.value;
   const lastPlaytime = base.history.lastSavePlaytime;
@@ -375,8 +355,6 @@ export function applySync(
       answers[question.id] === "accept" ? question.differences.map(({ key }) => key) : [],
     ),
   );
-  const stamp: FactProvenance =
-    playtime === undefined ? { source: "save" } : { playtime, source: "save" };
   const { history, progress } = base;
   for (const key of settled) history.resolutions = withoutKey(history.resolutions, key);
   for (const key of promotions) {
@@ -390,30 +368,25 @@ export function applySync(
       (policy === "ask-first" && accepted.has(key));
     if (difference.applied) {
       writeFact(progress, key, save);
-      const obtainedSource = obtainedSourceOf(
+      history.provenance[key] = appliedFact(
         ownEntry(history.provenance, key),
         "save",
+        playtime,
         difference.local,
         save,
       );
-      history.provenance[key] = obtainedSource ? { ...stamp, obtainedSource } : { ...stamp };
       history.resolutions = withoutKey(history.resolutions, key);
     } else if (policy === "ask-first") {
       history.resolutions[key] = { saveValue: save ?? null };
     }
   }
-  if (playtime === undefined) {
-    history.lastSaveUnordered = true;
-  } else {
-    history.lastSavePlaytime = playtime;
-    delete history.lastSaveUnordered;
-    // Edits stamped after the save rolled back to keep beating it (they survived it), but the next
-    // save that disagrees with them wins.
-    if (rollback === "accepted") {
-      for (const record of Object.values(history.provenance)) {
-        if (record.source === "manual" && record.playtime !== undefined) {
-          record.playtime = Math.min(record.playtime, playtime);
-        }
+  recordSavePlaytime(history, playtime);
+  // Edits stamped after the save rolled back to keep beating it (they survived it), but the next
+  // save that disagrees with them wins.
+  if (rollback === "accepted" && playtime !== undefined) {
+    for (const record of Object.values(history.provenance)) {
+      if (record.source === "manual" && record.playtime !== undefined) {
+        record.playtime = Math.min(record.playtime, playtime);
       }
     }
   }
@@ -450,7 +423,7 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
   for (const field of SYNC_FIELDS) {
     const extracted = extraction.fields[field];
     if (extracted.value === undefined) continue;
-    const save = progressFacts({ ...emptyProgress(), [field]: extracted.value });
+    const save = progressFacts({ [field]: extracted.value });
     const complete = extracted.completeness === "complete";
     // A complete field speaks for every fact it holds; an unknown one only for what it lists.
     // A complete field also settles “keep mine” for facts at their default on both sides.
@@ -479,7 +452,8 @@ function compare(base: SyncState, extraction: SaveExtraction): Comparison {
         }
         continue;
       }
-      const direction = rank(field, saveValue) > rank(field, localValue) ? "forward" : "backward";
+      const direction =
+        factRank(field, saveValue) > factRank(field, localValue) ? "forward" : "backward";
       // Only a complete field removes or lowers, and only quests the game reliably lists.
       if (direction === "backward" && (!complete || !questReplaceable(field, id))) continue;
       if (!isHouseholdFact(field, id) && resolutionHolds(resolution, saveValue ?? null)) continue;
@@ -626,14 +600,6 @@ function tracksProgress(state: SyncState, fresh: SyncState): boolean {
   );
 }
 
-/** The incoming identity, keeping any part only the stored one could read. */
-function mergeFarm(tracked: FarmIdentity | null, incoming: FarmIdentity): FarmIdentity {
-  return {
-    creationVersion: incoming.creationVersion ?? tracked?.creationVersion ?? null,
-    saveNumber: incoming.saveNumber ?? tracked?.saveNumber ?? null,
-  };
-}
-
 function farmLabel({ saveNumber }: FarmIdentity): string {
   return saveNumber ?? "unknown";
 }
@@ -655,91 +621,6 @@ function unknownSaveIds(extraction: SaveExtraction): SyncResult["unknownIds"] {
 
 function cloneState(state: SyncState): SyncState {
   return structuredClone(state);
-}
-
-function emptyProgress(): ProgressState {
-  return {
-    almanac: new Set(),
-    almanacRecipes: new Set(),
-    animalCosmetics: {},
-    animals: {},
-    breakUpsDisabled: false,
-    childChoice: "undeclared",
-    cosmetics: new Set(),
-    hasUpperFloor: false,
-    heartLevels: {},
-    mineFloor: 0,
-    mountAppearances: new Set(),
-    museum: new Set(),
-    petCosmetics: new Set(),
-    petSkins: new Set(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown: 0,
-    skillLevels: {},
-    spells: new Set(),
-    unlockedPerks: new Set(),
-    villagerRelationships: {},
-  };
-}
-
-/** Sets one fact to a `progressFacts` value, or to its default for `undefined`. */
-function writeFact(progress: ProgressState, key: string, value: string | undefined): void {
-  const [field, id = "", member = ""] = key.split("/") as [SyncField, string?, string?];
-  switch (field) {
-    case "animalCosmetics":
-    case "animals": {
-      const byAnimal = progress[field] as Record<string, Set<string>>;
-      const ids = getOrCreate(byAnimal, id, () => new Set<string>());
-      if (value === undefined) ids.delete(member);
-      else ids.add(member);
-      return;
-    }
-    case "hasUpperFloor":
-      progress.hasUpperFloor = value !== undefined;
-      return;
-    case "breakUpsDisabled":
-      progress.breakUpsDisabled = value !== undefined;
-      return;
-    case "childChoice":
-      progress.childChoice = (value ?? "undeclared") as ChildChoice;
-      return;
-    case "villagerRelationships":
-      if (value === undefined) {
-        progress.villagerRelationships = withoutKey(progress.villagerRelationships, id);
-      } else {
-        (progress.villagerRelationships as Record<string, VillagerRelationship>)[id] =
-          value as VillagerRelationship;
-      }
-      return;
-    case "heartLevels":
-    case "skillLevels":
-      (progress[field] as Record<string, number>)[id] = Number(value ?? 0);
-      return;
-    case "questStates":
-      (progress.questStates as Record<string, QuestState>)[id] = (value ?? "none") as QuestState;
-      return;
-    case "mineFloor":
-    case "renown":
-      progress[field] = Number(value ?? 0);
-      return;
-    case "reachedSeason":
-      progress.reachedSeason = (value ?? "spring") as Season;
-      return;
-    case "almanac":
-    case "almanacRecipes":
-    case "cosmetics":
-    case "mountAppearances":
-    case "museum":
-    case "petCosmetics":
-    case "petSkins":
-    case "spells":
-    case "unlockedPerks": {
-      const ids = progress[field] as Set<string>;
-      if (value === undefined) ids.delete(id);
-      else ids.add(id);
-    }
-  }
 }
 
 function ownEntry<V>(record: Readonly<Record<string, V>>, key: string): undefined | V {

@@ -34,25 +34,32 @@ afterEach(() => {
 });
 
 describe("merge summary integration", () => {
-  it.each(CASES)("reports $expected after an actual merge", ({ expected, imported, setup }) => {
-    setup?.();
-    const { counts } = userState.mergeFromSave(imported);
+  it.each(CASES)(
+    "reports $expected after an actual merge",
+    async ({ expected, imported, setup }) => {
+      setup?.();
+      const outcome = await userState.mergeFromSave(imported);
+      if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
+      const { counts } = outcome.result;
 
-    const { text } = renderToFragment(MergeSummary, {
-      props: { counts, filesUsed: ["player.json"] },
-    });
+      const { text } = renderToFragment(MergeSummary, {
+        props: { counts, filesUsed: ["player.json"] },
+      });
 
-    expect(text).toContain(expected);
-    expect(text).not.toContain("No new data to import");
-  });
+      expect(text).toContain(expected);
+      expect(text).not.toContain("No new data to import");
+    },
+  );
 });
 
 describe("merge summary household conflicts", () => {
-  it("renders a spouse conflict with both villager names and a correction link", () => {
+  it("renders a spouse conflict with both villager names and a correction link", async () => {
     userState.setVillagerRelationship("adeline" as VillagerId, "married");
-    const { conflicts, counts } = userState.mergeFromSave({
+    const outcome = await userState.mergeFromSave({
       villagerRelationships: { ["balor" as VillagerId]: "married" },
     });
+    if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
+    const { conflicts, counts } = outcome.result;
 
     const { container, text } = renderToFragment(MergeSummary, {
       props: { conflicts, counts },
@@ -64,13 +71,15 @@ describe("merge summary household conflicts", () => {
     expect(link?.textContent).toContain("Correct this manually");
   });
 
-  it("renders a child-choice conflict", () => {
+  it("renders a child-choice conflict", async () => {
     userState.setVillagerRelationship("adeline" as VillagerId, "married");
     userState.setChildChoice("yes");
-    const { conflicts, counts } = userState.mergeFromSave({
+    const outcome = await userState.mergeFromSave({
       childChoice: "no",
       villagerRelationships: { ["adeline" as VillagerId]: "married" },
     });
+    if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
+    const { conflicts, counts } = outcome.result;
 
     const { text } = renderToFragment(MergeSummary, {
       props: { conflicts, counts },
