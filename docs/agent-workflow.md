@@ -15,59 +15,35 @@ to make signing work.
 
 ## Agent attribution
 
-Agent-authored Git & GitHub content must say which agent wrote it.
+Commit trailers are the durable record of agent authorship. Squash merges preserve them on `main`.
+Use the PR body for the change summary, verification, & decisions.
 
 - **Commits:** keep the repository owner’s configured identity as the commit author. Add the agent’s
   standard `Co-Authored-By` trailer to every commit the agent materially wrote. Use a stable
   product-level identity that doesn’t change with each model version, for example:
   - `Co-Authored-By: Claude Code <noreply@anthropic.com>`
   - `Co-Authored-By: Codex <codex@openai.com>`
-- **Issue & PR bodies:** end every agent-authored body with an `Agent: <agent-id>` line. The ID is
-  `claude-code` for Claude Code, `codex` for Codex, and a stable lowercase product slug for any
-  other agent.
-- **PR labels:** give every agent-authored PR exactly one matching `agent:*` label. The established
-  labels are `agent: claude`, `agent: codex`, `agent: antigravity`, `agent: kilo`, `agent: copilot`,
-  & `agent: lm studio`. Don’t create a parallel `agent/...` label family.
-- **Issues:** include the `Agent:` line, exactly one `type:` label, exactly one `status:` label, an
-  `area:` label when one fits, a milestone, & an “Acceptance criteria” section (or a “Done when”
-  line for investigations). Use the [task](../.github/ISSUE_TEMPLATE/task.md) or
-  [bug](../.github/ISSUE_TEMPLATE/bug.md) template. With `gh issue create --body-file`, pass labels
-  & the milestone explicitly through `--label` & `--milestone`; template defaults don't apply. List
-  current milestones with `gh api repos/mrh-is/mistria-fyi/milestones --jq '.[].title'`. An
-  `agent:*` label marks who is working on the issue now, not who wrote it.
+- **Issues:** end the body with `Agent: <agent-id>`. Use `claude-code` for Claude Code, `codex` for
+  Codex, & a stable lowercase product slug for any other agent. Include exactly one `type:` label,
+  exactly one `status:` label, an `area:` label when one fits, a milestone, & an “Acceptance
+  criteria” section (or a “Done when” line for investigations). Use the
+  [task](../.github/ISSUE_TEMPLATE/task.md) or [bug](../.github/ISSUE_TEMPLATE/bug.md) template.
+  With `gh issue create --body-file`, pass labels & the milestone explicitly through `--label` &
+  `--milestone`; template defaults don't apply. List current milestones with
+  `gh api repos/mrh-is/mistria-fyi/milestones --jq '.[].title'`. Use the issue’s `agent:*` label to
+  identify its active agent.
 - **Issue & PR assignees:** when taking on work, assign the issue & its PR to the GitHub user you
   represent. Check the authenticated account with `gh api user --jq .login`; use
   `gh issue edit <number> --add-assignee @me` & `gh pr edit <number> --add-assignee @me`, or
-  `--assignee @me` when creating a PR. The assignee identifies the human responsible; the `agent:*`
-  label identifies the agent. Keep assignments current when handing work off.
-- **Comments:** end every substantive agent-authored GitHub comment with the same `Agent:` line.
-  This still applies when the issue or PR already has an agent label, because several agents may
-  take part in one thread.
+  `--assignee @me` when creating a PR. The assignee identifies the human responsible. Keep
+  assignments current when handing work off.
+- **Comments:** end every substantive agent-authored GitHub comment with an `Agent:` line to
+  identify its author when several agents take part in one thread.
 - **Multiline bodies:** pass a file or stdin with literal line breaks, for example
   `gh issue edit --body-file -`. Don’t embed escaped `\\n` sequences in `--body`, which GitHub
   renders literally. Re-read the published body after creating or editing it.
 - **Edits & handoffs:** keep existing attribution. Trailers & `Agent:` lines record who wrote each
   piece.
-
-### Attribution checks
-
-These checks enforce the rules above:
-
-- A `commit-msg` hook rejects a drifted trailer locally, such as one that names a model version
-  instead of the product.
-- The “Attribution” workflow checks four things on a PR:
-  - the PR’s own commits (the final trailer block only),
-  - its final `Agent:` line,
-  - its single `agent:*` label,
-  - its `Preview:` line, against `previewSlug` in `scripts/check-attribution.ts`.
-
-  Human-only PRs pass: those with no agent trailer, `Agent:` line, or `agent:*` label.
-
-- The “Guarded paths” workflow requires `data:diff` output in a PR that changes the tracker data.
-- `pnpm run lint` requires a `-- reason` on every oxlint & ESLint disable directive.
-
-“Attribution” blocks a merge only once the main branch’s ruleset lists it as a required check. A
-harness reminder may inject model-versioned trailer text; correct it before committing.
 
 ## Task sequence
 
@@ -100,12 +76,10 @@ harness reminder may inject model-versioned trailer text; correct it before comm
    focused tests during development (see agent-verification.md).
 8. **Verify.** Run `pnpm run lint:fix` before committing. CI runs the full matrix (see
    agent-verification.md).
-9. **Deliver.** Commit with the required co-author trailer, push, & open an attributed PR. The PR
-   needs:
+9. **Deliver.** Commit with the required co-author trailer, push, & open a PR. The PR needs:
    - a reference to the issue (`Closes #N`),
-   - the branch preview URL on the template’s “Preview” line (see “Preview URL” below),
+   - a deployment or branch preview URL when available (see “Preview URL” below),
    - `data:diff` output, if the PR regenerates tracker data (see “Tracker data changes” below),
-   - the matching `agent:*` label,
    - the GitHub user you represent as its assignee (`--assignee @me`).
 
    Open it as a draft or as ready according to “Draft or ready” below.
@@ -199,17 +173,18 @@ instead. See [the decision on decision records](decisions/2026-11-02-agents-repo
 
 ### Preview URL
 
-Each branch gets a preview at `https://<branch-slug>.mistria-fyi.pages.dev`. Cloudflare’s PR comment
-with this URL isn’t reliable, so derive the slug from the branch name yourself:
+Use the Cloudflare Pages deployment link when GitHub shows it. Otherwise, fill in the PR template’s
+“Preview” line with the branch alias at `https://<branch-slug>.mistria-fyi.pages.dev`. Derive the
+slug from the branch name:
 
 1. Lowercase it.
 2. Replace each non-alphanumeric character with `-`. Runs aren’t collapsed, so `a/_b` becomes
    `a--b`.
 3. Keep the first 28 characters.
-4. Drop a trailing `-`.
+4. Trim trailing hyphens.
 
 For example, `worktree-agent-ac94622f1a9ec4708` becomes `worktree-agent-ac94622f1a9ec`. Cloudflare
-documents only the first two steps.
+documents only the first two steps. Omit the preview link when no preview is available.
 
 ### Tracker data changes
 
@@ -242,8 +217,8 @@ version first.
 
 - A PR under the visual review gate must attach its verification screenshots; attaching isn’t
   optional. When the change alters existing UI, prefer a before & after pair of the same state.
-- Attach screenshots with GitHub CLI’s `--attach` flag. Reference each file in the body above the
-  final `Agent:` line. Otherwise, the image lands after that line, and the Attribution check fails.
+- Attach screenshots with GitHub CLI’s `--attach` flag. Reference each file where it belongs in the
+  body.
 - Put useful prototype code in a collapsed `<details>` element.
 - The [development workflow](development-workflow.md#attach-visual-evidence--prototype-code) has the
   exact syntax & examples.

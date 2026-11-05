@@ -10,7 +10,7 @@ verification”.
 - Run only the test that covers your change: `pnpm exec vitest run path/to/file.test.ts`. For
   plain-Node tests under `eslint-rules/`, `scripts/`, & `tests/`, add `--project node`, or
   `--project node-isolated` for `*.isolated.test.ts`. For example:
-  `pnpm exec vitest run --project node scripts/check-attribution.test.ts`. A path selects the right
+  `pnpm exec vitest run --project node scripts/lib/pinned-node.test.ts`. A path selects the right
   tests, but can still start the app projects’ Cloudflare proxy & workerd before filtering. Use
   `--project pipeline` for asset-independent `pipeline/` tests. App tests, including
   `*.client.test.ts` & `*.cold.test.ts`, can use the path-only command.

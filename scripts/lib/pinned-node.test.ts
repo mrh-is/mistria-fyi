@@ -89,7 +89,6 @@ describe("require-pinned-node coverage", () => {
   it("finds the repository's entry points", () => {
     expect(entries).toContain("scripts/verify.ts");
     expect(entries).toContain("pipeline/src/main.ts");
-    expect(entries).toContain("scripts/check-attribution.ts");
     expect(entries).toContain("scripts/agent-tool-hook.ts");
   });
 

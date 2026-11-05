@@ -2,7 +2,7 @@ Closes #
 
 Preview: https://<branch-slug>.mistria-fyi.pages.dev
 
-<!-- branch-slug: lowercase, each non-alphanumeric character to "-", first 28 characters, no trailing "-" (previewSlug in scripts/check-attribution.ts) -->
+<!-- Use the deployment’s preview URL if available. For the branch alias, lowercase the branch name, replace each non-alphanumeric character with a hyphen, keep the first 28 characters, & trim trailing hyphens. Omit the “Preview” line when there is no preview. -->
 
 ## What changed
 
@@ -19,5 +19,3 @@ Preview: https://<branch-slug>.mistria-fyi.pages.dev
 ## Decisions
 
 <!-- One decision per line: what you chose & why, in words a reader who wasn’t in the session can follow. Write “None” if there were none. -->
-
-Agent:
