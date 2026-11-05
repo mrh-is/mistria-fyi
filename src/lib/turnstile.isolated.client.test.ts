@@ -52,6 +52,31 @@ describe("ensureTurnstileScript", () => {
     await expect(retried).resolves.toBeUndefined();
   });
 
+  it("stops watching once it gives up, even if the script's `load` comes late", async () => {
+    vi.useFakeTimers();
+    const { ensureTurnstileScript } = await load();
+    const attempt = Promise.allSettled([ensureTurnstileScript()]);
+    const [element] = held.scripts();
+    await vi.advanceTimersByTimeAsync(10_000);
+    await attempt;
+    element.dispatchEvent(new Event("load"));
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("accepts Turnstile from an earlier attempt's late script during a retry", async () => {
+    vi.useFakeTimers();
+    const { ensureTurnstileScript } = await load();
+    const attempt = Promise.allSettled([ensureTurnstileScript()]);
+    await vi.advanceTimersByTimeAsync(10_000);
+    await attempt;
+
+    const retried = ensureTurnstileScript();
+    vi.stubGlobal("turnstile", TURNSTILE);
+    await vi.advanceTimersByTimeAsync(50);
+    await expect(retried).resolves.toBeUndefined();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("gives up on a download that never finishes, & starts over next time", async () => {
     vi.useFakeTimers();
     const { ensureTurnstileScript } = await load();
