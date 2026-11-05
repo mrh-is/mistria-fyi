@@ -1,12 +1,7 @@
 import { SvelteSet } from "svelte/reactivity";
 
 import { trackerData } from "#lib/data/index.js";
-import {
-  emptyMergeCounts,
-  nextQuestState,
-  questStateRank,
-  seasonOrdinal,
-} from "#lib/engine/domain-primitives.js";
+import { nextQuestState, questStateRank, seasonOrdinal } from "#lib/engine/domain-primitives.js";
 import {
   clampLevel,
   clampMineFloor,
@@ -16,7 +11,6 @@ import {
 } from "#lib/engine/progress.js";
 import {
   changedFacts,
-  confirmedBySave,
   editPlaytime,
   factKey,
   holdsGuess,
@@ -24,7 +18,9 @@ import {
   progressFacts,
 } from "#lib/engine/provenance.js";
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
-import { applyEngagementCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
+import { applyEngagementCascade, getPartnerId, getSpouseId } from "#lib/engine/relationships.js";
+import { compareFarms, mergeFarmIdentity } from "#lib/engine/save-identity.js";
+import { applyAdditiveSave, mergeProgress } from "#lib/engine/save-progress.js";
 import { applySync, receiptCovers } from "#lib/engine/sync-apply.js";
 import { nextFreshness } from "#lib/engine/sync-freshness.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
@@ -32,10 +28,8 @@ import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
-import { unionInto } from "#lib/utils/set.js";
 
 import {
-  backfillAnimalMaps,
   emptyProgressHistory,
   emptyRetainedProgress,
   readFarmSwitchBackup,
@@ -64,7 +58,7 @@ import type { SyncAnswers, SyncQuestion, SyncReceipt, SyncResult } from "#lib/en
 import type { GameDate, SyncFreshness } from "#lib/engine/sync-freshness.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
-import type { SaveImportMetadata } from "#lib/types/save-identity.js";
+import type { FarmIdentity, SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -86,7 +80,6 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type {
   ChildChoice,
-  MergeCounts,
   MergeResult,
   ProgressState,
   QuestState,
@@ -113,17 +106,24 @@ type WriteIntent =
       stamp?: SyncApplyStamp;
     }
   | {
-      /** What `json` builds on: the stored value this tab last read, or a pending explicit write. */
-      base: null | string;
       /** Removes the receipt from whichever `local` section the write keeps. */
       dropReceipt: boolean;
-      importedSave: boolean;
       /** Serialized at confirmation, so later storage events cannot change the requested write. */
       json: string;
       keepLocal: boolean;
-      kind: "merge" | "replace";
+      kind: "replace";
       progress: ProgressState;
       sequence: number;
+    }
+  | {
+      base: null | string;
+      before: string;
+      imported: Partial<ProgressState>;
+      kind: "merge";
+      options: ManualImportOptions;
+      progress: ProgressState;
+      sequence: number;
+      settle: (outcome: ManualImportOutcome) => void;
     }
   | { generation: number; kind: "auto-save" }
   | {
@@ -281,6 +281,18 @@ export interface SyncedSave {
   playtime: number | undefined;
 }
 
+interface ManualImportOptions {
+  confirmedFarm?: string;
+  metadata?: SaveImportMetadata;
+  playtime?: number;
+  source?: "save" | "unknown";
+}
+
+export type ManualImportOutcome =
+  | { farm: string; kind: "ask" }
+  | { kind: "applied"; result: MergeResult }
+  | { kind: "busy" | "newer-data" | "sync-active" | "write-failed" };
+
 /** What an applied save leaves in `local`: its receipt & when it came. */
 export interface SyncApplyStamp {
   gameDate: GameDate | undefined;
@@ -384,6 +396,8 @@ function createUserState() {
    * not the stored value, is the base the next import's history merges against.
    */
   let pendingExplicitJson: string | undefined;
+  /** The live progress a pending import captured. Keep it attached while a queued reset lands. */
+  let pendingManualProgress: ProgressState | undefined;
 
   function clearPendingSave(): void {
     saveGeneration++;
@@ -499,7 +513,10 @@ function createUserState() {
    */
   function writeProgress(intent: WriteIntent): boolean {
     if (intent.kind === "auto-save" && intent.generation !== saveGeneration) return false;
-    if (!_persistenceReady) return false;
+    if (!_persistenceReady && !(intent.kind === "merge" && quarantineAvailable)) {
+      if (intent.kind === "merge" && newerDataBlocked) intent.settle({ kind: "newer-data" });
+      return false;
+    }
     const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
     if (!storedResult.ok) {
       reportStorageUnavailable();
@@ -508,9 +525,17 @@ function createUserState() {
 
     const stored = storedResult.value;
     const read = stored === null ? undefined : readProgressBlob(stored, "repair");
+    if (
+      intent.kind === "merge" &&
+      (local.syncLane || (read?.kind === "ok" && read.loaded.local.syncLane))
+    ) {
+      intent.settle({ kind: "sync-active" });
+      return false;
+    }
     if (stored !== null && stored !== lastKnownStoredValue) {
       if (read?.kind === "newer" || intent.kind === "auto-save") {
         applyStorageValue(stored);
+        if (intent.kind === "merge") intent.settle({ kind: "newer-data" });
         return false;
       }
       if (read?.kind === "unreadable") {
@@ -527,62 +552,27 @@ function createUserState() {
     if (intent.kind === "staged") return writeStaged(intent, stored, read);
     if (intent.kind === "sync") return writeSyncApply(intent, stored);
 
-    let json = serialize();
-    if (intent.kind !== "auto-save") {
+    if (intent.kind === "merge") return writeManualMerge(intent, stored, read);
+
+    let json: string;
+    if (intent.kind === "auto-save") {
+      json = serialize();
+    } else {
       const captured = readProgressBlob(intent.json, "repair");
       if (captured.kind !== "ok") throw new Error("Invalid captured progress write");
-      let loaded = captured.loaded;
+      const { loaded } = captured;
       if (intent.keepLocal && read?.kind === "ok") loaded.local = read.loaded.local;
       if (intent.dropReceipt) {
         const { syncReceipt: _receipt, ...kept } = loaded.local;
         loaded.local = kept;
       }
-      if (intent.kind === "merge" && read?.kind === "ok") {
-        loaded = read.loaded;
-        // The captured preview includes unsaved local edits as well as the imported progress.
-        const storedFacts = progressFacts(loaded.progress);
-        mergeProgress(loaded.progress, captured.loaded.progress);
-        mergeRetainedProgress(loaded.retained, captured.loaded.retained);
-        loaded.worldState = captured.loaded.worldState;
-        if (intent.importedSave) loaded.lastImport = captured.loaded.lastImport;
-        const mergedFacts = progressFacts(loaded.progress);
-        // The captured history adds what this tab recorded since its base, the merge included;
-        // rebased, it keeps the history another tab stored meanwhile. A save or transfer agreeing
-        // with a fact already stored leaves that fact's provenance as stored, unless a save is
-        // replacing a guess in it, for the value it reported.
-        const storedProvenance = loaded.history.provenance;
-        const capturedFacts = progressFacts(captured.loaded.progress);
-        rebaseHistory(
-          loaded.history,
-          storedHistory(intent.base),
-          captured.loaded.history,
-          (key, { source }) =>
-            (source === "save" || source === "unknown") &&
-            !(
-              source === "save" &&
-              Object.hasOwn(storedProvenance, key) &&
-              holdsGuess(storedProvenance[key]) &&
-              capturedFacts.get(key) === mergedFacts.get(key)
-            ) &&
-            storedFacts.has(key) &&
-            storedFacts.get(key) === mergedFacts.get(key),
-          intent.importedSave,
-        );
-      }
       json = serializeStoredProgress(loaded, loaded.local);
       if (intent.sequence === explicitSequence) {
-        if (state.progress !== intent.progress || serialize() === intent.json) {
+        if (
+          state.progress !== intent.progress ||
+          (state.progress !== pendingManualProgress && serialize() === intent.json)
+        ) {
           replaceProgress(loaded);
-        } else if (intent.kind === "merge") {
-          // The captured merge is persisted first; later local edits remain for the next auto-save.
-          const rebased = readProgressBlob(json, "repair");
-          if (rebased.kind !== "ok") throw new Error("Invalid merged progress write");
-          rebaseProgressEdits(rebased.loaded.progress, captured.loaded.progress, state.progress);
-          // Snapshotted as `unknown`: mapping JsonValue resolutions is too deep for the compiler.
-          const current = $state.snapshot<unknown>(history) as ProgressHistory;
-          rebaseHistory(rebased.loaded.history, captured.loaded.history, current);
-          rebased.loaded.worldState = state.worldState;
-          replaceProgress(rebased.loaded);
         }
         local = loaded.local;
       }
@@ -592,10 +582,85 @@ function createUserState() {
       return false;
     }
     lastKnownStoredValue = json;
-    if (intent.kind !== "auto-save" && intent.sequence === explicitSequence) {
+    if (intent.kind === "replace" && intent.sequence === explicitSequence) {
       pendingExplicitJson = undefined;
     }
     _persistenceFailureGeneration = 0;
+    return true;
+  }
+
+  /** Checks both farms under the write lock before applying or exposing any imported progress. */
+  function writeManualMerge(
+    intent: Extract<WriteIntent, { kind: "merge" }>,
+    stored: null | string,
+    read: ReturnType<typeof readProgressBlob> | undefined,
+  ): boolean {
+    const captured = readProgressBlob(intent.before, "repair");
+    if (captured.kind !== "ok") throw new Error("Invalid captured progress write");
+    const { confirmedFarm, metadata, playtime, source = "save" } = intent.options;
+    const current = read?.kind === "ok" ? read.loaded : undefined;
+    const capturedFarm = captured.loaded.lastImport?.identity ?? null;
+    const storedFarm = current?.lastImport?.identity ?? null;
+    const incomingFarm = metadata?.identity ?? null;
+    const farm = manualFarmQuestion(capturedFarm, storedFarm, incomingFarm);
+    if (farm !== undefined && farm !== confirmedFarm) {
+      intent.settle({ farm, kind: "ask" });
+      return false;
+    }
+
+    const preview = captured.loaded;
+    const result = applyAdditiveSave(
+      preview.progress,
+      preview.history,
+      intent.imported,
+      source,
+      playtime,
+    );
+    if (metadata) preview.lastImport = importMetadata(storedFarm ?? capturedFarm, metadata);
+    const loaded = current
+      ? mergeCapturedImport(current, preview, storedHistory(intent.base), metadata !== undefined)
+      : preview;
+    const json = serializeStoredProgress(loaded, loaded.local);
+    let live: LoadedProgress | undefined;
+    if (intent.sequence === explicitSequence) {
+      live = loaded;
+      if (state.progress === intent.progress && serialize() !== intent.before) {
+        // Edits after confirmation are saved after the import, and keep their intended effects.
+        const rebased = readProgressBlob(json, "repair");
+        const original = readProgressBlob(intent.before, "repair");
+        if (rebased.kind !== "ok" || original.kind !== "ok") {
+          throw new Error("Invalid merged progress write");
+        }
+        live = rebased.loaded;
+        rebaseProgressEdits(live.progress, original.loaded.progress, state.progress);
+        const currentHistory = $state.snapshot<unknown>(history) as ProgressHistory;
+        const laterEdits = changedFacts(
+          progressFacts(original.loaded.progress),
+          progressFacts(state.progress),
+        );
+        rebaseImportEdits(
+          live.history,
+          original.loaded.history,
+          currentHistory,
+          laterEdits,
+          editPlaytime(preview.history),
+        );
+        live.worldState = state.worldState;
+      }
+    }
+    if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
+      reportStorageUnavailable();
+      return false;
+    }
+    if (live) {
+      clearPendingSave();
+      replaceProgress(live);
+      local = loaded.local;
+    }
+    enablePersistenceAfterExplicitReplace();
+    lastKnownStoredValue = json;
+    _persistenceFailureGeneration = 0;
+    intent.settle({ kind: "applied", result });
     return true;
   }
 
@@ -806,34 +871,16 @@ function createUserState() {
     return true;
   }
 
-  /** Captures an explicit write now, rather than after the auto-save debounce. */
-  function writeExplicitProgress(
-    kind: "merge" | "replace" = "replace",
-    keepLocal = true,
-    importedSave = false,
-    dropReceipt = false,
-  ): void {
-    void explicitWrite(kind, keepLocal, importedSave, dropReceipt);
-  }
-
-  /** {@link writeExplicitProgress}, resolving once the write has run with whether it's stored. */
-  function explicitWrite(
-    kind: "merge" | "replace",
-    keepLocal: boolean,
-    importedSave = false,
-    dropReceipt = false,
-  ): Promise<boolean> {
+  /** Captures an explicit replacement now, rather than after the auto-save debounce. */
+  function writeExplicitProgress(keepLocal = true, dropReceipt = false): void {
     clearPendingSave();
     const json = serialize();
-    const base = pendingExplicitJson ?? lastKnownStoredValue;
     pendingExplicitJson = json;
-    return requestProgressWrite({
-      base,
+    void requestProgressWrite({
       dropReceipt,
-      importedSave,
       json,
       keepLocal,
-      kind,
+      kind: "replace",
       progress: state.progress,
       sequence: ++explicitSequence,
     });
@@ -1172,46 +1219,34 @@ function createUserState() {
       });
     },
     /**
-     * Merges a native save into current progress: sets union, levels take the max, and the
-     * household follows {@link mergeHousehold}'s conflict policy. Never removes progress. Every
-     * fact it changes records `source` (a save, or `unknown` for a device transfer, whose payload
-     * carries no provenance), and a save replaces the guesses in the facts it agrees with (see
-     * `confirmedBySave`); a save's `playtime` becomes the last applied save's, and a manual
-     * import's `metadata` the last import's.
+     * Applies a native save additively. The farm decision, lane guard, & write all use the latest
+     * stored value, so another tab cannot start sync or change farms behind the import.
      */
-    mergeFromSave(
+    async mergeFromSave(
       imported: Partial<ProgressState>,
-      {
-        metadata,
-        playtime,
-        source = "save",
-      }: { metadata?: SaveImportMetadata; playtime?: number; source?: "save" | "unknown" } = {},
-    ): MergeResult {
-      if (source === "save" && playtime === undefined) history.lastSaveUnordered = true;
-      if (source === "save" && playtime !== undefined) {
-        history.lastSavePlaytime = playtime;
-        delete history.lastSaveUnordered;
+      options: ManualImportOptions = {},
+    ): Promise<ManualImportOutcome> {
+      if (local.syncLane) return { kind: "sync-active" };
+      if (pendingManualProgress) return { kind: "busy" };
+      pendingManualProgress = state.progress;
+      try {
+        const settled: { outcome: ManualImportOutcome } = { outcome: { kind: "write-failed" } };
+        await requestProgressWrite({
+          base: pendingExplicitJson ?? lastKnownStoredValue,
+          before: serialize(),
+          imported: structuredClone(imported),
+          kind: "merge",
+          options: structuredClone(options),
+          progress: pendingManualProgress,
+          sequence: explicitSequence,
+          settle: (outcome) => {
+            settled.outcome = outcome;
+          },
+        });
+        return settled.outcome;
+      } finally {
+        pendingManualProgress = undefined;
       }
-      // A save's facts carry its own playtime, none if it couldn't be read; a transfer's carry the
-      // last applied save's, like an edit.
-      const stamp = { playtime: source === "save" ? playtime : editPlaytime(history) };
-      const result = track(source, () => mergeProgress(state.progress, imported), [], stamp);
-      if (source === "save") {
-        const saveFacts = progressFacts({ ...createDefaultProgress(), ...imported });
-        const currentFacts = progressFacts(state.progress);
-        for (const [key, value] of saveFacts) {
-          if (!Object.hasOwn(history.provenance, key) || currentFacts.get(key) !== value) continue;
-          const record = history.provenance[key];
-          if (holdsGuess(record)) history.provenance[key] = confirmedBySave(record, stamp.playtime);
-        }
-      }
-      if (metadata !== undefined) state.lastImport = structuredClone(metadata);
-
-      // Re-importing a save is how a player rebuilds progress after a quarantine, so it unblocks
-      // persistence like a reset or restore (only once the unreadable blob is safely stored).
-      enablePersistenceAfterExplicitReplace();
-      writeExplicitProgress("merge", true, metadata !== undefined);
-      return result;
     },
     get persistenceFailed(): boolean {
       return _persistenceFailureGeneration > 0;
@@ -1247,7 +1282,7 @@ function createUserState() {
       history = emptyProgressHistory();
       local = {};
       enablePersistenceAfterExplicitReplace();
-      writeExplicitProgress("replace", false);
+      writeExplicitProgress(false);
     },
     /**
      * Clears progress & world state; this device's preferences & `local` section are kept, so a
@@ -1260,7 +1295,7 @@ function createUserState() {
       const { syncReceipt: _receipt, ...kept } = local;
       local = kept;
       // The write keeps the stored section, which another tab may have added to since this one read.
-      writeExplicitProgress("replace", true, false, true);
+      writeExplicitProgress(true, true);
     },
     /** The player's “keep mine” for a fact, if any; see `resolutionHolds`. */
     resolutionOf(key: string): Readonly<Resolution> | undefined {
@@ -1403,15 +1438,7 @@ function createUserState() {
       // that's cancelled or can't be stored never erases anything, even in a later save.
       const staged = emptyLoadedProgress();
       staged.lastImport = $state.snapshot(save.metadata);
-      if (save.playtime !== undefined) staged.history.lastSavePlaytime = save.playtime;
-      const before = progressFacts(staged.progress);
-      mergeProgress(staged.progress, save.completed);
-      for (const key of changedFacts(before, progressFacts(staged.progress))) {
-        staged.history.provenance[key] =
-          save.playtime === undefined
-            ? { source: "save" }
-            : { playtime: save.playtime, source: "save" };
-      }
+      applyAdditiveSave(staged.progress, staged.history, save.completed, "save", save.playtime);
       enablePersistenceAfterExplicitReplace();
       return requestProgressWrite({
         guard: stillWanted,
@@ -1568,86 +1595,81 @@ function createUserState() {
   };
 }
 
-/** Applies the additive import policy to an explicit target, including a locked storage snapshot. */
-function mergeProgress(progress: ProgressState, imported: Partial<ProgressState>): MergeResult {
-  const counts: MergeCounts = emptyMergeCounts();
-
-  counts.almanac = unionInto(progress.almanac, imported.almanac ?? []);
-  counts.almanacRecipes = unionInto(progress.almanacRecipes, imported.almanacRecipes ?? []);
-  counts.cosmetics = unionInto(progress.cosmetics, imported.cosmetics ?? []);
-  counts.mountAppearances = unionInto(progress.mountAppearances, imported.mountAppearances ?? []);
-  counts.museum = unionInto(progress.museum, imported.museum ?? []);
-  counts.perks = unionInto(progress.unlockedPerks, imported.unlockedPerks ?? []);
-  counts.petCosmetics = unionInto(progress.petCosmetics, imported.petCosmetics ?? []);
-  counts.petSkins = unionInto(progress.petSkins, imported.petSkins ?? []);
-  counts.spells = unionInto(progress.spells, imported.spells ?? []);
-  for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
-    const existing = getOrCreate(
-      progress.animals,
-      animalId,
-      () => new SvelteSet<AnimalVariantId>(),
-    );
-    counts.animals += unionInto(existing, variants);
-  }
-  for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics ?? {})) {
-    const existing = getOrCreate(
-      progress.animalCosmetics,
-      animalId,
-      () => new SvelteSet<CosmeticId>(),
-    );
-    counts.animalCosmetics += unionInto(existing, cosmetics);
-  }
-
-  // Levels are clamped again here so the canonical state stays inside its domains even if a
-  // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
-  if (imported.mineFloor !== undefined) {
-    const mineFloor = clampMineFloor(imported.mineFloor);
-    if (mineFloor > progress.mineFloor) {
-      counts.mineFloor = mineFloor - progress.mineFloor;
-      progress.mineFloor = mineFloor;
-    }
-  }
-  if (imported.renown !== undefined) {
-    const renown = clampRenownLevel(imported.renown);
-    if (renown > progress.renown) {
-      counts.renown = renown - progress.renown;
-      progress.renown = renown;
-    }
-  }
-  counts.heartLevels = raiseLevels(progress.heartLevels, imported.heartLevels, MAX_HEART_LEVEL);
-  counts.skillLevels = raiseLevels(progress.skillLevels, imported.skillLevels, MAX_SKILL_LEVEL);
-
-  // Quest states take the more advanced state: none < obtained < completed.
-  for (const [id, importedState] of recordEntries(imported.questStates ?? {})) {
-    if (questStateRank(importedState) > questStateRank(progress.questStates[id] ?? "none")) {
-      progress.questStates[id] = importedState;
-      counts.quests++;
-    }
-  }
-
+/**
+ * A confirmation is valid only for the farms compared in this write. The captured progress can
+ * also conflict with the stored farm when another tab changed farms without a storage event.
+ */
+function manualFarmQuestion(
+  captured: FarmIdentity | null,
+  stored: FarmIdentity | null,
+  incoming: FarmIdentity | null,
+): string | undefined {
   if (
-    imported.reachedSeason !== undefined &&
-    seasonOrdinal(imported.reachedSeason) > seasonOrdinal(progress.reachedSeason)
+    (stored && compareFarms(captured, stored) === "different") ||
+    (incoming &&
+      (compareFarms(captured, incoming) === "different" ||
+        compareFarms(stored, incoming) === "different"))
   ) {
-    progress.reachedSeason = imported.reachedSeason;
-    counts.reachedSeason = 1;
+    return JSON.stringify(
+      [captured, stored, incoming].map((identity) => {
+        if (!identity) return null;
+        const { creationVersion: version, saveNumber } = identity;
+        return [saveNumber, version && [version.major, version.minor, version.patch, version.pre]];
+      }),
+    );
   }
-  if (imported.hasUpperFloor && !progress.hasUpperFloor) {
-    progress.hasUpperFloor = true;
-    counts.hasUpperFloor = 1;
+  return undefined;
+}
+
+function importMetadata(
+  tracked: FarmIdentity | null,
+  metadata: SaveImportMetadata,
+): SaveImportMetadata {
+  const { identity } = metadata;
+  if (identity.saveNumber === null && tracked?.saveNumber) {
+    return { ...metadata, identity: tracked };
   }
+  return {
+    ...metadata,
+    identity:
+      compareFarms(tracked, identity) === "same" ? mergeFarmIdentity(tracked, identity) : identity,
+  };
+}
 
-  const household = mergeHousehold(progress, imported);
-  progress.villagerRelationships = household.villagerRelationships;
-  progress.breakUpsDisabled = household.breakUpsDisabled;
-  progress.childChoice = household.childChoice;
-  counts.villagerRelationships = household.counts.villagerRelationships;
-  counts.breakUpsDisabled = household.counts.breakUpsDisabled;
-  counts.childChoice = household.counts.childChoice;
-
-  // Backfill animal maps for any animals added since the imported state was created
-  backfillAnimalMaps(progress);
-  return { conflicts: household.conflicts, counts };
+/** Reconciles the captured preview, including unsaved edits, with what another tab stored. */
+function mergeCapturedImport(
+  stored: LoadedProgress,
+  captured: LoadedProgress,
+  baseHistory: ProgressHistory,
+  importedSave: boolean,
+): LoadedProgress {
+  const storedFacts = progressFacts(stored.progress);
+  mergeProgress(stored.progress, captured.progress);
+  mergeRetainedProgress(stored.retained, captured.retained);
+  stored.worldState = captured.worldState;
+  if (importedSave) stored.lastImport = captured.lastImport;
+  const mergedFacts = progressFacts(stored.progress);
+  const capturedFacts = progressFacts(captured.progress);
+  const storedProvenance = stored.history.provenance;
+  // A save agreeing with a fact already stored leaves its provenance alone, unless the save
+  // confirms a guess for the value the merge kept.
+  rebaseHistory(
+    stored.history,
+    baseHistory,
+    captured.history,
+    (key, { source }) =>
+      (source === "save" || source === "unknown") &&
+      !(
+        source === "save" &&
+        Object.hasOwn(storedProvenance, key) &&
+        holdsGuess(storedProvenance[key]) &&
+        capturedFacts.get(key) === mergedFacts.get(key)
+      ) &&
+      storedFacts.has(key) &&
+      storedFacts.get(key) === mergedFacts.get(key),
+    importedSave,
+  );
+  return stored;
 }
 
 /** Retain unknown IDs from both sides of an additive import; opaque relationship conflicts keep storage. */
@@ -1685,21 +1707,21 @@ function rebaseProgressEdits(
     before as unknown as Record<string, unknown>,
     after as unknown as Record<string, unknown>,
   );
-  const relationships = new Set([
-    ...recordKeys(before.villagerRelationships),
-    ...recordKeys(after.villagerRelationships),
-  ]);
+  const beforeSpouse = getSpouseId(before.villagerRelationships);
+  const afterSpouse = getSpouseId(after.villagerRelationships);
   if (
-    before.breakUpsDisabled !== after.breakUpsDisabled ||
-    before.childChoice !== after.childChoice ||
-    [...relationships].some(
-      (id) => before.villagerRelationships[id] !== after.villagerRelationships[id],
-    )
+    beforeSpouse !== afterSpouse ||
+    getPartnerId(before.villagerRelationships) !== getPartnerId(after.villagerRelationships) ||
+    (before.childChoice !== after.childChoice &&
+      getSpouseId(target.villagerRelationships) !== afterSpouse)
   ) {
-    // A later explicit household edit replaces the household as a unit, preserving its cascade.
+    // A later change of partners keeps that household together. A child choice must also stay
+    // with the spouse it was made for.
     target.villagerRelationships = { ...after.villagerRelationships };
     target.breakUpsDisabled = after.breakUpsDisabled;
     target.childChoice = after.childChoice;
+  } else {
+    applyEngagementCascade(target.villagerRelationships, target.breakUpsDisabled);
   }
 }
 
@@ -1729,6 +1751,29 @@ function rebaseHistory(
     else target.lastSavePlaytime = after.lastSavePlaytime;
     if (after.lastSaveUnordered === undefined) delete target.lastSaveUnordered;
     else target.lastSaveUnordered = after.lastSaveUnordered;
+  }
+}
+
+/** Edits made after import confirmation carry the accepted save's playtime once it lands. */
+function rebaseImportEdits(
+  target: ProgressHistory,
+  before: ProgressHistory,
+  after: ProgressHistory,
+  changed: string[],
+  playtime: number | undefined,
+): void {
+  rebaseHistory(target, before, after);
+  const previous = editPlaytime(before);
+  for (const key of changed) {
+    const record = Object.hasOwn(after.provenance, key) ? after.provenance[key] : undefined;
+    if (record?.source === "manual" || record?.source === "inferred") {
+      const rebased = { ...record };
+      if (record.playtime === previous) {
+        if (playtime === undefined) delete rebased.playtime;
+        else rebased.playtime = playtime;
+      }
+      target.provenance[key] = rebased;
+    }
   }
 }
 
@@ -1772,26 +1817,6 @@ function rebaseFields(
       else Reflect.deleteProperty(target, key);
     }
   }
-}
-
-/**
- * Raises each level in `target` to its clamped imported value when that is higher, and returns how
- * many levels rose.
- */
-function raiseLevels(
-  target: Partial<Record<string, number>>,
-  imported: Partial<Record<string, number>> | undefined,
-  max: number,
-): number {
-  let raised = 0;
-  for (const [id, rawLevel] of recordEntries(imported ?? {})) {
-    const level = clampLevel(rawLevel, max);
-    if (level > (target[id] ?? 0)) {
-      target[id] = level;
-      raised++;
-    }
-  }
-  return raised;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
