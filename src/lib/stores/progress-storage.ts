@@ -22,6 +22,11 @@ import * as v from "valibot";
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { trackedPerkIds } from "#lib/engine/perk-ids.js";
 import {
+  PROGRESS_FIELD_SPECS,
+  PROGRESS_FIELDS,
+  PROGRESS_LIST_FIELDS,
+} from "#lib/engine/progress-fields.js";
+import {
   clampLevel,
   clampMineFloor,
   clampRenownLevel,
@@ -36,14 +41,11 @@ import {
   PROVENANCE_SOURCES,
 } from "#lib/engine/provenance.js";
 import { applyEngagementCascade } from "#lib/engine/relationships.js";
-import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
-import {
-  CHILD_CHOICES,
-  CURRENT_SERIALIZATION_VERSION,
-  QUEST_STATES,
-} from "#lib/types/user-progress.js";
+import { SEASONS, WEATHERS } from "#lib/types/tracker-data.js";
+import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
+import type { ProgressField, ProgressListField } from "#lib/engine/progress-fields.js";
 import type { ProgressHistory, ResolutionRecord } from "#lib/engine/provenance.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
@@ -226,18 +228,24 @@ function validEntries<TOutput>(schema: v.GenericSchema<unknown, TOutput>) {
   );
 }
 
-/** Lists every policy requires to be well formed; without them the blob isn't progress. */
-const LIST_ENTRIES = {
-  almanac: StringListSchema,
-  almanacRecipes: v.optional(StringListSchema),
-  cosmetics: StringListSchema,
-  mountAppearances: v.optional(StringListSchema),
-  museum: StringListSchema,
-  petCosmetics: v.optional(StringListSchema),
-  petSkins: v.optional(StringListSchema),
-  spells: StringListSchema,
-  unlockedPerks: v.optional(StringListSchema),
+// Both policies require launch-era lists and accept absent lists added by later versions.
+const OptionalStringListSchema = v.optional(StringListSchema);
+const LIST_ENTRIES = Object.fromEntries(
+  PROGRESS_LIST_FIELDS.map((field) => [
+    field,
+    "required" in PROGRESS_FIELD_SPECS[field] ? StringListSchema : OptionalStringListSchema,
+  ]),
+) as {
+  [Field in ProgressListField]: (typeof PROGRESS_FIELD_SPECS)[Field] extends { required: true }
+    ? typeof StringListSchema
+    : typeof OptionalStringListSchema;
 };
+
+const ChildChoiceSchema = v.picklist(PROGRESS_FIELD_SPECS.childChoice.choices);
+const QuestStateSchema = v.picklist(PROGRESS_FIELD_SPECS.questStates.choices);
+const ReachedSeasonSchema = v.picklist(PROGRESS_FIELD_SPECS.reachedSeason.choices);
+const RelationshipSchema = v.picklist(PROGRESS_FIELD_SPECS.villagerRelationships.choices);
+type StoredProgressEntries = Record<ProgressField, v.ObjectEntries[string]> & v.ObjectEntries;
 
 const PlaytimeSchema = v.pipe(FiniteNumberSchema, v.minValue(0));
 const FactProvenanceSchema = v.object({
@@ -256,20 +264,20 @@ const StrictBlobSchema = v.object({
     animalCosmetics: v.record(v.string(), StringListSchema),
     animals: v.record(v.string(), StringListSchema),
     breakUpsDisabled: v.optional(v.boolean()),
-    childChoice: v.optional(v.picklist(CHILD_CHOICES)),
+    childChoice: v.optional(ChildChoiceSchema),
     hasUpperFloor: v.optional(v.boolean()),
     heartLevels: v.optional(strictLevels(trackerData.villagers, LEGACY_MAX_HEART_LEVEL)),
     lastSavePlaytime: v.optional(PlaytimeSchema),
     lastSaveUnordered: v.optional(v.literal(true)),
     mineFloor: domainInteger(getMaxMineFloor()),
     provenance: v.optional(v.record(v.string(), FactProvenanceSchema)),
-    questStates: v.optional(v.record(v.string(), v.picklist(QUEST_STATES))),
-    reachedSeason: v.optional(v.picklist(SEASONS)),
+    questStates: v.optional(v.record(v.string(), QuestStateSchema)),
+    reachedSeason: v.optional(ReachedSeasonSchema),
     renown: FiniteNumberSchema,
     resolutions: v.optional(v.record(v.string(), ResolutionSchema)),
     skillLevels: v.optional(strictLevels(trackerData.skills, MAX_SKILL_LEVEL)),
-    villagerRelationships: v.optional(v.record(v.string(), v.picklist(VILLAGER_RELATIONSHIPS))),
-  }),
+    villagerRelationships: v.optional(v.record(v.string(), RelationshipSchema)),
+  } satisfies StoredProgressEntries),
   version: VersionSchema,
   worldState: v.object({ season: v.picklist(SEASONS), weather: v.picklist(WEATHERS) }),
 });
@@ -343,7 +351,7 @@ const RepairBlobSchema = v.object({
     animalCosmetics: validEntries(StringListSchema),
     animals: validEntries(StringListSchema),
     breakUpsDisabled: v.fallback(v.optional(v.boolean()), undefined),
-    childChoice: v.fallback(v.optional(v.picklist(CHILD_CHOICES)), undefined),
+    childChoice: v.fallback(v.optional(ChildChoiceSchema), undefined),
     hasUpperFloor: v.fallback(v.optional(v.boolean()), undefined),
     heartLevels: v.optional(validEntries(FiniteNumberSchema)),
     lastSavePlaytime: v.fallback(v.optional(PlaytimeSchema), undefined),
@@ -351,13 +359,13 @@ const RepairBlobSchema = v.object({
     mineFloor: v.fallback(FiniteNumberSchema, 0),
     // History is no reason to quarantine progress, so a malformed container is dropped whole.
     provenance: v.fallback(v.optional(validEntries(FactProvenanceSchema)), undefined),
-    questStates: v.optional(validEntries(v.picklist(QUEST_STATES))),
-    reachedSeason: v.fallback(v.optional(v.picklist(SEASONS)), undefined),
+    questStates: v.optional(validEntries(QuestStateSchema)),
+    reachedSeason: v.fallback(v.optional(ReachedSeasonSchema), undefined),
     renown: v.fallback(FiniteNumberSchema, 0),
     resolutions: v.fallback(v.optional(validEntries(ResolutionSchema)), undefined),
     skillLevels: v.optional(validEntries(FiniteNumberSchema)),
-    villagerRelationships: v.optional(validEntries(v.picklist(VILLAGER_RELATIONSHIPS))),
-  }),
+    villagerRelationships: v.optional(validEntries(RelationshipSchema)),
+  } satisfies StoredProgressEntries),
   version: VersionSchema,
   worldState: v.object({
     season: v.fallback(v.picklist(SEASONS), "spring"),
@@ -388,19 +396,6 @@ export interface WorldState {
   weather: Weather;
 }
 
-const LIST_FIELDS = [
-  "almanac",
-  "almanacRecipes",
-  "cosmetics",
-  "mountAppearances",
-  "museum",
-  "petCosmetics",
-  "petSkins",
-  "spells",
-  "unlockedPerks",
-] as const satisfies readonly (keyof SerializedState["progress"])[];
-type ListField = (typeof LIST_FIELDS)[number];
-
 /**
  * Stored entries whose IDs this build's tracker data doesn't know. They stay out of
  * `ProgressState`, so counts & completion ignore them, and are written back unchanged.
@@ -409,7 +404,7 @@ export interface RetainedProgress {
   animalCosmetics: Record<string, string[]>;
   animals: Record<string, string[]>;
   heartLevels: Record<string, number>;
-  lists: Partial<Record<ListField, string[]>>;
+  lists: Partial<Record<ProgressListField, string[]>>;
   questStates: Record<string, QuestState>;
   skillLevels: Record<string, number>;
   villagerRelationships: Record<string, VillagerRelationship>;
@@ -488,7 +483,7 @@ const PERK_IDS = new Set<string>(trackedPerkIds(trackerData));
 
 type KnownIds = object | ReadonlySet<string>;
 
-const LIST_KNOWN_IDS: Record<Exclude<ListField, "almanac">, KnownIds> = {
+const LIST_KNOWN_IDS: Record<Exclude<ProgressListField, "almanac">, KnownIds> = {
   almanacRecipes: trackerData.recipes,
   cosmetics: trackerData.cosmetics,
   mountAppearances: trackerData.mount.appearances,
@@ -580,8 +575,8 @@ function normalizeBlob({
 }: ValidatedBlob): LoadedProgress {
   const retained = emptyRetainedProgress();
 
-  const lists = {} as Record<ListField, Set<string>>;
-  for (const field of LIST_FIELDS) {
+  const lists = {} as Record<ProgressListField, Set<string>>;
+  for (const field of PROGRESS_LIST_FIELDS) {
     const isKnown =
       field === "almanac"
         ? (id: string) => trackerIndex.memberToCanonicalAlmanacId.has(id as ItemId)
@@ -612,12 +607,16 @@ function normalizeBlob({
   retained.heartLevels = heartLevels.unknown;
   const skillLevels = splitLevels(stored.skillLevels, trackerData.skills, MAX_SKILL_LEVEL);
   retained.skillLevels = skillLevels.unknown;
-  const questStates = splitRecord(stored.questStates ?? {}, QUEST_IDS, (state) => state !== "none");
+  const questStates = splitRecord(
+    stored.questStates ?? {},
+    QUEST_IDS,
+    (state) => state !== PROGRESS_FIELD_SPECS.questStates.default,
+  );
   retained.questStates = questStates.unknown;
   const relationships = splitRecord(
     stored.villagerRelationships ?? {},
     trackerData.villagers,
-    (relationship) => relationship !== "undecided",
+    (relationship) => relationship !== PROGRESS_FIELD_SPECS.villagerRelationships.default,
   );
   retained.villagerRelationships = relationships.unknown;
   const villagerRelationships = relationships.known as Partial<
@@ -641,26 +640,19 @@ function normalizeBlob({
   }
 
   const progress: ProgressState = {
+    ...(lists as Pick<ProgressState, ProgressListField>),
     almanac,
-    almanacRecipes: lists.almanacRecipes as ProgressState["almanacRecipes"],
     animalCosmetics: animalCosmetics.known,
     animals: animals.known,
     breakUpsDisabled: stored.breakUpsDisabled ?? false,
-    childChoice: stored.childChoice ?? "undeclared",
-    cosmetics: lists.cosmetics as ProgressState["cosmetics"],
+    childChoice: stored.childChoice ?? PROGRESS_FIELD_SPECS.childChoice.default,
     hasUpperFloor: stored.hasUpperFloor ?? false,
     heartLevels: heartLevels.known,
     mineFloor: clampMineFloor(stored.mineFloor),
-    mountAppearances: lists.mountAppearances as ProgressState["mountAppearances"],
-    museum: lists.museum as ProgressState["museum"],
-    petCosmetics: lists.petCosmetics as ProgressState["petCosmetics"],
-    petSkins: lists.petSkins as ProgressState["petSkins"],
     questStates: questStates.known,
-    reachedSeason: stored.reachedSeason ?? "spring",
+    reachedSeason: stored.reachedSeason ?? PROGRESS_FIELD_SPECS.reachedSeason.default,
     renown: clampRenownLevel(stored.renown),
     skillLevels: skillLevels.known,
-    spells: lists.spells as ProgressState["spells"],
-    unlockedPerks: lists.unlockedPerks as ProgressState["unlockedPerks"],
     villagerRelationships,
   };
   backfillAnimalMaps(progress);
@@ -847,6 +839,11 @@ function sortedRecord<V>(record: Readonly<Record<string, V>>): Record<string, V>
   );
 }
 
+// Preserve the existing JSON byte order so old and new tabs agree on whether storage changed.
+const SERIALIZED_FIELD_ORDER = (
+  [...PROGRESS_FIELDS, "provenance", "resolutions"] as const
+).toSorted();
+
 function serializedState({
   history,
   lastImport,
@@ -854,48 +851,50 @@ function serializedState({
   retained,
   worldState,
 }: ProgressSnapshot): SerializedState {
-  const list = (field: ListField) => sortedUnion(progress[field], retained.lists[field]);
-  const s: SerializedState = {
+  const lists = Object.fromEntries(
+    PROGRESS_LIST_FIELDS.map((field) => [
+      field,
+      sortedUnion(progress[field], retained.lists[field]),
+    ]),
+  ) as Record<ProgressListField, string[]>;
+  const fields = {
+    ...lists,
+    animalCosmetics: mergeAnimalIds(progress.animalCosmetics, retained.animalCosmetics),
+    animals: mergeAnimalIds(progress.animals, retained.animals),
+    breakUpsDisabled: progress.breakUpsDisabled,
+    childChoice: progress.childChoice,
+    hasUpperFloor: progress.hasUpperFloor,
+    heartLevels: mergeRecord(progress.heartLevels, retained.heartLevels, (level) => level > 0),
+    mineFloor: progress.mineFloor,
+    provenance: sortedRecord(history.provenance),
+    questStates: mergeRecord(
+      progress.questStates,
+      retained.questStates,
+      (state) => state !== PROGRESS_FIELD_SPECS.questStates.default,
+    ),
+    reachedSeason: progress.reachedSeason,
+    renown: progress.renown,
+    resolutions: sortedRecord(history.resolutions),
+    skillLevels: mergeRecord(progress.skillLevels, retained.skillLevels, (level) => level > 0),
+    villagerRelationships: mergeRecord(
+      progress.villagerRelationships,
+      retained.villagerRelationships,
+      (relationship) => relationship !== PROGRESS_FIELD_SPECS.villagerRelationships.default,
+    ),
+  } satisfies Required<Pick<SerializedState["progress"], (typeof SERIALIZED_FIELD_ORDER)[number]>>;
+  const ordered = Object.fromEntries(
+    SERIALIZED_FIELD_ORDER.map((field) => [field, fields[field]]),
+  ) as typeof fields;
+  return {
     lastImport: lastImport ?? null,
     progress: {
       ...(history.lastSavePlaytime === undefined
         ? {}
         : { lastSavePlaytime: history.lastSavePlaytime }),
       ...(history.lastSaveUnordered ? { lastSaveUnordered: true } : {}),
-      almanac: list("almanac"),
-      almanacRecipes: list("almanacRecipes"),
-      animalCosmetics: mergeAnimalIds(progress.animalCosmetics, retained.animalCosmetics),
-      animals: mergeAnimalIds(progress.animals, retained.animals),
-      breakUpsDisabled: progress.breakUpsDisabled,
-      childChoice: progress.childChoice,
-      cosmetics: list("cosmetics"),
-      hasUpperFloor: progress.hasUpperFloor,
-      heartLevels: mergeRecord(progress.heartLevels, retained.heartLevels, (level) => level > 0),
-      mineFloor: progress.mineFloor,
-      mountAppearances: list("mountAppearances"),
-      museum: list("museum"),
-      petCosmetics: list("petCosmetics"),
-      petSkins: list("petSkins"),
-      provenance: sortedRecord(history.provenance),
-      questStates: mergeRecord(
-        progress.questStates,
-        retained.questStates,
-        (state) => state !== "none",
-      ),
-      reachedSeason: progress.reachedSeason,
-      renown: progress.renown,
-      resolutions: sortedRecord(history.resolutions),
-      skillLevels: mergeRecord(progress.skillLevels, retained.skillLevels, (level) => level > 0),
-      spells: list("spells"),
-      unlockedPerks: list("unlockedPerks"),
-      villagerRelationships: mergeRecord(
-        progress.villagerRelationships,
-        retained.villagerRelationships,
-        (relationship) => relationship !== "undecided",
-      ),
+      ...ordered,
     },
     version: CURRENT_SERIALIZATION_VERSION,
     worldState: { season: worldState.season, weather: worldState.weather },
   };
-  return s;
 }

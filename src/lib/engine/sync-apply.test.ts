@@ -4,6 +4,7 @@ import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import { PREGNANCY_QUEST_IDS } from "./craving-quest.js";
+import { createDefaultProgress } from "./progress-fields.js";
 import { editPlaytime, progressFacts } from "./provenance.js";
 import {
   applySync,
@@ -44,30 +45,7 @@ const FARM: FarmIdentity = {
 const OTHER_FARM: FarmIdentity = { ...FARM, saveNumber: "1720221376" };
 
 function progress(overrides: Record<string, unknown> = {}): ProgressState {
-  return {
-    almanac: new Set(),
-    almanacRecipes: new Set(),
-    animalCosmetics: {},
-    animals: {},
-    breakUpsDisabled: false,
-    childChoice: "undeclared",
-    cosmetics: new Set(),
-    hasUpperFloor: false,
-    heartLevels: {},
-    mineFloor: 0,
-    mountAppearances: new Set(),
-    museum: new Set(),
-    petCosmetics: new Set(),
-    petSkins: new Set(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown: 0,
-    skillLevels: {},
-    spells: new Set(),
-    unlockedPerks: new Set(),
-    villagerRelationships: {},
-    ...overrides,
-  };
+  return { ...createDefaultProgress(), ...overrides };
 }
 
 function syncState({
