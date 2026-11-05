@@ -11,7 +11,6 @@ import {
 import {
   changedFacts,
   confirmedBySave,
-  editPlaytime,
   factFieldOf,
   holdsGuess,
   obtainedSourceOf,
@@ -186,29 +185,25 @@ export function applyAdditiveSave(
   progress: ProgressState,
   history: ProgressHistory,
   imported: Partial<ProgressState>,
-  source: "save" | "unknown",
   playtime: number | undefined,
 ): MergeResult {
-  if (source === "save") recordSavePlaytime(history, playtime);
-  const stamp = source === "save" ? playtime : editPlaytime(history);
+  recordSavePlaytime(history, playtime);
   const before = progressFacts(progress);
   const result = mergeProgress(progress, imported);
   const after = progressFacts(progress);
   for (const key of changedFacts(before, after)) {
     history.provenance[key] = appliedFact(
       history.provenance[key],
-      source,
-      stamp,
+      "save",
+      playtime,
       before.get(key),
       after.get(key),
     );
   }
-  if (source === "save") {
-    for (const [key, value] of progressFacts(imported)) {
-      const record = Object.hasOwn(history.provenance, key) ? history.provenance[key] : undefined;
-      if (record && holdsGuess(record) && after.get(key) === value) {
-        history.provenance[key] = confirmedBySave(record, stamp);
-      }
+  for (const [key, value] of progressFacts(imported)) {
+    const record = Object.hasOwn(history.provenance, key) ? history.provenance[key] : undefined;
+    if (record && holdsGuess(record) && after.get(key) === value) {
+      history.provenance[key] = confirmedBySave(record, playtime);
     }
   }
   return result;

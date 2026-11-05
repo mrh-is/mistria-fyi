@@ -3,12 +3,30 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolutionHolds } from "#lib/engine/provenance.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
+import type { FactProvenance } from "#lib/engine/provenance.js";
+import type { SerializedState } from "#lib/stores/progress-storage.js";
 import type { ItemId, PerkId, QuestId, RecipeId, VillagerId } from "#lib/types/tracker-data.js";
 
 const TURNIP = "turnip" as ItemId;
 const POTATO = "potato" as ItemId;
 const ONE_REWARD_QUEST = "bell_berry_bakewell_tart_challenge" as QuestId;
 const ONE_REWARD_RECIPE = "kitchen_herb_planter" as RecipeId;
+
+function restoreWithUnknownProvenance(
+  fields: Partial<Pick<SerializedState["progress"], "almanac" | "questStates" | "renown">>,
+  keys: string[],
+  playtime?: number,
+): void {
+  const provenance: Record<string, FactProvenance> = Object.fromEntries(
+    keys.map((key) => [key, { playtime, source: "unknown" }]),
+  );
+  const backup = JSON.parse(userState.exportBackup()) as SerializedState;
+  const json = JSON.stringify({
+    ...backup,
+    progress: { ...backup.progress, ...fields, lastSavePlaytime: playtime, provenance },
+  });
+  expect(userState.restoreBackup(json)).toEqual({ ok: true });
+}
 
 beforeEach(() => {
   userState.loadFromStorage();
@@ -49,10 +67,8 @@ describe("provenance", () => {
     expect(userState.provenanceOf("almanac/potato")).toEqual({ playtime: 60, source: "save" });
   });
 
-  it("records a transfer's facts as unknown & keeps the last save's playtime", async () => {
-    await userState.mergeFromSave({ mineFloor: 10 }, { playtime: 100 });
-
-    await userState.mergeFromSave({ renown: 4 }, { source: "unknown" });
+  it("restores unknown provenance & the last save's playtime from a backup", () => {
+    restoreWithUnknownProvenance({ renown: 4 }, ["renown"], 100);
 
     expect(userState.provenanceOf("renown")).toEqual({ playtime: 100, source: "unknown" });
     expect(userState.lastSavePlaytime).toBe(100);
@@ -150,7 +166,10 @@ describe("provenance", () => {
   });
 
   it("promotes an unknown fact a save agrees with, stamped with its playtime", async () => {
-    await userState.mergeFromSave({ almanac: new Set([TURNIP, POTATO]) }, { source: "unknown" });
+    restoreWithUnknownProvenance({ almanac: [TURNIP, POTATO] }, [
+      "almanac/turnip",
+      "almanac/potato",
+    ]);
     expect(userState.provenanceOf("almanac/turnip")).toEqual({ source: "unknown" });
 
     await userState.mergeFromSave({ almanac: new Set([TURNIP]) }, { playtime: 5 });
@@ -175,10 +194,7 @@ describe("provenance", () => {
 
   it("stamps a guessed slash under a pen X when a save agrees with the finish", async () => {
     const key = `questStates/${ONE_REWARD_QUEST}`;
-    await userState.mergeFromSave(
-      { questStates: { [ONE_REWARD_QUEST]: "obtained" } },
-      { source: "unknown" },
-    );
+    restoreWithUnknownProvenance({ questStates: { [ONE_REWARD_QUEST]: "obtained" } }, [key]);
     userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
     expect(userState.provenanceOf(key)).toEqual({ obtainedSource: "unknown", source: "manual" });
 
@@ -207,10 +223,7 @@ describe("provenance", () => {
 
   it("replaces a guessed slash when a save finishes the quest", async () => {
     const key = `questStates/${ONE_REWARD_QUEST}`;
-    await userState.mergeFromSave(
-      { questStates: { [ONE_REWARD_QUEST]: "obtained" } },
-      { source: "unknown" },
-    );
+    restoreWithUnknownProvenance({ questStates: { [ONE_REWARD_QUEST]: "obtained" } }, [key]);
 
     await userState.mergeFromSave(
       { questStates: { [ONE_REWARD_QUEST]: "completed" } },
@@ -222,8 +235,7 @@ describe("provenance", () => {
 
   it("doesn't promote a fact the save reports differently", async () => {
     const key = `questStates/${ONE_REWARD_QUEST}`;
-    const completed = { questStates: { [ONE_REWARD_QUEST]: "completed" as const } };
-    await userState.mergeFromSave(completed, { source: "unknown" });
+    restoreWithUnknownProvenance({ questStates: { [ONE_REWARD_QUEST]: "completed" } }, [key]);
 
     await userState.mergeFromSave(
       { questStates: { [ONE_REWARD_QUEST]: "obtained" } },
@@ -231,13 +243,6 @@ describe("provenance", () => {
     );
 
     expect(userState.provenanceOf(key)).toEqual({ source: "unknown" });
-  });
-
-  it("doesn't promote when a transfer agrees", async () => {
-    await userState.mergeFromSave({ mineFloor: 10 }, { source: "unknown" });
-    await userState.mergeFromSave({ mineFloor: 10 }, { source: "unknown" });
-
-    expect(userState.provenanceOf("mineFloor")).toEqual({ source: "unknown" });
   });
 
   it("leaves a manual fact manual when a save agrees with it", async () => {

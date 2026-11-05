@@ -210,10 +210,10 @@ inference set. `src/lib/engine/provenance.ts` defines the keys & sources; the st
   the player made is remembered.
 - **Sources.** Setters & toggles record `manual`. An engagement cascade, a quest's recipe rewards (&
   the undo that takes them back), default unlocks, & “Record prerequisites” record `inferred`. A
-  save import records `save`; retired device transfers recorded `unknown`, since their payloads
-  carried no provenance. Only facts a call changes record, with one exception: a save replaces the
-  app's guesses but never the player's entries, so one agreeing with an `unknown` or `inferred` fact
-  promotes it to `save`, and one agreeing with a `manual` fact leaves it `manual`.
+  save import records `save`. Stored facts whose original source is unavailable keep `unknown`. Only
+  facts a call changes record, with one exception: a save replaces the app's guesses but never the
+  player's entries, so one agreeing with an `unknown` or `inferred` fact promotes it to `save`, and
+  one agreeing with a `manual` fact leaves it `manual`.
 - **A quest's two moments.** When a different source finishes an obtained quest, its record keeps
   the obtained moment's source in `obtainedSource` (version 6), and any later change replaces the
   record. A save reporting `completed` follows the same rule for that moment: it replaces a guess
@@ -321,9 +321,8 @@ These flows are not interchangeable:
 - **Save-driven sync** applies a save from the game as a policy-driven diff through one serialized
   write path. See [sync.md](sync.md).
 
-Progress-transfer QR codes are retired. Data points players to sync for following a save and backup
-export & restore for moving hand-tracked progress. The camera scanner & QR renderer live in
-`src/routes/sync/qr.ts`.
+[#433](https://github.com/mrh-is/mistria-fyi/pull/433) retired progress-transfer QR codes. The old
+`/data?section=transfer` link opens guidance on sync & backups.
 
 ## 4. Route Composition
 
@@ -522,9 +521,6 @@ treat each as an API. See
   before #111 post `mfg:skip-waiting` from their update prompt; the worker still honors it.
 
 ### Not promised
-
-- **Progress-transfer QR codes:** the build-bound codec is retired (#138). The old
-  `/data?section=transfer` link opens guidance to sync & backups.
 
 - The retired beta route `/settings` returns the not-found page; use `/data?section=import` for
   data-management links. Its removal without a redirect was explicitly approved in #156; see

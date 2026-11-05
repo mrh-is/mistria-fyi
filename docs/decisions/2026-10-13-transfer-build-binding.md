@@ -1,5 +1,8 @@
 # Transfer codes bind to the exact app build
 
+[#433](https://github.com/mrh-is/mistria-fyi/pull/433) superseded this decision when it removed
+progress-transfer QR codes.
+
 ## Context
 
 The device-transfer QR code carried a manually bumped `TRANSFER_VERSION`, a pinned ordering hash,

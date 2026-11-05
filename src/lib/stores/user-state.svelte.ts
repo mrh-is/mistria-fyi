@@ -285,7 +285,6 @@ interface ManualImportOptions {
   confirmedFarm?: string;
   metadata?: SaveImportMetadata;
   playtime?: number;
-  source?: "save" | "unknown";
 }
 
 export type ManualImportOutcome =
@@ -597,7 +596,7 @@ function createUserState() {
   ): boolean {
     const captured = readProgressBlob(intent.before, "repair");
     if (captured.kind !== "ok") throw new Error("Invalid captured progress write");
-    const { confirmedFarm, metadata, playtime, source = "save" } = intent.options;
+    const { confirmedFarm, metadata, playtime } = intent.options;
     const current = read?.kind === "ok" ? read.loaded : undefined;
     const capturedFarm = captured.loaded.lastImport?.identity ?? null;
     const storedFarm = current?.lastImport?.identity ?? null;
@@ -609,13 +608,7 @@ function createUserState() {
     }
 
     const preview = captured.loaded;
-    const result = applyAdditiveSave(
-      preview.progress,
-      preview.history,
-      intent.imported,
-      source,
-      playtime,
-    );
+    const result = applyAdditiveSave(preview.progress, preview.history, intent.imported, playtime);
     if (metadata) preview.lastImport = importMetadata(storedFarm ?? capturedFarm, metadata);
     const loaded = current
       ? mergeCapturedImport(current, preview, storedHistory(intent.base), metadata !== undefined)
@@ -1438,7 +1431,7 @@ function createUserState() {
       // that's cancelled or can't be stored never erases anything, even in a later save.
       const staged = emptyLoadedProgress();
       staged.lastImport = $state.snapshot(save.metadata);
-      applyAdditiveSave(staged.progress, staged.history, save.completed, "save", save.playtime);
+      applyAdditiveSave(staged.progress, staged.history, save.completed, save.playtime);
       enablePersistenceAfterExplicitReplace();
       return requestProgressWrite({
         guard: stillWanted,

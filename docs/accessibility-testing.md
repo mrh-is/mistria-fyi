@@ -144,8 +144,8 @@ focus-visible rule.
 `populated-records.spec.ts` uses the same full-light/dark-contrast pattern. Its separate navigation
 is intentional: populated progress & revealed spoilers expose controls missing from the initial
 route DOM. `states.spec.ts` retains full scans for distinct dialogs, expanded controls, search
-results, completed/spoiler rows, & import/transfer/restore results. Result assertions there wait for
-the assembled DOM before axe; their value & error semantics also have colocated component tests. The
+results, completed/spoiler rows, & import or restore results. Result assertions there wait for the
+assembled DOM before axe; their value & error semantics also have colocated component tests. The
 former smoke & semantics route loops are folded into the journey. Progress values, decorative marks,
 input bounds, selected controls, & input-alert associations are asserted in component tests.
 
