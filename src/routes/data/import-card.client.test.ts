@@ -174,6 +174,7 @@ describe("save import", () => {
       "href",
       "https://github.com/lordp/VaultGo",
     );
+    expect(screen.getByRole("alert")).toHaveTextContent("VaultGo (on Linux).");
     const fallback = screen.getByText(/Then import from the resulting/);
     expect(fallback).toHaveTextContent(
       "Then import from the resulting player.json, gamedata.json, and quests.json files.",
