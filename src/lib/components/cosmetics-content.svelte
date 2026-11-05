@@ -232,6 +232,7 @@
               >
                 <ShelfRows
                   forceOpen={!!nameFilter}
+                  level={4}
                   getKey={(cosmetic) => cosmetic.id}
                   getShelf={(cosmetic) => rowShelf(cosmeticFacts(cosmetic))}
                   items={visibleCosmetics}

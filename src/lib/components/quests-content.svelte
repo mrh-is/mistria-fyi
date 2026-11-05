@@ -15,9 +15,9 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showQuestToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
-  import { projectQuests } from "#lib/engine/projections/quests.js";
+  import { cravingFacts, projectQuests } from "#lib/engine/projections/quests.js";
   import { factKey } from "#lib/engine/provenance.js";
-  import { countShelfRows, filteredCounts, rowShelf, shelfFacts } from "#lib/engine/shelves.js";
+  import { countShelfRows, filteredCounts, progressShelf, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildQuestSections } from "#lib/presentation/quest-sections.js";
@@ -73,9 +73,7 @@
       if (!facts) throw new Error(`Quest row without a projection: ${row.id}`);
       return { ...row, ...facts };
     }
-    const facts = shelfFacts({ sources: [] }, row.completed, userState.progressContext);
-    // Before marriage the row stands in for a quest that doesn't exist yet.
-    return row.questId ? { ...row, ...facts } : { ...row, ...facts, doable: false };
+    return { ...row, ...cravingFacts(row, userState.progressContext) };
   }
 
   let nameFilter = $derived(toolbarState.searchQuery);
@@ -167,6 +165,7 @@
   {#snippet section({ categorySpoilered, progress, section: questSection, visibleRows })}
     {#if !nameFilter || visibleRows.length > 0}
       <SpoilerSection
+        maskedShelf={progressShelf(progress)}
         name={typeLabel(questSection.questType)}
         spoilered={categorySpoilered}
         topLevel

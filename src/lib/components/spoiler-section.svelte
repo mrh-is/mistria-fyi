@@ -12,13 +12,18 @@
 
   import type { Snippet } from "svelte";
 
+  import type { Shelf } from "#lib/engine/shelves.js";
+
   let {
     children,
+    maskedShelf = "notNow",
     name,
     spoilered,
     topLevel = false,
   }: {
     children: Snippet;
+    /** The shelf the section's own rows put it on, which a mask must not change. */
+    maskedShelf?: Shelf;
     name: string;
     spoilered: boolean;
     /** Stands in for a top-level section, which Everything partitions by completion. */
@@ -36,13 +41,14 @@
     () => topLevel && isSpoilered,
   );
 
-  // A masked section is locked, so it waits on Not now. Once revealed, its own header reports.
+  // Once revealed, the section's own header reports its shelf.
   const sectionGroupItem = getSectionGroupItem();
   $effect(() => {
     if (!topLevel || !isSpoilered || !sectionGroupItem) return;
     const { report } = sectionGroupItem;
+    const shelf = maskedShelf;
     untrack(() => {
-      report("notNow");
+      report(shelf);
     });
     return () => {
       untrack(() => {

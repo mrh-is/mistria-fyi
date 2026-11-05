@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { getAllProgress, getCategoryProgress } from "#lib/engine/categories.js";
 import { projectMuseum } from "#lib/engine/projections/museum.js";
-import { projectQuests } from "#lib/engine/projections/quests.js";
-import { progressShelf } from "#lib/engine/shelves.js";
+import { cravingFacts, projectQuests } from "#lib/engine/projections/quests.js";
+import { filteredCounts, progressShelf, rowShelf } from "#lib/engine/shelves.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordValues } from "#lib/utils/record.js";
@@ -67,5 +67,14 @@ describe("shelves across the real tracker data", () => {
     const narrow = getCategoryProgress("museum", ctx, { showsSource: () => false });
     expect(narrow.total).toBe(full.total);
     expect(narrow.completed).toBe(full.completed);
+  });
+});
+
+describe("the craving quest before marriage", () => {
+  it("waits on Not now in the projection & adds nothing to the filter note", () => {
+    const ctx = context();
+    const facts = cravingFacts({ completed: false }, ctx);
+    expect(rowShelf(facts)).toBe("notNow");
+    expect(filteredCounts([facts])).toEqual({ completed: 0, notNow: 0, todo: 0 });
   });
 });

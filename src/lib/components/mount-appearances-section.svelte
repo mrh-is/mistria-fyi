@@ -147,6 +147,7 @@
         >
           <ShelfRows
             forceOpen={!!nameFilter}
+            level={4}
             getKey={(entry) => `${entry.kind}:${entry.id}`}
             getShelf={rowShelf}
             items={visibleGroupEntries}

@@ -75,8 +75,9 @@
     progress !== undefined && progress.total > 0 ? (progress.todo / progress.total) * 100 : 0,
   );
   let shelf = $derived(progress === undefined ? undefined : progressShelf(progress));
-  // A section with progress & no shelf has nothing the filters show, so it leaves the page.
-  let leavesPage = $derived(progress !== undefined && shelf === undefined);
+  // A section with progress & no shelf has nothing the filters show, so it leaves the page. A
+  // section forced open stays, because a search or a link needs what's inside it.
+  let leavesPage = $derived(progress !== undefined && shelf === undefined && !forceOpen);
   // Derived apart from `progress`, whose object can change while the shelf doesn't.
   let reportedShelf = $derived(progress === undefined ? "todo" : shelf);
   let complete = $derived(total !== undefined && total > 0 && boundedCount === total);

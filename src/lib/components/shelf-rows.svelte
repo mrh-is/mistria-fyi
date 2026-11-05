@@ -13,6 +13,7 @@
     getShelf,
     isLeaving,
     items,
+    level = 3,
     row,
     showEmpty = true,
   }: {
@@ -21,12 +22,13 @@
     getShelf: (item: T) => Shelf | undefined;
     isLeaving?: (item: T) => boolean;
     items: readonly T[];
+    level?: 3 | 4;
     row: Snippet<[T]>;
     showEmpty?: boolean;
   } = $props();
 </script>
 
-<ShelfGroups {forceOpen} {getKey} {getShelf} {isLeaving} {items}>
+<ShelfGroups {forceOpen} {getKey} {getShelf} {isLeaving} {items} {level}>
   {#snippet group(members)}
     <TrackerRowList {getKey} items={members} {row} showEmpty={false} />
   {/snippet}

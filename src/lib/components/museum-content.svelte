@@ -149,9 +149,8 @@
       setId: id,
       ...setConfig(wingId, id),
     }));
-    const setConfigs = allSets.filter(
-      ({ progress, visibleRows }) =>
-        progressShelf(progress) !== undefined && (!nameFilter || visibleRows.length > 0),
+    const setConfigs = allSets.filter(({ progress, visibleRows }) =>
+      nameFilter ? visibleRows.length > 0 : progressShelf(progress) !== undefined,
     );
     return {
       isVisible: setConfigs.length > 0,
@@ -199,7 +198,7 @@
         <ShelfGroups
           forceOpen={!!nameFilter}
           getKey={(set) => set.setId}
-          getShelf={(set) => progressShelf(set.progress)}
+          getShelf={(set) => progressShelf(set.progress) ?? "completed"}
           items={config.setConfigs}
         >
           {#snippet group(sets)}
@@ -215,6 +214,7 @@
               >
                 <ShelfRows
                   forceOpen={!!nameFilter}
+                  level={4}
                   getKey={(row) => row.id}
                   getShelf={rowShelf}
                   isLeaving={(row) => recentlyCompleted.has(row.id)}

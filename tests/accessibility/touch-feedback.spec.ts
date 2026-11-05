@@ -101,6 +101,7 @@ test.describe("touch feedback", () => {
       await scrollFromControl(page, page.getByRole("button", { name: /^Check / }).first());
       await page.setViewportSize({ height: 500, width: 390 });
       await gotoRenderedApplication(page, "/mines");
+      await page.getByRole("button", { expanded: false, name: "Not now" }).first().tap();
       const spoiler = page.getByRole("button", { name: "Reveal spoiler" }).first();
       const mask = spoiler.getByTestId("spoiler-cover-mask");
       await scrollFromControl(page, spoiler, mask);

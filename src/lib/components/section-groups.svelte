@@ -3,6 +3,7 @@
   import ShelfHeading from "#lib/components/shelf-heading.svelte";
   import { getCompletionScope } from "#lib/controllers/completion-scope.svelte.js";
   import { SHELVES } from "#lib/engine/shelves.js";
+  import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
 
   import type { Snippet } from "svelte";
 
@@ -75,25 +76,19 @@
     return [...shelfEntries, ...unshelved];
   });
 
-  // Moving a node blurs whatever it contains, so focus inside a moved section is put back.
-  let focusBeforeMove: Element | null = null;
+  // Moving a node blurs whatever it contains, and a closed fold hides it, so focus is repaired.
+  let restoreFocus: (() => Promise<void>) | undefined;
 
   $effect.pre(() => {
     void entries;
-    focusBeforeMove = document.activeElement;
+    restoreFocus = captureFocusFallback();
   });
 
   $effect(() => {
     void entries;
-    const target = focusBeforeMove;
-    focusBeforeMove = null;
-    if (
-      target instanceof HTMLElement &&
-      target.isConnected &&
-      (document.activeElement === null || document.activeElement === document.body)
-    ) {
-      target.focus({ preventScroll: true });
-    }
+    const restore = restoreFocus;
+    restoreFocus = undefined;
+    if (restore) void restore();
   });
 </script>
 

@@ -60,8 +60,14 @@
   const searchGroup = createSearchGroup();
 
   let content = $derived(CONTENT[key]);
+  // A search can reach rows the shelves don't count; otherwise nothing left means no header.
+  let hasOutstandingRows = $derived(
+    toolbarState.searchQuery
+      ? progress.completed < progress.total
+      : progress.todo + progress.waiting > 0,
+  );
   let visible = $derived(
-    scope.hasContent(completed ? progress.completed > 0 : progress.completed < progress.total) &&
+    scope.hasContent(completed ? progress.completed > 0 : hasOutstandingRows) &&
       !(toolbarState.searchQuery && searchGroup.isEmpty),
   );
 </script>

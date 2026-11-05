@@ -28,6 +28,11 @@ export async function openSettingsCard(page: Page, name: string): Promise<void> 
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
 }
 
+/** Opens the first closed fold of `shelf`, where a locked or finished row waits. */
+export async function openShelf(page: Page, shelf: string): Promise<void> {
+  await page.getByRole("button", { expanded: false, name: shelf }).first().click();
+}
+
 export async function openVisibilityPanel(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Visibility filters" }).click();
   await expect(page.getByRole("dialog", { name: "Filters" })).toBeVisible();

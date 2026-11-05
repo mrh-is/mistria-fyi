@@ -125,7 +125,10 @@
       groupSections.some(
         (entry) =>
           isInCompletedList(entry) &&
-          (entry.section.id === anchor || `sources-${entry.section.group}` === anchor),
+          (entry.section.id === anchor ||
+            (entry.section.id === "progress" && anchor === "source-progress") ||
+            `sources-${entry.section.group}` === anchor ||
+            `sources-${entry.section.group}-completed` === anchor),
       ),
     ),
   );
@@ -167,11 +170,15 @@
 
   function rowShelfOf({ doable, entry }: { doable: boolean; entry: SourceChecklistRow }): Shelf {
     if (entry.completed) return "completed";
-    return doable ? "todo" : "notNow";
+    return doable && entry.obtainable ? "todo" : "notNow";
   }
 
   /** A source's fraction, with the rest of the shelf counts its header reads. */
-  function sectionProgress(section: SourceSection<SourceChecklistRow>): CategoryProgress {
+  function sectionProgress(
+    section: SourceSection<SourceChecklistRow>,
+  ): CategoryProgress | undefined {
+    // Only revealed unobtainable rows: nothing to count, but the section stays for them.
+    if (section.total === 0) return undefined;
     const remaining = section.rows.filter(({ entry }) => entry.obtainable && !entry.completed);
     const todo = remaining.filter(({ doable }) => doable).length;
     return {
@@ -221,13 +228,20 @@
       group.sections.flatMap(({ visibleRows }) => visibleRows),
     );
     const visibleKeys = new Set(visible.map(({ entry }) => entry.key));
+    // A row is doable anywhere through any source, & doable here through a source still shown.
+    const shownDoable = new Set(
+      visible.filter(({ doable }) => doable).map(({ entry }) => entry.key),
+    );
+    const doableAnywhere = new Set(
+      matches.filter(({ doable }) => doable).map(({ entry }) => entry.key),
+    );
     const rows = new Map(
-      matches.map(({ doable, entry }) => [
+      matches.map(({ entry }) => [
         entry.key,
         {
           completed: entry.completed,
-          doable: doable && visibleKeys.has(entry.key),
-          doableAnywhere: doable,
+          doable: shownDoable.has(entry.key),
+          doableAnywhere: doableAnywhere.has(entry.key),
           shown: visibleKeys.has(entry.key),
         },
       ]),
@@ -339,6 +353,7 @@
               >
                 <ShelfRows
                   forceOpen={!!toolbarState.searchQuery}
+                  level={4}
                   getKey={({ entry }) => entry.key}
                   getShelf={rowShelfOf}
                   isLeaving={({ entry }) => leaving.has(entry.key)}

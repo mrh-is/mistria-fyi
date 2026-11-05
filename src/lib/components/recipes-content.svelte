@@ -149,7 +149,7 @@
     {#if !nameFilter || filteredEntries.length > 0}
       <ExpandableSection
         {locale}
-        forceOpen={!!nameFilter || toolbarState.isSourceFilterNarrowing}
+        forceOpen={!!nameFilter}
         name={group.name}
         reportCategory="recipe-category"
         reportEntityId={group.id}

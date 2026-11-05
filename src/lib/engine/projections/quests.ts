@@ -12,6 +12,7 @@ import type {
   CategoryProjectionOptions,
   ChecklistRow,
 } from "#lib/engine/projections/category-projection.js";
+import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { QuestId, QuestType } from "#lib/types/tracker-data.js";
 
@@ -51,10 +52,17 @@ export function projectQuests(
     }
   }
   const craving = getCravingQuest(ctx.progress);
-  const counted = craving.applicable
-    ? [...rows, shelfFacts({ sources: [] }, craving.completed, ctx)]
-    : rows;
+  const counted = craving.applicable ? [...rows, cravingFacts(craving, ctx)] : rows;
   return { craving, rows, totals: countShelfRows(counted) };
+}
+
+/** Before marriage the craving row stands in for a quest that doesn't exist yet, so it waits. */
+export function cravingFacts(
+  { completed, questId }: Pick<CravingQuest, "completed" | "questId">,
+  ctx: ProgressContext,
+): ShelfRow {
+  const facts = shelfFacts({ sources: [] }, completed, ctx);
+  return questId ? facts : { ...facts, doable: false, doableAnywhere: false };
 }
 
 export function questSources(questType: QuestType, questId: QuestId): Source[] {

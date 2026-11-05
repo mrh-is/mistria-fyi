@@ -16,7 +16,12 @@ import {
   findOverflow,
   findTargetSizeViolations,
 } from "./support/geometry.js";
-import { openSearch, openSettingsCard, openVisibilityPanel } from "./support/scenarios.js";
+import {
+  openSearch,
+  openSettingsCard,
+  openShelf,
+  openVisibilityPanel,
+} from "./support/scenarios.js";
 import { critical, criticalWhen } from "./support/tags.js";
 
 // Geometry proves the production layout only with Satoshi's metrics. CI fetches the font
@@ -65,6 +70,7 @@ test.describe("320-pixel reflow", () => {
     await openSearch(page, "turnip");
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
     await page.getByRole("button", { name: "Cancel" }).click();
+    await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
 
@@ -309,6 +315,7 @@ test.describe("tracker paper touch geometry", () => {
     await initializeApplication(page, "light", createStoredState());
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
+    await openShelf(page, "Not now");
 
     await expect(page.getByRole("button", { name: "Reveal spoiler" }).first()).toBeVisible();
     // Long names wrap at 320 pixels; measure a cover that fits on one line.

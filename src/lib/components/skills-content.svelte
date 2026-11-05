@@ -49,6 +49,8 @@
   {@render ledger(skills)}
 {:else}
   <ShelfGroups
+    explains
+    level={2}
     forceOpen={!!toolbarState.searchQuery}
     getKey={(skill) => skill.id}
     getShelf={(skill) =>

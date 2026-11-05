@@ -2,6 +2,7 @@
   import ShelfFold from "#lib/components/shelf-fold.svelte";
   import { SHELVES } from "#lib/engine/shelves.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
+  import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
 
   import type { Snippet } from "svelte";
 
@@ -13,14 +14,18 @@
    */
   let {
     empty,
+    explains = false,
     forceOpen = false,
     getKey,
     getShelf,
     group,
     isLeaving,
     items,
+    level = 3,
   }: {
     empty?: Snippet;
+    /** Offers the shelf explainer, for lists that sit directly on the page. */
+    explains?: boolean;
     forceOpen?: boolean;
     getKey: (item: T) => string;
     getShelf: (item: T) => Shelf | undefined;
@@ -28,6 +33,8 @@
     /** A row finishing now stays where it is until it has had time to leave. */
     isLeaving?: (item: T) => boolean;
     items: readonly T[];
+    /** The fold headings' level: one below the heading that holds these items. */
+    level?: 2 | 3 | 4;
   } = $props();
 
   // Bookkeeping for leaving rows, read & written while deriving, so it's deliberately not reactive.
@@ -54,6 +61,21 @@
       return members ? [{ members, shelf }] : [];
     });
   });
+
+  // A row that changes shelves can land in a closed fold, which takes keyboard focus with it.
+  let restoreFocus: (() => Promise<void>) | undefined;
+
+  $effect.pre(() => {
+    void groups;
+    restoreFocus = captureFocusFallback();
+  });
+
+  $effect(() => {
+    void groups;
+    const restore = restoreFocus;
+    restoreFocus = undefined;
+    if (restore) void restore();
+  });
 </script>
 
 {#each groups as { members, shelf }, index (shelf)}
@@ -61,7 +83,7 @@
     {#if index === 0}
       {@render group(members)}
     {:else}
-      <ShelfFold count={members.length} {forceOpen} {shelf}>
+      <ShelfFold count={members.length} {explains} {forceOpen} {level} {shelf}>
         {@render group(members)}
       </ShelfFold>
     {/if}

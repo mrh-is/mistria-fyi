@@ -24,7 +24,7 @@ test.describe("keyboard and focus accessibility", () => {
     await page.keyboard.press("Tab");
     await expect(tools.getByRole("button", { name: "Search" })).toBeFocused();
     await page.keyboard.press("Tab");
-    await expect(tools.getByRole("button", { name: "Visibility filters" })).toBeFocused();
+    await expect(tools.getByRole("button", { name: /^Season & weather/ })).toBeFocused();
   });
 
   test("feedback dialog contains focus and restores it on Escape", critical, async ({ page }) => {

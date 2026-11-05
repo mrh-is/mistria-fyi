@@ -59,6 +59,8 @@ export function searchAllCategories(
   worldState: { season: Season; weather: Weather },
   progressionState: UserProgressionState,
   locale: LocaleCode,
+  /** What decides availability, which never knows about "Show spoilers". */
+  availabilityState: UserProgressionState = progressionState,
 ): SearchResult[] {
   const q = matchKey(query, locale);
   const englishQ = matchKey(query, "en");
@@ -71,7 +73,7 @@ export function searchAllCategories(
     progressionState,
     projectionContext: {
       progress: completed,
-      progressionState,
+      progressionState: availabilityState,
       worldState,
     },
   };

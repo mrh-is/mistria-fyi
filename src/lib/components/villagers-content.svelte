@@ -37,6 +37,8 @@
   // A villager linked by hash (e.g. from search) opens the fold they sit in.
   let targetedId = $derived(page.url.hash.replace(/^#villager-/, ""));
   let nameFilter = $derived(toolbarState.searchQuery);
+  // The alphabet index can jump to anyone, so using it opens the folds.
+  let indexOpenedFolds = $state(false);
   // Spoilered villagers render without their name, so a search can't find them.
   let namedVillagers = $derived(
     nameFilter
@@ -111,7 +113,9 @@
   {:else}
     <div class="min-w-0">
       <ShelfGroups
-        forceOpen={!!nameFilter || Boolean(targetedId)}
+        explains
+        level={2}
+        forceOpen={!!nameFilter || Boolean(targetedId) || indexOpenedFolds}
         getKey={(villager) => villager.id}
         getShelf={villagerShelf}
         group={roster}
@@ -121,7 +125,13 @@
   {/if}
 
   {#if indexed}
-    <VillagerAlphabetIndex entries={indexEntries} {locale} />
+    <VillagerAlphabetIndex
+      entries={indexEntries}
+      {locale}
+      revealTargets={() => {
+        indexOpenedFolds = true;
+      }}
+    />
   {/if}
 </div>
 

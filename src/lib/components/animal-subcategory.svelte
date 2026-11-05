@@ -61,6 +61,7 @@
             >
               <ShelfRows
                 forceOpen={!!toolbarState.searchQuery}
+                level={4}
                 getKey={(itemRow) => itemRow.id}
                 getShelf={rowShelf}
                 items={visibleItems}

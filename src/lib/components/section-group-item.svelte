@@ -28,6 +28,7 @@
   });
 </script>
 
-<div style:display={closed ? "none" : "contents"}>
+<!-- `hidden`, so focus repair can tell a closed fold's sections aren't on the page. -->
+<div hidden={closed} style:display={closed ? undefined : "contents"}>
   {@render children()}
 </div>

@@ -68,6 +68,27 @@ describe("SectionGroups", () => {
     expect(screen.queryByRole("button", { name: /^Crops,/ })).toBeNull();
   });
 
+  it("moves focus to a visible trigger when a section leaves for a closed fold", async () => {
+    const { view } = renderGroups([
+      { count: 1, id: "Artifacts", total: 2 },
+      { count: 0, id: "Bugs", total: 2 },
+    ]);
+    await tick();
+    const trigger = screen.getByRole("button", { name: /^Artifacts,/ });
+    trigger.focus();
+
+    await view.rerender({
+      sections: [
+        { count: 2, id: "Artifacts", total: 2 },
+        { count: 0, id: "Bugs", total: 2 },
+      ],
+    });
+    await tick();
+    await tick();
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: /^Bugs,/ }));
+  });
+
   it("leaves a lone finished section ungrouped", async () => {
     renderGroups([{ count: 2, id: "Spells", total: 2 }]);
     await tick();

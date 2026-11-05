@@ -6,7 +6,6 @@ import {
   gotoRenderedApplication,
   initializeApplication,
 } from "./support/application-state.js";
-import { openVisibilityPanel } from "./support/scenarios.js";
 
 test.describe("@readiness application readiness", () => {
   test("navigation waits for hydration without waiting for unrelated requests", async ({
@@ -81,13 +80,9 @@ test.describe("@readiness application readiness", () => {
     await initializeApplication(page, "dark", createStoredState({ showSpoilers: true }));
     await gotoApplication(page, "/almanac");
     await expectResolvedTheme(page, "dark");
-    await expect(
-      page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }),
-    ).toBeVisible();
-    await openVisibilityPanel(page);
-    await expect(page.getByRole("button", { exact: true, name: "Later" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
+    await page.getByRole("button", { expanded: false, name: "Not now" }).first().click();
+    await expect(page.getByRole("button", { name: /^Check / }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reveal spoiler" })).toHaveCount(0);
   });
 });
