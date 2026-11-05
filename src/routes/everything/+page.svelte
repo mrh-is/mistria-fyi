@@ -8,7 +8,7 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import PageSearchStatus from "#lib/components/page-search-status.svelte";
   import { createSharedReveals } from "#lib/controllers/completion-scope.svelte.js";
-  import { showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { showsCompletedRows, visibleWindows } from "#lib/controllers/page-search.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
@@ -52,9 +52,10 @@
   });
 
   let progress = $derived(
-    getAllProgress(userState.progressContext, {
-      matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
-    }),
+    getAllProgress(
+      { ...userState.progressContext, availabilityWindows: visibleWindows() },
+      { matchesSources: (sources) => toolbarState.matchesSourceFilters(sources) },
+    ),
   );
 
   let overallProgress = $derived(getOverallProgress(progress));

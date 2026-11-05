@@ -8,6 +8,7 @@ import RecipesContent from "#lib/components/recipes-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
+import { getCategoryProgress } from "#lib/engine/categories.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -146,6 +147,21 @@ describe("subsection counters", () => {
     expect(filteredBody).toMatch(
       new RegExp(`Fetch Quests 0 / ${unfilteredTotal} (\\d+ for now|done for now)`, "u"),
     );
+  });
+
+  it("narrows the quests header with the sources its sections filter by", () => {
+    toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
+    const unfiltered = getCategoryProgress("quests", userState.progressContext, {
+      matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
+    });
+    toolbarState.hideAllSourceFilters();
+
+    const filtered = getCategoryProgress("quests", userState.progressContext, {
+      matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
+    });
+
+    expect(filtered.remainingInScope).toBeLessThan(unfiltered.remainingInScope);
+    expect(filtered.total).toBe(unfiltered.total);
   });
 
   it("hides almanac rows whose covered sources all belong to hidden groups", () => {
