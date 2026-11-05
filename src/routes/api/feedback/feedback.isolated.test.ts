@@ -452,7 +452,9 @@ describe("POST /api/feedback", () => {
     const body = JSON.parse(options.body as string) as { body: string };
     expect(body.body).toContain("\u{1F4E7} Contact email provided");
     expect(body.body).not.toContain("user@example.com");
-    expect(kvPut).toHaveBeenCalledWith("99", expect.stringContaining("user@example.com"));
+    expect(kvPut).toHaveBeenCalledWith("99", expect.stringContaining("user@example.com"), {
+      expirationTtl: 7_776_000,
+    });
   });
 
   it("escapes @-mentions in user-written text so feedback can't notify GitHub users", async () => {
