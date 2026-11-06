@@ -136,11 +136,12 @@ type, never its message. A Durable Object that knows the kind sends it in an int
 `X-Relay-Failure` header, which the Worker removes before responding. The singleton accepts only
 these kinds & keeps 14 UTC days of counts, so nothing recorded holds request contents, mailbox IDs,
 tokens, addresses, or exception text; its alarm drops each day when it leaves the window. Each
-isolate adds failures up in memory & sends them at most every 10 seconds, after the response, so an
-outage can’t flood the singleton. Recording is best effort: a batch the singleton can’t take, or one
-still pending when the isolate ends, is lost, & the player’s response never changes. Read the counts
-with `GET /v1/admin/failures`. Like other singleton storage, they can stay in Cloudflare’s recovery
-copy for 30 days.
+isolate sends its first count immediately in the background. It batches any failures in the next 10
+seconds & sends the batch when that window ends, even if no more requests arrive. The gap between
+sends limits the load on the singleton during an outage. Recording is best effort. A batch the
+singleton can’t take, or one still pending when the isolate ends, is lost. The player’s response is
+independent of the report. Read the counts with `GET /v1/admin/failures`. Like other singleton
+storage, they can stay in Cloudflare’s recovery copy for 30 days.
 
 ## Maintainer launch
 
