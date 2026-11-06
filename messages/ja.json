@@ -513,19 +513,24 @@
   "sync_error_camera_init": "カメラを初期化できませんでした。",
   "sync_error_camera_denied": "カメラへのアクセスが拒否されました。ゲーム用パソコンの同期リンクを開くか、ここに貼り付けてください。",
   "merge_imported_from": "{files}からインポートしました",
-  "merge_label_almanac": "アルマナック：+{count}",
-  "merge_label_almanac_recipes": "レシピ：+{count}",
-  "merge_label_animal_cosmetics": "動物のコスメ：+{count}",
-  "merge_label_animals": "動物のバリエーション：+{count}",
-  "merge_label_cosmetics": "コスメ：+{count}",
-  "merge_label_museum": "博物館への寄贈：+{count}",
-  "merge_label_villager_relationships": "町の住民との関係：+{count}",
-  "merge_label_perks": "スキルボーナス：+{count}",
-  "merge_label_pet_cosmetics": "ペットのコスメ：+{count}",
-  "merge_label_pet_skins": "ペットのスキン：+{count}",
-  "merge_label_mount_appearances": "マウントの外見：+{count}",
-  "merge_label_quests": "クエスト：+{count}",
-  "merge_label_spells": "呪文：+{count}",
+  "merge_overall_outcome": "フィールドガイドの達成率は{percent}。残りは{remaining}件だよ。",
+  "merge_changes_details": "追加した内容",
+  "merge_label_break_ups_disabled": "別れは無効",
+  "import_save_details": "セーブの詳細",
+  "import_view_progress": "残りを見てみる",
+  "merge_label_almanac": "アルマナック：+{countText}",
+  "merge_label_almanac_recipes": "レシピ：+{countText}",
+  "merge_label_animal_cosmetics": "動物のコスメ：+{countText}",
+  "merge_label_animals": "動物のバリエーション：+{countText}",
+  "merge_label_cosmetics": "コスメ：+{countText}",
+  "merge_label_museum": "博物館への寄贈：+{countText}",
+  "merge_label_villager_relationships": "町の住民との関係：+{countText}",
+  "merge_label_perks": "スキルボーナス：+{countText}",
+  "merge_label_pet_cosmetics": "ペットのコスメ：+{countText}",
+  "merge_label_pet_skins": "ペットのスキン：+{countText}",
+  "merge_label_mount_appearances": "マウントの外見：+{countText}",
+  "merge_label_quests": "クエスト：+{countText}",
+  "merge_label_spells": "呪文：+{countText}",
   "merge_label_child_choice": "子供の選択を更新しました",
   "merge_conflict_relationship": "ご参考までに、あなたは{villager}と{local}と記録されていましたが、セーブファイルでは{incoming}となっていました。記録されていた状態を維持しました。",
   "merge_conflict_spouse": "ご参考までに、あなたは{localVillager}と結婚していると記録されていましたが、セーブファイルでは{incomingVillager}と結婚したことになっていました。配偶者は{localVillager}のまま維持し、インポートされた子供の選択はスキップしました。",
@@ -535,37 +540,37 @@
   "merge_label_reached_season": "季節の進行を更新しました",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "鉱坑の階層：+{count}階"
+        "countPlural=other": "鉱坑の階層：+{countText}階"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "町の住民との好感度：{count}件の関係を更新"
+        "countPlural=other": "町の住民との好感度：{countText}件の関係を更新"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "名声：+{count}レベル"
+        "countPlural=other": "名声：+{countText}レベル"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "スキル：{count}件を更新"
+        "countPlural=other": "スキル：{countText}件を更新"
       }
     }
   ],
