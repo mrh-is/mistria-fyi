@@ -9,7 +9,7 @@ export function getVariantSeason(variant: AnimalVariant): Season | undefined {
   return undefined;
 }
 
-/** A discovered tier reveals itself & the next tier; recorded variants are always revealed. */
+/** The first tier is always open; a find in a tier reveals that tier & the next one. */
 export function isAnimalVariantSpoilered(
   animalId: AnimalId,
   variantId: AnimalVariantId,
@@ -17,14 +17,10 @@ export function isAnimalVariantSpoilered(
   showSpoilers: boolean,
 ): boolean {
   if (showSpoilers || completedVariants?.has(variantId)) return false;
-  let foundThisVariant = false;
-  for (const tier of trackerData.animals[animalId].variantTiers.toReversed()) {
-    const wasThisVariantLastTier = foundThisVariant;
-    for (const id of Object.keys(tier)) {
-      if (completedVariants?.has(id as AnimalVariantId)) return false;
-      if (id === variantId) foundThisVariant = true;
-    }
-    if (wasThisVariantLastTier) return true;
-  }
-  return true;
+  const tiers = trackerData.animals[animalId].variantTiers;
+  const variantTier = tiers.findIndex((tier) => variantId in tier);
+  const highestFoundTier = tiers.findLastIndex((tier) =>
+    Object.keys(tier).some((id) => completedVariants?.has(id as AnimalVariantId)),
+  );
+  return variantTier > highestFoundTier + 1;
 }
