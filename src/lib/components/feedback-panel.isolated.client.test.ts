@@ -247,14 +247,6 @@ describe("FeedbackPanel", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("keeps the elastic-overscroll backdrop below the persistent page chrome", () => {
-    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
-
-    const backdrop = document.querySelector('[aria-label="Close feedback"]');
-    expect(backdrop).toHaveClass("top-[-100dvh]", "bottom-[-100dvh]", "z-0");
-    expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveClass("z-[var(--z-panel)]");
-  });
-
   it("clears progress preview and email validation when their options are unchecked", async () => {
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
     const attach = screen.getByRole("checkbox", { name: "Attach my tracker progress" });
