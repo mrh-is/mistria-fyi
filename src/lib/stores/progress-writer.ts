@@ -1,9 +1,10 @@
 import { progressFacts } from "#lib/engine/provenance.js";
 import { applySync, receiptCovers } from "#lib/engine/sync-apply.js";
-import { applySaveDay } from "#lib/engine/world-state.js";
+import { applySaveDay, rebaseWorldDay } from "#lib/engine/world-state.js";
 import { stampedLocal, startLaneLocal } from "#lib/sync/lane-operations.js";
 
 import {
+  createDefaultWorldState,
   readFarmSwitchBackup,
   readProgressBlob,
   serializeFarmSwitch,
@@ -11,6 +12,7 @@ import {
 } from "./progress-storage.js";
 
 import type { SyncResult } from "#lib/engine/sync-apply.js";
+import type { SaveDay } from "#lib/engine/world-state.js";
 import type {
   DeviceLocalState,
   SyncApplyOutcome,
@@ -88,14 +90,29 @@ export function planLocalPatch(
   return local && { json: serializeStoredProgress(base, local), local };
 }
 
+export interface StagedLaneStart {
+  clockBase: null | string;
+  day: SaveDay;
+  lane: SyncLane;
+  staged: Omit<LoadedProgress, "local">;
+  stamp?: SyncApplyStamp;
+}
+
+/** Layers the clock edits captured at lane start, then the save, over the stored clock. */
 export function planLaneStart(
-  staged: ProgressSnapshot,
-  stored: DeviceLocalState,
-  lane: SyncLane,
-  stamp: SyncApplyStamp | undefined,
-): { json: string; local: DeviceLocalState } {
-  const local = startLaneLocal(stored, lane, stamp);
-  return { json: serializeStoredProgress(staged, local), local };
+  { clockBase, day, lane, staged, stamp }: StagedLaneStart,
+  stored: LoadedProgress | undefined,
+  liveLocal: DeviceLocalState,
+): { json: string; loaded: LoadedProgress } {
+  const baseline = clockBase === null ? undefined : readProgressBlob(clockBase, "repair");
+  const baseClock =
+    baseline?.kind === "ok" ? baseline.loaded.worldState : createDefaultWorldState();
+  const clock = stored
+    ? rebaseWorldDay(stored.worldState, baseClock, staged.worldState)
+    : staged.worldState;
+  const local = startLaneLocal(stored?.local ?? liveLocal, lane, stamp);
+  const loaded = { ...staged, local, worldState: applySaveDay(clock, day) };
+  return { json: serializeStoredProgress(loaded, local), loaded };
 }
 
 export interface BackupReplacementQuestion {

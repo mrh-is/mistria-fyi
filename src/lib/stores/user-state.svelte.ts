@@ -109,7 +109,7 @@ import type {
   ProgressSnapshot,
   RetainedProgress,
 } from "./progress-storage.js";
-import type { BackupReplacementQuestion } from "./progress-writer.js";
+import type { BackupReplacementQuestion, StagedLaneStart } from "./progress-writer.js";
 
 export type {
   SyncApplyOutcome,
@@ -127,14 +127,11 @@ type WriteIntent =
       sequence: number;
       settle: (outcome: ManualImportOutcome) => void;
     })
-  | {
+  | (StagedLaneStart & {
       /** Built aside from live state, which takes it only once it's stored (see `startSyncLane`). */
       guard: () => boolean;
       kind: "staged";
-      lane: SyncLane;
-      staged: Omit<LoadedProgress, "local">;
-      stamp?: SyncApplyStamp;
-    }
+    })
   | {
       chooseManual?: boolean;
       /** Removes the receipt from whichever `local` section the write keeps. */
@@ -614,13 +611,12 @@ function createUserState() {
     read: ProgressReadResult | undefined,
   ): boolean {
     if (!intent.guard()) return false;
-    const storedLocal = read?.kind === "ok" ? read.loaded.local : local;
-    const plan = planLaneStart(intent.staged, storedLocal, intent.lane, intent.stamp);
+    const plan = planLaneStart(intent, read?.kind === "ok" ? read.loaded : undefined, local);
     if (!tryWriteProgress(plan.json, stored)) return false;
     clearPendingSave();
     pendingExplicitJson = undefined;
-    replaceProgress(intent.staged);
-    local = plan.local;
+    replaceProgress(plan.loaded);
+    local = plan.loaded.local;
     finishProgressWrite(plan.json);
     return true;
   }
@@ -1337,13 +1333,12 @@ function createUserState() {
       // Built aside from live state, which stays untouched until the write lands, so a lane start
       // that's cancelled or can't be stored never erases anything, even in a later save.
       const staged = emptyLoadedProgress();
-      stageSyncSave(
-        staged,
-        { ...save, metadata: $state.snapshot(save.metadata) },
-        $state.snapshot(state.worldState),
-      );
+      staged.worldState = $state.snapshot(state.worldState);
+      stageSyncSave(staged, { ...save, metadata: $state.snapshot(save.metadata) });
       enablePersistenceAfterExplicitReplace();
       const written = await requestProgressWrite({
+        clockBase: pendingExplicitJson ?? lastReadableStoredValue,
+        day: { ...save.day },
         guard: stillWanted,
         kind: "staged",
         lane: $state.snapshot(lane),

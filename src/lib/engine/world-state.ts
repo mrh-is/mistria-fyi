@@ -12,6 +12,14 @@ export interface SaveDay {
   weather: undefined | Weather;
 }
 
+/** Only fields the tab changed take precedence over the clock read under the lock. */
+export function rebaseWorldDay(stored: WorldDay, before: WorldDay, after: WorldDay): WorldDay {
+  return {
+    season: before.season === after.season ? stored.season : after.season,
+    weather: before.weather === after.weather ? stored.weather : after.weather,
+  };
+}
+
 /**
  * `world` with the save's day applied. Each value the save left unreadable stays as it was, and
  * weather the new season can't have clears to calm, as the clock's season control does.

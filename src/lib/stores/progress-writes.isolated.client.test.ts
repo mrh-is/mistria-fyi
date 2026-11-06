@@ -465,6 +465,72 @@ describe("serialized progress writes", () => {
   });
 
   it.each([
+    { editWeather: false, storageEvent: false },
+    { editWeather: false, storageEvent: true },
+    { editWeather: true, storageEvent: true },
+  ])(
+    "reconciles the clock under the lane start lock ($editWeather, $storageEvent)",
+    async ({ editWeather, storageEvent }) => {
+      const { locks, state } = sharedLocks();
+      const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+      vi.stubGlobal("localStorage", storage);
+      vi.stubGlobal("navigator", { locks });
+      const starting = await openTab();
+      const other = await openTab();
+      await settle(other.PERSIST_DEBOUNCE_MS);
+      const initial = storage.getItem(PROGRESS_KEY);
+      state.requests.length = 0;
+      const gate = Promise.withResolvers<undefined>();
+      const held = locks.request(WRITE_LOCK, () => gate.promise);
+      await vi.advanceTimersByTimeAsync(1);
+      other.userState.setSeason("fall");
+      if (!editWeather) other.userState.setWeather("inclement");
+      await vi.advanceTimersByTimeAsync(other.PERSIST_DEBOUNCE_MS);
+      expect(state.requests).toEqual([WRITE_LOCK, WRITE_LOCK]);
+
+      if (editWeather) starting.userState.setWeather("heavy_inclement");
+      const started = starting.userState.startSyncLane(
+        { kind: "computer" },
+        {
+          completed: { mineFloor: 10 },
+          day: { season: undefined, weather: undefined },
+          metadata: firstFarm,
+          playtime: 1000,
+        },
+      );
+      expect(starting.userState.state.worldState).toEqual({
+        season: "spring",
+        weather: editWeather ? "heavy_inclement" : "calm",
+      });
+      expect(storage.getItem(PROGRESS_KEY)).toBe(initial);
+
+      const setItem = storage.setItem.bind(storage);
+      const clock = { season: "fall", weather: editWeather ? "heavy_inclement" : "inclement" };
+      vi.spyOn(storage, "setItem").mockImplementationOnce((key, value) => {
+        setItem(key, value);
+        expect(key).toBe(PROGRESS_KEY);
+        expect(JSON.parse(value)).toMatchObject({
+          worldState: { season: "fall", weather: editWeather ? "calm" : "inclement" },
+        });
+        if (storageEvent) starting.tabWindow.dispatch("storage", { key, newValue: value });
+      });
+      gate.resolve(undefined);
+      await held;
+      await settle(starting.PERSIST_DEBOUNCE_MS);
+
+      await expect(started).resolves.toBe(true);
+      expect(starting.userState.state.worldState).toEqual(clock);
+      expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+        local: { syncLane: { kind: "computer" } },
+        progress: { mineFloor: 10, renown: 0 },
+        worldState: clock,
+      });
+      const reloaded = await openTab();
+      expect(reloaded.userState.state.worldState).toEqual(clock);
+    },
+  );
+
+  it.each([
     { day: undefined, season: "fall" },
     { day: { season: "spring" as const, weather: undefined }, season: "spring" },
   ])(
