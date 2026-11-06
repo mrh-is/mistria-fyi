@@ -53,7 +53,12 @@ describe("manual import metadata", () => {
       identity: { creationVersion: null, saveNumber: null },
       importedAt: metadata.importedAt + 60_000,
     };
-    const outcome = await userState.mergeFromSave({ mineFloor: 10 }, { metadata: renamed });
+    const prompt = await userState.mergeFromSave({ mineFloor: 10 }, { metadata: renamed });
+    if (prompt.kind !== "ask") throw new Error(`Import returned ${prompt.kind}`);
+    const outcome = await userState.mergeFromSave(
+      { mineFloor: 10 },
+      { confirmedFarm: prompt.farm, metadata: renamed },
+    );
     expect(outcome.kind).toBe("applied");
     expect(userState.state.lastImport).toEqual({ ...renamed, identity: metadata.identity });
   });
@@ -84,4 +89,41 @@ describe("manual import metadata", () => {
     const outcome = await userState.mergeFromSave({}, { metadata: identified });
     expect(outcome.kind).toBe("applied");
   });
+
+  it.each([
+    { incomingNumber: null, trackedNumber: null },
+    { incomingNumber: null, trackedNumber: "123" },
+    { incomingNumber: "456", trackedNumber: null },
+  ])(
+    "asks when creation versions differ with an unnumbered farm ($trackedNumber, $incomingNumber)",
+    async ({ incomingNumber, trackedNumber }) => {
+      const creationVersion = { major: 1, minor: 0, patch: 8, pre: null };
+      const tracked = { ...metadata, identity: { creationVersion, saveNumber: trackedNumber } };
+      const incoming = {
+        ...metadata,
+        farmName: "Moss",
+        identity: { creationVersion: { ...creationVersion, patch: 9 }, saveNumber: incomingNumber },
+      };
+      await expect(
+        userState.mergeFromSave({ renown: 7 }, { metadata: tracked }),
+      ).resolves.toMatchObject({ kind: "applied" });
+      const before = userState.exportBackup();
+      const prompt = await userState.mergeFromSave({ mineFloor: 10 }, { metadata: incoming });
+      expect(prompt).toMatchObject({ kind: "ask", reason: "different" });
+      expect(userState.exportBackup()).toBe(before);
+      if (prompt.kind !== "ask") throw new Error(`Import returned ${prompt.kind}`);
+
+      await expect(
+        userState.mergeFromSave(
+          { mineFloor: 10 },
+          { confirmedFarm: prompt.farm, metadata: incoming },
+        ),
+      ).resolves.toMatchObject({ kind: "applied" });
+      expect(userState.state.progress).toMatchObject({ mineFloor: 10, renown: 7 });
+      expect(userState.state.lastImport).toEqual({
+        ...incoming,
+        identity: trackedNumber ? tracked.identity : incoming.identity,
+      });
+    },
+  );
 });

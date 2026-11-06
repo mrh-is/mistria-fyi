@@ -457,6 +457,7 @@
   "import_farm_title": "This save is for a different farm",
   "import_farm_description": "Merging this save will combine progress from different farms. The tracker will keep the progress you’ve already recorded.",
   "import_farm_merge": "Merge progress",
+  "import_farm_unnumbered_description": "We can’t tell which farm this save belongs to. If you merge it, we’ll add its progress to what you’ve already tracked.",
   "import_farm_cancel": "Cancel",
   "import_error_sync_active": "Stop syncing on this device before importing a save.",
   "import_error_busy": "An import is already running. Wait for it to finish and try again.",
