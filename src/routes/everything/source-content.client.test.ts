@@ -2,9 +2,13 @@ import { tick } from "svelte";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
+import { trackerData } from "#lib/data/index.js";
+import { getName } from "#lib/data/names.js";
+import { getMaxRenownLevel } from "#lib/engine/progress.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import SourceContent from "./source-content.test-harness.svelte";
 
@@ -54,4 +58,32 @@ it("leaves the mine floor record out of a search", async () => {
   toolbarState.setSearchQuery("acorn");
   await tick();
   expect(view.queryByText("Upper Mines")).toBeNull();
+});
+
+it("hides the Progress group during a search that matches nothing in it", async () => {
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  toolbarState.setSearchQuery("acorn");
+  await tick();
+  await tick();
+  expect(view.queryByRole("button", { name: "Progress" })).toBeNull();
+});
+
+it("keeps the Progress group during a search that matches a skill", async () => {
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  toolbarState.setSearchQuery(getName("skills", recordKeys(trackerData.skills)[0], "en"));
+  await tick();
+  await tick();
+  expect(view.getByRole("button", { name: "Progress" })).toBeVisible();
+});
+
+it("hides the Completed divider when a search leaves only an empty Progress group in it", async () => {
+  userState.setRenown(getMaxRenownLevel());
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  await tick();
+  expect(view.getByTestId("everything-completed").hidden).toBe(false);
+
+  toolbarState.setSearchQuery("acorn");
+  await tick();
+  await tick();
+  expect(view.getByTestId("everything-completed").hidden).toBe(true);
 });

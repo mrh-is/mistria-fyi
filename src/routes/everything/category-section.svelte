@@ -49,11 +49,14 @@
     key,
     locale,
     progress,
+    shown = $bindable(),
   }: {
     completed?: boolean;
     key: CategoryKey;
     locale: LocaleCode;
     progress: CategoryProgress;
+    /** Reports whether the section shows, so a group around it can hide when none does. */
+    shown?: boolean;
   } = $props();
 
   const scope = createCompletionScope(untrack(() => completed));
@@ -70,6 +73,9 @@
     scope.hasContent(completed ? progress.completed > 0 : hasOutstandingRows) &&
       !(toolbarState.searchQuery && searchGroup.isEmpty),
   );
+  $effect.pre(() => {
+    shown = visible;
+  });
 </script>
 
 <div class="contents" style="--primary: var(--color-category-{key})">
