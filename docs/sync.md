@@ -401,12 +401,12 @@ tracker (`applyLocalSave`, which the courier in #134 calls) as well as every fol
 ### Freshness
 
 A follower’s sync panel shows when the last save file came (the file’s own modification time) & its
-in-game date (`sync_panel_*` in [sync-setup.md](sync-setup.md#copy)), read from `gamedata.date`, &
-it learns the typical gap between saves. The last 32 gaps are kept in `local.syncFreshness`, which
-the apply write advances beside the receipt (`src/lib/engine/sync-freshness.ts`). A gap is abnormal
-at three days or twice the longest gap remembered, whichever is longer, since sessions run half an
-hour apart but days can pass between them. When it opens after an abnormally long gap, a slip says
-so (`sync_status_gap`). There are no push notifications. Describe sync as best effort until real
+in-game date (the `sync_panel_*` keys in `messages/en.json`), read from `gamedata.date`, & it learns
+the typical gap between saves. The last 32 gaps are kept in `local.syncFreshness`, which the apply
+write advances beside the receipt (`src/lib/engine/sync-freshness.ts`). A gap is abnormal at three
+days or twice the longest gap remembered, whichever is longer, since sessions run half an hour apart
+but days can pass between them. When it opens after an abnormally long gap, a slip says so
+(`sync_status_gap`). There are no push notifications. Describe sync as best effort until real
 sessions prove it.
 
 ## Applying a bundle
@@ -556,8 +556,8 @@ plus `info.creation_version`, parsed tolerantly (#128).
 
 The envelope carries a protocol version, & both sides are strict: a follower accepts only its own
 version. An older envelope says the tracker on the computer needs a refresh, & a newer one that this
-tracker does (`sync_update_computer` & `sync_update_here` in [sync-setup.md](sync-setup.md#copy)); a
-reload fixes either. App builds do not matter.
+tracker does (`sync_update_computer` & `sync_update_here` in `messages/en.json`); a reload fixes
+either. App builds do not matter.
 
 ## App updates
 
