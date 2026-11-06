@@ -47,22 +47,11 @@ Use the PR body for the change summary, verification, & decisions.
 
 ## Task sequence
 
-1. **Read the issue, comments, & relationships.** Use
-   `gh issue view <number> --json title,body,labels,comments,blockedBy,parent,assignees`. The
-   `--comments` flag prints nothing when there are no comments, while `--json` works in every case.
-   Don’t start an issue that an open issue blocks (see “Blockers” below), or one labeled
-   `status: blocked` or `status: needs decision`. If an issue has an assignee,
-   `status: in progress`, or an `agent:*` label, coordinate with its current owner instead of
-   duplicating the work.
-2. **Resolve open questions before starting.** If the issue already has clear acceptance criteria,
-   go ahead without asking for approval again. Ask the user only about scope the criteria leave
-   open, requirements that conflict, or decisions the criteria don’t settle.
-3. **Scope the change.** Identify the subsystem it affects, its acceptance criteria, & its
-   deliverables. A nontrivial feature without clear acceptance criteria needs a short acceptance
-   checklist: three to seven items, each describing a state the finished feature must satisfy. Get
-   the user’s approval of that checklist before implementing. Clear existing criteria count as the
-   approval, so don’t ask a second time or write a duplicate checklist. When starting work, assign
-   the issue to the GitHub user you represent (see “Issue & PR assignees” above).
+1. **Read the issue & resolve open questions.** Follow [Task scope](../AGENTS.md#task-scope). Add
+   `assignees` to the `gh issue view` fields, since an assignee also means the issue has an owner.
+2. **Scope the change.** A nontrivial feature without clear acceptance criteria needs three to seven
+   acceptance items, each describing a state the finished feature must satisfy.
+3. **Assign the issue** to the GitHub user you represent (see “Issue & PR assignees” above).
 4. **Branch.** Work on a branch cut from the freshly fetched remote tip. A worktree is optional (see
    “Worktrees” in AGENTS.md).
 5. **Check the baseline.** Install dependencies with `pnpm install --frozen-lockfile`, which also
@@ -77,7 +66,8 @@ Use the PR body for the change summary, verification, & decisions.
 8. **Verify.** Run `pnpm run lint:fix` before committing. CI runs the full matrix (see
    agent-verification.md).
 9. **Deliver.** Commit with the required co-author trailer, push, & open a PR. The PR needs:
-   - a reference to the issue (`Closes #N`),
+   - a reference to the issue: `Closes #N`, or `Refs #N` when the issue needs work after the merge
+     (see “Final state” below),
    - a deployment or branch preview URL when available (see “Preview URL” below),
    - `data:diff` output, if the PR regenerates tracker data (see “Tracker data changes” below),
    - the GitHub user you represent as its assignee (`--assignee @me`).
@@ -169,6 +159,26 @@ Each kind of “why” has one home. Pick the narrowest one that fits:
 Most changes need only the first. A decision record that would merely log a choice belongs in the PR
 instead. See [the decision on decision records](decisions/2026-11-02-agents-report-less.md).
 
+## Docs sweep
+
+Docs drift between sweeps, so repeat this one when agent guidance has grown noticeably or during a
+project review. File it as one issue, with the findings as its acceptance criteria.
+
+1. **Find repeated rules.** Compare `AGENTS.md`, `docs/agent-*.md`, &
+   `docs/development-workflow.md`. Each procedural rule keeps one home, and other mentions link to
+   it.
+2. **Check references.** Look for closed issues described as tracking something, private issues no
+   reader can open, renamed headings, & moved paths.
+3. **Replace copies with links.** A number, a string, or a list copied from code goes stale. Point
+   to the constant or the file instead. For example, `docs/sync-setup.md` names `messages/en.json`
+   instead of repeating its text.
+4. **Compare docs with their tools.** A command in a doc should match what the tool expects, such as
+   `scripts/machine-doctor.ts` for browser installs.
+5. **Remove what nothing uses.** Search for inbound links to each doc. Delete a doc with none unless
+   a reader would still look for it, because Git history keeps the old text.
+6. **Verify.** Run `pnpm exec vitest run --project node tests/doc-paths.test.ts`, then the docs-only
+   checks.
+
 ## Pull request details
 
 ### Preview URL
@@ -206,6 +216,19 @@ merging:
 Mark it ready (`gh pr ready`) only once you’d merge it yourself. If that changes, convert it back
 with `gh pr ready --undo`.
 
+### Final state
+
+“Ready” means ready to merge, so cleanup happens before a PR is marked ready. The maintainer merges
+on GitHub, and an agent may get no moment to fix anything afterward.
+
+- **PR body:** before `gh pr ready`, rewrite the body so it describes the final state of the change.
+  Remove anything that only held true while the work was in progress, such as “the PR remains a
+  draft” or a request for a check that has since finished.
+- **Post-merge work:** when an issue’s acceptance criteria include anything that can happen only
+  after the merge, such as a production check, reference that issue with `Refs #N`, not `Closes #N`.
+  `Closes` would close the issue with the item still unchecked. Whoever finishes the item closes the
+  issue.
+
 ### Release versions
 
 Production builds derive their application version from Git commit metadata, which is deterministic.
@@ -216,7 +239,8 @@ version first.
 ## Evidence attachments
 
 - A PR under the visual review gate must attach its verification screenshots; attaching isn’t
-  optional. When the change alters existing UI, prefer a before & after pair of the same state.
+  optional. When the change alters existing UI, prefer a before & after pair of the same state. A PR
+  that meets a [visual exemption](agent-verification.md#visual-exemptions) attaches none.
 - Attach screenshots with GitHub CLI’s `--attach` flag. Reference each file where it belongs in the
   body.
 - Put useful prototype code in a collapsed `<details>` element.

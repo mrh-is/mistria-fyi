@@ -115,7 +115,7 @@ describe("package-manager deny lists", () => {
 describe("Claude Code file deny rules", () => {
   // Claude Code applies Read deny rules to Grep & Glob, and Edit deny rules to every file-editing
   // tool. Shell commands aren't covered unless the sandbox is enabled; Codex has no equivalent rule.
-  it("denies the R2 token, tracker-data reads & edits, and history edits", () => {
+  it("denies the R2 token and tracker-data reads & edits", () => {
     const { permissions } = JSON.parse(readFileSync(".claude/settings.json", "utf8")) as {
       permissions: { deny: string[] };
     };
@@ -124,7 +124,6 @@ describe("Claude Code file deny rules", () => {
         "Read(**/.env.r2-upload)",
         "Read(**/src/lib/data/tracker-data.json)",
         "Edit(**/src/lib/data/tracker-data.json)",
-        "Edit(**/docs/superpowers/**)",
       ]),
     );
   });

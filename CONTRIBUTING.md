@@ -7,40 +7,15 @@ in GitHub Issues.
 
 ### Issue lifecycle
 
-1. **Create an issue** — include enough context that someone unfamiliar with the codebase can act on
-   it (what, where, why, acceptance criteria).
-2. **Label it** — apply a `status:` label and a `type:` label. Add an `area:` label if the change is
-   scoped to one subsystem.
-3. **Work it** — create a branch (see [branch naming](#branch-naming)), make changes, and open a PR
-   that references the issue (`Closes #N`).
-4. **Merge** — merge to `main` with a merge commit. The repository allows only merge commits, so a
-   branch’s individual commits stay in history.
-
-### Labels
-
-Status labels track where an issue is in its lifecycle:
-
-| Label                    | Meaning                                                      |
-| ------------------------ | ------------------------------------------------------------ |
-| `status: ready`          | Triaged and ready to be picked up                            |
-| `status: in progress`    | Actively being worked on                                     |
-| `status: blocked`        | Waiting on an external dependency                            |
-| `status: needs decision` | Requires a product, UX, or architecture decision before work |
-
-Type labels describe the kind of change:
-
-| Label               | Meaning                                          |
-| ------------------- | ------------------------------------------------ |
-| `type: bug`         | Something isn't working correctly                |
-| `type: enhancement` | New feature or improvement                       |
-| `type: maintenance` | Repository, release, verification, or operations |
-
-Area labels scope the change to a subsystem:
-
-| Label            | Meaning                          |
-| ---------------- | -------------------------------- |
-| `area: pipeline` | Data extraction pipeline changes |
-| `area: ui`       | Frontend / visual changes        |
+1. **Create an issue.** Include enough context that someone unfamiliar with the codebase can act on
+   it: what, where, why, & acceptance criteria.
+2. **Label it.** Apply a `status:` label & a `type:` label, plus an `area:` label if the change is
+   scoped to one subsystem. The [label page](https://github.com/mrh-is/mistria-fyi/labels) describes
+   each one.
+3. **Work it.** Create a branch (see [branch naming](#branch-naming)), make changes, and open a PR
+   that references the issue: `Closes #N`, or `Refs #N` when work remains after the merge.
+4. **Merge.** PRs squash-merge to `main`, which is the only merge method the repository allows. The
+   PR title becomes the commit title.
 
 ### Branch naming
 
@@ -53,7 +28,8 @@ Worktrees are optional; see [Worktrees](AGENTS.md#worktrees).
 Agents are welcome. Claude Code and Codex both read [AGENTS.md](AGENTS.md) (Claude through
 `CLAUDE.md`), which links the on-demand guides in `docs/agent-*.md`. The repo also ships shared
 agent config: `.claude/settings.json` and `.codex/rules/` allow the project’s `pnpm` scripts and
-deny other package managers, and a Claude Code hook guards generated files.
+deny other package managers. A `permissions.deny` rule in `.claude/settings.json` keeps Claude
+Code’s file tools from editing the generated tracker data.
 
 Agent-authored commits use a stable product identity in a `Co-Authored-By` trailer, such as
 `Co-Authored-By: Codex <codex@openai.com>`. The “Guarded paths” check requires a label for changes
@@ -87,7 +63,7 @@ contracts, and state management rules, see [docs/app-architecture.md](docs/app-a
 
 ## Commands
 
-See the command table in the [agent command reference](docs/agent-reference.md#package-commands).
+See the command table in the [command reference](docs/agent-reference.md#package-commands).
 
 ## Security
 

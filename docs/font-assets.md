@@ -74,8 +74,7 @@ The base faces (Instrument Serif, Petrona, Fragment Mono, Satoshi, IBM Plex Mono
 IBM Plex Mono also covers Cyrillic. Japanese, Chinese, Korean, and Russian pages swap the five
 `--font-*` roles through `html:lang()` rules in `src/app.css`, and each of those locales links a
 generated stylesheet, `src/lib/fonts/locale-fonts-<locale>.css`, from the root layout. The brand
-mark uses `--font-brand` (Instrument Serif) in every locale. The picks and the reasoning are in
-issue #269 (private beta).
+mark uses `--font-brand` (Instrument Serif) in every locale.
 
 The stylesheets and the woff2 chunks they reference are produced by `scripts/locale-fonts`:
 

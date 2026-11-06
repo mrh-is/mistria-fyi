@@ -10,38 +10,22 @@ session limits) belong in each contributor’s user config.
 
 ## Focused verification
 
-- Run the test that covers your change: `pnpm exec vitest run path/to/file.test.ts`. For plain-Node
-  tests under `eslint-rules/`, `scripts/`, & `tests/`, also select `--project node`, or
-  `--project node-isolated` for `*.isolated.test.ts`. For example:
-  `pnpm exec vitest run --project node scripts/lib/pinned-node.test.ts`. A path alone selects the
-  right tests, but can still start the app projects’ Cloudflare proxy & workerd before filtering.
-  Use `--project pipeline` for asset-independent `pipeline/` tests. App tests, including
-  `*.client.test.ts` & `*.cold.test.ts`, can use the path-only command.
+- Run the test that covers your change, not a full suite:
+  `pnpm exec vitest run path/to/file.test.ts`.
+  [Focused checks](docs/agent-verification.md#focused-checks) has the project flags that keep this
+  fast.
 - Add or update tests when behavior changes, ideally before the implementation.
-- Run focused tests during development. CI runs the complete matrix on each PR, so don’t default to
-  `pnpm run test`, coverage, builds, browser matrices, or `pnpm run verify`.
+- CI runs the complete matrix on each PR, so don’t default to `pnpm run test`, coverage, builds,
+  browser matrices, or `pnpm run verify`. Run the full local matrix only for the exceptions in
+  [Full verification](docs/agent-verification.md#full-verification).
 - A hook formats files you edit with the file tools, but not shell edits. If a hook fails, fix or
   report it. Run `pnpm run lint:fix` directly before committing; it must show zero errors &
   warnings.
 - After editing a TypeScript or Svelte contract, run `pnpm run check`.
 - A docs-only change needs only `pnpm run lint:fix && pnpm run lint`: no tests or build.
 - Hooks are conveniences, not verification evidence. Run required commands directly & confirm a zero
-  exit status. When trimming output, keep the exit status: a bare `command | tail` reports `tail`’s.
-- Read [agent-verification.md](docs/agent-verification.md) before verification work. It covers the
-  visual checklist, the review procedure, what CI runs, the full-matrix flags, & how to retry
-  failures.
-- Run full local verification once, when the change is ready to commit, and only in these cases:
-  - The change touches the pipeline parser, evaluator, extractors, generated tracker data, or shared
-    tracker contract.
-  - The change touches a high-risk surface (see “Review gates”).
-  - A CI failure doesn’t reproduce with focused tests.
-  - The changed paths have checks that CI doesn’t run.
-
-  Pipeline & shared-contract changes also need the asset tests & a real pipeline run.
-
-- If the full matrix fails, fix the failure and rerun only the failed step. Then rerun the matrix
-  once. After it passes, rerun it only if you change code again.
-- To inspect a failed CI run, run `gh run view <id> --log-failed` once.
+  exit status ([Exit status](docs/agent-verification.md#exit-status)).
+- Read [agent-verification.md](docs/agent-verification.md) before verification work.
 
 ## Task scope
 
@@ -66,9 +50,8 @@ session limits) belong in each contributor’s user config.
 - Name each issue you filed, updated, or commented on in your final report, including friction-log
   entries.
 
-- Record a dependency on another issue as a “blocked by” relationship, not a label:
-  `gh issue edit <number> --add-blocked-by <other>`. Keep `status: blocked` for blockers outside the
-  tracker, such as time, hardware, or a third party, and name the blocker in a comment.
+- Record a dependency on another issue as a “blocked by” relationship, not a label; see
+  [Blockers](docs/agent-workflow.md#blockers).
 - When you file or triage a small, fully specified task, add the `delegate: small agent` label so
   the owner can hand it to Antigravity or Copilot. A self-contained piece of a larger issue
   qualifies as a sub-issue. Read [agent-workflow.md](docs/agent-workflow.md#small-agent-tasks)
@@ -165,8 +148,6 @@ session limits) belong in each contributor’s user config.
 - Sync uses a strict protocol version.
 - Category pages compose layouts. Put shared or stateful concerns in focused components. Split a
   complex component by logical concern, even with one caller, so it’s easier to reason about.
-- `docs/superpowers/` is read-only history, hidden from ripgrep by `.ignore`. Read it only when a
-  task names a file; update the current `docs/*.md` for later changes.
 - Before implementation, read [agent-reference.md](docs/agent-reference.md#code-conventions), which
   covers naming, imports, path handling, Svelte, lint, formatting, & colocated tests.
 - Read these guides when your work touches their area:
@@ -181,37 +162,16 @@ session limits) belong in each contributor’s user config.
 
 ## Review gates
 
-- A change to `.svelte` files, CSS, layout, or routes needs visual verification before it’s done,
-  unless it meets a [visual exemption](docs/agent-verification.md#visual-exemptions). Check:
-  - each changed route,
-  - desktop (~1280) & mobile (~390) widths,
-  - each changed interaction & one way to reverse it,
-  - light & dark modes,
-  - the relevant empty, loaded, error, & disabled states,
-  - console errors.
-- Take at most 10 screenshots per PR. Compare against a design reference if one exists. List
-  anything you didn’t check under “Not verified” in the PR description.
-- Attach the verification screenshots to the PR body: at least one per changed route or component,
-  at desktop & mobile widths, showing the changed state. A visual PR with no attached screenshots
-  isn’t ready for review.
-- Docs-only, pipeline-only, & test-only changes don’t need visual checks. Pure engine changes don’t
-  either, unless they change rendered output. Accessibility-only changes, such as a checkbox’s
-  accessible label, don’t need visual checks or screenshots when visible content, layout, focus
-  behavior, & interactions stay unchanged. Verify the accessibility behavior with focused tests. The
-  complete checklist is in agent-verification.md.
-- Most PRs need a fresh-context self-review, such as a subagent that didn’t write the change reading
-  its diff cold.
-- A request to review is a request to post. Post the review on GitHub (`gh pr review --comment`, or
-  an issue comment when there’s no PR), even when it has no findings. Don’t leave it only in the
-  session. The format is under “Review records” in agent-verification.md.
-- High-risk surfaces need full local verification & an especially careful review. They are:
-  - engine or state-machine logic,
-  - pipeline extractors or schemas,
-  - persistence, or the save, import, & export flows,
-  - auth, abuse, or security boundaries,
-  - changes across five or more files with cross-cutting concerns.
-- Review the merge-base diff (the branch’s changes since it left its base branch) in one pass.
-  Re-review once, and only after substantial fixes for high-severity findings.
+- A change to `.svelte` files, CSS, layout, or routes needs visual verification & attached
+  screenshots before it’s done. Follow [Visual checks](docs/agent-verification.md#visual-checks).
+  Don’t attach screenshots to a PR that meets a
+  [visual exemption](docs/agent-verification.md#visual-exemptions).
+- Most PRs need a fresh-context self-review; see
+  [Review selection](docs/agent-verification.md#review-selection).
+- [High-risk surfaces](docs/agent-verification.md#high-risk-surfaces) need full local verification &
+  an especially careful review.
+- A request to review is a request to post; see
+  [Review records](docs/agent-verification.md#review-records).
 - A review doesn’t authorize fixes. Address findings only when asked.
 
 ## Delivery gates
@@ -221,14 +181,16 @@ session limits) belong in each contributor’s user config.
   such as `Co-Authored-By: Codex <codex@openai.com>`.
 - Every agent-authored issue body & substantive GitHub comment ends with `Agent: <agent-id>`.
 - Commit, push, & open a PR. Its body includes `Closes #N` & a preview URL from the deployment
-  integration or the PR template when a preview is available.
+  integration or the PR template when a preview is available. Use `Refs #N` instead when the issue
+  needs work after the merge.
 - Record each decision in the narrowest home that fits, usually the PR’s “Decisions” section. Add a
   record to `docs/decisions/` only when a newcomer would propose the rejected alternative; see
   [Recording decisions](docs/agent-workflow.md#recording-decisions).
 - Pass multiline GitHub bodies with `--body-file`, and re-read the published result.
 - An open PR’s state is your merge recommendation. Keep it a draft while any manual step, question,
   gap, or review remains. Mark it ready only when you would merge it yourself, and return it to
-  draft if that changes.
+  draft if that changes. Before marking it ready, make its body describe the final state; see
+  [Final state](docs/agent-workflow.md#final-state).
 - Watch CI & fix failures on the branch. Don’t merge around failing CI. If no “CI” run starts a few
   minutes after you open the PR, follow the workflow’s empty-commit recovery.
 - Never change `package.json`’s version or create Git tags without an approved release. Production
@@ -236,13 +198,8 @@ session limits) belong in each contributor’s user config.
 
 ## Tooling failures
 
-Remote CI setup has one retry exception: an agent may run `gh run rerun <id> --failed` once when the
-logs identify a transient network or service problem, such as a registry download timeout. Merely
-failing before tests is insufficient. Missing credentials, incompatible runtimes, & broken
-configuration remain stop-&-report conditions. Test, lint, type-check, & build failures never
-qualify. Record the original failure, rerun link, & outcome on the PR. If the retry fails, stop
-dependent work & follow the existing reporting procedure. This exception does not apply to local
-tooling failures or authorize installation, authentication, or runtime changes.
+Remote CI setup has one retry exception; see
+[Remote setup retry](docs/agent-verification.md#remote-setup-retry).
 
 Missing or stale project dependencies are routine setup. Agents may run
 `pnpm install --frozen-lockfile` without further approval, using the configured external store &
@@ -271,9 +228,9 @@ other way.
   a workaround.
 - **Missing Playwright browsers are a standing exception.** When a required browser check needs a
   browser binary that’s missing, install it with the workspace’s Playwright, then run the check. For
-  example: `pnpm exec playwright install chromium --only-shell`. Use the external browser cache,
-  request sandbox access if needed, & report the install. This exception doesn’t cover dependency
-  changes, system packages, or a different browser or executable.
+  example: `pnpm exec playwright install chromium`. Use the external browser cache, request sandbox
+  access if needed, & report the install. This exception doesn’t cover dependency changes, system
+  packages, or a different browser or executable.
 - **Repository bugs count too.** A documented command that fails, or a doc that’s out of date,
   blocks you the same way. While you report it, search the open issues for it. Add your evidence to
   an existing issue, or file one with the symptom & a guess at the cause. The user decides whether

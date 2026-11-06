@@ -61803,7 +61803,13 @@
         "itemId": "wild_berries",
         "villager": "eiland",
         "rewardRecipeId": "berries_and_cream",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_more_wildberries": {
         "itemId": "wild_berries",
@@ -61814,45 +61820,147 @@
           "type": "skillLevel",
           "level": 12,
           "skillId": "cooking"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "skillLevel",
+              "level": 12,
+              "skillId": "cooking"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
         }
       },
       "request_for_berries_gold": {
         "itemId": "wild_berries",
         "villager": "errol",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_fennel": {
         "itemId": "fennel",
         "villager": "celine",
         "rewardRecipeId": "spring_salad",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "itemAcquired",
+              "itemId": "fennel"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
+        }
       },
       "request_for_snowdrop_anemone": {
         "itemId": "snowdrop_anemone",
         "villager": "elsie",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 4
+              }
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
+        }
       },
       "request_for_lemon": {
         "itemId": "lemon",
         "villager": "adeline",
         "rewardRecipeId": "cup_of_tea",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "itemAcquired",
+              "itemId": "lemon"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
+        }
       },
       "request_for_blueberries": {
         "itemId": "blueberry",
         "villager": "reina",
         "rewardRecipeId": "blueberry_jam",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_gardening_supplies": {
         "itemId": "sod",
         "villager": "celine",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "itemAcquired",
+              "itemId": "pick_axe_worn"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
+        }
       },
       "request_for_wild_leek": {
         "itemId": "wild_leek",
         "villager": "reina",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_materials": {
         "itemId": "basic_wood",
@@ -61867,12 +61975,20 @@
       "request_for_clay": {
         "itemId": "clay",
         "villager": "nora",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "pick_axe_worn"
+        }
       },
       "request_for_hay": {
         "itemId": "hay",
         "villager": "hayden",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "hay"
+        }
       },
       "request_for_strawberries": {
         "itemId": "strawberry",
@@ -61883,18 +61999,55 @@
           "type": "skillLevel",
           "level": 20,
           "skillId": "cooking"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "skillLevel",
+              "level": 20,
+              "skillId": "cooking"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
         }
       },
       "request_for_turnip": {
         "itemId": "turnip",
         "villager": "adeline",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_strawberries_cream": {
         "itemId": "strawberry",
         "villager": "eiland",
         "rewardRecipeId": "strawberries_and_cream",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "itemAcquired",
+              "itemId": "strawberry"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
+        }
       },
       "request_for_copper": {
         "itemId": "ore_copper",
@@ -61903,42 +62056,88 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "cop_some_ore"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "itemAcquired",
+              "itemId": "ore_copper"
+            },
+            {
+              "type": "quest",
+              "questId": "cop_some_ore",
+              "state": "completed"
+            }
+          ]
         }
       },
       "request_for_copper_beetle": {
         "itemId": "copper_beetle",
         "villager": "luc",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "copper_beetle"
+        }
       },
       "request_for_a_rock": {
         "itemId": "ore_stone",
         "villager": "olric",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "ore_stone"
+        }
       },
       "request_for_a_red_toadstool": {
         "itemId": "red_toadstool",
         "villager": "juniper",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "red_toadstool"
+        }
       },
       "request_for_bait": {
         "itemId": "worm",
         "villager": "terithia",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "worm"
+        }
       },
       "request_for_pink_scallop_shell": {
         "itemId": "pink_scallop_shell",
         "villager": "maple",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_morel_mushroom": {
         "itemId": "morel_mushroom",
         "villager": "valen",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_shards": {
         "itemId": "shards",
         "villager": "eiland",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "pick_axe_worn"
+        }
       },
       "request_for_ruby": {
         "itemId": "ore_ruby",
@@ -61947,6 +62146,20 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "unlocking_the_mines_pt_2",
+              "state": "available"
+            },
+            {
+              "type": "itemAcquired",
+              "itemId": "pick_axe_worn"
+            }
+          ]
         }
       },
       "request_for_catfish": {
@@ -61958,18 +62171,55 @@
           "type": "skillLevel",
           "level": 2,
           "skillId": "fishing"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "skillLevel",
+              "level": 2,
+              "skillId": "fishing"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
         }
       },
       "request_for_salmon": {
         "itemId": "salmon",
         "villager": "josephine",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "itemAcquired",
+              "itemId": "fishing_rod_worn"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
+        }
       },
       "request_for_trout": {
         "itemId": "trout",
         "villager": "terithia",
         "rewardRecipeId": "smoked_trout_soup",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_baked_potato": {
         "itemId": "baked_potato",
@@ -61980,79 +62230,169 @@
           "type": "skillLevel",
           "level": 18,
           "skillId": "cooking"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "skillLevel",
+              "level": 18,
+              "skillId": "cooking"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
         }
       },
       "request_for_wood_fence": {
         "itemId": "starter_wood_fence",
         "villager": "hayden",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "starter_wood_fence"
+        }
       },
       "request_for_caterpillar": {
         "itemId": "caterpillar",
         "villager": "hemlock",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "net_worn"
+        }
       },
       "request_for_tomato": {
         "itemId": "tomato",
         "villager": "holt",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_basil_thyme": {
         "itemId": "basil",
         "villager": "valen",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_coconuts": {
         "itemId": "coconut",
         "villager": "landen",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_cranberry_orange": {
         "itemId": "cranberry",
         "villager": "ryis",
         "rewardRecipeId": "cranberry_orange_scone",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_garlic": {
         "itemId": "garlic",
         "villager": "reina",
         "rewardRecipeId": "garlic_bread",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_horseradish_salmon": {
         "itemId": "salmon",
         "villager": "terithia",
         "rewardRecipeId": "horseradish_salmon",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_blackberries": {
         "itemId": "blackberry",
         "villager": "elsie",
         "rewardRecipeId": "blackberry_jam",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_chestnuts": {
         "itemId": "chestnut",
         "villager": "dell",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_rose_hip": {
         "itemId": "rose_hip",
         "villager": "valen",
         "rewardRecipeId": "rosehip_jam",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_eel": {
         "itemId": "freshwater_eel",
         "villager": "march",
         "rewardRecipeId": "grilled_eel_rice_bowl",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_pineshrooms": {
         "itemId": "pineshroom",
         "villager": "adeline",
         "rewardRecipeId": "pineshroom_toast",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_monster_powder": {
         "itemId": "monster_powder",
@@ -62061,6 +62401,20 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "unlocking_the_mines_pt_2",
+              "state": "available"
+            },
+            {
+              "type": "itemAcquired",
+              "itemId": "monster_powder"
+            }
+          ]
         }
       },
       "request_for_monster_shell": {
@@ -62070,6 +62424,20 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "unlocking_the_mines_pt_2",
+              "state": "available"
+            },
+            {
+              "type": "itemAcquired",
+              "itemId": "monster_shell"
+            }
+          ]
         }
       },
       "request_for_shadow_flower": {
@@ -62079,6 +62447,11 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
         }
       },
       "request_for_a_miners_pickaxe": {
@@ -62088,6 +62461,11 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
         }
       },
       "request_for_glass": {
@@ -62097,6 +62475,11 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
         }
       },
       "request_for_iron": {
@@ -62106,6 +62489,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_water_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_water_tablet",
+          "state": "completed"
         }
       },
       "request_for_coral": {
@@ -62115,6 +62503,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_water_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_water_tablet",
+          "state": "completed"
         }
       },
       "request_for_sapphire": {
@@ -62124,6 +62517,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_water_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_water_tablet",
+          "state": "completed"
         }
       },
       "request_for_underseaweed": {
@@ -62133,6 +62531,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_water_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_water_tablet",
+          "state": "completed"
         }
       },
       "request_for_tidestone": {
@@ -62142,6 +62545,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_water_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_water_tablet",
+          "state": "completed"
         }
       },
       "request_for_crystal": {
@@ -62151,6 +62559,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_earth_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_earth_tablet",
+          "state": "completed"
         }
       },
       "request_for_emerald": {
@@ -62160,6 +62573,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_earth_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_earth_tablet",
+          "state": "completed"
         }
       },
       "request_for_silver_ore": {
@@ -62169,6 +62587,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_earth_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_earth_tablet",
+          "state": "completed"
         }
       },
       "request_for_round_rock": {
@@ -62178,6 +62601,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_earth_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_earth_tablet",
+          "state": "completed"
         }
       },
       "request_for_deep_earthworm": {
@@ -62187,79 +62615,164 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_earth_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_earth_tablet",
+          "state": "completed"
         }
       },
       "request_for_striped_bass": {
         "itemId": "striped_bass",
         "villager": "eiland",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_mullet": {
         "itemId": "mullet",
         "villager": "maple",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_rosemary": {
         "itemId": "rosemary",
         "villager": "reina",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_heather": {
         "itemId": "heather",
         "villager": "adeline",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_fog_orchid": {
         "itemId": "fog_orchid",
         "villager": "juniper",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_tilapia": {
         "itemId": "tilapia",
         "villager": "errol",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_frog": {
         "itemId": "frog",
         "villager": "dell",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_ice": {
         "itemId": "ice_block",
         "villager": "josephine",
         "rewardRecipeId": "wintergreen_ice_cream",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_burdock_root": {
         "itemId": "burdock_root",
         "villager": "nora",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_glowberry": {
         "itemId": "glowberry",
         "villager": "ryis",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_egg": {
         "itemId": "egg",
         "villager": "eiland",
         "rewardRecipeId": "hard_boiled_egg",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "gamePredicate",
+          "predicate": "has_coop",
+          "value": true
+        }
       },
       "request_for_milk": {
         "itemId": "cow_milk",
         "villager": "reina",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "gamePredicate",
+          "predicate": "has_barn",
+          "value": true
+        }
       },
       "request_for_rooster_feather": {
         "itemId": "feather",
         "villager": "josephine",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "gamePredicate",
+          "predicate": "has_coop",
+          "value": true
+        }
       },
       "request_for_bull_horn": {
         "itemId": "bull_horn",
         "villager": "ryis",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "gamePredicate",
+          "predicate": "has_barn",
+          "value": true
+        }
       },
       "request_for_horse_hair": {
         "itemId": "horse_hair",
@@ -62268,6 +62781,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_haydens_barn"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "repair_haydens_barn",
+          "state": "completed"
         }
       },
       "request_for_duck_egg": {
@@ -62277,6 +62795,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_haydens_barn"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "repair_haydens_barn",
+          "state": "completed"
         }
       },
       "request_for_sheep_wool": {
@@ -62286,6 +62809,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_haydens_barn"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "repair_haydens_barn",
+          "state": "completed"
         }
       },
       "request_for_rabbit_wool": {
@@ -62295,6 +62823,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_haydens_barn"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "repair_haydens_barn",
+          "state": "completed"
         }
       },
       "request_for_bristles": {
@@ -62304,6 +62837,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_haydens_barn"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "repair_haydens_barn",
+          "state": "completed"
         }
       },
       "request_for_copper_ingot": {
@@ -62313,6 +62851,11 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
         }
       },
       "request_for_copper_shovel": {
@@ -62322,6 +62865,11 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
         }
       },
       "request_for_iron_ingot": {
@@ -62331,6 +62879,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_water_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_water_tablet",
+          "state": "completed"
         }
       },
       "request_for_iron_armor": {
@@ -62340,6 +62893,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_water_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_water_tablet",
+          "state": "completed"
         }
       },
       "request_for_silver_ingot": {
@@ -62349,6 +62907,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_earth_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_earth_tablet",
+          "state": "completed"
         }
       },
       "request_for_silver_sword": {
@@ -62358,56 +62921,115 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_earth_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_earth_tablet",
+          "state": "completed"
         }
       },
       "request_for_pond_skater": {
         "itemId": "pond_skater",
         "villager": "luc",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_trail_mix": {
         "itemId": "trail_mix",
         "villager": "josephine",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_tea": {
         "itemId": "tea",
         "villager": "valen",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_onion": {
         "itemId": "onion",
         "villager": "nora",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_beet": {
         "itemId": "beet",
         "villager": "holt",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_wild_berry": {
         "itemId": "wild_berries",
         "villager": "elsie",
         "rewardRecipeId": "wildberry_scone",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_orange": {
         "itemId": "orange",
         "villager": "elsie",
         "rewardRecipeId": "marmalade",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_roasted_chestnuts": {
         "itemId": "chestnut",
         "villager": "hemlock",
         "rewardRecipeId": "roasted_chestnuts",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_broccoli": {
         "itemId": "broccoli",
         "villager": "reina",
         "rewardRecipeId": "broccoli_salad",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_earthshroom": {
         "itemId": "earthshroom",
@@ -62417,61 +63039,120 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_earth_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_earth_tablet",
+          "state": "completed"
         }
       },
       "request_for_perch": {
         "itemId": "perch",
         "villager": "errol",
         "rewardRecipeId": "perch_risotto",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_moon_fruit": {
         "itemId": "moon_fruit",
         "villager": "eiland",
         "rewardRecipeId": "caramelized_moon_fruit",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_daikon": {
         "itemId": "daikon_radish",
         "villager": "vera",
         "rewardRecipeId": "winter_stew",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_water_chestnuts": {
         "itemId": "water_chestnut",
         "villager": "juniper",
         "rewardRecipeId": "water_chestnut_fritters",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_clam": {
         "itemId": "clam",
         "villager": "errol",
         "rewardRecipeId": "clam_chowder",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_sesame": {
         "itemId": "sesame",
         "villager": "vera",
         "rewardRecipeId": "sesame_broccoli",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_cod": {
         "itemId": "cod",
         "villager": "reina",
         "rewardRecipeId": "cod_with_thyme",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_moon": {
         "itemId": "moon_fruit",
         "villager": "juniper",
         "rewardRecipeId": "moon_fruit_cake",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_seaweed": {
         "itemId": "seaweed",
         "villager": "valen",
         "rewardRecipeId": "seaweed_salad",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_sap": {
         "itemId": "sap",
@@ -62480,6 +63161,11 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
         }
       },
       "request_for_monster_fang": {
@@ -62498,6 +63184,21 @@
               "questId": "unlocking_the_mines_pt_2"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "quest",
+              "questId": "unlocking_the_mines_pt_2",
+              "state": "available"
+            }
+          ]
         }
       },
       "request_for_monster_core": {
@@ -62507,6 +63208,11 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
         }
       },
       "request_for_monster_horn": {
@@ -62516,6 +63222,11 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
         }
       },
       "request_for_crystal_berries": {
@@ -62525,6 +63236,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_earth_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_earth_tablet",
+          "state": "completed"
         }
       },
       "request_for_ultimate_hay": {
@@ -62534,6 +63250,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_mill"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "repair_the_mill",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "has_any_animal",
+              "value": true
+            }
+          ]
         }
       },
       "request_for_ultimate_small_animal_feed": {
@@ -62543,6 +63274,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_mill"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "repair_the_mill",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "has_any_animal",
+              "value": true
+            }
+          ]
         }
       },
       "request_for_butter": {
@@ -62552,6 +63298,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_mill"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "repair_the_mill",
+          "state": "completed"
         }
       },
       "request_for_golden_butter": {
@@ -62561,6 +63312,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_mill"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "repair_the_mill",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "has_barn",
+              "value": true
+            }
+          ]
         }
       },
       "request_for_cheese": {
@@ -62570,6 +63336,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_mill"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "repair_the_mill",
+          "state": "completed"
         }
       },
       "request_for_pomegranate_juice": {
@@ -62579,6 +63350,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "greet_the_vendors",
+          "state": "completed"
         }
       },
       "request_for_noodles": {
@@ -62591,6 +63367,11 @@
         "villager": "terithia",
         "sources": [],
         "visibility": {
+          "type": "skillLevel",
+          "level": 2,
+          "skillId": "fishing"
+        },
+        "startCondition": {
           "type": "skillLevel",
           "level": 2,
           "skillId": "fishing"
@@ -62613,6 +63394,21 @@
               "skillId": "cooking"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "skillLevel",
+              "level": 14,
+              "skillId": "cooking"
+            }
+          ]
         }
       },
       "request_for_pudding": {
@@ -62620,6 +63416,11 @@
         "villager": "eiland",
         "sources": [],
         "visibility": {
+          "type": "skillLevel",
+          "level": 10,
+          "skillId": "cooking"
+        },
+        "startCondition": {
           "type": "skillLevel",
           "level": 10,
           "skillId": "cooking"
@@ -62632,6 +63433,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "greet_the_vendors",
+          "state": "completed"
         }
       },
       "request_for_bird_house": {
@@ -62642,6 +63448,11 @@
           "type": "skillLevel",
           "level": 4,
           "skillId": "woodcrafting"
+        },
+        "startCondition": {
+          "type": "skillLevel",
+          "level": 4,
+          "skillId": "woodcrafting"
         }
       },
       "request_for_scarecrow": {
@@ -62649,6 +63460,11 @@
         "villager": "errol",
         "sources": [],
         "visibility": {
+          "type": "skillLevel",
+          "level": 4,
+          "skillId": "woodcrafting"
+        },
+        "startCondition": {
           "type": "skillLevel",
           "level": 4,
           "skillId": "woodcrafting"
@@ -62667,6 +63483,11 @@
           "type": "skillLevel",
           "level": 4,
           "skillId": "woodcrafting"
+        },
+        "startCondition": {
+          "type": "skillLevel",
+          "level": 4,
+          "skillId": "woodcrafting"
         }
       },
       "request_for_smallmouth_bass": {
@@ -62674,6 +63495,11 @@
         "villager": "ryis",
         "sources": [],
         "visibility": {
+          "type": "skillLevel",
+          "level": 2,
+          "skillId": "fishing"
+        },
+        "startCondition": {
           "type": "skillLevel",
           "level": 2,
           "skillId": "fishing"
@@ -62687,6 +63513,11 @@
           "type": "skillLevel",
           "level": 2,
           "skillId": "fishing"
+        },
+        "startCondition": {
+          "type": "skillLevel",
+          "level": 2,
+          "skillId": "fishing"
         }
       },
       "request_for_goby": {
@@ -62694,6 +63525,11 @@
         "villager": "holt",
         "sources": [],
         "visibility": {
+          "type": "skillLevel",
+          "level": 2,
+          "skillId": "fishing"
+        },
+        "startCondition": {
           "type": "skillLevel",
           "level": 2,
           "skillId": "fishing"
@@ -62707,7 +63543,11 @@
       "request_for_snail": {
         "itemId": "snail",
         "villager": "dell",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "itemAcquired",
+          "itemId": "net_worn"
+        }
       },
       "request_for_walnut": {
         "itemId": "walnut",
@@ -62716,6 +63556,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_spirit_mushroom_tea": {
@@ -62725,6 +63570,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_dragon_horn_beetle": {
@@ -62734,6 +63584,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_singing_katydid": {
@@ -62743,6 +63598,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_temple_flower": {
@@ -62752,6 +63612,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_breath_of_flame": {
@@ -62761,6 +63626,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_diamond": {
@@ -62770,6 +63640,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_lake_trout": {
@@ -62779,6 +63654,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_bell_berry_bakewell": {
@@ -62788,6 +63668,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_thorn_vine": {
@@ -62797,6 +63682,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_obsidian": {
@@ -62806,6 +63696,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_gold_ore": {
@@ -62815,6 +63710,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_armored_bass": {
@@ -62824,67 +63724,162 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_fire_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_fire_seal",
+          "state": "completed"
         }
       },
       "request_for_chili_pepper": {
         "itemId": "chili_pepper",
         "villager": "josephine",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_pear": {
         "itemId": "pear",
         "villager": "errol",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_sunflower": {
         "itemId": "sunflower",
         "villager": "maple",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_coconuts_2": {
         "itemId": "coconut",
         "villager": "darcy",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_wild_grapes": {
         "itemId": "wild_grapes",
         "villager": "hemlock",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_watermelon": {
         "itemId": "watermelon",
         "villager": "merri",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_corn": {
         "itemId": "corn",
         "villager": "nora",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_apple": {
         "itemId": "apple",
         "villager": "balor",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_rice": {
         "itemId": "rice",
         "villager": "hemlock",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "fall"
+              ]
+            },
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 1,
+                "year": 2
+              }
+            }
+          ]
+        }
       },
       "request_for_acorn": {
         "itemId": "acorn",
         "villager": "dell",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_sweet_potato": {
         "itemId": "sweet_potato",
         "villager": "nora",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_cabbage": {
         "itemId": "cabbage",
         "villager": "holt",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "spring"
+          ]
+        }
       },
       "request_for_fiddlehead": {
         "itemId": "fiddlehead",
@@ -62893,12 +63888,65 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            },
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 1,
+                "year": 2
+              }
+            },
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            }
+          ]
         }
       },
       "request_for_carrot": {
         "itemId": "carrot",
         "villager": "juniper",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            },
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 1,
+                "year": 2
+              }
+            }
+          ]
+        }
       },
       "request_for_middlemist": {
         "itemId": "middlemist",
@@ -62907,17 +63955,76 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            },
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 1,
+                "year": 2
+              }
+            },
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            }
+          ]
         }
       },
       "request_for_peas": {
         "itemId": "peas",
         "villager": "hayden",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            },
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 1,
+                "year": 2
+              }
+            }
+          ]
+        }
       },
       "request_for_cucumbers": {
         "itemId": "cucumber",
         "villager": "valen",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_peaches": {
         "itemId": "peach",
@@ -62926,22 +64033,56 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "summer"
+              ]
+            },
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            }
+          ]
         }
       },
       "request_for_dill": {
         "itemId": "dill",
         "villager": "josephine",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_night_queen": {
         "itemId": "night_queen",
         "villager": "juniper",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_roses": {
         "itemId": "rose",
         "villager": "elsie",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_salted_watermelon": {
         "itemId": "salted_watermelon",
@@ -62950,37 +64091,107 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "summer"
+              ]
+            },
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            }
+          ]
         }
       },
       "request_for_grilled_corn": {
         "itemId": "grilled_corn",
         "villager": "nora",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_tomato_soup": {
         "itemId": "tomato_soup",
         "villager": "landen",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "summer"
+          ]
+        }
       },
       "request_for_sugar_cane": {
         "itemId": "sugar_cane",
         "villager": "holt",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "summer"
+              ]
+            },
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 1,
+                "year": 2
+              }
+            }
+          ]
+        }
       },
       "request_for_pumpkin": {
         "itemId": "pumpkin",
         "villager": "eiland",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_cauliflower": {
         "itemId": "cauliflower",
         "villager": "holt",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_crocus": {
         "itemId": "crocus",
         "villager": "dell",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_holly": {
         "itemId": "holly",
@@ -62989,6 +64200,22 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "winter"
+              ]
+            },
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            }
+          ]
         }
       },
       "request_for_pomegranate": {
@@ -62998,12 +64225,34 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "winter"
+              ]
+            },
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            }
+          ]
         }
       },
       "request_for_oyster_mushrooms": {
         "itemId": "oyster_mushroom",
         "villager": "olric",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "winter"
+          ]
+        }
       },
       "request_for_red_wine": {
         "itemId": "red_wine",
@@ -63012,6 +64261,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "upgrade_the_saturday_market"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "upgrade_the_saturday_market",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_spring_galette": {
@@ -63021,6 +64285,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "upgrade_the_saturday_market"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "upgrade_the_saturday_market",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_beet_soup": {
@@ -63030,6 +64309,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "beet_soup_challenge"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "beet_soup_challenge",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_gold_ingots": {
@@ -63039,6 +64333,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "upgrade_the_saturday_market"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "upgrade_the_saturday_market",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_emeralds": {
@@ -63048,6 +64357,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "upgrade_the_saturday_market"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "upgrade_the_saturday_market",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_golden_cookies": {
@@ -63057,6 +64381,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "upgrade_the_saturday_market"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "upgrade_the_saturday_market",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_premium_honey": {
@@ -63066,6 +64405,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "apiaries_and_terrariums"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "apiaries_and_terrariums",
+          "state": "completed"
         }
       },
       "request_for_deluxe_honey": {
@@ -63075,6 +64419,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "apiaries_and_terrariums"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "apiaries_and_terrariums",
+          "state": "completed"
         }
       },
       "request_for_legendary_honey": {
@@ -63084,6 +64433,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "apiaries_and_terrariums"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "apiaries_and_terrariums",
+          "state": "completed"
         }
       },
       "request_for_common_pheromone": {
@@ -63093,6 +64447,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "apiaries_and_terrariums"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "apiaries_and_terrariums",
+          "state": "completed"
         }
       },
       "request_for_uncommon_pheromone": {
@@ -63102,6 +64461,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "request_for_common_pheromone"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "request_for_common_pheromone",
+          "state": "completed"
         }
       },
       "request_for_rare_pheromone": {
@@ -63111,6 +64475,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "request_for_uncommon_pheromone"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "request_for_uncommon_pheromone",
+          "state": "completed"
         }
       },
       "request_for_common_bait": {
@@ -63120,6 +64489,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "apiaries_and_terrariums"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "apiaries_and_terrariums",
+          "state": "completed"
         }
       },
       "request_for_uncommon_bait": {
@@ -63129,6 +64503,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "request_for_common_bait"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "request_for_common_bait",
+          "state": "completed"
         }
       },
       "request_for_rare_bait": {
@@ -63138,6 +64517,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "request_for_uncommon_bait"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "request_for_uncommon_bait",
+          "state": "completed"
         }
       },
       "request_for_mistril_ore": {
@@ -63147,6 +64531,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_ruins_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_ruins_seal",
+          "state": "completed"
         }
       },
       "request_for_mistril_ingot": {
@@ -63156,6 +64545,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_ruins_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_ruins_seal",
+          "state": "completed"
         }
       },
       "request_for_pink_diamond": {
@@ -63165,6 +64559,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_ruins_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_ruins_seal",
+          "state": "completed"
         }
       },
       "request_for_corrupted_mistril_sword": {
@@ -63174,6 +64573,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_ruins_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_ruins_seal",
+          "state": "completed"
         }
       },
       "request_for_coelacanth": {
@@ -63183,6 +64587,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_ruins_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_ruins_seal",
+          "state": "completed"
         }
       },
       "request_for_dragon_forged_bracelet": {
@@ -63192,6 +64601,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_ruins_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_ruins_seal",
+          "state": "completed"
         }
       },
       "request_for_spell_fruit": {
@@ -63201,6 +64615,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_ruins_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_ruins_seal",
+          "state": "completed"
         }
       },
       "request_for_voidite": {
@@ -63210,6 +64629,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_ruins_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_ruins_seal",
+          "state": "completed"
         }
       },
       "request_for_written_root": {
@@ -63228,6 +64652,21 @@
               "questId": "upgrade_the_saturday_market"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "breaking_the_ruins_seal",
+              "state": "completed"
+            },
+            {
+              "type": "quest",
+              "questId": "upgrade_the_saturday_market",
+              "state": "completed"
+            }
+          ]
         }
       },
       "request_for_wood_2": {
@@ -63237,6 +64676,22 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "fall"
+              ]
+            }
+          ]
         }
       },
       "request_for_hard_wood": {
@@ -63246,6 +64701,22 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "fall"
+              ]
+            }
+          ]
         }
       },
       "request_for_copper_net": {
@@ -63255,6 +64726,11 @@
         "visibility": {
           "type": "questAvailable",
           "questId": "unlocking_the_mines_pt_2"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
         }
       },
       "request_for_iron_watering_can": {
@@ -63264,6 +64740,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_water_tablet"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "the_water_tablet",
+          "state": "completed"
         }
       },
       "request_for_silver_axe": {
@@ -63278,6 +64759,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_mont_blanc": {
@@ -63287,6 +64773,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_dragon_forged_core": {
@@ -63296,6 +64787,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_fire_wasp": {
@@ -63305,6 +64801,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_latte": {
@@ -63314,6 +64815,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_iron_shovel": {
@@ -63323,6 +64829,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_bomb": {
@@ -63332,6 +64843,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_monster_mash": {
@@ -63341,6 +64857,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_fried_rice": {
@@ -63350,6 +64871,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_sushi_platter": {
@@ -63359,6 +64885,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_pumpkin_pie": {
@@ -63368,6 +64899,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_dog_treat": {
@@ -63377,6 +64913,11 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "breaking_the_final_seal",
+          "state": "completed"
         }
       },
       "request_for_lobster": {
@@ -63386,12 +64927,44 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "breaking_the_final_seal",
+              "state": "completed"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
         }
       },
       "request_for_blackberries_2": {
         "itemId": "blackberry",
         "villager": "hayden",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "gamePredicate",
+              "predicate": "has_any_animal",
+              "value": true
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "fall"
+              ]
+            }
+          ]
+        }
       },
       "request_for_coffee": {
         "itemId": "coffee",
@@ -63400,6 +64973,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "meet_the_new_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "meet_the_new_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_fire_crystal": {
@@ -63409,6 +64997,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "meet_the_new_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "meet_the_new_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_poached_pear": {
@@ -63418,6 +65021,27 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "meet_the_new_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "meet_the_new_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "summer"
+              ]
+            }
+          ]
         }
       },
       "request_for_mushroom_rice": {
@@ -63427,6 +65051,27 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "meet_the_new_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "meet_the_new_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
         }
       },
       "request_for_glowing_mushroom": {
@@ -63436,6 +65081,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "meet_the_new_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "meet_the_new_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_bell_berries": {
@@ -63454,6 +65114,26 @@
               "questId": "breaking_the_fire_seal"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "meet_the_new_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            },
+            {
+              "type": "quest",
+              "questId": "breaking_the_fire_seal",
+              "state": "completed"
+            }
+          ]
         }
       },
       "request_for_duck_mayonnaise": {
@@ -63463,6 +65143,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "upgrade_the_saturday_market"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "upgrade_the_saturday_market",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_golden_duck_mayonnaise": {
@@ -63472,6 +65167,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "request_for_duck_mayonnaise"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "request_for_duck_mayonnaise",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            }
+          ]
         }
       },
       "request_for_apple_pie": {
@@ -63481,12 +65191,39 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "greet_the_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "greet_the_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "fall"
+              ]
+            }
+          ]
         }
       },
       "request_for_crab": {
         "itemId": "crab",
         "villager": "luc",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "season",
+          "seasons": [
+            "fall"
+          ]
+        }
       },
       "request_for_butterfly": {
         "itemId": "butterfly",
@@ -63495,17 +65232,69 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "breaking_the_final_seal"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "breaking_the_final_seal",
+              "state": "completed"
+            },
+            {
+              "type": "season",
+              "seasons": [
+                "spring"
+              ]
+            }
+          ]
         }
       },
       "request_for_cherry_tart": {
         "itemId": "cherry_tart",
         "villager": "dell",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 1,
+                "year": 2
+              }
+            }
+          ]
+        }
       },
       "request_for_blueberry_jam": {
         "itemId": "blueberry_jam",
         "villager": "elsie",
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 1,
+                "year": 2
+              }
+            }
+          ]
+        }
       }
     },
     "heart": {
@@ -63524,6 +65313,21 @@
               "type": "heartLevel",
               "level": 2,
               "villagerId": "balor"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 2,
+              "villagerId": "balor"
+            },
+            {
+              "type": "quest",
+              "questId": "repair_the_bridge",
+              "state": "completed"
             }
           ]
         }
@@ -63545,6 +65349,11 @@
               "villagerId": "hayden"
             }
           ]
+        },
+        "startCondition": {
+          "type": "heartLevel",
+          "level": 2,
+          "villagerId": "hayden"
         }
       },
       "becoming_junipers_guinea_pig": {
@@ -63564,6 +65373,11 @@
               "villagerId": "juniper"
             }
           ]
+        },
+        "startCondition": {
+          "type": "heartLevel",
+          "level": 2,
+          "villagerId": "juniper"
         }
       },
       "the_unusual_seed": {
@@ -63583,6 +65397,11 @@
               "villagerId": "celine"
             }
           ]
+        },
+        "startCondition": {
+          "type": "heartLevel",
+          "level": 2,
+          "villagerId": "celine"
         }
       },
       "the_smell_of_drying_ink": {
@@ -63602,6 +65421,11 @@
               "villagerId": "adeline"
             }
           ]
+        },
+        "startCondition": {
+          "type": "heartLevel",
+          "level": 2,
+          "villagerId": "adeline"
         }
       },
       "the_stele": {
@@ -63621,6 +65445,11 @@
               "villagerId": "eiland"
             }
           ]
+        },
+        "startCondition": {
+          "type": "heartLevel",
+          "level": 2,
+          "villagerId": "eiland"
         }
       },
       "surprise_me": {
@@ -63640,6 +65469,11 @@
               "villagerId": "march"
             }
           ]
+        },
+        "startCondition": {
+          "type": "heartLevel",
+          "level": 2,
+          "villagerId": "march"
         }
       },
       "pie_in_the_sky": {
@@ -63659,6 +65493,11 @@
               "villagerId": "reina"
             }
           ]
+        },
+        "startCondition": {
+          "type": "heartLevel",
+          "level": 2,
+          "villagerId": "reina"
         }
       },
       "the_annual_check_up": {
@@ -63678,6 +65517,11 @@
               "villagerId": "valen"
             }
           ]
+        },
+        "startCondition": {
+          "type": "heartLevel",
+          "level": 2,
+          "villagerId": "valen"
         }
       },
       "bird_song": {
@@ -63697,6 +65541,11 @@
               "villagerId": "ryis"
             }
           ]
+        },
+        "startCondition": {
+          "type": "heartLevel",
+          "level": 2,
+          "villagerId": "ryis"
         }
       },
       "a_rewarding_choice": {
@@ -63718,6 +65567,21 @@
             {
               "type": "questCompleted",
               "questId": "the_smell_of_drying_ink"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "adeline"
+            },
+            {
+              "type": "quest",
+              "questId": "the_smell_of_drying_ink",
+              "state": "completed"
             }
           ]
         }
@@ -63743,6 +65607,21 @@
               "questId": "the_unusual_seed"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "celine"
+            },
+            {
+              "type": "quest",
+              "questId": "the_unusual_seed",
+              "state": "completed"
+            }
+          ]
         }
       },
       "many_hands_make_light_work": {
@@ -63764,6 +65643,26 @@
             {
               "type": "questCompleted",
               "questId": "surprise_me"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "march"
+            },
+            {
+              "type": "quest",
+              "questId": "surprise_me",
+              "state": "completed"
+            },
+            {
+              "type": "quest",
+              "questId": "repair_the_bridge",
+              "state": "completed"
             }
           ]
         }
@@ -63789,6 +65688,21 @@
               "questId": "pie_in_the_sky"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "reina"
+            },
+            {
+              "type": "quest",
+              "questId": "pie_in_the_sky",
+              "state": "completed"
+            }
+          ]
         }
       },
       "the_ruins": {
@@ -63810,6 +65724,21 @@
             {
               "type": "questCompleted",
               "questId": "the_stele"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "eiland"
+            },
+            {
+              "type": "quest",
+              "questId": "the_stele",
+              "state": "completed"
             }
           ]
         }
@@ -63835,6 +65764,21 @@
               "questId": "the_annual_check_up"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "valen"
+            },
+            {
+              "type": "quest",
+              "questId": "the_annual_check_up",
+              "state": "completed"
+            }
+          ]
         }
       },
       "horsing_around": {
@@ -63856,6 +65800,21 @@
             {
               "type": "questCompleted",
               "questId": "becoming_junipers_guinea_pig"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "juniper"
+            },
+            {
+              "type": "quest",
+              "questId": "becoming_junipers_guinea_pig",
+              "state": "completed"
             }
           ]
         }
@@ -63881,6 +65840,21 @@
               "questId": "tall_dark_and_mysterious"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "balor"
+            },
+            {
+              "type": "quest",
+              "questId": "tall_dark_and_mysterious",
+              "state": "completed"
+            }
+          ]
         }
       },
       "a_sapling": {
@@ -63902,6 +65876,21 @@
             {
               "type": "questCompleted",
               "questId": "bird_song"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "ryis"
+            },
+            {
+              "type": "quest",
+              "questId": "bird_song",
+              "state": "completed"
             }
           ]
         }
@@ -63927,6 +65916,21 @@
               "questId": "a_get_together"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "a_get_together",
+              "state": "completed"
+            },
+            {
+              "type": "heartLevel",
+              "level": 4,
+              "villagerId": "hayden"
+            }
+          ]
         }
       },
       "an_outside_consultant": {
@@ -63948,6 +65952,21 @@
             {
               "type": "questCompleted",
               "questId": "batch_312"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "valen"
+            },
+            {
+              "type": "quest",
+              "questId": "batch_312",
+              "state": "completed"
             }
           ]
         }
@@ -63973,6 +65992,21 @@
               "questId": "extra_feed"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "hayden"
+            },
+            {
+              "type": "quest",
+              "questId": "extra_feed",
+              "state": "completed"
+            }
+          ]
         }
       },
       "the_manor": {
@@ -63994,6 +66028,21 @@
             {
               "type": "questCompleted",
               "questId": "the_ruins"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "eiland"
+            },
+            {
+              "type": "quest",
+              "questId": "the_ruins",
+              "state": "completed"
             }
           ]
         }
@@ -64019,6 +66068,26 @@
               "questId": "an_open_book"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "balor"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "earned_gold",
+              "value": 10000
+            },
+            {
+              "type": "quest",
+              "questId": "an_open_book",
+              "state": "completed"
+            }
+          ]
         }
       },
       "a_change_of_greenery": {
@@ -64040,6 +66109,21 @@
             {
               "type": "questCompleted",
               "questId": "water_and_soil"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "celine"
+            },
+            {
+              "type": "quest",
+              "questId": "water_and_soil",
+              "state": "completed"
             }
           ]
         }
@@ -64065,6 +66149,21 @@
               "questId": "shopping_buddy"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "reina"
+            },
+            {
+              "type": "quest",
+              "questId": "shopping_buddy",
+              "state": "completed"
+            }
+          ]
         }
       },
       "working_like_a_dog": {
@@ -64086,6 +66185,21 @@
             {
               "type": "questCompleted",
               "questId": "horsing_around"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "juniper"
+            },
+            {
+              "type": "quest",
+              "questId": "horsing_around",
+              "state": "completed"
             }
           ]
         }
@@ -64111,6 +66225,21 @@
               "questId": "a_rewarding_choice"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "adeline"
+            },
+            {
+              "type": "quest",
+              "questId": "a_rewarding_choice",
+              "state": "completed"
+            }
+          ]
         }
       },
       "shield_of_the_realm": {
@@ -64132,6 +66261,21 @@
             {
               "type": "questCompleted",
               "questId": "many_hands_make_light_work"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "march"
+            },
+            {
+              "type": "quest",
+              "questId": "many_hands_make_light_work",
+              "state": "completed"
             }
           ]
         }
@@ -64157,6 +66301,21 @@
               "questId": "a_sapling"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 6,
+              "villagerId": "ryis"
+            },
+            {
+              "type": "quest",
+              "questId": "a_sapling",
+              "state": "completed"
+            }
+          ]
         }
       },
       "lost_track_of_time": {
@@ -64178,6 +66337,65 @@
             {
               "type": "questCompleted",
               "questId": "chief_inspector"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "any",
+          "conditions": [
+            {
+              "type": "all",
+              "conditions": [
+                {
+                  "type": "gamePredicate",
+                  "predicate": "world_fact_is",
+                  "value": [
+                    {
+                      "shooting_star_adeline_attended": true
+                    },
+                    {
+                      "adeline_status": "undefined"
+                    }
+                  ]
+                },
+                {
+                  "type": "heartLevel",
+                  "level": 8,
+                  "villagerId": "adeline"
+                },
+                {
+                  "type": "quest",
+                  "questId": "chief_inspector",
+                  "state": "completed"
+                }
+              ]
+            },
+            {
+              "type": "all",
+              "conditions": [
+                {
+                  "type": "gamePredicate",
+                  "predicate": "world_fact_is",
+                  "value": [
+                    {
+                      "shooting_star_adeline_attended": false
+                    },
+                    {
+                      "adeline_status": "undefined"
+                    }
+                  ]
+                },
+                {
+                  "type": "heartLevel",
+                  "level": 8,
+                  "villagerId": "adeline"
+                },
+                {
+                  "type": "quest",
+                  "questId": "chief_inspector",
+                  "state": "completed"
+                }
+              ]
             }
           ]
         }
@@ -64203,6 +66421,35 @@
               "questId": "lemonade_from_lemons"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "gamePredicate",
+              "predicate": "world_fact_is",
+              "value": [
+                {
+                  "balor_status": "undefined"
+                }
+              ]
+            },
+            {
+              "type": "heartLevel",
+              "level": 8,
+              "villagerId": "balor"
+            },
+            {
+              "type": "quest",
+              "questId": "an_open_book",
+              "state": "completed"
+            },
+            {
+              "type": "quest",
+              "questId": "repair_the_bridge",
+              "state": "completed"
+            }
+          ]
         }
       },
       "a_lost_flower": {
@@ -64224,6 +66471,26 @@
             {
               "type": "questCompleted",
               "questId": "a_change_of_greenery"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 8,
+              "villagerId": "celine"
+            },
+            {
+              "type": "quest",
+              "questId": "a_change_of_greenery",
+              "state": "completed"
+            },
+            {
+              "type": "quest",
+              "questId": "repair_the_summit_stairs",
+              "state": "completed"
             }
           ]
         }
@@ -64249,6 +66516,75 @@
               "questId": "real_fine_day"
             }
           ]
+        },
+        "startCondition": {
+          "type": "any",
+          "conditions": [
+            {
+              "type": "all",
+              "conditions": [
+                {
+                  "type": "gamePredicate",
+                  "predicate": "world_fact_is",
+                  "value": [
+                    {
+                      "shooting_star_hayden_attended": true
+                    },
+                    {
+                      "hayden_status": "undefined"
+                    }
+                  ]
+                },
+                {
+                  "type": "heartLevel",
+                  "level": 8,
+                  "villagerId": "hayden"
+                },
+                {
+                  "type": "quest",
+                  "questId": "real_fine_day",
+                  "state": "completed"
+                },
+                {
+                  "type": "quest",
+                  "questId": "repair_the_mill",
+                  "state": "completed"
+                }
+              ]
+            },
+            {
+              "type": "all",
+              "conditions": [
+                {
+                  "type": "gamePredicate",
+                  "predicate": "world_fact_is",
+                  "value": [
+                    {
+                      "shooting_star_hayden_attended": false
+                    },
+                    {
+                      "hayden_status": "undefined"
+                    }
+                  ]
+                },
+                {
+                  "type": "heartLevel",
+                  "level": 8,
+                  "villagerId": "hayden"
+                },
+                {
+                  "type": "quest",
+                  "questId": "real_fine_day",
+                  "state": "completed"
+                },
+                {
+                  "type": "quest",
+                  "questId": "repair_the_mill",
+                  "state": "completed"
+                }
+              ]
+            }
+          ]
         }
       },
       "potions_and_errands": {
@@ -64270,6 +66606,26 @@
             {
               "type": "questCompleted",
               "questId": "working_like_a_dog"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 8,
+              "villagerId": "juniper"
+            },
+            {
+              "type": "quest",
+              "questId": "working_like_a_dog",
+              "state": "completed"
+            },
+            {
+              "type": "quest",
+              "questId": "the_earth_tablet",
+              "state": "completed"
             }
           ]
         }
@@ -64295,6 +66651,21 @@
               "questId": "farm_fresh_sous_chef"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 8,
+              "villagerId": "reina"
+            },
+            {
+              "type": "quest",
+              "questId": "farm_fresh_sous_chef",
+              "state": "completed"
+            }
+          ]
         }
       },
       "the_glade": {
@@ -64318,6 +66689,26 @@
               "questId": "the_manor"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 8,
+              "villagerId": "eiland"
+            },
+            {
+              "type": "quest",
+              "questId": "breaking_the_fire_seal",
+              "state": "completed"
+            },
+            {
+              "type": "quest",
+              "questId": "the_manor",
+              "state": "completed"
+            }
+          ]
         }
       },
       "life_in_this_form": {
@@ -64335,6 +66726,21 @@
               "type": "heartLevel",
               "level": 8,
               "villagerId": "caldarus"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 8,
+              "villagerId": "caldarus"
+            },
+            {
+              "type": "quest",
+              "questId": "breaking_the_fire_seal",
+              "state": "completed"
             }
           ]
         }
@@ -64360,6 +66766,21 @@
               "questId": "a_birdhouse"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 8,
+              "villagerId": "ryis"
+            },
+            {
+              "type": "quest",
+              "questId": "a_birdhouse",
+              "state": "completed"
+            }
+          ]
         }
       },
       "the_panacea": {
@@ -64383,6 +66804,21 @@
               "questId": "an_outside_consultant"
             }
           ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 8,
+              "villagerId": "valen"
+            },
+            {
+              "type": "quest",
+              "questId": "an_outside_consultant",
+              "state": "completed"
+            }
+          ]
         }
       },
       "whatever_your_heart_desires": {
@@ -64400,6 +66836,23 @@
               "type": "heartLevel",
               "level": 8,
               "villagerId": "seridia"
+            }
+          ]
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "heartLevel",
+              "level": 8,
+              "villagerId": "seridia"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "world_fact_is",
+              "value": {
+                "seridia_is_human": true
+              }
             }
           ]
         }
@@ -64625,59 +67078,254 @@
         "sources": []
       },
       "do_a_bro_a_favor": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 2
+              }
+            }
+          ]
+        }
       },
       "stinky_stamina_potion": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 5
+              }
+            }
+          ]
+        }
       },
       "friday_at_the_sleeping_dragon_inn": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 5
+              }
+            }
+          ]
+        }
       },
       "museum_donation_wanted": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 2
+              }
+            }
+          ]
+        }
       },
       "cop_some_ore": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "quest",
+          "questId": "unlocking_the_mines_pt_2",
+          "state": "available"
+        }
       },
       "greet_the_vendors": {
         "sources": [],
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_bridge"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            },
+            {
+              "type": "quest",
+              "questId": "repair_the_bridge",
+              "state": "completed"
+            }
+          ]
         }
       },
       "somethings_bugging_me": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 4
+              }
+            }
+          ]
+        }
       },
       "repair_the_mill": {
         "sources": [],
         "visibility": {
           "type": "questCompleted",
           "questId": "replenishing_mistrias_food_reserves_1"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "replenishing_mistrias_food_reserves_1",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "replenishing_mistrias_food_reserves_1",
+                "days_after": 3
+              }
+            }
+          ]
         }
       },
       "jos_cooking_class": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 13
+              }
+            }
+          ]
+        }
       },
       "tea_with_hayden": {
         "sources": [],
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_mill"
+        },
+        "startCondition": {
+          "type": "quest",
+          "questId": "repair_the_mill",
+          "state": "completed"
         }
       },
       "unlocking_the_mines_pt_1": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 6,
+                "year": 1
+              }
+            }
+          ]
+        }
       },
       "unlocking_the_mines_pt_2": {
         "sources": [],
         "visibility": {
           "type": "questCompleted",
           "questId": "unlocking_the_mines_pt_1"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "unlocking_the_mines_pt_1",
+              "state": "completed"
+            },
+            {
+              "type": "renownLevel",
+              "level": 10
+            }
+          ]
         }
       },
       "repair_the_bridge": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 3,
+                "year": 1
+              }
+            }
+          ]
+        }
       },
       "the_water_tablet": {
         "sources": [],
@@ -64750,16 +67398,117 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "the_spring_festival"
+        },
+        "startCondition": {
+          "type": "any",
+          "conditions": [
+            {
+              "type": "all",
+              "conditions": [
+                {
+                  "type": "season",
+                  "seasons": [
+                    "spring"
+                  ]
+                },
+                {
+                  "type": "gamePredicate",
+                  "predicate": "reached_date",
+                  "value": {
+                    "season": "spring",
+                    "day": 14,
+                    "exact": true
+                  }
+                },
+                {
+                  "type": "not",
+                  "condition": {
+                    "type": "quest",
+                    "questId": "the_spring_festival",
+                    "state": "completed"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "all",
+              "conditions": [
+                {
+                  "type": "season",
+                  "seasons": [
+                    "spring"
+                  ]
+                },
+                {
+                  "type": "gamePredicate",
+                  "predicate": "reached_date",
+                  "value": {
+                    "season": "spring",
+                    "day": 14,
+                    "exact": true
+                  }
+                },
+                {
+                  "type": "quest",
+                  "questId": "the_spring_festival",
+                  "state": "completed"
+                }
+              ]
+            }
+          ]
         }
       },
       "the_shooting_star_festival": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "summer"
+              ]
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "summer",
+                "day": 28,
+                "exact": true
+              }
+            },
+            {
+              "type": "quest",
+              "questId": "repair_the_summit_stairs",
+              "state": "available"
+            }
+          ]
+        }
       },
       "replenishing_mistrias_food_reserves_1": {
         "sources": [],
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_bridge"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "repair_the_bridge",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "repair_the_bridge",
+                "days_after": 2
+              }
+            }
+          ]
         }
       },
       "repair_the_general_store": {
@@ -64767,16 +67516,70 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_summit_stairs"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "repair_the_summit_stairs",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "repair_the_summit_stairs",
+                "days_after": 3
+              }
+            }
+          ]
         }
       },
       "crafting_tutorial": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "spring"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "spring",
+                "day": 10,
+                "year": 1
+              }
+            }
+          ]
+        }
       },
       "repair_the_summit_stairs": {
         "sources": [],
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_mill"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "repair_the_mill",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "repair_the_mill",
+                "days_after": 3
+              }
+            }
+          ]
         }
       },
       "repair_haydens_barn": {
@@ -64784,6 +67587,24 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "replenishing_mistrias_food_reserves_2"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "replenishing_mistrias_food_reserves_2",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "replenishing_mistrias_food_reserves_2",
+                "days_after": 2
+              }
+            }
+          ]
         }
       },
       "replenishing_mistrias_food_reserves_2": {
@@ -64791,6 +67612,24 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_beach_bridge"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "repair_the_beach_bridge",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "repair_the_beach_bridge",
+                "days_after": 2
+              }
+            }
+          ]
         }
       },
       "repair_the_beach_bridge": {
@@ -64798,6 +67637,24 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_general_store"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "repair_the_general_store",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "repair_the_general_store",
+                "days_after": 3
+              }
+            }
+          ]
         }
       },
       "repair_the_inn": {
@@ -64805,32 +67662,148 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_haydens_barn"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "repair_haydens_barn",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "repair_haydens_barn",
+                "days_after": 3
+              }
+            }
+          ]
         }
       },
       "find_the_weathervane": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "quest",
+          "questId": "repair_haydens_barn",
+          "state": "completed"
+        }
       },
       "stone_refinery": {
         "sources": [],
         "visibility": {
           "type": "questCompleted",
           "questId": "repair_the_inn"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "unlocking_the_mines_pt_2",
+              "state": "available"
+            },
+            {
+              "type": "renownLevel",
+              "level": 50
+            },
+            {
+              "type": "quest",
+              "questId": "repair_the_inn",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "repair_the_inn",
+                "days_after": 2
+              }
+            }
+          ]
         }
       },
       "gossip_for_elsie": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "reachedSeason",
+              "season": "summer"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "summer",
+                "day": 1
+              }
+            }
+          ]
+        }
       },
       "the_animal_festival": {
         "sources": []
       },
       "the_harvest_festival": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "season",
+              "seasons": [
+                "fall"
+              ]
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "reached_date",
+              "value": {
+                "season": "fall",
+                "day": 7,
+                "exact": true
+              }
+            }
+          ]
+        }
       },
       "upgrade_the_saturday_market": {
         "sources": [],
         "visibility": {
           "type": "questCompleted",
           "questId": "stone_refinery"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "renownLevel",
+              "level": 60
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "world_fact_is",
+              "value": {
+                "market_is_back": true
+              }
+            },
+            {
+              "type": "quest",
+              "questId": "stone_refinery",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "stone_refinery",
+                "days_after": 1
+              }
+            }
+          ]
         }
       },
       "upgrade_the_carpenters_shop": {
@@ -64838,13 +67811,43 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "upgrade_the_saturday_market"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "renownLevel",
+              "level": 70
+            },
+            {
+              "type": "quest",
+              "questId": "upgrade_the_saturday_market",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "upgrade_the_saturday_market",
+                "days_after": 1
+              }
+            }
+          ]
         }
       },
       "lost_and_found": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "renownLevel",
+          "level": 20
+        }
       },
       "apiaries_and_terrariums": {
-        "sources": []
+        "sources": [],
+        "startCondition": {
+          "type": "renownLevel",
+          "level": 30
+        }
       },
       "find_the_magic_key": {
         "sources": [],
@@ -64928,6 +67931,28 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "upgrade_the_carpenters_shop"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "renownLevel",
+              "level": 80
+            },
+            {
+              "type": "quest",
+              "questId": "upgrade_the_carpenters_shop",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "upgrade_the_carpenters_shop",
+                "days_after": 1
+              }
+            }
+          ]
         }
       },
       "meet_the_new_vendors": {
@@ -64935,6 +67960,21 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "upgrade_the_saturday_market_plaza"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "gamePredicate",
+              "predicate": "is_day_type",
+              "value": "saturday"
+            },
+            {
+              "type": "quest",
+              "questId": "upgrade_the_saturday_market_plaza",
+              "state": "completed"
+            }
+          ]
         }
       },
       "repair_the_bell_tower": {
@@ -64942,6 +67982,28 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "meet_the_new_vendors"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "renownLevel",
+              "level": 90
+            },
+            {
+              "type": "quest",
+              "questId": "meet_the_new_vendors",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "meet_the_new_vendors",
+                "days_after": 1
+              }
+            }
+          ]
         }
       },
       "complete_the_museum": {
@@ -64949,6 +68011,32 @@
         "visibility": {
           "type": "questCompleted",
           "questId": "reach_mistril_star_town_rank"
+        },
+        "startCondition": {
+          "type": "all",
+          "conditions": [
+            {
+              "type": "quest",
+              "questId": "reach_mistril_star_town_rank",
+              "state": "completed"
+            },
+            {
+              "type": "gamePredicate",
+              "predicate": "completed_quest",
+              "value": {
+                "quest": "reach_mistril_star_town_rank",
+                "days_after": 2
+              }
+            },
+            {
+              "type": "not",
+              "condition": {
+                "type": "gamePredicate",
+                "predicate": "received_letter",
+                "value": "complete_the_museum_complete"
+              }
+            }
+          ]
         }
       }
     }

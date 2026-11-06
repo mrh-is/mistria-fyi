@@ -162,6 +162,8 @@ a change affects its spacing.
 
 - Take at most **10 screenshots** per PR: one per materially changed state, not one per interaction
   step.
+- Attach at least one per changed route or component, at desktop & mobile widths, showing the
+  changed state. A visual PR with no attached screenshots isn’t ready for review.
 - The cap counts the screenshots attached to the PR. Choose that set so a reviewer can judge layout
   & spacing without running the preview.
 - If a design reference exists, such as a Figma file or an existing page to match, screenshot both &
@@ -171,7 +173,8 @@ a change affects its spacing.
 ### Visual exemptions
 
 Documentation-only, pipeline-only, & test-only changes don’t need visual verification. Changes to
-engine logic (`src/lib/engine/`) don’t either, unless they affect rendered output.
+engine logic (`src/lib/engine/`) don’t either, unless they affect rendered output. Don’t attach
+screenshots to a PR that meets an exemption; they give a reviewer nothing to judge.
 
 Accessibility-only changes don’t need visual checks or screenshot attachments when visible content,
 layout, focus behavior, & interactions stay unchanged. For example, adding a variant to a checkbox’s
