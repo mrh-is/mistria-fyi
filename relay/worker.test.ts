@@ -1,9 +1,7 @@
-import { convertV4MiniflareOptions, Miniflare } from "miniflare";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import ts from "typescript";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createRelayClient,
@@ -17,14 +15,23 @@ import {
   shareNewCode,
 } from "#lib/sync/follow.js";
 
+import {
+  relayTestFetch,
+  relayTestModules,
+  relayTestRuntime,
+  TEST_ADMIN,
+  TEST_ORIGIN,
+} from "./test-runtime.js";
+
+import type { Miniflare } from "miniflare";
+
 let mailboxId: string;
 const TOKEN = "a".repeat(43);
 const OTHER_TOKEN = "b".repeat(43);
-const ADMIN = "placeholder-admin-token-for-local-tests";
+const ADMIN = TEST_ADMIN;
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
-let workerModule: string;
-let wireModule: string;
+let modules: Awaited<ReturnType<typeof relayTestModules>>;
 const runtimes: Miniflare[] = [];
 const directories: string[] = [];
 let verifications: number;
@@ -38,12 +45,14 @@ let mailboxRequests = 0;
 let gateRequests = 0;
 let failureReports = 0;
 let throwNext;
+let nextReadDelay;
 export class TestMailbox extends Mailbox {
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname === "/__test") {
       const action = await request.json();
       if (action.throwNext) throwNext = action.throwNext;
+      if (action.nextReadDelay) nextReadDelay = action.nextReadDelay;
       if (action.age) {
         const meta = await this.ctx.storage.get("meta");
         meta.lastUpload = Date.now() - action.age;
@@ -70,6 +79,11 @@ export class TestMailbox extends Mailbox {
       return Response.json(Object.fromEntries(await this.ctx.storage.list()));
     }
     mailboxRequests++;
+    if (url.pathname === "/read" && nextReadDelay) {
+      const delay = nextReadDelay;
+      nextReadDelay = undefined;
+      await scheduler.wait(delay);
+    }
     if (throwNext) {
       const message = throwNext;
       throwNext = undefined;
@@ -89,6 +103,7 @@ export class TestControl extends RelayControl {
         failureReports = 0;
         pauseCheck = undefined;
         throwNext = undefined;
+        nextReadDelay = undefined;
         pendingFailures.clear();
         lastFailureFlush = 0;
       }
@@ -113,8 +128,7 @@ export class TestControl extends RelayControl {
 beforeAll(async () => {
   verifications = 0;
   caseIndex = 0;
-  workerModule = (await transpile("worker.ts")) + testSubclass;
-  wireModule = await transpile("wire.ts");
+  modules = await relayTestModules(testSubclass);
   shared = runtime();
 });
 
@@ -131,56 +145,32 @@ afterAll(async () => {
   );
 });
 
-async function transpile(file: string): Promise<string> {
-  return ts.transpileModule(await readFile(new URL(file, import.meta.url), "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2024 },
-  }).outputText;
-}
-
 function runtime(persist?: string): Miniflare {
   if (!persist && shared) return shared;
-  const mf = new Miniflare(
-    convertV4MiniflareOptions({
-      bindings: {
-        ADMIN_TOKEN: ADMIN,
-        IP_RATE_SECRET: "placeholder-rate-secret-for-local-tests",
-        TURNSTILE_HOSTNAME: "mistria.fyi",
-        TURNSTILE_SECRET: "placeholder-turnstile-secret",
-      },
-      cf: false,
-      compatibilityDate: "2026-10-26",
-      durableObjects: {
-        CONTROL: { className: "TestControl", useSQLite: true },
-        MAILBOXES: { className: "TestMailbox", useSQLite: true },
-      },
-      modules: [
-        { type: "ESModule", contents: workerModule, path: "worker.js" },
-        { type: "ESModule", contents: wireModule, path: "wire.js" },
-      ],
-      outboundService: async (verification) => {
-        expect(verification.url).toBe("https://challenges.cloudflare.com/turnstile/v0/siteverify");
-        const form = new URLSearchParams(await verification.text());
-        expect(form.get("secret")).toBe("placeholder-turnstile-secret");
-        expect(form.has("remoteip")).toBe(false);
-        verifications++;
-        const token = form.get("response");
-        if (token === "unavailable") return new Response(null, { status: 503 });
-        if (token === "invalid-input-secret" || token === "missing-input-secret") {
-          return Response.json({ "error-codes": [token], success: false });
-        }
-        return Response.json({
-          action: token === "wrong-action" ? "feedback" : "sync-create",
-          hostname: token === "wrong-host" ? "attacker.test" : "mistria.fyi",
-          success: token !== "invalid",
-        });
-      },
-      ratelimits: {
-        CREATE_RATE: { namespace_id: "132", simple: { limit: 3, period: 60 } },
-        READ_RATE: { namespace_id: "133", simple: { limit: 60, period: 60 } },
-      },
-      resourcePersistencePath: persist,
-    }),
-  );
+  const mf = relayTestRuntime(modules, {
+    durableObjects: {
+      CONTROL: { className: "TestControl", useSQLite: true },
+      MAILBOXES: { className: "TestMailbox", useSQLite: true },
+    },
+    outboundService: async (verification) => {
+      expect(verification.url).toBe("https://challenges.cloudflare.com/turnstile/v0/siteverify");
+      const form = new URLSearchParams(await verification.text());
+      expect(form.get("secret")).toBe("placeholder-turnstile-secret");
+      expect(form.has("remoteip")).toBe(false);
+      verifications++;
+      const token = form.get("response");
+      if (token === "unavailable") return new Response(null, { status: 503 });
+      if (token === "invalid-input-secret" || token === "missing-input-secret") {
+        return Response.json({ "error-codes": [token], success: false });
+      }
+      return Response.json({
+        action: token === "wrong-action" ? "feedback" : "sync-create",
+        hostname: token === "wrong-host" ? "attacker.test" : "mistria.fyi",
+        success: token !== "invalid",
+      });
+    },
+    resourcePersistencePath: persist,
+  });
   runtimes.push(mf);
   return mf;
 }
@@ -947,21 +937,12 @@ describe("sync relay in the local Workers runtime", () => {
   });
 });
 
-describe("the app's relay client against the real worker", () => {
-  const ORIGIN = "https://relay.mistria.fyi";
-  const save = new Uint8Array([1, 2, 3, 4, 5]);
+function integrationClient() {
+  return createRelayClient(TEST_ORIGIN, relayTestFetch(runtime(), `192.0.2.${caseIndex}`));
+}
 
-  /** The real client over Miniflare, plus the address Cloudflare would add at the edge. */
-  function client() {
-    const mf = runtime();
-    const fetcher = (async (url: string, init: RequestInit) => {
-      const headers = new Headers(init.headers);
-      headers.set("CF-Connecting-IP", `192.0.2.${caseIndex}`);
-      const { body, method } = init;
-      return mf.dispatchFetch(url, { body, headers, method } as never);
-    }) as unknown as typeof fetch;
-    return createRelayClient(ORIGIN, fetcher);
-  }
+describe("the app's relay client against the real worker", () => {
+  const save = new Uint8Array([1, 2, 3, 4, 5]);
 
   async function sealed(key: Parameters<typeof deriveFollowKeys>[0], counter = 1) {
     const version = FOLLOW_PROTOCOL_VERSION;
@@ -975,7 +956,7 @@ describe("the app's relay client against the real worker", () => {
   }
 
   it("creates a mailbox, uploads a sealed save, reads it back, opens it, & retires it", async () => {
-    const relay = client();
+    const relay = integrationClient();
     const share = await shareNewCode(relay, () => Promise.resolve("valid"));
     if (share.kind !== "shared") throw new Error(`Couldn't share: ${share.kind}`);
     const { key, token } = share.code;
@@ -996,7 +977,7 @@ describe("the app's relay client against the real worker", () => {
   });
 
   it("reports a failed Turnstile check as a refusal", async () => {
-    const relay = client();
+    const relay = integrationClient();
     const { mailboxId: id } = await deriveFollowKeys(generateFollowKey());
     expect(await relay.create(id, generateWriteToken(), "invalid")).toEqual({ kind: "refused" });
     expect(await shareNewCode(relay, () => Promise.resolve("invalid"))).toEqual({
@@ -1004,8 +985,60 @@ describe("the app's relay client against the real worker", () => {
     });
   });
 
+  it("reports a pause after the Worker's cached check expires", async () => {
+    const mf = runtime();
+    const relay = integrationClient();
+    const key = generateFollowKey();
+    const { mailboxId: id } = await deriveFollowKeys(key);
+    expect(await relay.create(id, generateWriteToken(), "valid")).toEqual({ kind: "created" });
+    expect(await openFollowKey(relay, key)).toEqual({ kind: "empty" });
+
+    const until = Date.now() + HOUR;
+    await inspectControl(mf, { pausedUntil: until });
+    expect(await openFollowKey(relay, key)).toEqual({ kind: "empty" });
+    await inspectControl(mf, { pauseCheckAge: 30_000 });
+    expect(await openFollowKey(relay, key)).toEqual({ kind: "paused", until });
+  });
+
+  it("reports a 429 with the relay's retry delay", async () => {
+    const relay = integrationClient();
+    const { mailboxId: id } = await deriveFollowKeys(generateFollowKey());
+    const token = generateWriteToken();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      // oxlint-disable-next-line no-await-in-loop -- Fill the same address's creation budget.
+      expect(await relay.create(id, token, "valid")).toEqual({ kind: "created" });
+    }
+    expect(await relay.create(id, token, "valid")).toEqual({
+      kind: "rate-limited",
+      retryAfterSeconds: 60,
+    });
+  });
+
+  it("reports an in-flight relay read as unreachable when its deadline expires", async () => {
+    const mf = runtime();
+    const relay = integrationClient();
+    expect(await relay.create(mailboxId, generateWriteToken(), "valid")).toEqual({
+      kind: "created",
+    });
+    const { mailboxRequests } = await inspectControl(mf, { requests: true });
+    await inspect(mf, { nextReadDelay: 2000 });
+
+    const deadline = new AbortController();
+    vi.spyOn(AbortSignal, "timeout").mockReturnValueOnce(deadline.signal);
+    const reading = relay.read(mailboxId);
+    await vi.waitFor(async () => {
+      expect(await inspectControl(mf, { requests: true })).toMatchObject({
+        mailboxRequests: Number(mailboxRequests) + 1,
+      });
+    });
+    deadline.abort(new DOMException("Read deadline expired", "TimeoutError"));
+
+    expect(await reading).toEqual({ kind: "unreachable" });
+    expect(await relay.read(mailboxId)).toEqual({ kind: "empty" });
+  });
+
   it("reports a wrong token as a refusal on upload & retire", async () => {
-    const relay = client();
+    const relay = integrationClient();
     const key = generateFollowKey();
     const { mailboxId: id } = await deriveFollowKeys(key);
     expect(await relay.create(id, generateWriteToken(), "valid")).toEqual({ kind: "created" });
@@ -1015,14 +1048,14 @@ describe("the app's relay client against the real worker", () => {
   });
 
   it("reports a malformed token as a refusal", async () => {
-    const relay = client();
+    const relay = integrationClient();
     const key = generateFollowKey();
     const { mailboxId: id } = await deriveFollowKeys(key);
     expect(await relay.upload(id, "short", await sealed(key))).toEqual({ kind: "refused" });
   });
 
   it("reports a protocol the relay doesn't speak as a version mismatch", async () => {
-    const relay = client();
+    const relay = integrationClient();
     const key = generateFollowKey();
     const token = generateWriteToken();
     const { mailboxId: id } = await deriveFollowKeys(key);
@@ -1034,7 +1067,7 @@ describe("the app's relay client against the real worker", () => {
   });
 
   it("reports a stale counter, a too-large envelope, & a mailbox that never existed", async () => {
-    const relay = client();
+    const relay = integrationClient();
     const key = generateFollowKey();
     const token = generateWriteToken();
     const { mailboxId: id } = await deriveFollowKeys(key);
