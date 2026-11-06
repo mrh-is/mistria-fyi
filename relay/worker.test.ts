@@ -69,7 +69,7 @@ export class TestControl extends RelayControl {
         pauseCheck = undefined;
       }
       if (action.pausedUntil) await this.ctx.storage.put("pausedUntil", action.pausedUntil);
-      if (action.agePauseCheck && pauseCheck) pauseCheck.checkedAt -= action.agePauseCheck;
+      if (action.pauseCheckAge && pauseCheck) pauseCheck.checkedAt = Date.now() - action.pauseCheckAge;
       if (action.requests) return Response.json({ mailboxRequests, gateRequests });
       if (action.usage) await this.ctx.storage.put("usage", action.usage);
       if (action.alarm) await this.alarm();
@@ -335,9 +335,9 @@ describe("sync relay in the local Workers runtime", () => {
     // Another isolate's admin request pauses the relay without touching this isolate's cache.
     await inspectControl(mf, { pausedUntil: Date.now() + DAY });
     expect(await status(upload(mf))).toBe(200);
-    await inspectControl(mf, { agePauseCheck: 29_000 });
+    await inspectControl(mf, { pauseCheckAge: 29_000 });
     expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(200);
-    await inspectControl(mf, { agePauseCheck: 1000 });
+    await inspectControl(mf, { pauseCheckAge: 30_000 });
     const read = await request(mf, "GET", `mailboxes/${mailboxId}`);
     expect(read.status).toBe(503);
     expect(await read.json()).toMatchObject({ state: "paused" });
@@ -345,7 +345,7 @@ describe("sync relay in the local Workers runtime", () => {
     // Lifting the pause elsewhere reaches this isolate within the same interval.
     await inspectControl(mf, { pausedUntil: Date.now() - 1 });
     expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(503);
-    await inspectControl(mf, { agePauseCheck: 30_000 });
+    await inspectControl(mf, { pauseCheckAge: 30_000 });
     expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(200);
     expect(await inspectControl(mf, { requests: true })).toMatchObject({ gateRequests: 3 });
   });

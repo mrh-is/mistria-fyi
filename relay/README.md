@@ -92,11 +92,12 @@ followed by a failed mailbox storage operation conservatively consumes singleton
 
 Public reads & WebSocket handshakes share a separate 60-attempt-per-minute binding per IPv4 address
 or IPv6 /64, checked before any object access. The pause check then runs before mailbox access, from
-the isolate's 30-second cache, so it costs at most one singleton request per isolate every 30
-seconds, & the singleton answers it without a lock. A pause protects mailbox requests but still
-costs Worker requests; bindings cannot prevent Worker request exhaustion, & distributed traffic can
-defeat per-client limits. The zone WAF rule below is a required launch step, not configured by this
-repository.
+the isolate's 30-second cache, so it costs about one singleton request per isolate every 30 seconds
+(more when concurrent requests find it stale together), & the singleton answers it without a lock.
+Creates still reach the singleton through admission, which refuses them at once during a pause. A
+pause protects mailbox requests but still costs Worker requests; bindings cannot prevent Worker
+request exhaustion, & distributed traffic can defeat per-client limits. The zone WAF rule below is a
+required launch step, not configured by this repository.
 
 Each mailbox accepts one fresh upload per 60 seconds & 60 per UTC day. The Worker bounds & buffers
 network bodies before forwarding them, so a slow uplink holds no mailbox lock. A fresh counter’s

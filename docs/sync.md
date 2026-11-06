@@ -258,9 +258,9 @@ One Durable Object per mailbox ID.
   per in-game day, about every half hour, so Workers Free’s 100,000 row writes a day cover thousands
   of players, but only a few hundred mailboxes uploading at the cap (estimates). There’s no runtime
   budget check. The kill switch stops new mailbox reads & writes; each Worker isolate asks its
-  singleton at most every 30 seconds, & rejected traffic still costs Worker requests. A zone WAF
-  rate rule, shared with feedback at 10 requests per 10 seconds per address, protects the relay
-  before the Worker runs
+  singleton about once every 30 seconds (creates also reach it through admission), & rejected
+  traffic still costs Worker requests. A zone WAF rate rule, shared with feedback at 10 requests per
+  10 seconds per address, protects the relay before the Worker runs
   ([decision](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-30-shared-edge-rate-rule.md));
   distributed abuse can still exhaust Free quotas. Tighter caps, an edge block, or Workers Paid come
   first if usage approaches the limit.
@@ -274,11 +274,11 @@ One Durable Object per mailbox ID.
 - **Kill switch.** A flag in the singleton object, flipped by an authenticated admin request (a
   dashboard variable would be dropped by the next deploy). It carries an end time (a day by default;
   each request may set at most seven days ahead; the maintainer can extend it with another request),
-  so it lifts by itself. `sync_paused_*`, which says so, applies to uploads, creation, public reads,
-  & new WebSocket handshakes within 30 seconds, since each Worker isolate caches the switch that
-  long, while retiring still goes through. Existing WebSockets remain connected; a pause does not
-  enumerate or disconnect them. The courier uploads its latest save once it lifts. Manual tracking
-  still works.
+  so it lifts by itself. `sync_paused_*`, which says so, applies to uploads, public reads, & new
+  WebSocket handshakes within 30 seconds, since each Worker isolate caches the switch that long, &
+  to creation at once, while retiring still goes through. Lifting it takes up to 30 seconds too.
+  Existing WebSockets remain connected; a pause does not enumerate or disconnect them. The courier
+  uploads its latest save once it lifts. Manual tracking still works.
 - **Logging.** Request logging stays off.
 - **Takedown.** [takedown.md](takedown.md) gains a relay section.
 - **Tests** run the Durable Object in Miniflare. Deploying needs the maintainer’s Cloudflare login.

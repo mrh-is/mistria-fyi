@@ -153,7 +153,8 @@ async function pauseEnd(env: Env): Promise<number> {
   const gate = await control(env).fetch("https://control/gate");
   if (!gate.ok) throw new Error("Relay control gate failed");
   const { until } = await gate.json<{ until: number }>();
-  pauseCheck = { checkedAt: now, until };
+  // An admin pause this isolate handled meanwhile is newer than this answer; keep it.
+  if (!pauseCheck || pauseCheck.checkedAt <= now) pauseCheck = { checkedAt: now, until };
   return until;
 }
 
