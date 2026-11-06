@@ -100,7 +100,10 @@ version bump fails until a save written by the new game exists there; that failu
    observations are fine), then run `pnpm exec vitest run --project=saves` locally.
 3. Run `pnpm run saves:upload`. It needs `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` (from
    `.env.r2-upload` as for sprites), checks each digest, & uploads to the bucket.
-4. Push. CI downloads the saves with the read-only `R2_SAVES_READ_TOKEN` secret.
+4. Push. CI downloads the saves with the `R2_SAVES_READ_TOKEN` secret. It must be a Cloudflare API
+   token with “Account, Workers R2 Storage, Read” (My Profile, API Tokens). An R2 API token with
+   “Object Read only” fails with a 403, because Wrangler uses the REST API, not the S3 one. The
+   permission covers every R2 bucket on the account but allows no writes.
 
 Fork pull requests get no secrets, so the job skips there; every other run fails if the saves are
 missing or their digests differ. Billy’s machine doesn’t need Cloudflare tokens: it runs
