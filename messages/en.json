@@ -515,19 +515,24 @@
   "sync_error_camera_init": "Could not initialize camera.",
   "sync_error_camera_denied": "Camera access denied. Open the sync link from your gaming computer, or paste it here.",
   "merge_imported_from": "Imported from {files}",
-  "merge_label_almanac": "Almanac: +{count}",
-  "merge_label_almanac_recipes": "Recipes: +{count}",
-  "merge_label_animal_cosmetics": "Animal cosmetics: +{count}",
-  "merge_label_animals": "Animal variants: +{count}",
-  "merge_label_cosmetics": "Cosmetics: +{count}",
-  "merge_label_museum": "Museum donations: +{count}",
-  "merge_label_villager_relationships": "Villager relationships: +{count}",
-  "merge_label_perks": "Perks: +{count}",
-  "merge_label_pet_cosmetics": "Pet cosmetics: +{count}",
-  "merge_label_pet_skins": "Pet skins: +{count}",
-  "merge_label_mount_appearances": "Mount appearances: +{count}",
-  "merge_label_quests": "Quests: +{count}",
-  "merge_label_spells": "Spells: +{count}",
+  "merge_overall_outcome": "Your field guide is {percent} complete, with {remaining} left to go.",
+  "merge_changes_details": "What we added",
+  "merge_label_break_ups_disabled": "Break-ups disabled",
+  "import_save_details": "Save details",
+  "import_view_progress": "See what’s left",
+  "merge_label_almanac": "Almanac: +{countText}",
+  "merge_label_almanac_recipes": "Recipes: +{countText}",
+  "merge_label_animal_cosmetics": "Animal cosmetics: +{countText}",
+  "merge_label_animals": "Animal variants: +{countText}",
+  "merge_label_cosmetics": "Cosmetics: +{countText}",
+  "merge_label_museum": "Museum donations: +{countText}",
+  "merge_label_villager_relationships": "Villager relationships: +{countText}",
+  "merge_label_perks": "Perks: +{countText}",
+  "merge_label_pet_cosmetics": "Pet cosmetics: +{countText}",
+  "merge_label_pet_skins": "Pet skins: +{countText}",
+  "merge_label_mount_appearances": "Mount appearances: +{countText}",
+  "merge_label_quests": "Quests: +{countText}",
+  "merge_label_spells": "Spells: +{countText}",
   "merge_label_child_choice": "Child choice updated",
   "merge_conflict_relationship": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We've kept your recorded status.",
   "merge_conflict_spouse": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We've kept {localVillager} as your spouse, and skipped the imported child choice.",
@@ -537,41 +542,41 @@
   "merge_label_reached_season": "Season progression updated",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Mine floor: +{count} floor",
-        "countPlural=other": "Mine floor: +{count} floors"
+        "countPlural=one": "Mine floor: +{countText} floor",
+        "countPlural=other": "Mine floor: +{countText} floors"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Villager hearts: +{count} relationship updated",
-        "countPlural=other": "Villager hearts: +{count} relationships updated"
+        "countPlural=one": "Villager hearts: +{countText} relationship updated",
+        "countPlural=other": "Villager hearts: +{countText} relationships updated"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Renown: +{count} level",
-        "countPlural=other": "Renown: +{count} levels"
+        "countPlural=one": "Renown: +{countText} level",
+        "countPlural=other": "Renown: +{countText} levels"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Skills: +{count} skill updated",
-        "countPlural=other": "Skills: +{count} skills updated"
+        "countPlural=one": "Skills: +{countText} skill updated",
+        "countPlural=other": "Skills: +{countText} skills updated"
       }
     }
   ],

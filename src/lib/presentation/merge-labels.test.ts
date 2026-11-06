@@ -72,21 +72,30 @@ describe("totalMergeCounts", () => {
 
 describe("formatMergeCount", () => {
   it("returns null for zero count", () => {
-    expect(formatMergeCount("almanac", 0)).toBeNull();
+    expect(formatMergeCount("almanac", 0, "en")).toBeNull();
   });
 
   it("formats a plain count field", () => {
-    expect(formatMergeCount("almanac", 5)).toBe("Almanac: +5");
+    expect(formatMergeCount("almanac", 5, "en")).toBe("Almanac: +5");
+    expect(formatMergeCount("almanac", 1737, "en")).toBe("Almanac: +1,737");
   });
 
   it("formats a field with a suffix", () => {
-    expect(formatMergeCount("mineFloor", 3)).toBe("Mine floor: +3 floors");
+    expect(formatMergeCount("mineFloor", 3, "en")).toBe("Mine floor: +3 floors");
+    expect(formatMergeCount("mineFloor", 1234, "en")).toBe("Mine floor: +1,234 floors");
+    expect(formatMergeCount("mineFloor", 1, "en")).toBe("Mine floor: +1 floor");
+  });
+
+  it("uses the supplied locale for both wording and grouped numbers", () => {
+    expect(formatMergeCount("almanac", 1737, "fr")).toBe("Almanach : +1\u202F737");
+    expect(formatMergeCount("mineFloor", 1234, "fr")).toBe("Étage de mine : +1\u202F234 étages");
   });
 
   it("formats a boolean field without a count prefix", () => {
-    expect(formatMergeCount("hasUpperFloor", 1)).toBe("Upper floor unlocked");
-    expect(formatMergeCount("reachedSeason", 1)).toBe("Season progression updated");
-    expect(formatMergeCount("childChoice", 1)).toBe("Child choice updated");
+    expect(formatMergeCount("hasUpperFloor", 1, "en")).toBe("Upper floor unlocked");
+    expect(formatMergeCount("reachedSeason", 1, "en")).toBe("Season progression updated");
+    expect(formatMergeCount("childChoice", 1, "en")).toBe("Child choice updated");
+    expect(formatMergeCount("breakUpsDisabled", 1, "en")).toBe("Break-ups disabled");
   });
 
   it("returns a label for every previously omitted field when non-zero", () => {
@@ -99,7 +108,7 @@ describe("formatMergeCount", () => {
     ] as const;
 
     for (const field of previouslyOmitted) {
-      const result = formatMergeCount(field, 1);
+      const result = formatMergeCount(field, 1, "en");
       expect(result, `field "${field}" should produce a non-null label`).toBeTruthy();
       expect((result ?? "").length, `field "${field}" label should be non-empty`).toBeGreaterThan(
         0,

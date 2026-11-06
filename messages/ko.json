@@ -510,19 +510,24 @@
   "sync_error_camera_init": "카메라를 초기화할 수 없습니다.",
   "sync_error_camera_denied": "카메라 접근이 거부되었어요. 게임용 컴퓨터의 동기화 링크를 열거나 여기에 붙여 넣으세요.",
   "merge_imported_from": "{files}에서 가져왔습니다",
-  "merge_label_almanac": "알마낙: +{count}",
-  "merge_label_almanac_recipes": "레시피: +{count}",
-  "merge_label_animal_cosmetics": "동물 코스메틱: +{count}",
-  "merge_label_animals": "동물 변형: +{count}",
-  "merge_label_cosmetics": "코스메틱: +{count}",
-  "merge_label_museum": "박물관 기증: +{count}",
-  "merge_label_villager_relationships": "마을 주민 관계: +{count}",
-  "merge_label_perks": "스킬 특성: +{count}",
-  "merge_label_pet_cosmetics": "펫 코스메틱: +{count}",
-  "merge_label_pet_skins": "펫 스킨: +{count}",
-  "merge_label_mount_appearances": "탈 것 외형: +{count}",
-  "merge_label_quests": "퀘스트: +{count}",
-  "merge_label_spells": "주문: +{count}",
+  "merge_overall_outcome": "필드 가이드를 {percent} 완성했어요. 앞으로 {remaining}개 남았어요.",
+  "merge_changes_details": "추가된 내용",
+  "merge_label_break_ups_disabled": "이별 비활성화됨",
+  "import_save_details": "저장 파일 세부 정보",
+  "import_view_progress": "남은 항목 보기",
+  "merge_label_almanac": "알마낙: +{countText}",
+  "merge_label_almanac_recipes": "레시피: +{countText}",
+  "merge_label_animal_cosmetics": "동물 코스메틱: +{countText}",
+  "merge_label_animals": "동물 변형: +{countText}",
+  "merge_label_cosmetics": "코스메틱: +{countText}",
+  "merge_label_museum": "박물관 기증: +{countText}",
+  "merge_label_villager_relationships": "마을 주민 관계: +{countText}",
+  "merge_label_perks": "스킬 특성: +{countText}",
+  "merge_label_pet_cosmetics": "펫 코스메틱: +{countText}",
+  "merge_label_pet_skins": "펫 스킨: +{countText}",
+  "merge_label_mount_appearances": "탈 것 외형: +{countText}",
+  "merge_label_quests": "퀘스트: +{countText}",
+  "merge_label_spells": "주문: +{countText}",
   "merge_label_child_choice": "자녀 선택 업데이트됨",
   "merge_conflict_relationship": "참고로, {villager}와(과) {local} 관계로 기록되어 있었지만 저장 파일에는 {incoming}(으)로 되어 있었습니다. 기록된 상태를 유지했습니다.",
   "merge_conflict_spouse": "참고로, {localVillager}와(과) 결혼한 것으로 기록되어 있었지만 저장 파일에는 {incomingVillager}와(과) 결혼한 것으로 되어 있었습니다. 배우자는 {localVillager}로 유지했으며, 가져온 자녀 선택은 건너뛰었습니다.",
@@ -532,37 +537,37 @@
   "merge_label_reached_season": "계절 진행 업데이트됨",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "광산 층: +{count}층"
+        "countPlural=other": "광산 층: +{countText}층"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "마을 주민 호감도: 관계 {count}개 업데이트됨"
+        "countPlural=other": "마을 주민 호감도: 관계 {countText}개 업데이트됨"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "명성: +{count}레벨"
+        "countPlural=other": "명성: +{countText}레벨"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "스킬: {count}개 업데이트됨"
+        "countPlural=other": "스킬: {countText}개 업데이트됨"
       }
     }
   ],

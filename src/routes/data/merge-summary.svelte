@@ -1,11 +1,14 @@
 <script lang="ts">
   import { getName } from "#lib/data/names.js";
+  import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import * as m from "#lib/paraglide/messages.js";
   import {
     formatMergeCount,
     MERGE_COUNT_LABELS,
     totalMergeCounts,
   } from "#lib/presentation/merge-labels.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { formatNumber, formatPercent } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
@@ -24,6 +27,10 @@
   } = $props();
 
   let total = $derived(totalMergeCounts(counts));
+  let overall = $derived(getOverallProgress(getAllProgress(userState.progressContext)));
+  let percent = $derived(
+    overall.total > 0 ? Math.round((overall.completed / overall.total) * 100) : 0,
+  );
 
   function childChoiceLabel(choice: Exclude<ChildChoice, "undeclared">): string {
     return choice === "yes" ? m.relationship_action_yes() : m.relationship_action_no();
@@ -69,18 +76,34 @@
   }
 </script>
 
+<p class="text-base font-medium">
+  {m.merge_overall_outcome({
+    percent: formatPercent(percent, page.data.locale),
+    remaining: formatNumber(overall.total - overall.completed, page.data.locale),
+  })}
+</p>
+
 {#if total > 0}
-  <p class="text-base font-medium">
-    {m.merge_imported_from({ files: filesUsed.join(", ") })}
-  </p>
-  <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
-    {#each Object.keys(MERGE_COUNT_LABELS) as key (key)}
-      {@const text = formatMergeCount(key as MergeCountKey, counts[key as MergeCountKey])}
-      {#if text}
-        <li>{text}</li>
-      {/if}
-    {/each}
-  </ul>
+  <details class="mt-2 text-sm">
+    <summary class="cursor-pointer">{m.merge_changes_details()}</summary>
+    {#if filesUsed.length > 0}
+      <p class="mt-1 break-words text-muted-foreground">
+        {m.merge_imported_from({ files: filesUsed.join(", ") })}
+      </p>
+    {/if}
+    <ul class="mt-1 space-y-0.5 text-muted-foreground">
+      {#each Object.keys(MERGE_COUNT_LABELS) as key (key)}
+        {@const text = formatMergeCount(
+          key as MergeCountKey,
+          counts[key as MergeCountKey],
+          page.data.locale,
+        )}
+        {#if text}
+          <li>{text}</li>
+        {/if}
+      {/each}
+    </ul>
+  </details>
 {:else}
   <p class="text-base font-medium">
     {m.data_no_new_data_import()}
