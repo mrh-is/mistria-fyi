@@ -1,7 +1,7 @@
 import { trackerData } from "#lib/data/index.js";
 import { getMaxMineFloor } from "#lib/engine/progress.js";
 import { addProgress, countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
-import { recordEntries } from "#lib/utils/record.js";
+import { isNonEmptyArray, recordEntries } from "#lib/utils/record.js";
 
 import type { CategoryProgress, ProgressContext } from "#lib/engine/progress.js";
 import type {
@@ -10,6 +10,7 @@ import type {
 } from "#lib/engine/projections/category-projection.js";
 import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { SpellId } from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 export interface SpellRow extends ShelfRow {
   id: SpellId;
@@ -43,6 +44,24 @@ export function mineFloorProgress({
     total: maxFloor,
     waiting: maxFloor - reachable,
   };
+}
+
+/**
+ * What a player would have to do first to record `target`: finish the quest of every unbroken seal
+ * between their floor & it. A seal on `target` itself is reachable, since it stops them only there.
+ */
+export function sealsBefore(
+  { mineFloor, questStates }: ProgressContext["progress"],
+  target: number,
+): undefined | VisibilityCondition {
+  const conditions = trackerData.mines.seals
+    .filter(
+      ({ floor, questId }) =>
+        floor >= mineFloor && floor < target && questStates[questId] !== "completed",
+    )
+    .map(({ questId }): VisibilityCondition => ({ type: "questCompleted", questId }));
+  if (!isNonEmptyArray(conditions)) return undefined;
+  return conditions.length === 1 ? conditions[0] : { type: "and", conditions };
 }
 
 /** Each mine floor & each spell is one step. */

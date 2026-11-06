@@ -49,6 +49,8 @@
       return;
     }
     updateFloor(value);
+    // A request the parent holds or refuses leaves `floor` as it was, so the field must too.
+    input.value = String(floor);
   }
 
   function segmentProgress(biome: MinesBiome): number {

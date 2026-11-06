@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
-import { mineFloorProgress } from "#lib/engine/projections/mines.js";
+import { mineFloorProgress, sealsBefore } from "#lib/engine/projections/mines.js";
 import { progressShelf } from "#lib/engine/shelves.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 
@@ -22,6 +22,44 @@ function floors(mineFloor: number, ...brokenSeals: string[]) {
   );
   return mineFloorProgress({ ...makeCompletedState(), mineFloor, questStates });
 }
+
+function quest(id: string) {
+  return { type: "questCompleted", questId: sealQuest(id) };
+}
+
+function before(mineFloor: number, target: number, ...brokenSeals: string[]) {
+  return sealsBefore(
+    {
+      ...makeCompletedState(),
+      mineFloor,
+      questStates: Object.fromEntries(brokenSeals.map((id) => [sealQuest(id), "completed"])),
+    },
+    target,
+  );
+}
+
+describe("sealsBefore", () => {
+  it("asks for the seal's quest when the next floor is past it", () => {
+    expect(before(20, 21)).toEqual(quest("water"));
+  });
+
+  it("lets a player walk up to a seal, and past a broken one", () => {
+    expect(before(19, 20)).toBeUndefined();
+    expect(before(20, 21, "water")).toBeUndefined();
+  });
+
+  it("ignores seals the player is already past, and moves back up", () => {
+    expect(before(25, 26)).toBeUndefined();
+    expect(before(20, 19)).toBeUndefined();
+  });
+
+  it("asks for every seal a jump crosses", () => {
+    expect(before(5, 50)).toEqual({
+      type: "and",
+      conditions: [quest("water"), quest("earth")],
+    });
+  });
+});
 
 describe("mineFloorProgress", () => {
   it("counts floors down to the first seal as doable", () => {
