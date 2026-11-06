@@ -10,12 +10,11 @@ starts fresh; stopping keeps everything. This document is the journey, the scree
 [the decision record](decisions/2026-10-28-sync-follow-the-save.md).
 
 Status: journey, copy, & mockups approved by the maintainer on #131 (2026-10-28), after two design
-review rounds on PR #275. Every main state has a board on the
-[design canvas](https://claude.ai/artifact/5MG6rDBdx4HqjGmQyBbjrD); [Screens](#screens) embeds a
-sheet per row from the [design package](design/sync-setup/README.md). Not drawn, & specified only
-here: the Linux & Mac folder views, “Show code” from Data (the same code area as setup), the
-version-update notices, the blocked-store notice, the one-year expired code, & the farm’s “try that
-again” hint. This replaces the pairing design explored on #251.
+review rounds on PR #275. [Screens](#screens) embeds a sheet per row from the
+[design package](design/sync-setup/README.md). Not drawn, & specified only here: the Linux & Mac
+folder views, “Show code” from Data (the same code area as setup), the version-update notices, the
+blocked-store notice, the one-year expired code, & the farm’s “try that again” hint. This replaces
+the pairing design explored on #251.
 
 ## Mental model
 
@@ -94,12 +93,12 @@ The erase dialog & the “only the save file syncs” notes can say “nearly ev
 
 Four checks. They choose which options & copy appear; none of them picks a lane for the player.
 
-| Check                         | How                                                                                                          | Effect                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| A computer, not a phone       | User-Agent Client Hints `mobile` where supported, else no iOS or Android in the user agent, & a fine pointer | Shows “My save file is on this computer”; picks computer or phone copy        |
-| A Mac                         | `Macintosh` in the user agent without touch                                                                  | Downplays that option to a small button, since the game has no Mac build      |
-| Can this browser watch a file | Feature checks for `FileSystemObserver` & drop handles                                                       | “Every time you sleep”, or “Drop it in again after you play” & the Chrome tip |
-| iPhone or iPad browser        | iOS user agent, or `Macintosh` with touch, & not standalone                                                  | The home screen question before syncing                                       |
+| Check                         | How                                                                                                          | Effect                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| A computer, not a phone       | User-Agent Client Hints `mobile` where supported, else no iOS or Android in the user agent, & a fine pointer | Shows “My save file is on this computer”; picks computer or phone copy         |
+| A Mac                         | `Macintosh` in the user agent without touch                                                                  | Downplays that option to a small button, since the game has no Mac build       |
+| Can this browser watch a file | Feature checks for `FileSystemObserver` & drop handles                                                       | Sync every time you sleep, or drop it in again after you play & the Chrome tip |
+| iPhone or iPad browser        | iOS user agent, or `Macintosh` with touch, & not standalone                                                  | The home screen question before syncing                                        |
 
 The computer check is a heuristic, so the sync page keeps “On a computer?” & “On a phone?” overrides
 at the bottom.
@@ -342,12 +341,12 @@ of most of these pieces to borrow from.
 ## Copy
 
 The words live in `messages/en.json`, under the `sync_` key prefix, & that file is the one source.
-This document names a key where the journey depends on it. `_device` variants use inlang’s `match`
-on computer or phone, text in parentheses after a button is its subtitle, & line breaks in a body
-are paragraphs. Each fact question is a tag dialog: “Not now” (`sync_question_later`), or closing
-it, keeps the status button’s dot & leaves `sync_question_waiting` on Home & in the panel, with
-`sync_question_open` to bring it back. Fact questions name the tracker category they’re about, since
-one question can cover many facts.
+This document names a key where the journey depends on it. Device variants select separate messages
+(such as `_computer` & `_phone`), text in parentheses after a button is its subtitle, & line breaks
+in a body are paragraphs. Each fact question is a tag dialog: “Not now” (`sync_question_later`), or
+closing it, keeps the status button’s dot & leaves `sync_question_waiting` on Home & in the panel,
+with `sync_question_open` to bring it back. Fact questions name the tracker category they’re about,
+since one question can cover many facts.
 
 ## Decisions so far
 

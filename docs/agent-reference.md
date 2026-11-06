@@ -22,8 +22,9 @@ The setup script is deliberately not a pnpm script. `verifyDepsBeforeRun: error`
 `pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse to start when dependencies are missing
 or stale, instead of installing them implicitly.
 
-**No automatic setup:** no hook links files or installs dependencies, so setup is one explicit step
-(see the [decision record](decisions/2026-11-05-explicit-worktree-setup.md)).
+**No automatic setup:** no hook links files or installs dependencies, apart from a cloud environment
+rerunning setup when `.node-version` mismatches, so setup is one explicit step (see the
+[decision record](decisions/2026-11-05-explicit-worktree-setup.md)).
 
 - A new editing worktree runs `node scripts/setup-worktree.ts` once, before the first edit.
 - A read-only session runs nothing. It can read, search, & use `git` & `gh` without dependencies.

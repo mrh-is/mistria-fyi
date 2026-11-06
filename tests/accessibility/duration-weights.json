@@ -96,7 +96,7 @@
     "[] › states.spec.ts › stateful accessibility › populated and empty search results pass axe": 4723,
     "[] › states.spec.ts › stateful accessibility › settings dialog and import results pass axe": 4937,
     "[] › states.spec.ts › stateful accessibility › spoiler-hidden and revealed rows pass axe": 7295,
-    "[] › states.spec.ts › stateful accessibility › transfer generation, success, and failure pass axe": 5893,
+    "[] › states.spec.ts › stateful accessibility › replacement device guidance passes axe": 5893,
     "[] › touch-feedback.spec.ts › mouse hover & keyboard focus retain row feedback": 1378,
     "[] › touch-feedback.spec.ts › touch feedback › dark scroll gestures clear row, section, & stripe feedback": 5451,
     "[] › touch-feedback.spec.ts › touch feedback › light scroll gestures clear row, section, & stripe feedback": 5412
