@@ -32,6 +32,11 @@
           relationship === "romantic" || relationship === "proposed" || relationship === "married",
       ),
   );
+  let breakUpsReadOnly = $derived(
+    Object.values(userState.state.progress.villagerRelationships).some(
+      (relationship) => relationship === "proposed" || relationship === "married",
+    ),
+  );
 
   let villagers = $derived(buildVillagerRoster(locale));
   // A villager linked by hash (e.g. from search) opens the fold they sit in.
@@ -94,7 +99,7 @@
   </ul>
 {/snippet}
 
-{#if !compact && showBreakUpsSetting && !nameFilter}
+{#if !compact && showBreakUpsSetting && !breakUpsReadOnly && !nameFilter}
   <div class="break-ups-setting">
     <BlockySwitch
       checked={userState.state.progress.breakUpsDisabled}
@@ -103,7 +108,7 @@
     >
       <span>{getName("ui", "disable_break_ups", locale)}</span>
     </BlockySwitch>
-    <p>{getName("ui", "disable_break_ups_description", locale)}</p>
+    <p>{m.villagers_break_ups_hint()}</p>
   </div>
 {/if}
 
@@ -135,6 +140,14 @@
   {/if}
 </div>
 
+{#if !compact && breakUpsReadOnly}
+  <p class="break-ups-status">
+    {userState.state.progress.breakUpsDisabled
+      ? m.villagers_break_ups_disabled()
+      : m.villagers_break_ups_enabled()}
+  </p>
+{/if}
+
 <style>
   .break-ups-setting {
     display: grid;
@@ -149,7 +162,12 @@
     margin: 0;
     color: var(--color-ink-muted);
     font-size: var(--text-xs);
-    white-space: pre-line;
+  }
+
+  .break-ups-status {
+    margin-top: 16px;
+    color: var(--color-ink-muted);
+    font-size: var(--text-xs);
   }
 
   .villager-roster-shell {
