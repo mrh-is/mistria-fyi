@@ -41,12 +41,14 @@ import {
   PROVENANCE_SOURCES,
 } from "#lib/engine/provenance.js";
 import { applyEngagementCascade } from "#lib/engine/relationships.js";
+import { DeviceLocalSchema } from "#lib/sync/lane-state.js";
 import { SEASONS, WEATHERS } from "#lib/types/tracker-data.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import type { ProgressField, ProgressListField } from "#lib/engine/progress-fields.js";
 import type { ProgressHistory, ResolutionRecord } from "#lib/engine/provenance.js";
+import type { DeviceLocalState } from "#lib/sync/lane-state.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
@@ -284,66 +286,6 @@ const StrictBlobSchema = v.object({
   version: VersionSchema,
   worldState: v.object({ season: v.picklist(SEASONS), weather: v.picklist(WEATHERS) }),
 });
-
-const SyncSecretSchema = v.pipe(v.string(), v.regex(/^[\w-]{43}$/u));
-
-/**
- * The device's sync lane (`docs/sync.md` § Following). Tracking by hand, the default, has none. The
- * computer lane holds the code it shares, once its mailbox exists; a following lane, the key it
- * follows.
- */
-const SyncLaneSchema = v.variant("kind", [
-  v.object({
-    code: v.optional(v.object({ key: SyncSecretSchema, token: SyncSecretSchema })),
-    kind: v.literal("computer"),
-  }),
-  v.object({ key: SyncSecretSchema, kind: v.literal("following") }),
-]);
-export type SyncLane = v.InferOutput<typeof SyncLaneSchema>;
-
-/** A code waiting for the relay to confirm its retirement: its mailbox & write token. */
-const PendingRetireSchema = v.object({
-  mailboxId: v.pipe(v.string(), v.regex(/^[\w-]{22}$/u)),
-  token: SyncSecretSchema,
-});
-
-/** What this device last applied; see `receiptCovers` in `sync-apply.ts`. */
-const SyncReceiptSchema = v.object({
-  counter: v.optional(v.pipe(v.number(), v.safeInteger(), v.minValue(1))),
-  hash: SyncSecretSchema,
-  mailboxId: v.optional(v.pipe(v.string(), v.regex(/^[\w-]{22}$/u))),
-});
-
-/** The last save file's time & date, & the gaps learned between saves; see `sync-freshness.ts`. */
-const SyncFreshnessSchema = v.object({
-  gameDate: v.optional(
-    v.object({
-      day: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
-      season: v.picklist(SEASONS),
-      year: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
-    }),
-  ),
-  gaps: v.array(v.pipe(FiniteNumberSchema, v.minValue(0))),
-  modified: v.pipe(FiniteNumberSchema, v.minValue(0)),
-});
-
-/**
- * This device's own data under the progress key, which never leaves it: exports leave it out and
- * a restore keeps this device's. Its slots are for sync: `syncReceipt` (what this device last
- * applied), `syncFreshness` (when the last save came), `farmSwitchBackup` (progress saved before
- * switching farms), `syncLane` (the lane & its key), & `syncPendingRetires` (codes still to retire).
- * The backup is carried through as stored & read with {@link readFarmSwitchBackup}. A malformed lane,
- * retire list, receipt, or freshness is dropped rather than quarantining progress; losing a receipt
- * only applies the latest save again.
- */
-const DeviceLocalSchema = v.looseObject({
-  farmSwitchBackup: v.optional(v.unknown()),
-  syncFreshness: v.fallback(v.optional(SyncFreshnessSchema), undefined),
-  syncLane: v.fallback(v.optional(SyncLaneSchema), undefined),
-  syncPendingRetires: v.fallback(v.optional(v.array(PendingRetireSchema)), undefined),
-  syncReceipt: v.fallback(v.optional(SyncReceiptSchema), undefined),
-});
-export type DeviceLocalState = v.InferOutput<typeof DeviceLocalSchema>;
 
 const RepairBlobSchema = v.object({
   lastImport: v.fallback(v.optional(LastImportSchema, null), null),

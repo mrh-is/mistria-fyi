@@ -12,9 +12,9 @@ import { toBase64url } from "./follow.js";
 import type { GameDate } from "#lib/engine/game-calendar.js";
 import type { SaveExtraction } from "#lib/engine/import-save.js";
 import type { SyncReceipt } from "#lib/engine/sync-apply.js";
-import type { SyncApplyStamp, SyncedSave } from "#lib/stores/user-state.svelte.js";
 
 import type { SavePayload } from "./follow.js";
+import type { SyncApplyStamp, SyncedSave } from "./lane-state.js";
 
 /** A save file read for sync, with the file it came from. */
 export interface ReadSave extends SyncedSave {

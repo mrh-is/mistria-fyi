@@ -11,9 +11,9 @@ import { FOLLOW_PROTOCOL_VERSION, isFollowKey, mailboxIdFor } from "./follow.js"
 
 import type { SyncDifference } from "#lib/engine/sync-apply.js";
 import type { SyncLog, SyncLogEvent } from "#lib/feedback/sync-log-schema.js";
-import type { SyncApplyOutcome } from "#lib/stores/user-state.svelte.js";
 
 import type { PrivateValues } from "./diagnostic-redaction.js";
+import type { SyncApplyOutcome } from "./lane-state.js";
 import type { ReadSave } from "./read-save.js";
 
 export type { PrivateValues } from "./diagnostic-redaction.js";

@@ -26,13 +26,9 @@ import { readSaveFile, readSavePayload, stampOf } from "./read-save.js";
 import { relayClient } from "./sharing.js";
 
 import type { SyncAnswer, SyncResult } from "#lib/engine/sync-apply.js";
-import type {
-  SyncApplyOutcome,
-  SyncApplyQuestion,
-  SyncApplyRequest,
-} from "#lib/stores/user-state.svelte.js";
 
 import type { FollowKeys, MailboxSubscriber, ReadResult } from "./follow.js";
+import type { SyncApplyOutcome, SyncApplyQuestion, SyncApplyRequest } from "./lane-state.js";
 import type { ReadSave } from "./read-save.js";
 
 /** Held for as long as a tab leads. A queued tab takes over when the holder's page goes away. */
