@@ -153,6 +153,24 @@ async function flush(): Promise<void> {
   });
 }
 
+async function untilStatus(
+  receiver: Receiver,
+  predicate: (status: ReceiverStatus) => boolean,
+  timeout = 1000,
+): Promise<ReceiverStatus> {
+  await vi.waitFor(
+    () => {
+      expect(predicate(receiver.status), JSON.stringify(receiver.status)).toBe(true);
+    },
+    { interval: 5, timeout },
+  );
+  return receiver.status;
+}
+
+async function untilKind(receiver: Receiver, kind: ReceiverStatus["kind"], timeout = 1000) {
+  return untilStatus(receiver, (status) => status.kind === kind, timeout);
+}
+
 function file(bytes: Uint8Array<ArrayBuffer>): File {
   return new File([bytes], FARM_FILE, { lastModified: 2000 });
 }
@@ -1144,7 +1162,7 @@ describe("switching farms", () => {
       setItem(name, value);
     };
     receiver.start();
-    await flush();
+    await untilKind(receiver, "switch-failed");
     expect(receiver.status.kind).toBe("switch-failed");
     expect(userState.state.progress.renown).toBe(3);
     expect(localStorage.getItem(PROGRESS_KEY)).toBe(before);
@@ -1265,15 +1283,18 @@ describe("what the review found", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver } = await load(ASKS, relay);
     receiver.start();
-    await flush();
+    await untilStatus(receiver, (status) => status.kind === "asking");
     const asked = questionId(receiver.status);
 
     relay.sockets[0].onpush(await envelope(5, GARBAGE));
-    await flush();
-    expect(questionId(receiver.status)).toBe(asked);
+    await untilStatus(
+      receiver,
+      (status) => status.kind === "asking" && questionId(status) === asked,
+    );
 
     await receiver.answer(asked, "accept");
     expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
+    await untilKind(receiver, "unreadable");
     expect(receiver.status.kind).toBe("unreadable");
   });
 
@@ -1281,14 +1302,17 @@ describe("what the review found", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver } = await load(ASKS, relay);
     receiver.start();
-    await flush();
+    await untilStatus(receiver, (status) => status.kind === "asking");
     const asked = questionId(receiver.status);
 
     relay.sockets[0].onpush(await envelope(5, saveBytes(SEASON), { version: 2 }));
-    await flush();
-    expect(questionId(receiver.status)).toBe(asked);
+    await untilStatus(
+      receiver,
+      (status) => status.kind === "asking" && questionId(status) === asked,
+    );
 
     await receiver.answer(asked, "accept");
+    await untilKind(receiver, "update-here");
     expect(receiver.status.kind).toBe("update-here");
   });
 
