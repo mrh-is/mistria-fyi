@@ -44,5 +44,10 @@ describe("ShelfGroups during search", () => {
     expect(onlyMatch.getByRole("heading", { name: "Not now" })).toBeVisible();
     expect(onlyMatch.getByText("1")).toBeVisible();
     expect(onlyMatch.getByText("Wild Berries")).toBeVisible();
+
+    await view.rerender({ labelFirstShelf: false });
+
+    expect(onlyMatch.queryByRole("heading", { name: "Not now" })).toBeNull();
+    expect(onlyMatch.getByText("Wild Berries")).toBeVisible();
   });
 });

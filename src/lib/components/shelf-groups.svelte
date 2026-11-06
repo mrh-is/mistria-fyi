@@ -23,6 +23,7 @@
     group,
     isLeaving,
     items,
+    labelFirstShelf = true,
     level = 3,
   }: {
     empty?: Snippet;
@@ -35,6 +36,8 @@
     /** A row finishing now stays where it is until it has had time to leave. */
     isLeaving?: (item: T) => boolean;
     items: readonly T[];
+    /** Opt out when a navigation shortcut forces shelves open without filtering their rows. */
+    labelFirstShelf?: boolean;
     /** The fold headings' level: one below the heading that holds these items. */
     level?: 2 | 3 | 4;
   } = $props();
@@ -83,7 +86,7 @@
 {#each groups as { members, shelf }, index (shelf)}
   <div role="group" aria-label={shelfLabel(shelf)}>
     {#if index === 0}
-      {#if forceOpen && shelf !== "todo"}
+      {#if forceOpen && labelFirstShelf && shelf !== "todo"}
         <ShelfHeading count={members.length} {explains} {level} {shelf} />
       {/if}
       {@render group(members)}
