@@ -94,6 +94,7 @@ function syntheticFiddle() {
       },
     },
     requirements: { repaired_horse_statue: { seen_cutscene: "find_the_weathervane_setup" } },
+    seals: {},
     ui: {
       character_customization: {},
       menus: { sub_menus: { almanac: { categories: [{ key: "crops", tags: ["crop"] }] } } },
