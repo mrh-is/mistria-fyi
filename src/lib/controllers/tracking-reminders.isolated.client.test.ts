@@ -121,6 +121,8 @@ it("suggests another backup after resetting a large previous collection", async 
   const { trackerData } = await import("#lib/data/index.js");
   for (const id of Object.keys(trackerData.items).slice(0, 100)) {
     store.toggleAlmanacItem(id as keyof typeof trackerData.items);
+    // The first check applies the starter items; undo them so the count stays at the 100 checks.
+    store.starterItems?.undo();
   }
   expect(store.factCount).toBe(100);
   await controller.checkBackup();
