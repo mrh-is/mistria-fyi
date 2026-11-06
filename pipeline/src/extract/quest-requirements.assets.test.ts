@@ -17,19 +17,20 @@ describe("quest requirements — real assets", () => {
     assignQuestRequirements(fiddle, quests, buildCutsceneQuestMap(fiddle));
     const all = Object.values(quests).flatMap((group) => Object.values(group));
     expect(all.length).toBeGreaterThan(200);
-    for (const quest of all) expect(quest.requirements).toBeDefined();
-    expect(quests.fetch["request_for_berries" as QuestId].requirements?.start).toEqual({
+    // Unconstrained starts are omitted, so the stored conditions never contain a bare "always".
+    for (const quest of all) expect(quest.startCondition?.type).not.toBe("always");
+    expect(quests.fetch["request_for_berries" as QuestId].startCondition).toEqual({
       type: "season",
       seasons: ["spring"],
     });
-    expect(quests.fetch["request_for_catfish" as QuestId].requirements?.start).toEqual({
+    expect(quests.fetch["request_for_catfish" as QuestId].startCondition).toEqual({
       type: "all",
       conditions: [
         { type: "skillLevel", level: 2, skillId: "fishing" },
         { type: "season", seasons: ["spring"] },
       ],
     });
-    const mill = quests.story["repair_the_mill" as QuestId].requirements?.start;
+    const mill = quests.story["repair_the_mill" as QuestId].startCondition;
     expect(mill?.type).toBe("all");
     if (mill?.type !== "all") throw new Error("Missing mill start gates");
     expect(mill.conditions).toContainEqual({
@@ -37,6 +38,6 @@ describe("quest requirements — real assets", () => {
       questId: "replenishing_mistrias_food_reserves_1",
       state: "completed",
     });
-    expect(quests.story["find_the_weathervane" as QuestId].requirements?.start).toBeDefined();
+    expect(quests.story["find_the_weathervane" as QuestId].startCondition).toBeDefined();
   });
 });

@@ -20,35 +20,20 @@ vi.mock("#lib/data/index.js", () => ({
     pregnancyQuestByVillager: {},
     quests: {
       story: {
-        acquired: {
-          requirements: { start: { type: "itemAcquired", itemId: "lilac" }, stages: [] },
-          sources: [],
-        },
-        item: {
-          requirements: { start: { type: "itemAvailable", itemId: "lilac" }, stages: [] },
-          sources: [],
-        },
+        acquired: { sources: [], startCondition: { type: "itemAcquired", itemId: "lilac" } },
+        open: { sources: [] },
         progression: {
-          requirements: {
-            start: {
-              type: "all",
-              conditions: [
-                { type: "skillLevel", level: 2, skillId: "fishing" },
-                { type: "mineFloor", floor: 40 },
-                { type: "quest", questId: "prerequisite", state: "completed" },
-              ],
-            },
-            stages: [],
-          },
           sources: [],
-        },
-        seasonal: {
-          requirements: {
-            start: { type: "season", seasons: ["summer"] },
-            stages: [{ type: "season", seasons: ["winter"] }],
+          startCondition: {
+            type: "all",
+            conditions: [
+              { type: "skillLevel", level: 2, skillId: "fishing" },
+              { type: "mineFloor", floor: 40 },
+              { type: "quest", questId: "prerequisite", state: "completed" },
+            ],
           },
-          sources: [],
         },
+        seasonal: { sources: [], startCondition: { type: "season", seasons: ["summer"] } },
       },
     },
   },
@@ -85,7 +70,11 @@ const row = (id: string, ctx: ProgressContext) =>
   projectQuests(ctx).rows.find((quest) => quest.id === id);
 
 describe("quest start availability", () => {
-  it("uses the quest's own season even without an item source, separately from stages", () => {
+  it("treats a quest without a start condition as unconstrained", () => {
+    expect(row("open", context("winter"))?.doable).toBe(true);
+  });
+
+  it("uses the quest's own season even without an item source", () => {
     expect(row("seasonal", context())).toMatchObject({
       doable: false,
       doableAnywhere: false,
@@ -124,11 +113,6 @@ describe("quest start availability", () => {
         }),
       )?.doable,
     ).toBe(false);
-  });
-
-  it("evaluates item obtainability using the item's own sources", () => {
-    expect(row("item", context())?.doable).toBe(true);
-    expect(row("item", context("summer"))?.doable).toBe(false);
   });
 
   it("uses recorded acquisition history independently of today's sources", () => {

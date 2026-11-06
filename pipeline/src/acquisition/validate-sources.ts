@@ -82,7 +82,6 @@ const AVAILABILITY_FIELDS = {
   heartLevel: ["level", "villagerId"],
   isDating: [],
   itemAcquired: ["itemId"],
-  itemAvailable: ["itemId"],
   mineFloor: ["floor"],
   not: ["condition"],
   perkUnlocked: ["perkId"],
@@ -656,7 +655,6 @@ function validateAvailability(
       case "hasUpperFloor":
       case "isDating":
         return;
-      case "itemAvailable":
       case "itemAcquired":
         reference(
           diagnostics,
@@ -1673,31 +1671,16 @@ function validateQuests(
     const questRecords = isRecord(group) ? group : {};
     for (const [questId, quest] of sortedEntries(questRecords)) {
       if (!isRecord(quest)) continue;
-      if (isRecord(quest.requirements)) {
-        const requirements = quest.requirements;
-        const path = `${groupPath}.${questId}.requirements`;
+      if (quest.startCondition !== undefined) {
         validateAvailability(
-          requirements.start,
+          quest.startCondition,
           questId,
-          `${path}.start`,
+          `${groupPath}.${questId}.startCondition`,
           quest,
           references,
           diagnostics,
           new Set(),
         );
-        if (Array.isArray(requirements.stages)) {
-          for (const [index, stage] of requirements.stages.entries()) {
-            validateAvailability(
-              stage,
-              questId,
-              `${path}.stages[${index}]`,
-              quest,
-              references,
-              diagnostics,
-              new Set(),
-            );
-          }
-        }
       }
       validateQuestFields(
         quest,

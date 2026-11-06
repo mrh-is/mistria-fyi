@@ -19,7 +19,6 @@ export interface AvailabilityContext {
   hasUpperFloor?: boolean;
   heartLevels?: Lookup<VillagerId, number>;
   isDating?: boolean;
-  items?: Lookup<ItemId, boolean>;
   mineFloor?: number;
   questStates?: Lookup<QuestId, QuestVisibility>;
   /** The latest season the player has reached. */
@@ -63,8 +62,6 @@ export function evaluateAvailabilityCondition(
     }
     case "isDating":
       return context.isDating ?? "unknown";
-    case "itemAvailable":
-      return context.items?.get(condition.itemId) ?? "unknown";
     case "itemAcquired":
       return context.acquiredItems?.get(condition.itemId) ?? "unknown";
     case "mineFloor":
@@ -138,7 +135,6 @@ export function simplifyAvailabilityCondition(
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "itemAvailable":
     case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":
@@ -188,7 +184,6 @@ function collectBadges(condition: AvailabilityCondition, badges: DisplayBadges):
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "itemAvailable":
     case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":
@@ -249,7 +244,6 @@ function hasSelectiveSeasonConditionInSimplified(condition?: AvailabilityConditi
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "itemAvailable":
     case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":

@@ -28,7 +28,6 @@ export function availabilityToVisibility(condition?: AvailabilityCondition): Vis
       return condition;
     case "dateUnlocked":
     case "gamePredicate":
-    case "itemAvailable":
     case "itemAcquired":
     case "not":
     case "season":

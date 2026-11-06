@@ -353,8 +353,9 @@ The `enrich/` modules compute spoiler gating from facts extracted in `extract/`.
 
 ### Quest requirements
 
-Every quest records `requirements.start` separately from the ordered `requirements.stages`. Start
-gates come from `quests/request_board.toml`, letters' `quest_to_start`, and cutscenes'
+A quest's optional `startCondition` records what must be true before it can start. Quests with no
+start gate omit it. Stage requirements describe finishing a quest, so the pipeline doesn't extract
+them. Start gates come from `quests/request_board.toml`, letters' `quest_to_start`, and cutscenes'
 `quest_to_start` (including arrays). Multiple ways to start the same quest are alternatives. Setup
 cutscenes that map back to the quest follow their native requirements instead of creating a
 self-dependency. Stage queries and `quest_to_progress` do not start quests.
@@ -363,14 +364,13 @@ Season, skill, heart, mine-floor, renown, and quest-completion gates use availab
 Completed-quest arrays require every member; delayed completions keep both the completion gate and
 the native delay. Exact dates constrain the season while retaining the day/year restriction as a
 game predicate. Acquired-item gates read Almanac history for tracked items; untracked acquisition
-history stays unknown. `has_item` objectives retain native quantities alongside item obtainability,
-which does not assert inventory possession. Other reviewed game predicates remain explicit;
-unrecognized predicates throw, even when newly declared in `requirements.toml`.
+history stays unknown. Other reviewed game predicates remain explicit `gamePredicate` leaves, which
+quest shelves treat as met. Unrecognized predicates throw, even when newly declared in
+`requirements.toml`.
 
 Quest shelves evaluate start conditions in addition to spoiler gates and existing fetch/cooking item
-sources. An obtained quest has already passed its start conditions. Stage objectives never become
-start gates, and the app does not infer a current stage, inventory counts, calendar day, or letter
-receipt from incomplete progress.
+sources. An obtained quest has already passed its start conditions. The app doesn't infer inventory
+counts, calendar day, or letter receipt from incomplete progress.
 
 ### Recipes
 

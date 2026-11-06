@@ -14,17 +14,13 @@ import type { Source } from "#lib/types/acquisition.js";
 import type { AcquisitionSourceAssembly } from "./validate-sources.js";
 
 describe("validateAcquisitionSources", () => {
-  it.each(["start", "stage"])("validates item references in quest %s requirements", (where) => {
-    const missing = { type: "itemAcquired", itemId: "unknown_item" };
+  it("validates item references in quest start conditions", () => {
     const trackerData = {
       quests: {
         story: {
           example: {
-            requirements: {
-              start: where === "start" ? missing : { type: "always" },
-              stages: where === "stage" ? [missing] : [],
-            },
             sources: [],
+            startCondition: { type: "itemAcquired", itemId: "unknown_item" },
           },
         },
       },
@@ -33,10 +29,7 @@ describe("validateAcquisitionSources", () => {
     expect(captureDiagnostics(trackerData, references)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          fieldPath:
-            where === "start"
-              ? "quests.story.example.requirements.start.itemId"
-              : "quests.story.example.requirements.stages[0].itemId",
+          fieldPath: "quests.story.example.startCondition.itemId",
           kind: "unresolved-reference",
         }),
       ]),

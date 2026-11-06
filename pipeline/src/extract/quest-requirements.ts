@@ -2,13 +2,7 @@ import { simplifyAvailabilityCondition } from "#lib/engine/availability-conditio
 import { SEASONS } from "#lib/types/tracker-data.js";
 
 import { projectRequirementExpressionToAvailability } from "../acquisition/requirement-projector.js";
-import {
-  expectArray,
-  expectNumber,
-  expectRecord,
-  expectString,
-  expectStringArray,
-} from "../data-shapes.js";
+import { expectNumber, expectRecord, expectString, expectStringArray } from "../data-shapes.js";
 import { forEachQuest, QUEST_TYPE_BY_GROUP, TRACKED_QUEST_GROUPS } from "../extractor-helpers.js";
 import { getCutsceneRecords, sourceFileFor } from "../parse/parse-fiddle.js";
 import { createRequirementContext, parseRequirements } from "../parse/requirements.js";
@@ -27,20 +21,15 @@ import type { ParsedGameData } from "../parse/parse-fiddle.js";
 import type { RequirementExpression } from "../parse/requirements.js";
 import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
 
-// Reviewed native predicates used by quest starts and objectives. Untracked facts remain explicit
+// Reviewed native predicates that can gate a quest start. Untracked facts remain explicit
 // gamePredicate leaves. A new predicate requires review even if requirements.toml declares it.
 const QUEST_PREDICATES = new Set([
   "acquired_item",
-  "completed_museum",
   "completed_quest",
-  "custom",
-  "defeated_monster",
   "earned_gold",
   "has_any_animal",
   "has_barn",
   "has_coop",
-  "has_gold",
-  "has_item",
   "has_perk",
   "has_upper_floor",
   "in_time_range",
@@ -48,7 +37,6 @@ const QUEST_PREDICATES = new Set([
   "is_day_type",
   "is_season",
   "is_weather",
-  "met_npc",
   "reached_date",
   "reached_heart_level",
   "reached_mines_level",
@@ -56,9 +44,6 @@ const QUEST_PREDICATES = new Set([
   "reached_skill_level",
   "received_letter",
   "seen_cutscene",
-  "shipped_item",
-  "shipped_tag",
-  "supplied_items",
   "unlocked_animal",
   "world_fact_is",
 ]);
@@ -66,7 +51,7 @@ const QUEST_PREDICATES = new Set([
 /**
  * RequestBoard.gml, Inbox.gml and Mist.gml gate quest activation outside the quest's stage
  * list. Several letters/scenes can start the same quest: those are alternatives, never siblings
- * of an AND. Stage requirements are recorded separately and never used as start gates.
+ * of an AND. Stage requirements describe finishing a quest, so they aren't extracted here.
  */
 export function assignQuestRequirements(
   fiddle: ParsedGameData,
@@ -168,22 +153,6 @@ export function assignQuestRequirements(
         ids.map((itemId) => ({ type: "itemAcquired", itemId: itemId as ItemId })),
       );
     }
-    if (predicate === "has_item") {
-      if (Array.isArray(value)) {
-        return combine(
-          "all",
-          value.map((entry) => visit({ predicate, value: entry }, location, questId, scenes)),
-        );
-      }
-      const ids = typeof value === "string" ? [value] : Object.keys(expectRecord(value, location));
-      return combine("all", [
-        projected,
-        ...ids.map((itemId): AvailabilityCondition => ({
-          type: "itemAvailable",
-          itemId: itemId as ItemId,
-        })),
-      ]);
-    }
     if (predicate === "completed_quest" && typeof value !== "string") {
       if (Array.isArray(value)) {
         return combine(
@@ -248,29 +217,20 @@ export function assignQuestRequirements(
     }
   }
 
-  forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (group, id, native) => {
+  forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (group, id) => {
     const quest = quests[QUEST_TYPE_BY_GROUP[group as TrackedQuestGroup]][id as QuestId];
     if (!quest) throw new Error(`Quest ${id} is absent from extracted ${group}`);
-    const location = {
-      entityId: id,
-      fieldPath: "stages",
-      sourcePath: sourceFileFor(fiddle, `quests.${group}`),
-    };
-    const stages = native.stages === undefined ? [] : expectArray<unknown>(native.stages, location);
-    quest.requirements = {
-      start: combine("any", starts.get(id) ?? [{ type: "always" }]),
-      stages: stages.map((raw, index) =>
-        project(
-          expectRecord(raw, location).requirements,
-          { ...location, fieldPath: `stages[${index}].requirements` },
-          undefined,
-        ),
-      ),
-    };
+    const routes = starts.get(id);
+    if (!routes) return;
+    // An unconstrained start is the schema default, so it's omitted rather than stored.
+    const start = combine("any", routes);
+    if (start.type !== "always") quest.startCondition = start;
   });
 }
 
-function combine(type: "all" | "any", conditions: AvailabilityCondition[]): AvailabilityCondition {
+function combine(type: "all" | "any", all: AvailabilityCondition[]): AvailabilityCondition {
+  // A "never" alternative can't make an "any" true, so it's dropped rather than stored.
+  const conditions = type === "any" ? all.filter((condition) => !isNever(condition)) : all;
   if (conditions.length === 0) {
     return type === "all" ? { type: "always" } : { type: "not", condition: { type: "always" } };
   }
@@ -280,4 +240,8 @@ function combine(type: "all" | "any", conditions: AvailabilityCondition[]): Avai
       conditions: conditions as [AvailabilityCondition, ...AvailabilityCondition[]],
     }) ?? { type: "always" }
   );
+}
+
+function isNever(condition: AvailabilityCondition): boolean {
+  return condition.type === "not" && condition.condition.type === "always";
 }

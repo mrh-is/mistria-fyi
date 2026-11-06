@@ -19,19 +19,15 @@ import type {
 const summer = { season: "summer" as const, weather: "calm" as const };
 
 describe("evaluateAvailabilityCondition", () => {
-  it("distinguishes acquisition history, item obtainability, & renown", () => {
+  it("evaluates acquisition history & renown", () => {
     const itemId = "lilac" as ItemId;
     const acquired: AvailabilityCondition = { type: "itemAcquired", itemId };
-    const obtainable: AvailabilityCondition = { type: "itemAvailable", itemId };
     expect(evaluateAvailabilityCondition(acquired, {})).toBe("unknown");
-    expect(evaluateAvailabilityCondition(obtainable, {})).toBe("unknown");
-    const context = {
-      acquiredItems: new Map([[itemId, true]]),
-      items: new Map([[itemId, false]]),
-      renown: 40,
-    };
+    const context = { acquiredItems: new Map([[itemId, true]]), renown: 40 };
     expect(evaluateAvailabilityCondition(acquired, context)).toBe(true);
-    expect(evaluateAvailabilityCondition(obtainable, context)).toBe(false);
+    expect(
+      evaluateAvailabilityCondition(acquired, { acquiredItems: new Map([[itemId, false]]) }),
+    ).toBe(false);
     expect(evaluateAvailabilityCondition({ type: "renownLevel", level: 40 }, context)).toBe(true);
     expect(evaluateAvailabilityCondition({ type: "renownLevel", level: 41 }, context)).toBe(false);
   });

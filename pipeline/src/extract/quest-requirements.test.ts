@@ -33,7 +33,7 @@ describe("quest requirements", () => {
       quests,
       {},
     );
-    expect(quests.story["example" as QuestId].requirements?.start).toEqual({
+    expect(quests.story["example" as QuestId].startCondition).toEqual({
       type: "all",
       conditions: [
         { type: "itemAcquired", itemId: "lilac" },
@@ -43,7 +43,7 @@ describe("quest requirements", () => {
     });
   });
 
-  it("keeps alternative start routes separate from ordered objectives", () => {
+  it("keeps alternative start routes & ignores stage objectives", () => {
     const quests = questRegistry();
     assignQuestRequirements(
       makeFiddle({
@@ -63,8 +63,9 @@ describe("quest requirements", () => {
       quests,
       {},
     );
-    expect(quests.story["example" as QuestId].requirements).toEqual({
-      start: {
+    expect(quests.story["example" as QuestId]).toEqual({
+      sources: [],
+      startCondition: {
         type: "any",
         conditions: [
           {
@@ -77,16 +78,6 @@ describe("quest requirements", () => {
           { type: "quest", questId: "repair_the_bridge", state: "completed" },
         ],
       },
-      stages: [
-        {
-          type: "all",
-          conditions: [
-            { type: "gamePredicate", predicate: "has_item", value: { trout: 3 } },
-            { type: "itemAvailable", itemId: "trout" },
-          ],
-        },
-        { type: "always" },
-      ],
     });
   });
 
@@ -109,26 +100,23 @@ describe("quest requirements", () => {
       quests,
       {},
     );
-    expect(quests.story["example" as QuestId].requirements).toEqual({
-      start: {
-        type: "all",
-        conditions: [
-          { type: "quest", questId: "prerequisite", state: "completed" },
-          {
-            type: "gamePredicate",
-            predicate: "completed_quest",
-            value: { days_after: 3, quest: "prerequisite" },
-          },
-          { type: "season", seasons: ["fall"] },
-          {
-            type: "gamePredicate",
-            predicate: "reached_date",
-            value: { day: 7, exact: true, season: "fall" },
-          },
-          { type: "mineFloor", floor: 40 },
-        ],
-      },
-      stages: [],
+    expect(quests.story["example" as QuestId].startCondition).toEqual({
+      type: "all",
+      conditions: [
+        { type: "quest", questId: "prerequisite", state: "completed" },
+        {
+          type: "gamePredicate",
+          predicate: "completed_quest",
+          value: { days_after: 3, quest: "prerequisite" },
+        },
+        { type: "season", seasons: ["fall"] },
+        {
+          type: "gamePredicate",
+          predicate: "reached_date",
+          value: { day: 7, exact: true, season: "fall" },
+        },
+        { type: "mineFloor", floor: 40 },
+      ],
     });
   });
 
@@ -145,7 +133,7 @@ describe("quest requirements", () => {
       quests,
       { setup: { phase: "available", questId: "example" as QuestId } },
     );
-    expect(quests.story["example" as QuestId].requirements?.start).toEqual({
+    expect(quests.story["example" as QuestId].startCondition).toEqual({
       type: "mineFloor",
       floor: 20,
     });
@@ -159,7 +147,7 @@ describe("quest requirements", () => {
           request_board: {
             example: {
               requirements: {
-                or: [{ mine_access: true }, { has_gold: 100, invert: { is_season: "winter" } }],
+                or: [{ mine_access: true }, { earned_gold: 100, invert: { is_season: "winter" } }],
               },
             },
           },
@@ -170,14 +158,14 @@ describe("quest requirements", () => {
       quests,
       {},
     );
-    expect(quests.story["example" as QuestId].requirements?.start).toEqual({
+    expect(quests.story["example" as QuestId].startCondition).toEqual({
       type: "any",
       conditions: [
         { type: "mineFloor", floor: 20 },
         {
           type: "all",
           conditions: [
-            { type: "gamePredicate", predicate: "has_gold", value: 100 },
+            { type: "gamePredicate", predicate: "earned_gold", value: 100 },
             { type: "not", condition: { type: "season", seasons: ["winter"] } },
           ],
         },
@@ -185,28 +173,66 @@ describe("quest requirements", () => {
     });
   });
 
-  it.each(["start", "stage", "named"])(
-    "rejects an unreviewed %s predicate with its source",
-    (where) => {
-      const quests = questRegistry();
-      const requirements = { future_predicate: true };
-      const fiddle = makeFiddle({
+  it("omits the start condition when nothing gates the quest", () => {
+    const quests = questRegistry();
+    assignQuestRequirements(
+      makeFiddle({
+        letters: { invitation: { quest_to_start: "example" } },
         quests: {
-          request_board:
-            where === "stage"
-              ? {}
-              : {
-                  example: {
-                    requirements: where === "named" ? { future_gate: true } : requirements,
-                  },
-                },
-          story_quests: { example: where === "stage" ? { stages: [{ requirements }] } : {} },
+          story_quests: { example: { stages: [{ requirements: { has_item: "trout" } }] } },
         },
-        requirements: where === "named" ? { future_gate: requirements, future_predicate: {} } : {},
-      });
-      expect(() => {
-        assignQuestRequirements(fiddle, quests, {});
-      }).toThrow(/Unrecognized quest requirement "future_predicate".*quests/);
-    },
-  );
+      }),
+      quests,
+      {},
+    );
+    expect(quests.story["example" as QuestId]).toEqual({ sources: [] });
+  });
+
+  it.each(["start", "named"])("rejects an unreviewed %s predicate with its source", (where) => {
+    const quests = questRegistry();
+    const requirements = { future_predicate: true };
+    const fiddle = makeFiddle({
+      quests: {
+        request_board: {
+          example: { requirements: where === "named" ? { future_gate: true } : requirements },
+        },
+        story_quests: { example: {} },
+      },
+      requirements: where === "named" ? { future_gate: requirements, future_predicate: {} } : {},
+    });
+    expect(() => {
+      assignQuestRequirements(fiddle, quests, {});
+    }).toThrow(/Unrecognized quest requirement "future_predicate".*quests/);
+  });
+
+  it("rejects a stage-only predicate used as a start gate", () => {
+    const fiddle = makeFiddle({
+      quests: {
+        request_board: { example: { requirements: { has_item: "trout" } } },
+        story_quests: { example: {} },
+      },
+    });
+    expect(() => {
+      assignQuestRequirements(fiddle, questRegistry(), {});
+    }).toThrow(/Unrecognized quest requirement "has_item"/);
+  });
+
+  it("drops a start route that can never fire", () => {
+    const quests = questRegistry();
+    assignQuestRequirements(
+      makeFiddle({
+        letters: {
+          blocked: { quest_to_start: "example", requirements: { or: [] } },
+          open: { quest_to_start: "example", requirements: { reached_mines_level: 20 } },
+        },
+        quests: { story_quests: { example: {} } },
+      }),
+      quests,
+      {},
+    );
+    expect(quests.story["example" as QuestId].startCondition).toEqual({
+      type: "mineFloor",
+      floor: 20,
+    });
+  });
 });

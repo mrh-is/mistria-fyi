@@ -1,5 +1,5 @@
 import { trackerData, trackerIndex } from "#lib/data/index.js";
-import { isAvailabilityDoable, isDoableToday } from "#lib/engine/availability.js";
+import { isAvailabilityDoable } from "#lib/engine/availability.js";
 import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { isSpoilered } from "#lib/engine/projections/category-projection.js";
 import { countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
@@ -46,14 +46,13 @@ export function projectQuests(
       // Obtained quests have already passed their start gate, including seasonal board posting.
       const canStart =
         ctx.progress.questStates[id] === "obtained" ||
-        isAvailabilityDoable(quest.requirements?.start, ctx, {
+        isAvailabilityDoable(quest.startCondition, ctx, {
           acquiredItems: {
             get: (itemId) => {
               const canonical = trackerIndex.memberToCanonicalAlmanacId.get(itemId);
               return canonical === undefined ? undefined : ctx.progress.almanac.has(canonical);
             },
           },
-          items: { get: (itemId) => isDoableToday(trackerData.items[itemId], ctx) },
         });
       rows.push({
         ...facts,

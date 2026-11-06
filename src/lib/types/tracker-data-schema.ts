@@ -67,7 +67,6 @@ export const AvailabilityLeafSchema = v.variant("type", [
   v.strictObject({ type: v.literal("hasUpperFloor") }),
   v.strictObject({ type: v.literal("heartLevel"), level: number, villagerId: id("VillagerId") }),
   v.strictObject({ type: v.literal("isDating") }),
-  v.strictObject({ type: v.literal("itemAvailable"), itemId: id("ItemId") }),
   v.strictObject({ type: v.literal("itemAcquired"), itemId: id("ItemId") }),
   v.strictObject({ type: v.literal("mineFloor"), floor: number }),
   v.strictObject({ type: v.literal("perkUnlocked"), perkId: id("PerkId") }),
@@ -230,13 +229,8 @@ export const HeartLevelChangeSchema = v.strictObject({
 });
 export const QuestEntitySchema = v.strictObject({
   ...TrackerEntitySchema.entries,
-  /** Absent means unconstrained; the pipeline records both parts for every quest. */
-  requirements: v.optional(
-    v.strictObject({
-      start: AvailabilitySchema,
-      stages: v.array(AvailabilitySchema),
-    }),
-  ),
+  /** What must be true before the quest can start. Absent means unconstrained. */
+  startCondition: v.optional(AvailabilitySchema),
 });
 export const CookingQuestSchema = v.strictObject({
   ...QuestEntitySchema.entries,

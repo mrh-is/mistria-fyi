@@ -93,7 +93,6 @@ function collectGamePredicates(
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "itemAvailable":
     case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":

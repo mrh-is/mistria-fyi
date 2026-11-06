@@ -61,7 +61,7 @@ export function isSourceDoable(source: Source, ctx: DayContext): boolean {
 export function isAvailabilityDoable(
   condition: AvailabilityCondition | undefined,
   ctx: DayContext,
-  facts: Pick<AvailabilityContext, "acquiredItems" | "items"> = {},
+  facts: Pick<AvailabilityContext, "acquiredItems"> = {},
 ): boolean {
   if (!condition) return true;
   const availability = assumeIgnoredLeavesMet(condition, false);
@@ -113,7 +113,6 @@ function assumeIgnoredLeavesMet(
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "itemAvailable":
     case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":
