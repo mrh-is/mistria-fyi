@@ -1,6 +1,5 @@
 import { cleanup, setup } from "@testing-library/svelte";
 import { flushSync, tick } from "svelte";
-import { toast } from "svelte-sonner";
 import { aroundEach, beforeAll, vi } from "vitest";
 
 import { resetRowReveal } from "#lib/controllers/row-reveal.svelte.js";
@@ -11,15 +10,13 @@ import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { syncNotice } from "#lib/sync/notice.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
+import { toastState } from "#lib/test-utils/sonner-state.js";
 
 const originalGetLocale = getLocale;
 
-beforeAll(() => {
-  userState.loadFromStorage();
-});
-
 function resetSharedState(): void {
   resetRowReveal();
+  toastState.reset();
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
@@ -33,7 +30,6 @@ function resetSharedState(): void {
   toolbarState.reset();
   pageStub.reset();
   syncNotice.dismiss();
-  toast.dismiss();
   theme.set("system");
   overwriteGetLocale(originalGetLocale);
   flushSync();
@@ -46,6 +42,9 @@ function resetSharedState(): void {
   // Save import & backup restore release their reload holds when unmounted.
   if (updateHolds.held) throw new Error("A client test left an app update hold active");
 }
+
+// Store initialization can write defaults before the first test on a fresh worker.
+beforeAll(resetSharedState);
 
 // The outer hook runs even if a test fails. Unmount with the test's stubs still installed so
 // component teardown cancels its own timers, listeners, and frames through the same APIs it used.

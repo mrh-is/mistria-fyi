@@ -443,9 +443,9 @@ to no project or to more than one.
 
 #### Shared client cleanup
 
-`src/vitest-setup-client-state.ts` unmounts Testing Library components after each `client` test,
-then resets the worker’s shared state. Suites still dispose of resources they create directly, such
-as their own `$effect.root` or event listeners.
+`src/vitest-setup-client-state.ts` resets the worker’s shared state before each `client` file. After
+each test, it unmounts Testing Library components and runs the same reset. Suites still dispose of
+resources they create directly, such as their own `$effect.root` or event listeners.
 
 | State                | Teardown                                                                                                                                                                                                 |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -455,7 +455,7 @@ as their own `$effect.root` or event listeners.
 | `theme` & Paraglide  | Restores the system theme & original locale getter. Removes the document’s dark class & test theme-color meta tag.                                                                                       |
 | Row-reveal scheduler | Unmount cancels each list’s frames. The shared reset clears the queue, frame budget, & cached height.                                                                                                    |
 | Reload holds         | Unmount releases component-owned holds. Teardown fails if a hold remains active.                                                                                                                         |
-| Sync notice & toasts | Clears the sync notice & dismisses visible Sonner toasts. The receiver & courier stay idle in the shared project. Tests that drive them run in `client-isolated`.                                        |
+| Sync notice & toasts | Clears the sync notice, Sonner’s queue, & its removal timers. The receiver & courier stay idle in the shared project. Tests that drive them run in `client-isolated`.                                    |
 | Browser stubs & DOM  | Restores spies, `vi.stubGlobal()` replacements, environment stubs, & real timers. The default `matchMedia` & `Element.animate` stubs keep no call history. Empties `document.body` & both storage areas. |
 | Names & collators    | Keeps the cache warm. Tests that need an empty cache use `cold`.                                                                                                                                         |
 

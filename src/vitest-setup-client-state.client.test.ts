@@ -8,9 +8,12 @@ import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { syncNotice } from "#lib/sync/notice.svelte.js";
 import { pageStub, updated } from "#lib/test-utils/page-stub.svelte.js";
+import { toastState } from "#lib/test-utils/sonner-state.js";
 
 describe("shared client setup", { shuffle: false }, () => {
   it("leaves state for the shared teardown to reset", () => {
+    expect.soft(localStorage).toHaveLength(0);
+    expect.soft(sessionStorage).toHaveLength(0);
     toolbarState.openSearch();
     toolbarState.setSearchQuery("turnip");
     toolbarState.carrySearchToNextPage();
@@ -33,7 +36,8 @@ describe("shared client setup", { shuffle: false }, () => {
     updated.current = true;
     theme.set("dark");
     syncNotice.show(42);
-    toast("Test notification");
+    const toastId = toast("Test notification", { onDismiss: vi.fn() });
+    expect(toastState.toasts.map(({ id }) => id)).toContain(toastId);
     overwriteGetLocale(() => "ja");
     document.body.append(document.createElement("div"));
     localStorage.setItem("test-key", "test-value");
@@ -63,7 +67,7 @@ describe("shared client setup", { shuffle: false }, () => {
     expect.soft(updated.current).toBe(false);
     expect.soft(theme.preference).toBe("system");
     expect.soft(syncNotice.applied).toBeNull();
-    expect.soft(toast.getActiveToasts()).toHaveLength(0);
+    expect.soft(toastState.toasts).toHaveLength(0);
     expect.soft(getLocale()).toBe("en");
     expect.soft(document.documentElement.classList.contains("dark")).toBe(false);
     expect.soft(document.body.childElementCount).toBe(0);
