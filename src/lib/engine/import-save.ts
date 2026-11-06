@@ -1,5 +1,6 @@
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { SEASON_ORDER, seasonFromOrdinal } from "#lib/engine/domain-primitives.js";
+import { DAYS_PER_SEASON, GAME_DAY, gameDateAt } from "#lib/engine/game-calendar.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
@@ -8,13 +9,17 @@ import {
   normalizeLevel,
 } from "#lib/engine/progress.js";
 import { getSpouseId } from "#lib/engine/relationships.js";
+import { isWeatherInSeason } from "#lib/engine/world-state.js";
+import { WEATHERS } from "#lib/types/tracker-data.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import { trackedPerkIds } from "./perk-ids.js";
 import { hasProgressSection, isSaveSection } from "./save-bundle.js";
 import { isKnownItemId } from "./untracked-save-ids.js";
 
+import type { GameDate } from "#lib/engine/game-calendar.js";
 import type { LevelIssue } from "#lib/engine/progress.js";
+import type { SaveDay } from "#lib/engine/world-state.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -29,6 +34,7 @@ import type {
   SpellId,
   VillagerId,
   VillagerRelationship,
+  Weather,
 } from "#lib/types/tracker-data.js";
 import type {
   ChildChoice,
@@ -145,14 +151,21 @@ export interface SaveIdentity {
   playtime: ExtractedField<number>;
 }
 
+/** The in-game day the save was made on, from `gamedata.date` & `gamedata.weather`. */
+export interface SaveDayFields {
+  season: ExtractedField<Season>;
+  weather: ExtractedField<Weather>;
+}
+
 export interface SaveExtraction {
+  day: SaveDayFields;
   /** Every diagnostic in extraction order, including section-level ones no field owns. */
   diagnostics: SaveDiagnostic[];
   fields: SaveFields;
   identity: SaveIdentity;
 }
 
-type FieldKey = ExtractedProgressKey | keyof SaveIdentity;
+type FieldKey = ExtractedProgressKey | keyof SaveDayFields | keyof SaveIdentity;
 
 /**
  * Fields whose readable source can still leave the choice unknown:
@@ -235,6 +248,7 @@ interface SectionReader {
  */
 export function extractSaveProgress(bundle: SaveBundle): {
   completed: Partial<ProgressState>;
+  day: SaveDay;
   playtime: number | undefined;
   warnings: SaveImportWarning[];
 } {
@@ -244,6 +258,7 @@ export function extractSaveProgress(bundle: SaveBundle): {
 /** What {@link extractSaveProgress} returns, for a save that's already extracted. */
 export function progressOfExtraction(extraction: SaveExtraction): {
   completed: Partial<ProgressState>;
+  day: SaveDay;
   playtime: number | undefined;
   warnings: SaveImportWarning[];
 } {
@@ -253,6 +268,7 @@ export function progressOfExtraction(extraction: SaveExtraction): {
   }
   return {
     completed: completed as Partial<ProgressState>,
+    day: { season: extraction.day.season.value, weather: extraction.day.weather.value },
     playtime: extraction.identity.playtime.value,
     warnings: extraction.diagnostics.filter(isSaveImportWarning),
   };
@@ -593,6 +609,14 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   );
   const reachedSeason = date === undefined ? undefined : deriveReachedSeason(date);
 
+  // ── Today (from gamedata.json → date & weather.forecast) ──
+  const today = date === undefined ? undefined : gameDateAt(date);
+  const weatherSection = gamedata.record("weather", ["weather"]);
+  const weather =
+    today === undefined || weatherSection === undefined
+      ? undefined
+      : readTodaysWeather(weatherSection.forecast, today, collector);
+
   // ── Quest completion (from quests.json) ──
   // Completed quests import as "completed" and active quests as "obtained". A quest listed in
   // both keeps "completed", matching mergeFromSave's rule that a merge never lowers a quest.
@@ -797,6 +821,10 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     villagerRelationships: collector.finish("villagerRelationships", villagerRelationships),
   };
   return {
+    day: {
+      season: collector.finish("season", today?.season),
+      weather: collector.finish("weather", weather),
+    },
     diagnostics: collector.diagnostics,
     fields,
     identity: {
@@ -937,6 +965,32 @@ function isGameVersion(raw: unknown): raw is GameVersion {
   );
 }
 
+function isWeather(raw: unknown): raw is Weather {
+  return (WEATHERS as readonly unknown[]).includes(raw);
+}
+
+/**
+ * Today's entry in `gamedata.weather.forecast`, which holds one weather for each day of the season.
+ * The game's load menu reads it the same way. Weather the season can't have counts as unreadable.
+ */
+function readTodaysWeather(
+  forecast: unknown,
+  today: GameDate,
+  collector: Collector,
+): undefined | Weather {
+  const path = "gamedata.weather.forecast";
+  if (forecast === undefined) {
+    collector.report({ code: "absent", path }, ["weather"]);
+    return undefined;
+  }
+  const raw: unknown = Array.isArray(forecast) ? forecast[today.day - 1] : undefined;
+  if (!isWeather(raw) || !isWeatherInSeason(raw, today.season)) {
+    collector.report({ code: "invalid-value", path }, ["weather"]);
+    return undefined;
+  }
+  return raw;
+}
+
 /** Quest IDs from `quests.active_quests`, a list of `{ quest_name }` objects. */
 function readActiveQuestNames(raw: unknown, collector: Collector): string[] | undefined {
   const path = "quests.active_quests";
@@ -967,9 +1021,7 @@ export type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 // ─── Season derivation ─────────────────────────────────────────────
 
-/** One in-game day on the save's calendar (`gamedata.date`). */
-export const GAME_DAY = 259_200;
-const GAME_SEASON = 28 * GAME_DAY;
+const GAME_SEASON = DAYS_PER_SEASON * GAME_DAY;
 
 function deriveReachedSeason(date: unknown): Season {
   if (typeof date !== "number" || date < 0) return "spring";

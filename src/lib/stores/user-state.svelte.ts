@@ -25,7 +25,7 @@ import { applyAdditiveSave, mergeProgress } from "#lib/engine/save-progress.js";
 import { applySync, receiptCovers } from "#lib/engine/sync-apply.js";
 import { nextFreshness } from "#lib/engine/sync-freshness.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
-import { isWeatherInSeason } from "#lib/engine/world-state.js";
+import { applySaveDay, isWeatherInSeason } from "#lib/engine/world-state.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
@@ -46,6 +46,7 @@ import {
   QUARANTINE_STORAGE_KEY,
 } from "./storage-keys.js";
 
+import type { GameDate } from "#lib/engine/game-calendar.js";
 import type { SaveExtraction } from "#lib/engine/import-save.js";
 import type { ProgressContext } from "#lib/engine/progress.js";
 import type {
@@ -55,8 +56,9 @@ import type {
   Resolution,
 } from "#lib/engine/provenance.js";
 import type { SyncAnswers, SyncQuestion, SyncReceipt, SyncResult } from "#lib/engine/sync-apply.js";
-import type { GameDate, SyncFreshness } from "#lib/engine/sync-freshness.js";
+import type { SyncFreshness } from "#lib/engine/sync-freshness.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
+import type { SaveDay } from "#lib/engine/world-state.js";
 import type { FarmIdentity, SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
@@ -237,15 +239,17 @@ function createDefaultWorldState(): UserState["worldState"] {
   return { season: "spring", weather: "calm" };
 }
 
-/** A save file read for sync: the progress it records, its farm, & its playtime. */
+/** A save file read for sync: the progress it records, its day, its farm, & its playtime. */
 export interface SyncedSave {
   completed: Partial<ProgressState>;
+  day: SaveDay;
   metadata: SaveImportMetadata;
   playtime: number | undefined;
 }
 
 interface ManualImportOptions {
   confirmedFarm?: string;
+  day?: SaveDay;
   metadata?: SaveImportMetadata;
   playtime?: number;
 }
@@ -265,6 +269,7 @@ export interface SyncApplyStamp {
 /** A save to apply through the single write path, with the answers given so far. */
 export interface SyncApplyRequest extends SyncApplyStamp {
   answers: SyncAnswers;
+  day: SaveDay;
   extraction: SaveExtraction;
   metadata: SaveImportMetadata;
   /** The lane this save belongs to. Any other stored lane (stopped, or another code) refuses it. */
@@ -559,7 +564,7 @@ function createUserState() {
   ): boolean {
     const captured = readProgressBlob(intent.before, "repair");
     if (captured.kind !== "ok") throw new Error("Invalid captured progress write");
-    const { confirmedFarm, metadata, playtime } = intent.options;
+    const { confirmedFarm, day, metadata, playtime } = intent.options;
     const current = read?.kind === "ok" ? read.loaded : undefined;
     const capturedFarm = captured.loaded.lastImport?.identity ?? null;
     const storedFarm = current?.lastImport?.identity ?? null;
@@ -573,6 +578,7 @@ function createUserState() {
     const preview = captured.loaded;
     const result = applyAdditiveSave(preview.progress, preview.history, intent.imported, playtime);
     if (metadata) preview.lastImport = importMetadata(storedFarm ?? capturedFarm, metadata);
+    if (day) preview.worldState = applySaveDay(preview.worldState, day);
     const loaded = current
       ? mergeCapturedImport(current, preview, storedHistory(intent.base), metadata !== undefined)
       : preview;
@@ -601,7 +607,7 @@ function createUserState() {
           laterEdits,
           editPlaytime(preview.history),
         );
-        live.worldState = state.worldState;
+        live.worldState = day ? applySaveDay(state.worldState, day) : state.worldState;
       }
     }
     if (json !== stored && !trySetItem(PROGRESS_STORAGE_KEY, json)) {
@@ -798,7 +804,11 @@ function createUserState() {
           : { ...request.metadata, identity: result.state.farm ?? request.metadata.identity },
       progress: result.state.progress,
       retained: result.farmSwitch ? empty.retained : base.retained,
-      worldState: result.farmSwitch ? empty.worldState : base.worldState,
+      // A farm switch resets progress, not the clock: what the save can't say stays as it was.
+      worldState:
+        result.rollback === "declined"
+          ? base.worldState
+          : applySaveDay(base.worldState, request.day),
     };
     const nextLocal: DeviceLocalState = { ...local, ...stampedLocal(local.syncFreshness, request) };
     const built = result.farmSwitch
@@ -1396,6 +1406,7 @@ function createUserState() {
       const staged = emptyLoadedProgress();
       staged.lastImport = $state.snapshot(save.metadata);
       applyAdditiveSave(staged.progress, staged.history, save.completed, save.playtime);
+      staged.worldState = applySaveDay($state.snapshot(state.worldState), save.day);
       enablePersistenceAfterExplicitReplace();
       return requestProgressWrite({
         guard: stillWanted,

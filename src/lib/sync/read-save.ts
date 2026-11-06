@@ -9,9 +9,9 @@ import { readGameDate } from "#lib/engine/sync-freshness.js";
 
 import { toBase64url } from "./follow.js";
 
+import type { GameDate } from "#lib/engine/game-calendar.js";
 import type { SaveExtraction } from "#lib/engine/import-save.js";
 import type { SyncReceipt } from "#lib/engine/sync-apply.js";
-import type { GameDate } from "#lib/engine/sync-freshness.js";
 import type { SyncApplyStamp, SyncedSave } from "#lib/stores/user-state.svelte.js";
 
 import type { SavePayload } from "./follow.js";
@@ -44,7 +44,7 @@ async function hashFile(file: File): Promise<string> {
 export async function readSaveFile(file: File, now = Date.now()): Promise<ReadSave> {
   const bundle = await unpackSavFile(file);
   const extraction = extractSave(bundle);
-  const { completed, playtime } = progressOfExtraction(extraction);
+  const { completed, day, playtime } = progressOfExtraction(extraction);
   const rawVersion = bundle.info?.version;
   const parts = isSaveSection(rawVersion)
     ? [rawVersion.major, rawVersion.minor, rawVersion.patch]
@@ -56,6 +56,7 @@ export async function readSaveFile(file: File, now = Date.now()): Promise<ReadSa
       : null;
   return {
     completed,
+    day,
     extraction,
     fileName: file.name,
     gameDate: readGameDate(bundle),

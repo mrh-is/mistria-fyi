@@ -306,8 +306,8 @@ world state. Keys follow naming conventions:
 | Field                     | Type      | Description                                   |
 | ------------------------- | --------- | --------------------------------------------- |
 | `clock`                   | `number`  | Current time of day                           |
-| `date`                    | `number`  | Current calendar date                         |
-| `weather`                 | `object`  | Current weather state                         |
+| `date`                    | `number`  | Game seconds, at 259,200 per day              |
+| `weather`                 | `object`  | `forecast`: one weather per day of the season |
 | `daycare`                 | `array`   | Animals in the daycare                        |
 | `seals`                   | `object`  | Seal room puzzle state                        |
 | `saturday_market_vendors` | `array`   | Current Saturday market vendor lineup         |
