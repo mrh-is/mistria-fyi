@@ -23,10 +23,12 @@ export function availabilityToVisibility(condition?: AvailabilityCondition): Vis
     case "mineFloor":
     case "perkUnlocked":
     case "reachedSeason":
+    case "renownLevel":
     case "skillLevel":
       return condition;
     case "dateUnlocked":
     case "gamePredicate":
+    case "itemAcquired":
     case "not":
     case "season":
     case "time":
