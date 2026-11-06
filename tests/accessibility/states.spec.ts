@@ -172,7 +172,18 @@ test.describe("stateful accessibility", () => {
       mimeType: "application/json",
       name: "player.json",
     });
+    await expect(page.getByText(/Your field guide is .* complete/)).toBeVisible();
+    await expect(page.getByText(/Imported from player.json/)).toBeHidden();
+    await page.getByText("What we added", { exact: true }).click();
     await expect(page.getByText(/Imported from player.json/)).toBeVisible();
+    await page.getByText("Save details", { exact: true }).click();
+    await analyzeAccessibility(
+      page,
+      { route: "/data", state: "import-details-expanded", theme: "light" },
+      testInfo,
+    );
+    await page.getByText("What we added", { exact: true }).click();
+    await page.getByText("Save details", { exact: true }).click();
     await fileInput.setInputFiles({
       buffer: await readFile(emptyPlayerPath),
       mimeType: "application/json",
@@ -190,6 +201,8 @@ test.describe("stateful accessibility", () => {
       mimeType: "application/json",
       name: "player.json",
     });
+    await expect(page.getByText(/Your field guide is .* complete/)).toBeVisible();
+    await page.getByText("What we added", { exact: true }).click();
     await expect(page.getByText(/Imported from player.json/)).toBeVisible();
     await expect(page.getByText("1 warnings", { exact: true })).toBeVisible();
     await analyzeAccessibility(

@@ -30,12 +30,6 @@
 <div class="mb-4 space-y-1 text-sm break-words" data-testid="last-import">
   {#if names}<p class="font-medium">{names}</p>{/if}
   <p class="text-xs text-muted-foreground">
-    {m.import_farm_identity({
-      number: metadata.identity.saveNumber ?? m.import_unknown_number(),
-      version: versionDisplay,
-    })}
-  </p>
-  <p class="text-xs text-muted-foreground">
     <time
       datetime={new Date(metadata.importedAt).toISOString()}
       title={new Date(metadata.importedAt).toLocaleString(locale)}
@@ -43,4 +37,13 @@
       {m.import_last_imported({ time: age })}
     </time>
   </p>
+  <details class="text-xs text-muted-foreground">
+    <summary class="cursor-pointer">{m.import_save_details()}</summary>
+    <p class="mt-1">
+      {m.import_farm_identity({
+        number: metadata.identity.saveNumber ?? m.import_unknown_number(),
+        version: versionDisplay,
+      })}
+    </p>
+  </details>
 </div>

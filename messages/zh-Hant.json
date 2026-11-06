@@ -513,19 +513,24 @@
   "sync_error_camera_init": "無法初始化攝影機。",
   "sync_error_camera_denied": "相機存取遭到拒絕。請開啟遊戲電腦上的同步連結，或將連結貼到這裡。",
   "merge_imported_from": "已從 {files} 匯入",
-  "merge_label_almanac": "年鑑：+{count}",
-  "merge_label_almanac_recipes": "食譜：+{count}",
-  "merge_label_animal_cosmetics": "動物裝飾：+{count}",
-  "merge_label_animals": "動物變體：+{count}",
-  "merge_label_cosmetics": "裝飾：+{count}",
-  "merge_label_museum": "博物館捐贈：+{count}",
-  "merge_label_villager_relationships": "村民關係：+{count}",
-  "merge_label_perks": "技能特長：+{count}",
-  "merge_label_pet_cosmetics": "寵物裝飾：+{count}",
-  "merge_label_pet_skins": "寵物外觀：+{count}",
-  "merge_label_mount_appearances": "坐騎外觀：+{count}",
-  "merge_label_quests": "任務：+{count}",
-  "merge_label_spells": "法術：+{count}",
+  "merge_overall_outcome": "你的田野指南已完成 {percent}，還有 {remaining} 項等你完成。",
+  "merge_changes_details": "我們新增了什麼",
+  "merge_label_break_ups_disabled": "已停用分手",
+  "import_save_details": "存檔詳情",
+  "import_view_progress": "看看還剩什麼",
+  "merge_label_almanac": "年鑑：+{countText}",
+  "merge_label_almanac_recipes": "食譜：+{countText}",
+  "merge_label_animal_cosmetics": "動物裝飾：+{countText}",
+  "merge_label_animals": "動物變體：+{countText}",
+  "merge_label_cosmetics": "裝飾：+{countText}",
+  "merge_label_museum": "博物館捐贈：+{countText}",
+  "merge_label_villager_relationships": "村民關係：+{countText}",
+  "merge_label_perks": "技能特長：+{countText}",
+  "merge_label_pet_cosmetics": "寵物裝飾：+{countText}",
+  "merge_label_pet_skins": "寵物外觀：+{countText}",
+  "merge_label_mount_appearances": "坐騎外觀：+{countText}",
+  "merge_label_quests": "任務：+{countText}",
+  "merge_label_spells": "法術：+{countText}",
   "merge_label_child_choice": "已更新孩子的選擇",
   "merge_conflict_relationship": "提示：你之前記錄的是與{villager}的關係為{local}，但存檔檔案顯示為{incoming}。我們保留了你記錄的狀態。",
   "merge_conflict_spouse": "提示：你之前記錄的配偶是{localVillager}，但存檔檔案顯示你與{incomingVillager}結婚。我們保留了{localVillager}作為你的配偶，並跳過了匯入的孩子選擇。",
@@ -535,37 +540,37 @@
   "merge_label_reached_season": "已更新季節進度",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "礦洞樓層：+{count}層"
+        "countPlural=other": "礦洞樓層：+{countText}層"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "村民好感度：已更新{count}段關係"
+        "countPlural=other": "村民好感度：已更新{countText}段關係"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "聲望：+{count}級"
+        "countPlural=other": "聲望：+{countText}級"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "技能：已更新{count}項技能"
+        "countPlural=other": "技能：已更新{countText}項技能"
       }
     }
   ],
