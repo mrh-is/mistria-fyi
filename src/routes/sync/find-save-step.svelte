@@ -36,7 +36,6 @@
     }),
   );
 
-  // The gate is only visual: a save dropped anyway proves the player found it.
   async function read(source: SaveSource): Promise<void> {
     onread(await readSaveFile(await fileOf(source)), source);
   }
@@ -89,7 +88,12 @@
     {#if hint}
       <p class="find__hint" role="status">{hint}</p>
     {/if}
-    <SaveDrop label={m.sync_find_drop()} locked={!copied} onsource={read} {platform} />
+    <SaveDrop
+      label={copied ? m.sync_find_drop() : m.sync_find_drop_next()}
+      emphasized={copied}
+      onsource={read}
+      {platform}
+    />
 
     <button
       type="button"
@@ -124,15 +128,14 @@
     line-height: 1.45;
   }
 
-  /* One half is active at a time: an accent rule beside it, & the other half dims. Dimmed isn't
-     disabled; everything in it stays usable & announced. */
+  /* Emphasis guides the next action; both halves stay readable and usable. */
   .find__half {
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding-left: 11px;
     border-left: 1px solid color-mix(in srgb, var(--color-ink-hairline) 45%, transparent);
-    color: color-mix(in srgb, var(--color-ink) 48%, var(--color-paper-raised));
+    color: var(--color-ink-muted);
   }
 
   .find__half--active {

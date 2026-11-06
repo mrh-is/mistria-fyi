@@ -24,7 +24,7 @@
     try {
       await navigator.clipboard.writeText(folder);
     } catch {
-      // A blocked clipboard still lifts the gate; the path stays selectable to copy by hand.
+      // The path stays selectable to copy by hand if the clipboard is blocked.
     }
     copied = true;
   }
