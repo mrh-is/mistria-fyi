@@ -352,6 +352,64 @@ describe("readProgressBlob", () => {
     expect(readOk(serializeProgress(loaded), policy).lastImport).toEqual(loaded.lastImport);
   });
 
+  it.each(POLICIES)("keeps a version 8 blob's progress through version 9 (%s)", (policy) => {
+    const before = readOk(JSON.stringify(fixture(8)), policy);
+    const after = readOk(JSON.stringify(fixture(9)), policy);
+    expect(serializeProgress(before)).toBe(serializeProgress(after));
+  });
+
+  describe("version 9's tracking lane", () => {
+    const FOLLOWING = { key: "k".repeat(43), kind: "following" };
+    const EMPTY_V8 = {
+      ...fixture(8),
+      progress: {
+        ...(fixture(8).progress as object),
+        almanac: [],
+        breakUpsDisabled: false,
+        provenance: {},
+      },
+    };
+
+    it("puts a device that stored progress on the manual lane", () => {
+      expect(readOk(JSON.stringify(fixture(8)), "repair").local).toEqual({
+        trackingLane: "manual",
+      });
+    });
+
+    it("puts a device with a sync lane on the sync lane", () => {
+      const json = JSON.stringify({ ...fixture(8), local: { syncLane: FOLLOWING } });
+      expect(readOk(json, "repair").local).toEqual({ syncLane: FOLLOWING, trackingLane: "sync" });
+    });
+
+    it("puts a following device on the sync lane even before its first save", () => {
+      const json = JSON.stringify({ ...EMPTY_V8, local: { syncLane: FOLLOWING } });
+      expect(readOk(json, "repair").local.trackingLane).toBe("sync");
+    });
+
+    it("leaves a device with nothing stored to choose its lane", () => {
+      const local = readOk(JSON.stringify(EMPTY_V8), "repair").local;
+      expect(local).not.toHaveProperty("trackingLane");
+    });
+
+    it("keeps the rest of the local section", () => {
+      const pending = [{ mailboxId: "m".repeat(22), token: "t".repeat(43) }];
+      const json = JSON.stringify({ ...fixture(8), local: { syncPendingRetires: pending } });
+      expect(readOk(json, "repair").local).toEqual({
+        syncPendingRetires: pending,
+        trackingLane: "manual",
+      });
+    });
+
+    it("never brings a lane in with a restored backup", () => {
+      expect(readOk(JSON.stringify(fixture(8)), "strict").local).toEqual({});
+    });
+
+    it("leaves a lane a version 9 build stored alone", () => {
+      const json = JSON.stringify({ ...fixture(9), local: { trackingLane: "manual" } });
+      expect(readOk(json, "repair").local).toEqual({ trackingLane: "manual" });
+    });
+  });
+
   it("repairs invalid import metadata on hydration and rejects it in a backup", () => {
     const json = JSON.stringify({ ...fixture(2), lastImport: { importedAt: -1 } });
     expect(readOk(json, "repair").lastImport).toBeNull();

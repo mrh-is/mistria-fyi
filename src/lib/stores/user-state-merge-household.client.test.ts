@@ -8,9 +8,11 @@ const ADELINE = "adeline" as VillagerId;
 const BALOR = "balor" as VillagerId;
 const CELINE = "celine" as VillagerId;
 
-beforeEach(() => {
+beforeEach(async () => {
   userState.loadFromStorage();
   userState.resetAll();
+  // Hand edits wait for a tracking lane; these tests record them straight away.
+  await userState.startTrackingByHand();
 });
 
 afterEach(() => {

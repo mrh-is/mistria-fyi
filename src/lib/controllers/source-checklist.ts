@@ -304,7 +304,7 @@ export function buildSourceChecklist(
           toggle: () => {
             const completion = userState.completeQuestWithRecipes(questId);
             return () => {
-              userState.undoQuestWithRecipes(questId, completion);
+              if (completion) userState.undoQuestWithRecipes(questId, completion);
             };
           },
         },

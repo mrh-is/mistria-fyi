@@ -55,20 +55,55 @@ const SyncFreshnessSchema = v.object({
 });
 
 /**
+ * How this device tracks (`docs/app-architecture.md` § Tracking lanes): by hand, or by syncing a
+ * save file. Nothing is recorded by hand until a lane is chosen. A device with a sync lane is on
+ * the sync lane whatever this says.
+ */
+export const TRACKING_LANES = ["manual", "sync"] as const;
+export type TrackingLane = (typeof TRACKING_LANES)[number];
+
+const TimestampSchema = v.pipe(FiniteNumberSchema, v.minValue(0));
+const FactCountSchema = v.pipe(v.number(), v.safeInteger(), v.minValue(0));
+
+/**
+ * The reminders this device has shown; see `tracking-reminders.ts`. `install` is the home-screen
+ * nudge: when it last showed & a fingerprint of progress then, or `dismissed` once the player says
+ * they've installed the app. `backupFacts` is how many facts progress held when a backup was last
+ * suggested or downloaded.
+ */
+const TrackingRemindersSchema = v.object({
+  backupFacts: v.fallback(v.optional(FactCountSchema), undefined),
+  install: v.fallback(
+    v.optional(
+      v.object({
+        dismissed: v.optional(v.literal(true)),
+        fingerprint: v.optional(v.string()),
+        shownAt: v.optional(TimestampSchema),
+      }),
+    ),
+    undefined,
+  ),
+});
+export type TrackingReminders = v.InferOutput<typeof TrackingRemindersSchema>;
+
+/**
  * This device's own data under the progress key, which never leaves it: exports leave it out and
- * a restore keeps this device's. Its slots are for sync: `syncReceipt` (what this device last
- * applied), `syncFreshness` (when the last save came), `farmSwitchBackup` (progress saved before
- * switching farms), `syncLane` (the lane & its key), & `syncPendingRetires` (codes still to retire).
- * The backup is carried through as stored & read with the progress codec. A malformed lane,
- * retire list, receipt, or freshness is dropped rather than quarantining progress; losing a receipt
- * only applies the latest save again.
+ * a restore keeps this device's. Its slots: `syncReceipt` (what this device last applied),
+ * `syncFreshness` (when the last save came), `farmSwitchBackup` (progress saved before switching
+ * farms), `syncLane` (the lane & its key), `syncPendingRetires` (codes still to retire),
+ * `trackingLane` (by hand or by sync, since version 9), & `reminders` (the data-loss reminders
+ * shown). The backup is carried through as stored & read with the progress codec. A malformed
+ * lane, retire list, receipt, freshness, or reminder record is dropped rather than quarantining
+ * progress; losing a receipt only applies the latest save again.
  */
 export const DeviceLocalSchema = v.looseObject({
   farmSwitchBackup: v.optional(v.unknown()),
+  reminders: v.fallback(v.optional(TrackingRemindersSchema), undefined),
   syncFreshness: v.fallback(v.optional(SyncFreshnessSchema), undefined),
   syncLane: v.fallback(v.optional(SyncLaneSchema), undefined),
   syncPendingRetires: v.fallback(v.optional(v.array(PendingRetireSchema)), undefined),
   syncReceipt: v.fallback(v.optional(SyncReceiptSchema), undefined),
+  trackingLane: v.fallback(v.optional(v.picklist(TRACKING_LANES)), undefined),
 });
 export type DeviceLocalState = v.InferOutput<typeof DeviceLocalSchema>;
 
