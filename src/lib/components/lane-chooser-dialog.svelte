@@ -16,6 +16,7 @@
     <Dialog.Title class="sr-only">{m.tracking_choose_title()}</Dialog.Title>
     <Dialog.Description class="sr-only">{m.tracking_choose_body()}</Dialog.Description>
     <WelcomeCard
+      framed={false}
       title={m.tracking_choose_title()}
       body={m.tracking_choose_body()}
       onSync={() => userState.chooseSyncTracking()}

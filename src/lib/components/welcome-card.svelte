@@ -11,10 +11,12 @@
   let syncComputer = $state(true);
   let {
     body = m.sync_home_body(),
+    framed = true,
     onSync,
     title = m.sync_home_title(),
   }: {
     body?: string;
+    framed?: boolean;
     onSync?: () => void;
     title?: string;
   } = $props();
@@ -28,13 +30,19 @@
   }
 </script>
 
-<section class="welcome-card" aria-label={m.onboarding_region_label()}>
-  <div class="welcome-card__marker" aria-hidden="true">
-    <IconSparkles />
-  </div>
+<section
+  class="welcome-card"
+  class:welcome-card--framed={framed}
+  aria-label={m.onboarding_region_label()}
+>
+  {#if framed}
+    <div class="welcome-card__marker" aria-hidden="true">
+      <IconSparkles />
+    </div>
+  {/if}
 
   <div class="welcome-card__copy">
-    <p class="welcome-card__overline">{m.onboarding_overline()}</p>
+    {#if framed}<p class="welcome-card__overline">{m.onboarding_overline()}</p>{/if}
     <h2>{title}</h2>
     <p>{body}</p>
   </div>
@@ -69,6 +77,9 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+  }
+
+  .welcome-card--framed {
     padding: 19px 18px 16px 21px;
     overflow: clip;
     border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 38%, transparent);
@@ -83,7 +94,7 @@
     box-shadow: var(--shadow-small);
   }
 
-  .welcome-card::after {
+  .welcome-card--framed::after {
     position: absolute;
     right: -19px;
     bottom: -26px;
