@@ -281,13 +281,14 @@ jobs:
         run: node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"
 
   # Runs the parser & importer against real saves kept in a private R2 bucket (#466). Secrets are
-  # withheld from fork pull requests, so those skip the job; everywhere else a missing secret or
+  # withheld from fork pull requests & from Dependabot (which reads its own secret store), so those skip
+  # the job; everywhere else a missing secret or
   # object fails it, because a skipped check would hide a game-format change.
   saves:
     name: Real saves
     if:
-      github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name ==
-      github.repository
+      github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name ==
+      github.repository && github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

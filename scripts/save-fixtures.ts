@@ -13,7 +13,7 @@ import "#scripts/lib/require-pinned-node";
 
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -100,6 +100,8 @@ export async function fetchSaves(): Promise<number> {
   return forEachFixture(async ({ key, localPath, sha256 }) => {
     if (existsSync(localPath) && (await digest(localPath)) === sha256) return undefined;
     await mkdir(path.dirname(localPath), { recursive: true });
+    // A stale file with the wrong digest must not make Wrangler refuse to write.
+    await rm(localPath, { force: true });
     const { ok, output } = await runWrangler(
       ["r2", "object", "get", `${SAVES_BUCKET}/${key}`, "--file", localPath, "--remote"],
       env,

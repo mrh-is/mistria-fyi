@@ -108,6 +108,21 @@ describe("workflow hardening", () => {
     });
   });
 
+  it("exposes the saves secrets only to the saves job’s fetch step", () => {
+    const ci = workflows.find(({ name }) => name === "ci.yml")?.workflow;
+    const jobs = (ci?.jobs ?? {}) as Record<string, { steps?: { env?: object; name?: string }[] }>;
+    const others = Object.entries(jobs).filter(([jobName]) => jobName !== "saves");
+    expect(others.filter(([, job]) => JSON.stringify(job).includes("secrets."))).toEqual([]);
+    const withSecrets = (jobs.saves.steps ?? []).filter((step) =>
+      JSON.stringify(step).includes("secrets."),
+    );
+    expect(withSecrets.map((step) => step.name)).toEqual(["Fetch real saves"]);
+    expect(Object.keys(withSecrets[0]?.env ?? {}).toSorted()).toEqual([
+      "CLOUDFLARE_ACCOUNT_ID",
+      "R2_SAVES_READ_TOKEN",
+    ]);
+  });
+
   it("limits CI to the permissions its jobs need & keeps checkout credentials out of git config", () => {
     const ci = workflows.find(({ name }) => name === "ci.yml")?.workflow;
     const elevated: Record<string, Record<string, string>> = {

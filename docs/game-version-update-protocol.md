@@ -105,9 +105,12 @@ version bump fails until a save written by the new game exists there; that failu
    “Object Read only” fails with a 403, because Wrangler uses the REST API, not the S3 one. The
    permission covers every R2 bucket on the account but allows no writes.
 
-Fork pull requests get no secrets, so the job skips there; every other run fails if the saves are
-missing or their digests differ. Billy’s machine doesn’t need Cloudflare tokens: it runs
-`pnpm run test`, which excludes the `saves` project.
+Fork pull requests & Dependabot get no Actions secrets, so the job skips there. The fetch step runs
+`scripts/save-fixtures.ts` from the pull request’s branch, so any branch in this repository can read
+the token; that is accepted for a read-only token with two committers.
+
+Every other run fails if the saves are missing or their digests differ. Billy’s machine doesn’t need
+Cloudflare tokens: it runs `pnpm run test`, which excludes the `saves` project.
 
 Other machines symlink `pipeline/input` to the synced Drive folder that holds the `vX.Y.Z/` folders;
 the pipeline picks `vX.Y.Z/assets` from `--version`.
