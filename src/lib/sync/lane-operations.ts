@@ -53,14 +53,22 @@ export function stageSyncSave(
   staged.worldState = applySaveDay(world, save.day);
 }
 
-/** A lane start replaces the old lane and receipt while keeping unrelated local data. */
+/**
+ * A lane start replaces the old lane and receipt while keeping unrelated local data, and puts the
+ * device on the sync tracking lane.
+ */
 export function startLaneLocal(
   stored: DeviceLocalState,
   lane: SyncLane,
   stamp: SyncApplyStamp | undefined,
 ): DeviceLocalState {
   const { syncFreshness: _freshness, syncLane: _lane, syncReceipt: _receipt, ...kept } = stored;
-  return { ...kept, ...(stamp && stampedLocal(undefined, stamp)), syncLane: lane };
+  return {
+    ...kept,
+    ...(stamp && stampedLocal(undefined, stamp)),
+    syncLane: lane,
+    trackingLane: "sync",
+  };
 }
 
 type LocalPatch = (stored: DeepReadonly<DeviceLocalState>) => DeviceLocalState | undefined;
@@ -116,7 +124,7 @@ export function syncLaneOperations(
     },
     /**
      * Returns the device to tracking by hand, keeping progress & history: only the receipt, the
-     * lane, & its key go. A code the computer shared joins the pending retires in the same write,
+     * lane, & its key go, and the tracking lane becomes `manual`. A code the computer shared joins the pending retires in the same write,
      * so it's retired only once leaving has landed. Resolves with whether that write landed.
      */
     stopSyncing(stopped?: RetiredCode): Promise<boolean> {
@@ -134,6 +142,7 @@ export function syncLaneOperations(
         return {
           ...kept,
           syncPendingRetires: withRetire(kept.syncPendingRetires, stopped?.retire),
+          trackingLane: "manual",
         };
       });
     },

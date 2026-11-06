@@ -30,8 +30,9 @@ async function search(query: string) {
 }
 
 describe("PageSearchStatus", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.resetAll();
+    await userState.startTrackingByHand();
   });
 
   // Client test files share this store, so a search left open would filter their pages.

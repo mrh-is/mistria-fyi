@@ -147,6 +147,7 @@
       () => userState.completeQuestWithRecipes(questId),
       [isSectionComplete],
     );
+    if (!completion) return;
     const newState = getQuestState(questId);
     showQuestToast(displayName, newState, completion.newlyAdded, locale, () => {
       userState.undoQuestWithRecipes(questId, completion);

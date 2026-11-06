@@ -12,7 +12,7 @@ import { critical } from "./support/tags.js";
 
 test.describe("keyboard and focus accessibility", () => {
   test.beforeEach(async ({ page }) => {
-    await initializeApplication(page, "light");
+    await initializeApplication(page, "light", createStoredState());
   });
 
   test("toolbar controls follow a predictable focus order", critical, async ({ page }) => {

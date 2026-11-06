@@ -58,6 +58,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-height: 0;
+    overflow-y: auto;
     padding: 15px 16px 4px;
     border-top: 1px dashed color-mix(in srgb, var(--color-tag-ink) 32%, transparent);
   }
@@ -81,6 +83,7 @@
     display: grid;
     grid-template-columns: repeat(var(--sync-tag-columns), minmax(0, 1fr));
     gap: 6px;
+    flex-shrink: 0;
     padding: 10px 16px 14px;
   }
 
@@ -95,9 +98,9 @@
   }
 
   .sync-tag__action--primary {
-    border-color: var(--color-tag-accent);
+    border-color: var(--color-tag-action-accent);
     color: var(--color-tag-highlight);
-    background: var(--color-tag-accent);
+    background: var(--color-tag-action-accent);
   }
 
   .sync-tag__action:is(:hover, :focus-visible) {

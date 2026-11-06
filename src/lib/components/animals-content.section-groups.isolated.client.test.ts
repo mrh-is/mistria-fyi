@@ -13,8 +13,9 @@ import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 // Finishing a section fires confetti, which needs a canvas happy-dom doesn't provide.
 vi.mock("#lib/effects/celebrate.js", () => ({ celebrate: vi.fn(), celebrateCategory: vi.fn() }));
 
-beforeEach(() => {
+beforeEach(async () => {
   userState.resetAll();
+  await userState.startTrackingByHand();
   toolbarState.closeSearch();
 });
 

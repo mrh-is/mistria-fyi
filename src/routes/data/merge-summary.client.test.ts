@@ -31,9 +31,10 @@ const CASES: { expected: string; imported: Partial<ProgressState>; setup?: () =>
   },
 ];
 
-beforeEach(() => {
+beforeEach(async () => {
   userState.loadFromStorage();
   userState.resetAll();
+  await userState.startTrackingByHand();
 });
 
 afterEach(() => {

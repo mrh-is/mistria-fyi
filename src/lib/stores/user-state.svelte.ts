@@ -19,6 +19,7 @@ import {
 } from "#lib/engine/provenance.js";
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
 import { applyEngagementCascade, getSpouseId } from "#lib/engine/relationships.js";
+import { progressFingerprint } from "#lib/engine/tracking-reminders.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import { stageSyncSave, syncLaneOperations } from "#lib/sync/lane-operations.js";
@@ -74,6 +75,8 @@ import type {
   SyncApplyStamp,
   SyncedSave,
   SyncLane,
+  TrackingLane,
+  TrackingReminders,
 } from "#lib/sync/lane-state.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
@@ -108,7 +111,13 @@ import type {
 } from "./progress-storage.js";
 import type { BackupReplacementQuestion } from "./progress-writer.js";
 
-export type { SyncApplyOutcome, SyncApplyQuestion, SyncedSave } from "#lib/sync/lane-state.js";
+export type {
+  SyncApplyOutcome,
+  SyncApplyQuestion,
+  SyncedSave,
+  TrackingLane,
+  TrackingReminders,
+} from "#lib/sync/lane-state.js";
 
 /** How a write treats a value another tab stored since this one last read it. */
 type WriteIntent =
@@ -127,6 +136,7 @@ type WriteIntent =
       stamp?: SyncApplyStamp;
     }
   | {
+      chooseManual?: boolean;
       /** Removes the receipt from whichever `local` section the write keeps. */
       dropReceipt: boolean;
       /** Serialized at confirmation, so later storage events cannot change the requested write. */
@@ -289,6 +299,9 @@ function createUserState() {
   let pendingExplicitJson: string | undefined;
   /** The live progress a pending import captured. Keep it attached while a queued reset lands. */
   let pendingManualProgress: ProgressState | undefined;
+  /** A hand edit held back until the player chooses a tracking lane; see {@link handEdit}. */
+  let pendingHandEdit = $state.raw<(() => void) | undefined>(undefined);
+  let choosingSync = $state(false);
 
   function clearPendingSave(): void {
     saveGeneration++;
@@ -655,11 +668,16 @@ function createUserState() {
   }
 
   /** Captures an explicit replacement now, rather than after the auto-save debounce. */
-  function writeExplicitProgress(keepLocal = true, dropReceipt = false): void {
+  function writeExplicitProgress(
+    keepLocal = true,
+    dropReceipt = false,
+    chooseManual = false,
+  ): void {
     clearPendingSave();
     const json = serialize();
     pendingExplicitJson = json;
     void requestProgressWrite({
+      chooseManual,
       dropReceipt,
       json,
       keepLocal,
@@ -860,15 +878,47 @@ function createUserState() {
       recordValues(state.progress.animalCosmetics).some((s) => s.size > 0),
   );
 
+  /**
+   * The device's tracking lane. A sync lane always means syncing; a stored `sync` without one can
+   * only be left over, and progress left behind is tracked by hand.
+   */
+  const trackingLane = $derived.by((): TrackingLane | undefined => {
+    if (local.syncLane) return "sync";
+    return local.trackingLane === undefined ? undefined : "manual";
+  });
+
+  const facts = $derived(progressFacts(state.progress));
+
+  /**
+   * Runs a player's edit, unless nothing may be recorded yet: a device that stores progress
+   * records nothing by hand until it has a tracking lane. The edit then waits for the player's
+   * choice; {@link startTrackingByHand} runs it & {@link cancelLaneChoice} drops it. Edits nested in
+   * another tracked change run as part of it. Returns the edit's result, or `undefined` if it waits.
+   */
+  function handEdit<T>(run: () => T): T | undefined {
+    if (trackingSource === undefined && _persistenceReady && trackingLane === undefined) {
+      choosingSync = false;
+      pendingHandEdit = () => {
+        run();
+      };
+      return undefined;
+    }
+    return run();
+  }
+
   /** Runs a player's edit of one fact, recording it as `manual`; see {@link track}. */
   function manual(key: string, edit: () => void): void {
-    track("manual", edit, [key]);
+    handEdit(() => {
+      track("manual", edit, [key]);
+    });
   }
 
   /** Ticks or unticks one listed fact by hand. */
-  function toggleFact<T extends string>(field: string, set: Set<T>, id: T): void {
+  function toggleFact<T extends string>(field: string, getSet: () => Set<T>, id: T): void {
+    const wanted = !getSet().has(id);
     manual(factKey(field, id), () => {
-      toggleInSet(set, id);
+      const set = getSet();
+      if (set.has(id) !== wanted) toggleInSet(set, id);
     });
   }
 
@@ -879,7 +929,8 @@ function createUserState() {
     if (result.kind === "unreadable") return { error: result.error, ok: false };
     replaceProgress(result.loaded);
     enablePersistenceAfterExplicitReplace();
-    writeExplicitProgress();
+    local = { ...local, trackingLane: local.syncLane ? "sync" : "manual" };
+    writeExplicitProgress(true, false, true);
     return { ok: true };
   }
 
@@ -900,27 +951,41 @@ function createUserState() {
       });
       return settled.outcome;
     },
-    /** Cycles the quest's state, completing its recipe rewards on the obtained-to-completed step. */
-    completeQuestWithRecipes(id: QuestId): QuestCompletion {
-      return track(
-        "manual",
-        () => {
-          const previousState = state.progress.questStates[id] ?? "none";
-          state.progress.questStates[id] = nextQuestState(previousState);
+    /** Drops the hand edit waiting for a tracking lane, so nothing is recorded. */
+    cancelLaneChoice() {
+      pendingHandEdit = undefined;
+      choosingSync = false;
+    },
+    /** Keep the first check-off while sync setup obtains the save that chooses its lane. */
+    chooseSyncTracking() {
+      choosingSync = true;
+    },
+    /**
+     * Cycles the quest's state, completing its recipe rewards on the obtained-to-completed step.
+     * Returns `undefined` while the edit waits for a tracking lane; see {@link handEdit}.
+     */
+    completeQuestWithRecipes(id: QuestId): QuestCompletion | undefined {
+      return handEdit(() =>
+        track(
+          "manual",
+          () => {
+            const previousState = state.progress.questStates[id] ?? "none";
+            state.progress.questStates[id] = nextQuestState(previousState);
 
-          if (previousState !== "obtained") return { newlyAdded: [], previousState };
+            if (previousState !== "obtained") return { newlyAdded: [], previousState };
 
-          const candidates = findRecipesForQuest(id);
-          const newlyAdded: RecipeId[] = [];
-          for (const recipeId of candidates) {
-            if (!state.progress.almanacRecipes.has(recipeId)) {
-              state.progress.almanacRecipes.add(recipeId);
-              newlyAdded.push(recipeId);
+            const candidates = findRecipesForQuest(id);
+            const newlyAdded: RecipeId[] = [];
+            for (const recipeId of candidates) {
+              if (!state.progress.almanacRecipes.has(recipeId)) {
+                state.progress.almanacRecipes.add(recipeId);
+                newlyAdded.push(recipeId);
+              }
             }
-          }
-          return { newlyAdded, previousState };
-        },
-        [factKey("questStates", id)],
+            return { newlyAdded, previousState };
+          },
+          [factKey("questStates", id)],
+        ),
       );
     },
     ...syncLaneOperations(writeLocal),
@@ -944,6 +1009,10 @@ function createUserState() {
         if (value !== null) return withoutDeviceLocal(value);
       }
       return serializeProgress(snapshot());
+    },
+    /** How many progress facts this device holds; see `progressFacts`. */
+    get factCount(): number {
+      return facts.size;
     },
     /** The backup kept from the last farm switch, if there is one to offer. */
     get farmSwitchBackup(): FarmSwitchBackup | undefined {
@@ -1037,6 +1106,10 @@ function createUserState() {
     get progressContext(): ProgressContext {
       return progressContext;
     },
+    /** A digest of progress facts, which changes whenever progress does. */
+    get progressFingerprint(): string {
+      return progressFingerprint(facts);
+    },
     get progressionState(): UserProgressionState {
       return progressionState;
     },
@@ -1049,10 +1122,18 @@ function createUserState() {
      * does for the conditions it satisfies.
      */
     recordInferred(mutations: () => void) {
-      track("inferred", mutations);
+      handEdit(() => {
+        track("inferred", mutations);
+      });
+    },
+    /** The data-loss reminders this device has shown; see `tracking-reminders.ts`. */
+    get reminders(): DeepReadonly<TrackingReminders> | undefined {
+      return local.reminders;
     },
     /** Restores every field to its default, this device's preferences & `local` section included. */
     resetAll() {
+      pendingHandEdit = undefined;
+      choosingSync = false;
       state = createDefaultState();
       retained = emptyRetainedProgress();
       history = emptyProgressHistory();
@@ -1066,6 +1147,8 @@ function createUserState() {
      * applies again.
      */
     resetProgress() {
+      pendingHandEdit = undefined;
+      choosingSync = false;
       replaceProgress(emptyLoadedProgress());
       enablePersistenceAfterExplicitReplace();
       const { syncReceipt: _receipt, ...kept } = local;
@@ -1179,7 +1262,7 @@ function createUserState() {
      * receipt & lane go, replaced by `stamp`'s; the farm-switch backup & pending retires stay.
      * Resolves with whether the write landed.
      */
-    startSyncLane(
+    async startSyncLane(
       lane: SyncLane,
       save: SyncedSave,
       stillWanted: () => boolean = () => true,
@@ -1194,13 +1277,43 @@ function createUserState() {
         $state.snapshot(state.worldState),
       );
       enablePersistenceAfterExplicitReplace();
-      return requestProgressWrite({
+      const written = await requestProgressWrite({
         guard: stillWanted,
         kind: "staged",
         lane: $state.snapshot(lane),
         ...(stamp ? { stamp } : {}),
         staged,
       });
+      if (written) {
+        const pending = pendingHandEdit;
+        pendingHandEdit = undefined;
+        choosingSync = false;
+        pending?.();
+      } else {
+        pendingHandEdit = undefined;
+        choosingSync = false;
+      }
+      return written;
+    },
+    /**
+     * Puts this device on the manual tracking lane, then runs the hand edit that was waiting for
+     * it. Storage that can't keep the lane keeps nothing, so the edit is dropped; while persistence
+     * is off, nothing is stored either way & the edit just runs. Resolves with whether the device
+     * may now record by hand.
+     */
+    async startTrackingByHand(): Promise<boolean> {
+      const pending = pendingHandEdit;
+      pendingHandEdit = undefined;
+      choosingSync = false;
+      if (_persistenceReady) {
+        const written = await writeLocal((stored) => ({
+          ...(structuredClone(stored) as DeviceLocalState),
+          trackingLane: stored.syncLane ? "sync" : "manual",
+        }));
+        if (!written) return false;
+      }
+      pending?.();
+      return true;
     },
     get state(): DeepReadonly<UserState> {
       return state;
@@ -1229,74 +1342,98 @@ function createUserState() {
       return local.syncReceipt;
     },
     toggleAlmanacItem(id: ItemId) {
-      toggleFact("almanac", state.progress.almanac, id);
+      toggleFact("almanac", () => state.progress.almanac, id);
     },
     toggleAlmanacRecipe(id: RecipeId) {
-      toggleFact("almanacRecipes", state.progress.almanacRecipes, id);
+      toggleFact("almanacRecipes", () => state.progress.almanacRecipes, id);
     },
     toggleAnimalCosmetic(animalId: AnimalId, cosmeticId: CosmeticId) {
+      const wanted = !state.progress.animalCosmetics[animalId]?.has(cosmeticId);
       manual(factKey("animalCosmetics", animalId, cosmeticId), () => {
         const set = getOrCreate(
           state.progress.animalCosmetics,
           animalId,
           () => new SvelteSet<CosmeticId>(),
         );
-        toggleInSet(set, cosmeticId);
+        if (set.has(cosmeticId) !== wanted) toggleInSet(set, cosmeticId);
       });
     },
     toggleAnimalVariant(animalId: AnimalId, variantId: AnimalVariantId) {
+      const wanted = !state.progress.animals[animalId]?.has(variantId);
       manual(factKey("animals", animalId, variantId), () => {
         const set = getOrCreate(
           state.progress.animals,
           animalId,
           () => new SvelteSet<AnimalVariantId>(),
         );
-        toggleInSet(set, variantId);
+        if (set.has(variantId) !== wanted) toggleInSet(set, variantId);
       });
     },
     toggleCosmetic(id: CosmeticId) {
-      toggleFact("cosmetics", state.progress.cosmetics, id);
+      toggleFact("cosmetics", () => state.progress.cosmetics, id);
     },
     toggleMountAppearance(id: MountAppearanceId) {
-      toggleFact("mountAppearances", state.progress.mountAppearances, id);
+      toggleFact("mountAppearances", () => state.progress.mountAppearances, id);
     },
     toggleMuseumItem(id: ItemId) {
-      toggleFact("museum", state.progress.museum, id);
+      toggleFact("museum", () => state.progress.museum, id);
     },
     togglePerk(id: PerkId) {
-      toggleFact("unlockedPerks", state.progress.unlockedPerks, id);
+      toggleFact("unlockedPerks", () => state.progress.unlockedPerks, id);
     },
     togglePetCosmetic(id: PetCosmeticSetId) {
-      toggleFact("petCosmetics", state.progress.petCosmetics, id);
+      toggleFact("petCosmetics", () => state.progress.petCosmetics, id);
     },
     togglePetSkin(id: PetSkinId) {
-      toggleFact("petSkins", state.progress.petSkins, id);
+      toggleFact("petSkins", () => state.progress.petSkins, id);
     },
     toggleShowSpoilers() {
       state.showSpoilers = !state.showSpoilers;
     },
     toggleSpell(id: SpellId) {
-      toggleFact("spells", state.progress.spells, id);
+      toggleFact("spells", () => state.progress.spells, id);
+    },
+    /** How this device tracks, or `undefined` until it chooses; see {@link handEdit}. */
+    get trackingLane(): TrackingLane | undefined {
+      return trackingLane;
+    },
+    /** Whether a hand edit is waiting for the player to choose a tracking lane. */
+    get trackingLaneNeeded(): boolean {
+      return pendingHandEdit !== undefined && !choosingSync;
     },
     /**
      * Restores the quest's prior state and removes only recipes added by that transition. The quest
      * records `manual`; the recipes it takes back record `inferred`, as their completion did.
      */
     undoQuestWithRecipes(id: QuestId, { newlyAdded, previousState }: QuestCompletion) {
-      track(
-        "manual",
-        () => {
-          state.progress.questStates[id] = previousState;
-          for (const recipeId of newlyAdded) {
-            state.progress.almanacRecipes.delete(recipeId);
-          }
-        },
-        [factKey("questStates", id)],
-      );
+      handEdit(() => {
+        track(
+          "manual",
+          () => {
+            state.progress.questStates[id] = previousState;
+            for (const recipeId of newlyAdded) {
+              state.progress.almanacRecipes.delete(recipeId);
+            }
+          },
+          [factKey("questStates", id)],
+        );
+      });
     },
     /** Stored progress that couldn't be read, kept so the player can download it; null if none. */
     get unreadableData(): null | string {
       return _unreadableData;
+    },
+    /**
+     * Records a reminder the player saw or answered, as a patch to the stored `local` section.
+     * Resolves with whether it was stored.
+     */
+    updateReminders(
+      change: (current: DeepReadonly<TrackingReminders> | undefined) => TrackingReminders,
+    ): Promise<boolean> {
+      return writeLocal((stored) => ({
+        ...(structuredClone(stored) as DeviceLocalState),
+        reminders: change(stored.reminders),
+      }));
     },
   };
 }

@@ -11,6 +11,7 @@ import type { Page, Response } from "@playwright/test";
 
 import type { SerializedState } from "../../../src/lib/stores/progress-storage.js";
 import type { SerializedPreferences } from "../../../src/lib/stores/user-state.svelte.js";
+import type { DeviceLocalState } from "../../../src/lib/sync/lane-state.js";
 import type { AccessibilityTheme } from "./violations.js";
 
 /**
@@ -25,7 +26,7 @@ type SerializedProgress = Omit<
 /** The two localStorage blobs the store reads at startup: progress and this device's preferences. */
 export interface StoredState {
   preferences: SerializedPreferences;
-  progress: SerializedState;
+  progress: SerializedState & { local?: DeviceLocalState };
 }
 
 /** Builds progress & preferences blobs in the store's current serialized shapes and version. */
@@ -68,6 +69,7 @@ export function createStoredState(
       showSpoilers: overrides.showSpoilers ?? false,
     },
     progress: {
+      local: { trackingLane: "manual" },
       progress,
       version: CURRENT_SERIALIZATION_VERSION,
       worldState: overrides.worldState ?? { season: "spring", weather: "calm" },

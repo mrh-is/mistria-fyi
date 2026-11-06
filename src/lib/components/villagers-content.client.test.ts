@@ -14,8 +14,9 @@ import { recordKeys } from "#lib/utils/record.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";
 
 describe("VillagersContent localization", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.resetAll();
+    await userState.startTrackingByHand();
   });
 
   afterEach(() => {
@@ -79,8 +80,9 @@ describe("VillagersContent localization", () => {
 });
 
 describe("VillagersContent alphabet index", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.resetAll();
+    await userState.startTrackingByHand();
   });
 
   afterEach(() => {
@@ -117,8 +119,9 @@ describe("VillagersContent with completed villagers hidden", () => {
     (id) => !trackerData.villagers[id].dateable,
   );
 
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.resetAll();
+    await userState.startTrackingByHand();
     userState.setHeartLevel(completed, MAX_HEART_LEVEL);
     userState.setHeartLevel(other, MAX_HEART_LEVEL);
   });
