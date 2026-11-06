@@ -136,23 +136,6 @@ function fakeRelay(initial?: ReadResult) {
   };
 }
 
-let statusArrived: (() => void) | undefined;
-
-/**
- * Waits for the receiver's next status, which comes last in each read or apply. A test expecting
- * no status waits out the timeout, long enough for hashing, decrypting, & the fake locks.
- */
-async function flush(): Promise<void> {
-  await new Promise((resolve) => {
-    const timeout = setTimeout(resolve, 40);
-    statusArrived = () => {
-      clearTimeout(timeout);
-      statusArrived = undefined;
-      setTimeout(resolve, 0);
-    };
-  });
-}
-
 async function untilStatus(
   receiver: Receiver,
   predicate: (status: ReceiverStatus) => boolean,
@@ -236,7 +219,6 @@ async function load(
       locks: () => locks,
       onstatus: (status) => {
         statuses.push(status);
-        statusArrived?.();
       },
       ontell: (tell) => tells.push(tell),
       read: relay.read,
@@ -355,7 +337,10 @@ describe("one tab leads", () => {
     const relay = fakeRelay(await envelope(1, saveBytes(SEASON, 137)));
     const { receiver } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilStatus(
+      receiver,
+      (status) => status.kind === "asking" || status.kind === "up-to-date",
+    );
     if (receiver.status.kind === "asking") {
       await receiver.answer(questionId(receiver.status), "new-farm");
     }
@@ -401,7 +386,10 @@ describe("one tab leads", () => {
       relay,
     );
     receiver.start();
-    await flush();
+    await untilStatus(
+      receiver,
+      (status) => status.kind === "asking" || status.kind === "up-to-date",
+    );
     if (receiver.status.kind === "asking") {
       await receiver.answer(questionId(receiver.status), "new-farm");
     }
@@ -440,19 +428,20 @@ describe("one tab leads", () => {
     const relay = fakeRelay({ kind: "empty" });
     const { make, receiver } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "waiting");
     expect(relay.read).toHaveBeenCalledTimes(1);
 
     const second = make();
     second.start();
     second.update();
-    await flush();
     expect(relay.read).toHaveBeenCalledTimes(1);
     expect(relay.subscribe).toHaveBeenCalledTimes(1);
 
     receiver.stop();
-    await flush();
-    expect(relay.read).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => {
+      expect(relay.read).toHaveBeenCalledTimes(2);
+    });
+    await untilKind(second, "waiting");
     expect(second.status.kind).toBe("waiting");
   });
 
@@ -463,7 +452,6 @@ describe("one tab leads", () => {
     const lockless = make({ locks: () => undefined });
     lockless.start();
     lockless.update();
-    await flush();
     expect(relay.read).not.toHaveBeenCalled();
     expectNothingApplied();
   });
@@ -472,7 +460,6 @@ describe("one tab leads", () => {
     const relay = fakeRelay();
     const { receiver } = await load(blob({}), relay);
     receiver.start();
-    await flush();
     expect(relay.read).not.toHaveBeenCalled();
     expect(relay.subscribe).not.toHaveBeenCalled();
     expect(receiver.status.kind).toBe("idle");
@@ -485,7 +472,7 @@ describe("applying", () => {
     const { receiver, userState } = await load(blob({ syncLane: FOLLOWING }), relay);
     const writes = countWrites();
     receiver.start();
-    await flush();
+    await untilKind(receiver, "up-to-date");
 
     expect(writes.count()).toBe(1);
     expect(receiver.status.kind).toBe("up-to-date");
@@ -516,7 +503,7 @@ describe("applying", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "up-to-date");
     expect(userState.exportBackup()).not.toContain("syncReceipt");
     expect(userState.exportBackup()).not.toContain("syncFreshness");
   });
@@ -526,7 +513,7 @@ describe("applying", () => {
     // The envelope arrived last time, but the write never landed: no receipt.
     const { receiver } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "up-to-date");
     expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
   });
 
@@ -538,7 +525,7 @@ describe("applying", () => {
     const { receiver } = await load(before, relay);
     const writes = countWrites();
     receiver.start();
-    await flush();
+    await untilKind(receiver, "up-to-date");
     expect(writes.count()).toBe(0);
     expect(receiver.status.kind).toBe("up-to-date");
   });
@@ -549,12 +536,13 @@ describe("applying", () => {
     const relay = fakeRelay(await envelope(3, saveBytes(SEASON)));
     const { receiver } = await load(blob({ syncLane: FOLLOWING, syncReceipt: receipt }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "up-to-date");
     expect(stored().local.syncReceipt).toEqual(receipt);
 
     relay.sockets[0].onpush(await envelope(5, saveBytes(SEASON)));
-    await flush();
-    expect(stored().local.syncReceipt).toMatchObject({ counter: 5 });
+    await vi.waitFor(() => {
+      expect(stored().local.syncReceipt).toMatchObject({ counter: 5 });
+    });
   });
 
   it("applies a new code's envelopes whatever their counter", async () => {
@@ -562,7 +550,7 @@ describe("applying", () => {
     const relay = fakeRelay(await envelope(1, saveBytes(SEASON)));
     const { receiver } = await load(blob({ syncLane: FOLLOWING, syncReceipt: receipt }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "up-to-date");
     expect(stored().local.syncReceipt).toMatchObject({
       counter: 1,
       mailboxId: await mailboxIdFor(KEY),
@@ -573,11 +561,11 @@ describe("applying", () => {
     const relay = fakeRelay({ kind: "empty" });
     const { receiver, userState } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "waiting");
     relay.set(await envelope(1, saveBytes(SEASON), { key: OTHER_KEY }));
     await userState.switchFollowKey(OTHER_KEY);
     receiver.update();
-    await flush();
+    await untilKind(receiver, "up-to-date");
     expect(relay.subscribe.mock.calls.at(-1)?.[0]).toBe(await mailboxIdFor(OTHER_KEY));
     expect(stored().local.syncReceipt).toMatchObject({
       counter: 1,
@@ -587,13 +575,16 @@ describe("applying", () => {
 
   it("applies the latest save again after a reset removes the receipt", async () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
-    const { receiver, userState } = await load(blob({ syncLane: FOLLOWING }), relay);
+    const { receiver, statuses, userState } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "up-to-date");
     receiver.update();
+    const statusCount = statuses.length;
     userState.resetProgress();
     receiver.update();
-    await flush();
+    await vi.waitFor(() => {
+      expect(statuses.slice(statusCount)).toContainEqual({ kind: "up-to-date" });
+    });
     expect(userState.syncLane).toEqual(FOLLOWING);
     expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
     expect(userState.state.progress.reachedSeason).toBe("summer");
@@ -603,12 +594,17 @@ describe("applying", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load(blob({ syncLane: FOLLOWING }), relay);
     const read = relay.read.getMockImplementation();
+    let queuedBarrier: ReturnType<Receiver["applyLocalSave"]> | undefined;
     relay.read.mockImplementationOnce(async () => {
       await userState.stopSyncing();
+      queuedBarrier = receiver.applyLocalSave(file(saveBytes(SEASON)));
       return read?.() ?? { kind: "empty" };
     });
     receiver.start();
-    await flush();
+    await vi.waitFor(() => {
+      expect(queuedBarrier).toBeDefined();
+    });
+    expect(await queuedBarrier).toBe("stale");
     expect(userState.syncLane).toBeUndefined();
     expect(userState.syncReceipt).toBeUndefined();
     expect(localStorage.getItem(PROGRESS_KEY)).not.toContain("syncReceipt");
@@ -622,7 +618,6 @@ describe("a store it must not touch", () => {
     const { receiver, userState } = await load(newer, relay);
     const writes = countWrites();
     receiver.start();
-    await flush();
     expect(relay.read).not.toHaveBeenCalled();
     expect(writes.count()).toBe(0);
     expect(localStorage.getItem(PROGRESS_KEY)).toBe(newer);
@@ -636,7 +631,6 @@ describe("a store it must not touch", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load("{not json", relay);
     receiver.start();
-    await flush();
     expect(localStorage.getItem(PROGRESS_KEY)).toBe("{not json");
     expect(userState.persistenceFailureKind).toBe("unreadable");
     expect(userState.syncBlocked).toBe(true);
@@ -648,10 +642,10 @@ describe("a store it must not touch", () => {
     const relay = fakeRelay();
     const { receiver, userState } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "waiting");
     localStorage.setItem(PROGRESS_KEY, "{not json");
     relay.sockets[0].onpush(await envelope(4, saveBytes(SEASON)));
-    await flush();
+    await untilKind(receiver, "blocked");
     expect(localStorage.getItem(PROGRESS_KEY)).toBe("{not json");
     expect(localStorage.getItem(QUARANTINE_STORAGE_KEY)).toBe("{not json");
     expect(userState.syncBlocked).toBe(true);
@@ -662,11 +656,13 @@ describe("a store it must not touch", () => {
     const relay = fakeRelay();
     const { receiver, userState } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "waiting");
     const newer = blob({ syncLane: FOLLOWING }, { version: 99 });
     localStorage.setItem(PROGRESS_KEY, newer);
     relay.sockets[0].onpush(await envelope(4, saveBytes(SEASON)));
-    await flush();
+    await vi.waitFor(() => {
+      expect(userState.syncBlocked).toBe(true);
+    });
     expect(localStorage.getItem(PROGRESS_KEY)).toBe(newer);
     expect(userState.syncBlocked).toBe(true);
     receiver.update();
@@ -678,7 +674,7 @@ describe("a store it must not touch", () => {
     localStorage.setItem(PROGRESS_KEY, canonical(blob({ syncLane: FOLLOWING })));
     userState.loadFromStorage();
     receiver.update();
-    await flush();
+    await untilKind(receiver, "up-to-date");
     expect(receiver.status.kind).toBe("up-to-date");
     expect(stored().local.syncReceipt).toMatchObject({ counter: 5 });
   });
@@ -694,8 +690,7 @@ describe("a save it can't use", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON), { version }));
     const { receiver } = await load(before, relay);
     receiver.start();
-    await flush();
-    expect(receiver.status.kind).toBe(kind);
+    await untilKind(receiver, kind);
     expectNothingApplied();
   });
 
@@ -704,13 +699,11 @@ describe("a save it can't use", () => {
     const relay = fakeRelay(await envelope(4, garbage));
     const { receiver } = await load(before, relay);
     receiver.start();
-    await flush();
-    expect(receiver.status.kind).toBe("unreadable");
+    await untilKind(receiver, "unreadable");
     expectNothingApplied();
 
     relay.sockets[0].onpush(await envelope(5, saveBytes(SEASON)));
-    await flush();
-    expect(receiver.status.kind).toBe("up-to-date");
+    await untilKind(receiver, "up-to-date");
   });
 
   it("shows unreadable for a tampered envelope", async () => {
@@ -718,8 +711,7 @@ describe("a save it can't use", () => {
     const relay = fakeRelay({ ...good, counter: 5 });
     const { receiver } = await load(before, relay);
     receiver.start();
-    await flush();
-    expect(receiver.status.kind).toBe("unreadable");
+    await untilKind(receiver, "unreadable");
     expectNothingApplied();
   });
 
@@ -727,10 +719,9 @@ describe("a save it can't use", () => {
     const relay = fakeRelay({ kind: "empty" });
     const { receiver } = await load(before, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "waiting");
     relay.sockets[0].onpush({ kind: "retired" });
-    await flush();
-    expect(receiver.status.kind).toBe("retired");
+    await untilKind(receiver, "retired");
     expect(relay.sockets).toHaveLength(0);
     expectNothingApplied();
   });
@@ -739,8 +730,7 @@ describe("a save it can't use", () => {
     const relay = fakeRelay({ kind: "absent" });
     const { receiver } = await load(before, relay);
     receiver.start();
-    await flush();
-    expect(receiver.status.kind).toBe("retired");
+    await untilKind(receiver, "retired");
     expect(relay.sockets).toHaveLength(0);
     expectNothingApplied();
   });
@@ -749,8 +739,7 @@ describe("a save it can't use", () => {
     const relay = fakeRelay({ kind });
     const { receiver } = await load(before, relay);
     receiver.start();
-    await flush();
-    expect(receiver.status.kind).toBe(kind);
+    await untilKind(receiver, kind);
     expectNothingApplied();
   });
 
@@ -758,8 +747,9 @@ describe("a save it can't use", () => {
     const relay = fakeRelay({ kind: "empty" });
     const { receiver } = await load(before, relay);
     receiver.start();
-    await flush();
-    expect(relay.read).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(relay.read).toHaveBeenCalledTimes(1);
+    });
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     const [socket] = relay.sockets;
     relay.sockets.splice(0, 1);
@@ -796,7 +786,7 @@ describe("questions", () => {
     const { receiver, userState } = await load(SUMMER_BLOB, relay);
     const writes = countWrites();
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     expect(askedKinds(receiver.status)).toEqual(["facts"]);
     expect(writes.count()).toBe(0);
     expect(stored().local.syncReceipt).toBeUndefined();
@@ -812,7 +802,7 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load(SUMMER_BLOB, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     await receiver.answer(questionId(receiver.status), "keep");
     expect(userState.state.progress.reachedSeason).toBe("fall");
     expect(userState.resolutionOf("reachedSeason")).toEqual({ saveValue: "summer" });
@@ -823,7 +813,7 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load(SUMMER_BLOB, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     const asked = questionId(receiver.status);
 
     userState.setReachedSeason("winter");
@@ -838,7 +828,7 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load(SUMMER_BLOB, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     const asked = questionId(receiver.status);
 
     // Unsaved here, then overtaken by another tab's write of the same progress.
@@ -853,7 +843,7 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load(SUMMER_BLOB, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     const asked = questionId(receiver.status);
 
     localStorage.setItem(
@@ -880,9 +870,9 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load(SUMMER_BLOB, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     relay.sockets[0].onpush(await envelope(5, saveBytes(2 * SEASON + GAME_DAY)));
-    await flush();
+    await untilKind(receiver, "up-to-date");
     expect(receiver.status).toEqual({ kind: "up-to-date" });
     expect(userState.state.progress.reachedSeason).toBe("fall");
     expect(stored().local.syncReceipt).toMatchObject({ counter: 5 });
@@ -892,13 +882,13 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { make, receiver } = await load(SUMMER_BLOB, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     const asked = questionId(receiver.status);
     receiver.stop();
 
     const reopened = make();
     reopened.start();
-    await flush();
+    await untilKind(reopened, "asking");
     expect(questionId(reopened.status)).toBe(asked);
   });
 
@@ -907,7 +897,7 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, tells, userState } = await load(unidentified, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     expect(askedKinds(receiver.status)).toEqual(["farm"]);
 
     await receiver.answer(questionId(receiver.status), "same-farm");
@@ -921,7 +911,7 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(2 * SEASON, 10)));
     const { receiver, userState } = await load(SUMMER_BLOB, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     expect(askedKinds(receiver.status)).toEqual(["older-save"]);
 
     await receiver.answer(questionId(receiver.status), "keep");
@@ -967,8 +957,9 @@ describe("questions", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(2 * SEASON, 100)));
     const { receiver, tells, userState } = await load(mine, relay);
     receiver.start();
-    await flush();
-    expect(tells).toEqual([{ applied: false, kept: true }]);
+    await vi.waitFor(() => {
+      expect(tells).toEqual([{ applied: false, kept: true }]);
+    });
     expect(userState.state.progress.reachedSeason).toBe("summer");
   });
 
@@ -978,15 +969,15 @@ describe("questions", () => {
     const leader = make();
     const other = make();
     leader.start();
-    await flush();
+    await untilKind(leader, "asking");
     other.start();
-    await flush();
+    await untilKind(other, "asking");
     expect(leader.status.kind).toBe("asking");
     expect(other.status.kind).toBe("asking");
 
     await other.answer(questionId(other.status), "accept");
-    await flush();
-    expect(leader.status.kind).toBe("up-to-date");
+    await untilKind(leader, "up-to-date");
+    await untilKind(other, "up-to-date");
     expect(other.status.kind).toBe("up-to-date");
     expect(userState.state.progress.reachedSeason).toBe("summer");
   });
@@ -1018,7 +1009,7 @@ describe("switching farms", () => {
       relay,
     );
     receiver.start();
-    await flush();
+    await untilKind(receiver, "up-to-date");
 
     expect(userState.farmSwitchBackup?.farmName).toBe("Rosewood");
     expect(userState.state.worldState).toEqual({ season: "summer", weather: "inclement" });
@@ -1033,7 +1024,7 @@ describe("switching farms", () => {
         relay,
       );
       receiver.start();
-      await flush();
+      await untilKind(receiver, "asking");
       expect(receiver.status).toMatchObject({
         kind: "asking",
         questions: [{ farmName: "Old Acres", kind: "replace-backup", savedAt: 5 }],
@@ -1065,8 +1056,6 @@ describe("switching farms", () => {
 
       // The new question stays stable until its effect changes, and its own answer can apply.
       receiver.refresh();
-      await flush();
-      expect(questionId(receiver.status)).toBe(nextQuestion);
       await receiver.answer(nextQuestion, "accept");
       expect(receiver.status.kind).toBe("up-to-date");
       expect(userState.farmSwitchBackup?.farmName).toBe("Rosewood");
@@ -1096,7 +1085,6 @@ describe("switching farms", () => {
       });
       leader.start();
       follower.start();
-      await flush();
 
       await vi.waitFor(() => {
         expect(received).toHaveBeenCalledExactlyOnceWith({
@@ -1117,7 +1105,7 @@ describe("switching farms", () => {
     );
     const writes = countWrites();
     receiver.start();
-    await flush();
+    await untilKind(receiver, "up-to-date");
 
     expect(writes.count()).toBe(1);
     expect(userState.state.progress.renown).toBe(0);
@@ -1139,7 +1127,7 @@ describe("switching farms", () => {
       relay,
     );
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     expect(receiver.status).toMatchObject({
       kind: "asking",
       questions: [{ farmName: "Old Acres", kind: "replace-backup", savedAt: 5 }],
@@ -1177,7 +1165,6 @@ describe("the computer's own saves", () => {
     async (queuedAnswer) => {
       const { receiver, userState } = await load(computer, fakeRelay());
       receiver.start();
-      await flush();
       const current = file(saveBytes(2 * SEASON, 100));
       expect(await receiver.applyLocalSave(current)).toBe("applied");
       expect(await receiver.applyLocalSave(file(saveBytes(SEASON, 10)))).toBe("ask");
@@ -1192,7 +1179,6 @@ describe("the computer's own saves", () => {
       expect(receiver.status.kind).toBe("up-to-date");
       await receiver.answer(asked, "accept");
       receiver.refresh();
-      await flush();
       expect(receiver.status.kind).toBe("up-to-date");
       expect(userState.lastSavePlaytime).toBe(100);
       expect(userState.state.progress.reachedSeason).toBe("fall");
@@ -1206,7 +1192,6 @@ describe("the computer's own saves", () => {
     const { receiver, userState } = await load(computer, relay);
     const writes = countWrites();
     receiver.start();
-    await flush();
     expect(relay.subscribe).not.toHaveBeenCalled();
 
     expect(await receiver.applyLocalSave(file(saveBytes(SEASON)))).toBe("applied");
@@ -1265,82 +1250,75 @@ describe("what the review found", () => {
     const relay = fakeRelay(unreadable);
     const { receiver } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "unreadable");
     expect(receiver.status.kind).toBe("unreadable");
 
     relay.set({ kind: "unreachable" });
     receiver.refresh();
-    await flush();
+    await untilKind(receiver, "unreachable");
     expect(receiver.status.kind).toBe("unreachable");
 
     relay.set(unreadable);
     receiver.refresh();
-    await flush();
+    await untilKind(receiver, "unreadable");
     expect(receiver.status.kind).toBe("unreadable");
   });
 
   it("keeps a question up when a newer save can't be read, then says so (F2)", async () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
-    const { receiver } = await load(ASKS, relay);
+    const { receiver, statuses } = await load(ASKS, relay);
     receiver.start();
     await untilStatus(receiver, (status) => status.kind === "asking");
     const asked = questionId(receiver.status);
 
+    const statusCount = statuses.length;
     relay.sockets[0].onpush(await envelope(5, GARBAGE));
-    await untilStatus(
-      receiver,
-      (status) => status.kind === "asking" && questionId(status) === asked,
-    );
-
     await receiver.answer(asked, "accept");
+    expect(statuses.slice(statusCount)).toEqual([{ kind: "unreadable" }]);
     expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
-    await untilKind(receiver, "unreadable");
     expect(receiver.status.kind).toBe("unreadable");
   });
 
   it("keeps a question up when a newer version arrives, then says so (F2)", async () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
-    const { receiver } = await load(ASKS, relay);
+    const { receiver, statuses } = await load(ASKS, relay);
     receiver.start();
     await untilStatus(receiver, (status) => status.kind === "asking");
     const asked = questionId(receiver.status);
 
+    const statusCount = statuses.length;
     relay.sockets[0].onpush(await envelope(5, saveBytes(SEASON), { version: 2 }));
-    await untilStatus(
-      receiver,
-      (status) => status.kind === "asking" && questionId(status) === asked,
-    );
-
     await receiver.answer(asked, "accept");
-    await untilKind(receiver, "update-here");
+    expect(statuses.slice(statusCount)).toEqual([{ kind: "update-here" }]);
     expect(receiver.status.kind).toBe("update-here");
   });
 
   it("drops a newer save's trouble when a good one replaces it (F2)", async () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
-    const { receiver } = await load(ASKS, relay);
+    const { receiver, statuses } = await load(ASKS, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
+    const asked = questionId(receiver.status);
     const [socket] = relay.sockets;
+    const statusCount = statuses.length;
     socket.onpush(await envelope(5, GARBAGE));
-    await flush();
     socket.onpush(await envelope(6, saveBytes(2 * SEASON + GAME_DAY)));
-    await flush();
+    await receiver.answer(asked, "accept");
+    expect(statuses.slice(statusCount)).toEqual([{ kind: "up-to-date" }]);
     expect(receiver.status.kind).toBe("up-to-date");
     expect(stored().local.syncReceipt).toMatchObject({ counter: 6 });
   });
 
   it("reports a retired code once a waiting question is answered (F3)", async () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
-    const { receiver } = await load(ASKS, relay);
+    const { receiver, statuses } = await load(ASKS, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     const asked = questionId(receiver.status);
+    const statusCount = statuses.length;
     relay.sockets[0].onpush({ kind: "retired" });
-    await flush();
-    expect(questionId(receiver.status)).toBe(asked);
-
     await receiver.answer(asked, "accept");
+    expect(statuses.slice(statusCount)).toEqual([{ kind: "retired" }]);
     expect(receiver.status.kind).toBe("retired");
     expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
   });
@@ -1353,17 +1331,18 @@ describe("what the review found", () => {
     const leader = make();
     const other = make();
     leader.start();
-    await flush();
+    await untilKind(leader, "unreachable");
     other.start();
-    await flush();
+    await untilKind(other, "unreachable");
     expect(other.status.kind).toBe("unreachable");
 
     relay.set({ kind: "empty" });
     other.refresh();
-    await flush();
-    expect(relay.read).toHaveBeenCalledTimes(2);
-    expect(leader.status.kind).toBe("waiting");
-    expect(other.status.kind).toBe("waiting");
+    await vi.waitFor(() => {
+      expect(relay.read).toHaveBeenCalledTimes(2);
+    });
+    await untilKind(leader, "waiting");
+    await untilKind(other, "waiting");
   });
 
   it("names the save's farm on the farm question, not the stored one (F5)", async () => {
@@ -1371,7 +1350,7 @@ describe("what the review found", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver } = await load(unidentified, relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "asking");
     expect(receiver.status).toMatchObject({
       kind: "asking",
       questions: [{ farmName: "Rosewood", kind: "farm" }],
@@ -1384,7 +1363,6 @@ describe("what the review found", () => {
       fakeRelay(),
     );
     receiver.start();
-    await flush();
     const setItem = localStorage.setItem.bind(localStorage);
     localStorage.setItem = () => {
       throw new Error("quota");
@@ -1394,7 +1372,7 @@ describe("what the review found", () => {
 
     localStorage.setItem = setItem;
     receiver.refresh();
-    await flush();
+    await untilKind(receiver, "up-to-date");
     expect(receiver.status.kind).toBe("up-to-date");
     expect(userState.syncReceipt?.hash).toMatch(/^[\w-]{43}$/u);
   });
@@ -1419,7 +1397,9 @@ describe("what the review found", () => {
       ),
     );
     userState.resetProgress();
-    await flush();
+    await vi.waitFor(() => {
+      expect(stored().local.syncReceipt).toBeUndefined();
+    });
     const { local } = stored();
     expect(local.syncReceipt).toBeUndefined();
     expect(local.syncLane).toEqual(FOLLOWING);
@@ -1432,7 +1412,7 @@ describe("what the review found", () => {
     relay.read.mockRejectedValueOnce(new Error("body failed"));
     const { receiver } = await load(blob({ syncLane: FOLLOWING }), relay);
     receiver.start();
-    await flush();
+    await untilKind(receiver, "unreachable");
     expect(receiver.status.kind).toBe("unreachable");
   });
 });
