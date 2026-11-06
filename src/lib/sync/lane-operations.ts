@@ -1,9 +1,7 @@
 import { applyAdditiveSave } from "#lib/engine/save-progress.js";
 import { nextFreshness } from "#lib/engine/sync-freshness.js";
-import { applySaveDay } from "#lib/engine/world-state.js";
 
 import type { ProgressHistory } from "#lib/engine/provenance.js";
-import type { WorldDay } from "#lib/engine/world-state.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
@@ -43,14 +41,11 @@ export function stageSyncSave(
     history: ProgressHistory;
     lastImport: null | SaveImportMetadata;
     progress: ProgressState;
-    worldState: WorldDay;
   },
   save: SyncedSave,
-  world: WorldDay,
 ): void {
   staged.lastImport = save.metadata;
   applyAdditiveSave(staged.progress, staged.history, save.completed, save.playtime);
-  staged.worldState = applySaveDay(world, save.day);
 }
 
 /**
