@@ -2,6 +2,7 @@ import { seasonOrdinal } from "#lib/engine/domain-primitives.js";
 
 import type {
   AvailabilityCondition,
+  ItemId,
   PerkId,
   QuestId,
   Season,
@@ -14,6 +15,7 @@ import type { NonEmptyArray } from "#lib/utils/record.js";
 
 /** Each omitted fact, & each key a lookup doesn't answer, evaluates as "unknown". */
 export interface AvailabilityContext {
+  acquiredItems?: Lookup<ItemId, boolean>;
   hasUpperFloor?: boolean;
   heartLevels?: Lookup<VillagerId, number>;
   isDating?: boolean;
@@ -21,6 +23,7 @@ export interface AvailabilityContext {
   questStates?: Lookup<QuestId, QuestVisibility>;
   /** The latest season the player has reached. */
   reachedSeason?: Season;
+  renown?: number;
   season?: Season;
   skillLevels?: Lookup<SkillId, number>;
   time?: number;
@@ -59,6 +62,8 @@ export function evaluateAvailabilityCondition(
     }
     case "isDating":
       return context.isDating ?? "unknown";
+    case "itemAcquired":
+      return context.acquiredItems?.get(condition.itemId) ?? "unknown";
     case "mineFloor":
       return context.mineFloor === undefined ? "unknown" : context.mineFloor >= condition.floor;
     case "not": {
@@ -71,12 +76,17 @@ export function evaluateAvailabilityCondition(
         : context.unlockedPerks.has(condition.perkId);
     case "quest": {
       const state = context.questStates?.get(condition.questId);
-      return state === undefined ? "unknown" : state === condition.state;
+      if (state === undefined) return "unknown";
+      return (
+        state === condition.state || (condition.state === "available" && state === "completed")
+      );
     }
     case "reachedSeason":
       return context.reachedSeason === undefined
         ? "unknown"
         : seasonOrdinal(context.reachedSeason) >= seasonOrdinal(condition.season);
+    case "renownLevel":
+      return context.renown === undefined ? "unknown" : context.renown >= condition.level;
     case "season":
       return context.season === undefined ? "unknown" : condition.seasons.includes(context.season);
     case "skillLevel": {
@@ -125,10 +135,12 @@ export function simplifyAvailabilityCondition(
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
+    case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":
+    case "renownLevel":
     case "skillLevel":
     case "time":
     case "weather":
@@ -172,10 +184,12 @@ function collectBadges(condition: AvailabilityCondition, badges: DisplayBadges):
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
+    case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":
+    case "renownLevel":
     case "skillLevel":
       break;
     case "not":
@@ -230,10 +244,12 @@ function hasSelectiveSeasonConditionInSimplified(condition?: AvailabilityConditi
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
+    case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":
+    case "renownLevel":
     case "skillLevel":
     case "time":
     case undefined:

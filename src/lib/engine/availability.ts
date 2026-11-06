@@ -54,10 +54,18 @@ export function isRowShown(
  */
 export function isSourceDoable(source: Source, ctx: DayContext): boolean {
   if (!isConditionVisible(getSourceVisibility(source), ctx.progressionState)) return false;
-  const condition = getAvailabilityCondition(source);
+  return isAvailabilityDoable(getAvailabilityCondition(source), ctx);
+}
+
+/** Evaluate row-level requirements with the same day policy as acquisition sources. */
+export function isAvailabilityDoable(
+  condition: AvailabilityCondition | undefined,
+  ctx: DayContext,
+  facts: Pick<AvailabilityContext, "acquiredItems"> = {},
+): boolean {
   if (!condition) return true;
   const availability = assumeIgnoredLeavesMet(condition, false);
-  const day = { ...progressContext(ctx.progressionState), ...ctx.worldState };
+  const day = { ...progressContext(ctx.progressionState), ...ctx.worldState, ...facts };
   return evaluateAvailabilityCondition(availability, day) !== false;
 }
 
@@ -105,10 +113,12 @@ function assumeIgnoredLeavesMet(
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
+    case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":
+    case "renownLevel":
     case "season":
     case "skillLevel":
     case "weather":
@@ -142,6 +152,7 @@ function progressContext(state: UserProgressionState): AvailabilityContext {
     mineFloor: state.mineFloor,
     questStates: { get: (questId) => state.questVisibility[questId] },
     reachedSeason: state.reachedSeason,
+    renown: state.renown,
     skillLevels: { get: (skillId) => state.skillLevels[skillId] ?? 0 },
     unlockedPerks: state.unlockedPerks,
   };

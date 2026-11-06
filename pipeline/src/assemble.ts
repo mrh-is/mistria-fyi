@@ -52,6 +52,7 @@ import { extractMount } from "./extract/mount.js";
 import { extractMuseum } from "./extract/museum.js";
 import { extractPetCosmetics, extractPetSkins } from "./extract/pets.js";
 import { extractQuestChains } from "./extract/quest-chains.js";
+import { assignQuestRequirements } from "./extract/quest-requirements.js";
 import { extractQuests } from "./extract/quests.js";
 import { extractRecipeScrollUnlocks } from "./extract/recipe-scrolls.js";
 import { deriveRecipeLocaleNames, extractRecipes } from "./extract/recipes.js";
@@ -390,6 +391,7 @@ export function assembleTrackerData(
   stampVillagerVisibility(trackerData);
   stampStoreVisibility(trackerData);
   assignEntityVisibility(trackerData, cutsceneQuestMap, fiddle, questChainsRaw);
+  assignQuestRequirements(fiddle, trackerData.quests, cutsceneQuestMap);
 
   // Validation is the last step before serialization: visibility assignment rewrites sources and
   // injects hard-coded quest gates, so validating any earlier would miss the emitted shape.

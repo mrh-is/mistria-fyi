@@ -14,6 +14,28 @@ import type { Source } from "#lib/types/acquisition.js";
 import type { AcquisitionSourceAssembly } from "./validate-sources.js";
 
 describe("validateAcquisitionSources", () => {
+  it("validates item references in quest start conditions", () => {
+    const trackerData = {
+      quests: {
+        story: {
+          example: {
+            sources: [],
+            startCondition: { type: "itemAcquired", itemId: "unknown_item" },
+          },
+        },
+      },
+    };
+    const references = AcquisitionReferenceIndex.from({ emitted: { quests: trackerData.quests } });
+    expect(captureDiagnostics(trackerData, references)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fieldPath: "quests.story.example.startCondition.itemId",
+          kind: "unresolved-reference",
+        }),
+      ]),
+    );
+  });
+
   it("rejects a table-excluded cosmetic reintroduced after extraction", () => {
     const trackerData = { cosmetics: { head_flower_hat: { sources: [{ type: "default" }] } } };
     const references = AcquisitionReferenceIndex.from({

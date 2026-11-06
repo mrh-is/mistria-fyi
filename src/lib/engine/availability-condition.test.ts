@@ -9,6 +9,7 @@ import {
 import type {
   AvailabilityCondition,
   DateId,
+  ItemId,
   PerkId,
   QuestId,
   SkillId,
@@ -18,6 +19,32 @@ import type {
 const summer = { season: "summer" as const, weather: "calm" as const };
 
 describe("evaluateAvailabilityCondition", () => {
+  it("evaluates acquisition history & renown", () => {
+    const itemId = "lilac" as ItemId;
+    const acquired: AvailabilityCondition = { type: "itemAcquired", itemId };
+    expect(evaluateAvailabilityCondition(acquired, {})).toBe("unknown");
+    const context = { acquiredItems: new Map([[itemId, true]]), renown: 40 };
+    expect(evaluateAvailabilityCondition(acquired, context)).toBe(true);
+    expect(
+      evaluateAvailabilityCondition(acquired, { acquiredItems: new Map([[itemId, false]]) }),
+    ).toBe(false);
+    expect(evaluateAvailabilityCondition({ type: "renownLevel", level: 40 }, context)).toBe(true);
+    expect(evaluateAvailabilityCondition({ type: "renownLevel", level: 41 }, context)).toBe(false);
+  });
+
+  it("keeps a quest-start cutscene gate met after that quest completes", () => {
+    const questId = "main_quest" as QuestId;
+    const condition: AvailabilityCondition = { type: "quest", questId, state: "available" };
+    expect(
+      evaluateAvailabilityCondition(condition, { questStates: new Map([[questId, "completed"]]) }),
+    ).toBe(true);
+    expect(
+      evaluateAvailabilityCondition(condition, {
+        questStates: new Map([[questId, "unavailable"]]),
+      }),
+    ).toBe(false);
+  });
+
   it("evaluates always as true", () => {
     expect(evaluateAvailabilityCondition({ type: "always" }, {})).toBe(true);
   });

@@ -765,6 +765,8 @@ function describeStoreAvailability(
     }
     case "dateUnlocked":
     case "gamePredicate":
+    case "itemAcquired":
+    case "renownLevel":
     case "not":
       return undefined;
     case "hasUpperFloor":
