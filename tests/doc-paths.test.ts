@@ -5,8 +5,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Keeps prose docs from drifting away from the repo: relative Markdown links must resolve, and
- * backticked tokens that look like repo paths must exist. `docs/superpowers/` is historical & is
- * deliberately not scanned.
+ * backticked tokens that look like repo paths must exist.
  */
 
 const root = join(import.meta.dirname, "..");
