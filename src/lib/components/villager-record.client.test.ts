@@ -18,8 +18,9 @@ const balor: Villager = {
 };
 
 describe("VillagerRecord", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.resetAll();
+    await userState.startTrackingByHand();
     // happy-dom never loads images, so it reports every one as finished; a browser's image is
     // still loading when the record mounts.
     vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(false);

@@ -581,6 +581,7 @@ describe("following a code", () => {
         hash: expect.stringMatching(/^[\w-]{43}$/u) as string,
         mailboxId: await mailboxIdFor(key),
       },
+      trackingLane: "sync",
     });
   });
 

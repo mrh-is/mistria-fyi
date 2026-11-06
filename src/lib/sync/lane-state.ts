@@ -83,6 +83,7 @@ const TrackingRemindersSchema = v.object({
     ),
     undefined,
   ),
+  lastOpenedAt: v.fallback(v.optional(TimestampSchema), undefined),
 });
 export type TrackingReminders = v.InferOutput<typeof TrackingRemindersSchema>;
 

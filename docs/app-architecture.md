@@ -92,12 +92,35 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 
 ## 3. Persistence & Serialization
 
+### Tracking lanes
+
+Every device chooses tracking by hand or syncing a save file before recording progress. The first
+hand edit on a fresh device waits for the chooser; choosing by hand writes the lane before replaying
+the edit, and cancelling discards it. Choosing sync keeps the intended check-off through setup, then
+applies it after the first save commits its lane. An item already checked by the save stays checked.
+Leaving or cancelling setup discards the pending edit. Existing progress migrates to manual
+tracking, and existing sync devices migrate to sync. Imports and backup restores also choose manual
+tracking when no lane exists. Unavailable persistence allows temporary in-memory edits without the
+chooser.
+
+Version 9 stores `local.trackingLane` (`manual` or `sync`) & `local.reminders` on this device only.
+The latter holds the last-open time, the last install nudge's time & progress fingerprint, an
+explicit installed dismissal, and the fact count at the last backup suggestion or download. These
+fields never travel with backups. A sync lane takes precedence over the tracking choice.
+
+The reminder controller requests persistent storage on opening with a lane and choosing by hand. An
+iOS browser shows installation guidance on choosing by hand; opening or completing a section shows
+it again only after three days and changed progress. Installed apps and an explicit “I’ve installed
+it” dismissal suppress it. The guidance explains backup, installation, & restore because browser and
+installed-app storage are separate. Manual tracking suggests a backup every 100 further progress
+facts. Install guidance takes precedence when both reminders are due.
+
 ### localStorage
 
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `6`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `9`.
   - `lastImport`: the last manual save import's timestamp, identity (filename number plus creation
     version), & player/farm display names, or `null`. Version 1 migrates to `null` without inventing
     history. Missing or malformed game metadata remains unknown and never blocks importing progress.
@@ -108,10 +131,11 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
     `provenance`, `resolutions`, `lastSavePlaytime`, & `lastSaveUnordered` (version 7).
   - `worldState`: the in-game season & weather the availability filters read.
   - `local` (storage only, left out while empty): this device's own section, which holds sync's
-    lane, receipt, freshness, pending retires, & farm-switch backup (see [sync.md](sync.md)).
-    Exports never include it; a restore keeps this device's and never brings one in; a progress
-    reset keeps it (all but the receipt) and a full reset clears it. Provenance & resolved diffs
-    live in `progress`, so they travel with backups.
+    lane, receipt, freshness, pending retires, & farm-switch backup (see [sync.md](sync.md)), plus
+    `trackingLane` & `reminders` (version 9; see [Tracking lanes](#tracking-lanes)). Exports never
+    include it; a restore keeps this device's and never brings one in; a progress reset keeps it
+    (all but the receipt) and a full reset clears it. Provenance & resolved diffs live in
+    `progress`, so they travel with backups.
 - **`mistria-fyi:sync-uploads`** holds the sync courier's upload counter & the mailbox & hash of its
   last upload, apart from progress so nothing that blocks or erases progress touches them
   ([sync.md](sync.md#the-courier)).

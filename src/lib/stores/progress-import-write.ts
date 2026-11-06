@@ -95,6 +95,8 @@ export function planManualImport(
     : capturedClock;
   const clock = rebaseWorldState(storedClock, clockBase, capturedClock);
   loaded.worldState = resolveImportDay(storedClock, clock, day);
+  // A manual import chooses its lane in the same durable write as its progress.
+  loaded.local.trackingLane ??= loaded.local.syncLane ? "sync" : "manual";
   const json = serializeStoredProgress(loaded, loaded.local);
   if (!edits) return { json, kind: "write", live: loaded, local: loaded.local, result };
 

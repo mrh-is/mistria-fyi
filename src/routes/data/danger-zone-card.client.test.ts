@@ -10,6 +10,7 @@ import DangerZoneCard from "./danger-zone-card.svelte";
 // Client files share one store per worker, so each test starts from defaults (#174).
 beforeEach(async () => {
   userState.resetAll();
+  await userState.startTrackingByHand();
   await tick();
 });
 

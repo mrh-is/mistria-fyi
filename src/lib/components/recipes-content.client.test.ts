@@ -12,8 +12,9 @@ import { recordValues } from "#lib/utils/record.js";
 import type { ItemId } from "#lib/types/tracker-data.js";
 
 describe("RecipesContent", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.resetAll();
+    await userState.startTrackingByHand();
     toolbarState.closeSearch();
   });
 

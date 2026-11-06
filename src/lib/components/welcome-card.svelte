@@ -3,54 +3,65 @@
   import IconSparkles from "@tabler/icons-svelte-runes/icons/sparkles";
   import { onMount } from "svelte";
 
+  import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { userState } from "#lib/stores/user-state.svelte.js";
   import { currentDevice } from "#lib/sync/device.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   let syncComputer = $state(true);
+  let {
+    body = m.sync_home_body(),
+    onSync,
+    title = m.sync_home_title(),
+  }: {
+    body?: string;
+    onSync?: () => void;
+    title?: string;
+  } = $props();
 
   onMount(() => {
     syncComputer = currentDevice().computer;
   });
 
   function startManually(): void {
-    userState.markDefaultUnlocksComplete();
+    void trackingReminders.chooseHandTracking();
   }
 </script>
 
-{#if !userState.hasAnyProgress}
-  <section class="welcome-card" aria-label={m.onboarding_region_label()}>
-    <div class="welcome-card__marker" aria-hidden="true">
-      <IconSparkles />
-    </div>
+<section class="welcome-card" aria-label={m.onboarding_region_label()}>
+  <div class="welcome-card__marker" aria-hidden="true">
+    <IconSparkles />
+  </div>
 
-    <div class="welcome-card__copy">
-      <p class="welcome-card__overline">{m.onboarding_overline()}</p>
-      <h2>{m.sync_home_title()}</h2>
-      <p>{m.sync_home_body()}</p>
-    </div>
+  <div class="welcome-card__copy">
+    <p class="welcome-card__overline">{m.onboarding_overline()}</p>
+    <h2>{title}</h2>
+    <p>{body}</p>
+  </div>
 
-    <div class="welcome-card__choices">
-      <a class="welcome-card__choice welcome-card__choice--sync" href={localizedHref("sync")}>
-        <IconSparkles aria-hidden="true" />
-        <span>
-          <span class="welcome-card__choice-title">{m.sync_home_sync()}</span>
-          <span class="welcome-card__choice-sub">
-            {syncComputer ? m.sync_home_sync_sub_computer() : m.sync_home_sync_sub_phone()}
-          </span>
+  <div class="welcome-card__choices">
+    <a
+      class="welcome-card__choice welcome-card__choice--sync"
+      href={localizedHref("sync")}
+      onclick={onSync}
+    >
+      <IconSparkles aria-hidden="true" />
+      <span>
+        <span class="welcome-card__choice-title">{m.sync_home_sync()}</span>
+        <span class="welcome-card__choice-sub">
+          {syncComputer ? m.sync_home_sync_sub_computer() : m.sync_home_sync_sub_phone()}
         </span>
-      </a>
-      <button class="welcome-card__choice" type="button" onclick={startManually}>
-        <IconPencil aria-hidden="true" />
-        <span>
-          <span class="welcome-card__choice-title">{m.sync_home_hand()}</span>
-          <span class="welcome-card__choice-sub">{m.sync_home_hand_sub()}</span>
-        </span>
-      </button>
-    </div>
-  </section>
-{/if}
+      </span>
+    </a>
+    <button class="welcome-card__choice" type="button" onclick={startManually}>
+      <IconPencil aria-hidden="true" />
+      <span>
+        <span class="welcome-card__choice-title">{m.sync_home_hand()}</span>
+        <span class="welcome-card__choice-sub">{m.sync_home_hand_sub()}</span>
+      </span>
+    </button>
+  </div>
+</section>
 
 <style>
   .welcome-card {

@@ -6,6 +6,7 @@ import WelcomeCard from "#lib/components/welcome-card.svelte";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
 beforeEach(() => {
+  userState.loadFromStorage();
   userState.resetAll();
 });
 
@@ -25,19 +26,15 @@ describe("WelcomeCard", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: /I’ll track it all by hand/ }));
 
-    expect(userState.hasAnyProgress).toBe(true);
-    expect(screen.queryByRole("region", { name: "Getting started" })).toBeNull();
+    await waitFor(() => {
+      expect(userState.trackingLane).toBe("manual");
+      expect(userState.hasAnyProgress).toBe(true);
+    });
   });
 
-  it("returns after a full reset leaves no tracked progress", async () => {
-    render(WelcomeCard);
-    await fireEvent.click(screen.getByRole("button", { name: /I’ll track it all by hand/ }));
-
-    userState.resetAll();
-
-    await waitFor(() => {
-      expect(screen.getByRole("region", { name: "Getting started" })).toBeVisible();
-    });
-    expect(userState.hasAnyProgress).toBe(false);
+  it("accepts copy for a required tracking choice", () => {
+    render(WelcomeCard, { body: "Choose before checking off.", title: "Choose how to track" });
+    expect(screen.getByRole("heading", { name: "Choose how to track" })).toBeVisible();
+    expect(screen.getByText("Choose before checking off.")).toBeVisible();
   });
 });
