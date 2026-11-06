@@ -23,7 +23,6 @@ interface StoreModule {
 
 function buildState(renown: number, extra: Record<string, unknown> = {}, version = 1): string {
   return JSON.stringify({
-    ...extra,
     progress: {
       almanac: [],
       animalCosmetics: {},
@@ -36,6 +35,7 @@ function buildState(renown: number, extra: Record<string, unknown> = {}, version
     },
     version,
     worldState: { season: "spring", weather: "calm" },
+    ...extra,
   });
 }
 
@@ -464,7 +464,64 @@ describe("serialized progress writes", () => {
     });
   });
 
-  it("keeps unsaved world state & retained entries from the importing tab", async () => {
+  it.each([
+    { day: undefined, season: "fall" },
+    { day: { season: "spring" as const, weather: undefined }, season: "spring" },
+  ])(
+    "keeps the stored weather when the save leaves it unreadable ($day)",
+    async ({ day, season }) => {
+      const { locks } = sharedLocks();
+      const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+      vi.stubGlobal("localStorage", storage);
+      vi.stubGlobal("navigator", { locks });
+      const importing = await openTab();
+      await settle(importing.PERSIST_DEBOUNCE_MS);
+      const other = await openTab();
+      other.userState.setSeason("fall");
+      other.userState.setWeather("inclement");
+      await settle(other.PERSIST_DEBOUNCE_MS);
+      expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+        worldState: { season: "fall", weather: "inclement" },
+      });
+      // The importing tab never receives the other tab's storage event.
+      expect(importing.userState.state.worldState).toEqual({ season: "spring", weather: "calm" });
+
+      const pending = importing.userState.mergeFromSave({ mineFloor: 10 }, day ? { day } : {});
+      await settle(importing.PERSIST_DEBOUNCE_MS);
+      await expect(pending).resolves.toMatchObject({ kind: "applied" });
+      expect(importing.userState.state.worldState).toEqual({ season, weather: "inclement" });
+      const reloaded = await openTab();
+      expect(reloaded.userState.state.worldState).toEqual({ season, weather: "inclement" });
+    },
+  );
+
+  it.each([null, "unreadable"])(
+    "keeps the stored clock after a %j storage event and a missed write",
+    async (newValue) => {
+      const { locks } = sharedLocks();
+      const original = { season: "fall", weather: "inclement" };
+      const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1, { worldState: original }) });
+      vi.stubGlobal("localStorage", storage);
+      vi.stubGlobal("navigator", { locks });
+      const tab = await openTab();
+      if (newValue === null) storage.removeItem(PROGRESS_KEY);
+      else storage.setItem(PROGRESS_KEY, newValue);
+      tab.tabWindow.dispatch("storage", { key: PROGRESS_KEY, newValue });
+      expect(tab.userState.state.worldState).toEqual(original);
+
+      const latest = { season: "summer", weather: "heavy_inclement" };
+      storage.setItem(PROGRESS_KEY, buildState(5, { worldState: latest }));
+      const pending = tab.userState.mergeFromSave({ mineFloor: 10 });
+      await settle(tab.PERSIST_DEBOUNCE_MS);
+      await expect(pending).resolves.toMatchObject({ kind: "applied" });
+      expect(tab.userState.state.worldState).toEqual(latest);
+      expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+        worldState: latest,
+      });
+    },
+  );
+
+  it("merges an unsaved clock edit & retained entries with another tab's write", async () => {
     const original = JSON.parse(buildState(1)) as { progress: { almanac: string[] } };
     original.progress.almanac = ["future-item"];
     const storage = memoryStorage({ [PROGRESS_KEY]: JSON.stringify(original) });
@@ -472,16 +529,71 @@ describe("serialized progress writes", () => {
     vi.stubGlobal("localStorage", storage);
     vi.stubGlobal("navigator", { locks });
     const tab = await openTab();
-    tab.userState.setSeason("fall");
     tab.userState.setWeather("inclement");
-    storage.setItem(PROGRESS_KEY, buildState(5));
-    void tab.userState.mergeFromSave({ mineFloor: 10 });
+    const other = buildState(5, { worldState: { season: "fall", weather: "heavy_inclement" } });
+    storage.setItem(PROGRESS_KEY, other);
+    const pending = tab.userState.mergeFromSave({ mineFloor: 10 });
     await settle(tab.PERSIST_DEBOUNCE_MS);
+    await expect(pending).resolves.toMatchObject({ kind: "applied" });
     expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
       progress: { almanac: ["future-item"], mineFloor: 10, renown: 5 },
       worldState: { season: "fall", weather: "inclement" },
     });
     expect(tab.userState.state.worldState).toEqual({ season: "fall", weather: "inclement" });
+  });
+
+  it.each([false, true])(
+    "rebases a clock edit while the import waits (storage event: %s)",
+    async (storageEvent) => {
+      const { locks } = sharedLocks();
+      const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+      vi.stubGlobal("localStorage", storage);
+      vi.stubGlobal("navigator", { locks });
+      const tab = await openTab();
+      const gate = Promise.withResolvers<undefined>();
+      const held = locks.request(WRITE_LOCK, () => gate.promise);
+      await vi.advanceTimersByTimeAsync(1);
+      const pending = tab.userState.mergeFromSave({ mineFloor: 10 });
+      const other = buildState(5, { worldState: { season: "fall", weather: "heavy_inclement" } });
+      storage.setItem(PROGRESS_KEY, other);
+      if (storageEvent) tab.tabWindow.dispatch("storage", { key: PROGRESS_KEY, newValue: other });
+      tab.userState.setWeather("inclement");
+      gate.resolve(undefined);
+      await held;
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(pending).resolves.toMatchObject({ kind: "applied" });
+      expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+        worldState: { season: "fall", weather: "heavy_inclement" },
+      });
+      expect(tab.userState.state.worldState).toEqual({ season: "fall", weather: "inclement" });
+      await settle(tab.PERSIST_DEBOUNCE_MS);
+      const reloaded = await openTab();
+      expect(reloaded.userState.state.worldState).toEqual({ season: "fall", weather: "inclement" });
+    },
+  );
+
+  it("keeps a pending weather edit if a later season edit makes it valid", async () => {
+    const { locks } = sharedLocks();
+    const storage = memoryStorage({ [PROGRESS_KEY]: buildState(1) });
+    vi.stubGlobal("localStorage", storage);
+    vi.stubGlobal("navigator", { locks });
+    const tab = await openTab();
+    const gate = Promise.withResolvers<undefined>();
+    const held = locks.request(WRITE_LOCK, () => gate.promise);
+    await vi.advanceTimersByTimeAsync(1);
+    tab.userState.setWeather("special");
+    const pending = tab.userState.mergeFromSave({ mineFloor: 10 });
+    const other = buildState(5, { worldState: { season: "summer", weather: "heavy_inclement" } });
+    storage.setItem(PROGRESS_KEY, other);
+    tab.userState.setSeason("fall");
+    gate.resolve(undefined);
+    await held;
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(pending).resolves.toMatchObject({ kind: "applied" });
+    expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+      worldState: { season: "summer", weather: "calm" },
+    });
+    expect(tab.userState.state.worldState).toEqual({ season: "fall", weather: "special" });
   });
 
   it("rebases later removals, decreases, & record deletions onto a queued import", async () => {
