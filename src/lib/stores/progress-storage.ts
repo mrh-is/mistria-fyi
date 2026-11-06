@@ -341,6 +341,10 @@ export interface WorldState {
   weather: Weather;
 }
 
+export function createDefaultWorldState(): WorldState {
+  return { season: "spring", weather: "calm" };
+}
+
 /**
  * Stored entries whose IDs this build's tracker data doesn't know. They stay out of
  * `ProgressState`, so counts & completion ignore them, and are written back unchanged.
