@@ -256,6 +256,14 @@ export const MinesBiomeSchema = v.strictObject({
   floors: LevelRangeSchema,
   id: id("MinesBiomeId"),
 });
+
+/** A seal on a mine floor. Completing `questId` opens the way down; `stage` is where it's offered. */
+export const MineSealSchema = v.strictObject({
+  floor: number,
+  id: id("MineSealId"),
+  questId: id("QuestId"),
+  stage: number,
+});
 export const MountSchema = v.strictObject({
   appearances: v.record(id("MountAppearanceId"), SourcedEntitySchema),
   perks: v.record(id("PerkId"), SourcedEntitySchema),
@@ -300,6 +308,8 @@ export const TrackerDataSchema = v.strictObject({
   items: v.record(id("ItemId"), ItemSchema),
   mines: v.strictObject({
     biomes: v.array(MinesBiomeSchema),
+    /** In floor order. */
+    seals: v.array(MineSealSchema),
     spells: v.record(id("SpellId"), TrackerEntitySchema),
   }),
   mount: MountSchema,

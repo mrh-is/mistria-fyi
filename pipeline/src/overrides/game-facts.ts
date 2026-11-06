@@ -122,6 +122,15 @@ export const MINE_SUBCAT_TO_BIOME_ENTRIES = entriesFromRecord(
 );
 export const MINE_SUBCAT_TO_BIOME = entriesToRecord(MINE_SUBCAT_TO_BIOME_ENTRIES);
 
+export const MINE_SEAL_FLOORS_ENTRIES = entriesFromRecord(
+  { earth: 40, final: 100, fire: 60, priestess: 90, ruins: 80, water: 20 },
+  "seals.toml names; floors in the visual_index switch of enter_dungeon.gml",
+  "Seal rooms are placed by floor in GML, and seals.toml doesn't record a floor",
+);
+export const MINE_SEAL_FLOORS = entriesToRecord(MINE_SEAL_FLOORS_ENTRIES);
+/** The Void Seal is a side room behind the Ruins Seal's portal, so no floor waits on it directly. */
+export const SEALS_OFF_THE_FLOORS: ReadonlySet<string> = new Set(["void"]);
+
 export const GOLDEN_PRODUCT_TO_ANIMAL_ENTRIES = entriesFromRecord(
   {
     animal_currency: "chicken",

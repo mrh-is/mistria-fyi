@@ -22,6 +22,7 @@
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { getAllProgress, isCategoryComplete } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
+  import { sealsBefore } from "#lib/engine/projections/mines.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { emptyProgress, filteredCounts } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
@@ -54,6 +55,17 @@
   let { anchor, locale }: { anchor: string; locale: LocaleCode } = $props();
 
   const guard = createSpoilerGuard();
+
+  function requestFloor(floor: number): void {
+    const seals = sealsBefore(userState.state.progress, floor);
+    if (seals) {
+      guard.requestGuardedAction(seals, () => {
+        userState.setMineFloor(floor);
+      });
+    } else {
+      userState.setMineFloor(floor);
+    }
+  }
   const leaving = createLeavingSet<string>();
   const sectionGrouping = createSectionGrouping<string>();
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
@@ -401,7 +413,7 @@
                 biomes={trackerData.mines.biomes}
                 floor={userState.state.progress.mineFloor}
                 {locale}
-                onChange={(floor) => userState.setMineFloor(floor)}
+                onChange={requestFloor}
               />
             {/if}
             {#each ["skills", "renown", "villagers"] as const as category (category)}
