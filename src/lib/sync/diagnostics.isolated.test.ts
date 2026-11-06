@@ -13,10 +13,10 @@ import { createSyncDiagnostics } from "./diagnostics.svelte.js";
 import { buildFollowLink, mailboxIdFor } from "./follow.js";
 
 import type { SaveImportWarning } from "#lib/engine/import-save.js";
-import type { SyncApplyOutcome } from "#lib/stores/user-state.svelte.js";
 
 import type { PrivateValues } from "./diagnostics.svelte.js";
 import type { FollowKey } from "./follow.js";
+import type { SyncApplyOutcome } from "./lane-state.js";
 import type { ReadSave } from "./read-save.js";
 
 const KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8" as FollowKey;

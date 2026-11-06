@@ -1,5 +1,9 @@
 export type NonEmptyArray<T> = [T, ...T[]];
 
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 /** Returns `record[key]`, first storing `create()` there when the key is unset. */
 export function getOrCreate<K extends PropertyKey, V>(
   record: Partial<Record<K, V>>,

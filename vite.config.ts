@@ -120,6 +120,8 @@ const clientTestOptions = {
  */
 const relayChanged = process.env.VITEST_RELAY_CHANGED !== "false";
 const scriptsChanged = process.env.VITEST_SCRIPTS_CHANGED !== "false";
+const projectListingCacheDir = process.env.MISTRIA_VITEST_LIST_CACHE_DIR;
+const plainNodeProject = { cacheDir: projectListingCacheDir, resolve: { alias: libAlias } };
 
 /**
  * `scripts/` tests that load the browser suites' specs, fixtures, or app modules, so app & test
@@ -153,6 +155,7 @@ export default defineConfig(({ command }) => ({
       },
     },
   },
+  cacheDir: projectListingCacheDir,
   define: {
     __PRODUCTION_DEPLOYMENT__: JSON.stringify(isProductionDeployment),
     __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
@@ -274,7 +277,7 @@ export default defineConfig(({ command }) => ({
       {
         // The data pipeline: plain Node without the app's plugins, the same environment as the
         // `assets` project.
-        resolve: { alias: libAlias },
+        ...plainNodeProject,
         test: {
           ...plainNodeTestOptions,
           exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
@@ -285,7 +288,7 @@ export default defineConfig(({ command }) => ({
       },
       {
         // Build scripts, lint rules, & repo-level checks: plain Node without the app's plugins.
-        resolve: { alias: libAlias },
+        ...plainNodeProject,
         test: {
           ...plainNodeTestOptions,
           // CLI exclusions are overridden by inline projects, so exclude here.
@@ -303,7 +306,7 @@ export default defineConfig(({ command }) => ({
       {
         // The `node` project's environment, with a fresh module registry per file for tests that
         // mock or reset modules.
-        resolve: { alias: libAlias },
+        ...plainNodeProject,
         test: {
           ...plainNodeTestOptions,
           exclude: sharedTestExcludes,
@@ -348,7 +351,7 @@ export default defineConfig(({ command }) => ({
       },
       {
         // Needs the installed game assets, so CI never runs it; `pnpm run test` excludes it.
-        resolve: { alias: libAlias },
+        ...plainNodeProject,
         test: {
           ...plainNodeTestOptions,
           exclude: sharedTestExcludes,
