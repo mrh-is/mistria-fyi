@@ -1,5 +1,6 @@
 <script lang="ts" generics="T">
   import ShelfFold from "#lib/components/shelf-fold.svelte";
+  import ShelfHeading from "#lib/components/shelf-heading.svelte";
   import { SHELVES } from "#lib/engine/shelves.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
@@ -10,7 +11,8 @@
 
   /**
    * Things inside a section, grouped the way a page groups its sections. The first shelf with
-   * anything on it reads as the section's own list, and the shelves after it fold away.
+   * anything on it reads as the section's own list, and the shelves after it fold away. A search
+   * can hide the earlier rows, so a first shelf below To do gets a heading while forced open.
    */
   let {
     empty,
@@ -81,6 +83,9 @@
 {#each groups as { members, shelf }, index (shelf)}
   <div role="group" aria-label={shelfLabel(shelf)}>
     {#if index === 0}
+      {#if forceOpen && shelf !== "todo"}
+        <ShelfHeading count={members.length} {explains} {level} {shelf} />
+      {/if}
       {@render group(members)}
     {:else}
       <ShelfFold count={members.length} {explains} {forceOpen} {level} {shelf}>
