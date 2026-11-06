@@ -75,7 +75,39 @@ describe("save import", () => {
     );
   });
 
-  it("records a manual import and shows its display even when creation_version is absent", async () => {
+  it("can cancel a renamed save without changing the tracked farm or its progress", async () => {
+    const save = buildSavFile(
+      { player: { farm_name: "Moss", items_acquired: ["animated_waterfall_v2"] } },
+      "renamed.sav",
+    );
+    await userState.mergeFromSave(
+      { renown: 7 },
+      {
+        metadata: {
+          farmName: "Fern",
+          identity: { creationVersion: null, saveNumber: "123" },
+          importedAt: Date.now(),
+          playerName: null,
+        },
+      },
+    );
+    const before = userState.exportBackup();
+    const stored = localStorage.getItem(PROGRESS_STORAGE_KEY);
+
+    await importFiles([save]);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Is this the farm you’ve been tracking?",
+    });
+    expect(userState.exportBackup()).toBe(before);
+    await fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+
+    expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(stored);
+    userState.loadFromStorage();
+    expect(userState.exportBackup()).toBe(before);
+  });
+
+  it("imports unnumbered progress into a hand-tracked lane without a farm question", async () => {
     await importFiles([
       new File(
         [JSON.stringify({ farm_name: "Fern", items_acquired: [], name: "Ada" })],

@@ -53,7 +53,12 @@ describe("manual import metadata", () => {
       identity: { creationVersion: null, saveNumber: null },
       importedAt: metadata.importedAt + 60_000,
     };
-    const outcome = await userState.mergeFromSave({ mineFloor: 10 }, { metadata: renamed });
+    const prompt = await userState.mergeFromSave({ mineFloor: 10 }, { metadata: renamed });
+    if (prompt.kind !== "ask") throw new Error(`Import returned ${prompt.kind}`);
+    const outcome = await userState.mergeFromSave(
+      { mineFloor: 10 },
+      { confirmedFarm: prompt.farm, metadata: renamed },
+    );
     expect(outcome.kind).toBe("applied");
     expect(userState.state.lastImport).toEqual({ ...renamed, identity: metadata.identity });
   });

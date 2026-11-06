@@ -461,6 +461,7 @@
   "import_error_unexpected": "Se produjo un error inesperado durante la importación.",
   "import_farm_title": "Este archivo es de otra granja",
   "import_farm_description": "Al combinar este archivo con tu progreso, juntarás datos de distintas granjas. La guía conservará el progreso que ya registraste.",
+  "import_farm_unnumbered_description": "No sabemos de qué granja es esta partida guardada. Si la combinas, añadiremos su progreso al que ya has registrado.",
   "import_farm_merge": "Combinar el progreso",
   "import_farm_cancel": "Cancelar",
   "import_error_sync_active": "Detén la sincronización en este dispositivo antes de importar una partida.",

@@ -451,6 +451,7 @@
   "import_error_unexpected": "インポート中に予期しないエラーが発生しました。",
   "import_farm_title": "別の農場のセーブデータです",
   "import_farm_description": "このセーブデータを取り込むと、別々の農場の進み具合が合わさります。すでに記録した進み具合はそのまま残ります。",
+  "import_farm_unnumbered_description": "このセーブデータがどの農場のものか分かりません。取り込むと、これまでの記録にこのセーブデータの進み具合が追加されます。",
   "import_farm_merge": "進み具合を合わせる",
   "import_farm_cancel": "キャンセル",
   "import_error_sync_active": "セーブデータを取り込む前に、この端末での同期を停止してください。",

@@ -451,6 +451,7 @@
   "import_error_unexpected": "匯入時發生意外錯誤。",
   "import_farm_title": "這是另一座農場的存檔",
   "import_farm_description": "合併此存檔會將不同農場的進度合在一起。指南會保留你已經記錄的進度。",
+  "import_farm_unnumbered_description": "我們無法確定這個存檔是哪個農場的。如果你選擇合併，我們會把存檔中的進度加到你已有的紀錄裡。",
   "import_farm_merge": "合併進度",
   "import_farm_cancel": "取消",
   "import_error_sync_active": "請先停止在這部裝置上的同步，再匯入存檔。",

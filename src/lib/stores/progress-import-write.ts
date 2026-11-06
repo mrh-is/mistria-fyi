@@ -28,8 +28,14 @@ interface ManualImportOptions {
   playtime?: number;
 }
 
+interface ManualFarmQuestion {
+  farm: string;
+  kind: "ask";
+  reason: "different" | "unnumbered";
+}
+
 export type ManualImportOutcome =
-  | { farm: string; kind: "ask" }
+  | ManualFarmQuestion
   | { kind: "applied"; result: MergeResult }
   | { kind: "busy" | "newer-data" | "sync-active" | "write-failed" };
 
@@ -49,7 +55,7 @@ interface ManualImportEdits {
 }
 
 type ManualImportPlan =
-  | { farm: string; kind: "ask" }
+  | ManualFarmQuestion
   | {
       json: string;
       kind: "write";
@@ -72,8 +78,8 @@ export function planManualImport(
   const capturedFarm = captured.lastImport?.identity ?? null;
   const storedFarm = current?.lastImport?.identity ?? null;
   const incomingFarm = metadata?.identity ?? null;
-  const farm = manualFarmQuestion(capturedFarm, storedFarm, incomingFarm);
-  if (farm !== undefined && farm !== confirmedFarm) return { farm, kind: "ask" };
+  const question = manualFarmQuestion(capturedFarm, storedFarm, incomingFarm);
+  if (question && question.farm !== confirmedFarm) return question;
 
   const result = applyAdditiveSave(captured.progress, captured.history, imported, playtime);
   if (metadata) captured.lastImport = importMetadata(storedFarm ?? capturedFarm, metadata);
@@ -131,22 +137,27 @@ function manualFarmQuestion(
   captured: FarmIdentity | null,
   stored: FarmIdentity | null,
   incoming: FarmIdentity | null,
-): string | undefined {
-  if (
-    (stored && compareFarms(captured, stored) === "different") ||
-    (incoming &&
+): ManualFarmQuestion | undefined {
+  const different =
+    (stored !== null && compareFarms(captured, stored) === "different") ||
+    (incoming !== null &&
       (compareFarms(captured, incoming) === "different" ||
-        compareFarms(stored, incoming) === "different"))
-  ) {
-    return JSON.stringify(
+        compareFarms(stored, incoming) === "different"));
+  const unnumbered =
+    incoming?.saveNumber === null && Boolean(captured?.saveNumber ?? stored?.saveNumber);
+  if (!different && !unnumbered) return undefined;
+
+  return {
+    farm: JSON.stringify(
       [captured, stored, incoming].map((identity) => {
         if (!identity) return null;
         const { creationVersion: version, saveNumber } = identity;
         return [saveNumber, version && [version.major, version.minor, version.patch, version.pre]];
       }),
-    );
-  }
-  return undefined;
+    ),
+    kind: "ask",
+    reason: different ? "different" : "unnumbered",
+  };
 }
 
 function importMetadata(
