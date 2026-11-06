@@ -363,7 +363,10 @@ tracker (`applyLocalSave`, which the courier in #134 calls) as well as every fol
   never applies; the writer’s synchronous fallback isn’t enough for two long-lived receivers.
 - **It listens** on the mailbox’s WebSocket, & reads the mailbox once each time it connects, giving
   each read 30 seconds, since reads & applies take turns. A closed socket retries from 5 seconds,
-  doubling up to 5 minutes; coming back into view or online retries at once.
+  doubling up to 5 minutes; coming back into view or online retries at once. A refused handshake
+  uses the same retry & read. The browser hides the reason for a handshake failure, so there’s no
+  separate notice for a full mailbox. The follower still shows the outcome of its reads & when its
+  last save arrived.
 - **It never applies** while its store is quarantined or in the “newer data” state, & never uses
   manual import’s unlock path; on the sharing PC the courier still uploads. In the newer-data state,
   “Export backup” returns the stored blob verbatim (the choice in PR #158 for #106, provisional
