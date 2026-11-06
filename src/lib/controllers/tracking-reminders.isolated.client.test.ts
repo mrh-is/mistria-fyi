@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
+import { PROGRESS_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 
 const notifications = vi.hoisted(() => ({ dismiss: vi.fn(), show: vi.fn(() => 1) }));
@@ -48,7 +49,6 @@ it("requests persistence and shows the install transfer steps when choosing by h
   await controller.opened();
   expect(controller.installOpen).toBe(false);
   expect(store.reminders?.install?.dismissed).toBe(true);
-  expect(store.reminders?.lastOpenedAt).toEqual(expect.any(Number));
 });
 
 it("does not nudge non-iOS players but still requests persistence", async () => {
@@ -57,6 +57,37 @@ it("does not nudge non-iOS players but still requests persistence", async () => 
   expect(persist).toHaveBeenCalledTimes(1);
   expect(controller.installOpen).toBe(false);
 });
+
+it.each([false, true])(
+  "opens unchanged progress without writing when no reminder is due (old timestamp: %s)",
+  async (hasTimestamp) => {
+    const { store: previous } = await open(false);
+    await previous.mergeFromSave({ mineFloor: 7 });
+    const reminders = {
+      backupFacts: 1,
+      install: { dismissed: true as const },
+      ...(hasTimestamp ? { lastOpenedAt: 1000 } : {}),
+    };
+    expect(await previous.updateReminders(() => reminders)).toBe(true);
+    await vi.runAllTimersAsync();
+    const before = localStorage.getItem(PROGRESS_STORAGE_KEY);
+
+    vi.resetModules();
+    const write = vi.spyOn(localStorage, "setItem");
+    const { controller, store } = await open(false);
+    expect(store.state.progress.mineFloor).toBe(7);
+    expect(store.trackingLane).toBe("manual");
+    expect(store.reminders).toEqual(reminders);
+
+    await controller.opened();
+    await vi.runAllTimersAsync();
+    expect(write).not.toHaveBeenCalled();
+    expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(before);
+    expect(persist).toHaveBeenCalledTimes(1);
+    expect(notifications.show).not.toHaveBeenCalled();
+    expect(controller.installOpen).toBe(false);
+  },
+);
 
 it("treats a denied persistence request as best effort", async () => {
   persist.mockRejectedValueOnce(new DOMException("Denied", "SecurityError"));

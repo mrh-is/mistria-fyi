@@ -436,7 +436,31 @@ export function readProgressBlob(json: string, policy: IngressPolicy): ProgressR
   const migrated = migrateDocument(envelope.output, version);
   const blob = v.safeParse(SCHEMAS[policy], migrated);
   if (!blob.success) return { error: "invalid-fields", kind: "unreadable" };
-  return { kind: "ok", loaded: normalizeBlob(blob.output) };
+  const loaded = normalizeBlob(blob.output);
+  if (policy === "repair") loaded.local = keepStoredKeyOrder(migrated.local, loaded.local);
+  return { kind: "ok", loaded };
+}
+
+/** Keep validated local values in storage order so a key reorder alone cannot trigger auto-save. */
+function keepStoredKeyOrder(
+  stored: unknown,
+  validated: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!isPlainObject(stored)) return validated;
+  const keys = new Set([...Object.keys(stored), ...Object.keys(validated)]);
+  return Object.fromEntries(
+    [...keys]
+      .filter((key) => Object.hasOwn(validated, key))
+      .map((key) => {
+        const value = validated[key];
+        return [
+          key,
+          value !== stored[key] && isPlainObject(value)
+            ? keepStoredKeyOrder(stored[key], value)
+            : value,
+        ];
+      }),
+  );
 }
 
 const QUEST_IDS = new Set(
