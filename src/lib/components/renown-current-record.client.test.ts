@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import RenownCurrentRecordHarness from "#lib/components/renown-current-record.test-harness.svelte";
 import { getName } from "#lib/data/names.js";
@@ -8,11 +8,7 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 
 describe("RenownCurrentRecord", () => {
   beforeEach(async () => {
-    userState.resetAll();
     await userState.startTrackingByHand();
-  });
-  afterEach(() => {
-    userState.resetAll();
   });
 
   it("shows one current-rank impression and a raw overall progress value", () => {

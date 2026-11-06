@@ -7,7 +7,7 @@ import { SvelteURL } from "svelte/reactivity";
  * client-side navigation.
  *
  * The app & client test setup mocks `$app/state` with this module (it exports `page`); a test sets
- * `pageStub.status` or calls `pageStub.navigate()`, and resets the stub in `beforeEach`.
+ * `pageStub.status` or calls `pageStub.navigate()`. Shared client teardown resets both stubs.
  */
 const ORIGIN = "https://mistria.fyi";
 

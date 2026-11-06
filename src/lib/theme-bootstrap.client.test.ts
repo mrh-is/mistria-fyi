@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { THEME_COLORS, THEME_STORAGE_KEY } from "#lib/theme.js";
@@ -63,11 +63,6 @@ describe("theme bootstrap", () => {
       document.head.append(meta);
     }
     meta.content = THEME_COLORS.light;
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.unstubAllGlobals();
   });
 
   it("extracts both inline scripts from app.html", () => {
@@ -145,11 +140,6 @@ describe("theme-color sync", () => {
       document.head.append(meta);
     }
     meta.content = THEME_COLORS.light;
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.unstubAllGlobals();
   });
 
   it("sets dark theme-color when bootstrap applied dark class", () => {

@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import VillagerRecordHarness from "#lib/components/villager-record.test-harness.svelte";
 import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
@@ -19,15 +19,10 @@ const balor: Villager = {
 
 describe("VillagerRecord", () => {
   beforeEach(async () => {
-    userState.resetAll();
     await userState.startTrackingByHand();
     // happy-dom never loads images, so it reports every one as finished; a browser's image is
     // still loading when the record mounts.
     vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(false);
-  });
-
-  afterEach(() => {
-    userState.resetAll();
   });
 
   it("renders a known dateable Villager as one compact, accessible record", () => {

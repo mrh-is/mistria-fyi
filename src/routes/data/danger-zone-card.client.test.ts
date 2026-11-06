@@ -1,23 +1,13 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 
 import DangerZoneCard from "./danger-zone-card.svelte";
 
-// Client files share one store per worker, so each test starts from defaults (#174).
 beforeEach(async () => {
-  userState.resetAll();
   await userState.startTrackingByHand();
-  await tick();
-});
-
-afterEach(async () => {
-  cleanup();
-  userState.resetAll();
-  await tick();
 });
 
 describe("DangerZoneCard", () => {

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { resolutionHolds } from "#lib/engine/provenance.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -37,14 +37,8 @@ function restoreWithUnknownProvenance(
 }
 
 beforeEach(async () => {
-  userState.loadFromStorage();
-  userState.resetAll();
   // Hand edits wait for a tracking lane; these tests record them straight away.
   await userState.startTrackingByHand();
-});
-
-afterEach(() => {
-  userState.resetAll();
 });
 
 describe("provenance", () => {

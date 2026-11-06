@@ -1,9 +1,7 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { afterEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { describe, expect, it } from "vitest";
 
 import AiDisclosureDialog from "#lib/components/ai-disclosure-dialog.svelte";
-
-afterEach(cleanup);
 
 describe("dialog close button", () => {
   it("is the one localized close control, and it dismisses the dialog", async () => {

@@ -1,5 +1,5 @@
 import { render } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -32,13 +32,7 @@ const CASES: { expected: string; imported: Partial<ProgressState>; setup?: () =>
 ];
 
 beforeEach(async () => {
-  userState.loadFromStorage();
-  userState.resetAll();
   await userState.startTrackingByHand();
-});
-
-afterEach(() => {
-  userState.resetAll();
 });
 
 describe("merge summary integration", () => {

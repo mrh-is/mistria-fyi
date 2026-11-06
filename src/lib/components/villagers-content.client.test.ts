@@ -1,5 +1,5 @@
 import { fireEvent, waitFor } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import VillagersContent from "#lib/components/villagers-content.svelte";
 import { trackerData } from "#lib/data/index.js";
@@ -15,12 +15,7 @@ import type { VillagerId } from "#lib/types/tracker-data.js";
 
 describe("VillagersContent localization", () => {
   beforeEach(async () => {
-    userState.resetAll();
     await userState.startTrackingByHand();
-  });
-
-  afterEach(() => {
-    userState.resetAll();
   });
 
   it("reveals the setting with romance and supports turning it on and off", async () => {
@@ -81,12 +76,7 @@ describe("VillagersContent localization", () => {
 
 describe("VillagersContent alphabet index", () => {
   beforeEach(async () => {
-    userState.resetAll();
     await userState.startTrackingByHand();
-  });
-
-  afterEach(() => {
-    userState.resetAll();
   });
 
   it("omits initials that only spoilered villagers start with", () => {
@@ -120,15 +110,9 @@ describe("VillagersContent with completed villagers hidden", () => {
   );
 
   beforeEach(async () => {
-    userState.resetAll();
     await userState.startTrackingByHand();
     userState.setHeartLevel(completed, MAX_HEART_LEVEL);
     userState.setHeartLevel(other, MAX_HEART_LEVEL);
-  });
-
-  afterEach(() => {
-    userState.resetAll();
-    pageStub.reset();
   });
 
   it("opens the fold around the villager targeted by the URL hash", () => {

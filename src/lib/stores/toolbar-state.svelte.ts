@@ -100,6 +100,18 @@ export class ToolbarState {
     this.rebuildSourceFilters();
   }
 
+  reset(): void {
+    this.closeSearch();
+    this.carriesSearch = false;
+    this.expandedFilterSections.clear();
+    this.pageSearchCounters.clear();
+    this.panelClearance = 0;
+    this.showUnobtainable = false;
+    this.sourceFilterRegistrations.clear();
+    this.sourceFilters = [];
+    this.resetSourceFilters();
+  }
+
   resetSourceFilters(): void {
     this.enabledSourceFilterIds = new SvelteSet(this.sourceFilters.map((filter) => filter.id));
   }

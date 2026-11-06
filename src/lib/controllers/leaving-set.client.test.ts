@@ -1,9 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { afterEach, expect, it, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 
 import LeavingSetHarness from "#lib/controllers/leaving-set.test-harness.svelte";
-
-afterEach(() => vi.useRealTimers());
 
 it("clears pending leaving timers when its component unmounts", async () => {
   vi.useFakeTimers();

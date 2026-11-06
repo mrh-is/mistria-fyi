@@ -1,12 +1,11 @@
 import { fireEvent, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { getMaxRenownLevel } from "#lib/engine/progress.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
@@ -21,16 +20,8 @@ const props = {
 };
 
 beforeEach(async () => {
-  userState.resetAll();
   await userState.startTrackingByHand();
-  pageStub.reset();
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-  // Client test files share this store, so a search left open would filter their pages.
-  toolbarState.closeSearch();
 });
 
 it("offers one closed Completed fold, only once something's finished", async () => {

@@ -1,13 +1,9 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
 import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
-
-afterEach(() => {
-  cleanup();
-});
 
 describe("SpoilerGuardDialog", () => {
   it("renders nothing until the guard holds a condition", () => {

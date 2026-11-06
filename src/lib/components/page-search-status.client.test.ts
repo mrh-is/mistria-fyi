@@ -1,6 +1,6 @@
 import { fireEvent } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import MuseumContent from "#lib/components/museum-content.svelte";
 import PageSearchStatus from "#lib/components/page-search-status.svelte";
@@ -31,15 +31,10 @@ async function search(query: string) {
 
 describe("PageSearchStatus", () => {
   beforeEach(async () => {
-    userState.resetAll();
     await userState.startTrackingByHand();
   });
 
   // Client test files share this store, so a search left open would filter their pages.
-  afterEach(() => {
-    toolbarState.closeSearch();
-    toolbarState.unregisterPageSearch(KEY);
-  });
 
   it("stays quiet without a search", () => {
     const view = renderWithFeedback(PageSearchStatus, { locale: "en" });

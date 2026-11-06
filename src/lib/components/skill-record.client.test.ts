@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import SkillRecordHarness from "#lib/components/skill-record.test-harness.svelte";
 import { perksOfSkill } from "#lib/engine/projections/skills.js";
@@ -12,11 +12,7 @@ const skillId = "mining" as SkillId;
 
 describe("SkillRecord", () => {
   beforeEach(async () => {
-    userState.resetAll();
     await userState.startTrackingByHand();
-  });
-  afterEach(() => {
-    userState.resetAll();
   });
 
   it("registers with skill metadata", async () => {

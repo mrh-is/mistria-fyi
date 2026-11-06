@@ -1,13 +1,9 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 
 import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
 
 import type { FactProvenance } from "#lib/engine/provenance.js";
-
-afterEach(() => {
-  cleanup();
-});
 
 function renderBox(
   state: "checked" | "obtained" | "unchecked",

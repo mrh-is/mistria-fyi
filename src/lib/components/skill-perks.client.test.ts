@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import SkillPerks from "#lib/components/skill-perks.svelte";
 import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -35,13 +35,8 @@ function toggle() {
 
 describe("SkillPerks", () => {
   beforeEach(async () => {
-    userState.resetAll();
     await userState.startTrackingByHand();
     spoilerGuard = createSpoilerGuard();
-  });
-  afterEach(() => {
-    cleanup();
-    userState.resetAll();
   });
 
   it("starts collapsed, counting every perk as locked before level 1", () => {

@@ -28,8 +28,6 @@ beforeEach(() => {
 
 afterEach(() => {
   scheduler.stop();
-  document.body.replaceChildren();
-  vi.useRealTimers();
 });
 
 function append(html: string): HTMLElement {

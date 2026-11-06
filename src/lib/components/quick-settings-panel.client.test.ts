@@ -1,15 +1,8 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { tick } from "svelte";
-import { afterEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { describe, expect, it } from "vitest";
 
 import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
 import { userState } from "#lib/stores/user-state.svelte.js";
-
-afterEach(async () => {
-  userState.resetAll();
-  cleanup();
-  await tick();
-});
 
 describe("QuickSettingsPanel", () => {
   it("groups compact links to the data and About pages", () => {
