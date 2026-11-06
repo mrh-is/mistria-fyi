@@ -84,8 +84,8 @@
   .category-stripe {
     position: relative;
     isolation: isolate;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 10px;
     width: 100%;
@@ -110,6 +110,8 @@
 
   .category-copy {
     min-width: 0;
+    /* Reserve room for the name before the fraction moves onto its own line. */
+    flex: 1 1 10em;
   }
 
   .category-name {
@@ -117,6 +119,8 @@
     isolation: isolate;
     display: block;
     width: fit-content;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     font-size: var(--text-base);
     font-weight: 600;
     line-height: 1.2;
@@ -154,6 +158,8 @@
 
   .category-count {
     display: grid;
+    flex: 0 0 auto;
+    margin-left: auto;
     grid-template-columns:
       minmax(var(--category-count-width, 4ch), max-content) auto
       minmax(var(--category-count-width, 4ch), max-content);
