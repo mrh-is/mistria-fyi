@@ -12,6 +12,7 @@ function extractMines(fiddle: ReturnType<typeof makeFiddleBase>, _localizer = lo
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({
     dungeons: { dungeons: { biomes: [] }, misc: { max_floors: 100 } },
+    seals: {},
     ...overrides,
   });
 }
@@ -19,6 +20,38 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
 describe("extractMines", () => {
   beforeEach(() => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
+  });
+
+  it("lists seals in floor order, leaving out the one off the floors", () => {
+    const { mines: result } = extractMines(
+      makeFiddle({
+        seals: {
+          earth: { quest: "the_earth_tablet", stage: 1 },
+          void: { quest: "creating_the_void_mass", stage: 0 },
+          water: { quest: "the_water_tablet", stage: 1 },
+        },
+      }),
+    );
+    expect(result.seals).toEqual([
+      { floor: 20, id: "water", questId: "the_water_tablet", stage: 1 },
+      { floor: 40, id: "earth", questId: "the_earth_tablet", stage: 1 },
+    ]);
+  });
+
+  it("throws on a seal with no known floor", () => {
+    const seals = { new_seal: { quest: "a_quest", stage: 0 } };
+    expect(() => extractMines(makeFiddle({ seals }))).toThrow("No mine floor recorded");
+  });
+
+  it.each([
+    ["a stage", { water: { quest: "the_water_tablet" } }, "Expected numeric stage"],
+    ["a quest", { water: { stage: 1 } }, "quest"],
+  ])("throws on a seal without %s", (_name, seals, message) => {
+    expect(() => extractMines(makeFiddle({ seals }))).toThrow(message);
+  });
+
+  it("throws without a seals table", () => {
+    expect(() => extractMines(makeFiddle({ seals: undefined }))).toThrow("Missing seals table");
   });
 
   it("extracts biomes with floor ranges", () => {

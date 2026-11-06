@@ -1,9 +1,9 @@
 import { trackerData } from "#lib/data/index.js";
 import { getMaxMineFloor } from "#lib/engine/progress.js";
-import { addProgress, countShelfRows, emptyProgress, shelfFacts } from "#lib/engine/shelves.js";
+import { addProgress, countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
 import { recordEntries } from "#lib/utils/record.js";
 
-import type { ProgressContext } from "#lib/engine/progress.js";
+import type { CategoryProgress, ProgressContext } from "#lib/engine/progress.js";
 import type {
   CategoryProjection,
   CategoryProjectionOptions,
@@ -22,6 +22,29 @@ export interface MinesProjection extends CategoryProjection {
   spells: SpellRow[];
 }
 
+/**
+ * Floors up to the next seal are doable, and those past it wait for its quest. A seal above the
+ * player's floor counts as broken whatever its quest says, because they got past it. A seal on the
+ * player's floor still stops them, since the seal room is the floor itself.
+ */
+export function mineFloorProgress({
+  mineFloor,
+  questStates,
+}: ProgressContext["progress"]): CategoryProgress {
+  const maxFloor = getMaxMineFloor();
+  const seal = trackerData.mines.seals.find(
+    ({ floor, questId }) => floor >= mineFloor && questStates[questId] !== "completed",
+  );
+  const reachable = seal?.floor ?? maxFloor;
+  return {
+    completed: mineFloor,
+    completedShown: mineFloor,
+    todo: reachable - mineFloor,
+    total: maxFloor,
+    waiting: maxFloor - reachable,
+  };
+}
+
 /** Each mine floor & each spell is one step. */
 export function projectMines(
   ctx: ProgressContext,
@@ -32,14 +55,10 @@ export function projectMines(
     ...shelfFacts(spell, ctx.progress.spells.has(id), ctx, options.showsSource),
     id,
   }));
-  const floor = ctx.progress.mineFloor;
-  // Every unreached floor is doable until #503 says where a seal stops the player.
-  const floors = {
-    ...emptyProgress(),
-    completed: floor,
-    completedShown: floor,
-    todo: maxFloor - floor,
-    total: maxFloor,
+  return {
+    floor: ctx.progress.mineFloor,
+    maxFloor,
+    spells,
+    totals: addProgress([mineFloorProgress(ctx.progress), countShelfRows(spells)]),
   };
-  return { floor, maxFloor, spells, totals: addProgress([floors, countShelfRows(spells)]) };
 }

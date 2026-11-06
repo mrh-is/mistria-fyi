@@ -12,6 +12,7 @@ import {
   GOLDEN_PRODUCT_TO_ANIMAL_ENTRIES,
   HAYDENS_BARN_GATE,
   KNOWN_STORES_ENTRIES,
+  MINE_SEAL_FLOORS_ENTRIES,
   MINE_SUBCAT_TO_BIOME_ENTRIES,
   MOUNT_APPEARANCE_UNLOCK_ENTRIES,
   PERK_BY_ITEM_ID_ENTRIES,
@@ -131,6 +132,7 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
       record(record(fiddle.items).mines)[entry.id] !== undefined &&
       record(record(record(fiddle.items).mines)[entry.id]).biome_id === entry.value,
   );
+  validate("mine seal floor", MINE_SEAL_FLOORS_ENTRIES, ids(record(fiddle.seals)));
   validate(
     "golden animal product",
     GOLDEN_PRODUCT_TO_ANIMAL_ENTRIES,

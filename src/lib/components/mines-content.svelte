@@ -17,8 +17,9 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { getMaxMineFloor } from "#lib/engine/progress.js";
+  import { mineFloorProgress } from "#lib/engine/projections/mines.js";
   import { factKey } from "#lib/engine/provenance.js";
-  import { alwaysToDo, countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
+  import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -158,7 +159,7 @@
       <ExpandableSection
         {locale}
         name={m.mines_floor_progress_section()}
-        progress={alwaysToDo(userState.state.progress.mineFloor, maxFloors)}
+        progress={mineFloorProgress(userState.state.progress)}
         reportCategory="mines"
         reportEntityId="floors"
         reportExtra={{
