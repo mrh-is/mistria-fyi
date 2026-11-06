@@ -446,19 +446,25 @@ to no project or to more than one.
 
 `src/vitest-setup-client-state.ts` resets the worker’s shared state before each `client` file. After
 each test, it unmounts Testing Library components and runs the same reset. Suites still dispose of
-resources they create directly, such as their own `$effect.root` or event listeners.
+resources they create directly, such as their own `$effect.root` or event listeners. Seed shared
+state in `beforeEach`: the reset undoes a file’s top-level code before its first test, and a suite’s
+`beforeAll` state lasts only until the first test ends.
 
-| State                | Teardown                                                                                                                                                                                                 |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `userState`          | Clears browser storage before loading & resetting the store. Flushes the reset’s effects before clearing storage again.                                                                                  |
-| `toolbarState`       | Clears search, filters, disclosure state, panel clearance, & page registrations.                                                                                                                         |
-| `$app/state`         | `pageStub.reset()` restores the English page, HTTP 200, & `updated.current`.                                                                                                                             |
-| `theme` & Paraglide  | Restores the system theme & original locale getter. Removes the document’s dark class & test theme-color meta tag.                                                                                       |
-| Row-reveal scheduler | Unmount cancels each list’s frames. The shared reset clears the queue, frame budget, & cached height.                                                                                                    |
-| Reload holds         | Unmount releases component-owned holds. Teardown fails if a hold remains active.                                                                                                                         |
-| Sync notice & toasts | Clears the sync notice, Sonner’s queue, & its removal timers. The receiver & courier stay idle in the shared project. Tests that drive them run in `client-isolated`.                                    |
-| Browser stubs & DOM  | Restores spies, `vi.stubGlobal()` replacements, environment stubs, & real timers. The default `matchMedia` & `Element.animate` stubs keep no call history. Empties `document.body` & both storage areas. |
-| Names & collators    | Keeps the cache warm. Tests that need an empty cache use `cold`.                                                                                                                                         |
+| State                     | Teardown                                                                                                                                                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `userState`               | Clears browser storage before loading & resetting the store. Flushes the reset’s effects before clearing storage again.                                                                                  |
+| `toolbarState`            | Clears search, filters, disclosure state, panel clearance, & page registrations.                                                                                                                         |
+| `$app/state`              | `pageStub.reset()` restores the English page, HTTP 200, & `updated.current`.                                                                                                                             |
+| `theme` & Paraglide       | Restores the system theme & original locale getter. Removes the document’s dark class & test theme-color meta tag.                                                                                       |
+| Row-reveal scheduler      | Unmount cancels each list’s frames. The shared reset clears the queue, frame budget, & cached height.                                                                                                    |
+| Reload holds              | Unmount releases component-owned holds. A hold that remains fails the test that left it, then teardown clears it.                                                                                        |
+| Sync notice & toasts      | Clears the sync notice, Sonner’s queue, & its removal timers. The receiver & courier stay idle in the shared project. Tests that drive them run in `client-isolated`.                                    |
+| Browser stubs & DOM       | Restores spies, `vi.stubGlobal()` replacements, environment stubs, & real timers. The default `matchMedia` & `Element.animate` stubs keep no call history. Empties `document.body` & both storage areas. |
+| Tracking reminders        | Closes the install nudge. A stale backup toast id is harmless because Sonner’s ids keep counting.                                                                                                        |
+| Undo toast id             | Stays set. Dismissing a stale id does nothing, and Sonner’s ids keep counting.                                                                                                                           |
+| Sync diagnostics          | Stays in memory. Only the courier & receiver write it, and they stay idle in the shared project.                                                                                                         |
+| Relay & Turnstile sources | Stay at their defaults. Only `client-isolated` tests call `setRelayClient()` or `setTurnstileTokenSource()`.                                                                                             |
+| Names & collators         | Keeps the cache warm. Tests that need an empty cache use `cold`.                                                                                                                                         |
 
 The existing CI test job shuffles the shared client files and logs the seed. It keeps the other
 projects’ ordering & the relay’s head start. Reproduce the scheduled order with

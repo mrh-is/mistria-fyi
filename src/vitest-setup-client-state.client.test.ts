@@ -1,6 +1,7 @@
 import { toast } from "svelte-sonner";
 import { describe, expect, it, vi } from "vitest";
 
+import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
 import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { PROGRESS_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { theme } from "#lib/stores/theme.svelte.js";
@@ -11,7 +12,7 @@ import { pageStub, updated } from "#lib/test-utils/page-stub.svelte.js";
 import { toastState } from "#lib/test-utils/sonner-state.js";
 
 describe("shared client setup", { shuffle: false }, () => {
-  it("leaves state for the shared teardown to reset", () => {
+  it("leaves state for the shared teardown to reset", async () => {
     expect.soft(localStorage).toHaveLength(0);
     expect.soft(sessionStorage).toHaveLength(0);
     toolbarState.openSearch();
@@ -25,6 +26,10 @@ describe("shared client setup", { shuffle: false }, () => {
     toolbarState.showUnobtainable = true;
     toolbarState.toggleFilterSection("sources");
     toolbarState.panelClearance = 42;
+    vi.stubGlobal("navigator", { maxTouchPoints: 5, platform: "iPhone", userAgent: "iPhone" });
+    await userState.startTrackingByHand();
+    await trackingReminders.checkInstall("lane-chosen");
+    expect(trackingReminders.installOpen).toBe(true);
     userState.setRenown(7);
     userState.toggleShowSpoilers();
     localStorage.setItem(PROGRESS_STORAGE_KEY, "{invalid");
@@ -37,6 +42,7 @@ describe("shared client setup", { shuffle: false }, () => {
     theme.set("dark");
     syncNotice.show(42);
     const toastId = toast("Test notification", { onDismiss: vi.fn() });
+    toast.dismiss(toastId);
     expect(toastState.toasts.map(({ id }) => id)).toContain(toastId);
     overwriteGetLocale(() => "ja");
     document.body.append(document.createElement("div"));
@@ -68,6 +74,7 @@ describe("shared client setup", { shuffle: false }, () => {
     expect.soft(theme.preference).toBe("system");
     expect.soft(syncNotice.applied).toBeNull();
     expect.soft(toastState.toasts).toHaveLength(0);
+    expect.soft(trackingReminders.installOpen).toBe(false);
     expect.soft(getLocale()).toBe("en");
     expect.soft(document.documentElement.classList.contains("dark")).toBe(false);
     expect.soft(document.body.childElementCount).toBe(0);
