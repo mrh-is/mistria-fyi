@@ -76,7 +76,8 @@
     }
   }
   const PROGRESS_CATEGORIES = ["skills", "renown", "villagers"] as const;
-  // Which Progress categories show, per list, so a search can hide the group when none does.
+  // Which Progress categories show, per list, so a search can hide the group when none does. A list
+  // that unmounts leaves its keys; they're rewritten on remount, and only read while it's mounted.
   const progressShown: Record<string, boolean> = $state({});
   const leaving = createLeavingSet<string>();
 

@@ -4,7 +4,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
-import { getMaxRenownLevel } from "#lib/engine/progress.js";
+import { getMaxRenownLevel, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
+import { perksOfSkill } from "#lib/engine/projections/skills.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -13,6 +14,8 @@ import { recordKeys } from "#lib/utils/record.js";
 import SourceContent from "./source-content.test-harness.svelte";
 
 import type { StoreId } from "#lib/types/tracker-data.js";
+
+const firstSkill = recordKeys(trackerData.skills)[0];
 
 beforeEach(() => {
   userState.resetAll();
@@ -70,7 +73,7 @@ it("hides the Progress group during a search that matches nothing in it", async 
 
 it("keeps the Progress group during a search that matches a skill", async () => {
   const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
-  toolbarState.setSearchQuery(getName("skills", recordKeys(trackerData.skills)[0], "en"));
+  toolbarState.setSearchQuery(getName("skills", firstSkill, "en"));
   await tick();
   await tick();
   expect(view.getByRole("button", { name: "Progress" })).toBeVisible();
@@ -86,4 +89,24 @@ it("hides the Completed divider when a search leaves only an empty Progress grou
   await tick();
   await tick();
   expect(view.getByTestId("everything-completed").hidden).toBe(true);
+
+  // A finished skill still matches, so the divider stays for it.
+  userState.setSkillLevel(firstSkill, MAX_SKILL_LEVEL);
+  for (const perk of perksOfSkill(firstSkill)) userState.togglePerk(perk);
+  toolbarState.setSearchQuery(getName("skills", firstSkill, "en"));
+  await tick();
+  await tick();
+  expect(view.getByTestId("everything-completed").hidden).toBe(false);
+});
+
+it("brings the Progress group back when the search clears", async () => {
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  toolbarState.setSearchQuery("acorn");
+  await tick();
+  await tick();
+  expect(view.queryByRole("button", { name: "Progress" })).toBeNull();
+
+  toolbarState.setSearchQuery("");
+  await tick();
+  expect(view.getByRole("button", { name: "Progress" })).toBeVisible();
 });
