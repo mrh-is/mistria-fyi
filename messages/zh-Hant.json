@@ -25,6 +25,8 @@
   "og_share_description": "米斯特里亞的一切，盡在一處",
   "source_spoilered": "已隱藏",
   "onboarding_region_label": "開始使用",
+  "onboarding_starter_items": "我們勾選了你一開始就有的項目（{count} 項）",
+  "onboarding_undo_starter_items": "復原這些勾選",
   "onboarding_overline": "新田野指南",
   "onboarding_title": "歡迎你，農場主！",
   "onboarding_desktop_description": "匯入你的《Fields of Mistria》存檔，自動填入進度。",

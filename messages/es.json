@@ -25,6 +25,8 @@
   "og_share_description": "Todo Mistria en un solo lugar",
   "source_spoilered": "Oculto",
   "onboarding_region_label": "Primeros pasos",
+  "onboarding_starter_items": "Marcamos lo que tienes al empezar ({count})",
+  "onboarding_undo_starter_items": "Deshacer esas marcas",
   "onboarding_overline": "Nueva guía de campo",
   "onboarding_title": "¡Te damos la bienvenida!",
   "onboarding_desktop_description": "Importa tu partida de Fields of Mistria para completar tu progreso automáticamente.",
