@@ -46,17 +46,24 @@ export interface CategoryDefinition {
  * home page, & `/everything`) and, with `search`, cross-category search results. A new category
  * also needs:
  *
- * - its projection in `engine/projections/`, plus a provider in `engine/search-providers.ts` if it
- *   has search results;
+ * - its projection in `engine/projections/`;
+ * - with search: a provider in `engine/search-providers.ts`, plus a report category & a toggle `case`
+ *   in `components/search-results.svelte`, or clicking its results does nothing;
  * - its name & description in `data/categories.ts`, since the engine can't import messages;
  * - its page: a `+page.ts` & `+page.svelte` in `src/routes/(category)/<route>/`, and the path in
  *   `PRERENDERED_ROUTES` (`i18n/prerender-entries.ts`);
  * - its content on `/everything`, in `routes/everything/category-section.svelte`;
- * - its rows in `controllers/source-checklist.ts`, so `/everything` can group them by source;
+ * - its place in `/everything`'s source grouping: rows in `controllers/source-checklist.ts`, or, for a
+ *   category without sources, the Progress group in `routes/everything/source-content.svelte`;
+ * - with sourced rows: its source types in `categorySourceTypes` (`data/tracker-index.ts`), which its
+ *   page's source filters read;
  * - its icon in `components/icon/icon-maps.ts`, & its `--color-category-<key>` colors in `app.css`.
  *
- * The name, description, content, & icon maps are `Record<CategoryKey, …>`, so type-checking fails
- * until each has the new key. `prerender-entries.test.ts` fails until the page & its path agree.
+ * New progress fields also need a storage version bump & a migration (`docs/app-architecture.md`).
+ *
+ * The name, description, content, icon, & search report maps are keyed by category, so
+ * type-checking fails until each has the new key. `prerender-entries.test.ts` fails until the page
+ * & its path agree. Nothing checks the toggle `case`, the source grouping, or the source types.
  */
 export const CATEGORIES = {
   almanac: { project: projectAlmanac, route: "almanac", search: searchAlmanac },
