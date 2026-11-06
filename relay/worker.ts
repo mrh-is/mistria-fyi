@@ -85,6 +85,7 @@ let pauseCheck: undefined | { checkedAt: number; until: number };
 /** Failures this isolate hasn't sent yet, & when it last sent some. */
 const pendingFailures = new Map<FailureKind, number>();
 let lastFailureFlush = 0;
+let scheduledFailureFlush: undefined | { due: number };
 
 function json(state: RelayState, status = 200): Response {
   return Response.json({ state }, { status });
@@ -143,21 +144,28 @@ function utcDate(time: number): string {
 }
 
 /**
- * Counts a failure in this isolate & sends the pending batch when the last send is old enough.
- * Best effort: a lost batch never changes the player's response, & counts still pending when the
- * isolate ends are lost.
+ * Counts a failure & schedules at most one flush per isolate, even if no more requests arrive.
+ * The request scheduling the flush keeps its own timer & send alive after the response.
  */
 function recordFailure(env: Env, ctx: ExecutionContext, kind: FailureKind): void {
   pendingFailures.set(kind, (pendingFailures.get(kind) ?? 0) + 1);
   const now = Date.now();
-  if (now >= lastFailureFlush && now < lastFailureFlush + FAILURE_FLUSH_INTERVAL) return;
-  lastFailureFlush = now;
-  const batch = JSON.stringify(Object.fromEntries(pendingFailures));
-  pendingFailures.clear();
-  ctx.waitUntil(sendFailures(env, batch));
+  // If a request's timer was canceled, a later failure can take over once it was due.
+  if (scheduledFailureFlush && now < scheduledFailureFlush.due) return;
+  const elapsed = Math.max(0, now - lastFailureFlush);
+  const flush = { due: now + Math.max(0, FAILURE_FLUSH_INTERVAL - elapsed) };
+  scheduledFailureFlush = flush;
+  ctx.waitUntil(flushFailures(env, flush));
 }
 
-async function sendFailures(env: Env, batch: string): Promise<void> {
+async function flushFailures(env: Env, flush: { due: number }): Promise<void> {
+  const delay = flush.due - Date.now();
+  if (delay > 0) await scheduler.wait(delay);
+  if (scheduledFailureFlush !== flush) return;
+  lastFailureFlush = Date.now();
+  scheduledFailureFlush = undefined;
+  const batch = JSON.stringify(Object.fromEntries(pendingFailures));
+  pendingFailures.clear();
   try {
     await control(env).fetch("https://control/failure", { body: batch, method: "POST" });
   } catch {
