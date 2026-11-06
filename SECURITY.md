@@ -19,6 +19,12 @@ Include as much detail as you can: what you found, how to reproduce it, and any 
 You'll receive an acknowledgment within 72 hours, and I'll work with you to understand and address
 the issue before any public disclosure.
 
+The same contact & this policy are published at
+[mistria.fyi/.well-known/security.txt](https://mistria.fyi/.well-known/security.txt)
+([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)). Its source is
+`static/.well-known/security.txt`; its `Expires` date needs a yearly refresh, and a test fails when
+it is within 30 days.
+
 ## Scope
 
 The following are in scope:
