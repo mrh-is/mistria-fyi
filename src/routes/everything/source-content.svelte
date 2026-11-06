@@ -76,7 +76,14 @@
       userState.setMineFloor(floor);
     }
   }
+  // Which Progress categories show, per list, so a search can hide the group when none does. A list
+  // that unmounts leaves its keys; they're rewritten on remount, and only read while it's mounted.
+  const progressShown: Record<string, boolean> = $state({});
   const leaving = createLeavingSet<string>();
+
+  function progressCategoryShown(completed: boolean): boolean {
+    return UNSOURCED_CATEGORY_KEYS.some((category) => progressShown[`${completed}:${category}`]);
+  }
   const sectionGrouping = createSectionGrouping<string>();
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
   let entries = $derived(
@@ -136,7 +143,8 @@
     ),
   );
   let hasCompletedContent = $derived(
-    progressCompletions.includes(true) ||
+    (progressCompletions.includes(true) &&
+      (!toolbarState.searchQuery || progressCategoryShown(true))) ||
       groups.some(({ sections: groupSections }) =>
         groupSections.some((entry) => isInCompletedList(entry)),
       ),
@@ -326,11 +334,15 @@
       allGroupSections.some((entry) => !isInCompletedList(entry)) ||
       (group === "progress" && progressCompletions.includes(false))}
     {@const groupId = `sources-${group}${completed && hasOutstanding ? "-completed" : ""}`}
+    <!-- During a search the mine floor hides, so only matching rows or categories keep the group. -->
+    {@const searchMatches =
+      groupSections.length > 0 || (group === "progress" && progressCategoryShown(completed))}
     {#if groupSections.length > 0 || hasProgress}
       <GroupSection
         id={groupId}
         name={sourceTypeLabel(group, locale)}
         {completed}
+        visible={!toolbarState.searchQuery || searchMatches}
         revealTarget={anchor === groupId ||
         groupSections.some(
           ({ section }) =>
@@ -423,7 +435,13 @@
               />
             {/if}
             {#each progressCategories as category (category)}
-              <CategorySection key={category} {locale} progress={progress[category]} {completed} />
+              <CategorySection
+                key={category}
+                {locale}
+                progress={progress[category]}
+                {completed}
+                bind:shown={progressShown[`${completed}:${category}`]}
+              />
             {/each}
           </div>
         {/if}
