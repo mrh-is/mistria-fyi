@@ -252,6 +252,7 @@ describe("the step catalog", () => {
       "check:routes",
       "check:built",
       "test:pipeline:assets",
+      "test:saves",
       "test:accessibility",
       "test:pwa",
     ]);

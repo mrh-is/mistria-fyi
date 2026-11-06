@@ -62,6 +62,7 @@ export function vitestArguments(coverage: boolean, cpus: number, filters: string
     "vitest",
     "run",
     "--project=!assets",
+    "--project=!saves",
     `--maxWorkers=${Math.max(1, Math.min(Math.floor(cpus / 2), 4))}`,
     "--reporter=default",
     "--reporter=./scripts/vitest-timings.ts",

@@ -1,9 +1,10 @@
-import { deflateSync, inflateSync } from "node:zlib";
+import { inflateSync } from "node:zlib";
 import * as v from "valibot";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { UpdateHolds } from "#lib/pwa/update-holds.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
+import { buildSavBytes } from "#lib/test-utils/sav.js";
 
 import { decodeSavePayload, deriveFollowKeys, mailboxIdFor, openEnvelope } from "./follow.js";
 
@@ -46,14 +47,8 @@ function blob(local: Record<string, unknown>): string {
   });
 }
 
-function u64(value: number): Uint8Array {
-  const bytes = new Uint8Array(8);
-  new DataView(bytes.buffer).setBigUint64(0, BigInt(value), true);
-  return bytes;
-}
-
 function saveBytes(playtime = 100): Uint8Array<ArrayBuffer> {
-  const entries: Record<string, unknown> = {
+  const entries = {
     date_photos: { photos: "big" },
     farm: { tiles: "big" },
     game_stats: { stats: "big" },
@@ -61,14 +56,7 @@ function saveBytes(playtime = 100): Uint8Array<ArrayBuffer> {
     header: { farm_name: "Rosewood", name: "Pat", playtime },
     info: { creation_version: { major: 1, minor: 0, patch: 8, pre: null } },
   };
-  const encoder = new TextEncoder();
-  const parts: Uint8Array[] = [u64(Object.keys(entries).length)];
-  for (const [name, data] of Object.entries(entries)) {
-    const nameBytes = encoder.encode(name);
-    const dataBytes = encoder.encode(JSON.stringify(data));
-    parts.push(u64(nameBytes.length), nameBytes, u64(dataBytes.length), dataBytes);
-  }
-  return Uint8Array.from(deflateSync(Buffer.concat(parts)));
+  return buildSavBytes(entries);
 }
 
 /** A handle onto a file the test can replace, take away, or lock. */
