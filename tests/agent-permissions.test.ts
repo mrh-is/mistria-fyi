@@ -18,8 +18,11 @@ const NOT_ALLOWED: Record<string, string> = {
   "housekeeping:install": "installs a persistent launchd agent that deletes merged worktrees",
   "optimize-icons": "rewrites committed icon files",
   "r2:check": "writes & deletes a probe object in production storage",
+  "saves:fetch": "downloads private player saves with stored Cloudflare credentials",
+  "saves:upload": "publishes private player saves to storage",
   "sprites:upload": "publishes to production storage",
   "sprites:villagers": "rewrites generated sprites from game assets",
+  "test:saves": "reads private player saves; the maintainer runs it deliberately",
   "worktree:cleanup": "a trailing `-- --apply` reaches the same deletion as worktree:cleanup:apply",
   "worktree:cleanup:apply": "deletes worktrees & branches",
 };
