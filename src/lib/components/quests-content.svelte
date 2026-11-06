@@ -6,13 +6,13 @@
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showQuestToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { cravingFacts, projectQuests } from "#lib/engine/projections/quests.js";
@@ -140,17 +140,17 @@
 
   function completeQuest(questId: QuestId, displayName: string, section: QuestSection): void {
     sectionGrouping.hold(section.questType);
-    const completion = userState.completeQuestWithRecipes(questId);
+    const isSectionComplete = () =>
+      section.rows.every((row) => getQuestState(row.id) === "completed");
+    const completion = celebrateProgress(
+      "quests",
+      () => userState.completeQuestWithRecipes(questId),
+      [isSectionComplete],
+    );
     const newState = getQuestState(questId);
     showQuestToast(displayName, newState, completion.newlyAdded, locale, () => {
       userState.undoQuestWithRecipes(questId, completion);
     });
-    if (newState !== "completed") return;
-    if (isCategoryComplete("quests", userState.progressContext)) {
-      celebrateCategory();
-    } else if (section.rows.every((row) => getQuestState(row.id) === "completed")) {
-      celebrate();
-    }
   }
 </script>
 

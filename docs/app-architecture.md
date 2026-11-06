@@ -58,11 +58,13 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
 
 `engine/categories.ts` is the category registry: one entry per category, keyed and ordered by
 `CategoryKey`. Every entry has a projection (`engine/projections/<category>.ts`) that returns the
-category's rows and its progress `totals`; a route and a search provider are optional capabilities.
-`getCategoryProgress`, `getAllProgress`, & `isCategoryComplete` read each projection's totals, and
-search runs only the categories that declare `search`, whose providers
-(`engine/search-providers.ts`) read their own projection. `data/categories.ts` adds each category's
-localized name & description, which the engine can't import. See the
+category's rows and its progress `totals`, a route, & a `sourced` flag saying whether its rows have
+sources; a search provider is optional. Type-checking & tests catch the other pieces a new category
+needs, except its colors in `app.css`. `getCategoryProgress`, `getAllProgress`, &
+`isCategoryComplete` read each projection's totals, and search runs only the categories that declare
+`search`, whose providers (`engine/search-providers.ts`) read their own projection.
+`data/categories.ts` adds each category's localized name & description, which the engine can't
+import. See the
 [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-21-category-registry.md).
 
 `engine/projections/almanac.ts` supplies the almanac page, progress counters, and search with one
@@ -418,8 +420,9 @@ Progress calculation and UI row visibility are separate concerns.
   then holds until the next save arrives.
 - Mines counts floors as doable down to the first unbroken seal at or below the player's floor, and
   the floors past it wait. Finishing the seal's quest breaks it, and a floor below a seal proves
-  that seal is broken. Quests read only spoilers & the items they ask for until #502. Skills &
-  Renown are always To do.
+  that seal is broken. Quests combine spoiler gates, requested-item sources, & each quest's native
+  `startCondition`. Obtained quests have already passed their start condition. The source-grouped
+  Everything view uses the same quest availability. Skills & Renown are always To do.
 - **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the
   category's progress at 100%. The header, the all-completed banner, & `celebrateCategory()` all
   read it; components don't re-derive completion. See the

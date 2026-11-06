@@ -174,6 +174,9 @@
   "mines_floor_label": "樓層",
   "mines_floor_input_aria": "礦洞樓層",
   "villagers_roster_aria": "村民名冊",
+  "villagers_break_ups_hint": "訂婚前，記得將這裡的選項與遊戲中的設定保持一致。",
+  "villagers_break_ups_disabled": "已停用分手",
+  "villagers_break_ups_enabled": "已啟用分手",
   "villagers_alphabet_aria": "村民字母索引",
   "season_spring_abbr": "春",
   "season_summer_abbr": "夏",
@@ -407,7 +410,7 @@
   "privacy_sync_what_body": "只有遊戲的存檔檔案會被同步。你手動勾選的內容會留在那台裝置上。存檔檔案在離開你的遊戲電腦之前就已進行端對端加密，所以只有擁有你的代碼的裝置才能讀取。我們讀不了，負責傳遞它的伺服器也讀不了。",
   "privacy_sync_what_feedback_log": "送出回饋時，你可以選擇附加存檔同步紀錄，該紀錄會公開。紀錄的內容請見上方的「回饋提交」。",
   "privacy_sync_storage_heading": "儲存多久",
-  "privacy_sync_storage_body": "伺服器只為每個代碼儲存最新的存檔檔案，並在傳送 30 天後將其刪除。它還會為每個代碼保留一筆很小的紀錄，其中不含存檔資料：代碼的建立時間和最後使用時間、當天傳送的存檔檔案數量、用於維持存檔檔案順序的編號，以及用於證明你的電腦擁有該代碼、並辨識重複傳送的同一存檔檔案的單向指紋。這筆紀錄沒有加密。它會在你產生新代碼時，或在最後一個存檔檔案的一年後消失，只留下一個標記，確保該代碼不會被再次使用。有一點要說明：託管該伺服器的 Cloudflare 會將儲存空間的復原副本保留 30 天，所以被取代或已刪除的存檔檔案仍可能在之後最多 30 天內可被復原，且仍處於加密狀態。",
+  "privacy_sync_storage_body": "伺服器只為每個代碼儲存最新的存檔檔案，並在傳送 30 天後將其刪除。它還會為每個代碼保留一筆很小的紀錄，其中不含存檔資料：代碼的建立時間和最後使用時間、當天傳送的存檔檔案數量、用於維持存檔檔案順序的編號，以及用於證明你的電腦擁有該代碼、並辨識重複傳送的同一存檔檔案的單向指紋。這筆紀錄沒有加密。它會在你產生新代碼時，或在最後一個存檔檔案的一年後消失，只留下一個標記，確保該代碼不會被再次使用。伺服器出問題時，會按天統計問題的類型，例如機器人驗證沒有回應，並將這些計數保留兩週。這些計數不包含任何關於你或你所傳送內容的資訊。有一點要說明：託管該伺服器的 Cloudflare 會將儲存空間的復原副本保留 30 天，所以被取代或已刪除的存檔檔案仍可能在之後最多 30 天內可被復原，且仍處於加密狀態。",
   "privacy_sync_code_heading": "你的代碼",
   "privacy_sync_code_body": "任何持有你的代碼的人都能讀取你分享的存檔檔案，直到這個代碼失效為止。請像對待密碼一樣對待它，最好別在直播中露出。萬一外洩了，請產生一個新代碼。舊代碼需要片刻才會停用，完成之前資料管理裡會一直顯示。",
   "privacy_sync_ip_heading": "IP 位址",
@@ -510,19 +513,24 @@
   "sync_error_camera_init": "無法初始化攝影機。",
   "sync_error_camera_denied": "相機存取遭到拒絕。請開啟遊戲電腦上的同步連結，或將連結貼到這裡。",
   "merge_imported_from": "已從 {files} 匯入",
-  "merge_label_almanac": "年鑑：+{count}",
-  "merge_label_almanac_recipes": "食譜：+{count}",
-  "merge_label_animal_cosmetics": "動物裝飾：+{count}",
-  "merge_label_animals": "動物變體：+{count}",
-  "merge_label_cosmetics": "裝飾：+{count}",
-  "merge_label_museum": "博物館捐贈：+{count}",
-  "merge_label_villager_relationships": "村民關係：+{count}",
-  "merge_label_perks": "技能特長：+{count}",
-  "merge_label_pet_cosmetics": "寵物裝飾：+{count}",
-  "merge_label_pet_skins": "寵物外觀：+{count}",
-  "merge_label_mount_appearances": "坐騎外觀：+{count}",
-  "merge_label_quests": "任務：+{count}",
-  "merge_label_spells": "法術：+{count}",
+  "merge_overall_outcome": "你的田野指南已完成 {percent}，還有 {remaining} 項等你完成。",
+  "merge_changes_details": "我們新增了什麼",
+  "merge_label_break_ups_disabled": "已停用分手",
+  "import_save_details": "存檔詳情",
+  "import_view_progress": "看看還剩什麼",
+  "merge_label_almanac": "年鑑：+{countText}",
+  "merge_label_almanac_recipes": "食譜：+{countText}",
+  "merge_label_animal_cosmetics": "動物裝飾：+{countText}",
+  "merge_label_animals": "動物變體：+{countText}",
+  "merge_label_cosmetics": "裝飾：+{countText}",
+  "merge_label_museum": "博物館捐贈：+{countText}",
+  "merge_label_villager_relationships": "村民關係：+{countText}",
+  "merge_label_perks": "技能特長：+{countText}",
+  "merge_label_pet_cosmetics": "寵物裝飾：+{countText}",
+  "merge_label_pet_skins": "寵物外觀：+{countText}",
+  "merge_label_mount_appearances": "坐騎外觀：+{countText}",
+  "merge_label_quests": "任務：+{countText}",
+  "merge_label_spells": "法術：+{countText}",
   "merge_label_child_choice": "已更新孩子的選擇",
   "merge_conflict_relationship": "提示：你之前記錄的是與{villager}的關係為{local}，但存檔檔案顯示為{incoming}。我們保留了你記錄的狀態。",
   "merge_conflict_spouse": "提示：你之前記錄的配偶是{localVillager}，但存檔檔案顯示你與{incomingVillager}結婚。我們保留了{localVillager}作為你的配偶，並跳過了匯入的孩子選擇。",
@@ -532,37 +540,37 @@
   "merge_label_reached_season": "已更新季節進度",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "礦洞樓層：+{count}層"
+        "countPlural=other": "礦洞樓層：+{countText}層"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "村民好感度：已更新{count}段關係"
+        "countPlural=other": "村民好感度：已更新{countText}段關係"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "聲望：+{count}級"
+        "countPlural=other": "聲望：+{countText}級"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "技能：已更新{count}項技能"
+        "countPlural=other": "技能：已更新{countText}項技能"
       }
     }
   ],

@@ -22,6 +22,7 @@ const TOKEN = "a".repeat(43);
 const OTHER_TOKEN = "b".repeat(43);
 const ADMIN = "placeholder-admin-token-for-local-tests";
 const DAY = 86_400_000;
+const HOUR = 3_600_000;
 let workerModule: string;
 let wireModule: string;
 const runtimes: Miniflare[] = [];
@@ -31,14 +32,17 @@ let shared: Miniflare | undefined;
 let caseIndex: number;
 
 // Only the local test module has this storage/clock control. Public routing never exposes it.
+// It shares the Worker's isolate & module scope, so it can reset or age the cached pause check.
 const testSubclass = `
 let mailboxRequests = 0;
 let gateRequests = 0;
+let throwNext;
 export class TestMailbox extends Mailbox {
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname === "/__test") {
       const action = await request.json();
+      if (action.throwNext) throwNext = action.throwNext;
       if (action.age) {
         const meta = await this.ctx.storage.get("meta");
         meta.lastUpload = Date.now() - action.age;
@@ -49,11 +53,27 @@ export class TestMailbox extends Mailbox {
         const meta = await this.ctx.storage.get("meta");
         await this.ctx.storage.put("meta", { ...meta, ...action.patch });
       }
+      if (action.ageSockets) {
+        for (const socket of this.ctx.getWebSockets()) {
+          const attachment = socket.deserializeAttachment();
+          socket.serializeAttachment({ openedAt: attachment.openedAt - action.ageSockets });
+        }
+      }
       if (action.alarm) await this.alarm();
       if (action.alarmAt) return Response.json({ alarm: await this.ctx.storage.getAlarm() });
+      if (action.sockets) {
+        // Count open sockets only: Miniflare takes seconds to finish a close handshake.
+        const open = this.ctx.getWebSockets().filter((socket) => socket.readyState === 1);
+        return Response.json({ sockets: open.length });
+      }
       return Response.json(Object.fromEntries(await this.ctx.storage.list()));
     }
     mailboxRequests++;
+    if (throwNext) {
+      const message = throwNext;
+      throwNext = undefined;
+      throw new TypeError(message);
+    }
     return super.fetch(request);
   }
 }
@@ -65,9 +85,18 @@ export class TestControl extends RelayControl {
         await this.ctx.storage.deleteAll();
         mailboxRequests = 0;
         gateRequests = 0;
+        pauseCheck = undefined;
+        throwNext = undefined;
+        pendingFailures.clear();
+        lastFailureFlush = 0;
       }
+      if (action.pausedUntil) await this.ctx.storage.put("pausedUntil", action.pausedUntil);
+      if (action.pauseCheckAge && pauseCheck) pauseCheck.checkedAt = Date.now() - action.pauseCheckAge;
       if (action.requests) return Response.json({ mailboxRequests, gateRequests });
       if (action.usage) await this.ctx.storage.put("usage", action.usage);
+      if (action.failures) await this.ctx.storage.put("failures", action.failures);
+      if (action.expireFailureFlush) lastFailureFlush = 0;
+      if (action.alarmAt) return Response.json({ alarm: await this.ctx.storage.getAlarm() });
       if (action.alarm) await this.alarm();
       return Response.json(Object.fromEntries(await this.ctx.storage.list()));
     }
@@ -206,6 +235,41 @@ async function inspect(mf: Miniflare, action: Record<string, unknown> = {}) {
   return response.json() as Promise<Record<string, unknown>>;
 }
 
+/** Opens a follower socket the way a browser would, accepted so its messages & close arrive. */
+async function follow(mf: Miniflare) {
+  const response = await mf.dispatchFetch(`https://relay.mistria.fyi/v1/mailboxes/${mailboxId}`, {
+    headers: { "CF-Connecting-IP": `192.0.2.${caseIndex}`, Upgrade: "websocket" },
+  });
+  response.webSocket?.accept();
+  return response;
+}
+
+type FollowerSocket = NonNullable<Awaited<ReturnType<Miniflare["dispatchFetch"]>>["webSocket"]>;
+
+/** Waits for the Worker's after-response failure counts to reach `total`. */
+async function failures(mf: Miniflare, total: number) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    // oxlint-disable-next-line no-await-in-loop -- Recording runs after the response, so poll.
+    const state = (await inspectControl(mf)) as {
+      failures?: Record<string, Record<string, number>>;
+    };
+    const counts = state.failures ?? {};
+    const sum = Object.values(counts)
+      .flatMap((day) => Object.values(day))
+      .reduce((left, right) => left + right, 0);
+    if (sum >= total) return counts;
+    // oxlint-disable-next-line no-await-in-loop -- See above.
+    await new Promise((resolve) => {
+      setTimeout(resolve, 20);
+    });
+  }
+  throw new Error(`Fewer than ${total} failures recorded`);
+}
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 async function controlStub(mf: Miniflare) {
   const namespace = await mf.getDurableObjectNamespace("CONTROL");
   return namespace.get(namespace.idFromName("relay-control-v1"));
@@ -247,7 +311,8 @@ describe("sync relay in the local Workers runtime", () => {
     expect(await status(create(mf, mailboxId, TOKEN, "wrong-action"))).toBe(403);
     expect(await status(create(mf, mailboxId, TOKEN, "unavailable"))).toBe(503);
     expect(await inspect(mf)).toEqual({});
-    expect(await inspectControl(mf)).toEqual({});
+    expect(await failures(mf, 1)).toEqual({ [today()]: { "siteverify-unreachable": 1 } });
+    expect(await inspectControl(mf)).not.toHaveProperty("usage");
   });
 
   it("distinguishes absent, empty, and permanently retired mailboxes", async () => {
@@ -322,6 +387,28 @@ describe("sync relay in the local Workers runtime", () => {
       ),
     ).toBe(200);
     expect(await status(create(mf, mailboxId, TOKEN, "valid", "198.51.100.1"))).toBe(410);
+  });
+
+  it("lets each Worker isolate trust its last pause check for 30 seconds", async () => {
+    const mf = runtime();
+    await create(mf);
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(200);
+    // Another isolate's admin request pauses the relay without touching this isolate's cache.
+    await inspectControl(mf, { pausedUntil: Date.now() + DAY });
+    expect(await status(upload(mf))).toBe(200);
+    await inspectControl(mf, { pauseCheckAge: 29_000 });
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(200);
+    await inspectControl(mf, { pauseCheckAge: 30_000 });
+    const read = await request(mf, "GET", `mailboxes/${mailboxId}`);
+    expect(read.status).toBe(503);
+    expect(await read.json()).toMatchObject({ state: "paused" });
+    expect(await status(upload(mf, 2))).toBe(503);
+    // Lifting the pause elsewhere reaches this isolate within the same interval.
+    await inspectControl(mf, { pausedUntil: Date.now() - 1 });
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(503);
+    await inspectControl(mf, { pauseCheckAge: 30_000 });
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(200);
+    expect(await inspectControl(mf, { requests: true })).toMatchObject({ gateRequests: 3 });
   });
 
   it("deletes expired envelopes, preserves ordering, and tombstones year-old mailboxes", async () => {
@@ -495,6 +582,8 @@ describe("sync relay in the local Workers runtime", () => {
   it("limits public reads & handshakes across mailbox IDs before any object request", async () => {
     const mf = runtime();
     const prefix = `2001:db8:${caseIndex}:abcd`;
+    // One read from another address fills the pause check, so the batch below never needs it.
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(404);
     const results = await Promise.all(
       Array.from({ length: 60 }, async (_, index) => {
         const id = Buffer.alloc(16, index + 128).toString("base64url");
@@ -509,7 +598,7 @@ describe("sync relay in the local Workers runtime", () => {
     );
     expect(results).toEqual(Array.from({ length: 60 }, () => 404));
     const before = await inspectControl(mf, { requests: true });
-    expect(before).toEqual({ gateRequests: 60, mailboxRequests: 60 });
+    expect(before).toEqual({ gateRequests: 1, mailboxRequests: 61 });
     for (const upgrade of [false, true]) {
       // oxlint-disable-next-line no-await-in-loop -- Both request variants must use the exhausted budget.
       const limited = await mf.dispatchFetch(
@@ -552,7 +641,12 @@ describe("sync relay in the local Workers runtime", () => {
     expect(await status(create(mf, mailboxId, TOKEN, "invalid-input-secret"))).toBe(503);
     expect(await status(create(mf, mailboxId, TOKEN, "missing-input-secret"))).toBe(503);
     expect(await inspect(mf)).toEqual({});
-    expect(await inspectControl(mf)).toEqual({});
+    // The second failure waits in the isolate until the flush interval passes.
+    expect(await failures(mf, 1)).toEqual({ [today()]: { "siteverify-secret-rejected": 1 } });
+    await inspectControl(mf, { expireFailureFlush: true });
+    expect(await status(create(mf, mailboxId, TOKEN, "invalid-input-secret"))).toBe(503);
+    expect(await failures(mf, 3)).toEqual({ [today()]: { "siteverify-secret-rejected": 3 } });
+    expect(await inspectControl(mf)).not.toHaveProperty("usage");
   });
 
   it("buffers a slow upload before entering the mailbox lock so reads can continue", async () => {
@@ -593,8 +687,9 @@ describe("sync relay in the local Workers runtime", () => {
         }),
       ]);
       expect(await read.json()).toEqual({ state: "empty" });
+      // Only the create asks the singleton; the upload & read reuse its pause check.
       expect(await inspectControl(mf, { requests: true })).toEqual({
-        gateRequests: 3,
+        gateRequests: 1,
         mailboxRequests: 2,
       });
     } finally {
@@ -699,6 +794,126 @@ describe("sync relay in the local Workers runtime", () => {
     });
     await request(mf, "DELETE", `mailboxes/${mailboxId}`, TOKEN);
     await closed;
+  });
+
+  it("refuses a 21st follower socket until an expired one makes room", async () => {
+    const mf = runtime();
+    await create(mf);
+    const sockets: FollowerSocket[] = [];
+    for (let index = 0; index < 20; index++) {
+      // oxlint-disable-next-line no-await-in-loop -- Each handshake must count the previous ones.
+      const response = await follow(mf);
+      expect(response.status).toBe(101);
+      if (response.webSocket) sockets.push(response.webSocket);
+    }
+    const refused = await follow(mf);
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get("Retry-After")).toBe("60");
+    expect(await inspect(mf, { sockets: true })).toEqual({ sockets: 20 });
+    // The next handshake ends expired sockets before counting, even before the alarm runs.
+    await inspect(mf, { ageSockets: 6 * HOUR });
+    const admitted = await follow(mf);
+    expect(admitted.status).toBe(101);
+    expect(await inspect(mf, { sockets: true })).toEqual({ sockets: 1 });
+    for (const socket of [...sockets, admitted.webSocket]) socket?.close();
+  });
+
+  it("closes a follower socket after six hours through the mailbox alarm", async () => {
+    const mf = runtime();
+    await create(mf);
+    const before = Date.now();
+    const response = await follow(mf);
+    const socket = response.webSocket;
+    if (!socket) throw new Error("Missing WebSocket");
+    const { alarm } = (await inspect(mf, { alarmAt: true })) as { alarm: number };
+    expect(alarm).toBeGreaterThanOrEqual(before + 6 * HOUR);
+    expect(alarm).toBeLessThanOrEqual(Date.now() + 6 * HOUR);
+    // An upload's 30-day alarm doesn't push the socket deadline back.
+    expect(await status(upload(mf))).toBe(200);
+    expect(await inspect(mf, { alarmAt: true })).toEqual({ alarm });
+    await inspect(mf, { ageSockets: 6 * HOUR });
+    const saved = await inspect(mf, { alarm: true });
+    expect(saved).toHaveProperty("envelope");
+    expect(await inspect(mf, { sockets: true })).toEqual({ sockets: 0 });
+    const uploaded = saved as { meta: { lastUpload: number } };
+    expect(await inspect(mf, { alarmAt: true })).toEqual({
+      alarm: uploaded.meta.lastUpload + 30 * DAY,
+    });
+    // The follower's retry gets a fresh socket with the latest envelope.
+    const again = await follow(mf);
+    expect(again.status).toBe(101);
+    again.webSocket?.close();
+  });
+
+  it("counts an exception by kind without recording its message or the request", async () => {
+    const mf = runtime();
+    await create(mf);
+    const secret = `leak ${TOKEN} 192.0.2.${caseIndex} ${mailboxId}`;
+    await inspect(mf, { throwNext: secret });
+    const response = await upload(mf);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ state: "unavailable" });
+    expect(response.headers.has("X-Relay-Failure")).toBe(false);
+    expect(await failures(mf, 1)).toEqual({ [today()]: { "code-error": 1 } });
+    const recorded = JSON.stringify(await inspectControl(mf));
+    for (const fragment of ["leak", TOKEN, "192.0.2.", mailboxId]) {
+      expect(recorded).not.toContain(fragment);
+    }
+  });
+
+  it("serves the failure counts only to the admin & refuses kinds off the allowlist", async () => {
+    const mf = runtime();
+    const stub = await controlStub(mf);
+    for (const body of [
+      "free text",
+      "{}",
+      JSON.stringify({ "free text": 1 }),
+      JSON.stringify({ "code-error": 0 }),
+      JSON.stringify({ "code-error": 1.5 }),
+      JSON.stringify({ "code-error": "1" }),
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- Each refusal must leave storage untouched.
+      expect(await status(stub.fetch("https://control/failure", { body, method: "POST" }))).toBe(
+        400,
+      );
+    }
+    expect(await inspectControl(mf)).toEqual({});
+    expect(
+      await status(
+        stub.fetch("https://control/failure", {
+          body: JSON.stringify({ "code-error": 1 }),
+          method: "POST",
+        }),
+      ),
+    ).toBe(204);
+    // Counting schedules the alarm that drops today's counts once they leave the window.
+    expect(await inspectControl(mf, { alarmAt: true })).toEqual({
+      alarm: Date.parse(today()) + 14 * DAY,
+    });
+    const old = new Date(Date.now() - 14 * DAY).toISOString().slice(0, 10);
+    const kept = new Date(Date.now() - 13 * DAY).toISOString().slice(0, 10);
+    const state = (await inspectControl(mf)) as { failures: Record<string, unknown> };
+    await stub.fetch("https://internal/__test", {
+      body: JSON.stringify({
+        failures: {
+          ...state.failures,
+          [kept]: { "object-transient": 2 },
+          [old]: { "code-error": 9 },
+        },
+      }),
+      method: "POST",
+    });
+    expect(await status(request(mf, "GET", "admin/failures", "wrong"))).toBe(403);
+    expect(await status(request(mf, "GET", "admin/failures"))).toBe(403);
+    const read = await request(mf, "GET", "admin/failures", ADMIN);
+    expect(read.status).toBe(200);
+    expect(await read.json()).toEqual({
+      failures: { [kept]: { "object-transient": 2 }, [today()]: { "code-error": 1 } },
+    });
+    // The control alarm drops expired days without waiting for a failure or a read.
+    expect(await inspectControl(mf, { alarm: true })).toEqual({
+      failures: { [kept]: { "object-transient": 2 }, [today()]: { "code-error": 1 } },
+    });
   });
 
   it("survives eviction & a runtime restart with the same SQLite storage", async () => {

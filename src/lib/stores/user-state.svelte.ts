@@ -33,6 +33,7 @@ import {
 
 import { planManualImport } from "./progress-import-write.js";
 import {
+  createDefaultWorldState,
   emptyProgressHistory,
   emptyRetainedProgress,
   readFarmSwitchBackup,
@@ -244,10 +245,6 @@ function createDefaultState(): UserState {
   };
 }
 
-function createDefaultWorldState(): UserState["worldState"] {
-  return { season: "spring", weather: "calm" };
-}
-
 function emptyLoadedProgress(): Omit<LoadedProgress, "local"> {
   return {
     history: emptyProgressHistory(),
@@ -280,6 +277,8 @@ function createUserState() {
   let trackingSource: ProvenanceSource | undefined;
   let lastKnownPreferencesValue: null | string = null;
   let lastKnownStoredValue: null | string = null;
+  /** The clock still in memory after a missing or unreadable value replaces the stored blob. */
+  let lastReadableStoredValue: null | string = null;
   let saveTimeout: ReturnType<typeof setTimeout> | undefined;
   let saveGeneration = 0;
   let explicitSequence = 0;
@@ -479,6 +478,7 @@ function createUserState() {
 
   function finishProgressWrite(json: string): void {
     lastKnownStoredValue = json;
+    lastReadableStoredValue = json;
     _persistenceFailureGeneration = 0;
   }
 
@@ -488,12 +488,19 @@ function createUserState() {
     stored: null | string,
   ): boolean {
     const isCurrent = intent.sequence === explicitSequence;
+    const sameProgress = state.progress === intent.progress;
     const laterEdits =
-      isCurrent && state.progress === intent.progress && serialize() !== intent.before
+      isCurrent && serialize() !== intent.before
         ? {
-            history: $state.snapshot<unknown>(history) as ProgressHistory,
-            progress: state.progress,
-            worldState: state.worldState,
+            clock: state.worldState,
+            ...(sameProgress
+              ? {
+                  progress: {
+                    history: $state.snapshot<unknown>(history) as ProgressHistory,
+                    progress: state.progress,
+                  },
+                }
+              : { clockBase: lastReadableStoredValue }),
           }
         : undefined;
     const plan = planManualImport(intent, stored, laterEdits);
@@ -697,6 +704,7 @@ function createUserState() {
   function adoptStoredValue(value: string): void {
     const result = readProgressBlob(value, "repair");
     if (result.kind === "ok") {
+      lastReadableStoredValue = value;
       replaceProgress(result.loaded);
       local = result.loaded.local;
       resumePersistence();
@@ -1001,6 +1009,7 @@ function createUserState() {
         await requestProgressWrite({
           base: pendingExplicitJson ?? lastKnownStoredValue,
           before: serialize(),
+          fallbackClockBase: lastReadableStoredValue,
           imported: structuredClone(imported),
           kind: "merge",
           options: structuredClone(options),

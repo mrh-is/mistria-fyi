@@ -7,6 +7,7 @@ import { applySaveDay } from "#lib/engine/world-state.js";
 import { isRecord, recordEntries } from "#lib/utils/record.js";
 
 import {
+  createDefaultWorldState,
   emptyProgressHistory,
   readProgressBlob,
   serializeStoredProgress,
@@ -35,8 +36,16 @@ export type ManualImportOutcome =
 export interface ManualImport {
   base: null | string;
   before: string;
+  fallbackClockBase?: null | string;
   imported: Partial<ProgressState>;
   options: ManualImportOptions;
+}
+
+interface ManualImportEdits {
+  clock: WorldState;
+  /** Set if the tab adopted a different progress object while the import waited. */
+  clockBase?: null | string;
+  progress?: Pick<LoadedProgress, "history" | "progress">;
 }
 
 type ManualImportPlan =
@@ -51,52 +60,64 @@ type ManualImportPlan =
 
 /** Compares farms and builds the stored merge, plus any live edits made after confirmation. */
 export function planManualImport(
-  { base, before, imported, options }: ManualImport,
+  { base, before, fallbackClockBase, imported, options }: ManualImport,
   stored: null | string,
-  edits?: { history: ProgressHistory; progress: ProgressState; worldState: WorldState },
+  edits?: ManualImportEdits,
 ): ManualImportPlan {
-  const captured = readProgressBlob(before, "repair");
-  if (captured.kind !== "ok") throw new Error("Invalid captured progress write");
+  const captured = readImportSnapshot(before);
+  if (!captured) throw new Error("Invalid captured progress write");
   const { confirmedFarm, day, metadata, playtime } = options;
   // The planner owns its decoded values. Merging them never mutates a caller's snapshot.
-  const read = stored === null ? undefined : readProgressBlob(stored, "repair");
-  const current = read?.kind === "ok" ? read.loaded : undefined;
-  const capturedFarm = captured.loaded.lastImport?.identity ?? null;
+  const current = readImportSnapshot(stored);
+  const capturedFarm = captured.lastImport?.identity ?? null;
   const storedFarm = current?.lastImport?.identity ?? null;
   const incomingFarm = metadata?.identity ?? null;
   const farm = manualFarmQuestion(capturedFarm, storedFarm, incomingFarm);
   if (farm !== undefined && farm !== confirmedFarm) return { farm, kind: "ask" };
 
-  const preview = captured.loaded;
-  const result = applyAdditiveSave(preview.progress, preview.history, imported, playtime);
-  if (day) preview.worldState = applySaveDay(preview.worldState, day);
-  if (metadata) preview.lastImport = importMetadata(storedFarm ?? capturedFarm, metadata);
+  const result = applyAdditiveSave(captured.progress, captured.history, imported, playtime);
+  if (metadata) captured.lastImport = importMetadata(storedFarm ?? capturedFarm, metadata);
+  const baseline = current && readImportSnapshot(base);
   const loaded = current
-    ? mergeCapturedImport(current, preview, storedHistory(base), metadata !== undefined)
-    : preview;
+    ? mergeCapturedImport(
+        current,
+        captured,
+        baseline?.history ?? emptyProgressHistory(),
+        metadata !== undefined,
+      )
+    : captured;
+  const capturedClock = captured.worldState;
+  const storedClock = loaded.worldState;
+  const clockBase = current
+    ? (baseline?.worldState ??
+      readImportSnapshot(fallbackClockBase)?.worldState ??
+      createDefaultWorldState())
+    : capturedClock;
+  const clock = rebaseWorldState(storedClock, clockBase, capturedClock);
+  loaded.worldState = resolveImportDay(storedClock, clock, day);
   const json = serializeStoredProgress(loaded, loaded.local);
   if (!edits) return { json, kind: "write", live: loaded, local: loaded.local, result };
 
   // Later edits go to memory only. They remain eligible for the next auto-save.
-  const rebased = readProgressBlob(json, "repair");
-  const original = readProgressBlob(before, "repair");
-  if (rebased.kind !== "ok" || original.kind !== "ok") {
-    throw new Error("Invalid merged progress write");
+  const live = readImportSnapshot(json);
+  if (!live) throw new Error("Invalid merged progress write");
+  if (edits.progress) {
+    const original = readImportSnapshot(before);
+    if (!original) throw new Error("Invalid captured progress write");
+    const { history, progress } = edits.progress;
+    rebaseProgressEdits(live.progress, original.progress, progress);
+    const laterEdits = changedFacts(progressFacts(original.progress), progressFacts(progress));
+    rebaseImportEdits(
+      live.history,
+      original.history,
+      history,
+      laterEdits,
+      editPlaytime(captured.history),
+    );
   }
-  const live = rebased.loaded;
-  rebaseProgressEdits(live.progress, original.loaded.progress, edits.progress);
-  const laterEdits = changedFacts(
-    progressFacts(original.loaded.progress),
-    progressFacts(edits.progress),
-  );
-  rebaseImportEdits(
-    live.history,
-    original.loaded.history,
-    edits.history,
-    laterEdits,
-    editPlaytime(preview.history),
-  );
-  live.worldState = day ? applySaveDay(edits.worldState, day) : edits.worldState;
+  const laterBase = readImportSnapshot(edits.clockBase)?.worldState ?? capturedClock;
+  const liveClock = rebaseWorldState(clock, laterBase, edits.clock);
+  live.worldState = resolveImportDay(storedClock, liveClock, day);
   return { json, kind: "write", live, local: loaded.local, result };
 }
 
@@ -151,7 +172,6 @@ function mergeCapturedImport(
   const storedFacts = progressFacts(stored.progress);
   mergeProgress(stored.progress, captured.progress);
   mergeRetainedProgress(stored.retained, captured.retained);
-  stored.worldState = captured.worldState;
   if (importedSave) stored.lastImport = captured.lastImport;
   const mergedFacts = progressFacts(stored.progress);
   const capturedFacts = progressFacts(captured.progress);
@@ -297,10 +317,23 @@ function rebaseEntries<V>(
   }
 }
 
-/** The history a stored value holds; none for an absent or unreadable one. */
-function storedHistory(json: null | string): ProgressHistory {
-  const read = json === null ? undefined : readProgressBlob(json, "repair");
-  return read?.kind === "ok" ? read.loaded.history : emptyProgressHistory();
+function readImportSnapshot(json: null | string | undefined): LoadedProgress | undefined {
+  const read = typeof json === "string" ? readProgressBlob(json, "repair") : undefined;
+  return read?.kind === "ok" ? read.loaded : undefined;
+}
+
+/** Only fields the tab changed take precedence over the clock read under the lock. */
+function rebaseWorldState(target: WorldState, before: WorldState, after: WorldState): WorldState {
+  return {
+    season: before.season === after.season ? target.season : after.season,
+    weather: before.weather === after.weather ? target.weather : after.weather,
+  };
+}
+
+/** Apply the save & normalize once, after all clock edits have been combined. */
+function resolveImportDay(stored: WorldState, clock: WorldState, day?: SaveDay): WorldState {
+  if (!day && clock.season === stored.season && clock.weather === stored.weather) return stored;
+  return applySaveDay(clock, day ?? { season: undefined, weather: undefined });
 }
 
 function rebaseFields(

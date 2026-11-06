@@ -9,18 +9,18 @@
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
-  import { categoryForKey } from "#lib/data/categories.js";
+  import { categoryForKey, sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { nameCollator } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
-  import { getAllProgress, isCategoryComplete } from "#lib/engine/categories.js";
+  import { UNSOURCED_CATEGORY_KEYS } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
   import { sealsBefore } from "#lib/engine/projections/mines.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
@@ -46,13 +46,23 @@
   import GroupSection from "./group-section.svelte";
 
   import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
+  import type { AllProgress } from "#lib/engine/categories.js";
   import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { Shelf } from "#lib/engine/shelves.js";
   import type { SourceSection } from "#lib/presentation/source-groups.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { QuestId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
-  let { anchor, locale }: { anchor: string; locale: LocaleCode } = $props();
+  let {
+    anchor,
+    locale,
+    progress,
+  }: {
+    anchor: string;
+    locale: LocaleCode;
+    /** The page's progress, so `/everything` computes it once per context. */
+    progress: AllProgress;
+  } = $props();
 
   const guard = createSpoilerGuard();
 
@@ -66,7 +76,14 @@
       userState.setMineFloor(floor);
     }
   }
+  // Which Progress categories show, per list, so a search can hide the group when none does. A list
+  // that unmounts leaves its keys; they're rewritten on remount, and only read while it's mounted.
+  const progressShown: Record<string, boolean> = $state({});
   const leaving = createLeavingSet<string>();
+
+  function progressCategoryShown(completed: boolean): boolean {
+    return UNSOURCED_CATEGORY_KEYS.some((category) => progressShown[`${completed}:${category}`]);
+  }
   const sectionGrouping = createSectionGrouping<string>();
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
   let entries = $derived(
@@ -75,7 +92,8 @@
   let lookups = $derived(
     buildBaseSegmentLookups(computeSpoileredStoreIds(userState.progressionState), locale),
   );
-  let progress = $derived(getAllProgress(userState.progressContext));
+  // Categories without sources have no source to sit under, so they share the Progress group.
+  let progressCategories = $derived(sortCategoryKeysByName(UNSOURCED_CATEGORY_KEYS, locale));
   let progressCompletions = $derived([
     userState.state.progress.mineFloor >= getMaxMineFloor(),
     userState.state.progress.renown >= getMaxRenownLevel(),
@@ -125,7 +143,8 @@
     ),
   );
   let hasCompletedContent = $derived(
-    progressCompletions.includes(true) ||
+    (progressCompletions.includes(true) &&
+      (!toolbarState.searchQuery || progressCategoryShown(true))) ||
       groups.some(({ sections: groupSections }) =>
         groupSections.some((entry) => isInCompletedList(entry)),
       ),
@@ -263,20 +282,19 @@
 
   function toggle(entry: SourceChecklistRow): void {
     const perform = () => {
-      const completesSource = sections.some(({ rows }) => {
-        const remaining = rows.filter(({ entry: row }) => row.obtainable && !row.completed);
-        return remaining.length === 1 && remaining[0].entry.key === entry.key;
-      });
-      for (const { id, rows } of sections) {
-        if (rows.some(({ entry: row }) => row.key === entry.key)) sectionGrouping.hold(id);
-      }
+      const sourceIds = sections
+        .filter(({ rows }) => rows.some(({ entry: row }) => row.key === entry.key))
+        .map(({ id }) => id);
+      for (const id of sourceIds) sectionGrouping.hold(id);
       const beforeRecipes = new Set(userState.state.progress.almanacRecipes);
-      const undo = entry.toggle();
-      const updated = buildSourceChecklist(
-        userState.progressContext,
-        locale,
-        userState.state.showSpoilers,
-      ).find(({ key }) => key === entry.key);
+      const undo = celebrateProgress(
+        entry.category,
+        () => entry.toggle(),
+        sourceIds.map(
+          (id) => () => sections.find((section) => section.id === id)?.state === "done",
+        ),
+      );
+      const updated = entries.find(({ key }) => key === entry.key);
       if (entry.reportCategory === "quest") {
         const added = [...userState.state.progress.almanacRecipes].filter(
           (id) => !beforeRecipes.has(id),
@@ -291,11 +309,7 @@
       } else {
         showUndoToast(entry.name, updated?.completed ?? false, undo);
       }
-      if (updated?.completed) {
-        leaving.markLeaving(entry.key);
-        if (isCategoryComplete(entry.category, userState.progressContext)) celebrateCategory();
-        else if (completesSource) celebrate();
-      }
+      if (updated?.completed) leaving.markLeaving(entry.key);
     };
     if (
       entry.completed ||
@@ -320,11 +334,15 @@
       allGroupSections.some((entry) => !isInCompletedList(entry)) ||
       (group === "progress" && progressCompletions.includes(false))}
     {@const groupId = `sources-${group}${completed && hasOutstanding ? "-completed" : ""}`}
+    <!-- During a search the mine floor hides, so only matching rows or categories keep the group. -->
+    {@const searchMatches =
+      groupSections.length > 0 || (group === "progress" && progressCategoryShown(completed))}
     {#if groupSections.length > 0 || hasProgress}
       <GroupSection
         id={groupId}
         name={sourceTypeLabel(group, locale)}
         {completed}
+        visible={!toolbarState.searchQuery || searchMatches}
         revealTarget={anchor === groupId ||
         groupSections.some(
           ({ section }) =>
@@ -416,8 +434,14 @@
                 onChange={requestFloor}
               />
             {/if}
-            {#each ["skills", "renown", "villagers"] as const as category (category)}
-              <CategorySection key={category} {locale} progress={progress[category]} {completed} />
+            {#each progressCategories as category (category)}
+              <CategorySection
+                key={category}
+                {locale}
+                progress={progress[category]}
+                {completed}
+                bind:shown={progressShown[`${completed}:${category}`]}
+              />
             {/each}
           </div>
         {/if}

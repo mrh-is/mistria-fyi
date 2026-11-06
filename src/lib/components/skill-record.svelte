@@ -3,8 +3,7 @@
   import SkillPerks from "#lib/components/skill-perks.svelte";
   import Stepper from "#lib/components/stepper.svelte";
   import { Input } from "#lib/components/ui/input/index.js";
-  import { celebrateCategory } from "#lib/effects/celebrate.js";
-  import { isCategoryComplete } from "#lib/engine/categories.js";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -81,9 +80,9 @@
   }
 
   function setLevelWithCelebration(newLevel: number): void {
-    const wasDone = isCategoryComplete("skills", userState.progressContext);
-    userState.setSkillLevel(id, newLevel);
-    if (!wasDone && isCategoryComplete("skills", userState.progressContext)) celebrateCategory();
+    celebrateProgress("skills", () => {
+      userState.setSkillLevel(id, newLevel);
+    });
   }
 
   function startEditing(): void {

@@ -30,6 +30,13 @@ async function importFiles(files: File[]) {
 }
 
 describe("save import", () => {
+  it("offers a next step after success without a desktop transfer callback", async () => {
+    await importFiles([new File([JSON.stringify({ items_acquired: [] })], "player.json")]);
+    const next = await screen.findByRole("link", { name: "See what’s left" });
+    expect(next).toBeVisible();
+    expect(next).toHaveAttribute("href", "/en/everything");
+  });
+
   it("can cancel a different farm, then explicitly merge it without losing progress", async () => {
     const encoder = new TextEncoder();
     const name = encoder.encode("player");
@@ -72,6 +79,13 @@ describe("save import", () => {
     });
     expect(userState.state.progress.renown).toBe(7);
     expect(userState.state.lastImport?.identity.saveNumber).toBe("456");
+    const source = screen.getByText("Imported from game-456-autosave.sav");
+    expect(source).not.toBeVisible();
+    expect(screen.queryByText("Imported from player.json")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See what’s left" })).toHaveAttribute(
+      "href",
+      "/en/everything",
+    );
   });
 
   it("records a manual import and shows its display even when creation_version is absent", async () => {
@@ -85,6 +99,8 @@ describe("save import", () => {
     expect(history).toHaveTextContent("Fern · Ada");
     expect(history).toHaveTextContent("Last imported now");
     expect(history).toHaveTextContent("unknown version");
+    expect(screen.getByText(/Created in unknown version/)).not.toBeVisible();
+    expect(history.querySelector("summary")).toHaveTextContent("Save details");
     expect(userState.state.lastImport?.identity).toEqual({
       creationVersion: null,
       saveNumber: null,
@@ -122,6 +138,8 @@ describe("save import", () => {
       expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
     });
     expect(screen.getByText(/Imported from player.json/)).toBeInTheDocument();
+    expect(screen.getByText(/Imported from player.json/)).not.toBeVisible();
+    expect(screen.getByRole("link", { name: "See what’s left" })).toBeVisible();
     expect(screen.queryByRole("alert")).toBeNull();
 
     await fireEvent.change(input, { target: { files } });

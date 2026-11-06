@@ -1,4 +1,5 @@
-import { trackerData } from "#lib/data/index.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { isAvailabilityDoable } from "#lib/engine/availability.js";
 import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { isSpoilered } from "#lib/engine/projections/category-projection.js";
 import { countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
@@ -42,10 +43,21 @@ export function projectQuests(
       const completed = ctx.progress.questStates[id] === "completed";
       const row = { sources: questSources(questType, id), visibility: quest.visibility };
       const facts = shelfFacts(row, completed, ctx, options.showsSource);
+      // Obtained quests have already passed their start gate, including seasonal board posting.
+      const canStart =
+        ctx.progress.questStates[id] === "obtained" ||
+        isAvailabilityDoable(quest.startCondition, ctx, {
+          acquiredItems: {
+            get: (itemId) => {
+              const canonical = trackerIndex.memberToCanonicalAlmanacId.get(itemId);
+              return canonical === undefined ? undefined : ctx.progress.almanac.has(canonical);
+            },
+          },
+        });
       rows.push({
         ...facts,
-        doable: facts.doable && typeOpen,
-        doableAnywhere: facts.doableAnywhere && typeOpen,
+        doable: facts.doable && typeOpen && canStart,
+        doableAnywhere: facts.doableAnywhere && typeOpen && canStart,
         id,
         spoilered: isSpoilered(quest.visibility, options.progressionState),
       });

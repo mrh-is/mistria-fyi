@@ -184,6 +184,9 @@
   "mines_floor_label": "Piso",
   "mines_floor_input_aria": "Piso de la mina",
   "villagers_roster_aria": "Lista de aldeanos",
+  "villagers_break_ups_hint": "Haz que coincida con el ajuste de tu partida antes de comprometerte.",
+  "villagers_break_ups_disabled": "Rupturas desactivadas",
+  "villagers_break_ups_enabled": "Rupturas activadas",
   "villagers_alphabet_aria": "Índice alfabético de aldeanos",
   "season_spring_abbr": "PRI",
   "season_summer_abbr": "VER",
@@ -417,7 +420,7 @@
   "privacy_sync_what_body": "Solo se sincroniza el archivo de guardado del juego. Lo que marques a mano se queda en ese dispositivo. Tu archivo de guardado se cifra de extremo a extremo antes de salir de tu ordenador de juego, así que solo pueden leerlo los dispositivos que tengan tu código. Nosotros no podemos leerlo, ni tampoco el servidor que lo transmite.",
   "privacy_sync_what_feedback_log": "Si envías un comentario, puedes adjuntar tu registro de sincronización de partidas, y ese registro es público. En «Envío de comentarios», más arriba, se explica qué contiene.",
   "privacy_sync_storage_heading": "Cuánto tiempo lo guardamos",
-  "privacy_sync_storage_body": "El servidor guarda solo el último archivo de guardado de cada código y lo elimina 30 días después de que se enviara. También guarda un pequeño registro por código, sin datos de la partida: cuándo se creó el código y cuándo se usó por última vez, cuántos archivos de guardado se enviaron ese día, un número que mantiene los archivos en orden y unas huellas de un solo sentido que demuestran que tu ordenador es el dueño del código y detectan un archivo de guardado repetido. Ese registro no está cifrado. Desaparece cuando creas un código nuevo, o un año después de tu último archivo de guardado, y solo queda una marca para que el código nunca se reutilice. Un detalle: Cloudflare, que aloja ese servidor, conserva una copia de recuperación de su almacenamiento durante 30 días, así que un archivo de guardado sustituido o eliminado puede seguir siendo recuperable hasta 30 días más, aún cifrado.",
+  "privacy_sync_storage_body": "El servidor guarda solo el último archivo de guardado de cada código y lo elimina 30 días después de que se enviara. También guarda un pequeño registro por código, sin datos de la partida: cuándo se creó el código y cuándo se usó por última vez, cuántos archivos de guardado se enviaron ese día, un número que mantiene los archivos en orden y unas huellas de un solo sentido que demuestran que tu ordenador es el dueño del código y detectan un archivo de guardado repetido. Ese registro no está cifrado. Desaparece cuando creas un código nuevo, o un año después de tu último archivo de guardado, y solo queda una marca para que el código nunca se reutilice. Cuando algo falla en el servidor, cuenta cada día qué tipo de problema fue, como que la comprobación contra bots no respondiera, y guarda esos recuentos durante dos semanas. No contienen nada sobre ti ni sobre lo que enviaste. Un detalle: Cloudflare, que aloja ese servidor, conserva una copia de recuperación de su almacenamiento durante 30 días, así que un archivo de guardado sustituido o eliminado puede seguir siendo recuperable hasta 30 días más, aún cifrado.",
   "privacy_sync_code_heading": "Tu código",
   "privacy_sync_code_body": "Cualquiera que tenga tu código puede leer los archivos de guardado que compartes, hasta que ese código deje de funcionar. Trátalo como una contraseña, y mejor que no salga en directo. Si alguna vez se filtra, crea un código nuevo. El antiguo tarda un momento en desactivarse, y Datos te lo muestra hasta que esté listo.",
   "privacy_sync_ip_heading": "Direcciones IP",
@@ -520,19 +523,24 @@
   "sync_error_camera_init": "No se pudo inicializar la cámara.",
   "sync_error_camera_denied": "Acceso a la cámara denegado. Abre el enlace de sincronización de tu ordenador o pégalo aquí.",
   "merge_imported_from": "Importado desde {files}",
-  "merge_label_almanac": "Almanaque: +{count}",
-  "merge_label_almanac_recipes": "Recetas: +{count}",
-  "merge_label_animal_cosmetics": "Cosméticos de animales: +{count}",
-  "merge_label_animals": "Variantes de animales: +{count}",
-  "merge_label_cosmetics": "Cosméticos: +{count}",
-  "merge_label_museum": "Donaciones al museo: +{count}",
-  "merge_label_villager_relationships": "Relaciones con aldeanos: +{count}",
-  "merge_label_perks": "Dones de habilidad: +{count}",
-  "merge_label_pet_cosmetics": "Cosméticos de mascotas: +{count}",
-  "merge_label_pet_skins": "Pieles de mascotas: +{count}",
-  "merge_label_mount_appearances": "Apariencias de montura: +{count}",
-  "merge_label_quests": "Misiones: +{count}",
-  "merge_label_spells": "Hechizos: +{count}",
+  "merge_overall_outcome": "Tu guía está completada al {percent}. Te quedan {remaining} por completar.",
+  "merge_changes_details": "Lo que hemos añadido",
+  "merge_label_break_ups_disabled": "Rupturas desactivadas",
+  "import_save_details": "Detalles de la partida",
+  "import_view_progress": "Ver lo que queda",
+  "merge_label_almanac": "Almanaque: +{countText}",
+  "merge_label_almanac_recipes": "Recetas: +{countText}",
+  "merge_label_animal_cosmetics": "Cosméticos de animales: +{countText}",
+  "merge_label_animals": "Variantes de animales: +{countText}",
+  "merge_label_cosmetics": "Cosméticos: +{countText}",
+  "merge_label_museum": "Donaciones al museo: +{countText}",
+  "merge_label_villager_relationships": "Relaciones con aldeanos: +{countText}",
+  "merge_label_perks": "Dones de habilidad: +{countText}",
+  "merge_label_pet_cosmetics": "Cosméticos de mascotas: +{countText}",
+  "merge_label_pet_skins": "Pieles de mascotas: +{countText}",
+  "merge_label_mount_appearances": "Apariencias de montura: +{countText}",
+  "merge_label_quests": "Misiones: +{countText}",
+  "merge_label_spells": "Hechizos: +{countText}",
   "merge_label_child_choice": "Elección del hijo actualizada",
   "merge_conflict_relationship": "Ten en cuenta que tenías registrado que estás {local} con {villager}, pero el archivo de guardado decía {incoming}. Hemos mantenido tu estado registrado.",
   "merge_conflict_spouse": "Ten en cuenta que tenías registrado que estás casado/a con {localVillager}, pero el archivo de guardado decía que te casaste con {incomingVillager}. Hemos mantenido a {localVillager} como tu cónyuge y hemos omitido la elección de hijos importada.",
@@ -542,45 +550,45 @@
   "merge_label_reached_season": "Progreso de temporada actualizado",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Piso de mina: +{count} piso",
-        "countPlural=many": "Piso de mina: +{count} pisos",
-        "countPlural=other": "Piso de mina: +{count} pisos"
+        "countPlural=one": "Piso de mina: +{countText} piso",
+        "countPlural=many": "Piso de mina: +{countText} pisos",
+        "countPlural=other": "Piso de mina: +{countText} pisos"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Corazones de aldeanos: +{count} relación actualizada",
-        "countPlural=many": "Corazones de aldeanos: +{count} relaciones actualizadas",
-        "countPlural=other": "Corazones de aldeanos: +{count} relaciones actualizadas"
+        "countPlural=one": "Corazones de aldeanos: +{countText} relación actualizada",
+        "countPlural=many": "Corazones de aldeanos: +{countText} relaciones actualizadas",
+        "countPlural=other": "Corazones de aldeanos: +{countText} relaciones actualizadas"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Reputación: +{count} nivel",
-        "countPlural=many": "Reputación: +{count} niveles",
-        "countPlural=other": "Reputación: +{count} niveles"
+        "countPlural=one": "Reputación: +{countText} nivel",
+        "countPlural=many": "Reputación: +{countText} niveles",
+        "countPlural=other": "Reputación: +{countText} niveles"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Habilidades: +{count} habilidad actualizada",
-        "countPlural=many": "Habilidades: +{count} habilidades actualizadas",
-        "countPlural=other": "Habilidades: +{count} habilidades actualizadas"
+        "countPlural=one": "Habilidades: +{countText} habilidad actualizada",
+        "countPlural=many": "Habilidades: +{countText} habilidades actualizadas",
+        "countPlural=other": "Habilidades: +{countText} habilidades actualizadas"
       }
     }
   ],

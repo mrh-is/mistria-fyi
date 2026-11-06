@@ -9,7 +9,7 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
-import SourceContent from "./source-content.svelte";
+import SourceContent from "./source-content.test-harness.svelte";
 
 import type { Source, WaterType } from "#lib/types/acquisition.js";
 import type { ItemId, StoreId } from "#lib/types/tracker-data.js";
@@ -172,6 +172,18 @@ describe("while a source section changes lists", () => {
     expect(within(completed).getByRole("button", { name: "Fishing" })).toBeInTheDocument();
     expect(document.activeElement?.matches("button[data-section-trigger]")).toBe(true);
     expect(document.activeElement?.closest("[hidden]")).toBeNull();
+  });
+
+  it("celebrates a source the toggle finishes, but not unticking it again", async () => {
+    mockChecklist();
+    const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+    await tick();
+    await fireEvent.click(await openFishing(view));
+    expect(celebration.celebrate).toHaveBeenCalledTimes(1);
+    expect(celebration.celebrateCategory).not.toHaveBeenCalled();
+
+    await fireEvent.click(view.getByRole("button", { name: "Uncheck Anchovy" }));
+    expect(celebration.celebrate).toHaveBeenCalledTimes(1);
   });
 
   it("hides the Completed divider while no source is finished", async () => {

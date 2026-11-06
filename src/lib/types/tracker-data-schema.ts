@@ -57,6 +57,7 @@ const JsonValueSchema: v.GenericSchema<unknown, JsonValue> = v.lazy(() =>
 );
 export const AvailabilityLeafSchema = v.variant("type", [
   v.strictObject({ type: v.literal("always") }),
+  v.strictObject({ type: v.literal("renownLevel"), level: number }),
   v.strictObject({ type: v.literal("dateUnlocked"), dateId: v.optional(id("DateId")) }),
   v.strictObject({
     type: v.literal("gamePredicate"),
@@ -66,6 +67,7 @@ export const AvailabilityLeafSchema = v.variant("type", [
   v.strictObject({ type: v.literal("hasUpperFloor") }),
   v.strictObject({ type: v.literal("heartLevel"), level: number, villagerId: id("VillagerId") }),
   v.strictObject({ type: v.literal("isDating") }),
+  v.strictObject({ type: v.literal("itemAcquired"), itemId: id("ItemId") }),
   v.strictObject({ type: v.literal("mineFloor"), floor: number }),
   v.strictObject({ type: v.literal("perkUnlocked"), perkId: id("PerkId") }),
   v.strictObject({
@@ -225,23 +227,28 @@ export const HeartLevelChangeSchema = v.strictObject({
   level: number,
   villagerId: id("VillagerId"),
 });
-export const CookingQuestSchema = v.strictObject({
+export const QuestEntitySchema = v.strictObject({
   ...TrackerEntitySchema.entries,
+  /** What must be true before the quest can start. Absent means unconstrained. */
+  startCondition: v.optional(AvailabilitySchema),
+});
+export const CookingQuestSchema = v.strictObject({
+  ...QuestEntitySchema.entries,
   recipeId: id("RecipeId"),
 });
 export const FetchQuestSchema = v.strictObject({
-  ...TrackerEntitySchema.entries,
+  ...QuestEntitySchema.entries,
   itemId: id("ItemId"),
   rewardRecipeId: v.optional(id("RecipeId")),
   villager: id("VillagerId"),
 });
 export const HeartQuestSchema = v.strictObject({
-  ...TrackerEntitySchema.entries,
+  ...QuestEntitySchema.entries,
   heartLevel: number,
   villager: id("VillagerId"),
 });
 export const StoryQuestSchema = v.strictObject({
-  ...TrackerEntitySchema.entries,
+  ...QuestEntitySchema.entries,
   heartLevelChanges: v.optional(v.array(HeartLevelChangeSchema)),
   /** Completion threshold for native Reach Town Rank quests, validated against townRanks. */
   townRankLevel: v.optional(number),
@@ -323,10 +330,10 @@ export const TrackerDataSchema = v.strictObject({
   questOrder: v.record(questType, v.array(id("QuestId"))),
   quests: v.strictObject({
     cooking: v.record(id("QuestId"), CookingQuestSchema),
-    crown: v.record(id("QuestId"), TrackerEntitySchema),
+    crown: v.record(id("QuestId"), QuestEntitySchema),
     fetch: v.record(id("QuestId"), FetchQuestSchema),
     heart: v.record(id("QuestId"), HeartQuestSchema),
-    mission: v.record(id("QuestId"), TrackerEntitySchema),
+    mission: v.record(id("QuestId"), QuestEntitySchema),
     story: v.record(id("QuestId"), StoryQuestSchema),
   }),
   recipes: v.record(id("RecipeId"), SourcedEntitySchema),

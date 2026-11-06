@@ -5,6 +5,7 @@ import { isAnimalVariantSpoilered } from "#lib/engine/animal-availability.js";
 import { projectAlmanac } from "#lib/engine/projections/almanac.js";
 import { projectAnimals } from "#lib/engine/projections/animals.js";
 import { projectMuseum } from "#lib/engine/projections/museum.js";
+import { projectQuests } from "#lib/engine/projections/quests.js";
 import { recipePlacements } from "#lib/engine/projections/recipes.js";
 import { factKey } from "#lib/engine/provenance.js";
 import { buildQuestSections } from "#lib/presentation/quest-sections.js";
@@ -271,6 +272,9 @@ export function buildSourceChecklist(
         break;
     }
   }
+  const questAvailability = new Map(
+    projectQuests(ctx).rows.map((row) => [row.id, row.doableAnywhere]),
+  );
   for (const section of buildQuestSections(ctx.progress, locale)) {
     for (const row of section.rows) {
       const questId = row.kind === "craving" ? row.questId : row.id;
@@ -299,6 +303,7 @@ export function buildSourceChecklist(
         },
         {
           fact: factKey("questStates", questId),
+          locked: !completed && row.kind === "quest" && questAvailability.get(row.id) === false,
           questState: ctx.progress.questStates[questId] ?? "none",
           subtitle: row.subtitle,
           toggle: () => {
