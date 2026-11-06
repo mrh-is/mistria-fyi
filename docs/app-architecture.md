@@ -418,7 +418,9 @@ Progress calculation and UI row visibility are separate concerns.
   then holds until the next save arrives.
 - Mines counts floors as doable down to the first unbroken seal at or below the player's floor, and
   the floors past it wait. Finishing the seal's quest breaks it, and a floor below a seal proves
-  that seal is broken. Quests read only spoilers & the items they ask for until #502. Skills &
+  that seal is broken. Quests combine spoiler gates, requested-item sources, & native start
+  requirements, recorded separately from stage objectives. Obtained quests have already passed their
+  start requirements. The source-grouped Everything view uses the same quest availability. Skills &
   Renown are always To do.
 - **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the
   category's progress at 100%. The header, the all-completed banner, & `celebrateCategory()` all

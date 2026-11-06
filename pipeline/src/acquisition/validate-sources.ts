@@ -81,11 +81,14 @@ const AVAILABILITY_FIELDS = {
   hasUpperFloor: [],
   heartLevel: ["level", "villagerId"],
   isDating: [],
+  itemAcquired: ["itemId"],
+  itemAvailable: ["itemId"],
   mineFloor: ["floor"],
   not: ["condition"],
   perkUnlocked: ["perkId"],
   quest: ["questId", "state"],
   reachedSeason: ["season"],
+  renownLevel: ["level"],
   season: ["seasons"],
   skillLevel: ["level", "skillId"],
   time: ["end", "start"],
@@ -653,6 +656,18 @@ function validateAvailability(
       case "hasUpperFloor":
       case "isDating":
         return;
+      case "itemAvailable":
+      case "itemAcquired":
+        reference(
+          diagnostics,
+          references,
+          "item",
+          value.itemId,
+          targetId,
+          `${fieldPath}.itemId`,
+          source,
+        );
+        return;
       case "heartLevel":
         requireNumber(value, "level", targetId, fieldPath, source, diagnostics);
         if (requireString(value, "villagerId", targetId, fieldPath, source, diagnostics)) {
@@ -669,6 +684,9 @@ function validateAvailability(
         return;
       case "mineFloor":
         requireNumber(value, "floor", targetId, fieldPath, source, diagnostics);
+        return;
+      case "renownLevel":
+        requireNumber(value, "level", targetId, fieldPath, source, diagnostics);
         return;
       case "not":
         validateAvailability(
@@ -1655,6 +1673,32 @@ function validateQuests(
     const questRecords = isRecord(group) ? group : {};
     for (const [questId, quest] of sortedEntries(questRecords)) {
       if (!isRecord(quest)) continue;
+      if (isRecord(quest.requirements)) {
+        const requirements = quest.requirements;
+        const path = `${groupPath}.${questId}.requirements`;
+        validateAvailability(
+          requirements.start,
+          questId,
+          `${path}.start`,
+          quest,
+          references,
+          diagnostics,
+          new Set(),
+        );
+        if (Array.isArray(requirements.stages)) {
+          for (const [index, stage] of requirements.stages.entries()) {
+            validateAvailability(
+              stage,
+              questId,
+              `${path}.stages[${index}]`,
+              quest,
+              references,
+              diagnostics,
+              new Set(),
+            );
+          }
+        }
+      }
       validateQuestFields(
         quest,
         QUEST_FIELDS[questType as QuestType],

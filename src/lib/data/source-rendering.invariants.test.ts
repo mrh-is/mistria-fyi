@@ -93,10 +93,13 @@ function collectGamePredicates(
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
+    case "itemAvailable":
+    case "itemAcquired":
     case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":
+    case "renownLevel":
     case "season":
     case "skillLevel":
     case "time":

@@ -8,8 +8,29 @@ import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import { buildSourceChecklist } from "./source-checklist.js";
 
+import type { ItemId } from "#lib/types/tracker-data.js";
+
 beforeEach(() => {
   userState.resetAll();
+});
+
+function fennelPlacements() {
+  return projectSourceGroups(
+    buildSourceChecklist(userState.progressContext, "en"),
+    userState.progressContext,
+  )
+    .flatMap((section) => section.rows)
+    .filter(({ entry }) => entry.category === "quests" && entry.id === "request_for_fennel");
+}
+
+it("keeps quest start gates in every source placement", () => {
+  const before = fennelPlacements();
+  expect(before.length).toBeGreaterThan(0);
+  expect(before.every(({ doable }) => !doable)).toBe(true);
+  userState.toggleAlmanacItem("fennel" as ItemId);
+  expect(fennelPlacements().some(({ doable }) => doable)).toBe(true);
+  userState.toggleAlmanacItem("fennel" as ItemId);
+  expect(fennelPlacements().every(({ doable }) => !doable)).toBe(true);
 });
 
 it("preserves variant discovery spoilers & species context outside the animal’s section", () => {

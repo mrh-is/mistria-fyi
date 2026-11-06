@@ -145,6 +145,7 @@ describe("assembleTrackerData", () => {
     expect(trackerData.pregnancyQuestByVillager).toEqual({ adeline: "adeline_pregnancy_request" });
     expect(trackerData.quests.heart["adeline_pregnancy_request" as QuestId]).toEqual({
       heartLevel: 10,
+      requirements: { start: { type: "always" }, stages: [{ type: "always" }] },
       sources: [],
       villager: "adeline",
     });
