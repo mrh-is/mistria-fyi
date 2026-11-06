@@ -20,7 +20,8 @@ const fallbackFonts = new Set([
       [...readFileSync(new URL(name, fontDirectory), "utf8").matchAll(/url\((https:[^)]+)\)/g)].map(
         ([, url]) => url,
       ),
-    ),
+    )
+    .filter((url) => new URL(url).origin === PRODUCTION_ASSET_ORIGIN),
 ]);
 const turnstileUrl = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 for (const size of new Set(Object.values(spriteDimensions))) {
@@ -35,6 +36,7 @@ export { expect } from "@playwright/test";
 export async function isolateNetwork(
   context: BrowserContext,
   baseURL: string,
+  allowTurnstile = true,
 ): Promise<() => string[]> {
   const origin = new URL(baseURL).origin;
   const external = new Map<Request, string>();
@@ -92,7 +94,7 @@ export async function isolateNetwork(
         return;
       }
     }
-    if (url.href === turnstileUrl) {
+    if (allowTurnstile && url.href === turnstileUrl) {
       await route.fulfill({
         body: readFileSync(new URL("fixtures/turnstile.js", import.meta.url)),
         contentType: "text/javascript",
@@ -109,11 +111,12 @@ export async function isolateNetwork(
   return () => [...external.values(), ...sockets];
 }
 
-export const test = base.extend<{ networkIsolation: undefined }>({
+export const test = base.extend<{ allowTurnstile: boolean; networkIsolation: undefined }>({
+  allowTurnstile: [true, { option: true }],
   networkIsolation: [
-    async ({ baseURL, context }, use) => {
+    async ({ allowTurnstile, baseURL, context }, use) => {
       if (baseURL === undefined) throw new Error("Browser tests require a local baseURL");
-      const unexpectedRequests = await isolateNetwork(context, baseURL);
+      const unexpectedRequests = await isolateNetwork(context, baseURL, allowTurnstile);
       await use(undefined);
       expect(unexpectedRequests(), "Unexpected internet requests; add a local fixture").toEqual([]);
     },

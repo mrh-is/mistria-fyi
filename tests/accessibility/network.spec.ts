@@ -2,8 +2,9 @@ import { expect, isolateNetwork, test } from "../browser/test.js";
 import { gotoApplication } from "./support/application-state.js";
 
 test.describe("privacy disclosure", () => {
-  // Let the network guard observe attempted loads even when the production CSP would stop them.
-  test.use({ bypassCSP: true });
+  // Turnstile is disclosed for specific actions, so a fresh page must not load it.
+  // Bypass CSP so the guard can observe resources that production CSP would block.
+  test.use({ allowTurnstile: false, bypassCSP: true });
 
   test("the privacy page loads without undisclosed third-party requests", async ({ page }) => {
     await gotoApplication(page, "/en/privacy");
