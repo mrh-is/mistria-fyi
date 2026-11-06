@@ -31,6 +31,30 @@ interface LiveMailbox {
   uploadDay: number;
 }
 type MailboxMeta = LiveMailbox | { retired: true };
+/**
+ * The only failure kinds the relay records, as daily counts. A kind names where & how a request
+ * failed, never what it carried: no request data, identifiers, tokens, or exception text.
+ */
+const FAILURE_KINDS = [
+  "code-error",
+  "object-overloaded",
+  "object-transient",
+  "secret-missing",
+  "siteverify-secret-rejected",
+  "siteverify-unreachable",
+  "unexpected-error",
+] as const;
+type FailureKind = (typeof FAILURE_KINDS)[number];
+/** UTC date (`YYYY-MM-DD`) → counts per kind, for the last {@link FAILURE_DAYS} days. */
+type FailureCounts = Record<string, Partial<Record<FailureKind, number>>>;
+/** Carries a kind from a Durable Object to the Worker, which strips it before responding. */
+const FAILURE_HEADER = "X-Relay-Failure";
+const FAILURE_DAYS = 14;
+
+/** What each follower socket carries through hibernation. */
+interface SocketAttachment {
+  openedAt: number;
+}
 interface Usage {
   clients: Record<string, number>;
   count: number;
@@ -44,6 +68,10 @@ const DAY = 24 * HOUR;
 const ENVELOPE_TTL = 30 * DAY;
 const MAILBOX_TTL = 365 * DAY;
 const MAX_ENVELOPE = 256 * 1024;
+/** Followers one mailbox holds at once; a player's own devices fit well under it. */
+const MAX_FOLLOWERS = 20;
+/** A follower reconnects (& reads again) after this long, so no socket outlives it by much. */
+const SOCKET_LIFETIME = 6 * HOUR;
 /** How long a Worker isolate trusts its last look at the kill switch. See relay/README.md. */
 const PAUSE_CHECK_INTERVAL = 30_000;
 const encoder = new TextEncoder();
@@ -67,6 +95,60 @@ function paused(until: number): Response {
     headers: { "Retry-After": String(Math.max(1, Math.ceil((until - Date.now()) / 1000))) },
     status: 503,
   });
+}
+
+/** A `503 unavailable` that tells the Worker which kind of failure to count. */
+function failed(kind: FailureKind): Response {
+  return Response.json({ state: "unavailable" } satisfies { state: RelayState }, {
+    headers: { [FAILURE_HEADER]: kind },
+    status: 503,
+  });
+}
+
+function isFailureKind(value: null | string): value is FailureKind {
+  return FAILURE_KINDS.includes(value as FailureKind);
+}
+
+/**
+ * Names an exception by allowlisted traits only: the runtime's `overloaded` & `retryable` flags
+ * mark Durable Object & storage trouble, & the built-in error types a code bug throws. The message
+ * never leaves this function.
+ */
+function failureKind(error: unknown): FailureKind {
+  if (typeof error === "object" && error !== null) {
+    const flags = error as { overloaded?: unknown; retryable?: unknown };
+    if (flags.overloaded === true) return "object-overloaded";
+    if (flags.retryable === true) return "object-transient";
+  }
+  if (
+    error instanceof TypeError ||
+    error instanceof RangeError ||
+    error instanceof ReferenceError ||
+    error instanceof SyntaxError
+  ) {
+    return "code-error";
+  }
+  return "unexpected-error";
+}
+
+function utcDate(time: number): string {
+  return new Date(time).toISOString().slice(0, 10);
+}
+
+/** Best effort: a failed count never changes the player's response. */
+async function recordFailure(env: Env, kind: FailureKind): Promise<void> {
+  try {
+    await control(env).fetch("https://control/failure", { body: kind, method: "POST" });
+  } catch {
+    // The singleton may share the outage being counted.
+  }
+}
+
+async function isAdmin(request: Request, env: Env): Promise<boolean> {
+  return (
+    Boolean(env.ADMIN_TOKEN) &&
+    (await sameSecret(request.headers.get("Authorization") ?? "", `Bearer ${env.ADMIN_TOKEN}`))
+  );
 }
 
 function bearer(request: Request): string | undefined {
@@ -215,13 +297,12 @@ async function route(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   if (url.search) return json("bad-request", 400);
   if (request.method === "OPTIONS") return new Response(null, { status: 204 });
+  if (url.pathname === "/v1/admin/failures" && request.method === "GET") {
+    if (!(await isAdmin(request, env))) return json("forbidden", 403);
+    return control(env).fetch("https://control/failures");
+  }
   if (url.pathname === "/v1/admin/pause" && request.method === "PUT") {
-    if (
-      !env.ADMIN_TOKEN ||
-      !(await sameSecret(request.headers.get("Authorization") ?? "", `Bearer ${env.ADMIN_TOKEN}`))
-    ) {
-      return json("forbidden", 403);
-    }
+    if (!(await isAdmin(request, env))) return json("forbidden", 403);
     const body = await bodyBytes(request, 4096);
     if (!body) return json("too-large", 413);
     const response = await control(env).fetch(
@@ -251,7 +332,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
   if (create && prefix) {
     if (!env.IP_RATE_SECRET || !env.TURNSTILE_SECRET || !env.TURNSTILE_HOSTNAME) {
-      return json("unavailable", 503);
+      return failed("secret-missing");
     }
     const limit = await env.CREATE_RATE.limit({ key: prefix });
     if (!limit.success) return rateLimited(Date.now() + MINUTE);
@@ -295,15 +376,21 @@ async function route(request: Request, env: Env): Promise<Response> {
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     let response: Response;
+    let failure: FailureKind | undefined;
     try {
       response = await route(request, env);
-    } catch {
-      // No request, error, address, token, or payload logging, including unexpected failures.
+    } catch (error) {
+      // No request, error, address, token, or payload logging: only a fixed kind is counted.
+      failure = failureKind(error);
       response = json("unavailable", 503);
     }
     const headers = new Headers(response.headers);
+    const reported = headers.get(FAILURE_HEADER);
+    headers.delete(FAILURE_HEADER);
+    failure ??= isFailureKind(reported) ? reported : undefined;
+    if (failure) ctx.waitUntil(recordFailure(env, failure));
     headers.set("Cache-Control", "no-store");
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Access-Control-Allow-Origin", "*");
@@ -379,24 +466,30 @@ export class Mailbox implements DurableObject {
     ) {
       return json("bad-request", 400);
     }
-    const verified = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      body: new URLSearchParams({ response: body.turnstile, secret: this.env.TURNSTILE_SECRET }),
-      method: "POST",
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!verified.ok) return json("unavailable", 503);
-    const result: {
+    let result: {
       action?: string;
       "error-codes"?: string[];
       hostname?: string;
       success?: boolean;
-    } = await verified.json();
+    };
+    try {
+      const verified = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        body: new URLSearchParams({ response: body.turnstile, secret: this.env.TURNSTILE_SECRET }),
+        method: "POST",
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!verified.ok) return failed("siteverify-unreachable");
+      result = await verified.json();
+    } catch {
+      // A timeout, network error, or unreadable answer all mean Siteverify didn't answer usefully.
+      return failed("siteverify-unreachable");
+    }
     if (
       result["error-codes"]?.some(
         (code) => code === "invalid-input-secret" || code === "missing-input-secret",
       )
     ) {
-      return json("unavailable", 503);
+      return failed("siteverify-secret-rejected");
     }
     if (
       result.success !== true ||
@@ -465,7 +558,8 @@ export class Mailbox implements DurableObject {
     };
     await this.ctx.storage.transaction(async (storage) => {
       await storage.put({ envelope: bytes, meta: next });
-      await storage.setAlarm(now + ENVELOPE_TTL);
+      // Keep an earlier socket deadline; the alarm closes expired followers too.
+      await storage.setAlarm(Math.min(now + ENVELOPE_TTL, this.sweepSockets(now, false).next));
     });
     this.broadcast(Mailbox.envelopeMessage(next, bytes));
     return json("stored");
@@ -477,8 +571,14 @@ export class Mailbox implements DurableObject {
         ? await this.ctx.storage.get<ArrayBuffer>("envelope")
         : undefined;
     if (request.headers.get("Upgrade")?.toLowerCase() === "websocket") {
+      const now = Date.now();
+      if (this.sweepSockets(now, true).open >= MAX_FOLLOWERS) return rateLimited(now + MINUTE);
       const pair = new WebSocketPair();
       this.ctx.acceptWebSocket(pair[1]);
+      pair[1].serializeAttachment({ openedAt: now } satisfies SocketAttachment);
+      const deadline = now + SOCKET_LIFETIME;
+      const alarm = await this.ctx.storage.getAlarm();
+      if (alarm === null || alarm > deadline) await this.ctx.storage.setAlarm(deadline);
       pair[1].send(bytes ? Mailbox.envelopeMessage(meta, bytes) : Mailbox.push({ state: "empty" }));
       return new Response(null, { status: 101, webSocket: pair[0] });
     }
@@ -523,6 +623,30 @@ export class Mailbox implements DurableObject {
     }
   }
 
+  /**
+   * Counts follower sockets & finds the earliest lifetime deadline among them. With `close`, ends
+   * the expired ones first; a socket from before attachments existed counts as expired.
+   */
+  private sweepSockets(now: number, close: boolean): { next: number; open: number } {
+    let next = Number.POSITIVE_INFINITY;
+    let open = 0;
+    for (const socket of this.ctx.getWebSockets()) {
+      const attachment = socket.deserializeAttachment() as null | SocketAttachment;
+      const deadline = (attachment?.openedAt ?? 0) + SOCKET_LIFETIME;
+      if (close && now >= deadline) {
+        try {
+          socket.close(1000, "expired");
+        } catch {
+          // Already closing; the client reconnects either way.
+        }
+      } else {
+        open++;
+        next = Math.min(next, deadline);
+      }
+    }
+    return { next, open };
+  }
+
   private async tombstone(): Promise<void> {
     await this.ctx.storage.transaction(async (storage) => {
       await storage.put("meta", { retired: true });
@@ -534,19 +658,22 @@ export class Mailbox implements DurableObject {
 
   alarm(): Promise<void> {
     return this.ctx.blockConcurrencyWhile(async () => {
+      const now = Date.now();
+      const sockets = this.sweepSockets(now, true);
       const meta = await this.ctx.storage.get<MailboxMeta>("meta");
       if (!meta || meta.retired) return;
-      const now = Date.now();
       const retireAt = Math.max(meta.lastUpload, meta.createdAt) + MAILBOX_TTL;
       if (now >= retireAt) {
         await this.tombstone();
       } else {
         const expiresAt = meta.lastUpload + ENVELOPE_TTL;
-        if (now >= expiresAt) {
-          await this.ctx.storage.delete("envelope");
+        // A socket deadline can wake the alarm after expiry too; announce `empty` only once.
+        if (now >= expiresAt && (await this.ctx.storage.delete("envelope"))) {
           this.broadcast(Mailbox.push({ state: "empty" }));
         }
-        await this.ctx.storage.setAlarm(now < expiresAt ? expiresAt : retireAt);
+        await this.ctx.storage.setAlarm(
+          Math.min(now < expiresAt ? expiresAt : retireAt, sockets.next),
+        );
       }
     });
   }
@@ -581,6 +708,8 @@ export class RelayControl implements DurableObject {
     }
     return this.ctx.blockConcurrencyWhile(async () => {
       const now = Date.now();
+      if (path === "/failure") return this.countFailure(await request.text(), now);
+      if (path === "/failures") return Response.json({ failures: await this.failures(now) });
       if (path === "/pause") {
         const body = await smallJson(request);
         if (!body) return json("bad-request", 400);
@@ -616,6 +745,23 @@ export class RelayControl implements DurableObject {
       });
       return json("live");
     });
+  }
+
+  /** The kept days' counts, dropping any older than {@link FAILURE_DAYS}. */
+  private async failures(now: number): Promise<FailureCounts> {
+    const oldest = utcDate(now - (FAILURE_DAYS - 1) * DAY);
+    const stored = (await this.ctx.storage.get<FailureCounts>("failures")) ?? {};
+    return Object.fromEntries(Object.entries(stored).filter(([date]) => date >= oldest));
+  }
+
+  private async countFailure(kind: string, now: number): Promise<Response> {
+    // The allowlist is checked again here, so nothing else can reach storage under this key.
+    if (!isFailureKind(kind)) return json("bad-request", 400);
+    const failures = await this.failures(now);
+    const today = utcDate(now);
+    failures[today] = { ...failures[today], [kind]: (failures[today]?.[kind] ?? 0) + 1 };
+    await this.ctx.storage.put("failures", failures);
+    return new Response(null, { status: 204 });
   }
 
   alarm(): Promise<void> {

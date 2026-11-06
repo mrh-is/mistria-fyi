@@ -37,14 +37,16 @@ random bits, supplied only as `Authorization: Bearer <write-token>`. Query strin
 | `POST /v1/mailboxes/<id>`                       | Write token; JSON `{ "turnstile": "<token>" }`, up to 4,096 bytes                                                                      | `201 { "state": "live" }`; same-owner retry `200`; different owner `409`; retired `410`                                                           |
 | `PUT /v1/mailboxes/<id>/envelope`               | Write token; `Content-Type: application/octet-stream`; `X-Sync-Version: 1`; `X-Sync-Counter: <positive safe integer>`; binary envelope | `200 { "state": "stored" }`; stale or conflicting counter `409`; cap `429`; oversized body `413`                                                  |
 | `GET /v1/mailboxes/<id>`                        | No token; optional `If-None-Match`                                                                                                     | Binary envelope with version, counter, & ETag; matching ETag `304`; live without envelope `200 { "state": "empty" }`; absent `404`; retired `410` |
-| `GET /v1/mailboxes/<id>` with WebSocket upgrade | No token                                                                                                                               | Hibernating socket; initial state, then updates; retirement sends `retired` & closes                                                              |
+| `GET /v1/mailboxes/<id>` with WebSocket upgrade | No token                                                                                                                               | Hibernating socket; initial state, then updates; retirement sends `retired` & closes; a 21st socket gets `429`; each closes after six hours       |
 | `DELETE /v1/mailboxes/<id>`                     | Write token                                                                                                                            | `200 { "state": "retired" }`; subsequent attempts `410`, which is also a terminal retirement acknowledgment                                       |
+| `GET /v1/admin/failures`                        | `Authorization: Bearer <ADMIN_TOKEN>`                                                                                                  | `{ "failures": { "<UTC date>": { "<kind>": <count> } } }` for the last 14 days; see [Failure counts](#failure-counts)                             |
 | `PUT /v1/admin/pause`                           | `Authorization: Bearer <ADMIN_TOKEN>`; JSON `{}` or `{ "until": <Unix milliseconds> }`                                                 | `{ "until": <Unix milliseconds> }`; defaults to one day; a past end time resumes writes                                                           |
 
 All responses carry `Cache-Control: no-store`. Missing or malformed write authorization is `401`; a
 wrong token or a failed Turnstile check is `403`. The client reports both as a refusal, never as
 “unreachable”. A missing secret, upstream verification failure, or unexpected runtime failure
-returns `503` without error details. A paused relay returns `503` with state `paused`, its end time,
+returns `503` without error details, & the relay counts it by kind (see
+[Failure counts](#failure-counts)). A paused relay returns `503` with state `paused`, its end time,
 & `Retry-After`. Only retirement bypasses the pause; new reads & WebSocket handshakes are paused
 too. Each Worker isolate caches its look at the pause for 30 seconds, so a pause or its lifting
 reaches every request within 30 seconds; the isolate that handled the admin request applies it at
@@ -74,7 +76,10 @@ standard base64:
 { "state": "retired" }
 ```
 
-Client messages close the socket as read-only. No delivery receipts exist.
+Client messages close the socket as read-only. No delivery receipts exist. A mailbox holds at most
+20 sockets; a handshake past that gets `429` with `Retry-After: 60`. Each socket closes with code
+`1000` six hours after it opened. Either way the follower retries with backoff, reads the mailbox, &
+subscribes again, so it misses nothing.
 
 ## Caps & storage
 
@@ -102,11 +107,38 @@ required launch step, not configured by this repository.
 Each mailbox accepts one fresh upload per 60 seconds & 60 per UTC day. The Worker bounds & buffers
 network bodies before forwarding them, so a slow uplink holds no mailbox lock. A fresh counter’s
 upload caps are checked before reading or hashing that buffer inside the mailbox; equal-counter
-retries still check byte identity without consuming quota. Reads write no application storage.
-Alarms delete envelopes after 30 days & replace mailboxes after 365 days without an upload (or after
-creation for never-uploaded mailboxes) with permanent tombstones. Reads apply the same deadlines
-without deleting anything, so a delayed alarm cannot serve expired content. Retirement atomically
-removes the envelope, owner hash, & other metadata, retaining only the tombstone.
+retries still check byte identity without consuming quota. Reads write no application storage; a
+WebSocket handshake may move the mailbox’s alarm earlier, to its socket’s six-hour deadline, & that
+alarm closes expired sockets before handling envelope & mailbox expiry. A handshake also closes
+expired sockets before counting against the 20-socket cap. Alarms delete envelopes after 30 days &
+replace mailboxes after 365 days without an upload (or after creation for never-uploaded mailboxes)
+with permanent tombstones. Reads apply the same deadlines without deleting anything, so a delayed
+alarm cannot serve expired content. Retirement atomically removes the envelope, owner hash, & other
+metadata, retaining only the tombstone.
+
+## Failure counts
+
+Logs & traces stay off. Instead, each `503 unavailable` adds one to a daily count in the
+`RelayControl` singleton, under one of these fixed kinds:
+
+| Kind                         | Meaning                                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------------------- |
+| `secret-missing`             | A creation secret or the Turnstile hostname isn’t configured.                           |
+| `siteverify-unreachable`     | Siteverify timed out, failed, or answered with something unreadable.                    |
+| `siteverify-secret-rejected` | Siteverify rejected `TURNSTILE_SECRET` as invalid or missing.                           |
+| `object-overloaded`          | The runtime marked the exception as a Durable Object overload.                          |
+| `object-transient`           | The runtime marked the exception retryable, such as a Durable Object or storage outage. |
+| `code-error`                 | A `TypeError`, `RangeError`, `ReferenceError`, or `SyntaxError`, which point to a bug.  |
+| `unexpected-error`           | Any other exception.                                                                    |
+
+The Worker classifies an exception by the runtime’s `overloaded` & `retryable` flags & its error
+type, never its message. A Durable Object that knows the kind sends it in an internal
+`X-Relay-Failure` header, which the Worker removes before responding. The singleton accepts only
+these kinds & keeps 14 UTC days of counts, so nothing recorded holds request contents, mailbox IDs,
+tokens, addresses, or exception text. Recording runs after the response & is best effort: if the
+singleton shares the outage, the count is lost, & the player’s response doesn’t change. Read the
+counts with `GET /v1/admin/failures`. Like other singleton storage, they can stay in Cloudflare’s
+recovery copy for 30 days.
 
 ## Maintainer launch
 
