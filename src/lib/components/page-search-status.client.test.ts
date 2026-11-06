@@ -48,6 +48,7 @@ describe("PageSearchStatus", () => {
     const view = await search("zzz");
 
     expect(view.getAllByText("No items found")).not.toHaveLength(0);
+    expect(view.getByRole("status")).toHaveTextContent("No items found");
   });
 
   it("names the shelf that lost rows, in its heading's typeface", async () => {
