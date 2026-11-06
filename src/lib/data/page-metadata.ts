@@ -33,13 +33,15 @@ export interface PageMetadataInput {
 export type RobotsDirective = "noindex, follow" | "noindex, nofollow";
 
 export interface ToolbarConfig {
+  /** Shows the clock, which sets the season & weather the page's shelves read. */
+  clock: boolean;
+  /** Shows the filter button, on pages with source type filters. */
+  filter: boolean;
   /** Shows the toolbar's in-page name filter (`toolbarState.searchQuery`). */
   search: boolean;
-  /** Shows the toolbar's season/weather & availability filters. */
-  worldState: boolean;
 }
 
-const DEFAULT_TOOLBAR: ToolbarConfig = { search: false, worldState: false };
+const DEFAULT_TOOLBAR: ToolbarConfig = { clock: false, filter: false, search: false };
 
 export function errorPageMetadata(status: number, locale: LocaleCode): PageMetadata {
   return pageMetadata({

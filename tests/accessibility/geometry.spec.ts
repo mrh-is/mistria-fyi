@@ -16,7 +16,12 @@ import {
   findOverflow,
   findTargetSizeViolations,
 } from "./support/geometry.js";
-import { openSearch, openSettingsCard, openVisibilityPanel } from "./support/scenarios.js";
+import {
+  openSearch,
+  openSettingsCard,
+  openShelf,
+  openVisibilityPanel,
+} from "./support/scenarios.js";
 import { critical, criticalWhen } from "./support/tags.js";
 
 // Geometry proves the production layout only with Satoshi's metrics. CI fetches the font
@@ -65,6 +70,7 @@ test.describe("320-pixel reflow", () => {
     await openSearch(page, "turnip");
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
     await page.getByRole("button", { name: "Cancel" }).click();
+    await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
 
@@ -78,7 +84,6 @@ test.describe("320-pixel reflow", () => {
       page,
       "light",
       createStoredState({
-        availabilityWindows: ["now", "anytime", "later"],
         progress: {
           heartLevels: { adeline: 10 },
           mineFloor: 21,
@@ -155,7 +160,7 @@ test.describe("interactive target geometry", () => {
 
   test("fine-pointer tracker controls retain compact accessible targets", async ({ page }) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
     expect(
       await page.evaluate(() => matchMedia("(pointer: fine) and (hover: hover)").matches),
     ).toBe(true);
@@ -183,7 +188,7 @@ test.describe("tracker paper geometry", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light");
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
   });
 
   test(
@@ -282,7 +287,7 @@ test.describe("tracker paper touch geometry", () => {
   test("coarse-pointer targets and expanded sources fit at 320 pixels", async ({ page }) => {
     await initializeApplication(page, "light");
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
 
     expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia("(any-pointer: coarse)").matches)).toBe(true);
@@ -307,13 +312,10 @@ test.describe("tracker paper touch geometry", () => {
   });
 
   test("spoiler covers stay text-height while their targets reach 44 pixels", async ({ page }) => {
-    await initializeApplication(
-      page,
-      "light",
-      createStoredState({ availabilityWindows: ["now", "anytime", "later"] }),
-    );
+    await initializeApplication(page, "light", createStoredState());
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
+    await openShelf(page, "Not now");
 
     await expect(page.getByRole("button", { name: "Reveal spoiler" }).first()).toBeVisible();
     // Long names wrap at 320 pixels; measure a cover that fits on one line.
@@ -346,7 +348,6 @@ test.describe("tracker paper touch geometry", () => {
       page,
       "light",
       createStoredState({
-        availabilityWindows: ["now", "anytime", "later"],
         progress: {
           heartLevels: { adeline: 10 },
           villagerRelationships: { adeline: "romantic" },

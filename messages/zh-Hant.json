@@ -47,14 +47,11 @@
   "toolbar_filters_cleared": "已清除所有篩選",
   "page_header_back_to_home": "返回首頁",
   "page_header_progress": "已完成 {completed}/{total}",
-  "home_index_heading": "索引",
   "home_everything_label": "全部",
   "home_page_description": "追蹤《Fields of Mistria》中的博物館捐贈、年鑑發現、食譜、關係、技能、任務等內容，向 100% 完成度邁進。",
   "all_page_title": "全部清單",
   "all_page_description": "在同一份清單中查看並追蹤《Fields of Mistria》的所有完成度類別。",
-  "home_active_categories_label": "進行中的分類",
   "common_completed_heading": "已完成",
-  "home_completed_categories_label": "已完成的分類",
   "overall_progress_label": "總計已完成 {completed}/{total}，{pct}",
   "foldout_close": "關閉{title}",
   "search_results_count": [
@@ -67,25 +64,6 @@
     }
   ],
   "search_no_results": "找不到任何物品",
-  "search_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=other": "篩選條件之外有 {count} 項"
-      }
-    }
-  ],
-  "search_more_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=other": "篩選條件之外還有 {count} 項"
-      }
-    }
-  ],
-  "search_turn_off_filters": "本次搜尋關閉篩選條件",
   "search_filters_off": "本次搜尋已關閉篩選條件。",
   "search_filters_resume": "恢復篩選條件",
   "search_guide_prompt": "沒有找到想要的內容？",
@@ -254,25 +232,17 @@
   "settings_theme_auto": "自動",
   "settings_theme_light": "淺色",
   "settings_theme_dark": "深色",
-  "visibility_when_to_find": "何時可取得",
-  "availability_whenever": "隨時",
-  "availability_later": "稍後",
-  "availability_now": "現在",
   "visibility_season_label": "季節",
   "visibility_weather_label": "天氣",
   "visibility_source_types": "來源類型",
   "visibility_source_types_about_aria": "關於來源類型",
   "visibility_source_types_summary": "{enabled}/{total}",
   "visibility_show_heading": "顯示",
-  "visibility_when_everything": "全部",
   "visibility_sources_all": "所有類型",
   "visibility_sources_none": "無類型",
   "visibility_sources_only": "僅{type}",
-  "visibility_show_todo": "待辦",
   "visibility_show_obtainable": "可取得",
-  "visibility_show_uncompleted": "未完成",
   "visibility_show_everything": "全部",
-  "visibility_completed_toggle": "已完成",
   "visibility_unobtainable_toggle": "無法取得",
   "source_explainer_overline": "田野指南物品欄",
   "source_explainer_description": "篩選面板中顯示的來源類型。",
@@ -1027,5 +997,28 @@
   "sync_backup_restore_body": "它會取代這台裝置上的內容。同步會繼續，所以下一個存檔仍會按平常的規則套用。",
   "sync_backup_restore_confirm": "還原",
   "sync_backup_restore_cancel": "取消",
-  "sync_backup_restored": "已還原備份。"
+  "sync_backup_restored": "已還原備份。",
+  "filter_note": [
+    {
+      "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "有 {count} 個「{shelf}」項目被篩選隱藏了。"
+      }
+    }
+  ],
+  "filter_note_show": "仍然顯示",
+  "filter_note_nothing_left": "篩選後，此頁面沒有內容了。",
+  "shelf_to_do": "待辦",
+  "shelf_not_now": "暫時不行",
+  "shelf_categories_label": "{shelf}分類",
+  "shelf_explainer_open": "關於「{shelf}」架",
+  "shelf_explainer_title": "各個架子的含義",
+  "shelf_explainer_description": "每個架子的內容，以及排序所依據的日子。",
+  "shelf_explainer_day": "依{season}、{weather}排序",
+  "shelf_explainer_todo": "今天至少能完成其中一項。",
+  "shelf_explainer_not_now": "今天這裡的都做不了，需要等待季節、天氣或你的進度。",
+  "shelf_explainer_completed": "這裡的都完成了，真棒！",
+  "toolbar_clock": "季節和天氣：{season}，{weather}",
+  "toolbar_clock_title": "季節和天氣"
 }

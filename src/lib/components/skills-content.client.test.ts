@@ -36,12 +36,10 @@ describe("SkillsContent", () => {
     flushSync();
     expect(miningRecord()).not.toBeNull();
 
+    // A finished skill moves into the closed Completed fold.
     userState.togglePerk(lastPerk);
     flushSync();
     expect(miningRecord()).toBeNull();
-
-    userState.toggleShowCompleted();
-    flushSync();
-    expect(miningRecord()).not.toBeNull();
+    expect(screen.getByRole("button", { expanded: false, name: "Completed" })).toBeInTheDocument();
   });
 });

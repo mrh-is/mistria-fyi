@@ -8,5 +8,5 @@ export const load: PageLoad = localizedPageLoad(["mines", "spells"], (locale) =>
   accent: categoryColor("mines"),
   description: m.mines_page_description({}, { locale }),
   title: m.category_mines_name({}, { locale }),
-  toolbar: { search: true },
+  toolbar: { clock: true, filter: true, search: true },
 }));

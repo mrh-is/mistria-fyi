@@ -47,14 +47,11 @@
   "toolbar_filters_cleared": "All filters cleared",
   "page_header_back_to_home": "Back to home",
   "page_header_progress": "{completed} of {total} completed",
-  "home_index_heading": "Index",
   "home_everything_label": "Everything",
   "home_page_description": "Track museum donations, almanac finds, recipes, relationships, skills, quests, & more in Fields of Mistria, as you work toward 100% completion.",
   "all_page_title": "Checklist of everything",
   "all_page_description": "View & track every Fields of Mistria completion category in one checklist.",
-  "home_active_categories_label": "Categories in progress",
   "common_completed_heading": "Completed",
-  "home_completed_categories_label": "Completed categories",
   "overall_progress_label": "{completed} of {total} completed overall, {pct}",
   "foldout_close": "Close {title}",
   "search_results_count": [
@@ -68,27 +65,6 @@
     }
   ],
   "search_no_results": "No items found",
-  "search_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{count} match outside your filters",
-        "countPlural=other": "{count} match outside your filters"
-      }
-    }
-  ],
-  "search_more_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{count} more match outside your filters",
-        "countPlural=other": "{count} more match outside your filters"
-      }
-    }
-  ],
-  "search_turn_off_filters": "Turn off filters for this search",
   "search_filters_off": "Your filters are off for this search.",
   "search_filters_resume": "Turn them back on",
   "search_guide_prompt": "Don’t see what you’re looking for?",
@@ -261,25 +237,17 @@
   "settings_theme_auto": "Auto",
   "settings_theme_light": "Light",
   "settings_theme_dark": "Dark",
-  "visibility_when_to_find": "When to find",
-  "availability_whenever": "Whenever",
-  "availability_later": "Later",
-  "availability_now": "Now",
   "visibility_season_label": "Season",
   "visibility_weather_label": "Weather",
   "visibility_source_types": "Source types",
   "visibility_source_types_about_aria": "About source types",
   "visibility_source_types_summary": "{enabled} of {total}",
   "visibility_show_heading": "Show",
-  "visibility_when_everything": "Everything",
   "visibility_sources_all": "All types",
   "visibility_sources_none": "No types",
   "visibility_sources_only": "Only {type}",
-  "visibility_show_todo": "To do",
   "visibility_show_obtainable": "Obtainable",
-  "visibility_show_uncompleted": "Uncompleted",
   "visibility_show_everything": "Everything",
-  "visibility_completed_toggle": "Completed",
   "visibility_unobtainable_toggle": "Unobtainable",
   "source_explainer_overline": "Field Guide inventory",
   "source_explainer_description": "The source types shown in the filter panel.",
@@ -1039,5 +1007,29 @@
   "sync_backup_restore_body": "It replaces what’s on this device. You’ll stay synced, so your next save file still applies with the usual rules.",
   "sync_backup_restore_confirm": "Restore it",
   "sync_backup_restore_cancel": "Cancel",
-  "sync_backup_restored": "Restored that backup."
+  "sync_backup_restored": "Restored that backup.",
+  "filter_note": [
+    {
+      "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} {shelf} item is being filtered out.",
+        "countPlural=other": "{count} {shelf} items are being filtered out."
+      }
+    }
+  ],
+  "filter_note_show": "Show anyway",
+  "filter_note_nothing_left": "Your filters leave nothing on this page.",
+  "shelf_to_do": "To do",
+  "shelf_not_now": "Not now",
+  "shelf_categories_label": "{shelf} categories",
+  "shelf_explainer_open": "About the {shelf} shelf",
+  "shelf_explainer_title": "What the shelves mean",
+  "shelf_explainer_description": "What each shelf holds, & the day it’s sorted for.",
+  "shelf_explainer_day": "Sorted for {season}, {weather}",
+  "shelf_explainer_todo": "You can do at least one of these today.",
+  "shelf_explainer_not_now": "Nothing here can happen today. It’s waiting on a season, the weather, or your progress.",
+  "shelf_explainer_completed": "You finished everything here. Nice!",
+  "toolbar_clock": "Season & weather: {season}, {weather}",
+  "toolbar_clock_title": "Season & weather"
 }

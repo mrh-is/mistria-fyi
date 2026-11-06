@@ -5,9 +5,11 @@ import {
   MAX_HEART_LEVEL,
 } from "#lib/engine/progress.js";
 import { isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { addProgress, alwaysToDo } from "#lib/engine/shelves.js";
+import { isConditionVisible } from "#lib/engine/visibility.js";
 import { recordEntries } from "#lib/utils/record.js";
 
-import type { CategoryProgress, ProgressContext } from "#lib/engine/progress.js";
+import type { ProgressContext } from "#lib/engine/progress.js";
 import type {
   CategoryProjection,
   CategoryProjectionOptions,
@@ -20,6 +22,8 @@ export interface VillagerRow {
   /** Heart level, capped at `MAX_HEART_LEVEL`. */
   hearts: number;
   id: VillagerId;
+  /** The player hasn't met this Villager yet, whatever "Show spoilers" reveals. */
+  locked: boolean;
   settled: boolean;
   spoilered: boolean;
 }
@@ -41,18 +45,18 @@ export function projectVillagers(
     dateable: villager.dateable === true,
     hearts: Math.min(ctx.progress.heartLevels[id] ?? 0, MAX_HEART_LEVEL),
     id,
+    locked: !isConditionVisible(villager.visibility, ctx.progressionState),
     settled: isRelationshipSettled(id, ctx.progress),
     spoilered: isSpoilered(villager.visibility, options.progressionState),
   }));
-  let total = 0;
-  let completed = 0;
-  for (const row of rows) {
-    total += MAX_HEART_LEVEL;
-    completed += row.hearts;
-    if (!row.dateable) continue;
-    total++;
-    if (row.settled) completed++;
-  }
-  const totals: CategoryProgress = { completed, remainingInScope: total - completed, total };
+  const totals = addProgress(
+    rows.map((row) => {
+      const total = MAX_HEART_LEVEL + (row.dateable ? 1 : 0);
+      const completed = row.hearts + (row.dateable && row.settled ? 1 : 0);
+      const steps = alwaysToDo(completed, total);
+      // Nobody can raise hearts with a Villager they haven't met.
+      return row.locked ? { ...steps, todo: 0, waiting: steps.todo } : steps;
+    }),
+  );
   return { rows, totals };
 }

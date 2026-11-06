@@ -1,8 +1,9 @@
 <script lang="ts">
   import CompletionSection from "#lib/components/completion-section.svelte";
+  import ShelfGroups from "#lib/components/shelf-groups.svelte";
   import SkillRecord from "#lib/components/skill-record.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
@@ -28,25 +29,36 @@
       .toSorted((a, b) => collator.compare(a.name, b.name));
   });
 
-  function isVisible(id: SkillId): boolean {
-    return !isSkillComplete(id, userState.state.progress) || showsCompletedRows();
-  }
-
   registerPageSearch(() => ({
-    matches: skills.length,
-    visible: skills.filter(({ id }) => isVisible(id)).length,
+    filtered: { completed: 0, notNow: 0, todo: 0 },
+    visible: skills.length,
   }));
 </script>
 
-<ul class="skill-ledger" aria-label={m.skills_ledger_aria()}>
-  {#each skills as skill (skill.id)}
-    <CompletionSection complete={isSkillComplete(skill.id, userState.state.progress)}>
-      {#if isVisible(skill.id)}
+{#snippet ledger(rows: readonly { id: SkillId; name: string }[])}
+  <ul class="skill-ledger" aria-label={m.skills_ledger_aria()}>
+    {#each rows as skill (skill.id)}
+      <CompletionSection complete={isSkillComplete(skill.id, userState.state.progress)}>
         <SkillRecord {compact} id={skill.id} {locale} name={skill.name} {spoilerGuard} />
-      {/if}
-    </CompletionSection>
-  {/each}
-</ul>
+      </CompletionSection>
+    {/each}
+  </ul>
+{/snippet}
+
+{#if compact}
+  {@render ledger(skills)}
+{:else}
+  <ShelfGroups
+    explains
+    level={2}
+    forceOpen={!!toolbarState.searchQuery}
+    getKey={(skill) => skill.id}
+    getShelf={(skill) =>
+      isSkillComplete(skill.id, userState.state.progress) ? "completed" : "todo"}
+    group={ledger}
+    items={skills}
+  />
+{/if}
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 

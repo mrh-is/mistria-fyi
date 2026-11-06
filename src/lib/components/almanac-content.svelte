@@ -2,15 +2,11 @@
   import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
+  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
-  import {
-    registerPageSearch,
-    showsCompletedRows,
-    visibleWindows,
-  } from "#lib/controllers/page-search.svelte.js";
+  import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -22,11 +18,11 @@
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { projectAlmanac } from "#lib/engine/projections/almanac.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import { filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -46,7 +42,6 @@
   function rowDisplay(row: AlmanacRow): TrackerRowDisplay {
     return trackerRowDisplay({
       completed: row.completed,
-      dimmed: row.dimmed,
       leaving: recentlyCompleted.has(row.canonicalId),
       spoilered: row.spoilered,
     });
@@ -84,33 +79,18 @@
     );
   }
 
-  // Page context includes user filters and the animation's temporary completed-row retention.
   let projection = $derived(
-    projectAlmanac(
-      { ...userState.progressContext, availabilityWindows: visibleWindows() },
-      {
-        hideSpoilered: Boolean(nameFilter),
-        matchesEntry,
-        matchesSources: (sources) => toolbarState.matchesSourceFilters(sources),
-        progressionState: userState.progressionState,
-        recentlyCompleted: recentlyCompleted.ids,
-        showCompleted: showsCompletedRows(),
-        showUnobtainable: toolbarState.showUnobtainable,
-      },
-    ),
+    projectAlmanac(userState.progressContext, {
+      hideSpoilered: Boolean(nameFilter),
+      matchesEntry,
+      progressionState: userState.progressionState,
+      showsSource: toolbarState.showsSource,
+      showUnobtainable: toolbarState.showUnobtainable,
+    }),
   );
 
   registerPageSearch(() => ({
-    matches: projectAlmanac(
-      { ...userState.progressContext, availabilityWindows: AVAILABILITY_WINDOWS },
-      {
-        hideSpoilered: true,
-        matchesEntry,
-        progressionState: userState.progressionState,
-        showCompleted: true,
-        showUnobtainable: toolbarState.showUnobtainable,
-      },
-    ).rows.filter((row) => row.visible).length,
+    filtered: filteredCounts(projection.rows.filter((row) => row.matchesSearch)),
     visible: projection.rows.filter((row) => row.visible).length,
   }));
 
@@ -140,7 +120,7 @@
       userState.toggleAlmanacItem(canonicalId);
     });
     if (completed) {
-      if (!userState.state.showCompleted) recentlyCompleted.markLeaving(canonicalId);
+      recentlyCompleted.markLeaving(canonicalId);
       checkCelebration(catCanonicalIds);
     }
   }
@@ -148,19 +128,29 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-<SectionGroups getKey={(view) => view.id} grouping={sectionGrouping} items={sectionViews}>
-  {#snippet section({ baseRows, canonicalIds, completedCount, id, scopedTotal, visibleRows })}
-    {#if baseRows.length > 0 && (!nameFilter || visibleRows.length > 0)}
+<SectionGroups
+  forceOpen={!!nameFilter}
+  getKey={(view) => view.id}
+  grouping={sectionGrouping}
+  items={sectionViews}
+>
+  {#snippet section({ canonicalIds, id, progress, visibleRows })}
+    {#if !nameFilter || visibleRows.length > 0}
       <ExpandableSection
         {locale}
-        count={completedCount}
         forceOpen={!!nameFilter}
         name={getName("ui", id, locale)}
         reportCategory="almanac"
         reportEntityId={id}
-        total={scopedTotal}
+        {progress}
       >
-        <TrackerRowList getKey={(item) => item.canonicalId} items={visibleRows}>
+        <ShelfRows
+          forceOpen={!!nameFilter}
+          getKey={(item) => item.canonicalId}
+          getShelf={rowShelf}
+          isLeaving={(item) => recentlyCompleted.has(item.canonicalId)}
+          items={visibleRows}
+        >
           {#snippet row(row)}
             {@const { canonicalId, completed, item, name, sources, spoilered, variant } = row}
             {@const itemVisibility = item.visibility}
@@ -187,7 +177,7 @@
               }}
             />
           {/snippet}
-        </TrackerRowList>
+        </ShelfRows>
       </ExpandableSection>
     {/if}
   {/snippet}

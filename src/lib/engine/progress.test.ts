@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
-import { isVariantInScope } from "#lib/engine/animal-availability.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import {
@@ -25,7 +23,6 @@ import {
 import { isSkillComplete, perksOfSkill } from "./projections/skills.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
-import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type {
   AnimalVariantId,
   QuestId,
@@ -36,14 +33,6 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type { ProgressState, QuestState } from "#lib/types/user-progress.js";
 
-/** Window selections named for the retired availability modes, kept as test presets. */
-const WINDOW_PRESETS = {
-  available: DEFAULT_AVAILABILITY_WINDOWS,
-  everything: AVAILABILITY_WINDOWS,
-  timely: ["now"],
-} satisfies Record<string, readonly AvailabilityWindow[]>;
-type WindowPreset = keyof typeof WINDOW_PRESETS;
-
 // ─── Helpers ───────────────────────────────────────────────────────
 
 const defaultWorld = { season: "spring" as Season, weather: "calm" as Weather };
@@ -51,13 +40,11 @@ const defaultWorld = { season: "spring" as Season, weather: "calm" as Weather };
 function ctx(
   overrides: Partial<{
     completed: Partial<ProgressState>;
-    windowPreset: WindowPreset;
     worldState: { season: Season; weather: Weather };
   }> = {},
 ) {
   const progress = makeCompletedState(overrides.completed ?? {});
   return {
-    availabilityWindows: [...WINDOW_PRESETS[overrides.windowPreset ?? "everything"]],
     progress,
     progressionState: deriveProgressionState(progress, trackerData, false),
     worldState: overrides.worldState ?? defaultWorld,
@@ -183,12 +170,10 @@ describe("getAllProgress", () => {
     }
   });
 
-  it("has filtered + completed equal total for every category (in everything mode)", () => {
-    const progress = getAllProgress(ctx({ windowPreset: "everything" }));
+  it("sorts every step of every category onto a shelf when nothing is filtered", () => {
+    const progress = getAllProgress(ctx());
     for (const [key, cat] of recordEntries(progress)) {
-      expect(cat.remainingInScope + cat.completed, `${key}: filtered + completed !== total`).toBe(
-        cat.total,
-      );
+      expect(cat.todo + cat.waiting + cat.completed, `${key}: shelves !== total`).toBe(cat.total);
     }
   });
 });
@@ -198,11 +183,13 @@ describe("getAllProgress", () => {
 describe("getOverallProgress", () => {
   it("sums to the same totals as reducing every category directly", () => {
     const all = getAllProgress(ctx());
-    const expected = { completed: 0, remainingInScope: 0, total: 0 };
+    const expected = { completed: 0, completedShown: 0, todo: 0, total: 0, waiting: 0 };
     for (const p of Object.values(all)) {
       expected.completed += p.completed;
-      expected.remainingInScope += p.remainingInScope;
+      expected.completedShown += p.completedShown;
+      expected.todo += p.todo;
       expected.total += p.total;
+      expected.waiting += p.waiting;
     }
     expect(getOverallProgress(all)).toEqual(expected);
   });
@@ -327,8 +314,8 @@ describe("almanac progress", () => {
     expect(colorwayEntry).toBeDefined();
     const canonicalId = colorwayEntry?.itemIds[0];
 
-    const progressAll = getCategoryProgress("almanac", ctx({ windowPreset: "everything" }));
-    const progressAvailable = getCategoryProgress("almanac", ctx({ windowPreset: "available" }));
+    const progressAll = getCategoryProgress("almanac", ctx());
+    const progressAvailable = getCategoryProgress("almanac", ctx());
 
     expect(progressAll.total).toBe(progressAvailable.total);
     expect(progressAll.total).toBeGreaterThan(0);
@@ -551,52 +538,16 @@ describe("animals progress", () => {
 
 // ─── Animal variant availability ──────────────────────────────────
 
-describe("animal progress variant filtering matches UI predicate", () => {
-  const seasons: Season[] = ["spring", "summer", "fall", "winter"];
-  const modes: WindowPreset[] = ["available", "everything", "timely"];
-
-  it.each(modes.flatMap((mode) => seasons.map((season) => [mode, season] as const)))(
-    "%s/%s: variant filtered count matches isVariantInScope",
-    (mode, season) => {
-      const c = ctx({
-        windowPreset: mode,
-        worldState: { season, weather: "calm" as Weather },
-      });
-      const progress = getCategoryProgress("animals", c);
-
-      let expectedVariantFiltered = 0;
-      for (const [, animal] of recordEntries(trackerData.animals)) {
-        for (const tier of animal.variantTiers) {
-          for (const [, variant] of recordEntries(tier)) {
-            if (isVariantInScope(variant, animal.visibility, c, c.availabilityWindows)) {
-              expectedVariantFiltered++;
-            }
-          }
-        }
-      }
-
-      const cosmeticCount = recordValues(trackerData.animals).reduce(
-        (sum, a) => sum + recordKeys(a.cosmetics).length,
-        0,
-      );
-      const petCosmeticCount = recordKeys(trackerData.pets.cosmetics).length;
-      const petSkinCount = recordKeys(trackerData.pets.skins).length;
-      const mountCount =
-        recordKeys(trackerData.mount.appearances).length +
-        recordKeys(trackerData.mount.perks).length;
-      const nonVariantFiltered = cosmeticCount + mountCount + petCosmeticCount + petSkinCount;
-
-      expect(progress.remainingInScope).toBe(expectedVariantFiltered + nonVariantFiltered);
-    },
-  );
-
-  it("everything mode: filtered + completed = total for animals", () => {
-    const c = ctx({ windowPreset: "everything" });
-    const progress = getCategoryProgress("animals", c);
-    expect(progress.remainingInScope + progress.completed).toBe(progress.total);
+describe("animal progress across seasons", () => {
+  it("keeps the total whatever the season", () => {
+    const seasons: Season[] = ["spring", "summer", "fall", "winter"];
+    const progress = seasons.map((season) =>
+      getCategoryProgress("animals", ctx({ worldState: { season, weather: "calm" as Weather } })),
+    );
+    expect(new Set(progress.map(({ total }) => total)).size).toBe(1);
   });
 
-  it("available mode: completed count is independent of season", () => {
+  it("keeps the completed count whatever the season", () => {
     const variantId = recordEntries(recordValues(trackerData.animals)[0].variantTiers[0])[0][0];
     const animalId = recordKeys(trackerData.animals)[0];
     const animals: Record<string, Set<AnimalVariantId>> = {};
@@ -609,7 +560,6 @@ describe("animal progress variant filtering matches UI predicate", () => {
       "animals",
       ctx({
         completed: { animals },
-        windowPreset: "available",
         worldState: { season: "spring" as Season, weather: "calm" as Weather },
       }),
     );
@@ -617,7 +567,6 @@ describe("animal progress variant filtering matches UI predicate", () => {
       "animals",
       ctx({
         completed: { animals },
-        windowPreset: "available",
         worldState: { season: "winter" as Season, weather: "calm" as Weather },
       }),
     );
@@ -630,11 +579,11 @@ describe("animal progress variant filtering matches UI predicate", () => {
 
 describe("availability filtering on item-based categories", () => {
   it("available mode may reduce filtered count compared to everything mode", () => {
-    const c1 = ctx({ windowPreset: "everything" });
-    const c2 = ctx({ windowPreset: "available" });
+    const c1 = ctx();
+    const c2 = ctx();
     const everything = getCategoryProgress("almanac", c1);
     const available = getCategoryProgress("almanac", c2);
-    expect(available.remainingInScope).toBeLessThanOrEqual(everything.remainingInScope);
+    expect(available.todo).toBeLessThanOrEqual(everything.todo);
   });
 
   it("completed count is the same regardless of availability mode", () => {
@@ -642,8 +591,8 @@ describe("availability filtering on item-based categories", () => {
       items.map((entry) => entry.itemIds[0]),
     );
     const subset = new Set(allCanonicalIds.slice(0, 3));
-    const c1 = ctx({ completed: { almanac: subset }, windowPreset: "everything" });
-    const c2 = ctx({ completed: { almanac: subset }, windowPreset: "available" });
+    const c1 = ctx({ completed: { almanac: subset } });
+    const c2 = ctx({ completed: { almanac: subset } });
     expect(getCategoryProgress("almanac", c1).completed).toBe(
       getCategoryProgress("almanac", c2).completed,
     );

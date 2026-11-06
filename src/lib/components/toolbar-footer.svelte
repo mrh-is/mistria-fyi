@@ -1,4 +1,5 @@
 <script lang="ts">
+  import IconClock from "@tabler/icons-svelte-runes/icons/clock";
   import IconFilter from "@tabler/icons-svelte-runes/icons/filter";
   import IconMessageReport from "@tabler/icons-svelte-runes/icons/message-report";
   import IconPlugConnected from "@tabler/icons-svelte-runes/icons/plug-connected";
@@ -9,9 +10,11 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { fade } from "svelte/transition";
 
+  import ClockPanel from "#lib/components/clock-panel.svelte";
   import FeedbackPanel from "#lib/components/feedback-panel.svelte";
   import FilterPanel from "#lib/components/filter-panel.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
+  import { Icon } from "#lib/components/icon/index.js";
   import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
   import SyncStatusPanel from "#lib/components/sync/sync-status-panel.svelte";
@@ -24,13 +27,13 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
-  import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
+  import { seasonLabel, weatherLabel } from "#lib/utils/format.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
   import type { PageMetadata } from "#lib/data/page-metadata.js";
 
-  type ActivePanel = "feedback" | "settings" | "sync" | "visibility" | null;
+  type ActivePanel = "clock" | "feedback" | "settings" | "sync" | "visibility" | null;
 
   // The root layout resolves `metadata` (including the error-page fallback) and passes it down, so
   // this never reads `page.data.metadata`, which is absent when no `+page.ts` load ran.
@@ -183,22 +186,12 @@
     searchInput?.focus();
   }
 
-  let availabilityIsDefault = $derived(
-    userState.state.availabilityWindows.length === DEFAULT_AVAILABILITY_WINDOWS.length &&
-      DEFAULT_AVAILABILITY_WINDOWS.every(
-        (window, index) => userState.state.availabilityWindows[index] === window,
-      ),
-  );
   let filtersActive = $derived(
-    !availabilityIsDefault ||
-      userState.state.showCompleted ||
-      toolbarState.isSourceFilterNarrowing ||
+    toolbarState.isSourceFilterNarrowing ||
       (toolbarState.hasAlmanacFilters && toolbarState.showUnobtainable),
   );
 
   function resetFilters(): void {
-    userState.setAvailabilityWindows(DEFAULT_AVAILABILITY_WINDOWS);
-    if (userState.state.showCompleted) userState.toggleShowCompleted();
     toolbarState.resetSourceFilters();
     toolbarState.showUnobtainable = false;
     announceFilters();
@@ -323,28 +316,61 @@
               <IconSearch class="size-5" />
             </button>
           {/if}
-          <button
-            class="floating-tool {activePanel === 'visibility'
-              ? 'floating-tool--active'
-              : filtersActive
-                ? 'floating-tool--filtered'
+          {#if toolbar.filter}
+            <button
+              class="floating-tool {activePanel === 'visibility'
+                ? 'floating-tool--active'
+                : filtersActive
+                  ? 'floating-tool--filtered'
+                  : ''}"
+              type="button"
+              aria-label={m.toolbar_visibility_filters()}
+              aria-expanded={activePanel === "visibility"}
+              aria-controls="filter-panel"
+              onclick={() => {
+                togglePanel("visibility");
+              }}
+            >
+              <IconFilter class="size-5" />
+            </button>
+          {/if}
+          {#if toolbar.clock}
+            <button
+              class="floating-tool floating-tool--tabbed {activePanel === 'clock'
+                ? 'floating-tool--active'
                 : ''}"
-            type="button"
-            aria-label={m.toolbar_visibility_filters()}
-            aria-expanded={activePanel === "visibility"}
-            aria-controls="filter-panel"
-            onclick={() => {
-              togglePanel("visibility");
-            }}
-          >
-            <IconFilter class="size-5" />
-          </button>
+              type="button"
+              aria-label={m.toolbar_clock({
+                season: seasonLabel(userState.state.worldState.season, page.data.locale),
+                weather: weatherLabel(
+                  userState.state.worldState.weather,
+                  userState.state.worldState.season,
+                ),
+              })}
+              aria-expanded={activePanel === "clock"}
+              aria-controls="clock-panel"
+              onclick={() => {
+                togglePanel("clock");
+              }}
+            >
+              <IconClock class="size-5" />
+              <!-- Sits behind the button's edge, at the screen's edge. -->
+              <span class="clock-tab" data-clock-tab aria-hidden="true">
+                <Icon.Season season={userState.state.worldState.season} class="size-3" />
+                <Icon.Weather
+                  season={userState.state.worldState.season}
+                  weather={userState.state.worldState.weather}
+                  class="size-3"
+                />
+              </span>
+            </button>
+          {/if}
         </div>
       </div>
     {/if}
   </nav>
 
-  {#if activePanel === "settings" || activePanel === "visibility" || activePanel === "sync"}
+  {#if activePanel === "clock" || activePanel === "settings" || activePanel === "visibility" || activePanel === "sync"}
     <PanelOverlay
       bind:element={panelElement}
       animateOut
@@ -359,6 +385,10 @@
           onClose={closePanel}
         >
           <QuickSettingsPanel />
+        </FoldoutPanel>
+      {:else if activePanel === "clock"}
+        <FoldoutPanel id="clock-panel" title={m.toolbar_clock_title()} onClose={closePanel}>
+          <ClockPanel />
         </FoldoutPanel>
       {:else if activePanel === "sync"}
         <FoldoutPanel id="sync-status-panel" title={m.sync_card_title()} onClose={closePanel}>
@@ -378,10 +408,7 @@
               </button>
             {/if}
           {/snippet}
-          <FilterPanel
-            showWorldStateFilters={toolbar.worldState}
-            onFilterChange={announceFilters}
-          />
+          <FilterPanel onFilterChange={announceFilters} />
         </FoldoutPanel>
       {/if}
     </PanelOverlay>
@@ -415,6 +442,30 @@
       box-shadow 150ms ease-out,
       color 150ms ease-out,
       transform 150ms ease-out;
+  }
+
+  .floating-tool--tabbed {
+    position: relative;
+    margin-right: 20px;
+  }
+
+  .clock-tab {
+    position: absolute;
+    /* Offsets start inside the button's 1px border, so these sit 2px in from its outer edge. */
+    top: 1px;
+    bottom: 1px;
+    left: 100%;
+    z-index: -1;
+    display: grid;
+    width: 20px;
+    place-items: center;
+    align-content: center;
+    gap: 2px;
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
+    border-left: 0;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    background: var(--color-paper-sunken);
+    color: var(--color-ink-muted);
   }
 
   .floating-tool:is(:hover, :focus-visible),

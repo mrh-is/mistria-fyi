@@ -1,12 +1,12 @@
 import { trackerData } from "#lib/data/index.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
-import { classifyItemAvailability } from "#lib/engine/availability.js";
+import { isDoableToday } from "#lib/engine/availability.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
 
 import type { SourceFilterId } from "#lib/data/source-filters.js";
-import type { RowWindowContext } from "#lib/engine/availability.js";
+import type { DayContext } from "#lib/engine/availability.js";
+import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { Source } from "#lib/types/acquisition.js";
-import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 export type SourceTypeGroup = "gifts" | "monsters" | "quests" | SourceFilterId;
@@ -40,6 +40,8 @@ export interface SourceInstance {
 export interface SourceGroupRow {
   completed: boolean;
   key: string;
+  /** Can't be acted on yet, whatever "Show spoilers" reveals. */
+  locked?: boolean;
   obtainable: boolean;
   sources: Source[];
   spoilered?: boolean;
@@ -48,7 +50,7 @@ export interface SourceGroupRow {
 
 export interface SourceSection<Row extends SourceGroupRow> extends SourceInstance {
   completed: number;
-  rows: { entry: Row; sources: Source[]; window: AvailabilityWindow }[];
+  rows: { doable: boolean; entry: Row; sources: Source[] }[];
   spoilered: boolean;
   state: "done" | "later" | "now";
   total: number;
@@ -56,7 +58,7 @@ export interface SourceSection<Row extends SourceGroupRow> extends SourceInstanc
 
 /**
  * Instances ignore stock facets, costs, & gates. A multi-location source is narrowed to one
- * location in each placement; facets of the same instance are reunited before taking a window.
+ * location in each placement; facets of the same instance are reunited before checking availability.
  */
 export function sourceInstances(source: Source): SourceInstance[] {
   const instance = (
@@ -109,11 +111,13 @@ export function sourceInstances(source: Source): SourceInstance[] {
   return [instance([source.type, ...identity].join("-"), filter.id)];
 }
 
-/** Project all placements before display filtering, so a hidden Later row cannot finish a source. */
+/** Project all placements before display filtering, so a hidden row cannot finish a source. */
 export function projectSourceGroups<Row extends SourceGroupRow>(
   entries: readonly Row[],
-  ctx: RowWindowContext,
+  ctx: DayContext,
   matchesSources: (sources: Source[]) => boolean = () => true,
+  /** What decides a spoiler mask. Unlike availability, this can know about "Show spoilers". */
+  spoilerState: UserProgressionState = ctx.progressionState,
 ): SourceSection<Row>[] {
   const sections = new Map<
     string,
@@ -138,19 +142,16 @@ export function projectSourceGroups<Row extends SourceGroupRow>(
   return [...sections.values()].flatMap(({ placements, ...instance }) => {
     const rows = [...placements.values()].map((placement) => ({
       ...placement,
-      window: placement.entry.spoilered
-        ? ("later" as const)
-        : classifyItemAvailability(
-            { sources: placement.sources, visibility: placement.entry.visibility },
-            ctx,
-          ),
+      doable:
+        !placement.entry.locked &&
+        isDoableToday({ sources: placement.sources, visibility: placement.entry.visibility }, ctx),
     }));
     if (!matchesSources(rows.flatMap(({ sources }) => sources))) return [];
     const counted = rows.filter(({ entry }) => entry.obtainable);
     const remaining = counted.filter(({ entry }) => !entry.completed);
     let state: SourceSection<Row>["state"] = "later";
     if (remaining.length === 0) state = "done";
-    else if (remaining.some(({ window }) => window !== "later")) state = "now";
+    else if (remaining.some(({ doable }) => doable)) state = "now";
     return [
       {
         ...instance,
@@ -160,7 +161,7 @@ export function projectSourceGroups<Row extends SourceGroupRow>(
           rows.length > 0 &&
           rows.every(
             ({ sources }) =>
-              sources.length > 0 && sources.every((source) => !sourceVisible(source, ctx)),
+              sources.length > 0 && sources.every((source) => !sourceVisible(source, spoilerState)),
           ),
         state,
         total: counted.length,
@@ -169,20 +170,20 @@ export function projectSourceGroups<Row extends SourceGroupRow>(
   });
 }
 
-function sourceVisible(source: Source, ctx: RowWindowContext): boolean {
-  if ("visibility" in source && !isConditionVisible(source.visibility, ctx.progressionState)) {
+function sourceVisible(source: Source, state: UserProgressionState): boolean {
+  if ("visibility" in source && !isConditionVisible(source.visibility, state)) {
     return false;
   }
   if (
     "storeId" in source &&
     source.storeId &&
-    !isConditionVisible(trackerData.stores[source.storeId]?.visibility, ctx.progressionState)
+    !isConditionVisible(trackerData.stores[source.storeId]?.visibility, state)
   ) {
     return false;
   }
   if (
     "villagerId" in source &&
-    !isConditionVisible(trackerData.villagers[source.villagerId]?.visibility, ctx.progressionState)
+    !isConditionVisible(trackerData.villagers[source.villagerId]?.visibility, state)
   ) {
     return false;
   }
@@ -191,10 +192,10 @@ function sourceVisible(source: Source, ctx: RowWindowContext): boolean {
       const quest = quests[source.questId];
       if (
         Object.hasOwn(quests, source.questId) &&
-        (!isConditionVisible(quest.visibility, ctx.progressionState) ||
+        (!isConditionVisible(quest.visibility, state) ||
           !isConditionVisible(
             trackerData.categoryVisibility[type as keyof typeof trackerData.categoryVisibility],
-            ctx.progressionState,
+            state,
           ))
       ) {
         return false;

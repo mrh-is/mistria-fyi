@@ -179,6 +179,24 @@ describe("migration table", () => {
     expect(MIGRATIONS[1]?.(document)).toBe(document);
   });
 
+  it("retires the row windows & the Completed switch in version 8", () => {
+    const stored = fixture(7);
+    const migrated = MIGRATIONS[8]?.({
+      ...stored,
+      availabilityWindows: ["now"],
+      showCompleted: true,
+    });
+    expect(migrated).not.toHaveProperty("availabilityWindows");
+    expect(migrated).not.toHaveProperty("showCompleted");
+    expect(migrated).toHaveProperty("progress", stored.progress);
+  });
+
+  it.each(POLICIES)("keeps a version 7 blob's progress through version 8 (%s)", (policy) => {
+    const before = readOk(JSON.stringify(fixture(7)), policy);
+    const after = readOk(JSON.stringify(fixture(8)), policy);
+    expect(serializeProgress(before)).toBe(serializeProgress(after));
+  });
+
   it.each(POLICIES)("round-trips an unordered last save from version 7 (%s)", (policy) => {
     const loaded = readOk(JSON.stringify(fixture(7)), policy);
     expect(loaded.history).toMatchObject({ lastSavePlaytime: 7200.5, lastSaveUnordered: true });

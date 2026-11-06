@@ -125,7 +125,6 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("window", makeWindow());
     const storage = makeStorage({
       "mistria-fyi:preferences": JSON.stringify({
-        availabilityWindows: ["later"],
         showSpoilers: true,
       }),
     });
@@ -133,24 +132,14 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.toggleAvailabilityWindow("later");
-    await Promise.resolve();
-    expect(JSON.parse(storage.getItem("mistria-fyi:preferences") ?? "null")).toEqual({
-      availabilityWindows: ["later"],
-      showSpoilers: true,
-    });
-
     userState.loadFromStorage();
-    expect(userState.state.availabilityWindows).toEqual(["later"]);
-    userState.toggleAvailabilityWindow("now");
     userState.setEverythingGrouping("source");
     await vi.runAllTimersAsync();
     expect(JSON.parse(storage.getItem("mistria-fyi:preferences") ?? "null")).toEqual({
-      availabilityWindows: ["now", "later"],
       everythingGrouping: "source",
       showSpoilers: true,
     });
-    expect(JSON.parse(userState.exportBackup())).not.toHaveProperty("availabilityWindows");
+    expect(JSON.parse(userState.exportBackup())).not.toHaveProperty("everythingGrouping");
   });
 
   it("applies preference updates from another tab", async () => {
@@ -164,7 +153,6 @@ describe("persistence lifecycle", () => {
     const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
     const incoming = JSON.stringify({
-      availabilityWindows: ["now"],
       everythingGrouping: "source",
       showSpoilers: true,
     });
@@ -175,7 +163,6 @@ describe("persistence lifecycle", () => {
       storageArea: storage,
     });
 
-    expect(userState.state.availabilityWindows).toEqual(["now"]);
     expect(userState.state.everythingGrouping).toBe("source");
     expect(userState.state.showSpoilers).toBe(true);
     await Promise.resolve();
@@ -193,7 +180,7 @@ describe("persistence lifecycle", () => {
     const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
     // Another tab wrote first, but its event arrives only after this tab's own write.
-    const stale = JSON.stringify({ availabilityWindows: ["now"], showSpoilers: false });
+    const stale = JSON.stringify({ showSpoilers: false });
     storage.setItem("mistria-fyi:preferences", stale);
     userState.toggleShowSpoilers();
     await vi.runAllTimersAsync();

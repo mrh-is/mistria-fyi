@@ -68,7 +68,7 @@ describe("ExpandableSection", () => {
       total: 4,
     });
 
-    expect(view.getByText("4 / 4")).toHaveAttribute("aria-hidden", "true");
+    expect(view.getByText("4 / 4").closest("[aria-hidden]")).toHaveAttribute("aria-hidden", "true");
     expect(view.getByRole("button", { name: "Crops, 4 of 4 completed" })).toBeInTheDocument();
     expect(view.getByTestId("section-progress")).toHaveAttribute("aria-hidden", "true");
     expect(view.getByTestId("section-progress-fill")).toHaveStyle("width: 100%");
@@ -119,10 +119,8 @@ describe("ExpandableSection", () => {
       "aria-expanded",
       "true",
     );
-    expect(empty.getByRole("button", { name: "Empty, 0 of 0 completed" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    // A section with nothing to count sits on no shelf, so it leaves the page.
+    expect(empty.queryByRole("button", { name: /^Empty/ })).toBeNull();
   });
 
   it("registers when reportCategory is provided", async () => {

@@ -7,10 +7,13 @@
 
   let {
     children,
+    closed = false,
     grouping,
     key,
   }: {
     children: Snippet;
+    /** Inside a closed fold. The section stays mounted, so it can still report its shelf. */
+    closed?: boolean;
     grouping: SectionGrouping<Key>;
     key: Key;
   } = $props();
@@ -19,10 +22,13 @@
     hold: () => {
       grouping.hold(key);
     },
-    report: (complete) => {
-      grouping.report(key, complete);
+    report: (shelf) => {
+      grouping.report(key, shelf);
     },
   });
 </script>
 
-{@render children()}
+<!-- `hidden`, so focus repair can tell a closed fold's sections aren't on the page. -->
+<div hidden={closed} style:display={closed ? undefined : "contents"}>
+  {@render children()}
+</div>

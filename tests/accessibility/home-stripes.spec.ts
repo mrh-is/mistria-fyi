@@ -12,7 +12,6 @@ test("home stripe counts fit before their ribbons", async ({ page }) => {
     page,
     "light",
     createStoredState({
-      availabilityWindows: ["now", "anytime", "later"],
       progress: {
         renown: 100,
       },

@@ -11,6 +11,6 @@ export const load: PageLoad = localizedPageLoad(
     accent: categoryColor("recipes"),
     description: m.recipes_page_description({}, { locale }),
     title: m.category_recipes_name({}, { locale }),
-    toolbar: { search: true },
+    toolbar: { clock: true, filter: true, search: true },
   }),
 );

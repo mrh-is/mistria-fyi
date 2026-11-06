@@ -6,7 +6,6 @@ import { CATEGORY_DEFINITIONS } from "#lib/engine/categories.js";
 import { recipeForItem, recipePlacements } from "#lib/engine/projections/recipes.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import { searchAllCategories } from "./search.js";
@@ -727,7 +726,6 @@ function allResults(): SearchResult[] {
     locale: "en",
     progressionState: makeProgressionState({ showSpoilers: true }),
     projectionContext: {
-      availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
       progress: makeCompletedState(),
       progressionState: makeProgressionState({ showSpoilers: true }),
       worldState: defaultWorld,

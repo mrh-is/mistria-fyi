@@ -1,5 +1,6 @@
 import { trackerData } from "#lib/data/index.js";
-import { countChecklist, isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
@@ -18,18 +19,17 @@ export interface RecipesProjection extends CategoryProjection {
   rows: RecipeRow[];
 }
 
-/** Every recipe is one step, in scope until learned. Recipes gate on their own visibility. */
+/** Every recipe is one step. Recipes gate on their own visibility. */
 export function projectRecipes(
   ctx: ProgressContext,
   options: CategoryProjectionOptions = {},
 ): RecipesProjection {
   const rows = recordEntries(trackerData.recipes).map(([id, recipe]): RecipeRow => ({
-    completed: ctx.progress.almanacRecipes.has(id),
+    ...shelfFacts(recipe, ctx.progress.almanacRecipes.has(id), ctx, options.showsSource),
     id,
-    inScope: true,
     spoilered: isSpoilered(recipe.visibility, options.progressionState),
   }));
-  return { rows, totals: countChecklist(rows) };
+  return { rows, totals: countShelfRows(rows) };
 }
 
 /** The recipe that makes `item`, if any. */

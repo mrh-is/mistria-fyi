@@ -1,8 +1,7 @@
 import { trackerData } from "#lib/data/index.js";
 import { getPartnerId } from "#lib/engine/relationships.js";
 
-import type { RowWindowContext } from "#lib/engine/availability.js";
-import type { AvailabilityWindow } from "#lib/types/availability.js";
+import type { DayContext } from "#lib/engine/availability.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
@@ -13,9 +12,16 @@ export const MAX_SKILL_LEVEL = 60;
 // ─── Types ──────────────────────────────────────────────────────────
 
 export interface CategoryProgress {
+  /** Finished steps, whatever the filters show. */
   completed: number;
-  remainingInScope: number;
+  /** Finished steps the filters show. */
+  completedShown: number;
+  /** Unfinished steps doable today through a source the filters show. */
+  todo: number;
+  /** Every step, whatever the filters show. */
   total: number;
+  /** Unfinished steps the filters show that aren't doable today. */
+  waiting: number;
 }
 
 /** Why `normalizeLevel` changed or rejected its input; absent when the value was already valid. */
@@ -28,9 +34,8 @@ export interface NormalizedLevel {
   value: number;
 }
 
-/** What category projections read: progress, the selected windows, & what decides a row's window. */
-export interface ProgressContext extends RowWindowContext {
-  availabilityWindows: readonly AvailabilityWindow[];
+/** What category projections read: progress, & what decides whether a row is doable today. */
+export interface ProgressContext extends DayContext {
   progress: DeepReadonly<ProgressState>;
 }
 

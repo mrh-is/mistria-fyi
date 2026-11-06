@@ -46,14 +46,11 @@
 
   let {
     completed = false,
-    hasContent = $bindable(),
     key,
     locale,
     progress,
   }: {
     completed?: boolean;
-    /** Whether this category shows anything in its list, for a page's Completed divider. */
-    hasContent?: boolean;
     key: CategoryKey;
     locale: LocaleCode;
     progress: CategoryProgress;
@@ -63,14 +60,16 @@
   const searchGroup = createSearchGroup();
 
   let content = $derived(CONTENT[key]);
+  // A search can reach rows the shelves don't count; otherwise nothing left means no header.
+  let hasOutstandingRows = $derived(
+    toolbarState.searchQuery
+      ? progress.completed < progress.total
+      : progress.todo + progress.waiting > 0,
+  );
   let visible = $derived(
-    scope.hasContent(completed ? progress.completed > 0 : progress.completed < progress.total) &&
+    scope.hasContent(completed ? progress.completed > 0 : hasOutstandingRows) &&
       !(toolbarState.searchQuery && searchGroup.isEmpty),
   );
-
-  $effect(() => {
-    hasContent = visible;
-  });
 </script>
 
 <div class="contents" style="--primary: var(--color-category-{key})">

@@ -56,7 +56,6 @@ it("gathers complete sections into the completed list and moves a reopened secti
   for (const id of Object.keys(trackerData.mines.spells)) userState.toggleSpell(id as SpellId);
   userState.setRenown(getMaxRenownLevel());
   userState.toggleAlmanacItem("acorn" as ItemId);
-  userState.toggleShowCompleted();
   const view = renderWithFeedback(CompletionLists, { categories: ["almanac", "mines", "renown"] });
   await tick();
 
@@ -79,9 +78,7 @@ it("gathers complete sections into the completed list and moves a reopened secti
   await finishRowLeaving();
   expect(within(completed).queryByRole("button", { name: "Mines" })).not.toBeInTheDocument();
   expect(view.getByRole("button", { name: /^Magic Spells,/ })).toBeInTheDocument();
-  userState.toggleShowCompleted();
   await tick();
-  expect(view.queryByTestId("everything-completed")).not.toBeInTheDocument();
   expect(toolbarState.hasAlmanacFilters).toBe(true);
 });
 
@@ -91,7 +88,6 @@ it("partitions compact skill records only after both their level and perks are f
   const perks = perksOfSkill(id);
   expect(perks.length).toBeGreaterThan(0);
   userState.setSkillLevel(id, MAX_SKILL_LEVEL);
-  userState.toggleShowCompleted();
   const view = renderWithFeedback(CompletionLists, { categories: ["skills"] });
   const completed = view.getByTestId("everything-completed");
   expect(within(completed).queryByRole("button", { name: "Skills" })).not.toBeInTheDocument();
@@ -158,7 +154,6 @@ describe("while a section changes lists", () => {
   });
 
   it("keeps a section in one list during the hold when completed sections are shown", async () => {
-    userState.toggleShowCompleted();
     const { row, section, view } = await renderWithLastSpellOpen();
     row.focus();
     await fireEvent.click(row);
@@ -176,7 +171,6 @@ describe("while a section changes lists", () => {
 
   it("moves sections at once when progress is replaced rather than toggled", async () => {
     userState.setRenown(getMaxRenownLevel());
-    userState.toggleShowCompleted();
     const view = renderWithFeedback(CompletionLists, { categories: ["renown"] });
     await tick();
     const completed = view.getByTestId("everything-completed");
@@ -219,7 +213,6 @@ async function renderFinishedQuests() {
     section("fetch", true),
     section("crown", false),
   ]);
-  userState.toggleShowCompleted();
   const view = renderWithFeedback(CompletionLists, { categories: ["quests"] });
   await tick();
   const completed = view.getByTestId("everything-completed");
@@ -239,11 +232,11 @@ describe("locked quest sections", () => {
       section("fetch", false),
       section("crown", true),
     ]);
-    userState.toggleShowCompleted();
     const view = renderWithFeedback(CompletionLists, { categories: ["quests"] });
     await tick();
     const outstanding = view.container.querySelector("#category-quests")?.closest("section");
     if (!outstanding) throw new Error("Quests has no outstanding group");
+    await fireEvent.click(within(outstanding).getByRole("button", { name: "Not now" }));
     await fireEvent.click(within(outstanding).getByRole("button", { name: "Reveal spoiler" }));
     await tick();
     expect(within(outstanding).queryByRole("button", { name: /^Crown Requests,/ })).toBeNull();
@@ -268,6 +261,7 @@ describe("locked quest sections", () => {
       .find((button) => !completed.contains(button))
       ?.closest("section");
     if (!outstanding) throw new Error("Quests has no outstanding group");
+    await fireEvent.click(within(outstanding).getByRole("button", { name: "Not now" }));
     expect(within(outstanding).getAllByRole("button", { name: "Reveal spoiler" })).toHaveLength(1);
     expect(within(outstanding).queryByRole("button", { name: /^Fetch Quests,/ })).toBeNull();
   });

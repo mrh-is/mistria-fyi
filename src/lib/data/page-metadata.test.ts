@@ -63,11 +63,12 @@ describe("page metadata", () => {
     expect(pageMetadata(base)).toEqual({
       ...base,
       accent: "var(--color-home-accent)",
-      toolbar: { search: false, worldState: false },
+      toolbar: { clock: false, filter: false, search: false },
     });
     expect(pageMetadata({ ...base, toolbar: { search: true } }).toolbar).toEqual({
+      clock: false,
+      filter: false,
       search: true,
-      worldState: false,
     });
     expect(pageMetadata({ ...base, toolbar: "hidden" }).toolbar).toBe("hidden");
     expect(pageMetadata({ ...base, accent: "var(--color-category-mines)" }).accent).toBe(
@@ -103,9 +104,14 @@ describe("page metadata", () => {
 
     expect(toolbarFor("about")).toBe("hidden");
     expect(toolbarFor("data")).toBe("hidden");
-    expect(toolbarFor("")).toEqual({ search: true, worldState: true });
-    expect(toolbarFor("mines")).toEqual({ search: true, worldState: false });
-    expect(errorPageMetadata(404, "en").toolbar).toEqual({ search: false, worldState: false });
+    expect(toolbarFor("")).toEqual({ clock: true, filter: false, search: true });
+    expect(toolbarFor("mines")).toEqual({ clock: true, filter: true, search: true });
+    expect(toolbarFor("skills")).toEqual({ clock: false, filter: false, search: true });
+    expect(errorPageMetadata(404, "en").toolbar).toEqual({
+      clock: false,
+      filter: false,
+      search: false,
+    });
   });
 
   it("declares each page's robots directive statically, where the sitemap reads it", async () => {

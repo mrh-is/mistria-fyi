@@ -11,7 +11,4 @@ it("exposes readonly nested state while preserving branded IDs", () => {
   expectTypeOf(userState.state.progress.almanac).not.toHaveProperty("clear");
   expectTypeOf(userState.state.progress.almanac).not.toHaveProperty("delete");
   expectTypeOf<DeepReadonly<ItemId>>().toEqualTypeOf<ItemId>();
-  expectTypeOf(userState.state.availabilityWindows).toEqualTypeOf<
-    readonly (typeof userState.state.availabilityWindows)[number][]
-  >();
 });

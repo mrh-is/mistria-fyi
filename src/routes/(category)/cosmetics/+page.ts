@@ -11,6 +11,6 @@ export const load: PageLoad = localizedPageLoad(
     accent: categoryColor("cosmetics"),
     description: m.cosmetics_page_description({}, { locale }),
     title: m.category_cosmetics_name({}, { locale }),
-    toolbar: { search: true },
+    toolbar: { clock: true, filter: true, search: true },
   }),
 );

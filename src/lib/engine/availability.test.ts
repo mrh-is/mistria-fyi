@@ -1,21 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
-
-import {
-  classifyItemAvailability,
-  classifySourceAvailability,
-  getDisplayBadges,
-  isInProgressScope,
-  isItemAvailable,
-  isItemDimmed,
-  isRowVisible,
-} from "./availability.js";
+import { getDisplayBadges, isDoableToday, isRowShown, isSourceDoable } from "./availability.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
-import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type {
-  ItemId,
   PerkId,
   QuestId,
   Season,
@@ -27,13 +15,8 @@ import type {
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 import type { NonEmptyArray } from "#lib/utils/record.js";
 
-import type { RowWindowContext, WindowedRow } from "./availability.js";
+import type { AvailabilityRow, DayContext } from "./availability.js";
 import type { UserProgressionState } from "./visibility.js";
-
-const defaultWindows: AvailabilityWindow[] = ["now", "anytime"];
-const AVAILABLE = [...DEFAULT_AVAILABILITY_WINDOWS];
-const EVERYTHING = [...AVAILABILITY_WINDOWS];
-const TIMELY: AvailabilityWindow[] = ["now"];
 
 const repairQuest = "repair_the_general_store" as QuestId;
 
@@ -60,7 +43,7 @@ function context(
   season: Season = "spring",
   overrides: Partial<UserProgressionState> = {},
   weather: Weather = "calm",
-): RowWindowContext {
+): DayContext {
   return { progressionState: progression(overrides), worldState: { season, weather } };
 }
 
@@ -75,7 +58,7 @@ function src(availability?: AvailabilityCondition, visibility?: VisibilityCondit
   };
 }
 
-function row(sources: Source[], visibility?: VisibilityCondition): WindowedRow {
+function row(sources: Source[], visibility?: VisibilityCondition): AvailabilityRow {
   return { sources, ...(visibility ? { visibility } : {}) };
 }
 
@@ -100,26 +83,26 @@ const repairGate: AvailabilityCondition = {
 };
 const repairVisibility: VisibilityCondition = { type: "questCompleted", questId: repairQuest };
 
-// ─── classifySourceAvailability ─────────────────────────────────────
+// ─── isSourceDoable ─────────────────────────────────────
 
-describe("classifySourceAvailability", () => {
-  describe("rule 1: a spoiler-hidden source is later", () => {
+describe("isSourceDoable", () => {
+  describe("rule 1: a locked source isn't doable", () => {
     it("classifies a source whose visibility is unmet as later", () => {
-      expect(classifySourceAvailability(src(undefined, repairVisibility), spring)).toBe("later");
+      expect(isSourceDoable(src(undefined, repairVisibility), spring)).toBe(false);
     });
 
     it("stops applying once spoilers are shown", () => {
       const shown = context("spring", { showSpoilers: true });
-      expect(classifySourceAvailability(src(undefined, repairVisibility), shown)).toBe("anytime");
+      expect(isSourceDoable(src(undefined, repairVisibility), shown)).toBe(true);
     });
 
     it("still applies an unmet gate when spoilers are shown", () => {
       const shown = context("spring", { showSpoilers: true });
-      expect(classifySourceAvailability(src(repairGate, repairVisibility), shown)).toBe("later");
+      expect(isSourceDoable(src(repairGate, repairVisibility), shown)).toBe(false);
     });
   });
 
-  describe("rule 2: an unmet progress gate is later", () => {
+  describe("rule 2: an unmet progress gate isn't doable", () => {
     const gates: [string, AvailabilityCondition, Partial<UserProgressionState>][] = [
       ["reachedSeason", { type: "reachedSeason", season: "summer" }, { reachedSeason: "summer" }],
       ["quest", repairGate, { questVisibility: { [repairQuest]: "completed" } }],
@@ -146,8 +129,8 @@ describe("classifySourceAvailability", () => {
     it.each(gates)(
       "classifies an unmet %s gate as later, and a met one as anytime",
       (_, gate, met) => {
-        expect(classifySourceAvailability(src(gate), spring)).toBe("later");
-        expect(classifySourceAvailability(src(gate), context("spring", met))).toBe("anytime");
+        expect(isSourceDoable(src(gate), spring)).toBe(false);
+        expect(isSourceDoable(src(gate), context("spring", met))).toBe(true);
       },
     );
 
@@ -157,14 +140,12 @@ describe("classifySourceAvailability", () => {
         level: 1,
         skillId: "fishing" as SkillId,
       };
-      expect(classifySourceAvailability(src(fishing), context("spring", { skillLevels: {} }))).toBe(
-        "later",
-      );
+      expect(isSourceDoable(src(fishing), context("spring", { skillLevels: {} }))).toBe(false);
     });
 
     it("treats a quest that is only available as an unmet completion gate", () => {
       const available = context("spring", { questVisibility: { [repairQuest]: "available" } });
-      expect(classifySourceAvailability(src(repairGate), available)).toBe("later");
+      expect(isSourceDoable(src(repairGate), available)).toBe(false);
     });
 
     it("keeps a gated source with a met season window now", () => {
@@ -173,8 +154,8 @@ describe("classifySourceAvailability", () => {
         conditions: [seasonCondition(["spring"]), repairGate],
       };
       const repaired = context("spring", { questVisibility: { [repairQuest]: "completed" } });
-      expect(classifySourceAvailability(src(gated), repaired)).toBe("now");
-      expect(classifySourceAvailability(src(gated), spring)).toBe("later");
+      expect(isSourceDoable(src(gated), repaired)).toBe(true);
+      expect(isSourceDoable(src(gated), spring)).toBe(false);
     });
 
     it("counts a gate that only offers an alternative to a season as unrestricted once met", () => {
@@ -182,11 +163,9 @@ describe("classifySourceAvailability", () => {
         type: "any",
         conditions: [seasonCondition(["spring"]), { type: "mineFloor", floor: 20 }],
       };
-      expect(classifySourceAvailability(src(either), context("summer"))).toBe("later");
-      expect(classifySourceAvailability(src(either), spring)).toBe("now");
-      expect(classifySourceAvailability(src(either), context("summer", { mineFloor: 20 }))).toBe(
-        "anytime",
-      );
+      expect(isSourceDoable(src(either), context("summer"))).toBe(false);
+      expect(isSourceDoable(src(either), spring)).toBe(true);
+      expect(isSourceDoable(src(either), context("summer", { mineFloor: 20 }))).toBe(true);
     });
   });
 
@@ -203,11 +182,9 @@ describe("classifySourceAvailability", () => {
 
     it.each(ignored)("classifies a met alternative alongside %o as anytime", (leaf) => {
       const condition: AvailabilityCondition = { type: "all", conditions: [springOrFloor, leaf] };
-      expect(classifySourceAvailability(src(condition), context("winter", { mineFloor: 20 }))).toBe(
-        "anytime",
-      );
-      expect(classifySourceAvailability(src(condition), spring)).toBe("now");
-      expect(classifySourceAvailability(src(condition), context("winter"))).toBe("later");
+      expect(isSourceDoable(src(condition), context("winter", { mineFloor: 20 }))).toBe(true);
+      expect(isSourceDoable(src(condition), spring)).toBe(true);
+      expect(isSourceDoable(src(condition), context("winter"))).toBe(false);
     });
   });
 
@@ -219,41 +196,41 @@ describe("classifySourceAvailability", () => {
     ];
 
     it.each(unknowable)("never makes a %o source later", (gate) => {
-      expect(classifySourceAvailability(src(gate), spring)).toBe("anytime");
+      expect(isSourceDoable(src(gate), spring)).toBe(true);
       const seasonal: AvailabilityCondition = {
         type: "all",
         conditions: [seasonCondition(["spring"]), gate],
       };
-      expect(classifySourceAvailability(src(seasonal), spring)).toBe("now");
+      expect(isSourceDoable(src(seasonal), spring)).toBe(true);
     });
   });
 
-  describe("rule 3: out of season or weather is later", () => {
+  describe("rule 3: out of season or weather isn't doable", () => {
     it("classifies an out-of-season source as later", () => {
-      expect(classifySourceAvailability(src(seasonCondition(["winter"])), spring)).toBe("later");
+      expect(isSourceDoable(src(seasonCondition(["winter"])), spring)).toBe(false);
     });
 
     it("classifies an out-of-weather source as later", () => {
       const rainy = src(weatherCondition(["inclement"]));
-      expect(classifySourceAvailability(rainy, spring)).toBe("later");
-      expect(classifySourceAvailability(rainy, context("spring", {}, "inclement"))).toBe("now");
+      expect(isSourceDoable(rainy, spring)).toBe(false);
+      expect(isSourceDoable(rainy, context("spring", {}, "inclement"))).toBe(true);
     });
   });
 
-  describe("rule 4: in season is now, unrestricted is anytime", () => {
+  describe("rule 4: in season or unrestricted is doable", () => {
     it("classifies a matching season as now", () => {
-      expect(classifySourceAvailability(src(seasonCondition(["spring"])), spring)).toBe("now");
+      expect(isSourceDoable(src(seasonCondition(["spring"])), spring)).toBe(true);
     });
 
     it("classifies an unrestricted or all-season source as anytime", () => {
-      expect(classifySourceAvailability(src(), spring)).toBe("anytime");
-      expect(classifySourceAvailability(src(allSeasonsCondition), spring)).toBe("anytime");
+      expect(isSourceDoable(src(), spring)).toBe(true);
+      expect(isSourceDoable(src(allSeasonsCondition), spring)).toBe(true);
     });
   });
 
   describe("time of day is never filtered on", () => {
     it("classifies a time-only source as anytime at any time", () => {
-      expect(classifySourceAvailability(src(timeCondition(1800, 2400)), spring)).toBe("anytime");
+      expect(isSourceDoable(src(timeCondition(1800, 2400)), spring)).toBe(true);
     });
 
     it("lets a time window ride along with an in-season source", () => {
@@ -261,40 +238,38 @@ describe("classifySourceAvailability", () => {
         type: "all",
         conditions: [seasonCondition(["spring"]), timeCondition(1800, 2400)],
       };
-      expect(classifySourceAvailability(src(evening), spring)).toBe("now");
+      expect(isSourceDoable(src(evening), spring)).toBe(true);
     });
   });
 });
 
-// ─── classifyItemAvailability ───────────────────────────────────────
+// ─── isDoableToday ───────────────────────────────────────
 
-describe("classifyItemAvailability", () => {
-  it("classifies a row without sources as anytime", () => {
-    expect(classifyItemAvailability(row([]), spring)).toBe("anytime");
+describe("isDoableToday", () => {
+  it("treats a row without sources as doable", () => {
+    expect(isDoableToday(row([]), spring)).toBe(true);
   });
 
-  it("classifies a spoiler-hidden item as later whatever its sources", () => {
-    expect(classifyItemAvailability(row([src()], repairVisibility), spring)).toBe("later");
-    expect(classifyItemAvailability(row([], repairVisibility), spring)).toBe("later");
+  it("never counts a locked row, whatever its sources", () => {
+    expect(isDoableToday(row([src()], repairVisibility), spring)).toBe(false);
+    expect(isDoableToday(row([], repairVisibility), spring)).toBe(false);
     const shown = context("spring", { showSpoilers: true });
-    expect(classifyItemAvailability(row([src()], repairVisibility), shown)).toBe("anytime");
+    expect(isDoableToday(row([src()], repairVisibility), shown)).toBe(true);
   });
 
-  it("takes the best of its sources: now, then anytime, then later", () => {
+  it("is doable through any one source", () => {
     const now = src(seasonCondition(["spring"]));
     const anytime = src();
     const later = src(seasonCondition(["winter"]));
-    expect(classifyItemAvailability(row([later, anytime, now]), spring)).toBe("now");
-    expect(classifyItemAvailability(row([later, anytime]), spring)).toBe("anytime");
-    expect(classifyItemAvailability(row([later, src(repairGate)]), spring)).toBe("later");
+    expect(isDoableToday(row([later, anytime, now]), spring)).toBe(true);
+    expect(isDoableToday(row([later, anytime]), spring)).toBe(true);
+    expect(isDoableToday(row([later, src(repairGate)]), spring)).toBe(false);
   });
 
-  it("counts a spoiler-hidden source as later even when the item is visible", () => {
+  it("skips a locked source even when the row is unlocked", () => {
     const hidden = src(undefined, repairVisibility);
-    expect(classifyItemAvailability(row([hidden]), spring)).toBe("later");
-    expect(classifyItemAvailability(row([hidden, src(seasonCondition(["spring"]))]), spring)).toBe(
-      "now",
-    );
+    expect(isDoableToday(row([hidden]), spring)).toBe(false);
+    expect(isDoableToday(row([hidden, src(seasonCondition(["spring"]))]), spring)).toBe(true);
   });
 
   // The issue's worked examples. Balor sells Carrot after the General Store repair, a spoiler gate,
@@ -306,13 +281,13 @@ describe("classifyItemAvailability", () => {
     const repaired = { questVisibility: { [repairQuest]: "completed" as const } };
 
     it.each([
-      ["spring, store not repaired", context("spring"), "later", "now", "now"],
-      ["summer, store not repaired", context("summer"), "later", "later", "later"],
-      ["summer, store repaired", context("summer", repaired), "anytime", "later", "anytime"],
-    ] as const)("%s", (_, ctx, balorWindow, cropWindow, rowWindow) => {
-      expect(classifySourceAvailability(balor, ctx)).toBe(balorWindow);
-      expect(classifySourceAvailability(crop, ctx)).toBe(cropWindow);
-      expect(classifyItemAvailability(carrot, ctx)).toBe(rowWindow);
+      ["spring, store not repaired", context("spring"), false, true, true],
+      ["summer, store not repaired", context("summer"), false, false, false],
+      ["summer, store repaired", context("summer", repaired), true, false, true],
+    ] as const)("%s", (_, ctx, balorDoable, cropDoable, rowDoable) => {
+      expect(isSourceDoable(balor, ctx)).toBe(balorDoable);
+      expect(isSourceDoable(crop, ctx)).toBe(cropDoable);
+      expect(isDoableToday(carrot, ctx)).toBe(rowDoable);
     });
   });
 
@@ -323,156 +298,45 @@ describe("classifyItemAvailability", () => {
     const tomato = row([balor, crop]);
 
     it.each([
-      ["spring, year 1", context("spring"), "later", "later", "later"],
-      ["summer", context("summer", { reachedSeason: "summer" }), "anytime", "now", "now"],
-      [
-        "the next spring",
-        context("spring", { reachedSeason: "winter" }),
-        "anytime",
-        "later",
-        "anytime",
-      ],
-    ] as const)("%s", (_, ctx, balorWindow, cropWindow, rowWindow) => {
-      expect(classifySourceAvailability(balor, ctx)).toBe(balorWindow);
-      expect(classifySourceAvailability(crop, ctx)).toBe(cropWindow);
-      expect(classifyItemAvailability(tomato, ctx)).toBe(rowWindow);
+      ["spring, year 1", context("spring"), false, false, false],
+      ["summer", context("summer", { reachedSeason: "summer" }), true, true, true],
+      ["the next spring", context("spring", { reachedSeason: "winter" }), true, false, true],
+    ] as const)("%s", (_, ctx, balorDoable, cropDoable, rowDoable) => {
+      expect(isSourceDoable(balor, ctx)).toBe(balorDoable);
+      expect(isSourceDoable(crop, ctx)).toBe(cropDoable);
+      expect(isDoableToday(tomato, ctx)).toBe(rowDoable);
     });
   });
 });
 
-// ─── isItemAvailable ────────────────────────────────────────────────
+describe("isDoableToday with source filters", () => {
+  const shop: Source = { ...src(), type: "store", storeId: "shop" as StoreId };
+  const springCatch = src(seasonCondition(["spring"]));
+  const onlyCatching = (source: Source): boolean => source === springCatch;
 
-describe("isItemAvailable", () => {
-  it("available if ANY source passes (OR logic)", () => {
-    expect(
-      isItemAvailable(
-        row([src(seasonCondition(["winter"])), src(seasonCondition(["spring"]))]),
-        spring,
-        AVAILABLE,
-      ),
-    ).toBe(true);
+  it("counts a row only through the sources the filters show", () => {
+    const ladybug = row([springCatch, shop]);
+    expect(isDoableToday(ladybug, context("summer"))).toBe(true);
+    expect(isDoableToday(ladybug, context("summer"), onlyCatching)).toBe(false);
+    expect(isDoableToday(ladybug, context("spring"), onlyCatching)).toBe(true);
   });
 
-  it("unavailable if no source passes", () => {
-    expect(isItemAvailable(row([src(seasonCondition(["winter"]))]), spring, AVAILABLE)).toBe(false);
+  it("isn't doable when the filters show none of its sources", () => {
+    expect(isDoableToday(row([shop]), spring, onlyCatching)).toBe(false);
   });
 
-  it("hides a gated row from the default windows", () => {
-    expect(isItemAvailable(row([src(repairGate)]), spring, AVAILABLE)).toBe(false);
-    expect(isItemAvailable(row([src(repairGate)]), spring, ["later"])).toBe(true);
-  });
-
-  it("no sources: available in available mode, hidden in timely mode", () => {
-    expect(isItemAvailable(row([]), spring, AVAILABLE)).toBe(true);
-    expect(isItemAvailable(row([]), spring, TIMELY)).toBe(false);
-  });
-
-  it("everything mode: always available", () => {
-    expect(isItemAvailable(row([src(seasonCondition(["winter"]))]), spring, EVERYTHING)).toBe(true);
-    expect(isItemAvailable(row([src()], repairVisibility), spring, EVERYTHING)).toBe(true);
-  });
-
-  it("supports independently selected windows", () => {
-    expect(isItemAvailable(row([src(seasonCondition(["spring"]))]), spring, ["now"])).toBe(true);
-    expect(isItemAvailable(row([src()]), spring, ["now"])).toBe(false);
-    expect(isItemAvailable(row([src()]), spring, ["anytime"])).toBe(true);
-    expect(isItemAvailable(row([src(seasonCondition(["winter"]))]), spring, ["later"])).toBe(true);
-    expect(isItemAvailable(row([src(seasonCondition(["winter"]))]), spring, defaultWindows)).toBe(
-      false,
-    );
+  it("keeps a row without sources doable under any filter", () => {
+    expect(isDoableToday(row([]), spring, () => false)).toBe(true);
   });
 });
 
-// ─── isItemDimmed ───────────────────────────────────────────────────
-
-describe("isItemDimmed", () => {
-  const laterItem = row([src(seasonCondition(["winter"]))]);
-
-  it("never dims completed items", () => {
-    expect(isItemDimmed(laterItem, true, spring, EVERYTHING)).toBe(false);
-  });
-
-  it("dims a later item when shown alongside now/anytime windows for contrast", () => {
-    expect(isItemDimmed(laterItem, false, spring, EVERYTHING)).toBe(true);
-    expect(isItemDimmed(laterItem, false, spring, ["now", "later"])).toBe(true);
-  });
-
-  it("dims a gated or spoiler-hidden row like any other later row", () => {
-    expect(isItemDimmed(row([src(repairGate)]), false, spring, EVERYTHING)).toBe(true);
-    expect(isItemDimmed(row([src()], repairVisibility), false, spring, EVERYTHING)).toBe(true);
-  });
-
-  it("does not dim when later is the only selected window", () => {
-    expect(isItemDimmed(laterItem, false, spring, ["later"])).toBe(false);
-  });
-
-  it("does not dim when later isn't selected at all", () => {
-    expect(isItemDimmed(laterItem, false, spring, defaultWindows)).toBe(false);
-  });
-
-  it("does not dim items that aren't classified as later", () => {
-    expect(isItemDimmed(row([src()]), false, spring, EVERYTHING)).toBe(false);
+describe("isRowShown", () => {
+  it("shows a row with any shown source, or with none at all", () => {
+    expect(isRowShown([src()], () => true)).toBe(true);
+    expect(isRowShown([src()], () => false)).toBe(false);
+    expect(isRowShown([], () => false)).toBe(true);
   });
 });
-
-// ─── isInProgressScope ────────────────────────────────────────────────
-
-describe("isInProgressScope", () => {
-  it("completed items are always in scope regardless of availability", () => {
-    const gated = row([src(repairGate)], repairVisibility);
-    expect(isInProgressScope(gated, true, spring, AVAILABLE)).toBe(true);
-    expect(isInProgressScope(gated, true, spring, TIMELY)).toBe(true);
-    expect(isInProgressScope(gated, true, spring, EVERYTHING)).toBe(true);
-  });
-
-  it("incomplete items in scope when available", () => {
-    expect(isInProgressScope(row([src()]), false, spring, AVAILABLE)).toBe(true);
-  });
-
-  it("incomplete gated items out of scope by default", () => {
-    expect(isInProgressScope(row([src(repairGate)]), false, spring, AVAILABLE)).toBe(false);
-  });
-
-  it("incomplete items always in scope in everything mode", () => {
-    expect(isInProgressScope(row([src(repairGate)]), false, spring, EVERYTHING)).toBe(true);
-  });
-
-  it("incomplete items out of scope in timely mode when no sources are timely", () => {
-    expect(isInProgressScope(row([]), false, spring, TIMELY)).toBe(false);
-  });
-});
-
-// ─── isRowVisible ───────────────────────────────────────────────────
-
-describe("isRowVisible", () => {
-  const id = "item_b" as ItemId;
-
-  it("incomplete items are always visible", () => {
-    expect(isRowVisible(id, false, false)).toBe(true);
-    expect(isRowVisible(id, false, true)).toBe(true);
-  });
-
-  it("completed items hidden when showCompleted is false", () => {
-    expect(isRowVisible(id, true, false)).toBe(false);
-  });
-
-  it("completed items visible when showCompleted is true", () => {
-    expect(isRowVisible(id, true, true)).toBe(true);
-  });
-
-  it("recently completed items are always visible regardless of showCompleted", () => {
-    const recentlyCompleted = new Set([id]);
-    expect(isRowVisible(id, true, false, recentlyCompleted)).toBe(true);
-  });
-
-  it("items not in recentlyCompleted respect showCompleted", () => {
-    const other = "other_item" as ItemId;
-    const recentlyCompleted = new Set([other]);
-    expect(isRowVisible(id, true, false, recentlyCompleted)).toBe(false);
-  });
-});
-
-// ─── getDisplayBadges ───────────────────────────────────────────────
 
 describe("getDisplayBadges", () => {
   it("returns an empty object when no sources have availability conditions", () => {

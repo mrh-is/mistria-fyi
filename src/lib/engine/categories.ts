@@ -17,6 +17,7 @@ import {
   searchRecipes,
   searchVillagers,
 } from "#lib/engine/search-providers.js";
+import { addProgress } from "#lib/engine/shelves.js";
 import { recordKeys, recordMap, recordValues } from "#lib/utils/record.js";
 
 import type { CategoryProgress, ProgressContext } from "#lib/engine/progress.js";
@@ -71,26 +72,28 @@ export const CATEGORY_KEYS: readonly CategoryKey[] = recordKeys(CATEGORIES);
 /** The registry as uniform definitions, for callers that visit every category alike. */
 export const CATEGORY_DEFINITIONS: readonly CategoryDefinition[] = recordValues(CATEGORIES);
 
-export function getAllProgress(ctx: ProgressContext): AllProgress {
-  return recordMap(CATEGORIES, (definition: CategoryDefinition) => definition.project(ctx).totals);
+export function getAllProgress(
+  ctx: ProgressContext,
+  options?: CategoryProjectionOptions,
+): AllProgress {
+  return recordMap(
+    CATEGORIES,
+    (definition: CategoryDefinition) => definition.project(ctx, options).totals,
+  );
 }
 
-export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext): CategoryProgress {
+export function getCategoryProgress(
+  category: CategoryKey,
+  ctx: ProgressContext,
+  options?: CategoryProjectionOptions,
+): CategoryProgress {
   const definition: CategoryDefinition = CATEGORIES[category];
-  return definition.project(ctx).totals;
+  return definition.project(ctx, options).totals;
 }
 
 /** Sums every category's progress into one overall total (home page, `/everything`). */
 export function getOverallProgress(allProgress: AllProgress): CategoryProgress {
-  let completed = 0;
-  let remainingInScope = 0;
-  let total = 0;
-  for (const p of recordValues(allProgress)) {
-    completed += p.completed;
-    remainingInScope += p.remainingInScope;
-    total += p.total;
-  }
-  return { completed, remainingInScope, total };
+  return addProgress(recordValues(allProgress));
 }
 
 /**

@@ -40,6 +40,10 @@
       : undefined,
   );
 
+  const todoPct = $derived(
+    progress !== undefined && progress.total > 0 ? (progress.todo / progress.total) * 100 : 0,
+  );
+
   function goBack(event: MouseEvent): void {
     if (history.length <= 1) return;
     event.preventDefault();
@@ -54,7 +58,7 @@
   class:page-header--complete={pct === 100}
   data-page-header={category === undefined ? "generic" : "category"}
   style={category !== undefined && pct !== undefined
-    ? `--category-progress-percent: ${pct}%;`
+    ? `--category-progress-percent: ${pct}%; --category-todo-percent: ${todoPct}%;`
     : undefined}
 >
   <a
@@ -91,7 +95,7 @@
     >
 
     <span class="page-header__edge-mask" aria-hidden="true"></span>
-    <span class="page-header__progress" aria-hidden="true"><i></i></span>
+    <span class="page-header__progress" aria-hidden="true"><i></i><b></b></span>
   {/if}
 </header>
 
@@ -156,7 +160,9 @@
   .page-header__count {
     position: relative;
     z-index: 2;
+    display: grid;
     flex-shrink: 0;
+    justify-items: end;
     color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-xs);
@@ -215,6 +221,7 @@
     bottom: 0;
     left: 0;
     z-index: 2;
+    display: flex;
     height: 3px;
     background: color-mix(in srgb, var(--primary) 13%, transparent);
   }
@@ -224,6 +231,15 @@
     width: var(--category-progress-percent);
     height: 100%;
     background: var(--primary);
+    transition: width 300ms ease-out;
+  }
+
+  /* The To do share: a quiet tint, because the shelf already says something's doable. */
+  .page-header__progress b {
+    display: block;
+    width: var(--category-todo-percent);
+    height: 100%;
+    background: color-mix(in srgb, var(--primary) 34%, transparent);
     transition: width 300ms ease-out;
   }
 
@@ -271,7 +287,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .page-header__progress i {
+    .page-header__progress i,
+    .page-header__progress b {
       transition-duration: 0.01ms;
     }
   }

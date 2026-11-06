@@ -1,20 +1,16 @@
 <script lang="ts">
   import { untrack } from "svelte";
 
-  import CompletedHeading from "#lib/components/completed-heading.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
+  import ShelfFold from "#lib/components/shelf-fold.svelte";
+  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
-  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
-  import {
-    registerPageSearch,
-    showsCompletedRows,
-    visibleWindows,
-  } from "#lib/controllers/page-search.svelte.js";
+  import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
@@ -27,8 +23,10 @@
   import { getAllProgress, isCategoryComplete } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
+  import { emptyProgress, filteredCounts } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { shelfLabel } from "#lib/presentation/shelves.js";
   import { projectSourceGroups, SOURCE_TYPE_ORDER } from "#lib/presentation/source-groups.js";
   import {
     compareSourceSections,
@@ -47,6 +45,9 @@
   import GroupSection from "./group-section.svelte";
 
   import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
+  import type { CategoryProgress } from "#lib/engine/progress.js";
+  import type { Shelf } from "#lib/engine/shelves.js";
+  import type { SourceSection } from "#lib/presentation/source-groups.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { QuestId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
@@ -56,7 +57,9 @@
   const leaving = createLeavingSet<string>();
   const sectionGrouping = createSectionGrouping<string>();
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
-  let entries = $derived(buildSourceChecklist(userState.progressContext, locale));
+  let entries = $derived(
+    buildSourceChecklist(userState.progressContext, locale, userState.state.showSpoilers),
+  );
   let lookups = $derived(
     buildBaseSegmentLookups(computeSpoileredStoreIds(userState.progressionState), locale),
   );
@@ -72,8 +75,11 @@
     ),
   ]);
   let sections = $derived(
-    projectSourceGroups(entries, userState.progressContext, (sources) =>
-      toolbarState.matchesSourceFilters(sources),
+    projectSourceGroups(
+      entries,
+      userState.progressContext,
+      (sources) => toolbarState.matchesSourceFilters(sources),
+      userState.progressionState,
     ),
   );
   let groups = $derived(
@@ -84,27 +90,22 @@
         .map((section) => ({
           section,
           ...sourceSectionLabel(section, lookups, userState.progressionState),
-          held: sectionGrouping.heldCompletion(section.id),
+          held: sectionGrouping.heldShelf(section.id),
           visibleRows: section.rows
-            .filter(({ entry, window }) => {
+            .filter(({ entry }) => {
               const spoilered =
                 entry.spoilered ||
                 !isConditionVisible(entry.visibility, userState.progressionState);
               if (toolbarState.searchQuery && (spoilered || !matchesSearch(entry))) {
                 return false;
               }
-              if (!entry.obtainable && !toolbarState.showUnobtainable) return false;
-              if (leaving.has(entry.key)) return true;
-              return entry.completed ? showsCompletedRows() : visibleWindows().includes(window);
+              return entry.obtainable || toolbarState.showUnobtainable;
             })
             .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
         }))
         .filter(
-          ({ section, spoilered, visibleRows }) =>
-            (!toolbarState.searchQuery || (!spoilered && visibleRows.length > 0)) &&
-            (section.state !== "done" ||
-              showsCompletedRows() ||
-              section.rows.some(({ entry }) => leaving.has(entry.key))),
+          ({ spoilered, visibleRows }) =>
+            !toolbarState.searchQuery || (!spoilered && visibleRows.length > 0),
         )
         .toSorted((a, b) => compareSourceSections(a, b, locale)),
     })).filter(
@@ -118,11 +119,25 @@
       ),
   );
 
-  // The hold starts from the section's current completion, which the grouping needs to know.
+  // A link to a finished source has to reach it through the closed fold.
+  let anchorInCompleted = $derived(
+    groups.some(({ sections: groupSections }) =>
+      groupSections.some(
+        (entry) =>
+          isInCompletedList(entry) &&
+          (entry.section.id === anchor ||
+            (entry.section.id === "progress" && anchor === "source-progress") ||
+            `sources-${entry.section.group}` === anchor ||
+            `sources-${entry.section.group}-completed` === anchor),
+      ),
+    ),
+  );
+
+  // The hold starts from the section's current shelf, which the grouping needs to know.
   $effect(() => {
-    const reports = sections.map(({ id, state }) => [id, state === "done"] as const);
+    const reports = sections.map(({ id, state }) => [id, stateShelf(state)] as const);
     untrack(() => {
-      for (const [id, done] of reports) sectionGrouping.report(id, done);
+      for (const [id, shelf] of reports) sectionGrouping.report(id, shelf);
     });
   });
 
@@ -146,11 +161,39 @@
     section,
     spoilered,
   }: {
-    held: boolean | undefined;
-    section: { state: string };
+    held: Shelf | undefined;
+    section: { state: SourceSection<SourceChecklistRow>["state"] };
     spoilered: boolean;
   }): boolean {
-    return !spoilered && (held ?? section.state === "done");
+    return !spoilered && (held ?? stateShelf(section.state)) === "completed";
+  }
+
+  function rowShelfOf({ doable, entry }: { doable: boolean; entry: SourceChecklistRow }): Shelf {
+    if (entry.completed) return "completed";
+    return doable && entry.obtainable ? "todo" : "notNow";
+  }
+
+  /** A source's fraction, with the rest of the shelf counts its header reads. */
+  function sectionProgress(
+    section: SourceSection<SourceChecklistRow>,
+  ): CategoryProgress | undefined {
+    // Only revealed unobtainable rows: nothing to count, but the section stays for them.
+    if (section.total === 0) return undefined;
+    const remaining = section.rows.filter(({ entry }) => entry.obtainable && !entry.completed);
+    const todo = remaining.filter(({ doable }) => doable).length;
+    return {
+      ...emptyProgress(),
+      completed: section.completed,
+      completedShown: section.completed,
+      todo,
+      total: section.total,
+      waiting: remaining.length - todo,
+    };
+  }
+
+  function stateShelf(state: SourceSection<SourceChecklistRow>["state"]): Shelf {
+    if (state === "done") return "completed";
+    return state === "now" ? "todo" : "notNow";
   }
 
   function matchesSearch(entry: SourceChecklistRow): boolean {
@@ -164,7 +207,12 @@
 
   // A row can sit under several sources, but it's still one match.
   registerPageSearch(() => {
-    const matches = projectSourceGroups(entries, userState.progressContext, () => true)
+    const matches = projectSourceGroups(
+      entries,
+      userState.progressContext,
+      () => true,
+      userState.progressionState,
+    )
       .filter(
         (section) => !sourceSectionLabel(section, lookups, userState.progressionState).spoilered,
       )
@@ -179,10 +227,26 @@
     const visible = groups.flatMap((group) =>
       group.sections.flatMap(({ visibleRows }) => visibleRows),
     );
-    return {
-      matches: new Set(matches.map(({ entry }) => entry.key)).size,
-      visible: new Set(visible.map(({ entry }) => entry.key)).size,
-    };
+    const visibleKeys = new Set(visible.map(({ entry }) => entry.key));
+    // A row is doable anywhere through any source, & doable here through a source still shown.
+    const shownDoable = new Set(
+      visible.filter(({ doable }) => doable).map(({ entry }) => entry.key),
+    );
+    const doableAnywhere = new Set(
+      matches.filter(({ doable }) => doable).map(({ entry }) => entry.key),
+    );
+    const rows = new Map(
+      matches.map(({ entry }) => [
+        entry.key,
+        {
+          completed: entry.completed,
+          doable: shownDoable.has(entry.key),
+          doableAnywhere: doableAnywhere.has(entry.key),
+          shown: visibleKeys.has(entry.key),
+        },
+      ]),
+    );
+    return { filtered: filteredCounts([...rows.values()]), visible: visibleKeys.size };
   });
 
   function toggle(entry: SourceChecklistRow): void {
@@ -196,9 +260,11 @@
       }
       const beforeRecipes = new Set(userState.state.progress.almanacRecipes);
       const undo = entry.toggle();
-      const updated = buildSourceChecklist(userState.progressContext, locale).find(
-        ({ key }) => key === entry.key,
-      );
+      const updated = buildSourceChecklist(
+        userState.progressContext,
+        locale,
+        userState.state.showSpoilers,
+      ).find(({ key }) => key === entry.key);
       if (entry.reportCategory === "quest") {
         const added = [...userState.state.progress.almanacRecipes].filter(
           (id) => !beforeRecipes.has(id),
@@ -214,7 +280,7 @@
         showUndoToast(entry.name, updated?.completed ?? false, undo);
       }
       if (updated?.completed) {
-        if (!userState.state.showCompleted) leaving.markLeaving(entry.key);
+        leaving.markLeaving(entry.key);
         if (isCategoryComplete(entry.category, userState.progressContext)) celebrateCategory();
         else if (completesSource) celebrate();
       }
@@ -232,130 +298,135 @@
 
 <SpoilerGuardDialog {guard} />
 
-{#each showsCompletedRows() ? [false, true] : [false] as completed (completed)}
-  <div
-    class="flex flex-col gap-6"
-    data-testid={completed ? "everything-completed" : undefined}
-    hidden={completed && !hasCompletedContent}
-  >
-    {#if completed}<CompletedHeading class="px-2 pt-2" />{/if}
-    {#each groups as { group, sections: allGroupSections } (group)}
-      {@const groupSections = allGroupSections.filter(
-        (entry) => completed === isInCompletedList(entry),
-      )}
-      {@const hasProgress = group === "progress" && progressCompletions.includes(completed)}
-      {@const hasOutstanding =
-        allGroupSections.some((entry) => !isInCompletedList(entry)) ||
-        (group === "progress" && progressCompletions.includes(false))}
-      {@const groupId = `sources-${group}${completed && hasOutstanding ? "-completed" : ""}`}
-      {#if groupSections.length > 0 || hasProgress}
-        <GroupSection
-          id={groupId}
-          name={sourceTypeLabel(group, locale)}
-          {completed}
-          revealTarget={anchor === groupId ||
-          groupSections.some(
-            ({ section }) =>
-              anchor === section.id || (section.id === "progress" && anchor === "source-progress"),
-          )
-            ? anchor
-            : ""}
-        >
-          {#snippet icon()}
-            <Icon.Source
-              type={allGroupSections[0]?.section.source?.type ?? "default"}
-              class="size-4 text-muted-foreground"
-            />
-          {/snippet}
+{#snippet sourceGroups(completed: boolean)}
+  {#each groups as { group, sections: allGroupSections } (group)}
+    {@const groupSections = allGroupSections.filter(
+      (entry) => completed === isInCompletedList(entry),
+    )}
+    {@const hasProgress = group === "progress" && progressCompletions.includes(completed)}
+    {@const hasOutstanding =
+      allGroupSections.some((entry) => !isInCompletedList(entry)) ||
+      (group === "progress" && progressCompletions.includes(false))}
+    {@const groupId = `sources-${group}${completed && hasOutstanding ? "-completed" : ""}`}
+    {#if groupSections.length > 0 || hasProgress}
+      <GroupSection
+        id={groupId}
+        name={sourceTypeLabel(group, locale)}
+        {completed}
+        revealTarget={anchor === groupId ||
+        groupSections.some(
+          ({ section }) =>
+            anchor === section.id || (section.id === "progress" && anchor === "source-progress"),
+        )
+          ? anchor
+          : ""}
+      >
+        {#snippet icon()}
+          <Icon.Source
+            type={allGroupSections[0]?.section.source?.type ?? "default"}
+            class="size-4 text-muted-foreground"
+          />
+        {/snippet}
 
-          {#each groupSections as { section, name, spoilered, visibleRows } (section.id)}
-            <div
-              id={section.id === "progress" ? "source-progress" : section.id}
-              class="scroll-mt-32"
-              data-source-section
-              data-source-status={spoilered ? undefined : section.state}
-            >
-              <SpoilerSection {name} {spoilered}>
-                <ExpandableSection
-                  {locale}
-                  depth={1}
-                  count={section.completed}
-                  total={section.total}
-                  forceOpen={anchor === section.id ||
-                    (section.id === "progress" && anchor === "source-progress") ||
-                    !!toolbarState.searchQuery}
-                  name={m.everything_source_heading({
-                    name,
-                    state:
-                      section.state === "done"
-                        ? m.everything_source_done()
-                        : section.state === "now"
-                          ? m.availability_now()
-                          : m.availability_later(),
-                  })}
+        {#each groupSections as { section, name, spoilered, visibleRows } (section.id)}
+          <div
+            id={section.id === "progress" ? "source-progress" : section.id}
+            class="scroll-mt-32"
+            data-source-section
+            data-source-status={spoilered ? undefined : section.state}
+          >
+            <SpoilerSection {name} {spoilered}>
+              <ExpandableSection
+                {locale}
+                depth={1}
+                progress={sectionProgress(section)}
+                forceOpen={anchor === section.id ||
+                  (section.id === "progress" && anchor === "source-progress") ||
+                  !!toolbarState.searchQuery}
+                name={m.everything_source_heading({
+                  name,
+                  state:
+                    section.state === "done"
+                      ? m.everything_source_done()
+                      : shelfLabel(stateShelf(section.state)),
+                })}
+              >
+                <ShelfRows
+                  forceOpen={!!toolbarState.searchQuery}
+                  level={4}
+                  getKey={({ entry }) => entry.key}
+                  getShelf={rowShelfOf}
+                  isLeaving={({ entry }) => leaving.has(entry.key)}
+                  items={visibleRows}
                 >
-                  <TrackerRowList getKey={({ entry }) => entry.key} items={visibleRows}>
-                    {#snippet row({ entry, sources, window })}
-                      {@const spoileredRow =
-                        entry.spoilered ||
-                        !isConditionVisible(entry.visibility, userState.progressionState)}
-                      <TrackerRow
-                        category={entry.category}
-                        fact={entry.fact}
-                        display={entry.questState === "obtained" && !spoileredRow
-                          ? { mode: "obtained" }
-                          : trackerRowDisplay({
-                              completed: entry.completed,
-                              spoilered: spoileredRow,
-                              leaving: leaving.has(entry.key),
-                              dimmed:
-                                !entry.completed &&
-                                window === "later" &&
-                                userState.state.availabilityWindows.some((w) => w !== "later"),
-                            })}
-                        name={entry.name}
-                        variant={entry.category === "almanac" ? entry.subtitle : undefined}
-                        subtitle={[categoryForKey(entry.category, locale).name, entry.subtitle]
-                          .filter(Boolean)
-                          .join(" · ")}
-                        reportCategory={entry.reportCategory}
-                        reportEntityId={entry.id}
-                        sprite={entry.sprite}
-                        spriteClass="text-primary"
-                        {sources}
-                        segmentLookups={{ ...lookups, entityVisibility: entry.visibility }}
-                        onToggle={() => toggle(entry)}
-                      />
-                    {/snippet}
-                  </TrackerRowList>
-                </ExpandableSection>
-              </SpoilerSection>
-            </div>
-          {/each}
+                  {#snippet row({ entry, sources })}
+                    {@const spoileredRow =
+                      entry.spoilered ||
+                      !isConditionVisible(entry.visibility, userState.progressionState)}
+                    <TrackerRow
+                      category={entry.category}
+                      fact={entry.fact}
+                      display={entry.questState === "obtained" && !spoileredRow
+                        ? { mode: "obtained" }
+                        : trackerRowDisplay({
+                            completed: entry.completed,
+                            spoilered: spoileredRow,
+                            leaving: leaving.has(entry.key),
+                          })}
+                      name={entry.name}
+                      variant={entry.category === "almanac" ? entry.subtitle : undefined}
+                      subtitle={[categoryForKey(entry.category, locale).name, entry.subtitle]
+                        .filter(Boolean)
+                        .join(" · ")}
+                      reportCategory={entry.reportCategory}
+                      reportEntityId={entry.id}
+                      sprite={entry.sprite}
+                      spriteClass="text-primary"
+                      {sources}
+                      segmentLookups={{ ...lookups, entityVisibility: entry.visibility }}
+                      onToggle={() => toggle(entry)}
+                    />
+                  {/snippet}
+                </ShelfRows>
+              </ExpandableSection>
+            </SpoilerSection>
+          </div>
+        {/each}
 
-          {#if group === "progress"}
-            <div class="mt-2 flex flex-col gap-6">
-              {#if !toolbarState.searchQuery && completed === userState.state.progress.mineFloor >= getMaxMineFloor()}
-                <MineFloorRecord
-                  compact
-                  biomes={trackerData.mines.biomes}
-                  floor={userState.state.progress.mineFloor}
-                  {locale}
-                  onChange={(floor) => userState.setMineFloor(floor)}
-                />
-              {/if}
-              {#each ["skills", "renown", "villagers"] as const as category (category)}
-                <CategorySection
-                  key={category}
-                  {locale}
-                  progress={progress[category]}
-                  {completed}
-                />
-              {/each}
-            </div>
-          {/if}
-        </GroupSection>
-      {/if}
-    {/each}
-  </div>
-{/each}
+        {#if group === "progress"}
+          <div class="mt-2 flex flex-col gap-6">
+            {#if !toolbarState.searchQuery && completed === userState.state.progress.mineFloor >= getMaxMineFloor()}
+              <MineFloorRecord
+                compact
+                biomes={trackerData.mines.biomes}
+                floor={userState.state.progress.mineFloor}
+                {locale}
+                onChange={(floor) => userState.setMineFloor(floor)}
+              />
+            {/if}
+            {#each ["skills", "renown", "villagers"] as const as category (category)}
+              <CategorySection key={category} {locale} progress={progress[category]} {completed} />
+            {/each}
+          </div>
+        {/if}
+      </GroupSection>
+    {/if}
+  {/each}
+{/snippet}
+
+<div class="flex flex-col gap-6">
+  {@render sourceGroups(false)}
+</div>
+
+<div class="flex flex-col gap-6" data-testid="everything-completed" hidden={!hasCompletedContent}>
+  <ShelfFold
+    explains
+    forceOpen={!!toolbarState.searchQuery || anchorInCompleted}
+    level={2}
+    shelf="completed"
+  >
+    <div class="flex flex-col gap-6">
+      {@render sourceGroups(true)}
+    </div>
+  </ShelfFold>
+</div>
