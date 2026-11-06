@@ -113,7 +113,7 @@
   </label>
   <PageSearchStatus locale={data.locale} />
   {#if grouping === "source"}
-    <SourceContent locale={data.locale} {anchor} />
+    <SourceContent locale={data.locale} {anchor} {progress} />
   {:else}
     {#each orderedCategories as category (category)}
       <CategorySection key={category} locale={data.locale} progress={progress[category]} />

@@ -6,10 +6,9 @@
   import { Icon } from "#lib/components/icon/index.js";
   import Spoiler from "#lib/components/spoiler.svelte";
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
-  import { celebrateCategory } from "#lib/effects/celebrate.js";
-  import { isCategoryComplete } from "#lib/engine/categories.js";
   import { perkUnlocksFor } from "#lib/engine/perk-unlocks.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
@@ -98,9 +97,9 @@
 
   function togglePerk(perk: (typeof perks)[number]): void {
     const toggle = (): void => {
-      const wasDone = isCategoryComplete("skills", userState.progressContext);
-      userState.togglePerk(perk.id);
-      if (!wasDone && isCategoryComplete("skills", userState.progressContext)) celebrateCategory();
+      celebrateProgress("skills", () => {
+        userState.togglePerk(perk.id);
+      });
     };
     if (perk.spoilered) spoilerGuard.requestGuardedAction(perk.tier.condition, toggle);
     else toggle();

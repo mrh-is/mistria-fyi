@@ -6,7 +6,7 @@ import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
-import SourceContent from "./source-content.svelte";
+import SourceContent from "./source-content.test-harness.svelte";
 
 import type { StoreId } from "#lib/types/tracker-data.js";
 

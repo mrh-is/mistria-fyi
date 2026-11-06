@@ -3,10 +3,10 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { addProgress, rowShelf } from "#lib/engine/shelves.js";
@@ -83,18 +83,17 @@
                     subtitle={itemRow.subtitle}
                     onToggle={() => {
                       sectionGroupItem?.hold();
-                      props.toggleCompletion(animal.id, itemRow.id);
+                      celebrateProgress(
+                        "animals",
+                        () => {
+                          props.toggleCompletion(animal.id, itemRow.id);
+                        },
+                        [() => props.isAnimalComplete(animal.id)],
+                      );
                       const completed = props.completionCheck(animal.id, itemRow.id);
                       showUndoToast(itemRow.name, completed, () => {
                         props.toggleCompletion(animal.id, itemRow.id);
                       });
-                      if (completed) {
-                        if (props.areAllAnimalsComplete()) {
-                          celebrateCategory();
-                        } else if (props.isAnimalComplete(animal.id)) {
-                          celebrate();
-                        }
-                      }
                     }}
                     sources={itemRow.sources}
                   />

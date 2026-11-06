@@ -16,7 +16,6 @@ const horsepower = "horsepower" as PerkId;
 
 async function openMountSection(): Promise<void> {
   renderWithFeedback(MountAppearancesSection, {
-    areAllAnimalsComplete: () => false,
     locale: "en",
   });
   const mountName = new RegExp(`^${RegExp.escape(getName("ui", "mount", "en"))},`);
