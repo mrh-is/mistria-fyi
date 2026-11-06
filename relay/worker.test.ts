@@ -83,12 +83,16 @@ export class TestControl extends RelayControl {
         gateRequests = 0;
         pauseCheck = undefined;
         throwNext = undefined;
+        pendingFailures.clear();
+        lastFailureFlush = 0;
       }
       if (action.pausedUntil) await this.ctx.storage.put("pausedUntil", action.pausedUntil);
       if (action.pauseCheckAge && pauseCheck) pauseCheck.checkedAt = Date.now() - action.pauseCheckAge;
       if (action.requests) return Response.json({ mailboxRequests, gateRequests });
       if (action.usage) await this.ctx.storage.put("usage", action.usage);
       if (action.failures) await this.ctx.storage.put("failures", action.failures);
+      if (action.expireFailureFlush) lastFailureFlush = 0;
+      if (action.alarmAt) return Response.json({ alarm: await this.ctx.storage.getAlarm() });
       if (action.alarm) await this.alarm();
       return Response.json(Object.fromEntries(await this.ctx.storage.list()));
     }
@@ -639,7 +643,11 @@ describe("sync relay in the local Workers runtime", () => {
     expect(await status(create(mf, mailboxId, TOKEN, "invalid-input-secret"))).toBe(503);
     expect(await status(create(mf, mailboxId, TOKEN, "missing-input-secret"))).toBe(503);
     expect(await inspect(mf)).toEqual({});
-    expect(await failures(mf, 2)).toEqual({ [today()]: { "siteverify-secret-rejected": 2 } });
+    // The second failure waits in the isolate until the flush interval passes.
+    expect(await failures(mf, 1)).toEqual({ [today()]: { "siteverify-secret-rejected": 1 } });
+    await inspectControl(mf, { expireFailureFlush: true });
+    expect(await status(create(mf, mailboxId, TOKEN, "invalid-input-secret"))).toBe(503);
+    expect(await failures(mf, 3)).toEqual({ [today()]: { "siteverify-secret-rejected": 3 } });
     expect(await inspectControl(mf)).not.toHaveProperty("usage");
   });
 
@@ -862,12 +870,32 @@ describe("sync relay in the local Workers runtime", () => {
   it("serves the failure counts only to the admin & refuses kinds off the allowlist", async () => {
     const mf = runtime();
     const stub = await controlStub(mf);
+    for (const body of [
+      "free text",
+      "{}",
+      JSON.stringify({ "free text": 1 }),
+      JSON.stringify({ "code-error": 0 }),
+      JSON.stringify({ "code-error": 1.5 }),
+      JSON.stringify({ "code-error": "1" }),
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- Each refusal must leave storage untouched.
+      expect(await status(stub.fetch("https://control/failure", { body, method: "POST" }))).toBe(
+        400,
+      );
+    }
+    expect(await inspectControl(mf)).toEqual({});
     expect(
-      await status(stub.fetch("https://control/failure", { body: "free text", method: "POST" })),
-    ).toBe(400);
-    expect(
-      await status(stub.fetch("https://control/failure", { body: "code-error", method: "POST" })),
+      await status(
+        stub.fetch("https://control/failure", {
+          body: JSON.stringify({ "code-error": 1 }),
+          method: "POST",
+        }),
+      ),
     ).toBe(204);
+    // Counting schedules the alarm that drops today's counts once they leave the window.
+    expect(await inspectControl(mf, { alarmAt: true })).toEqual({
+      alarm: Date.parse(today()) + 14 * DAY,
+    });
     const old = new Date(Date.now() - 14 * DAY).toISOString().slice(0, 10);
     const kept = new Date(Date.now() - 13 * DAY).toISOString().slice(0, 10);
     const state = (await inspectControl(mf)) as { failures: Record<string, unknown> };
@@ -886,6 +914,10 @@ describe("sync relay in the local Workers runtime", () => {
     const read = await request(mf, "GET", "admin/failures", ADMIN);
     expect(read.status).toBe(200);
     expect(await read.json()).toEqual({
+      failures: { [kept]: { "object-transient": 2 }, [today()]: { "code-error": 1 } },
+    });
+    // The control alarm drops expired days without waiting for a failure or a read.
+    expect(await inspectControl(mf, { alarm: true })).toEqual({
       failures: { [kept]: { "object-transient": 2 }, [today()]: { "code-error": 1 } },
     });
   });

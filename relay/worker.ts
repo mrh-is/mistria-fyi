@@ -50,6 +50,10 @@ type FailureCounts = Record<string, Partial<Record<FailureKind, number>>>;
 /** Carries a kind from a Durable Object to the Worker, which strips it before responding. */
 const FAILURE_HEADER = "X-Relay-Failure";
 const FAILURE_DAYS = 14;
+/** An isolate sends its pending counts at most this often, so an outage can't flood the singleton. */
+const FAILURE_FLUSH_INTERVAL = 10_000;
+/** The most one batch may add to a kind; an isolate can't plausibly fail more in one interval. */
+const MAX_FAILURE_BATCH = 1_000_000;
 
 /** What each follower socket carries through hibernation. */
 interface SocketAttachment {
@@ -78,6 +82,9 @@ const encoder = new TextEncoder();
 
 /** This isolate's last look at the kill switch; `until` is 0 when no pause was ever set. */
 let pauseCheck: undefined | { checkedAt: number; until: number };
+/** Failures this isolate hasn't sent yet, & when it last sent some. */
+const pendingFailures = new Map<FailureKind, number>();
+let lastFailureFlush = 0;
 
 function json(state: RelayState, status = 200): Response {
   return Response.json({ state }, { status });
@@ -135,10 +142,24 @@ function utcDate(time: number): string {
   return new Date(time).toISOString().slice(0, 10);
 }
 
-/** Best effort: a failed count never changes the player's response. */
-async function recordFailure(env: Env, kind: FailureKind): Promise<void> {
+/**
+ * Counts a failure in this isolate & sends the pending batch when the last send is old enough.
+ * Best effort: a lost batch never changes the player's response, & counts still pending when the
+ * isolate ends are lost.
+ */
+function recordFailure(env: Env, ctx: ExecutionContext, kind: FailureKind): void {
+  pendingFailures.set(kind, (pendingFailures.get(kind) ?? 0) + 1);
+  const now = Date.now();
+  if (now >= lastFailureFlush && now < lastFailureFlush + FAILURE_FLUSH_INTERVAL) return;
+  lastFailureFlush = now;
+  const batch = JSON.stringify(Object.fromEntries(pendingFailures));
+  pendingFailures.clear();
+  ctx.waitUntil(sendFailures(env, batch));
+}
+
+async function sendFailures(env: Env, batch: string): Promise<void> {
   try {
-    await control(env).fetch("https://control/failure", { body: kind, method: "POST" });
+    await control(env).fetch("https://control/failure", { body: batch, method: "POST" });
   } catch {
     // The singleton may share the outage being counted.
   }
@@ -390,7 +411,7 @@ export default {
     const reported = headers.get(FAILURE_HEADER);
     headers.delete(FAILURE_HEADER);
     failure ??= isFailureKind(reported) ? reported : undefined;
-    if (failure) ctx.waitUntil(recordFailure(env, failure));
+    if (failure) recordFailure(env, ctx, failure);
     headers.set("Cache-Control", "no-store");
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Access-Control-Allow-Origin", "*");
@@ -556,10 +577,12 @@ export class Mailbox implements DurableObject {
       uploadCount: count + 1,
       uploadDay: day,
     };
+    // Close expired followers first, so no deadline is already past.
+    const sockets = this.sweepSockets(now, true);
     await this.ctx.storage.transaction(async (storage) => {
       await storage.put({ envelope: bytes, meta: next });
       // Keep an earlier socket deadline; the alarm closes expired followers too.
-      await storage.setAlarm(Math.min(now + ENVELOPE_TTL, this.sweepSockets(now, false).next));
+      await storage.setAlarm(Math.min(now + ENVELOPE_TTL, sockets.next));
     });
     this.broadcast(Mailbox.envelopeMessage(next, bytes));
     return json("stored");
@@ -631,6 +654,8 @@ export class Mailbox implements DurableObject {
     let next = Number.POSITIVE_INFINITY;
     let open = 0;
     for (const socket of this.ctx.getWebSockets()) {
+      // A socket already closing, such as after a failed send, no longer holds a place.
+      if (socket.readyState !== WebSocket.READY_STATE_OPEN) continue;
       const attachment = socket.deserializeAttachment() as null | SocketAttachment;
       const deadline = (attachment?.openedAt ?? 0) + SOCKET_LIFETIME;
       if (close && now >= deadline) {
@@ -708,7 +733,7 @@ export class RelayControl implements DurableObject {
     }
     return this.ctx.blockConcurrencyWhile(async () => {
       const now = Date.now();
-      if (path === "/failure") return this.countFailure(await request.text(), now);
+      if (path === "/failure") return this.countFailures(await smallJson(request), now);
       if (path === "/failures") return Response.json({ failures: await this.failures(now) });
       if (path === "/pause") {
         const body = await smallJson(request);
@@ -754,14 +779,45 @@ export class RelayControl implements DurableObject {
     return Object.fromEntries(Object.entries(stored).filter(([date]) => date >= oldest));
   }
 
-  private async countFailure(kind: string, now: number): Promise<Response> {
+  /** Adds a batch of `{ kind: count }` to today, accepting only allowlisted kinds. */
+  private async countFailures(
+    batch: null | Record<string, unknown>,
+    now: number,
+  ): Promise<Response> {
+    const entries = Object.entries(batch ?? {});
     // The allowlist is checked again here, so nothing else can reach storage under this key.
-    if (!isFailureKind(kind)) return json("bad-request", 400);
+    if (
+      entries.length === 0 ||
+      !entries.every(
+        ([kind, count]) =>
+          isFailureKind(kind) &&
+          Number.isSafeInteger(count) &&
+          (count as number) > 0 &&
+          (count as number) <= MAX_FAILURE_BATCH,
+      )
+    ) {
+      return json("bad-request", 400);
+    }
     const failures = await this.failures(now);
     const today = utcDate(now);
-    failures[today] = { ...failures[today], [kind]: (failures[today]?.[kind] ?? 0) + 1 };
-    await this.ctx.storage.put("failures", failures);
+    const counts = { ...failures[today] };
+    for (const [kind, count] of entries as [FailureKind, number][]) {
+      counts[kind] = (counts[kind] ?? 0) + count;
+    }
+    failures[today] = counts;
+    const pruneAt = RelayControl.pruneAt(failures);
+    await this.ctx.storage.transaction(async (storage) => {
+      await storage.put("failures", failures);
+      const alarm = await storage.getAlarm();
+      if (alarm === null || alarm > pruneAt) await storage.setAlarm(pruneAt);
+    });
     return new Response(null, { status: 204 });
+  }
+
+  /** When the oldest kept day's counts fall out of the {@link FAILURE_DAYS} window. */
+  private static pruneAt(failures: FailureCounts): number {
+    const oldest = Math.min(...Object.keys(failures).map((date) => Date.parse(date)));
+    return oldest + FAILURE_DAYS * DAY;
   }
 
   alarm(): Promise<void> {
@@ -774,6 +830,17 @@ export class RelayControl implements DurableObject {
           clients: {},
           hour: Math.floor(Date.now() / HOUR),
         });
+      }
+      // Drop counts past the window even when no failure or admin read comes along to do it.
+      const stored = await this.ctx.storage.get<FailureCounts>("failures");
+      if (stored) {
+        const failures = await this.failures(Date.now());
+        if (Object.keys(failures).length === 0) {
+          await this.ctx.storage.delete("failures");
+        } else {
+          await this.ctx.storage.put("failures", failures);
+          await this.ctx.storage.setAlarm(RelayControl.pruneAt(failures));
+        }
       }
     });
   }
