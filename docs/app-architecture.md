@@ -95,7 +95,7 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 
 - **`mistria-fyi:progress`** holds `SerializedState`, which is also the JSON backup format:
-  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`, currently `6`.
+  - `version`, a positive integer: `CURRENT_SERIALIZATION_VERSION`.
   - `lastImport`: the last manual save import's timestamp, identity (filename number plus creation
     version), & player/farm display names, or `null`. Version 1 migrates to `null` without inventing
     history. Missing or malformed game metadata remains unknown and never blocks importing progress.

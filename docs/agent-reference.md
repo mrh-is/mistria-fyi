@@ -222,8 +222,8 @@ rooted at the original checkout would otherwise miss.
 
 These rules don’t cover shell commands while Claude Code’s sandbox is off, and Codex & Copilot have
 no equivalent. Both Claude Code (`sandbox.enabled` merges `Read` deny rules into the sandbox) &
-Codex (a `[permissions.<name>]` profile with `"deny"` paths) can deny shell reads; turning either on
-is tracked in #417. Until then, the rules in `AGENTS.md` stand for every client.
+Codex (a `[permissions.<name>]` profile with `"deny"` paths) can deny shell reads, but neither is
+on, so the rules in `AGENTS.md` stand for every client.
 
 ### CI checks
 

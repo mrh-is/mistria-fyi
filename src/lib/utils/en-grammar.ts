@@ -43,7 +43,7 @@ export function formatBiomeName(
 /**
  * Stores whose English name reads as a common noun and takes “the” (“the General Store”);
  * possessive & personal stalls (“Merri's Stall”) don't. The pipeline throws on a store it hasn't
- * reviewed (`KNOWN_STORES` in `pipeline/src/extractors/stores-meta.ts`), so a new one lands here.
+ * reviewed (`KNOWN_STORES` in `pipeline/src/overrides/game-facts.ts`), so a new one lands here.
  */
 const STORES_WITH_ARTICLE: ReadonlySet<string> = new Set([
   "blacksmith",

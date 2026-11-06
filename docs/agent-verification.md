@@ -171,7 +171,8 @@ a change affects its spacing.
 ### Visual exemptions
 
 Documentation-only, pipeline-only, & test-only changes don’t need visual verification. Changes to
-engine logic (`src/lib/engine/`) don’t either, unless they affect rendered output.
+engine logic (`src/lib/engine/`) don’t either, unless they affect rendered output. Don’t attach
+screenshots to a PR that meets an exemption; they give a reviewer nothing to judge.
 
 Accessibility-only changes don’t need visual checks or screenshot attachments when visible content,
 layout, focus behavior, & interactions stay unchanged. For example, adding a variant to a checkbox’s
