@@ -686,13 +686,16 @@ describe("a save it can't use", () => {
   it.each([
     { kind: "update-computer", version: 0 },
     { kind: "update-here", version: 2 },
-  ])("shows $kind for envelope version $version & keeps progress", async ({ kind, version }) => {
-    const relay = fakeRelay(await envelope(4, saveBytes(SEASON), { version }));
-    const { receiver } = await load(before, relay);
-    receiver.start();
-    await untilKind(receiver, kind);
-    expectNothingApplied();
-  });
+  ] as const)(
+    "shows $kind for envelope version $version & keeps progress",
+    async ({ kind, version }) => {
+      const relay = fakeRelay(await envelope(4, saveBytes(SEASON), { version }));
+      const { receiver } = await load(before, relay);
+      receiver.start();
+      await untilKind(receiver, kind);
+      expectNothingApplied();
+    },
+  );
 
   it("shows unreadable for a save this build can't read, keeps progress, & waits", async () => {
     const garbage = Uint8Array.from([1, 2, 3, 4]);
