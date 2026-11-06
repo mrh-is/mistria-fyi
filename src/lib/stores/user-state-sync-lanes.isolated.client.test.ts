@@ -17,6 +17,7 @@ interface StoredBlob {
   lastImport: null | { farmName: null | string };
   local?: Record<string, unknown>;
   progress: { almanac: string[]; renown: number };
+  worldState: { season: string; weather: string };
 }
 
 function blob(local?: Record<string, unknown>, renown = 7): string {
@@ -40,6 +41,7 @@ function blob(local?: Record<string, unknown>, renown = 7): string {
 
 const SAVE: SyncedSave = {
   completed: { almanac: new Set([SAVED_ITEM]) },
+  day: { season: "fall", weather: "special" },
   metadata: {
     farmName: "Sunny Meadow",
     identity: { creationVersion: null, saveNumber: "1315159680" },
@@ -93,6 +95,7 @@ describe("starting a syncing lane", () => {
     const after = stored();
     expect(after.progress.almanac).toEqual([SAVED_ITEM]);
     expect(after.progress.renown).toBe(0);
+    expect(after.worldState).toEqual({ season: "fall", weather: "special" });
     expect(after.lastImport?.farmName).toBe("Sunny Meadow");
     expect(after.local).toEqual({
       farmSwitchBackup: backup,
@@ -110,6 +113,23 @@ describe("starting a syncing lane", () => {
     const userState = await openStore(blob());
     expect(userState.syncLane).toBeUndefined();
     expect(stored().local).toBeUndefined();
+  });
+
+  it("keeps the clock's values that the first save can't say", async () => {
+    const userState = await openStore(blob());
+    userState.setSeason("summer");
+    userState.setWeather("inclement");
+
+    const day = { season: "fall", weather: undefined } as const;
+    await userState.startSyncLane({ kind: "computer" }, { ...SAVE, day });
+    expect(stored().worldState).toEqual({ season: "fall", weather: "inclement" });
+
+    await userState.stopSyncing();
+    await userState.startSyncLane(
+      { kind: "computer" },
+      { ...SAVE, day: { season: undefined, weather: undefined } },
+    );
+    expect(stored().worldState).toEqual({ season: "fall", weather: "inclement" });
   });
 
   it("leaves the lane & key out of a backup", async () => {

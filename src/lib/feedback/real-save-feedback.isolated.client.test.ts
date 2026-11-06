@@ -123,6 +123,7 @@ describe.skipIf(files.length === 0)("real saves in public feedback (local assets
         const outcome = await userState.applySyncedSave({
           ...stampOf(save),
           answers,
+          day: save.day,
           extraction: save.extraction,
           metadata: save.metadata,
           wantsLane: () => true,

@@ -467,6 +467,13 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
   above P to P, so ticks survive the rollback itself & the next disagreeing save wins & tells.
   Rollback is supported but rare, so nothing more elaborate.
 
+### The day
+
+Every applied save also sets the season & weather, unless the player kept their progress over an
+older save. The day isn’t a progress fact, so it has no provenance & asks no questions: the newest
+applied save wins, and a clock change holds until the next one. It stays on the device that applies
+the save, so the protocol doesn’t change. An unreadable value leaves the current one alone.
+
 ### Resolved diffs
 
 A memory of resolved diffs makes “keep mine” stick until the save’s value changes. Editing that

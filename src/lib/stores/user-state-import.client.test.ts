@@ -253,6 +253,28 @@ describe("restoreBackup validation", () => {
   });
 });
 
+describe("mergeFromSave day", () => {
+  it("sets the season & weather from the save, and a clock change holds afterwards", async () => {
+    await userState.mergeFromSave({}, { day: { season: "fall", weather: "special" } });
+    expect(userState.state.worldState).toEqual({ season: "fall", weather: "special" });
+
+    userState.setSeason("winter");
+    expect(userState.state.worldState).toEqual({ season: "winter", weather: "calm" });
+  });
+
+  it("keeps the current weather when the save's is unreadable", async () => {
+    userState.setWeather("inclement");
+    await userState.mergeFromSave({}, { day: { season: "summer", weather: undefined } });
+    expect(userState.state.worldState).toEqual({ season: "summer", weather: "inclement" });
+  });
+
+  it("leaves the day alone when the import carries none", async () => {
+    userState.setSeason("summer");
+    await userState.mergeFromSave({});
+    expect(userState.state.worldState.season).toBe("summer");
+  });
+});
+
 describe("mergeFromSave numeric domains", () => {
   it("never installs out-of-domain levels from a native save", async () => {
     const { completed, warnings } = extractSaveProgress({

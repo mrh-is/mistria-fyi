@@ -3,16 +3,13 @@
  * it has learned to expect between saves. Pure: the store keeps the result beside the receipt. See
  * `docs/sync.md` § Freshness.
  */
-import { seasonFromOrdinal } from "#lib/engine/domain-primitives.js";
-import { GAME_DAY } from "#lib/engine/import-save.js";
+import { gameDateAt } from "#lib/engine/game-calendar.js";
 
-import type { Season } from "#lib/types/tracker-data.js";
+import type { GameDate } from "#lib/engine/game-calendar.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 import type { SaveBundle } from "./save-bundle.js";
 
-const DAYS_PER_SEASON = 28;
-const SEASONS_PER_YEAR = 4;
 const MS_PER_DAY = 86_400_000;
 
 /** How many gaps a device remembers, enough to span a few play sessions & the days between them. */
@@ -21,15 +18,6 @@ export const REMEMBERED_GAPS = 32;
 export const MIN_ABNORMAL_GAP_DAYS = 3;
 /** A gap is abnormal once it's this many times the longest gap the device remembers. */
 export const ABNORMAL_GAP_FACTOR = 2;
-
-/** A date on the game's calendar, as the save records it. */
-export interface GameDate {
-  /** 1 through 28. */
-  day: number;
-  season: Season;
-  /** From 1. */
-  year: number;
-}
 
 export interface SyncFreshness {
   gameDate?: GameDate;
@@ -43,13 +31,7 @@ export interface SyncFreshness {
 export function readGameDate(bundle: SaveBundle): GameDate | undefined {
   const raw = bundle.gamedata?.date;
   if (typeof raw !== "number" || !Number.isFinite(raw) || raw < 0) return undefined;
-  const days = Math.floor(raw / GAME_DAY);
-  const seasons = Math.floor(days / DAYS_PER_SEASON);
-  return {
-    day: (days % DAYS_PER_SEASON) + 1,
-    season: seasonFromOrdinal(seasons % SEASONS_PER_YEAR),
-    year: Math.floor(seasons / SEASONS_PER_YEAR) + 1,
-  };
+  return gameDateAt(raw);
 }
 
 /** The freshness after a save arrives. A save re-sent unchanged teaches nothing about gaps. */
