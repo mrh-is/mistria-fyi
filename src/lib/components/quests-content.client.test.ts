@@ -11,9 +11,10 @@ import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 describe("QuestsContent empty sections", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.loadFromStorage();
     userState.resetAll();
+    await userState.startTrackingByHand();
     userState.toggleShowSpoilers();
     toolbarState.closeSearch();
     toolbarState.resetSourceFilters();

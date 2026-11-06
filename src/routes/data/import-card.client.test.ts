@@ -13,9 +13,10 @@ import { recordKeys } from "#lib/utils/record.js";
 import ImportCard from "./import-card.svelte";
 
 // Client files share one store per worker, so each test starts from defaults (#174).
-beforeEach(() => {
+beforeEach(async () => {
   userState.loadFromStorage();
   userState.resetAll();
+  await userState.startTrackingByHand();
 });
 
 afterEach(() => {

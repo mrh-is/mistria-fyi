@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 
@@ -69,6 +69,11 @@ async function openStore(initial?: string) {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(async () => {
+  await vi.runAllTimersAsync();
   vi.useRealTimers();
 });
 
@@ -101,6 +106,7 @@ describe("starting a syncing lane", () => {
       farmSwitchBackup: backup,
       syncLane: { key: KEY, kind: "following" },
       syncPendingRetires: [RETIRE],
+      trackingLane: "sync",
     });
     expect(userState.syncLane).toEqual({ key: KEY, kind: "following" });
     expect(userState.provenanceOf(`almanac/${SAVED_ITEM}`)).toEqual({
@@ -151,7 +157,7 @@ describe("leaving a lane", () => {
     const after = stored();
     expect(after.progress.almanac).toEqual([HAND_ITEM]);
     expect(after.progress.renown).toBe(7);
-    expect(after.local).toBeUndefined();
+    expect(after.local).toEqual({ trackingLane: "manual" });
     expect(userState.syncLane).toBeUndefined();
   });
 
@@ -160,11 +166,11 @@ describe("leaving a lane", () => {
       blob({ syncLane: { code: { key: KEY, token: TOKEN }, kind: "computer" } }),
     );
     await userState.stopSyncing({ code: { key: KEY, token: TOKEN }, retire: RETIRE });
-    expect(stored().local).toEqual({ syncPendingRetires: [RETIRE] });
+    expect(stored().local).toEqual({ syncPendingRetires: [RETIRE], trackingLane: "manual" });
     expect(userState.syncPendingRetires).toEqual([RETIRE]);
 
     await userState.confirmRetired([RETIRE]);
-    expect(stored().local).toBeUndefined();
+    expect(stored().local).toEqual({ trackingLane: "manual" });
   });
 });
 
@@ -176,7 +182,7 @@ describe("Data's reset in a syncing lane", () => {
     userState.resetProgress();
     const after = stored();
     expect(after.progress.renown).toBe(0);
-    expect(after.local).toEqual({ syncLane: { kind: "computer" } });
+    expect(after.local).toEqual({ syncLane: { kind: "computer" }, trackingLane: "sync" });
     expect(userState.syncLane).toEqual({ kind: "computer" });
   });
 });
@@ -193,6 +199,7 @@ describe("codes", () => {
     expect(stored().local).toEqual({
       syncLane: { code: { key: OTHER_KEY, token: TOKEN }, kind: "computer" },
       syncPendingRetires: [RETIRE],
+      trackingLane: "sync",
     });
   });
 
@@ -204,7 +211,10 @@ describe("codes", () => {
       }),
     );
     await userState.switchFollowKey(OTHER_KEY);
-    expect(stored().local).toEqual({ syncLane: { key: OTHER_KEY, kind: "following" } });
+    expect(stored().local).toEqual({
+      syncLane: { key: OTHER_KEY, kind: "following" },
+      trackingLane: "sync",
+    });
     expect(stored().progress.renown).toBe(7);
   });
 
@@ -283,6 +293,7 @@ describe("cancelled lane changes", () => {
   it("leaves live progress alone until the lane start's write lands", async () => {
     const gate = Promise.withResolvers<undefined>();
     const userState = await openStore(blob());
+    await userState.startTrackingByHand();
     vi.stubGlobal("navigator", {
       locks: {
         request: async (_name: string, task: () => unknown) => {
@@ -305,7 +316,7 @@ describe("cancelled lane changes", () => {
     expect(userState.state.progress.renown).toBe(8);
     expect(userState.state.progress.almanac.has(HAND_ITEM)).toBe(true);
     expect(userState.syncLane).toBeUndefined();
-    expect(stored().local).toBeUndefined();
+    expect(stored().local).toEqual({ trackingLane: "manual" });
   });
 
   it("keeps the followed key when a switch is cancelled inside the lock", async () => {

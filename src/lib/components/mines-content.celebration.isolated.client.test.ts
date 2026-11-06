@@ -19,8 +19,9 @@ const spellIds = recordKeys(trackerData.mines.spells);
 const lastSpell = spellIds[0];
 const lastSpellName = getName("spells", lastSpell, "en");
 
-beforeEach(() => {
+beforeEach(async () => {
   userState.resetAll();
+  await userState.startTrackingByHand();
   userState.toggleShowSpoilers();
   userState.setMineFloor(getMaxMineFloor());
   for (const id of spellIds) if (id !== lastSpell) userState.toggleSpell(id);

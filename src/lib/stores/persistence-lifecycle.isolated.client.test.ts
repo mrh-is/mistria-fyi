@@ -237,10 +237,12 @@ describe("persistence lifecycle", () => {
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
     const incomingState = JSON.parse(userState.exportBackup()) as {
+      local?: { trackingLane: string };
       progress: { renown: number };
     };
+    incomingState.local = { trackingLane: "manual" };
     incomingState.progress.renown = 42;
-    const incoming = JSON.stringify(incomingState);
+    const incoming = JSON.stringify({ local: { trackingLane: "manual" }, ...incomingState });
     userState.setRenown(10);
     storage.setItem("mistria-fyi:progress", incoming);
     testWindow.dispatch("storage", {
@@ -265,10 +267,12 @@ describe("persistence lifecycle", () => {
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
     const incomingState = JSON.parse(userState.exportBackup()) as {
+      local?: { trackingLane: string };
       progress: { renown: number };
     };
+    incomingState.local = { trackingLane: "manual" };
     incomingState.progress.renown = 42;
-    const incoming = JSON.stringify(incomingState);
+    const incoming = JSON.stringify({ local: { trackingLane: "manual" }, ...incomingState });
     storage.setItem("mistria-fyi:progress", incoming);
     userState.setRenown(10);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
@@ -430,6 +434,7 @@ describe("persistence lifecycle", () => {
     testWindow.dispatch("storage", { key: null, newValue: null, storageArea: storage });
 
     expect(userState.persistenceFailed).toBe(false);
+    await userState.startTrackingByHand();
     userState.setRenown(3);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
@@ -566,7 +571,10 @@ describe("persistence lifecycle", () => {
     userState.loadFromStorage();
 
     expect(userState.restoreBackup(buildMinimalState(25))).toEqual({ ok: true });
-    const expected = userState.exportBackup();
+    const expected = JSON.stringify({
+      local: { trackingLane: "manual" },
+      ...(JSON.parse(userState.exportBackup()) as object),
+    });
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
@@ -700,13 +708,19 @@ describe("persistence lifecycle", () => {
 
       const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
       userState.loadFromStorage();
+      if (!failed) await userState.startTrackingByHand();
       userState.setRenown(9);
 
       vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
       await vi.runAllTimersAsync();
 
       expect(storage.getItem("mistria-fyi:progress")).toBe(
-        failed ? stored : userState.exportBackup(),
+        failed
+          ? stored
+          : JSON.stringify({
+              local: { trackingLane: "manual" },
+              ...(JSON.parse(userState.exportBackup()) as object),
+            }),
       );
       expect(JSON.parse(storage.getItem("mistria-fyi:progress") ?? "null")).toMatchObject({
         progress: { renown: failed ? 25 : 9 },
@@ -735,8 +749,18 @@ describe("persistence lifecycle", () => {
 
     expect(userState.persistenceFailureGeneration).toBe(0);
 
+    await userState.startTrackingByHand();
+
     // Switch to failing storage
-    vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi:progress": stored }));
+    vi.stubGlobal(
+      "localStorage",
+      failingStorage({
+        "mistria-fyi:progress": JSON.stringify({
+          ...(JSON.parse(stored) as object),
+          local: { trackingLane: "manual" },
+        }),
+      }),
+    );
 
     // Trigger a state change that fires the auto-save effect
     userState.setRenown(1);
@@ -765,8 +789,17 @@ describe("persistence lifecycle", () => {
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
+    await userState.startTrackingByHand();
 
-    vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi:progress": stored }));
+    vi.stubGlobal(
+      "localStorage",
+      failingStorage({
+        "mistria-fyi:progress": JSON.stringify({
+          ...(JSON.parse(stored) as object),
+          local: { trackingLane: "manual" },
+        }),
+      }),
+    );
     userState.setRenown(1);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
@@ -787,8 +820,17 @@ describe("persistence lifecycle", () => {
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
+    await userState.startTrackingByHand();
 
-    vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi:progress": stored }));
+    vi.stubGlobal(
+      "localStorage",
+      failingStorage({
+        "mistria-fyi:progress": JSON.stringify({
+          ...(JSON.parse(stored) as object),
+          local: { trackingLane: "manual" },
+        }),
+      }),
+    );
 
     // First failure
     userState.setRenown(1);

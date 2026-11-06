@@ -1,3 +1,4 @@
+import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
 import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
 import { isCategoryComplete } from "#lib/engine/categories.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -20,8 +21,10 @@ export function celebrateProgress<Result>(
   const result = action();
   if (!categoryWasComplete && isCategoryComplete(category, userState.progressContext)) {
     celebrateCategory();
+    void trackingReminders.checkInstall("milestone");
   } else if (sections.some((isComplete, index) => !sectionsWereComplete[index] && isComplete())) {
     celebrate();
+    void trackingReminders.checkInstall("milestone");
   }
   return result;
 }

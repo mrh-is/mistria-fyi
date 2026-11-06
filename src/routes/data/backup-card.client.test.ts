@@ -14,8 +14,9 @@ async function restoreFromFile(file: File) {
 }
 
 // Client files share one store per worker, so each test starts from defaults (#174).
-beforeEach(() => {
+beforeEach(async () => {
   userState.resetAll();
+  await userState.startTrackingByHand();
 });
 
 afterEach(() => {

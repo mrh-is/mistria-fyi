@@ -63,7 +63,9 @@
     {:else}
       <GotItNote locale={data.locale} />
       <SyncTroubleNote />
-      <WelcomeCard />
+      {#if userState.trackingLane === undefined && !userState.hasAnyProgress}
+        <WelcomeCard />
+      {/if}
       <CategoryGrid progress={allProgress} />
       <a
         class="everything-link"

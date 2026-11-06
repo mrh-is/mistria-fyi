@@ -14,8 +14,9 @@ import { recordEntries } from "#lib/utils/record.js";
 import type { ItemId } from "#lib/types/tracker-data.js";
 
 describe("AlmanacContent", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.resetAll();
+    await userState.startTrackingByHand();
     toolbarState.closeSearch();
   });
 

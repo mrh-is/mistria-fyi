@@ -121,6 +121,18 @@ export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   // Version 8 retires the row windows & the “Completed” switch, which the shelves replace. Launch
   // blobs carried `showCompleted`; no later format declares either field.
   8: ({ availabilityWindows: _windows, showCompleted: _completed, ...document }) => document,
+  // Version 9 records this device's tracking lane, which must be chosen before anything is checked
+  // off by hand. A device with a sync lane is on the sync lane; any other device that stored
+  // progress was tracking by hand. One with nothing stored chooses when it first checks something.
+  9: (document) => {
+    const local = isPlainObject(document.local) ? document.local : {};
+    if (local.trackingLane !== undefined) return document;
+    if (isPlainObject(local.syncLane)) {
+      return { ...document, local: { ...local, trackingLane: "sync" } };
+    }
+    if (!storesAnyFact(document)) return document;
+    return { ...document, local: { ...local, trackingLane: "manual" } };
+  },
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -144,6 +156,13 @@ function storedFactKeys({ progress, retained }: Pick<LoadedProgress, "progress" 
     }
   }
   return keys;
+}
+
+/** Whether a migrated document holds any progress fact, read the way hydration reads it. */
+function storesAnyFact(document: StoredDocument): boolean {
+  if (!isPlainObject(document.progress)) return false;
+  const read = v.safeParse(RepairBlobSchema, document);
+  return read.success && storedFactKeys(normalizeBlob(read.output)).length > 0;
 }
 
 /**

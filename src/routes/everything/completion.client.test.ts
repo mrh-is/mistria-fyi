@@ -20,8 +20,9 @@ const props = {
   params: {},
 };
 
-beforeEach(() => {
+beforeEach(async () => {
   userState.resetAll();
+  await userState.startTrackingByHand();
   pageStub.reset();
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
 });
