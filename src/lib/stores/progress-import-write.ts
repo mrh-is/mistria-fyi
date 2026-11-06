@@ -1,7 +1,11 @@
 import { questStateRank } from "#lib/engine/domain-primitives.js";
 import { changedFacts, editPlaytime, holdsGuess, progressFacts } from "#lib/engine/provenance.js";
 import { applyEngagementCascade, getPartnerId, getSpouseId } from "#lib/engine/relationships.js";
-import { compareFarms, mergeFarmIdentity } from "#lib/engine/save-identity.js";
+import {
+  compareFarms,
+  creationVersionsDiffer,
+  mergeFarmIdentity,
+} from "#lib/engine/save-identity.js";
 import { applyAdditiveSave, mergeProgress } from "#lib/engine/save-progress.js";
 import { applySaveDay } from "#lib/engine/world-state.js";
 import { isRecord, recordEntries } from "#lib/utils/record.js";
@@ -139,10 +143,9 @@ function manualFarmQuestion(
   incoming: FarmIdentity | null,
 ): ManualFarmQuestion | undefined {
   const different =
-    (stored !== null && compareFarms(captured, stored) === "different") ||
-    (incoming !== null &&
-      (compareFarms(captured, incoming) === "different" ||
-        compareFarms(stored, incoming) === "different"));
+    manualFarmsDiffer(captured, stored) ||
+    manualFarmsDiffer(captured, incoming) ||
+    manualFarmsDiffer(stored, incoming);
   const unnumbered =
     incoming?.saveNumber === null && Boolean(captured?.saveNumber ?? stored?.saveNumber);
   if (!different && !unnumbered) return undefined;
@@ -158,6 +161,16 @@ function manualFarmQuestion(
     kind: "ask",
     reason: different ? "different" : "unnumbered",
   };
+}
+
+function manualFarmsDiffer(tracked: FarmIdentity | null, incoming: FarmIdentity | null): boolean {
+  if (!tracked || !incoming) return false;
+  const match = compareFarms(tracked, incoming);
+  return (
+    match === "different" ||
+    (match === "unidentified" &&
+      creationVersionsDiffer(tracked.creationVersion, incoming.creationVersion))
+  );
 }
 
 function importMetadata(

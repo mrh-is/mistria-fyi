@@ -100,6 +100,10 @@ describe("save import", () => {
     });
     expect(userState.exportBackup()).toBe(before);
     await fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveAttribute("data-state", "closed");
+    expect(dialog).toHaveTextContent("Is this the farm you’ve been tracking?");
+    expect(dialog).toHaveTextContent("We can’t tell which farm this save belongs to.");
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
 
     expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(stored);

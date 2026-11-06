@@ -291,11 +291,11 @@ The app processes save files entirely client-side. No save data is uploaded.
    only). It doesn’t count anything. See the
    [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-save-extraction-completeness.md).
 5. `mergeFromSave` refuses the import if this device is syncing. It asks the player to cancel or
-   explicitly merge when the farms differ or when the incoming save has no number and a known farm
-   is already tracked. Renamed saves & extracted JSON can both lack a save number. The write
-   rechecks the farms when the player confirms. A confirmed merge keeps the combined progress and
-   tracks the identified farm from the most recent import. A save with no number keeps the tracked
-   identity. Each tab accepts one import at a time.
+   explicitly merge when save numbers or readable creation versions differ. It also asks when the
+   tracker has a save number and the incoming save lacks one. Renamed saves & extracted JSON can
+   both lack a save number. The write rechecks the farms when the player confirms. A confirmed merge
+   keeps the combined progress and tracks the farm from the most recent numbered import. An
+   unnumbered save keeps an existing numbered identity. Each tab accepts one import at a time.
 6. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
    values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
    quest state (`none` → `obtained` → `completed`). Relationships, the break-ups setting, & child
@@ -314,9 +314,9 @@ records a sync receipt when it applies a bundle.
 
 - Manual import accepts a first save onto hand-tracked progress without asking about the farm. Sync
   asks whether the bundle belongs to the farm already tracked when either farm is unidentified and
-  there is progress to protect. Creation versions serve as a check against two farms drawing the
-  same number. When a number is missing, the import rule already asks whenever there is a known
-  identity to protect, regardless of creation version.
+  there is progress to protect. Both flows use creation versions to distinguish farms that drew the
+  same number. Manual import also treats a version mismatch as evidence of different farms when a
+  number is missing. Matching creation versions alone leave the farm unidentified.
 - An older same-farm save can merge by manual import without a question. Its playtime becomes the
   baseline, so a backup taken after the import carries that lower baseline when restored. Sync asks
   before applying a save whose playtime is lower than the stored baseline.

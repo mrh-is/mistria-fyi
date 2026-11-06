@@ -67,9 +67,10 @@
   let importing = $state(false);
   let importStatus = $state("");
   let filesUsed = $state<string[]>([]);
+  // The dialog stays mounted while it closes, after the pending import has been cleared.
+  let unnumberedFarmPrompt = $state(false);
   let farmPrompt = $state.raw<null | {
     farm: string;
-    reason: "different" | "unnumbered";
     save: SyncedSave;
     warnings: SaveImportWarning[];
   }>(null);
@@ -213,7 +214,8 @@
     });
     switch (outcome.kind) {
       case "ask":
-        farmPrompt = { farm: outcome.farm, reason: outcome.reason, save, warnings };
+        unnumberedFarmPrompt = outcome.reason === "unnumbered";
+        farmPrompt = { farm: outcome.farm, save, warnings };
         break;
       case "applied":
         importResult = { ...outcome.result, warnings };
@@ -429,12 +431,10 @@
       <Dialog.Content class="sm:max-w-sm" showCloseButton={false}>
         <Dialog.Header>
           <Dialog.Title>
-            {farmPrompt?.reason === "unnumbered"
-              ? m.sync_farm_question_title()
-              : m.import_farm_title()}
+            {unnumberedFarmPrompt ? m.sync_farm_question_title() : m.import_farm_title()}
           </Dialog.Title>
           <Dialog.Description>
-            {farmPrompt?.reason === "unnumbered"
+            {unnumberedFarmPrompt
               ? m.import_farm_unnumbered_description()
               : m.import_farm_description()}
           </Dialog.Description>
