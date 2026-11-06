@@ -44,7 +44,12 @@ const DAY = 24 * HOUR;
 const ENVELOPE_TTL = 30 * DAY;
 const MAILBOX_TTL = 365 * DAY;
 const MAX_ENVELOPE = 256 * 1024;
+/** How long a Worker isolate trusts its last look at the kill switch. See relay/README.md. */
+const PAUSE_CHECK_INTERVAL = 30_000;
 const encoder = new TextEncoder();
+
+/** This isolate's last look at the kill switch; `until` is 0 when no pause was ever set. */
+let pauseCheck: undefined | { checkedAt: number; until: number };
 
 function json(state: RelayState, status = 200): Response {
   return Response.json({ state }, { status });
@@ -54,6 +59,13 @@ function rateLimited(retryAt: number): Response {
   return Response.json({ state: "rate-limited" } satisfies { state: RelayState }, {
     headers: { "Retry-After": String(Math.max(1, Math.ceil((retryAt - Date.now()) / 1000))) },
     status: 429,
+  });
+}
+
+function paused(until: number): Response {
+  return Response.json({ state: "paused", until } satisfies { state: RelayState; until: number }, {
+    headers: { "Retry-After": String(Math.max(1, Math.ceil((until - Date.now()) / 1000))) },
+    status: 503,
   });
 }
 
@@ -125,6 +137,26 @@ function control(env: Env): DurableObjectStub {
   return env.CONTROL.get(env.CONTROL.idFromName("relay-control-v1"));
 }
 
+/**
+ * The kill switch's end time, from this isolate's cache when it's fresh. A pause reaches every
+ * isolate within {@link PAUSE_CHECK_INTERVAL}, so reads & uploads skip the singleton otherwise.
+ */
+async function pauseEnd(env: Env): Promise<number> {
+  const now = Date.now();
+  if (
+    pauseCheck &&
+    now >= pauseCheck.checkedAt &&
+    now < pauseCheck.checkedAt + PAUSE_CHECK_INTERVAL
+  ) {
+    return pauseCheck.until;
+  }
+  const gate = await control(env).fetch("https://control/gate");
+  if (!gate.ok) throw new Error("Relay control gate failed");
+  const { until } = await gate.json<{ until: number }>();
+  pauseCheck = { checkedAt: now, until };
+  return until;
+}
+
 /** Canonical IPv4 address or IPv6 /64; temporary IPv6 addresses share one budget. */
 function clientPrefix(ip: string): null | string {
   if (!ip.includes(":")) {
@@ -191,7 +223,15 @@ async function route(request: Request, env: Env): Promise<Response> {
     }
     const body = await bodyBytes(request, 4096);
     if (!body) return json("too-large", 413);
-    return control(env).fetch(new Request("https://control/pause", { body, method: "PUT" }));
+    const response = await control(env).fetch(
+      new Request("https://control/pause", { body, method: "PUT" }),
+    );
+    if (response.ok) {
+      // This isolate applies its own change at once; the others within the check interval.
+      const { until } = await response.clone().json<{ until: number }>();
+      pauseCheck = { checkedAt: Date.now(), until };
+    }
+    return response;
   }
   const match = MAILBOX_ROUTE.exec(url.pathname);
   if (!match) return json("not-found", 404);
@@ -228,8 +268,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (value !== null) headers.set(name, value);
   }
   if (create || upload || read) {
-    const gate = await control(env).fetch("https://control/gate");
-    if (!gate.ok) return gate;
+    const until = await pauseEnd(env);
+    if (until > Date.now()) return paused(until);
   }
   if (create && prefix) {
     headers.set("X-Relay-Client", await clientBucket(prefix, env.IP_RATE_SECRET));
@@ -532,9 +572,13 @@ export class RelayControl implements DurableObject {
     this.ctx = ctx;
   }
 
-  fetch(request: Request): Promise<Response> {
+  async fetch(request: Request): Promise<Response> {
+    const path = new URL(request.url).pathname;
+    if (path === "/gate") {
+      // A read-only lookup needs no lock; Worker isolates cache its answer.
+      return Response.json({ until: (await this.ctx.storage.get<number>("pausedUntil")) ?? 0 });
+    }
     return this.ctx.blockConcurrencyWhile(async () => {
-      const path = new URL(request.url).pathname;
       const now = Date.now();
       if (path === "/pause") {
         const body = await smallJson(request);
@@ -552,16 +596,7 @@ export class RelayControl implements DurableObject {
         return Response.json({ until });
       }
       const pausedUntil = await this.ctx.storage.get<number>("pausedUntil");
-      if (pausedUntil && pausedUntil > now) {
-        return Response.json(
-          { state: "paused", until: pausedUntil } satisfies { state: RelayState; until: number },
-          {
-            headers: { "Retry-After": String(Math.ceil((pausedUntil - now) / 1000)) },
-            status: 503,
-          },
-        );
-      }
-      if (path === "/gate") return json("live");
+      if (pausedUntil && pausedUntil > now) return paused(pausedUntil);
       if (path !== "/admit") return json("not-found", 404);
       const client = await request.text();
       if (!/^[\da-f]{4}$/u.test(client)) return json("bad-request", 400);

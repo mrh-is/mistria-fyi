@@ -46,7 +46,9 @@ wrong token or a failed Turnstile check is `403`. The client reports both as a r
 “unreachable”. A missing secret, upstream verification failure, or unexpected runtime failure
 returns `503` without error details. A paused relay returns `503` with state `paused`, its end time,
 & `Retry-After`. Only retirement bypasses the pause; new reads & WebSocket handshakes are paused
-too. An admin request may pause at most seven days ahead; a past end time resumes the relay.
+too. Each Worker isolate caches its look at the pause for 30 seconds, so a pause or its lifting
+reaches every request within 30 seconds; the isolate that handled the admin request applies it at
+once. An admin request may pause at most seven days ahead; a past end time resumes the relay.
 Existing WebSockets remain connected. Preflight responses allow a 7,200-second cache. Rate-limited
 responses include `Retry-After` in seconds, using the relevant minute, UTC hour, or UTC day
 deadline. Same-owner creation retries skip Siteverify & creation quotas after the short-window edge
@@ -89,10 +91,12 @@ boundary. Failed verification uses the edge attempt budget but no singleton quot
 followed by a failed mailbox storage operation conservatively consumes singleton quota.
 
 Public reads & WebSocket handshakes share a separate 60-attempt-per-minute binding per IPv4 address
-or IPv6 /64, checked before any object access. The singleton pause gate then runs before mailbox
-access. A pause protects mailbox requests but still costs singleton & Worker requests; bindings
-cannot prevent Worker request exhaustion, & distributed traffic can defeat per-client limits. The
-zone WAF rule below is a required launch step, not configured by this repository.
+or IPv6 /64, checked before any object access. The pause check then runs before mailbox access, from
+the isolate's 30-second cache, so it costs at most one singleton request per isolate every 30
+seconds, & the singleton answers it without a lock. A pause protects mailbox requests but still
+costs Worker requests; bindings cannot prevent Worker request exhaustion, & distributed traffic can
+defeat per-client limits. The zone WAF rule below is a required launch step, not configured by this
+repository.
 
 Each mailbox accepts one fresh upload per 60 seconds & 60 per UTC day. The Worker bounds & buffers
 network bodies before forwarding them, so a slow uplink holds no mailbox lock. A fresh counter’s
