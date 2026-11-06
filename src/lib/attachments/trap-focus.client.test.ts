@@ -5,7 +5,6 @@ import { trapFocus } from "#lib/attachments/trap-focus.js";
 let dispose: (() => void) | undefined;
 afterEach(() => {
   dispose?.();
-  document.body.replaceChildren();
 });
 
 function mount() {

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { userState } from "./user-state.svelte.js";
 
@@ -8,15 +8,6 @@ const metadata = {
   importedAt: 1_792_531_800_000,
   playerName: "Ada",
 };
-
-beforeEach(() => {
-  userState.loadFromStorage();
-  userState.resetAll();
-});
-
-afterEach(() => {
-  userState.resetAll();
-});
 
 describe("manual import metadata", () => {
   it("travels in backups, restores, and survives progress-only merges", async () => {

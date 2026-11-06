@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, screen } from "@testing-library/svelte";
+import { fireEvent, screen } from "@testing-library/svelte";
 import { flushSync, tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import MinesContent from "#lib/components/mines-content.svelte";
 import { trackerData } from "#lib/data/index.js";
@@ -21,13 +21,8 @@ async function confirm(name: string): Promise<void> {
 
 describe("MinesContent floor stepper", () => {
   beforeEach(async () => {
-    userState.resetAll();
     await userState.startTrackingByHand();
     renderWithFeedback(MinesContent, { compact: true, locale: "en" });
-  });
-  afterEach(() => {
-    cleanup();
-    userState.resetAll();
   });
 
   it("steps freely up to a seal", async () => {

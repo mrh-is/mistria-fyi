@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import WelcomeCard from "#lib/components/welcome-card.svelte";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -8,16 +8,6 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
 
 const STARTER_RECIPE = "basic_wood_chest" as RecipeId;
-
-beforeEach(() => {
-  userState.loadFromStorage();
-  userState.resetAll();
-});
-
-afterEach(async () => {
-  cleanup();
-  await tick();
-});
 
 describe("WelcomeCard", () => {
   it("asks how to work, with sync or by hand", async () => {

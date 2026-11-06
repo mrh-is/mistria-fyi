@@ -1,11 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { flushSync, tick } from "svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import FilterPanel from "#lib/components/filter-panel.svelte";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
-import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
@@ -32,18 +31,6 @@ function emulatePhone(): void {
       }) as unknown as MediaQueryList,
   );
 }
-
-afterEach(async () => {
-  cleanup();
-  toolbarState.unregisterSourceFilters("test");
-  toolbarState.unregisterSourceFilters("almanac");
-  toolbarState.showUnobtainable = false;
-  toolbarState.expandedFilterSections.clear();
-  vi.restoreAllMocks();
-  userState.resetAll();
-  pageStub.reset();
-  await tick();
-});
 
 describe("FilterPanel interactions", () => {
   it("offers the unobtainable filter only while the almanac is mounted", async () => {

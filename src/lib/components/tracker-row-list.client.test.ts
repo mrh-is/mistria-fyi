@@ -52,7 +52,6 @@ describe("TrackerRowList", () => {
   });
 
   afterEach(async () => {
-    vi.unstubAllGlobals();
     await nextTask();
   });
 

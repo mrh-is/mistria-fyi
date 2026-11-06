@@ -1,13 +1,8 @@
 import { tick } from "svelte";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import CosmeticsContent from "#lib/components/cosmetics-content.svelte";
-import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-
-afterEach(() => {
-  userState.resetAll();
-});
 
 describe("CosmeticsContent", () => {
   // Its section progress is a new object on every render, which once made sections re-report their

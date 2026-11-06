@@ -1,13 +1,8 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { trySetItem } from "#lib/utils/local-storage.js";
 
 describe("trySetItem", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.unstubAllGlobals();
-  });
-
   it("returns true on successful write", () => {
     const store: Record<string, string> = {};
     vi.stubGlobal("localStorage", {

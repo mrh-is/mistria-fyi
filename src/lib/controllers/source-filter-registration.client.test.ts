@@ -1,15 +1,10 @@
 import { render } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import SourceFilterRegistrationHarness from "#lib/test-utils/source-filter-registration.test-harness.svelte";
-
-afterEach(() => {
-  toolbarState.unregisterSourceFilters("external-test");
-  toolbarState.unregisterSourceFilters("reactivity-test");
-});
 
 describe("registerSourceFilters", () => {
   it("does not subscribe its effect to toolbar state read during registration", async () => {

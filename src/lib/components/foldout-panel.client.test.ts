@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 
 import FoldoutPanelHarness from "#lib/components/foldout-panel.test-harness.svelte";
 
@@ -8,10 +8,6 @@ function renderPanel(props: { isModal?: boolean; withHeaderAction?: boolean } = 
   render(FoldoutPanelHarness, { onClose, ...props });
   return onClose;
 }
-
-afterEach(() => {
-  cleanup();
-});
 
 describe("FoldoutPanel", () => {
   it("exposes itself as a labelled modal dialog with a close control", async () => {

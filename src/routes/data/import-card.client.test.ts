@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
@@ -12,15 +12,8 @@ import { recordKeys } from "#lib/utils/record.js";
 
 import ImportCard from "./import-card.svelte";
 
-// Client files share one store per worker, so each test starts from defaults (#174).
 beforeEach(async () => {
-  userState.loadFromStorage();
-  userState.resetAll();
   await userState.startTrackingByHand();
-});
-
-afterEach(() => {
-  userState.resetAll();
 });
 
 async function importFiles(files: File[]) {
@@ -260,18 +253,13 @@ describe("save import atomicity", () => {
       localStorage.setItem(PROGRESS_STORAGE_KEY, newer);
       if (loaded) userState.loadFromStorage();
 
-      try {
-        await importFiles([new File(['{"items_acquired":["turnip"]}'], "player.json")]);
-        expect(await screen.findByRole("alert")).toHaveTextContent(
-          "Your progress was saved by a newer version. Update to continue.",
-        );
-        expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(newer);
-        expect(localStorage.getItem(QUARANTINE_STORAGE_KEY)).toBe(quarantine);
-        expect(userState.state.progress.almanac.size).toBe(0);
-      } finally {
-        localStorage.removeItem(PROGRESS_STORAGE_KEY);
-        userState.loadFromStorage();
-      }
+      await importFiles([new File(['{"items_acquired":["turnip"]}'], "player.json")]);
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Your progress was saved by a newer version. Update to continue.",
+      );
+      expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(newer);
+      expect(localStorage.getItem(QUARANTINE_STORAGE_KEY)).toBe(quarantine);
+      expect(userState.state.progress.almanac.size).toBe(0);
     },
   );
 
@@ -295,10 +283,6 @@ describe("save import atomicity", () => {
 });
 
 describe("save import file picker", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("filters the picker to save files on desktop", () => {
     render(ImportCard, { open: true });
     expect(screen.getByLabelText("Choose save files to import")).toHaveAttribute(

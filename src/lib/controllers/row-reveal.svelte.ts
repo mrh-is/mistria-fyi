@@ -43,6 +43,16 @@ let initialBudget = INITIAL_ROW_BUDGET;
 let budgetResetQueued = false;
 let lastRowHeight = FALLBACK_ROW_HEIGHT_PX;
 
+/** Restores the page-wide scheduler defaults after the test runner unmounts its lists. */
+export function resetRowReveal(): void {
+  if (frame !== undefined) cancelAnimationFrame(frame);
+  pending.clear();
+  frame = undefined;
+  initialBudget = INITIAL_ROW_BUDGET;
+  budgetResetQueued = false;
+  lastRowHeight = FALLBACK_ROW_HEIGHT_PX;
+}
+
 function claimInitialRows(total: number): number {
   // The server has no frames to reveal rows in, so it renders every row (for crawlers & no-JS
   // readers). Hydration doesn't keep them all: a hydrating list claims from this budget like any

@@ -6,22 +6,20 @@
  * Holding is reference-counted, so overlapping tasks each release only their own hold.
  */
 export class UpdateHolds {
-  #count = 0;
+  readonly #holds = new Set<symbol>();
   readonly #listeners = new Set<() => void>();
 
   /** Whether any task currently holds the reload off. */
   get held(): boolean {
-    return this.#count > 0;
+    return this.#holds.size > 0;
   }
 
   /** Holds the reload off until the returned function is called; calling it twice is harmless. */
   hold(): () => void {
-    this.#count += 1;
-    let released = false;
+    const hold = Symbol("update hold");
+    this.#holds.add(hold);
     return () => {
-      if (released) return;
-      released = true;
-      this.#count -= 1;
+      if (!this.#holds.delete(hold)) return;
       for (const listener of this.#listeners) listener();
     };
   }
@@ -32,6 +30,11 @@ export class UpdateHolds {
     return () => {
       this.#listeners.delete(listener);
     };
+  }
+
+  /** Drops every hold without notifying listeners, for the test runner's shared teardown. */
+  reset(): void {
+    this.#holds.clear();
   }
 }
 

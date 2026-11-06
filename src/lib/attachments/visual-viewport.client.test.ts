@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { trackVisualViewport } from "#lib/attachments/visual-viewport.js";
 
@@ -12,10 +12,6 @@ class FakeVisualViewport extends EventTarget {
     this.dispatchEvent(new Event(type));
   }
 }
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
 
 function attach(): { dispose: () => void; element: HTMLElement; viewport: FakeVisualViewport } {
   const viewport = new FakeVisualViewport();

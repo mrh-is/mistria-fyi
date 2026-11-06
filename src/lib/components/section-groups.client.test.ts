@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import SectionGroupsHarness from "#lib/components/section-groups.test-harness.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -15,10 +15,6 @@ interface Section {
   total: number;
   waiting?: boolean;
 }
-
-afterEach(() => {
-  vi.useRealTimers();
-});
 
 describe("SectionGroups", () => {
   it("sorts sections onto their shelves", async () => {

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
 
@@ -9,14 +9,8 @@ const BALOR = "balor" as VillagerId;
 const CELINE = "celine" as VillagerId;
 
 beforeEach(async () => {
-  userState.loadFromStorage();
-  userState.resetAll();
   // Hand edits wait for a tracking lane; these tests record them straight away.
   await userState.startTrackingByHand();
-});
-
-afterEach(() => {
-  userState.resetAll();
 });
 
 async function mergeFromSave(...args: Parameters<typeof userState.mergeFromSave>) {

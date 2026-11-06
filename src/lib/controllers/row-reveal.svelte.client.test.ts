@@ -41,8 +41,6 @@ describe("createRowReveal", () => {
 
   afterEach(async () => {
     for (const cleanup of cleanups.splice(0)) cleanup();
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
     await nextTask();
   });
 

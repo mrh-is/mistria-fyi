@@ -1,9 +1,7 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
-import { afterEach, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { expect, it, vi } from "vitest";
 
 import TransferCard from "./transfer-card.svelte";
-
-afterEach(cleanup);
 
 it("points players to sync and backup restore instead of progress codes", async () => {
   const onOpenBackup = vi.fn();
