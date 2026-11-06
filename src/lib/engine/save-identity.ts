@@ -41,12 +41,21 @@ export type FarmMatch = "different" | "same" | "unidentified";
 export function compareFarms(tracked: FarmIdentity | null, incoming: FarmIdentity): FarmMatch {
   if (!tracked?.saveNumber || !incoming.saveNumber) return "unidentified";
   if (tracked.saveNumber !== incoming.saveNumber) return "different";
-  const [a, b] = [tracked.creationVersion, incoming.creationVersion];
-  const differs =
+  return creationVersionsDiffer(tracked.creationVersion, incoming.creationVersion)
+    ? "different"
+    : "same";
+}
+
+/** A version mismatch is evidence of different farms only when both versions are readable. */
+export function creationVersionsDiffer(
+  a: FarmIdentity["creationVersion"],
+  b: FarmIdentity["creationVersion"],
+): boolean {
+  return (
     a !== null &&
     b !== null &&
-    (a.major !== b.major || a.minor !== b.minor || a.patch !== b.patch || a.pre !== b.pre);
-  return differs ? "different" : "same";
+    (a.major !== b.major || a.minor !== b.minor || a.patch !== b.patch || a.pre !== b.pre)
+  );
 }
 
 /** The incoming identity, keeping any part only the stored one could read. */

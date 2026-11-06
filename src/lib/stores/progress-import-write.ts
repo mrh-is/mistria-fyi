@@ -1,7 +1,11 @@
 import { questStateRank } from "#lib/engine/domain-primitives.js";
 import { changedFacts, editPlaytime, holdsGuess, progressFacts } from "#lib/engine/provenance.js";
 import { applyEngagementCascade, getPartnerId, getSpouseId } from "#lib/engine/relationships.js";
-import { compareFarms, mergeFarmIdentity } from "#lib/engine/save-identity.js";
+import {
+  compareFarms,
+  creationVersionsDiffer,
+  mergeFarmIdentity,
+} from "#lib/engine/save-identity.js";
 import { applyAdditiveSave, mergeProgress } from "#lib/engine/save-progress.js";
 import { applySaveDay, rebaseWorldDay } from "#lib/engine/world-state.js";
 import { isRecord, recordEntries } from "#lib/utils/record.js";
@@ -28,8 +32,14 @@ interface ManualImportOptions {
   playtime?: number;
 }
 
+interface ManualFarmQuestion {
+  farm: string;
+  kind: "ask";
+  reason: "different" | "unnumbered";
+}
+
 export type ManualImportOutcome =
-  | { farm: string; kind: "ask" }
+  | ManualFarmQuestion
   | { kind: "applied"; result: MergeResult }
   | { kind: "busy" | "newer-data" | "sync-active" | "write-failed" };
 
@@ -49,7 +59,7 @@ interface ManualImportEdits {
 }
 
 type ManualImportPlan =
-  | { farm: string; kind: "ask" }
+  | ManualFarmQuestion
   | {
       json: string;
       kind: "write";
@@ -72,8 +82,8 @@ export function planManualImport(
   const capturedFarm = captured.lastImport?.identity ?? null;
   const storedFarm = current?.lastImport?.identity ?? null;
   const incomingFarm = metadata?.identity ?? null;
-  const farm = manualFarmQuestion(capturedFarm, storedFarm, incomingFarm);
-  if (farm !== undefined && farm !== confirmedFarm) return { farm, kind: "ask" };
+  const question = manualFarmQuestion(capturedFarm, storedFarm, incomingFarm);
+  if (question && question.farm !== confirmedFarm) return question;
 
   const result = applyAdditiveSave(captured.progress, captured.history, imported, playtime);
   if (metadata) captured.lastImport = importMetadata(storedFarm ?? capturedFarm, metadata);
@@ -131,22 +141,36 @@ function manualFarmQuestion(
   captured: FarmIdentity | null,
   stored: FarmIdentity | null,
   incoming: FarmIdentity | null,
-): string | undefined {
-  if (
-    (stored && compareFarms(captured, stored) === "different") ||
-    (incoming &&
-      (compareFarms(captured, incoming) === "different" ||
-        compareFarms(stored, incoming) === "different"))
-  ) {
-    return JSON.stringify(
+): ManualFarmQuestion | undefined {
+  const different =
+    manualFarmsDiffer(captured, stored) ||
+    manualFarmsDiffer(captured, incoming) ||
+    manualFarmsDiffer(stored, incoming);
+  const unnumbered =
+    incoming?.saveNumber === null && Boolean(captured?.saveNumber ?? stored?.saveNumber);
+  if (!different && !unnumbered) return undefined;
+
+  return {
+    farm: JSON.stringify(
       [captured, stored, incoming].map((identity) => {
         if (!identity) return null;
         const { creationVersion: version, saveNumber } = identity;
         return [saveNumber, version && [version.major, version.minor, version.patch, version.pre]];
       }),
-    );
-  }
-  return undefined;
+    ),
+    kind: "ask",
+    reason: different ? "different" : "unnumbered",
+  };
+}
+
+function manualFarmsDiffer(tracked: FarmIdentity | null, incoming: FarmIdentity | null): boolean {
+  if (!tracked || !incoming) return false;
+  const match = compareFarms(tracked, incoming);
+  return (
+    match === "different" ||
+    (match === "unidentified" &&
+      creationVersionsDiffer(tracked.creationVersion, incoming.creationVersion))
+  );
 }
 
 function importMetadata(

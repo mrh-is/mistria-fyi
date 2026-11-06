@@ -451,6 +451,7 @@
   "import_error_unexpected": "导入时发生意外错误。",
   "import_farm_title": "这是另一个农场的存档",
   "import_farm_description": "合并此存档会将不同农场的进度合在一起。指南会保留你已经记录的进度。",
+  "import_farm_unnumbered_description": "我们无法确定这个存档属于哪个农场。如果合并，我们会把存档中的进度加到你已有的记录中。",
   "import_farm_merge": "合并进度",
   "import_farm_cancel": "取消",
   "import_error_sync_active": "请先停止在此设备上的同步，再导入存档。",
