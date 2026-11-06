@@ -33,7 +33,12 @@
     const filtered = note
       ? m.filter_note({ count: note.count, shelf: shelfLabel(note.shelf) }, { locale })
       : undefined;
-    const empty = nothingLeft ? m.filter_note_nothing_left({}, { locale }) : undefined;
+    let empty: string | undefined;
+    if (nothingLeft && !note) {
+      empty = query
+        ? m.search_no_results({}, { locale })
+        : m.filter_note_nothing_left({}, { locale });
+    }
     return [found, filtered, empty].filter(Boolean).join(". ");
   });
 </script>
