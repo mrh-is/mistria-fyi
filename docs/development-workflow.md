@@ -87,10 +87,8 @@ instead; run the setup steps from inside it:
 node scripts/setup-worktree.ts
 ```
 
-It refuses to run in the main checkout. Claude Code orchestrators should give editing subagents
-harness worktrees (`isolation: "worktree"`) rather than `.worktrees/<slug>`: the session's edit
-guard refuses Write/Edit outside the session's own worktree, which pushed subagents into unguarded
-shell writes (#545).
+It refuses to run in the main checkout. For subagents, see
+[Worktree mechanics](agent-reference.md#worktree-mechanics).
 
 <details>
 <summary>Manual fallback</summary>

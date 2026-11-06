@@ -13,37 +13,10 @@ Worktrees are optional; use them when several sessions work at once. Worktrees &
 harness creates are equally acceptable. Examples include Claude Code’s `.claude/worktrees/` with
 `claude/issue-<number>-<suffix>` branches, and Codex’s `codex/…` branches.
 
-Create & set up a worktree with one command:
-
-```sh
-pnpm run worktree:new <issue-number>-<short-description>
-```
-
-The command creates `.worktrees/<slug>` on a matching branch (`<issue-number>-<short-description>`).
-Then it:
-
-- symlinks `pipeline/input/` & the `.worktreeinclude` entries in from the main checkout,
-- runs `pnpm install --frozen-lockfile`,
-- runs `pnpm run prepare`.
-
-It never copies dependencies, caches, build artifacts, or other writable generated directories.
+[Worktrees](../AGENTS.md#worktrees) has the rules, including which setup command to run & what’s
+preauthorized.
 [docs/development-workflow.md §2](development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
-has the manual steps & troubleshooting.
-
-**Refreshing the base:** refresh the starting branch, usually `main`, before beginning work.
-
-- `worktree:new` fetches the latest `origin/main` before it creates the worktree. Pass a second
-  argument to start from another branch.
-- For a harness-created worktree, fetch its intended starting branch. Make sure the worktree starts
-  at that refreshed remote tip before setup or edits.
-- If you work directly on an existing starting branch, use `git pull --ff-only`.
-
-Never reset existing work, switch a shared checkout, or discard local changes to refresh a base.
-
-**Harness-created worktrees:** inside one, run `node scripts/setup-worktree.ts` for the same symlink
-& install steps. This standard setup is preauthorized when dependencies or included links are
-missing, even if a dependency preflight check already failed. It needs no further confirmation. If
-setup fails, follow the stop & report procedure in AGENTS.md.
+has what those commands do, the base-branch steps, & the manual fallback.
 
 The setup script is deliberately not a pnpm script. `verifyDepsBeforeRun: error` in
 `pnpm-workspace.yaml` makes `pnpm run` & `pnpm exec` refuse to start when dependencies are missing
@@ -57,16 +30,10 @@ or stale, instead of installing them implicitly.
   Its `pipeline/input/` link may be absent, so it looks in the main checkout’s instead.
 - The main checkout & cloud environments use `pnpm install --frozen-lockfile`. Cloud environments
   have no linked worktrees, so they need no links.
-- When dependencies are absent, or a merge, pull, or rebase changes the lockfile, `pnpm run` &
-  `pnpm exec` fail with `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`. In a linked worktree, run
-  `node scripts/setup-worktree.ts`, which also restores missing links. Elsewhere, run
-  `pnpm install --frozen-lockfile`. Both are preauthorized. A deliberate dependency edit follows
-  [Package commands](#package-commands) instead, because a frozen install rejects it.
 - Until setup runs, a linked worktree may have no Git hooks, because `prepare` generates them. CI
   still runs the checks they would have run.
-- If setup fails, follow AGENTS.md’s stop & report procedure, and run
-  `node scripts/machine-doctor.ts --for core` directly to diagnose. Rerunning setup is safe: it
-  skips entries that are already linked.
+- Rerunning setup is safe: it skips entries that are already linked. If setup fails, diagnose with
+  `node scripts/machine-doctor.ts --for core`.
 
 **No shared dependencies:** a worktree never links `node_modules` from another checkout, for two
 reasons:
@@ -84,16 +51,9 @@ the subagent edit. In Claude Code, the session’s edit guard refuses Write & Ed
 session’s own worktree, including in `.worktrees/`. So spawn editing subagents with the Agent tool’s
 `isolation: "worktree"`, and have each run `node scripts/setup-worktree.ts` first.
 
-**Previews:** `preview_start` by `name` serves the session’s original folder, not the worktree. For
-a subagent, that’s the orchestrator’s checkout. For a session that moved into `.worktrees/`, it’s
-the main checkout. An agent working in a worktree previews its own dev server by URL & confirms it
-serves the branch’s code; see
-[docs/development-workflow.md](development-workflow.md#preview-from-a-worktree).
-
-**Stashes are shared:** `refs/stash` is one stack for every linked worktree, so a bare
-`git stash pop` or `apply` can restore another session’s edits. Prefer a temporary WIP commit. If
-you must stash, address your entry by its commit ID (see
-[docs/development-workflow.md](development-workflow.md#set-work-aside-without-the-shared-stash)).
+**Previews & stashes:** see
+[Preview from a worktree](development-workflow.md#preview-from-a-worktree) &
+[Set work aside without the shared stash](development-workflow.md#set-work-aside-without-the-shared-stash).
 
 ## Asset inputs
 
