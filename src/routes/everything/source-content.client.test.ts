@@ -17,7 +17,8 @@ import type { StoreId } from "#lib/types/tracker-data.js";
 
 const firstSkill = recordKeys(trackerData.skills)[0];
 
-beforeEach(() => {
+beforeEach(async () => {
+  await userState.startTrackingByHand();
   // The registration doesn't depend on how many rows render, and rendering every row took this file
   // past its CI time budget. This per-test spy restores automatically.
   vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([

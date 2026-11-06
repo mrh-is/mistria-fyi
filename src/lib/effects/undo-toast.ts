@@ -2,6 +2,7 @@ import { toast } from "svelte-sonner";
 
 import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
 import * as m from "#lib/paraglide/messages.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { RecipeId } from "#lib/types/tracker-data.js";
@@ -54,7 +55,24 @@ export function showUndoToast(itemName: string, completed: boolean, onUndo: () =
   showSingleUndoToast(message, onUndo);
 }
 
+/** The starter batch keeps its own Undo while the player continues checking things off. */
+export function showStarterItemsToast(
+  count: number,
+  undo: () => void,
+  dismiss: () => void,
+): () => void {
+  const id = toast(m.onboarding_starter_items({ count }), {
+    cancel: { label: m.onboarding_undo_starter_items(), onClick: undo },
+    duration: 30_000,
+    onAutoClose: dismiss,
+    onDismiss: dismiss,
+  });
+  return () => toast.dismiss(id);
+}
+
 function showSingleUndoToast(message: string, onUndo: () => void): void {
+  // An edit waiting for a tracking lane hasn't happened, so there's nothing to undo yet.
+  if (userState.trackingLaneNeeded) return;
   if (currentToastId !== undefined) {
     toast.dismiss(currentToastId);
   }

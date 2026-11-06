@@ -78,6 +78,8 @@ describe("collection toggles", () => {
   });
 
   it.each(COLLECTIONS)("toggles $name on, off, & on again", ({ read, toggle, value }) => {
+    userState.markDefaultUnlocksComplete();
+    userState.starterItems?.undo();
     expect(read()).toEqual([]);
 
     toggle();
@@ -91,6 +93,8 @@ describe("collection toggles", () => {
   });
 
   it.each(COLLECTIONS)("round-trips $name through exportBackup & restoreBackup", (collection) => {
+    userState.markDefaultUnlocksComplete();
+    userState.starterItems?.undo();
     collection.toggle();
     const json = userState.exportBackup();
 

@@ -19,7 +19,8 @@ const props = {
   params: {},
 };
 
-beforeEach(() => {
+beforeEach(async () => {
+  await userState.startTrackingByHand();
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
 });
 

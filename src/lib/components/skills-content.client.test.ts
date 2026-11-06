@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/svelte";
 import { flushSync } from "svelte";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import SkillsContent from "#lib/components/skills-content.svelte";
 import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
@@ -17,6 +17,10 @@ function miningRecord() {
 }
 
 describe("SkillsContent", () => {
+  beforeEach(async () => {
+    await userState.startTrackingByHand();
+  });
+
   it("keeps a maxed skill visible until every perk is bought", () => {
     renderWithFeedback(SkillsContent, { locale: "en" });
     const [lastPerk, ...otherPerks] = perksOfSkill(skillId).toReversed();

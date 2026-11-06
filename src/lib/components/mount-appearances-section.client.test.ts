@@ -21,7 +21,8 @@ async function openMountSection(): Promise<void> {
   await fireEvent.click(await screen.findByRole("button", { name: mountName }));
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  await userState.startTrackingByHand();
   userState.toggleShowSpoilers();
 });
 

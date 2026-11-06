@@ -20,7 +20,8 @@ async function confirm(name: string): Promise<void> {
 }
 
 describe("MinesContent floor stepper", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await userState.startTrackingByHand();
     renderWithFeedback(MinesContent, { compact: true, locale: "en" });
   });
 

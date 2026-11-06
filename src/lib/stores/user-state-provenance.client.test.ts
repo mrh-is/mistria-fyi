@@ -1,16 +1,24 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { resolutionHolds } from "#lib/engine/provenance.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
 import type { FactProvenance } from "#lib/engine/provenance.js";
 import type { SerializedState } from "#lib/stores/progress-storage.js";
+import type { QuestCompletion } from "#lib/stores/user-state.svelte.js";
 import type { ItemId, PerkId, QuestId, RecipeId, VillagerId } from "#lib/types/tracker-data.js";
 
 const TURNIP = "turnip" as ItemId;
 const POTATO = "potato" as ItemId;
 const ONE_REWARD_QUEST = "bell_berry_bakewell_tart_challenge" as QuestId;
 const ONE_REWARD_RECIPE = "kitchen_herb_planter" as RecipeId;
+
+/** Completes a quest step, which must not wait for a tracking lane. */
+function completeQuest(id: QuestId): QuestCompletion {
+  const completion = userState.completeQuestWithRecipes(id);
+  if (!completion) throw new Error("The quest edit waited for a tracking lane");
+  return completion;
+}
 
 function restoreWithUnknownProvenance(
   fields: Partial<Pick<SerializedState["progress"], "almanac" | "questStates" | "renown">>,
@@ -27,6 +35,11 @@ function restoreWithUnknownProvenance(
   });
   expect(userState.restoreBackup(json)).toEqual({ ok: true });
 }
+
+beforeEach(async () => {
+  // Hand edits wait for a tracking lane; these tests record them straight away.
+  await userState.startTrackingByHand();
+});
 
 describe("provenance", () => {
   it("records a manual tick & untick, with no playtime before any save", async () => {
@@ -106,8 +119,8 @@ describe("provenance", () => {
   });
 
   it("records a quest as manual & the recipe rewards it adds or takes back as inferred", async () => {
-    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
-    const completion = userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    completeQuest(ONE_REWARD_QUEST);
+    const completion = completeQuest(ONE_REWARD_QUEST);
     expect(completion.newlyAdded).toEqual([ONE_REWARD_RECIPE]);
     expect(userState.provenanceOf(`questStates/${ONE_REWARD_QUEST}`)?.source).toBe("manual");
     expect(userState.provenanceOf(`almanacRecipes/${ONE_REWARD_RECIPE}`)?.source).toBe("inferred");
@@ -135,7 +148,7 @@ describe("provenance", () => {
     );
     expect(userState.provenanceOf(key)).toEqual({ playtime: 5, source: "save" });
 
-    const completion = userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    const completion = completeQuest(ONE_REWARD_QUEST);
     expect(userState.provenanceOf(key)).toEqual({
       obtainedSource: "save",
       playtime: 5,
@@ -148,8 +161,8 @@ describe("provenance", () => {
   });
 
   it("records no obtained source when one source obtains & finishes a quest", () => {
-    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
-    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    completeQuest(ONE_REWARD_QUEST);
+    completeQuest(ONE_REWARD_QUEST);
 
     expect(userState.provenanceOf(`questStates/${ONE_REWARD_QUEST}`)).toEqual({
       source: "manual",
@@ -171,8 +184,8 @@ describe("provenance", () => {
 
   it("promotes an inferred fact a save agrees with", async () => {
     const recipe = `almanacRecipes/${ONE_REWARD_RECIPE}`;
-    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
-    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    completeQuest(ONE_REWARD_QUEST);
+    completeQuest(ONE_REWARD_QUEST);
     expect(userState.provenanceOf(recipe)?.source).toBe("inferred");
 
     await userState.mergeFromSave(
@@ -186,7 +199,7 @@ describe("provenance", () => {
   it("stamps a guessed slash under a pen X when a save agrees with the finish", async () => {
     const key = `questStates/${ONE_REWARD_QUEST}`;
     restoreWithUnknownProvenance({ questStates: { [ONE_REWARD_QUEST]: "obtained" } }, [key]);
-    userState.completeQuestWithRecipes(ONE_REWARD_QUEST);
+    completeQuest(ONE_REWARD_QUEST);
     expect(userState.provenanceOf(key)).toEqual({ obtainedSource: "unknown", source: "manual" });
 
     await userState.mergeFromSave(

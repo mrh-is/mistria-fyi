@@ -1,12 +1,13 @@
 import { fireEvent } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import MuseumContent from "#lib/components/museum-content.svelte";
 import PageSearchStatus from "#lib/components/page-search-status.svelte";
 import SearchGuideLink from "#lib/components/search-guide-link.svelte";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 import type { FilteredCounts } from "#lib/engine/shelves.js";
@@ -29,6 +30,10 @@ async function search(query: string) {
 }
 
 describe("PageSearchStatus", () => {
+  beforeEach(async () => {
+    await userState.startTrackingByHand();
+  });
+
   // Client test files share this store, so a search left open would filter their pages.
 
   it("stays quiet without a search", () => {

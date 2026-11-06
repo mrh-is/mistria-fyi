@@ -12,7 +12,7 @@ import { critical } from "./support/tags.js";
 
 test.describe("keyboard and focus accessibility", () => {
   test.beforeEach(async ({ page }) => {
-    await initializeApplication(page, "light");
+    await initializeApplication(page, "light", createStoredState());
   });
 
   test("toolbar controls follow a predictable focus order", critical, async ({ page }) => {
@@ -92,10 +92,34 @@ test.describe("keyboard and focus accessibility", () => {
     await rows.first().focus();
     await page.keyboard.press("Space");
     await expect(page.getByRole("button", { name: nextName ?? "" })).toBeFocused();
-    const undo = page.getByRole("button", { name: "Undo" });
+    const undo = page.getByRole("button", { exact: true, name: "Undo" });
     await undo.focus();
     await page.keyboard.press("Enter");
     await expect(page.getByRole("button", { name: /^Check / }).first()).toBeVisible();
+  });
+
+  test("the first check and the starter checks have separate Undo actions", async ({ page }) => {
+    await gotoApplication(page, "/almanac");
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
+    await page
+      .getByRole("button", { name: /^Check (?!spoilered item)/ })
+      .first()
+      .click();
+
+    const itemUndo = page.getByRole("button", { exact: true, name: "Undo" });
+    const starterUndo = page.getByRole("button", { name: "Undo starter checks" });
+    await expect(page.getByText("We checked off your starter items (296)")).toBeVisible();
+    await itemUndo.click({ trial: true });
+    await starterUndo.click();
+
+    await expect(starterUndo).toBeHidden();
+    await expect(
+      page.getByRole("button", { name: /^Artifacts, 1 of \d+ completed/ }),
+    ).toBeVisible();
+    await itemUndo.click();
+    await expect(
+      page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }),
+    ).toBeVisible();
   });
 
   test("Villager alphabet and relationship progression preserve keyboard focus", async ({

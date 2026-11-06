@@ -1,10 +1,10 @@
-import { deflateSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GAME_DAY } from "#lib/engine/game-calendar.js";
 import { readProgressBlob, serializeStoredProgress } from "#lib/stores/progress-storage.js";
 import { QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
+import { buildSavBytes } from "#lib/test-utils/sav.js";
 
 import { syncDiagnostics } from "./diagnostics.svelte.js";
 import { deriveFollowKeys, encodeSavePayload, mailboxIdFor, sealEnvelope } from "./follow.js";
@@ -44,18 +44,12 @@ function blob(local: Local, overrides: Record<string, unknown> = {}): string {
   });
 }
 
-function u64(value: number): Uint8Array {
-  const bytes = new Uint8Array(8);
-  new DataView(bytes.buffer).setBigUint64(0, BigInt(value), true);
-  return bytes;
-}
-
 function saveBytes(
   date: number,
   playtime = 100,
   itemsAcquired?: string[],
 ): Uint8Array<ArrayBuffer> {
-  const entries: Record<string, unknown> = {
+  const entries: Record<string, object> = {
     gamedata: { date },
     header: { farm_name: "Rosewood", name: "Pat", playtime },
     info: {
@@ -66,14 +60,7 @@ function saveBytes(
       player: { farm_name: "Oakhill", items_acquired: itemsAcquired, name: "Bo" },
     }),
   };
-  const encoder = new TextEncoder();
-  const parts: Uint8Array[] = [u64(Object.keys(entries).length)];
-  for (const [name, data] of Object.entries(entries)) {
-    const nameBytes = encoder.encode(name);
-    const dataBytes = encoder.encode(JSON.stringify(data));
-    parts.push(u64(nameBytes.length), nameBytes, u64(dataBytes.length), dataBytes);
-  }
-  return Uint8Array.from(deflateSync(Buffer.concat(parts)));
+  return buildSavBytes(entries);
 }
 
 async function envelope(

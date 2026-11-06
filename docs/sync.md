@@ -294,6 +294,11 @@ One Durable Object per mailbox ID.
 
 ## Following
 
+The device-only `local.trackingLane` & `local.reminders` fields (version 9) record its tracking
+choice & data-loss reminders. Starting sync writes `trackingLane: "sync"` with the lane; stopping
+keeps progress and chooses `manual`. Neither field is exported or restored from another device. See
+[Tracking lanes](app-architecture.md#tracking-lanes) for the first-edit chooser & reminder cadence.
+
 Built in #133: `src/lib/sync/follow.ts` (keys, link, envelope, & relay client) &
 `src/lib/sync/sharing.ts` (the writes around them). The UI is in [sync-setup.md](sync-setup.md)
 (#131), on `/sync` & Data's sync card. See

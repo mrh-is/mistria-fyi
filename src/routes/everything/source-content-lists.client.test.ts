@@ -14,7 +14,8 @@ import SourceContent from "./source-content.test-harness.svelte";
 import type { Source, WaterType } from "#lib/types/acquisition.js";
 import type { ItemId, StoreId } from "#lib/types/tracker-data.js";
 
-beforeEach(() => {
+beforeEach(async () => {
+  await userState.startTrackingByHand();
   vi.spyOn(celebration, "celebrate").mockImplementation(() => undefined);
   vi.spyOn(celebration, "celebrateCategory").mockImplementation(() => undefined);
 });

@@ -86,6 +86,32 @@ G:\My Drive\Mistria\
 A version folder can have `save\` without `assets\` when the only save from that release predates
 the update. Pass `--drive=<dir>` or set `MISTRIA_DRIVE_DIR` if the Drive folder lives elsewhere.
 
+## Refresh the real-save fixtures
+
+CI runs the save parser & importer against real saves (`pnpm run test:saves`, the “Real saves” job).
+The saves live in the private R2 bucket `mistria-fyi-private` under `saves/vX.Y.Z/<file>`, never in
+git. The suite reads `pipeline/input/v<trackerData.version>/save/`, so the first CI run after the
+version bump fails until a save written by the new game exists there; that failure is the reminder.
+
+1. Run `pnpm run game-assets:share` on the gaming PC, then confirm `vX.Y.Z\save\` on the Drive has a
+   late-game autosave written by the new version.
+2. Add an entry for each such save to `SAVE_OBSERVATIONS` in
+   `src/lib/engine/import-save.observations.ts` with its `gameVersion` & SHA-256 (`pending`
+   observations are fine), then run `pnpm exec vitest run --project=saves` locally.
+3. Run `pnpm run saves:upload`. It needs `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` (from
+   `.env.r2-upload` as for sprites), checks each digest, & uploads to the bucket.
+4. Push. CI downloads the saves with the `R2_SAVES_READ_TOKEN` secret. It must be a Cloudflare API
+   token with “Account, Workers R2 Storage, Read” (My Profile, API Tokens). An R2 API token with
+   “Object Read only” fails with a 403, because Wrangler uses the REST API, not the S3 one. The
+   permission covers every R2 bucket on the account but allows no writes.
+
+Fork pull requests & Dependabot get no Actions secrets, so the job skips there. The fetch step runs
+`scripts/save-fixtures.ts` from the pull request’s branch, so any branch in this repository can read
+the token; that is accepted for a read-only token with two committers.
+
+Every other run fails if the saves are missing or their digests differ. Billy’s machine doesn’t need
+Cloudflare tokens: it runs `pnpm run test`, which excludes the `saves` project.
+
 Other machines symlink `pipeline/input` to the synced Drive folder that holds the `vX.Y.Z/` folders;
 the pipeline picks `vX.Y.Z/assets` from `--version`.
 
@@ -310,6 +336,8 @@ Before merging, verify that:
 - The committed generated-data diff contains only reviewed changes.
 - The new version’s assets and saves are on the shared Drive, and
   `DRY_RUN=1 pnpm run sprites:upload` reports nothing left to upload.
+- The new version’s saves are in `SAVE_OBSERVATIONS` & uploaded with `pnpm run saves:upload`
+  ([Refresh the real-save fixtures](#refresh-the-real-save-fixtures)).
 - A preceding-release local state and backup load with the decided behavior.
 - Save imports behave as documented for every supported game-save version.
 - Release notes describe any migration, dropped compatibility, or required player action.

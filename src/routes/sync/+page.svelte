@@ -7,6 +7,10 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import StatusNote from "#lib/components/status-note.svelte";
   import SyncTagDialog from "#lib/components/sync/sync-tag-dialog.svelte";
+  import {
+    downloadProgressBackup,
+    trackingReminders,
+  } from "#lib/controllers/tracking-reminders.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { currentDevice } from "#lib/sync/device.js";
@@ -14,7 +18,6 @@
   import { syncNotice } from "#lib/sync/notice.svelte.js";
   import { browserGivesHandles } from "#lib/sync/save-source.js";
   import { followCode, retryPendingRetires, stopSyncing, switchCode } from "#lib/sync/sharing.js";
-  import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { goto, replaceState } from "$app/navigation";
   import { page } from "$app/state";
@@ -194,13 +197,12 @@
   }
 
   function backup(): void {
-    downloadJson(userState.exportBackup(), BACKUP_FILE_PREFIX);
+    downloadProgressBackup();
   }
 
-  function trackByHand(): void {
+  async function trackByHand(): Promise<void> {
     cancelFollow();
-    userState.markDefaultUnlocksComplete();
-    void goto(localizedHref(""));
+    if (await trackingReminders.chooseHandTracking()) void goto(localizedHref(""));
   }
 
   function init(): void {
@@ -230,6 +232,7 @@
   onDestroy(() => {
     destroyed = true;
     stopPolling();
+    if (ready) userState.cancelLaneChoice();
   });
 </script>
 

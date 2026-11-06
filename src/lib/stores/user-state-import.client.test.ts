@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { extractSaveProgress } from "#lib/engine/import-save.js";
@@ -9,6 +9,11 @@ import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 import type { SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
 const MAX_MINE_FLOOR = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
+
+beforeEach(async () => {
+  // Hand edits wait for a tracking lane; these tests record them straight away.
+  await userState.startTrackingByHand();
+});
 
 describe("restoreBackup validation", () => {
   it("succeeds with a valid backup", () => {

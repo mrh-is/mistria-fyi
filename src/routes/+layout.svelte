@@ -4,9 +4,11 @@
 
   import "../app.css";
 
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
 
   import AppUpdater from "#lib/components/app-updater.svelte";
+  import InstallNudgeDialog from "#lib/components/install-nudge-dialog.svelte";
+  import LaneChooserDialog from "#lib/components/lane-chooser-dialog.svelte";
   import PencilFilter from "#lib/components/pencil-filter.svelte";
   import PersistenceWarning from "#lib/components/persistence-warning.svelte";
   import RouteMain from "#lib/components/route-main.svelte";
@@ -14,7 +16,9 @@
   import SyncReceiverHost from "#lib/components/sync/sync-receiver-host.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
   import { Toaster } from "#lib/components/ui/sonner/index.js";
+  import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
   import { errorPageMetadata } from "#lib/data/page-metadata.js";
+  import { showStarterItemsToast } from "#lib/effects/undo-toast.js";
   import { FeedbackContext, setFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { localeFontStylesheet } from "#lib/fonts/locale-fonts.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -40,6 +44,7 @@
 
   onMount(() => {
     userState.loadFromStorage();
+    void trackingReminders.opened();
     // A retire the relay hasn't confirmed yet tries again on every visit, then with backoff & on
     // coming back online for as long as the page is open.
     const stopRetiring = keepRetiring();
@@ -52,14 +57,23 @@
   let metadata = $derived(
     page.status >= 400 ? errorPageMetadata(page.status, page.data.locale) : page.data.metadata,
   );
+  $effect(() => {
+    // Read progress and the dialog state so closing an install nudge can reveal a due backup.
+    void userState.factCount;
+    void userState.trackingLane;
+    void trackingReminders.installOpen;
+    void trackingReminders.checkBackup();
+  });
   let hasToolbar = $derived(metadata.toolbar !== "hidden");
   let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
   let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
   // Toasts sit just above the toolbar, or above an open toolbar panel so they never cover it.
   const toastOffset = "calc(56px + env(safe-area-inset-bottom))";
-  let toastLift = $derived(
-    toolbarState.panelClearance > 0 ? `${toolbarState.panelClearance + 8}px` : null,
+  let toastBottom = $derived(
+    toolbarState.panelClearance > 0
+      ? `max(${toastOffset}, ${toolbarState.panelClearance + 8}px)`
+      : toastOffset,
   );
 
   // The server stamps `<html lang>`/`dir` for the first paint; a client-side locale switch (the
@@ -72,6 +86,11 @@
   // The service worker precaches no name chunks; the locale being read is the one kept offline.
   $effect(() => {
     keepLocaleOffline(page.data.locale);
+  });
+
+  $effect(() => {
+    const batch = userState.starterItems;
+    return batch && untrack(() => showStarterItemsToast(batch.count, batch.undo, batch.dismiss));
   });
 </script>
 
@@ -106,16 +125,19 @@
 
   <Toaster
     position="bottom-center"
+    expand={userState.starterItems !== undefined}
     offset={{
-      bottom: toastLift ? `max(${toastOffset}, ${toastLift})` : toastOffset,
+      bottom: toastBottom,
       left: toastOffset,
       right: toastOffset,
       top: toastOffset,
     }}
-    mobileOffset={toastLift ? { bottom: `max(16px, ${toastLift})` } : undefined}
+    mobileOffset={{ bottom: toastBottom }}
   />
 
   <PersistenceWarning />
+  <LaneChooserDialog />
+  <InstallNudgeDialog />
   <SyncReceiverHost />
   <PencilFilter />
 {/key}

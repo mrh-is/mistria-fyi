@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
@@ -12,6 +12,10 @@ async function restoreFromFile(file: File) {
   const input = screen.getByLabelText("Choose a backup file to restore");
   await fireEvent.change(input, { target: { files: [file] } });
 }
+
+beforeEach(async () => {
+  await userState.startTrackingByHand();
+});
 
 describe("BackupCard export", () => {
   it("downloads the serialized state as a dated JSON file", async () => {

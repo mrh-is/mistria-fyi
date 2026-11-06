@@ -1,6 +1,6 @@
 import { fireEvent, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import AlmanacContent from "#lib/components/almanac-content.svelte";
 import { INITIAL_ROW_BUDGET } from "#lib/controllers/row-reveal.svelte.js";
@@ -14,6 +14,10 @@ import { recordEntries } from "#lib/utils/record.js";
 import type { ItemId } from "#lib/types/tracker-data.js";
 
 describe("AlmanacContent", () => {
+  beforeEach(async () => {
+    await userState.startTrackingByHand();
+  });
+
   it("shows Date Inspiration without a duplicate Dates checklist", async () => {
     userState.toggleShowSpoilers();
     const view = renderWithFeedback(AlmanacContent, { locale: "en" });

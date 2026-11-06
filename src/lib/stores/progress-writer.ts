@@ -1,3 +1,4 @@
+import { progressFacts } from "#lib/engine/provenance.js";
 import { applySync, receiptCovers } from "#lib/engine/sync-apply.js";
 import { applySaveDay } from "#lib/engine/world-state.js";
 import { stampedLocal, startLaneLocal } from "#lib/sync/lane-operations.js";
@@ -53,13 +54,25 @@ export function planStoredWrite(
 
 /** A replacement uses the captured progress and can keep the device data found under the lock. */
 export function planReplacement(
-  { dropReceipt, json, keepLocal }: { dropReceipt: boolean; json: string; keepLocal: boolean },
+  {
+    chooseManual,
+    dropReceipt,
+    json,
+    keepLocal,
+  }: { chooseManual?: boolean; dropReceipt: boolean; json: string; keepLocal: boolean },
   storedLocal: DeviceLocalState | undefined,
 ): { json: string; loaded: LoadedProgress } {
   const captured = readProgressBlob(json, "repair");
   if (captured.kind !== "ok") throw new Error("Invalid captured progress write");
   const { loaded } = captured;
   if (keepLocal && storedLocal) loaded.local = storedLocal;
+  if (chooseManual) loaded.local.trackingLane ??= loaded.local.syncLane ? "sync" : "manual";
+  if ((chooseManual || dropReceipt) && loaded.local.reminders) {
+    loaded.local = {
+      ...loaded.local,
+      reminders: { ...loaded.local.reminders, backupFacts: progressFacts(loaded.progress).size },
+    };
+  }
   if (dropReceipt) {
     const { syncReceipt: _receipt, ...kept } = loaded.local;
     loaded.local = kept;

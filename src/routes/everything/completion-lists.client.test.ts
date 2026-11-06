@@ -18,7 +18,8 @@ import CompletionLists from "./completion-lists.test-harness.svelte";
 import type { QuestRow, QuestSection } from "#lib/presentation/quest-sections.js";
 import type { ItemId, QuestType, SkillId, SpellId } from "#lib/types/tracker-data.js";
 
-beforeEach(() => {
+beforeEach(async () => {
+  await userState.startTrackingByHand();
   vi.spyOn(celebration, "celebrate").mockImplementation(() => undefined);
   vi.spyOn(celebration, "celebrateCategory").mockImplementation(() => undefined);
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });

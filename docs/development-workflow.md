@@ -415,17 +415,18 @@ workerd before filtering. For focused plain-Node runs, pass both the file path &
 described [above](#executing-tests). Select a whole project with
 `pnpm exec vitest run --project=<name>`.
 
-| Project           | Files                                                              | Environment & setup                                          |
-| ----------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
-| `app`             | `src/**/*.test.ts`                                                 | Node, SvelteKit stand-ins & preloaded names, shared registry |
-| `isolated`        | `src/**/*.isolated.test.ts`                                        | As `app`, isolated per file                                  |
-| `cold`            | `src/**/*.cold.test.ts`                                            | Node, isolated per file, no names preload                    |
-| `client`          | `src/**/*.client.test.ts`                                          | happy-dom & Testing Library, shared registry                 |
-| `client-isolated` | `src/**/*.isolated.client.test.ts`                                 | As `client`, isolated per file                               |
-| `pipeline`        | `pipeline/**/*.test.ts`                                            | Plain Node without the app's Vite plugins, shared registry   |
-| `node`            | `*.test.ts` under `eslint-rules/`, `scripts/`, & `tests/`          | Plain Node without the app's Vite plugins, shared registry   |
-| `node-isolated`   | `*.isolated.test.ts` under `eslint-rules/`, `scripts/`, & `tests/` | As `node`, isolated per file                                 |
-| `assets`          | `**/*.assets.test.ts`                                              | Installed game assets; local only, excluded from `test`      |
+| Project           | Files                                                              | Environment & setup                                               |
+| ----------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `app`             | `src/**/*.test.ts`                                                 | Node, SvelteKit stand-ins & preloaded names, shared registry      |
+| `isolated`        | `src/**/*.isolated.test.ts`                                        | As `app`, isolated per file                                       |
+| `cold`            | `src/**/*.cold.test.ts`                                            | Node, isolated per file, no names preload                         |
+| `client`          | `src/**/*.client.test.ts`                                          | happy-dom & Testing Library, shared registry                      |
+| `client-isolated` | `src/**/*.isolated.client.test.ts`                                 | As `client`, isolated per file                                    |
+| `pipeline`        | `pipeline/**/*.test.ts`                                            | Plain Node without the app's Vite plugins, shared registry        |
+| `node`            | `*.test.ts` under `eslint-rules/`, `scripts/`, & `tests/`          | Plain Node without the app's Vite plugins, shared registry        |
+| `node-isolated`   | `*.isolated.test.ts` under `eslint-rules/`, `scripts/`, & `tests/` | As `node`, isolated per file                                      |
+| `assets`          | `**/*.assets.test.ts`                                              | Installed game assets; local only, excluded from `test`           |
+| `saves`           | `**/*.saves.test.ts`                                               | Private real saves; CI fetches them from R2, excluded from `test` |
 
 Every project restores spies, stubbed globals, & stubbed environment variables before each test. Set
 up spies and `vi.stubGlobal()` in the test or `beforeEach`, rather than relying on suite-level

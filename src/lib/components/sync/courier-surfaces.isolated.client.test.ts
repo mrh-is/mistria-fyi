@@ -1,10 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { deflateSync } from "node:zlib";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
+import { buildSavFile } from "#lib/test-utils/sav.js";
 
 import type { CourierOptions, CourierStatus } from "#lib/sync/courier.js";
 import type { RelayClient, RetireResult } from "#lib/sync/follow.js";
@@ -78,28 +78,12 @@ function blob(local: Record<string, unknown>): string {
   });
 }
 
-function u64(value: number): Uint8Array {
-  const bytes = new Uint8Array(8);
-  new DataView(bytes.buffer).setBigUint64(0, BigInt(value), true);
-  return bytes;
-}
-
 function saveFile(): File {
-  const encoder = new TextEncoder();
   const entries = {
     gamedata: { date: 0 },
     header: { farm_name: "Rosewood", name: "Pat", playtime: 100 },
   };
-  const parts: Uint8Array[] = [u64(Object.keys(entries).length)];
-  for (const [name, data] of Object.entries(entries)) {
-    const nameBytes = encoder.encode(name);
-    const dataBytes = encoder.encode(JSON.stringify(data));
-    parts.push(u64(nameBytes.length), nameBytes, u64(dataBytes.length), dataBytes);
-  }
-  return new File(
-    [Uint8Array.from(deflateSync(Buffer.concat(parts)))],
-    "game-1315159680-autosave.sav",
-  );
+  return buildSavFile(entries);
 }
 
 /** A file dropped by a browser that gives no handles, as the tests' browser does. */

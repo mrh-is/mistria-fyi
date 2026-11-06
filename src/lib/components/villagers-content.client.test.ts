@@ -14,6 +14,10 @@ import { recordKeys } from "#lib/utils/record.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";
 
 describe("VillagersContent localization", () => {
+  beforeEach(async () => {
+    await userState.startTrackingByHand();
+  });
+
   it("reveals the setting with romance and supports turning it on and off", async () => {
     const view = renderWithFeedback(VillagersContent, { locale: "en" });
     expect(view.queryByRole("switch")).not.toBeInTheDocument();
@@ -71,6 +75,10 @@ describe("VillagersContent localization", () => {
 });
 
 describe("VillagersContent alphabet index", () => {
+  beforeEach(async () => {
+    await userState.startTrackingByHand();
+  });
+
   it("omits initials that only spoilered villagers start with", () => {
     const { knownVillagers } = userState.progressionState;
     const roster = buildVillagerRoster("en");
@@ -101,7 +109,8 @@ describe("VillagersContent with completed villagers hidden", () => {
     (id) => !trackerData.villagers[id].dateable,
   );
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await userState.startTrackingByHand();
     userState.setHeartLevel(completed, MAX_HEART_LEVEL);
     userState.setHeartLevel(other, MAX_HEART_LEVEL);
   });

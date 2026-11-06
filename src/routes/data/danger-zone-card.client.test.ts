@@ -1,10 +1,14 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 
 import DangerZoneCard from "./danger-zone-card.svelte";
+
+beforeEach(async () => {
+  await userState.startTrackingByHand();
+});
 
 describe("DangerZoneCard", () => {
   it("asks for confirmation before resetting and keeps progress when cancelled", async () => {

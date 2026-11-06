@@ -34,7 +34,8 @@ function toggle() {
 }
 
 describe("SkillPerks", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await userState.startTrackingByHand();
     spoilerGuard = createSpoilerGuard();
   });
 

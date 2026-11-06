@@ -1,7 +1,7 @@
-import { deflateSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
+import { buildSavBytes } from "#lib/test-utils/sav.js";
 import { holdTurnstileScripts } from "#lib/test-utils/turnstile-script.js";
 
 import { deriveFollowKeys, encodeSavePayload, mailboxIdFor, sealEnvelope } from "./follow.js";
@@ -483,24 +483,6 @@ describe("stopping", () => {
   });
 });
 
-function u64(value: number): Uint8Array {
-  const bytes = new Uint8Array(8);
-  new DataView(bytes.buffer).setBigUint64(0, BigInt(value), true);
-  return bytes;
-}
-
-/** A `.sav` container (u64 little-endian counts & lengths), deflated as the game writes it. */
-function savBytes(entries: Record<string, object>): Uint8Array<ArrayBuffer> {
-  const encoder = new TextEncoder();
-  const parts: Uint8Array[] = [u64(Object.keys(entries).length)];
-  for (const [name, data] of Object.entries(entries)) {
-    const nameBytes = encoder.encode(name);
-    const dataBytes = encoder.encode(JSON.stringify(data));
-    parts.push(u64(nameBytes.length), nameBytes, u64(dataBytes.length), dataBytes);
-  }
-  return Uint8Array.from(deflateSync(Buffer.concat(parts)));
-}
-
 async function envelopeRead(key: FollowKey, save: Uint8Array<ArrayBuffer>): Promise<ReadResult> {
   const keys = await deriveFollowKeys(key);
   const plaintext = encodeSavePayload({
@@ -538,7 +520,7 @@ describe("following a code", () => {
 
   it("switches codes only after an empty mailbox has a readable save", async () => {
     const currentLane = { key: OTHER_KEY, kind: "following" } as const;
-    const save = savBytes({ player: { name: "Robin" } });
+    const save = buildSavBytes({ player: { name: "Robin" } });
     const read = vi
       .fn<RelayClient["read"]>()
       .mockResolvedValueOnce({ kind: "empty" })
@@ -558,7 +540,7 @@ describe("following a code", () => {
   });
 
   it("starts the lane in the write that applies the first save", async () => {
-    const save = savBytes({
+    const save = buildSavBytes({
       header: { farm_name: "Sunny Meadow", name: "Robin" },
       player: { name: "Robin" },
     });
@@ -581,11 +563,12 @@ describe("following a code", () => {
         hash: expect.stringMatching(/^[\w-]{43}$/u) as string,
         mailboxId: await mailboxIdFor(key),
       },
+      trackingLane: "sync",
     });
   });
 
   it("changes nothing when the player left before the save arrived", async () => {
-    const save = savBytes({ player: { name: "Robin" } });
+    const save = buildSavBytes({ player: { name: "Robin" } });
     const response = await envelopeRead(key, save);
     const pendingRead = Promise.withResolvers<ReadResult>();
     const read = vi.fn<RelayClient["read"]>().mockReturnValue(pendingRead.promise);
