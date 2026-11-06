@@ -3,8 +3,11 @@
 [![CI](https://github.com/mrh-is/mistria-fyi/workflows/CI/badge.svg)](https://github.com/mrh-is/mistria-fyi/actions/workflows/ci.yml)
 
 A mobile-first companion tracker for
-[Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/). Helps
-completionists track progress toward 100%.
+[Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/), live at
+[mistria.fyi](https://mistria.fyi). Helps completionists track progress toward 100%.
+
+Import a save file to fill in your progress at once. Sync keeps another device following that save
+file as you play, with no account.
 
 > **This is an independent, unofficial, noncommercial fan project.** It is not produced, endorsed,
 > supported, sponsored, or affiliated with [NPC Studio](https://www.npcstudio.com/). “Fields of
@@ -52,7 +55,7 @@ pnpm run pipeline -- /path/to/assets
 
 ## Scripts
 
-See the command table in the [agent command reference](docs/agent-reference.md#package-commands).
+See the command table in the [command reference](docs/agent-reference.md#package-commands).
 
 ## Tech stack
 

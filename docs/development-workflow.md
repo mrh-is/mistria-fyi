@@ -11,7 +11,7 @@
 > login steps. Run `node scripts/machine-doctor.ts` (with `node`, not through pnpm) to see which
 > prerequisites are present, missing, or the wrong version; `--for` limits it to the sections your
 > work needs (see machine-setup.md). It changes nothing. If a tool is missing or broken mid-task,
-> agents stop & report instead of repairing it (AGENTS.md, "Local tooling failures").
+> agents stop & report instead of repairing it ([Tooling failures](../AGENTS.md#tooling-failures)).
 
 - **Node.js**: `.node-version` is the single source of truth (Node 24 LTS). `package.json`’s
   `devEngines.runtime` repeats it with `onFail: "download"`, so `pnpm install` downloads that exact
@@ -38,11 +38,11 @@
   ```
 - **pnpm launcher**: The `packageManager` field pins pnpm, and your installed pnpm downloads and
   runs that version. pnpm 12 ships as a native executable, which pnpm 11's launcher runs through
-  Node and fails with `SyntaxError: Invalid or unexpected token` (issue #563 in the private beta).
-  Before or when the pin moves to pnpm 12, upgrade the machine's pnpm itself to 12 (for example
-  `pnpm self-update 12`, or your installer's equivalent). As a stopgap, put the downloaded native
-  pnpm 12 executable first on `PATH` so nested scripts use it too. CI uses `pnpm/setup`, which
-  installs the native binary directly and isn't affected.
+  Node and fails with `SyntaxError: Invalid or unexpected token`. Before or when the pin moves to
+  pnpm 12, upgrade the machine's pnpm itself to 12 (for example `pnpm self-update 12`, or your
+  installer's equivalent). As a stopgap, put the downloaded native pnpm 12 executable first on
+  `PATH` so nested scripts use it too. CI uses `pnpm/setup`, which installs the native binary
+  directly and isn't affected.
 - **Environment Configuration**: Copy `.env.example` to `.env` if local environment variables are
   required.
 - **Cloud agents**: Configure Claude Code cloud and Codex cloud with the shared setup script and
@@ -87,10 +87,8 @@ instead; run the setup steps from inside it:
 node scripts/setup-worktree.ts
 ```
 
-It refuses to run in the main checkout. Claude Code orchestrators should give editing subagents
-harness worktrees (`isolation: "worktree"`) rather than `.worktrees/<slug>`: the session's edit
-guard refuses Write/Edit outside the session's own worktree, which pushed subagents into unguarded
-shell writes (#545).
+It refuses to run in the main checkout. For subagents, see
+[Worktree mechanics](agent-reference.md#worktree-mechanics).
 
 <details>
 <summary>Manual fallback</summary>
@@ -182,23 +180,14 @@ Mistria Field Guide uses explicit planning and approval gates for changes that n
 
 ### Scope the change
 
-- Read the issue and comments before beginning issue work.
-- Existing clear acceptance criteria satisfy the scope approval gate. Proceed without requesting
-  approval again or drafting a duplicate checklist; ask only about unresolved scope, conflicting
-  requirements, or decisions those criteria do not settle.
-- Identify affected contracts, tests, generated files, and documentation before editing.
-- Use the smallest process that fits the change. Small, well-specified maintenance work does not
-  require a separate specification or implementation plan.
+[Task scope](../AGENTS.md#task-scope) has the rules for reading an issue & deciding whether to start
+it. Use the smallest process that fits the change: small, well-specified maintenance work doesn’t
+need a separate specification or implementation plan.
 
 ### Issue status
 
-Status labels show where an issue stands: `status: ready`, `status: blocked`,
-`status: needs decision`, or `status: in progress`. Do not start a blocked or needs-decision issue.
-A dependency on another issue is a “blocked by” relationship instead of a label, and an issue is
-blocked while any issue blocking it is open; `status: blocked` covers blockers outside the tracker.
-See [Issue triage](agent-workflow.md#issue-triage) for both rules & for the `delegate: small agent`
-label. An issue with `status: in progress` or an `agent:*` label already has an owner; coordinate on
-the issue instead of starting duplicate work. Applying these labels requires triage access, so
+[Issue triage](agent-workflow.md#issue-triage) defines the status labels, “blocked by”
+relationships, & the `delegate: small agent` label. Applying labels requires triage access, so
 outside contributors say on the issue that they are taking it.
 
 ### Attribute agent-authored content
@@ -216,8 +205,8 @@ criteria authorize implementation within that scope without another approval rou
    specifications before drafting implementation steps.
 3. **Plan Gate**: For changes that need a written implementation plan, obtain explicit user approval
    before editing code.
-4. **Commit Approved Artifacts**: Commit approved specifications and plans to Git _before_ starting
-   the implementation work they describe.
+4. **Keep Approval on the Issue or PR**: Specifications, plans, & their approval live in the issue
+   or PR. Don’t commit them to the repository.
 5. **Execution Checkpoints**: Respect pause points and review checkpoints specified in execution
    plans.
 
@@ -283,24 +272,9 @@ server too (“Server process exited with code 1”).
 
 ### Executing Tests
 
-Start with the test file that covers the change, for every agent and every Vitest project:
-
-- **Default: run one file** from any project:
-  ```sh
-  pnpm exec vitest run path/to/file.test.ts
-  ```
-
-For plain-Node tests under `eslint-rules/`, `scripts/`, & `tests/`, also select the project so
-unrelated app projects don’t start their Cloudflare proxy & workerd before file filtering:
-
-```sh
-pnpm exec vitest run --project node scripts/lib/pinned-node.test.ts
-```
-
-Use `--project node-isolated` for `*.isolated.test.ts` in those directories, and
-`--project pipeline` for asset-independent `pipeline/` tests. App tests, including
-`*.client.test.ts` & `*.cold.test.ts`, can use the path-only command. The
-[project table](#test-projects) lists every project.
+Start with the test file that covers the change, using the commands in
+[Focused checks](agent-verification.md#focused-checks). The [project table](#test-projects) lists
+every project.
 
 Broaden only when the changed contracts require it. Full-suite commands are references for CI or the
 explicit full-local-matrix exceptions in [agent-verification.md](agent-verification.md); do not run
@@ -506,24 +480,8 @@ exceptions. This section is the command reference.
 
 ### During development
 
-Confirm each command’s own exit status. A pipeline such as `command | tail` reports `tail`’s status,
-so capture verbose output to a temporary log & inspect its tail separately, or use `set -o pipefail`
-when filtering inline (see [agent-verification.md](agent-verification.md#exit-status)).
-
-Run only the specific test covering your change:
-
-```sh
-pnpm exec vitest run path/to/file.test.ts
-```
-
-After a TypeScript or Svelte contract edit that could cause type errors elsewhere, also run:
-
-```sh
-pnpm run check
-```
-
-Run `pnpm run lint:fix` before committing. Do not run `pnpm run test`, `pnpm run build`, or any
-other full-suite command during development.
+[Focused checks](agent-verification.md#focused-checks) lists what to run during development, &
+[Exit status](agent-verification.md#exit-status) covers confirming each result.
 
 ### CI
 
@@ -665,13 +623,8 @@ above the finding.
 
 ### Full local matrix
 
-`pnpm run verify` runs CI's non-browser matrix locally (the default steps in `STEPS`,
-[scripts/verify.ts](../scripts/verify.ts)) with live output, stopping on the first failure. It is
-read-only: it runs `lint`, not `lint:fix`, so run `pnpm run lint:fix` beforehand. Opt-in flags add
-the local-only steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`, `--browser` adds
-`test:accessibility` & `test:pwa`, and `--all` adds both. Run it once, when commit-ready, only for
-the exceptions in [verification policy](agent-verification.md). If a step fails, fix the issue and
-rerun only that step, then rerun `pnpm run verify` once.
+[Full verification](agent-verification.md#full-verification) says when to run `pnpm run verify` &
+which flags it takes. It stops on the first failure.
 
 The browser steps reuse the production build from the matrix via `PLAYWRIGHT_SKIP_BUILD=true`, so
 `--browser` & `--all` build once. Standalone browser commands still build by default.
@@ -694,18 +647,9 @@ Pipeline parser, evaluator, extractor, & shared data-contract changes must addit
 
 ### Documentation-only changes
 
-Changes that touch only `.md` files, comments, or non-executable content need only:
-
-```sh
-pnpm run lint:fix && pnpm run lint
-```
-
-No build, no tests. `pnpm run prepare` generates `.svelte-kit/tsconfig.json`; if oxlint reports it
-missing (lifecycle scripts skipped), run `pnpm exec svelte-kit sync` first.
-
-> [!IMPORTANT] Git pre-commit hooks are developer conveniences, not verification evidence. Agents
-> must run the documented commands directly in their shell and verify clean exit status before
-> committing work.
+Changes that touch only `.md` files, comments, or non-executable content need only
+`pnpm run lint:fix && pnpm run lint`. `pnpm run prepare` generates `.svelte-kit/tsconfig.json`; if
+oxlint reports it missing (lifecycle scripts skipped), run `pnpm exec svelte-kit sync` first.
 
 ### Required branch/PR delivery check before handoff
 

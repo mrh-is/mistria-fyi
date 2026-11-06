@@ -1,5 +1,5 @@
 // Every board on the save file sync canvas, by row, plus the canvas notes. Copy comes from the
-// copy table in docs/sync-setup.md; change it there first, then here.
+// `sync_` keys in messages/en.json; change it there first, then here.
 import * as k from "./kit.mjs";
 
 const {
