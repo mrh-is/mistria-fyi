@@ -33,6 +33,8 @@ describe("ShelfGroups during search", () => {
     });
     const todo = within(view.getByRole("group", { name: "To do" }));
     const notNow = within(view.getByRole("group", { name: "Not now" }));
+    expect(todo.getByRole("heading", { name: "To do" })).toBeVisible();
+    expect(todo.getByText("1")).toBeVisible();
     expect(todo.getByText("Turnip")).toBeVisible();
     expect(notNow.getByRole("heading", { name: "Not now" })).toBeVisible();
     expect(notNow.getByText("2")).toBeVisible();

@@ -12,7 +12,7 @@
   /**
    * Things inside a section, grouped the way a page groups its sections. The first shelf with
    * anything on it reads as the section's own list, and the shelves after it fold away. A search
-   * can hide the earlier rows, so a first shelf below To do gets a heading while forced open.
+   * labels the matching shelves. A lone To do shelf needs no extra heading.
    */
   let {
     empty,
@@ -86,7 +86,7 @@
 {#each groups as { members, shelf }, index (shelf)}
   <div role="group" aria-label={shelfLabel(shelf)}>
     {#if index === 0}
-      {#if forceOpen && labelFirstShelf && shelf !== "todo"}
+      {#if forceOpen && labelFirstShelf && (shelf !== "todo" || groups.length > 1)}
         <ShelfHeading count={members.length} {explains} {level} {shelf} />
       {/if}
       {@render group(members)}
