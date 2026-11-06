@@ -1003,6 +1003,22 @@ describe("switching farms", () => {
     savedAt: 5,
   };
 
+  it("keeps the current weather when the new farm's save can't say it", async () => {
+    const relay = fakeRelay(await envelope(4, saveBytes(SEASON), { fileName: OTHER_FARM_FILE }));
+    const { receiver, userState } = await load(
+      blob(
+        { syncLane: FOLLOWING },
+        { ...TRACKED, worldState: { season: "spring", weather: "inclement" } },
+      ),
+      relay,
+    );
+    receiver.start();
+    await flush();
+
+    expect(userState.farmSwitchBackup?.farmName).toBe("Rosewood");
+    expect(userState.state.worldState).toEqual({ season: "summer", weather: "inclement" });
+  });
+
   it.each([true, false])(
     "asks again before replacing a changed backup, even with unchanged labels: %s (F14)",
     async (sameLabels) => {

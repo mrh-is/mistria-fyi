@@ -115,6 +115,23 @@ describe("starting a syncing lane", () => {
     expect(stored().local).toBeUndefined();
   });
 
+  it("keeps the clock's values that the first save can't say", async () => {
+    const userState = await openStore(blob());
+    userState.setSeason("summer");
+    userState.setWeather("inclement");
+
+    const day = { season: "fall", weather: undefined } as const;
+    await userState.startSyncLane({ kind: "computer" }, { ...SAVE, day });
+    expect(stored().worldState).toEqual({ season: "fall", weather: "inclement" });
+
+    await userState.stopSyncing();
+    await userState.startSyncLane(
+      { kind: "computer" },
+      { ...SAVE, day: { season: undefined, weather: undefined } },
+    );
+    expect(stored().worldState).toEqual({ season: "fall", weather: "inclement" });
+  });
+
   it("leaves the lane & key out of a backup", async () => {
     const userState = await openStore(blob());
     await userState.startSyncLane({ kind: "computer" }, SAVE);

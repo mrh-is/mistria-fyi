@@ -795,7 +795,6 @@ function createUserState() {
       }
     }
 
-    const world = result.farmSwitch ? empty.worldState : base.worldState;
     const next: ProgressSnapshot = {
       history: result.state.history,
       // Keeping current progress applies nothing from the older save, its names included.
@@ -805,7 +804,11 @@ function createUserState() {
           : { ...request.metadata, identity: result.state.farm ?? request.metadata.identity },
       progress: result.state.progress,
       retained: result.farmSwitch ? empty.retained : base.retained,
-      worldState: result.rollback === "declined" ? world : applySaveDay(world, request.day),
+      // A farm switch resets progress, not the clock: what the save can't say stays as it was.
+      worldState:
+        result.rollback === "declined"
+          ? base.worldState
+          : applySaveDay(base.worldState, request.day),
     };
     const nextLocal: DeviceLocalState = { ...local, ...stampedLocal(local.syncFreshness, request) };
     const built = result.farmSwitch
@@ -1403,7 +1406,7 @@ function createUserState() {
       const staged = emptyLoadedProgress();
       staged.lastImport = $state.snapshot(save.metadata);
       applyAdditiveSave(staged.progress, staged.history, save.completed, save.playtime);
-      staged.worldState = applySaveDay(staged.worldState, save.day);
+      staged.worldState = applySaveDay($state.snapshot(state.worldState), save.day);
       enablePersistenceAfterExplicitReplace();
       return requestProgressWrite({
         guard: stillWanted,
