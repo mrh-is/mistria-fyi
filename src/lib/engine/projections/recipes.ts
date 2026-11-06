@@ -44,9 +44,9 @@ export interface RecipePlacement {
 }
 
 /**
- * How the Recipes page lays recipes out: for each almanac category, in almanac order, each recipe
- * made by one of its entries, once, pictured with the first such entry's canonical item. A recipe
- * can appear under more than one category; a recipe no almanac entry makes appears under none.
+ * Recipes made by almanac entries, grouped in almanac order. Each category lists a recipe once,
+ * pictured with the first matching entry's canonical item. A recipe can appear in several
+ * categories. The Recipes page adds a separate section for recipes with no almanac placement.
  */
 export function recipePlacements(): {
   categoryId: AlmanacCategoryId;
