@@ -506,13 +506,14 @@ usable anywhere, though unlocked through mine progression.
 refuses to prerender a template containing `%sveltekit.nonce%`. Editing either script changes its
 hash, which the build recomputes and `security-headers.test.ts` pins.
 
-Production pages log two expected CSP errors for an inline script that Cloudflare adds to each HTML
-response. The script loads `/cdn-cgi/challenge-platform/scripts/jsd/main.js` for JavaScript
-Detections, part of Bot Fight Mode, so branch previews don’t log it. It embeds a per-response ray
-ID, so its hash changes on every load and can’t be allowed. Allowing it would need `unsafe-inline`,
-and the page works without it. Web Analytics stays off for the zone, because the privacy page
-promises no analytics; a CSP error for `static.cloudflareinsights.com` means someone turned it back
-on.
+Production pages log an expected CSP error, usually twice per load, for one inline script that
+Cloudflare adds to each HTML response. The script loads
+`/cdn-cgi/challenge-platform/scripts/jsd/main.js` for JavaScript Detections, part of Bot Fight Mode,
+so branch previews don’t log it. It embeds a per-response ray ID, so its hash changes on every load
+and can’t be allowed. Browsers ignore `unsafe-inline` in a policy with hashes or nonces, so allowing
+the script would mean dropping all of them, and the page works without it. Web Analytics stays off
+for the zone, because the privacy page promises no analytics; a CSP error for
+`static.cloudflareinsights.com` means someone turned it back on.
 
 ### Prerendered pages
 
