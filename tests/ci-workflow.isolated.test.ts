@@ -343,6 +343,13 @@ describe("CI workflow jobs", () => {
 });
 
 describe("CI workflow browser suites", () => {
+  it("preserves hidden static assets in the build artifact served by browser suites", () => {
+    const upload = jobs.build.steps?.find((step) => step.with?.name === "build-output");
+    expect(upload?.uses).toMatch(/^actions\/upload-artifact@/u);
+    expect(upload?.with?.path).toBe(".svelte-kit/output/");
+    expect(upload?.with?.["include-hidden-files"]).toBe(true);
+  });
+
   it.each([
     "src/routes/+page.svelte",
     "static/icon.png",

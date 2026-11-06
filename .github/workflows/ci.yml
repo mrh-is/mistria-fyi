@@ -308,6 +308,8 @@ jobs:
         with:
           name: build-output
           path: .svelte-kit/output/
+          # The worker precaches hidden static paths too, including .well-known/security.txt.
+          include-hidden-files: true
           retention-days: 1
 
   accessibility:
