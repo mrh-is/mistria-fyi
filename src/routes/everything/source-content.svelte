@@ -9,6 +9,7 @@
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
@@ -18,9 +19,7 @@
   import { categoryForKey } from "#lib/data/categories.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { nameCollator } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
-  import { getAllProgress, isCategoryComplete } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
   import { sealsBefore } from "#lib/engine/projections/mines.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
@@ -46,13 +45,23 @@
   import GroupSection from "./group-section.svelte";
 
   import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
+  import type { AllProgress } from "#lib/engine/categories.js";
   import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { Shelf } from "#lib/engine/shelves.js";
   import type { SourceSection } from "#lib/presentation/source-groups.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { QuestId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
-  let { anchor, locale }: { anchor: string; locale: LocaleCode } = $props();
+  let {
+    anchor,
+    locale,
+    progress,
+  }: {
+    anchor: string;
+    locale: LocaleCode;
+    /** The page's progress, so `/everything` computes it once per context. */
+    progress: AllProgress;
+  } = $props();
 
   const guard = createSpoilerGuard();
 
@@ -75,7 +84,6 @@
   let lookups = $derived(
     buildBaseSegmentLookups(computeSpoileredStoreIds(userState.progressionState), locale),
   );
-  let progress = $derived(getAllProgress(userState.progressContext));
   let progressCompletions = $derived([
     userState.state.progress.mineFloor >= getMaxMineFloor(),
     userState.state.progress.renown >= getMaxRenownLevel(),
@@ -263,20 +271,19 @@
 
   function toggle(entry: SourceChecklistRow): void {
     const perform = () => {
-      const completesSource = sections.some(({ rows }) => {
-        const remaining = rows.filter(({ entry: row }) => row.obtainable && !row.completed);
-        return remaining.length === 1 && remaining[0].entry.key === entry.key;
-      });
-      for (const { id, rows } of sections) {
-        if (rows.some(({ entry: row }) => row.key === entry.key)) sectionGrouping.hold(id);
-      }
+      const sourceIds = sections
+        .filter(({ rows }) => rows.some(({ entry: row }) => row.key === entry.key))
+        .map(({ id }) => id);
+      for (const id of sourceIds) sectionGrouping.hold(id);
       const beforeRecipes = new Set(userState.state.progress.almanacRecipes);
-      const undo = entry.toggle();
-      const updated = buildSourceChecklist(
-        userState.progressContext,
-        locale,
-        userState.state.showSpoilers,
-      ).find(({ key }) => key === entry.key);
+      const undo = celebrateProgress(
+        entry.category,
+        () => entry.toggle(),
+        sourceIds.map(
+          (id) => () => sections.find((section) => section.id === id)?.state === "done",
+        ),
+      );
+      const updated = entries.find(({ key }) => key === entry.key);
       if (entry.reportCategory === "quest") {
         const added = [...userState.state.progress.almanacRecipes].filter(
           (id) => !beforeRecipes.has(id),
@@ -291,11 +298,7 @@
       } else {
         showUndoToast(entry.name, updated?.completed ?? false, undo);
       }
-      if (updated?.completed) {
-        leaving.markLeaving(entry.key);
-        if (isCategoryComplete(entry.category, userState.progressContext)) celebrateCategory();
-        else if (completesSource) celebrate();
-      }
+      if (updated?.completed) leaving.markLeaving(entry.key);
     };
     if (
       entry.completed ||

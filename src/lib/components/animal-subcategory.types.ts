@@ -7,7 +7,6 @@ import type { LocaleCode } from "#lib/types/locale.js";
 import type { AnimalId, AnyId } from "#lib/types/tracker-data.js";
 
 export interface AnimalSubcategoryProps<Id extends AnyId> {
-  areAllAnimalsComplete: () => boolean;
   completionCheck: (animalId: AnimalId, itemId: Id) => boolean;
   /** The progress field the rows' facts live in. */
   factField: "animalCosmetics" | "animals";

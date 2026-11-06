@@ -6,6 +6,7 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
@@ -13,7 +14,6 @@
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { projectMuseum } from "#lib/engine/projections/museum.js";
@@ -127,20 +127,20 @@
 
   function toggleItem(itemId: ItemId, setId: MuseumWingSetId, wingId: MuseumWingId): void {
     sectionGrouping.hold(wingId);
-    userState.toggleMuseumItem(itemId);
+    const wing = trackerData.museum[wingId];
+    celebrateProgress(
+      "museum",
+      () => {
+        userState.toggleMuseumItem(itemId);
+      },
+      [() => isWingComplete(wing), () => isSetComplete(wing.sets[setId])],
+    );
     const completed = isItemComplete(itemId);
     showUndoToast(getName("items", itemId, locale), completed, () => {
       userState.toggleMuseumItem(itemId);
     });
     if (completed) {
       recentlyCompleted.markLeaving(itemId);
-      if (isMuseumComplete()) {
-        celebrateCategory();
-      } else if (isWingComplete(trackerData.museum[wingId])) {
-        celebrate();
-      } else if (isSetComplete(trackerData.museum[wingId].sets[setId])) {
-        celebrate();
-      }
     }
   }
 

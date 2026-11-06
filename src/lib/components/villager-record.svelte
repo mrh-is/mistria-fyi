@@ -5,9 +5,8 @@
   import { Icon } from "#lib/components/icon/index.js";
   import Spoiler from "#lib/components/spoiler.svelte";
   import Stepper from "#lib/components/stepper.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { getName } from "#lib/data/names.js";
-  import { celebrateCategory } from "#lib/effects/celebrate.js";
-  import { isCategoryComplete } from "#lib/engine/categories.js";
   import { isVillagerComplete, MAX_HEART_LEVEL } from "#lib/engine/progress.js";
   import { getPartnerId, relationshipPresentation } from "#lib/engine/relationships.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -120,14 +119,8 @@
     }
   }
 
-  function areAllVillagersComplete(): boolean {
-    return isCategoryComplete("villagers", userState.progressContext);
-  }
-
   function mutateWithCelebration(mutate: () => void): void {
-    const wasCategoryComplete = areAllVillagersComplete();
-    mutate();
-    if (!wasCategoryComplete && areAllVillagersComplete()) celebrateCategory();
+    celebrateProgress("villagers", mutate);
   }
 
   function setLevel(level: number): void {
