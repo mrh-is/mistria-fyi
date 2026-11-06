@@ -158,12 +158,15 @@ export function wranglerEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.Proces
  * deps `allowBuilds` in pnpm-workspace.yaml already approves) through pnpm's own executable, so no
  * shell shim is involved. `pnpx` would install a separate copy that ignores that approval.
  */
-export function runWrangler(args: string[]): Promise<WranglerResult> {
+export function runWrangler(
+  args: string[],
+  env: NodeJS.ProcessEnv = wranglerEnv(),
+): Promise<WranglerResult> {
   const pnpm = pnpmCommand(["exec", "wrangler", ...args]);
   return new Promise((resolve) => {
     const child = spawn(pnpm.command, pnpm.args, {
       cwd: REPO_ROOT,
-      env: wranglerEnv(),
+      env,
       shell: pnpm.shell,
       windowsHide: true,
     });

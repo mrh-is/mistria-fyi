@@ -66,7 +66,7 @@ by 1.0.8 (333 KB compressed, 3.7 MB decompressed, 42 entries).
 - **World facts.** `gamedata.t2_world_facts` grows from about 6,600 to 9,300 entries, &
   `t2_world_facts.renown` (the fact the importer reads) is present in both.
 
-`import-save.assets.test.ts` runs both saves through the importer: neither reports an unrecognized
+`import-save.saves.test.ts` runs both saves through the importer: neither reports an unrecognized
 ID, & every field the save fully records extracts as complete.
 
 ## Entries

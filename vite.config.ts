@@ -245,7 +245,7 @@ export default defineConfig(({ command }) => ({
     // Every file gets its own module registry; spies and stubbed globals are restored per test.
     isolate: true,
     // Each project is a tier, split by what its tests need to run. `pnpm run test` runs every
-    // project except `assets`; see docs/development-workflow.md §4.
+    // project except `assets` & `saves`; see docs/development-workflow.md §4.
     projects: [
       {
         extends: true,
@@ -253,6 +253,7 @@ export default defineConfig(({ command }) => ({
           exclude: [
             ...sharedTestExcludes,
             "**/*.assets.test.ts",
+            "**/*.saves.test.ts",
             "**/*.client.test.ts",
             "**/*.cold.test.ts",
             "**/*.isolated.test.ts",
@@ -280,7 +281,7 @@ export default defineConfig(({ command }) => ({
         ...plainNodeProject,
         test: {
           ...plainNodeTestOptions,
-          exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
+          exclude: [...sharedTestExcludes, "**/*.assets.test.ts", "**/*.saves.test.ts"],
           include: ["pipeline/**/*.test.ts"],
           name: "pipeline",
           ...sharedRegistry,
@@ -292,7 +293,12 @@ export default defineConfig(({ command }) => ({
         test: {
           ...plainNodeTestOptions,
           // CLI exclusions are overridden by inline projects, so exclude here.
-          exclude: [...sharedTestExcludes, "**/*.assets.test.ts", "**/*.isolated.test.ts"],
+          exclude: [
+            ...sharedTestExcludes,
+            "**/*.assets.test.ts",
+            "**/*.saves.test.ts",
+            "**/*.isolated.test.ts",
+          ],
           include: [
             "eslint-rules/**/*.test.ts",
             ...(scriptsChanged ? ["scripts/**/*.test.ts"] : alwaysRunScriptTests),
@@ -358,6 +364,17 @@ export default defineConfig(({ command }) => ({
           globalSetup: ["pipeline/src/assets-test-setup.ts"],
           include: ["**/*.assets.test.ts"],
           name: "assets",
+        },
+      },
+      {
+        // Needs the real saves (pipeline/input/vX.Y.Z/save/), which are private. Locally they come
+        // from the shared Drive folder; CI fetches them from R2. `pnpm run test` excludes it.
+        ...plainNodeProject,
+        test: {
+          ...plainNodeTestOptions,
+          exclude: sharedTestExcludes,
+          include: ["**/*.saves.test.ts"],
+          name: "saves",
         },
       },
     ],

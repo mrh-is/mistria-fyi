@@ -7,7 +7,8 @@
 // checks that every step with a `job` runs in exactly that job of ci.yml.
 //
 // Opt-in steps CI cannot run or only runs conditionally:
-//   --assets   also run test:pipeline:assets (needs the game assets; CI has none)
+//   --assets   also run test:pipeline:assets (needs the game assets; CI has none) & test:saves
+//              (needs the real saves; CI fetches them from private R2)
 //   --browser  also run the Playwright suites (test:accessibility & test:pwa) against a build
 //   --all      both of the above
 //
@@ -93,6 +94,9 @@ export const STEPS: readonly StepDefinition[] = [
   { command: script("check:routes"), job: "build", matrix: "default", name: "check:routes" },
   { command: script("check:built"), job: "build", matrix: "default", name: "check:built" },
   { command: script("test:pipeline:assets"), matrix: "assets", name: "test:pipeline:assets" },
+  // CI fetches the real saves from private R2 first (`pnpm run saves:fetch`); locally they come
+  // from the shared Drive folder.
+  { command: script("test:saves"), job: "saves", matrix: "assets", name: "test:saves" },
   {
     command: script("test:accessibility"),
     env: SKIP_BUILD,

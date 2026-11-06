@@ -1,7 +1,7 @@
 # Save import verification
 
 The real-save suite can compare imports with facts a player checks in Fields of Mistria. These
-checks extend `src/lib/engine/import-save.assets.test.ts`; they use its existing parser & importer.
+checks extend `src/lib/engine/import-save.saves.test.ts`; they use its existing parser & importer.
 
 ## Current coverage
 
@@ -63,12 +63,15 @@ The worktree needs the private saves under `pipeline/input/v<version>/save/`, li
 worktree setup. No save upload, game asset extraction, or importer change is required.
 
 ```sh
-pnpm exec vitest run src/lib/engine/import-save.assets.test.ts
+pnpm run test:saves
 ```
 
 The suite always checks the snapshot digest & its writing game version. It compares imported facts
 only for confirmed observations. Missing snapshots & changed bytes fail rather than silently
-dropping coverage. CI has no private saves, so this remains a local asset test.
+dropping coverage. CI runs the same suite in its “Real saves” job, which first downloads each save
+named in `import-save.observations.ts` from a private R2 bucket (`pnpm run saves:fetch`) & checks
+its digest; see
+[the update protocol](game-version-update-protocol.md#refresh-the-real-save-fixtures).
 
 ## Privacy & updates
 

@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { deflateSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
 import { PROGRESS_STORAGE_KEY, QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { buildSavFile } from "#lib/test-utils/sav.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 import { recordKeys } from "#lib/utils/record.js";
@@ -38,17 +38,10 @@ describe("save import", () => {
   });
 
   it("can cancel a different farm, then explicitly merge it without losing progress", async () => {
-    const encoder = new TextEncoder();
-    const name = encoder.encode("player");
-    const data = encoder.encode(JSON.stringify({ items_acquired: ["animated_waterfall_v2"] }));
-    const raw = new Uint8Array(24 + name.length + data.length);
-    const view = new DataView(raw.buffer);
-    view.setBigUint64(0, 1n, true);
-    view.setBigUint64(8, BigInt(name.length), true);
-    raw.set(name, 16);
-    view.setBigUint64(16 + name.length, BigInt(data.length), true);
-    raw.set(data, 24 + name.length);
-    const save = new File([new Uint8Array(deflateSync(raw))], "game-456-autosave.sav");
+    const save = buildSavFile(
+      { player: { items_acquired: ["animated_waterfall_v2"] } },
+      "game-456-autosave.sav",
+    );
 
     await userState.mergeFromSave(
       { renown: 7 },

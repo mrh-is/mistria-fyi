@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { buildRawSav, u64LE } from "#lib/test-utils/sav.js";
+
 import {
   MAX_COMPRESSED_SIZE,
   parseSavArchive,
@@ -23,31 +25,6 @@ async function expectSavArchiveError(
   expect(rejected).toBeInstanceOf(SavArchiveError);
   expect(rejected).toHaveProperty("detail", detail);
   expect(rejected).toHaveProperty("message", expect.stringContaining(message ?? ""));
-}
-
-const encoder = new TextEncoder();
-
-/** Build an uncompressed .sav-format buffer from named JSON entries; strings are written as is. */
-function buildRawSav(entries: Record<string, object | string>): Uint8Array {
-  const parts: Uint8Array[] = [];
-  const entryList = Object.entries(entries);
-
-  parts.push(u64LE(entryList.length));
-
-  for (const [name, data] of entryList) {
-    const nameBytes = encoder.encode(name);
-    const dataBytes = encoder.encode(typeof data === "string" ? data : JSON.stringify(data));
-    parts.push(u64LE(nameBytes.length), nameBytes, u64LE(dataBytes.length), dataBytes);
-  }
-
-  const totalLen = parts.reduce((sum, p) => sum + p.length, 0);
-  const result = new Uint8Array(totalLen);
-  let offset = 0;
-  for (const part of parts) {
-    result.set(part, offset);
-    offset += part.length;
-  }
-  return result;
 }
 
 /** Deflate-compress raw bytes and wrap as a File for parseSavArchive. */
@@ -84,15 +61,6 @@ async function compressToFile(raw: Uint8Array, name = "test.sav"): Promise<File>
   }
 
   return new File([compressed], name);
-}
-
-/** Write a u64 LE into an 8-byte Uint8Array. */
-function u64LE(n: number): Uint8Array {
-  const buf = new ArrayBuffer(8);
-  const view = new DataView(buf);
-  view.setUint32(0, n >>> 0, true);
-  view.setUint32(4, Math.floor(n / 0x1_00_00_00_00), true);
-  return new Uint8Array(buf);
 }
 
 // ─── parseSavArchive ──────────────────────────────────────────────────
