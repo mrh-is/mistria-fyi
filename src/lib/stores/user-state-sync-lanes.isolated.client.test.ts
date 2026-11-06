@@ -17,6 +17,7 @@ interface StoredBlob {
   lastImport: null | { farmName: null | string };
   local?: Record<string, unknown>;
   progress: { almanac: string[]; renown: number };
+  worldState: { season: string; weather: string };
 }
 
 function blob(local?: Record<string, unknown>, renown = 7): string {
@@ -40,6 +41,7 @@ function blob(local?: Record<string, unknown>, renown = 7): string {
 
 const SAVE: SyncedSave = {
   completed: { almanac: new Set([SAVED_ITEM]) },
+  day: { season: "fall", weather: "special" },
   metadata: {
     farmName: "Sunny Meadow",
     identity: { creationVersion: null, saveNumber: "1315159680" },
@@ -93,6 +95,7 @@ describe("starting a syncing lane", () => {
     const after = stored();
     expect(after.progress.almanac).toEqual([SAVED_ITEM]);
     expect(after.progress.renown).toBe(0);
+    expect(after.worldState).toEqual({ season: "fall", weather: "special" });
     expect(after.lastImport?.farmName).toBe("Sunny Meadow");
     expect(after.local).toEqual({
       farmSwitchBackup: backup,

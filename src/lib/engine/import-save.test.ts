@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
+import { DAYS_PER_SEASON, GAME_DAY } from "#lib/engine/game-calendar.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
@@ -47,6 +48,64 @@ function getDefaultAnimalVariants(animalId: AnimalId): Set<AnimalVariantId> {
     ),
   );
 }
+
+function day(gamedata: Record<string, unknown>) {
+  return extractSave({ gamedata }).day;
+}
+
+function forecast(entries: Record<number, string>): string[] {
+  return Array.from({ length: DAYS_PER_SEASON }, (_, index) => entries[index] ?? "calm");
+}
+
+describe("the save's day", () => {
+  it("reads the current season past the first year & today's forecast entry", () => {
+    // The example from a real v1.0.8 save: day 169 is the second day of the seventh season.
+    const { season, weather } = day({
+      date: 43_804_800,
+      weather: { forecast: forecast({ 1: "special" }) },
+    });
+    expect(season.value).toBe("fall");
+    expect(weather.value).toBe("special");
+  });
+
+  it("reads the last day of a season", () => {
+    const { season, weather } = day({
+      date: 27 * GAME_DAY,
+      weather: { forecast: forecast({ 27: "heavy_inclement" }) },
+    });
+    expect(season.value).toBe("spring");
+    expect(weather.value).toBe("heavy_inclement");
+  });
+
+  it.each([
+    ["an unknown weather", { forecast: forecast({ 0: "blizzard" }) }, "invalid-value"],
+    ["a short forecast", { forecast: [] }, "invalid-value"],
+    ["a forecast that isn't a list", { forecast: "calm" }, "invalid-value"],
+    ["no forecast", {}, "absent"],
+  ])("reports %s, keeping the season", (_name, weather, code) => {
+    const fields = day({ date: 0, weather });
+    expect(fields.season.value).toBe("spring");
+    expect(fields.weather.value).toBeUndefined();
+    expect(fields.weather.diagnostics).toEqual([{ code, path: "gamedata.weather.forecast" }]);
+  });
+
+  it("reports weather the season can't have", () => {
+    const summer = DAYS_PER_SEASON * GAME_DAY;
+    const { weather } = day({ date: summer, weather: { forecast: forecast({ 0: "special" }) } });
+    expect(weather.value).toBeUndefined();
+    expect(weather.completeness).toBe("unknown");
+  });
+
+  it("reads neither without a date", () => {
+    const { season, weather } = day({ weather: { forecast: forecast({}) } });
+    expect(season.value).toBeUndefined();
+    expect(weather.value).toBeUndefined();
+  });
+
+  it("never warns the player about the day", () => {
+    expect(extractSaveProgress({ gamedata: { date: "soon" } }).warnings).toEqual([]);
+  });
+});
 
 describe("starting unlocks", () => {
   it("credits every default cosmetic even when the save omits its unlock list", () => {

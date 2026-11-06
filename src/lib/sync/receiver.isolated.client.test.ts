@@ -1,7 +1,7 @@
 import { deflateSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GAME_DAY } from "#lib/engine/import-save.js";
+import { GAME_DAY } from "#lib/engine/game-calendar.js";
 import { readProgressBlob, serializeStoredProgress } from "#lib/stores/progress-storage.js";
 import { QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
@@ -250,6 +250,7 @@ function stored(): {
   lastImport: null | { farmName: null | string };
   local: Local;
   progress: { reachedSeason?: string };
+  worldState: { season: string; weather: string };
 } {
   return JSON.parse(localStorage.getItem(PROGRESS_KEY) ?? "null") as ReturnType<typeof stored>;
 }
@@ -483,8 +484,9 @@ describe("applying", () => {
 
     expect(writes.count()).toBe(1);
     expect(receiver.status.kind).toBe("up-to-date");
-    const { local, progress } = stored();
+    const { local, progress, worldState } = stored();
     expect(progress.reachedSeason).toBe("summer");
+    expect(worldState).toEqual({ season: "summer", weather: "calm" });
     expect(local.syncReceipt).toEqual({
       counter: 4,
       hash: expect.stringMatching(/^[\w-]{43}$/u) as string,
@@ -920,6 +922,7 @@ describe("questions", () => {
     await receiver.answer(questionId(receiver.status), "keep");
     expect(receiver.status.kind).toBe("up-to-date");
     expect(userState.lastSavePlaytime).toBe(50);
+    expect(userState.state.worldState.season).toBe("spring");
     expect(stored().local.syncReceipt).toMatchObject({ counter: 4 });
     expect(userState.state.lastImport?.identity.saveNumber).toBe("1315159680");
   });

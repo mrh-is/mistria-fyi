@@ -412,7 +412,8 @@ Progress calculation and UI row visibility are separate concerns.
   `page-search-status.svelte` names the most actionable shelf that lost rows. Search uses the same
   note.
 - **The toolbar** gives each page its own `clock` & `filter` flags in `ToolbarConfig`. The clock
-  sets `worldState`; a save sync will overwrite it (#500).
+  sets `worldState`. A save import or sync overwrites it with the save’s day, and a clock change
+  then holds until the next save arrives.
 - Mines counts every unreached floor as doable until #503 says where a seal stops the player, and
   Quests read only spoilers & the items they ask for until #502. Skills & Renown are always To do.
 - **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the

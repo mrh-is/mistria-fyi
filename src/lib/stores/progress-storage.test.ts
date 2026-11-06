@@ -81,6 +81,7 @@ it("carries a non-default value for every progress field through sync, import, &
     progress: createDefaultProgress(),
   });
   const extraction: SaveExtraction = {
+    day: { season: extracted("spring"), weather: extracted("calm") },
     diagnostics: [],
     fields: Object.fromEntries(
       Object.entries(incoming).map(([field, value]) => [field, extracted(value)]),
