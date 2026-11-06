@@ -83,6 +83,7 @@ const TrackingRemindersSchema = v.object({
     ),
     undefined,
   ),
+  // Keep the old field readable so opening unchanged progress doesn't rewrite it.
   lastOpenedAt: v.fallback(v.optional(TimestampSchema), undefined),
 });
 export type TrackingReminders = v.InferOutput<typeof TrackingRemindersSchema>;

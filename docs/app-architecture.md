@@ -104,9 +104,10 @@ tracking when no lane exists. Unavailable persistence allows temporary in-memory
 chooser.
 
 Version 9 stores `local.trackingLane` (`manual` or `sync`) & `local.reminders` on this device only.
-The latter holds the last-open time, the last install nudge's time & progress fingerprint, an
-explicit installed dismissal, and the fact count at the last backup suggestion or download. These
-fields never travel with backups. A sync lane takes precedence over the tracking choice.
+The latter holds the last install nudge’s time & progress fingerprint, an explicit installed
+dismissal, and the fact count at the last backup suggestion or download. Earlier version nine data
+can also hold an unused last-open time. These fields never travel with backups. A sync lane takes
+precedence over the tracking choice.
 
 The reminder controller requests persistent storage on opening with a lane and choosing by hand. An
 iOS browser shows installation guidance on choosing by hand; opening or completing a section shows

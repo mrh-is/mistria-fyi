@@ -115,7 +115,6 @@ export const trackingReminders = {
     if (userState.trackingLane === undefined || userState.syncBlocked) return;
     void requestPersistence();
     await trackingReminders.checkInstall("open");
-    await userState.updateReminders((current) => ({ ...current, lastOpenedAt: Date.now() }));
     await trackingReminders.checkBackup();
   },
 };
