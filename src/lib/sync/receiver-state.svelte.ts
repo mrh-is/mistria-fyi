@@ -8,8 +8,8 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { createReceiver } from "./receiver.js";
 
 import type { SyncAnswer } from "#lib/engine/sync-apply.js";
-import type { SyncApplyQuestion } from "#lib/stores/user-state.svelte.js";
 
+import type { SyncApplyQuestion } from "./lane-state.js";
 import type { ReceiverStatus, SyncTell } from "./receiver.js";
 
 /** The statuses that need the player, which get the dot & a note. */

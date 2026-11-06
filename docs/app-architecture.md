@@ -170,7 +170,9 @@ storage keys. See the
 
 Every progress write goes through the store's `writeProgress`, run under the
 `mistria-fyi:progress-write` Web Lock so tabs write one at a time. Inside the lock it re-reads the
-stored value & validates it before writing:
+stored value. The pure writer in `src/lib/stores/progress-writer.ts` classifies that value and plans
+the replacement or sync write. The import planner merges captured progress & rebases later edits
+separately. The store handles storage access, quarantine, & publishing the planned state.
 
 | Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset) | Additive import (save)      |
 | ---------------------------------------- | ---------------------------- | --------------------------------- | --------------------------- |

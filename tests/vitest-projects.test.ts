@@ -41,6 +41,8 @@ async function listProjectFiles(
         ),
       ),
       ...Object.fromEntries(unchanged.map((gate) => [gate, "false"])),
+      // The two list subprocesses initialize Vite concurrently. Each needs its own cache.
+      MISTRIA_VITEST_LIST_CACHE_DIR: join(outputDirectory, "vite-cache"),
     };
     await promisify(execFile)(
       process.execPath,
