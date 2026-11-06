@@ -3,7 +3,7 @@ import { trackerData } from "#lib/data/index.js";
 /**
  * Game IDs real saves hold that the tracker deliberately doesn't track, reviewed against the v1.0.8
  * `fiddle` data. Save extraction counts them as known-but-untracked, so they never make a field
- * `unknown`; an ID in neither tracker data nor here is unrecognized. `import-save.assets.test.ts`
+ * `unknown`; an ID in neither tracker data nor here is unrecognized. `import-save.saves.test.ts`
  * fails when a real save holds an unrecognized ID, which prompts a review of this list.
  */
 const UNTRACKED_ITEMS = new Set([
