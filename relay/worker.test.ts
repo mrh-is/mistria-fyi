@@ -36,6 +36,7 @@ let caseIndex: number;
 const testSubclass = `
 let mailboxRequests = 0;
 let gateRequests = 0;
+let failureReports = 0;
 let throwNext;
 export class TestMailbox extends Mailbox {
   async fetch(request) {
@@ -85,6 +86,7 @@ export class TestControl extends RelayControl {
         await this.ctx.storage.deleteAll();
         mailboxRequests = 0;
         gateRequests = 0;
+        failureReports = 0;
         pauseCheck = undefined;
         throwNext = undefined;
         pendingFailures.clear();
@@ -95,12 +97,14 @@ export class TestControl extends RelayControl {
       if (action.requests) return Response.json({ mailboxRequests, gateRequests });
       if (action.usage) await this.ctx.storage.put("usage", action.usage);
       if (action.failures) await this.ctx.storage.put("failures", action.failures);
-      if (action.expireFailureFlush) lastFailureFlush = 0;
+      if (action.failureFlushAge) lastFailureFlush = Date.now() - action.failureFlushAge;
+      if (action.failureReports) return Response.json({ failureReports });
       if (action.alarmAt) return Response.json({ alarm: await this.ctx.storage.getAlarm() });
       if (action.alarm) await this.alarm();
       return Response.json(Object.fromEntries(await this.ctx.storage.list()));
     }
     if (new URL(request.url).pathname === "/gate") gateRequests++;
+    if (new URL(request.url).pathname === "/failure") failureReports++;
     return super.fetch(request);
   }
 }
@@ -639,13 +643,20 @@ describe("sync relay in the local Workers runtime", () => {
   it("reports misconfigured Siteverify secrets as unavailable without consuming admission", async () => {
     const mf = runtime();
     expect(await status(create(mf, mailboxId, TOKEN, "invalid-input-secret"))).toBe(503);
-    expect(await status(create(mf, mailboxId, TOKEN, "missing-input-secret"))).toBe(503);
-    expect(await inspect(mf)).toEqual({});
-    // The second failure waits in the isolate until the flush interval passes.
     expect(await failures(mf, 1)).toEqual({ [today()]: { "siteverify-secret-rejected": 1 } });
-    await inspectControl(mf, { expireFailureFlush: true });
-    expect(await status(create(mf, mailboxId, TOKEN, "invalid-input-secret"))).toBe(503);
-    expect(await failures(mf, 3)).toEqual({ [today()]: { "siteverify-secret-rejected": 3 } });
+
+    // Leave one second in the window so the Worker runs a real timer without a ten-second test.
+    await inspectControl(mf, { failureFlushAge: 9000 });
+    expect(await status(create(mf, mailboxId, TOKEN, "missing-input-secret"))).toBe(503);
+    expect(await status(create(mf, mailboxId, TOKEN, "unavailable"))).toBe(503);
+    expect(await inspect(mf)).toEqual({});
+    expect(await inspectControl(mf, { failureReports: true })).toEqual({ failureReports: 1 });
+
+    // Only inspection requests follow the burst. The Worker must send both counts on its own.
+    expect(await failures(mf, 3)).toEqual({
+      [today()]: { "siteverify-secret-rejected": 2, "siteverify-unreachable": 1 },
+    });
+    expect(await inspectControl(mf, { failureReports: true })).toEqual({ failureReports: 2 });
     expect(await inspectControl(mf)).not.toHaveProperty("usage");
   });
 
