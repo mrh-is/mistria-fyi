@@ -45,13 +45,24 @@ const unsafeTriggers = new Set([
   "workflow_run",
 ]);
 const secretReferences = /wrangler|pages deploy|sprites:upload|fonts:upload|CLOUDFLARE_|secrets\./;
+/**
+ * The one exception: ci.yml's "Real saves" job reads private test saves with a read-only R2 token
+ * (#466). Pull requests from forks get no secrets, & the token can't write. Only these exact lines
+ * are exempt; any other reference in ci.yml still fails.
+ */
+const secretExpression = (secret: string): string => ["$", "{{ secrets.", secret, " }}"].join("");
+const ALLOWED_CI_SECRET_LINES = new Set(
+  ["CLOUDFLARE_ACCOUNT_ID", "R2_SAVES_READ_TOKEN"].map(
+    (secret) => `${secret}: ${secretExpression(secret)}`,
+  ),
+);
 
 describe("workflow hardening", () => {
   it("finds the workflows", () => {
     expect(files.length).toBeGreaterThan(0);
   });
 
-  describe.each(workflows)("$name", ({ source, workflow }) => {
+  describe.each(workflows)("$name", ({ name, source, workflow }) => {
     it("avoids triggers that give fork-controlled events a write token or secrets", () => {
       const forbidden = triggers(workflow).filter((trigger) => unsafeTriggers.has(trigger));
       expect(forbidden).toEqual([]);
@@ -86,7 +97,14 @@ describe("workflow hardening", () => {
     });
 
     it("references no deploy credentials or repository secrets", () => {
-      expect(source).not.toMatch(secretReferences);
+      const checked =
+        name === "ci.yml"
+          ? source
+              .split("\n")
+              .filter((line) => !ALLOWED_CI_SECRET_LINES.has(line.trim()))
+              .join("\n")
+          : source;
+      expect(checked).not.toMatch(secretReferences);
     });
   });
 
