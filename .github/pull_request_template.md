@@ -1,5 +1,7 @@
 Closes #
 
+<!-- Use “Refs #” instead when the issue needs work after the merge, such as a production check. Before marking the PR ready, make this body describe the final state. -->
+
 Preview: https://<branch-slug>.mistria-fyi.pages.dev
 
 <!-- Use the deployment’s preview URL if available. For the branch alias, lowercase the branch name, replace each non-alphanumeric character with a hyphen, keep the first 28 characters, & trim trailing hyphens. Omit the “Preview” line when there is no preview. -->
