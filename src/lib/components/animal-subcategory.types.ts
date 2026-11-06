@@ -1,3 +1,5 @@
+import type { CategoryProgress } from "#lib/engine/progress.js";
+import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { ReportCategory } from "#lib/feedback/types.js";
 import type { SegmentLookups } from "#lib/sources/source-segments.js";
 import type { Source } from "#lib/types/acquisition.js";
@@ -19,8 +21,7 @@ export interface AnimalSubcategoryProps<Id extends AnyId> {
   toggleCompletion: (animalId: AnimalId, itemId: Id) => void;
 }
 
-export interface AnimalSubcategoryRowProps<Id extends AnyId> {
-  completed: boolean;
+export interface AnimalSubcategoryRowProps<Id extends AnyId> extends ShelfRow {
   id: Id;
   name: string;
   sources: Source[];
@@ -29,8 +30,11 @@ export interface AnimalSubcategoryRowProps<Id extends AnyId> {
 }
 
 export interface AnimalSubcategorySectionConfig<Id extends AnyId> {
-  displayableCompletedItemCount: number;
   displayableItemCount: number;
   isVisible: boolean;
+  /** Every item the animal has that matches the search, for the page's filter note. */
+  matchingRows: ShelfRow[];
+  /** Every item the animal has, whatever the page shows. */
+  progress: CategoryProgress;
   visibleItems: AnimalSubcategoryRowProps<Id>[];
 }

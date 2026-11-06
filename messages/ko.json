@@ -47,14 +47,11 @@
   "toolbar_filters_cleared": "모든 필터 해제됨",
   "page_header_back_to_home": "홈으로 돌아가기",
   "page_header_progress": "{total}개 중 {completed}개 완료",
-  "home_index_heading": "색인",
   "home_everything_label": "전체",
   "home_page_description": "Fields of Mistria의 박물관 기증, 알마낙 발견, 레시피, 관계, 스킬, 퀘스트 등을 기록하며 100% 달성을 향해 나아가세요.",
   "all_page_title": "전체 체크리스트",
   "all_page_description": "Fields of Mistria의 모든 달성 카테고리를 하나의 체크리스트에서 확인하고 기록하세요.",
-  "home_active_categories_label": "진행 중인 카테고리",
   "common_completed_heading": "완료",
-  "home_completed_categories_label": "완료된 카테고리",
   "overall_progress_label": "전체 {total}개 중 {completed}개 완료, {pct}",
   "foldout_close": "{title} 닫기",
   "search_results_count": [
@@ -67,25 +64,6 @@
     }
   ],
   "search_no_results": "항목을 찾을 수 없습니다",
-  "search_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=other": "필터 밖에 {count}개가 있습니다"
-      }
-    }
-  ],
-  "search_more_outside_filters": [
-    {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=other": "필터 밖에 {count}개가 더 있습니다"
-      }
-    }
-  ],
-  "search_turn_off_filters": "이 검색에서 필터 끄기",
   "search_filters_off": "이 검색에서는 필터가 꺼져 있습니다.",
   "search_filters_resume": "필터 다시 적용",
   "search_guide_prompt": "찾는 항목이 없나요?",
@@ -254,25 +232,17 @@
   "settings_theme_auto": "자동",
   "settings_theme_light": "라이트",
   "settings_theme_dark": "다크",
-  "visibility_when_to_find": "찾을 수 있는 시기",
-  "availability_whenever": "언제든",
-  "availability_later": "나중에",
-  "availability_now": "지금",
   "visibility_season_label": "계절",
   "visibility_weather_label": "날씨",
   "visibility_source_types": "획득 경로 유형",
   "visibility_source_types_about_aria": "획득 경로 유형 안내",
   "visibility_source_types_summary": "{total}개 중 {enabled}개",
   "visibility_show_heading": "표시",
-  "visibility_when_everything": "전체",
   "visibility_sources_all": "모든 유형",
   "visibility_sources_none": "유형 없음",
   "visibility_sources_only": "{type}만",
-  "visibility_show_todo": "할 일",
   "visibility_show_obtainable": "획득 가능",
-  "visibility_show_uncompleted": "미완료",
   "visibility_show_everything": "전체",
-  "visibility_completed_toggle": "완료됨",
   "visibility_unobtainable_toggle": "획득 불가",
   "source_explainer_overline": "필드 가이드 소지품",
   "source_explainer_description": "필터 패널에 표시되는 획득 경로 유형입니다.",
@@ -1027,5 +997,28 @@
   "sync_backup_restore_body": "이 기기의 내용이 대체돼요. 동기화는 계속되므로 다음 세이브 파일은 평소 규칙대로 적용돼요.",
   "sync_backup_restore_confirm": "복원하기",
   "sync_backup_restore_cancel": "취소",
-  "sync_backup_restored": "백업을 복원했어요."
+  "sync_backup_restored": "백업을 복원했어요.",
+  "filter_note": [
+    {
+      "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "{shelf} 항목 {count}개가 필터로 숨겨져 있어요."
+      }
+    }
+  ],
+  "filter_note_show": "그래도 표시",
+  "filter_note_nothing_left": "필터 때문에 이 페이지에 남은 항목이 없어요.",
+  "shelf_to_do": "할 일",
+  "shelf_not_now": "지금은 안 됨",
+  "shelf_categories_label": "{shelf} 카테고리",
+  "shelf_explainer_open": "{shelf} 선반 정보",
+  "shelf_explainer_title": "선반의 의미",
+  "shelf_explainer_description": "각 선반에 담긴 내용과 정렬 기준이 되는 날입니다.",
+  "shelf_explainer_day": "{season}, {weather} 기준으로 정렬",
+  "shelf_explainer_todo": "오늘 할 수 있는 항목이 하나 이상 있어요.",
+  "shelf_explainer_not_now": "오늘은 할 수 있는 항목이 없어요. 계절, 날씨 또는 진행 상황을 기다리는 중이에요.",
+  "shelf_explainer_completed": "여기 있는 건 모두 끝냈어요!",
+  "toolbar_clock": "계절과 날씨: {season}, {weather}",
+  "toolbar_clock_title": "계절과 날씨"
 }

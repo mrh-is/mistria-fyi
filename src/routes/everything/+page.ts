@@ -8,5 +8,5 @@ import type { PageLoad } from "./$types";
 export const load: PageLoad = localizedPageLoad(NAME_CHUNKS, (locale) => ({
   description: m.all_page_description({}, { locale }),
   title: m.all_page_title({}, { locale }),
-  toolbar: { search: true, worldState: true },
+  toolbar: { clock: true, filter: true, search: true },
 }));

@@ -17,7 +17,6 @@
       completed={1416}
       completedLabel="??"
       description={m.og_share_description()}
-      filteredTotal={total}
       href=""
       icon="all"
       mobileRibbon

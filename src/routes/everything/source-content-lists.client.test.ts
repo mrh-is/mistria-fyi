@@ -47,10 +47,10 @@ it("splits source types around a single Completed divider and opens an anchored 
       toggle: vi.fn(() => vi.fn()),
     },
   ]);
-  userState.toggleShowCompleted();
   const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
   await tick();
   const completed = view.getByTestId("everything-completed");
+  await fireEvent.click(within(completed).getByRole("button", { name: "Completed" }));
   const finishedType = within(completed).getByRole("button", { name: "Stores" });
   expect(finishedType).toHaveAttribute("aria-expanded", "false");
   expect(view.getByRole("button", { name: "Fishing" })).toHaveAttribute("aria-expanded", "true");
@@ -66,9 +66,8 @@ it("splits source types around a single Completed divider and opens an anchored 
   expect(finishedType).toHaveAttribute("aria-expanded", "true");
   expect(within(completed).getByRole("button", { name: "Uncheck Acorn" })).toBeInTheDocument();
   expect(view.container.querySelectorAll("#store-balor")).toHaveLength(1);
-  userState.toggleShowCompleted();
   await tick();
-  expect(view.queryByRole("button", { name: "Stores" })).not.toBeInTheDocument();
+  expect(view.getAllByRole("button", { name: "Stores" })).toHaveLength(1);
 });
 
 function checklistRow(id: string, completed: boolean, sources: Source[]) {
@@ -158,7 +157,6 @@ describe("while a source section changes lists", () => {
 
   it("moves a finished source section to the completed list only after the hold", async () => {
     mockChecklist();
-    userState.toggleShowCompleted();
     const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
     await tick();
     const completed = view.getByTestId("everything-completed");
@@ -170,6 +168,7 @@ describe("while a source section changes lists", () => {
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS);
     await tick();
     await tick();
+    await fireEvent.click(within(completed).getByRole("button", { name: "Completed" }));
     expect(within(completed).getByRole("button", { name: "Fishing" })).toBeInTheDocument();
     expect(document.activeElement?.matches("button[data-section-trigger]")).toBe(true);
     expect(document.activeElement?.closest("[hidden]")).toBeNull();
@@ -177,7 +176,6 @@ describe("while a source section changes lists", () => {
 
   it("hides the Completed divider while no source is finished", async () => {
     mockChecklist();
-    userState.toggleShowCompleted();
     const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
     await tick();
     expect(view.getByTestId("everything-completed").hidden).toBe(true);

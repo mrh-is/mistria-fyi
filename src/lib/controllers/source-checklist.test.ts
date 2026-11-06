@@ -20,7 +20,7 @@ it("preserves variant discovery spoilers & species context outside the animal’
   const [animalId, animal] = fixture;
   const variantId = recordKeys(animal.variantTiers[1])[0];
   const find = () =>
-    buildSourceChecklist(userState.progressContext, "en").find(
+    buildSourceChecklist(userState.progressContext, "en", userState.state.showSpoilers).find(
       (row) => row.id === `${animalId}/${variantId}`,
     );
   const hidden = find();
@@ -33,7 +33,7 @@ it("preserves variant discovery spoilers & species context outside the animal’
   )
     .flatMap((section) => section.rows)
     .find(({ entry }) => entry.key === hidden?.key);
-  expect(placement?.window).toBe("later");
+  expect(placement?.doable).toBe(false);
   userState.toggleShowSpoilers();
   expect(find()?.spoilered).toBe(false);
   userState.toggleShowSpoilers();

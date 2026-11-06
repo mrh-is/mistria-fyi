@@ -6,19 +6,23 @@
   import type { CategoryKey } from "#lib/engine/categories.js";
   import type { CategoryProgress } from "#lib/engine/progress.js";
 
-  let { key, progress }: { key: CategoryKey; progress: CategoryProgress } = $props();
+  let {
+    key,
+    progress,
+    quiet = false,
+  }: { key: CategoryKey; progress: CategoryProgress; quiet?: boolean } = $props();
 
   const { color, description, href, name } = $derived(categoryForKey(key, page.data.locale));
 </script>
 
-<!-- The total counts what the filters still show, so filtering shrinks it. -->
 <CategoryStripe
   {color}
   categoryTotal={progress.total}
   completed={progress.completed}
   {description}
-  filteredTotal={progress.completed + progress.remainingInScope}
   {href}
   icon={key}
   {name}
+  {quiet}
+  todo={progress.todo}
 />

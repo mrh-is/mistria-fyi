@@ -10,6 +10,7 @@
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -69,7 +70,12 @@
   registerSourceFilters("animals", () => trackerIndex.categorySourceTypes.animals);
 </script>
 
-<SectionGroups getKey={(key) => key} grouping={sectionGrouping} items={SECTION_KEYS}>
+<SectionGroups
+  forceOpen={!!toolbarState.searchQuery}
+  getKey={(key) => key}
+  grouping={sectionGrouping}
+  items={SECTION_KEYS}
+>
   {#snippet section(key)}
     {#if key === "variants"}
       <AnimalVariantsSection

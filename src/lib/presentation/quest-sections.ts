@@ -1,6 +1,7 @@
 import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
 import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
+import { questSources } from "#lib/engine/projections/quests.js";
 import * as m from "#lib/paraglide/messages.js";
 import { displayQuestName } from "#lib/utils/en-grammar.js";
 import { recordEntries } from "#lib/utils/record.js";
@@ -178,19 +179,6 @@ function questRow(questType: QuestType, id: QuestId, locale: LocaleCode): Sortab
     };
   }
   return { row: { ...base, displayName } };
-}
-
-function questSources(questType: QuestType, questId: QuestId): Source[] {
-  if (questType === "fetch") {
-    const { itemId } = trackerData.quests.fetch[questId];
-    return [...trackerData.items[itemId].sources];
-  }
-  if (questType === "cooking") {
-    const quest = trackerData.quests.cooking[questId];
-    const recipe = "recipeId" in quest ? trackerData.recipes[quest.recipeId] : undefined;
-    if (recipe) return [...recipe.sources];
-  }
-  return [];
 }
 
 /**

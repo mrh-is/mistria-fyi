@@ -49,8 +49,8 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
   or any of the layers above.
 - **`test-utils/`** holds helpers & harnesses that only tests import.
 
-- **Availability filtering** — determines which items/recipes/Villagers are visible based on season,
-  weather, quest gates, and world state.
+- **Availability** — decides what's doable today from the season, the weather, & the player's
+  progress, which sorts everything onto shelves.
 - **Progress calculation** — computes completion counts and percentages from `ProgressState`.
 - **Search** — filters and ranks tracker entries.
 - **Save import** — parses extracted save JSON files and builds a `Partial<ProgressState>` for
@@ -70,8 +70,7 @@ row policy. It returns section membership, canonical rows, applicability, spoile
 and progress totals. Date Inspiration is counted only through its canonical Almanac entries.
 Unobtainable entries are hidden by default; the almanac's temporary filter can reveal them without
 changing any total: header progress and each section's count & total count only obtainable rows.
-Page callers pass user-selected availability windows, name/source filters, and completed-row
-retention. Search explicitly uses default windows, includes out-of-window results for ranking, hides
+Page callers pass name & source filters. Search includes rows that aren't doable today, hides
 spoilers, and deduplicates rows that belong to several sections. Section progress still counts each
 in-game section membership.
 
@@ -79,7 +78,7 @@ in-game section membership.
 
 Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$effect`). It:
 
-- Holds the canonical `UserState` shape (`availabilityWindows`, `progress`, `showCompleted`,
+- Holds the canonical `UserState` shape (`everythingGrouping`, `lastImport`, `progress`,
   `showSpoilers`, `worldState`).
 - Persists progress & world state to `localStorage` through one locked write function (see
   [One write path](#one-write-path)), and this device's preferences under a separate key (see
@@ -114,11 +113,10 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
 - **`mistria-fyi:sync-uploads`** holds the sync courier's upload counter & the mailbox & hash of its
   last upload, apart from progress so nothing that blocks or erases progress touches them
   ([sync.md](sync.md#the-courier)).
-- **`mistria-fyi:preferences`** holds `SerializedPreferences` (`availabilityWindows`, a subset of
-  `now`, `anytime`, & `later`, `showSpoilers`, and `everythingGrouping`, either `category` or
-  `source`). The UI labels `anytime` “Whenever”; the stored value keeps its original name. These are
-  per-device conveniences: they're never exported, so restoring a backup or resetting progress keeps
-  them, and a missing or invalid field falls back to its default rather than blocking anything.
+- **`mistria-fyi:preferences`** holds `SerializedPreferences` (`showSpoilers`, and
+  `everythingGrouping`, either `category` or `source`). These are per-device conveniences: they're
+  never exported, so restoring a backup or resetting progress keeps them, and a missing or invalid
+  field falls back to its default rather than blocking anything.
 
 `src/lib/stores/progress-storage.ts` owns the blob. Storage hydration & backup restore both read it
 the same way: parse it, dispatch on `version`, run the numbered `MIGRATIONS` that bring it up to
@@ -348,21 +346,21 @@ The Everything page also offers a Source grouping. `controllers/source-checklist
 category projections into rows with their original completion identity, presentation, & reversible
 store action. `presentation/source-groups.ts` places each row under all of its source instances,
 merges stock facets within an instance, & classifies availability using only that instance’s
-sources. Source totals & Now/Later/Done rollups precede display filtering; unobtainable rows never
-hold a source open. `source-content.svelte` composes the source types & sections, placing Done
-sections below the same page-wide Completed divider. In both lenses, outstanding groups start open &
-completed groups start closed on each page load; these choices aren't persisted. The divider itself
-never collapses. A source anchor opens its containing type group, including a completed one.
-`controllers/completion-scope.svelte.ts` partitions category sections by the same completion their
-headers show; compact records & masked top-level spoiler sections register individually, & a masked
-section always counts as outstanding. A section changes lists once a completed row has had time to
-leave, the source lens holds its sections the same way, & focus inside a section that leaves moves
-to the nearest visible section trigger. The Completed divider hides while no completed group has
-content. Collapsed groups keep their content mounted so progress edits & filters can update which
-groups have content. Category pages have no completion scope & keep their existing grouping. The
-`group=category|source` query overrides the device’s `everythingGrouping` preference without
-rewriting it; choosing the control updates both the preference & URL. Progress serialization is
-unchanged.
+sources. Source totals & To do, Not now, & Done rollups precede display filtering; unobtainable rows
+never hold a source open. `source-content.svelte` composes the source types & sections, placing Done
+sections inside the same page-wide Completed fold. In both lenses, outstanding groups start open &
+completed groups start closed on each page load; these choices aren't persisted. A source anchor
+opens its containing type group, including a completed one. `controllers/completion-scope.svelte.ts`
+partitions category sections by the same completion their headers show; compact records & masked
+top-level spoiler sections register individually, & a masked section always counts as outstanding. A
+section changes lists once a completed row has had time to leave, the source lens holds its sections
+the same way, & focus inside a section that leaves moves to the nearest visible section trigger. The
+Completed fold starts closed and renders its copy only once opened, because that copy is every
+category a second time. Collapsed groups keep their content mounted so progress edits & filters can
+update which groups have content. Category pages have no completion scope & keep their existing
+grouping. The `group=category|source` query overrides the device’s `everythingGrouping` preference
+without rewriting it; choosing the control updates both the preference & URL. Progress serialization
+is unchanged.
 
 ### Component conventions
 
@@ -391,18 +389,32 @@ Progress calculation and UI row visibility are separate concerns.
 
 - **Progress** is each category projection's `totals`, computed from the full `ProgressState`
   regardless of display filters; `src/lib/engine/progress.ts` holds its types & level rules.
-- **Visibility** is controlled by `availabilityWindows` (`now`, `anytime`, `later`),
-  `showCompleted`, and `showSpoilers` at the component level.
-- **Row windows** answer “what can I act on today?”. `classifyItemAvailability` in
-  `engine/availability.ts` puts each incomplete row in one window: “Later” while the row or a source
-  is a spoiler, a progress gate the app records is unmet, or the source is out of season or weather;
-  “Now” when a season or weather restriction holds today; “Whenever” (`anytime`) otherwise. A row
-  takes its best source. Unevaluable gates count as met, & time of day is never filtered on. Every
-  projection reads the rule through `ProgressContext`, which carries the player's
-  `progressionState`, so counts, dimming, & the filter agree. See the
-  [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-27-row-windows.md).
-- Hidden completed rows still contribute to progress totals. This ensures the overall percentage
-  remains accurate even when the user filters out completed content.
+- **Two systems decide what a page shows, & each has one job.** Availability says what's doable
+  today, and it decides the shelf. Source filters say which sources the player is looking at, and
+  they decide what's on the page. Neither touches a fraction, which always uses the full total.
+- **Availability** is `isDoableToday` in `engine/availability.ts`. A locked row isn't doable. A row
+  without sources is. Any other row needs a doable source among those the filters show, so a hidden
+  shop can't keep a spring insect doable in summer. A source isn't doable while it's locked, a
+  progress gate the app records is unmet, or it's out of season or weather. Unevaluable gates count
+  as met, & time of day never counts against a source.
+- **Availability has no knowledge of spoilers.** `ProgressContext.progressionState` is always
+  derived with “Show spoilers” off, so that switch only changes what the spoiler UI reveals. Code
+  that masks something reads `userState.progressionState` instead.
+- **Shelves** live in `engine/shelves.ts`. To do has an unfinished row doable today through a shown
+  source. Not now has unfinished shown rows, none doable. Completed has every row finished & at
+  least one row matching the filters. Anything else leaves the page. `progressShelf` sorts
+  categories, sections, & Museum sets from their `CategoryProgress`, & `rowShelf` sorts rows.
+- **Folds:** `section-groups.svelte` groups a page's sections, & `shelf-groups.svelte` groups what's
+  inside a section. Not now & Completed start closed and reset on navigation, while home keeps every
+  shelf open, because it's the index. A search opens every fold. Sections in a closed page fold stay
+  mounted, so they can report a new shelf.
+- **Filter note:** each page's parts report `filteredCounts` through `registerPageSearch`, and
+  `page-search-status.svelte` names the most actionable shelf that lost rows. Search uses the same
+  note.
+- **The toolbar** gives each page its own `clock` & `filter` flags in `ToolbarConfig`. The clock
+  sets `worldState`; a save sync will overwrite it (#500).
+- Mines counts every unreached floor as doable until #503 says where a seal stops the player, and
+  Quests read only spoilers & the items they ask for until #502. Skills & Renown are always To do.
 - **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the
   category's progress at 100%. The header, the all-completed banner, & `celebrateCategory()` all
   read it; components don't re-derive completion. See the

@@ -63,7 +63,6 @@ describe("MountAppearancesSection", () => {
   });
 
   it("checks a perk into unlockedPerks, then unchecks it", async () => {
-    userState.toggleShowCompleted();
     await openMountSection();
     await fireEvent.click(screen.getByRole("button", { name: "Perks, 0 of 3 completed" }));
     const name = getName("perks", horsepower, "en");
@@ -73,23 +72,19 @@ describe("MountAppearancesSection", () => {
     expect(screen.getByRole("button", { name: "Perks, 1 of 3 completed" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mount, 1 of 6 completed" })).toBeTruthy();
 
+    await fireEvent.click(screen.getByRole("button", { expanded: false, name: "Completed" }));
     await fireEvent.click(await screen.findByRole("button", { name: `Uncheck ${name}` }));
     expect(userState.state.progress.unlockedPerks.has(horsepower)).toBe(false);
     expect(screen.getByRole("button", { name: "Perks, 0 of 3 completed" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mount, 0 of 6 completed" })).toBeTruthy();
   });
 
-  it("hides a finished subsection until completed rows are shown", async () => {
+  it("keeps a finished subsection beside an unfinished one", async () => {
     for (const id of recordKeys(trackerData.mount.appearances)) userState.toggleMountAppearance(id);
     await openMountSection();
 
-    expect(screen.queryByRole("button", { name: /^Appearances,/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Perks, 0 of 3 completed" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mount, 3 of 6 completed" })).toBeTruthy();
-
-    userState.toggleShowCompleted();
-    expect(
-      await screen.findByRole("button", { name: "Appearances, 3 of 3 completed" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Appearances, 3 of 3 completed" })).toBeTruthy();
   });
 });

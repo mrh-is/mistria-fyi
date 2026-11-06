@@ -1,18 +1,19 @@
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
+import type { FilteredCounts } from "#lib/engine/shelves.js";
 import type { Source } from "#lib/types/acquisition.js";
 
-/** What one part of a page found for the current search. */
+/** What one part of a page holds, given the current search & filters. */
 export interface PageSearchCount {
-  /** Rows the player could see that match the search, whatever the page's filters say. */
-  matches: number;
+  /** What the filters take from each shelf, among the rows that match any search. */
+  filtered: FilteredCounts;
   /** The matching rows on screen now. */
   visible: number;
 }
 
 /** The filter-panel sections that collapse into disclosures on phones. */
-export type FilterSectionId = "availability" | "show" | "sources";
+export type FilterSectionId = "show" | "sources";
 
 export class ToolbarState {
   enabledSourceFilterIds = $state<SvelteSet<SourceFilterId>>(new SvelteSet());
@@ -34,16 +35,18 @@ export class ToolbarState {
     return this.sourceFilterRegistrations.has("almanac");
   }
 
-  /** The current search's totals across the page; `hidden` counts matches filters keep off it. */
-  get pageSearchCount(): { hidden: number; visible: number } {
-    let matches = 0;
+  /** The page's totals: what's on screen, & what the filters take from each shelf. */
+  get pageSearchCount(): PageSearchCount {
+    const filtered: FilteredCounts = { completed: 0, notNow: 0, todo: 0 };
     let visible = 0;
     for (const count of this.pageSearchCounters.values()) {
       const part = count();
-      matches += part.matches;
+      filtered.completed += part.filtered.completed;
+      filtered.notNow += part.filtered.notNow;
+      filtered.todo += part.filtered.todo;
       visible += part.visible;
     }
-    return { hidden: Math.max(matches - visible, 0), visible };
+    return { filtered, visible };
   }
 
   sourceFilters = $state<readonly SourceFilter[]>([]);
@@ -80,15 +83,8 @@ export class ToolbarState {
     this.enabledSourceFilterIds = new SvelteSet();
   }
 
-  matchesSourceFilters(sources: Source[]): boolean {
-    if (this.searchShowsAll || !this.isSourceFilterNarrowing) return true;
-    return (
-      sources.length === 0 ||
-      sources.some((source) => {
-        const group = this.sourceFilters.find((filter) => filter.types.includes(source.type));
-        return group === undefined || this.enabledSourceFilterIds.has(group.id);
-      })
-    );
+  matchesSourceFilters(sources: readonly Source[]): boolean {
+    return sources.length === 0 || sources.some((source) => this.showsSource(source));
   }
 
   openSearch(): void {
@@ -113,6 +109,13 @@ export class ToolbarState {
     this.searchQuery = query.trim() ? query : "";
     if (!this.searchQuery) this.searchShowsAll = false;
   }
+
+  /** Whether the filters show `source`. An arrow, since projections take it as a callback. */
+  readonly showsSource = (source: Source): boolean => {
+    if (this.searchShowsAll || !this.isSourceFilterNarrowing) return true;
+    const group = this.sourceFilters.find((filter) => filter.types.includes(source.type));
+    return group === undefined || this.enabledSourceFilterIds.has(group.id);
+  };
 
   toggleFilterSection(section: FilterSectionId): void {
     if (this.expandedFilterSections.has(section)) {

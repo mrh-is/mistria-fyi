@@ -63,7 +63,10 @@ describe("/everything page", () => {
 
       expect(
         view.queries.getByText(
-          `${formatNumber(overall.completed, "en")} of ${formatNumber(overall.total, "en")} completed`,
+          new RegExp(
+            `^${formatNumber(overall.completed, "en")} of ${formatNumber(overall.total, "en")} completed`,
+            "u",
+          ),
         ),
       ).toBeTruthy();
     });
@@ -90,9 +93,8 @@ describe("/everything page", () => {
 
     userState.setEverythingGrouping("source");
     pageStub.navigate("/en/everything?group=category");
-    userState.toggleShowCompleted();
     const shown = renderToFragmentWithFeedback(AllPage, { props });
-    expect(shown.container.querySelector("#category-renown-completed")).not.toBeNull();
+    expect(shown.queries.getByTestId("everything-completed")).toBeTruthy();
     expect(shown.container.querySelector("#sources-stores")).toBeNull();
     expect(userState.state.everythingGrouping).toBe("source");
   });

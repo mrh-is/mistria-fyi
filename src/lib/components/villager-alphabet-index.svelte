@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { flushSync } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
 
   import { nameCollator } from "#lib/data/names.js";
@@ -9,9 +10,12 @@
   let {
     entries,
     locale,
+    revealTargets,
   }: {
     entries: { id: string; name: string }[];
     locale: LocaleCode;
+    /** Puts every entry's record on the page, for a record that sits in a closed fold. */
+    revealTargets?: () => void;
   } = $props();
 
   let scrubbing = $state(false);
@@ -38,7 +42,11 @@
 
   function activate({ id, initial }: { id: string; initial: string }): void {
     if (scrubbing && lastScrubbedInitial === initial) return;
-    const target = document.getElementById(id);
+    let target = document.getElementById(id);
+    if (!target && revealTargets) {
+      flushSync(revealTargets);
+      target = document.getElementById(id);
+    }
     if (!target) return;
 
     lastScrubbedInitial = initial;

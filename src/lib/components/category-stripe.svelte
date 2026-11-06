@@ -19,43 +19,48 @@
     completed,
     completedLabel,
     description,
-    filteredTotal,
     href,
     icon,
     mobileRibbon = false,
     name,
+    quiet = false,
+    todo = 0,
   }: {
-    /** Everything in the category, filters aside; reaching it earns the gold-leaf edge. */
+    /** Everything in the category, filters aside: the fraction's denominator. */
     categoryTotal: number;
     color: string;
     completed: number;
     /** Replaces the visible completed count (the share image shows "??"). */
     completedLabel?: string;
     description: string;
-    /** The count shown after the slash: what's completed plus what the filters still show. */
-    filteredTotal: number;
     href: Path;
     icon: "all" | CategoryKey;
     mobileRibbon?: boolean;
     name: string;
+    /** Sits on the Not now shelf, where nothing asks for attention today. */
+    quiet?: boolean;
+    /** Unfinished steps doable today, for the tint on the progress rule. */
+    todo?: number;
   } = $props();
 
-  let pct = $derived(filteredTotal > 0 ? (completed / filteredTotal) * 100 : 0);
+  let pct = $derived(categoryTotal > 0 ? (completed / categoryTotal) * 100 : 0);
+  let todoPct = $derived(categoryTotal > 0 ? (todo / categoryTotal) * 100 : 0);
   let isComplete = $derived(categoryTotal > 0 && completed >= categoryTotal);
 </script>
 
 <a
   class="category-stripe"
   class:category-stripe--complete={isComplete}
+  class:category-stripe--quiet={quiet}
   class:category-stripe--mobile-ribbon={mobileRibbon}
   data-category-stripe
   href={localizedHref(href)}
   aria-label={m.section_progress_label({
     completed: formatNumber(completed, page.data.locale),
     name,
-    total: formatNumber(filteredTotal, page.data.locale),
+    total: formatNumber(categoryTotal, page.data.locale),
   })}
-  style="--category-color: {color}; --category-progress-percent: {pct}%"
+  style="--category-color: {color}; --category-progress-percent: {pct}%; --category-todo-percent: {todoPct}%"
 >
   <span class="category-copy">
     <strong class="category-name">{name}</strong>
@@ -65,14 +70,14 @@
   <span class="category-count" aria-hidden="true">
     <span>{completedLabel ?? formatNumber(completed, page.data.locale)}</span>
     <span class="category-slash">/</span>
-    <span>{formatNumber(filteredTotal, page.data.locale)}</span>
+    <span>{formatNumber(categoryTotal, page.data.locale)}</span>
   </span>
 
   <span class="category-ribbon" data-category-ribbon aria-hidden="true">
     <Icon.Category category={icon} class="category-icon" />
   </span>
   <span class="paper-edge-mask" aria-hidden="true"></span>
-  <span class="category-progress" aria-hidden="true"><i></i></span>
+  <span class="category-progress" aria-hidden="true"><i></i><b></b></span>
 </a>
 
 <style>
@@ -163,7 +168,7 @@
     text-align: right;
   }
 
-  .category-count > :last-child {
+  .category-count > :nth-child(3) {
     text-align: left;
   }
 
@@ -205,6 +210,7 @@
     right: 0;
     bottom: 0;
     left: 0;
+    display: flex;
     height: 2px;
     background: color-mix(in srgb, var(--category-color) 13%, transparent);
   }
@@ -215,6 +221,44 @@
     height: 100%;
     background: var(--category-color);
     transition: width 300ms ease-out;
+  }
+
+  /* The To do share: a quiet tint, because the shelf already says something's doable. */
+  .category-progress b {
+    display: block;
+    width: var(--category-todo-percent);
+    height: 100%;
+    background: color-mix(in srgb, var(--category-color) 34%, transparent);
+    transition: width 300ms ease-out;
+  }
+
+  /* Not now loses the raised paper & full ribbon, so the eye stays on To do. */
+  .category-stripe--quiet {
+    min-height: 44px;
+    color: var(--color-ink-muted);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .category-stripe--quiet .category-name {
+    font-weight: 400;
+    -webkit-text-stroke: 0;
+  }
+
+  .category-stripe--quiet .category-name::after,
+  .category-stripe--quiet .category-note {
+    display: none;
+  }
+
+  .category-stripe--quiet .category-ribbon {
+    top: 11px;
+    bottom: 11px;
+    opacity: 0.55;
+  }
+
+  .category-stripe--quiet .category-ribbon :global(.category-icon) {
+    width: 14px;
+    height: 14px;
   }
 
   .category-stripe--complete {
@@ -370,7 +414,8 @@
     .category-stripe,
     .category-ribbon,
     .category-ribbon :global(.category-icon),
-    .category-progress i {
+    .category-progress i,
+    .category-progress b {
       transition-duration: 0.01ms;
     }
 

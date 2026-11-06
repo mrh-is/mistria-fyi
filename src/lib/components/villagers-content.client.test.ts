@@ -98,7 +98,6 @@ describe("VillagersContent with completed villagers hidden", () => {
 
   beforeEach(() => {
     userState.resetAll();
-    if (userState.state.showCompleted) userState.toggleShowCompleted();
     userState.setHeartLevel(completed, MAX_HEART_LEVEL);
     userState.setHeartLevel(other, MAX_HEART_LEVEL);
   });
@@ -108,13 +107,13 @@ describe("VillagersContent with completed villagers hidden", () => {
     pageStub.reset();
   });
 
-  it("keeps the villager targeted by the URL hash", () => {
+  it("opens the fold around the villager targeted by the URL hash", () => {
     pageStub.navigate(`/en/villagers#villager-${completed}`);
 
     const view = renderWithFeedback(VillagersContent, { locale: "en" });
 
     expect(view.container.querySelector(`#villager-${completed}`)).not.toBeNull();
-    expect(view.container.querySelector(`#villager-${other}`)).toBeNull();
+    expect(view.container.querySelector(`#villager-${other}`)).not.toBeNull();
   });
 
   it("moves focus to a remaining record when settling a relationship hides the focused one", async () => {

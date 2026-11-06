@@ -116,7 +116,6 @@ function emptyCompletedState(): ProgressState {
 function grandTotal(): number {
   const progress = emptyCompletedState();
   const allProgress = getAllProgress({
-    availabilityWindows: ["now", "anytime", "later"],
     progress,
     progressionState: deriveProgressionState(progress, trackerData, false),
     worldState: { season: "spring", weather: "calm" },

@@ -2,11 +2,10 @@
   import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
+  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
-  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -16,6 +15,7 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -26,6 +26,8 @@
   import { recordEntries } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
+  import type { CategoryProgress } from "#lib/engine/progress.js";
+  import type { ShelfRow } from "#lib/engine/shelves.js";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { CosmeticId, CosmeticSlot } from "#lib/types/tracker-data.js";
@@ -127,13 +129,16 @@
     return matchesName(cosmetic.name, nameFilter, locale);
   }
 
-  function isScoped(cosmetic: CosmeticEntry): boolean {
-    return matchesSearch(cosmetic) && toolbarState.matchesSourceFilters(cosmetic.sources);
+  function cosmeticFacts(cosmetic: CosmeticEntry): ShelfRow {
+    return pageShelfFacts(cosmetic, userState.state.progress.cosmetics.has(cosmetic.id));
   }
 
   function isVisible(cosmetic: CosmeticEntry): boolean {
-    if (!isScoped(cosmetic)) return false;
-    return !userState.state.progress.cosmetics.has(cosmetic.id) || showsCompletedRows();
+    return matchesSearch(cosmetic) && toolbarState.matchesSourceFilters(cosmetic.sources);
+  }
+
+  function cosmeticsProgress(cosmetics: CosmeticEntry[]): CategoryProgress {
+    return countShelfRows(cosmetics.map((cosmetic) => cosmeticFacts(cosmetic)));
   }
 
   registerPageSearch(() => {
@@ -141,7 +146,9 @@
       subCategories.flatMap((subCategory) => subCategory.cosmetics),
     );
     return {
-      matches: cosmetics.filter((cosmetic) => matchesSearch(cosmetic)).length,
+      filtered: filteredCounts(
+        cosmetics.filter((cosmetic) => matchesSearch(cosmetic)).map((c) => cosmeticFacts(c)),
+      ),
       visible: cosmetics.filter((cosmetic) => isVisible(cosmetic)).length,
     };
   });
@@ -169,10 +176,15 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-<SectionGroups getKey={(group) => group.slot} grouping={sectionGrouping} items={groups()}>
+<SectionGroups
+  forceOpen={!!nameFilter}
+  getKey={(group) => group.slot}
+  grouping={sectionGrouping}
+  items={groups()}
+>
   {#snippet section({ name, nested, slot, subCategories })}
     {@const allInSlot = subCategories.flatMap(({ cosmetics }) => cosmetics)}
-    {@const scopedInSlot = allInSlot.filter(isScoped)}
+    {@const slotProgress = cosmeticsProgress(allInSlot)}
     {@const visibleInSlot = allInSlot.filter(isVisible)}
     {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
       {@const completed = userState.state.progress.cosmetics.has(cosmetic.id)}
@@ -196,15 +208,14 @@
         }}
       />
     {/snippet}
-    {#if visibleInSlot.length > 0 || (!nameFilter && toolbarState.isSourceFilterNarrowing)}
+    {#if !nameFilter || visibleInSlot.length > 0}
       <ExpandableSection
         {locale}
         forceOpen={!!nameFilter}
-        count={scopedInSlot.filter((c) => userState.state.progress.cosmetics.has(c.id)).length}
         {name}
+        progress={slotProgress}
         reportCategory="cosmetic-slot"
         reportEntityId={slot}
-        total={scopedInSlot.length}
       >
         {#each subCategories as { cosmetics, key: subCategory, name: subCategoryName } (subCategory)}
           {@const visibleCosmetics = cosmetics.filter(isVisible)}
@@ -212,26 +223,28 @@
             {#if nested}
               <ExpandableSection
                 {locale}
-                count={cosmetics.filter(
-                  (c) => isScoped(c) && userState.state.progress.cosmetics.has(c.id),
-                ).length}
                 depth={1}
                 forceOpen={!!nameFilter}
                 name={subCategoryName}
+                progress={cosmeticsProgress(cosmetics)}
                 reportCategory="cosmetic"
                 reportEntityId={`${slot}:${subCategory}`}
-                total={cosmetics.filter(isScoped).length}
               >
-                <TrackerRowList
+                <ShelfRows
+                  forceOpen={!!nameFilter}
+                  level={4}
                   getKey={(cosmetic) => cosmetic.id}
+                  getShelf={(cosmetic) => rowShelf(cosmeticFacts(cosmetic))}
                   items={visibleCosmetics}
                   row={cosmeticRow}
                   showEmpty={false}
                 />
               </ExpandableSection>
             {:else}
-              <TrackerRowList
+              <ShelfRows
+                forceOpen={!!nameFilter}
                 getKey={(cosmetic) => cosmetic.id}
+                getShelf={(cosmetic) => rowShelf(cosmeticFacts(cosmetic))}
                 items={visibleCosmetics}
                 row={cosmeticRow}
                 showEmpty={false}
@@ -239,9 +252,6 @@
             {/if}
           {/if}
         {/each}
-        {#if visibleInSlot.length === 0}
-          <TrackerEmptyState />
-        {/if}
       </ExpandableSection>
     {/if}
   {/snippet}

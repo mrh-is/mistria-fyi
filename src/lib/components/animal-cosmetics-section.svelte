@@ -1,8 +1,9 @@
 <script lang="ts">
   import AnimalSubcategory from "#lib/components/animal-subcategory.svelte";
-  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName } from "#lib/data/names.js";
+  import { countShelfRows, filteredCounts } from "#lib/engine/shelves.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
@@ -15,6 +16,7 @@
     AnimalSubcategoryRowProps,
     AnimalSubcategorySectionConfig,
   } from "#lib/components/animal-subcategory.types.js";
+  import type { ShelfRow } from "#lib/engine/shelves.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { AnimalId, CosmeticId } from "#lib/types/tracker-data.js";
 
@@ -24,14 +26,7 @@
 
   function hasDisplayableCosmetic(animalId: AnimalId): boolean {
     const cosmeticIds = Object.keys(trackerData.animals[animalId].cosmetics) as CosmeticId[];
-    if (toolbarState.searchQuery || isSpeciesVisible(animalId)) {
-      return cosmeticIds.some((cid) => isCosmeticVisible(animalId, cid));
-    }
-    return cosmeticIds.some((cosmeticId) =>
-      toolbarState.matchesSourceFilters(
-        trackerData.animals[animalId].cosmetics[cosmeticId].sources,
-      ),
-    );
+    return cosmeticIds.some((cid) => isCosmeticVisible(animalId, cid));
   }
 
   /** A cosmetic matches through its own name or its animal's, so “cow” finds every cow's. */
@@ -45,44 +40,40 @@
   }
 
   function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
-    if (
-      !matchesSearch(animalId, cosmeticId) ||
-      !toolbarState.matchesSourceFilters(
-        trackerData.animals[animalId].cosmetics[cosmeticId].sources,
-      )
-    ) {
-      return false;
-    }
-    return !hasCompletedCosmetic(animalId, cosmeticId) || showsCompletedRows();
+    return (
+      matchesSearch(animalId, cosmeticId) &&
+      toolbarState.matchesSourceFilters(trackerData.animals[animalId].cosmetics[cosmeticId].sources)
+    );
+  }
+
+  function cosmeticFacts(animalId: AnimalId, cosmeticId: CosmeticId): ShelfRow {
+    const animal = trackerData.animals[animalId];
+    return pageShelfFacts(
+      { sources: animal.cosmetics[cosmeticId].sources, visibility: animal.visibility },
+      hasCompletedCosmetic(animalId, cosmeticId),
+    );
   }
 
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<CosmeticId> {
     const animal = trackerData.animals[animalId];
-    let completedCount = 0;
-    let displayableCount = 0;
-    const visibleCosmetics: AnimalSubcategoryRowProps<CosmeticId>[] = [];
-    for (const [cid] of recordEntries(animal.cosmetics)) {
-      if (!matchesSearch(animalId, cid)) continue;
-      if (!toolbarState.matchesSourceFilters(animal.cosmetics[cid].sources)) continue;
-      displayableCount++;
-      const cosmeticId = cid;
-      const completed = hasCompletedCosmetic(animalId, cosmeticId);
-      if (completed) completedCount++;
-      if (isCosmeticVisible(animalId, cosmeticId)) {
-        visibleCosmetics.push({
-          completed,
-          id: cosmeticId,
-          name: getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), locale),
-          sources: animal.cosmetics[cosmeticId].sources,
-          spoilered: false,
-        });
-      }
-    }
+    const cosmeticIds = recordEntries(animal.cosmetics).map(([id]) => id);
+    const visibleItems = cosmeticIds
+      .filter((id) => isCosmeticVisible(animalId, id))
+      .map((id): AnimalSubcategoryRowProps<CosmeticId> => ({
+        ...cosmeticFacts(animalId, id),
+        id,
+        name: getName("animals", animalNameId(animalId, "cosmetics", id), locale),
+        sources: animal.cosmetics[id].sources,
+        spoilered: false,
+      }));
     return {
-      displayableCompletedItemCount: completedCount,
-      displayableItemCount: displayableCount,
+      displayableItemCount: visibleItems.length,
       isVisible: isSpeciesVisible(animalId),
-      visibleItems: visibleCosmetics,
+      matchingRows: cosmeticIds
+        .filter((id) => matchesSearch(animalId, id))
+        .map((id) => cosmeticFacts(animalId, id)),
+      progress: countShelfRows(cosmeticIds.map((id) => cosmeticFacts(animalId, id))),
+      visibleItems,
     };
   }
 
@@ -103,14 +94,11 @@
   let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   registerPageSearch(() => {
-    let matches = 0;
-    let visible = 0;
-    for (const animalId of recordKeys(trackerData.animals)) {
-      const cosmeticIds = Object.keys(trackerData.animals[animalId].cosmetics) as CosmeticId[];
-      matches += cosmeticIds.filter((id) => matchesSearch(animalId, id)).length;
-      visible += sectionConfig(animalId).visibleItems.length;
-    }
-    return { matches, visible };
+    const configs = recordKeys(trackerData.animals).map((animalId) => sectionConfig(animalId));
+    return {
+      filtered: filteredCounts(configs.flatMap(({ matchingRows }) => matchingRows)),
+      visible: configs.reduce((sum, { visibleItems }) => sum + visibleItems.length, 0),
+    };
   });
 </script>
 

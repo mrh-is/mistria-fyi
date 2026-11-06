@@ -95,6 +95,7 @@
       userState.state.worldState,
       userState.progressionState,
       locale,
+      userState.progressContext.progressionState,
     ),
   );
 

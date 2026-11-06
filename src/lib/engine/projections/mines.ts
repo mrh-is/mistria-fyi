@@ -1,13 +1,17 @@
 import { trackerData } from "#lib/data/index.js";
 import { getMaxMineFloor } from "#lib/engine/progress.js";
-import { recordKeys } from "#lib/utils/record.js";
+import { addProgress, countShelfRows, emptyProgress, shelfFacts } from "#lib/engine/shelves.js";
+import { recordEntries } from "#lib/utils/record.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
-import type { CategoryProjection } from "#lib/engine/projections/category-projection.js";
+import type {
+  CategoryProjection,
+  CategoryProjectionOptions,
+} from "#lib/engine/projections/category-projection.js";
+import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { SpellId } from "#lib/types/tracker-data.js";
 
-export interface SpellRow {
-  completed: boolean;
+export interface SpellRow extends ShelfRow {
   id: SpellId;
 }
 
@@ -19,18 +23,23 @@ export interface MinesProjection extends CategoryProjection {
 }
 
 /** Each mine floor & each spell is one step. */
-export function projectMines(ctx: ProgressContext): MinesProjection {
+export function projectMines(
+  ctx: ProgressContext,
+  options: CategoryProjectionOptions = {},
+): MinesProjection {
   const maxFloor = getMaxMineFloor();
-  const spells = recordKeys(trackerData.mines.spells).map((id): SpellRow => ({
-    completed: ctx.progress.spells.has(id),
+  const spells = recordEntries(trackerData.mines.spells).map(([id, spell]): SpellRow => ({
+    ...shelfFacts(spell, ctx.progress.spells.has(id), ctx, options.showsSource),
     id,
   }));
-  const total = maxFloor + spells.length;
-  const completed = ctx.progress.mineFloor + spells.filter((spell) => spell.completed).length;
-  return {
-    floor: ctx.progress.mineFloor,
-    maxFloor,
-    spells,
-    totals: { completed, remainingInScope: total - completed, total },
+  const floor = ctx.progress.mineFloor;
+  // Every unreached floor is doable until #503 says where a seal stops the player.
+  const floors = {
+    ...emptyProgress(),
+    completed: floor,
+    completedShown: floor,
+    todo: maxFloor - floor,
+    total: maxFloor,
   };
+  return { floor, maxFloor, spells, totals: addProgress([floors, countShelfRows(spells)]) };
 }

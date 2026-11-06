@@ -44,16 +44,17 @@ describe("QuestsContent empty sections", () => {
     await fireEvent.click(view.getByRole("button", { name: /^Story Quests,/ }));
     const story = view.getByRole("button", { name: /^Story Quests,/ }).closest("section, .section");
     if (!story) throw new Error("Expected the Story section");
-    expect(story.querySelectorAll("[data-tracker-row]")).toHaveLength(9);
+    await fireEvent.click(within(story as HTMLElement).getByRole("button", { name: "Not now" }));
+    await waitFor(() => {
+      expect(story.querySelectorAll("[data-tracker-row]")).toHaveLength(9);
+    });
     expect(story.querySelector("[data-tracker-empty]")).toBeNull();
 
+    const pageFold = view.getByRole("heading", { level: 2, name: "Completed" });
+    await fireEvent.click(within(pageFold).getByRole("button"));
     await fireEvent.click(view.getByRole("button", { name: /^Crown Requests,/ }));
     const crown = view.getByRole("button", { name: /^Crown Requests,/ }).closest(".section");
     if (!crown) throw new Error("Expected the Crown section");
-    expect(within(crown as HTMLElement).getByText(/All done!/)).toBeInTheDocument();
-    expect(crown.querySelectorAll("[data-tracker-row]")).toHaveLength(0);
-
-    userState.toggleShowCompleted();
     await tick();
     // The Story section above takes the rows rendered at once; Crown's arrive over frames.
     await waitFor(() => {
@@ -64,24 +65,17 @@ describe("QuestsContent empty sections", () => {
     expect(crown.querySelector("[data-tracker-empty]")).toBeNull();
   });
 
-  it("keeps a filter-empty note inside the section whose sources were filtered out", async () => {
+  it("takes a section off the page while filters hide all its sources", async () => {
     const view = renderWithFeedback(QuestsContent, { locale: "en" });
     await tick();
+    expect(view.getByRole("button", { name: /^Fetch Quests,/ })).toBeInTheDocument();
+
     toolbarState.hideAllSourceFilters();
     await tick();
-
-    expect(view.container.querySelector("[data-tracker-empty]")).toBeNull();
-    await fireEvent.click(view.getByRole("button", { name: /^Fetch Quests,/ }));
-    const fetch = view.getByRole("button", { name: /^Fetch Quests,/ }).closest(".section");
-    if (!fetch) throw new Error("Expected the Fetch section");
-    expect(
-      within(fetch as HTMLElement).getByText("No items match the current filters"),
-    ).toBeInTheDocument();
-    expect(fetch.querySelectorAll("[data-tracker-row]")).toHaveLength(0);
+    expect(view.queryByRole("button", { name: /^Fetch Quests,/ })).toBeNull();
 
     toolbarState.resetSourceFilters();
     await tick();
-    expect(fetch.querySelectorAll("[data-tracker-row]").length).toBeGreaterThan(0);
-    expect(fetch.querySelector("[data-tracker-empty]")).toBeNull();
+    expect(view.getByRole("button", { name: /^Fetch Quests,/ })).toBeInTheDocument();
   });
 });

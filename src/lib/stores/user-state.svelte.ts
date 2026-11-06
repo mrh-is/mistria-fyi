@@ -26,7 +26,6 @@ import { applySync, receiptCovers } from "#lib/engine/sync-apply.js";
 import { nextFreshness } from "#lib/engine/sync-freshness.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
-import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
@@ -58,7 +57,6 @@ import type {
 import type { SyncAnswers, SyncQuestion, SyncReceipt, SyncResult } from "#lib/engine/sync-apply.js";
 import type { GameDate, SyncFreshness } from "#lib/engine/sync-freshness.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
-import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { FarmIdentity, SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
@@ -168,11 +166,9 @@ export interface QuestCompletion {
 }
 
 export interface UserState {
-  availabilityWindows: AvailabilityWindow[];
   everythingGrouping: "category" | "source";
   lastImport: null | SaveImportMetadata;
   progress: ProgressState;
-  showCompleted: boolean;
   showSpoilers: boolean;
   worldState: { season: Season; weather: Weather };
 }
@@ -181,7 +177,6 @@ export interface UserState {
 
 /** Per-device display preferences, stored apart from progress so a backup restore keeps them. */
 export interface SerializedPreferences {
-  availabilityWindows: AvailabilityWindow[];
   everythingGrouping: "category" | "source";
   showSpoilers: boolean;
 }
@@ -224,7 +219,6 @@ const ANIMAL_IDS = recordKeys(trackerData.animals);
 
 function createDefaultPreferences(): SerializedPreferences {
   return {
-    availabilityWindows: [...DEFAULT_AVAILABILITY_WINDOWS],
     everythingGrouping: "category",
     showSpoilers: false,
   };
@@ -235,7 +229,6 @@ function createDefaultState(): UserState {
     ...createDefaultPreferences(),
     lastImport: null,
     progress: createDefaultProgress(SvelteSet, ANIMAL_IDS),
-    showCompleted: false,
     worldState: createDefaultWorldState(),
   };
 }
@@ -937,7 +930,6 @@ function createUserState() {
   function applyPreferencesValue(value: null | string): void {
     lastKnownPreferencesValue = value;
     const preferences = deserializePreferences(value);
-    state.availabilityWindows = preferences.availabilityWindows;
     state.everythingGrouping = preferences.everythingGrouping;
     state.showSpoilers = preferences.showSpoilers;
   }
@@ -953,10 +945,15 @@ function createUserState() {
   const progressionState = $derived(
     deriveProgressionState(state.progress, trackerData, state.showSpoilers),
   );
+  // "Show spoilers" changes what the spoiler UI reveals, never what's doable today.
+  const availabilityProgressionState = $derived(
+    state.showSpoilers
+      ? deriveProgressionState(state.progress, trackerData, false)
+      : progressionState,
+  );
   const progressContext: ProgressContext = $derived({
-    availabilityWindows: state.availabilityWindows,
     progress: state.progress,
-    progressionState,
+    progressionState: availabilityProgressionState,
     worldState: state.worldState,
   });
 
@@ -1279,9 +1276,6 @@ function createUserState() {
       if (!kept) return { error: "invalid-fields", ok: false };
       return restoreBackupJson(JSON.stringify(kept.backup));
     },
-    setAvailabilityWindows(windows: readonly AvailabilityWindow[]) {
-      state.availabilityWindows = AVAILABILITY_WINDOWS.filter((window) => windows.includes(window));
-    },
     setBreakUpsDisabled(value: boolean) {
       manual("breakUpsDisabled", () => {
         state.progress.breakUpsDisabled = value;
@@ -1495,19 +1489,6 @@ function createUserState() {
         toggleInSet(set, variantId);
       });
     },
-    toggleAvailabilityWindow(window: AvailabilityWindow) {
-      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- A scratch copy; only the filtered array is stored.
-      const selected = new Set(state.availabilityWindows);
-      if (selected.has(window)) {
-        if (selected.size === 1) return;
-        selected.delete(window);
-      } else {
-        selected.add(window);
-      }
-      state.availabilityWindows = AVAILABILITY_WINDOWS.filter((candidate) =>
-        selected.has(candidate),
-      );
-    },
     toggleCosmetic(id: CosmeticId) {
       toggleFact("cosmetics", state.progress.cosmetics, id);
     },
@@ -1525,9 +1506,6 @@ function createUserState() {
     },
     togglePetSkin(id: PetSkinId) {
       toggleFact("petSkins", state.progress.petSkins, id);
-    },
-    toggleShowCompleted() {
-      state.showCompleted = !state.showCompleted;
     },
     toggleShowSpoilers() {
       state.showSpoilers = !state.showSpoilers;
@@ -1786,10 +1764,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
-}
-
 /** Reads stored preferences, defaulting each missing or invalid field. */
 function deserializePreferences(json: null | string): SerializedPreferences {
   const defaults = createDefaultPreferences();
@@ -1803,10 +1777,8 @@ function deserializePreferences(json: null | string): SerializedPreferences {
   }
   if (!isRecord(parsed)) return defaults;
 
-  const stored = isStringArray(parsed.availabilityWindows) ? parsed.availabilityWindows : [];
-  const windows = AVAILABILITY_WINDOWS.filter((window) => stored.includes(window));
+  // Older builds also stored `availabilityWindows`; the next write leaves it behind.
   return {
-    availabilityWindows: windows.length > 0 ? windows : defaults.availabilityWindows,
     everythingGrouping: parsed.everythingGrouping === "source" ? "source" : "category",
     showSpoilers:
       typeof parsed.showSpoilers === "boolean" ? parsed.showSpoilers : defaults.showSpoilers,
@@ -1815,7 +1787,6 @@ function deserializePreferences(json: null | string): SerializedPreferences {
 
 function serializePreferences(state: UserState): string {
   const preferences: SerializedPreferences = {
-    availabilityWindows: [...state.availabilityWindows],
     everythingGrouping: state.everythingGrouping,
     showSpoilers: state.showSpoilers,
   };

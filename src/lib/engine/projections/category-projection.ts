@@ -1,6 +1,8 @@
 import { isConditionVisible } from "#lib/engine/visibility.js";
 
+import type { ShowsSource } from "#lib/engine/availability.js";
 import type { CategoryProgress } from "#lib/engine/progress.js";
+import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
@@ -17,25 +19,13 @@ export interface CategoryProjection {
 export interface CategoryProjectionOptions {
   /** Flags rows whose visibility condition is unmet; omitted, no row is spoilered. */
   progressionState?: UserProgressionState;
+  /** A page's source type filters; omitted, every source shows. */
+  showsSource?: ShowsSource;
 }
 
 /** A row tracked as one completion step. */
-export interface ChecklistRow {
-  completed: boolean;
-  /** Whether an incomplete row is obtainable in the context's availability windows. */
-  inScope: boolean;
+export interface ChecklistRow extends ShelfRow {
   spoilered: boolean;
-}
-
-/** Each row is one step; an incomplete row is remaining in scope when its `inScope` holds. */
-export function countChecklist(rows: readonly ChecklistRow[]): CategoryProgress {
-  let completed = 0;
-  let remainingInScope = 0;
-  for (const row of rows) {
-    if (row.completed) completed++;
-    else if (row.inScope) remainingInScope++;
-  }
-  return { completed, remainingInScope, total: rows.length };
 }
 
 /** Whether an entity's visibility condition hides it from the given progression. */

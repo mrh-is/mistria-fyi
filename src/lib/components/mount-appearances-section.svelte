@@ -1,10 +1,9 @@
 <script lang="ts">
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
-  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { registerPageSearch, showsCompletedRows } from "#lib/controllers/page-search.svelte.js";
+  import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData } from "#lib/data/index.js";
@@ -12,6 +11,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -69,27 +69,28 @@
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
+  let shelvedEntries = $derived(
+    entries.map((entry) => ({ ...entry, ...pageShelfFacts(entry, isCompleted(entry)) })),
+  );
+
   let namedEntries = $derived(
     nameFilter
-      ? entries.filter(
+      ? shelvedEntries.filter(
           ({ name, visibility }) =>
             isConditionVisible(visibility, userState.progressionState) &&
             matchesName(name, nameFilter, locale),
         )
-      : entries,
+      : shelvedEntries,
   );
 
-  let scopedEntries = $derived(
-    namedEntries.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
-  );
+  let progress = $derived(countShelfRows(shelvedEntries));
 
-  let completedCount = $derived(scopedEntries.filter((entry) => isCompleted(entry)).length);
+  let visibleEntries = $derived(namedEntries.filter(({ shown }) => shown));
 
-  let visibleEntries = $derived(
-    scopedEntries.filter((entry) => (isCompleted(entry) ? showsCompletedRows() : true)),
-  );
-
-  registerPageSearch(() => ({ matches: namedEntries.length, visible: visibleEntries.length }));
+  registerPageSearch(() => ({
+    filtered: filteredCounts(namedEntries),
+    visible: visibleEntries.length,
+  }));
 
   function isCompleted(entry: MountEntry): boolean {
     return entry.kind === "appearance"
@@ -123,29 +124,32 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#if visibleEntries.length > 0}
+{#if !nameFilter || visibleEntries.length > 0}
   <ExpandableSection
     {locale}
-    count={completedCount}
     forceOpen={!!nameFilter}
     name={getName("ui", "mount", locale)}
+    {progress}
     reportCategory="mount-appearances"
-    total={scopedEntries.length}
   >
     {#each [{ kind: "appearance", name: m.animals_mount_appearances() }, { kind: "perk", name: m.animals_mount_perks() }] as group (group.kind)}
-      {@const scopedGroupEntries = scopedEntries.filter((entry) => entry.kind === group.kind)}
+      {@const groupProgress = countShelfRows(
+        shelvedEntries.filter((entry) => entry.kind === group.kind),
+      )}
       {@const visibleGroupEntries = visibleEntries.filter((entry) => entry.kind === group.kind)}
       {#if visibleGroupEntries.length > 0}
         <ExpandableSection
           {locale}
           depth={1}
           forceOpen={!!nameFilter}
-          count={scopedGroupEntries.filter((entry) => isCompleted(entry)).length}
           name={group.name}
-          total={scopedGroupEntries.length}
+          progress={groupProgress}
         >
-          <TrackerRowList
+          <ShelfRows
+            forceOpen={!!nameFilter}
+            level={4}
             getKey={(entry) => `${entry.kind}:${entry.id}`}
+            getShelf={rowShelf}
             items={visibleGroupEntries}
           >
             {#snippet row(entry)}
@@ -173,11 +177,9 @@
                 }}
               />
             {/snippet}
-          </TrackerRowList>
+          </ShelfRows>
         </ExpandableSection>
       {/if}
     {/each}
   </ExpandableSection>
-{:else if !nameFilter && toolbarState.isSourceFilterNarrowing}
-  <TrackerEmptyState />
 {/if}

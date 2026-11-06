@@ -13,6 +13,7 @@ interface Section {
   hidden?: boolean;
   id: string;
   total: number;
+  waiting?: boolean;
 }
 
 afterEach(() => {
@@ -20,7 +21,7 @@ afterEach(() => {
 });
 
 describe("SectionGroups", () => {
-  it("lists unfinished sections first, then finished ones under a Completed heading", async () => {
+  it("sorts sections onto their shelves", async () => {
     renderGroups([
       { count: 1, id: "Artifacts", total: 3 },
       { count: 2, id: "Bugs", total: 2 },
@@ -30,8 +31,16 @@ describe("SectionGroups", () => {
     ]);
     await tick();
 
-    // A filter that leaves nothing in scope doesn't finish a section.
-    expect(headingOrder()).toEqual(["Artifacts", "Crops", "Fish", "Completed", "Bugs", "Dishes"]);
+    // A section with nothing to count sits on no shelf.
+    expect(headingOrder()).toEqual([
+      "To do",
+      "Artifacts",
+      "Fish",
+      "Completed",
+      "Bugs",
+      "Dishes",
+      "Crops",
+    ]);
   });
 
   it("omits the Completed heading while every section is unfinished", async () => {
@@ -41,7 +50,43 @@ describe("SectionGroups", () => {
     ]);
     await tick();
 
-    expect(headingOrder()).toEqual(["Artifacts", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Bugs"]);
+  });
+
+  it("starts Not now & Completed closed, and reopens them on request", async () => {
+    renderGroups([
+      { count: 0, id: "Artifacts", total: 2 },
+      { count: 0, id: "Bugs", total: 2, waiting: true },
+      { count: 2, id: "Crops", total: 2 },
+    ]);
+    await tick();
+
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Not now", "Bugs", "Completed", "Crops"]);
+    expect(screen.queryByRole("button", { name: /^Bugs,/ })).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { expanded: false, name: "Not now" }));
+    expect(screen.getByRole("button", { name: /^Bugs,/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Crops,/ })).toBeNull();
+  });
+
+  it("moves focus to a visible trigger when a section leaves for a closed fold", async () => {
+    const { view } = renderGroups([
+      { count: 1, id: "Artifacts", total: 2 },
+      { count: 0, id: "Bugs", total: 2 },
+    ]);
+    await tick();
+    const trigger = screen.getByRole("button", { name: /^Artifacts,/ });
+    trigger.focus();
+
+    await view.rerender({
+      sections: [
+        { count: 2, id: "Artifacts", total: 2 },
+        { count: 0, id: "Bugs", total: 2 },
+      ],
+    });
+    await tick();
+    await tick();
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: /^Bugs,/ }));
   });
 
   it("leaves a lone finished section ungrouped", async () => {
@@ -59,7 +104,7 @@ describe("SectionGroups", () => {
       { count: 1, id: "Crops", total: 2 },
     ]);
     await tick();
-    expect(headingOrder()).toEqual(["Artifacts", "Crops", "Completed", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Crops", "Completed", "Bugs"]);
 
     grouping.hold("Bugs");
     await view.rerender({
@@ -71,7 +116,7 @@ describe("SectionGroups", () => {
     });
     await tick();
 
-    expect(headingOrder()).toEqual(["Artifacts", "Crops"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Crops"]);
   });
 
   it("regroups a section as soon as its counts change outside a toggle", async () => {
@@ -89,7 +134,7 @@ describe("SectionGroups", () => {
     });
     await tick();
 
-    expect(headingOrder()).toEqual(["Bugs", "Completed", "Artifacts"]);
+    expect(headingOrder()).toEqual(["To do", "Bugs", "Completed", "Artifacts"]);
   });
 
   it("moves a section finished by a toggle only after the row-leaving window", async () => {
@@ -111,16 +156,16 @@ describe("SectionGroups", () => {
       ],
     });
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 1);
-    expect(headingOrder()).toEqual(["Artifacts", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Bugs"]);
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(headingOrder()).toEqual(["Bugs", "Completed", "Artifacts"]);
+    expect(headingOrder()).toEqual(["To do", "Bugs", "Completed", "Artifacts"]);
+    await fireEvent.click(screen.getByRole("button", { expanded: false, name: "Completed" }));
     expect(screen.getByRole("button", { name: /^Artifacts,/ })).toHaveAttribute(
       "aria-expanded",
       "true",
     );
     expect(screen.getByRole("button", { name: "Row in Artifacts" })).toBe(row);
-    expect(document.activeElement).toBe(row);
   });
 
   it("keeps a section reopened by a toggle among the completed until the window passes", async () => {
@@ -139,10 +184,10 @@ describe("SectionGroups", () => {
       ],
     });
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 1);
-    expect(headingOrder()).toEqual(["Artifacts", "Completed", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Completed", "Bugs"]);
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(headingOrder()).toEqual(["Artifacts", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Bugs"]);
   });
 
   it("restarts the window when a held section is toggled again", async () => {
@@ -163,10 +208,10 @@ describe("SectionGroups", () => {
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 1);
     grouping.hold("Artifacts");
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 1);
-    expect(headingOrder()).toEqual(["Artifacts", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Bugs"]);
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(headingOrder()).toEqual(["Bugs", "Completed", "Artifacts"]);
+    expect(headingOrder()).toEqual(["To do", "Bugs", "Completed", "Artifacts"]);
   });
 
   it("clears pending hold timers when it unmounts", async () => {
@@ -182,8 +227,9 @@ describe("SectionGroups", () => {
 });
 
 function headingOrder(): string[] {
+  // Sections in a closed fold stay mounted, so `hidden` includes them.
   return screen
-    .getAllByRole("heading", { level: 2 })
+    .getAllByRole("heading", { hidden: true, level: 2 })
     .map((heading) => heading.textContent.trim().replace(/\d.*$/, "").trim());
 }
 

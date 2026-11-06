@@ -1,20 +1,18 @@
 import { trackerData } from "#lib/data/index.js";
 import { isItemObtainable } from "#lib/engine/applicability.js";
-import { isItemAvailable } from "#lib/engine/availability.js";
 import { isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
 import { recordEntries } from "#lib/utils/record.js";
 
-import type { CategoryProgress, ProgressContext } from "#lib/engine/progress.js";
+import type { ProgressContext } from "#lib/engine/progress.js";
 import type {
   CategoryProjection,
   CategoryProjectionOptions,
 } from "#lib/engine/projections/category-projection.js";
+import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { ItemId, MuseumWingId, MuseumWingSetId } from "#lib/types/tracker-data.js";
 
-export interface MuseumRow {
-  /** Whether the item is obtainable in the context's availability windows. */
-  available: boolean;
-  completed: boolean;
+export interface MuseumRow extends ShelfRow {
   id: ItemId;
   /** Unobtainable items, such as a declined spouse's gifts, don't count; donated ones always do. */
   obtainable: boolean;
@@ -38,11 +36,14 @@ export function projectMuseum(
     for (const [setId, set] of recordEntries(wing.sets)) {
       for (const id of set.items) {
         const item = trackerData.items[id];
+        const facts = shelfFacts(item, ctx.progress.museum.has(id), ctx, options.showsSource);
+        const obtainable = isItemObtainable(id, ctx.progress);
         rows.push({
-          available: isItemAvailable(item, ctx, ctx.availabilityWindows),
-          completed: ctx.progress.museum.has(id),
+          ...facts,
+          doable: facts.doable && obtainable,
+          doableAnywhere: facts.doableAnywhere && obtainable,
           id,
-          obtainable: isItemObtainable(id, ctx.progress),
+          obtainable,
           setId,
           spoilered: isSpoilered(item.visibility, options.progressionState),
           wingId,
@@ -50,12 +51,6 @@ export function projectMuseum(
       }
     }
   }
-  const totals: CategoryProgress = { completed: 0, remainingInScope: 0, total: 0 };
-  for (const row of rows) {
-    if (!row.obtainable) continue;
-    totals.total++;
-    if (row.completed) totals.completed++;
-    else if (row.available) totals.remainingInScope++;
-  }
+  const totals = countShelfRows(rows.filter((row) => row.obtainable));
   return { rows, totals };
 }

@@ -33,6 +33,7 @@
 
   let overall = $derived(getOverallProgress(allProgress));
   let overallPct = $derived(overall.total > 0 ? (overall.completed / overall.total) * 100 : 0);
+  let overallTodoPct = $derived(overall.total > 0 ? (overall.todo / overall.total) * 100 : 0);
   let totalCompleted = $derived(formatNumber(overall.completed, data.locale));
   let grandTotal = $derived(formatNumber(overall.total, data.locale));
 </script>
@@ -44,13 +45,16 @@
   class:home-page--searching={toolbarState.searchOpen}
   {@attach toolbarState.searchOpen ? trackVisualViewport : undefined}
 >
-  <header class="home-header" style="--overall-progress-percent: {overallPct}%">
+  <header
+    class="home-header"
+    style="--overall-progress-percent: {overallPct}%; --overall-todo-percent: {overallTodoPct}%"
+  >
     <h1 class="flex min-w-0 items-center gap-2 font-brand text-2xl leading-none">
       <IconNotebook class="size-5 shrink-0 text-(--color-brand-mark)" />
       {m.app_name()}
     </h1>
     <OverallProgress progress={allProgress} />
-    <span class="overall-progress-rule" aria-hidden="true"><i></i></span>
+    <span class="overall-progress-rule" aria-hidden="true"><i></i><b></b></span>
   </header>
 
   <div class="home-content flex flex-col gap-3 px-4 pb-4" bind:this={content}>
@@ -60,9 +64,6 @@
       <GotItNote locale={data.locale} />
       <SyncTroubleNote />
       <WelcomeCard />
-      <h2 class="px-1 font-controls text-2xs tracking-[0.14em] text-muted-foreground uppercase">
-        {m.home_index_heading()}
-      </h2>
       <CategoryGrid progress={allProgress} />
       <a
         class="everything-link"
@@ -131,6 +132,7 @@
     right: 0;
     bottom: 0;
     left: 0;
+    display: flex;
     height: 3px;
     background: var(--color-paper-sunken);
   }
@@ -140,6 +142,14 @@
     width: var(--overall-progress-percent);
     height: 100%;
     background: var(--color-home-accent);
+    transition: width 300ms ease-out;
+  }
+
+  .overall-progress-rule b {
+    display: block;
+    width: var(--overall-todo-percent);
+    height: 100%;
+    background: color-mix(in srgb, var(--color-home-accent) 34%, transparent);
     transition: width 300ms ease-out;
   }
 
@@ -168,7 +178,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .overall-progress-rule i {
+    .overall-progress-rule i,
+    .overall-progress-rule b {
       transition-duration: 0.01ms;
     }
   }

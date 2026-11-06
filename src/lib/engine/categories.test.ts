@@ -4,7 +4,6 @@ import { trackerData } from "#lib/data/index.js";
 import { searchAllCategories } from "#lib/engine/search.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import {
@@ -25,7 +24,6 @@ const worldState = { season: "spring", weather: "calm" } as const;
 
 function progressContext(): ProgressContext {
   return {
-    availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
     progress: makeCompletedState(),
     progressionState: deriveProgressionState(makeCompletedState(), trackerData, false),
     worldState,

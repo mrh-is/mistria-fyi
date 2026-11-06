@@ -1,17 +1,11 @@
 <script lang="ts">
   import AnimalSubcategory from "#lib/components/animal-subcategory.svelte";
-  import {
-    registerPageSearch,
-    showsCompletedRows,
-    visibleWindows,
-  } from "#lib/controllers/page-search.svelte.js";
+  import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
-  import {
-    getVariantSeason,
-    isAnimalVariantSpoilered,
-    isVariantInScope as isVariantInScopeEngine,
-  } from "#lib/engine/animal-availability.js";
+  import { getVariantSeason, isAnimalVariantSpoilered } from "#lib/engine/animal-availability.js";
+  import { projectAnimals } from "#lib/engine/projections/animals.js";
+  import { countShelfRows, filteredCounts } from "#lib/engine/shelves.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -21,6 +15,7 @@
     AnimalSubcategoryRowProps,
     AnimalSubcategorySectionConfig,
   } from "#lib/components/animal-subcategory.types.js";
+  import type { ShelfRow } from "#lib/engine/shelves.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {
     AnimalId,
@@ -46,14 +41,9 @@
   }
 
   function hasDisplayableVariant(animalId: AnimalId): boolean {
-    const isAnimalVisible = isSpeciesVisible(animalId);
-    return someVariant(animalId, ([variantId, variant]) => {
-      if (!matchesSearch(animalId, variantId)) return false;
-      const completed = hasCompletedVariant(animalId, variantId);
-      if (isAnimalVisible) {
-        return isVariantVisible(animalId, variant, completed);
-      }
-      return isVariantInScope(animalId, variant, completed);
+    return someVariant(animalId, ([variantId]) => {
+      const facts = variantFacts(animalId, variantId);
+      return matchesSearch(animalId, variantId) && facts.shown;
     });
   }
 
@@ -77,19 +67,20 @@
     tier: number;
   }
 
-  function isVariantInScope(
-    animalId: AnimalId,
-    variant: AnimalVariant,
-    completed: boolean,
-  ): boolean {
-    if (!toolbarState.matchesSourceFilters([variant.source])) return false;
-    if (completed) return true;
-    return isVariantInScopeEngine(
-      variant,
-      trackerData.animals[animalId].visibility,
-      userState.progressContext,
-      visibleWindows(),
-    );
+  let factsByVariant = $derived(
+    new Map(
+      projectAnimals(userState.progressContext, {
+        showsSource: toolbarState.showsSource,
+      }).rows.flatMap((row) =>
+        row.kind === "variant" ? [[`${row.animalId}:${row.variantId}`, row]] : [],
+      ) as [string, ShelfRow][],
+    ),
+  );
+
+  function variantFacts(animalId: AnimalId, variantId: AnimalVariantId): ShelfRow {
+    const facts = factsByVariant.get(`${animalId}:${variantId}`);
+    if (!facts) throw new Error(`Variant without a projection: ${animalId}:${variantId}`);
+    return facts;
   }
 
   /** A variant matches through its own name or its animal's, so “cow” finds every cow. */
@@ -111,39 +102,28 @@
     );
   }
 
-  function isVariantVisible(
-    animalId: AnimalId,
-    variant: AnimalVariant,
-    completed: boolean,
-  ): boolean {
-    if (!isVariantInScope(animalId, variant, completed)) return false;
-    return !completed || showsCompletedRows();
-  }
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<AnimalVariantId> {
-    let displayableCompletedItemCount = 0;
-    let displayableItemCount = 0;
+    const everyRow: ShelfRow[] = [];
+    const matchingRows: ShelfRow[] = [];
     const visibleItems: VariantRowConfig[] = [];
     forEachVariant(animalId, ([vid, variant], tier) => {
+      const facts = variantFacts(animalId, vid);
+      everyRow.push(facts);
       if (!matchesSearch(animalId, vid)) return;
-      const completed = hasCompletedVariant(animalId, vid);
-      if (!isVariantInScope(animalId, variant, completed)) return;
-      displayableItemCount++;
-      if (completed) displayableCompletedItemCount++;
-
-      if (!completed || showsCompletedRows()) {
-        const totalTiers = trackerData.animals[animalId].variantTiers.length;
-        visibleItems.push({
-          completed,
-          id: vid,
-          name: getName("animals", animalNameId(animalId, "variants", vid), locale),
-          season: getVariantSeason(variant),
-          sources: [variant.source],
-          spoilered: isVariantSpoilered(animalId, vid),
-          subtitle:
-            totalTiers > 1 ? getName("ui", `tier_${(tier + 1).toString()}`, locale) : undefined,
-          tier,
-        });
-      }
+      matchingRows.push(facts);
+      if (!facts.shown) return;
+      const totalTiers = trackerData.animals[animalId].variantTiers.length;
+      visibleItems.push({
+        ...facts,
+        id: vid,
+        name: getName("animals", animalNameId(animalId, "variants", vid), locale),
+        season: getVariantSeason(variant),
+        sources: [variant.source],
+        spoilered: isVariantSpoilered(animalId, vid),
+        subtitle:
+          totalTiers > 1 ? getName("ui", `tier_${(tier + 1).toString()}`, locale) : undefined,
+        tier,
+      });
     });
     visibleItems.sort((a, b) => {
       if (a.tier !== b.tier) return a.tier - b.tier;
@@ -155,9 +135,10 @@
       return nameCollator(locale).compare(a.name, b.name);
     });
     return {
-      displayableCompletedItemCount,
-      displayableItemCount,
+      displayableItemCount: visibleItems.length,
       isVisible: isSpeciesVisible(animalId),
+      matchingRows,
+      progress: countShelfRows(everyRow),
       visibleItems,
     };
   }
@@ -174,22 +155,12 @@
     locale: LocaleCode;
   } = $props();
 
-  function countMatches(animalId: AnimalId): number {
-    let matches = 0;
-    forEachVariant(animalId, ([variantId]) => {
-      if (matchesSearch(animalId, variantId)) matches++;
-    });
-    return matches;
-  }
-
   registerPageSearch(() => {
-    let matches = 0;
-    let visible = 0;
-    for (const animalId of recordKeys(trackerData.animals)) {
-      matches += countMatches(animalId);
-      visible += sectionConfig(animalId).visibleItems.length;
-    }
-    return { matches, visible };
+    const configs = recordKeys(trackerData.animals).map((animalId) => sectionConfig(animalId));
+    return {
+      filtered: filteredCounts(configs.flatMap(({ matchingRows }) => matchingRows)),
+      visible: configs.reduce((sum, { visibleItems }) => sum + visibleItems.length, 0),
+    };
   });
 </script>
 

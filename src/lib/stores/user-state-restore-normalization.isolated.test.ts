@@ -240,21 +240,10 @@ describe("stored preferences", () => {
   );
 
   it.each([
-    ["missing", undefined, ["now", "anytime"], false],
-    ["malformed", "not json", ["now", "anytime"], false],
-    [
-      "unknown windows",
-      '{"availabilityWindows":["later","removed","now"]}',
-      ["now", "later"],
-      false,
-    ],
-    [
-      "no valid windows",
-      '{"availabilityWindows":["removed"],"showSpoilers":true}',
-      ["now", "anytime"],
-      true,
-    ],
-  ] as const)("defaults %s values field by field", async (_, stored, windows, showSpoilers) => {
+    ["missing", undefined, false],
+    ["malformed", "not json", false],
+    ["retired windows", '{"availabilityWindows":["later"],"showSpoilers":true}', true],
+  ] as const)("reads %s values field by field", async (_, stored, showSpoilers) => {
     vi.stubGlobal("window", {});
     vi.stubGlobal(
       "localStorage",
@@ -265,7 +254,7 @@ describe("stored preferences", () => {
     userState.loadFromStorage();
 
     expect(userState.persistenceFailed).toBe(false);
-    expect(userState.state.availabilityWindows).toEqual(windows);
+    expect(userState.state).not.toHaveProperty("availabilityWindows");
     expect(userState.state.showSpoilers).toBe(showSpoilers);
   });
 });

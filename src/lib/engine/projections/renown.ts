@@ -1,4 +1,5 @@
 import { getMaxRenownLevel } from "#lib/engine/progress.js";
+import { alwaysToDo } from "#lib/engine/shelves.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
 import type { CategoryProjection } from "#lib/engine/projections/category-projection.js";
@@ -16,6 +17,6 @@ export function projectRenown(ctx: ProgressContext): RenownProjection {
   return {
     level,
     maxLevel,
-    totals: { completed: level, remainingInScope: maxLevel - level, total: maxLevel },
+    totals: alwaysToDo(level, maxLevel),
   };
 }

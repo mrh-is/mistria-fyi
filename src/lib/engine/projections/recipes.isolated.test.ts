@@ -5,7 +5,6 @@ import { recipePlacements } from "#lib/engine/projections/recipes.js";
 import { searchRecipes } from "#lib/engine/search-providers.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
 import type * as DataModule from "#lib/data/index.js";
 import type * as NamesModule from "#lib/data/names.js";
@@ -30,7 +29,7 @@ vi.mock("#lib/data/index.js", async (importOriginal) => {
       second: { sources: [{ type: "recipe", recipeId: "shared" }] },
       uncraftable: { sources: [] },
     },
-    recipes: { other: {}, shared: {}, unlisted: {} },
+    recipes: { other: { sources: [] }, shared: { sources: [] }, unlisted: { sources: [] } },
   };
   return {
     ...original,
@@ -65,7 +64,6 @@ describe("recipe placement semantic fixture", () => {
         locale: "en",
         progressionState,
         projectionContext: {
-          availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
           progress,
           progressionState,
           worldState: { season: "spring", weather: "calm" },

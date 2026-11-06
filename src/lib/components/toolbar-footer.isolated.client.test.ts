@@ -3,6 +3,7 @@ import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ToolbarFooterHarness from "#lib/components/toolbar-footer.test-harness.svelte";
+import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -22,7 +23,7 @@ function overlayState() {
 }
 
 function renderToolbar(toolbar?: PageMetadataInput["toolbar"]) {
-  const resolvedToolbar = toolbar ?? { search: true, worldState: true };
+  const resolvedToolbar = toolbar ?? { clock: true, filter: true, search: true };
   const feedbackContext = new FeedbackContext();
   const view = render(ToolbarFooterHarness, {
     feedbackContext,
@@ -333,22 +334,21 @@ describe("ToolbarFooter filters", () => {
     expect(visibilityButton()).not.toHaveClass("floating-tool--filtered");
   });
 
-  it("shows a reset action once filters diverge from the default and clears them", async () => {
+  it("shows a reset action once a source filter narrows & clears it", async () => {
+    const [first, second] = SOURCE_FILTERS;
+    toolbarState.registerSourceFilters("test", [first, second]);
     renderToolbar();
     await fireEvent.click(visibilityButton());
     const dialog = await screen.findByRole("dialog", { name: "Filters" });
     expect(within(dialog).queryByRole("button", { name: "Reset" })).toBeNull();
     expect(visibilityButton()).not.toHaveClass("floating-tool--filtered");
 
-    await fireEvent.click(within(dialog).getByRole("switch", { name: "Completed" }));
-
+    toolbarState.toggleSourceFilter(first);
     const reset = await within(dialog).findByRole("button", { name: "Reset" });
-    expect(userState.state.showCompleted).toBe(true);
-    expect(screen.getByRole("status")).toHaveTextContent("Filters applied");
 
     await fireEvent.click(reset);
 
-    expect(userState.state.showCompleted).toBe(false);
+    expect(toolbarState.isSourceFilterNarrowing).toBe(false);
     await waitFor(() => {
       expect(within(dialog).queryByRole("button", { name: "Reset" })).toBeNull();
     });
@@ -356,13 +356,48 @@ describe("ToolbarFooter filters", () => {
   });
 
   it("highlights the filter trigger while filters are active and the panel is closed", async () => {
+    const [first, second] = SOURCE_FILTERS;
+    toolbarState.registerSourceFilters("test", [first, second]);
+    toolbarState.toggleSourceFilter(first);
     renderToolbar();
-
-    userState.toggleShowCompleted();
 
     await waitFor(() => {
       expect(visibilityButton()).toHaveClass("floating-tool--filtered");
     });
+  });
+});
+
+function clockButton() {
+  return screen.getByRole("button", { name: /^Season & weather/ });
+}
+
+describe("ToolbarFooter clock", () => {
+  it("puts search, filter, & clock in that order, so the tab sits at the screen edge", () => {
+    renderToolbar({ clock: true, filter: true, search: true });
+
+    const buttons = within(screen.getByRole("navigation")).getAllByRole("button");
+    expect(buttons.slice(-3).map((button) => button.getAttribute("aria-label"))).toEqual([
+      "Search",
+      "Visibility filters",
+      "Season & weather: Spring, Sun",
+    ]);
+    expect(clockButton().querySelector("[data-clock-tab]")).toBeInTheDocument();
+  });
+
+  it("opens the season & weather panel from the clock", async () => {
+    renderToolbar({ clock: true });
+
+    await fireEvent.click(clockButton());
+
+    const dialog = await screen.findByRole("dialog", { name: "Season & weather" });
+    expect(within(dialog).getByRole("radiogroup", { name: "Season" })).toBeInTheDocument();
+  });
+
+  it("leaves the clock & filter to each page's config", () => {
+    renderToolbar({ search: true });
+
+    expect(screen.queryByRole("button", { name: /^Season & weather/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Visibility filters" })).toBeNull();
   });
 });
 

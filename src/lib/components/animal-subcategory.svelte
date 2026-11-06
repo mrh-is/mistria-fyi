@@ -1,8 +1,7 @@
 <script lang="ts" generics="Id extends AnyId">
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
-  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
-  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { trackerData } from "#lib/data/index.js";
@@ -10,6 +9,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import { addProgress, rowShelf } from "#lib/engine/shelves.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -29,44 +29,43 @@
       .toSorted((a, b) => nameCollator(props.locale).compare(a.name, b.name)),
   );
 
-  let { completedCount, totalCount } = $derived.by(() => {
-    let completed = 0;
-    let total = 0;
-    for (const a of animals) {
-      const { displayableCompletedItemCount, displayableItemCount } = props.sectionConfig(a.id);
-      completed += displayableCompletedItemCount;
-      total += displayableItemCount;
-    }
-    return { completedCount: completed, totalCount: total };
-  });
+  let progress = $derived(addProgress(animals.map((a) => props.sectionConfig(a.id).progress)));
 </script>
 
 {#if animals.some((a) => props.hasDisplayableItem(a.id))}
   <ExpandableSection
     locale={props.locale}
-    count={completedCount}
     forceOpen={!!toolbarState.searchQuery}
     name={props.name}
+    {progress}
     reportCategory={props.reportCategory}
-    total={totalCount}
   >
     {#each animals as animal (animal.id)}
-      {@const { displayableCompletedItemCount, displayableItemCount, isVisible, visibleItems } =
-        props.sectionConfig(animal.id)}
+      {@const {
+        displayableItemCount,
+        isVisible,
+        progress: animalProgress,
+        visibleItems,
+      } = props.sectionConfig(animal.id)}
       {#if displayableItemCount > 0 && (!toolbarState.searchQuery || visibleItems.length > 0)}
         <SpoilerSection name={animal.name} spoilered={!isVisible}>
           {#if visibleItems.length > 0}
             <ExpandableSection
               locale={props.locale}
               depth={1}
-              count={displayableCompletedItemCount}
               forceOpen={!!toolbarState.searchQuery}
               name={animal.name}
+              progress={animalProgress}
               reportCategory={props.reportCategory}
               reportEntityId={animal.id}
-              total={displayableItemCount}
             >
-              <TrackerRowList getKey={(itemRow) => itemRow.id} items={visibleItems}>
+              <ShelfRows
+                forceOpen={!!toolbarState.searchQuery}
+                level={4}
+                getKey={(itemRow) => itemRow.id}
+                getShelf={rowShelf}
+                items={visibleItems}
+              >
                 {#snippet row(itemRow)}
                   <TrackerRow
                     fact={factKey(props.factField, animal.id, itemRow.id)}
@@ -100,13 +99,11 @@
                     sources={itemRow.sources}
                   />
                 {/snippet}
-              </TrackerRowList>
+              </ShelfRows>
             </ExpandableSection>
           {/if}
         </SpoilerSection>
       {/if}
     {/each}
   </ExpandableSection>
-{:else if !toolbarState.searchQuery && toolbarState.isSourceFilterNarrowing}
-  <TrackerEmptyState />
 {/if}

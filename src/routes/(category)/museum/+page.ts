@@ -12,6 +12,6 @@ export const load: PageLoad = localizedPageLoad(
     accent: categoryColor("museum"),
     description: m.museum_page_description({}, { locale }),
     title: getName("ui", "museum", locale),
-    toolbar: { search: true, worldState: true },
+    toolbar: { clock: true, filter: true, search: true },
   }),
 );

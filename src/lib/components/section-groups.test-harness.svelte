@@ -4,6 +4,7 @@
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
+  import { alwaysToDo } from "#lib/engine/shelves.js";
   import { setFeedbackContext } from "#lib/feedback/context.svelte.js";
 
   import type { SectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
@@ -14,6 +15,8 @@
     hidden?: boolean;
     id: string;
     total: number;
+    /** Unfinished steps that can't happen today, so the section can sit on Not now. */
+    waiting?: boolean;
   }
 
   let {
@@ -33,9 +36,14 @@
 </script>
 
 <SectionGroups getKey={(section) => section.id} {grouping} items={sections}>
-  {#snippet section({ count, hidden, id, total })}
+  {#snippet section({ count, hidden, id, total, waiting })}
+    {@const progress = alwaysToDo(count, total)}
     {#if !hidden}
-      <ExpandableSection locale="en" {count} name={id} {total}>
+      <ExpandableSection
+        locale="en"
+        name={id}
+        progress={waiting ? { ...progress, todo: 0, waiting: progress.todo } : progress}
+      >
         <button type="button">Row in {id}</button>
       </ExpandableSection>
     {/if}

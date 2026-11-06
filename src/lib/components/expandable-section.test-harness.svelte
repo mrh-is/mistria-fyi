@@ -2,6 +2,7 @@
   import { untrack } from "svelte";
 
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import { alwaysToDo } from "#lib/engine/shelves.js";
   import { setFeedbackContext } from "#lib/feedback/context.svelte.js";
 
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -39,15 +40,14 @@
 
 <ExpandableSection
   {locale}
-  {count}
   {defaultOpen}
   {depth}
   {forceOpen}
   {name}
+  progress={total === undefined ? undefined : alwaysToDo(count ?? 0, total)}
   {reportCategory}
   {reportEntityId}
   {reportExtra}
-  {total}
 >
   <p>Test content</p>
 </ExpandableSection>

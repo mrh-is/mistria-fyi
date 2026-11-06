@@ -1,14 +1,17 @@
 import { trackerData } from "#lib/data/index.js";
-import { isVariantInScope } from "#lib/engine/animal-availability.js";
-import { countChecklist, isSpoilered } from "#lib/engine/projections/category-projection.js";
-import { recordEntries, recordKeys } from "#lib/utils/record.js";
+import { isAnimalVariantSpoilered } from "#lib/engine/animal-availability.js";
+import { isSpoilered } from "#lib/engine/projections/category-projection.js";
+import { countShelfRows, shelfFacts } from "#lib/engine/shelves.js";
+import { recordEntries } from "#lib/utils/record.js";
 
+import type { AvailabilityRow } from "#lib/engine/availability.js";
 import type { ProgressContext } from "#lib/engine/progress.js";
 import type {
   CategoryProjection,
   CategoryProjectionOptions,
   ChecklistRow,
 } from "#lib/engine/projections/category-projection.js";
+import type { ShelfRow } from "#lib/engine/shelves.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -35,15 +38,14 @@ export interface AnimalsProjection extends CategoryProjection {
   rows: AnimalsRow[];
 }
 
-/**
- * Every variant, cosmetic, appearance, Mistmare perk, & skin is one step. A variant is in scope
- * only within the context's availability windows; everything else stays in scope until collected.
- */
+/** Every variant, cosmetic, appearance, Mistmare perk, & skin is one step. */
 export function projectAnimals(
   ctx: ProgressContext,
   options: CategoryProjectionOptions = {},
 ): AnimalsProjection {
   const { progress } = ctx;
+  const facts = (row: AvailabilityRow, completed: boolean): ShelfRow =>
+    shelfFacts(row, completed, ctx, options.showsSource);
   const animals = recordEntries(trackerData.animals).map(([animalId, animal]) => ({
     animal,
     animalId,
@@ -53,11 +55,18 @@ export function projectAnimals(
   for (const { animal, animalId, spoilered } of animals) {
     for (const tier of animal.variantTiers) {
       for (const [variantId, variant] of recordEntries(tier)) {
-        const completed = progress.animals[animalId]?.has(variantId) ?? false;
+        const completedVariants = progress.animals[animalId];
+        const row = facts(
+          { sources: [variant.source], visibility: animal.visibility },
+          completedVariants?.has(variantId) ?? false,
+        );
+        // A tier opens only once the tier before it is found, whatever "Show spoilers" reveals.
+        const locked = isAnimalVariantSpoilered(animalId, variantId, completedVariants, false);
         rows.push({
+          ...row,
           animalId,
-          completed,
-          inScope: isVariantInScope(variant, animal.visibility, ctx, ctx.availabilityWindows),
+          doable: row.doable && !locked,
+          doableAnywhere: row.doableAnywhere && !locked,
           kind: "variant",
           spoilered,
           variantId,
@@ -66,12 +75,14 @@ export function projectAnimals(
     }
   }
   for (const { animal, animalId, spoilered } of animals) {
-    for (const cosmeticId of recordKeys(animal.cosmetics)) {
+    for (const [cosmeticId, cosmetic] of recordEntries(animal.cosmetics)) {
       rows.push({
+        ...facts(
+          { sources: cosmetic.sources, visibility: animal.visibility },
+          progress.animalCosmetics[animalId]?.has(cosmeticId) ?? false,
+        ),
         animalId,
-        completed: progress.animalCosmetics[animalId]?.has(cosmeticId) ?? false,
         cosmeticId,
-        inScope: true,
         kind: "cosmetic",
         spoilered,
       });
@@ -79,39 +90,35 @@ export function projectAnimals(
   }
   for (const [id, appearance] of recordEntries(trackerData.mount.appearances)) {
     rows.push({
-      completed: progress.mountAppearances.has(id),
+      ...facts(appearance, progress.mountAppearances.has(id)),
       id,
-      inScope: true,
       kind: "mountAppearance",
       spoilered: isSpoilered(appearance.visibility, options.progressionState),
     });
   }
   for (const [id, perk] of recordEntries(trackerData.mount.perks)) {
     rows.push({
-      completed: progress.unlockedPerks.has(id),
+      ...facts(perk, progress.unlockedPerks.has(id)),
       id,
-      inScope: true,
       kind: "mountPerk",
       spoilered: isSpoilered(perk.visibility, options.progressionState),
     });
   }
-  for (const id of recordKeys(trackerData.pets.cosmetics)) {
+  for (const [id, cosmetic] of recordEntries(trackerData.pets.cosmetics)) {
     rows.push({
-      completed: progress.petCosmetics.has(id),
+      ...facts({ sources: cosmetic.sources }, progress.petCosmetics.has(id)),
       id,
-      inScope: true,
       kind: "petCosmetic",
       spoilered: false,
     });
   }
-  for (const id of recordKeys(trackerData.pets.skins)) {
+  for (const [id, skin] of recordEntries(trackerData.pets.skins)) {
     rows.push({
-      completed: progress.petSkins.has(id),
+      ...facts({ sources: skin.sources }, progress.petSkins.has(id)),
       id,
-      inScope: true,
       kind: "petSkin",
       spoilered: false,
     });
   }
-  return { rows, totals: countChecklist(rows) };
+  return { rows, totals: countShelfRows(rows) };
 }

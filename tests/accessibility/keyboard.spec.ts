@@ -24,7 +24,7 @@ test.describe("keyboard and focus accessibility", () => {
     await page.keyboard.press("Tab");
     await expect(tools.getByRole("button", { name: "Search" })).toBeFocused();
     await page.keyboard.press("Tab");
-    await expect(tools.getByRole("button", { name: "Visibility filters" })).toBeFocused();
+    await expect(tools.getByRole("button", { name: /^Season & weather/ })).toBeFocused();
   });
 
   test("feedback dialog contains focus and restores it on Escape", critical, async ({ page }) => {
@@ -86,7 +86,7 @@ test.describe("keyboard and focus accessibility", () => {
 
   test("row removal moves focus and Undo is keyboard operable", critical, async ({ page }) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
     const rows = page.getByRole("button", { name: /^Check (?!spoilered item)/ });
     const nextName = await rows.nth(1).getAttribute("aria-label");
     await rows.first().focus();

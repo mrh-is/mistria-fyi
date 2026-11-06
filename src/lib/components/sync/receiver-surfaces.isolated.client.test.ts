@@ -54,7 +54,7 @@ async function renderToolbar(): Promise<void> {
     metadata: {
       description: "Test page.",
       title: "Test",
-      toolbar: { search: true, worldState: true },
+      toolbar: { clock: true, filter: true, search: true },
     },
   });
   await tick();
