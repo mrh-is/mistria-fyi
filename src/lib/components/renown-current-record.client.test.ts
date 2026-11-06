@@ -7,8 +7,9 @@ import { getMaxRenownLevel } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
 describe("RenownCurrentRecord", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.resetAll();
+    await userState.startTrackingByHand();
   });
   afterEach(() => {
     userState.resetAll();

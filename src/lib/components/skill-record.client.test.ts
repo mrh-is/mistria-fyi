@@ -11,8 +11,9 @@ import type { SkillId } from "#lib/types/tracker-data.js";
 const skillId = "mining" as SkillId;
 
 describe("SkillRecord", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     userState.resetAll();
+    await userState.startTrackingByHand();
   });
   afterEach(() => {
     userState.resetAll();

@@ -140,6 +140,7 @@
   function handleQuestToggle(result: SearchResult): void {
     const questId = result.id as QuestId;
     const completion = userState.completeQuestWithRecipes(questId);
+    if (!completion) return;
     const newState = userState.state.progress.questStates[questId] ?? "none";
     showQuestToast(result.name, newState, completion.newlyAdded, locale, () => {
       userState.undoQuestWithRecipes(questId, completion);

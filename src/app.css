@@ -192,6 +192,7 @@
 
   /* Tag dialogs (tag-dialog.svelte): a paper shipping tag on a string */
   --color-tag-accent: #a65343;
+  --color-tag-action-accent: var(--color-tag-accent);
   --color-tag-ink: #312e2b;
   --color-tag-ink-muted: #68635e;
   --color-tag-paper: #e2dace;
@@ -256,6 +257,11 @@
   --color-category-mines: #886838;
 
   --color-tag-accent: #c36d5a;
+  --color-tag-action-accent: color-mix(
+    in srgb,
+    var(--color-tag-accent) 75%,
+    var(--color-tag-paper)
+  );
   --color-tag-ink: #e8e3dc;
   --color-tag-ink-muted: #aaa39b;
   --color-tag-paper: #352f2a;

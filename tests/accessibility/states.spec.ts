@@ -26,7 +26,10 @@ const progressPlayerPath = fileURLToPath(
 
 test.describe("stateful accessibility", () => {
   test.beforeEach(async ({ page }, testInfo) => {
-    const state = testInfo.title.includes("spoiler-hidden") ? createStoredState() : null;
+    const state =
+      testInfo.title.includes("spoiler-hidden") || testInfo.title.includes("completed rows")
+        ? createStoredState()
+        : null;
     await initializeApplication(page, "light", state);
   });
 

@@ -6,10 +6,11 @@
 
   import SyncTagDialog from "#lib/components/sync/sync-tag-dialog.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
+  import { downloadProgressBackup } from "#lib/controllers/tracking-reminders.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
+  import { downloadJson } from "#lib/utils/download.js";
   import { page } from "$app/state";
 
   import DataCard from "./data-card.svelte";
@@ -55,7 +56,7 @@
   }
 
   function handleExport() {
-    downloadJson(userState.exportBackup(), BACKUP_FILE_PREFIX);
+    downloadProgressBackup();
   }
 
   function handleDownloadUnreadable() {

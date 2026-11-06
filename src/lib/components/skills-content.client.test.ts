@@ -18,9 +18,10 @@ function miningRecord() {
 }
 
 describe("SkillsContent", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     toolbarState.closeSearch();
     userState.resetAll();
+    await userState.startTrackingByHand();
   });
   afterEach(() => {
     cleanup();
