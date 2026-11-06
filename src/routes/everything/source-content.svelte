@@ -16,10 +16,11 @@
   import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
-  import { categoryForKey } from "#lib/data/categories.js";
+  import { categoryForKey, sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { nameCollator } from "#lib/data/names.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
+  import { UNSOURCED_CATEGORY_KEYS } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
   import { sealsBefore } from "#lib/engine/projections/mines.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
@@ -75,14 +76,13 @@
       userState.setMineFloor(floor);
     }
   }
-  const PROGRESS_CATEGORIES = ["skills", "renown", "villagers"] as const;
   // Which Progress categories show, per list, so a search can hide the group when none does. A list
   // that unmounts leaves its keys; they're rewritten on remount, and only read while it's mounted.
   const progressShown: Record<string, boolean> = $state({});
   const leaving = createLeavingSet<string>();
 
   function progressCategoryShown(completed: boolean): boolean {
-    return PROGRESS_CATEGORIES.some((category) => progressShown[`${completed}:${category}`]);
+    return UNSOURCED_CATEGORY_KEYS.some((category) => progressShown[`${completed}:${category}`]);
   }
   const sectionGrouping = createSectionGrouping<string>();
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
@@ -92,6 +92,8 @@
   let lookups = $derived(
     buildBaseSegmentLookups(computeSpoileredStoreIds(userState.progressionState), locale),
   );
+  // Categories without sources have no source to sit under, so they share the Progress group.
+  let progressCategories = $derived(sortCategoryKeysByName(UNSOURCED_CATEGORY_KEYS, locale));
   let progressCompletions = $derived([
     userState.state.progress.mineFloor >= getMaxMineFloor(),
     userState.state.progress.renown >= getMaxRenownLevel(),
@@ -432,7 +434,7 @@
                 onChange={requestFloor}
               />
             {/if}
-            {#each PROGRESS_CATEGORIES as category (category)}
+            {#each progressCategories as category (category)}
               <CategorySection
                 key={category}
                 {locale}
