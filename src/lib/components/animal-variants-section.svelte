@@ -144,12 +144,10 @@
   }
 
   let {
-    areAllAnimalsComplete,
     isAnimalComplete,
     isSpeciesVisible,
     locale,
   }: {
-    areAllAnimalsComplete: () => boolean;
     isAnimalComplete: (animalId: AnimalId) => boolean;
     isSpeciesVisible: (animalId: AnimalId) => boolean;
     locale: LocaleCode;
@@ -166,7 +164,6 @@
 
 <AnimalSubcategory
   factField="animals"
-  {areAllAnimalsComplete}
   completionCheck={hasCompletedVariant}
   hasDisplayableItem={hasDisplayableVariant}
   {isAnimalComplete}

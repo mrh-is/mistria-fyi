@@ -1,10 +1,9 @@
 <script lang="ts">
   import { Icon } from "#lib/components/icon/index.js";
   import Stepper from "#lib/components/stepper.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
-  import { celebrateCategory } from "#lib/effects/celebrate.js";
-  import { isCategoryComplete } from "#lib/engine/categories.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { getRenownPresentation } from "#lib/presentation/renown-presentation.js";
@@ -37,9 +36,9 @@
   }
 
   function setRenownWithCelebration(newLevel: number): void {
-    const wasDone = isCategoryComplete("renown", userState.progressContext);
-    userState.setRenown(newLevel);
-    if (!wasDone && isCategoryComplete("renown", userState.progressContext)) celebrateCategory();
+    celebrateProgress("renown", () => {
+      userState.setRenown(newLevel);
+    });
   }
 </script>
 

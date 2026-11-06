@@ -78,25 +78,15 @@
 >
   {#snippet section(key)}
     {#if key === "variants"}
-      <AnimalVariantsSection
-        {areAllAnimalsComplete}
-        {isAnimalComplete}
-        {isSpeciesVisible}
-        {locale}
-      />
+      <AnimalVariantsSection {isAnimalComplete} {isSpeciesVisible} {locale} />
     {:else if key === "cosmetics"}
-      <AnimalCosmeticsSection
-        {areAllAnimalsComplete}
-        {isAnimalComplete}
-        {isSpeciesVisible}
-        {locale}
-      />
+      <AnimalCosmeticsSection {isAnimalComplete} {isSpeciesVisible} {locale} />
     {:else if key === "mount"}
-      <MountAppearancesSection {areAllAnimalsComplete} {locale} />
+      <MountAppearancesSection {locale} />
     {:else if key === "pet-cosmetics"}
-      <PetCollectiblesSection {areAllAnimalsComplete} collection="cosmetics" {locale} />
+      <PetCollectiblesSection collection="cosmetics" {locale} />
     {:else}
-      <PetCollectiblesSection {areAllAnimalsComplete} collection="skins" {locale} />
+      <PetCollectiblesSection collection="skins" {locale} />
     {/if}
   {/snippet}
 </SectionGroups>

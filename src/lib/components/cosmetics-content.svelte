@@ -5,13 +5,13 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { factKey } from "#lib/engine/provenance.js";
@@ -159,18 +159,17 @@
     allInSlot: CosmeticEntry[],
   ): void {
     sectionGrouping.hold(slot);
-    userState.toggleCosmetic(cosmetic.id);
+    celebrateProgress(
+      "cosmetics",
+      () => {
+        userState.toggleCosmetic(cosmetic.id);
+      },
+      [() => isSlotComplete(allInSlot)],
+    );
     const completed = userState.state.progress.cosmetics.has(cosmetic.id);
     showUndoToast(getName("cosmetics", cosmetic.id, locale), completed, () => {
       userState.toggleCosmetic(cosmetic.id);
     });
-    if (completed) {
-      if (isCosmeticsComplete()) {
-        celebrateCategory();
-      } else if (isSlotComplete(allInSlot)) {
-        celebrate();
-      }
-    }
   }
 </script>
 
