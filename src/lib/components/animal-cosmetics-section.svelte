@@ -80,12 +80,10 @@
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
   let {
-    areAllAnimalsComplete,
     isAnimalComplete,
     isSpeciesVisible,
     locale,
   }: {
-    areAllAnimalsComplete: () => boolean;
     isAnimalComplete: (animalId: AnimalId) => boolean;
     isSpeciesVisible: (animalId: AnimalId) => boolean;
     locale: LocaleCode;
@@ -104,7 +102,6 @@
 
 <AnimalSubcategory
   factField="animalCosmetics"
-  {areAllAnimalsComplete}
   completionCheck={hasCompletedCosmetic}
   hasDisplayableItem={hasDisplayableCosmetic}
   {isAnimalComplete}

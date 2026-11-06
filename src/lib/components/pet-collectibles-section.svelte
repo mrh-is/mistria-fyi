@@ -2,11 +2,11 @@
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
@@ -22,11 +22,9 @@
   import type { PetCosmeticSetId, PetSkinId } from "#lib/types/tracker-data.js";
 
   let {
-    areAllAnimalsComplete,
     collection,
     locale,
   }: {
-    areAllAnimalsComplete: () => boolean;
     /** Each collection is its own section, so the page can group it on its own. */
     collection: "cosmetics" | "skins";
     locale: LocaleCode;
@@ -128,16 +126,17 @@
           sources={entry.sources}
           onToggle={() => {
             sectionGroupItem?.hold();
-            userState.togglePetCosmetic(entry.id);
+            celebrateProgress(
+              "animals",
+              () => {
+                userState.togglePetCosmetic(entry.id);
+              },
+              [arePetsComplete],
+            );
             const completed = userState.state.progress.petCosmetics.has(entry.id);
             showUndoToast(entry.name, completed, () => {
               userState.togglePetCosmetic(entry.id);
             });
-            if (completed && arePetsComplete() && areAllAnimalsComplete()) {
-              celebrateCategory();
-            } else if (completed && arePetsComplete()) {
-              celebrate();
-            }
           }}
         />
       {/snippet}
@@ -172,16 +171,17 @@
           sources={entry.sources}
           onToggle={() => {
             sectionGroupItem?.hold();
-            userState.togglePetSkin(entry.id);
+            celebrateProgress(
+              "animals",
+              () => {
+                userState.togglePetSkin(entry.id);
+              },
+              [arePetsComplete],
+            );
             const completed = userState.state.progress.petSkins.has(entry.id);
             showUndoToast(entry.name, completed, () => {
               userState.togglePetSkin(entry.id);
             });
-            if (completed && arePetsComplete() && areAllAnimalsComplete()) {
-              celebrateCategory();
-            } else if (completed && arePetsComplete()) {
-              celebrate();
-            }
           }}
         />
       {/snippet}

@@ -184,6 +184,9 @@
   "mines_floor_label": "Étage",
   "mines_floor_input_aria": "Étage de la mine",
   "villagers_roster_aria": "Liste des habitants",
+  "villagers_break_ups_hint": "Fais correspondre ce choix au réglage de ta partie avant tes fiançailles.",
+  "villagers_break_ups_disabled": "Ruptures désactivées",
+  "villagers_break_ups_enabled": "Ruptures activées",
   "villagers_alphabet_aria": "Index alphabétique des habitants",
   "season_spring_abbr": "PRI",
   "season_summer_abbr": "ÉTÉ",
@@ -417,7 +420,7 @@
   "privacy_sync_what_body": "Seul le fichier de sauvegarde du jeu est synchronisé. Ce que vous cochez à la main reste sur cet appareil. Votre fichier de sauvegarde est chiffré de bout en bout avant de quitter votre ordinateur de jeu : seuls les appareils qui ont votre code peuvent le lire. Nous ne pouvons pas le lire, et le serveur qui le transmet non plus.",
   "privacy_sync_what_feedback_log": "Si vous envoyez un retour, vous pouvez choisir d’y joindre votre journal de synchronisation des sauvegardes, et ce journal est public. La section « Envois de retours », plus haut, indique ce qu’il contient.",
   "privacy_sync_storage_heading": "Combien de temps on le garde",
-  "privacy_sync_storage_body": "Le serveur garde seulement le dernier fichier de sauvegarde de chaque code et le supprime 30 jours après son envoi. Il garde aussi un petit registre par code, sans aucune donnée de sauvegarde : la date de création du code et de sa dernière utilisation, le nombre de fichiers de sauvegarde envoyés ce jour-là, un numéro qui garde les fichiers dans l’ordre, et des empreintes à sens unique qui prouvent que votre ordinateur possède le code et repèrent un fichier de sauvegarde renvoyé. Ce registre n’est pas chiffré. Il disparaît quand vous créez un nouveau code, ou un an après votre dernier fichier de sauvegarde, et il ne reste qu’une marque pour que le code ne soit jamais réutilisé. Petite précision : Cloudflare, qui héberge ce serveur, conserve une copie de récupération de son stockage pendant 30 jours. Un fichier de sauvegarde remplacé ou supprimé peut donc rester récupérable jusqu’à 30 jours de plus, toujours chiffré.",
+  "privacy_sync_storage_body": "Le serveur garde seulement le dernier fichier de sauvegarde de chaque code et le supprime 30 jours après son envoi. Il garde aussi un petit registre par code, sans aucune donnée de sauvegarde : la date de création du code et de sa dernière utilisation, le nombre de fichiers de sauvegarde envoyés ce jour-là, un numéro qui garde les fichiers dans l’ordre, et des empreintes à sens unique qui prouvent que votre ordinateur possède le code et repèrent un fichier de sauvegarde renvoyé. Ce registre n’est pas chiffré. Il disparaît quand vous créez un nouveau code, ou un an après votre dernier fichier de sauvegarde, et il ne reste qu’une marque pour que le code ne soit jamais réutilisé. Quand quelque chose tombe en panne sur le serveur, il compte chaque jour le type de problème, par exemple la vérification anti-bot qui ne répond pas, et garde ces décomptes pendant deux semaines. Ils ne contiennent rien sur vous ni sur ce que vous avez envoyé. Petite précision : Cloudflare, qui héberge ce serveur, conserve une copie de récupération de son stockage pendant 30 jours. Un fichier de sauvegarde remplacé ou supprimé peut donc rester récupérable jusqu’à 30 jours de plus, toujours chiffré.",
   "privacy_sync_code_heading": "Votre code",
   "privacy_sync_code_body": "Toute personne qui a votre code peut lire les fichiers de sauvegarde que vous partagez, jusqu’à ce que ce code cesse de fonctionner. Traitez-le comme un mot de passe, et mieux vaut ne pas le montrer en stream. S’il venait à fuiter, créez un nouveau code. L’ancien met un instant à se désactiver, et Données vous l’indique jusqu’à ce que ce soit fait.",
   "privacy_sync_ip_heading": "Adresses IP",
@@ -520,19 +523,24 @@
   "sync_error_camera_init": "Impossible d'initialiser la caméra.",
   "sync_error_camera_denied": "Accès à la caméra refusé. Ouvrez le lien de synchronisation de votre ordinateur ou collez-le ici.",
   "merge_imported_from": "Importé depuis {files}",
-  "merge_label_almanac": "Almanach : +{count}",
-  "merge_label_almanac_recipes": "Recettes : +{count}",
-  "merge_label_animal_cosmetics": "Cosmétiques d’animaux : +{count}",
-  "merge_label_animals": "Variantes d’animaux : +{count}",
-  "merge_label_cosmetics": "Cosmétiques : +{count}",
-  "merge_label_museum": "Dons au musée : +{count}",
-  "merge_label_villager_relationships": "Relations avec les habitants : +{count}",
-  "merge_label_perks": "Bonus de compétences : +{count}",
-  "merge_label_pet_cosmetics": "Cosmétiques d’animaux de compagnie : +{count}",
-  "merge_label_pet_skins": "Apparences d’animaux de compagnie : +{count}",
-  "merge_label_mount_appearances": "Apparences de monture : +{count}",
-  "merge_label_quests": "Quêtes : +{count}",
-  "merge_label_spells": "Sorts : +{count}",
+  "merge_overall_outcome": "Ton guide est rempli à {percent}. Il t’en reste {remaining} à compléter.",
+  "merge_changes_details": "Ce qu’on a ajouté",
+  "merge_label_break_ups_disabled": "Ruptures désactivées",
+  "import_save_details": "Détails de la sauvegarde",
+  "import_view_progress": "Voir ce qu’il reste",
+  "merge_label_almanac": "Almanach : +{countText}",
+  "merge_label_almanac_recipes": "Recettes : +{countText}",
+  "merge_label_animal_cosmetics": "Cosmétiques d’animaux : +{countText}",
+  "merge_label_animals": "Variantes d’animaux : +{countText}",
+  "merge_label_cosmetics": "Cosmétiques : +{countText}",
+  "merge_label_museum": "Dons au musée : +{countText}",
+  "merge_label_villager_relationships": "Relations avec les habitants : +{countText}",
+  "merge_label_perks": "Bonus de compétences : +{countText}",
+  "merge_label_pet_cosmetics": "Cosmétiques d’animaux de compagnie : +{countText}",
+  "merge_label_pet_skins": "Apparences d’animaux de compagnie : +{countText}",
+  "merge_label_mount_appearances": "Apparences de monture : +{countText}",
+  "merge_label_quests": "Quêtes : +{countText}",
+  "merge_label_spells": "Sorts : +{countText}",
   "merge_label_child_choice": "Choix de l’enfant mis à jour",
   "merge_conflict_relationship": "Pour info, vous aviez enregistré que vous êtes {local} avec {villager}, mais le fichier de sauvegarde indiquait {incoming}. Nous avons conservé votre statut enregistré.",
   "merge_conflict_spouse": "Pour info, vous aviez enregistré que vous êtes marié(e) à {localVillager}, mais le fichier de sauvegarde indiquait que vous vous étiez marié(e) à {incomingVillager}. Nous avons conservé {localVillager} comme conjoint(e) et ignoré le choix d’enfant importé.",
@@ -542,45 +550,45 @@
   "merge_label_reached_season": "Progression de saison mise à jour",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Étage de mine : +{count} étage",
-        "countPlural=many": "Étage de mine : +{count} étages",
-        "countPlural=other": "Étage de mine : +{count} étages"
+        "countPlural=one": "Étage de mine : +{countText} étage",
+        "countPlural=many": "Étage de mine : +{countText} étages",
+        "countPlural=other": "Étage de mine : +{countText} étages"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Cœurs des habitants : +{count} relation mise à jour",
-        "countPlural=many": "Cœurs des habitants : +{count} relations mises à jour",
-        "countPlural=other": "Cœurs des habitants : +{count} relations mises à jour"
+        "countPlural=one": "Cœurs des habitants : +{countText} relation mise à jour",
+        "countPlural=many": "Cœurs des habitants : +{countText} relations mises à jour",
+        "countPlural=other": "Cœurs des habitants : +{countText} relations mises à jour"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Renommée : +{count} niveau",
-        "countPlural=many": "Renommée : +{count} niveaux",
-        "countPlural=other": "Renommée : +{count} niveaux"
+        "countPlural=one": "Renommée : +{countText} niveau",
+        "countPlural=many": "Renommée : +{countText} niveaux",
+        "countPlural=other": "Renommée : +{countText} niveaux"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Compétences : +{count} compétence mise à jour",
-        "countPlural=many": "Compétences : +{count} compétences mises à jour",
-        "countPlural=other": "Compétences : +{count} compétences mises à jour"
+        "countPlural=one": "Compétences : +{countText} compétence mise à jour",
+        "countPlural=many": "Compétences : +{countText} compétences mises à jour",
+        "countPlural=other": "Compétences : +{countText} compétences mises à jour"
       }
     }
   ],
@@ -785,8 +793,8 @@
   "sync_find_open_linux": "Ouvrez maintenant votre gestionnaire de fichiers, appuyez sur Ctrl+L, collez cela et appuyez sur Entrée. Vous devriez arriver dans un dossier avec des fichiers comme {file}. Faites glisser ce fichier autosave dans ce cadre :",
   "sync_find_open_mac": "Ouvrez maintenant le Finder, appuyez sur Maj-Commande-G, collez cela et appuyez sur Retour. Vous devriez arriver dans un dossier avec des fichiers comme {file}. Faites glisser ce fichier autosave dans ce cadre :",
   "sync_find_drop": "Déposez votre autosave ici",
+  "sync_find_drop_next": "Quand vous aurez trouvé votre autosave, déposez-le ici.",
   "sync_redrop_label": "Déposez votre dernière sauvegarde",
-  "sync_find_drop_locked": "Copiez d’abord le dossier, et ce cadre se réveillera.",
   "sync_find_reading": "Lecture de votre sauvegarde…",
   "sync_find_bad_file": "Hum, impossible de lire celui-là. Choisissez le fichier le plus récent qui se termine par « autosave ».",
   "sync_find_cant_drag": "Impossible de glisser ?",

@@ -2,14 +2,36 @@ import { beforeEach, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
+import { CATEGORIES, CATEGORY_KEYS } from "#lib/engine/categories.js";
 import { projectSourceGroups } from "#lib/presentation/source-groups.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import { buildSourceChecklist } from "./source-checklist.js";
 
+import type { ItemId } from "#lib/types/tracker-data.js";
+
 beforeEach(() => {
   userState.resetAll();
+});
+
+function fennelPlacements() {
+  return projectSourceGroups(
+    buildSourceChecklist(userState.progressContext, "en"),
+    userState.progressContext,
+  )
+    .flatMap((section) => section.rows)
+    .filter(({ entry }) => entry.category === "quests" && entry.id === "request_for_fennel");
+}
+
+it("keeps quest start gates in every source placement", () => {
+  const before = fennelPlacements();
+  expect(before.length).toBeGreaterThan(0);
+  expect(before.every(({ doable }) => !doable)).toBe(true);
+  userState.toggleAlmanacItem("fennel" as ItemId);
+  expect(fennelPlacements().some(({ doable }) => doable)).toBe(true);
+  userState.toggleAlmanacItem("fennel" as ItemId);
+  expect(fennelPlacements().every(({ doable }) => !doable)).toBe(true);
 });
 
 it("preserves variant discovery spoilers & species context outside the animal’s section", () => {
@@ -104,4 +126,13 @@ it("carries an almanac row’s variant as its subtitle & a search term", () => {
   const turnip = rows.find((row) => row.category === "almanac" && row.id === "turnip");
   expect(turnip?.subtitle).toBeUndefined();
   expect(turnip?.searchTerms).toBeUndefined();
+});
+
+it("lists rows for exactly the categories the registry marks as sourced", () => {
+  const listed = new Set(
+    buildSourceChecklist(userState.progressContext, "en", true).map(({ category }) => category),
+  );
+  expect([...listed].toSorted()).toEqual(
+    CATEGORY_KEYS.filter((key) => CATEGORIES[key].sourced).toSorted(),
+  );
 });

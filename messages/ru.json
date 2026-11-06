@@ -189,6 +189,9 @@
   "mines_floor_label": "Этаж",
   "mines_floor_input_aria": "Этаж шахты",
   "villagers_roster_aria": "Список жителей",
+  "villagers_break_ups_hint": "До помолвки выбери тот же вариант, что и в настройках игры.",
+  "villagers_break_ups_disabled": "Расставания отключены",
+  "villagers_break_ups_enabled": "Расставания включены",
   "villagers_alphabet_aria": "Алфавитный указатель жителей",
   "season_spring_abbr": "ВЕС",
   "season_summer_abbr": "ЛЕТ",
@@ -422,7 +425,7 @@
   "privacy_sync_what_body": "Синхронизируется только файл сохранения игры. Всё, что вы отмечаете вручную, остаётся на этом устройстве. Файл сохранения шифруется сквозным шифрованием ещё до того, как покинет ваш игровой компьютер, поэтому прочитать его могут только устройства с вашим кодом. Мы не можем его прочитать, как и сервер, который его передаёт.",
   "privacy_sync_what_feedback_log": "Отправляя отзыв, вы можете прикрепить журнал синхронизации сохранений, и этот журнал станет общедоступным. Что в нём содержится, описано выше, в разделе «Отправка отзывов».",
   "privacy_sync_storage_heading": "Сколько мы его храним",
-  "privacy_sync_storage_body": "Сервер хранит только последний файл сохранения для каждого кода и удаляет его через 30 дней после отправки. Для каждого кода он также хранит небольшую запись без данных сохранения: когда код был создан и когда использовался в последний раз, сколько файлов сохранения было отправлено за день, номер, который поддерживает порядок файлов, и односторонние отпечатки, которые подтверждают, что код принадлежит вашему компьютеру, и распознают повторную отправку того же файла. Эта запись не зашифрована. Она исчезает, когда вы создаёте новый код, или через год после последнего файла сохранения, и остаётся лишь отметка, чтобы код никогда не использовался повторно. Одна оговорка: Cloudflare, на чьей платформе работает этот сервер, хранит резервную копию хранилища 30 дней, поэтому заменённый или удалённый файл сохранения может оставаться восстановимым ещё до 30 дней, по-прежнему в зашифрованном виде.",
+  "privacy_sync_storage_body": "Сервер хранит только последний файл сохранения для каждого кода и удаляет его через 30 дней после отправки. Для каждого кода он также хранит небольшую запись без данных сохранения: когда код был создан и когда использовался в последний раз, сколько файлов сохранения было отправлено за день, номер, который поддерживает порядок файлов, и односторонние отпечатки, которые подтверждают, что код принадлежит вашему компьютеру, и распознают повторную отправку того же файла. Эта запись не зашифрована. Она исчезает, когда вы создаёте новый код, или через год после последнего файла сохранения, и остаётся лишь отметка, чтобы код никогда не использовался повторно. Когда на сервере что-то ломается, он считает по дням, какого рода была проблема, например что проверка на бота не ответила, и хранит эти счётчики две недели. В них нет ничего о вас или о том, что вы отправили. Одна оговорка: Cloudflare, на чьей платформе работает этот сервер, хранит резервную копию хранилища 30 дней, поэтому заменённый или удалённый файл сохранения может оставаться восстановимым ещё до 30 дней, по-прежнему в зашифрованном виде.",
   "privacy_sync_code_heading": "Ваш код",
   "privacy_sync_code_body": "Любой, у кого есть ваш код, может читать файлы сохранения, которыми вы делитесь, пока этот код не перестанет работать. Относитесь к нему как к паролю, и лучше не показывайте его на стриме. Если он утёк, создайте новый код. Старый отключается не сразу, а раздел «Данные» показывает это, пока всё не закончится.",
   "privacy_sync_ip_heading": "IP-адреса",
@@ -525,19 +528,24 @@
   "sync_error_camera_init": "Не удалось инициализировать камеру.",
   "sync_error_camera_denied": "Доступ к камере запрещён. Откройте ссылку синхронизации с игрового компьютера или вставьте её сюда.",
   "merge_imported_from": "Импортировано из {files}",
-  "merge_label_almanac": "Альманах: +{count}",
-  "merge_label_almanac_recipes": "Рецепты: +{count}",
-  "merge_label_animal_cosmetics": "Косметика животных: +{count}",
-  "merge_label_animals": "Варианты животных: +{count}",
-  "merge_label_cosmetics": "Косметика: +{count}",
-  "merge_label_museum": "Пожертвования музею: +{count}",
-  "merge_label_villager_relationships": "Отношения с жителями: +{count}",
-  "merge_label_perks": "Навыки: +{count}",
-  "merge_label_pet_cosmetics": "Косметика питомцев: +{count}",
-  "merge_label_pet_skins": "Скины питомцев: +{count}",
-  "merge_label_mount_appearances": "Облики ездовых животных: +{count}",
-  "merge_label_quests": "Задания: +{count}",
-  "merge_label_spells": "Заклинания: +{count}",
+  "merge_overall_outcome": "Твой путеводитель заполнен на {percent}. Осталось выполнить: {remaining}.",
+  "merge_changes_details": "Что мы добавили",
+  "merge_label_break_ups_disabled": "Расставания отключены",
+  "import_save_details": "Сведения о сохранении",
+  "import_view_progress": "Посмотреть, что осталось",
+  "merge_label_almanac": "Альманах: +{countText}",
+  "merge_label_almanac_recipes": "Рецепты: +{countText}",
+  "merge_label_animal_cosmetics": "Косметика животных: +{countText}",
+  "merge_label_animals": "Варианты животных: +{countText}",
+  "merge_label_cosmetics": "Косметика: +{countText}",
+  "merge_label_museum": "Пожертвования музею: +{countText}",
+  "merge_label_villager_relationships": "Отношения с жителями: +{countText}",
+  "merge_label_perks": "Навыки: +{countText}",
+  "merge_label_pet_cosmetics": "Косметика питомцев: +{countText}",
+  "merge_label_pet_skins": "Скины питомцев: +{countText}",
+  "merge_label_mount_appearances": "Облики ездовых животных: +{countText}",
+  "merge_label_quests": "Задания: +{countText}",
+  "merge_label_spells": "Заклинания: +{countText}",
   "merge_label_child_choice": "Выбор ребёнка обновлён",
   "merge_conflict_relationship": "К вашему сведению: у вас было записано, что вы {local} с {villager}, но в файле сохранения указано {incoming}. Мы сохранили ваш записанный статус.",
   "merge_conflict_spouse": "К вашему сведению: у вас было записано, что вы состоите в браке с {localVillager}, но в файле сохранения указано, что вы вступили в брак с {incomingVillager}. Мы сохранили {localVillager} в качестве супруга(и) и пропустили импортированный выбор по поводу детей.",
@@ -547,49 +555,49 @@
   "merge_label_reached_season": "Прогресс сезона обновлён",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Шахтный этаж: +{count} этаж",
-        "countPlural=few": "Шахтный этаж: +{count} этажа",
-        "countPlural=many": "Шахтный этаж: +{count} этажей",
-        "countPlural=other": "Шахтный этаж: +{count} этажа"
+        "countPlural=one": "Шахтный этаж: +{countText} этаж",
+        "countPlural=few": "Шахтный этаж: +{countText} этажа",
+        "countPlural=many": "Шахтный этаж: +{countText} этажей",
+        "countPlural=other": "Шахтный этаж: +{countText} этажа"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Симпатия жителей: +{count} отношение обновлено",
-        "countPlural=few": "Симпатия жителей: +{count} отношения обновлено",
-        "countPlural=many": "Симпатия жителей: +{count} отношений обновлено",
-        "countPlural=other": "Симпатия жителей: +{count} отношения обновлено"
+        "countPlural=one": "Симпатия жителей: +{countText} отношение обновлено",
+        "countPlural=few": "Симпатия жителей: +{countText} отношения обновлено",
+        "countPlural=many": "Симпатия жителей: +{countText} отношений обновлено",
+        "countPlural=other": "Симпатия жителей: +{countText} отношения обновлено"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Репутация: +{count} уровень",
-        "countPlural=few": "Репутация: +{count} уровня",
-        "countPlural=many": "Репутация: +{count} уровней",
-        "countPlural=other": "Репутация: +{count} уровня"
+        "countPlural=one": "Репутация: +{countText} уровень",
+        "countPlural=few": "Репутация: +{countText} уровня",
+        "countPlural=many": "Репутация: +{countText} уровней",
+        "countPlural=other": "Репутация: +{countText} уровня"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Навыки: +{count} навык обновлён",
-        "countPlural=few": "Навыки: +{count} навыка обновлено",
-        "countPlural=many": "Навыки: +{count} навыков обновлено",
-        "countPlural=other": "Навыки: +{count} навыка обновлено"
+        "countPlural=one": "Навыки: +{countText} навык обновлён",
+        "countPlural=few": "Навыки: +{countText} навыка обновлено",
+        "countPlural=many": "Навыки: +{countText} навыков обновлено",
+        "countPlural=other": "Навыки: +{countText} навыка обновлено"
       }
     }
   ],
@@ -795,8 +803,8 @@
   "sync_find_open_linux": "Теперь откройте файловый менеджер, нажмите Ctrl+L, вставьте путь и нажмите Enter. Откроется папка с файлами вроде {file}. Перетащите этот файл autosave в эту рамку:",
   "sync_find_open_mac": "Теперь откройте Finder, нажмите Shift-Command-G, вставьте путь и нажмите Return. Откроется папка с файлами вроде {file}. Перетащите этот файл autosave в эту рамку:",
   "sync_find_drop": "Перетащите autosave сюда",
+  "sync_find_drop_next": "Когда найдёте свой autosave, перетащите его сюда.",
   "sync_redrop_label": "Перетащите последнее сохранение",
-  "sync_find_drop_locked": "Сначала скопируйте путь к папке, и эта рамка проснётся.",
   "sync_find_reading": "Читаем сохранение…",
   "sync_find_bad_file": "Хм, этот файл не читается. Выберите самый новый файл, который заканчивается на «autosave».",
   "sync_find_cant_drag": "Не получается перетащить?",

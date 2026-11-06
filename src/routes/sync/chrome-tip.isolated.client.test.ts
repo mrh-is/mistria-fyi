@@ -58,7 +58,9 @@ describe("the Chrome tip", () => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     expect(screen.getByRole("heading", { name: "Find your save file" })).toBeVisible();
-    expect(screen.getByRole("group", { name: "Drop your autosave here" })).toBeVisible();
+    expect(
+      screen.getByRole("group", { name: "When you’ve found your autosave, drop it here." }),
+    ).toBeVisible();
     await fireEvent.click(screen.getByRole("button", { name: "Can’t drag?" }));
     expect(screen.getByLabelText("Choose the save file")).toBeInTheDocument();
   });

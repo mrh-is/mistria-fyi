@@ -1,7 +1,9 @@
 import { render } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { formatNumber, formatPercent } from "#lib/utils/format.js";
 
 import MergeSummary from "./merge-summary.svelte";
 
@@ -39,6 +41,24 @@ afterEach(() => {
 });
 
 describe("merge summary integration", () => {
+  it("leads with overall progress, separately from import deltas", async () => {
+    const outcome = await userState.mergeFromSave({ renown: 7 });
+    if (outcome.kind !== "applied") throw new Error(`Import returned ${outcome.kind}`);
+    const overall = getOverallProgress(getAllProgress(userState.progressContext));
+    const percent = formatPercent(Math.round((overall.completed / overall.total) * 100), "en");
+    const remaining = formatNumber(overall.total - overall.completed, "en");
+    const view = render(MergeSummary, {
+      counts: { ...outcome.result.counts, almanac: 1737 },
+      filesUsed: ["player.json"],
+    });
+    expect(view.container.firstElementChild).toHaveTextContent(
+      `Your field guide is ${percent} complete, with ${remaining} left to go.`,
+    );
+    const delta = view.getByText("Almanac: +1,737");
+    expect(delta).not.toBeVisible();
+    expect(delta.closest("details")?.querySelector("summary")).toHaveTextContent("What we added");
+  });
+
   it.each(CASES)(
     "reports $expected after an actual merge",
     async ({ expected, imported, setup }) => {

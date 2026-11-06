@@ -6,6 +6,7 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
@@ -13,9 +14,7 @@
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { isCategoryComplete } from "#lib/engine/categories.js";
   import { getMaxMineFloor } from "#lib/engine/progress.js";
   import { mineFloorProgress, sealsBefore } from "#lib/engine/projections/mines.js";
   import { factKey } from "#lib/engine/provenance.js";
@@ -41,19 +40,18 @@
 
   function toggleSpell(spellId: SpellId): void {
     sectionGrouping.hold("spells");
-    userState.toggleSpell(spellId);
+    celebrateProgress(
+      "mines",
+      () => {
+        userState.toggleSpell(spellId);
+      },
+      [allSpellsComplete],
+    );
     const completed = userState.state.progress.spells.has(spellId);
     showUndoToast(getName("spells", spellId, locale), completed, () => {
       userState.toggleSpell(spellId);
     });
-    if (completed) {
-      leavingSpells.markLeaving(spellId);
-      if (isMinesComplete()) {
-        celebrateCategory();
-      } else if (allSpellsComplete()) {
-        celebrate();
-      }
-    }
+    if (completed) leavingSpells.markLeaving(spellId);
   }
 
   let {
@@ -75,10 +73,6 @@
     );
   }
 
-  function isMinesComplete(): boolean {
-    return isCategoryComplete("mines", userState.progressContext);
-  }
-
   let currentBiome = $derived.by(() => {
     const floor = userState.state.progress.mineFloor;
     let biome = trackerData.mines.biomes[0];
@@ -90,14 +84,13 @@
 
   function setFloorWithCelebration(floor: number): void {
     sectionGrouping.hold("floors");
-    const wasMinesComplete = isMinesComplete();
-    const previousFloor = userState.state.progress.mineFloor;
-    userState.setMineFloor(floor);
-    if (!wasMinesComplete && isMinesComplete()) {
-      celebrateCategory();
-    } else if (previousFloor < maxFloors && userState.state.progress.mineFloor >= maxFloors) {
-      celebrate();
-    }
+    celebrateProgress(
+      "mines",
+      () => {
+        userState.setMineFloor(floor);
+      },
+      [() => userState.state.progress.mineFloor >= maxFloors],
+    );
   }
 
   function requestFloor(floor: number): void {

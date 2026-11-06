@@ -5,6 +5,7 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
@@ -13,7 +14,6 @@
   import { trackerIndex } from "#lib/data/index.js";
   import { getAlmanacEntryVariant } from "#lib/data/item-variants.js";
   import { getAlmanacEntryNames, getName, nameCollator } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { projectAlmanac } from "#lib/engine/projections/almanac.js";
@@ -53,14 +53,6 @@
 
   const recentlyCompleted = createLeavingSet<ItemId>();
   const sectionGrouping = createSectionGrouping<AlmanacCategoryId>();
-
-  function checkCelebration(canonicalIds: ItemId[]): void {
-    if (isAlmanacComplete()) {
-      celebrateCategory();
-    } else if (canonicalIds.every((id) => isItemCompleted(id))) {
-      celebrate();
-    }
-  }
 
   function isAlmanacComplete(): boolean {
     return isCategoryComplete("almanac", userState.progressContext);
@@ -114,15 +106,18 @@
     catCanonicalIds: ItemId[],
   ): void {
     sectionGrouping.hold(sectionId);
-    userState.toggleAlmanacItem(canonicalId);
+    celebrateProgress(
+      "almanac",
+      () => {
+        userState.toggleAlmanacItem(canonicalId);
+      },
+      [() => catCanonicalIds.every((id) => isItemCompleted(id))],
+    );
     const completed = isItemCompleted(canonicalId);
     showUndoToast(name, completed, () => {
       userState.toggleAlmanacItem(canonicalId);
     });
-    if (completed) {
-      recentlyCompleted.markLeaving(canonicalId);
-      checkCelebration(catCanonicalIds);
-    }
+    if (completed) recentlyCompleted.markLeaving(canonicalId);
   }
 </script>
 

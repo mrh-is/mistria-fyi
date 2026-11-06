@@ -179,6 +179,9 @@
   "mines_floor_label": "Floor",
   "mines_floor_input_aria": "Mine floor",
   "villagers_roster_aria": "Villager roster",
+  "villagers_break_ups_hint": "Match this to your game’s setting before you get engaged.",
+  "villagers_break_ups_disabled": "Break-ups disabled",
+  "villagers_break_ups_enabled": "Break-ups enabled",
   "villagers_alphabet_aria": "Villager alphabet",
   "season_spring_abbr": "SPR",
   "season_summer_abbr": "SUM",
@@ -412,7 +415,7 @@
   "privacy_sync_what_body": "Only the game’s save file gets synced. Anything you check off by hand stays on that device. Your save file is end-to-end encrypted before it leaves your gaming computer, so only devices with your code can read it. We can’t read it, and neither can the server that passes it along.",
   "privacy_sync_what_feedback_log": "If you send feedback, you can choose to attach your save file sync log, and that log is public. “Feedback submissions” above says what’s in it.",
   "privacy_sync_storage_heading": "How long we keep it",
-  "privacy_sync_storage_body": "The server keeps only the latest save file for each code, and deletes it 30 days after it was sent. It also keeps a small record for each code, with no save data in it: when the code was made and last used, how many save files were sent that day, a number that keeps save files in order, and one-way fingerprints that prove your computer owns the code and spot a repeat of the same save file. That record isn’t encrypted. It goes away when you make a new code, or a year after your last save file, leaving only a marker so the code never gets reused. One catch: Cloudflare, who hosts that server, keeps a recovery copy of its storage for 30 days, so a replaced or deleted save file can stay recoverable for up to 30 more days, still encrypted.",
+  "privacy_sync_storage_body": "The server keeps only the latest save file for each code, and deletes it 30 days after it was sent. It also keeps a small record for each code, with no save data in it: when the code was made and last used, how many save files were sent that day, a number that keeps save files in order, and one-way fingerprints that prove your computer owns the code and spot a repeat of the same save file. That record isn’t encrypted. It goes away when you make a new code, or a year after your last save file, leaving only a marker so the code never gets reused. When something on the server breaks, it counts what kind of problem it was each day, like the bot check not answering, and keeps those counts for two weeks. They hold nothing about you or what you sent. One catch: Cloudflare, who hosts that server, keeps a recovery copy of its storage for 30 days, so a replaced or deleted save file can stay recoverable for up to 30 more days, still encrypted.",
   "privacy_sync_code_heading": "Your code",
   "privacy_sync_code_body": "Anyone holding your code can read the save files you share, until that code stops working. Treat it like a password, and it’s worth keeping off stream. If it ever gets out, make a new code. The old one takes a moment to turn off, and Data shows you until it’s done.",
   "privacy_sync_ip_heading": "IP addresses",
@@ -515,19 +518,24 @@
   "sync_error_camera_init": "Could not initialize camera.",
   "sync_error_camera_denied": "Camera access denied. Open the sync link from your gaming computer, or paste it here.",
   "merge_imported_from": "Imported from {files}",
-  "merge_label_almanac": "Almanac: +{count}",
-  "merge_label_almanac_recipes": "Recipes: +{count}",
-  "merge_label_animal_cosmetics": "Animal cosmetics: +{count}",
-  "merge_label_animals": "Animal variants: +{count}",
-  "merge_label_cosmetics": "Cosmetics: +{count}",
-  "merge_label_museum": "Museum donations: +{count}",
-  "merge_label_villager_relationships": "Villager relationships: +{count}",
-  "merge_label_perks": "Perks: +{count}",
-  "merge_label_pet_cosmetics": "Pet cosmetics: +{count}",
-  "merge_label_pet_skins": "Pet skins: +{count}",
-  "merge_label_mount_appearances": "Mount appearances: +{count}",
-  "merge_label_quests": "Quests: +{count}",
-  "merge_label_spells": "Spells: +{count}",
+  "merge_overall_outcome": "Your field guide is {percent} complete, with {remaining} left to go.",
+  "merge_changes_details": "What we added",
+  "merge_label_break_ups_disabled": "Break-ups disabled",
+  "import_save_details": "Save details",
+  "import_view_progress": "See what’s left",
+  "merge_label_almanac": "Almanac: +{countText}",
+  "merge_label_almanac_recipes": "Recipes: +{countText}",
+  "merge_label_animal_cosmetics": "Animal cosmetics: +{countText}",
+  "merge_label_animals": "Animal variants: +{countText}",
+  "merge_label_cosmetics": "Cosmetics: +{countText}",
+  "merge_label_museum": "Museum donations: +{countText}",
+  "merge_label_villager_relationships": "Villager relationships: +{countText}",
+  "merge_label_perks": "Perks: +{countText}",
+  "merge_label_pet_cosmetics": "Pet cosmetics: +{countText}",
+  "merge_label_pet_skins": "Pet skins: +{countText}",
+  "merge_label_mount_appearances": "Mount appearances: +{countText}",
+  "merge_label_quests": "Quests: +{countText}",
+  "merge_label_spells": "Spells: +{countText}",
   "merge_label_child_choice": "Child choice updated",
   "merge_conflict_relationship": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We've kept your recorded status.",
   "merge_conflict_spouse": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We've kept {localVillager} as your spouse, and skipped the imported child choice.",
@@ -537,41 +545,41 @@
   "merge_label_reached_season": "Season progression updated",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Mine floor: +{count} floor",
-        "countPlural=other": "Mine floor: +{count} floors"
+        "countPlural=one": "Mine floor: +{countText} floor",
+        "countPlural=other": "Mine floor: +{countText} floors"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Villager hearts: +{count} relationship updated",
-        "countPlural=other": "Villager hearts: +{count} relationships updated"
+        "countPlural=one": "Villager hearts: +{countText} relationship updated",
+        "countPlural=other": "Villager hearts: +{countText} relationships updated"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Renown: +{count} level",
-        "countPlural=other": "Renown: +{count} levels"
+        "countPlural=one": "Renown: +{countText} level",
+        "countPlural=other": "Renown: +{countText} levels"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Skills: +{count} skill updated",
-        "countPlural=other": "Skills: +{count} skills updated"
+        "countPlural=one": "Skills: +{countText} skill updated",
+        "countPlural=other": "Skills: +{countText} skills updated"
       }
     }
   ],
@@ -775,8 +783,8 @@
   "sync_find_open_linux": "Now open your file manager, press Ctrl+L, paste that, and press Enter. It should take you to a folder with files like {file}. Drag that autosave file into this box:",
   "sync_find_open_mac": "Now open Finder, press Shift-Command-G, paste that, and press Return. It should take you to a folder with files like {file}. Drag that autosave file into this box:",
   "sync_find_drop": "Drop your autosave here",
+  "sync_find_drop_next": "When you’ve found your autosave, drop it here.",
   "sync_redrop_label": "Drop in your latest save file",
-  "sync_find_drop_locked": "Copy the folder first, and this box will wake up.",
   "sync_find_reading": "Reading your save file…",
   "sync_find_bad_file": "Hmm, we couldn’t read that one. Pick the newest file that ends in “autosave”.",
   "sync_find_cant_drag": "Can’t drag?",

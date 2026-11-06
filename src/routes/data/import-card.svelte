@@ -22,6 +22,7 @@
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { isIosDevice } from "#lib/utils/ios-device.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";
   import { page } from "$app/state";
 
@@ -165,10 +166,14 @@
         parseWarnings = result.warnings ?? [];
       }
 
-      // Track which files were loaded
-      if (bundle.player) filesUsed.push("player.json");
-      if (bundle.gamedata) filesUsed.push("gamedata.json");
-      if (bundle.quests) filesUsed.push("quests.json");
+      // The archive's internal names aren't files the player chose.
+      if (savFile) {
+        filesUsed = [savFile.name];
+      } else {
+        if (bundle.player) filesUsed.push("player.json");
+        if (bundle.gamedata) filesUsed.push("gamedata.json");
+        if (bundle.quests) filesUsed.push("quests.json");
+      }
 
       importStatus = m.import_status_importing();
       const { completed, day, playtime, warnings } = extractSaveProgress(bundle);
@@ -454,6 +459,10 @@
           </details>
         {/if}
       </StatusNote>
+
+      <Button class="mt-3" href={localizedHref("everything")}>
+        {m.import_view_progress()}
+      </Button>
 
       {#if isDesktop && onScrollToTransfer}
         <button

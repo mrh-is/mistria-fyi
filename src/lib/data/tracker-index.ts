@@ -1,3 +1,4 @@
+import type { SourcedCategoryKey } from "#lib/engine/categories.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { AlmanacEntry, ItemId, TrackerData } from "#lib/types/tracker-data.js";
 
@@ -5,7 +6,7 @@ export interface TrackerIndex {
   almanacCanonicalIds: ItemId[];
   almanacEntries: AlmanacEntry[];
   almanacEntryByCanonicalId: ReadonlyMap<ItemId, AlmanacEntry>;
-  categorySourceTypes: Readonly<Record<string, readonly SourceType[]>>;
+  categorySourceTypes: Readonly<Record<"all" | SourcedCategoryKey, readonly SourceType[]>>;
   getAggregatedAlmanacSources: (almanacItemId: ItemId) => Source[];
   memberToCanonicalAlmanacId: ReadonlyMap<ItemId, ItemId>;
   uniqueAlmanacCanonicalIds: ItemId[];
@@ -130,7 +131,7 @@ export function buildTrackerIndex(trackerData: TrackerData): TrackerIndex {
     recipes: uniqueSourceTypes(
       Object.values(trackerData.recipes).flatMap(({ sources }) => sources.map(({ type }) => type)),
     ),
-  } satisfies Readonly<Record<string, readonly SourceType[]>>;
+  } satisfies Readonly<Record<SourcedCategoryKey, readonly SourceType[]>>;
 
   const categorySourceTypes = {
     ...categorySourceTypesWithoutAll,

@@ -174,6 +174,9 @@
   "mines_floor_label": "階層",
   "mines_floor_input_aria": "鉱坑の階層",
   "villagers_roster_aria": "町の住民の名簿",
+  "villagers_break_ups_hint": "婚約する前に、ゲーム内の設定に合わせてね。",
+  "villagers_break_ups_disabled": "別れは無効",
+  "villagers_break_ups_enabled": "別れは有効",
   "villagers_alphabet_aria": "町の住民の五十音索引",
   "season_spring_abbr": "春",
   "season_summer_abbr": "夏",
@@ -407,7 +410,7 @@
   "privacy_sync_what_body": "同期されるのはゲームのセーブファイルだけです。手動でチェックした内容はその端末に残ります。セーブファイルはゲーム用パソコンから送信される前にエンドツーエンドで暗号化されるので、読めるのはあなたのコードを持つ端末だけです。私たちにも、中継するサーバーにも読めません。",
   "privacy_sync_what_feedback_log": "フィードバックを送信するときは、セーブファイルの同期ログを添付することもできます。そのログは公開されます。内容は上の「フィードバックの送信」で説明しています。",
   "privacy_sync_storage_heading": "保存期間",
-  "privacy_sync_storage_body": "サーバーはコードごとに最新のセーブファイルだけを保管し、送信から30日後に削除します。また、コードごとに小さな記録も保管しますが、セーブデータは含まれません。内容は、コードを作成した日時と最後に使われた日時、その日に送信されたセーブファイルの数、セーブファイルの順序を保つための番号、そしてあなたのパソコンがコードの持ち主であることを証明し、同じセーブファイルの再送を見分けるための一方向の指紋です。この記録は暗号化されていません。新しいコードを作ったとき、または最後のセーブファイルから1年後に消え、そのコードが再利用されないための目印だけが残ります。ひとつ補足があります。このサーバーをホストするCloudflareはストレージの復旧用コピーを30日間保持するため、置き換えられたセーブファイルや削除されたセーブファイルは暗号化されたまま、さらに最大30日間復旧可能な状態で残ることがあります。",
+  "privacy_sync_storage_body": "サーバーはコードごとに最新のセーブファイルだけを保管し、送信から30日後に削除します。また、コードごとに小さな記録も保管しますが、セーブデータは含まれません。内容は、コードを作成した日時と最後に使われた日時、その日に送信されたセーブファイルの数、セーブファイルの順序を保つための番号、そしてあなたのパソコンがコードの持ち主であることを証明し、同じセーブファイルの再送を見分けるための一方向の指紋です。この記録は暗号化されていません。新しいコードを作ったとき、または最後のセーブファイルから1年後に消え、そのコードが再利用されないための目印だけが残ります。サーバーで問題が起きたときは、ボット確認から応答がなかったなど、問題の種類を1日ごとに数え、その件数を2週間保管します。この件数には、あなたや送信した内容に関する情報は含まれません。ひとつ補足があります。このサーバーをホストするCloudflareはストレージの復旧用コピーを30日間保持するため、置き換えられたセーブファイルや削除されたセーブファイルは暗号化されたまま、さらに最大30日間復旧可能な状態で残ることがあります。",
   "privacy_sync_code_heading": "あなたのコード",
   "privacy_sync_code_body": "コードを持っている人は、そのコードが使えなくなるまで、共有されたセーブファイルを読むことができます。パスワードのように扱い、配信には映さないようにしましょう。もし漏れてしまったら、新しいコードを作ってください。古いコードが止まるまで少しかかります。完了するまでデータ管理に表示されます。",
   "privacy_sync_ip_heading": "IPアドレス",
@@ -510,19 +513,24 @@
   "sync_error_camera_init": "カメラを初期化できませんでした。",
   "sync_error_camera_denied": "カメラへのアクセスが拒否されました。ゲーム用パソコンの同期リンクを開くか、ここに貼り付けてください。",
   "merge_imported_from": "{files}からインポートしました",
-  "merge_label_almanac": "アルマナック：+{count}",
-  "merge_label_almanac_recipes": "レシピ：+{count}",
-  "merge_label_animal_cosmetics": "動物のコスメ：+{count}",
-  "merge_label_animals": "動物のバリエーション：+{count}",
-  "merge_label_cosmetics": "コスメ：+{count}",
-  "merge_label_museum": "博物館への寄贈：+{count}",
-  "merge_label_villager_relationships": "町の住民との関係：+{count}",
-  "merge_label_perks": "スキルボーナス：+{count}",
-  "merge_label_pet_cosmetics": "ペットのコスメ：+{count}",
-  "merge_label_pet_skins": "ペットのスキン：+{count}",
-  "merge_label_mount_appearances": "マウントの外見：+{count}",
-  "merge_label_quests": "クエスト：+{count}",
-  "merge_label_spells": "呪文：+{count}",
+  "merge_overall_outcome": "フィールドガイドの達成率は{percent}。残りは{remaining}件だよ。",
+  "merge_changes_details": "追加した内容",
+  "merge_label_break_ups_disabled": "別れは無効",
+  "import_save_details": "セーブの詳細",
+  "import_view_progress": "残りを見てみる",
+  "merge_label_almanac": "アルマナック：+{countText}",
+  "merge_label_almanac_recipes": "レシピ：+{countText}",
+  "merge_label_animal_cosmetics": "動物のコスメ：+{countText}",
+  "merge_label_animals": "動物のバリエーション：+{countText}",
+  "merge_label_cosmetics": "コスメ：+{countText}",
+  "merge_label_museum": "博物館への寄贈：+{countText}",
+  "merge_label_villager_relationships": "町の住民との関係：+{countText}",
+  "merge_label_perks": "スキルボーナス：+{countText}",
+  "merge_label_pet_cosmetics": "ペットのコスメ：+{countText}",
+  "merge_label_pet_skins": "ペットのスキン：+{countText}",
+  "merge_label_mount_appearances": "マウントの外見：+{countText}",
+  "merge_label_quests": "クエスト：+{countText}",
+  "merge_label_spells": "呪文：+{countText}",
   "merge_label_child_choice": "子供の選択を更新しました",
   "merge_conflict_relationship": "ご参考までに、あなたは{villager}と{local}と記録されていましたが、セーブファイルでは{incoming}となっていました。記録されていた状態を維持しました。",
   "merge_conflict_spouse": "ご参考までに、あなたは{localVillager}と結婚していると記録されていましたが、セーブファイルでは{incomingVillager}と結婚したことになっていました。配偶者は{localVillager}のまま維持し、インポートされた子供の選択はスキップしました。",
@@ -532,37 +540,37 @@
   "merge_label_reached_season": "季節の進行を更新しました",
   "merge_label_mine_floor": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "鉱坑の階層：+{count}階"
+        "countPlural=other": "鉱坑の階層：+{countText}階"
       }
     }
   ],
   "merge_label_heart_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "町の住民との好感度：{count}件の関係を更新"
+        "countPlural=other": "町の住民との好感度：{countText}件の関係を更新"
       }
     }
   ],
   "merge_label_renown": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "名声：+{count}レベル"
+        "countPlural=other": "名声：+{countText}レベル"
       }
     }
   ],
   "merge_label_skill_levels": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
+      "declarations": ["input count", "input countText", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "スキル：{count}件を更新"
+        "countPlural=other": "スキル：{countText}件を更新"
       }
     }
   ],
@@ -765,8 +773,8 @@
   "sync_find_open_linux": "次にファイルマネージャーを開いて Ctrl+L を押し、貼り付けて Enter を押します。{file} のようなファイルがあるフォルダーが開くはずです。その autosave ファイルをこの枠にドラッグしてください：",
   "sync_find_open_mac": "次に Finder を開いて Shift-Command-G を押し、貼り付けて Return を押します。{file} のようなファイルがあるフォルダーが開くはずです。その autosave ファイルをこの枠にドラッグしてください：",
   "sync_find_drop": "ここに autosave をドロップ",
+  "sync_find_drop_next": "autosave が見つかったら、ここにドロップしてください。",
   "sync_redrop_label": "最新のセーブデータをドロップ",
-  "sync_find_drop_locked": "先にフォルダーをコピーすると、この枠が使えるようになります。",
   "sync_find_reading": "セーブデータを読み込み中…",
   "sync_find_bad_file": "うーん、そのファイルは読み込めませんでした。「autosave」で終わるいちばん新しいファイルを選んでください。",
   "sync_find_cant_drag": "ドラッグできない？",
