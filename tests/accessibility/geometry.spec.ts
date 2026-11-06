@@ -118,6 +118,30 @@ test.describe("320-pixel reflow", () => {
   });
 });
 
+test("feedback backdrop covers overscroll while the form and toolbar receive clicks", async ({
+  page,
+}) => {
+  await initializeApplication(page, "light");
+  await gotoApplication(page, "/");
+  const trigger = page.getByRole("button", { exact: true, name: "Send feedback" });
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", { name: "Send feedback" });
+  const backdrop = page.getByRole("button", { exact: true, name: "Close feedback" });
+  await expect(backdrop).toBeVisible();
+  const box = await requireBox(backdrop);
+  const { height, width } = await page.evaluate(() => ({ height: innerHeight, width: innerWidth }));
+  expect(box.x).toBeLessThanOrEqual(0);
+  expect(box.x + box.width).toBeGreaterThanOrEqual(width);
+  expect(box.y).toBeLessThanOrEqual(-height);
+  expect(box.y + box.height).toBeGreaterThanOrEqual(2 * height);
+
+  await dialog.getByRole("textbox", { name: "Message" }).click({ trial: true });
+  await trigger.click({ trial: true });
+  await page.mouse.click(1, 1);
+  await expect(dialog).toBeHidden();
+});
+
 test.describe("interactive target geometry", () => {
   test.beforeEach(async ({ page }) => {
     await initializeApplication(page, "light");

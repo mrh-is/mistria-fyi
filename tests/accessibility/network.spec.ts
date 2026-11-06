@@ -1,4 +1,16 @@
 import { expect, isolateNetwork, test } from "../browser/test.js";
+import { gotoApplication } from "./support/application-state.js";
+
+test.describe("privacy disclosure", () => {
+  // Let the network guard observe attempted loads even when the production CSP would stop them.
+  test.use({ bypassCSP: true });
+
+  test("the privacy page loads without undisclosed third-party requests", async ({ page }) => {
+    await gotoApplication(page, "/en/privacy");
+    await expect(page.getByRole("heading", { exact: true, name: "Privacy Policy" })).toBeVisible();
+    await page.waitForLoadState("load");
+  });
+});
 
 test("serves sprites with their native dimensions without the CDN", async ({ page }) => {
   await page.setContent(`<img alt="Sprite fixture" src="https://assets.mistria.fyi/sprites/items/apple.webp?g=1">
