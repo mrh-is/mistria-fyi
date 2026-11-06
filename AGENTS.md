@@ -221,14 +221,16 @@ session limits) belong in each contributor’s user config.
   such as `Co-Authored-By: Codex <codex@openai.com>`.
 - Every agent-authored issue body & substantive GitHub comment ends with `Agent: <agent-id>`.
 - Commit, push, & open a PR. Its body includes `Closes #N` & a preview URL from the deployment
-  integration or the PR template when a preview is available.
+  integration or the PR template when a preview is available. Use `Refs #N` instead when the issue
+  needs work after the merge.
 - Record each decision in the narrowest home that fits, usually the PR’s “Decisions” section. Add a
   record to `docs/decisions/` only when a newcomer would propose the rejected alternative; see
   [Recording decisions](docs/agent-workflow.md#recording-decisions).
 - Pass multiline GitHub bodies with `--body-file`, and re-read the published result.
 - An open PR’s state is your merge recommendation. Keep it a draft while any manual step, question,
   gap, or review remains. Mark it ready only when you would merge it yourself, and return it to
-  draft if that changes.
+  draft if that changes. Before marking it ready, make its body describe the final state; see
+  [Final state](docs/agent-workflow.md#final-state).
 - Watch CI & fix failures on the branch. Don’t merge around failing CI. If no “CI” run starts a few
   minutes after you open the PR, follow the workflow’s empty-commit recovery.
 - Never change `package.json`’s version or create Git tags without an approved release. Production

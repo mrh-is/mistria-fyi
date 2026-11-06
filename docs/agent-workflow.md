@@ -77,7 +77,8 @@ Use the PR body for the change summary, verification, & decisions.
 8. **Verify.** Run `pnpm run lint:fix` before committing. CI runs the full matrix (see
    agent-verification.md).
 9. **Deliver.** Commit with the required co-author trailer, push, & open a PR. The PR needs:
-   - a reference to the issue (`Closes #N`),
+   - a reference to the issue: `Closes #N`, or `Refs #N` when the issue needs work after the merge
+     (see “Final state” below),
    - a deployment or branch preview URL when available (see “Preview URL” below),
    - `data:diff` output, if the PR regenerates tracker data (see “Tracker data changes” below),
    - the GitHub user you represent as its assignee (`--assignee @me`).
@@ -205,6 +206,19 @@ merging:
 
 Mark it ready (`gh pr ready`) only once you’d merge it yourself. If that changes, convert it back
 with `gh pr ready --undo`.
+
+### Final state
+
+“Ready” means ready to merge, so cleanup happens before a PR is marked ready. The maintainer merges
+on GitHub, and an agent may get no moment to fix anything afterward.
+
+- **PR body:** before `gh pr ready`, rewrite the body so it describes the final state of the change.
+  Remove anything that only held true while the work was in progress, such as “the PR remains a
+  draft” or a request for a check that has since finished.
+- **Post-merge work:** when an issue’s acceptance criteria include anything that can happen only
+  after the merge, such as a production check, reference that issue with `Refs #N`, not `Closes #N`.
+  `Closes` would close the issue with the item still unchecked. Whoever finishes the item closes the
+  issue.
 
 ### Release versions
 
