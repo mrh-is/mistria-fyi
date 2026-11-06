@@ -162,6 +162,8 @@ a change affects its spacing.
 
 - Take at most **10 screenshots** per PR: one per materially changed state, not one per interaction
   step.
+- Attach at least one per changed route or component, at desktop & mobile widths, showing the
+  changed state. A visual PR with no attached screenshots isn’t ready for review.
 - The cap counts the screenshots attached to the PR. Choose that set so a reviewer can judge layout
   & spacing without running the preview.
 - If a design reference exists, such as a Figma file or an existing page to match, screenshot both &

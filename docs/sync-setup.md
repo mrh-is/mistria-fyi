@@ -343,10 +343,12 @@ of most of these pieces to borrow from.
 ## Copy
 
 The words live in `messages/en.json`, under the `sync_` key prefix, & that file is the one source.
-This document names a key where the journey depends on it. Each fact question is a tag dialog: “Not
-now” (`sync_question_later`), or closing it, keeps the status button’s dot & leaves
-`sync_question_waiting` on Home & in the panel, with `sync_question_open` to bring it back. Fact
-questions name the tracker category they’re about, since one question can cover many facts.
+This document names a key where the journey depends on it. `_device` variants use inlang’s `match`
+on computer or phone, text in parentheses after a button is its subtitle, & line breaks in a body
+are paragraphs. Each fact question is a tag dialog: “Not now” (`sync_question_later`), or closing
+it, keeps the status button’s dot & leaves `sync_question_waiting` on Home & in the panel, with
+`sync_question_open` to bring it back. Fact questions name the tracker category they’re about, since
+one question can cover many facts.
 
 ## Decisions so far
 
