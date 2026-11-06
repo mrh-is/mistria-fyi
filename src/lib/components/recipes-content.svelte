@@ -15,10 +15,11 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
-  import { recipePlacements } from "#lib/engine/projections/recipes.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { recipeSections } from "#lib/presentation/recipe-sections.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -45,28 +46,37 @@
 
   interface RecipeEntry {
     id: RecipeId;
-    itemId: ItemId;
+    itemId?: ItemId;
     name: string;
     sources: Source[];
     spoilered: boolean;
     visibility?: VisibilityCondition;
   }
 
+  const sections = recipeSections();
   let recipesByCategory = $derived.by(() =>
-    recipePlacements().map(({ categoryId, recipes }) => {
+    sections.map(({ categoryId, recipes }) => {
       const entries = recipes.map(({ itemId, recipeId }): RecipeEntry => {
         const recipe = trackerData.recipes[recipeId];
         return {
           id: recipeId,
           itemId,
-          name: getName("items", itemId, locale),
+          name:
+            categoryId && itemId
+              ? getName("items", itemId, locale)
+              : getName("recipes", recipeId, locale),
           sources: recipe.sources,
           spoilered: !isConditionVisible(recipe.visibility, userState.progressionState),
           visibility: recipe.visibility,
         };
       });
       entries.sort((a, b) => nameCollator(locale).compare(a.name, b.name));
-      return { entries, id: categoryId, name: getName("ui", categoryId, locale) };
+      return {
+        categoryId,
+        entries,
+        id: categoryId ?? "other-recipes",
+        name: categoryId ? getName("ui", categoryId, locale) : m.recipes_other({}, { locale }),
+      };
     }),
   );
 
@@ -146,8 +156,8 @@
         {locale}
         forceOpen={!!nameFilter}
         name={group.name}
-        reportCategory="recipe-category"
-        reportEntityId={group.id}
+        reportCategory={group.categoryId ? "recipe-category" : undefined}
+        reportEntityId={group.categoryId}
         {progress}
       >
         <ShelfRows
