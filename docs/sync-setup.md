@@ -128,18 +128,11 @@ at the bottom.
 ## On the gaming computer
 
 1. **Find your save file.** The step admits it’s the weirdest part & promises smooth sailing after.
-   It has two halves, copying the folder & dragging the file in, both always visible but only one
-   active at a time, marked by an accent rule beside it; the other half keeps a hairline rule & its
-   text & controls dim, so the next step is obvious at a glance. Dimmed isn’t disabled: everything
-   in the other half stays usable & is announced normally, & only the drop box itself is disabled
-   before the copy. The dimmed text falls below 4.5:1 on purpose, since emphasis is its job; the
-   active half carries every instruction at full contrast (maintainer’s choice).
+   It has two halves, copying the folder & dragging the file in, both always visible at normal
+   contrast. The drop box is ready immediately for players who already know where their save is.
    - **Copy the folder.** The path (Windows by default; “On Linux, Steam Deck, or a Mac?” shows the
-     others) with a Copy button. The drop box below looks inactive until the path is copied (a
-     hairline border & muted icon, its label still at full contrast, & `aria-disabled` on the box
-     alone), by the button or by a manual copy (a `copy` event whose selection is inside the path).
-     The gate is only visual: a save file dropped anyway still works, since it proves the player
-     found it.
+     others) with a Copy button. Copying confirms the action on the button, but isn't a prerequisite
+     for dropping, pasting, or choosing a save file.
    - **Open it.** “Now open File Explorer and paste that into the address bar at the top.” It should
      show files like `game-[numbers]-autosave.sav`.
    - **Drag in the autosave.** Chrome & Edge refuse their file picker under `%LOCALAPPDATA%`, so
@@ -330,8 +323,8 @@ One sheet per canvas row; computer boards are cropped to the 512 px column. The 
   returns focus to the control that opened it.
 - **One polite live region** announces step results, & an assertive one an error that blocks a step,
   once. Field notes already on a page at load are plain content.
-- **The copy gate** is announced: the drop box has `aria-disabled` & a description
-  (`sync_find_drop_locked`) until the path is copied, & dropping or choosing a file still works.
+- **The drop box** is announced as available from the start, with paste instructions associated with
+  it when “Can’t drag?” is open.
 - **Targets** are at least 44 px tall on phones & 24 px elsewhere. The drop box has the keyboard
   path described above.
 
@@ -393,7 +386,6 @@ parentheses after a button is its subtitle. Line breaks in a body are paragraphs
 | `sync_find_open_redrop`               | Open it in File Explorer and drag your newest autosave in.                                                                                                                                  |
 | `sync_redrop_label`                   | Drop in your latest save file                                                                                                                                                               |
 | `sync_find_drop`                      | Drop your autosave here                                                                                                                                                                     |
-| `sync_find_drop_locked`               | Copy the folder first, and this box will wake up.                                                                                                                                           |
 | `sync_find_cant_drag`                 | Can’t drag?                                                                                                                                                                                 |
 | `sync_find_cant_drag_body`            | Click the autosave in File Explorer and press Ctrl+C. Then come back here and press Ctrl+V.                                                                                                 |
 | `sync_find_cant_drag_body_linux`      | Click the autosave in your file manager and press Ctrl+C. Then come back here and press Ctrl+V.                                                                                             |

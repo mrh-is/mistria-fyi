@@ -24,7 +24,6 @@
 
   let platform = $state<SaveFolderPlatform>("windows");
   let showOtherPlatforms = $state(false);
-  let copied = $state(false);
   let showHelp = $state(false);
 
   const openParts = $derived(
@@ -36,7 +35,6 @@
     }),
   );
 
-  // The gate is only visual: a save dropped anyway proves the player found it.
   async function read(source: SaveSource): Promise<void> {
     onread(await readSaveFile(await fileOf(source)), source);
   }
@@ -45,9 +43,9 @@
 <div class="find">
   <p>{m.sync_find_intro()}</p>
 
-  <div class="find__half" class:find__half--active={!copied}>
+  <div class="find__half">
     <p>{m.sync_find_copy_lead()}</p>
-    <SaveFolderPath {platform} bind:copied />
+    <SaveFolderPath {platform} />
     {#if showOtherPlatforms}
       <div class="find__platforms" role="radiogroup" aria-label={m.sync_find_other_os()}>
         {#each [["windows", m.sync_find_os_windows()], ["linux", m.sync_find_os_linux()], ["mac", m.sync_find_os_mac()]] as const as [value, label] (value)}
@@ -80,7 +78,7 @@
     {/if}
   </div>
 
-  <div class="find__half" class:find__half--active={copied}>
+  <div class="find__half">
     <p>
       {#each openParts as part, index (index)}
         {#if typeof part === "string"}{part}{:else}<code>{AUTOSAVE_EXAMPLE}</code>{/if}
@@ -89,7 +87,7 @@
     {#if hint}
       <p class="find__hint" role="status">{hint}</p>
     {/if}
-    <SaveDrop label={m.sync_find_drop()} locked={!copied} onsource={read} {platform} />
+    <SaveDrop label={m.sync_find_drop()} onsource={read} {platform} />
 
     <button
       type="button"
@@ -124,20 +122,12 @@
     line-height: 1.45;
   }
 
-  /* One half is active at a time: an accent rule beside it, & the other half dims. Dimmed isn't
-     disabled; everything in it stays usable & announced. */
   .find__half {
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding-left: 11px;
     border-left: 1px solid color-mix(in srgb, var(--color-ink-hairline) 45%, transparent);
-    color: color-mix(in srgb, var(--color-ink) 48%, var(--color-paper-raised));
-  }
-
-  .find__half--active {
-    border-left: 3px solid var(--color-home-accent);
-    padding-left: 9px;
     color: var(--color-ink);
   }
 

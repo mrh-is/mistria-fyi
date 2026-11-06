@@ -766,7 +766,6 @@
   "sync_find_open_mac": "現在打開 Finder，按 Shift-Command-G，貼上後按 Return。它應該會帶你到一個有類似 {file} 檔案的資料夾。把那個 autosave 檔案拖到這個框裡：",
   "sync_find_drop": "把 autosave 拖到這裡",
   "sync_redrop_label": "拖入你最新的存檔",
-  "sync_find_drop_locked": "先複製資料夾位置，這個框就會醒過來。",
   "sync_find_reading": "正在讀取你的存檔…",
   "sync_find_bad_file": "嗯，這個檔案讀不了。請選擇以「autosave」結尾的最新檔案。",
   "sync_find_cant_drag": "拖不了？",

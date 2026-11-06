@@ -12,13 +12,10 @@
 
   let {
     label,
-    locked = false,
     onsource,
     platform,
   }: {
     label: string;
-    /** Looks inactive until the folder's been copied. The gate is only visual. */
-    locked?: boolean;
     /** Takes the save file. Throwing says this one couldn't be read. */
     onsource: (source: SaveSource) => Promise<void>;
     platform: SaveFolderPlatform;
@@ -34,7 +31,6 @@
   const givesHandles = browserGivesHandles();
   const uid = $props.id();
   const cantDragId = `${uid}-cant-drag`;
-  const lockedId = `${uid}-locked`;
   const cantDragBody = $derived.by(() => {
     if (givesHandles) {
       if (platform === "linux") return m.sync_find_cant_drag_body_linux();
@@ -94,18 +90,11 @@
 <div
   bind:this={box}
   class="save-drop"
-  class:save-drop--locked={locked}
   class:save-drop--over={dragOver}
   role="group"
   tabindex="0"
   aria-label={label}
-  aria-disabled={locked ? "true" : undefined}
-  aria-describedby={[
-    locked && !reading ? lockedId : undefined,
-    showCantDrag ? cantDragId : undefined,
-  ]
-    .filter(Boolean)
-    .join(" ") || undefined}
+  aria-describedby={showCantDrag ? cantDragId : undefined}
   ondragover={(event) => {
     event.preventDefault();
     dragOver = true;
@@ -120,11 +109,7 @@
     <span role="status">{m.sync_find_reading()}</span>
   {:else}
     <IconUpload aria-hidden="true" />
-    {#if locked}
-      <span id={lockedId}>{m.sync_find_drop_locked()}</span>
-    {:else}
-      <span aria-hidden="true">{label}</span>
-    {/if}
+    <span aria-hidden="true">{label}</span>
   {/if}
 </div>
 {#if error}
@@ -177,8 +162,8 @@
     outline-offset: 2px;
   }
 
-  .save-drop:not(.save-drop--locked)::before,
-  .save-drop:not(.save-drop--locked)::after {
+  .save-drop::before,
+  .save-drop::after {
     position: absolute;
     width: 10px;
     height: 10px;
@@ -201,16 +186,6 @@
   .save-drop :global(svg) {
     width: 20px;
     height: 20px;
-  }
-
-  /* Locked: a hairline border & muted icon, its label still at full contrast. */
-  .save-drop--locked {
-    border: 1px dashed color-mix(in srgb, var(--color-ink-hairline) 50%, transparent);
-  }
-
-  .save-drop--locked :global(svg) {
-    color: var(--color-ink-muted);
-    opacity: 0.6;
   }
 
   .save-drop--over {

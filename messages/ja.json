@@ -766,7 +766,6 @@
   "sync_find_open_mac": "次に Finder を開いて Shift-Command-G を押し、貼り付けて Return を押します。{file} のようなファイルがあるフォルダーが開くはずです。その autosave ファイルをこの枠にドラッグしてください：",
   "sync_find_drop": "ここに autosave をドロップ",
   "sync_redrop_label": "最新のセーブデータをドロップ",
-  "sync_find_drop_locked": "先にフォルダーをコピーすると、この枠が使えるようになります。",
   "sync_find_reading": "セーブデータを読み込み中…",
   "sync_find_bad_file": "うーん、そのファイルは読み込めませんでした。「autosave」で終わるいちばん新しいファイルを選んでください。",
   "sync_find_cant_drag": "ドラッグできない？",

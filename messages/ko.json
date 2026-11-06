@@ -766,7 +766,6 @@
   "sync_find_open_mac": "이제 Finder를 열고 Shift-Command-G를 누른 뒤 붙여넣고 Return을 누르세요. {file} 같은 파일이 있는 폴더가 열릴 거예요. 그 autosave 파일을 이 상자로 끌어다 놓으세요:",
   "sync_find_drop": "여기에 autosave를 놓으세요",
   "sync_redrop_label": "최신 세이브 파일을 놓으세요",
-  "sync_find_drop_locked": "먼저 폴더를 복사하면 이 상자가 깨어나요.",
   "sync_find_reading": "세이브 파일을 읽는 중…",
   "sync_find_bad_file": "음, 그 파일은 읽지 못했어요. “autosave”로 끝나는 가장 최신 파일을 고르세요.",
   "sync_find_cant_drag": "끌어다 놓을 수 없나요?",

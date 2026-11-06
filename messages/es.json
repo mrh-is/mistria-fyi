@@ -786,7 +786,6 @@
   "sync_find_open_mac": "Ahora abre el Finder, pulsa Mayús-Comando-G, pega eso y pulsa Retorno. Debería llevarte a una carpeta con archivos como {file}. Arrastra ese archivo autosave a este recuadro:",
   "sync_find_drop": "Suelta tu autosave aquí",
   "sync_redrop_label": "Suelta tu última partida guardada",
-  "sync_find_drop_locked": "Copia primero la carpeta y este recuadro despertará.",
   "sync_find_reading": "Leyendo tu partida guardada…",
   "sync_find_bad_file": "Vaya, no hemos podido leer ese. Elige el archivo más reciente que termine en «autosave».",
   "sync_find_cant_drag": "¿No puedes arrastrar?",

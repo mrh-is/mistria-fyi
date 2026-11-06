@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/sv
 import { tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import FindSaveStep from "../../../routes/sync/find-save-step.svelte";
 import SaveDrop from "./save-drop.svelte";
 
 import type { SaveSource } from "#lib/sync/save-source.js";
@@ -32,7 +33,7 @@ function givesHandles(gives: boolean): void {
 }
 
 function renderDrop(
-  options: { locked?: boolean; platform?: "linux" | "mac" | "windows" } = {},
+  options: { platform?: "linux" | "mac" | "windows" } = {},
   onsource = vi.fn<(source: SaveSource) => Promise<void>>(() => Promise.resolve()),
 ) {
   render(SaveDrop, { label: "Drop it here", onsource, platform: "windows", ...options });
@@ -67,11 +68,19 @@ describe("dropping", () => {
     });
   });
 
-  it("works while it only looks locked", async () => {
-    const onsource = renderDrop({ locked: true });
+  it("offers a working drop box before the folder path is copied", () => {
+    render(FindSaveStep, { onread: vi.fn() });
+    const box = screen.getByRole("group");
+    expect(box).not.toHaveAttribute("aria-disabled");
+    expect(box).toHaveTextContent("Drop your autosave here");
+    expect(screen.getByRole("button", { name: "Copy" })).toBeVisible();
+  });
+
+  it("accepts a file immediately", async () => {
+    const onsource = renderDrop();
     const box = screen.getByRole("group", { name: "Drop it here" });
-    expect(box).toHaveAttribute("aria-disabled", "true");
-    expect(box).toHaveAccessibleDescription("Copy the folder first, and this box will wake up.");
+    expect(box).not.toHaveAttribute("aria-disabled");
+    expect(box).toHaveTextContent("Drop it here");
     await fireEvent.drop(box, { dataTransfer: transfer() });
     await waitFor(() => {
       expect(onsource).toHaveBeenCalledTimes(1);
