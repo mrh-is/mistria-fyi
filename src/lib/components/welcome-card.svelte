@@ -19,7 +19,7 @@
   }
 </script>
 
-{#if !userState.hasAnyProgress}
+{#if userState.canStartTrackingByHand}
   <section class="welcome-card" aria-label={m.onboarding_region_label()}>
     <div class="welcome-card__marker" aria-hidden="true">
       <IconSparkles />

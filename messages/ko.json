@@ -15,6 +15,8 @@
   "og_share_description": "미스트리아의 모든 것을 한곳에",
   "source_spoilered": "숨김",
   "onboarding_region_label": "시작하기",
+  "onboarding_starter_items": "처음부터 갖고 있는 항목을 체크했어요({count}개)",
+  "onboarding_undo_starter_items": "자동 체크 취소",
   "onboarding_overline": "새 필드 가이드",
   "onboarding_title": "농부님, 환영해요!",
   "onboarding_desktop_description": "Fields of Mistria 저장 파일을 불러와 진행 상황을 자동으로 채우세요.",

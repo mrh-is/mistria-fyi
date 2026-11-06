@@ -88,6 +88,7 @@ describe("quest recipe rewards", () => {
   });
 
   it("completes a quest without rewards without changing recipe state", () => {
+    userState.markDefaultUnlocksComplete();
     const recipesBefore = [...userState.state.progress.almanacRecipes];
     userState.completeQuestWithRecipes(NO_REWARD_QUEST);
 

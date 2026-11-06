@@ -15,6 +15,8 @@
   "og_share_description": "ミストリアのすべてをひとつに",
   "source_spoilered": "非表示",
   "onboarding_region_label": "はじめに",
+  "onboarding_starter_items": "最初から持っているものにチェックを入れたよ（{count}件）",
+  "onboarding_undo_starter_items": "最初のチェックを取り消す",
   "onboarding_overline": "新しいフィールドガイド",
   "onboarding_title": "農家さん、ようこそ！",
   "onboarding_desktop_description": "Fields of Mistriaのセーブデータを読み込むと、進捗を自動で反映できます。",

@@ -177,6 +177,12 @@ export interface QuestCompletion {
   previousState: QuestState;
 }
 
+interface StarterItemsNotice {
+  count: number;
+  dismiss: () => void;
+  undo: () => void;
+}
+
 export interface UserState {
   everythingGrouping: "category" | "source";
   lastImport: null | SaveImportMetadata;
@@ -196,10 +202,18 @@ export interface SerializedPreferences {
 /** Quiet period after the last change before progress is written to localStorage. */
 export const PERSIST_DEBOUNCE_MS = 300;
 
-function addDefaultUnlocks(progress: ProgressState): void {
+function addDefaultUnlocks(progress: ProgressState): { key: string; remove: () => void }[] {
+  const added: { key: string; remove: () => void }[] = [];
+
+  function add<T extends string>(key: string, set: Set<T>, id: T): void {
+    if (set.has(id)) return;
+    set.add(id);
+    added.push({ key, remove: () => set.delete(id) });
+  }
+
   for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
     if (cosmetic.sources.some((s) => s.type === "default")) {
-      progress.cosmetics.add(id);
+      add(factKey("cosmetics", id), progress.cosmetics, id);
     }
   }
 
@@ -212,7 +226,7 @@ function addDefaultUnlocks(progress: ProgressState): void {
     for (const tier of animal.variantTiers) {
       for (const [variantId, variant] of recordEntries(tier)) {
         if (variant.source.type === "default") {
-          variantSet.add(variantId);
+          add(factKey("animals", animalId, variantId), variantSet, variantId);
         }
       }
     }
@@ -220,9 +234,10 @@ function addDefaultUnlocks(progress: ProgressState): void {
 
   for (const [id, recipe] of recordEntries(trackerData.recipes)) {
     if (recipe.sources.some((s) => s.type === "default")) {
-      progress.almanacRecipes.add(id);
+      add(factKey("almanacRecipes", id), progress.almanacRecipes, id);
     }
   }
+  return added;
 }
 
 const ANIMAL_IDS = recordKeys(trackerData.animals);
@@ -275,6 +290,7 @@ function createUserState() {
   let history = $state<ProgressHistory>(emptyProgressHistory());
   /** The source the outermost {@link track} call is recording, while one runs. */
   let trackingSource: ProvenanceSource | undefined;
+  let starterItems = $state.raw<StarterItemsNotice>();
   let lastKnownPreferencesValue: null | string = null;
   let lastKnownStoredValue: null | string = null;
   /** The clock still in memory after a missing or unreadable value replaces the stored blob. */
@@ -744,6 +760,7 @@ function createUserState() {
    * device's preferences & `local` section untouched.
    */
   function replaceProgress(loaded: Omit<LoadedProgress, "local">): void {
+    starterItems = undefined;
     state.lastImport = loaded.lastImport;
     state.progress = loaded.progress;
     state.worldState = loaded.worldState;
@@ -860,9 +877,51 @@ function createUserState() {
       recordValues(state.progress.animalCosmetics).some((s) => s.size > 0),
   );
 
+  // Provenance includes unticks, so undoing the starter items still counts as having started.
+  const canStartTrackingByHand = $derived(
+    !local.syncLane &&
+      !state.lastImport &&
+      !hasAnyProgress &&
+      Object.keys(history.provenance).length === 0,
+  );
+
+  function applyStarterItems(): void {
+    const added = track("inferred", () => addDefaultUnlocks(state.progress));
+    if (added.length === 0) return;
+
+    const batch = added.map((fact) => ({ ...fact, provenance: history.provenance[fact.key] }));
+    const notice: StarterItemsNotice = {
+      count: batch.length,
+      dismiss() {
+        if (starterItems === notice) starterItems = undefined;
+      },
+      undo() {
+        if (starterItems !== notice) return;
+        track("inferred", () => {
+          for (const { key, provenance, remove } of batch) {
+            if (history.provenance[key] === provenance) remove();
+          }
+        });
+        notice.dismiss();
+      },
+    };
+    starterItems = notice;
+  }
+
+  function trackHandEdit<T>(
+    source: "inferred" | "manual",
+    edit: () => T,
+    primary: readonly string[] = [],
+  ): T {
+    const starting = trackingSource === undefined && canStartTrackingByHand;
+    const result = track(source, edit, primary);
+    if (starting && hasAnyProgress) applyStarterItems();
+    return result;
+  }
+
   /** Runs a player's edit of one fact, recording it as `manual`; see {@link track}. */
   function manual(key: string, edit: () => void): void {
-    track("manual", edit, [key]);
+    trackHandEdit("manual", edit, [key]);
   }
 
   /** Ticks or unticks one listed fact by hand. */
@@ -900,9 +959,13 @@ function createUserState() {
       });
       return settled.outcome;
     },
+    /** Whether this guide still needs a choice between hand tracking & sync. */
+    get canStartTrackingByHand(): boolean {
+      return canStartTrackingByHand;
+    },
     /** Cycles the quest's state, completing its recipe rewards on the obtained-to-completed step. */
     completeQuestWithRecipes(id: QuestId): QuestCompletion {
-      return track(
+      return trackHandEdit(
         "manual",
         () => {
           const previousState = state.progress.questStates[id] ?? "none";
@@ -989,9 +1052,7 @@ function createUserState() {
       }
     },
     markDefaultUnlocksComplete() {
-      track("inferred", () => {
-        addDefaultUnlocks(state.progress);
-      });
+      if (canStartTrackingByHand) applyStarterItems();
     },
     /**
      * Applies a native save additively. The farm decision, lane guard, & write all use the latest
@@ -1049,10 +1110,11 @@ function createUserState() {
      * does for the conditions it satisfies.
      */
     recordInferred(mutations: () => void) {
-      track("inferred", mutations);
+      trackHandEdit("inferred", mutations);
     },
     /** Restores every field to its default, this device's preferences & `local` section included. */
     resetAll() {
+      starterItems = undefined;
       state = createDefaultState();
       retained = emptyRetainedProgress();
       history = emptyProgressHistory();
@@ -1172,6 +1234,10 @@ function createUserState() {
     setWeather(weather: Weather) {
       if (!isWeatherInSeason(weather, state.worldState.season)) return;
       state.worldState.weather = weather;
+    },
+    /** The current starter-item batch, for the one-time notice and its Undo action. */
+    get starterItems(): Readonly<StarterItemsNotice> | undefined {
+      return starterItems;
     },
     /**
      * Starts a syncing lane: erases progress & history, applies the lane's first save, & records

@@ -15,6 +15,8 @@
   "og_share_description": "All of Mistria in one place",
   "source_spoilered": "Hidden",
   "onboarding_region_label": "Getting started",
+  "onboarding_starter_items": "We checked off your starter items ({count})",
+  "onboarding_undo_starter_items": "Undo starter checks",
   "onboarding_overline": "New field guide",
   "onboarding_title": "Welcome, farmer!",
   "onboarding_desktop_description": "Import your Fields of Mistria save to fill in your progress automatically.",

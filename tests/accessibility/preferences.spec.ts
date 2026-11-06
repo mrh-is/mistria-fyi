@@ -75,6 +75,6 @@ test.describe("browser accessibility preferences", () => {
     expect(Number.parseFloat(focusStyle.outlineWidth)).toBeGreaterThan(0);
 
     await completion.press("Space");
-    await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
+    await expect(page.getByRole("button", { exact: true, name: "Undo" })).toBeVisible();
   });
 });
