@@ -1,12 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import AboutPage from "./+page.svelte";
 
 afterEach(async () => {
-  cleanup();
-  vi.restoreAllMocks();
   Reflect.deleteProperty(globalThis.history, "length");
   await tick();
 });

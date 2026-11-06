@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import RenownCurrentRecordHarness from "#lib/components/renown-current-record.test-harness.svelte";
 import { getName } from "#lib/data/names.js";
@@ -7,13 +7,6 @@ import { getMaxRenownLevel } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
 describe("RenownCurrentRecord", () => {
-  beforeEach(() => {
-    userState.resetAll();
-  });
-  afterEach(() => {
-    userState.resetAll();
-  });
-
   it("shows one current-rank impression and a raw overall progress value", () => {
     const view = render(RenownCurrentRecordHarness);
     const maxLevel = getMaxRenownLevel();

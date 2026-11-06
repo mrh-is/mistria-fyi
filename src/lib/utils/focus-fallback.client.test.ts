@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { beforeEach, expect, it } from "vitest";
 
 import { captureFocusFallback } from "./focus-fallback.js";
 
@@ -19,10 +19,6 @@ beforeEach(() => {
   row = button("row", false);
   after = button("after");
   row.focus();
-});
-
-afterEach(() => {
-  document.body.replaceChildren();
 });
 
 it("gives focus back to an element that moved & lost it", async () => {

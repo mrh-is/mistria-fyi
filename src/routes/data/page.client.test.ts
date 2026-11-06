@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
@@ -9,15 +9,6 @@ import DataPage from "./+page.svelte";
 function trigger(name: string): HTMLElement {
   return screen.getByRole("button", { name: new RegExp(name) });
 }
-
-beforeEach(() => {
-  pageStub.reset();
-});
-
-afterEach(async () => {
-  cleanup();
-  await tick();
-});
 
 describe("data management deep links", () => {
   it("opens the tool `?section=` names once the page is in the browser", async () => {

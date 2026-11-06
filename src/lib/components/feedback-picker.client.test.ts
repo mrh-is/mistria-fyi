@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import FeedbackPicker from "#lib/components/feedback-picker.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -35,10 +35,6 @@ describe("FeedbackPicker", () => {
   beforeEach(() => {
     vi.spyOn(globalThis, "requestAnimationFrame").mockReturnValue(1);
     vi.spyOn(globalThis, "cancelAnimationFrame").mockReturnValue(undefined);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it("renders a highlight for each visible reportable element", async () => {

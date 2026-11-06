@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { afterEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { describe, expect, it } from "vitest";
 
 import ClockPanel from "#lib/components/clock-panel.svelte";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -7,11 +7,6 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 function weatherStrip() {
   return screen.getByRole("radiogroup", { name: "Weather" });
 }
-
-afterEach(() => {
-  cleanup();
-  userState.resetAll();
-});
 
 describe("ClockPanel", () => {
   it("selects a season and relabels the weather strip for it", async () => {

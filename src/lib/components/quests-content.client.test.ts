@@ -1,6 +1,6 @@
 import { fireEvent, waitFor, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import QuestsContent from "#lib/components/quests-content.svelte";
 import { trackerData } from "#lib/data/index.js";
@@ -12,20 +12,11 @@ import { recordKeys } from "#lib/utils/record.js";
 
 describe("QuestsContent empty sections", () => {
   beforeEach(() => {
-    userState.loadFromStorage();
-    userState.resetAll();
     userState.toggleShowSpoilers();
-    toolbarState.closeSearch();
-    toolbarState.resetSourceFilters();
   });
 
   // The `client` project shares stores across the files a worker runs, so leave spoilers off &
   // the toolbar closed for the next file.
-  afterEach(() => {
-    userState.resetAll();
-    toolbarState.closeSearch();
-    toolbarState.resetSourceFilters();
-  });
 
   it("keeps completed sections' notes out from under incomplete sections after an import", async () => {
     // Synthetic late-game progress: Crown & Cooking are complete, while Story has quests left.

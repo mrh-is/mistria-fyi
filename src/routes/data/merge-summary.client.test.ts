@@ -1,5 +1,5 @@
 import { render } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -30,15 +30,6 @@ const CASES: { expected: string; imported: Partial<ProgressState>; setup?: () =>
     imported: { almanacRecipes: new Set(["review-recipe" as never]) },
   },
 ];
-
-beforeEach(() => {
-  userState.loadFromStorage();
-  userState.resetAll();
-});
-
-afterEach(() => {
-  userState.resetAll();
-});
 
 describe("merge summary integration", () => {
   it("leads with overall progress, separately from import deltas", async () => {

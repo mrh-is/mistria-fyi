@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import MountAppearancesSection from "#lib/components/mount-appearances-section.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
-import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordKeys } from "#lib/utils/record.js";
@@ -23,8 +22,6 @@ async function openMountSection(): Promise<void> {
 }
 
 beforeEach(() => {
-  userState.resetAll();
-  toolbarState.closeSearch();
   userState.toggleShowSpoilers();
 });
 

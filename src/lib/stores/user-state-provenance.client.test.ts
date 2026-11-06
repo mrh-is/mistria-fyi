@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { resolutionHolds } from "#lib/engine/provenance.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -27,15 +27,6 @@ function restoreWithUnknownProvenance(
   });
   expect(userState.restoreBackup(json)).toEqual({ ok: true });
 }
-
-beforeEach(() => {
-  userState.loadFromStorage();
-  userState.resetAll();
-});
-
-afterEach(() => {
-  userState.resetAll();
-});
 
 describe("provenance", () => {
   it("records a manual tick & untick, with no playtime before any save", async () => {

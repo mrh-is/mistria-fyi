@@ -1,21 +1,15 @@
 import { fireEvent, screen, waitFor } from "@testing-library/svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
-import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { SPRITE_PREVIEW_FADE_MS, SPRITE_PREVIEW_HOLD_MS } from "#lib/utils/row-timing.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 
 describe("TrackerRow localized checkbox labels", () => {
-  const originalGetLocale = getLocale;
-
-  afterEach(() => {
-    overwriteGetLocale(originalGetLocale);
-  });
-
   it.each<{
     locale: LocaleCode;
     plain: string;
@@ -282,9 +276,6 @@ describe("TrackerRow reportable metadata", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Check First item" }));
 
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Check Second item" }));
-    // Testing Library's cleanup removes only its own containers, not this hand-built list.
-    list.remove();
-    vi.unstubAllGlobals();
   });
 });
 
@@ -301,10 +292,6 @@ describe("TrackerRow sprite preview", () => {
     reportEntityId: "animated_clouds_window_blue",
     sprite: "spr_ui_item_animated_clouds_window_blue",
   } as const;
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
 
   it("reveals the full sprite for a few seconds without toggling the row", async () => {
     vi.useFakeTimers();

@@ -1,18 +1,8 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { describe, expect, it } from "vitest";
 
 import WelcomeCard from "#lib/components/welcome-card.svelte";
 import { userState } from "#lib/stores/user-state.svelte.js";
-
-beforeEach(() => {
-  userState.resetAll();
-});
-
-afterEach(async () => {
-  cleanup();
-  await tick();
-});
 
 describe("WelcomeCard", () => {
   it("asks how to work, with sync or by hand", async () => {

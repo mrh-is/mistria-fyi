@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { deflateSync } from "node:zlib";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
@@ -11,16 +11,6 @@ import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import ImportCard from "./import-card.svelte";
-
-// Client files share one store per worker, so each test starts from defaults (#174).
-beforeEach(() => {
-  userState.loadFromStorage();
-  userState.resetAll();
-});
-
-afterEach(() => {
-  userState.resetAll();
-});
 
 async function importFiles(files: File[]) {
   render(ImportCard, { open: true });
@@ -266,18 +256,13 @@ describe("save import atomicity", () => {
       localStorage.setItem(PROGRESS_STORAGE_KEY, newer);
       if (loaded) userState.loadFromStorage();
 
-      try {
-        await importFiles([new File(['{"items_acquired":["turnip"]}'], "player.json")]);
-        expect(await screen.findByRole("alert")).toHaveTextContent(
-          "Your progress was saved by a newer version. Update to continue.",
-        );
-        expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(newer);
-        expect(localStorage.getItem(QUARANTINE_STORAGE_KEY)).toBe(quarantine);
-        expect(userState.state.progress.almanac.size).toBe(0);
-      } finally {
-        localStorage.removeItem(PROGRESS_STORAGE_KEY);
-        userState.loadFromStorage();
-      }
+      await importFiles([new File(['{"items_acquired":["turnip"]}'], "player.json")]);
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Your progress was saved by a newer version. Update to continue.",
+      );
+      expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(newer);
+      expect(localStorage.getItem(QUARANTINE_STORAGE_KEY)).toBe(quarantine);
+      expect(userState.state.progress.almanac.size).toBe(0);
     },
   );
 
@@ -301,10 +286,6 @@ describe("save import atomicity", () => {
 });
 
 describe("save import file picker", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("filters the picker to save files on desktop", () => {
     render(ImportCard, { open: true });
     expect(screen.getByLabelText("Choose save files to import")).toHaveAttribute(

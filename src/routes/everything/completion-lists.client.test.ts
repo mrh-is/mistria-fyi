@@ -1,6 +1,6 @@
 import { fireEvent, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
@@ -19,14 +19,9 @@ import type { QuestRow, QuestSection } from "#lib/presentation/quest-sections.js
 import type { ItemId, QuestType, SkillId, SpellId } from "#lib/types/tracker-data.js";
 
 beforeEach(() => {
-  userState.resetAll();
   vi.spyOn(celebration, "celebrate").mockImplementation(() => undefined);
   vi.spyOn(celebration, "celebrateCategory").mockImplementation(() => undefined);
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
 });
 
 const finishRowLeaving = async () => {
@@ -223,10 +218,6 @@ async function renderFinishedQuests() {
 }
 
 describe("locked quest sections", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("moves a finished locked section to the completed list when it's revealed", async () => {
     vi.spyOn(questSections, "buildQuestSections").mockReturnValue([
       section("fetch", false),

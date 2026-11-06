@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
@@ -13,23 +13,11 @@ async function restoreFromFile(file: File) {
   await fireEvent.change(input, { target: { files: [file] } });
 }
 
-// Client files share one store per worker, so each test starts from defaults (#174).
-beforeEach(() => {
-  userState.resetAll();
-});
-
-afterEach(() => {
-  cleanup();
-  vi.restoreAllMocks();
-  userState.resetAll();
-});
-
 describe("BackupCard export", () => {
   it("downloads the serialized state as a dated JSON file", async () => {
     enableSpoilers();
-    const createObjectURL = vi.fn((_blob: Blob) => "blob:mistria/backup");
-    const revokeObjectURL = vi.fn();
-    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL }));
+    const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:mistria/backup");
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockReturnValue(undefined);
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockReturnValue(undefined);
     render(BackupCard, { open: true });
 
@@ -37,6 +25,7 @@ describe("BackupCard export", () => {
 
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     const [blob] = createObjectURL.mock.calls[0];
+    if (!(blob instanceof Blob)) throw new Error("Expected the backup download to use a Blob");
     expect(blob.type).toBe("application/json");
     expect(await blob.text()).toBe(userState.exportBackup());
 
@@ -45,7 +34,6 @@ describe("BackupCard export", () => {
     expect(anchor.download).toMatch(/^mistria-field-guide-backup-\d{4}-\d{2}-\d{2}\.json$/);
     expect(anchor.href).toBe("blob:mistria/backup");
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:mistria/backup");
-    vi.unstubAllGlobals();
   });
 });
 
@@ -121,7 +109,6 @@ describe("BackupCard restore", () => {
   });
 });
 
-// Last in the file: the store singleton keeps unreadable data for the rest of the module's life.
 describe("BackupCard unreadable data", () => {
   it("hides the download action when nothing was quarantined", () => {
     render(BackupCard, { open: true });
@@ -133,17 +120,19 @@ describe("BackupCard unreadable data", () => {
     const invalid = "{not json";
     localStorage.setItem("mistria-fyi:progress", invalid);
     userState.loadFromStorage();
-    const createObjectURL = vi.fn((_blob: Blob) => "blob:mistria/unreadable");
-    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    const createObjectURL = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:mistria/unreadable");
+    vi.spyOn(URL, "revokeObjectURL").mockReturnValue(undefined);
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockReturnValue(undefined);
     render(BackupCard, { open: true });
 
     await fireEvent.click(screen.getByRole("button", { name: "Download unreadable data" }));
 
-    expect(await createObjectURL.mock.calls[0][0].text()).toBe(invalid);
+    const [blob] = createObjectURL.mock.calls[0];
+    if (!(blob instanceof Blob)) throw new Error("Expected the unreadable download to use a Blob");
+    expect(await blob.text()).toBe(invalid);
     const anchor = click.mock.instances[0] as HTMLAnchorElement;
     expect(anchor.download).toMatch(/^mistria-field-guide-unreadable-\d{4}-\d{2}-\d{2}\.json$/);
-    vi.unstubAllGlobals();
-    localStorage.clear();
   });
 });

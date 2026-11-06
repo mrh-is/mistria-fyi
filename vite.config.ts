@@ -330,12 +330,13 @@ export default defineConfig(({ command }) => ({
       },
       {
         extends: true,
-        plugins: [svelteTesting()],
+        plugins: [svelteTesting({ autoCleanup: false })],
         test: {
           ...clientTestOptions,
           exclude: [...sharedTestExcludes, "**/*.isolated.client.test.ts"],
           include: ["src/**/*.client.test.ts"],
           name: "client",
+          setupFiles: [...clientTestOptions.setupFiles, "./src/vitest-setup-client-state.ts"],
           ...sharedRegistry,
         },
       },
@@ -363,7 +364,8 @@ export default defineConfig(({ command }) => ({
     ],
     restoreMocks: true,
     retry,
-    sequence: { sequencer: RelayFirstSequencer },
+    // With no relay tests outside CI, let the CLI select Vitest's built-in shuffle sequencer.
+    sequence: { sequencer: relayChanged || process.env.CI ? RelayFirstSequencer : undefined },
     testTimeout: loadTolerantTimeoutMs,
     unstubEnvs: true,
     unstubGlobals: true,

@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import FindSaveStep from "../../../routes/sync/find-save-step.svelte";
 import SaveDrop from "./save-drop.svelte";
@@ -39,12 +39,6 @@ function renderDrop(
   render(SaveDrop, { label: "Drop it here", onsource, platform: "windows", ...options });
   return onsource;
 }
-
-afterEach(async () => {
-  cleanup();
-  await tick();
-  vi.unstubAllGlobals();
-});
 
 describe("dropping", () => {
   it("hands over a real handle when the browser gives one", async () => {

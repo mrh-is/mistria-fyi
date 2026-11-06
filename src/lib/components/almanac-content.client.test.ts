@@ -1,6 +1,6 @@
 import { fireEvent, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import AlmanacContent from "#lib/components/almanac-content.svelte";
 import { INITIAL_ROW_BUDGET } from "#lib/controllers/row-reveal.svelte.js";
@@ -14,17 +14,6 @@ import { recordEntries } from "#lib/utils/record.js";
 import type { ItemId } from "#lib/types/tracker-data.js";
 
 describe("AlmanacContent", () => {
-  beforeEach(() => {
-    userState.resetAll();
-    toolbarState.closeSearch();
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    // Client test files share this store, so a search left open would filter their pages.
-    toolbarState.closeSearch();
-  });
-
   it("shows Date Inspiration without a duplicate Dates checklist", async () => {
     userState.toggleShowSpoilers();
     const view = renderWithFeedback(AlmanacContent, { locale: "en" });

@@ -1,6 +1,5 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
-import { tick } from "svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 
 import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
 
@@ -22,11 +21,6 @@ function renderDialog(condition: VisibilityCondition) {
   render(ConfirmSpoilerDialog, { condition, open: true, ...handlers });
   return handlers;
 }
-
-afterEach(async () => {
-  cleanup();
-  await tick();
-});
 
 describe("ConfirmSpoilerDialog", () => {
   it("offers to update progress only when the condition can be inverted", async () => {

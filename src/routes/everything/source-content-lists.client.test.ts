@@ -1,6 +1,6 @@
 import { fireEvent, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import * as celebration from "#lib/effects/celebrate.js";
@@ -15,7 +15,6 @@ import type { Source, WaterType } from "#lib/types/acquisition.js";
 import type { ItemId, StoreId } from "#lib/types/tracker-data.js";
 
 beforeEach(() => {
-  userState.resetAll();
   vi.spyOn(celebration, "celebrate").mockImplementation(() => undefined);
   vi.spyOn(celebration, "celebrateCategory").mockImplementation(() => undefined);
 });
@@ -131,11 +130,6 @@ const openFishing = async (view: ReturnType<typeof renderWithFeedback>) => {
 describe("while a source section changes lists", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   it("holds a finished source section, then keeps focus on a visible trigger", async () => {
