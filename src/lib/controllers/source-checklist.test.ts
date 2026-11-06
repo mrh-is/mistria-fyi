@@ -2,6 +2,7 @@ import { beforeEach, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
+import { CATEGORIES, CATEGORY_KEYS } from "#lib/engine/categories.js";
 import { projectSourceGroups } from "#lib/presentation/source-groups.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
@@ -104,4 +105,13 @@ it("carries an almanac row’s variant as its subtitle & a search term", () => {
   const turnip = rows.find((row) => row.category === "almanac" && row.id === "turnip");
   expect(turnip?.subtitle).toBeUndefined();
   expect(turnip?.searchTerms).toBeUndefined();
+});
+
+it("lists rows for exactly the categories the registry marks as sourced", () => {
+  const listed = new Set(
+    buildSourceChecklist(userState.progressContext, "en", true).map(({ category }) => category),
+  );
+  expect([...listed].toSorted()).toEqual(
+    CATEGORY_KEYS.filter((key) => CATEGORIES[key].sourced).toSorted(),
+  );
 });

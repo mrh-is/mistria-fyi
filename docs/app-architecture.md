@@ -58,12 +58,13 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
 
 `engine/categories.ts` is the category registry: one entry per category, keyed and ordered by
 `CategoryKey`. Every entry has a projection (`engine/projections/<category>.ts`) that returns the
-category's rows and its progress `totals`, and a route; a search provider is optional. The
-registry's comment lists the other files a new category needs. `getCategoryProgress`,
-`getAllProgress`, & `isCategoryComplete` read each projection's totals, and search runs only the
-categories that declare `search`, whose providers (`engine/search-providers.ts`) read their own
-projection. `data/categories.ts` adds each category's localized name & description, which the engine
-can't import. See the
+category's rows and its progress `totals`, a route, & a `sourced` flag saying whether its rows have
+sources; a search provider is optional. Type-checking & tests catch the other pieces a new category
+needs, except its colors in `app.css`. `getCategoryProgress`, `getAllProgress`, &
+`isCategoryComplete` read each projection's totals, and search runs only the categories that declare
+`search`, whose providers (`engine/search-providers.ts`) read their own projection.
+`data/categories.ts` adds each category's localized name & description, which the engine can't
+import. See the
 [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-21-category-registry.md).
 
 `engine/projections/almanac.ts` supplies the almanac page, progress counters, and search with one

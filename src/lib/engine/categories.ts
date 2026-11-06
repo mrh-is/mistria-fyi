@@ -39,43 +39,40 @@ export interface CategoryDefinition {
   route: Path;
   /** Search candidates read from the category's own projection; omitted, it has no results. */
   search?: (context: SearchContext) => Iterable<SearchCandidate>;
+  /**
+   * Whether its rows have sources. A sourced category lists its rows in the source checklist & has
+   * source filters; an unsourced one joins the Progress group when `/everything` groups by source.
+   */
+  sourced: boolean;
 }
 
 /**
- * The categories, keyed and ordered by key. An entry here gives a category its progress (the header,
- * home page, & `/everything`) and, with `search`, cross-category search results. A new category
- * also needs:
- *
- * - its projection in `engine/projections/`;
- * - with search: a provider in `engine/search-providers.ts`, plus a report category & a toggle `case`
- *   in `components/search-results.svelte`, or clicking its results does nothing;
- * - its name & description in `data/categories.ts`, since the engine can't import messages;
- * - its page: a `+page.ts` & `+page.svelte` in `src/routes/(category)/<route>/`, and the path in
- *   `PRERENDERED_ROUTES` (`i18n/prerender-entries.ts`);
- * - its content on `/everything`, in `routes/everything/category-section.svelte`;
- * - its place in `/everything`'s source grouping: rows in `controllers/source-checklist.ts`, or, for a
- *   category without sources, the Progress group in `routes/everything/source-content.svelte`;
- * - with sourced rows: its source types in `categorySourceTypes` (`data/tracker-index.ts`), which its
- *   page's source filters read;
- * - its icon in `components/icon/icon-maps.ts`, & its `--color-category-<key>` colors in `app.css`.
- *
- * New progress fields also need a storage version bump & a migration (`docs/app-architecture.md`).
- *
- * The name, description, content, icon, & search report maps are keyed by category, so
- * type-checking fails until each has the new key. `prerender-entries.test.ts` fails until the page
- * & its path agree. Nothing checks the toggle `case`, the source grouping, or the source types.
+ * The categories, keyed and ordered by key. An entry gives a category its progress (the header,
+ * home page, & `/everything`) and, with `search`, cross-category search results. Type-checking &
+ * tests name every other piece a new category needs, from its localized name to its page; only its
+ * `--color-category-<key>` colors in `app.css` go unchecked.
  */
 export const CATEGORIES = {
-  almanac: { project: projectAlmanac, route: "almanac", search: searchAlmanac },
-  animals: { project: projectAnimals, route: "animals", search: searchAnimals },
-  cosmetics: { project: projectCosmetics, route: "cosmetics", search: searchCosmetics },
-  mines: { project: projectMines, route: "mines" },
-  museum: { project: projectMuseum, route: "museum", search: searchMuseum },
-  quests: { project: projectQuests, route: "quests", search: searchQuests },
-  recipes: { project: projectRecipes, route: "recipes", search: searchRecipes },
-  renown: { project: projectRenown, route: "renown" },
-  skills: { project: projectSkills, route: "skills" },
-  villagers: { project: projectVillagers, route: "villagers", search: searchVillagers },
+  almanac: { project: projectAlmanac, route: "almanac", search: searchAlmanac, sourced: true },
+  animals: { project: projectAnimals, route: "animals", search: searchAnimals, sourced: true },
+  cosmetics: {
+    project: projectCosmetics,
+    route: "cosmetics",
+    search: searchCosmetics,
+    sourced: true,
+  },
+  mines: { project: projectMines, route: "mines", sourced: true },
+  museum: { project: projectMuseum, route: "museum", search: searchMuseum, sourced: true },
+  quests: { project: projectQuests, route: "quests", search: searchQuests, sourced: true },
+  recipes: { project: projectRecipes, route: "recipes", search: searchRecipes, sourced: true },
+  renown: { project: projectRenown, route: "renown", sourced: false },
+  skills: { project: projectSkills, route: "skills", sourced: false },
+  villagers: {
+    project: projectVillagers,
+    route: "villagers",
+    search: searchVillagers,
+    sourced: false,
+  },
 } as const satisfies Record<string, CategoryDefinition>;
 
 export type AllProgress = Record<CategoryKey, CategoryProgress>;
@@ -86,7 +83,19 @@ export type SearchCategoryKey = {
   [Key in CategoryKey]: (typeof CATEGORIES)[Key] extends { search: unknown } ? Key : never;
 }[CategoryKey];
 
+/** Category keys whose rows have sources: the source checklist & source filters cover these. */
+export type SourcedCategoryKey = {
+  [Key in CategoryKey]: (typeof CATEGORIES)[Key] extends { sourced: true } ? Key : never;
+}[CategoryKey];
+
+/** Category keys without sources, which `/everything` shows in its Progress group by source. */
+export type UnsourcedCategoryKey = Exclude<CategoryKey, SourcedCategoryKey>;
+
 export const CATEGORY_KEYS: readonly CategoryKey[] = recordKeys(CATEGORIES);
+
+export const UNSOURCED_CATEGORY_KEYS = CATEGORY_KEYS.filter(
+  (key): key is UnsourcedCategoryKey => !CATEGORIES[key].sourced,
+);
 
 /** The registry as uniform definitions, for callers that visit every category alike. */
 export const CATEGORY_DEFINITIONS: readonly CategoryDefinition[] = recordValues(CATEGORIES);

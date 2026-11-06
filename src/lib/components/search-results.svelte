@@ -172,50 +172,52 @@
     }
   }
 
-  function toggleResult(result: SearchResult): void {
-    switch (result.category) {
-      case "almanac":
-        userState.toggleAlmanacItem(result.id as never);
-        break;
-      case "animals":
-        if (result.id.startsWith("pet-cosmetic:")) {
-          const petCosmeticId = result.id.slice("pet-cosmetic:".length);
-          userState.togglePetCosmetic(petCosmeticId as PetCosmeticSetId);
-        } else if (result.id.startsWith("mount-appearance:")) {
-          const appearanceId = result.id.slice("mount-appearance:".length);
-          userState.toggleMountAppearance(appearanceId as MountAppearanceId);
-        } else if (result.id.startsWith("mount-perk:")) {
-          const perkId = result.id.slice("mount-perk:".length);
-          userState.togglePerk(perkId as PerkId);
-        } else if (result.id.startsWith("pet-skin:")) {
-          const petSkinId = result.id.slice("pet-skin:".length);
-          userState.togglePetSkin(petSkinId as PetSkinId);
-        } else {
-          const [animalId, subId] = result.id.split(":");
-          if (result.fullName) {
-            userState.toggleAnimalCosmetic(animalId as AnimalId, subId as CosmeticId);
-          } else {
-            userState.toggleAnimalVariant(animalId as AnimalId, subId as AnimalVariantId);
-          }
-        }
-        break;
-
-      case "cosmetics":
-        userState.toggleCosmetic(result.id as never);
-        break;
-      case "museum":
-        userState.toggleMuseumItem(result.id as ItemId);
-        break;
-      case "quests":
-        // Quest results route through handleQuestToggle before reaching this function.
-        break;
-      case "recipes":
-        userState.toggleAlmanacRecipe(result.id as RecipeId);
-        break;
-      case "villagers":
-        // Villager results render as links to their records, never as toggles.
-        break;
+  function toggleAnimalResult(result: SearchResult): void {
+    if (result.id.startsWith("pet-cosmetic:")) {
+      const petCosmeticId = result.id.slice("pet-cosmetic:".length);
+      userState.togglePetCosmetic(petCosmeticId as PetCosmeticSetId);
+    } else if (result.id.startsWith("mount-appearance:")) {
+      const appearanceId = result.id.slice("mount-appearance:".length);
+      userState.toggleMountAppearance(appearanceId as MountAppearanceId);
+    } else if (result.id.startsWith("mount-perk:")) {
+      const perkId = result.id.slice("mount-perk:".length);
+      userState.togglePerk(perkId as PerkId);
+    } else if (result.id.startsWith("pet-skin:")) {
+      const petSkinId = result.id.slice("pet-skin:".length);
+      userState.togglePetSkin(petSkinId as PetSkinId);
+    } else {
+      const [animalId, subId] = result.id.split(":");
+      if (result.fullName) {
+        userState.toggleAnimalCosmetic(animalId as AnimalId, subId as CosmeticId);
+      } else {
+        userState.toggleAnimalVariant(animalId as AnimalId, subId as AnimalVariantId);
+      }
     }
+  }
+
+  /** How each category's result toggles, keyed so a new searchable category can't be left out. */
+  const TOGGLE_RESULT: Record<SearchCategoryKey, (result: SearchResult) => void> = {
+    almanac: (result) => {
+      userState.toggleAlmanacItem(result.id as never);
+    },
+    animals: toggleAnimalResult,
+    cosmetics: (result) => {
+      userState.toggleCosmetic(result.id as never);
+    },
+    museum: (result) => {
+      userState.toggleMuseumItem(result.id as ItemId);
+    },
+    // Quest results route through handleQuestToggle before reaching this table.
+    quests: () => undefined,
+    recipes: (result) => {
+      userState.toggleAlmanacRecipe(result.id as RecipeId);
+    },
+    // Villager results render as links to their records, never as toggles.
+    villagers: () => undefined,
+  };
+
+  function toggleResult(result: SearchResult): void {
+    TOGGLE_RESULT[result.category](result);
   }
 
   /** Search results report under the stable key of their row's own category, not a localized name. */
