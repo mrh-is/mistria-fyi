@@ -4,7 +4,7 @@
 
   import "../app.css";
 
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
 
   import AppUpdater from "#lib/components/app-updater.svelte";
   import InstallNudgeDialog from "#lib/components/install-nudge-dialog.svelte";
@@ -18,6 +18,7 @@
   import { Toaster } from "#lib/components/ui/sonner/index.js";
   import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
   import { errorPageMetadata } from "#lib/data/page-metadata.js";
+  import { showStarterItemsToast } from "#lib/effects/undo-toast.js";
   import { FeedbackContext, setFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { localeFontStylesheet } from "#lib/fonts/locale-fonts.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -69,8 +70,10 @@
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
   // Toasts sit just above the toolbar, or above an open toolbar panel so they never cover it.
   const toastOffset = "calc(56px + env(safe-area-inset-bottom))";
-  let toastLift = $derived(
-    toolbarState.panelClearance > 0 ? `${toolbarState.panelClearance + 8}px` : null,
+  let toastBottom = $derived(
+    toolbarState.panelClearance > 0
+      ? `max(${toastOffset}, ${toolbarState.panelClearance + 8}px)`
+      : toastOffset,
   );
 
   // The server stamps `<html lang>`/`dir` for the first paint; a client-side locale switch (the
@@ -83,6 +86,11 @@
   // The service worker precaches no name chunks; the locale being read is the one kept offline.
   $effect(() => {
     keepLocaleOffline(page.data.locale);
+  });
+
+  $effect(() => {
+    const batch = userState.starterItems;
+    return batch && untrack(() => showStarterItemsToast(batch.count, batch.undo, batch.dismiss));
   });
 </script>
 
@@ -117,13 +125,14 @@
 
   <Toaster
     position="bottom-center"
+    expand={userState.starterItems !== undefined}
     offset={{
-      bottom: toastLift ? `max(${toastOffset}, ${toastLift})` : toastOffset,
+      bottom: toastBottom,
       left: toastOffset,
       right: toastOffset,
       top: toastOffset,
     }}
-    mobileOffset={toastLift ? { bottom: `max(16px, ${toastLift})` } : undefined}
+    mobileOffset={{ bottom: toastBottom }}
   />
 
   <PersistenceWarning />

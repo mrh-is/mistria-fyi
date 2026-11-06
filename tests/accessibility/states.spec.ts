@@ -138,7 +138,7 @@ test.describe("stateful accessibility", () => {
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
     const completion = page.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
     await completion.click();
-    await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
+    await expect(page.getByRole("button", { exact: true, name: "Undo" })).toBeVisible();
 
     await analyzeAccessibility(
       page,
