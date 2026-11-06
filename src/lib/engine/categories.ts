@@ -29,22 +29,34 @@ import type { SearchCandidate, SearchContext } from "#lib/engine/search.js";
 import type { Path } from "$app/types";
 
 /**
- * One category's capabilities. Every category has a projection, and its `totals` are the
- * category's progress; a route & search are optional.
+ * One category's capabilities. Every category has a projection, whose `totals` are the category's
+ * progress, and a page; search is optional.
  */
 export interface CategoryDefinition {
   /** The category's rows & progress totals in one context. */
   project: (ctx: ProgressContext, options?: CategoryProjectionOptions) => CategoryProjection;
-  /** The category's page. */
-  route?: Path;
+  /** The category's page, under `src/routes/(category)/`. */
+  route: Path;
   /** Search candidates read from the category's own projection; omitted, it has no results. */
   search?: (context: SearchContext) => Iterable<SearchCandidate>;
 }
 
 /**
- * The categories, keyed and ordered by key. Adding a category here gives it progress (the header,
- * home page, & `/everything`) and, with the optional capabilities, a route & search results.
- * Localized names live in `data/categories.ts`, since the engine can't import messages.
+ * The categories, keyed and ordered by key. An entry here gives a category its progress (the header,
+ * home page, & `/everything`) and, with `search`, cross-category search results. A new category
+ * also needs:
+ *
+ * - its projection in `engine/projections/`, plus a provider in `engine/search-providers.ts` if it
+ *   has search results;
+ * - its name & description in `data/categories.ts`, since the engine can't import messages;
+ * - its page: a `+page.ts` & `+page.svelte` in `src/routes/(category)/<route>/`, and the path in
+ *   `PRERENDERED_ROUTES` (`i18n/prerender-entries.ts`);
+ * - its content on `/everything`, in `routes/everything/category-section.svelte`;
+ * - its rows in `controllers/source-checklist.ts`, so `/everything` can group them by source;
+ * - its icon in `components/icon/icon-maps.ts`, & its `--color-category-<key>` colors in `app.css`.
+ *
+ * The name, description, content, & icon maps are `Record<CategoryKey, …>`, so type-checking fails
+ * until each has the new key. `prerender-entries.test.ts` fails until the page & its path agree.
  */
 export const CATEGORIES = {
   almanac: { project: projectAlmanac, route: "almanac", search: searchAlmanac },
