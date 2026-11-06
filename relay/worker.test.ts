@@ -31,6 +31,7 @@ let shared: Miniflare | undefined;
 let caseIndex: number;
 
 // Only the local test module has this storage/clock control. Public routing never exposes it.
+// It shares the Worker's isolate & module scope, so it can reset or age the cached pause check.
 const testSubclass = `
 let mailboxRequests = 0;
 let gateRequests = 0;
@@ -65,7 +66,10 @@ export class TestControl extends RelayControl {
         await this.ctx.storage.deleteAll();
         mailboxRequests = 0;
         gateRequests = 0;
+        pauseCheck = undefined;
       }
+      if (action.pausedUntil) await this.ctx.storage.put("pausedUntil", action.pausedUntil);
+      if (action.pauseCheckAge && pauseCheck) pauseCheck.checkedAt = Date.now() - action.pauseCheckAge;
       if (action.requests) return Response.json({ mailboxRequests, gateRequests });
       if (action.usage) await this.ctx.storage.put("usage", action.usage);
       if (action.alarm) await this.alarm();
@@ -324,6 +328,28 @@ describe("sync relay in the local Workers runtime", () => {
     expect(await status(create(mf, mailboxId, TOKEN, "valid", "198.51.100.1"))).toBe(410);
   });
 
+  it("lets each Worker isolate trust its last pause check for 30 seconds", async () => {
+    const mf = runtime();
+    await create(mf);
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(200);
+    // Another isolate's admin request pauses the relay without touching this isolate's cache.
+    await inspectControl(mf, { pausedUntil: Date.now() + DAY });
+    expect(await status(upload(mf))).toBe(200);
+    await inspectControl(mf, { pauseCheckAge: 29_000 });
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(200);
+    await inspectControl(mf, { pauseCheckAge: 30_000 });
+    const read = await request(mf, "GET", `mailboxes/${mailboxId}`);
+    expect(read.status).toBe(503);
+    expect(await read.json()).toMatchObject({ state: "paused" });
+    expect(await status(upload(mf, 2))).toBe(503);
+    // Lifting the pause elsewhere reaches this isolate within the same interval.
+    await inspectControl(mf, { pausedUntil: Date.now() - 1 });
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(503);
+    await inspectControl(mf, { pauseCheckAge: 30_000 });
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(200);
+    expect(await inspectControl(mf, { requests: true })).toMatchObject({ gateRequests: 3 });
+  });
+
   it("deletes expired envelopes, preserves ordering, and tombstones year-old mailboxes", async () => {
     const mf = runtime();
     await create(mf);
@@ -495,6 +521,8 @@ describe("sync relay in the local Workers runtime", () => {
   it("limits public reads & handshakes across mailbox IDs before any object request", async () => {
     const mf = runtime();
     const prefix = `2001:db8:${caseIndex}:abcd`;
+    // One read from another address fills the pause check, so the batch below never needs it.
+    expect(await status(request(mf, "GET", `mailboxes/${mailboxId}`))).toBe(404);
     const results = await Promise.all(
       Array.from({ length: 60 }, async (_, index) => {
         const id = Buffer.alloc(16, index + 128).toString("base64url");
@@ -509,7 +537,7 @@ describe("sync relay in the local Workers runtime", () => {
     );
     expect(results).toEqual(Array.from({ length: 60 }, () => 404));
     const before = await inspectControl(mf, { requests: true });
-    expect(before).toEqual({ gateRequests: 60, mailboxRequests: 60 });
+    expect(before).toEqual({ gateRequests: 1, mailboxRequests: 61 });
     for (const upgrade of [false, true]) {
       // oxlint-disable-next-line no-await-in-loop -- Both request variants must use the exhausted budget.
       const limited = await mf.dispatchFetch(
@@ -593,8 +621,9 @@ describe("sync relay in the local Workers runtime", () => {
         }),
       ]);
       expect(await read.json()).toEqual({ state: "empty" });
+      // Only the create asks the singleton; the upload & read reuse its pause check.
       expect(await inspectControl(mf, { requests: true })).toEqual({
-        gateRequests: 3,
+        gateRequests: 1,
         mailboxRequests: 2,
       });
     } finally {

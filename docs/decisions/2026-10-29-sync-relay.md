@@ -28,10 +28,12 @@ Object, Siteverify, or application logs. Rare collisions share the three-create 
 windows can admit six creations near an hour boundary; the account-wide daily ceiling stays strict.
 
 Limit public reads & WebSocket handshakes together to 60 attempts per minute per prefix at the edge,
-before any object request, then apply the singleton pause before mailbox access. Retirement bypasses
-the pause. Existing sockets remain connected; pausing does not require a mailbox inventory or
-write-on-read behavior. Cap each pause request at seven days ahead, retaining one day as the default
-& repeat requests for extension. Require a zone WAF rate rule at launch because a binding or
+before any object request, then apply the singleton pause before mailbox access. Each Worker isolate
+caches the pause's end time for 30 seconds, so reads & uploads skip the singleton & a pause takes up
+to 30 seconds to reach every isolate; a deploy-time variable would lose the live control. Retirement
+bypasses the pause. Existing sockets remain connected; pausing does not require a mailbox inventory
+or write-on-read behavior. Cap each pause request at seven days ahead, retaining one day as the
+default & repeat requests for extension. Require a zone WAF rate rule at launch because a binding or
 singleton pause still consumes Worker requests, & a pause gate consumes object requests too.
 
 Keep the Worker at `relay.mistria.fyi`, independently deployed from Pages, with explicit HTTPS & WSS
