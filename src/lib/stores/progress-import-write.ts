@@ -3,7 +3,7 @@ import { changedFacts, editPlaytime, holdsGuess, progressFacts } from "#lib/engi
 import { applyEngagementCascade, getPartnerId, getSpouseId } from "#lib/engine/relationships.js";
 import { compareFarms, mergeFarmIdentity } from "#lib/engine/save-identity.js";
 import { applyAdditiveSave, mergeProgress } from "#lib/engine/save-progress.js";
-import { applySaveDay } from "#lib/engine/world-state.js";
+import { applySaveDay, rebaseWorldDay } from "#lib/engine/world-state.js";
 import { isRecord, recordEntries } from "#lib/utils/record.js";
 
 import {
@@ -93,7 +93,7 @@ export function planManualImport(
       readImportSnapshot(fallbackClockBase)?.worldState ??
       createDefaultWorldState())
     : capturedClock;
-  const clock = rebaseWorldState(storedClock, clockBase, capturedClock);
+  const clock = rebaseWorldDay(storedClock, clockBase, capturedClock);
   loaded.worldState = resolveImportDay(storedClock, clock, day);
   // A manual import chooses its lane in the same durable write as its progress.
   loaded.local.trackingLane ??= loaded.local.syncLane ? "sync" : "manual";
@@ -118,7 +118,7 @@ export function planManualImport(
     );
   }
   const laterBase = readImportSnapshot(edits.clockBase)?.worldState ?? capturedClock;
-  const liveClock = rebaseWorldState(clock, laterBase, edits.clock);
+  const liveClock = rebaseWorldDay(clock, laterBase, edits.clock);
   live.worldState = resolveImportDay(storedClock, liveClock, day);
   return { json, kind: "write", live, local: loaded.local, result };
 }
@@ -322,14 +322,6 @@ function rebaseEntries<V>(
 function readImportSnapshot(json: null | string | undefined): LoadedProgress | undefined {
   const read = typeof json === "string" ? readProgressBlob(json, "repair") : undefined;
   return read?.kind === "ok" ? read.loaded : undefined;
-}
-
-/** Only fields the tab changed take precedence over the clock read under the lock. */
-function rebaseWorldState(target: WorldState, before: WorldState, after: WorldState): WorldState {
-  return {
-    season: before.season === after.season ? target.season : after.season,
-    weather: before.weather === after.weather ? target.weather : after.weather,
-  };
 }
 
 /** Apply the save & normalize once, after all clock edits have been combined. */
