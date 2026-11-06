@@ -172,8 +172,14 @@ test.describe("keyboard and focus accessibility", () => {
 
     await gotoApplication(page, "/mines");
     const floorInput = page.getByRole("spinbutton", { name: "Mine floor" });
+    await floorInput.fill("19");
+    await floorInput.press("Tab");
+    await expect(page.getByRole("group", { name: /Mine floor, 19 of/ })).toBeVisible();
+
+    // Floor 21 is past the first seal, so the dialog must work from the keyboard too.
     await floorInput.fill("21");
     await floorInput.press("Tab");
+    await page.getByRole("button", { name: "Yes, just this item" }).press("Enter");
     await expect(page.getByRole("group", { name: /Mine floor, 21 of/ })).toBeVisible();
 
     await gotoApplication(page, "/renown");

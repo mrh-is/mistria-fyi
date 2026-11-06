@@ -17,8 +17,9 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { getMaxMineFloor } from "#lib/engine/progress.js";
+  import { mineFloorProgress, sealsBefore } from "#lib/engine/projections/mines.js";
   import { factKey } from "#lib/engine/provenance.js";
-  import { alwaysToDo, countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
+  import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -99,6 +100,17 @@
     }
   }
 
+  function requestFloor(floor: number): void {
+    const seals = sealsBefore(userState.state.progress, floor);
+    if (seals) {
+      spoilerGuard.requestGuardedAction(seals, () => {
+        setFloorWithCelebration(floor);
+      });
+    } else {
+      setFloorWithCelebration(floor);
+    }
+  }
+
   let spells = $derived(
     Object.entries(trackerData.mines.spells)
       .map(([id, spell]) => ({
@@ -141,7 +153,7 @@
       compact
       floor={userState.state.progress.mineFloor}
       {locale}
-      onChange={setFloorWithCelebration}
+      onChange={requestFloor}
     />
   </CompletionSection>
 {/if}
@@ -158,7 +170,7 @@
       <ExpandableSection
         {locale}
         name={m.mines_floor_progress_section()}
-        progress={alwaysToDo(userState.state.progress.mineFloor, maxFloors)}
+        progress={mineFloorProgress(userState.state.progress)}
         reportCategory="mines"
         reportEntityId="floors"
         reportExtra={{
@@ -172,7 +184,7 @@
           floor={userState.state.progress.mineFloor}
           isReportable={false}
           {locale}
-          onChange={setFloorWithCelebration}
+          onChange={requestFloor}
         />
       </ExpandableSection>
     {:else if !nameFilter || visibleSpells.length > 0}

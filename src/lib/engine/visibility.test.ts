@@ -61,7 +61,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     dates: {},
     festivals: {},
     items: {},
-    mines: { biomes: [], spells: {} },
+    mines: { biomes: [], seals: [], spells: {} },
     mount: { appearances: {}, perks: {} },
     museum: {},
     perkTierLevels: [1, 15, 30, 45, 60],

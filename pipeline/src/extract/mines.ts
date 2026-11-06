@@ -2,6 +2,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray, expectNonEmptyString } from "../data-shapes.js";
 import { minesBiomeId } from "../extractor-helpers.js";
+import { MINE_SEAL_FLOORS, SEALS_OFF_THE_FLOORS } from "../overrides/game-facts.js";
 import { BIOME_ENGLISH_NAMES } from "../overrides/ordinal-names.js";
 import { sourceFileFor } from "../parse/parse-fiddle.js";
 
@@ -9,6 +10,9 @@ import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   MinesBiome,
   MinesBiomeId,
+  MineSeal,
+  MineSealId,
+  QuestId,
   Spell,
   SpellId,
   TrackerData,
@@ -21,6 +25,30 @@ export interface MinesExtraction {
   biomeLocaleNames: Record<LocaleCode, Record<MinesBiomeId, string>>;
   mines: TrackerData["mines"];
   spellLocaleNames: Record<LocaleCode, Record<SpellId, string>>;
+}
+
+/** Each seal on a mine floor, in floor order. A seal with no known floor throws. */
+function extractSeals(fiddle: ParsedGameData): MineSeal[] {
+  const raw = fiddle.seals as Record<string, Record<string, unknown>> | undefined;
+  if (!raw) throw new TypeError("Missing seals table");
+  const sourcePath = sourceFileFor(fiddle, "seals");
+  const seals: MineSeal[] = [];
+  for (const [id, seal] of Object.entries(raw)) {
+    if (SEALS_OFF_THE_FLOORS.has(id)) continue;
+    const floor = MINE_SEAL_FLOORS[id];
+    if (floor === undefined) throw new TypeError(`No mine floor recorded for seal ${id}`);
+    const { stage } = seal;
+    if (typeof stage !== "number" || !Number.isInteger(stage) || stage < 0) {
+      throw new TypeError(`Expected numeric stage for seal ${id} in ${sourcePath}`);
+    }
+    const questId = expectNonEmptyString(seal.quest, {
+      entityId: `seals.${id}`,
+      fieldPath: "quest",
+      sourcePath,
+    }) as QuestId;
+    seals.push({ floor, id: id as MineSealId, questId, stage });
+  }
+  return seals.toSorted((a, b) => a.floor - b.floor);
 }
 
 export function extractMines(fiddle: ParsedGameData, localizer: Localizer): MinesExtraction {
@@ -109,5 +137,9 @@ export function extractMines(fiddle: ParsedGameData, localizer: Localizer): Mine
   console.log(
     `  Mines: ${biomes.length} biomes, ${lastBiome?.floors.end ?? 0} max floors, ${Object.keys(spells).length} spells`,
   );
-  return { biomeLocaleNames, mines: { biomes, spells }, spellLocaleNames };
+  return {
+    biomeLocaleNames,
+    mines: { biomes, seals: extractSeals(fiddle), spells },
+    spellLocaleNames,
+  };
 }

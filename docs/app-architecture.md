@@ -416,8 +416,10 @@ Progress calculation and UI row visibility are separate concerns.
 - **The toolbar** gives each page its own `clock` & `filter` flags in `ToolbarConfig`. The clock
   sets `worldState`. A save import or sync overwrites it with the save’s day, and a clock change
   then holds until the next save arrives.
-- Mines counts every unreached floor as doable until #503 says where a seal stops the player, and
-  Quests read only spoilers & the items they ask for until #502. Skills & Renown are always To do.
+- Mines counts floors as doable down to the first unbroken seal at or below the player's floor, and
+  the floors past it wait. Finishing the seal's quest breaks it, and a floor below a seal proves
+  that seal is broken. Quests read only spoilers & the items they ask for until #502. Skills &
+  Renown are always To do.
 - **Category completion** is `isCategoryComplete(key, ctx)` in `engine/categories.ts`, which is the
   category's progress at 100%. The header, the all-completed banner, & `celebrateCategory()` all
   read it; components don't re-derive completion. See the

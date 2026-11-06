@@ -59974,6 +59974,44 @@
         "id": "ancient_ruins"
       }
     ],
+    "seals": [
+      {
+        "floor": 20,
+        "id": "water",
+        "questId": "the_water_tablet",
+        "stage": 1
+      },
+      {
+        "floor": 40,
+        "id": "earth",
+        "questId": "the_earth_tablet",
+        "stage": 1
+      },
+      {
+        "floor": 60,
+        "id": "fire",
+        "questId": "breaking_the_fire_seal",
+        "stage": 0
+      },
+      {
+        "floor": 80,
+        "id": "ruins",
+        "questId": "breaking_the_ruins_seal",
+        "stage": 0
+      },
+      {
+        "floor": 90,
+        "id": "priestess",
+        "questId": "find_the_magic_key",
+        "stage": 3
+      },
+      {
+        "floor": 100,
+        "id": "final",
+        "questId": "breaking_the_final_seal",
+        "stage": 0
+      }
+    ],
     "spells": {
       "full_restore": {
         "sources": []

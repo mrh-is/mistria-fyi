@@ -74,6 +74,20 @@ describe("non-empty collections", () => {
     expect(trackerData.mines.biomes.length).toBeGreaterThan(0);
   });
 
+  it("orders mine seals by floor, each inside the mines & broken by a tracked quest", () => {
+    const { seals } = trackerData.mines;
+    expect(seals.map(({ floor, id }) => [id, floor])).toEqual([
+      ["water", 20],
+      ["earth", 40],
+      ["fire", 60],
+      ["ruins", 80],
+      ["priestess", 90],
+      ["final", 100],
+    ]);
+    const quests = new Set(Object.values(trackerData.quests).flatMap((kind) => Object.keys(kind)));
+    for (const { questId } of seals) expect(quests).toContain(questId);
+  });
+
   it("has mine spells", () => {
     expect(recordKeys(trackerData.mines.spells).length).toBeGreaterThan(0);
   });
