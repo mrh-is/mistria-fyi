@@ -5,6 +5,7 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
@@ -12,7 +13,6 @@
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { recipePlacements } from "#lib/engine/projections/recipes.js";
@@ -74,14 +74,6 @@
 
   registerSourceFilters("recipes", () => trackerIndex.categorySourceTypes.recipes);
 
-  function checkCelebration(sectionRecipeIds: RecipeId[]): void {
-    if (isAllComplete()) {
-      celebrateCategory();
-    } else if (sectionRecipeIds.every((id) => userState.state.progress.almanacRecipes.has(id))) {
-      celebrate();
-    }
-  }
-
   function isAllComplete(): boolean {
     return isCategoryComplete("recipes", userState.progressContext);
   }
@@ -125,15 +117,18 @@
 
   function toggleRecipe(entry: RecipeEntry, sectionId: string, sectionRecipeIds: RecipeId[]): void {
     sectionGrouping.hold(sectionId);
-    userState.toggleAlmanacRecipe(entry.id);
+    celebrateProgress(
+      "recipes",
+      () => {
+        userState.toggleAlmanacRecipe(entry.id);
+      },
+      [() => sectionRecipeIds.every((id) => userState.state.progress.almanacRecipes.has(id))],
+    );
     const nowCompleted = userState.state.progress.almanacRecipes.has(entry.id);
     showUndoToast(entry.name, nowCompleted, () => {
       userState.toggleAlmanacRecipe(entry.id);
     });
-    if (nowCompleted) {
-      recentlyCompleted.markLeaving(entry.id);
-      checkCelebration(sectionRecipeIds);
-    }
+    if (nowCompleted) recentlyCompleted.markLeaving(entry.id);
   }
 </script>
 

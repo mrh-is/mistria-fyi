@@ -3,12 +3,12 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
@@ -36,10 +36,7 @@
     | (MountPerk & { id: PerkId; kind: "perk" })
   ) & { name: string };
 
-  let {
-    areAllAnimalsComplete,
-    locale,
-  }: { areAllAnimalsComplete: () => boolean; locale: LocaleCode } = $props();
+  let { locale }: { locale: LocaleCode } = $props();
 
   const sectionGroupItem = getSectionGroupItem();
   const spoilerGuard = createSpoilerGuard();
@@ -109,16 +106,17 @@
 
   function toggleEntry(entry: MountEntry): void {
     sectionGroupItem?.hold();
-    toggleCompleted(entry);
+    celebrateProgress(
+      "animals",
+      () => {
+        toggleCompleted(entry);
+      },
+      [isMountComplete],
+    );
     const completed = isCompleted(entry);
     showUndoToast(entry.name, completed, () => {
       toggleCompleted(entry);
     });
-    if (completed && isMountComplete() && areAllAnimalsComplete()) {
-      celebrateCategory();
-    } else if (completed && isMountComplete()) {
-      celebrate();
-    }
   }
 </script>
 

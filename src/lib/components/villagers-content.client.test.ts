@@ -29,11 +29,32 @@ describe("VillagersContent localization", () => {
     const toggle = await view.findByRole("switch", {
       name: getName("ui", "disable_break_ups", "en"),
     });
+    expect(
+      view.getByText("Match this to your game’s setting before you get engaged."),
+    ).toBeVisible();
+    expect(view.container).not.toHaveTextContent(
+      getName("ui", "disable_break_ups_description", "en"),
+    );
     await fireEvent.click(toggle);
     expect(userState.state.progress.breakUpsDisabled).toBe(true);
     await fireEvent.click(toggle);
     expect(userState.state.progress.breakUpsDisabled).toBe(false);
   });
+
+  it.each(["proposed", "married"] as const)(
+    "puts a read-only setting after the roster when %s, for either setting value",
+    async (relationship) => {
+      userState.setVillagerRelationship("adeline" as VillagerId, relationship);
+      const view = renderWithFeedback(VillagersContent, { locale: "en" });
+      expect(view.queryByRole("switch")).not.toBeInTheDocument();
+      const line = view.getByText("Break-ups enabled");
+      const roster = view.getByTestId("villager-roster");
+      expect(roster.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      userState.setBreakUpsDisabled(true);
+      await waitFor(() => expect(view.getByText("Break-ups disabled")).toBeVisible());
+      expect(view.queryByRole("switch")).not.toBeInTheDocument();
+    },
+  );
 
   it("hides the household setting in compact rosters", () => {
     userState.setBreakUpsDisabled(true);
