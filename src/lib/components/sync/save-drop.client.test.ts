@@ -68,12 +68,49 @@ describe("dropping", () => {
     });
   });
 
-  it("offers a working drop box before the folder path is copied", () => {
+  it("guides toward copying first, then emphasizes the drop box without disabling it", async () => {
+    vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
     render(FindSaveStep, { onread: vi.fn() });
     const box = screen.getByRole("group");
+    const copyHalf = screen.getByRole("button", { name: "Copy" }).closest(".find__half");
+    const dropHalf = box.closest(".find__half");
+    expect(copyHalf).toHaveClass("find__half--active");
+    expect(dropHalf).not.toHaveClass("find__half--active");
+    expect(box).not.toHaveClass("save-drop--emphasized");
     expect(box).not.toHaveAttribute("aria-disabled");
-    expect(box).toHaveTextContent("Drop your autosave here");
+    expect(box).toHaveAccessibleName("When you’ve found your autosave, drop it here.");
+    await fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    await waitFor(() => {
+      expect(dropHalf).toHaveClass("find__half--active");
+    });
+    expect(copyHalf).not.toHaveClass("find__half--active");
+    expect(box).toHaveClass("save-drop--emphasized");
+    expect(box).not.toHaveAttribute("aria-disabled");
+    expect(box).toHaveAccessibleName("Drop your autosave here");
+  });
+
+  it("also advances the guidance when the path is copied by hand", async () => {
+    render(FindSaveStep, { onread: vi.fn() });
+    const path = screen.getByText(/%LOCALAPPDATA%/);
+    const selection = document.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(path);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    await fireEvent.copy(document);
+    expect(screen.getByRole("group")).toHaveClass("save-drop--emphasized");
+    expect(screen.getByRole("button", { name: "Copied!" })).toBeVisible();
+    selection?.removeAllRanges();
+  });
+
+  it("reads a file dropped before copying the path", async () => {
+    const onread = vi.fn();
+    render(FindSaveStep, { onread });
+    await fireEvent.drop(screen.getByRole("group"), { dataTransfer: transfer() });
+    // This fixture isn't a save: reaching the reader's error proves Copy didn't gate delivery.
+    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn’t read that one/);
     expect(screen.getByRole("button", { name: "Copy" })).toBeVisible();
+    expect(onread).not.toHaveBeenCalled();
   });
 
   it("accepts a file immediately", async () => {

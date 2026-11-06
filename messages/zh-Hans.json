@@ -773,6 +773,7 @@
   "sync_find_open_linux": "现在打开你的文件管理器，按 Ctrl+L，粘贴后按 Enter。它应该会带你到一个有类似 {file} 文件的文件夹。把那个 autosave 文件拖到这个框里：",
   "sync_find_open_mac": "现在打开访达，按 Shift-Command-G，粘贴后按 Return。它应该会带你到一个有类似 {file} 文件的文件夹。把那个 autosave 文件拖到这个框里：",
   "sync_find_drop": "把 autosave 拖到这里",
+  "sync_find_drop_next": "找到 autosave 后，把它拖到这里。",
   "sync_redrop_label": "拖入你最新的存档",
   "sync_find_reading": "正在读取你的存档…",
   "sync_find_bad_file": "嗯，这个文件读不了。请选择以“autosave”结尾的最新文件。",

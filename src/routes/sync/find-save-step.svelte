@@ -24,6 +24,7 @@
 
   let platform = $state<SaveFolderPlatform>("windows");
   let showOtherPlatforms = $state(false);
+  let copied = $state(false);
   let showHelp = $state(false);
 
   const openParts = $derived(
@@ -43,9 +44,9 @@
 <div class="find">
   <p>{m.sync_find_intro()}</p>
 
-  <div class="find__half">
+  <div class="find__half" class:find__half--active={!copied}>
     <p>{m.sync_find_copy_lead()}</p>
-    <SaveFolderPath {platform} />
+    <SaveFolderPath {platform} bind:copied />
     {#if showOtherPlatforms}
       <div class="find__platforms" role="radiogroup" aria-label={m.sync_find_other_os()}>
         {#each [["windows", m.sync_find_os_windows()], ["linux", m.sync_find_os_linux()], ["mac", m.sync_find_os_mac()]] as const as [value, label] (value)}
@@ -78,7 +79,7 @@
     {/if}
   </div>
 
-  <div class="find__half">
+  <div class="find__half" class:find__half--active={copied}>
     <p>
       {#each openParts as part, index (index)}
         {#if typeof part === "string"}{part}{:else}<code>{AUTOSAVE_EXAMPLE}</code>{/if}
@@ -87,7 +88,12 @@
     {#if hint}
       <p class="find__hint" role="status">{hint}</p>
     {/if}
-    <SaveDrop label={m.sync_find_drop()} onsource={read} {platform} />
+    <SaveDrop
+      label={copied ? m.sync_find_drop() : m.sync_find_drop_next()}
+      emphasized={copied}
+      onsource={read}
+      {platform}
+    />
 
     <button
       type="button"
@@ -122,12 +128,19 @@
     line-height: 1.45;
   }
 
+  /* Emphasis guides the next action; both halves stay readable and usable. */
   .find__half {
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding-left: 11px;
     border-left: 1px solid color-mix(in srgb, var(--color-ink-hairline) 45%, transparent);
+    color: var(--color-ink-muted);
+  }
+
+  .find__half--active {
+    border-left: 3px solid var(--color-home-accent);
+    padding-left: 9px;
     color: var(--color-ink);
   }
 

@@ -11,10 +11,13 @@
   import type { SaveSource } from "#lib/sync/save-source.js";
 
   let {
+    emphasized = true,
     label,
     onsource,
     platform,
   }: {
+    /** Adds the next-action accent, without affecting file delivery or accessibility. */
+    emphasized?: boolean;
     label: string;
     /** Takes the save file. Throwing says this one couldn't be read. */
     onsource: (source: SaveSource) => Promise<void>;
@@ -90,6 +93,7 @@
 <div
   bind:this={box}
   class="save-drop"
+  class:save-drop--emphasized={emphasized}
   class:save-drop--over={dragOver}
   role="group"
   tabindex="0"
@@ -151,7 +155,7 @@
     justify-content: center;
     gap: 6px;
     padding: 14px;
-    border: 2px dashed color-mix(in srgb, var(--color-ink-hairline) 70%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--color-ink-hairline) 50%, transparent);
     font-family: var(--font-annotation);
     font-size: var(--text-xs);
     text-align: center;
@@ -162,8 +166,12 @@
     outline-offset: 2px;
   }
 
-  .save-drop::before,
-  .save-drop::after {
+  .save-drop--emphasized {
+    border: 2px dashed color-mix(in srgb, var(--color-ink-hairline) 70%, transparent);
+  }
+
+  .save-drop--emphasized::before,
+  .save-drop--emphasized::after {
     position: absolute;
     width: 10px;
     height: 10px;

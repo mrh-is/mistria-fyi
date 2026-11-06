@@ -490,7 +490,7 @@ describe("sharing", () => {
 describe("computer setup", () => {
   it("creates nothing for “No thanks”, & hands the save file to the courier", async () => {
     const { relay, userState } = await renderSetup();
-    await dropSave(saveFile(), "Drop your autosave here");
+    await dropSave(saveFile(), "When you’ve found your autosave, drop it here.");
     await fireEvent.click(await screen.findByRole("button", { name: "Yep!" }));
     await waitFor(() => {
       expect(fake.take).toHaveBeenCalledTimes(1);
@@ -506,7 +506,7 @@ describe("computer setup", () => {
 
   it("creates nothing, & starts nothing, for a wrong file", async () => {
     const { relay, userState } = await renderSetup();
-    await dropSave(saveFile(), "Drop your autosave here");
+    await dropSave(saveFile(), "When you’ve found your autosave, drop it here.");
     await fireEvent.click(await screen.findByRole("button", { name: "Hmm, no, try that again" }));
     expect(fake.take).not.toHaveBeenCalled();
     expect(relay.create).not.toHaveBeenCalled();
@@ -516,18 +516,21 @@ describe("computer setup", () => {
   it("promises watching only for a save file with a handle", async () => {
     await renderSetup();
     const handle = { getFile: () => Promise.resolve(saveFile()), kind: "file" };
-    await fireEvent.drop(screen.getByRole("group", { name: "Drop your autosave here" }), {
-      dataTransfer: {
-        files: [saveFile()],
-        items: [
-          {
-            getAsFile: saveFile,
-            getAsFileSystemHandle: () => Promise.resolve(handle),
-            kind: "file",
-          },
-        ],
+    await fireEvent.drop(
+      screen.getByRole("group", { name: "When you’ve found your autosave, drop it here." }),
+      {
+        dataTransfer: {
+          files: [saveFile()],
+          items: [
+            {
+              getAsFile: saveFile,
+              getAsFileSystemHandle: () => Promise.resolve(handle),
+              kind: "file",
+            },
+          ],
+        },
       },
-    });
+    );
     await fireEvent.click(await screen.findByRole("button", { name: "Yep!" }));
     await fireEvent.click(
       await screen.findByRole("button", { name: "No thanks, I’ll track here" }),

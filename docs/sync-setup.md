@@ -128,11 +128,14 @@ at the bottom.
 ## On the gaming computer
 
 1. **Find your save file.** The step admits it’s the weirdest part & promises smooth sailing after.
-   It has two halves, copying the folder & dragging the file in, both always visible at normal
-   contrast. The drop box is ready immediately for players who already know where their save is.
+   It has two halves, copying the folder & dragging the file in, both always visible and readable.
+   An accent rule marks the next action; the other half uses muted text and a hairline rule. The
+   accent starts on the folder instructions, then moves to the drop area after copying. The drop box
+   has a quieter border and no accent corners before copying, but remains ready immediately for
+   players who already know where their save is.
    - **Copy the folder.** The path (Windows by default; “On Linux, Steam Deck, or a Mac?” shows the
-     others) with a Copy button. Copying confirms the action on the button, but isn't a prerequisite
-     for dropping, pasting, or choosing a save file.
+     others) with a Copy button. The button or a manual copy of the path shifts the emphasis to the
+     drop area. Copying isn't a prerequisite for dropping, pasting, or choosing a save file.
    - **Open it.** “Now open File Explorer and paste that into the address bar at the top.” It should
      show files like `game-[numbers]-autosave.sav`.
    - **Drag in the autosave.** Chrome & Edge refuse their file picker under `%LOCALAPPDATA%`, so
@@ -297,6 +300,9 @@ One sheet per canvas row; computer boards are cropped to the 512 px column. The 
 ![Home & “Where’s your save file?”](design/sync-setup/sheets/01-start.png)
 
 ### On the gaming computer
+
+Before the path is copied, `sync_find_drop_next` says “When you’ve found your autosave, drop it
+here.” The shorter `sync_find_drop` label takes over after copying.
 
 ![Finding the save file, the farm check, & the code](design/sync-setup/sheets/02-computer.png)
 
@@ -587,7 +593,9 @@ On other devices:
 - Restore & a new farm stay inside a lane; only starting to sync erases.
 - The voice is a chill friend that speaks as “we”, & “sync” always travels with “save file”
   (maintainer).
-- Copying the folder path gates the drop box visually, never functionally (maintainer).
+- Copying the folder path moves the next-action accent to the drop box. Both halves stay readable;
+  file delivery is always available, and neither the copy nor accessibility semantics describe a
+  disabled control (maintainer, #468 / #509).
 - The farm confirmation (“Is this your farm?”) follows the first read, to catch a wrong file early
   (maintainer).
 - Windows key + R comes after the safe instructions, with a warning against pasting anything else,
@@ -606,7 +614,8 @@ On other devices:
   so; Data’s actions explain themselves (maintainer).
 - After review round two: once a code exists, setup finishes with “Go to my field guide”; the
   retired-code notice is neutral & offers “Stop syncing”; Data’s sync card holds the ongoing drop
-  box; only the drop box is ever disabled; Data’s reset stays in the lane (maintainer).
+  box; Data’s reset stays in the lane (maintainer). The drop box’s disabled announcement was
+  superseded by #468 / #509.
 - After the second mockup pass: the inactive half of “Find your save file” dims its text & controls;
   field-note highlighters run under each line at that line’s length; a bad link’s error sits under
   the paste field; Data shows the farmer & farm on separate lines (maintainer).
