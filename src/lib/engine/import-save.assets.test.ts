@@ -146,6 +146,13 @@ describe.each(SAVE_FILES)("real save %s", (name) => {
     });
   });
 
+  it("reads the day the save was made on", () => {
+    const { season, weather } = extractSave(bundle).day;
+
+    expect(season.completeness).toBe("complete");
+    expect(weather.completeness).toBe("complete");
+  });
+
   it("holds no unrecognized IDs, so every field it fully records is complete", () => {
     const extraction = extractSave(bundle);
 

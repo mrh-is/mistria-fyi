@@ -171,9 +171,14 @@
       if (bundle.quests) filesUsed.push("quests.json");
 
       importStatus = m.import_status_importing();
-      const { completed, playtime, warnings } = extractSaveProgress(bundle);
+      const { completed, day, playtime, warnings } = extractSaveProgress(bundle);
       await applyImport(
-        { completed, metadata: { ...readSaveIdentity(bundle), importedAt: Date.now() }, playtime },
+        {
+          completed,
+          day,
+          metadata: { ...readSaveIdentity(bundle), importedAt: Date.now() },
+          playtime,
+        },
         [...parseWarnings, ...warnings],
       );
     } catch {
@@ -193,9 +198,10 @@
     warnings: SaveImportWarning[],
     confirmedFarm?: string,
   ) {
-    const { completed, metadata, playtime } = save;
+    const { completed, day, metadata, playtime } = save;
     const outcome = await userState.mergeFromSave(completed, {
       confirmedFarm,
+      day,
       metadata,
       playtime,
     });

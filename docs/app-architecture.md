@@ -412,7 +412,8 @@ Progress calculation and UI row visibility are separate concerns.
   `page-search-status.svelte` names the most actionable shelf that lost rows. Search uses the same
   note.
 - **The toolbar** gives each page its own `clock` & `filter` flags in `ToolbarConfig`. The clock
-  sets `worldState`; a save sync will overwrite it (#500).
+  sets `worldState`. A save import or sync overwrites it with the save’s day, and a clock change
+  then holds until the next save arrives.
 - Mines counts floors as doable down to the first unbroken seal at or below the player's floor, and
   the floors past it wait. Finishing the seal's quest breaks it, and a floor below a seal proves
   that seal is broken. Quests read only spoilers & the items they ask for until #502. Skills &

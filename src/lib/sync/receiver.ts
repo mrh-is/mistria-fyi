@@ -344,6 +344,7 @@ export function createReceiver({
       outcome = await userState.applySyncedSave({
         ...request,
         answers,
+        day: save.day,
         extraction: save.extraction,
         metadata: save.metadata,
       });

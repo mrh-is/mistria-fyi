@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GAME_DAY } from "./import-save.js";
+import { GAME_DAY } from "./game-calendar.js";
 import {
   abnormalGapDays,
   MIN_ABNORMAL_GAP_DAYS,

@@ -25,6 +25,7 @@ const TOKEN = "HxwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEAAAA";
 async function fixture(): Promise<ReadSave> {
   return {
     completed: {},
+    day: { season: undefined, weather: undefined },
     extraction: extractSave({
       player: {
         items_acquired: [

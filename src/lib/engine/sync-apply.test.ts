@@ -95,6 +95,7 @@ function bundle(
     }),
   ) as unknown as SaveFields;
   const extraction: SaveExtraction = {
+    day: { season: field(undefined, "unknown"), weather: field(undefined, "unknown") },
     diagnostics: [],
     fields: all,
     identity: { creationVersion: field(undefined, "unknown"), playtime: field(playtime) },
