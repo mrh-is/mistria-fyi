@@ -61,7 +61,11 @@ export class TestMailbox extends Mailbox {
       }
       if (action.alarm) await this.alarm();
       if (action.alarmAt) return Response.json({ alarm: await this.ctx.storage.getAlarm() });
-      if (action.sockets) return Response.json({ sockets: this.ctx.getWebSockets().length });
+      if (action.sockets) {
+        // Count open sockets only: Miniflare takes seconds to finish a close handshake.
+        const open = this.ctx.getWebSockets().filter((socket) => socket.readyState === 1);
+        return Response.json({ sockets: open.length });
+      }
       return Response.json(Object.fromEntries(await this.ctx.storage.list()));
     }
     mailboxRequests++;
@@ -241,12 +245,6 @@ async function follow(mf: Miniflare) {
 }
 
 type FollowerSocket = NonNullable<Awaited<ReturnType<Miniflare["dispatchFetch"]>>["webSocket"]>;
-
-function closeEvent(socket: FollowerSocket): Promise<{ code: number }> {
-  return new Promise((resolve) => {
-    socket.addEventListener("close", resolve, { once: true });
-  });
-}
 
 /** Waits for the Worker's after-response failure counts to reach `total`. */
 async function failures(mf: Miniflare, total: number) {
@@ -813,12 +811,10 @@ describe("sync relay in the local Workers runtime", () => {
     expect(refused.headers.get("Retry-After")).toBe("60");
     expect(await inspect(mf, { sockets: true })).toEqual({ sockets: 20 });
     // The next handshake ends expired sockets before counting, even before the alarm runs.
-    const closed = closeEvent(sockets[0]);
     await inspect(mf, { ageSockets: 6 * HOUR });
     const admitted = await follow(mf);
     expect(admitted.status).toBe(101);
-    const event = await closed;
-    expect(event.code).toBe(1000);
+    expect(await inspect(mf, { sockets: true })).toEqual({ sockets: 1 });
     for (const socket of [...sockets, admitted.webSocket]) socket?.close();
   });
 
@@ -835,12 +831,10 @@ describe("sync relay in the local Workers runtime", () => {
     // An upload's 30-day alarm doesn't push the socket deadline back.
     expect(await status(upload(mf))).toBe(200);
     expect(await inspect(mf, { alarmAt: true })).toEqual({ alarm });
-    const closed = closeEvent(socket);
     await inspect(mf, { ageSockets: 6 * HOUR });
     const saved = await inspect(mf, { alarm: true });
     expect(saved).toHaveProperty("envelope");
-    const event = await closed;
-    expect(event.code).toBe(1000);
+    expect(await inspect(mf, { sockets: true })).toEqual({ sockets: 0 });
     const uploaded = saved as { meta: { lastUpload: number } };
     expect(await inspect(mf, { alarmAt: true })).toEqual({
       alarm: uploaded.meta.lastUpload + 30 * DAY,
