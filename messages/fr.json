@@ -1063,5 +1063,6 @@
   "shelf_explainer_not_now": "Rien de tout cela n’est possible aujourd’hui. Il faut attendre une saison, une météo ou ta progression.",
   "shelf_explainer_completed": "Tu as tout terminé ici. Bravo !",
   "toolbar_clock": "Saison et météo : {season}, {weather}",
+  "toolbar_clock_hint": "Saison et météo : {season}, {weather}. Cela trie vos listes ; indiquez le jour d’aujourd’hui.",
   "toolbar_clock_title": "Saison et météo"
 }

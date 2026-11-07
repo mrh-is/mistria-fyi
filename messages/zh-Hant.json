@@ -1041,5 +1041,6 @@
   "shelf_explainer_not_now": "今天這裡的都做不了，需要等待季節、天氣或你的進度。",
   "shelf_explainer_completed": "這裡的都完成了，真棒！",
   "toolbar_clock": "季節和天氣：{season}，{weather}",
+  "toolbar_clock_hint": "季節和天氣：{season}，{weather}。這會決定清單的排序；請設定今天的日期。",
   "toolbar_clock_title": "季節和天氣"
 }

@@ -1074,5 +1074,6 @@
   "shelf_explainer_not_now": "Сегодня здесь ничего не сделать. Нужно дождаться сезона, погоды или прогресса.",
   "shelf_explainer_completed": "Здесь всё готово. Отлично!",
   "toolbar_clock": "Сезон и погода: {season}, {weather}",
+  "toolbar_clock_hint": "Сезон и погода: {season}, {weather}. Это определяет порядок списков; укажите сегодняшний день.",
   "toolbar_clock_title": "Сезон и погода"
 }

@@ -1052,5 +1052,6 @@
   "shelf_explainer_not_now": "Nothing here can happen today. It’s waiting on a season, the weather, or your progress.",
   "shelf_explainer_completed": "You finished everything here. Nice!",
   "toolbar_clock": "Season & weather: {season}, {weather}",
+  "toolbar_clock_hint": "Season & weather: {season}, {weather}. This sorts your lists; set today’s day.",
   "toolbar_clock_title": "Season & weather"
 }

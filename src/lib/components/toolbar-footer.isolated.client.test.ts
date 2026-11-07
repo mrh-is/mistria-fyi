@@ -3,6 +3,7 @@ import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ToolbarFooterHarness from "#lib/components/toolbar-footer.test-harness.svelte";
+import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -62,6 +63,7 @@ afterEach(async () => {
   toolbarState.unregisterSourceFilters("almanac");
   toolbarState.showUnobtainable = false;
   userState.resetAll();
+  trackingReminders.clearClockHint();
   // Flush pending Svelte microtasks after unmount and state reset.
   await tick();
 });
@@ -391,6 +393,20 @@ describe("ToolbarFooter clock", () => {
 
     const dialog = await screen.findByRole("dialog", { name: "Season & weather" });
     expect(within(dialog).getByRole("radiogroup", { name: "Season" })).toBeInTheDocument();
+  });
+
+  it("shows a dot & a hint label until the clock opens", async () => {
+    renderToolbar({ clock: true });
+    expect(clockButton().querySelector("[data-clock-dot]")).toBeNull();
+
+    await trackingReminders.chooseHandTracking();
+    await tick();
+    expect(clockButton().querySelector("[data-clock-dot]")).toBeInTheDocument();
+    expect(clockButton()).toHaveAccessibleName(/This sorts your lists/);
+
+    await fireEvent.click(clockButton());
+    expect(clockButton().querySelector("[data-clock-dot]")).toBeNull();
+    expect(clockButton()).not.toHaveAccessibleName(/This sorts your lists/);
   });
 
   it("leaves the clock & filter to each page's config", () => {

@@ -10,6 +10,7 @@
   import { Button } from "#lib/components/ui/button/index.js";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import { Separator } from "#lib/components/ui/separator/index.js";
+  import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
   import {
     extractSaveProgress,
     parseExtractedSaveFiles,
@@ -218,6 +219,8 @@
         farmPrompt = { farm: outcome.farm, save, warnings };
         break;
       case "applied":
+        // The import sets the day, so the clock no longer needs a nudge.
+        trackingReminders.clearClockHint();
         importResult = { ...outcome.result, warnings };
         break;
       case "busy":
