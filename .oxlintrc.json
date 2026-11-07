@@ -113,7 +113,7 @@
     "unicorn/number-literal-case": "off", // Conflicts with oxfmt's lowercase hex digits.
 
     // Contradicts a stricter rule that's on.
-    "default-case": "off", // typescript/switch-exhaustiveness-check proves switches complete.
+    "default-case": "off", // The typed exhaustiveness rule skips .svelte scripts. Use `satisfies never` in a default branch there, or move the switch to .ts.
     "eslint/require-await": "off", // typescript/require-await knows when an async function returns a thenable.
     "typescript/promise-function-async": "off", // Its `async` fix makes require-await flag pass-through returns.
     "unicorn/no-nested-ternary": "off", // eslint/no-nested-ternary is stricter.
