@@ -219,21 +219,25 @@ review:
 - a pending agent review.
 
 Mark it ready (`gh pr ready`) as soon as nothing on that list remains. Don’t wait for CI. A pending
-or failing run doesn’t keep a PR in draft, because catching those problems is CI’s job. If a new gap
-appears, convert the PR back with `gh pr ready --undo`.
+or failing run doesn’t keep a PR in draft, because catching those problems is CI’s job. The
+exception is a failure that reveals a gap, which goes on the list above. If a new gap appears,
+convert the PR back with `gh pr ready --undo`.
 
 ### Who marks ready
 
 The agent that finishes the last step before human review marks the PR ready:
 
-- **Fresh-context self-review:** when that review is enough, the implementing agent marks the PR
-  ready after addressing its findings.
-- **Separate agent review:** when the PR needs one (see
-  [Review selection](agent-verification.md#review-selection)), the reviewing agent marks it ready if
-  no blocking findings remain. Otherwise, the PR stays a draft, and the agent that resolves the
-  findings marks it ready, unless the fixes need another review.
+- **Review the implementing agent requested:** this covers a fresh-context subagent, another model,
+  or a review command (see [Review selection](agent-verification.md#review-selection)). The
+  implementing agent posts the result, resolves the findings, & marks the PR ready.
+- **Review from a separate session:** the reviewing agent marks the PR ready if no blocking findings
+  remain. Otherwise, the PR stays a draft, and the implementing agent resolves the findings & marks
+  it ready, unless the fixes need another review.
 - **Maintainer as reviewer:** when the maintainer is the chosen reviewer for a high-risk PR, the
   implementing agent marks it ready once the rest of the list is clear.
+
+A finding is blocking until it has a disposition under
+[Review records](agent-verification.md#review-records).
 
 ### CI after ready
 
@@ -242,11 +246,20 @@ marked it. The agent owns CI until it passes, because the maintainer’s queue l
 that are failing, and nobody else will notice one. If your session has to end first, name the PR in
 your final report.
 
-When CI fails on a ready PR, the kind of fix decides its state:
+When you push to a ready PR, for CI or any other reason, the kind of change decides its state:
 
-- **Mechanical fix:** the PR stays ready for a fix such as lint, formatting, or a flaky test.
-- **Substantive fix:** when the fix changes behavior or reveals a gap, convert the PR to a draft.
-  Mark it ready again after a review covers the fix.
+- **Mechanical change:** the PR stays ready for a change such as lint, formatting, a clean conflict
+  resolution, or a test fix that leaves the assertions the same.
+- **Substantive change:** when the change alters behavior or reveals a gap, convert the PR to a
+  draft. “Who marks ready” applies again, with a review scoped to the change, and that review
+  doesn’t count as the one re-review. A PR with the maintainer as reviewer returns to ready once the
+  change is in.
+
+A failure you can’t fix, such as one also failing on `main`, doesn’t change the PR’s state. Report
+it on the PR & file an issue for it.
+
+The implementing agent also resolves merge conflicts while its session is active. After that, the
+maintainer asks for a fix.
 
 ### Final state
 
@@ -255,7 +268,9 @@ maintainer merges on GitHub, and an agent may get no moment to fix anything afte
 
 - **PR body:** before `gh pr ready`, rewrite the body so it describes the final state of the change.
   Remove anything that only held true while the work was in progress, such as “the PR remains a
-  draft” or a request for a check that has since finished.
+  draft” or a request for a check that has since finished. When a separate session will review the
+  PR, the implementing agent does this before requesting that review. The reviewing agent leaves the
+  PR a draft if the body is stale.
 - **Post-merge work:** when an issue’s acceptance criteria include anything that can happen only
   after the merge, such as a production check, reference that issue with `Refs #N`, not `Closes #N`.
   `Closes` would close the issue with the item still unchecked. Whoever finishes the item closes the
