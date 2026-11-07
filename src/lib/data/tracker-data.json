@@ -39494,11 +39494,14 @@
       "category": "materials",
       "sources": [
         {
-          "type": "recipe",
-          "method": "craft",
-          "recipeId": "voidite"
+          "type": "mine",
+          "biomeId": "ancient_ruins"
         }
-      ]
+      ],
+      "visibility": {
+        "type": "mineFloor",
+        "floor": 80
+      }
     },
     "stone_shell": {
       "category": "artifacts",
@@ -78363,13 +78366,6 @@
         }
       ]
     },
-    "voidite": {
-      "sources": [
-        {
-          "type": "default"
-        }
-      ]
-    },
     "coral": {
       "sources": [
         {
@@ -81591,20 +81587,6 @@
       ]
     },
     "shard_mass": {
-      "sources": [
-        {
-          "type": "default"
-        }
-      ]
-    },
-    "oil": {
-      "sources": [
-        {
-          "type": "default"
-        }
-      ]
-    },
-    "ore_copper": {
       "sources": [
         {
           "type": "default"

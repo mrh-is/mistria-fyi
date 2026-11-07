@@ -12,6 +12,7 @@ import { PipelineDiagnostics } from "../diagnostics.js";
 import { appendToMultimap, forEachItem } from "../extractor-helpers.js";
 import { compareStrings } from "../ordering.js";
 import { createRequirementContext } from "../parse/requirements.js";
+import { craftingMenuProducts } from "./recipe-menus.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { ItemId, Recipe, RecipeId } from "#lib/types/tracker-data.js";
@@ -72,9 +73,16 @@ export function extractRecipes(
 } {
   const diagnostics = sharedDiagnostics ?? new PipelineDiagnostics();
   const entries = collectRecipeEntries(fiddle);
+  const menuProducts = craftingMenuProducts(fiddle);
+  const menuRecipeIds =
+    menuProducts &&
+    new Set(
+      entries.filter(({ itemId }) => menuProducts.has(itemId)).map(({ recipeId }) => recipeId),
+    );
   const itemIdToRecipeId = new Map<string, string>();
   const grouped = new Map<string, RawRecipeEntry[]>();
   for (const entry of entries) {
+    if (menuRecipeIds && !menuRecipeIds.has(entry.recipeId)) continue;
     itemIdToRecipeId.set(entry.itemId, entry.recipeId);
     appendToMultimap(grouped, entry.recipeId, entry);
   }

@@ -8,6 +8,7 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
 
 const STARTER_RECIPE = "basic_wood_chest" as RecipeId;
+const STARTER_COUNT = 293;
 
 describe("WelcomeCard", () => {
   it("asks how to work, with sync or by hand", async () => {
@@ -24,7 +25,7 @@ describe("WelcomeCard", () => {
       expect(userState.trackingLane).toBe("manual");
       expect(userState.hasAnyProgress).toBe(true);
     });
-    expect(userState.starterItems?.count).toBe(296);
+    expect(userState.starterItems?.count).toBe(STARTER_COUNT);
 
     userState.starterItems?.undo();
     await tick();
@@ -35,7 +36,7 @@ describe("WelcomeCard", () => {
     await userState.startTrackingByHand();
     userState.toggleAlmanacRecipe(STARTER_RECIPE);
     const notice = userState.starterItems;
-    expect(notice?.count).toBe(295);
+    expect(notice?.count).toBe(STARTER_COUNT - 1);
     expect(userState.provenanceOf(`almanacRecipes/${STARTER_RECIPE}`)?.source).toBe("manual");
 
     notice?.undo();
@@ -51,7 +52,7 @@ describe("WelcomeCard", () => {
     await userState.startTrackingByHand();
     userState.toggleAlmanacItem("turnip" as ItemId);
     const notice = userState.starterItems;
-    expect(notice?.count).toBe(296);
+    expect(notice?.count).toBe(STARTER_COUNT);
     expect(userState.state.progress.almanacRecipes.has(STARTER_RECIPE)).toBe(true);
     userState.toggleAlmanacRecipe(STARTER_RECIPE);
     userState.toggleAlmanacRecipe(STARTER_RECIPE);
@@ -64,7 +65,7 @@ describe("WelcomeCard", () => {
 
   it("does not reapply the starter items after undo and backup restore", () => {
     userState.markDefaultUnlocksComplete();
-    expect(userState.starterItems?.count).toBe(296);
+    expect(userState.starterItems?.count).toBe(STARTER_COUNT);
     userState.starterItems?.undo();
     const backup = userState.exportBackup();
     userState.resetAll();
