@@ -43,10 +43,12 @@ export interface RecipePlacement {
   recipeId: RecipeId;
 }
 
+const PET_TREAT_ITEMS = ["cat_treat", "dog_treat"] as ItemId[];
+
 /**
- * Recipes made by almanac entries, grouped in almanac order. Each category lists a recipe once,
- * pictured with the first matching entry's canonical item. A recipe can appear in several
- * categories. The Recipes page adds a separate section for recipes with no almanac placement.
+ * Recipes made by almanac entries, grouped in almanac order. Ranching also lists the two pet
+ * treats, which the Mill makes but the almanac leaves out. A shared recipe counts in each
+ * section that shows it. The page total counts it once.
  */
 export function recipePlacements(): {
   categoryId: AlmanacCategoryId;
@@ -55,8 +57,11 @@ export function recipePlacements(): {
   return recordEntries(trackerData.almanac).flatMap(([categoryId, category]) => {
     const seen = new Set<RecipeId>();
     const recipes: RecipePlacement[] = [];
-    for (const entry of category.items) {
-      const itemId = entry.itemIds[0];
+    const itemIds = category.items.map((entry) => entry.itemIds[0]);
+    if (categoryId === "ranching") {
+      itemIds.push(...PET_TREAT_ITEMS.filter((id) => Object.hasOwn(trackerData.items, id)));
+    }
+    for (const itemId of itemIds) {
       const recipeId = recipeForItem(trackerData.items[itemId]);
       if (!recipeId || seen.has(recipeId)) continue;
       seen.add(recipeId);

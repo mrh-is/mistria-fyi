@@ -14,6 +14,7 @@ import { assembleTrackerData } from "./assemble.js";
 import { parseCliOptions, resolveCallerPath } from "./cli-options.js";
 import { publishFiles } from "./emit/publish.js";
 import { extractSprites, extractVillagerSprites, publishSprites } from "./emit/sprites.js";
+import { requireCraftingMenus } from "./extract/recipe-menus.js";
 import { extractVillagerIconSprites } from "./extract/villagers.js";
 import { assertGameLanguageMapExhaustive } from "./localize/locale-codes.js";
 import { createAssetsLocalizer, generateLocaleManifest } from "./localize/localize.js";
@@ -163,6 +164,7 @@ async function main(): Promise<void> {
     return;
   }
   console.log(`  Game version: ${version}\n`);
+  requireCraftingMenus(fiddle);
 
   console.log("Step 2: Evaluating expressions...");
   evaluateExpressions(fiddle);

@@ -58,6 +58,45 @@ describe("extractRecipes", () => {
     vi.restoreAllMocks();
   });
 
+  it("tracks menu recipes and keeps every output of a listed recipe identity", () => {
+    const millFeed = { manual_order: [] as string[], tags: ["milled_animal_feed"] };
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          materials: {
+            chair_blue: { name: "Chair", recipe: [], recipe_key: "chair" },
+            chair_red: { name: "Chair", recipe: [], recipe_key: "chair" },
+            drink: { kitchen_tier_requirement: 2, name: "Drink", recipe: [] },
+            food: { name: "Food", recipe: [], stars: 2 },
+            oil: { name: "Oil", recipe: [], recipe_is_default: true },
+            snack: { name: "Snack", recipe: [], tags: ["milling"] },
+            treat: { name: "Treat", recipe: [], tags: ["milled_animal_feed"] },
+          },
+        },
+      },
+      ui: {
+        crafting: {
+          cooking: { categories: [] },
+          milling: {
+            categories: [{ sub_categories: [millFeed] }],
+          },
+          woodcrafting: {
+            categories: [{ sub_categories: [{ manual_order: ["chair_red"] }] }],
+          },
+        },
+      },
+    });
+
+    const { recipeIdByItemId, recipes } = extractRecipes(fiddle);
+
+    expect(Object.keys(recipes).toSorted()).toEqual(["chair", "drink", "food", "treat"]);
+    expect(recipeIdByItemId.get("chair_blue")).toBe("chair");
+    expect(recipeIdByItemId.has("oil")).toBe(false);
+
+    millFeed.manual_order.push("oil");
+    expect(extractRecipes(fiddle).recipeIdByItemId.get("oil")).toBe("oil");
+  });
+
   it.each([["blacksmithing", 3], "blacksmithing"])("rejects malformed recipe tags: %j", (tags) => {
     const fiddle = makeFiddle({
       items: { weapons: { swords: { dragon_forged_sword: { recipe: [], tags } } } },

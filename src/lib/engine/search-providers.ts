@@ -181,8 +181,8 @@ export function* searchQuests({
 }
 
 /**
- * Recipes are gated by recipe visibility, not item visibility. A recipe with an almanac placement
- * is pictured with the item that row shows.
+ * Recipes are gated by recipe visibility, not item visibility. Each is pictured with the item its
+ * Recipes page row shows.
  */
 export function* searchRecipes({
   locale,
@@ -229,7 +229,8 @@ function collectible<Chunk extends "mount" | "perks" | "pets/cosmetic_sets" | "p
 let recipeSprites: ReadonlyMap<RecipeId, ItemId> | undefined;
 
 /**
- * The item from the recipe's first almanac placement, when it has one.
+ * The item the Recipes page pictures for `id`, from its first placement there. A recipe that page
+ * doesn't list has no picture.
  */
 function recipeSprite(id: RecipeId): ItemId | undefined {
   recipeSprites ??= buildRecipeSprites();

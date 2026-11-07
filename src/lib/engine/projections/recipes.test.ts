@@ -1,10 +1,33 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
+import { getName } from "#lib/data/names.js";
 import { recipeForItem, recipePlacements } from "#lib/engine/projections/recipes.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 describe("recipePlacements", () => {
   const placements = recipePlacements();
+
+  it("places every counted recipe on the page", () => {
+    const placed = new Set(
+      placements.flatMap(({ recipes }) => recipes.map(({ recipeId }) => recipeId)),
+    );
+    const missing = recordKeys(trackerData.recipes)
+      .filter((id) => !placed.has(id))
+      .map((id) => getName("recipes", id, "en"));
+
+    expect(missing).toEqual([]);
+  });
+
+  it("places both pet treat recipes in Ranching", () => {
+    const ranching = placements.find(({ categoryId }) => categoryId === "ranching");
+    expect(ranching?.recipes).toEqual(
+      expect.arrayContaining([
+        { itemId: "cat_treat", recipeId: "cat_treat" },
+        { itemId: "dog_treat", recipeId: "dog_treat" },
+      ]),
+    );
+  });
 
   it("follows almanac category order, skipping categories with no recipes", () => {
     const order = Object.keys(trackerData.almanac);
@@ -31,7 +54,9 @@ describe("recipePlacements", () => {
         const first = entries.find(
           (entry) => recipeForItem(trackerData.items[entry.itemIds[0]]) === recipeId,
         );
-        expect(first?.itemIds[0]).toBe(itemId);
+        const ranchingTreat =
+          categoryId === "ranching" && ["cat_treat", "dog_treat"].includes(itemId);
+        expect(first?.itemIds[0] ?? (ranchingTreat ? itemId : undefined)).toBe(itemId);
       }
     }
   });
