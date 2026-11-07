@@ -379,6 +379,11 @@ identities by `recipe_key ?? itemId`. Only items with a `recipe` array or a `rec
 included; items with `recipe_is_default` but neither (such as `ore_gold`) are excluded with a
 diagnostic log, and `recipe_is_default` must agree across a group.
 
+Full extraction keeps an identity when at least one of its products appears in a crafting menu. The
+pipeline reads the menus' item lists and tag selectors, plus the kitchen's rank and tier lists. A
+raw recipe formula can remain in the item data even when the game offers no way to make it. The
+recipe stays out of the tracker until a menu includes it.
+
 Assembly then collects recipe acquisition alongside item acquisition from quest and letter rewards,
 store and festival stock, museum rewards, the chicken statue, fishing chests, the wishing well,
 mines chests, scroll bundles, renown, perks, dragon-forged defaults, and a short exception list.

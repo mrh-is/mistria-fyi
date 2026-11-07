@@ -108,7 +108,7 @@ test.describe("keyboard and focus accessibility", () => {
 
     const itemUndo = page.getByRole("button", { exact: true, name: "Undo" });
     const starterUndo = page.getByRole("button", { name: "Undo starter checks" });
-    await expect(page.getByText("We checked off your starter items (296)")).toBeVisible();
+    await expect(page.getByText("We checked off your starter items (293)")).toBeVisible();
     await itemUndo.click({ trial: true });
     await starterUndo.click();
 

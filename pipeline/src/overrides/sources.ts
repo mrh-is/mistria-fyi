@@ -296,9 +296,12 @@ export function getItemOverrides(wishingWellCost: number): Partial<Record<ItemId
     // void_powder: Dropped by void monsters in the Ancient Ruins biome. The native monster is
     // `monsters.cat.cat_void`; `void_cat` is its pet skin, not a monster ID.
     ["void_powder" as ItemId]: [{ type: "monster" as const, monsterId: "cat_void" as MonsterId }],
-    // --- Mine & exploration items ---
     // void_stone: Mine drop from the Ancient Ruins biome, also quest item
     ["void_stone" as ItemId]: [{ type: "mine" as const, biomeId: "ancient_ruins" as MinesBiomeId }],
+    // --- Mine & exploration items ---
+    // dungeons/dungeons.toml spawns both Voidite breakables in the Ancient Ruins.
+    // object_prototypes/breakable.toml gives both objects a Voidite drop.
+    ["voidite" as ItemId]: [{ type: "mine" as const, biomeId: "ancient_ruins" as MinesBiomeId }],
 
     // --- Monster drops ---
     // mob_coin, medium_mob_coin, large_mob_coin: Currency dropped by mine monsters
