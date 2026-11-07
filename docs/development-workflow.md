@@ -409,11 +409,9 @@ without changing that issue. Each report still runs when the other fails.
 
 ### Test projects
 
-`vite.config.ts` splits Vitest into projects by what each test needs to run. A file path selects the
-right tests, but does not prevent unrelated app projects from starting their Cloudflare proxy &
-workerd before filtering. For focused plain-Node runs, pass both the file path & `--project` as
-described [above](#executing-tests). Select a whole project with
-`pnpm exec vitest run --project=<name>`.
+`vite.config.ts` splits Vitest into projects by what each test needs to run.
+[Focused checks](agent-verification.md#focused-checks) covers passing `--project` for focused runs.
+Select a whole project with `pnpm exec vitest run --project=<name>`.
 
 | Project           | Files                                                              | Environment & setup                                               |
 | ----------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
@@ -497,7 +495,7 @@ because licensed game assets are not distributed with the repository.
 The commands above cover routine regeneration from the same game version. When moving pipeline input
 to a new Fields of Mistria version, follow the
 [game version update protocol](game-version-update-protocol.md) instead. It requires a semantic data
-diff and separate compatibility decisions for persisted state, backups, save imports, and transfers.
+diff and separate compatibility decisions for persisted state, backups, & save imports.
 
 ---
 

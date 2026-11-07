@@ -4,6 +4,8 @@ Supersedes
 [App update detection](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-16-app-update-detection.md)
 and the consent-based update flow it preserved (#360). Detection itself is unchanged.
 
+Note: Transfer holds no longer exist; #433 & #449 removed progress-transfer QR codes.
+
 ## Context
 
 A new version waited for a player to accept the “Refresh” toast, and a player who ignored it stayed
