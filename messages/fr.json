@@ -462,6 +462,7 @@
   "import_error_unexpected": "Une erreur inattendue s'est produite lors de l'importation.",
   "import_farm_title": "Cette sauvegarde vient d’une autre ferme",
   "import_farm_description": "Si vous fusionnez cette sauvegarde, les progrès de plusieurs fermes seront réunis. Le guide conservera les progrès que vous avez déjà enregistrés.",
+  "import_farm_unnumbered_description": "On ne sait pas à quelle ferme appartient cette sauvegarde. Si vous la fusionnez, on ajoutera sa progression à ce que vous avez déjà enregistré.",
   "import_farm_merge": "Fusionner les progrès",
   "import_farm_cancel": "Annuler",
   "import_error_sync_active": "Arrêtez la synchronisation sur cet appareil avant d’importer une sauvegarde.",

@@ -291,13 +291,12 @@ The app processes save files entirely client-side. No save data is uploaded.
    plus the diagnostics the player sees as warnings (`absent` & `invalid-value` are diagnostics
    only). It doesn’t count anything. See the
    [decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-save-extraction-completeness.md).
-5. `mergeFromSave` refuses the import if this device is syncing. It compares the incoming farm with
-   the tracked farm using the same save number & creation version rules as sync. If the import would
-   combine known different farms, it asks the player to cancel or explicitly merge. The write
-   rechecks the farms when the player confirms. A confirmed merge keeps the combined progress and
-   tracks the identified farm from the most recent import. Renamed saves & extracted JSON may lack a
-   save number. An unidentified save leaves an existing known identity in place. Each tab accepts
-   one import at a time.
+5. `mergeFromSave` refuses the import if this device is syncing. It asks the player to cancel or
+   explicitly merge when save numbers or readable creation versions differ. It also asks when the
+   tracker has a save number and the incoming save lacks one. Renamed saves & extracted JSON can
+   both lack a save number. The write rechecks the farms when the player confirms. A confirmed merge
+   keeps the combined progress and tracks the farm from the most recent numbered import. An
+   unnumbered save keeps an existing numbered identity. Each tab accepts one import at a time.
 6. `mergeFromSave` unions the imported state into the current `userState.state.progress`, taking max
    values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
    quest state (`none` → `obtained` → `completed`). Relationships, the break-ups setting, & child
@@ -312,7 +311,18 @@ Manual import & sync share farm comparison, fact ordering, fact writes, & save p
 `save-identity.ts` & `save-progress.ts`. Manual import keeps its additive merge & household cascade.
 It can recover quarantined progress after the unreadable copy is safe. Sync uses its provenance &
 completeness policy to decide when to remove facts or ask. It can switch farms with a backup, and
-records a sync receipt when it applies a bundle. See [Applying a bundle](sync.md#applying-a-bundle).
+records a sync receipt when it applies a bundle.
+
+- Manual import accepts a first save onto hand-tracked progress without asking about the farm. Sync
+  asks whether the bundle belongs to the farm already tracked when either farm is unidentified and
+  there is progress to protect. Both flows use creation versions to distinguish farms that drew the
+  same number. Manual import also treats a version mismatch as evidence of different farms when a
+  number is missing. Matching creation versions alone leave the farm unidentified.
+- An older same-farm save can merge by manual import without a question. Its playtime becomes the
+  baseline, so a backup taken after the import carries that lower baseline when restored. Sync asks
+  before applying a save whose playtime is lower than the stored baseline.
+
+See [Applying a bundle](sync.md#applying-a-bundle).
 
 Numeric levels are normalized by `normalizeLevel` in `src/lib/engine/progress.ts` at extraction
 time, and `mergeFromSave` clamps them again before installing. Import stays additive, so an invalid
@@ -495,6 +505,15 @@ usable anywhere, though unlocked through mine progression.
 `app.html`'s two inline scripts are allowed by SHA-256 hash in every policy, not by nonce: SvelteKit
 refuses to prerender a template containing `%sveltekit.nonce%`. Editing either script changes its
 hash, which the build recomputes and `security-headers.test.ts` pins.
+
+Production pages log an expected CSP error, usually twice per load, for one inline script that
+Cloudflare adds to each HTML response. The script loads
+`/cdn-cgi/challenge-platform/scripts/jsd/main.js` for JavaScript Detections, part of Bot Fight Mode,
+so branch previews don’t log it. It embeds a per-response ray ID, so its hash changes on every load
+and can’t be allowed. Browsers ignore `unsafe-inline` in a policy with hashes or nonces, so allowing
+the script would mean dropping all of them, and the page works without it. Web Analytics stays off
+for the zone, because the privacy page promises no analytics; a CSP error for
+`static.cloudflareinsights.com` means someone turned it back on.
 
 ### Prerendered pages
 

@@ -46,8 +46,8 @@
   // One keyed list, not several, so a section changing shelves is moved rather than remounted and
   // keeps its expansion & rendered rows.
   let entries = $derived.by((): Entry[] => {
-    // A lone section has nothing to be grouped apart from.
-    if (items.length < 2) {
+    // Search labels the matching rows within each section. The full section's shelf can disagree.
+    if (forceOpen || items.length < 2) {
       return items.map((item) => ({ closed: false, item, key: getKey(item), kind: "section" }));
     }
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- A scratch index, rebuilt per run.
@@ -60,7 +60,7 @@
       const members = shelved.get(shelf) ?? [];
       if (members.length === 0) return [];
       const heading = hasHeading(shelf);
-      const closed = heading && !openShelves[shelf] && !forceOpen;
+      const closed = heading && !openShelves[shelf];
       return [
         ...(heading ? [{ count: members.length, key: shelf, kind: "heading" as const }] : []),
         ...members.map((item) => ({ closed, item, key: getKey(item), kind: "section" as const })),
@@ -100,7 +100,7 @@
       <ShelfHeading
         class="px-2"
         count={entry.count}
-        expanded={openShelves[entry.key] || forceOpen}
+        expanded={openShelves[entry.key]}
         onToggle={() => {
           openShelves[entry.key] = !openShelves[entry.key];
         }}
