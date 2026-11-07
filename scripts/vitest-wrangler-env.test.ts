@@ -2,7 +2,10 @@ import { existsSync, rmSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { configureVitestWranglerEnv } from "./vitest-wrangler-env.js";
+import {
+  configureVitestWranglerEnv,
+  resolvePlatformProxyPersistence,
+} from "./vitest-wrangler-env.js";
 
 const directories: string[] = [];
 
@@ -49,5 +52,28 @@ describe("Vitest Wrangler environment", () => {
     const inherited = { ...env };
     expect(configure(inherited)).toBeUndefined();
     expect(inherited).toEqual(env);
+  });
+});
+
+describe("Cloudflare platform proxy persistence", () => {
+  it.each([undefined, "/preview/state"])(
+    "gives Vitest temporary state (preview path %s)",
+    (path) => {
+      expect(
+        resolvePlatformProxyPersistence({ MISTRIA_PREVIEW_PERSIST_DIR: path, VITEST: "true" }),
+      ).toBe(false);
+    },
+  );
+
+  it("keeps the preview directory when running outside Vitest", () => {
+    expect(
+      resolvePlatformProxyPersistence({ MISTRIA_PREVIEW_PERSIST_DIR: "/preview/state" }),
+    ).toEqual({
+      path: "/preview/state",
+    });
+  });
+
+  it("uses Wrangler's default state directory for ordinary dev servers", () => {
+    expect(resolvePlatformProxyPersistence({})).toBeUndefined();
   });
 });
