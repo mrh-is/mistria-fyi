@@ -154,6 +154,17 @@ async function untilKind(receiver: Receiver, kind: ReceiverStatus["kind"], timeo
   return untilStatus(receiver, (status) => status.kind === kind, timeout);
 }
 
+/**
+ * Gives work that must not happen time to show itself. A test expecting nothing has no completion
+ * signal to await, so this waits as long as hashing, decrypting, & the fake locks need. It can only
+ * hide a regression, never fail a correct receiver.
+ */
+async function settle(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 40);
+  });
+}
+
 function file(bytes: Uint8Array<ArrayBuffer>): File {
   return new File([bytes], FARM_FILE, { lastModified: 2000 });
 }
@@ -434,6 +445,7 @@ describe("one tab leads", () => {
     const second = make();
     second.start();
     second.update();
+    await settle();
     expect(relay.read).toHaveBeenCalledTimes(1);
     expect(relay.subscribe).toHaveBeenCalledTimes(1);
 
@@ -452,6 +464,7 @@ describe("one tab leads", () => {
     const lockless = make({ locks: () => undefined });
     lockless.start();
     lockless.update();
+    await settle();
     expect(relay.read).not.toHaveBeenCalled();
     expectNothingApplied();
   });
@@ -460,6 +473,7 @@ describe("one tab leads", () => {
     const relay = fakeRelay();
     const { receiver } = await load(blob({}), relay);
     receiver.start();
+    await settle();
     expect(relay.read).not.toHaveBeenCalled();
     expect(relay.subscribe).not.toHaveBeenCalled();
     expect(receiver.status.kind).toBe("idle");
@@ -618,6 +632,7 @@ describe("a store it must not touch", () => {
     const { receiver, userState } = await load(newer, relay);
     const writes = countWrites();
     receiver.start();
+    await settle();
     expect(relay.read).not.toHaveBeenCalled();
     expect(writes.count()).toBe(0);
     expect(localStorage.getItem(PROGRESS_KEY)).toBe(newer);
@@ -631,6 +646,7 @@ describe("a store it must not touch", () => {
     const relay = fakeRelay(await envelope(4, saveBytes(SEASON)));
     const { receiver, userState } = await load("{not json", relay);
     receiver.start();
+    await settle();
     expect(localStorage.getItem(PROGRESS_KEY)).toBe("{not json");
     expect(userState.persistenceFailureKind).toBe("unreadable");
     expect(userState.syncBlocked).toBe(true);
@@ -1059,6 +1075,8 @@ describe("switching farms", () => {
 
       // The new question stays stable until its effect changes, and its own answer can apply.
       receiver.refresh();
+      await settle();
+      expect(questionId(receiver.status)).toBe(nextQuestion);
       await receiver.answer(nextQuestion, "accept");
       expect(receiver.status.kind).toBe("up-to-date");
       expect(userState.farmSwitchBackup?.farmName).toBe("Rosewood");
@@ -1195,6 +1213,7 @@ describe("the computer's own saves", () => {
     const { receiver, userState } = await load(computer, relay);
     const writes = countWrites();
     receiver.start();
+    await settle();
     expect(relay.subscribe).not.toHaveBeenCalled();
 
     expect(await receiver.applyLocalSave(file(saveBytes(SEASON)))).toBe("applied");
@@ -1301,12 +1320,11 @@ describe("what the review found", () => {
     const { receiver, statuses } = await load(ASKS, relay);
     receiver.start();
     await untilKind(receiver, "asking");
-    const asked = questionId(receiver.status);
     const [socket] = relay.sockets;
     const statusCount = statuses.length;
     socket.onpush(await envelope(5, GARBAGE));
     socket.onpush(await envelope(6, saveBytes(2 * SEASON + GAME_DAY)));
-    await receiver.answer(asked, "accept");
+    await untilKind(receiver, "up-to-date");
     expect(statuses.slice(statusCount)).toEqual([{ kind: "up-to-date" }]);
     expect(receiver.status.kind).toBe("up-to-date");
     expect(stored().local.syncReceipt).toMatchObject({ counter: 6 });
