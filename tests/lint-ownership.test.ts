@@ -1,6 +1,6 @@
 // Pins which linter owns which surface (docs/development-workflow.md#tool-ownership). Each probe in
-// tests/lint-probes/ breaks the same rules on purpose: an untyped oxlint rule (`no-debugger`), a
-// type-aware oxlint rule (`no-floating-promises`), and, in the template, two ESLint rules.
+// tests/lint-probes/ breaks the same rules on purpose: an untyped oxlint rule (`no-debugger`),
+// two type-aware oxlint rules, and, in the template, two ESLint rules.
 //
 // The `.svelte` expectation records a known gap: tsgolint doesn't read `.svelte` files, so typed
 // rules skip their `<script>` blocks. When this test fails because that rule starts firing there,
@@ -79,16 +79,20 @@ async function eslintRules(file: string): Promise<string[]> {
 describe("lint tool ownership", () => {
   const oxlint = oxlintRules();
   const untyped = "eslint(no-debugger)";
-  const typed = "typescript(no-floating-promises)";
+  const typed = ["typescript(no-floating-promises)", "typescript(switch-exhaustiveness-check)"];
 
   it.each(["probe.ts", "probe.svelte.ts"])("oxlint runs untyped & typed rules on %s", (file) => {
     expect(oxlint.get(file)).toContain(untyped);
-    expect(oxlint.get(file)).toContain(typed);
+    for (const rule of typed) {
+      expect(oxlint.get(file)).toContain(rule);
+    }
   });
 
   it("oxlint runs untyped rules, but not typed rules, in .svelte <script> blocks", () => {
     expect(oxlint.get("probe.svelte")).toContain(untyped);
-    expect(oxlint.get("probe.svelte")).not.toContain(typed);
+    for (const rule of typed) {
+      expect(oxlint.get("probe.svelte")).not.toContain(rule);
+    }
   });
 
   it("ESLint owns Svelte template rules", async () => {

@@ -592,6 +592,11 @@ minute per run. `svelte-check` still type-checks them. Keep nontrivial async or 
 in `.ts` or `.svelte.ts` modules, where the typed rules apply. When tsgolint gains Svelte support,
 the probe test fails; that's the trigger to revisit this boundary.
 
+This gap includes `typescript/switch-exhaustiveness-check`. For a union `switch` in a `.svelte`
+script, switch on a local variable and use `return value satisfies never;` in the `default` branch.
+`svelte-check` reports any union member that reaches that branch. You can also move the switch to a
+`.ts` module, where oxlint checks for missing cases.
+
 The same test checks that oxfmt formats `.svelte` files. That needs `.oxfmtrc.json`'s `svelte`
 option; without it, `oxfmt --check` skips every `.svelte` file without saying so.
 
@@ -608,7 +613,7 @@ Rules turned off in `.oxlintrc.json` fall into three groups:
   DOM APIs, oxfmt's output, and so on). The inline reason is the whole record; revisit only if the
   convention changes.
 - **Contradicted:** a stricter or overlapping rule is on (`default-case` versus
-  `switch-exhaustiveness-check`, for example).
+  `switch-exhaustiveness-check` in TypeScript modules, for example).
 - **Deferred:** worthwhile, but the backlog needs its own scoping. Each has a revisit condition:
 
 | Rule                                             | Findings | Revisit when                                                               |
