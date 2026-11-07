@@ -1,7 +1,7 @@
 /**
  * Work that an update's reload must not interrupt and that the page's markup can't show: a save
- * import or backup restore being applied. Open dialogs & focused fields count as busy on their own
- * (see `safe-reload.ts`).
+ * import or backup restore being applied, a sync apply (the receiver), & a queued sync task (the
+ * courier). Open dialogs & focused fields count as busy on their own (see `safe-reload.ts`).
  *
  * Holding is reference-counted, so overlapping tasks each release only their own hold.
  */
