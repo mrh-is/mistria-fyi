@@ -121,6 +121,7 @@
         explains
         level={2}
         forceOpen={!!nameFilter || Boolean(targetedId) || indexOpenedFolds}
+        labelFirstShelf={!!nameFilter}
         getKey={(villager) => villager.id}
         getShelf={villagerShelf}
         group={roster}

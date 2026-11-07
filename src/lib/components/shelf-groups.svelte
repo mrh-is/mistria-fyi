@@ -1,5 +1,6 @@
 <script lang="ts" generics="T">
   import ShelfFold from "#lib/components/shelf-fold.svelte";
+  import ShelfHeading from "#lib/components/shelf-heading.svelte";
   import { SHELVES } from "#lib/engine/shelves.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
@@ -10,7 +11,8 @@
 
   /**
    * Things inside a section, grouped the way a page groups its sections. The first shelf with
-   * anything on it reads as the section's own list, and the shelves after it fold away.
+   * anything on it reads as the section's own list, and the shelves after it fold away. A search
+   * labels the matching shelves. A lone To do shelf needs no extra heading.
    */
   let {
     empty,
@@ -21,6 +23,7 @@
     group,
     isLeaving,
     items,
+    labelFirstShelf = true,
     level = 3,
   }: {
     empty?: Snippet;
@@ -33,6 +36,8 @@
     /** A row finishing now stays where it is until it has had time to leave. */
     isLeaving?: (item: T) => boolean;
     items: readonly T[];
+    /** Opt out when a navigation shortcut forces shelves open without filtering their rows. */
+    labelFirstShelf?: boolean;
     /** The fold headings' level: one below the heading that holds these items. */
     level?: 2 | 3 | 4;
   } = $props();
@@ -81,6 +86,9 @@
 {#each groups as { members, shelf }, index (shelf)}
   <div role="group" aria-label={shelfLabel(shelf)}>
     {#if index === 0}
+      {#if forceOpen && labelFirstShelf && (shelf !== "todo" || groups.length > 1)}
+        <ShelfHeading count={members.length} {explains} {level} {shelf} />
+      {/if}
       {@render group(members)}
     {:else}
       <ShelfFold count={members.length} {explains} {forceOpen} {level} {shelf}>
