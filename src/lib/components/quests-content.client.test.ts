@@ -10,6 +10,26 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordKeys } from "#lib/utils/record.js";
 
+it("labels the matching shelf without the unfiltered section's shelf heading", async () => {
+  userState.setSeason("summer");
+  const view = renderWithFeedback(QuestsContent, { locale: "en" });
+  await tick();
+  expect(view.getByRole("heading", { level: 2, name: "To do" })).toBeVisible();
+
+  toolbarState.setSearchQuery("Berries");
+  await tick();
+
+  expect(view.getByRole("heading", { name: "Fetch Quests" })).toBeVisible();
+  const matches = within(view.getByRole("group", { name: "Not now" }));
+  expect(matches.getByRole("heading", { level: 3, name: "Not now" })).toBeVisible();
+  expect(matches.getAllByRole("button", { name: "Check Wild Berries" })).toHaveLength(3);
+  expect(view.queryByRole("heading", { name: "To do" })).toBeNull();
+
+  toolbarState.setSearchQuery("");
+  await tick();
+  expect(view.getByRole("heading", { level: 2, name: "To do" })).toBeVisible();
+});
+
 describe("QuestsContent empty sections", () => {
   beforeEach(async () => {
     await userState.startTrackingByHand();
