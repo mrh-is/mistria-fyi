@@ -160,3 +160,28 @@ it("suggests another backup after resetting a large previous collection", async 
   expect(notifications.show).toHaveBeenCalledTimes(1);
   expect(store.reminders?.install?.dismissed).toBe(true);
 });
+
+it("raises the clock hint after choosing by hand on an empty farm, until it is cleared", async () => {
+  const { controller } = await open(false);
+  expect(controller.clockHint).toBe(false);
+  await controller.chooseHandTracking();
+  expect(controller.clockHint).toBe(true);
+  controller.clearClockHint();
+  expect(controller.clockHint).toBe(false);
+});
+
+it("raises no clock hint when the farm already has progress", async () => {
+  const { controller, store } = await open(false);
+  await store.mergeFromSave({ mineFloor: 7 });
+  await controller.chooseHandTracking();
+  expect(controller.clockHint).toBe(false);
+});
+
+it("starts without the clock hint after a reload", async () => {
+  const first = await open(false);
+  await first.controller.chooseHandTracking();
+  expect(first.controller.clockHint).toBe(true);
+  vi.resetModules();
+  const second = await open(false);
+  expect(second.controller.clockHint).toBe(false);
+});

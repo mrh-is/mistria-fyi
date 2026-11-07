@@ -19,6 +19,7 @@
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
   import SyncStatusPanel from "#lib/components/sync/sync-status-panel.svelte";
   import { Input } from "#lib/components/ui/input/index.js";
+  import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -145,6 +146,7 @@
     }
     panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     activePanel = panel;
+    if (panel === "clock") trackingReminders.clearClockHint();
     if (panel !== "feedback") {
       void afterTick(() => {
         if (activePanel === panel) panelElement?.querySelector<HTMLElement>("button, a")?.focus();
@@ -340,13 +342,21 @@
                 ? 'floating-tool--active'
                 : ''}"
               type="button"
-              aria-label={m.toolbar_clock({
-                season: seasonLabel(userState.state.worldState.season, page.data.locale),
-                weather: weatherLabel(
-                  userState.state.worldState.weather,
-                  userState.state.worldState.season,
-                ),
-              })}
+              aria-label={trackingReminders.clockHint
+                ? m.toolbar_clock_hint({
+                    season: seasonLabel(userState.state.worldState.season, page.data.locale),
+                    weather: weatherLabel(
+                      userState.state.worldState.weather,
+                      userState.state.worldState.season,
+                    ),
+                  })
+                : m.toolbar_clock({
+                    season: seasonLabel(userState.state.worldState.season, page.data.locale),
+                    weather: weatherLabel(
+                      userState.state.worldState.weather,
+                      userState.state.worldState.season,
+                    ),
+                  })}
               aria-expanded={activePanel === "clock"}
               aria-controls="clock-panel"
               onclick={() => {
@@ -354,6 +364,9 @@
               }}
             >
               <IconClock class="size-5" />
+              {#if trackingReminders.clockHint}
+                <span class="clock-tool__dot" data-clock-dot aria-hidden="true"></span>
+              {/if}
               <!-- Sits behind the button's edge, at the screen's edge. -->
               <span class="clock-tab" data-clock-tab aria-hidden="true">
                 <Icon.Season season={userState.state.worldState.season} class="size-3" />
@@ -490,6 +503,17 @@
     height: 8px;
     border-radius: 50%;
     background: var(--color-status-warning);
+  }
+
+  /* Top left, away from the season tab on the button's right edge. */
+  .clock-tool__dot {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
   }
 
   .sync-tool__slip {
