@@ -1041,5 +1041,6 @@
   "shelf_explainer_not_now": "今日できるものはありません。季節、天気、または進行状況を待っています。",
   "shelf_explainer_completed": "ここはすべて完了しました！",
   "toolbar_clock": "季節と天気：{season}、{weather}",
+  "toolbar_clock_hint": "季節と天気：{season}、{weather}。リストの並び順に使われます。今日の日付を設定してください。",
   "toolbar_clock_title": "季節と天気"
 }

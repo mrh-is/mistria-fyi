@@ -11,6 +11,8 @@ import type { InstallNudgeMoment } from "#lib/engine/tracking-reminders.js";
 let installOpen = $state(false);
 let reminderQueue = Promise.resolve();
 let backupToast: number | string | undefined;
+/** In memory only: a reload clears it, so the storage schema never carries this hint. */
+let clockHint = $state(false);
 
 /** A progress write can wait for another tab; later reminders must still get their turn. */
 function queueReminder(check: () => Promise<void>): Promise<void> {
@@ -94,10 +96,22 @@ export const trackingReminders = {
   async chooseHandTracking(): Promise<boolean> {
     const empty = !userState.hasAnyProgress;
     if (!(await userState.startTrackingByHand())) return false;
-    if (empty) userState.markDefaultUnlocksComplete();
+    if (empty) {
+      userState.markDefaultUnlocksComplete();
+      // Only an empty farm hasn't told the app the day; the defaults (spring, calm) are a guess.
+      clockHint = true;
+    }
     void requestPersistence();
     await trackingReminders.checkInstall("lane-chosen");
     return true;
+  },
+  /** Clears the clock-button dot: the player opened the clock, or a save import set the day. */
+  clearClockHint(): void {
+    clockHint = false;
+  },
+  /** Whether the clock button should show the dot after a by-hand choice on an empty farm. */
+  get clockHint(): boolean {
+    return clockHint;
   },
   closeInstall(installed = false): void {
     if (installed) {
