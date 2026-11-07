@@ -14,7 +14,10 @@ import { configDefaults } from "vitest/config";
 import { getAppVersion } from "./scripts/app-version.js";
 import RelayFirstSequencer from "./scripts/vitest-relay-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
-import { configureVitestWranglerEnv } from "./scripts/vitest-wrangler-env.js";
+import {
+  configureVitestWranglerEnv,
+  resolvePlatformProxyPersistence,
+} from "./scripts/vitest-wrangler-env.js";
 import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
 import { withBarePathStubs } from "./src/lib/build/bare-path-stubs.js";
 import { withHeadersFile } from "./src/lib/build/headers-file.js";
@@ -166,12 +169,7 @@ export default defineConfig(({ command }) => ({
       adapter: withBarePathStubs(
         withHeadersFile(
           adapter({
-            // Concurrent preview servers (the Playwright suites, #19) must not share Miniflare's
-            // default `.wrangler/state` SQLite files, so scripts/playwright-preview.ts hands each one
-            // its own directory.
-            platformProxy: process.env.MISTRIA_PREVIEW_PERSIST_DIR
-              ? { persist: { path: process.env.MISTRIA_PREVIEW_PERSIST_DIR } }
-              : {},
+            platformProxy: { persist: resolvePlatformProxyPersistence() },
             // Every page is prerendered and every bare path is a static stub or a `_redirects` rule,
             // so only `/api` needs the Function. An include list stays one rule however many pages
             // there are; Pages caps `_routes.json` at 100, and excluding each prerendered page
