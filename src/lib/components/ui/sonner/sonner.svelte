@@ -20,7 +20,13 @@
       toast:
         "flex items-center gap-3 w-full rounded-xl border border-border bg-card px-4 py-3 shadow-md [&>[data-content]]:flex-1",
       title: "text-sm text-muted-foreground",
-      description: "text-xs text-muted-foreground/70",
+      description: "text-xs text-muted-foreground",
+      // An error can cost progress, so it reads as one: a red edge & icon, and a title that leads.
+      error:
+        "border-destructive/70 [&_[data-icon]]:text-destructive [&_[data-title]]:font-medium [&_[data-title]]:text-foreground",
+      // Wraps onto a second line instead of squeezing the description beside it.
+      actionButton:
+        "max-w-24 shrink-0 text-balance text-center text-sm leading-tight font-medium text-primary bg-primary/10 rounded-md px-2.5 py-1.5",
       cancelButton:
         "shrink-0 text-sm font-medium text-primary bg-primary/10 rounded-md px-2.5 py-1",
     },

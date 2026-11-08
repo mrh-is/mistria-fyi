@@ -261,7 +261,8 @@ describe("progress repository", () => {
     await tab.save();
     tab.repository.replace();
     await tab.gate.release();
-    expect(tab.repository.status()).toMatchObject({ failureKind: "unavailable", ready: false });
+    // The read failed at load, so no saved progress is showing; the warning says so.
+    expect(tab.repository.status()).toMatchObject({ failureKind: "load-blocked", ready: false });
     expect(tab.storage.getItem(PROGRESS_STORAGE_KEY)).toBe(initial);
     const reloaded = openRepository(tab.storage);
     reloaded.repository.read();

@@ -384,7 +384,7 @@ describe("FeedbackPanel", () => {
       screen.getByRole("alert"),
     );
     expect(message).toHaveFocus();
-    expect(screen.getByRole("alert")).toHaveTextContent("Please enter a message.");
+    expect(screen.getByRole("alert")).toHaveTextContent("What did you wanna say?");
   });
 
   it("exposes email purpose and validation relationship", async () => {
@@ -570,8 +570,7 @@ describe("FeedbackPanel", () => {
       expect(toast.warning).toHaveBeenCalledTimes(1);
     });
     const [warning] = toast.warning.mock.calls[0] as [string];
-    expect(warning).toContain("Sending it again would create a duplicate public issue");
-    expect(warning).toContain("submit a new report later");
+    expect(warning).toContain("submit feedback again, and I’ll get it sorted out");
     expect(warning).not.toContain("comment");
     expect(warning).not.toContain("private@example.com");
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -588,7 +587,7 @@ describe("FeedbackPanel", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Could not connect. Please try again or copy your message.",
+      "We couldn’t send your feedback. Check that you’re online, then please try again.",
     );
     expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
   });

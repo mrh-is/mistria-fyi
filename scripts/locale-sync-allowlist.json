@@ -1,1 +1,1052 @@
-[]
+[
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Fix this by hand",
+    "key": "merge_conflict_correction_link",
+    "locale": "ru",
+    "reason": "“Исправить вручную” already means “fix by hand”, so the new English needs no new wording."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unchecked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "es",
+    "reason": "“Desmarcado” already pairs with “marcado”, the Spanish for “checked off”."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  }
+]

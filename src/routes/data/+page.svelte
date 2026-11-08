@@ -6,6 +6,7 @@
   import { trackerData } from "#lib/data/index.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
   import { version } from "$app/env";
   import { page } from "$app/state";
 
@@ -80,8 +81,6 @@
 <PageHeader title={m.data_title()} backLabel={m.common_go_back()} historyBack />
 
 <div class="data-page">
-  <p class="data-page__intro">{m.sync_data_intro()}</p>
-
   <section aria-labelledby="data-sync-heading">
     <h2 id="data-sync-heading">{m.sync_card_title()}</h2>
     <SyncCard />
@@ -110,6 +109,7 @@
   </section>
 
   <footer class="data-page__footer">
+    <p><a href={localizedHref("privacy")}>{m.privacy_title()}</a></p>
     <p>{m.data_footer_versions({ appVersion: version, gameVersion: trackerData.version })}</p>
   </footer>
 </div>
@@ -120,12 +120,6 @@
     flex-direction: column;
     gap: 22px;
     padding: 18px 16px 28px;
-  }
-
-  .data-page__intro {
-    color: var(--color-ink-muted);
-    font-family: var(--font-annotation);
-    font-size: var(--text-sm);
   }
 
   .data-page h2 {
@@ -155,5 +149,18 @@
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     text-align: center;
+  }
+
+  /* Matches the About page's footer links, including their 44-pixel touch target. */
+  .data-page__footer a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .data-page__footer a:is(:hover, :focus-visible) {
+    color: var(--color-ink);
   }
 </style>

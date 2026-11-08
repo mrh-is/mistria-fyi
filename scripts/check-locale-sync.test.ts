@@ -136,6 +136,26 @@ describe("findStaleKeys", () => {
   });
 });
 
+describe("findStaleKeys with a plural message", () => {
+  it("lets an allowlist entry hold a plural's variants", () => {
+    const before = [{ match: { "countPlural=other": '"{name}" x{count}' } }];
+    const after = [{ match: { "countPlural=other": "“{name}” x{count}" } }];
+    const english = {
+      base: new Map([["toast", JSON.stringify(before)]]),
+      head: new Map([["toast", JSON.stringify(after)]]),
+    };
+    const fr = { base: new Map([["toast", "[1]"]]), head: new Map([["toast", "[1]"]]) };
+
+    expect(findStaleKeys(english, { fr })).toEqual([{ key: "toast", locale: "fr" }]);
+    expect(
+      findStaleKeys(english, { fr }, [entry({ english: after, key: "toast", locale: "fr" })]),
+    ).toEqual([]);
+    expect(
+      findStaleKeys(english, { fr }, [entry({ english: before, key: "toast", locale: "fr" })]),
+    ).toEqual([{ key: "toast", locale: "fr" }]);
+  });
+});
+
 describe("findAllowlistProblems", () => {
   const english = versions({ brand: "Mistria" }, { brand: "Mistria!" });
   const locales = { ja: versions({ brand: "Mistria" }, { brand: "Mistria" }) };
@@ -167,6 +187,13 @@ describe("parseAllowlist", () => {
     expect(() => parseAllowlist([{ ...entry(), english: undefined }])).toThrow(/"english"/);
     expect(() => parseAllowlist([{ ...entry(), key: "" }])).toThrow(/"key"/);
     expect(() => parseAllowlist([null])).toThrow(/"english"/);
+    expect(() => parseAllowlist([{ ...entry(), english: [] }])).toThrow(/"english"/);
+  });
+
+  it("accepts a plural message's variants as the English text", () => {
+    const variants = [{ match: { "countPlural=other": "“{name}” x{count}" } }];
+
+    expect(parseAllowlist([entry({ english: variants })])).toEqual([entry({ english: variants })]);
   });
 });
 

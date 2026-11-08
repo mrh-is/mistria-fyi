@@ -55,7 +55,7 @@ it("opens an editable draft without submitting, and cancels without sending", as
   vi.stubGlobal("fetch", fetchMock);
   renderError();
   const message = await openReport();
-  expect(message).toHaveValue("Something went wrong.");
+  expect(message).toHaveValue("Something went wrong on our end, but your progress is safe.");
   expect(screen.getByText(/public GitHub issue/)).toBeInTheDocument();
   expect(screen.getByTestId("overlay-state")).toHaveTextContent("active");
   await fireEvent.input(message, { target: { value: "I was checking my museum progress." } });
