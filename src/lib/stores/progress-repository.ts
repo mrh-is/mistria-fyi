@@ -26,10 +26,12 @@ import type { LoadedProgress, ProgressReadResult } from "./progress-storage.js";
 import type { BackupReplacementQuestion, StagedLaneStart } from "./progress-writer.js";
 
 export type PersistenceFailureKind = "newer-data" | "unavailable" | "unreadable";
+
 export interface SerializedPreferences {
   everythingGrouping: "category" | "source";
   showSpoilers: boolean;
 }
+
 export interface PersistenceStatus {
   failureGeneration: number;
   failureKind: PersistenceFailureKind;
@@ -37,6 +39,7 @@ export interface PersistenceStatus {
   ready: boolean;
   unreadableData: null | string;
 }
+
 export interface ProgressRepositoryEnvironment {
   events?: Partial<Pick<Window, "addEventListener" | "removeEventListener">>;
   locks?: () => ProgressLocks | undefined;
@@ -44,9 +47,11 @@ export interface ProgressRepositoryEnvironment {
   read: (key: string) => { ok: false } | { ok: true; value: null | string };
   write: (key: string, value: string) => boolean;
 }
+
 interface ProgressLocks {
   request: (name: string, task: () => void) => Promise<unknown>;
 }
+
 /** The shell supplies live values; the repository never holds a rune or reaches for window. */
 interface LiveProgress {
   emptyProgress: () => Omit<LoadedProgress, "local">;
@@ -55,10 +60,13 @@ interface LiveProgress {
   preferences: SerializedPreferences;
   snapshot: () => Omit<LoadedProgress, "local">;
 }
+
 export const PERSIST_DEBOUNCE_MS = 300;
+
 export function createDefaultPreferences(): SerializedPreferences {
   return { everythingGrouping: "category", showSpoilers: false };
 }
+
 /** How a write treats a value another tab stored since this one last read it. */
 type WriteIntent =
   | (ManualImport & {
@@ -99,6 +107,12 @@ type WriteIntent =
       settle: (outcome: SyncApplyOutcome) => void;
     };
 
+interface ReplaceOptions {
+  chooseManual?: boolean;
+  dropReceipt?: boolean;
+  keepLocal?: boolean;
+}
+
 interface ProgressRepository {
   readonly clockBase: null | string;
   dismissWarning: () => void;
@@ -112,12 +126,12 @@ interface ProgressRepository {
   onExternalChange: (listener: (loaded: Omit<LoadedProgress, "local">) => void) => () => void;
   read: () => void;
   readStored: () => null | string;
-  replace: (keepLocal?: boolean, dropReceipt?: boolean, chooseManual?: boolean) => void;
+  replace: (options?: ReplaceOptions) => void;
   savePreferences: () => void;
   schedule: (json: string) => void;
   serialize: () => string;
   status: () => PersistenceStatus;
-  write: (intent: WriteIntent) => Promise<boolean>;
+  write: (intent: Extract<WriteIntent, { kind: "staged" | "sync" }>) => Promise<boolean>;
   writeLocal: (
     update: (stored: DeepReadonly<DeviceLocalState>) => DeviceLocalState | undefined,
   ) => Promise<boolean>;
@@ -478,11 +492,11 @@ export function createProgressRepository(
   }
 
   /** Captures an explicit replacement now, rather than after the auto-save debounce. */
-  function writeExplicitProgress(
-    keepLocal = true,
-    dropReceipt = false,
+  function writeExplicitProgress({
     chooseManual = false,
-  ): void {
+    dropReceipt = false,
+    keepLocal = true,
+  }: ReplaceOptions = {}): void {
     clearPendingSave();
     const json = serialize();
     pendingExplicitJson = json;
@@ -714,6 +728,7 @@ export function createProgressRepository(
     writeLocal,
   };
 }
+
 /** Reads stored preferences, defaulting each missing or invalid field. */
 function deserializePreferences(json: null | string): SerializedPreferences {
   const defaults = createDefaultPreferences();

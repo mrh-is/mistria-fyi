@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { createDefaultProgress } from "#lib/engine/progress-fields.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
@@ -156,6 +156,11 @@ afterEach(() => {
 });
 
 describe("progress repository", () => {
+  it("keeps counter-bearing write intents private", () => {
+    type PublicIntent = Parameters<ReturnType<typeof createProgressRepository>["write"]>[0];
+    expectTypeOf<PublicIntent["kind"]>().toEqualTypeOf<"staged" | "sync">();
+  });
+
   it("reads & writes without window or a reactive shell", async () => {
     expect("window" in globalThis).toBe(false);
     const tab = openRepository(memoryStorage({ [PROGRESS_STORAGE_KEY]: blob(4) }));

@@ -218,7 +218,8 @@ function createUserState() {
   const repository = createProgressRepository(
     {
       emptyProgress: emptyLoadedProgress,
-      historySnapshot: () => $state.snapshot<unknown>(history),
+      // Widen before Svelte maps the recursive JsonValue in resolutions; the result stays history.
+      historySnapshot: () => $state.snapshot<object>(history) as ProgressHistory,
       get local() {
         return local;
       },
@@ -466,7 +467,7 @@ function createUserState() {
     replaceProgress(result.loaded);
     repository.enableAfterReplace();
     local = { ...local, trackingLane: local.syncLane ? "sync" : "manual" };
-    repository.replace(true, false, true);
+    repository.replace({ chooseManual: true });
     return { ok: true };
   }
 
@@ -618,7 +619,7 @@ function createUserState() {
       history = emptyProgressHistory();
       local = {};
       repository.enableAfterReplace();
-      repository.replace(false);
+      repository.replace({ keepLocal: false });
     },
     /**
      * Clears progress & world state; this device's preferences & `local` section are kept, so a
@@ -633,7 +634,7 @@ function createUserState() {
       const { syncReceipt: _receipt, ...kept } = local;
       local = kept;
       // The write keeps the stored section, which another tab may have added to since this one read.
-      repository.replace(true, true);
+      repository.replace({ dropReceipt: true });
     },
     /** The player's “keep mine” for a fact, if any; see `resolutionHolds`. */
     resolutionOf(key: string): Readonly<Resolution> | undefined {
