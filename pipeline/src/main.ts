@@ -16,7 +16,7 @@ import { publishFiles } from "./emit/publish.js";
 import { extractSprites, extractVillagerSprites, publishSprites } from "./emit/sprites.js";
 import { requireCraftingMenus } from "./extract/recipe-menus.js";
 import { extractVillagerIconSprites } from "./extract/villagers.js";
-import { extractGameTermLexicon } from "./localize/game-term-lexicon.js";
+import { stageGameTermLexicon } from "./localize/game-term-lexicon.js";
 import { assertGameLanguageMapExhaustive } from "./localize/locale-codes.js";
 import { createAssetsLocalizer, generateLocaleManifest } from "./localize/localize.js";
 import { validateReviewedGameFacts } from "./overrides/validate.js";
@@ -165,6 +165,17 @@ async function main(): Promise<void> {
     return;
   }
   console.log(`  Game version: ${version}\n`);
+  if (options.gameTermLexiconOnly) {
+    const file = stageGameTermLexicon(
+      PIPELINE_ROOT,
+      version,
+      fiddle,
+      createAssetsLocalizer(assetsDir),
+    );
+    publishFiles([file]);
+    console.log(`  Published: ${file.path}`);
+    return;
+  }
   requireCraftingMenus(fiddle);
 
   console.log("Step 2: Evaluating expressions...");
@@ -172,9 +183,8 @@ async function main(): Promise<void> {
   validateReviewedGameFacts(fiddle);
   console.log();
 
-  const localizer = createAssetsLocalizer(assetsDir);
   const { iconSpritesByItemId, iconSpritesByVillagerId, localeChunks, trackerData } =
-    assembleTrackerData(fiddle, localizer, { version });
+    assembleTrackerData(fiddle, createAssetsLocalizer(assetsDir), { version });
 
   // Pretty-printed so a regeneration's Git diff is reviewable; Vite re-emits imported JSON, so the
   // whitespace never reaches the bundle.
@@ -192,13 +202,6 @@ async function main(): Promise<void> {
   for (const chunk of localeChunks) {
     stageLocaleChunks(staged, chunk);
   }
-
-  const lexicon = extractGameTermLexicon(fiddle, localizer);
-  staged.push({
-    content: `${JSON.stringify(lexicon, null, 2)}\n`,
-    path: resolve(PIPELINE_ROOT, "output", "game-term-lexicon.json"),
-  });
-  console.log("  Staged: pipeline/output/game-term-lexicon.json");
 
   let stagedSprites: StagedSprite[] = [];
   if (options.sprites) {

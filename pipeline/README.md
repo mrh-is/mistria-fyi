@@ -21,6 +21,7 @@ MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
 pnpm run pipeline -- /path/to/assets --parse-only --parse-profile=canonical
 pnpm run pipeline:assets
+pnpm run pipeline:assets -- --game-term-lexicon-only
 ```
 
 `pnpm run pipeline:assets` is the local-development shortcut for the ignored `pipeline/input`
@@ -28,6 +29,10 @@ game-files root, at the canonical game version (`--version=current`, which reads
 `CURRENT_GAME_VERSION` in `src/game-version.ts` and picks `pipeline/input/vX.Y.Z/assets`). Pass
 other pipeline flags after `--`; it avoids a shell environment assignment and is the preferred
 command for routine regeneration in a configured worktree.
+
+`--game-term-lexicon-only` uses extracted game assets to generate the versioned translator reference
+under `pipeline/output/`. Missing or blank translations fail this mode before writing. Full tracker
+regeneration runs separately and keeps its usual beta translation fallbacks.
 
 `pipeline/input` holds one `vX.Y.Z/assets` folder per release. Given a directory with version
 folders and no `fiddle/` of its own, the pipeline reads `vX.Y.Z/assets` for the `--version` you pass

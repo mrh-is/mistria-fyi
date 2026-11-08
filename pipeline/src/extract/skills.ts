@@ -7,11 +7,38 @@ import { sourceFileFor } from "../parse/parse-fiddle.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { PerkId, PerkTier, Skill, SkillId, TrackerData } from "#lib/types/tracker-data.js";
 
-import type { Localizer } from "../localize/localize.js";
+import type { LocalizeFieldInput, Localizer } from "../localize/localize.js";
 import type { ParsedGameData } from "../parse/parse-fiddle.js";
 
 // v1.0.5 skills.toml has no name fields. These are the exact English source-cache values, checked
 // against each locale's English baseline by expectedEnglishValue below.
+
+export function readSkillEntries(fiddle: ParsedGameData): [string, Record<string, unknown>][] {
+  const skills = fiddle.skills as Record<string, Record<string, unknown>> | undefined;
+  return Object.entries(skills ?? {}).filter(([id]) => id !== "default");
+}
+
+export function skillNameInput(
+  fiddle: ParsedGameData,
+  id: string,
+  skill: Record<string, unknown>,
+): LocalizeFieldInput {
+  const reviewedName = skill.name === undefined ? SKILL_ENGLISH_NAMES[id] : undefined;
+  const name = expectNonEmptyString(skill.name ?? reviewedName, {
+    entityId: `skills.${id}`,
+    fieldPath: "name",
+    sourcePath: sourceFileFor(fiddle, `skills.${id}`),
+  });
+  return {
+    category: "ui/skill_menu",
+    classification: "localizable",
+    englishValue: name,
+    expectedEnglishValue: name,
+    field: "name",
+    id,
+    requireEnglishSource: reviewedName !== undefined,
+  };
+}
 
 /**
  * Skill display names are localized from `ui/skill_menu/<skill-id>/name`, e.g.
@@ -34,8 +61,7 @@ export function extractSkills(
     LocaleCode,
     Record<PerkId, string>
   >;
-  const skillsData = fiddle.skills as Record<string, Record<string, unknown>> | undefined;
-  if (!skillsData) {
+  if (!fiddle.skills) {
     return { localeNames, perkLocaleNames, perkTierLevels: [0, 0, 0, 0, 0], skills: {} };
   }
 
@@ -62,26 +88,12 @@ export function extractSkills(
   const perksData = fiddle.perks as Record<string, Record<string, unknown>> | undefined;
 
   const skills = {} as Record<SkillId, Skill>;
-  for (const id of Object.keys(skillsData)) {
-    if (id === "default") continue;
-    const reviewedName = skillsData[id].name === undefined ? SKILL_ENGLISH_NAMES[id] : undefined;
-    const name = expectNonEmptyString(skillsData[id].name ?? reviewedName, {
-      entityId: `skills.${id}`,
-      fieldPath: "name",
-      sourcePath: sourceFileFor(fiddle, `skills.${id}`),
-    });
+  for (const [id, skill] of readSkillEntries(fiddle)) {
+    const nameInput = skillNameInput(fiddle, id, skill);
     const perkTiers = buildPerkTiers(id, skillMenus, perksData, localizer, perkLocaleNames);
     skills[id as SkillId] = { perkTiers };
 
-    const { values } = localizer.localizeField({
-      category: "ui/skill_menu",
-      classification: "localizable",
-      englishValue: name,
-      expectedEnglishValue: name,
-      field: "name",
-      id,
-      requireEnglishSource: reviewedName !== undefined,
-    });
+    const { values } = localizer.localizeField(nameInput);
     for (const locale of LOCALE_CODES) localeNames[locale][id as SkillId] = values[locale];
   }
 

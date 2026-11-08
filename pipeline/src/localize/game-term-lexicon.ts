@@ -1,15 +1,35 @@
+import { resolve } from "node:path";
+
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { readAlmanacCategories } from "../extract/almanac.js";
+import { readLocationNames } from "../extract/locations.js";
+import { readSkillEntries, skillNameInput } from "../extract/skills.js";
 import { compareStrings } from "../ordering.js";
-import { SKILL_ENGLISH_NAMES } from "../overrides/ordinal-names.js";
+import { deriveKey } from "./localize.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 
+import type { StagedFile } from "../emit/publish.js";
 import type { ParsedGameData } from "../parse/parse-fiddle.js";
-import type { Localizer } from "./localize.js";
+import type { LocalizeFieldInput, Localizer } from "./localize.js";
 
-const SEAL_LOCATIONS = ["earth_seal", "fire_seal", "ruins_seal", "void_seal", "water_seal"];
+function compareEntryIds([a]: [string, unknown], [b]: [string, unknown]): number {
+  return compareStrings(a, b);
+}
+
+export function stageGameTermLexicon(
+  pipelineRoot: string,
+  version: string,
+  fiddle: ParsedGameData,
+  localizer: Localizer,
+): StagedFile {
+  const locales = extractGameTermLexicon(fiddle, localizer);
+  return {
+    content: `${JSON.stringify({ locales, version }, null, 2)}\n`,
+    path: resolve(pipelineRoot, "output", "game-term-lexicon.json"),
+  };
+}
 
 /** Translator reference keyed by native localization path, with no English fallbacks. */
 export function extractGameTermLexicon(
@@ -21,48 +41,61 @@ export function extractGameTermLexicon(
     Record<string, string>
   >;
   const almanacCategories = readAlmanacCategories(fiddle);
-  const locations = fiddle.locations as Record<string, { name?: unknown }> | undefined;
+  const seals = readLocationNames(fiddle).filter(([id]) => id.endsWith("_seal"));
   const miscLocal = fiddle.misc_local as Record<string, unknown> | undefined;
-  const skills = fiddle.skills as Record<string, { name?: unknown }> | undefined;
+  const skills = readSkillEntries(fiddle);
   if (almanacCategories.length === 0) throw new Error("Missing Almanac categories for game terms");
-  if (!skills || Object.keys(skills).every((id) => id === "default")) {
-    throw new Error("Missing skill names for game terms");
-  }
+  if (skills.length === 0) throw new Error("Missing skill names for game terms");
+  if (seals.length === 0) throw new Error("Missing mine seal locations for game terms");
 
-  for (const id of SEAL_LOCATIONS) addTerm("locations", id, locations?.[id]?.name, "name");
-  // The game has no Japanese song crystal label.
-  const almanacKeys = new Set([
-    "the_almanac",
-    ...almanacCategories.map(({ localKey }) => localKey).filter((key) => key !== "song_crystal"),
-  ]);
-  for (const id of [...almanacKeys].toSorted(compareStrings)) {
-    addTerm("misc_local", id, miscLocal?.[id]);
+  for (const [id, name] of seals.toSorted(compareEntryIds)) {
+    addTerm(namedTerm("locations", id, name, "name"));
   }
-  for (const id of Object.keys(skills).toSorted(compareStrings)) {
-    if (id === "default") continue;
-    addTerm("ui/skill_menu", id, skills[id].name ?? SKILL_ENGLISH_NAMES[id], "name");
+  addTerm(namedTerm("misc_local", "the_almanac", miscLocal?.the_almanac));
+  for (const { key, localKey } of almanacCategories.toSorted((a, b) =>
+    compareStrings(a.localKey, b.localKey),
+  )) {
+    addTerm(namedTerm("misc_local", localKey, miscLocal?.[localKey]), key === "song_crystal");
+  }
+  for (const [id, skill] of skills.toSorted(compareEntryIds)) {
+    addTerm(skillNameInput(fiddle, id, skill));
   }
   return lexicon;
 
-  function addTerm(category: string, id: string, english: unknown, field?: string): void {
-    const key = field === undefined ? `${category}/${id}` : `${category}/${id}/${field}`;
-    if (typeof english !== "string" || english.trim().length === 0) {
+  function addTerm(input: LocalizeFieldInput, allowMissingJapanese = false): void {
+    const key = deriveKey(input.category, input.id, input.field);
+    if (input.englishValue.trim().length === 0) {
       throw new Error(`Missing game term "${key}" for locale "en"`);
     }
     const { fallbackLocales, values } = localizer.localizeField({
-      category,
-      classification: "localizable",
-      englishValue: english,
-      expectedEnglishValue: english,
-      field,
-      id,
+      ...input,
       logMissing: false,
     });
+    // Song crystals are omitted only while the native Japanese translation is absent.
+    const omitTerm = allowMissingJapanese && fallbackLocales.includes("ja");
     for (const locale of LOCALE_CODES) {
+      if (omitTerm && locale === "ja") continue;
       if (fallbackLocales.includes(locale) || values[locale].trim().length === 0) {
         throw new Error(`Missing game term "${key}" for locale "${locale}"`);
       }
-      lexicon[locale][key] = values[locale];
+      if (!omitTerm) lexicon[locale][key] = values[locale];
     }
   }
+}
+
+function namedTerm(
+  category: string,
+  id: string,
+  name: unknown,
+  field?: string,
+): LocalizeFieldInput {
+  const englishValue = typeof name === "string" ? name : "";
+  return {
+    category,
+    classification: "localizable",
+    englishValue,
+    expectedEnglishValue: englishValue,
+    field,
+    id,
+  };
 }
