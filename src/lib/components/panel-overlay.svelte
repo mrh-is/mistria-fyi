@@ -34,7 +34,8 @@
 
 <button
   class={scrim
-    ? "fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-[var(--z-panel)] bg-black/35 dark:bg-black/60"
+    ? // The toolbar's layer: it comes earlier in the DOM, so the toolbar stays on top & clickable.
+      "fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-[var(--z-toolbar)] bg-black/35 dark:bg-black/60"
     : "fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"}
   type="button"
   aria-label={closeLabel}
