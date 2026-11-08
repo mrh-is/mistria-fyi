@@ -20,6 +20,9 @@ for (const { entry, link, path } of [
     await page.goForward();
     await page.goForward();
     await expect(page).toHaveURL(/\/en\/privacy$/);
+    await expect(page.getByRole("link", { name: "Go back" })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("link", { name: "Go back" })).toBeVisible();
     await page.getByRole("link", { name: "Go back" }).click();
     await expect(page).toHaveURL(new RegExp(`/en/${path}$`));
   });

@@ -10,8 +10,10 @@
     const source = from?.route.id;
     if (source !== "/about" && source !== "/data") return;
 
-    // Keep the source with this entry so browser Forward restores the same back behavior.
+    // Record the source here so both entry links keep their native anchor behavior.
+    // Persist it on this history entry for reloads and browser Forward.
     void goto(page.url.href, {
+      persistState: true,
       replace: true,
       shallow: true,
       state: { ...page.state, privacyFrom: source === "/data" ? "data" : "about" },
