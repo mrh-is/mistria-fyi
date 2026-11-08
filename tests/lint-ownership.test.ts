@@ -197,24 +197,22 @@ describe("engine import boundary", () => {
 });
 
 describe("sync import boundary", () => {
-  it("rejects direct stores while accepting progress facades & sync tests", async () => {
+  it("rejects direct stores in sync code & tests while accepting progress facades", async () => {
     const probeStem = `lint-probe-${randomUUID()}`;
     const directory = posix.join("src/lib/sync", probeStem);
     const blocked = posix.join(directory, "blocked.ts");
     const allowed = posix.join(directory, "allowed.ts");
-    // Integration tests beside the services may seed the store directly.
-    const test = posix.join(directory, "allowed.test.ts");
+    const blockedTest = posix.join(directory, "blocked.test.ts");
     await mkdir(directory);
     try {
-      await writeFile(
-        blocked,
-        [
-          'import type { AliasStore } from "#lib/stores/probe.js";',
-          'import type { RelativeStore } from "../../stores/probe.js";',
-          "",
-          "export type Probe = AliasStore | RelativeStore;",
-        ].join("\n"),
-      );
+      const storeImports = [
+        'import type { AliasStore } from "#lib/stores/probe.js";',
+        'import type { RelativeStore } from "../../stores/probe.js";',
+        "",
+        "export type Probe = AliasStore | RelativeStore;",
+      ].join("\n");
+      await writeFile(blocked, storeImports);
+      await writeFile(blockedTest, storeImports);
       await writeFile(
         allowed,
         [
@@ -223,34 +221,19 @@ describe("sync import boundary", () => {
           "export type Probe = Feature;",
         ].join("\n"),
       );
-      await writeFile(
-        test,
-        [
-          'import type { AliasStore } from "#lib/stores/probe.js";',
-          'import type { RelativeStore } from "../../stores/probe.js";',
-          "",
-          "export type Probe = AliasStore | RelativeStore;",
-        ].join("\n"),
-      );
-      const rejected = oxc("oxlint", ["--config", ".oxlintrc.json", "--format", "json", blocked], {
-        encoding: "utf8",
-      });
-      expect(rejected.error).toBeUndefined();
-      const report = JSON.parse(rejected.stdout) as OxlintReport;
-      expect(
-        report.diagnostics.filter(({ code }) => code === "eslint(no-restricted-imports)"),
-      ).toHaveLength(2);
-      expect(rejected.status).toBe(1);
-      const accepted = oxc(
+      const result = oxc(
         "oxlint",
-        ["--config", ".oxlintrc.json", "--format", "json", allowed, test],
+        ["--config", ".oxlintrc.json", "--format", "json", allowed, blocked, blockedTest],
         { encoding: "utf8" },
       );
-      expect(accepted.error).toBeUndefined();
-      const restricted = (JSON.parse(accepted.stdout) as OxlintReport).diagnostics.filter(
+      expect(result.error).toBeUndefined();
+      const restricted = (JSON.parse(result.stdout) as OxlintReport).diagnostics.filter(
         ({ code }) => code === "eslint(no-restricted-imports)",
       );
-      expect(restricted).toStrictEqual([]);
+      expect(restricted.filter(({ filename }) => filename === blocked)).toHaveLength(2);
+      expect(restricted.filter(({ filename }) => filename === blockedTest)).toHaveLength(2);
+      expect(restricted.filter(({ filename }) => filename === allowed)).toStrictEqual([]);
+      expect(result.status).toBe(1);
     } finally {
       await rm(directory, { force: true, recursive: true });
     }
