@@ -41,6 +41,7 @@ function machine(overrides: Partial<Environment> & { commands?: Record<string, s
     nodeVersion: "24.21.0",
     platform: "darwin",
     read: (path) => files[basename(path)],
+    realpath: () => undefined,
     root: "/repo",
     run: (command, args) => {
       const out = commands[[command, ...args].join(" ")];
@@ -282,7 +283,14 @@ describe("checkGh", () => {
 
 describe("checkPlaywright", () => {
   const cache = "/home/test/Library/Caches/ms-playwright";
-  const store = "/repo/node_modules/.pnpm";
+  // pnpm's global virtual store: each package's dependencies sit beside it in the shared store.
+  const links = "/home/test/Library/pnpm/store/v11/links";
+  const core = `${links}/playwright-core/1.63.0/c0/node_modules/playwright-core`;
+  const realPaths: Record<string, string> = {
+    "/repo/node_modules/@playwright/test": `${links}/@playwright/test/1.63.0/a0/node_modules/@playwright/test`,
+    [`${links}/@playwright/test/1.63.0/a0/node_modules/playwright`]: `${links}/playwright/1.63.0/b0/node_modules/playwright`,
+    [`${links}/playwright/1.63.0/b0/node_modules/playwright-core`]: core,
+  };
   const browsers = JSON.stringify({
     browsers: [
       { name: "chromium", revision: "1243" },
@@ -293,16 +301,9 @@ describe("checkPlaywright", () => {
   });
   const installed = (entries: string[]) =>
     machine({
-      list: (path) => {
-        if (path === cache) {
-          return entries;
-        }
-        return path === store ? ["@playwright+test@1.63.0", "playwright-core@1.63.0"] : [];
-      },
-      read: (path) =>
-        path === `${store}/playwright-core@1.63.0/node_modules/playwright-core/browsers.json`
-          ? browsers
-          : undefined,
+      list: (path) => (path === cache ? entries : []),
+      read: (path) => (path === `${core}/browsers.json` ? browsers : undefined),
+      realpath: (path) => realPaths[path],
     });
 
   it("requires the exact revisions the installed Playwright expects", () => {

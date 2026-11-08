@@ -6,6 +6,13 @@ engineStrict: true
 # `node` directly.
 verifyDepsBeforeRun: error
 
+# Link every checkout's packages to one shared tree in the pnpm store, so each worktree's
+# `node_modules` holds symlinks rather than ~1 GB of clones that disk-usage tools count in full.
+enableGlobalVirtualStore: true
+# Switching an existing checkout to that layout rebuilds `node_modules`; let setup scripts, which
+# have no terminal to confirm in, do so.
+confirmModulesPurge: false
+
 packages:
   - pipeline
 
@@ -26,6 +33,21 @@ overrides:
   # flags (GHSA-g3hv-75wg-m249, patched in 11.0.1). They call only `minimatch()`, `new Minimatch`,
   # `.match()`, & `.pattern`, which 11 keeps. Drop it once their own ranges allow 11.0.1 or later.
   "minimatch@10": "^11.0.3"
+
+# Some packages' type declarations import packages they don't declare, which resolved only through
+# hoisting, which the global virtual store doesn't do. Declare them so the types resolve:
+# Miniflare's for the relay tests' Durable Objects, & svelte-eslint-parser's for the lint rules.
+packageExtensions:
+  svelte-eslint-parser:
+    dependencies:
+      "@types/estree": "^1.0.9"
+      "@typescript-eslint/types": "^8.72.0"
+  miniflare:
+    peerDependencies:
+      "@cloudflare/workers-types": "*"
+    peerDependenciesMeta:
+      "@cloudflare/workers-types":
+        optional: true
 
 auditConfig:
   ignoreGhsas:
