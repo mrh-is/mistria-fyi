@@ -21,6 +21,7 @@
   import { showStarterItemsToast } from "#lib/effects/undo-toast.js";
   import { FeedbackContext, setFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { localeFontStylesheet } from "#lib/fonts/locale-fonts.js";
+  import { createNavigationHistory, setNavigationHistory } from "#lib/navigation-history.js";
   import * as m from "#lib/paraglide/messages.js";
   import { getTextDirection } from "#lib/paraglide/runtime.js";
   import { keepLocaleOffline } from "#lib/pwa/offline-locales.js";
@@ -32,6 +33,7 @@
 
   let { children } = $props();
   const feedbackContext = setFeedbackContext(new FeedbackContext());
+  const navigationHistory = setNavigationHistory(createNavigationHistory());
 
   // Clear search when navigating so home search doesn't bleed into category pages
   afterNavigate(({ shallow }) => {
@@ -43,6 +45,7 @@
   });
 
   onMount(() => {
+    const stopNavigationHistory = navigationHistory.start();
     userState.loadFromStorage();
     void trackingReminders.opened();
     // A retire the relay hasn't confirmed yet tries again on every visit, then with backoff & on
@@ -51,7 +54,10 @@
     // Browser tests wait for this before interacting: a server-rendered control clicked before
     // hydration silently drops the event. Root `onMount` runs after every child has mounted.
     document.documentElement.dataset.hydrated = "true";
-    return () => stopRetiring();
+    return () => {
+      stopRetiring();
+      stopNavigationHistory();
+    };
   });
 
   let metadata = $derived(
