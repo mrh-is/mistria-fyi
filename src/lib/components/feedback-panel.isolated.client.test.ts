@@ -54,7 +54,7 @@ describe("FeedbackPanel", () => {
     expect(previewLog.protocolVersion).toBe(1);
     expect(previewLog.events.map((event) => event.outcome)).toContain("unreadable");
     await fireEvent.click(checkbox);
-    expect(screen.queryByRole("button", { name: "Hide sync log" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Hide sync log" })).toBeInTheDocument();
     await fireEvent.click(checkbox);
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "Sync trouble" },
@@ -107,7 +107,6 @@ describe("FeedbackPanel", () => {
     try {
       renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
       await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
-      await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
       await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
       const preview = document.querySelector("pre")?.textContent ?? "";
       expect(JSON.parse(preview)).toEqual({
@@ -150,7 +149,6 @@ describe("FeedbackPanel", () => {
     );
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
     await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
     await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
     const preview = JSON.parse(document.querySelector("pre")?.textContent ?? "") as unknown;
     expect(preview).toHaveProperty("almanac", { count: 5000, summarized: true });
@@ -202,7 +200,6 @@ describe("FeedbackPanel", () => {
     );
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
     await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
     await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
     const preview = document.querySelector("pre")?.textContent ?? "";
     expect(preview).toContain('"renown": 7');
@@ -247,15 +244,72 @@ describe("FeedbackPanel", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("clears progress preview and email validation when their options are unchecked", async () => {
+  it("previews both attachments before opting in, and sends neither unchecked", async () => {
+    syncDiagnostics.status("unreadable");
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(userState, "exportBackup").mockReturnValue(
+      JSON.stringify({ progress: { renown: 7 } }),
+    );
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    expect(screen.getByRole("checkbox", { name: "Attach my tracker progress" })).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Attach my save file sync log" }),
+    ).not.toBeChecked();
+
+    const showProgress = screen.getByRole("button", { name: "Show my progress data" });
+    expect(showProgress).toHaveAttribute("aria-expanded", "false");
+    await fireEvent.click(showProgress);
+    expect(showProgress).toHaveAttribute("aria-expanded", "true");
+    const progressPreview = document.getElementById(
+      showProgress.getAttribute("aria-controls") ?? "",
+    );
+    expect(JSON.parse(progressPreview?.textContent ?? "")).toEqual({ renown: 7 });
+
+    const showSyncLog = screen.getByRole("button", { name: "Show sync log" });
+    await fireEvent.click(showSyncLog);
+    const syncPreview = document.getElementById(showSyncLog.getAttribute("aria-controls") ?? "");
+    const previewLog = JSON.parse(syncPreview?.textContent ?? "") as SyncLog;
+    expect(previewLog.events.map((event) => event.outcome)).toContain("unreadable");
+
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "Just looking" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(options.body as string) as Record<string, unknown>;
+    expect(body).not.toHaveProperty("saveData");
+    expect(body).not.toHaveProperty("syncLog");
+    expect(body).not.toHaveProperty("email");
+  });
+
+  it("says a reply needs a private email before opting in", async () => {
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    const reply = screen.getByRole("checkbox", { name: "I’d like a reply" });
+    expect(reply).not.toBeChecked();
+    expect(screen.queryByRole("textbox", { name: "Your email" })).toBeNull();
+    const notice = document.getElementById(reply.getAttribute("aria-describedby") ?? "");
+    expect(notice).toHaveTextContent(/email/);
+    expect(notice).toHaveTextContent(/private/);
+    expect(notice).toBeVisible();
+    await fireEvent.click(reply);
+    expect(screen.getByRole("textbox", { name: "Your email" })).toHaveAttribute(
+      "aria-describedby",
+      notice?.id,
+    );
+  });
+
+  it("keeps the progress preview open and clears email validation when options are unchecked", async () => {
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
     const attach = screen.getByRole("checkbox", { name: "Attach my tracker progress" });
     await fireEvent.click(attach);
-    await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
     await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
     expect(screen.getByRole("button", { name: "Hide my progress data" })).toBeInTheDocument();
     await fireEvent.click(attach);
-    expect(screen.getByRole("button", { name: "Show my progress data" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hide my progress data" })).toBeInTheDocument();
 
     const reply = screen.getByRole("checkbox", { name: "I’d like a reply" });
     await fireEvent.click(reply);

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { prefersReducedMotion } from "svelte/motion";
-  import { fly } from "svelte/transition";
+  import { fade, fly } from "svelte/transition";
 
   import { trapFocus } from "#lib/attachments/trap-focus.js";
 
@@ -15,6 +15,7 @@
     focus,
     label,
     onClose,
+    scrim = false,
     style,
   }: {
     /** Play the fly-out transition when the overlay unmounts. */
@@ -25,16 +26,22 @@
     focus?: Attachment<HTMLElement>;
     label?: string;
     onClose: () => void;
+    /** Dim the page behind the panel, so the panel reads as separate from it. */
+    scrim?: boolean;
     style?: string;
   } = $props();
 </script>
 
 <button
-  class="fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"
+  class={scrim
+    ? "fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-[var(--z-panel)] bg-black/35 dark:bg-black/60"
+    : "fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"}
   type="button"
   aria-label={closeLabel}
   tabindex="-1"
   onclick={onClose}
+  in:fade={{ duration: scrim && !prefersReducedMotion.current ? 150 : 0 }}
+  out:fade={{ duration: scrim && animateOut && !prefersReducedMotion.current ? 150 : 0 }}
 ></button>
 <div
   bind:this={element}

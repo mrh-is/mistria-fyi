@@ -2,7 +2,7 @@
   import IconChevronDown from "@tabler/icons-svelte-runes/icons/chevron-down";
   import IconCopy from "@tabler/icons-svelte-runes/icons/copy";
   import IconPointer from "@tabler/icons-svelte-runes/icons/pointer";
-  import IconShield from "@tabler/icons-svelte-runes/icons/shield";
+  import IconUserShield from "@tabler/icons-svelte-runes/icons/user-shield";
   import IconX from "@tabler/icons-svelte-runes/icons/x";
   import { onDestroy, tick, untrack } from "svelte";
   import { toast } from "svelte-sonner";
@@ -58,12 +58,13 @@
   let includeSaveData = $state(false);
   let includeSyncLog = $state(false);
   let showSyncLog = $state(false);
-  let syncLog = $derived(
-    allowSyncLog && includeSyncLog
+  // Previewing never opts in: the checkbox alone decides whether the log is sent.
+  let syncLogSnapshot = $derived(
+    allowSyncLog && (includeSyncLog || showSyncLog)
       ? syncDiagnostics.snapshot(version, userState.syncLane?.kind ?? "manual")
       : undefined,
   );
-  let showProgressInfo = $state(false);
+  let syncLog = $derived(includeSyncLog ? syncLogSnapshot : undefined);
   let showSaveDataPreview = $state(false);
   let submitting = $state(false);
   let submitError = $state("");
@@ -101,7 +102,7 @@
   let submitShake = $state(false);
 
   let saveDataPreview = $derived.by(() => {
-    if (!includeSaveData) return "";
+    if (!showSaveDataPreview) return "";
     try {
       const exported = JSON.parse(userState.exportBackup()) as SerializedState;
       return JSON.stringify(progressAttachment(exported.progress), null, 2);
@@ -312,7 +313,6 @@
       includeSaveData = false;
       includeSyncLog = false;
       showSyncLog = false;
-      showProgressInfo = false;
       showSaveDataPreview = false;
       selectedElement = undefined;
       onClose();
@@ -398,6 +398,7 @@
     closeLabel={m.feedback_close_aria()}
     label={m.toolbar_send_feedback()}
     {onClose}
+    scrim
     style={accentColor === undefined
       ? undefined
       : `--primary: ${accentColor}; --ring: ${accentColor};`}
@@ -425,52 +426,36 @@
         </div>
 
         <p class="feedback-form__privacy">
-          <IconShield class="size-4 shrink-0" />{m.feedback_privacy_notice()}
+          <IconUserShield class="size-4 shrink-0" />{m.feedback_privacy_notice()}
         </p>
 
         <p class="feedback-form__optional">{m.feedback_optional_label()}</p>
         <div class="feedback-form__options">
-          <div class="flex items-center gap-2">
-            <Checkbox
-              class="rounded-sm"
-              id="include-save-data"
-              checked={includeSaveData}
-              onCheckedChange={(checked) => {
-                includeSaveData = checked;
-                if (!checked) showSaveDataPreview = false;
-              }}
-            />
-            <label for="include-save-data" class="flex-1 text-xs select-none">
-              {m.feedback_attach_progress_label()}
-            </label>
-            <button
-              class="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground"
-              type="button"
-              onclick={() => {
-                showProgressInfo = !showProgressInfo;
-              }}
-            >
-              <IconChevronDown
-                class="size-3 transition-transform motion-reduce:transition-none {showProgressInfo
-                  ? 'rotate-180'
-                  : ''}"
+          <div class="feedback-form__option">
+            <div class="flex items-center gap-2">
+              <Checkbox
+                class="rounded-sm"
+                id="include-save-data"
+                aria-describedby="include-save-data-description"
+                checked={includeSaveData}
+                onCheckedChange={(checked) => {
+                  includeSaveData = checked;
+                }}
               />
-              {showProgressInfo ? m.feedback_toggle_less() : m.feedback_toggle_read_more()}
-            </button>
-          </div>
-
-          {#if showProgressInfo}
-            <div
-              class="space-y-1 pl-7"
-              transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
-            >
-              <p class="text-2xs leading-relaxed text-muted-foreground">
+              <label for="include-save-data" class="text-xs select-none">
+                {m.feedback_attach_progress_label()}
+              </label>
+            </div>
+            <div class="feedback-form__detail">
+              <p id="include-save-data-description">
                 {m.feedback_save_data_description()}
                 <strong>{m.feedback_save_data_public_warning()}</strong>
               </p>
               <button
-                class="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground"
+                class="feedback-form__disclosure"
                 type="button"
+                aria-controls="save-data-preview"
+                aria-expanded={showSaveDataPreview}
                 onclick={() => {
                   showSaveDataPreview = !showSaveDataPreview;
                 }}
@@ -487,69 +472,79 @@
               {#if showSaveDataPreview}
                 <!-- prettier-ignore -->
                 <pre
-                  class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-2xs leading-tight"
+                  id="save-data-preview"
+                  class="feedback-form__preview"
                   transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
                 >{saveDataPreview}</pre>
               {/if}
             </div>
-          {/if}
+          </div>
 
           {#if allowSyncLog}
-            <div class="flex items-center gap-2">
-              <Checkbox
-                class="rounded-sm"
-                id="include-sync-log"
-                checked={includeSyncLog}
-                onCheckedChange={(checked) => {
-                  includeSyncLog = checked;
-                  if (!checked) showSyncLog = false;
-                }}
-              />
-              <label for="include-sync-log" class="flex-1 text-xs select-none">
-                {m.feedback_attach_sync_log()}
-              </label>
-            </div>
-            {#if includeSyncLog}
-              <div class="space-y-1 pl-7">
-                <p class="text-2xs leading-relaxed text-muted-foreground">
-                  {m.feedback_sync_log_description()}
-                </p>
+            <div class="feedback-form__option">
+              <div class="flex items-center gap-2">
+                <Checkbox
+                  class="rounded-sm"
+                  id="include-sync-log"
+                  aria-describedby="include-sync-log-description"
+                  checked={includeSyncLog}
+                  onCheckedChange={(checked) => {
+                    includeSyncLog = checked;
+                  }}
+                />
+                <label for="include-sync-log" class="text-xs select-none">
+                  {m.feedback_attach_sync_log()}
+                </label>
+              </div>
+              <div class="feedback-form__detail">
+                <p id="include-sync-log-description">{m.feedback_sync_log_description()}</p>
                 <button
-                  class="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground"
+                  class="feedback-form__disclosure"
                   type="button"
+                  aria-controls="sync-log-preview"
                   aria-expanded={showSyncLog}
                   onclick={() => {
                     showSyncLog = !showSyncLog;
                   }}
                 >
-                  <IconChevronDown class="size-3" />
+                  <IconChevronDown
+                    class="size-3 transition-transform motion-reduce:transition-none {showSyncLog
+                      ? 'rotate-180'
+                      : ''}"
+                  />
                   {showSyncLog ? m.feedback_hide_sync_log() : m.feedback_show_sync_log()}
                 </button>
                 {#if showSyncLog}
                   <pre
-                    class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-2xs leading-tight">{JSON.stringify(
-                      syncLog,
-                      null,
-                      2,
-                    )}</pre>
+                    id="sync-log-preview"
+                    class="feedback-form__preview"
+                    transition:slide={{
+                      duration: prefersReducedMotion.current ? 0 : 120,
+                    }}>{JSON.stringify(syncLogSnapshot, null, 2)}</pre>
                 {/if}
               </div>
-            {/if}
+            </div>
           {/if}
 
-          <div class="flex items-center gap-2">
-            <Checkbox
-              class="rounded-sm"
-              id="wants-reply"
-              checked={wantsReply}
-              onCheckedChange={(checked) => {
-                wantsReply = checked;
-                if (!checked) emailTouched = false;
-              }}
-            />
-            <label for="wants-reply" class="text-xs select-none"
-              >{m.feedback_wants_reply_label()}</label
-            >
+          <div class="feedback-form__option">
+            <div class="flex items-center gap-2">
+              <Checkbox
+                class="rounded-sm"
+                id="wants-reply"
+                aria-describedby="feedback-email-note"
+                checked={wantsReply}
+                onCheckedChange={(checked) => {
+                  wantsReply = checked;
+                  if (!checked) emailTouched = false;
+                }}
+              />
+              <label for="wants-reply" class="text-xs select-none"
+                >{m.feedback_wants_reply_label()}</label
+              >
+            </div>
+            <p id="feedback-email-note" class="feedback-form__detail">
+              {m.feedback_email_note()}
+            </p>
           </div>
 
           {#if wantsReply}
@@ -585,10 +580,6 @@
               {#if emailInvalid}
                 <p id="feedback-email-error" class="mt-1 text-2xs text-destructive" role="alert">
                   {emailMissing ? m.feedback_email_missing() : m.feedback_email_invalid()}
-                </p>
-              {:else}
-                <p id="feedback-email-note" class="mt-2 text-2xs text-muted-foreground">
-                  {m.feedback_email_note()}
                 </p>
               {/if}
             </div>
@@ -730,8 +721,52 @@
     background: var(--color-paper-sunken);
   }
 
+  .feedback-form__option {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Indented to the label's edge, past the 16px checkbox & its 8px gap. */
+  .feedback-form__detail,
   .feedback-form__email {
-    padding-left: 28px;
+    padding-left: 24px;
+  }
+
+  .feedback-form__detail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    color: var(--color-ink-muted);
+    font-size: var(--text-2xs);
+    line-height: 1.5;
+  }
+
+  .feedback-form__disclosure {
+    display: flex;
+    min-height: 24px;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-ink-muted);
+    font-size: var(--text-2xs);
+  }
+
+  .feedback-form__disclosure:hover {
+    color: var(--color-ink);
+  }
+
+  .feedback-form__preview {
+    max-height: 10rem;
+    width: 100%;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--muted) 40%, transparent);
+    padding: 8px;
+    color: var(--color-ink);
+    font-size: var(--text-2xs);
+    line-height: 1.25;
   }
 
   .feedback-form__actions {
