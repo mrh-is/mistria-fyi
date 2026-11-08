@@ -1,6 +1,14 @@
-import { createContext } from "svelte";
+import { getContext, setContext } from "svelte";
 
-export const [getNavigationHistory, setNavigationHistory] = createContext<NavigationHistory>();
+export const navigationHistoryKey = Symbol("navigation-history");
+
+export function getNavigationHistory(): NavigationHistory | undefined {
+  return getContext<NavigationHistory | undefined>(navigationHistoryKey);
+}
+
+export function setNavigationHistory(value: NavigationHistory): NavigationHistory {
+  return setContext(navigationHistoryKey, value);
+}
 
 interface NavigationHistory {
   canGoBack: () => boolean;

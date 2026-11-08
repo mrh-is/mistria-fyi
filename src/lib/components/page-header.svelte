@@ -1,6 +1,5 @@
 <script lang="ts">
   import IconArrowLeft from "@tabler/icons-svelte-runes/icons/arrow-left";
-  import { untrack } from "svelte";
 
   import { Icon } from "#lib/components/icon/index.js";
   import { getNavigationHistory } from "#lib/navigation-history.js";
@@ -38,7 +37,7 @@
     title: string;
   } = $props();
 
-  const navigationHistory = untrack(() => (historyBack ? getNavigationHistory() : undefined));
+  const navigationHistory = getNavigationHistory();
 
   const pct = $derived(
     progress !== undefined && progress.total > 0
