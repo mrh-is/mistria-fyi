@@ -18,6 +18,7 @@
     unpackSavFile,
   } from "#lib/engine/import-save.js";
   import { readSaveIdentity } from "#lib/engine/save-identity.js";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
@@ -64,6 +65,9 @@
   let importResult = $state<null | SaveImportReport>(null);
   let importError = $state<null | string>(null);
   let importErrorDetails = $state<string[]>([]);
+  /** The error is the unreadable-save one, whose "send us feedback" opens the feedback form. */
+  let importErrorOffersFeedback = $state(false);
+  const feedbackContext = getFeedbackContext();
   let showSavFallbackHelp = $state(false);
   let importing = $state(false);
   let importStatus = $state("");
@@ -132,6 +136,7 @@
     importResult = null;
     importError = null;
     importErrorDetails = [];
+    importErrorOffersFeedback = false;
     showSavFallbackHelp = false;
     importStatus = "";
     filesUsed = [];
@@ -147,10 +152,12 @@
         try {
           bundle = await unpackSavFile(savFile);
         } catch (error) {
-          importError =
-            error instanceof SavArchiveError
-              ? formatSavArchiveError(error.detail)
-              : m.import_error_unexpected();
+          // A failure the archive reader doesn't recognize is worth a report, so it links to feedback.
+          const known = error instanceof SavArchiveError;
+          importError = known
+            ? formatSavArchiveError(error.detail)
+            : m.import_error_parse_failed({ feedback: m.import_error_feedback_link() });
+          importErrorOffersFeedback = !known;
           showSavFallbackHelp = true;
           return;
         }
@@ -159,7 +166,8 @@
         if (result.error || !result.bundle) {
           importError = result.error
             ? formatExtractedSaveFilesError(result.error)
-            : m.import_error_parse_failed();
+            : m.import_error_parse_failed({ feedback: m.import_error_feedback_link() });
+          importErrorOffersFeedback = !result.error;
           if (result.error?.code === "no-valid-files") {
             importErrorDetails = result.error.problems.map(formatSaveImportWarning);
           }
@@ -382,7 +390,21 @@
 
     {#if importError}
       <StatusNote class="mt-3 text-base" tone="error">
-        <p>{importError}</p>
+        {#if importErrorOffersFeedback}
+          <p>
+            {#each messageParts( (slot) => m.import_error_parse_failed( { feedback: slot("feedback") } ) ) as part, index (index)}
+              {#if typeof part === "string"}{part}{:else}<button
+                  type="button"
+                  class="cursor-pointer underline underline-offset-2"
+                  onclick={() => {
+                    if (importError) feedbackContext.reportError(importError);
+                  }}>{m.import_error_feedback_link()}</button
+                >{/if}
+            {/each}
+          </p>
+        {:else}
+          <p>{importError}</p>
+        {/if}
         {#if importErrorDetails.length > 0}
           <ul class="mt-2 list-disc ps-5 text-sm">
             {#each importErrorDetails as detail, index (index)}

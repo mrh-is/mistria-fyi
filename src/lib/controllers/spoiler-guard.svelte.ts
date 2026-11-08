@@ -4,6 +4,12 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
+/**
+ * What the dialog is asking about: a revealed item by name, or a mine floor past an unbroken seal.
+ * Absent means an item whose name is still behind its spoiler cover.
+ */
+export type GuardSubject = { floor: number } | { name: string };
+
 export interface SpoilerGuard {
   cancel: () => void;
   readonly condition: null | VisibilityCondition;
@@ -12,13 +18,21 @@ export interface SpoilerGuard {
   proceed: () => void;
   /** Satisfy the pending condition in the user's progress, then run the pending action. */
   proceedAndRecordPrerequisites: () => void;
-  /** Hold `action` and open the confirmation dialog for `forCondition`. */
-  requestGuardedAction: (forCondition: undefined | VisibilityCondition, action: () => void) => void;
+  /** Hold `action` and open the confirmation dialog for `forCondition`, about `subject`. */
+  requestGuardedAction: (
+    forCondition: undefined | VisibilityCondition,
+    action: () => void,
+    subject?: GuardSubject,
+  ) => void;
+  /** What the pending dialog asks about, or `undefined` for a covered item. */
+  readonly subject: GuardSubject | undefined;
 }
 
 export function createSpoilerGuard(): SpoilerGuard {
   let open = $state(false);
   let condition = $state<null | VisibilityCondition>(null);
+  // Kept after the dialog closes, so its wording doesn't change during the closing animation.
+  let subject = $state<GuardSubject>();
   let pendingAction: (() => void) | null = null;
 
   return {
@@ -87,10 +101,18 @@ export function createSpoilerGuard(): SpoilerGuard {
       condition = null;
       pendingAction = null;
     },
-    requestGuardedAction(forCondition: undefined | VisibilityCondition, action: () => void): void {
+    requestGuardedAction(
+      forCondition: undefined | VisibilityCondition,
+      action: () => void,
+      forSubject?: GuardSubject,
+    ): void {
       condition = forCondition ?? null;
+      subject = forSubject;
       pendingAction = action;
       open = true;
+    },
+    get subject(): GuardSubject | undefined {
+      return subject;
     },
   };
 }

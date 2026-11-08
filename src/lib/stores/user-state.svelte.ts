@@ -173,10 +173,11 @@ export type BackupRestoreResult = { error: BackupRestoreErrorKind; ok: false } |
 export type BackupRestoreErrorKind = "invalid-fields" | "malformed-json" | "newer-version";
 
 /**
- * Why changes aren't being saved: browser storage refused a read or write, the stored progress
- * couldn't be read and was quarantined, or a newer build wrote it and this one mustn't overwrite it.
+ * Why changes aren't being saved: browser storage refused the read at load (`load-blocked`, so no
+ * saved progress is showing) or a later read or write (`unavailable`), the stored progress couldn't
+ * be read and was quarantined, or a newer build wrote it and this one mustn't overwrite it.
  */
-export type PersistenceFailureKind = "newer-data" | "unavailable" | "unreadable";
+export type PersistenceFailureKind = "load-blocked" | "newer-data" | "unavailable" | "unreadable";
 
 /** The outcome of one `completeQuestWithRecipes` call, enough to undo exactly that call. */
 export interface QuestCompletion {
@@ -322,8 +323,8 @@ function createUserState() {
     saveTimeout = undefined;
   }
 
-  function reportStorageUnavailable(): void {
-    _persistenceFailureKind = "unavailable";
+  function reportStorageUnavailable(kind: "load-blocked" | "unavailable" = "unavailable"): void {
+    _persistenceFailureKind = kind;
     _persistenceFailureGeneration++;
   }
 
@@ -1100,7 +1101,7 @@ function createUserState() {
         _persistenceReady = false;
         persistenceBlocked = true;
         quarantineAvailable = false;
-        reportStorageUnavailable();
+        reportStorageUnavailable("load-blocked");
         return;
       }
 

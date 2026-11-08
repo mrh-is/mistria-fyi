@@ -87,6 +87,25 @@ describe("TrackerRow reportable metadata", () => {
     ).toBeInTheDocument();
   });
 
+  it("tells the toggle whether the name was still covered, so the guard can word its dialog", async () => {
+    const onToggle = vi.fn();
+    renderWithFeedback(TrackerRow, {
+      display: { mode: "spoilered" },
+      fact: "almanac/copper_ore",
+      name: "Copper Ore",
+      onToggle,
+      reportCategory: "almanac-item",
+      reportEntityId: "copper_ore",
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Check spoilered item" }));
+    expect(onToggle).toHaveBeenLastCalledWith(true);
+
+    await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Check Copper Ore" }));
+    expect(onToggle).toHaveBeenLastCalledWith(false);
+  });
+
   it("reveals a ready sprite with the spoiler name", async () => {
     const view = renderWithFeedback(TrackerRow, {
       display: { mode: "spoilered" },

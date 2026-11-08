@@ -41,7 +41,7 @@ describe("MinesContent floor stepper", () => {
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
     expect(userState.state.progress.mineFloor).toBe(20);
-    await confirm("Cancel");
+    await confirm("Never mind");
     expect(userState.state.progress.mineFloor).toBe(20);
   });
 
@@ -49,7 +49,7 @@ describe("MinesContent floor stepper", () => {
     userState.setMineFloor(20);
     flushSync();
     await stepDown();
-    await confirm("Yes, just this item");
+    await confirm("Yes, but just this");
 
     expect(userState.state.progress.mineFloor).toBe(21);
     expect(userState.state.progress.questStates[waterQuest]).toBeUndefined();
@@ -72,7 +72,7 @@ describe("MinesContent floor stepper", () => {
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
     expect(input.value).toBe("0");
-    await confirm("Cancel");
+    await confirm("Never mind");
     expect(userState.state.progress.mineFloor).toBe(0);
   });
 });

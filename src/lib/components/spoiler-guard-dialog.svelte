@@ -10,6 +10,7 @@
   <ConfirmSpoilerDialog
     bind:open={guard.open}
     condition={guard.condition}
+    subject={guard.subject}
     onCancel={() => {
       guard.cancel();
     }}

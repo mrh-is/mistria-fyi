@@ -234,13 +234,17 @@
                       sources={museumItemSources}
                       sprite={itemId}
                       spriteClass="text-(--color-category-museum)"
-                      onToggle={() => {
+                      onToggle={(covered) => {
                         if (!isItemSpoilered(itemId) || museumCompleted) {
                           toggleItem(itemId, set.setId, wingId);
                         } else {
-                          spoilerGuard.requestGuardedAction(museumItemVisibility, () => {
-                            toggleItem(itemId, set.setId, wingId);
-                          });
+                          spoilerGuard.requestGuardedAction(
+                            museumItemVisibility,
+                            () => {
+                              toggleItem(itemId, set.setId, wingId);
+                            },
+                            covered ? undefined : { name: getName("items", itemId, locale) },
+                          );
                         }
                       }}
                     />

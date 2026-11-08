@@ -405,10 +405,15 @@
     <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} isModal={false} {onClose}>
       <div class="feedback-form">
         <div>
+          <!-- Mirrors the "Optional" heading below; the field's own name & aria-required carry this for screen readers. -->
+          <p class="feedback-form__optional mb-1.5" aria-hidden="true">
+            {m.feedback_message_heading()}
+          </p>
           <textarea
             bind:this={messageInput}
             id="feedback-message"
             aria-label={m.feedback_message_label()}
+            aria-required="true"
             aria-invalid={messageInvalid}
             aria-describedby={messageInvalid ? "feedback-message-error" : undefined}
             class="feedback-form__message {messageInvalid

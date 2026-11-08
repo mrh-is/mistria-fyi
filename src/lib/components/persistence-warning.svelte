@@ -1,6 +1,7 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
+  import { downloadProgressBackup } from "#lib/controllers/tracking-reminders.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
@@ -8,10 +9,29 @@
 
   import type { PersistenceFailureKind } from "#lib/stores/user-state.svelte.js";
 
-  const MESSAGES: Record<PersistenceFailureKind, () => string> = {
-    "newer-data": m.persistence_warning_newer_data,
-    unavailable: m.persistence_warning,
-    unreadable: m.persistence_warning_unreadable,
+  interface Warning {
+    action?: { label: string; onClick: () => void };
+    description?: string;
+    title: string;
+  }
+
+  const openData = { label: m.data_title(), onClick: () => void goto(localizedHref("data")) };
+
+  const WARNINGS: Record<PersistenceFailureKind, () => Warning> = {
+    // Nothing loaded, so there's nothing to back up yet; a reload after fixing settings is the fix.
+    "load-blocked": () => ({
+      description: m.persistence_warning_load(),
+      title: m.persistence_warning_load_title(),
+    }),
+    // Newer data can't be recovered from Data management; only updating the app helps.
+    "newer-data": () => ({ title: m.persistence_warning_newer_data() }),
+    // The backup exports what's in memory, so it includes the change that didn't save.
+    unavailable: () => ({
+      action: { label: m.persistence_warning_backup(), onClick: downloadProgressBackup },
+      description: m.persistence_warning(),
+      title: m.persistence_warning_title(),
+    }),
+    unreadable: () => ({ action: openData, title: m.persistence_warning_unreadable() }),
   };
   const SUPPRESS_MS = 60_000;
   let suppressedUntil = 0;
@@ -23,19 +43,10 @@
       toast.dismiss(activeToastId);
     }
 
-    const kind = userState.persistenceFailureKind;
-    const message = MESSAGES[kind]();
-    activeToastId = toast.error(message, {
-      // Newer data can't be recovered from Data management; only updating the app helps.
-      action:
-        kind === "newer-data"
-          ? undefined
-          : {
-              label: m.data_title(),
-              onClick: () => {
-                void goto(localizedHref("data"));
-              },
-            },
+    const warning = WARNINGS[userState.persistenceFailureKind]();
+    activeToastId = toast.error(warning.title, {
+      action: warning.action,
+      description: warning.description,
       duration: Infinity,
       onDismiss: () => {
         suppressedUntil = Date.now() + SUPPRESS_MS;

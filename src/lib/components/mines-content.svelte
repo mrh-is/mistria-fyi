@@ -96,9 +96,13 @@
   function requestFloor(floor: number): void {
     const seals = sealsBefore(userState.state.progress, floor);
     if (seals) {
-      spoilerGuard.requestGuardedAction(seals, () => {
-        setFloorWithCelebration(floor);
-      });
+      spoilerGuard.requestGuardedAction(
+        seals,
+        () => {
+          setFloorWithCelebration(floor);
+        },
+        { floor },
+      );
     } else {
       setFloorWithCelebration(floor);
     }
@@ -210,7 +214,7 @@
               reportCategory="spell"
               reportEntityId={spell.id}
               sources={spell.sources}
-              onToggle={() => {
+              onToggle={(covered) => {
                 if (!isSpellSpoilered(spell.id) || completed) {
                   toggleSpell(spell.id);
                 } else {
@@ -219,6 +223,7 @@
                     () => {
                       toggleSpell(spell.id);
                     },
+                    covered ? undefined : { name: spell.name },
                   );
                 }
               }}

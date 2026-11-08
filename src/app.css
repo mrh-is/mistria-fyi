@@ -550,6 +550,11 @@ html:lang(ru) {
   color: var(--color-ink);
 }
 
+/* Sonner's theme rule paints descriptions near-white, brighter than the title they support. */
+[data-sonner-toaster][data-sonner-theme] [data-sonner-toast] [data-description] {
+  color: var(--color-ink-muted);
+}
+
 @media (forced-colors: active) {
   :disabled,
   [aria-disabled="true"],

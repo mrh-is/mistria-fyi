@@ -1,1 +1,1025 @@
-[]
+[
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
+    "key": "about_data_version_notice",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Backup & restore",
+    "key": "backup_card_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Face gear",
+    "key": "cosmetic_slot_face_gear",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Head gear",
+    "key": "cosmetic_slot_head_gear",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Danger zone",
+    "key": "danger_zone_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Import from save file",
+    "key": "import_card_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded choice.",
+    "key": "merge_conflict_child_choice",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Fix this by hand",
+    "key": "merge_conflict_correction_link",
+    "locale": "ru",
+    "reason": "“Исправить вручную” already means “fix by hand”, so the new English needs no new wording."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We’ve kept your recorded status.",
+    "key": "merge_conflict_relationship",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We’ve kept {localVillager} as your spouse, and skipped the imported child choice.",
+    "key": "merge_conflict_spouse",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Floor progress",
+    "key": "mines_floor_progress_section",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "The feedback endpoint may use Cloudflare’s built-in rate limiting or other abuse-prevention measures, which process IP addresses transiently at the network edge. IP addresses are not read, logged, or stored by the application.",
+    "key": "privacy_abuse_body",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "To remember your progress, the Mistria Field Guide saves your game data (completed items, settings, and world state) in your browser’s local storage. This data never leaves your device unless you explicitly choose to send it.",
+    "key": "privacy_device_body",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Privacy policy",
+    "key": "privacy_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Marked “{name}” completed",
+    "key": "quest_marked_completed",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed",
+    "key": "quest_marked_completed",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed",
+    "key": "quest_marked_completed",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed",
+    "key": "quest_marked_completed",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed",
+    "key": "quest_marked_completed",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed",
+    "key": "quest_marked_completed",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed",
+    "key": "quest_marked_completed",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed and unlocked “{recipe}”",
+    "key": "quest_marked_completed_with_recipe",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed and unlocked “{recipe}”",
+    "key": "quest_marked_completed_with_recipe",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed and unlocked “{recipe}”",
+    "key": "quest_marked_completed_with_recipe",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed and unlocked “{recipe}”",
+    "key": "quest_marked_completed_with_recipe",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed and unlocked “{recipe}”",
+    "key": "quest_marked_completed_with_recipe",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed and unlocked “{recipe}”",
+    "key": "quest_marked_completed_with_recipe",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” completed and unlocked “{recipe}”",
+    "key": "quest_marked_completed_with_recipe",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": [
+      {
+        "declarations": ["input name", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Marked “{name}” completed and unlocked {count} recipe",
+          "countPlural=other": "Marked “{name}” completed and unlocked {count} recipes"
+        }
+      }
+    ],
+    "key": "quest_marked_completed_with_recipes",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": [
+      {
+        "declarations": ["input name", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Marked “{name}” completed and unlocked {count} recipe",
+          "countPlural=other": "Marked “{name}” completed and unlocked {count} recipes"
+        }
+      }
+    ],
+    "key": "quest_marked_completed_with_recipes",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": [
+      {
+        "declarations": ["input name", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Marked “{name}” completed and unlocked {count} recipe",
+          "countPlural=other": "Marked “{name}” completed and unlocked {count} recipes"
+        }
+      }
+    ],
+    "key": "quest_marked_completed_with_recipes",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": [
+      {
+        "declarations": ["input name", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Marked “{name}” completed and unlocked {count} recipe",
+          "countPlural=other": "Marked “{name}” completed and unlocked {count} recipes"
+        }
+      }
+    ],
+    "key": "quest_marked_completed_with_recipes",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": [
+      {
+        "declarations": ["input name", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Marked “{name}” completed and unlocked {count} recipe",
+          "countPlural=other": "Marked “{name}” completed and unlocked {count} recipes"
+        }
+      }
+    ],
+    "key": "quest_marked_completed_with_recipes",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": [
+      {
+        "declarations": ["input name", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Marked “{name}” completed and unlocked {count} recipe",
+          "countPlural=other": "Marked “{name}” completed and unlocked {count} recipes"
+        }
+      }
+    ],
+    "key": "quest_marked_completed_with_recipes",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": [
+      {
+        "declarations": ["input name", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Marked “{name}” completed and unlocked {count} recipe",
+          "countPlural=other": "Marked “{name}” completed and unlocked {count} recipes"
+        }
+      }
+    ],
+    "key": "quest_marked_completed_with_recipes",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” obtained",
+    "key": "quest_marked_obtained",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Reset “{name}”",
+    "key": "quest_reset",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Fetch quests",
+    "key": "quest_type_fetch",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "es",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "fr",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "ja",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "ko",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "ru",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "zh-Hans",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Getting engaged moves everyone else you’re dating to best friends.",
+    "key": "relationship_warning_proposal",
+    "locale": "zh-Hant",
+    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "es",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "fr",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "ja",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "ko",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "ru",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Transfer to another device",
+    "key": "transfer_card_title",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
+  },
+  {
+    "english": "Marked “{name}” complete",
+    "key": "undo_marked_complete",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” complete",
+    "key": "undo_marked_complete",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” complete",
+    "key": "undo_marked_complete",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” complete",
+    "key": "undo_marked_complete",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” complete",
+    "key": "undo_marked_complete",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” complete",
+    "key": "undo_marked_complete",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Marked “{name}” complete",
+    "key": "undo_marked_complete",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "es",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "fr",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "ja",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "ko",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "ru",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "zh-Hans",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unmarked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "zh-Hant",
+    "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  }
+]

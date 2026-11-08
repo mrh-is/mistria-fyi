@@ -75,7 +75,7 @@ test.describe("320-pixel reflow", () => {
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
 
     await gotoApplication(page, "/data");
-    await openSettingsCard(page, "Import from Save File");
+    await openSettingsCard(page, "Import from save file");
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
   });
 

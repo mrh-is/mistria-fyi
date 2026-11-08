@@ -28,7 +28,7 @@ describe("showUndoToast", () => {
     showUndoToast("Copper Sword", true, onUndo);
 
     expect(toast).toHaveBeenCalledWith(
-      'Marked "Copper Sword" complete',
+      "Marked “Copper Sword” complete",
       expect.objectContaining({
         cancel: { label: "Undo", onClick: onUndo },
         duration: 30_000,
@@ -55,20 +55,20 @@ describe("questToastMessage", () => {
   const [firstRecipe, secondRecipe] = recordKeys(trackerData.recipes);
 
   it("describes each state a quest toggle lands on", () => {
-    expect(questToastMessage("Fishing", "obtained", [], "en")).toBe('Marked "Fishing" obtained');
-    expect(questToastMessage("Fishing", "completed", [], "en")).toBe('Marked "Fishing" completed');
-    expect(questToastMessage("Fishing", "none", [], "en")).toBe('Reset "Fishing"');
+    expect(questToastMessage("Fishing", "obtained", [], "en")).toBe("Marked “Fishing” obtained");
+    expect(questToastMessage("Fishing", "completed", [], "en")).toBe("Marked “Fishing” completed");
+    expect(questToastMessage("Fishing", "none", [], "en")).toBe("Reset “Fishing”");
   });
 
   it("names a single unlocked recipe", () => {
     expect(questToastMessage("Fishing", "completed", [firstRecipe], "en")).toBe(
-      `Marked "Fishing" completed and unlocked "${getName("recipes", firstRecipe, "en")}"`,
+      `Marked “Fishing” completed and unlocked “${getName("recipes", firstRecipe, "en")}”`,
     );
   });
 
   it("counts several unlocked recipes", () => {
     expect(questToastMessage("Fishing", "completed", [firstRecipe, secondRecipe], "en")).toBe(
-      'Marked "Fishing" completed and unlocked 2 recipes',
+      "Marked “Fishing” completed and unlocked 2 recipes",
     );
   });
 });
@@ -85,7 +85,7 @@ describe("showQuestToast", () => {
     showQuestToast("Fishing", "completed", [], "en", onUndo);
 
     expect(toast).toHaveBeenCalledWith(
-      'Marked "Fishing" completed',
+      "Marked “Fishing” completed",
       expect.objectContaining({ cancel: { label: "Undo", onClick: onUndo }, duration: 30_000 }),
     );
   });

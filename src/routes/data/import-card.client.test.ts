@@ -1,10 +1,11 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { fireEvent, screen, waitFor, within } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
 import { PROGRESS_STORAGE_KEY, QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { buildSavFile } from "#lib/test-utils/sav.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
@@ -17,7 +18,7 @@ beforeEach(async () => {
 });
 
 async function importFiles(files: File[]) {
-  render(ImportCard, { open: true });
+  renderWithFeedback(ImportCard, { open: true });
   await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
     target: { files },
   });
@@ -141,7 +142,7 @@ describe("save import", () => {
       playerName: "Ada",
     };
     await userState.mergeFromSave({}, { metadata });
-    render(ImportCard, { open: true });
+    renderWithFeedback(ImportCard, { open: true });
     expect(screen.getByTestId("last-import")).toHaveTextContent("Save #123456 · Created in 0.11.7");
     expect(screen.getByTestId("last-import")).toHaveTextContent("Last imported 2 minutes ago");
     await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
@@ -152,7 +153,7 @@ describe("save import", () => {
   });
 
   it("announces no new data on a repeated import after a successful source-file summary", async () => {
-    render(ImportCard, { open: true });
+    renderWithFeedback(ImportCard, { open: true });
     const input = screen.getByLabelText("Choose save files to import");
     const files = [new File([JSON.stringify({ items_acquired: [] })], "player.json")];
 
@@ -235,7 +236,7 @@ describe("save import", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "None of the selected save files could be read.",
+        "We couldn’t read any of those files. Try the newest file that ends in “autosave”.",
       );
     });
     expect(
@@ -252,7 +253,7 @@ describe("save import", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "This file isn’t a readable Fields of Mistria save. It may be corrupt.",
+        "Hmm, we can’t read this as a Fields of Mistria save. It might be damaged, or a different file. Try the newest file that ends in “autosave”.",
       );
     });
     expect(screen.getByRole("link", { name: "vaultc" })).toHaveAttribute(
@@ -291,7 +292,7 @@ describe("save import atomicity", () => {
 
       await importFiles([new File(['{"items_acquired":["turnip"]}'], "player.json")]);
       expect(await screen.findByRole("alert")).toHaveTextContent(
-        "Your progress was saved by a newer version. Update to continue.",
+        "Your progress is safe! A newer version of the field guide saved it, so reload this page to get the latest update.",
       );
       expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(newer);
       expect(localStorage.getItem(QUARANTINE_STORAGE_KEY)).toBe(quarantine);
@@ -310,7 +311,7 @@ describe("save import atomicity", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "This save file is too large (8 MB). The maximum supported size is 8 MB.",
+        "Whoa, that’s a big file (8 MB)! We can read save files up to 8 MB, so double-check you picked the right one.",
       );
     });
     expect(arrayBuffer).not.toHaveBeenCalled();
@@ -320,7 +321,7 @@ describe("save import atomicity", () => {
 
 describe("save import file picker", () => {
   it("filters the picker to save files on desktop", () => {
-    render(ImportCard, { open: true });
+    renderWithFeedback(ImportCard, { open: true });
     expect(screen.getByLabelText("Choose save files to import")).toHaveAttribute(
       "accept",
       ".sav,.json",
@@ -333,7 +334,7 @@ describe("save import file picker", () => {
       platform: "MacIntel",
       userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
     });
-    render(ImportCard, { open: true });
+    renderWithFeedback(ImportCard, { open: true });
     await waitFor(() => {
       expect(screen.getByLabelText("Choose save files to import")).not.toHaveAttribute("accept");
     });
@@ -350,7 +351,7 @@ describe("save import file picker", () => {
   });
 
   it("shows the picker hint on iOS only", async () => {
-    const { unmount } = render(ImportCard, { open: true });
+    const { unmount } = renderWithFeedback(ImportCard, { open: true });
     expect(screen.queryByTestId("ios-picker-hint")).toBeNull();
     unmount();
 
@@ -359,7 +360,7 @@ describe("save import file picker", () => {
       platform: "iPhone",
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
     });
-    render(ImportCard, { open: true });
+    renderWithFeedback(ImportCard, { open: true });
     expect(await screen.findByTestId("ios-picker-hint")).toHaveTextContent(".sav");
   });
 });

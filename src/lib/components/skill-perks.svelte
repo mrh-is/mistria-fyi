@@ -101,8 +101,12 @@
         userState.togglePerk(perk.id);
       });
     };
-    if (perk.spoilered) spoilerGuard.requestGuardedAction(perk.tier.condition, toggle);
-    else toggle();
+    if (perk.spoilered) {
+      const subject = revealed.has(perk.id) ? { name: perk.name } : undefined;
+      spoilerGuard.requestGuardedAction(perk.tier.condition, toggle, subject);
+    } else {
+      toggle();
+    }
   }
 </script>
 

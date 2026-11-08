@@ -54,10 +54,10 @@ describe("plural messages", () => {
   it("interpolates the item name alongside the recipe-count plural", () => {
     expect(
       m.quest_marked_completed_with_recipes({ count: 1, name: "Copper Sword" }, { locale: "en" }),
-    ).toBe('Marked "Copper Sword" completed and unlocked 1 recipe');
+    ).toBe("Marked “Copper Sword” completed and unlocked 1 recipe");
     expect(
       m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "en" }),
-    ).toBe('Marked "Copper Sword" completed and unlocked 3 recipes');
+    ).toBe("Marked “Copper Sword” completed and unlocked 3 recipes");
     expect(
       m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "ru" }),
     ).toBe("«Copper Sword» отмечено как выполненное, разблокировано 3 рецепта");

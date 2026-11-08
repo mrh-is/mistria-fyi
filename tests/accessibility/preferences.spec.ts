@@ -48,7 +48,7 @@ test.describe("browser accessibility preferences", () => {
 
       await gotoApplication(page, "/");
       await openFeedbackValidation(page);
-      await expect(page.getByRole("alert")).toHaveText("Please enter a message.");
+      await expect(page.getByRole("alert")).toHaveText("What did you wanna say?");
     },
   );
 

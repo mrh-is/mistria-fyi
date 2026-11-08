@@ -173,7 +173,7 @@
               sources={entry.sources}
               sprite={entry.itemId}
               spriteClass="text-(--color-category-recipes)"
-              onToggle={() => {
+              onToggle={(covered) => {
                 if (!entry.spoilered || completed) {
                   toggleRecipe(
                     entry,
@@ -181,13 +181,17 @@
                     group.entries.map((candidate) => candidate.id),
                   );
                 } else {
-                  spoilerGuard.requestGuardedAction(entry.visibility, () => {
-                    toggleRecipe(
-                      entry,
-                      group.id,
-                      group.entries.map((candidate) => candidate.id),
-                    );
-                  });
+                  spoilerGuard.requestGuardedAction(
+                    entry.visibility,
+                    () => {
+                      toggleRecipe(
+                        entry,
+                        group.id,
+                        group.entries.map((candidate) => candidate.id),
+                      );
+                    },
+                    covered ? undefined : { name: entry.name },
+                  );
                 }
               }}
             />

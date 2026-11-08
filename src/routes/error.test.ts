@@ -26,7 +26,7 @@ describe("error page", () => {
     const { queries, text } = renderToFragmentWithFeedback(ErrorPage, { props: {} });
 
     expect(queries.getByText("500")).toBeTruthy();
-    expect(text).toContain("Something went wrong.");
+    expect(text).toContain("Something went wrong on our end, but your progress is safe.");
     expect(text).not.toContain("tend the fields");
   });
 });
