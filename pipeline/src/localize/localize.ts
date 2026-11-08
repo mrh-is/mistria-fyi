@@ -179,7 +179,7 @@ function localizeField(loadTable: TableLoader, input: LocalizeFieldInput): Local
   return { fallbackLocales, values };
 }
 
-function deriveKey(category: string, id: string, field: string | undefined): string {
+export function deriveKey(category: string, id: string, field?: string): string {
   return field === undefined ? `${category}/${id}` : `${category}/${id}/${field}`;
 }
 
