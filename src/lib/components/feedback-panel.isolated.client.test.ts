@@ -261,14 +261,13 @@ describe("FeedbackPanel", () => {
     expect(showProgress).toHaveAttribute("aria-expanded", "false");
     await fireEvent.click(showProgress);
     expect(showProgress).toHaveAttribute("aria-expanded", "true");
-    const progressPreview = document.getElementById(
-      showProgress.getAttribute("aria-controls") ?? "",
-    );
+    expect(document.getElementById(showProgress.getAttribute("aria-controls") ?? "")).toBeVisible();
+    const progressPreview = document.getElementById("save-data-preview");
     expect(JSON.parse(progressPreview?.textContent ?? "")).toEqual({ renown: 7 });
 
     const showSyncLog = screen.getByRole("button", { name: "Show sync log" });
     await fireEvent.click(showSyncLog);
-    const syncPreview = document.getElementById(showSyncLog.getAttribute("aria-controls") ?? "");
+    const syncPreview = document.getElementById("sync-log-preview");
     const previewLog = JSON.parse(syncPreview?.textContent ?? "") as SyncLog;
     expect(previewLog.events.map((event) => event.outcome)).toContain("unreadable");
 
@@ -284,6 +283,17 @@ describe("FeedbackPanel", () => {
     expect(body).not.toHaveProperty("saveData");
     expect(body).not.toHaveProperty("syncLog");
     expect(body).not.toHaveProperty("email");
+  });
+
+  it("shows what an attachment shares once it is chosen, without opening the preview", async () => {
+    renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
+    expect(screen.queryByText("This data will be publicly visible.")).toBeNull();
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
+    expect(screen.getByText("This data will be publicly visible.")).toBeVisible();
+    expect(document.getElementById("save-data-preview")).toBeNull();
+    expect(screen.queryByText(/Recent sync activity/)).toBeNull();
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my save file sync log" }));
+    expect(screen.getByText(/Recent sync activity/)).toBeVisible();
   });
 
   it("says a reply needs a private email before opting in", async () => {

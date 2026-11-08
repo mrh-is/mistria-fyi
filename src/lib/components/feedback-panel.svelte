@@ -432,29 +432,22 @@
         <p class="feedback-form__optional">{m.feedback_optional_label()}</p>
         <div class="feedback-form__options">
           <div class="feedback-form__option">
-            <div class="flex items-center gap-2">
-              <Checkbox
-                class="rounded-sm"
-                id="include-save-data"
-                aria-describedby="include-save-data-description"
-                checked={includeSaveData}
-                onCheckedChange={(checked) => {
-                  includeSaveData = checked;
-                }}
-              />
+            <Checkbox
+              class="rounded-sm"
+              id="include-save-data"
+              checked={includeSaveData}
+              onCheckedChange={(checked) => {
+                includeSaveData = checked;
+              }}
+            />
+            <div class="feedback-form__heading">
               <label for="include-save-data" class="text-xs select-none">
                 {m.feedback_attach_progress_label()}
               </label>
-            </div>
-            <div class="feedback-form__detail">
-              <p id="include-save-data-description">
-                {m.feedback_save_data_description()}
-                <strong>{m.feedback_save_data_public_warning()}</strong>
-              </p>
               <button
                 class="feedback-form__disclosure"
                 type="button"
-                aria-controls="save-data-preview"
+                aria-controls="save-data-detail"
                 aria-expanded={showSaveDataPreview}
                 onclick={() => {
                   showSaveDataPreview = !showSaveDataPreview;
@@ -469,39 +462,43 @@
                   ? m.feedback_hide_progress_data()
                   : m.feedback_show_progress_data()}
               </button>
-              {#if showSaveDataPreview}
-                <!-- prettier-ignore -->
-                <pre
-                  id="save-data-preview"
-                  class="feedback-form__preview"
-                  transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
-                >{saveDataPreview}</pre>
-              {/if}
             </div>
+            {#if includeSaveData || showSaveDataPreview}
+              <div
+                id="save-data-detail"
+                class="feedback-form__detail"
+                transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+              >
+                <p>
+                  {m.feedback_save_data_description()}
+                  <strong>{m.feedback_save_data_public_warning()}</strong>
+                </p>
+                {#if showSaveDataPreview}
+                  <!-- prettier-ignore -->
+                  <pre id="save-data-preview" class="feedback-form__preview">{saveDataPreview}</pre>
+                {/if}
+              </div>
+            {/if}
           </div>
 
           {#if allowSyncLog}
             <div class="feedback-form__option">
-              <div class="flex items-center gap-2">
-                <Checkbox
-                  class="rounded-sm"
-                  id="include-sync-log"
-                  aria-describedby="include-sync-log-description"
-                  checked={includeSyncLog}
-                  onCheckedChange={(checked) => {
-                    includeSyncLog = checked;
-                  }}
-                />
+              <Checkbox
+                class="rounded-sm"
+                id="include-sync-log"
+                checked={includeSyncLog}
+                onCheckedChange={(checked) => {
+                  includeSyncLog = checked;
+                }}
+              />
+              <div class="feedback-form__heading">
                 <label for="include-sync-log" class="text-xs select-none">
                   {m.feedback_attach_sync_log()}
                 </label>
-              </div>
-              <div class="feedback-form__detail">
-                <p id="include-sync-log-description">{m.feedback_sync_log_description()}</p>
                 <button
                   class="feedback-form__disclosure"
                   type="button"
-                  aria-controls="sync-log-preview"
+                  aria-controls="sync-log-detail"
                   aria-expanded={showSyncLog}
                   onclick={() => {
                     showSyncLog = !showSyncLog;
@@ -514,34 +511,40 @@
                   />
                   {showSyncLog ? m.feedback_hide_sync_log() : m.feedback_show_sync_log()}
                 </button>
-                {#if showSyncLog}
-                  <pre
-                    id="sync-log-preview"
-                    class="feedback-form__preview"
-                    transition:slide={{
-                      duration: prefersReducedMotion.current ? 0 : 120,
-                    }}>{JSON.stringify(syncLogSnapshot, null, 2)}</pre>
-                {/if}
               </div>
+              {#if includeSyncLog || showSyncLog}
+                <div
+                  id="sync-log-detail"
+                  class="feedback-form__detail"
+                  transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+                >
+                  <p>{m.feedback_sync_log_description()}</p>
+                  {#if showSyncLog}
+                    <pre id="sync-log-preview" class="feedback-form__preview">{JSON.stringify(
+                        syncLogSnapshot,
+                        null,
+                        2,
+                      )}</pre>
+                  {/if}
+                </div>
+              {/if}
             </div>
           {/if}
 
           <div class="feedback-form__option">
-            <div class="flex items-center gap-2">
-              <Checkbox
-                class="rounded-sm"
-                id="wants-reply"
-                aria-describedby="feedback-email-note"
-                checked={wantsReply}
-                onCheckedChange={(checked) => {
-                  wantsReply = checked;
-                  if (!checked) emailTouched = false;
-                }}
-              />
-              <label for="wants-reply" class="text-xs select-none"
-                >{m.feedback_wants_reply_label()}</label
-              >
-            </div>
+            <Checkbox
+              class="rounded-sm"
+              id="wants-reply"
+              aria-describedby="feedback-email-note"
+              checked={wantsReply}
+              onCheckedChange={(checked) => {
+                wantsReply = checked;
+                if (!checked) emailTouched = false;
+              }}
+            />
+            <label for="wants-reply" class="text-xs select-none"
+              >{m.feedback_wants_reply_label()}</label
+            >
             <p id="feedback-email-note" class="feedback-form__detail">
               {m.feedback_email_note()}
             </p>
@@ -721,26 +724,34 @@
     background: var(--color-paper-sunken);
   }
 
+  /* Checkbox in the first column; label, details, & previews line up in the second. */
   .feedback-form__option {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 2px;
   }
 
-  /* Indented to the label's edge, past the 16px checkbox & its 8px gap. */
-  .feedback-form__detail,
+  .feedback-form__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 10px;
+  }
+
   .feedback-form__email {
     padding-left: 24px;
   }
 
   .feedback-form__detail {
     display: flex;
+    grid-column: 2;
     flex-direction: column;
-    align-items: flex-start;
     gap: 4px;
     color: var(--color-ink-muted);
     font-size: var(--text-2xs);
-    line-height: 1.5;
+    line-height: 1.45;
   }
 
   .feedback-form__disclosure {
