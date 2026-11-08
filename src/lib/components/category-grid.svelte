@@ -39,7 +39,7 @@
 <div class="flex flex-col gap-5" style="--category-count-width: {countWidth}ch">
   {#each shelves as { keys, shelf } (shelf)}
     <section class="flex flex-col gap-2">
-      <ShelfHeading class="px-1" {shelf} />
+      <ShelfHeading class="px-1" {shelf} --shelf-heading-info-accent="var(--color-home-accent)" />
       <ul
         class="flex flex-col gap-1.5"
         aria-label={m.shelf_categories_label({ shelf: shelfLabel(shelf) })}

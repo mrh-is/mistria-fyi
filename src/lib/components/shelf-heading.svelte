@@ -135,6 +135,10 @@
     outline-offset: -2px;
   }
 
+  .shelf-heading__info:is(:hover, :focus-visible) {
+    outline-color: var(--shelf-heading-info-accent, var(--primary));
+  }
+
   .shelf-heading__count {
     margin-inline-start: auto;
     font-family: var(--font-data);
