@@ -45,8 +45,8 @@ The relevant layers have different responsibilities:
 3. The project’s “.codex/rules/default.rules” governs command approval. An “allow” rule does not
    make a protected path writable.
 4. An agent runs “scripts/setup-worktree.ts” before editing; no hook does. It links inputs &
-   installs dependencies; it cannot change the already selected sandbox policy. Setup itself can
-   need Git metadata writes for hook installation.
+   installs dependencies and generates checkout-local hooks. The shared hook path is configured once
+   per clone in [machine setup](machine-setup.md#git-hooks).
 
 An approved “require_escalated” retry uses different filesystem permissions. Its success explains
 the original denial; it does not prove the ordinary sandbox is fixed.

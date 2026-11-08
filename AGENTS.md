@@ -80,6 +80,10 @@ session limits) belong in each contributor’s user config.
 - Run setup before editing in a harness-created worktree; no hook runs it, and a read-only session
   needs none. Standard setup in an isolated, harness-created worktree is preauthorized, even after a
   missing-dependency preflight failure.
+- In Codex desktop worktrees, run routine setup in the sandbox. Request scoped escalation up front
+  for Git operations that write protected metadata, including fetch, branch creation, staging, &
+  commits. The shared Git hook path is configured once per clone in
+  [machine setup](docs/machine-setup.md#git-hooks).
 - When dependencies are absent, or a merge, pull, or rebase changes the lockfile, pnpm fails with
   `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`. In a linked worktree, run `node scripts/setup-worktree.ts`,
   which also restores missing links. Elsewhere, run `pnpm install --frozen-lockfile`. A deliberate
