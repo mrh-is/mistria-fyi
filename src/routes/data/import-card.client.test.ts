@@ -311,7 +311,7 @@ describe("save import atomicity", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "Whoa, that’s a big file (8 MB)! We can read save files up to 8 MB, so double-check you picked the right one.",
+        "Mamma mia, that’s a big file. This app can only read save files up to 8 MB, and that file is 8 MB. Maybe double-check you picked the right one?",
       );
     });
     expect(arrayBuffer).not.toHaveBeenCalled();

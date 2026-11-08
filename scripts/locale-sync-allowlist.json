@@ -204,6 +204,48 @@
     "reason": "Only the English capitalization changed (title case to sentence case); this locale’s label is already in its own case."
   },
   {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "key": "feedback_toast_dry_run",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
     "english": "Import from save file",
     "key": "import_card_title",
     "locale": "es",
@@ -708,6 +750,216 @@
     "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
   },
   {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+    "key": "sync_facts_disagrees",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file has lower levels than this device.",
+    "key": "sync_facts_level",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "{field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+    "key": "sync_facts_removals",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number one: Nothing is lost. Your progress is totally safe.",
+    "key": "sync_unreadable_safe",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "es",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "fr",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "ja",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "ko",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "ru",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "zh-Hans",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
+    "english": "Number two: This isn’t anything you did. It can happen when {game} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
+    "key": "sync_unreadable_why",
+    "locale": "zh-Hant",
+    "reason": "Only the English capitalization after a colon changed; the translation follows its own language’s rule."
+  },
+  {
     "english": "Transfer to another device",
     "key": "transfer_card_title",
     "locale": "es",
@@ -754,6 +1006,12 @@
     "key": "undo_unmarked",
     "locale": "es",
     "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "Unchecked “{name}”",
+    "key": "undo_unmarked",
+    "locale": "es",
+    "reason": "“Desmarcado” already pairs with “marcado”, the Spanish for “checked off”."
   },
   {
     "english": "Unmarked “{name}”",

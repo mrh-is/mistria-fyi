@@ -167,7 +167,10 @@
           const known = error instanceof SavArchiveError;
           importError = known
             ? formatSavArchiveError(error.detail)
-            : m.import_error_parse_failed({ feedback: m.import_error_feedback_link() });
+            : m.import_error_parse_failed({
+                feedback: m.import_error_feedback_link(),
+                tryAutosave: m.import_error_try_autosave(),
+              });
           importErrorOffersFeedback = !known;
           if (!known) importErrorReportDetails = describeErrorForReport(error);
           showSavFallbackHelp = true;
@@ -178,7 +181,10 @@
         if (result.error || !result.bundle) {
           importError = result.error
             ? formatExtractedSaveFilesError(result.error)
-            : m.import_error_parse_failed({ feedback: m.import_error_feedback_link() });
+            : m.import_error_parse_failed({
+                feedback: m.import_error_feedback_link(),
+                tryAutosave: m.import_error_try_autosave(),
+              });
           importErrorOffersFeedback = !result.error;
           if (result.error?.code === "no-valid-files") {
             importErrorDetails = result.error.problems.map(formatSaveImportWarning);
@@ -404,7 +410,7 @@
       <StatusNote class="mt-3 text-base" tone="error">
         {#if importErrorOffersFeedback}
           <p>
-            {#each messageParts( (slot) => m.import_error_parse_failed( { feedback: slot("feedback") } ) ) as part, index (index)}
+            {#each messageParts( (slot) => m.import_error_parse_failed( { feedback: slot("feedback"), tryAutosave: m.import_error_try_autosave() } ) ) as part, index (index)}
               {#if typeof part === "string"}{part}{:else}<button
                   type="button"
                   class="cursor-pointer underline underline-offset-2"

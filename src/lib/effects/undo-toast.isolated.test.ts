@@ -55,7 +55,7 @@ describe("questToastMessage", () => {
   const [firstRecipe, secondRecipe] = recordKeys(trackerData.recipes);
 
   it("describes each state a quest toggle lands on", () => {
-    expect(questToastMessage("Fishing", "obtained", [], "en")).toBe("Marked “Fishing” obtained");
+    expect(questToastMessage("Fishing", "obtained", [], "en")).toBe("Started “Fishing”");
     expect(questToastMessage("Fishing", "completed", [], "en")).toBe("Checked off “Fishing”");
     expect(questToastMessage("Fishing", "none", [], "en")).toBe("Reset “Fishing”");
   });

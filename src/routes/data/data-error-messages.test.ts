@@ -54,9 +54,9 @@ describe("data error messages", () => {
     const detail = { code: "too-large", maxBytes: 8 * 1024 * 1024, sizeBytes: 9_700_000 } as const;
 
     expect(formatSavArchiveError(detail)).toBe(
-      "Whoa, that’s a big file (9.3 MB)! We can read save files up to 8 MB, so double-check you picked the right one.",
+      "Mamma mia, that’s a big file. This app can only read save files up to 8 MB, and that file is 9.3 MB. Maybe double-check you picked the right one?",
     );
     overwriteGetLocale(() => "fr");
-    expect(formatSavArchiveError(detail)).toMatch(/\(9,3\s?Mo\)/);
+    expect(formatSavArchiveError(detail)).toMatch(/fait 9,3\s?Mo\./);
   });
 });
