@@ -111,10 +111,6 @@
     letter-spacing: 0.02em;
   }
 
-  .quick-settings__link :global(svg) {
-    color: var(--color-ink-muted);
-  }
-
   .quick-settings__link {
     display: flex;
     min-width: 0;
