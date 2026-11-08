@@ -67,8 +67,9 @@ run or returns unusable JSON fails the report job. An incomplete report never cl
 [The development workflow](development-workflow.md#vitest-time-budgets) documents the timing
 ceilings.
 
-A PR merges only when CI passes. Fix CI failures on the branch instead of merging around them (see
-“Monitor CI” in agent-workflow.md).
+A PR merges only when CI passes, but it doesn’t have to pass before an agent marks the PR ready (see
+[Draft or ready](agent-workflow.md#draft-or-ready)). Fix CI failures on the branch (see “Monitor CI”
+in agent-workflow.md).
 
 ### Remote setup retry
 
@@ -184,8 +185,10 @@ visible content or keyboard focus still need the relevant visual checks.
 
 ## Review selection
 
-For most PRs, review your own diff in a fresh context before asking for human review. A subagent
+For most PRs, review your own diff in a fresh context before marking the PR ready. A subagent
 reading the diff cold catches mistakes that the implementing context has come to accept.
+[Who marks ready](agent-workflow.md#who-marks-ready) says which agent makes that move after each
+kind of review.
 
 ### High-risk surfaces
 

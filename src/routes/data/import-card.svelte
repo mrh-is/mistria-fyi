@@ -21,8 +21,8 @@
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
+  import { progressImport } from "#lib/progress/index.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
-  import { userState } from "#lib/stores/user-state.svelte.js";
   import { isIosDevice } from "#lib/utils/ios-device.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";
@@ -38,7 +38,7 @@
   import MergeSummary from "./merge-summary.svelte";
 
   import type { SaveImportReport, SaveImportWarning } from "#lib/engine/import-save.js";
-  import type { SyncedSave } from "#lib/stores/user-state.svelte.js";
+  import type { SyncedSave } from "#lib/progress/index.js";
 
   let {
     onScrollToTransfer,
@@ -215,7 +215,7 @@
     confirmedFarm?: string,
   ) {
     const { completed, day, metadata, playtime } = save;
-    const outcome = await userState.mergeFromSave(completed, {
+    const outcome = await progressImport.mergeFromSave(completed, {
       confirmedFarm,
       day,
       metadata,
@@ -276,8 +276,8 @@
 
 <DataCard bind:open title={m.import_card_title()} summary={m.import_card_summary()}>
   <div>
-    {#if userState.state.lastImport}
-      <LastImport metadata={userState.state.lastImport} locale={page.data.locale} />
+    {#if progressImport.lastImport}
+      <LastImport metadata={progressImport.lastImport} locale={page.data.locale} />
     {/if}
     <div class="sr-only" role="status" aria-live="polite">
       {#if importing}

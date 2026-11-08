@@ -172,7 +172,8 @@ session limits) belong in each contributor’s user config.
   an especially careful review.
 - A request to review is a request to post; see
   [Review records](docs/agent-verification.md#review-records).
-- A review doesn’t authorize fixes. Address findings only when asked.
+- A review doesn’t authorize a reviewing agent to fix what it reviews; it addresses findings only
+  when asked. The implementing agent resolves findings on its own PR.
 
 ## Delivery gates
 
@@ -187,12 +188,18 @@ session limits) belong in each contributor’s user config.
   record to `docs/decisions/` only when a newcomer would propose the rejected alternative; see
   [Recording decisions](docs/agent-workflow.md#recording-decisions).
 - Pass multiline GitHub bodies with `--body-file`, and re-read the published result.
-- An open PR’s state is your merge recommendation. Keep it a draft while any manual step, question,
-  gap, or review remains. Mark it ready only when you would merge it yourself, and return it to
-  draft if that changes. Before marking it ready, make its body describe the final state; see
+- A draft PR isn’t ready for human review. A ready PR is one you’d merge if CI passes. Keep it a
+  draft while any manual step, question, gap, or agent review remains, and return it to draft if
+  that changes. See [Draft or ready](docs/agent-workflow.md#draft-or-ready), which also says who
+  marks a PR ready.
+- Ready is independent of CI. Mark a PR ready when you think it’s ready, without waiting for CI to
+  pass; the maintainer reviews & merges only PRs that are both ready & passing.
+- Before marking a PR ready, make its body describe the final state; see
   [Final state](docs/agent-workflow.md#final-state).
-- Watch CI & fix failures on the branch. Don’t merge around failing CI. If no “CI” run starts a few
-  minutes after you open the PR, follow the workflow’s empty-commit recovery.
+- Marking a PR ready doesn’t end your ownership. Watch CI & fix failures on the branch until it
+  passes. If no “CI” run starts a few minutes after you open the PR, follow the workflow’s
+  empty-commit recovery.
+- Only the maintainer merges PRs.
 - Never change `package.json`’s version or create Git tags without an approved release. Production
   versions come from Git metadata.
 

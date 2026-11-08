@@ -156,10 +156,12 @@ describe("engine import boundary", () => {
         [
           'import type { AliasStore } from "#lib/stores/probe.js";',
           'import type { AliasComponent } from "#lib/components/probe.js";',
+          'import type { AliasProgress } from "#lib/progress/probe.js";',
           'import type { RelativeStore } from "../stores/probe.js";',
           'import type { RelativeComponent } from "../components/probe.js";',
+          'import type { RelativeProgress } from "../progress/probe.js";',
           'import type { Domain } from "../types/probe.js";',
-          "export type Probe = AliasStore | AliasComponent | RelativeStore | RelativeComponent | Domain;",
+          "export type Probe = AliasStore | AliasComponent | AliasProgress | RelativeStore | RelativeComponent | RelativeProgress | Domain;",
         ].join("\n"),
       );
       await writeFile(
@@ -167,8 +169,9 @@ describe("engine import boundary", () => {
         [
           'import type { Store } from "../../stores/probe.js";',
           'import type { Component } from "../../components/probe.js";',
+          'import type { Progress } from "../../progress/probe.js";',
           'import type { Domain } from "../../types/probe.js";',
-          "export type Probe = Store | Component | Domain;",
+          "export type Probe = Store | Component | Progress | Domain;",
         ].join("\n"),
       );
       // Run the filename scan before cleanup, forcing the overlap from concurrent test runs.
@@ -183,12 +186,73 @@ describe("engine import boundary", () => {
       const restricted = report.diagnostics.filter(
         ({ code }) => code === "eslint(no-restricted-imports)",
       );
-      expect(restricted.filter(({ filename }) => filename === rootProbe)).toHaveLength(4);
-      expect(restricted.filter(({ filename }) => filename === nestedProbe)).toHaveLength(2);
+      expect(restricted.filter(({ filename }) => filename === rootProbe)).toHaveLength(6);
+      expect(restricted.filter(({ filename }) => filename === nestedProbe)).toHaveLength(3);
       expect(result.status).toBe(1);
     } finally {
       await rm(rootProbe, { force: true });
       await rm(nestedDirectory, { force: true, recursive: true });
+    }
+  });
+});
+
+describe("sync import boundary", () => {
+  it("rejects direct stores while accepting progress facades & sync tests", async () => {
+    const probeStem = `lint-probe-${randomUUID()}`;
+    const directory = posix.join("src/lib/sync", probeStem);
+    const blocked = posix.join(directory, "blocked.ts");
+    const allowed = posix.join(directory, "allowed.ts");
+    // Integration tests beside the services may seed the store directly.
+    const test = posix.join(directory, "allowed.test.ts");
+    await mkdir(directory);
+    try {
+      await writeFile(
+        blocked,
+        [
+          'import type { AliasStore } from "#lib/stores/probe.js";',
+          'import type { RelativeStore } from "../../stores/probe.js";',
+          "",
+          "export type Probe = AliasStore | RelativeStore;",
+        ].join("\n"),
+      );
+      await writeFile(
+        allowed,
+        [
+          'import type { Feature } from "#lib/progress/probe.js";',
+          "",
+          "export type Probe = Feature;",
+        ].join("\n"),
+      );
+      await writeFile(
+        test,
+        [
+          'import type { AliasStore } from "#lib/stores/probe.js";',
+          'import type { RelativeStore } from "../../stores/probe.js";',
+          "",
+          "export type Probe = AliasStore | RelativeStore;",
+        ].join("\n"),
+      );
+      const rejected = oxc("oxlint", ["--config", ".oxlintrc.json", "--format", "json", blocked], {
+        encoding: "utf8",
+      });
+      expect(rejected.error).toBeUndefined();
+      const report = JSON.parse(rejected.stdout) as OxlintReport;
+      expect(
+        report.diagnostics.filter(({ code }) => code === "eslint(no-restricted-imports)"),
+      ).toHaveLength(2);
+      expect(rejected.status).toBe(1);
+      const accepted = oxc(
+        "oxlint",
+        ["--config", ".oxlintrc.json", "--format", "json", allowed, test],
+        { encoding: "utf8" },
+      );
+      expect(accepted.error).toBeUndefined();
+      const restricted = (JSON.parse(accepted.stdout) as OxlintReport).diagnostics.filter(
+        ({ code }) => code === "eslint(no-restricted-imports)",
+      );
+      expect(restricted).toStrictEqual([]);
+    } finally {
+      await rm(directory, { force: true, recursive: true });
     }
   });
 });
@@ -200,6 +264,7 @@ describe("utils import boundary", () => {
     const layers = [
       "components",
       "stores",
+      "progress",
       "controllers",
       "effects",
       "sources",

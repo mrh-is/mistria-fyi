@@ -3,7 +3,7 @@
  * record their results. Each write lands before the request that depends on it, so a code appears
  * only once its mailbox exists, & a code is retired only once the write that stopped it landed.
  */
-import { userState } from "#lib/stores/user-state.svelte.js";
+import { progressSync } from "#lib/progress/index.js";
 import { ensureTurnstileScript } from "#lib/turnstile.js";
 
 import { createRelayClient, openFollowKey, pendingRetireFor, shareNewCode } from "./follow.js";
@@ -105,14 +105,14 @@ let retireGeneration = 0;
 let knownPending = "";
 
 function pendingIds(): string {
-  return userState.syncPendingRetires
+  return progressSync.syncPendingRetires
     .map(({ mailboxId }) => mailboxId)
     .toSorted()
     .join(",");
 }
 
 function isPending(mailboxId: MailboxId): boolean {
-  return userState.syncPendingRetires.some((pending) => pending.mailboxId === mailboxId);
+  return progressSync.syncPendingRetires.some((pending) => pending.mailboxId === mailboxId);
 }
 
 /** How long to wait before trying again, or `undefined` when only the player coming back can help. */
@@ -160,7 +160,7 @@ async function retireOne(pending: DeepReadonly<PendingRetire>): Promise<void> {
   let result: RetireResult;
   try {
     result = await relay.retire(pending.mailboxId, pending.token);
-    if (result.kind === "retired") await userState.confirmRetired([pending]);
+    if (result.kind === "retired") await progressSync.confirmRetired([pending]);
   } catch {
     result = { kind: "unreachable" };
   }
@@ -177,7 +177,7 @@ async function retireOne(pending: DeepReadonly<PendingRetire>): Promise<void> {
  */
 export async function retryPendingRetires(): Promise<void> {
   retireDelays.clear();
-  const idle = userState.syncPendingRetires.filter(({ mailboxId }) => !retiring.has(mailboxId));
+  const idle = progressSync.syncPendingRetires.filter(({ mailboxId }) => !retiring.has(mailboxId));
   for (const { mailboxId } of idle) clearRetireTimer(mailboxId);
   await Promise.all(idle.map((pending) => retireOne(pending)));
   knownPending = pendingIds();
@@ -188,7 +188,7 @@ export async function retryPendingRetires(): Promise<void> {
  * this is safe to call whenever the player comes back.
  */
 export async function resumeStoppedRetires(): Promise<void> {
-  const stopped = userState.syncPendingRetires.filter(
+  const stopped = progressSync.syncPendingRetires.filter(
     ({ mailboxId }) => !retiring.has(mailboxId) && !retireTimers.has(mailboxId),
   );
   await Promise.all(stopped.map((pending) => retireOne(pending)));
@@ -260,7 +260,7 @@ async function settleRetires(): Promise<void> {
 export async function shareCode(): Promise<ShareResult> {
   const result = await shareNewCode(relay, turnstileToken);
   if (result.kind !== "shared") return result;
-  if (await userState.setSharedCode(result.code)) return result;
+  if (await progressSync.setSharedCode(result.code)) return result;
   await abandon(result.code);
   return { kind: "unreachable" };
 }
@@ -270,12 +270,12 @@ export async function shareCode(): Promise<ShareResult> {
  * one can't be made, the old one keeps working.
  */
 export async function makeNewCode(): Promise<ShareResult> {
-  const lane = userState.syncLane;
+  const lane = progressSync.syncLane;
   const old = lane?.kind === "computer" ? lane.code : undefined;
   const result = await shareNewCode(relay, turnstileToken);
   if (result.kind !== "shared") return result;
   const replaced = old ? { code: old, retire: await pendingRetireFor(old) } : undefined;
-  if (!(await userState.setSharedCode(result.code, replaced))) {
+  if (!(await progressSync.setSharedCode(result.code, replaced))) {
     // The new code never stored (or another tab replaced the old one first), so whichever code is
     // stored keeps working.
     await abandon(result.code);
@@ -290,10 +290,10 @@ export async function makeNewCode(): Promise<ShareResult> {
  * in that same write & retired after it.
  */
 export async function stopSyncing(): Promise<void> {
-  const lane = userState.syncLane;
+  const lane = progressSync.syncLane;
   const code = lane?.kind === "computer" ? lane.code : undefined;
   const stopped = code ? { code, retire: await pendingRetireFor(code) } : undefined;
-  if (await userState.stopSyncing(stopped)) await retryPendingRetires();
+  if (await progressSync.stopSyncing(stopped)) await retryPendingRetires();
 }
 
 /** The copy a failed share shows. */
@@ -333,7 +333,7 @@ export async function followCode(
   // A player who left setup while the fetch ran never sees their progress erased.
   if (!stillWanted()) return { kind: "unreachable" };
   const stamp = stampOf(save, { counter: opened.counter, mailboxId: opened.mailboxId });
-  if (!(await userState.startSyncLane({ key, kind: "following" }, save, stillWanted, stamp))) {
+  if (!(await progressSync.startSyncLane({ key, kind: "following" }, save, stillWanted, stamp))) {
     return { kind: "unreachable" };
   }
   return { kind: "applied", save };
@@ -356,7 +356,7 @@ export async function switchCode(
     return { kind: "unreadable" };
   }
   // Checked again inside the write lock, so leaving while it waits switches nothing.
-  if (!stillWanted() || !(await userState.switchFollowKey(key, stillWanted))) {
+  if (!stillWanted() || !(await progressSync.switchFollowKey(key, stillWanted))) {
     return { kind: "unreachable" };
   }
   return { kind: "applied", save };
