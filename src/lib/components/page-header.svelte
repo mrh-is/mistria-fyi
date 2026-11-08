@@ -195,14 +195,14 @@
     width: 9px;
     background:
       linear-gradient(
-          to bottom right,
+          to top right,
           transparent 46%,
           var(--color-ribbon-fill) 48% 57%,
           transparent 59%
         )
         top / 9px 50% no-repeat,
       linear-gradient(
-          to top right,
+          to bottom right,
           transparent 46%,
           var(--color-ribbon-fill) 48% 57%,
           transparent 59%
@@ -270,14 +270,14 @@
       left: auto;
       background:
         linear-gradient(
-            to bottom left,
+            to top left,
             transparent 46%,
             var(--color-ribbon-fill) 48% 57%,
             transparent 59%
           )
           top / 9px 50% no-repeat,
         linear-gradient(
-            to top left,
+            to bottom left,
             transparent 46%,
             var(--color-ribbon-fill) 48% 57%,
             transparent 59%

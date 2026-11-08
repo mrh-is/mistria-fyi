@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import PageHeader from "#lib/components/page-header.svelte";
@@ -45,5 +46,19 @@ describe("PageHeader", () => {
     const header = container.querySelector("header");
     expect(header?.classList.contains("page-header--complete")).toBe(true);
     expect(header?.getAttribute("style")).toContain("--category-progress-percent: 100%");
+  });
+
+  it("aligns the completed gold-leaf edge gradients with the ribbon notch", () => {
+    const source = readFileSync(new URL("page-header.svelte", import.meta.url), "utf8");
+
+    // Mobile ribbon notch on left: top half to top right, bottom half to bottom right
+    expect(source).toMatch(
+      /\.page-header--complete \.page-header__ribbon::after \{[\s\S]*?linear-gradient\(\s*to top right[\s\S]*?linear-gradient\(\s*to bottom right/,
+    );
+
+    // Desktop ribbon notch on right: top half to top left, bottom half to bottom left
+    expect(source).toMatch(
+      /@media \(min-width: 701px\)[\s\S]*?\.page-header--complete \.page-header__ribbon::after \{[\s\S]*?linear-gradient\(\s*to top left[\s\S]*?linear-gradient\(\s*to bottom left/,
+    );
   });
 });
