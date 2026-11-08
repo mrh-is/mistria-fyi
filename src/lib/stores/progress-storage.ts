@@ -1,8 +1,8 @@
 /**
  * The persisted progress blob, which is also the JSON backup: its Valibot schema, the numbered
  * migrations that bring an older blob up to this build's version, & the reader both storage
- * hydration & backup restore go through. The store owns storage access & the persistence lifecycle;
- * this module only turns text into progress & back.
+ * hydration & backup restore go through. The repository owns storage access & the persistence
+ * lifecycle; this module only turns text into progress & back.
  *
  * Each way data enters the store keeps a thin policy above validation:
  *
