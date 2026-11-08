@@ -1,12 +1,13 @@
 <script lang="ts">
   import IconPalette from "@tabler/icons-svelte-runes/icons/palette";
 
-  import * as ToggleGroup from "#lib/components/ui/toggle-group/index.js";
+  import SegmentedPicker from "#lib/components/segmented-picker.svelte";
   import * as m from "#lib/paraglide/messages.js";
   import { theme } from "#lib/stores/theme.svelte.js";
 
   import type { Theme } from "#lib/stores/theme.svelte.js";
 
+  const themes: Theme[] = ["light", "dark", "system"];
   const themeLabels: Record<Theme, string> = {
     dark: m.settings_theme_dark(),
     light: m.settings_theme_light(),
@@ -18,23 +19,16 @@
   <span class="theme-setting__label"
     ><IconPalette class="size-3.5" />{m.settings_theme_label()}</span
   >
-  <ToggleGroup.Root
-    class="theme-setting__strip"
-    type="single"
+  <SegmentedPicker
+    mode="theme"
+    choices={themes}
     value={theme.preference}
-    onValueChange={(value) => {
-      if (value) theme.set(value as Theme);
-    }}
+    onSelect={(value) => theme.set(value)}
   >
-    {#each ["light", "dark", "system"] as const as value (value)}
-      <ToggleGroup.Item
-        class="theme-setting__item hover:bg-transparent hover:text-inherit focus-visible:ring-0 focus-visible:panel-segment-outline enabled:hover:panel-segment-outline"
-        {value}
-      >
-        {themeLabels[value]}
-      </ToggleGroup.Item>
-    {/each}
-  </ToggleGroup.Root>
+    {#snippet content(value)}
+      {themeLabels[value]}
+    {/snippet}
+  </SegmentedPicker>
 </div>
 
 <style>
@@ -59,51 +53,11 @@
     letter-spacing: 0.02em;
   }
 
-  :global(.theme-setting__strip) {
-    gap: 0;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 42%, transparent);
-    border-radius: 0;
-  }
-
-  :global(.theme-setting__strip .theme-setting__item) {
-    min-height: 44px;
-    padding: 4px 9px;
-    border: 0;
-    border-right: 1px solid color-mix(in srgb, var(--color-ink-hairline) 26%, transparent);
-    border-radius: 0;
-    font-family: var(--font-controls);
-    font-size: var(--text-3xs);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    :global(.theme-setting__strip .theme-setting__item) {
-      min-height: 34px;
-    }
-  }
-
-  :global(.theme-setting__strip .theme-setting__item:last-child) {
-    border-right: 0;
-  }
-
-  :global(.theme-setting__strip .theme-setting__item[data-state="on"]) {
-    color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 12%, var(--color-paper-raised));
-  }
-
   @media (max-width: 359px) {
     .theme-setting {
       align-items: flex-start;
       flex-direction: column;
       padding-block: 10px;
-    }
-
-    :global(.theme-setting__strip) {
-      width: 100%;
-    }
-
-    :global(.theme-setting__strip .theme-setting__item) {
-      flex: 1;
     }
   }
 </style>
