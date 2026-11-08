@@ -2,7 +2,7 @@ import * as m from "#lib/paraglide/messages.js";
 import { getLocale } from "#lib/paraglide/runtime.js";
 import { formatNumber } from "#lib/utils/format.js";
 
-import type { ExtractedSaveFilesError, SaveImportWarning } from "#lib/engine/import-save.js";
+import type { SaveImportWarning } from "#lib/engine/import-save.js";
 import type { SavArchiveErrorDetail } from "#lib/engine/parse-sav.js";
 
 // Localized text for the structured errors & warnings the save import engine returns.
@@ -32,28 +32,14 @@ export function formatSavArchiveError(detail: SavArchiveErrorDetail): string {
   }
 }
 
-/** The headline for a failed file import; list `problems` beneath it with formatSaveImportWarning. */
-export function formatExtractedSaveFilesError(error: ExtractedSaveFilesError): string {
-  switch (error.code) {
-    case "no-save-files":
-      return m.import_error_no_save_files();
-    case "no-valid-files":
-      return m.import_error_no_valid_files({ tryAutosave: m.import_error_try_autosave() });
-  }
-}
-
 export function formatSaveImportWarning(warning: SaveImportWarning): string {
   switch (warning.code) {
-    case "invalid-json":
-      return m.import_warning_invalid_json({ file: warning.file });
     case "level":
       return formatLevelWarning(warning);
     case "not-a-list":
       return m.import_warning_not_a_list({ path: warning.path });
     case "not-an-object":
       return m.import_warning_not_an_object({ path: warning.path });
-    case "not-json-object":
-      return m.import_warning_not_json_object({ file: warning.file });
     case "unknown-id":
       return m.import_warning_unknown_id({ id: warning.id, path: warning.path });
     case "unreadable-entries":

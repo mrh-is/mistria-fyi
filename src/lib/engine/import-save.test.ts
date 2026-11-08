@@ -15,7 +15,6 @@ import {
   extractSaveProgress,
   isPlayerSaveSection,
   isSaveImportWarning,
-  parseExtractedSaveFiles,
 } from "./import-save.js";
 
 import type { LevelIssue } from "#lib/engine/progress.js";
@@ -625,10 +624,6 @@ function levelWarning(
   return { code: "level", issue, key, max, value };
 }
 
-function jsonFile(name: string, data: unknown): File {
-  return new File([JSON.stringify(data)], name);
-}
-
 describe("numeric level domains", () => {
   const ADELINE = "adeline" as VillagerId;
   const FARMING = "farming" as SkillId;
@@ -952,84 +947,6 @@ describe("quest import", () => {
       { code: "unreadable-entries", count: 2, path: "quests.active_quests" },
       { code: "unknown-id", id: "not_a_quest", path: "quests.active_quests" },
     ]);
-  });
-});
-
-describe("parseExtractedSaveFiles", () => {
-  const player = jsonFile("player.json", { perks: [] });
-
-  it("ignores files with other names", async () => {
-    const result = await parseExtractedSaveFiles([
-      player,
-      jsonFile("villagers.json", { perks: [] }),
-    ]);
-
-    expect(result).toEqual({ bundle: { player: { perks: [] } }, warnings: [] });
-  });
-
-  it("keeps header.json & info.json, which identify the save", async () => {
-    const header = { playtime: 12.5 };
-    const info = { creation_version: { major: 1, minor: 0, patch: 8, pre: null } };
-    const result = await parseExtractedSaveFiles([
-      player,
-      jsonFile("header.json", header),
-      jsonFile("info.json", info),
-    ]);
-
-    expect(result).toEqual({ bundle: { header, info, player: { perks: [] } }, warnings: [] });
-  });
-
-  it("needs a progress file beside header.json & info.json", async () => {
-    const result = await parseExtractedSaveFiles([jsonFile("info.json", {})]);
-
-    expect(result).toEqual({ error: { code: "no-save-files" } });
-  });
-
-  it("reports that no save files were recognized", async () => {
-    const result = await parseExtractedSaveFiles([jsonFile("notes.json", {})]);
-
-    expect(result.bundle).toBeUndefined();
-    expect(result.error).toEqual({ code: "no-save-files" });
-  });
-
-  it.each([
-    ["an array", "[]", "not-json-object"],
-    ["a number", "3", "not-json-object"],
-    ["invalid JSON", "{", "invalid-json"],
-  ] as const)("rejects a file containing %s", async (_label, text, code) => {
-    const result = await parseExtractedSaveFiles([new File([text], "gamedata.json")]);
-
-    expect(result).toEqual({
-      error: { code: "no-valid-files", problems: [{ code, file: "gamedata.json" }] },
-    });
-  });
-
-  it("rejects an unrecognizable player.json", async () => {
-    const result = await parseExtractedSaveFiles([jsonFile("player.json", { perks: "cook_perk" })]);
-
-    expect(result).toEqual({
-      error: {
-        code: "no-valid-files",
-        problems: [{ code: "unrecognized-player", file: "player.json" }],
-      },
-    });
-  });
-
-  it("imports a partial bundle and reports the files it skipped", async () => {
-    const quests = jsonFile("quests.json", { completed_quests: [] });
-    const result = await parseExtractedSaveFiles([
-      quests,
-      new File(["{"], "gamedata.json"),
-      jsonFile("player.json", {}),
-    ]);
-
-    expect(result).toEqual({
-      bundle: { quests: { completed_quests: [] } },
-      warnings: [
-        { code: "invalid-json", file: "gamedata.json" },
-        { code: "unrecognized-player", file: "player.json" },
-      ],
-    });
   });
 });
 
