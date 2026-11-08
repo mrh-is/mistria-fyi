@@ -405,9 +405,10 @@
     <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} isModal={false} {onClose}>
       <div class="feedback-form">
         <div>
-          <!-- Mirrors the "Optional" heading below; the field's own name & aria-required carry this for screen readers. -->
-          <p class="feedback-form__optional mb-1.5" aria-hidden="true">
-            {m.feedback_message_heading()}
+          <!-- The textarea's own name & aria-required carry this heading for screen readers. -->
+          <p class="feedback-form__section mb-1.5" aria-hidden="true">
+            {m.feedback_message_label()}
+            <span class="feedback-form__section-note">{m.feedback_required_note()}</span>
           </p>
           <textarea
             bind:this={messageInput}
@@ -433,7 +434,10 @@
           <IconShield class="size-4 shrink-0" />{m.feedback_privacy_notice()}
         </p>
 
-        <p class="feedback-form__optional">{m.feedback_optional_label()}</p>
+        <p class="feedback-form__section">
+          {m.feedback_extra_data_heading()}
+          <span class="feedback-form__section-note">{m.feedback_optional_note()}</span>
+        </p>
         <div class="feedback-form__options">
           <div class="flex items-center gap-2">
             <Checkbox
@@ -717,7 +721,26 @@
     font-size: var(--text-xs);
   }
 
-  .feedback-form__optional,
+  .feedback-form__section {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    color: var(--color-ink-muted);
+    font-family: var(--font-controls);
+    font-size: var(--text-3xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* A margin note beside the section name, not another segment of it. */
+  .feedback-form__section-note {
+    font-family: var(--font-annotation);
+    font-size: var(--text-2xs);
+    font-style: italic;
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
   .feedback-form__version {
     color: var(--color-ink-muted);
     font-family: var(--font-controls);

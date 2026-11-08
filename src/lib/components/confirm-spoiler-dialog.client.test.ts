@@ -37,8 +37,8 @@ describe("ConfirmSpoilerDialog", () => {
     expect(dialog).toHaveTextContent("You haven’t even revealed its name!");
     expect(buttonNames(dialog)).toEqual([
       "Never mind",
-      "YOLO, but just this",
-      "YOLO, and update my progress",
+      "YOLO (but just this one thing)",
+      "YOLO, and update my progress too",
     ]);
   });
 
@@ -58,8 +58,8 @@ describe("ConfirmSpoilerDialog", () => {
     );
     expect(buttonNames(dialog)).toEqual([
       "Never mind",
-      "Yes, but just this",
-      "Yes, and update my progress",
+      "Yes, just check off this one",
+      "Yes, and check off the prerequisite items too",
     ]);
   });
 
@@ -77,8 +77,8 @@ describe("ConfirmSpoilerDialog", () => {
     expect(dialog).toHaveTextContent("you haven’t broken the seal on the way there yet");
     expect(buttonNames(dialog)).toEqual([
       "Never mind",
-      "Yes, but just this",
-      "Yes, and update my progress",
+      "Yes, just check off this one",
+      "Yes, and check off the prerequisite items too",
     ]);
   });
 
@@ -86,7 +86,9 @@ describe("ConfirmSpoilerDialog", () => {
     const handlers = renderDialog(invertible);
     const dialog = await screen.findByRole("alertdialog");
 
-    await fireEvent.click(within(dialog).getByRole("button", { name: "YOLO, but just this" }));
+    await fireEvent.click(
+      within(dialog).getByRole("button", { name: "YOLO (but just this one thing)" }),
+    );
     expect(handlers.onComplete).toHaveBeenCalledTimes(1);
     expect(handlers.onCompleteAndUpdate).not.toHaveBeenCalled();
     expect(handlers.onCancel).not.toHaveBeenCalled();
@@ -97,7 +99,7 @@ describe("ConfirmSpoilerDialog", () => {
     const dialog = await screen.findByRole("alertdialog");
 
     await fireEvent.click(
-      within(dialog).getByRole("button", { name: "YOLO, and update my progress" }),
+      within(dialog).getByRole("button", { name: "YOLO, and update my progress too" }),
     );
     expect(handlers.onCompleteAndUpdate).toHaveBeenCalledTimes(1);
     expect(handlers.onComplete).not.toHaveBeenCalled();

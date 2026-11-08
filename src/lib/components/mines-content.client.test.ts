@@ -49,17 +49,17 @@ describe("MinesContent floor stepper", () => {
     userState.setMineFloor(20);
     flushSync();
     await stepDown();
-    await confirm("Yes, but just this");
+    await confirm("Yes, just check off this one");
 
     expect(userState.state.progress.mineFloor).toBe(21);
     expect(userState.state.progress.questStates[waterQuest]).toBeUndefined();
   });
 
-  it("records the seal's quest too on “update my progress”", async () => {
+  it("records the seal's quest too on “check off the prerequisite items too”", async () => {
     userState.setMineFloor(20);
     flushSync();
     await stepDown();
-    await confirm("Yes, and update my progress");
+    await confirm("Yes, and check off the prerequisite items too");
 
     expect(userState.state.progress.mineFloor).toBe(21);
     expect(userState.state.progress.questStates[waterQuest]).toBe("completed");

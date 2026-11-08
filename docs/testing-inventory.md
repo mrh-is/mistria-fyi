@@ -48,7 +48,8 @@ Ordered by risk:
 1. **`quick-settings-theme-picker`**: theme choice and its `localStorage` persistence.
 2. **`ai-disclosure-dialog`** & **`persistence-warning`**: open, dismiss, and dismissal memory.
 3. **Category compositors** (`*-content.svelte`): a smoke test per page that a spoilered row opens
-   `confirm-spoiler-dialog` and that "Yes, and update my progress" changes progression.
+   `confirm-spoiler-dialog` and that "Yes, and check off the prerequisite items too" changes
+   progression.
 4. **Camera stream** in sync’s `qr-scanner`: the real `getUserMedia` path belongs in the Playwright
    layer with a fake media stream, if it is covered at all.
 5. **`animals-content` & its sections**: variant & cosmetic toggles (the store is tested).

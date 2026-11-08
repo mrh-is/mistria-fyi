@@ -345,6 +345,8 @@ html:lang(ru) {
   --z-section-header: 5;
   --z-page-header: 10;
   --z-home-header: 12;
+  /* Below the toolbar, so a toast never covers its buttons & slides in from behind it. */
+  --z-toast: 15;
   --z-toolbar: 20;
   --z-panel: 30;
   --z-picker: 40;
@@ -546,7 +548,13 @@ html:lang(ru) {
   }
 }
 
-[data-sonner-toast] [data-cancel] {
+/* Sonner's own stylesheet puts the toaster above everything. */
+[data-sonner-toaster][data-sonner-theme] {
+  z-index: var(--z-toast);
+}
+
+/* Ink on the accent tint: accent text on its own tint misses 4.5:1 contrast. */
+[data-sonner-toast] [data-button] {
   color: var(--color-ink);
 }
 

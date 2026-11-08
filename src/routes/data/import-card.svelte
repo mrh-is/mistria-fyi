@@ -19,6 +19,7 @@
   } from "#lib/engine/import-save.js";
   import { readSaveIdentity } from "#lib/engine/save-identity.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import { describeErrorForReport } from "#lib/feedback/error-details.js";
   import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { progressImport } from "#lib/progress/index.js";
@@ -67,6 +68,8 @@
   let importErrorDetails = $state<string[]>([]);
   /** The error is the unreadable-save one, whose "send us feedback" opens the feedback form. */
   let importErrorOffersFeedback = $state(false);
+  /** Redacted exception details for the feedback draft, when the failure threw one. */
+  let importErrorReportDetails = $state<string | undefined>();
   const feedbackContext = getFeedbackContext();
   let showSavFallbackHelp = $state(false);
   let importing = $state(false);
@@ -100,6 +103,13 @@
     setTimeout(() => {
       copied = false;
     }, 2000);
+  }
+
+  /** The feedback draft: the error the player saw, then any redacted details for debugging. */
+  function importErrorReport(error: string): string {
+    return importErrorReportDetails === undefined
+      ? error
+      : `${error}\n\n${m.import_error_feedback_details({ details: importErrorReportDetails })}`;
   }
 
   function copyPath() {
@@ -137,6 +147,7 @@
     importError = null;
     importErrorDetails = [];
     importErrorOffersFeedback = false;
+    importErrorReportDetails = undefined;
     showSavFallbackHelp = false;
     importStatus = "";
     filesUsed = [];
@@ -158,6 +169,7 @@
             ? formatSavArchiveError(error.detail)
             : m.import_error_parse_failed({ feedback: m.import_error_feedback_link() });
           importErrorOffersFeedback = !known;
+          if (!known) importErrorReportDetails = describeErrorForReport(error);
           showSavFallbackHelp = true;
           return;
         }
@@ -397,7 +409,7 @@
                   type="button"
                   class="cursor-pointer underline underline-offset-2"
                   onclick={() => {
-                    if (importError) feedbackContext.reportError(importError);
+                    if (importError) feedbackContext.reportError(importErrorReport(importError));
                   }}>{m.import_error_feedback_link()}</button
                 >{/if}
             {/each}

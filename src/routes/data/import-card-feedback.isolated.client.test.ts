@@ -12,7 +12,7 @@ import type * as ImportSave from "#lib/engine/import-save.js";
 // the unexpected case this file covers, so the mock stays out of the main import tests.
 vi.mock("#lib/engine/import-save.js", async (importOriginal) => ({
   ...(await importOriginal<typeof ImportSave>()),
-  unpackSavFile: vi.fn(() => Promise.reject(new Error("unrecognized failure"))),
+  unpackSavFile: vi.fn(() => Promise.reject(new RangeError(`offset "Hollyhock" is out of bounds`))),
 }));
 
 beforeEach(async () => {
@@ -20,7 +20,7 @@ beforeEach(async () => {
 });
 
 describe("an unreadable save the archive reader doesn't recognize", () => {
-  it("links to the feedback form with the error as the draft", async () => {
+  it("links to the feedback form with the error & its redacted details as the draft", async () => {
     const { feedbackContext } = renderWithFeedback(ImportCard, { open: true });
     await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
       target: { files: [new File([new Uint8Array([1])], "game-1-autosave.sav")] },
@@ -34,6 +34,10 @@ describe("an unreadable save the archive reader doesn't recognize", () => {
 
     await fireEvent.click(within(alert).getByRole("button", { name: "send us feedback" }));
 
-    expect(feedbackContext.errorReportRequest?.message).toMatch(/^We couldn’t read that save file/);
+    const draft = feedbackContext.errorReportRequest?.message;
+    expect(draft).toMatch(/^We couldn’t read that save file/);
+    expect(draft).toMatch(
+      /\n\nTechnical details: RangeError: offset \[redacted\] is out of bounds$/,
+    );
   });
 });

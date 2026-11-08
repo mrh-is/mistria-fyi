@@ -23,7 +23,7 @@ describe("SpoilerGuardDialog", () => {
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
     expect(action).not.toHaveBeenCalled();
-    await fireEvent.click(screen.getByRole("button", { name: "YOLO, but just this" }));
+    await fireEvent.click(screen.getByRole("button", { name: "YOLO (but just this one thing)" }));
     expect(action).toHaveBeenCalledTimes(1);
   });
 });

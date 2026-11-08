@@ -63,7 +63,10 @@
         {copy.description}
       </AlertDialog.Description>
     </AlertDialog.Header>
-    <AlertDialog.Footer class="flex-wrap">
+    <!-- The longer confirmations wrap inside a phone-width dialog instead of overflowing it. -->
+    <AlertDialog.Footer
+      class="flex-wrap [&>button]:h-auto [&>button]:min-h-11 [&>button]:py-2 [&>button]:text-balance [&>button]:whitespace-normal"
+    >
       <AlertDialog.Cancel onclick={onCancel}>{m.spoiler_dialog_cancel()}</AlertDialog.Cancel>
       <AlertDialog.Action
         class={`${buttonVariants({ variant: invertible ? "outline" : "default" })} ${invertible ? "text-foreground" : ""}`}
