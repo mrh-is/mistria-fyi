@@ -24,15 +24,9 @@ import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import { stageSyncSave, syncLaneOperations } from "#lib/sync/lane-operations.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
-import {
-  getOrCreate,
-  isRecord,
-  recordEntries,
-  recordKeys,
-  recordValues,
-} from "#lib/utils/record.js";
+import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
-import { planManualImport } from "./progress-import-write.js";
+import { createDefaultPreferences, createProgressRepository } from "./progress-repository.js";
 import {
   createDefaultWorldState,
   emptyProgressHistory,
@@ -40,22 +34,8 @@ import {
   readFarmSwitchBackup,
   readProgressBlob,
   serializeProgress,
-  serializeStoredProgress,
   withoutDeviceLocal,
 } from "./progress-storage.js";
-import {
-  planLaneStart,
-  planLocalPatch,
-  planReplacement,
-  planStoredWrite,
-  planSyncApply,
-} from "./progress-writer.js";
-import {
-  PREFERENCES_STORAGE_KEY,
-  PROGRESS_STORAGE_KEY,
-  PROGRESS_WRITE_LOCK,
-  QUARANTINE_STORAGE_KEY,
-} from "./storage-keys.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
 import type {
@@ -101,15 +81,8 @@ import type {
 import type { ChildChoice, ProgressState, QuestState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
-import type { ManualImport, ManualImportOutcome } from "./progress-import-write.js";
-import type {
-  FarmSwitchBackup,
-  LoadedProgress,
-  ProgressReadResult,
-  ProgressSnapshot,
-  RetainedProgress,
-} from "./progress-storage.js";
-import type { BackupReplacementQuestion, StagedLaneStart } from "./progress-writer.js";
+import type { PersistenceFailureKind, PersistenceStatus } from "./progress-repository.js";
+import type { FarmSwitchBackup, LoadedProgress, RetainedProgress } from "./progress-storage.js";
 
 export type {
   SyncApplyOutcome,
@@ -119,51 +92,8 @@ export type {
   TrackingReminders,
 } from "#lib/sync/lane-state.js";
 
-/** How a write treats a value another tab stored since this one last read it. */
-type WriteIntent =
-  | (ManualImport & {
-      kind: "merge";
-      progress: ProgressState;
-      sequence: number;
-      settle: (outcome: ManualImportOutcome) => void;
-    })
-  | (StagedLaneStart & {
-      /** Built aside from live state, which takes it only once it's stored (see `startSyncLane`). */
-      guard: () => boolean;
-      kind: "staged";
-    })
-  | {
-      chooseManual?: boolean;
-      /** Removes the receipt from whichever `local` section the write keeps. */
-      dropReceipt: boolean;
-      /** Serialized at confirmation, so later storage events cannot change the requested write. */
-      json: string;
-      keepLocal: boolean;
-      kind: "replace";
-      progress: ProgressState;
-      sequence: number;
-    }
-  | { generation: number; kind: "auto-save" }
-  | {
-      kind: "local";
-      /**
-       * The next `local` section, given the one stored now, or `undefined` when the stored one
-       * isn't what the change expected (another tab changed the lane or code), so nothing is written.
-       */
-      update: (stored: DeepReadonly<DeviceLocalState>) => DeviceLocalState | undefined;
-    }
-  | {
-      kind: "sync";
-      request: SyncApplyRequest;
-      /** Reports what the write did; left unset, the store was blocked before it could look. */
-      settle: (outcome: SyncApplyOutcome) => void;
-    };
-
-/** The browser's Web Locks, where it has them; absent in old browsers & insecure contexts. */
-function progressLockManager(): LockManager | undefined {
-  const { navigator } = globalThis as { navigator?: { locks?: LockManager } };
-  return navigator?.locks;
-}
+export { PERSIST_DEBOUNCE_MS } from "./progress-repository.js";
+export type { PersistenceFailureKind, SerializedPreferences } from "./progress-repository.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -171,12 +101,6 @@ function progressLockManager(): LockManager | undefined {
 export type BackupRestoreResult = { error: BackupRestoreErrorKind; ok: false } | { ok: true };
 /** `newer-version`: a newer build wrote the backup, so this one can't read it. */
 export type BackupRestoreErrorKind = "invalid-fields" | "malformed-json" | "newer-version";
-
-/**
- * Why changes aren't being saved: browser storage refused a read or write, the stored progress
- * couldn't be read and was quarantined, or a newer build wrote it and this one mustn't overwrite it.
- */
-export type PersistenceFailureKind = "newer-data" | "unavailable" | "unreadable";
 
 /** The outcome of one `completeQuestWithRecipes` call, enough to undo exactly that call. */
 export interface QuestCompletion {
@@ -199,15 +123,6 @@ export interface UserState {
 }
 
 // ─── Serialization ──────────────────────────────────────────────────
-
-/** Per-device display preferences, stored apart from progress so a backup restore keeps them. */
-export interface SerializedPreferences {
-  everythingGrouping: "category" | "source";
-  showSpoilers: boolean;
-}
-
-/** Quiet period after the last change before progress is written to localStorage. */
-export const PERSIST_DEBOUNCE_MS = 300;
 
 function addDefaultUnlocks(progress: ProgressState): { key: string; remove: () => void }[] {
   const added: { key: string; remove: () => void }[] = [];
@@ -251,13 +166,6 @@ const ANIMAL_IDS = recordKeys(trackerData.animals);
 
 // ─── Store ──────────────────────────────────────────────────────────
 
-function createDefaultPreferences(): SerializedPreferences {
-  return {
-    everythingGrouping: "category",
-    showSpoilers: false,
-  };
-}
-
 function createDefaultState(): UserState {
   return {
     ...createDefaultPreferences(),
@@ -279,55 +187,18 @@ function emptyLoadedProgress(): Omit<LoadedProgress, "local"> {
 
 function createUserState() {
   let state = $state<UserState>(createDefaultState());
-  let _persistenceFailureGeneration = $state(0);
-  let _persistenceReady = $state(false);
-  let persistenceBlocked = false;
-  let quarantineAvailable = false;
-  let _persistenceFailureKind = $state<PersistenceFailureKind>("unavailable");
-  let _unreadableData = $state<null | string>(null);
-  let _preferencesReady = $state(false);
-  /** True while stored progress came from a newer build, which this one must leave untouched. */
-  let newerDataBlocked = false;
   let retained = $state.raw<RetainedProgress>(emptyRetainedProgress());
   /** This device's own section of the stored blob; never exported, kept across a restore. */
   let local = $state.raw<DeviceLocalState>({});
-  /** A replacement answer belongs to this exact backup & incoming farm, never just their names. */
-  let backupReplacementQuestion: BackupReplacementQuestion | undefined;
-  /** Provenance & resolutions for every fact, which backups carry. */
+  /** Provenance & resolutions stay reactive until the feature facades are extracted. */
   let history = $state<ProgressHistory>(emptyProgressHistory());
-  /** The source the outermost {@link track} call is recording, while one runs. */
   let trackingSource: ProvenanceSource | undefined;
   let starterItems = $state.raw<StarterItemsNotice>();
-  let lastKnownPreferencesValue: null | string = null;
-  let lastKnownStoredValue: null | string = null;
-  /** The clock still in memory after a missing or unreadable value replaces the stored blob. */
-  let lastReadableStoredValue: null | string = null;
-  let saveTimeout: ReturnType<typeof setTimeout> | undefined;
-  let saveGeneration = 0;
-  let explicitSequence = 0;
-  /**
-   * The newest explicit write's payload until it's written. Memory builds on it meanwhile, so it,
-   * not the stored value, is the base the next import's history merges against.
-   */
-  let pendingExplicitJson: string | undefined;
-  /** The live progress a pending import captured. Keep it attached while a queued reset lands. */
-  let pendingManualProgress: ProgressState | undefined;
   /** A hand edit held back until the player chooses a tracking lane; see {@link handEdit}. */
   let pendingHandEdit = $state.raw<(() => void) | undefined>(undefined);
   let choosingSync = $state(false);
 
-  function clearPendingSave(): void {
-    saveGeneration++;
-    if (saveTimeout !== undefined) clearTimeout(saveTimeout);
-    saveTimeout = undefined;
-  }
-
-  function reportStorageUnavailable(): void {
-    _persistenceFailureKind = "unavailable";
-    _persistenceFailureGeneration++;
-  }
-
-  function snapshot(): ProgressSnapshot {
+  function snapshot(): Omit<LoadedProgress, "local"> {
     return {
       history,
       lastImport: state.lastImport,
@@ -337,10 +208,48 @@ function createUserState() {
     };
   }
 
-  /** The stored form of the current state, `local` section included. */
-  function serialize(): string {
-    return serializeStoredProgress(snapshot(), local);
-  }
+  const persistence = $state<PersistenceStatus>({
+    failureGeneration: 0,
+    failureKind: "unavailable",
+    preferencesReady: false,
+    ready: false,
+    unreadableData: null,
+  });
+  const repository = createProgressRepository(
+    {
+      emptyProgress: emptyLoadedProgress,
+      // Widen before Svelte maps the recursive JsonValue in resolutions; the result stays history.
+      historySnapshot: () => $state.snapshot<object>(history) as ProgressHistory,
+      get local() {
+        return local;
+      },
+      set local(value) {
+        local = value;
+      },
+      get preferences() {
+        return { everythingGrouping: state.everythingGrouping, showSpoilers: state.showSpoilers };
+      },
+      set preferences(value) {
+        state.everythingGrouping = value.everythingGrouping;
+        state.showSpoilers = value.showSpoilers;
+      },
+      snapshot,
+    },
+    {
+      events: "window" in globalThis ? globalThis.window : undefined,
+      locks: () => {
+        const { navigator } = globalThis as { navigator?: { locks?: LockManager } };
+        return navigator?.locks;
+      },
+      ownsStorage: (storage) => storage === globalThis.localStorage,
+      read: tryGetItem,
+      write: trySetItem,
+    },
+    (value) => {
+      Object.assign(persistence, value);
+    },
+  );
+  repository.onExternalChange(replaceProgress);
 
   /**
    * Records `source` & `playtime` for one fact. A manual edit also clears the fact's “keep mine”,
@@ -400,375 +309,6 @@ function createUserState() {
     return result;
   }
 
-  /** Blocks persistence and keeps the unreadable value, in storage & memory, for recovery. */
-  function quarantine(value: string): void {
-    _persistenceReady = false;
-    persistenceBlocked = true;
-    newerDataBlocked = false;
-    quarantineAvailable = trySetItem(QUARANTINE_STORAGE_KEY, value);
-    _unreadableData = value;
-    _persistenceFailureKind = "unreadable";
-    _persistenceFailureGeneration++;
-  }
-
-  /**
-   * The one function that writes progress. It re-reads the stored value & validates it first,
-   * since another tab may have written since this one last read:
-   *
-   * - A newer build's data blocks the write; nothing is overwritten.
-   * - An `auto-save` adopts the other tab's value rather than writing a stale state over it. Its
-   *   storage event may never arrive (e.g. while this page sat in the back/forward cache), and
-   *   waiting would leave every later save comparing against a value no longer stored.
-   * - A `replace` is the player's explicit choice, so it overwrites, once an unreadable value is
-   *   safely copied to quarantine.
-   * - A `merge` unions the captured import preview into the current stored progress, preserving
-   *   both another tab's saved progress & this tab's unsaved edits.
-   *
-   * Cleared storage has nothing to conflict with, so it's written normally. Callers hold the
-   * progress Web Lock (see {@link requestProgressWrite}); only the pagehide flush calls it bare.
-   * Returns whether this write's value is now stored.
-   */
-  function writeProgress(intent: WriteIntent): boolean {
-    if (intent.kind === "auto-save" && intent.generation !== saveGeneration) return false;
-    if (!_persistenceReady && !(intent.kind === "merge" && quarantineAvailable)) {
-      if (intent.kind === "merge" && newerDataBlocked) intent.settle({ kind: "newer-data" });
-      return false;
-    }
-    const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
-    if (!storedResult.ok) {
-      reportStorageUnavailable();
-      return false;
-    }
-    const stored = storedResult.value;
-    const plan = planStoredWrite(intent.kind, stored, lastKnownStoredValue, local.syncLane);
-    switch (plan.kind) {
-      case "sync-active":
-        if (intent.kind === "merge") intent.settle({ kind: "sync-active" });
-        return false;
-      case "adopt":
-        applyStorageValue(plan.value);
-        if (intent.kind === "merge" && plan.newer) intent.settle({ kind: "newer-data" });
-        return false;
-      case "quarantine":
-        quarantine(plan.value);
-        return false;
-      case "preserve":
-        if (!trySetItem(QUARANTINE_STORAGE_KEY, plan.value)) {
-          quarantine(plan.value);
-          return false;
-        }
-        _unreadableData = plan.value;
-        break;
-      case "ready":
-        break;
-    }
-
-    const { read } = plan;
-    if (intent.kind === "local") return writeLocalPatch(intent.update, stored, read);
-    if (intent.kind === "staged") return writeStaged(intent, stored, read);
-    if (intent.kind === "sync") return writeSyncApply(intent, stored);
-    if (intent.kind === "merge") return writeManualMerge(intent, stored);
-
-    let json: string;
-    if (intent.kind === "auto-save") {
-      json = serialize();
-    } else {
-      const replacement = planReplacement(
-        intent,
-        read?.kind === "ok" ? read.loaded.local : undefined,
-      );
-      json = replacement.json;
-      if (intent.sequence === explicitSequence) {
-        if (
-          state.progress !== intent.progress ||
-          (state.progress !== pendingManualProgress && serialize() === intent.json)
-        ) {
-          replaceProgress(replacement.loaded);
-        }
-        local = replacement.loaded.local;
-      }
-    }
-    if (!tryWriteProgress(json, stored)) return false;
-    if (intent.kind === "replace" && intent.sequence === explicitSequence) {
-      pendingExplicitJson = undefined;
-    }
-    finishProgressWrite(json);
-    return true;
-  }
-
-  function tryWriteProgress(json: string, stored: null | string): boolean {
-    if (json === stored || trySetItem(PROGRESS_STORAGE_KEY, json)) return true;
-    reportStorageUnavailable();
-    return false;
-  }
-
-  function finishProgressWrite(json: string): void {
-    lastKnownStoredValue = json;
-    lastReadableStoredValue = json;
-    _persistenceFailureGeneration = 0;
-  }
-
-  /** Checks both farms under the write lock before applying or exposing any imported progress. */
-  function writeManualMerge(
-    intent: Extract<WriteIntent, { kind: "merge" }>,
-    stored: null | string,
-  ): boolean {
-    const isCurrent = intent.sequence === explicitSequence;
-    const sameProgress = state.progress === intent.progress;
-    const laterEdits =
-      isCurrent && serialize() !== intent.before
-        ? {
-            clock: state.worldState,
-            ...(sameProgress
-              ? {
-                  progress: {
-                    history: $state.snapshot<unknown>(history) as ProgressHistory,
-                    progress: state.progress,
-                  },
-                }
-              : { clockBase: lastReadableStoredValue }),
-          }
-        : undefined;
-    const plan = planManualImport(intent, stored, laterEdits);
-    if (plan.kind === "ask") {
-      intent.settle(plan);
-      return false;
-    }
-    if (!tryWriteProgress(plan.json, stored)) return false;
-    if (isCurrent) {
-      clearPendingSave();
-      replaceProgress(plan.live);
-      local = plan.local;
-    }
-    enablePersistenceAfterExplicitReplace();
-    finishProgressWrite(plan.json);
-    intent.settle({ kind: "applied", result: plan.result });
-    return true;
-  }
-
-  /**
-   * Runs {@link writeProgress} under the progress Web Lock, so no other tab writes between its
-   * re-read & its write. Without Web Locks it runs at once: the read & write are synchronous, so
-   * only another tab running in parallel in that same instant could slip between them.
-   */
-  function requestProgressWrite(intent: WriteIntent): Promise<boolean> {
-    const locks = progressLockManager();
-    if (!locks) return Promise.resolve(writeProgress(intent));
-    return writeUnderLock(locks, intent);
-  }
-
-  async function writeUnderLock(locks: LockManager, intent: WriteIntent): Promise<boolean> {
-    let written = false;
-    try {
-      await locks.request(PROGRESS_WRITE_LOCK, () => {
-        written = writeProgress(intent);
-      });
-    } catch {
-      // The lock couldn't be taken (e.g. a sandboxed frame); write as a browser without locks does.
-      written = writeProgress(intent);
-    }
-    return written;
-  }
-
-  /**
-   * Writes a change to this device's `local` section alone, as a patch to the document stored when
-   * the lock is held: its progress & the rest of `local` stay as stored, whichever tab wrote them.
-   * Memory takes the new section only once it's stored, so it never holds a code or lane that
-   * storage doesn't.
-   */
-  function writeLocal(
-    update: (stored: DeepReadonly<DeviceLocalState>) => DeviceLocalState | undefined,
-  ): Promise<boolean> {
-    return requestProgressWrite({ kind: "local", update });
-  }
-
-  /** The body of a {@link writeLocal} write, inside the lock. */
-  function writeLocalPatch(
-    update: (stored: DeepReadonly<DeviceLocalState>) => DeviceLocalState | undefined,
-    stored: null | string,
-    read: ProgressReadResult | undefined,
-  ): boolean {
-    // An unreadable stored value has no `local` section to patch.
-    if (stored !== null && read?.kind !== "ok") return false;
-    const base = read?.kind === "ok" ? read.loaded : { ...snapshot(), local };
-    const plan = planLocalPatch(base, update);
-    if (!plan || !tryWriteProgress(plan.json, stored)) return false;
-    // Adopt another tab's newer progress only once the patch lands.
-    if (read?.kind === "ok" && stored !== lastKnownStoredValue) {
-      clearPendingSave();
-      pendingExplicitJson = undefined;
-      replaceProgress(read.loaded);
-    }
-    local = plan.local;
-    finishProgressWrite(plan.json);
-    return true;
-  }
-
-  /** Installs a staged lane only after its progress, lane, & receipt are stored together. */
-  function writeStaged(
-    intent: Extract<WriteIntent, { kind: "staged" }>,
-    stored: null | string,
-    read: ProgressReadResult | undefined,
-  ): boolean {
-    if (!intent.guard()) return false;
-    const plan = planLaneStart(intent, read?.kind === "ok" ? read.loaded : undefined, local);
-    if (!tryWriteProgress(plan.json, stored)) return false;
-    clearPendingSave();
-    pendingExplicitJson = undefined;
-    replaceProgress(plan.loaded);
-    local = plan.loaded.local;
-    finishProgressWrite(plan.json);
-    return true;
-  }
-
-  /** Applies a synced save under the lock without unblocking quarantined or newer data. */
-  function writeSyncApply(
-    { request, settle }: Extract<WriteIntent, { kind: "sync" }>,
-    stored: null | string,
-  ): boolean {
-    // Another tab's value is adopted first; otherwise this tab's unsaved edits count.
-    if (stored !== null && stored !== lastKnownStoredValue) applyStorageValue(stored);
-    const current = readProgressBlob(serialize(), "repair");
-    if (current.kind !== "ok") {
-      settle({ kind: "write-failed" });
-      return false;
-    }
-    if (!request.wantsLane(local.syncLane)) {
-      settle({ kind: "stale" });
-      return false;
-    }
-    const plan = planSyncApply(
-      current.loaded,
-      local,
-      request,
-      emptyLoadedProgress(),
-      backupReplacementQuestion,
-      Date.now(),
-    );
-    if (plan.kind === "outcome") {
-      settle(plan.outcome);
-      return false;
-    }
-    if (plan.kind === "replace-backup") {
-      const { farmName, savedAt, snapshot: backupSnapshot } = plan;
-      if (backupReplacementQuestion?.snapshot !== backupSnapshot) {
-        // Compare the complete snapshot inside the lock, but send only a small ID between tabs.
-        backupReplacementQuestion = {
-          id: `replace-backup:${crypto.randomUUID()}`,
-          snapshot: backupSnapshot,
-        };
-      }
-      settle({
-        kind: "ask",
-        questions: [
-          { farmName, id: backupReplacementQuestion.id, kind: "replace-backup", savedAt },
-        ],
-      });
-      return false;
-    }
-    if (!tryWriteProgress(plan.json, stored)) {
-      settle({ kind: plan.failure });
-      return false;
-    }
-    clearPendingSave();
-    pendingExplicitJson = undefined;
-    replaceProgress(plan.loaded);
-    local = plan.loaded.local;
-    finishProgressWrite(plan.json);
-    settle({ kind: "applied", result: plan.result });
-    return true;
-  }
-
-  /** Captures an explicit replacement now, rather than after the auto-save debounce. */
-  function writeExplicitProgress(
-    keepLocal = true,
-    dropReceipt = false,
-    chooseManual = false,
-  ): void {
-    clearPendingSave();
-    const json = serialize();
-    pendingExplicitJson = json;
-    void requestProgressWrite({
-      chooseManual,
-      dropReceipt,
-      json,
-      keepLocal,
-      kind: "replace",
-      progress: state.progress,
-      sequence: ++explicitSequence,
-    });
-  }
-
-  /**
-   * The pagehide flush. A page being hidden can't wait for a lock, so this keeps the synchronous
-   * compare-before-write: it adopts another tab's value rather than overwriting it.
-   */
-  function flushCurrentState(): void {
-    if (!_persistenceReady) return;
-    clearPendingSave();
-    writeProgress({ generation: saveGeneration, kind: "auto-save" });
-  }
-
-  /**
-   * Blocks persistence without copying or touching the stored value: a newer build wrote it, so it
-   * isn't unreadable, and an explicit replace mustn't overwrite it either.
-   */
-  function blockForNewerData(): void {
-    _persistenceReady = false;
-    persistenceBlocked = true;
-    quarantineAvailable = false;
-    newerDataBlocked = true;
-    _persistenceFailureKind = "newer-data";
-    _persistenceFailureGeneration++;
-  }
-
-  function resumePersistence(): void {
-    persistenceBlocked = false;
-    quarantineAvailable = false;
-    newerDataBlocked = false;
-    _persistenceFailureGeneration = 0;
-    _persistenceReady = true;
-  }
-
-  /** Hydrates from a stored value under the repair policy, or blocks persistence if it can't. */
-  function adoptStoredValue(value: string): void {
-    const result = readProgressBlob(value, "repair");
-    if (result.kind === "ok") {
-      lastReadableStoredValue = value;
-      replaceProgress(result.loaded);
-      local = result.loaded.local;
-      resumePersistence();
-    } else if (result.kind === "newer") {
-      blockForNewerData();
-    } else {
-      quarantine(value);
-    }
-  }
-
-  function applyStorageValue(value: null | string): void {
-    clearPendingSave();
-    lastKnownStoredValue = value;
-    // Memory now builds on the adopted value, not on any write still waiting for the lock.
-    pendingExplicitJson = undefined;
-    if (value !== null) {
-      adoptStoredValue(value);
-    } else if (newerDataBlocked) {
-      // Another tab cleared the newer data, so there's nothing left to protect.
-      resumePersistence();
-    }
-  }
-
-  function resyncFromStorage(): void {
-    const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
-    if (storedResult.ok && storedResult.value !== lastKnownStoredValue) {
-      applyStorageValue(storedResult.value);
-    }
-    const preferencesResult = tryGetItem(PREFERENCES_STORAGE_KEY);
-    if (preferencesResult.ok && preferencesResult.value !== lastKnownPreferencesValue) {
-      applyPreferencesValue(preferencesResult.value);
-    }
-  }
-
   /**
    * Swaps in loaded progress, world state, retained unknown entries, & history, leaving this
    * device's preferences & `local` section untouched.
@@ -780,25 +320,6 @@ function createUserState() {
     state.worldState = loaded.worldState;
     retained = loaded.retained;
     history = loaded.history;
-  }
-
-  /**
-   * Adopts stored preferences. They're per-device conveniences, so a missing or unreadable value
-   * falls back to defaults field by field instead of blocking anything.
-   */
-  function applyPreferencesValue(value: null | string): void {
-    lastKnownPreferencesValue = value;
-    const preferences = deserializePreferences(value);
-    state.everythingGrouping = preferences.everythingGrouping;
-    state.showSpoilers = preferences.showSpoilers;
-  }
-
-  function enablePersistenceAfterExplicitReplace(): void {
-    if (!persistenceBlocked || !quarantineAvailable) return;
-
-    persistenceBlocked = false;
-    quarantineAvailable = false;
-    _persistenceReady = true;
   }
 
   const progressionState = $derived(
@@ -816,54 +337,15 @@ function createUserState() {
     worldState: state.worldState,
   });
 
-  // Auto-save to localStorage (debounced)
+  // Effects observe runes; the repository owns debounce, storage, & event handling.
   if ("window" in globalThis) {
     $effect.root(() => {
       $effect(() => {
-        if (!_persistenceReady) return;
-
-        // Every change, including a hydrated blob that migration or repair rewrote, is saved by an
-        // auto-save write once the quiet period passes.
-        const json = serialize();
-        clearPendingSave();
-        if (json === lastKnownStoredValue) return;
-
-        saveTimeout = setTimeout(() => {
-          saveTimeout = undefined;
-          void requestProgressWrite({ generation: saveGeneration, kind: "auto-save" });
-        }, PERSIST_DEBOUNCE_MS);
+        if (persistence.ready) repository.schedule(repository.serialize());
       });
-
-      // Preferences are tiny & rarely change, so they're written immediately; a failed write only
-      // costs this device its preferences, which the progress save reports anyway.
       $effect(() => {
-        if (!_preferencesReady) return;
-
-        const json = serializePreferences(state);
-        if (json === lastKnownPreferencesValue) return;
-        if (trySetItem(PREFERENCES_STORAGE_KEY, json)) lastKnownPreferencesValue = json;
+        if (persistence.preferencesReady) repository.savePreferences();
       });
-    });
-
-    const windowWithEvents = globalThis.window as { addEventListener?: Window["addEventListener"] };
-    windowWithEvents.addEventListener?.("pagehide", flushCurrentState);
-    // A page restored from the back/forward cache missed any storage events fired while frozen.
-    windowWithEvents.addEventListener?.("pageshow", (event) => {
-      if (event.persisted) resyncFromStorage();
-    });
-    windowWithEvents.addEventListener?.("storage", (event) => {
-      if (event.storageArea && event.storageArea !== localStorage) return;
-      // A null key means another tab called `localStorage.clear()`.
-      if (event.key === null) {
-        resyncFromStorage();
-      } else if (event.key === PROGRESS_STORAGE_KEY) {
-        applyStorageValue(event.newValue);
-      } else if (event.key === PREFERENCES_STORAGE_KEY) {
-        // Events can arrive after this tab has written something newer, so adopt what's stored now
-        // rather than the event's value; every tab then converges on the last write.
-        const preferencesResult = tryGetItem(PREFERENCES_STORAGE_KEY);
-        if (preferencesResult.ok) applyPreferencesValue(preferencesResult.value);
-      }
     });
   }
 
@@ -951,7 +433,7 @@ function createUserState() {
    * another tracked change run as part of it. Returns the edit's result, or `undefined` if it waits.
    */
   function handEdit<T>(run: () => T): T | undefined {
-    if (trackingSource === undefined && _persistenceReady && trackingLane === undefined) {
+    if (trackingSource === undefined && persistence.ready && trackingLane === undefined) {
       choosingSync = false;
       pendingHandEdit = () => {
         run();
@@ -983,9 +465,9 @@ function createUserState() {
     if (result.kind === "newer") return { error: "newer-version", ok: false };
     if (result.kind === "unreadable") return { error: result.error, ok: false };
     replaceProgress(result.loaded);
-    enablePersistenceAfterExplicitReplace();
+    repository.enableAfterReplace();
     local = { ...local, trackingLane: local.syncLane ? "sync" : "manual" };
-    writeExplicitProgress(true, false, true);
+    repository.replace({ chooseManual: true });
     return { ok: true };
   }
 
@@ -997,7 +479,7 @@ function createUserState() {
      */
     async applySyncedSave(request: SyncApplyRequest): Promise<SyncApplyOutcome> {
       const settled: { outcome: SyncApplyOutcome } = { outcome: { kind: "blocked" } };
-      await requestProgressWrite({
+      await repository.write({
         kind: "sync",
         request,
         settle: (outcome) => {
@@ -1047,14 +529,8 @@ function createUserState() {
         ),
       );
     },
-    ...syncLaneOperations(writeLocal),
-    dismissPersistenceWarning() {
-      if (persistenceBlocked) {
-        _persistenceFailureGeneration++;
-      } else {
-        _persistenceFailureGeneration = 0;
-      }
-    },
+    ...syncLaneOperations(repository.writeLocal),
+    dismissPersistenceWarning: repository.dismissWarning,
     /**
      * The backup of this device's progress, never its `local` section. While a newer build's data
      * blocks writes, that is the stored blob itself, otherwise verbatim: memory holds only defaults
@@ -1062,9 +538,8 @@ function createUserState() {
      * was restored.
      */
     exportBackup(): string {
-      if (newerDataBlocked) {
-        const stored = tryGetItem(PROGRESS_STORAGE_KEY);
-        const value = stored.ok ? stored.value : lastKnownStoredValue;
+      if (repository.newerDataBlocked) {
+        const value = repository.readStored();
         if (value !== null) return withoutDeviceLocal(value);
       }
       return serializeProgress(snapshot());
@@ -1088,34 +563,7 @@ function createUserState() {
     get lastSavePlaytime(): number | undefined {
       return history.lastSavePlaytime;
     },
-    loadFromStorage() {
-      const storedResult = tryGetItem(PROGRESS_STORAGE_KEY);
-      const preferencesResult = tryGetItem(PREFERENCES_STORAGE_KEY);
-      if (preferencesResult.ok) {
-        applyPreferencesValue(preferencesResult.value);
-        _preferencesReady = true;
-      }
-
-      if (!storedResult.ok) {
-        _persistenceReady = false;
-        persistenceBlocked = true;
-        quarantineAvailable = false;
-        reportStorageUnavailable();
-        return;
-      }
-
-      // A blob quarantined on an earlier visit stays retrievable after the tracker moves on.
-      const quarantined = tryGetItem(QUARANTINE_STORAGE_KEY);
-      if (quarantined.ok) _unreadableData = quarantined.value;
-
-      const stored = storedResult.value;
-      lastKnownStoredValue = stored;
-      if (stored === null) {
-        resumePersistence();
-      } else {
-        adoptStoredValue(stored);
-      }
-    },
+    loadFromStorage: repository.read,
     markDefaultUnlocksComplete() {
       if (canStartTrackingByHand) applyStarterItems();
     },
@@ -1123,41 +571,15 @@ function createUserState() {
      * Applies a native save additively. The farm decision, lane guard, & write all use the latest
      * stored value, so another tab cannot start sync or change farms behind the import.
      */
-    async mergeFromSave(
-      imported: Partial<ProgressState>,
-      options: ManualImport["options"] = {},
-    ): Promise<ManualImportOutcome> {
-      if (local.syncLane) return { kind: "sync-active" };
-      if (pendingManualProgress) return { kind: "busy" };
-      pendingManualProgress = state.progress;
-      try {
-        const settled: { outcome: ManualImportOutcome } = { outcome: { kind: "write-failed" } };
-        await requestProgressWrite({
-          base: pendingExplicitJson ?? lastKnownStoredValue,
-          before: serialize(),
-          fallbackClockBase: lastReadableStoredValue,
-          imported: structuredClone(imported),
-          kind: "merge",
-          options: structuredClone(options),
-          progress: pendingManualProgress,
-          sequence: explicitSequence,
-          settle: (outcome) => {
-            settled.outcome = outcome;
-          },
-        });
-        return settled.outcome;
-      } finally {
-        pendingManualProgress = undefined;
-      }
-    },
+    mergeFromSave: repository.merge,
     get persistenceFailed(): boolean {
-      return _persistenceFailureGeneration > 0;
+      return persistence.failureGeneration > 0;
     },
     get persistenceFailureGeneration(): number {
-      return _persistenceFailureGeneration;
+      return persistence.failureGeneration;
     },
     get persistenceFailureKind(): PersistenceFailureKind {
-      return _persistenceFailureKind;
+      return persistence.failureKind;
     },
     /** What category projections read, so every page counts, dims, & filters rows alike. */
     get progressContext(): ProgressContext {
@@ -1196,8 +618,8 @@ function createUserState() {
       retained = emptyRetainedProgress();
       history = emptyProgressHistory();
       local = {};
-      enablePersistenceAfterExplicitReplace();
-      writeExplicitProgress(false);
+      repository.enableAfterReplace();
+      repository.replace({ keepLocal: false });
     },
     /**
      * Clears progress & world state; this device's preferences & `local` section are kept, so a
@@ -1208,11 +630,11 @@ function createUserState() {
       pendingHandEdit = undefined;
       choosingSync = false;
       replaceProgress(emptyLoadedProgress());
-      enablePersistenceAfterExplicitReplace();
+      repository.enableAfterReplace();
       const { syncReceipt: _receipt, ...kept } = local;
       local = kept;
       // The write keeps the stored section, which another tab may have added to since this one read.
-      writeExplicitProgress(true, true);
+      repository.replace({ dropReceipt: true });
     },
     /** The player's “keep mine” for a fact, if any; see `resolutionHolds`. */
     resolutionOf(key: string): Readonly<Resolution> | undefined {
@@ -1335,9 +757,9 @@ function createUserState() {
       const staged = emptyLoadedProgress();
       staged.worldState = $state.snapshot(state.worldState);
       stageSyncSave(staged, { ...save, metadata: $state.snapshot(save.metadata) });
-      enablePersistenceAfterExplicitReplace();
-      const written = await requestProgressWrite({
-        clockBase: pendingExplicitJson ?? lastReadableStoredValue,
+      repository.enableAfterReplace();
+      const written = await repository.write({
+        clockBase: repository.clockBase,
         day: { ...save.day },
         guard: stillWanted,
         kind: "staged",
@@ -1366,8 +788,8 @@ function createUserState() {
       const pending = pendingHandEdit;
       pendingHandEdit = undefined;
       choosingSync = false;
-      if (_persistenceReady) {
-        const written = await writeLocal((stored) => ({
+      if (persistence.ready) {
+        const written = await repository.writeLocal((stored) => ({
           ...(structuredClone(stored) as DeviceLocalState),
           trackingLane: stored.syncLane ? "sync" : "manual",
         }));
@@ -1384,7 +806,7 @@ function createUserState() {
      * so no syncing lane may start.
      */
     get syncBlocked(): boolean {
-      return !_persistenceReady;
+      return !persistence.ready;
     },
     /** When the last save came & the gaps learned between saves, while syncing. */
     get syncFreshness(): DeepReadonly<SyncFreshness> | undefined {
@@ -1482,7 +904,7 @@ function createUserState() {
     },
     /** Stored progress that couldn't be read, kept so the player can download it; null if none. */
     get unreadableData(): null | string {
-      return _unreadableData;
+      return persistence.unreadableData;
     },
     /**
      * Records a reminder the player saw or answered, as a patch to the stored `local` section.
@@ -1491,41 +913,12 @@ function createUserState() {
     updateReminders(
       change: (current: DeepReadonly<TrackingReminders> | undefined) => TrackingReminders,
     ): Promise<boolean> {
-      return writeLocal((stored) => ({
+      return repository.writeLocal((stored) => ({
         ...(structuredClone(stored) as DeviceLocalState),
         reminders: change(stored.reminders),
       }));
     },
   };
-}
-
-/** Reads stored preferences, defaulting each missing or invalid field. */
-function deserializePreferences(json: null | string): SerializedPreferences {
-  const defaults = createDefaultPreferences();
-  if (json === null) return defaults;
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(json);
-  } catch {
-    return defaults;
-  }
-  if (!isRecord(parsed)) return defaults;
-
-  // Older builds also stored `availabilityWindows`; the next write leaves it behind.
-  return {
-    everythingGrouping: parsed.everythingGrouping === "source" ? "source" : "category",
-    showSpoilers:
-      typeof parsed.showSpoilers === "boolean" ? parsed.showSpoilers : defaults.showSpoilers,
-  };
-}
-
-function serializePreferences(state: UserState): string {
-  const preferences: SerializedPreferences = {
-    everythingGrouping: state.everythingGrouping,
-    showSpoilers: state.showSpoilers,
-  };
-  return JSON.stringify(preferences);
 }
 
 function toggleInSet<T>(set: Set<T>, item: T): void {
