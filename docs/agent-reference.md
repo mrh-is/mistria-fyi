@@ -45,7 +45,11 @@ reasons:
   sessions.
 
 An isolated frozen install from the shared global store takes seconds. It gives each worktree its
-own caches & build state.
+own caches & build state. With `enableGlobalVirtualStore`, a worktree’s `node_modules` holds
+symlinks into one package tree under the pnpm store’s `links/` folder, so it takes a few megabytes
+rather than a gigabyte. Without hoisting, a package that imports an undeclared dependency (often
+only in its type declarations) fails to resolve; declare that dependency under `packageExtensions`
+in `pnpm-workspace.yaml`.
 
 **Subagent worktrees:** an orchestrator gives each editing subagent a worktree that its harness lets
 the subagent edit. In Claude Code, the session’s edit guard refuses Write & Edit outside the
