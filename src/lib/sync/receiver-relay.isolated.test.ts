@@ -2,13 +2,6 @@ import { expect, it, vi } from "vitest";
 
 import { readProgressBlob, serializeStoredProgress } from "#lib/stores/progress-storage.js";
 import { PROGRESS_STORAGE_KEY } from "#lib/stores/storage-keys.js";
-import {
-  createRelayClient,
-  deriveFollowKeys,
-  generateFollowKey,
-  generateWriteToken,
-  subscribeToMailbox,
-} from "#lib/sync/follow.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 
 import {
@@ -17,6 +10,13 @@ import {
   relayTestRuntime,
   TEST_ORIGIN,
 } from "../../../relay/test-runtime.js";
+import {
+  createRelayClient,
+  deriveFollowKeys,
+  generateFollowKey,
+  generateWriteToken,
+  subscribeToMailbox,
+} from "./follow.js";
 
 it("retries a refused follower socket, rereads the mailbox, & receives a relay push", async () => {
   const storage = memoryStorage();
@@ -24,7 +24,7 @@ it("retries a refused follower socket, rereads the mailbox, & receives a relay p
   vi.stubGlobal("window", {});
   vi.stubGlobal("localStorage", storage);
   const { userState } = await import("#lib/stores/user-state.svelte.js");
-  const { createReceiver } = await import("#lib/sync/receiver.js");
+  const { createReceiver } = await import("./receiver.js");
   const mf = relayTestRuntime(await relayTestModules());
   const ip = "192.0.2.1";
   const headers = { "CF-Connecting-IP": ip };

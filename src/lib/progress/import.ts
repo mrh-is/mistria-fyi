@@ -7,7 +7,12 @@ interface ImportShell {
 }
 
 interface ImportFacade {
+  /** The farm & player from the last save import, or null before the first one. */
   readonly lastImport: DeepReadonly<null | SaveImportMetadata>;
+  /**
+   * Applies a native save additively. The farm decision, lane guard, & write all use the latest
+   * stored value, so another tab cannot start sync or change farms behind the import.
+   */
   mergeFromSave: ProgressRepository["merge"];
 }
 

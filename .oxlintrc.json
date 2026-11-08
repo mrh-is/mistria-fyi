@@ -449,6 +449,26 @@
       }
     },
     {
+      // Sync's integration tests stay beside the services they cover & seed or inspect the store
+      // directly, so the store boundary above applies to production modules only. Options replace
+      // the override's, so the icon restriction is restated.
+      "files": ["src/lib/sync/**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "allowTypeImports": true,
+                "message": "Import icons individually, e.g. from \"@tabler/icons-svelte-runes/icons/x\".",
+                "name": "@tabler/icons-svelte-runes"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       // `utils/` holds low-level helpers that every layer may import, so it must not reach up into
       // the layers built on it, even for types. Options replace the base rule's, so the icon
       // restriction is restated.

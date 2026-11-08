@@ -124,9 +124,10 @@ calls `progressBackup.restoreBackup`. Existing callers can still use `userState`
 constructs another store or another persistence lifecycle.
 
 The sync services use the focused facades & have no direct store imports. Their persisted-state
-integration tests live beside the progress facade, which owns the state API they exercise. The
-courier owns its separate upload-ledger key, whose stored name is unchanged. Oxlint enforces the
-sync boundary, and keeps the pure engine & low-level utilities from importing progress facades.
+integration tests stay beside the services in `src/lib/sync/`, and only those tests may import
+stores to seed or inspect state. The courier owns its separate upload-ledger key, whose stored name
+is unchanged; `storage-keys.ts` points to it. Oxlint enforces the sync boundary, and keeps the pure
+engine & low-level utilities from importing progress facades.
 
 ## 3. Persistence & Serialization
 

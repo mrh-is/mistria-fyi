@@ -30,23 +30,56 @@ interface SyncShell {
 type LaneOperations = ReturnType<typeof syncLaneOperations>;
 
 interface SyncFacade extends LaneOperations {
+  /**
+   * Applies a synced save in one immediate write: the settled progress, the receipt, & any
+   * farm-switch backup land together or not at all, so the receipt advances only here. It never
+   * unblocks a quarantined store or a newer build's data.
+   */
   applySyncedSave: (request: SyncApplyRequest) => Promise<SyncApplyOutcome>;
+  /** Drops the hand edit waiting for a tracking lane, so nothing is recorded. */
   cancelLaneChoice: () => void;
+  /** Whether this guide still needs a choice between hand tracking & sync. */
   readonly canStartTrackingByHand: boolean;
+  /** Keeps the first check-off while sync setup obtains the save that chooses its lane. */
   chooseSyncTracking: () => void;
+  /**
+   * Starts a syncing lane: erases progress & history, applies the lane's first save, & records the
+   * lane, all in one write, so a setup that never gets this far leaves nothing behind. Any old
+   * receipt & lane go, replaced by `stamp`'s; the farm-switch backup & pending retires stay.
+   * Resolves with whether the write landed.
+   */
   startSyncLane: (
     lane: SyncLane,
     save: SyncedSave,
     stillWanted?: () => boolean,
     stamp?: SyncApplyStamp,
   ) => Promise<boolean>;
+  /**
+   * Puts this device on the manual tracking lane, then runs the hand edit that was waiting for it.
+   * Storage that can't keep the lane keeps nothing, so the edit is dropped; while persistence is
+   * off, nothing is stored either way & the edit just runs. Resolves with whether the device may
+   * now record by hand.
+   */
   startTrackingByHand: () => Promise<boolean>;
+  /**
+   * True while stored progress can't be written (quarantined, from a newer build, or not loaded),
+   * so no syncing lane may start.
+   */
   readonly syncBlocked: boolean;
+  /** When the last save came & the gaps learned between saves, while syncing. */
   readonly syncFreshness: DeepReadonly<SyncFreshness> | undefined;
+  /** This device's sync lane, or `undefined` while it tracks by hand. */
   readonly syncLane: DeepReadonly<SyncLane> | undefined;
+  /** Codes this device stopped sharing that the relay hasn't confirmed retired yet. */
   readonly syncPendingRetires: readonly DeepReadonly<PendingRetire>[];
+  /** What this device last applied, which only `applySyncedSave` & a lane start advance. */
   readonly syncReceipt: DeepReadonly<SyncReceipt> | undefined;
+  /**
+   * How this device tracks, or `undefined` until it chooses. A sync lane always means syncing; a
+   * stored `sync` without one can only be left over, and progress left behind is tracked by hand.
+   */
   readonly trackingLane: TrackingLane | undefined;
+  /** Whether a hand edit is waiting for the player to choose a tracking lane. */
   readonly trackingLaneNeeded: boolean;
 }
 
@@ -56,7 +89,6 @@ export function createSyncFacade(
 ): SyncFacade {
   return {
     ...syncLaneOperations(repository.writeLocal),
-    /** Progress, receipt, & any outgoing-farm backup commit in the same locked write. */
     async applySyncedSave(request: SyncApplyRequest): Promise<SyncApplyOutcome> {
       const settled: { outcome: SyncApplyOutcome } = { outcome: { kind: "blocked" } };
       await repository.write({
@@ -75,13 +107,14 @@ export function createSyncFacade(
       return shell.canStartTrackingByHand;
     },
     chooseSyncTracking: shell.chooseSync,
-    /** Stages the first save aside, so a cancelled or failed lane start erases nothing. */
     async startSyncLane(
       lane: SyncLane,
       save: SyncedSave,
       stillWanted: () => boolean = () => true,
       stamp?: SyncApplyStamp,
     ): Promise<boolean> {
+      // Built aside from live state, which stays untouched until the write lands, so a lane start
+      // that's cancelled or can't be stored never erases anything, even in a later save.
       const staged = shell.emptyProgress();
       staged.worldState = $state.snapshot(shell.worldState);
       stageSyncSave(staged, { ...save, metadata: $state.snapshot(save.metadata) });
@@ -99,7 +132,6 @@ export function createSyncFacade(
       if (written) pending?.();
       return written;
     },
-    /** Commits the manual lane before replaying the hand edit that requested it. */
     async startTrackingByHand(): Promise<boolean> {
       const pending = shell.takePendingHandEdit();
       if (shell.ready) {

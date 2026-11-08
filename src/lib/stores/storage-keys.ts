@@ -1,7 +1,8 @@
 /**
  * localStorage keys for player data. They're a public contract (`docs/app-architecture.md` §3):
- * renaming one abandons whatever players have stored under it. The theme key lives with the theme
- * constants in `#lib/theme.js`.
+ * renaming one abandons whatever players have stored under it. Two keys live with their owners
+ * instead: the theme key in `#lib/theme.js`, and the sync courier's upload ledger
+ * (`mistria-fyi:sync-uploads`) in `#lib/sync/courier.js`, since sync doesn't import stores.
  */
 
 /** The serialized progress blob, which is also the backup format. */

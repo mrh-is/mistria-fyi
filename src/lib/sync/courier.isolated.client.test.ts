@@ -3,25 +3,21 @@ import * as v from "valibot";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { UpdateHolds } from "#lib/pwa/update-holds.js";
-import {
-  decodeSavePayload,
-  deriveFollowKeys,
-  mailboxIdFor,
-  openEnvelope,
-} from "#lib/sync/follow.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { buildSavBytes } from "#lib/test-utils/sav.js";
 
-import type { Courier, CourierOptions, CourierStatus, SaveObserver } from "#lib/sync/courier.js";
+import { decodeSavePayload, deriveFollowKeys, mailboxIdFor, openEnvelope } from "./follow.js";
+
+import type { Courier, CourierOptions, CourierStatus, SaveObserver } from "./courier.js";
 import type {
   FollowKey,
   RelayClient,
   SealedEnvelope,
   ShareResult,
   UploadResult,
-} from "#lib/sync/follow.js";
-import type { LocalSaveResult } from "#lib/sync/receiver.js";
-import type { SaveFileHandle, SaveHandleStore } from "#lib/sync/save-source.js";
+} from "./follow.js";
+import type { LocalSaveResult } from "./receiver.js";
+import type { SaveFileHandle, SaveHandleStore } from "./save-source.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const UPLOADS_KEY = "mistria-fyi:sync-uploads";
@@ -237,7 +233,7 @@ async function load({ code = true, options = {}, stored = {} }: Setup = {}) {
   vi.resetModules();
   const { userState } = await import("#lib/stores/user-state.svelte.js");
   userState.loadFromStorage();
-  const { createCourier } = await import("#lib/sync/courier.js");
+  const { createCourier } = await import("./courier.js");
   const statuses: CourierStatus[] = [];
   const relay = fakeRelay();
   const applyLocal = vi.fn<(file: File) => Promise<LocalSaveResult>>(() =>
@@ -924,7 +920,7 @@ async function visitBlocked(blocked: string) {
   userState.loadFromStorage();
   expect(userState.syncLane).toBeUndefined();
   expect(userState.syncBlocked).toBe(true);
-  const { createCourier } = await import("#lib/sync/courier.js");
+  const { createCourier } = await import("./courier.js");
   first.applyLocal.mockClear();
   first.relay.upload.mockClear();
   file.replace(saveBytes(200));
@@ -1570,7 +1566,7 @@ describe("the sync log", () => {
 
   it("logs a renewed code with no counter, mailbox ID, hash, size, or credential", async () => {
     const { make, relay, userState } = await load();
-    const { syncDiagnostics } = await import("#lib/sync/diagnostics.svelte.js");
+    const { syncDiagnostics } = await import("./diagnostics.svelte.js");
     const { SyncLogSchema } = await import("#lib/feedback/sync-log-schema.js");
     relay.upload
       .mockResolvedValueOnce({ kind: "paused", until: Date.now() })

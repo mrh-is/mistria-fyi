@@ -197,11 +197,13 @@ describe("engine import boundary", () => {
 });
 
 describe("sync import boundary", () => {
-  it("rejects direct stores while accepting progress facades", async () => {
+  it("rejects direct stores while accepting progress facades & sync tests", async () => {
     const probeStem = `lint-probe-${randomUUID()}`;
     const directory = posix.join("src/lib/sync", probeStem);
     const blocked = posix.join(directory, "blocked.ts");
     const allowed = posix.join(directory, "allowed.ts");
+    // Integration tests beside the services may seed the store directly.
+    const test = posix.join(directory, "allowed.test.ts");
     await mkdir(directory);
     try {
       await writeFile(
@@ -221,6 +223,15 @@ describe("sync import boundary", () => {
           "export type Probe = Feature;",
         ].join("\n"),
       );
+      await writeFile(
+        test,
+        [
+          'import type { AliasStore } from "#lib/stores/probe.js";',
+          'import type { RelativeStore } from "../../stores/probe.js";',
+          "",
+          "export type Probe = AliasStore | RelativeStore;",
+        ].join("\n"),
+      );
       const rejected = oxc("oxlint", ["--config", ".oxlintrc.json", "--format", "json", blocked], {
         encoding: "utf8",
       });
@@ -230,11 +241,16 @@ describe("sync import boundary", () => {
         report.diagnostics.filter(({ code }) => code === "eslint(no-restricted-imports)"),
       ).toHaveLength(2);
       expect(rejected.status).toBe(1);
-      const accepted = oxc("oxlint", ["--config", ".oxlintrc.json", "--format", "json", allowed], {
-        encoding: "utf8",
-      });
+      const accepted = oxc(
+        "oxlint",
+        ["--config", ".oxlintrc.json", "--format", "json", allowed, test],
+        { encoding: "utf8" },
+      );
       expect(accepted.error).toBeUndefined();
-      expect(accepted.status, accepted.stdout).toBe(0);
+      const restricted = (JSON.parse(accepted.stdout) as OxlintReport).diagnostics.filter(
+        ({ code }) => code === "eslint(no-restricted-imports)",
+      );
+      expect(restricted).toStrictEqual([]);
     } finally {
       await rm(directory, { force: true, recursive: true });
     }
