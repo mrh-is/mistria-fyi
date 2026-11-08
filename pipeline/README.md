@@ -407,13 +407,14 @@ translation directly, so English suffix rules never alter translated strings.
 
 ## Artifacts
 
-| Output                                       | Contents                                                              |
-| -------------------------------------------- | --------------------------------------------------------------------- |
-| `src/lib/data/tracker-data.json`             | Committed app data, pretty-printed so regenerations diff readably     |
-| `src/lib/data/locales.json`                  | Locale manifest generated from `l10n.meta.toml`                       |
-| `src/lib/data/locales/<locale>/*.json`       | Per-locale name chunks, one file per category                         |
-| `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--villager-sprites-only` |
-| `pipeline/output/asset-atlas/`               | Per-version asset inventories & diffs, from `pnpm run pipeline:atlas` |
+| Output                                       | Contents                                                               |
+| -------------------------------------------- | ---------------------------------------------------------------------- |
+| `src/lib/data/tracker-data.json`             | Committed app data, pretty-printed so regenerations diff readably      |
+| `src/lib/data/locales.json`                  | Locale manifest generated from `l10n.meta.toml`                        |
+| `src/lib/data/locales/<locale>/*.json`       | Per-locale name chunks, one file per category                          |
+| `pipeline/output/game-term-lexicon.json`     | Local translator reference keyed by locale and native localization key |
+| `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--villager-sprites-only`  |
+| `pipeline/output/asset-atlas/`               | Per-version asset inventories & diffs, from `pnpm run pipeline:atlas`  |
 
 Review a regeneration with `pnpm run data:diff [base-ref]`, which compares the committed tracker
 data at a Git ref (default `origin/main`) with the working copy and prints each added (`+`), removed
