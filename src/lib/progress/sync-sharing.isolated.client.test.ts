@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  deriveFollowKeys,
+  encodeSavePayload,
+  mailboxIdFor,
+  sealEnvelope,
+} from "#lib/sync/follow.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { buildSavBytes } from "#lib/test-utils/sav.js";
 import { holdTurnstileScripts } from "#lib/test-utils/turnstile-script.js";
 
-import { deriveFollowKeys, encodeSavePayload, mailboxIdFor, sealEnvelope } from "./follow.js";
-
-import type { FollowKey, ReadResult, RelayClient, RetireResult } from "./follow.js";
+import type { FollowKey, ReadResult, RelayClient, RetireResult } from "#lib/sync/follow.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const OLD_KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
@@ -50,7 +54,7 @@ async function load(local: Record<string, unknown>, client: RelayClient) {
   userState.loadFromStorage();
   // Finish the fixture's migration write before a test captures its storage baseline.
   await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS);
-  const sharing = await import("./sharing.js");
+  const sharing = await import("#lib/sync/sharing.js");
   sharing.setRelayClient(client);
   sharing.setTurnstileTokenSource(() => Promise.resolve("challenge"));
   return { sharing, userState };
@@ -242,7 +246,8 @@ describe("stopping", () => {
     await vi.advanceTimersByTimeAsync(5000);
     expect(retire).toHaveBeenCalledTimes(2);
 
-    const confirm = vi.spyOn(userState, "confirmRetired").mockResolvedValueOnce(false);
+    const { progressSync } = await import("#lib/progress/index.js");
+    const confirm = vi.spyOn(progressSync, "confirmRetired").mockResolvedValueOnce(false);
     await vi.advanceTimersByTimeAsync(10_000);
     expect(retire).toHaveBeenCalledTimes(3);
     expect(confirm).toHaveBeenCalledTimes(1);
@@ -394,7 +399,7 @@ describe("stopping", () => {
     vi.useFakeTimers();
     const retire = vi.fn<RelayClient["retire"]>().mockResolvedValue({ kind: "refused" });
     const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
-    const { retireStatus } = await import("./retire-status.svelte.js");
+    const { retireStatus } = await import("#lib/sync/retire-status.svelte.js");
     await sharing.makeNewCode();
     expect(retireStatus.stuck(userState.syncPendingRetires)).toBe(true);
     const [refused] = userState.syncPendingRetires;
@@ -412,7 +417,7 @@ describe("stopping", () => {
     const retire = vi.fn<RelayClient["retire"]>().mockResolvedValueOnce({ kind: "refused" });
     retire.mockResolvedValue({ kind: "unreachable" });
     const { sharing, userState } = await load({ syncLane: COMPUTER }, relay({ retire }));
-    const { retireStatus } = await import("./retire-status.svelte.js");
+    const { retireStatus } = await import("#lib/sync/retire-status.svelte.js");
     await sharing.stopSyncing();
     expect(retireStatus.stuck(userState.syncPendingRetires)).toBe(true);
 

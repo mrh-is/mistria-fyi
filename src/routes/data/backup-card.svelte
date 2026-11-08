@@ -8,14 +8,14 @@
   import { Button } from "#lib/components/ui/button/index.js";
   import { downloadProgressBackup } from "#lib/controllers/tracking-reminders.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { progressBackup } from "#lib/progress/index.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
-  import { userState } from "#lib/stores/user-state.svelte.js";
   import { downloadJson } from "#lib/utils/download.js";
   import { page } from "$app/state";
 
   import DataCard from "./data-card.svelte";
 
-  import type { BackupRestoreErrorKind } from "#lib/stores/user-state.svelte.js";
+  import type { BackupRestoreErrorKind } from "#lib/progress/index.js";
 
   const ERROR_MESSAGES: Record<BackupRestoreErrorKind, string> = {
     "invalid-fields": m.backup_error_invalid_fields(),
@@ -33,7 +33,7 @@
 
   let farmBackupOpen = $state(false);
   const farmBackupLabel = $derived.by(() => {
-    const kept = userState.farmSwitchBackup;
+    const kept = progressBackup.farmSwitchBackup;
     if (!kept) return undefined;
     const date = new Intl.DateTimeFormat(page.data.locale, { dateStyle: "medium" }).format(
       kept.savedAt,
@@ -46,7 +46,7 @@
   function restoreFarmBackup(): void {
     farmBackupOpen = false;
     restoreError = "";
-    const result = userState.restoreFarmSwitchBackup();
+    const result = progressBackup.restoreFarmSwitchBackup();
     if (result.ok) {
       restoreStatus = m.sync_backup_restored();
     } else {
@@ -60,7 +60,7 @@
   }
 
   function handleDownloadUnreadable() {
-    const data = userState.unreadableData;
+    const data = progressBackup.unreadableData;
     if (data !== null) downloadJson(data, "mistria-field-guide-unreadable");
   }
 
@@ -79,7 +79,7 @@
       restoreStatus = m.backup_restoring_status();
       try {
         const text = await file.text();
-        const result = userState.restoreBackup(text);
+        const result = progressBackup.restoreBackup(text);
         if (result.ok) {
           restoreStatus = m.backup_restored_success();
         } else {
@@ -128,7 +128,7 @@
         {farmBackupLabel}
       </Button>
     {/if}
-    {#if userState.unreadableData !== null}
+    {#if progressBackup.unreadableData !== null}
       <Button variant="outline" onclick={handleDownloadUnreadable}>
         <IconFileAlert />
         {m.backup_download_unreadable_action()}

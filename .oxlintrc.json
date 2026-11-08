@@ -399,7 +399,7 @@
       "rules": { "typescript/no-unsafe-assignment": "error" }
     },
     {
-      // The engine is pure domain logic: it must not reach up into stores, components, or Paraglide messages, even
+      // The engine is pure domain logic: it must not reach up into stores, progress facades, components, or messages, even
       // for types. Shared domain types live in `src/lib/types/`. Options replace the base rule's,
       // so the icon restriction is restated.
       "files": ["src/lib/engine/**/*.ts"],
@@ -417,7 +417,31 @@
             "patterns": [
               {
                 "message": "The engine is pure domain logic; move shared types to src/lib/types/ and keep side effects and message lookups at store or component boundaries.",
-                "regex": "^(#lib/|(?:\\.\\./)+)(stores|components|paraglide)/"
+                "regex": "^(#lib/|(?:\\.\\./)+)(stores|progress|components|paraglide)/"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // Sync uses the progress facades; its transport & protocol modules do not import stores.
+      "files": ["src/lib/sync/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "allowTypeImports": true,
+                "message": "Import icons individually, e.g. from \"@tabler/icons-svelte-runes/icons/x\".",
+                "name": "@tabler/icons-svelte-runes"
+              }
+            ],
+            "patterns": [
+              {
+                "message": "Sync consumes the narrow progress facades; keep direct store access in the progress layer.",
+                "regex": "^(#lib/|(?:\\.\\./)+)stores/"
               }
             ]
           }
@@ -443,7 +467,7 @@
             "patterns": [
               {
                 "message": "utils/ is for low-level helpers; code that needs components, stores, controllers, effects, sources, PWA, or presentation modules belongs in that layer instead.",
-                "regex": "^(#lib/|(?:\\.\\./)+)(components|stores|controllers|effects|sources|pwa|presentation)/"
+                "regex": "^(#lib/|(?:\\.\\./)+)(components|stores|progress|controllers|effects|sources|pwa|presentation)/"
               }
             ]
           }

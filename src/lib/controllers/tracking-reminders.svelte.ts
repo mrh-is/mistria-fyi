@@ -2,6 +2,7 @@ import { toast } from "svelte-sonner";
 
 import { shouldNudgeInstall, shouldSuggestBackup } from "#lib/engine/tracking-reminders.js";
 import * as m from "#lib/paraglide/messages.js";
+import { progressBackup } from "#lib/progress/index.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { currentDevice } from "#lib/sync/device.js";
 import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
@@ -40,7 +41,7 @@ async function requestPersistence(): Promise<void> {
 }
 
 export function downloadProgressBackup(): void {
-  downloadJson(userState.exportBackup(), BACKUP_FILE_PREFIX);
+  downloadJson(progressBackup.exportBackup(), BACKUP_FILE_PREFIX);
   void userState.updateReminders((current) => ({ ...current, backupFacts: userState.factCount }));
 }
 
