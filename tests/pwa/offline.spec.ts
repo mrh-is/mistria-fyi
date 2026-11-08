@@ -208,7 +208,7 @@ test("speaks the uncached URL's locale on the offline page", async ({ context, p
     // Its faces, which apply once the stylesheet is cached from an online visit in Japanese.
     fontStylesheet: expect.stringMatching(/\/locale-fonts-ja\.[^/.]+\.css$/) as unknown,
     lang: "ja",
-    title: "Mistria Field Guide — オフライン",
+    title: "Mistria Field Guide · オフライン",
   });
 });
 

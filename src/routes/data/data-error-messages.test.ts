@@ -40,23 +40,23 @@ describe("data error messages", () => {
 
   it("formats file-level errors", () => {
     expect(formatExtractedSaveFilesError({ code: "no-save-files" })).toMatch(
-      /^No recognized save files/,
+      /^We didn’t find a save file in there/,
     );
     expect(
       formatExtractedSaveFilesError({
         code: "no-valid-files",
         problems: [{ code: "invalid-json", file: "player.json" }],
       }),
-    ).toBe("None of the selected save files could be read.");
+    ).toBe("We couldn’t read any of those files. Try the newest file that ends in “autosave”.");
   });
 
   it("formats .sav sizes in binary units for the locale", () => {
     const detail = { code: "too-large", maxBytes: 8 * 1024 * 1024, sizeBytes: 9_700_000 } as const;
 
     expect(formatSavArchiveError(detail)).toBe(
-      "This save file is too large (9.3 MB). The maximum supported size is 8 MB.",
+      "Mamma mia, that’s a big file. This app can only read save files up to 8 MB, and that file is 9.3 MB. Maybe double-check you picked the right one?",
     );
     overwriteGetLocale(() => "fr");
-    expect(formatSavArchiveError(detail)).toMatch(/\(9,3\s?Mo\)/);
+    expect(formatSavArchiveError(detail)).toMatch(/fait 9,3\s?Mo\./);
   });
 });

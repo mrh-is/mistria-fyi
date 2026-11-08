@@ -326,10 +326,10 @@ describe("the gap", () => {
 describe("factsQuestionBody", () => {
   it("names the category & why it asks", () => {
     expect(factsQuestionBody(question("questStates", "many-removals"), "en")).toMatch(
-      /^Quests: your save file would take back/,
+      /^Quests: Your save file would take back/,
     );
     expect(factsQuestionBody(question("reachedSeason", "level-decrease"), "en")).toBe(
-      "Your farm: your save file has lower levels than this device.",
+      "Your farm: Your save file has lower levels than this device.",
     );
   });
 

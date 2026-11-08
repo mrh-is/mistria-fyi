@@ -18,6 +18,8 @@
     unpackSavFile,
   } from "#lib/engine/import-save.js";
   import { readSaveIdentity } from "#lib/engine/save-identity.js";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import { describeErrorForReport } from "#lib/feedback/error-details.js";
   import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { progressImport } from "#lib/progress/index.js";
@@ -64,6 +66,11 @@
   let importResult = $state<null | SaveImportReport>(null);
   let importError = $state<null | string>(null);
   let importErrorDetails = $state<string[]>([]);
+  /** The error is the unreadable-save one, whose "send us feedback" opens the feedback form. */
+  let importErrorOffersFeedback = $state(false);
+  /** Redacted exception details for the feedback draft, when the failure threw one. */
+  let importErrorReportDetails = $state<string | undefined>();
+  const feedbackContext = getFeedbackContext();
   let showSavFallbackHelp = $state(false);
   let importing = $state(false);
   let importStatus = $state("");
@@ -96,6 +103,13 @@
     setTimeout(() => {
       copied = false;
     }, 2000);
+  }
+
+  /** The feedback draft: the error the player saw, then any redacted details for debugging. */
+  function importErrorReport(error: string): string {
+    return importErrorReportDetails === undefined
+      ? error
+      : `${error}\n\n${m.import_error_feedback_details({ details: importErrorReportDetails })}`;
   }
 
   function copyPath() {
@@ -132,6 +146,8 @@
     importResult = null;
     importError = null;
     importErrorDetails = [];
+    importErrorOffersFeedback = false;
+    importErrorReportDetails = undefined;
     showSavFallbackHelp = false;
     importStatus = "";
     filesUsed = [];
@@ -147,10 +163,16 @@
         try {
           bundle = await unpackSavFile(savFile);
         } catch (error) {
-          importError =
-            error instanceof SavArchiveError
-              ? formatSavArchiveError(error.detail)
-              : m.import_error_unexpected();
+          // A failure the archive reader doesn't recognize is worth a report, so it links to feedback.
+          const known = error instanceof SavArchiveError;
+          importError = known
+            ? formatSavArchiveError(error.detail)
+            : m.import_error_parse_failed({
+                feedback: m.import_error_feedback_link(),
+                tryAutosave: m.import_error_try_autosave(),
+              });
+          importErrorOffersFeedback = !known;
+          if (!known) importErrorReportDetails = describeErrorForReport(error);
           showSavFallbackHelp = true;
           return;
         }
@@ -159,7 +181,11 @@
         if (result.error || !result.bundle) {
           importError = result.error
             ? formatExtractedSaveFilesError(result.error)
-            : m.import_error_parse_failed();
+            : m.import_error_parse_failed({
+                feedback: m.import_error_feedback_link(),
+                tryAutosave: m.import_error_try_autosave(),
+              });
+          importErrorOffersFeedback = !result.error;
           if (result.error?.code === "no-valid-files") {
             importErrorDetails = result.error.problems.map(formatSaveImportWarning);
           }
@@ -382,7 +408,21 @@
 
     {#if importError}
       <StatusNote class="mt-3 text-base" tone="error">
-        <p>{importError}</p>
+        {#if importErrorOffersFeedback}
+          <p>
+            {#each messageParts( (slot) => m.import_error_parse_failed( { feedback: slot("feedback"), tryAutosave: m.import_error_try_autosave() } ) ) as part, index (index)}
+              {#if typeof part === "string"}{part}{:else}<button
+                  type="button"
+                  class="cursor-pointer underline underline-offset-2"
+                  onclick={() => {
+                    if (importError) feedbackContext.reportError(importErrorReport(importError));
+                  }}>{m.import_error_feedback_link()}</button
+                >{/if}
+            {/each}
+          </p>
+        {:else}
+          <p>{importError}</p>
+        {/if}
         {#if importErrorDetails.length > 0}
           <ul class="mt-2 list-disc ps-5 text-sm">
             {#each importErrorDetails as detail, index (index)}

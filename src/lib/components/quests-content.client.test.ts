@@ -19,7 +19,7 @@ it("labels the matching shelf without the unfiltered section's shelf heading", a
   toolbarState.setSearchQuery("Berries");
   await tick();
 
-  expect(view.getByRole("heading", { name: "Fetch Quests" })).toBeVisible();
+  expect(view.getByRole("heading", { name: "Fetch quests" })).toBeVisible();
   const matches = within(view.getByRole("group", { name: "Not now" }));
   expect(matches.getByRole("heading", { level: 3, name: "Not now" })).toBeVisible();
   expect(matches.getAllByRole("button", { name: "Check Wild Berries" })).toHaveLength(3);
@@ -80,14 +80,14 @@ describe("QuestsContent empty sections", () => {
   it("takes a section off the page while filters hide all its sources", async () => {
     const view = renderWithFeedback(QuestsContent, { locale: "en" });
     await tick();
-    expect(view.getByRole("button", { name: /^Fetch Quests,/ })).toBeInTheDocument();
+    expect(view.getByRole("button", { name: /^Fetch quests,/ })).toBeInTheDocument();
 
     toolbarState.hideAllSourceFilters();
     await tick();
-    expect(view.queryByRole("button", { name: /^Fetch Quests,/ })).toBeNull();
+    expect(view.queryByRole("button", { name: /^Fetch quests,/ })).toBeNull();
 
     toolbarState.resetSourceFilters();
     await tick();
-    expect(view.getByRole("button", { name: /^Fetch Quests,/ })).toBeInTheDocument();
+    expect(view.getByRole("button", { name: /^Fetch quests,/ })).toBeInTheDocument();
   });
 });

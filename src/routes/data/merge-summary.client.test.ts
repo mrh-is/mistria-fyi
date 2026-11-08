@@ -88,7 +88,7 @@ describe("merge summary household conflicts", () => {
     expect(container).toHaveTextContent("Adeline");
     expect(container).toHaveTextContent("Balor");
     const link = container.querySelector("a[href$='/villagers']");
-    expect(link?.textContent).toContain("Correct this manually");
+    expect(link?.textContent).toContain("Fix this by hand");
   });
 
   it("renders a child-choice conflict", async () => {

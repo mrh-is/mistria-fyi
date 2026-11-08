@@ -212,13 +212,17 @@
                   reportEntityId={row.id}
                   sources={row.sources}
                   subtitle={row.subtitle}
-                  onToggle={() => {
+                  onToggle={(covered) => {
                     if (!spoilered || questState !== "none") {
                       completeQuest(row.id, row.displayName, questSection);
                     } else {
-                      spoilerGuard.requestGuardedAction(row.visibility, () => {
-                        completeQuest(row.id, row.displayName, questSection);
-                      });
+                      spoilerGuard.requestGuardedAction(
+                        row.visibility,
+                        () => {
+                          completeQuest(row.id, row.displayName, questSection);
+                        },
+                        covered ? undefined : { name: row.displayName },
+                      );
                     }
                   }}
                 />

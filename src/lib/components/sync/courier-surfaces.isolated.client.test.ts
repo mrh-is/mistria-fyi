@@ -187,7 +187,7 @@ describe("the notes", () => {
     await tick();
     const note = screen.getByRole("status");
     expect(note).toHaveTextContent("Hmm, we can’t read your save file");
-    expect(note).toHaveTextContent("Number one: nothing is lost.");
+    expect(note).toHaveTextContent("Number one: Nothing is lost.");
     expect(note).toHaveTextContent("It can happen when Fields of Mistria releases an update.");
     expect(note).toHaveTextContent("leave this tab open");
   });

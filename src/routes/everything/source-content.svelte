@@ -69,9 +69,13 @@
   function requestFloor(floor: number): void {
     const seals = sealsBefore(userState.state.progress, floor);
     if (seals) {
-      guard.requestGuardedAction(seals, () => {
-        userState.setMineFloor(floor);
-      });
+      guard.requestGuardedAction(
+        seals,
+        () => {
+          userState.setMineFloor(floor);
+        },
+        { floor },
+      );
     } else {
       userState.setMineFloor(floor);
     }
@@ -280,7 +284,7 @@
     return { filtered: filteredCounts([...rows.values()]), visible: visibleKeys.size };
   });
 
-  function toggle(entry: SourceChecklistRow): void {
+  function toggle(entry: SourceChecklistRow, covered: boolean): void {
     const perform = () => {
       const sourceIds = sections
         .filter(({ rows }) => rows.some(({ entry: row }) => row.key === entry.key))
@@ -317,7 +321,11 @@
     ) {
       perform();
     } else {
-      guard.requestGuardedAction(entry.visibility, perform);
+      guard.requestGuardedAction(
+        entry.visibility,
+        perform,
+        covered ? undefined : { name: entry.name },
+      );
     }
   }
 </script>
@@ -414,7 +422,7 @@
                       spriteClass="text-primary"
                       {sources}
                       segmentLookups={{ ...lookups, entityVisibility: entry.visibility }}
-                      onToggle={() => toggle(entry)}
+                      onToggle={(covered) => toggle(entry, covered)}
                     />
                   {/snippet}
                 </ShelfRows>

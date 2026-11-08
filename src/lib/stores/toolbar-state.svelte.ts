@@ -19,6 +19,10 @@ export class ToolbarState {
   enabledSourceFilterIds = $state<SvelteSet<SourceFilterId>>(new SvelteSet());
   // Phone-width disclosure state; session-only, so sections start collapsed on each visit.
   readonly expandedFilterSections = new SvelteSet<FilterSectionId>();
+  // Whether the current page's toolbar offers the filter panel; the toolbar keeps it current.
+  filterPanelAvailable = $state(false);
+  // Counts requests to open the filter panel from outside the toolbar, like the empty-state link.
+  filterPanelRequest = $state(0);
   // Pixels an open toolbar panel occupies above the viewport bottom; toasts rise above it.
   panelClearance = $state(0);
   searchOpen = $state(false);
@@ -100,10 +104,16 @@ export class ToolbarState {
     this.rebuildSourceFilters();
   }
 
+  /** Asks the toolbar to open its filter panel. */
+  requestFilterPanel(): void {
+    this.filterPanelRequest += 1;
+  }
+
   reset(): void {
     this.closeSearch();
     this.carriesSearch = false;
     this.expandedFilterSections.clear();
+    this.filterPanelRequest = 0;
     this.pageSearchCounters.clear();
     this.panelClearance = 0;
     this.showUnobtainable = false;
