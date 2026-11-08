@@ -12,9 +12,8 @@
 import * as v from "valibot";
 
 import { pruneSavArchive } from "#lib/engine/parse-sav.js";
+import { progressSync } from "#lib/progress/index.js";
 import { updateHolds } from "#lib/pwa/update-holds.js";
-import { SYNC_UPLOADS_STORAGE_KEY } from "#lib/stores/storage-keys.js";
-import { userState } from "#lib/stores/user-state.svelte.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 
 import { syncDiagnostics } from "./diagnostics.svelte.js";
@@ -48,6 +47,9 @@ import type { SaveFileHandle, SaveHandleStore, SaveSource } from "./save-source.
 
 /** Held for as long as a window is the profile's courier. */
 export const COURIER_LOCK = "mistria-fyi:sync-courier";
+
+/** The upload ledger stays separate from progress, so resets never restart its counter. */
+const SYNC_UPLOADS_STORAGE_KEY = "mistria-fyi:sync-uploads";
 
 /** How often the courier checks a watched file, in case its observer missed something. */
 export const BACKSTOP_POLL_MS = 60_000;
@@ -219,15 +221,15 @@ function defaultObserver(): SaveObserverConstructor | undefined {
 }
 
 function sharedCode(): DeepReadonly<{ key: string; token: string }> | undefined {
-  const lane = userState.syncLane;
+  const lane = progressSync.syncLane;
   if (lane?.kind === "computer") return lane.code;
-  return userState.syncBlocked ? readLedger().code : undefined;
+  return progressSync.syncBlocked ? readLedger().code : undefined;
 }
 
 /** Keeps the ledger's copy of the code in step with the lane, while the lane can be read. */
 function mirrorCode(): void {
-  const lane = userState.syncLane;
-  if (lane?.kind !== "computer" && userState.syncBlocked) return;
+  const lane = progressSync.syncLane;
+  if (lane?.kind !== "computer" && progressSync.syncBlocked) return;
   const code = lane?.kind === "computer" ? lane.code : undefined;
   const ledger = readLedger();
   if (code?.key === ledger.code?.key && code?.token === ledger.code?.token) return;
@@ -482,7 +484,7 @@ export function createCourier({
 
   async function applyHere(file: File): Promise<LocalSaveResult> {
     // A store that can't show its lane is never applied to; the upload still goes.
-    if (userState.syncLane?.kind !== "computer") return "blocked";
+    if (progressSync.syncLane?.kind !== "computer") return "blocked";
     try {
       return await within(applyLocal(file), "write-failed", taskTimeoutMs);
     } catch {
@@ -761,7 +763,7 @@ export function createCourier({
   async function renewAndResend(upload: PendingUpload): Promise<void> {
     const current = generation;
     // Only a store that can be written can hold a new code, so trying would just burn mailboxes.
-    if (userState.syncLane?.kind !== "computer" || userState.syncBlocked) {
+    if (progressSync.syncLane?.kind !== "computer" || progressSync.syncBlocked) {
       waitOut({ kind: "unreachable" });
       return;
     }
@@ -987,7 +989,7 @@ export function createCourier({
         await (next.kind === "handle" ? handles.save(next.handle) : handles.clear());
         if (mine !== latestTake) return;
         // The lane ended while that was stored, so nothing should be left behind.
-        if (userState.syncLane?.kind !== "computer") {
+        if (progressSync.syncLane?.kind !== "computer") {
           source = undefined;
           await handles.clear();
           return;
@@ -1003,12 +1005,12 @@ export function createCourier({
       }
     },
     update() {
-      const lane = userState.syncLane;
-      const receipt = userState.syncReceipt;
+      const lane = progressSync.syncLane;
+      const receipt = progressSync.syncReceipt;
       const receiptCleared = lastReceipt !== undefined && receipt === undefined;
       lastReceipt = receipt;
       mirrorCode();
-      const blocked = lane === undefined && userState.syncBlocked && sharedCode() !== undefined;
+      const blocked = lane === undefined && progressSync.syncBlocked && sharedCode() !== undefined;
       const unblocked = blockedLane && !blocked;
       blockedLane = blocked;
       if (lane?.kind !== "computer" && !blocked) {

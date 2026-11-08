@@ -11,8 +11,8 @@
  * courier uploads is unaffected.
  */
 import { receiptCovers } from "#lib/engine/sync-apply.js";
+import { progressImport, progressSync } from "#lib/progress/index.js";
 import { updateHolds } from "#lib/pwa/update-holds.js";
-import { userState } from "#lib/stores/user-state.svelte.js";
 
 import { syncDiagnostics } from "./diagnostics.svelte.js";
 import {
@@ -275,7 +275,7 @@ export function createReceiver({
     const { counter } = envelope;
     const { mailboxId } = opening;
     const placeholder = { counter, hash: "", mailboxId };
-    if (receiptCovers(userState.syncReceipt, placeholder)) {
+    if (receiptCovers(progressSync.syncReceipt, placeholder)) {
       if (!pending) setStatus({ kind: "up-to-date" });
       return;
     }
@@ -320,9 +320,9 @@ export function createReceiver({
   async function applyPending(): Promise<SyncApplyOutcome["kind"] | undefined> {
     if (!pending) return undefined;
     const { request, save } = pending;
-    const outgoingFarm = userState.state.lastImport?.farmName ?? null;
-    const outgoingPlayer = userState.state.lastImport?.playerName;
-    const lane = userState.syncLane;
+    const outgoingFarm = progressImport.lastImport?.farmName ?? null;
+    const outgoingPlayer = progressImport.lastImport?.playerName;
+    const lane = progressSync.syncLane;
     const privateValues = {
       credentials: [
         request.receipt.mailboxId,
@@ -330,14 +330,14 @@ export function createReceiver({
         lane?.kind === "computer" ? lane.code?.token : undefined,
       ],
       farmNames: [outgoingFarm],
-      farmNumbers: [userState.state.lastImport?.identity.saveNumber],
+      farmNumbers: [progressImport.lastImport?.identity.saveNumber],
       playerNames: [outgoingPlayer],
     };
     let outcome: SyncApplyOutcome;
     // An app update's reload waits until the apply has landed.
     const releaseHold = updateHolds.hold();
     try {
-      outcome = await userState.applySyncedSave({
+      outcome = await progressSync.applySyncedSave({
         ...request,
         answers,
         day: save.day,
@@ -447,8 +447,8 @@ export function createReceiver({
   }
 
   function update(): void {
-    const lane = userState.syncLane;
-    const receipt = userState.syncReceipt;
+    const lane = progressSync.syncLane;
+    const receipt = progressSync.syncReceipt;
     const receiptCleared = lastReceipt !== undefined && receipt === undefined;
     lastReceipt = receipt;
     if (!leading) return;
@@ -463,7 +463,7 @@ export function createReceiver({
       if (!pending && status.kind !== "idle") setStatus({ kind: "idle" });
       return;
     }
-    if (userState.syncBlocked) {
+    if (progressSync.syncBlocked) {
       stopListening();
       setStatus({ kind: "blocked" });
       return;
