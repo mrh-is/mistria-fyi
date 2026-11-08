@@ -36,9 +36,12 @@
 </script>
 
 <!-- Home is the index, so every shelf stays open. -->
-<div class="flex flex-col gap-5" style="--category-count-width: {countWidth}ch">
+<div
+  class="flex flex-col gap-5"
+  style="--category-count-width: {countWidth}ch; --shelf-heading-accent: var(--color-home-accent)"
+>
   {#each shelves as { keys, shelf } (shelf)}
-    <section class="flex flex-col gap-2" style="--shelf-heading-accent: var(--color-home-accent)">
+    <section class="flex flex-col gap-2">
       <ShelfHeading class="px-1" {shelf} />
       <ul
         class="flex flex-col gap-1.5"
