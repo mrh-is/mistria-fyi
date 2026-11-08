@@ -28,8 +28,11 @@ disposable() {
   [ -e "$primary/$2" ] && diff -rq "$1/$2" "$primary/$2" >/dev/null 2>&1
 }
 
-while IFS=$'\t' read -r path branch; do
+while IFS=$'\t' read -r path branch_type locked; do
   [ -d "$path" ] || continue
+  [ "$locked" != true ] || { echo "keep $path: locked"; continue; }
+  branch=
+  [ "$branch_type" = detached ] || branch=${branch_type#branch:}
   case "$cwd/" in "$path"/*) echo "keep $path: current worktree"; continue ;; esac
   # A nested worktree sits in an ignored folder, which removing its parent would delete.
   git worktree list --porcelain | grep -qF "worktree $path/" &&
@@ -48,26 +51,45 @@ while IFS=$'\t' read -r path branch; do
     [ "${entry:0:3}" = '!! ' ] && ! disposable "$path" "${entry:3}" && { local_file=${entry:3}; break; }
   done < <(git --no-optional-locks -C "$path" status --porcelain -z --ignored)
   [ -z "$local_file" ] || { echo "keep $path: ignored local file $local_file"; continue; }
-  # gh reads stdin, which here is the worktree list. A fork's PR can share the branch name.
-  read -r state head < <(gh pr list --head "$branch" --state all --limit 20 \
-    --json state,headRefOid,isCrossRepository \
-    --jq 'map(select(.isCrossRepository | not)) | .[0] // empty | "\(.state) \(.headRefOid)"' \
-    </dev/null 2>/dev/null)
-  case "${state:-}" in MERGED | CLOSED) ;; *) echo "keep $path: PR ${state:-not found}"; continue ;; esac
+  if [ "$branch_type" = detached ]; then
+    head=$(git -C "$path" rev-parse HEAD)
+    remote=$(git for-each-ref --contains="$head" --format='%(refname:short) %(symref)' refs/remotes |
+      awk '$2 == "" { print $1; exit }')
+    [ -n "$remote" ] ||
+      { echo "keep $path: detached HEAD isn't reachable from a remote branch"; continue; }
+    reason="detached, reachable from $remote"
+  else
+    # gh reads stdin, which here is the worktree list. A fork's PR can share the branch name.
+    read -r state pr_head < <(gh pr list --head "$branch" --state all --limit 20 \
+      --json state,headRefOid,isCrossRepository \
+      --jq 'map(select(.isCrossRepository | not)) | .[0] // empty | "\(.state) \(.headRefOid)"' \
+      </dev/null 2>/dev/null)
+    case "${state:-}" in
+      MERGED | CLOSED) ;;
+      *) echo "keep $path: PR ${state:-not found}"; continue ;;
+    esac
+    reason="$branch, PR $state"
+  fi
   if [ "$apply" = false ]; then
-    echo "would remove $path ($branch, PR $state)"
+    echo "would remove $path ($reason)"
   elif git worktree remove "$path"; then
-    echo "removed $path ($branch, PR $state)"
-    [ "$(git rev-parse "refs/heads/$branch")" = "$head" ] && git branch -D -q "$branch"
+    echo "removed $path ($reason)"
+    [ -z "$branch" ] ||
+      { [ "$(git rev-parse "refs/heads/$branch")" = "$pr_head" ] && git branch -D -q "$branch"; }
   else
     echo "failed to remove $path"
     failed=1
   fi
 done < <(git worktree list --porcelain | awk -v RS= '
-  NR > 1 && !/\nlocked/ && /\nbranch / {
+  NR > 1 {
     match($0, /^worktree [^\n]+/); path = substr($0, 10, RLENGTH - 9)
-    match($0, /\nbranch refs\/heads\/[^\n]+/); branch = substr($0, RSTART + 19, RLENGTH - 19)
-    print path "\t" branch
+    branch = ""
+    if (match($0, /\nbranch refs\/heads\/[^\n]+/))
+      branch = "branch:" substr($0, RSTART + 19, RLENGTH - 19)
+    else
+      branch = "detached"
+    locked = $0 ~ /\nlocked([ \t]|$)/ ? "true" : "false"
+    print path "\t" branch "\t" locked
   }')
 [ "$apply" = true ] && git worktree prune -v
 exit "$failed"
