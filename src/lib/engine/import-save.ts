@@ -14,7 +14,7 @@ import { WEATHERS } from "#lib/types/tracker-data.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import { trackedPerkIds } from "./perk-ids.js";
-import { hasProgressSection, isSaveSection } from "./save-bundle.js";
+import { isSaveSection } from "./save-bundle.js";
 import { isKnownItemId } from "./untracked-save-ids.js";
 
 import type { GameDate } from "#lib/engine/game-calendar.js";
@@ -69,11 +69,6 @@ export interface SaveImportReport extends MergeResult {
   warnings: SaveImportWarning[];
 }
 
-/** Why no extracted save file could be used. */
-export type ExtractedSaveFilesError =
-  | { code: "no-save-files" }
-  | { code: "no-valid-files"; problems: SaveImportWarning[] };
-
 /**
  * A problem with part of a save that the import skipped, localized by the UI. `path` names the
  * save field (e.g. `player.cosmetic_unlocks`) and `file` a save section or file name; both are
@@ -84,14 +79,11 @@ export type ExtractedSaveFilesError =
  * - `unreadable-entries`: list entries of the wrong shape.
  * - `level`: a numeric fact out of its domain; see {@link normalizeLevel}.
  * - `unrecognized-player`: a player section with no recognized progress fields.
- * - `invalid-json` / `not-json-object`: an extracted save file that isn't a JSON object.
  */
 export type SaveImportWarning =
-  | { code: "invalid-json"; file: string }
   | { code: "level"; issue: LevelIssue; key: string; max: number; value: string }
   | { code: "not-a-list"; path: string }
   | { code: "not-an-object"; path: string }
-  | { code: "not-json-object"; file: string }
   | { code: "unknown-id"; id: string; path: DiagnosticIdSource }
   | { code: "unreadable-entries"; count: number; path: string }
   | { code: "unrecognized-player"; file: string };
@@ -292,7 +284,6 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     else collector.report({ code: "unknown-id", id, path }, fields);
   };
 
-  // parseExtractedSaveFiles rejects an unrecognizable player.json outright; a .sav entry reaches here.
   let playerSection = bundle.player;
   if (playerSection && !isPlayerSaveSection(playerSection)) {
     collector.report({ code: "unrecognized-player", file: "player" }, []);
@@ -1028,93 +1019,6 @@ function deriveReachedSeason(date: unknown): Season {
   const seasonIndex = Math.floor(date / GAME_SEASON) % SEASON_ORDER.length;
   if (date >= SEASON_ORDER.length * GAME_SEASON) return "winter";
   return seasonFromOrdinal(seasonIndex);
-}
-
-// ─── Parse save files ----------------───────────────────────────────
-
-const SAVE_FILES = new Set([
-  "gamedata.json",
-  "header.json",
-  "info.json",
-  "player.json",
-  "quests.json",
-]);
-
-/**
- * Parse extracted save files into a bundle. Files with other names are ignored. When at least one
- * progress file parses, the problems with the others are returned as warnings rather than failing
- * the import; when none does, they are returned with the error. `header.json` & `info.json` only
- * identify the save, so they're optional & never enough on their own.
- */
-export async function parseExtractedSaveFiles(files: File[]): Promise<{
-  bundle?: SaveBundle;
-  error?: ExtractedSaveFilesError;
-  warnings?: SaveImportWarning[];
-}> {
-  const bundle: SaveBundle = {};
-  const errors: SaveImportWarning[] = [];
-
-  const saveFiles = files.filter((file) => SAVE_FILES.has(file.name));
-  const texts = await Promise.all(
-    saveFiles.map(async (file) => {
-      try {
-        return await file.text();
-      } catch {
-        return undefined;
-      }
-    }),
-  );
-
-  for (const [index, file] of saveFiles.entries()) {
-    const text = texts[index];
-    if (text === undefined) {
-      errors.push({ code: "invalid-json", file: file.name });
-      continue;
-    }
-
-    try {
-      const data: unknown = JSON.parse(text);
-      if (!isSaveSection(data)) {
-        errors.push({ code: "not-json-object", file: file.name });
-        continue;
-      }
-
-      switch (file.name) {
-        case "gamedata.json":
-          bundle.gamedata = data;
-          break;
-        case "header.json":
-          bundle.header = data;
-          break;
-        case "info.json":
-          bundle.info = data;
-          break;
-        case "player.json":
-          if (isPlayerSaveSection(data)) {
-            bundle.player = data;
-          } else {
-            errors.push({ code: "unrecognized-player", file: file.name });
-          }
-          break;
-        case "quests.json":
-          bundle.quests = data;
-          break;
-      }
-    } catch {
-      errors.push({ code: "invalid-json", file: file.name });
-    }
-  }
-
-  if (!hasProgressSection(bundle)) {
-    return {
-      error:
-        errors.length > 0
-          ? { code: "no-valid-files", problems: errors }
-          : { code: "no-save-files" },
-    };
-  }
-
-  return { bundle, warnings: errors };
 }
 
 // ─── Validation ─────────────────────────────────────────────────────

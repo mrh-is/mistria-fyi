@@ -2,11 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 
-import {
-  formatExtractedSaveFilesError,
-  formatSavArchiveError,
-  formatSaveImportWarning,
-} from "./data-error-messages.js";
+import { formatSavArchiveError, formatSaveImportWarning } from "./data-error-messages.js";
 
 const defaultGetLocale = getLocale;
 
@@ -36,18 +32,6 @@ describe("data error messages", () => {
     expect(formatSaveImportWarning({ code: "not-a-list", path: "player.perks" })).toBe(
       "player.perks n’est pas une liste ; ignoré",
     );
-  });
-
-  it("formats file-level errors", () => {
-    expect(formatExtractedSaveFilesError({ code: "no-save-files" })).toMatch(
-      /^We didn’t find a save file in there/,
-    );
-    expect(
-      formatExtractedSaveFilesError({
-        code: "no-valid-files",
-        problems: [{ code: "invalid-json", file: "player.json" }],
-      }),
-    ).toBe("We couldn’t read any of those files. Try the newest file that ends in “autosave”.");
   });
 
   it("formats .sav sizes in binary units for the locale", () => {

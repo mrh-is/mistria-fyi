@@ -26,7 +26,7 @@ async function importFiles(files: File[]) {
 
 describe("save import", () => {
   it("offers a next step after success without a desktop transfer callback", async () => {
-    await importFiles([new File([JSON.stringify({ items_acquired: [] })], "player.json")]);
+    await importFiles([buildSavFile({ player: { items_acquired: [] } })]);
     const next = await screen.findByRole("link", { name: "See what’s left" });
     expect(next).toBeVisible();
     expect(next).toHaveAttribute("href", "/en/everything");
@@ -114,9 +114,9 @@ describe("save import", () => {
 
   it("imports unnumbered progress into a hand-tracked lane without a farm question", async () => {
     await importFiles([
-      new File(
-        [JSON.stringify({ farm_name: "Fern", items_acquired: [], name: "Ada" })],
-        "player.json",
+      buildSavFile(
+        { player: { farm_name: "Fern", items_acquired: [], name: "Ada" } },
+        "renamed.sav",
       ),
     ]);
     const history = await screen.findByTestId("last-import");
@@ -155,14 +155,14 @@ describe("save import", () => {
   it("announces no new data on a repeated import after a successful source-file summary", async () => {
     renderWithFeedback(ImportCard, { open: true });
     const input = screen.getByLabelText("Choose save files to import");
-    const files = [new File([JSON.stringify({ items_acquired: [] })], "player.json")];
+    const files = [buildSavFile({ player: { items_acquired: [] } })];
 
     await fireEvent.change(input, { target: { files } });
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
     });
-    expect(screen.getByText(/Imported from player.json/)).toBeInTheDocument();
-    expect(screen.getByText(/Imported from player.json/)).not.toBeVisible();
+    expect(screen.getByText("Imported from game-1315159680-autosave.sav")).toBeInTheDocument();
+    expect(screen.getByText("Imported from game-1315159680-autosave.sav")).not.toBeVisible();
     expect(screen.getByRole("link", { name: "See what’s left" })).toBeVisible();
     expect(screen.queryByRole("alert")).toBeNull();
 
@@ -176,16 +176,15 @@ describe("save import", () => {
 
   it("shows a successful source-file summary and warning count", async () => {
     await importFiles([
-      new File(
-        [JSON.stringify({ items_acquired: ["animated_waterfall_v2"], perks: ["unknown_perk"] })],
-        "player.json",
-      ),
+      buildSavFile({
+        player: { items_acquired: ["animated_waterfall_v2"], perks: ["unknown_perk"] },
+      }),
     ]);
 
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
     });
-    expect(screen.getByText(/Imported from player.json/)).toBeInTheDocument();
+    expect(screen.getByText("Imported from game-1315159680-autosave.sav")).toBeInTheDocument();
     expect(screen.getByText("1 warnings", { exact: true })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
   });
@@ -194,8 +193,7 @@ describe("save import", () => {
     const cosmeticId = recordKeys(trackerData.cosmetics)[0];
 
     await importFiles([
-      new File([JSON.stringify({ cosmetic_unlocks: [cosmeticId] })], "player.json"),
-      new File([JSON.stringify({ playtime: 3600.25 })], "header.json"),
+      buildSavFile({ header: { playtime: 3600.25 }, player: { cosmetic_unlocks: [cosmeticId] } }),
     ]);
 
     await waitFor(() => {
@@ -208,44 +206,38 @@ describe("save import", () => {
     });
   });
 
-  it("imports extracted JSON files and lists each warning", async () => {
+  it("renders repeated warnings from the same save", async () => {
     const cosmeticId = recordKeys(trackerData.cosmetics)[0];
-    const player = new File(
-      [JSON.stringify({ cosmetic_unlocks: [cosmeticId, "not_a_cosmetic", "not_a_cosmetic"] })],
-      "player.json",
-    );
+    await importFiles([
+      buildSavFile({
+        player: { cosmetic_unlocks: [cosmeticId, "not_a_cosmetic", "not_a_cosmetic"] },
+      }),
+    ]);
 
-    await importFiles([player, new File(["{"], "gamedata.json")]);
-
-    await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
-    });
-    expect(userState.state.progress.cosmetics.has(cosmeticId)).toBe(true);
-    // The duplicate warnings also exercise the index-keyed list, which a text key would break.
     expect(
-      screen.getAllByText("player.cosmetic_unlocks: unrecognized ID not_a_cosmetic; skipped"),
+      await screen.findAllByText(
+        "player.cosmetic_unlocks: unrecognized ID not_a_cosmetic; skipped",
+      ),
     ).toHaveLength(2);
-    expect(screen.getByText("gamedata.json isn’t valid JSON; skipped")).toBeInTheDocument();
+    expect(userState.state.progress.cosmetics.has(cosmeticId)).toBe(true);
   });
 
-  it("reports unparseable JSON files and preserves tracker state", async () => {
-    enableSpoilers();
+  it.each(["picker", "drop"])("rejects extracted JSON through the %s", async (entry) => {
     const before = userState.exportBackup();
-
-    await importFiles([new File(["{"], "player.json")]);
-
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "We couldn’t read any of those files. Try the newest file that ends in “autosave”.",
-      );
-    });
-    expect(
-      within(screen.getByRole("alert")).getByText("player.json isn’t valid JSON; skipped"),
-    ).toBeInTheDocument();
+    const files = [new File(['{"items_acquired":["turnip"]}'], "player.json")];
+    if (entry === "picker") {
+      await importFiles(files);
+    } else {
+      renderWithFeedback(ImportCard, { open: true });
+      await fireEvent.drop(screen.getByRole("button", { name: "browse files" }), {
+        dataTransfer: { files },
+      });
+    }
+    expect(await screen.findByRole("alert")).toHaveTextContent(/^Choose a \.sav file\.$/);
     expect(userState.exportBackup()).toBe(before);
   });
 
-  it("offers the manual extraction fallback for an unreadable .sav and preserves tracker state", async () => {
+  it("offers autosave guidance for an unreadable .sav and preserves tracker state", async () => {
     enableSpoilers();
     const before = userState.exportBackup();
 
@@ -256,24 +248,6 @@ describe("save import", () => {
         "Hmm, we can’t read this as a Fields of Mistria save. It might be damaged, or a different file. Try the newest file that ends in “autosave”.",
       );
     });
-    expect(screen.getByRole("link", { name: "vaultc" })).toHaveAttribute(
-      "href",
-      "https://github.com/NPC-Studio/vaultc",
-    );
-    expect(screen.getByRole("link", { name: "VaultGo" })).toHaveAttribute(
-      "href",
-      "https://github.com/lordp/VaultGo",
-    );
-    expect(screen.getByRole("alert")).toHaveTextContent("VaultGo (on Linux).");
-    const fallback = screen.getByText(/Then import from the resulting/);
-    expect(fallback).toHaveTextContent(
-      "Then import from the resulting player.json, gamedata.json, and quests.json files.",
-    );
-    expect([...fallback.querySelectorAll("code")].map((code) => code.textContent)).toEqual([
-      "player.json",
-      "gamedata.json",
-      "quests.json",
-    ]);
     expect(userState.exportBackup()).toBe(before);
   });
 });
@@ -290,7 +264,7 @@ describe("save import atomicity", () => {
       localStorage.setItem(PROGRESS_STORAGE_KEY, newer);
       if (loaded) userState.loadFromStorage();
 
-      await importFiles([new File(['{"items_acquired":["turnip"]}'], "player.json")]);
+      await importFiles([buildSavFile({ player: { items_acquired: ["turnip"] } })]);
       expect(await screen.findByRole("alert")).toHaveTextContent(
         "Your progress is safe! A newer version of the field guide saved it, so reload this page to get the latest update.",
       );
@@ -322,10 +296,7 @@ describe("save import atomicity", () => {
 describe("save import file picker", () => {
   it("filters the picker to save files on desktop", () => {
     renderWithFeedback(ImportCard, { open: true });
-    expect(screen.getByLabelText("Choose save files to import")).toHaveAttribute(
-      "accept",
-      ".sav,.json",
-    );
+    expect(screen.getByLabelText("Choose save files to import")).toHaveAttribute("accept", ".sav");
   });
 
   it("drops the accept filter on iPadOS, which reports a desktop Mac user agent", async () => {
