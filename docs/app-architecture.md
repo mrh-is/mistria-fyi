@@ -82,13 +82,32 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 
 - Holds the canonical `UserState` shape (`everythingGrouping`, `lastImport`, `progress`,
   `showSpoilers`, `worldState`).
-- Persists progress & world state to `localStorage` through one locked write function (see
-  [One write path](#one-write-path)), and this device's preferences under a separate key (see
-  [localStorage](#localstorage)).
+- Observes reactive changes & schedules persistence through the non-reactive progress repository.
 - Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
   resetting.
 - Enforces domain constraints at the mutation boundary (e.g., heart level caps, mine floor bounds,
   renown clamping).
+
+### Progress repository
+
+`src/lib/stores/progress-repository.ts` owns persistence coordination. Its `read` hydrates progress
+& preferences; `write(intent)` runs a captured write under the progress lock. `onExternalChange`
+publishes adopted progress to the reactive shell, including a committed import or sync write. The
+shell supplies live snapshots, device-local state, & a plain history snapshot for rebasing edits.
+Repository status updates change individual reactive fields, so reporting a failed write cannot
+schedule another auto-save by itself.
+
+The repository receives storage access, a lock manager, & an event source through an environment
+adapter. It owns the debounce timer, compare-before-write, quarantine, & newer-data block. It also
+handles `storage`, `pagehide`, & back/forward-cache recovery events. For example, an auto-save that
+finds another tab’s readable write adopts it without writing stale progress over it. Tests exercise
+these paths with fake storage & locks, without `window` or Svelte runes.
+
+`progress-storage.ts` owns serialization & migration. `progress-writer.ts` &
+`progress-import-write.ts` plan writes without accessing browser storage. The compatibility
+`userState` API still owns feature methods & provenance tracking; feature facades & pure edits are
+the later phases of
+[the store decomposition (#531)](https://github.com/mrh-is/mistria-fyi/issues/531).
 
 ## 3. Persistence & Serialization
 
@@ -195,11 +214,11 @@ storage keys. See the
 
 ### One write path
 
-Every progress write goes through the store's `writeProgress`, run under the
+Every progress write goes through the repository’s `writeProgress`, run under the
 `mistria-fyi:progress-write` Web Lock so tabs write one at a time. Inside the lock it re-reads the
 stored value. The pure writer in `src/lib/stores/progress-writer.ts` classifies that value and plans
 the replacement or sync write. The import planner merges captured progress & rebases later edits
-separately. The store handles storage access, quarantine, & publishing the planned state.
+separately. The repository handles storage access, quarantine, & publishing the planned state.
 
 | Stored value since this tab last read it | Auto-save (edits, migration) | Explicit replace (restore, reset) | Additive import (save)      |
 | ---------------------------------------- | ---------------------------- | --------------------------------- | --------------------------- |
