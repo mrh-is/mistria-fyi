@@ -21,6 +21,7 @@
     icon,
     progress,
     ref = $bindable<HTMLElement | undefined>(undefined),
+    replaceBackEntry = false,
     title,
   }: {
     backHref?: Path;
@@ -31,6 +32,7 @@
     icon?: Snippet<[string]>;
     progress?: CategoryProgress;
     ref?: HTMLElement | undefined;
+    replaceBackEntry?: boolean;
     title: string;
   } = $props();
 
@@ -65,6 +67,7 @@
     class="page-header__back"
     href={localizedHref(backHref)}
     aria-label={backLabel}
+    data-sveltekit-replacestate={replaceBackEntry || undefined}
     onclick={historyBack ? goBack : undefined}
   >
     <IconArrowLeft class="size-5" />
