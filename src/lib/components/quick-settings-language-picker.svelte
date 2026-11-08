@@ -132,6 +132,13 @@
     background: color-mix(in srgb, var(--primary) 12%, var(--color-paper-raised));
   }
 
+  @media (hover: hover) {
+    .language-setting__trigger:hover:not(:focus-visible) {
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
+    }
+  }
+
   :global(.language-setting__chevron) {
     transition: transform 150ms ease-out;
   }

@@ -131,7 +131,7 @@
 
   .shelf-heading__toggle:focus-visible,
   .shelf-heading__info:is(:hover, :focus-visible) {
-    outline: 2px solid var(--primary);
+    outline: 2px solid var(--shelf-heading-accent, var(--primary));
     outline-offset: -2px;
   }
 
