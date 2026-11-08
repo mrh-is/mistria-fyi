@@ -2,7 +2,25 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import * as m from "#lib/paraglide/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
+  import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/state";
+
+  afterNavigate(({ type, from, shallow }) => {
+    if (shallow || type !== "link") return;
+    const source = from?.route.id;
+    if (source !== "/about" && source !== "/data") return;
+
+    // Record the source here so both entry links keep their native anchor behavior.
+    // Persist it on this history entry for reloads and browser Forward.
+    void goto(page.url.href, {
+      persistState: true,
+      replace: true,
+      shallow: true,
+      state: { ...page.state, privacyFrom: source === "/data" ? "data" : "about" },
+    });
+  });
+
+  const source = $derived(page.state.privacyFrom);
 
   /** Bump this whenever the policy's meaning changes. */
   const LAST_UPDATED = Date.UTC(2026, 10, 5);
@@ -20,7 +38,13 @@
   </h3>
 {/snippet}
 
-<PageHeader title={m.privacy_title()} backHref="about" backLabel={m.privacy_back_to_about()} />
+<PageHeader
+  title={m.privacy_title()}
+  backHref={source ?? "about"}
+  backLabel={source === undefined ? m.privacy_back_to_about() : m.common_go_back()}
+  historyBack={source !== undefined}
+  replaceBackEntry={source === undefined}
+/>
 
 <div class="flex flex-col gap-6 p-4 text-sm">
   <p class="text-muted-foreground">{m.privacy_last_updated({ date: lastUpdated })}</p>

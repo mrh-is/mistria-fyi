@@ -29,7 +29,9 @@ declare global {
       locale: LocaleCode;
       metadata: PageMetadata;
     }
-    // interface PageState {}
+    interface PageState {
+      privacyFrom?: "about" | "data";
+    }
   }
 
   interface Window {

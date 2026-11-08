@@ -1,5 +1,7 @@
 import { SvelteURL } from "svelte/reactivity";
 
+import type { page as kitPage } from "$app/state";
+
 /**
  * Reactive stand-in for SvelteKit's `$app/state` `page` object, for tests that need a URL or status
  * other than the shared setup's, or that drive route changes. Components read `page.url` inside
@@ -13,6 +15,7 @@ const ORIGIN = "https://mistria.fyi";
 
 export class PageStub {
   data = $state<Record<string, unknown>>({ locale: "en" });
+  state = $state<typeof kitPage.state>({});
   status = $state(200);
   url = new SvelteURL(`${ORIGIN}/en`);
 
@@ -23,6 +26,7 @@ export class PageStub {
   reset(): void {
     updated.current = false;
     this.data = { locale: "en" };
+    this.state = {};
     this.status = 200;
     this.url.href = `${ORIGIN}/en`;
   }
