@@ -79,17 +79,28 @@ Page callers pass name & source filters. Search includes rows that aren't doable
 spoilers, and deduplicates rows that belong to several sections. Section progress still counts each
 in-game section membership.
 
-### `src/lib/stores/user-state.svelte.ts`
+### Reactive progress shell
 
-Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$effect`). It:
+`src/lib/stores/progress-shell.svelte.ts` owns the live progress snapshot via Svelte 5 runes
+(`$state`, `$derived`, `$effect`). It:
 
 - Holds the canonical `UserState` shape (`everythingGrouping`, `lastImport`, `progress`,
-  `showSpoilers`, `worldState`).
+  `showSpoilers`, `worldState`) alongside device-local state & provenance history.
+- Derives the fact list & the progression context used by category projections.
 - Observes reactive changes & schedules persistence through the non-reactive progress repository.
-- Composes the feature facades & exports the compatibility `userState` API. It copies property
-  descriptors, so legacy getters stay reactive instead of capturing the initial value.
-- Enforces domain constraints at the mutation boundary (e.g., heart level caps, mine floor bounds,
-  renown clamping).
+
+### Hand edits
+
+`src/lib/engine/progress-edits.ts` returns the next progress values without changing its inputs. It
+applies level bounds, household cascades, quest rewards & their undo, and starter-item changes. It
+also derives provenance from the facts before & after an edit. The caller identifies the primary
+fact of a manual edit so consequences can record as inferred.
+
+`src/lib/stores/progress-hand-edits.svelte.ts` holds edits waiting for a tracking lane and commits
+the engine's result into the live snapshot. This preserves the progress object's identity across
+ordinary edits, so an import waiting for the write lock can distinguish later edits to its base from
+a replacement. A prerequisite batch records one net diff, and starter-item undo removes only items
+whose provenance is still the batch's original record.
 
 ### Progress repository
 
@@ -107,9 +118,7 @@ finds another tab’s readable write adopts it without writing stale progress ov
 these paths with fake storage & locks, without `window` or Svelte runes.
 
 `progress-storage.ts` owns serialization & migration. `progress-writer.ts` &
-`progress-import-write.ts` plan writes without accessing browser storage. The reactive shell still
-owns fact mutations & provenance tracking; pure edits are the remaining phase of
-[the store decomposition (#531)](https://github.com/mrh-is/mistria-fyi/issues/531).
+`progress-import-write.ts` plan writes without accessing browser storage.
 
 ### Feature facades
 
@@ -120,14 +129,15 @@ owns fact mutations & provenance tracking; pure edits are the remaining phase of
 - `progressSync` handles applying saves, tracking-lane choices, & device-local sync operations.
 
 For example, the Data page’s importer calls `progressImport.mergeFromSave`, while its backup card
-calls `progressBackup.restoreBackup`. Existing callers can still use `userState` for both. No facade
-constructs another store or another persistence lifecycle.
+calls `progressBackup.restoreBackup`. `src/lib/stores/user-state.svelte.ts` composes the shell, hand
+edits, and feature facades into the compatibility API. It copies property descriptors so legacy
+getters keep reading live state. All callers share one store & persistence lifecycle.
 
-The sync services use the focused facades & have no direct store imports. Their persisted-state
-integration tests stay beside the services in `src/lib/sync/`, and only those tests may import
-stores to seed or inspect state. The courier owns its separate upload-ledger key, whose stored name
-is unchanged; `storage-keys.ts` points to it. Oxlint enforces the sync boundary, and keeps the pure
-engine & low-level utilities from importing progress facades.
+The sync services use the focused facades & have no direct store imports. Integration tests that
+need to seed or inspect persisted state live beside the progress facade. The courier owns its
+separate upload-ledger key, whose stored name is unchanged, and `storage-keys.ts` points to it.
+Oxlint enforces the sync boundary and keeps the pure engine & low-level utilities from importing
+progress facades.
 
 ## 3. Persistence & Serialization
 
