@@ -3,7 +3,7 @@
  * dialog. See `docs/sync-setup.md` § Living with it.
  */
 import { abnormalGapDays } from "#lib/engine/sync-freshness.js";
-import { userState } from "#lib/stores/user-state.svelte.js";
+import { progressSync } from "#lib/progress/index.js";
 
 import { createReceiver } from "./receiver.js";
 
@@ -103,8 +103,10 @@ export const syncReceiver = {
   },
   /** How long it's been since a save, when that's abnormally long. Only followers wait on one. */
   get gapDays(): number | undefined {
-    if (userState.syncLane?.kind !== "following" || NEEDS_A_LOOK.has(status.kind)) return undefined;
-    return abnormalGapDays(userState.syncFreshness, now);
+    if (progressSync.syncLane?.kind !== "following" || NEEDS_A_LOOK.has(status.kind)) {
+      return undefined;
+    }
+    return abnormalGapDays(progressSync.syncFreshness, now);
   },
   get needsALook(): boolean {
     return NEEDS_A_LOOK.has(status.kind);

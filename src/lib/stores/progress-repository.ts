@@ -113,7 +113,7 @@ interface ReplaceOptions {
   keepLocal?: boolean;
 }
 
-interface ProgressRepository {
+export interface ProgressRepository {
   readonly clockBase: null | string;
   dismissWarning: () => void;
   dispose: () => void;

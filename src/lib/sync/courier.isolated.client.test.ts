@@ -1351,11 +1351,12 @@ describe("upload recovery across leadership & reloads", () => {
 describe("a store blocked while the page is open", () => {
   it("makes no new code it couldn't store", async () => {
     const renewCode = vi.fn(() => Promise.resolve<ShareResult>({ kind: "unreachable" }));
-    const { make, relay, userState } = await load({
+    const { make, relay } = await load({
       options: { firstRetryMs: 60_000, renewCode },
     });
     relay.upload.mockResolvedValue({ kind: "retired" });
-    vi.spyOn(userState, "syncBlocked", "get").mockReturnValue(true);
+    const { progressSync } = await import("#lib/progress/index.js");
+    vi.spyOn(progressSync, "syncBlocked", "get").mockReturnValue(true);
     const courier = make();
     courier.start();
     await courier.take({ file: new File([saveBytes()], FILE_NAME), kind: "file" });
@@ -1369,9 +1370,9 @@ describe("a store blocked while the page is open", () => {
     await until(() => first.relay.upload.mock.calls.length === 1);
     expect(first.applyLocal).not.toHaveBeenCalled();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
-    vi.spyOn(userState, "syncBlocked", "get").mockReturnValue(false);
-    vi.spyOn(userState, "syncLane", "get").mockReturnValue({
+    const { progressSync } = await import("#lib/progress/index.js");
+    vi.spyOn(progressSync, "syncBlocked", "get").mockReturnValue(false);
+    vi.spyOn(progressSync, "syncLane", "get").mockReturnValue({
       code: { key: KEY, token: TOKEN },
       kind: "computer",
     });

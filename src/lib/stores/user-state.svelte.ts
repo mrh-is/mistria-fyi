@@ -22,7 +22,9 @@ import { applyEngagementCascade, getSpouseId } from "#lib/engine/relationships.j
 import { progressFingerprint } from "#lib/engine/tracking-reminders.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
-import { stageSyncSave, syncLaneOperations } from "#lib/sync/lane-operations.js";
+import { createBackupFacade } from "#lib/progress/backup.js";
+import { createImportFacade } from "#lib/progress/import.js";
+import { createSyncFacade } from "#lib/progress/sync.svelte.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
@@ -31,10 +33,6 @@ import {
   createDefaultWorldState,
   emptyProgressHistory,
   emptyRetainedProgress,
-  readFarmSwitchBackup,
-  readProgressBlob,
-  serializeProgress,
-  withoutDeviceLocal,
 } from "./progress-storage.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
@@ -44,20 +42,8 @@ import type {
   ProvenanceSource,
   Resolution,
 } from "#lib/engine/provenance.js";
-import type { SyncReceipt } from "#lib/engine/sync-apply.js";
-import type { SyncFreshness } from "#lib/engine/sync-freshness.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
-import type {
-  DeviceLocalState,
-  PendingRetire,
-  SyncApplyOutcome,
-  SyncApplyRequest,
-  SyncApplyStamp,
-  SyncedSave,
-  SyncLane,
-  TrackingLane,
-  TrackingReminders,
-} from "#lib/sync/lane-state.js";
+import type { DeviceLocalState, TrackingReminders } from "#lib/sync/lane-state.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
   AnimalId,
@@ -82,7 +68,9 @@ import type { ChildChoice, ProgressState, QuestState } from "#lib/types/user-pro
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 import type { PersistenceFailureKind, PersistenceStatus } from "./progress-repository.js";
-import type { FarmSwitchBackup, LoadedProgress, RetainedProgress } from "./progress-storage.js";
+import type { LoadedProgress, RetainedProgress } from "./progress-storage.js";
+
+export type { BackupRestoreErrorKind, BackupRestoreResult } from "#lib/progress/backup.js";
 
 export type {
   SyncApplyOutcome,
@@ -96,11 +84,6 @@ export { PERSIST_DEBOUNCE_MS } from "./progress-repository.js";
 export type { PersistenceFailureKind, SerializedPreferences } from "./progress-repository.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
-
-/** The outcome of restoring a backup with `restoreBackup`, which replaces all progress. */
-export type BackupRestoreResult = { error: BackupRestoreErrorKind; ok: false } | { ok: true };
-/** `newer-version`: a newer build wrote the backup, so this one can't read it. */
-export type BackupRestoreErrorKind = "invalid-fields" | "malformed-json" | "newer-version";
 
 /** The outcome of one `completeQuestWithRecipes` call, enough to undo exactly that call. */
 export interface QuestCompletion {
@@ -185,12 +168,12 @@ function emptyLoadedProgress(): Omit<LoadedProgress, "local"> {
   };
 }
 
-function createUserState() {
+function createProgressSession() {
   let state = $state<UserState>(createDefaultState());
   let retained = $state.raw<RetainedProgress>(emptyRetainedProgress());
   /** This device's own section of the stored blob; never exported, kept across a restore. */
   let local = $state.raw<DeviceLocalState>({});
-  /** Provenance & resolutions stay reactive until the feature facades are extracted. */
+  /** Provenance & resolutions for the progress facts held by this shell. */
   let history = $state<ProgressHistory>(emptyProgressHistory());
   let trackingSource: ProvenanceSource | undefined;
   let starterItems = $state.raw<StarterItemsNotice>();
@@ -250,6 +233,67 @@ function createUserState() {
     },
   );
   repository.onExternalChange(replaceProgress);
+
+  function clearLaneChoice(): void {
+    pendingHandEdit = undefined;
+    choosingSync = false;
+  }
+
+  function takePendingHandEdit(): (() => void) | undefined {
+    const pending = pendingHandEdit;
+    clearLaneChoice();
+    return pending;
+  }
+
+  const backup = createBackupFacade(repository, {
+    clearLaneChoice,
+    emptyProgress: emptyLoadedProgress,
+    get local() {
+      return local;
+    },
+    set local(value) {
+      local = value;
+    },
+    replaceProgress,
+    resetState() {
+      starterItems = undefined;
+      state = createDefaultState();
+      retained = emptyRetainedProgress();
+      history = emptyProgressHistory();
+      local = {};
+    },
+    snapshot,
+    get unreadableData() {
+      return persistence.unreadableData;
+    },
+  });
+  const manualImport = createImportFacade(repository, {
+    get lastImport() {
+      return state.lastImport;
+    },
+  });
+  const syncing = createSyncFacade(repository, {
+    get canStartTrackingByHand() {
+      return canStartTrackingByHand;
+    },
+    chooseSync: () => {
+      choosingSync = true;
+    },
+    emptyProgress: emptyLoadedProgress,
+    get laneChoiceNeeded() {
+      return pendingHandEdit !== undefined && !choosingSync;
+    },
+    get local() {
+      return local;
+    },
+    get ready() {
+      return persistence.ready;
+    },
+    takePendingHandEdit,
+    get worldState() {
+      return state.worldState;
+    },
+  });
 
   /**
    * Records `source` & `playtime` for one fact. A manual edit also clears the fact's “keep mine”,
@@ -415,15 +459,6 @@ function createUserState() {
     return result;
   }
 
-  /**
-   * The device's tracking lane. A sync lane always means syncing; a stored `sync` without one can
-   * only be left over, and progress left behind is tracked by hand.
-   */
-  const trackingLane = $derived.by((): TrackingLane | undefined => {
-    if (local.syncLane) return "sync";
-    return local.trackingLane === undefined ? undefined : "manual";
-  });
-
   const facts = $derived(progressFacts(state.progress));
 
   /**
@@ -433,7 +468,7 @@ function createUserState() {
    * another tracked change run as part of it. Returns the edit's result, or `undefined` if it waits.
    */
   function handEdit<T>(run: () => T): T | undefined {
-    if (trackingSource === undefined && persistence.ready && trackingLane === undefined) {
+    if (trackingSource === undefined && persistence.ready && syncing.trackingLane === undefined) {
       choosingSync = false;
       pendingHandEdit = () => {
         run();
@@ -459,48 +494,7 @@ function createUserState() {
     });
   }
 
-  /** {@link restoreBackup}'s body, so the farm-switch backup restores the same way. */
-  function restoreBackupJson(json: string): BackupRestoreResult {
-    const result = readProgressBlob(json, "strict");
-    if (result.kind === "newer") return { error: "newer-version", ok: false };
-    if (result.kind === "unreadable") return { error: result.error, ok: false };
-    replaceProgress(result.loaded);
-    repository.enableAfterReplace();
-    local = { ...local, trackingLane: local.syncLane ? "sync" : "manual" };
-    repository.replace({ chooseManual: true });
-    return { ok: true };
-  }
-
-  return {
-    /**
-     * Applies a synced save in one immediate write: the settled progress, the receipt, & any
-     * farm-switch backup land together or not at all, so the receipt advances only here. It never
-     * unblocks a quarantined store or a newer build's data.
-     */
-    async applySyncedSave(request: SyncApplyRequest): Promise<SyncApplyOutcome> {
-      const settled: { outcome: SyncApplyOutcome } = { outcome: { kind: "blocked" } };
-      await repository.write({
-        kind: "sync",
-        request,
-        settle: (outcome) => {
-          settled.outcome = outcome;
-        },
-      });
-      return settled.outcome;
-    },
-    /** Drops the hand edit waiting for a tracking lane, so nothing is recorded. */
-    cancelLaneChoice() {
-      pendingHandEdit = undefined;
-      choosingSync = false;
-    },
-    /** Whether this guide still needs a choice between hand tracking & sync. */
-    get canStartTrackingByHand(): boolean {
-      return canStartTrackingByHand;
-    },
-    /** Keep the first check-off while sync setup obtains the save that chooses its lane. */
-    chooseSyncTracking() {
-      choosingSync = true;
-    },
+  const core = {
     /**
      * Cycles the quest's state, completing its recipe rewards on the obtained-to-completed step.
      * Returns `undefined` while the edit waits for a tracking lane; see {@link handEdit}.
@@ -529,28 +523,10 @@ function createUserState() {
         ),
       );
     },
-    ...syncLaneOperations(repository.writeLocal),
     dismissPersistenceWarning: repository.dismissWarning,
-    /**
-     * The backup of this device's progress, never its `local` section. While a newer build's data
-     * blocks writes, that is the stored blob itself, otherwise verbatim: memory holds only defaults
-     * or stale progress then, and a backup of those would overwrite the real progress wherever it
-     * was restored.
-     */
-    exportBackup(): string {
-      if (repository.newerDataBlocked) {
-        const value = repository.readStored();
-        if (value !== null) return withoutDeviceLocal(value);
-      }
-      return serializeProgress(snapshot());
-    },
     /** How many progress facts this device holds; see `progressFacts`. */
     get factCount(): number {
       return facts.size;
-    },
-    /** The backup kept from the last farm switch, if there is one to offer. */
-    get farmSwitchBackup(): FarmSwitchBackup | undefined {
-      return readFarmSwitchBackup(local);
     },
     get hasAnyProgress(): boolean {
       return hasAnyProgress;
@@ -571,7 +547,7 @@ function createUserState() {
      * Applies a native save additively. The farm decision, lane guard, & write all use the latest
      * stored value, so another tab cannot start sync or change farms behind the import.
      */
-    mergeFromSave: repository.merge,
+    mergeFromSave: manualImport.mergeFromSave,
     get persistenceFailed(): boolean {
       return persistence.failureGeneration > 0;
     },
@@ -609,51 +585,9 @@ function createUserState() {
     get reminders(): DeepReadonly<TrackingReminders> | undefined {
       return local.reminders;
     },
-    /** Restores every field to its default, this device's preferences & `local` section included. */
-    resetAll() {
-      starterItems = undefined;
-      pendingHandEdit = undefined;
-      choosingSync = false;
-      state = createDefaultState();
-      retained = emptyRetainedProgress();
-      history = emptyProgressHistory();
-      local = {};
-      repository.enableAfterReplace();
-      repository.replace({ keepLocal: false });
-    },
-    /**
-     * Clears progress & world state; this device's preferences & `local` section are kept, so a
-     * syncing lane stays a syncing lane. Only the sync receipt goes, so the latest save file
-     * applies again.
-     */
-    resetProgress() {
-      pendingHandEdit = undefined;
-      choosingSync = false;
-      replaceProgress(emptyLoadedProgress());
-      repository.enableAfterReplace();
-      const { syncReceipt: _receipt, ...kept } = local;
-      local = kept;
-      // The write keeps the stored section, which another tab may have added to since this one read.
-      repository.replace({ dropReceipt: true });
-    },
     /** The player's “keep mine” for a fact, if any; see `resolutionHolds`. */
     resolutionOf(key: string): Readonly<Resolution> | undefined {
       return history.resolutions[key];
-    },
-    /**
-     * Replaces progress & world state from a backup under the strict policy; this device's
-     * preferences & `local` section are kept, and a backup never brings one in. A backup from a
-     * newer build is refused, never partly read.
-     */
-    restoreBackup: restoreBackupJson,
-    /**
-     * Restores the farm-switch backup like any backup; it stays in place, so restoring it again
-     * still works until the next farm switch replaces it.
-     */
-    restoreFarmSwitchBackup(): BackupRestoreResult {
-      const kept = readFarmSwitchBackup(local);
-      if (!kept) return { error: "invalid-fields", ok: false };
-      return restoreBackupJson(JSON.stringify(kept.backup));
     },
     setBreakUpsDisabled(value: boolean) {
       manual("breakUpsDisabled", () => {
@@ -740,89 +674,8 @@ function createUserState() {
     get starterItems(): Readonly<StarterItemsNotice> | undefined {
       return starterItems;
     },
-    /**
-     * Starts a syncing lane: erases progress & history, applies the lane's first save, & records
-     * the lane, all in one write, so a setup that never gets this far leaves nothing behind. Any old
-     * receipt & lane go, replaced by `stamp`'s; the farm-switch backup & pending retires stay.
-     * Resolves with whether the write landed.
-     */
-    async startSyncLane(
-      lane: SyncLane,
-      save: SyncedSave,
-      stillWanted: () => boolean = () => true,
-      stamp?: SyncApplyStamp,
-    ): Promise<boolean> {
-      // Built aside from live state, which stays untouched until the write lands, so a lane start
-      // that's cancelled or can't be stored never erases anything, even in a later save.
-      const staged = emptyLoadedProgress();
-      staged.worldState = $state.snapshot(state.worldState);
-      stageSyncSave(staged, { ...save, metadata: $state.snapshot(save.metadata) });
-      repository.enableAfterReplace();
-      const written = await repository.write({
-        clockBase: repository.clockBase,
-        day: { ...save.day },
-        guard: stillWanted,
-        kind: "staged",
-        lane: $state.snapshot(lane),
-        ...(stamp ? { stamp } : {}),
-        staged,
-      });
-      if (written) {
-        const pending = pendingHandEdit;
-        pendingHandEdit = undefined;
-        choosingSync = false;
-        pending?.();
-      } else {
-        pendingHandEdit = undefined;
-        choosingSync = false;
-      }
-      return written;
-    },
-    /**
-     * Puts this device on the manual tracking lane, then runs the hand edit that was waiting for
-     * it. Storage that can't keep the lane keeps nothing, so the edit is dropped; while persistence
-     * is off, nothing is stored either way & the edit just runs. Resolves with whether the device
-     * may now record by hand.
-     */
-    async startTrackingByHand(): Promise<boolean> {
-      const pending = pendingHandEdit;
-      pendingHandEdit = undefined;
-      choosingSync = false;
-      if (persistence.ready) {
-        const written = await repository.writeLocal((stored) => ({
-          ...(structuredClone(stored) as DeviceLocalState),
-          trackingLane: stored.syncLane ? "sync" : "manual",
-        }));
-        if (!written) return false;
-      }
-      pending?.();
-      return true;
-    },
     get state(): DeepReadonly<UserState> {
       return state;
-    },
-    /**
-     * True while stored progress can't be written (quarantined, from a newer build, or not loaded),
-     * so no syncing lane may start.
-     */
-    get syncBlocked(): boolean {
-      return !persistence.ready;
-    },
-    /** When the last save came & the gaps learned between saves, while syncing. */
-    get syncFreshness(): DeepReadonly<SyncFreshness> | undefined {
-      return local.syncFreshness;
-    },
-    /** This device's sync lane, or `undefined` while it tracks by hand. */
-    get syncLane(): DeepReadonly<SyncLane> | undefined {
-      return local.syncLane;
-    },
-    /** Codes this device stopped sharing that the relay hasn't confirmed retired yet. */
-    get syncPendingRetires(): readonly DeepReadonly<PendingRetire>[] {
-      return local.syncPendingRetires ?? [];
-    },
-    /** What this device last applied, which only {@link applySyncedSave} & a lane start advance. */
-    get syncReceipt(): DeepReadonly<SyncReceipt> | undefined {
-      return local.syncReceipt;
     },
     toggleAlmanacItem(id: ItemId) {
       toggleFact("almanac", () => state.progress.almanac, id);
@@ -876,14 +729,6 @@ function createUserState() {
     toggleSpell(id: SpellId) {
       toggleFact("spells", () => state.progress.spells, id);
     },
-    /** How this device tracks, or `undefined` until it chooses; see {@link handEdit}. */
-    get trackingLane(): TrackingLane | undefined {
-      return trackingLane;
-    },
-    /** Whether a hand edit is waiting for the player to choose a tracking lane. */
-    get trackingLaneNeeded(): boolean {
-      return pendingHandEdit !== undefined && !choosingSync;
-    },
     /**
      * Restores the quest's prior state and removes only recipes added by that transition. The quest
      * records `manual`; the recipes it takes back record `inferred`, as their completion did.
@@ -902,10 +747,6 @@ function createUserState() {
         );
       });
     },
-    /** Stored progress that couldn't be read, kept so the player can download it; null if none. */
-    get unreadableData(): null | string {
-      return persistence.unreadableData;
-    },
     /**
      * Records a reminder the player saw or answered, as a patch to the stored `local` section.
      * Resolves with whether it was stored.
@@ -919,6 +760,13 @@ function createUserState() {
       }));
     },
   };
+
+  // Copy descriptors so the compatibility API’s getters keep reading live state.
+  const userState = Object.defineProperties(core, {
+    ...Object.getOwnPropertyDescriptors(backup),
+    ...Object.getOwnPropertyDescriptors(syncing),
+  }) as typeof backup & typeof core & typeof syncing;
+  return { backup, manualImport, syncing, userState };
 }
 
 function toggleInSet<T>(set: Set<T>, item: T): void {
@@ -929,4 +777,9 @@ function toggleInSet<T>(set: Set<T>, item: T): void {
   }
 }
 
-export const userState = createUserState();
+const session = createProgressSession();
+
+export const progressBackup = session.backup;
+export const progressImport = session.manualImport;
+export const progressSync = session.syncing;
+export const userState = session.userState;

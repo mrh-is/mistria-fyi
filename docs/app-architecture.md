@@ -44,6 +44,9 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
 - **`controllers/`** holds rune-backed controllers that components instantiate, such as the spoiler
   guard & the leaving-row set.
 - **`effects/`** fires UI side effects: confetti & the undo toast.
+- **`progress/`** exposes focused backup, import, & sync APIs. Its factories receive the progress
+  repository & narrow interfaces to the reactive shell; its public entry point shares the app’s one
+  session. Sync consumes these APIs through the facade boundary.
 - **`utils/`** is for low-level helpers (formatting, records, localized links, storage access) that
   any layer may import. oxlint's `no-restricted-imports` keeps it from importing components, stores,
   or any of the layers above.
@@ -83,8 +86,8 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 - Holds the canonical `UserState` shape (`everythingGrouping`, `lastImport`, `progress`,
   `showSpoilers`, `worldState`).
 - Observes reactive changes & schedules persistence through the non-reactive progress repository.
-- Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
-  resetting.
+- Composes the feature facades & exports the compatibility `userState` API. It copies property
+  descriptors, so legacy getters stay reactive instead of capturing the initial value.
 - Enforces domain constraints at the mutation boundary (e.g., heart level caps, mine floor bounds,
   renown clamping).
 
@@ -104,10 +107,27 @@ finds another tab’s readable write adopts it without writing stale progress ov
 these paths with fake storage & locks, without `window` or Svelte runes.
 
 `progress-storage.ts` owns serialization & migration. `progress-writer.ts` &
-`progress-import-write.ts` plan writes without accessing browser storage. The compatibility
-`userState` API still owns feature methods & provenance tracking; feature facades & pure edits are
-the later phases of
+`progress-import-write.ts` plan writes without accessing browser storage. The reactive shell still
+owns fact mutations & provenance tracking; pure edits are the remaining phase of
 [the store decomposition (#531)](https://github.com/mrh-is/mistria-fyi/issues/531).
+
+### Feature facades
+
+`src/lib/progress/index.ts` exposes three feature APIs backed by that same shell & repository:
+
+- `progressBackup` handles strict restores, exports, resets, & recovery downloads.
+- `progressImport` exposes save-import metadata & the additive import write.
+- `progressSync` handles applying saves, tracking-lane choices, & device-local sync operations.
+
+For example, the Data page’s importer calls `progressImport.mergeFromSave`, while its backup card
+calls `progressBackup.restoreBackup`. Existing callers can still use `userState` for both. No facade
+constructs another store or another persistence lifecycle.
+
+The sync services use the focused facades & have no direct store imports. Their persisted-state
+integration tests stay beside the services in `src/lib/sync/`, and only those tests may import
+stores to seed or inspect state. The courier owns its separate upload-ledger key, whose stored name
+is unchanged; `storage-keys.ts` points to it. Oxlint enforces the sync boundary, and keeps the pure
+engine & low-level utilities from importing progress facades.
 
 ## 3. Persistence & Serialization
 

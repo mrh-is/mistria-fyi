@@ -242,7 +242,8 @@ describe("stopping", () => {
     await vi.advanceTimersByTimeAsync(5000);
     expect(retire).toHaveBeenCalledTimes(2);
 
-    const confirm = vi.spyOn(userState, "confirmRetired").mockResolvedValueOnce(false);
+    const { progressSync } = await import("#lib/progress/index.js");
+    const confirm = vi.spyOn(progressSync, "confirmRetired").mockResolvedValueOnce(false);
     await vi.advanceTimersByTimeAsync(10_000);
     expect(retire).toHaveBeenCalledTimes(3);
     expect(confirm).toHaveBeenCalledTimes(1);
