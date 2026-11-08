@@ -3,14 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GAME_DAY } from "#lib/engine/game-calendar.js";
 import { readProgressBlob, serializeStoredProgress } from "#lib/stores/progress-storage.js";
 import { QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
+import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
+import {
+  deriveFollowKeys,
+  encodeSavePayload,
+  mailboxIdFor,
+  sealEnvelope,
+} from "#lib/sync/follow.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { buildSavBytes } from "#lib/test-utils/sav.js";
 
-import { syncDiagnostics } from "./diagnostics.svelte.js";
-import { deriveFollowKeys, encodeSavePayload, mailboxIdFor, sealEnvelope } from "./follow.js";
-
-import type { FollowKey, MailboxSubscriber, ReadResult } from "./follow.js";
-import type { Receiver, ReceiverOptions, ReceiverStatus, SyncTell } from "./receiver.js";
+import type { FollowKey, MailboxSubscriber, ReadResult } from "#lib/sync/follow.js";
+import type { Receiver, ReceiverOptions, ReceiverStatus, SyncTell } from "#lib/sync/receiver.js";
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8" as FollowKey;
@@ -221,7 +225,7 @@ async function load(
   vi.stubGlobal("navigator", { locks });
   const { userState } = await import("#lib/stores/user-state.svelte.js");
   userState.loadFromStorage();
-  const { createReceiver } = await import("./receiver.js");
+  const { createReceiver } = await import("#lib/sync/receiver.js");
   const statuses: ReceiverStatus[] = [];
   const tells: SyncTell[] = [];
   const make = (overrides: ReceiverOptions = {}): Receiver => {
