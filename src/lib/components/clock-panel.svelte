@@ -106,6 +106,7 @@
             aria-label={seasonLabel(season, page.data.locale)}
             aria-checked={selected}
             tabindex={selected ? 0 : -1}
+            class="focus-visible:panel-segment-outline enabled:hover:panel-segment-outline"
             class:radio-strip__active={selected}
             onclick={() => {
               userState.setSeason(season);
@@ -140,6 +141,7 @@
               aria-label={weatherLabel(weather, currentSeason)}
               aria-checked={selected}
               aria-hidden={isSpecial && !hasSpecialWeather}
+              class="focus-visible:panel-segment-outline enabled:hover:panel-segment-outline"
               class:radio-strip__active={selected}
               disabled={isSpecial && !hasSpecialWeather}
               tabindex={selected && !(isSpecial && !hasSpecialWeather) ? 0 : -1}
@@ -214,12 +216,6 @@
     .radio-strip button {
       min-height: 34px;
     }
-  }
-
-  .radio-strip button:is(:hover, :focus-visible) {
-    outline: 0;
-    /* stylelint-disable-next-line declaration-property-unit-disallowed-list -- an inset hover ring, not an elevation */
-    box-shadow: inset 0 0 0 2px var(--primary);
   }
 
   .radio-strip button,

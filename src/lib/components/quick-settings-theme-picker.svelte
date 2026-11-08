@@ -27,7 +27,10 @@
     }}
   >
     {#each ["light", "dark", "system"] as const as value (value)}
-      <ToggleGroup.Item class="theme-setting__item" {value}>
+      <ToggleGroup.Item
+        class="theme-setting__item hover:bg-transparent hover:text-inherit focus-visible:ring-0 focus-visible:panel-segment-outline enabled:hover:panel-segment-outline"
+        {value}
+      >
         {themeLabels[value]}
       </ToggleGroup.Item>
     {/each}

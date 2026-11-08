@@ -487,6 +487,11 @@ html:lang(ru) {
   font-family: var(--font-data);
 }
 
+@utility panel-segment-outline {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
 /* ─────────────────────────────────────────────────────── */
 
 @layer base {

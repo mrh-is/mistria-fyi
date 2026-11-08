@@ -5,10 +5,47 @@ import {
   initializeApplication,
   waitForRendering,
 } from "./support/application-state.js";
+import { requireBox } from "./support/boxes.js";
 import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
 import { critical } from "./support/tags.js";
 
 test.describe("browser accessibility preferences", () => {
+  for (const theme of ["light", "dark"] as const) {
+    test(`theme, season, and weather share an inset hover outline in ${theme} mode`, async ({
+      page,
+    }) => {
+      await initializeApplication(page, theme);
+      await gotoApplication(page, "/");
+
+      await page.getByRole("button", { name: "Quick settings" }).click();
+      const settings = page.getByRole("dialog", { name: "Quick settings" });
+      const themeOption = settings.getByRole("radio", { name: "Auto" });
+      await waitForRendering(page);
+      const before = await requireBox(themeOption);
+      await themeOption.hover();
+      await expect(themeOption).toHaveCSS("outline-style", "solid");
+      await expect(themeOption).toHaveCSS("outline-width", "2px");
+      await expect(themeOption).toHaveCSS("outline-offset", "-2px");
+      await expect(themeOption).toHaveAttribute("aria-checked", "false");
+      expect(await requireBox(themeOption)).toEqual(before);
+      const color = await themeOption.evaluate((option) => getComputedStyle(option).outlineColor);
+      await page.mouse.move(0, 0);
+      await expect(themeOption).toHaveCSS("outline-style", "none");
+      await settings.getByRole("button", { name: "Close Quick settings" }).click();
+
+      await page.getByRole("button", { name: /^Season & weather/ }).click();
+      const clock = page.getByRole("dialog", { name: "Season & weather" });
+      for (const name of ["Summer", "Rain"]) {
+        const option = clock.getByRole("radio", { name });
+        await option.hover();
+        await expect(option).toHaveCSS("outline-style", "solid");
+        await expect(option).toHaveCSS("outline-offset", "-2px");
+        await expect(option).toHaveCSS("outline-color", color);
+        await expect(option).toHaveAttribute("aria-checked", "false");
+      }
+    });
+  }
+
   test(
     "reduced motion removes non-essential animation but preserves feedback",
     critical,
