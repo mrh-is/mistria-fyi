@@ -7,14 +7,12 @@
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { celebrateProgress } from "#lib/controllers/celebration.js";
-  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { getMaxMineFloor } from "#lib/engine/progress.js";
   import { mineFloorProgress, sealsBefore } from "#lib/engine/projections/mines.js";
   import { factKey } from "#lib/engine/provenance.js";
@@ -29,29 +27,21 @@
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { SpellId } from "#lib/types/tracker-data.js";
 
-  const spoilerGuard = createSpoilerGuard();
   const sectionGrouping = createSectionGrouping<"floors" | "spells">();
-  const leavingSpells = createLeavingSet<SpellId>();
+  const checkOff = createCheckOff<SpellId, "floors" | "spells">({
+    category: "mines",
+    grouping: sectionGrouping,
+    isCompleted: (id) => userState.state.progress.spells.has(id),
+    toggle: (id) => {
+      userState.toggleSpell(id);
+    },
+  });
+  // Floor seals and spell spoilers share one dialog.
+  const spoilerGuard = checkOff.guard;
 
   function isSpellSpoilered(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility;
     return !isConditionVisible(visibility, userState.progressionState);
-  }
-
-  function toggleSpell(spellId: SpellId): void {
-    sectionGrouping.hold("spells");
-    celebrateProgress(
-      "mines",
-      () => {
-        userState.toggleSpell(spellId);
-      },
-      [allSpellsComplete],
-    );
-    const completed = userState.state.progress.spells.has(spellId);
-    showUndoToast(getName("spells", spellId, locale), completed, () => {
-      userState.toggleSpell(spellId);
-    });
-    if (completed) leavingSpells.markLeaving(spellId);
   }
 
   let {
@@ -198,7 +188,7 @@
           forceOpen={!!nameFilter}
           getKey={(spell) => spell.id}
           getShelf={rowShelf}
-          isLeaving={(spell) => leavingSpells.has(spell.id)}
+          isLeaving={(spell) => checkOff.leaving.has(spell.id)}
           items={visibleSpells}
         >
           {#snippet row(spell)}
@@ -207,7 +197,7 @@
               fact={factKey("spells", spell.id)}
               display={trackerRowDisplay({
                 completed,
-                leaving: leavingSpells.has(spell.id),
+                leaving: checkOff.leaving.has(spell.id),
                 spoilered: isSpellSpoilered(spell.id),
               })}
               name={spell.name}
@@ -215,17 +205,17 @@
               reportEntityId={spell.id}
               sources={spell.sources}
               onToggle={(covered) => {
-                if (!isSpellSpoilered(spell.id) || completed) {
-                  toggleSpell(spell.id);
-                } else {
-                  spoilerGuard.requestGuardedAction(
-                    trackerData.mines.spells[spell.id].visibility,
-                    () => {
-                      toggleSpell(spell.id);
-                    },
-                    covered ? undefined : { name: spell.name },
-                  );
-                }
+                checkOff.onToggle(
+                  {
+                    id: spell.id,
+                    name: spell.name,
+                    sectionChecks: [allSpellsComplete],
+                    sectionKey: "spells",
+                    spoilered: isSpellSpoilered(spell.id),
+                    visibility: trackerData.mines.spells[spell.id].visibility,
+                  },
+                  covered,
+                );
               }}
             />
           {/snippet}

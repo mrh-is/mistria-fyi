@@ -5,15 +5,12 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { celebrateProgress } from "#lib/controllers/celebration.js";
-  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { recipePlacements } from "#lib/engine/projections/recipes.js";
   import { factKey } from "#lib/engine/provenance.js";
@@ -33,10 +30,15 @@
 
   let { locale }: { locale: LocaleCode } = $props();
 
-  const spoilerGuard = createSpoilerGuard();
-
-  const recentlyCompleted = createLeavingSet<RecipeId>();
   const sectionGrouping = createSectionGrouping<string>();
+  const checkOff = createCheckOff<RecipeId, string>({
+    category: "recipes",
+    grouping: sectionGrouping,
+    isCompleted: (id) => userState.state.progress.almanacRecipes.has(id),
+    toggle: (id) => {
+      userState.toggleAlmanacRecipe(id);
+    },
+  });
 
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
@@ -114,25 +116,9 @@
       visible: rows.filter(({ shown }) => shown).length,
     };
   });
-
-  function toggleRecipe(entry: RecipeEntry, sectionId: string, sectionRecipeIds: RecipeId[]): void {
-    sectionGrouping.hold(sectionId);
-    celebrateProgress(
-      "recipes",
-      () => {
-        userState.toggleAlmanacRecipe(entry.id);
-      },
-      [() => sectionRecipeIds.every((id) => userState.state.progress.almanacRecipes.has(id))],
-    );
-    const nowCompleted = userState.state.progress.almanacRecipes.has(entry.id);
-    showUndoToast(entry.name, nowCompleted, () => {
-      userState.toggleAlmanacRecipe(entry.id);
-    });
-    if (nowCompleted) recentlyCompleted.markLeaving(entry.id);
-  }
 </script>
 
-<SpoilerGuardDialog guard={spoilerGuard} />
+<SpoilerGuardDialog guard={checkOff.guard} />
 
 <SectionGroups
   forceOpen={!!nameFilter}
@@ -154,7 +140,7 @@
           forceOpen={!!nameFilter}
           getKey={(entry) => entry.id}
           getShelf={rowShelf}
-          isLeaving={(entry) => recentlyCompleted.has(entry.id)}
+          isLeaving={(entry) => checkOff.leaving.has(entry.id)}
           items={filteredEntries}
         >
           {#snippet row(entry)}
@@ -163,7 +149,7 @@
               fact={factKey("almanacRecipes", entry.id)}
               display={trackerRowDisplay({
                 completed,
-                leaving: recentlyCompleted.has(entry.id),
+                leaving: checkOff.leaving.has(entry.id),
                 spoilered: entry.spoilered,
               })}
               segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
@@ -174,25 +160,22 @@
               sprite={entry.itemId}
               spriteClass="text-(--color-category-recipes)"
               onToggle={(covered) => {
-                if (!entry.spoilered || completed) {
-                  toggleRecipe(
-                    entry,
-                    group.id,
-                    group.entries.map((candidate) => candidate.id),
-                  );
-                } else {
-                  spoilerGuard.requestGuardedAction(
-                    entry.visibility,
-                    () => {
-                      toggleRecipe(
-                        entry,
-                        group.id,
-                        group.entries.map((candidate) => candidate.id),
-                      );
-                    },
-                    covered ? undefined : { name: entry.name },
-                  );
-                }
+                checkOff.onToggle(
+                  {
+                    id: entry.id,
+                    name: entry.name,
+                    sectionChecks: [
+                      () =>
+                        group.entries.every((candidate) =>
+                          userState.state.progress.almanacRecipes.has(candidate.id),
+                        ),
+                    ],
+                    sectionKey: group.id,
+                    spoilered: entry.spoilered,
+                    visibility: entry.visibility,
+                  },
+                  covered,
+                );
               }}
             />
           {/snippet}

@@ -6,15 +6,12 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { celebrateProgress } from "#lib/controllers/celebration.js";
-  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
-  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { projectMuseum } from "#lib/engine/projections/museum.js";
   import { factKey } from "#lib/engine/provenance.js";
@@ -48,8 +45,6 @@
 
   let { locale }: { locale: LocaleCode } = $props();
 
-  const spoilerGuard = createSpoilerGuard();
-
   function isItemSpoilered(itemId: ItemId): boolean {
     const visibility = trackerData.items[itemId].visibility;
     return !isConditionVisible(visibility, userState.progressionState);
@@ -62,13 +57,20 @@
   function rowDisplay(itemId: ItemId): TrackerRowDisplay {
     return trackerRowDisplay({
       completed: userState.state.progress.museum.has(itemId),
-      leaving: recentlyCompleted.has(itemId),
+      leaving: checkOff.leaving.has(itemId),
       spoilered: isItemSpoilered(itemId),
     });
   }
 
-  const recentlyCompleted = createLeavingSet<ItemId>();
   const sectionGrouping = createSectionGrouping<MuseumWingId>();
+  const checkOff = createCheckOff<ItemId, MuseumWingId>({
+    category: "museum",
+    grouping: sectionGrouping,
+    isCompleted: isItemComplete,
+    toggle: (id) => {
+      userState.toggleMuseumItem(id);
+    },
+  });
 
   function isItemComplete(itemId: ItemId): boolean {
     return userState.state.progress.museum.has(itemId);
@@ -125,25 +127,6 @@
     };
   }
 
-  function toggleItem(itemId: ItemId, setId: MuseumWingSetId, wingId: MuseumWingId): void {
-    sectionGrouping.hold(wingId);
-    const wing = trackerData.museum[wingId];
-    celebrateProgress(
-      "museum",
-      () => {
-        userState.toggleMuseumItem(itemId);
-      },
-      [() => isWingComplete(wing), () => isSetComplete(wing.sets[setId])],
-    );
-    const completed = isItemComplete(itemId);
-    showUndoToast(getName("items", itemId, locale), completed, () => {
-      userState.toggleMuseumItem(itemId);
-    });
-    if (completed) {
-      recentlyCompleted.markLeaving(itemId);
-    }
-  }
-
   function wingConfig(wingId: MuseumWingId, wing: MuseumWing): WingConfig {
     const allSets = recordEntries(wing.sets).map(([id]) => ({
       setId: id,
@@ -177,7 +160,7 @@
   });
 </script>
 
-<SpoilerGuardDialog guard={spoilerGuard} />
+<SpoilerGuardDialog guard={checkOff.guard} />
 
 <SectionGroups
   forceOpen={!!nameFilter}
@@ -217,11 +200,10 @@
                   level={4}
                   getKey={(row) => row.id}
                   getShelf={rowShelf}
-                  isLeaving={(row) => recentlyCompleted.has(row.id)}
+                  isLeaving={(row) => checkOff.leaving.has(row.id)}
                   items={set.visibleRows}
                 >
                   {#snippet row({ id: itemId })}
-                    {@const museumCompleted = isItemComplete(itemId)}
                     {@const museumItemSources = trackerData.items[itemId].sources}
                     {@const museumItemVisibility = trackerData.items[itemId].visibility}
                     <TrackerRow
@@ -235,17 +217,21 @@
                       sprite={itemId}
                       spriteClass="text-(--color-category-museum)"
                       onToggle={(covered) => {
-                        if (!isItemSpoilered(itemId) || museumCompleted) {
-                          toggleItem(itemId, set.setId, wingId);
-                        } else {
-                          spoilerGuard.requestGuardedAction(
-                            museumItemVisibility,
-                            () => {
-                              toggleItem(itemId, set.setId, wingId);
-                            },
-                            covered ? undefined : { name: getName("items", itemId, locale) },
-                          );
-                        }
+                        const wing = trackerData.museum[wingId];
+                        checkOff.onToggle(
+                          {
+                            id: itemId,
+                            name: getName("items", itemId, locale),
+                            sectionChecks: [
+                              () => isWingComplete(wing),
+                              () => isSetComplete(wing.sets[set.setId]),
+                            ],
+                            sectionKey: wingId,
+                            spoilered: isItemSpoilered(itemId),
+                            visibility: museumItemVisibility,
+                          },
+                          covered,
+                        );
                       }}
                     />
                   {/snippet}

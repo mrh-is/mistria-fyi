@@ -5,16 +5,13 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { celebrateProgress } from "#lib/controllers/celebration.js";
-  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerIndex } from "#lib/data/index.js";
   import { getAlmanacEntryVariant } from "#lib/data/item-variants.js";
   import { getAlmanacEntryNames, getName, nameCollator } from "#lib/data/names.js";
-  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { projectAlmanac } from "#lib/engine/projections/almanac.js";
   import { factKey } from "#lib/engine/provenance.js";
@@ -33,8 +30,6 @@
 
   let { locale }: { locale: LocaleCode } = $props();
 
-  const spoilerGuard = createSpoilerGuard();
-
   function isItemCompleted(itemId: ItemId): boolean {
     return userState.state.progress.almanac.has(itemId);
   }
@@ -42,7 +37,7 @@
   function rowDisplay(row: AlmanacRow): TrackerRowDisplay {
     return trackerRowDisplay({
       completed: row.completed,
-      leaving: recentlyCompleted.has(row.canonicalId),
+      leaving: checkOff.leaving.has(row.canonicalId),
       spoilered: row.spoilered,
     });
   }
@@ -51,8 +46,15 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
-  const recentlyCompleted = createLeavingSet<ItemId>();
   const sectionGrouping = createSectionGrouping<AlmanacCategoryId>();
+  const checkOff = createCheckOff<ItemId, AlmanacCategoryId>({
+    category: "almanac",
+    grouping: sectionGrouping,
+    isCompleted: isItemCompleted,
+    toggle: (id) => {
+      userState.toggleAlmanacItem(id);
+    },
+  });
 
   function isAlmanacComplete(): boolean {
     return isCategoryComplete("almanac", userState.progressContext);
@@ -98,30 +100,9 @@
         .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
     })),
   );
-
-  function toggleItem(
-    canonicalId: ItemId,
-    name: string,
-    sectionId: AlmanacCategoryId,
-    catCanonicalIds: ItemId[],
-  ): void {
-    sectionGrouping.hold(sectionId);
-    celebrateProgress(
-      "almanac",
-      () => {
-        userState.toggleAlmanacItem(canonicalId);
-      },
-      [() => catCanonicalIds.every((id) => isItemCompleted(id))],
-    );
-    const completed = isItemCompleted(canonicalId);
-    showUndoToast(name, completed, () => {
-      userState.toggleAlmanacItem(canonicalId);
-    });
-    if (completed) recentlyCompleted.markLeaving(canonicalId);
-  }
 </script>
 
-<SpoilerGuardDialog guard={spoilerGuard} />
+<SpoilerGuardDialog guard={checkOff.guard} />
 
 <SectionGroups
   forceOpen={!!nameFilter}
@@ -143,11 +124,11 @@
           forceOpen={!!nameFilter}
           getKey={(item) => item.canonicalId}
           getShelf={rowShelf}
-          isLeaving={(item) => recentlyCompleted.has(item.canonicalId)}
+          isLeaving={(item) => checkOff.leaving.has(item.canonicalId)}
           items={visibleRows}
         >
           {#snippet row(row)}
-            {@const { canonicalId, completed, item, name, sources, spoilered, variant } = row}
+            {@const { canonicalId, item, name, sources, spoilered, variant } = row}
             {@const itemVisibility = item.visibility}
             <TrackerRow
               fact={factKey("almanac", canonicalId)}
@@ -162,17 +143,17 @@
               sprite={canonicalId}
               spriteClass="text-(--color-category-almanac)"
               onToggle={(covered) => {
-                if (!spoilered || completed) {
-                  toggleItem(canonicalId, name, id, canonicalIds);
-                } else {
-                  spoilerGuard.requestGuardedAction(
-                    itemVisibility,
-                    () => {
-                      toggleItem(canonicalId, name, id, canonicalIds);
-                    },
-                    covered ? undefined : { name },
-                  );
-                }
+                checkOff.onToggle(
+                  {
+                    id: canonicalId,
+                    name,
+                    sectionChecks: [() => canonicalIds.every((itemId) => isItemCompleted(itemId))],
+                    sectionKey: id,
+                    spoilered,
+                    visibility: itemVisibility,
+                  },
+                  covered,
+                );
               }}
             />
           {/snippet}
