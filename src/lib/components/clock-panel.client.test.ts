@@ -58,6 +58,25 @@ describe("ClockPanel", () => {
     expect(special).toHaveAttribute("tabindex", "-1");
   });
 
+  it("skips the collapsed weather slot when jumping and wrapping", async () => {
+    render(ClockPanel);
+
+    await fireEvent.click(screen.getByRole("radio", { name: "Summer" }));
+    const sun = within(weatherStrip()).getByRole("radio", { name: "Sun" });
+    const options = within(weatherStrip()).getAllByRole("radio");
+    expect(options).toHaveLength(3);
+    const last = within(weatherStrip()).getByRole("radio", { name: "Storm" });
+    sun.focus();
+
+    await fireEvent.keyDown(sun, { key: "End" });
+    expect(last).toHaveFocus();
+    expect(last).toHaveAttribute("aria-checked", "true");
+
+    await fireEvent.keyDown(last, { key: "ArrowRight" });
+    expect(sun).toHaveFocus();
+    expect(sun).toHaveAttribute("aria-checked", "true");
+  });
+
   it("models season as a radiogroup with arrow-key selection", async () => {
     render(ClockPanel);
 
