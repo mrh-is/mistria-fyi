@@ -6,13 +6,15 @@ import type { PersistenceFailureKind } from "#lib/stores/user-state.svelte.js";
 
 const failure = vi.hoisted(() => ({ kind: "unavailable" as PersistenceFailureKind }));
 const toastError = vi.hoisted(() => vi.fn(() => "toast-id"));
-const downloadProgressBackup = vi.hoisted(() => vi.fn());
+const downloadJson = vi.hoisted(() => vi.fn());
+const dismissPersistenceWarning = vi.hoisted(() => vi.fn());
 
 vi.mock("svelte-sonner", () => ({ toast: { dismiss: vi.fn(), error: toastError } }));
-vi.mock("#lib/controllers/tracking-reminders.svelte.js", () => ({ downloadProgressBackup }));
+vi.mock("#lib/utils/download.js", () => ({ BACKUP_FILE_PREFIX: "backup", downloadJson }));
 vi.mock("#lib/stores/user-state.svelte.js", () => ({
   userState: {
-    dismissPersistenceWarning: vi.fn(),
+    dismissPersistenceWarning,
+    exportBackup: () => '{"in":"memory"}',
     get persistenceFailed() {
       return true;
     },
@@ -42,7 +44,8 @@ async function shownToast(kind: PersistenceFailureKind): Promise<[string, ToastO
 
 beforeEach(() => {
   toastError.mockClear();
-  downloadProgressBackup.mockClear();
+  downloadJson.mockClear();
+  dismissPersistenceWarning.mockClear();
 });
 
 describe("PersistenceWarning", () => {
@@ -53,7 +56,10 @@ describe("PersistenceWarning", () => {
     expect(options.description).toMatch(/^Your browser won’t let the field guide store anything/);
     expect(options.action?.label).toBe("Make a backup");
     options.action?.onClick();
-    expect(downloadProgressBackup).toHaveBeenCalledTimes(1);
+    // The in-memory export, without the reminder bookkeeping whose storage write would fail again.
+    expect(downloadJson).toHaveBeenCalledExactlyOnceWith('{"in":"memory"}', "backup");
+    // Sonner skips onDismiss for an action, so the action itself has to count as dismissing.
+    expect(dismissPersistenceWarning).toHaveBeenCalledTimes(1);
   });
 
   it("explains a load the browser refused, with nothing to back up", async () => {

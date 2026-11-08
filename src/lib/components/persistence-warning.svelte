@@ -1,9 +1,9 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
-  import { downloadProgressBackup } from "#lib/controllers/tracking-reminders.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { goto } from "$app/navigation";
 
@@ -25,9 +25,15 @@
     }),
     // Newer data can't be recovered from Data management; only updating the app helps.
     "newer-data": () => ({ title: m.persistence_warning_newer_data() }),
-    // The backup exports what's in memory, so it includes the change that didn't save.
+    // The backup exports what's in memory, so it includes the change that didn't save. It skips
+    // the backup reminder's bookkeeping, a storage write that would only fail & raise this again.
     unavailable: () => ({
-      action: { label: m.persistence_warning_backup(), onClick: downloadProgressBackup },
+      action: {
+        label: m.persistence_warning_backup(),
+        onClick: () => {
+          downloadJson(userState.exportBackup(), BACKUP_FILE_PREFIX);
+        },
+      },
       description: m.persistence_warning(),
       title: m.persistence_warning_title(),
     }),
@@ -44,15 +50,23 @@
     }
 
     const warning = WARNINGS[userState.persistenceFailureKind]();
+    const dismissed = (): void => {
+      suppressedUntil = Date.now() + SUPPRESS_MS;
+      userState.dismissPersistenceWarning();
+      activeToastId = undefined;
+    };
     activeToastId = toast.error(warning.title, {
-      action: warning.action,
+      // Sonner closes the toast on an action without calling onDismiss, so the action counts as one.
+      action: warning.action && {
+        label: warning.action.label,
+        onClick: () => {
+          warning.action?.onClick();
+          dismissed();
+        },
+      },
       description: warning.description,
       duration: Infinity,
-      onDismiss: () => {
-        suppressedUntil = Date.now() + SUPPRESS_MS;
-        userState.dismissPersistenceWarning();
-        activeToastId = undefined;
-      },
+      onDismiss: dismissed,
     });
   }
 
