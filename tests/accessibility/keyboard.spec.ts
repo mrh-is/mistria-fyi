@@ -203,7 +203,7 @@ test.describe("keyboard and focus accessibility", () => {
     // Floor 21 is past the first seal, so the dialog must work from the keyboard too.
     await floorInput.fill("21");
     await floorInput.press("Tab");
-    await page.getByRole("button", { name: "Yes, just check off this one" }).press("Enter");
+    await page.getByRole("button", { name: "Yes, just this one" }).press("Enter");
     await expect(page.getByRole("group", { name: /Mine floor, 21 of/ })).toBeVisible();
 
     await gotoApplication(page, "/renown");

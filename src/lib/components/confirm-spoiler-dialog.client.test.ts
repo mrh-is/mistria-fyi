@@ -37,8 +37,8 @@ describe("ConfirmSpoilerDialog", () => {
     expect(dialog).toHaveTextContent("You haven’t even revealed its name!");
     expect(buttonNames(dialog)).toEqual([
       "Never mind",
-      "YOLO (but just this one thing)",
-      "YOLO, and update my progress too",
+      "YOLO (just this one thing)",
+      "YOLO, and prerequisites",
     ]);
   });
 
@@ -58,8 +58,8 @@ describe("ConfirmSpoilerDialog", () => {
     );
     expect(buttonNames(dialog)).toEqual([
       "Never mind",
-      "Yes, just check off this one",
-      "Yes, and check off the prerequisite items too",
+      "Yes, just this one",
+      "Yes, and prerequisites too",
     ]);
   });
 
@@ -77,8 +77,8 @@ describe("ConfirmSpoilerDialog", () => {
     expect(dialog).toHaveTextContent("you haven’t broken the seal on the way there yet");
     expect(buttonNames(dialog)).toEqual([
       "Never mind",
-      "Yes, just check off this one",
-      "Yes, and check off the prerequisite items too",
+      "Yes, just this one",
+      "Yes, and prerequisites too",
     ]);
   });
 
@@ -87,7 +87,7 @@ describe("ConfirmSpoilerDialog", () => {
     const dialog = await screen.findByRole("alertdialog");
 
     await fireEvent.click(
-      within(dialog).getByRole("button", { name: "YOLO (but just this one thing)" }),
+      within(dialog).getByRole("button", { name: "YOLO (just this one thing)" }),
     );
     expect(handlers.onComplete).toHaveBeenCalledTimes(1);
     expect(handlers.onCompleteAndUpdate).not.toHaveBeenCalled();
@@ -98,9 +98,7 @@ describe("ConfirmSpoilerDialog", () => {
     const handlers = renderDialog(invertible);
     const dialog = await screen.findByRole("alertdialog");
 
-    await fireEvent.click(
-      within(dialog).getByRole("button", { name: "YOLO, and update my progress too" }),
-    );
+    await fireEvent.click(within(dialog).getByRole("button", { name: "YOLO, and prerequisites" }));
     expect(handlers.onCompleteAndUpdate).toHaveBeenCalledTimes(1);
     expect(handlers.onComplete).not.toHaveBeenCalled();
   });

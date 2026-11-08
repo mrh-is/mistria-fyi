@@ -54,13 +54,13 @@ describe("plural messages", () => {
   it("interpolates the item name alongside the recipe-count plural", () => {
     expect(
       m.quest_marked_completed_with_recipes({ count: 1, name: "Copper Sword" }, { locale: "en" }),
-    ).toBe("Marked “Copper Sword” completed and unlocked 1 recipe");
+    ).toBe("Checked off “Copper Sword” and unlocked 1 recipe");
     expect(
       m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "en" }),
-    ).toBe("Marked “Copper Sword” completed and unlocked 3 recipes");
+    ).toBe("Checked off “Copper Sword” and unlocked 3 recipes");
     expect(
       m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "ru" }),
-    ).toBe("«Copper Sword» отмечено как выполненное, разблокировано 3 рецепта");
+    ).toBe("«Copper Sword» отмечено, разблокировано 3 рецепта");
   });
 
   it("resolves all four Russian plural categories for the mine-floor merge-count label", () => {

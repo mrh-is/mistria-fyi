@@ -84,20 +84,20 @@
   "search_error": "没能加载搜索。请确认你已联网，然后再试一次。",
   "action_retry": "重试",
   "quest_marked_obtained": "已将“{name}”标记为已获得",
-  "quest_marked_completed": "已将“{name}”标记为已完成",
-  "quest_marked_completed_with_recipe": "已将“{name}”标记为已完成，并解锁了“{recipe}”",
+  "quest_marked_completed": "已勾选“{name}”",
+  "quest_marked_completed_with_recipe": "已勾选“{name}”，并解锁了“{recipe}”",
   "quest_marked_completed_with_recipes": [
     {
       "declarations": ["input name", "input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "已将“{name}”标记为已完成，并解锁了 {count} 个配方"
+        "countPlural=other": "已勾选“{name}”，并解锁了 {count} 个配方"
       }
     }
   ],
   "quest_reset": "已重置“{name}”",
   "action_undo": "撤销",
-  "undo_marked_complete": "已将“{name}”标记为已完成",
+  "undo_marked_complete": "已勾选“{name}”",
   "undo_unmarked": "已取消标记“{name}”",
   "almanac_page_description": "追踪《Fields of Mistria》中的作物、采集、钓鱼、昆虫、文物等年鉴条目。",
   "animals_page_description": "追踪《Fields of Mistria》农场中动物的品种、颜色与装饰。",
@@ -122,12 +122,12 @@
   "spoiler_dialog_masked_description": "你连它的名字都还没揭晓呢！",
   "spoiler_dialog_floor_title": "下到第 {floor} 层？",
   "spoiler_dialog_floor_description": "根据你记录的进度，你还没有打破途中的封印。确定要下去吗？",
-  "spoiler_dialog_confirm_item": "是，只勾这一个",
-  "spoiler_dialog_confirm_and_update": "是，前置项目也一起勾上",
+  "spoiler_dialog_confirm_item": "是，只这一个",
+  "spoiler_dialog_confirm_and_update": "是，前置项目也一起",
   "spoiler_dialog_confirm": "是",
   "spoiler_dialog_yolo": "YOLO",
-  "spoiler_dialog_yolo_item": "YOLO（但只勾这个）",
-  "spoiler_dialog_yolo_and_update": "YOLO，顺便更新我的进度",
+  "spoiler_dialog_yolo_item": "YOLO（只这一个）",
+  "spoiler_dialog_yolo_and_update": "YOLO，连同前置项目",
   "spoiler_dialog_cancel": "算了",
   "tracker_row_spoilered_item": "剧透物品",
   "tracker_row_uncheck": "取消勾选{name}",

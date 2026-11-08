@@ -84,20 +84,20 @@
   "search_error": "검색을 불러오지 못했어요. 온라인인지 확인하고 다시 시도해 주세요.",
   "action_retry": "다시 시도",
   "quest_marked_obtained": "“{name}”을(를) 획득으로 표시했습니다",
-  "quest_marked_completed": "“{name}”을(를) 완료로 표시했습니다",
-  "quest_marked_completed_with_recipe": "“{name}”을(를) 완료로 표시하고 “{recipe}”을(를) 해제했습니다",
+  "quest_marked_completed": "“{name}”을(를) 체크했습니다",
+  "quest_marked_completed_with_recipe": "“{name}”을(를) 체크하고 “{recipe}”을(를) 해제했습니다",
   "quest_marked_completed_with_recipes": [
     {
       "declarations": ["input name", "input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "“{name}”을(를) 완료로 표시하고 레시피 {count}개를 해제했습니다"
+        "countPlural=other": "“{name}”을(를) 체크하고 레시피 {count}개를 해제했습니다"
       }
     }
   ],
   "quest_reset": "“{name}”을(를) 초기화했습니다",
   "action_undo": "실행 취소",
-  "undo_marked_complete": "“{name}”을(를) 완료로 표시했습니다",
+  "undo_marked_complete": "“{name}”을(를) 체크했습니다",
   "undo_unmarked": "“{name}” 표시를 해제했습니다",
   "almanac_page_description": "Fields of Mistria의 작물, 채집, 낚시, 곤충, 유물 등 알마낙 항목을 기록하세요.",
   "animals_page_description": "Fields of Mistria 농장의 동물 품종, 색상, 코스메틱을 기록하세요.",
@@ -122,12 +122,12 @@
   "spoiler_dialog_masked_description": "이름도 아직 안 봤잖아요!",
   "spoiler_dialog_floor_title": "{floor}층으로 내려갈까요?",
   "spoiler_dialog_floor_description": "기록된 진행 상황으로는 가는 길의 봉인을 아직 풀지 않았어요. 정말 내려갈까요?",
-  "spoiler_dialog_confirm_item": "예, 이것만 체크",
-  "spoiler_dialog_confirm_and_update": "예, 선행 항목도 체크",
+  "spoiler_dialog_confirm_item": "예, 이것만",
+  "spoiler_dialog_confirm_and_update": "예, 선행 항목도 같이",
   "spoiler_dialog_confirm": "예",
   "spoiler_dialog_yolo": "YOLO",
   "spoiler_dialog_yolo_item": "YOLO (이것만)",
-  "spoiler_dialog_yolo_and_update": "YOLO, 진행 상황도 같이 업데이트",
+  "spoiler_dialog_yolo_and_update": "YOLO, 선행 항목도",
   "spoiler_dialog_cancel": "그만둘래요",
   "tracker_row_spoilered_item": "스포일러 항목",
   "tracker_row_uncheck": "{name} 선택 해제",

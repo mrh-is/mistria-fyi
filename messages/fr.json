@@ -86,22 +86,22 @@
   "search_error": "Impossible de charger la recherche. Vérifiez que vous êtes en ligne, puis réessayez.",
   "action_retry": "Réessayer",
   "quest_marked_obtained": "« {name} » marqué comme obtenu",
-  "quest_marked_completed": "« {name} » marqué comme terminé",
-  "quest_marked_completed_with_recipe": "« {name} » marqué comme terminé, débloquant « {recipe} »",
+  "quest_marked_completed": "« {name} » coché",
+  "quest_marked_completed_with_recipe": "« {name} » coché, débloquant « {recipe} »",
   "quest_marked_completed_with_recipes": [
     {
       "declarations": ["input name", "input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "« {name} » marqué comme terminé, débloquant {count} recette",
-        "countPlural=many": "« {name} » marqué comme terminé, débloquant {count} recettes",
-        "countPlural=other": "« {name} » marqué comme terminé, débloquant {count} recettes"
+        "countPlural=one": "« {name} » coché, débloquant {count} recette",
+        "countPlural=many": "« {name} » coché, débloquant {count} recettes",
+        "countPlural=other": "« {name} » coché, débloquant {count} recettes"
       }
     }
   ],
   "quest_reset": "« {name} » réinitialisé",
   "action_undo": "Annuler",
-  "undo_marked_complete": "« {name} » marqué comme terminé",
+  "undo_marked_complete": "« {name} » coché",
   "undo_unmarked": "« {name} » démarqué",
   "almanac_page_description": "Suivez les cultures, la cueillette, la pêche, les insectes, les artefacts et les autres entrées de l'almanach dans Fields of Mistria.",
   "animals_page_description": "Suivez les races, couleurs et cosmétiques des animaux de votre ferme dans Fields of Mistria.",
@@ -126,12 +126,12 @@
   "spoiler_dialog_masked_description": "Vous n’avez même pas révélé son nom !",
   "spoiler_dialog_floor_title": "Descendre à l’étage {floor} ?",
   "spoiler_dialog_floor_description": "D’après votre progression enregistrée, vous n’avez pas encore brisé le sceau sur le chemin. Vous confirmez ?",
-  "spoiler_dialog_confirm_item": "Oui, cocher juste celui-ci",
-  "spoiler_dialog_confirm_and_update": "Oui, et cocher aussi les prérequis",
+  "spoiler_dialog_confirm_item": "Oui, juste celui-ci",
+  "spoiler_dialog_confirm_and_update": "Oui, et les prérequis aussi",
   "spoiler_dialog_confirm": "Oui",
   "spoiler_dialog_yolo": "YOLO",
-  "spoiler_dialog_yolo_item": "YOLO (mais juste ça)",
-  "spoiler_dialog_yolo_and_update": "YOLO, et mettre aussi à jour ma progression",
+  "spoiler_dialog_yolo_item": "YOLO (juste ça)",
+  "spoiler_dialog_yolo_and_update": "YOLO, et les prérequis",
   "spoiler_dialog_cancel": "Finalement non",
   "tracker_row_spoilered_item": "Élément spoilé",
   "tracker_row_uncheck": "Décocher {name}",

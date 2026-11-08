@@ -87,23 +87,23 @@
   "search_error": "Не удалось загрузить поиск. Проверьте подключение к интернету и попробуйте ещё раз.",
   "action_retry": "Повторить",
   "quest_marked_obtained": "«{name}» отмечено как полученное",
-  "quest_marked_completed": "«{name}» отмечено как выполненное",
-  "quest_marked_completed_with_recipe": "«{name}» отмечено как выполненное, разблокирован рецепт «{recipe}»",
+  "quest_marked_completed": "«{name}» отмечено",
+  "quest_marked_completed_with_recipe": "«{name}» отмечено, разблокирован рецепт «{recipe}»",
   "quest_marked_completed_with_recipes": [
     {
       "declarations": ["input name", "input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "«{name}» отмечено как выполненное, разблокирован {count} рецепт",
-        "countPlural=few": "«{name}» отмечено как выполненное, разблокировано {count} рецепта",
-        "countPlural=many": "«{name}» отмечено как выполненное, разблокировано {count} рецептов",
-        "countPlural=other": "«{name}» отмечено как выполненное, разблокировано {count} рецепта"
+        "countPlural=one": "«{name}» отмечено, разблокирован {count} рецепт",
+        "countPlural=few": "«{name}» отмечено, разблокировано {count} рецепта",
+        "countPlural=many": "«{name}» отмечено, разблокировано {count} рецептов",
+        "countPlural=other": "«{name}» отмечено, разблокировано {count} рецепта"
       }
     }
   ],
   "quest_reset": "«{name}» сброшено",
   "action_undo": "Отменить",
-  "undo_marked_complete": "«{name}» отмечено как выполненное",
+  "undo_marked_complete": "«{name}» отмечено",
   "undo_unmarked": "«{name}» отмечено как невыполненное",
   "almanac_page_description": "Отслеживайте урожай, собирательство, рыбалку, насекомых, артефакты и другие записи альманаха в Fields of Mistria.",
   "animals_page_description": "Отслеживайте породы, окрасы и косметику животных на вашей ферме в Fields of Mistria.",
@@ -128,12 +128,12 @@
   "spoiler_dialog_masked_description": "Вы ведь даже не открыли его название!",
   "spoiler_dialog_floor_title": "Спуститься на этаж {floor}?",
   "spoiler_dialog_floor_description": "Судя по вашему отмеченному прогрессу, вы ещё не сломали печать на пути туда. Точно спуститься?",
-  "spoiler_dialog_confirm_item": "Да, отметить только это",
-  "spoiler_dialog_confirm_and_update": "Да, и отметить всё, что нужно до этого",
+  "spoiler_dialog_confirm_item": "Да, только это",
+  "spoiler_dialog_confirm_and_update": "Да, и всё нужное до этого тоже",
   "spoiler_dialog_confirm": "Да",
   "spoiler_dialog_yolo": "YOLO",
-  "spoiler_dialog_yolo_item": "YOLO (но только это)",
-  "spoiler_dialog_yolo_and_update": "YOLO, и заодно обновить мой прогресс",
+  "spoiler_dialog_yolo_item": "YOLO (только это)",
+  "spoiler_dialog_yolo_and_update": "YOLO, и всё нужное до этого",
   "spoiler_dialog_cancel": "Не надо",
   "tracker_row_spoilered_item": "Заспойлеренный предмет",
   "tracker_row_uncheck": "Снять отметку с «{name}»",
