@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
+import { buildSavBytes } from "../../src/lib/test-utils/sav.js";
 import { expect, test } from "../browser/test.js";
 import {
   createStoredState,
@@ -17,9 +18,7 @@ import {
 } from "./support/scenarios.js";
 import { critical } from "./support/tags.js";
 
-const emptyPlayerPath = fileURLToPath(
-  new URL("fixtures/import/empty-player.json", import.meta.url),
-);
+const emptySave = Buffer.from(buildSavBytes({ player: { items_acquired: [] } }));
 const progressPlayerPath = fileURLToPath(
   new URL("fixtures/import/progress-player.json", import.meta.url),
 );
@@ -171,14 +170,14 @@ test.describe("stateful accessibility", () => {
 
     const fileInput = page.getByLabel("Choose save files to import");
     await fileInput.setInputFiles({
-      buffer: await readFile(emptyPlayerPath),
-      mimeType: "application/json",
-      name: "player.json",
+      buffer: emptySave,
+      mimeType: "application/octet-stream",
+      name: "game-123-autosave.sav",
     });
     await expect(page.getByText(/Your field guide is .* complete/)).toBeVisible();
-    await expect(page.getByText(/Imported from player.json/)).toBeHidden();
+    await expect(page.getByText("Imported from game-123-autosave.sav")).toBeHidden();
     await page.getByText("What we added", { exact: true }).click();
-    await expect(page.getByText(/Imported from player.json/)).toBeVisible();
+    await expect(page.getByText("Imported from game-123-autosave.sav")).toBeVisible();
     await page.getByText("Save details", { exact: true }).click();
     await analyzeAccessibility(
       page,
@@ -188,9 +187,9 @@ test.describe("stateful accessibility", () => {
     await page.getByText("What we added", { exact: true }).click();
     await page.getByText("Save details", { exact: true }).click();
     await fileInput.setInputFiles({
-      buffer: await readFile(emptyPlayerPath),
-      mimeType: "application/json",
-      name: "player.json",
+      buffer: emptySave,
+      mimeType: "application/octet-stream",
+      name: "game-123-autosave.sav",
     });
     await expect(page.getByText("No new data to import", { exact: true })).toBeVisible();
     await analyzeAccessibility(
@@ -200,13 +199,13 @@ test.describe("stateful accessibility", () => {
     );
 
     await fileInput.setInputFiles({
-      buffer: await readFile(progressPlayerPath),
-      mimeType: "application/json",
-      name: "player.json",
+      buffer: Buffer.from(buildSavBytes({ player: await readFile(progressPlayerPath, "utf8") })),
+      mimeType: "application/octet-stream",
+      name: "game-123-autosave.sav",
     });
     await expect(page.getByText(/Your field guide is .* complete/)).toBeVisible();
     await page.getByText("What we added", { exact: true }).click();
-    await expect(page.getByText(/Imported from player.json/)).toBeVisible();
+    await expect(page.getByText("Imported from game-123-autosave.sav")).toBeVisible();
     await expect(page.getByText("1 warnings", { exact: true })).toBeVisible();
     await analyzeAccessibility(
       page,
@@ -219,7 +218,7 @@ test.describe("stateful accessibility", () => {
       mimeType: "application/json",
       name: "player.json",
     });
-    await expect(page.getByRole("alert")).toContainText("player.json isn’t valid JSON; skipped");
+    await expect(page.getByRole("alert")).toContainText("Choose a .sav file.");
     await analyzeAccessibility(
       page,
       { route: "/data", state: "import-error", theme: "light" },

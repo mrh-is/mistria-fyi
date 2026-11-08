@@ -392,7 +392,7 @@ versions, though new items, recipes, and quests are added in content updates.
    Mistmare's perks (`horsepower`, `harvest_horse`, `nice_ride`) share `perks` with the skill perks
    and import into the same `unlockedPerks` set.
 8. A farm's identity is the number in `game-<number>-<autosave or slot>.sav` plus
-   `info.creation_version`. Both are optional when importing: renamed files, extracted JSON, & old
-   saves may omit them. `header.playtime` only grows as the save is played. The manual importer also
-   reads player/farm names from `player` (or `header` when absent) for display; renaming them does
-   not change identity. These display names never enter the feedback progress attachment.
+   `info.creation_version`. Both are optional when importing: renamed files & old saves may omit
+   them. `header.playtime` only grows as the save is played. The manual importer also reads
+   player/farm names from `player` (or `header` when absent) for display; renaming them does not
+   change identity. These display names never enter the feedback progress attachment.
