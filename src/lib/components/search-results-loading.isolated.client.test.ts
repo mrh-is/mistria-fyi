@@ -71,7 +71,9 @@ describe("SearchResults chunk loading", () => {
     renderWithFeedback(SearchResults, { locale: "ja", query: "カブ" });
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Couldn’t load search results.");
+    expect(alert).toHaveTextContent(
+      "We couldn’t load search. Check that you’re online, then try again.",
+    );
 
     await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
 

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import BackupCard from "./backup-card.svelte";
@@ -14,7 +15,9 @@ afterEach(() => {
 
 describe("data cards", () => {
   it("summarizes save import while collapsed", () => {
-    const { container, text } = renderToFragment(ImportCard, { props: { open: false } });
+    const { container, text } = renderToFragmentWithFeedback(ImportCard, {
+      props: { open: false },
+    });
 
     expect(
       container.querySelector("[data-slot='collapsible-trigger']")?.getAttribute("aria-expanded"),
@@ -30,7 +33,7 @@ describe("data cards", () => {
     expect(
       container.querySelector("[data-slot='collapsible-trigger']")?.getAttribute("aria-expanded"),
     ).toBe("false");
-    expect(text).toContain("Sync your save or move hand-tracked progress with a backup.");
+    expect(text).toContain("Take your progress to another device.");
   });
 
   it("summarizes backup and restore while collapsed", () => {

@@ -46,7 +46,8 @@
     /** The `factKey` the row toggles, whose provenance picks its checkbox's mark. */
     fact: string;
     name: string;
-    onToggle: () => void;
+    /** `covered` says whether the row's name is still behind its spoiler cover. */
+    onToggle: (covered: boolean) => void;
     reportCategory: ReportCategory;
     reportEntityId: string;
     reportExtra?: Record<string, number | string>;
@@ -161,7 +162,7 @@
 
   function handleToggle(event: MouseEvent): void {
     const shouldFocusAdjacentRow = display.mode === "incomplete";
-    onToggle();
+    onToggle(isSpoilered);
     if (!shouldFocusAdjacentRow) return;
 
     const row = (event.currentTarget as HTMLElement).closest<HTMLElement>("[data-tracker-row]");

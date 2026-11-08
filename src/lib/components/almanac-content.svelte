@@ -161,13 +161,17 @@
               {sources}
               sprite={canonicalId}
               spriteClass="text-(--color-category-almanac)"
-              onToggle={() => {
+              onToggle={(covered) => {
                 if (!spoilered || completed) {
                   toggleItem(canonicalId, name, id, canonicalIds);
                 } else {
-                  spoilerGuard.requestGuardedAction(itemVisibility, () => {
-                    toggleItem(canonicalId, name, id, canonicalIds);
-                  });
+                  spoilerGuard.requestGuardedAction(
+                    itemVisibility,
+                    () => {
+                      toggleItem(canonicalId, name, id, canonicalIds);
+                    },
+                    covered ? undefined : { name },
+                  );
                 }
               }}
             />

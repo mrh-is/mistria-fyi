@@ -66,7 +66,7 @@ describe("TrackerRowList", () => {
   it("shows the empty note when there are no rows", () => {
     renderList({ items: [] });
 
-    expect(screen.getByText("No items match the current filters")).toBeInTheDocument();
+    expect(screen.getByText("Nothing matches your current filters.")).toBeInTheDocument();
   });
 
   it("omits the empty note when the parent owns it", () => {

@@ -726,7 +726,8 @@ describe("persistence lifecycle", () => {
         progress: { renown: failed ? 25 : 9 },
       });
       expect(userState.persistenceFailed).toBe(failed);
-      expect(userState.persistenceFailureKind).toBe("unavailable");
+      // A read refused at load leaves no saved progress showing, which the warning says.
+      expect(userState.persistenceFailureKind).toBe(failed ? "load-blocked" : "unavailable");
       expect(storage.getItem("mistria-fyi:progress-quarantine")).toBeNull();
 
       vi.resetModules();

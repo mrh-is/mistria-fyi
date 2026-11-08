@@ -14,7 +14,7 @@ type SelectionHandler = (element: ReportTarget) => void;
  * nothing else can see.
  */
 export class FeedbackContext {
-  /** A local draft request, never raw error details or an automatic submission. */
+  /** A local draft the player reviews, with any error details already redacted; never a submission. */
   errorReportRequest = $state<undefined | { message: string }>();
   isPicking = $state(false);
   readonly registrations = new SvelteMap<HTMLElement, ReportTarget>();

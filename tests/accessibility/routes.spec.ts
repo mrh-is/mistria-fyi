@@ -13,7 +13,7 @@ const coreRoutes = new Set<string>(["/", "/almanac", "/villagers", "/everything"
 const headingOverrides: Record<string, string | undefined> = {
   "/": "Mistria Field Guide",
   "/everything": "Everything",
-  "/privacy": "Privacy Policy",
+  "/privacy": "Privacy policy",
 };
 
 const auditRegressionByRoute: Partial<Record<string, string>> = {

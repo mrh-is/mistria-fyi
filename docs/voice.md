@@ -13,9 +13,12 @@ screens. Those rewrites are the examples below.
 
 - **A friend, not a manual.** Picture helping a friend set something up on the couch. Nothing should
   feel like a technical journey; most tasks are one file & maybe one QR code.
-- **Speak as “we”,** & talk to the player as “you”. “We’ll keep up from here.”
+- **Speak as “we”,** & talk to the player as “you”. “We’ll keep up from here.” “We” is the field
+  guide itself, not a claim that there’s a team behind it. “I” is the maintainer speaking
+  personally, only on About, the AI disclosure, & the privacy policy. Where “we” would sound like a
+  company making a promise, name the guide instead (“the field guide needs an update”).
 - **Casual is fine.** Contractions, “gonna”, “wanna”, “FYI”, & “automagically” all belong.
-- **Honest about effort, then reassuring.** Name the awkward part, then promise it gets easier:
+- **Honest about effort, then reassuring.** Name the awkward part, and then promise it gets easier:
   “Gonna be honest, this is the weirdest part of the setup. But once you’re done here, it’s smooth
   sailing!”
 - **Explain the why** in a sentence when it helps the player decide or relax. Longer & kind beats
@@ -26,9 +29,9 @@ screens. Those rewrites are the examples below.
   autosave.
 - **Playful, not vague.** A joke never stands in for what happened: “Sync is paused for now”, not
   “Sync’s taking a nap”, & say when it ends (“It’ll turn back on by itself, usually by tomorrow”).
-- **One obvious next step.** Show one active step at a time, with the rest visible but dimmed, so
-  the player never has to read the whole screen to know what to do; every success ends with a button
-  that says where to go.
+- **One obvious next step.** Show one active step at a time, with the rest visible but dimmed. The
+  player should never have to read the whole screen to know what to do. Every success ends with a
+  button that says where to go.
 - **Never blame the player.** Things “can happen”; they’re never something the player did wrong.
 
 ## The dial
@@ -74,13 +77,36 @@ sound like a choice the player is happy to make.
 
 ### Errors
 
-Reassure in this order: nothing is lost, it isn’t your fault, here’s what happens next (including
-anything the player should keep doing). A soft promise like “shortly” is fine; a precise time isn’t.
+Reassure in this order:
 
-> **Hmm, we can’t read your save file.** Number one: nothing is lost. Your progress is totally safe.
+1. Nothing is lost.
+2. It isn’t your fault.
+3. Here’s what happens next, including anything the player should keep doing.
+
+A soft promise like “shortly” is fine; a precise time isn’t.
+
+> **Hmm, we can’t read your save file.** Number one: Nothing is lost. Your progress is totally safe.
 > Number two: this isn’t anything you did. It can happen when _Fields of Mistria_ releases an
 > update. Rest assured that we’re on the case, and this field guide should be updated shortly… For
 > now, just leave this tab open, and enjoy… whatever is in the new update!
+
+Every error says why it happened, as far as that helps, & what the player can do next:
+
+- try again,
+- take another route, or
+- send feedback (as a link that opens the form).
+
+Be definite: Say what happened, not what might have. Give each sentence a clear subject, so the
+player never wonders who took too long or who couldn’t connect. Keep the machinery out of it (“There
+was a technical error on our end”, not “We didn’t hear back from the server”). Don’t tell the player
+something they can already see, like a message that’s still in its box.
+
+How much reassurance an error needs depends on what’s at stake. Errors that risk progress get the
+full treatment above. Everyday, non-destructive errors can be jovial & casual instead: “We’re still
+working on your last import! Give it one second, then try that file again.” Save “Hmm” for the
+puzzling ones, like a file we can’t read, so it doesn’t open every error.
+
+When two errors can show at once, word them differently, so they don’t read as duplicates.
 
 A device that’s only affected secondhand gets the short version, pointing to where the full story
 is:
@@ -92,7 +118,7 @@ is:
 
 Guide toward the simplest way to use a feature, even when nothing enforces it:
 
-> Heads up: only the game’s save file gets synced; anything you check off by hand on this computer
+> Heads up: Only the game’s save file gets synced. Anything you check off by hand on this computer
 > stays here. Easiest is to track on one device, like your phone, and let your gaming computer just
 > read the save file.
 
@@ -111,7 +137,10 @@ Offer the risky route only after the safe ones.
   “only the game’s save file gets synced”. It reinforces what syncs & what doesn’t. Short labels on
   a screen that already said it (“Stop syncing”, “Sync is paused for now”) & the Home card’s
   invitation can say “sync” alone.
-- **“Check off”, not “tick”;** “by hand” for manual tracking.
+- **“Check off”, not “tick”.** One item is “checked off” (“Checked off “Chub””), & taking it back is
+  “unchecked”. A shelf or any other group is “completed”. Manual tracking is “by hand”.
+- **Use the game’s own words** for its concepts. A quest the player has picked up is “started”, as
+  the game’s “Quest Started” notice says, not “obtained” or “accepted”.
 - **Devices:** “your gaming computer”, “your phone”, “this device”, “this computer”. Not “PC” in
   player copy unless the context is only Windows.
 - **Avoid the machinery:** no “pair”, “relay”, “follow”, “upload”, “parse”, “handle”, “token”, or
@@ -124,11 +153,15 @@ Offer the risky route only after the safe ones.
 - **Curly quotes & apostrophes** (“ ” ’) & the ellipsis character (…).
 - **`&` for close pairs** in labels & short phrases (“Backup & Restore”, “questions & requests”);
   “and” joins clauses in running sentences.
-- **Sentence case** for headings, buttons, & button subtitles. Data page card titles stay in title
-  case to match their siblings.
+- **Sentence case** for headings, buttons, button subtitles, & card titles, Data page cards
+  included.
+- **Capitalize after a colon** when a full sentence follows: “Heads up: We’ll…”
+- **Interpuncts (·) are only for metadata,** like version lines: “Fields of Mistria v1.0.8 · Field
+  Guide v0.9”. Where the app controls the styling, style the segments differently instead of joining
+  them with a dot. A plain-text title, like the browser tab’s, can still use one.
 - **Exclamation points** are welcome at success & in reassurance; one per message is plenty.
 - **No emoji** in UI text; the app’s icons & sprites carry that job.
-- **Parameters** read naturally in both directions: write variants for missing values (an unnamed
+- **Parameters** read naturally in both directions. Write variants for missing values (an unnamed
   farm) instead of filler text.
 
 ## Before & after

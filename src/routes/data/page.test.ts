@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
-import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
 import DataPage from "./+page.svelte";
 
@@ -20,15 +20,15 @@ beforeEach(() => {
 
 describe("data management page", () => {
   it("collects transfer, backup, and reset tools in the Field kit", () => {
-    const { container, text } = renderToFragment(DataPage, { props: {} });
+    const { container, text } = renderToFragmentWithFeedback(DataPage, { props: {} });
 
     expect(text).toContain("Data management");
     expect(text).toContain("Field kit");
     for (const title of [
-      "Import from Save File",
-      "Transfer to Another Device",
-      "Backup & Restore",
-      "Danger Zone",
+      "Import from save file",
+      "Transfer to another device",
+      "Backup & restore",
+      "Danger zone",
     ]) {
       expect(disclosureState(container, title)).toBeDefined();
     }
@@ -43,9 +43,9 @@ describe("data management page", () => {
   it("renders deep-linked tools closed on the server", () => {
     pageStub.navigate("/en/data?section=transfer");
 
-    const { container } = renderToFragment(DataPage, { props: {} });
+    const { container } = renderToFragmentWithFeedback(DataPage, { props: {} });
 
-    expect(disclosureState(container, "Import from Save File")).toBe("false");
-    expect(disclosureState(container, "Transfer to Another Device")).toBe("false");
+    expect(disclosureState(container, "Import from save file")).toBe("false");
+    expect(disclosureState(container, "Transfer to another device")).toBe("false");
   });
 });

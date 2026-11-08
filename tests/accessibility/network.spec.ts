@@ -8,7 +8,7 @@ test.describe("privacy disclosure", () => {
 
   test("the privacy page loads without undisclosed third-party requests", async ({ page }) => {
     await gotoApplication(page, "/en/privacy");
-    await expect(page.getByRole("heading", { exact: true, name: "Privacy Policy" })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: "Privacy policy" })).toBeVisible();
     await page.waitForLoadState("load");
   });
 });

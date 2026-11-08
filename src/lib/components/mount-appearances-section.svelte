@@ -164,13 +164,17 @@
                 reportCategory={entry.kind === "appearance" ? "mount-appearance" : "mount-perk"}
                 reportEntityId={entry.id}
                 sources={entry.sources}
-                onToggle={() => {
+                onToggle={(covered) => {
                   if (!spoilered || completed) {
                     toggleEntry(entry);
                   } else {
-                    spoilerGuard.requestGuardedAction(entry.visibility, () => {
-                      toggleEntry(entry);
-                    });
+                    spoilerGuard.requestGuardedAction(
+                      entry.visibility,
+                      () => {
+                        toggleEntry(entry);
+                      },
+                      covered ? undefined : { name: entry.name },
+                    );
                   }
                 }}
               />

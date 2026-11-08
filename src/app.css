@@ -349,6 +349,9 @@ html:lang(ru) {
   --z-panel: 30;
   --z-picker: 40;
   --z-dialog: 50;
+  /* Above dialogs, so a toast that fires mid-dialog (a failed save, say) can't expire unseen. The
+   * layout's bottom offset keeps toasts clear of the toolbar & any open panel. */
+  --z-toast: 60;
 }
 
 @theme inline {
@@ -546,8 +549,19 @@ html:lang(ru) {
   }
 }
 
-[data-sonner-toast] [data-cancel] {
+/* Sonner's own stylesheet uses a huge z-index; the token keeps it in the app's order. */
+[data-sonner-toaster][data-sonner-theme] {
+  z-index: var(--z-toast);
+}
+
+/* Ink on the accent tint: accent text on its own tint misses 4.5:1 contrast. */
+[data-sonner-toast] [data-button] {
   color: var(--color-ink);
+}
+
+/* Sonner's theme rule paints descriptions near-white, brighter than the title they support. */
+[data-sonner-toaster][data-sonner-theme] [data-sonner-toast] [data-description] {
+  color: var(--color-ink-muted);
 }
 
 @media (forced-colors: active) {

@@ -196,13 +196,17 @@
         reportCategory="cosmetic"
         reportEntityId={cosmetic.id}
         sources={cosmetic.sources}
-        onToggle={() => {
+        onToggle={(covered) => {
           if (!spoilered || completed) {
             toggleCosmetic(cosmetic, slot, allInSlot);
           } else {
-            spoilerGuard.requestGuardedAction(cosmetic.visibility, () => {
-              toggleCosmetic(cosmetic, slot, allInSlot);
-            });
+            spoilerGuard.requestGuardedAction(
+              cosmetic.visibility,
+              () => {
+                toggleCosmetic(cosmetic, slot, allInSlot);
+              },
+              covered ? undefined : { name: cosmetic.name },
+            );
           }
         }}
       />

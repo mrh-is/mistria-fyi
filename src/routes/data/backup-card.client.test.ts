@@ -52,7 +52,7 @@ describe("BackupCard restore", () => {
     await restoreFromFile(new File([backup], "backup.json", { type: "application/json" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Backup restored successfully.");
+      expect(screen.getByRole("status")).toHaveTextContent("All set, your backup is restored!");
     });
     expect(screen.queryByRole("alert")).toBeNull();
     expect(userState.state.progress.renown).toBe(7);
@@ -66,7 +66,7 @@ describe("BackupCard restore", () => {
 
     await restoreFromFile(new File(["{not json"], "broken.json", { type: "application/json" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/This file is not valid JSON/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/doesn’t look like a backup file/);
     expect(screen.getByRole("status")).toHaveTextContent("");
     expect(userState.exportBackup()).toBe(before);
   });
@@ -76,7 +76,7 @@ describe("BackupCard restore", () => {
 
     await restoreFromFile(new File(['{"version":1}'], "partial.json"));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/missing required data/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/missing some data/);
   });
 
   it("rejects a backup from a newer version", async () => {
@@ -85,7 +85,7 @@ describe("BackupCard restore", () => {
     const future = JSON.stringify({ version: CURRENT_SERIALIZATION_VERSION + 1 });
     await restoreFromFile(new File([future], "future.json"));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/newer version/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/future version/);
   });
 
   it("reports an unreadable file", async () => {
@@ -95,7 +95,9 @@ describe("BackupCard restore", () => {
 
     await restoreFromFile(file);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not read this backup file.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "We couldn’t open that file, so we left your progress as it was. Make sure you picked a backup you downloaded from here.",
+    );
     expect(screen.getByRole("button", { name: "Restore from backup" })).toBeEnabled();
   });
 
@@ -107,7 +109,7 @@ describe("BackupCard restore", () => {
     await restoreFromFile(new File([userState.exportBackup()], "backup.json"));
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Backup restored successfully.");
+      expect(screen.getByRole("status")).toHaveTextContent("All set, your backup is restored!");
     });
     expect(screen.queryByRole("alert")).toBeNull();
   });

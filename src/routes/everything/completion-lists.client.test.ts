@@ -243,7 +243,7 @@ describe("locked quest sections", () => {
     const group = finished.closest("section");
     if (!group) throw new Error("Quests has no group");
     expect(within(group).queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
-    expect(within(group).getByRole("button", { name: /^Fetch Quests,/ })).toBeInTheDocument();
+    expect(within(group).getByRole("button", { name: /^Fetch quests,/ })).toBeInTheDocument();
   });
 
   it("keeps a category outstanding when only its locked sections remain", async () => {
@@ -255,6 +255,6 @@ describe("locked quest sections", () => {
     if (!outstanding) throw new Error("Quests has no outstanding group");
     await fireEvent.click(within(outstanding).getByRole("button", { name: "Not now" }));
     expect(within(outstanding).getAllByRole("button", { name: "Reveal spoiler" })).toHaveLength(1);
-    expect(within(outstanding).queryByRole("button", { name: /^Fetch Quests,/ })).toBeNull();
+    expect(within(outstanding).queryByRole("button", { name: /^Fetch quests,/ })).toBeNull();
   });
 });

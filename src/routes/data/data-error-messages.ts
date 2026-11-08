@@ -11,13 +11,19 @@ import type { SavArchiveErrorDetail } from "#lib/engine/parse-sav.js";
 export function formatSavArchiveError(detail: SavArchiveErrorDetail): string {
   switch (detail.code) {
     case "corrupt":
-      return m.import_error_sav_corrupt();
+      return m.import_error_sav_corrupt({ tryAutosave: m.import_error_try_autosave() });
     case "decompressed-too-large":
-      return m.import_error_sav_decompressed_too_large({ max: formatBytes(detail.maxBytes) });
+      return m.import_error_sav_decompressed_too_large({
+        max: formatBytes(detail.maxBytes),
+        tryAutosave: m.import_error_try_autosave(),
+      });
     case "invalid-entry":
-      return m.import_error_sav_invalid_entry({ entry: detail.entry });
+      return m.import_error_sav_invalid_entry({
+        entry: detail.entry,
+        tryAutosave: m.import_error_try_autosave(),
+      });
     case "no-save-data":
-      return m.import_error_sav_no_save_data();
+      return m.import_error_sav_no_save_data({ tryAutosave: m.import_error_try_autosave() });
     case "too-large":
       return m.import_error_sav_too_large({
         max: formatBytes(detail.maxBytes),
@@ -32,7 +38,7 @@ export function formatExtractedSaveFilesError(error: ExtractedSaveFilesError): s
     case "no-save-files":
       return m.import_error_no_save_files();
     case "no-valid-files":
-      return m.import_error_no_valid_files();
+      return m.import_error_no_valid_files({ tryAutosave: m.import_error_try_autosave() });
   }
 }
 

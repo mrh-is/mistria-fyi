@@ -159,7 +159,7 @@ test.describe("stateful accessibility", () => {
   // These browser probes wait for each result before scanning its distinct assembled DOM.
   test("settings dialog and import results pass axe", async ({ page }, testInfo) => {
     await gotoApplication(page, "/data");
-    await openSettingsCard(page, "Import from Save File");
+    await openSettingsCard(page, "Import from save file");
     await page.getByRole("button", { name: "Where is my save file?" }).click();
     await expect(page.getByRole("dialog", { name: "Finding your save file" })).toBeVisible();
     await analyzeAccessibility(
@@ -235,13 +235,13 @@ test.describe("stateful accessibility", () => {
       { route: "/data", state: "device-guidance", theme: "light" },
       testInfo,
     );
-    await page.getByRole("button", { exact: true, name: "Open Backup & Restore" }).click();
+    await page.getByRole("button", { exact: true, name: "Go to Backup & restore" }).click();
     await expect(page.getByRole("button", { name: "Export backup" })).toBeVisible();
   });
 
   test("backup restore failure passes axe", async ({ page }, testInfo) => {
     await gotoApplication(page, "/data");
-    await openSettingsCard(page, "Backup & Restore");
+    await openSettingsCard(page, "Backup & restore");
     const chooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: "Restore from backup" }).click();
     const chooserDialog = await chooser;
@@ -250,7 +250,7 @@ test.describe("stateful accessibility", () => {
       mimeType: "application/json",
       name: "invalid-backup.json",
     });
-    await expect(page.getByRole("alert")).toContainText("missing required data");
+    await expect(page.getByRole("alert")).toContainText("missing some data");
     await analyzeAccessibility(
       page,
       { route: "/data", state: "backup-restore-error", theme: "light" },
@@ -262,7 +262,7 @@ test.describe("stateful accessibility", () => {
 test("dark expanded settings state passes axe", async ({ page }, testInfo) => {
   await initializeApplication(page, "dark", createStoredState({ showSpoilers: true }));
   await gotoApplication(page, "/data");
-  await openSettingsCard(page, "Danger Zone");
+  await openSettingsCard(page, "Danger zone");
 
   await analyzeAccessibility(
     page,
