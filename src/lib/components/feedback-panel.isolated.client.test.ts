@@ -570,8 +570,7 @@ describe("FeedbackPanel", () => {
       expect(toast.warning).toHaveBeenCalledTimes(1);
     });
     const [warning] = toast.warning.mock.calls[0] as [string];
-    expect(warning).toContain("Sending it again would make a duplicate public issue");
-    expect(warning).toContain("send a new note later");
+    expect(warning).toContain("submit feedback again, and I’ll get it sorted out");
     expect(warning).not.toContain("comment");
     expect(warning).not.toContain("private@example.com");
     expect(fetchMock).toHaveBeenCalledTimes(1);
