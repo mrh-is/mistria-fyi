@@ -1,0 +1,166 @@
+[
+  {
+    "translations": {
+      "en": [
+        "# result",
+        "# results"
+      ],
+      "ja": [
+        "#件の結果"
+      ],
+      "zh-Hans": [
+        "# 个结果"
+      ],
+      "zh-Hant": [
+        "# 項結果"
+      ],
+      "es": [
+        "# resultado",
+        "# resultados",
+        "# resultados"
+      ],
+      "fr": [
+        "# résultat",
+        "# résultats",
+        "# résultats"
+      ],
+      "ko": [
+        "결과 #개"
+      ],
+      "ru": [
+        "# результат",
+        "# результата",
+        "# результатов",
+        "# результата"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/features/search/panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "No items found",
+      "ja": "アイテムが見つかりません",
+      "zh-Hans": "未找到任何物品",
+      "zh-Hant": "找不到任何物品",
+      "es": "No se encontraron elementos",
+      "fr": "Aucun élément trouvé",
+      "ko": "항목을 찾을 수 없습니다",
+      "ru": "Ничего не найдено"
+    },
+    "references": [
+      {
+        "file": "src/features/search/panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search items",
+      "ja": "アイテムを検索",
+      "zh-Hans": "搜索物品",
+      "zh-Hant": "搜尋物品",
+      "es": "Buscar elementos",
+      "fr": "Rechercher des éléments",
+      "ko": "항목 검색",
+      "ru": "Поиск предметов"
+    },
+    "references": [
+      {
+        "file": "src/features/search/panel.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search items…",
+      "ja": "アイテムを検索…",
+      "zh-Hans": "搜索物品…",
+      "zh-Hant": "搜尋物品…",
+      "es": "Buscar elementos…",
+      "fr": "Rechercher des éléments…",
+      "ko": "항목 검색…",
+      "ru": "Поиск предметов…"
+    },
+    "references": [
+      {
+        "file": "src/features/search/panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search the entire Field Guide for “{0}”",
+      "ja": "フィールドガイド全体から「{0}」を検索",
+      "zh-Hans": "在整本田野指南中搜索“{0}”",
+      "zh-Hant": "在整本田野指南中搜尋「{0}」",
+      "es": "Buscar “{0}” en toda la guía de campo",
+      "fr": "Chercher « {0} » dans tout le guide de terrain",
+      "ko": "필드 가이드 전체에서 “{0}” 검색",
+      "ru": "Искать «{0}» во всём полевом справочнике"
+    },
+    "references": [
+      {
+        "file": "src/features/search/panel.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "query"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We couldn’t load search. Check that you’re online, then try again.",
+      "ja": "検索を読み込めませんでした。オンラインになっているか確認して、もう一度お試しください。",
+      "zh-Hans": "没能加载搜索。请确认你已联网，然后再试一次。",
+      "zh-Hant": "沒能載入搜尋。請確認你已連上網路，然後再試一次。",
+      "es": "No hemos podido cargar la búsqueda. Comprueba que tienes conexión e inténtalo de nuevo.",
+      "fr": "Impossible de charger la recherche. Vérifiez que vous êtes en ligne, puis réessayez.",
+      "ko": "검색을 불러오지 못했어요. 온라인인지 확인하고 다시 시도해 주세요.",
+      "ru": "Не удалось загрузить поиск. Проверьте подключение к интернету и попробуйте ещё раз."
+    },
+    "references": [
+      {
+        "file": "src/features/search/panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  }
+]

@@ -11,6 +11,8 @@
         "src/hooks.ts",
         // Standalone Worker, loaded by relay/wrangler.toml rather than the Pages build.
         "relay/worker.ts",
+        // This separate SvelteKit fixture has its own Vite config and generated module graph.
+        "spikes/wuchale/{*.js,src/**/*.{js,svelte}}",
       ],
       "ignore": [
         // `scripts/locale-fonts/` is its own pnpm package with its own scripts & dependencies.
@@ -27,6 +29,8 @@
         // the npm SDK of the same name & reports it unlisted. We do not use that package.
         "cloudflare",
       ],
+      // The spike switches these aliases between the two fixture builds.
+      "ignoreUnresolved": ["#fixture-ui", "#fixture-search", "#fixture-settings"],
     },
     "pipeline": {
       // The atlas CLI starts through `cd pipeline && tsx src/atlas/main.ts`, which Knip does not follow.
