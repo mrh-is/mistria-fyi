@@ -63,6 +63,7 @@ function fixture() {
   mkdirSync(bin);
   mkdirSync(prs);
   gitIn(primary, "init", "-q", "--initial-branch=main");
+  gitIn(primary, "remote", "add", "origin", primary);
   writeFileSync(join(primary, ".gitignore"), "/.worktrees/\n");
   commit(primary, "base");
   gitIn(primary, "update-ref", "refs/remotes/origin/main", gitIn(primary, "rev-parse", "HEAD"));
@@ -144,8 +145,36 @@ describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
     const path = detachedWorktree("unpublished", { commitChanges: true });
     const result = run(["--apply"]);
     expect(result.stdout).toContain(
-      `keep ${path}: detached HEAD isn't reachable from a remote branch`,
+      `keep ${path}: detached HEAD isn't reachable from a current remote branch`,
     );
+    expect(existsSync(path)).toBe(true);
+  });
+
+  it("keeps a detached worktree when its remote branch was deleted but its tracking ref is stale", () => {
+    const { detachedWorktree, primary, run } = fixture();
+    const path = detachedWorktree("deleted-topic", { commitChanges: true });
+    const head = gitIn(path, "rev-parse", "HEAD");
+    gitIn(primary, "update-ref", "refs/heads/topic", head);
+    gitIn(primary, "update-ref", "refs/remotes/origin/topic", head);
+    gitIn(primary, "update-ref", "-d", "refs/heads/topic");
+    expect(gitIn(primary, "branch", "--list", "topic")).toBe("");
+    expect(gitIn(primary, "rev-parse", "refs/remotes/origin/topic")).toBe(head);
+
+    const result = run(["--apply"]);
+    expect(result.stdout).toContain(
+      `keep ${path}: detached HEAD isn't reachable from a current remote branch`,
+    );
+    expect(existsSync(path)).toBe(true);
+    expect(gitIn(primary, "branch", "-r", "--list", "origin/topic")).toBe("");
+  });
+
+  it("keeps a detached worktree when it can't refresh remote heads", () => {
+    const { detachedWorktree, directory, primary, run } = fixture();
+    const path = detachedWorktree("offline");
+    gitIn(primary, "remote", "set-url", "origin", join(directory, "missing-origin"));
+
+    const result = run(["--apply"]);
+    expect(result.stdout).toContain(`keep ${path}: couldn't verify current remote branches`);
     expect(existsSync(path)).toBe(true);
   });
 
