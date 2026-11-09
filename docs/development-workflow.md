@@ -906,8 +906,8 @@ offline fallback, registration, or activation behavior.
   ```sh
   pnpm run prepare
   ```
-  Verify installation by confirming `core.hooksPath` is set to `.husky/_` and the Husky wrapper
-  exists:
+  Verify that `core.hooksPath` points to the expected hook directory and that its Husky wrapper
+  exists. For the recommended relative path:
   ```sh
   git config --get core.hooksPath   # should print .husky/_
   ls .husky/_/pre-commit            # should exist

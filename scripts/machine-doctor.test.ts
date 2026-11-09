@@ -568,12 +568,38 @@ describe("parseSections", () => {
   });
 });
 
+describe("Git hooks setup", () => {
+  it("reports an unset hooks path as a manual step", () => {
+    const results = checkGit(machine({ commands: { "git --version": "git version 2.50.0" } }));
+    expect(results.find((result) => result.id === "git-hooks")).toMatchObject({
+      fix: "git config --local core.hooksPath .husky/_",
+      status: "manual",
+    });
+  });
+
+  it.each([".husky/_", "/main/.husky/_", "/custom/hooks"])(
+    "accepts a configured hooks path of %s",
+    (path) => {
+      const results = checkGit(
+        machine({
+          commands: {
+            "git --version": "git version 2.50.0",
+            "git -C /repo config --get core.hooksPath": path,
+          },
+        }),
+      );
+      expect(results.find((result) => result.id === "git-hooks")?.status).toBe("ok");
+    },
+  );
+});
+
 describe("report", () => {
   const ready = machine({
     commands: {
       "gh --version": "gh",
       "gh auth status": "",
       "git --version": "git version 2.50.0",
+      "git -C /repo config --get core.hooksPath": ".husky/_\n",
       "git config --get commit.gpgsign": "true\n",
       "git config --get user.signingkey": "~/.ssh/id_ed25519_signing.pub\n",
       "pnpm --version": "11.28.2\n",

@@ -170,11 +170,13 @@ Configure the repository's pre-commit hook once per clone from the main checkout
 git config --local core.hooksPath .husky/_
 ```
 
-Skip this step if `git config --get core.hooksPath` already prints `.husky/_`. If the clone uses a
-custom hooks path, keep that configuration and arrange for its pre-commit hook to run
+Skip this step if `git config --get core.hooksPath` already prints `.husky/_` or an absolute path to
+the main checkout's `.husky/_`. An absolute path uses the main checkout's generated hooks for every
+worktree. The relative path uses each worktree's own generated hooks. If the clone uses a custom
+hooks path, keep that configuration and arrange for its pre-commit hook to run
 `pnpm exec lint-staged`. The setting is shared by linked worktrees. The command needs an approved
 Git metadata write when run from a restricted Codex shell. Routine `prepare` only generates hook
-files inside the checkout.
+files inside the checkout. The machine doctor reports an unset hook path as a manual setup step.
 
 ## Verify the result
 
