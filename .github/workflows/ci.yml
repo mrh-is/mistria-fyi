@@ -264,7 +264,7 @@ jobs:
       - name: Test with timing budgets
         env:
           VITEST_COVERAGE: ${{ github.event_name == 'schedule' }}
-          VITEST_MAX_WORKERS: "3"
+          VITEST_MAX_WORKERS: "4"
           VITEST_RELAY_CHANGED: ${{ needs.changes.outputs.relay }}
           VITEST_SCRIPTS_CHANGED: ${{ needs.changes.outputs.scripts }}
           VITEST_TOUCHED_TEST_FILES: ${{ needs.changes.outputs.tests }}
