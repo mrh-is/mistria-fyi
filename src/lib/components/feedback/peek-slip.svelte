@@ -41,25 +41,38 @@
     content: "";
   }
 
+  /*
+   * Its dots line up with the type, as on the preview sheet: one column per mono character plus its
+   * tracking, & one row on each edge of the line. The icon & its gap fill exactly two columns.
+   */
   .peek-slip__paper {
+    --fs: var(--text-2xs);
+    --ls: 1.6px;
+    /* IBM Plex Mono advances 0.6em per character; the tracking makes room for one dot. */
+    --cw: calc(var(--fs) * 0.6 + var(--ls));
+    --lh: calc(var(--fs) * 12 / 11);
+    --padx: 7px;
+    --pady: calc(var(--lh) / 2);
+
     position: relative;
     display: inline-flex;
-    min-height: 24px;
     align-items: center;
-    gap: 4px;
-    padding: 3px 14px 3px 7px;
+    gap: calc(2 * var(--cw) - 12px);
+    padding: var(--pady) 14px var(--pady) var(--padx);
     background-color: var(--color-paper-raised);
     background-image: radial-gradient(
       circle,
-      color-mix(in srgb, var(--color-ink-hairline) 45%, transparent) 0.8px,
-      transparent 1px
+      color-mix(in srgb, var(--color-ink-hairline) 24%, transparent) 0.75px,
+      transparent 0.95px
     );
-    background-position: 2px 2px;
-    background-size: 6px 6px;
+    background-position: calc(var(--padx) + var(--cw) / 2 - var(--ls) / 2)
+      calc(var(--pady) - var(--lh) / 2);
+    background-size: var(--cw) var(--lh);
     clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
     font-family: var(--font-data);
-    font-size: var(--text-2xs);
-    letter-spacing: 0.04em;
+    font-size: var(--fs);
+    letter-spacing: var(--ls);
+    line-height: var(--lh);
     transform: rotate(-1.5deg);
     transition: transform 120ms ease-out;
   }

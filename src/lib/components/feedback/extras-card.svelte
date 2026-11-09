@@ -34,13 +34,11 @@
         <dt>
           <IconPaperclip class="size-3.5 shrink-0" aria-hidden="true" />
           <span class="extras-card__name">{m.feedback_extra_progress_name()}</span>
+          <PeekSlip label={m.feedback_peek_progress_aria()} onclick={() => onPeek("progress")} />
           <VisibilityTag visibility="public" />
         </dt>
         <dd>
           {m.feedback_extra_progress_description()}
-          <span class="extras-card__peek">
-            <PeekSlip label={m.feedback_peek_progress_aria()} onclick={() => onPeek("progress")} />
-          </span>
         </dd>
       </div>
       {#if allowSyncLog}
@@ -48,13 +46,11 @@
           <dt>
             <IconRefresh class="size-3.5 shrink-0" aria-hidden="true" />
             <span class="extras-card__name">{m.feedback_extra_sync_log_name()}</span>
+            <PeekSlip label={m.feedback_peek_sync_log_aria()} onclick={() => onPeek("syncLog")} />
             <VisibilityTag visibility="public" />
           </dt>
           <dd>
             {m.feedback_extra_sync_log_description()}
-            <span class="extras-card__peek">
-              <PeekSlip label={m.feedback_peek_sync_log_aria()} onclick={() => onPeek("syncLog")} />
-            </span>
           </dd>
         </div>
       {/if}
@@ -105,6 +101,7 @@
 
   .extras-card__list dt {
     display: flex;
+    min-height: 28px;
     align-items: center;
     gap: 6px;
   }
@@ -122,12 +119,9 @@
     font-size: var(--text-sm);
   }
 
-  .extras-card__peek {
-    display: flex;
-    padding-top: 8px;
-  }
-
   .extras-card__footer {
+    display: flex;
+    justify-content: flex-end;
     padding: 0 16px 14px;
   }
 </style>

@@ -145,6 +145,8 @@ test("feedback backdrop covers overscroll while the form and toolbar receive cli
 test("feedback extras info button keeps its own tap area above the first row", async ({ page }) => {
   await initializeApplication(page, "light");
   await page.setViewportSize({ height: 844, width: 390 });
+  // The panel flies in, so measure it only once it has settled.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await gotoApplication(page, "/");
   await page.getByRole("button", { exact: true, name: "Send feedback" }).click();
   const info = page
