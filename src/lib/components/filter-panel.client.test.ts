@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import FilterPanel from "#lib/components/filter-panel.svelte";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
+import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
@@ -35,25 +36,25 @@ function emulatePhone(): void {
 describe("FilterPanel interactions", () => {
   it("offers the unobtainable filter only while the almanac is mounted", async () => {
     render(FilterPanel);
-    expect(screen.queryByRole("switch", { name: "Unobtainable" })).toBeNull();
+    expect(screen.queryByRole("switch", { name: m.visibility_unobtainable_toggle() })).toBeNull();
     toolbarState.registerSourceFilters("almanac", []);
     await tick();
-    const toggle = screen.getByRole("switch", { name: "Unobtainable" });
+    const toggle = screen.getByRole("switch", { name: m.visibility_unobtainable_toggle() });
     await fireEvent.click(toggle);
     expect(toolbarState.showUnobtainable).toBe(true);
     await fireEvent.click(toggle);
     expect(toolbarState.showUnobtainable).toBe(false);
     toolbarState.unregisterSourceFilters("almanac");
     await tick();
-    expect(screen.queryByRole("switch", { name: "Unobtainable" })).toBeNull();
+    expect(screen.queryByRole("switch", { name: m.visibility_unobtainable_toggle() })).toBeNull();
   });
 
   it("toggles source groups and reflects the pressed state", async () => {
     toolbarState.registerSourceFilters("test", [gatheringFilter, storesFilter]);
     render(FilterPanel);
 
-    const gathering = screen.getByRole("button", { name: "Gathering" });
-    const stores = screen.getByRole("button", { name: "Stores" });
+    const gathering = screen.getByRole("button", { name: m.source_filter_gathering() });
+    const stores = screen.getByRole("button", { name: m.source_filter_stores() });
     expect(gathering).toHaveAttribute("aria-pressed", "true");
     expect(stores).toHaveAttribute("aria-pressed", "true");
     expect(toolbarState.isSourceFilterNarrowing).toBe(false);
@@ -91,15 +92,19 @@ describe("FilterPanel interactions", () => {
     toolbarState.registerSourceFilters("test", [gatheringFilter]);
     render(FilterPanel);
 
-    await fireEvent.click(screen.getByRole("button", { name: "About source types" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: m.visibility_source_types_about_aria() }),
+    );
 
-    const dialog = await screen.findByRole("dialog", { name: "Source types" });
-    expect(within(dialog).getByText("Gathering")).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: m.visibility_source_types() });
+    expect(within(dialog).getByText(m.source_filter_gathering())).toBeInTheDocument();
     expect(
       within(dialog).getByText("Foraging, Bug catching, Artifact digs, and Equipment"),
     ).toBeInTheDocument();
 
-    await fireEvent.click(within(dialog).getByRole("button", { name: "Got it" }));
+    await fireEvent.click(
+      within(dialog).getByRole("button", { name: m.source_explainer_dismiss() }),
+    );
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
@@ -110,9 +115,9 @@ describe("FilterPanel interactions", () => {
     toolbarState.registerSourceFilters("test", [gatheringFilter, storesFilter]);
     render(FilterPanel);
 
-    expect(screen.getByRole("heading", { name: "Source types" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: m.visibility_source_types() })).toBeInTheDocument();
     expect(document.querySelector("[aria-expanded]")).toBeNull();
-    expect(screen.getByRole("button", { name: "Gathering" })).toBeVisible();
+    expect(screen.getByRole("button", { name: m.source_filter_gathering() })).toBeVisible();
   });
 
   it("collapses source types into a summarized disclosure on phones", async () => {
@@ -127,16 +132,20 @@ describe("FilterPanel interactions", () => {
     const body = document.getElementById(sourceTypes.getAttribute("aria-controls") ?? "");
     // A collapsed body is inert at once & hidden by CSS once its closing transition ends.
     expect(body).toHaveAttribute("inert");
-    expect(screen.queryByRole("button", { name: "About source types" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: m.visibility_source_types_about_aria() }),
+    ).toBeNull();
 
     await fireEvent.click(sourceTypes);
     expect(sourceTypes).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("button", { name: "About source types" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: m.visibility_source_types_about_aria() }),
+    ).toBeVisible();
     // The summary stays mounted to fade out; CSS hides it, & drops it from the name, once faded.
     const summary = sourceTypes.querySelector(".disclosure__summary");
     expect(summary).toHaveClass("disclosure__summary--hidden");
     expect(body).not.toHaveAttribute("inert");
-    await fireEvent.click(screen.getByRole("button", { name: "Gathering" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.source_filter_gathering() }));
 
     await fireEvent.click(sourceTypes);
     expect(sourceTypes).toHaveAttribute("aria-expanded", "false");
@@ -196,7 +205,7 @@ describe("FilterPanel interactions", () => {
 
     await fireEvent.click(show);
     expect(show).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("switch", { name: "Unobtainable" })).toBeChecked();
+    expect(screen.getByRole("switch", { name: m.visibility_unobtainable_toggle() })).toBeChecked();
   });
 
   it("remembers expanded sections for the session across panel openings", async () => {
@@ -211,6 +220,6 @@ describe("FilterPanel interactions", () => {
       "aria-expanded",
       "true",
     );
-    expect(screen.getByRole("button", { name: "Gathering" })).toBeVisible();
+    expect(screen.getByRole("button", { name: m.source_filter_gathering() })).toBeVisible();
   });
 });

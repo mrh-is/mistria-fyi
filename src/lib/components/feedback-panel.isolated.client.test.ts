@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import FeedbackPanel from "#lib/components/feedback-panel.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -45,21 +46,21 @@ describe("FeedbackPanel", () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
     vi.stubGlobal("fetch", fetchMock);
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
-    const checkbox = screen.getByRole("checkbox", { name: "Attach my save file sync log" });
+    const checkbox = screen.getByRole("checkbox", { name: m.feedback_attach_sync_log() });
     expect(checkbox).not.toBeChecked();
     await fireEvent.click(checkbox);
-    await fireEvent.click(screen.getByRole("button", { name: "Show sync log" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_show_sync_log() }));
     const preview = document.querySelector("pre")?.textContent ?? "";
     const previewLog = JSON.parse(preview) as SyncLog;
     expect(previewLog.protocolVersion).toBe(1);
     expect(previewLog.events.map((event) => event.outcome)).toContain("unreadable");
     await fireEvent.click(checkbox);
-    expect(screen.queryByRole("button", { name: "Hide sync log" })).toBeNull();
+    expect(screen.queryByRole("button", { name: m.feedback_hide_sync_log() })).toBeNull();
     await fireEvent.click(checkbox);
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "Sync trouble" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
@@ -72,8 +73,8 @@ describe("FeedbackPanel", () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
     vi.stubGlobal("fetch", fetchMock);
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
-    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my save file sync log" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Show sync log" }));
+    await fireEvent.click(screen.getByRole("checkbox", { name: m.feedback_attach_sync_log() }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_show_sync_log() }));
     const before = (JSON.parse(document.querySelector("pre")?.textContent ?? "") as SyncLog).events;
     syncDiagnostics.status("write-failed");
     await tick();
@@ -81,10 +82,10 @@ describe("FeedbackPanel", () => {
     const previewEvents = (JSON.parse(preview) as SyncLog).events;
     expect(previewEvents).toHaveLength(before.length + 1);
     expect(previewEvents.at(-1)?.outcome).toBe("write-failed");
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "Sync trouble" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
@@ -106,9 +107,11 @@ describe("FeedbackPanel", () => {
     );
     try {
       renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
-      await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
-      await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
-      await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
+      await fireEvent.click(
+        screen.getByRole("checkbox", { name: m.feedback_attach_progress_label() }),
+      );
+      await fireEvent.click(screen.getByRole("button", { name: m.feedback_toggle_read_more() }));
+      await fireEvent.click(screen.getByRole("button", { name: m.feedback_show_progress_data() }));
       const preview = document.querySelector("pre")?.textContent ?? "";
       expect(JSON.parse(preview)).toEqual({
         lastSavePlaytime: "[redacted]",
@@ -116,10 +119,10 @@ describe("FeedbackPanel", () => {
         renown: 7,
       });
       expect(preview).not.toContain("4321");
-      await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
         target: { value: "A report" },
       });
-      await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+      await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
       await waitFor(() => {
         expect(fetchMock).toHaveBeenCalledTimes(1);
       });
@@ -149,15 +152,17 @@ describe("FeedbackPanel", () => {
       }),
     );
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
-    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: m.feedback_attach_progress_label() }),
+    );
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_toggle_read_more() }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_show_progress_data() }));
     const preview = JSON.parse(document.querySelector("pre")?.textContent ?? "") as unknown;
     expect(preview).toHaveProperty("almanac", { count: 5000, summarized: true });
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "A report" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
@@ -171,11 +176,11 @@ describe("FeedbackPanel", () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ dryRun: true }));
     vi.stubGlobal("fetch", fetchMock);
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
-    expect(screen.getByRole("checkbox", { name: "Attach my save file sync log" })).toBeVisible();
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    expect(screen.getByRole("checkbox", { name: m.feedback_attach_sync_log() })).toBeVisible();
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "A report" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
@@ -201,16 +206,18 @@ describe("FeedbackPanel", () => {
       },
     );
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
-    await fireEvent.click(screen.getByRole("checkbox", { name: "Attach my tracker progress" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: m.feedback_attach_progress_label() }),
+    );
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_toggle_read_more() }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_show_progress_data() }));
     const preview = document.querySelector("pre")?.textContent ?? "";
     expect(preview).toContain('"renown": 7');
     expect(preview).not.toContain("Private");
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "Import feedback" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
@@ -229,15 +236,17 @@ describe("FeedbackPanel", () => {
       open: true,
     });
 
-    const dialog = screen.getByRole("dialog", { name: "Send feedback" });
+    const dialog = screen.getByRole("dialog", { name: m.toolbar_send_feedback() });
     expect(dialog).toHaveAttribute(
       "style",
       "--primary: var(--color-category-museum); --ring: var(--color-category-museum);",
     );
-    expect(screen.getByRole("checkbox", { name: /I’d like a reply/ })).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText("Comments, questions, suggestions, praise?"),
+      screen.getByRole("checkbox", {
+        name: (name) => name.includes(m.feedback_wants_reply_label()),
+      }),
     ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(m.feedback_message_placeholder())).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
   });
 
@@ -249,24 +258,28 @@ describe("FeedbackPanel", () => {
 
   it("clears progress preview and email validation when their options are unchecked", async () => {
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
-    const attach = screen.getByRole("checkbox", { name: "Attach my tracker progress" });
+    const attach = screen.getByRole("checkbox", { name: m.feedback_attach_progress_label() });
     await fireEvent.click(attach);
-    await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Show my progress data" }));
-    expect(screen.getByRole("button", { name: "Hide my progress data" })).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_toggle_read_more() }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_show_progress_data() }));
+    expect(
+      screen.getByRole("button", { name: m.feedback_hide_progress_data() }),
+    ).toBeInTheDocument();
     await fireEvent.click(attach);
-    expect(screen.getByRole("button", { name: "Show my progress data" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: m.feedback_show_progress_data() }),
+    ).toBeInTheDocument();
 
-    const reply = screen.getByRole("checkbox", { name: "I’d like a reply" });
+    const reply = screen.getByRole("checkbox", { name: m.feedback_wants_reply_label() });
     await fireEvent.click(reply);
-    await fireEvent.blur(screen.getByRole("textbox", { name: "Your email" }));
-    expect(screen.getByRole("textbox", { name: "Your email" })).toHaveAttribute(
+    await fireEvent.blur(screen.getByRole("textbox", { name: m.feedback_email_aria() }));
+    expect(screen.getByRole("textbox", { name: m.feedback_email_aria() })).toHaveAttribute(
       "aria-invalid",
       "true",
     );
     await fireEvent.click(reply);
     await fireEvent.click(reply);
-    expect(screen.getByRole("textbox", { name: "Your email" })).toHaveAttribute(
+    expect(screen.getByRole("textbox", { name: m.feedback_email_aria() })).toHaveAttribute(
       "aria-invalid",
       "false",
     );
@@ -293,10 +306,10 @@ describe("FeedbackPanel", () => {
       feedbackContext,
     );
 
-    await fireEvent.click(screen.getByRole("button", { name: "Point at something" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_pick_action() }));
     expect(feedbackContext.isPicking).toBe(true);
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: "Send feedback" })).toBeNull();
+      expect(screen.queryByRole("dialog", { name: m.toolbar_send_feedback() })).toBeNull();
     });
 
     feedbackContext.select({
@@ -307,10 +320,10 @@ describe("FeedbackPanel", () => {
     });
     expect(await screen.findByText("Tomato Soup")).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Change" })).toHaveFocus();
+      expect(screen.getByRole("button", { name: m.feedback_change_selection() })).toHaveFocus();
     });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Clear selected item" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_clear_selection_aria() }));
     expect(screen.queryByText("Tomato Soup")).toBeNull();
 
     view.unmount();
@@ -341,17 +354,20 @@ describe("FeedbackPanel", () => {
       feedbackContext,
     );
 
-    await fireEvent.click(screen.getByRole("button", { name: "Point at something" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_pick_action() }));
     feedbackContext.select({
       category: "recipe",
       displayName: "Tomato Soup",
       entityId: "tomato_soup",
       page: "/recipes",
     });
-    await fireEvent.input(await screen.findByRole("textbox", { name: "Message" }), {
-      target: { value: "The ingredients are wrong" },
-    });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.input(
+      await screen.findByRole("textbox", { name: m.feedback_message_label() }),
+      {
+        target: { value: "The ingredients are wrong" },
+      },
+    );
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -373,32 +389,36 @@ describe("FeedbackPanel", () => {
     vi.stubGlobal("fetch", fetchMock);
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
 
-    const sendButton = screen.getByRole("button", { name: "Send" });
+    const sendButton = screen.getByRole("button", { name: m.feedback_send_action() });
     expect(sendButton).not.toHaveAttribute("aria-disabled");
     await fireEvent.click(sendButton);
     expect(fetchMock).not.toHaveBeenCalled();
-    const message = screen.getByRole("textbox", { name: "Message" });
+    const message = screen.getByRole("textbox", { name: m.feedback_message_label() });
     expect(message).toHaveAttribute("aria-invalid", "true");
     expect(message).toHaveAttribute("aria-describedby", "feedback-message-error");
     expect(document.getElementById(message.getAttribute("aria-describedby") ?? "")).toBe(
       screen.getByRole("alert"),
     );
     expect(message).toHaveFocus();
-    expect(screen.getByRole("alert")).toHaveTextContent("What did you wanna say?");
+    expect(screen.getByRole("alert")).toHaveTextContent(m.feedback_message_required());
   });
 
   it("exposes email purpose and validation relationship", async () => {
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
 
-    await fireEvent.click(screen.getByRole("checkbox", { name: /I’d like a reply/ }));
-    const email = screen.getByRole("textbox", { name: "Your email" });
+    await fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: (name) => name.includes(m.feedback_wants_reply_label()),
+      }),
+    );
+    const email = screen.getByRole("textbox", { name: m.feedback_email_aria() });
     expect(email).toHaveAttribute("autocomplete", "email");
     expect(email).toHaveAttribute("name", "email");
 
-    const message = screen.getByRole("textbox", { name: "Message" });
+    const message = screen.getByRole("textbox", { name: m.feedback_message_label() });
     await fireEvent.input(message, { target: { value: "test message" } });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
     expect(email).toHaveAttribute("aria-invalid", "true");
     expect(email).toHaveAttribute("aria-describedby", "feedback-email-error");
     expect(email).toHaveFocus();
@@ -409,12 +429,14 @@ describe("FeedbackPanel", () => {
       onClose: vi.fn(),
       open: true,
     });
-    const message = screen.getByRole("textbox", { name: "Message" });
+    const message = screen.getByRole("textbox", { name: m.feedback_message_label() });
     await fireEvent.input(message, { target: { value: "Draft feedback" } });
 
     await view.rerender({ onClose: vi.fn(), open: false });
     await view.rerender({ onClose: vi.fn(), open: true });
-    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("Draft feedback");
+    expect(screen.getByRole("textbox", { name: m.feedback_message_label() })).toHaveValue(
+      "Draft feedback",
+    );
   });
 
   it("closes on Escape even when focus is outside the dialog", async () => {
@@ -430,14 +452,14 @@ describe("FeedbackPanel", () => {
   it("contains keyboard focus within the open dialog", async () => {
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
     await waitFor(() => {
-      expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus();
+      expect(screen.getByRole("dialog", { name: m.toolbar_send_feedback() })).toHaveFocus();
     });
     const closeButton = screen.getByRole("button", { name: "Close Send feedback" });
     closeButton.focus();
 
     await fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
 
-    const sendButton = screen.getByRole("button", { name: "Send" });
+    const sendButton = screen.getByRole("button", { name: m.feedback_send_action() });
     expect(document.activeElement).toBe(sendButton);
   });
 
@@ -452,7 +474,7 @@ describe("FeedbackPanel", () => {
         open: true,
       });
       await waitFor(() => {
-        expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus();
+        expect(screen.getByRole("dialog", { name: m.toolbar_send_feedback() })).toHaveFocus();
       });
 
       await view.rerender({ onClose: vi.fn(), open: false });
@@ -470,7 +492,7 @@ describe("FeedbackPanel", () => {
     try {
       const view = renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
       await vi.advanceTimersByTimeAsync(0);
-      await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+      await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
       await vi.advanceTimersByTimeAsync(0);
       expect(vi.getTimerCount()).toBe(1);
       view.unmount();
@@ -494,12 +516,12 @@ describe("FeedbackPanel", () => {
     );
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
 
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "Something is wrong" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
 
-    expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: m.feedback_sending_action() })).toBeDisabled();
     resolveRequest?.(Response.json({ issueUrl: "https://example.com/issues/1" }));
     await waitFor(() => {
       expect(toast).toHaveBeenCalledTimes(1);
@@ -514,15 +536,15 @@ describe("FeedbackPanel", () => {
     const onClose = vi.fn();
     renderWithFeedback(FeedbackPanel, { onClose, open: true });
 
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "Something is wrong" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
 
     await waitFor(() => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
-    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
+    expect(screen.getByRole("textbox", { name: m.feedback_message_label() })).toHaveValue("");
     expect(toast).toHaveBeenCalledTimes(1);
   });
 
@@ -531,15 +553,15 @@ describe("FeedbackPanel", () => {
     const onClose = vi.fn();
     renderWithFeedback(FeedbackPanel, { onClose, open: true });
 
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "Something is wrong" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
 
     await waitFor(() => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
-    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
+    expect(screen.getByRole("textbox", { name: m.feedback_message_label() })).toHaveValue("");
     expect(toast).toHaveBeenCalledTimes(1);
     const [notice, options] = toast.mock.calls[0] as [string, undefined | { action?: unknown }];
     expect(notice).toContain("Preview build");
@@ -557,20 +579,24 @@ describe("FeedbackPanel", () => {
     const onClose = vi.fn();
     renderWithFeedback(FeedbackPanel, { onClose, open: true });
 
-    await fireEvent.click(screen.getByRole("checkbox", { name: /I’d like a reply/ }));
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    await fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: (name) => name.includes(m.feedback_wants_reply_label()),
+      }),
+    );
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "Something is wrong" },
     });
-    await fireEvent.input(screen.getByRole("textbox", { name: "Your email" }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_email_aria() }), {
       target: { value: "private@example.com" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
 
     await waitFor(() => {
       expect(toast.warning).toHaveBeenCalledTimes(1);
     });
     const [warning] = toast.warning.mock.calls[0] as [string];
-    expect(warning).toContain("submit feedback again, and I’ll get it sorted out");
+    expect(warning).toContain(m.feedback_toast_email_not_saved());
     expect(warning).not.toContain("comment");
     expect(warning).not.toContain("private@example.com");
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -581,15 +607,15 @@ describe("FeedbackPanel", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     renderWithFeedback(FeedbackPanel, { onClose: vi.fn(), open: true });
 
-    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
       target: { value: "Something is wrong" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "We couldn’t send your feedback. Check that you’re online, then please try again.",
     );
-    expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: m.feedback_copy_action() })).toBeInTheDocument();
   });
 
   it("downloads Turnstile again after a failed attempt, without a reload", async () => {

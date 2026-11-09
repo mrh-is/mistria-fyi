@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
+import * as m from "#lib/paraglide/messages.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import AboutPage from "./+page.svelte";
@@ -22,8 +23,10 @@ describe("about and legal page", () => {
     expect(text).toContain("briefly be out of date");
     expect(container.querySelector("a[href='mailto:michael@mistria.fyi']")).not.toBeNull();
     expect(container.querySelector(".feedback-icon")).not.toBeNull();
-    expect(queries.getByRole("link", { name: "Privacy" })).toBeTruthy();
-    expect(queries.getByRole("button", { name: "AI disclosure" })).toBeTruthy();
-    expect(queries.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/en");
+    expect(queries.getByRole("link", { name: m.about_privacy_link() })).toBeTruthy();
+    expect(queries.getByRole("button", { name: m.about_ai_disclosure_link() })).toBeTruthy();
+    expect(
+      queries.getByRole("link", { name: m.page_header_back_to_home() }).getAttribute("href"),
+    ).toBe("/en");
   });
 });

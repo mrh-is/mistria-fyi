@@ -3,6 +3,7 @@ import { tick } from "svelte";
 import { describe, expect, it } from "vitest";
 
 import WelcomeCard from "#lib/components/welcome-card.svelte";
+import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
 import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
@@ -14,12 +15,16 @@ describe("WelcomeCard", () => {
   it("asks how to work, with sync or by hand", async () => {
     render(WelcomeCard);
 
-    expect(screen.getByRole("heading", { name: "Ready to get started?" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: m.sync_home_title() })).toBeVisible();
     expect(
-      screen.getByRole("link", { name: /Sync from my farm automagically/ }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: (name) => name.startsWith(m.sync_home_sync()) })
+        .getAttribute("href"),
     ).toMatch(/\/sync$/);
 
-    await fireEvent.click(screen.getByRole("button", { name: /I’ll track it all by hand/ }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: (name) => name.startsWith(m.sync_home_hand()) }),
+    );
 
     await waitFor(() => {
       expect(userState.trackingLane).toBe("manual");

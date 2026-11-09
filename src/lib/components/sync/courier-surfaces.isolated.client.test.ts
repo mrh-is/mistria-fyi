@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/sv
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as m from "#lib/paraglide/messages.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { buildSavFile } from "#lib/test-utils/sav.js";
@@ -186,18 +187,18 @@ describe("the notes", () => {
     report({ trouble: "unreadable" });
     await tick();
     const note = screen.getByRole("status");
-    expect(note).toHaveTextContent("Hmm, we can’t read your save file");
-    expect(note).toHaveTextContent("Number one: Nothing is lost.");
-    expect(note).toHaveTextContent("It can happen when Fields of Mistria releases an update.");
-    expect(note).toHaveTextContent("leave this tab open");
+    expect(note).toHaveTextContent(m.sync_unreadable_title());
+    expect(note).toHaveTextContent(m.sync_unreadable_safe());
+    expect(note).toHaveTextContent(m.sync_unreadable_why({ game: m.sync_unreadable_game() }));
+    expect(note).toHaveTextContent(m.sync_unreadable_for_now());
   });
 
   it("asks for access again after a restart", async () => {
     await renderNote();
     report({ trouble: "reallow" });
     await tick();
-    expect(screen.getByRole("status")).toHaveTextContent("Your browser asks after a restart.");
-    await fireEvent.click(screen.getByRole("button", { name: "Let us read it" }));
+    expect(screen.getByRole("status")).toHaveTextContent(m.sync_reallow_body());
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_reallow_action() }));
     expect(fake.reallow).toHaveBeenCalledTimes(1);
   });
 
@@ -206,8 +207,8 @@ describe("the notes", () => {
     report({ trouble: "reallow" });
     await tick();
     expect(screen.getByText(/FieldsOfMistria/)).toBeVisible();
-    expect(screen.getByRole("button", { name: "Can’t drag?" })).toBeVisible();
-    await dropSave(saveFile(), "Drop your autosave here");
+    expect(screen.getByRole("button", { name: m.sync_find_cant_drag() })).toBeVisible();
+    await dropSave(saveFile(), m.sync_find_drop());
     await waitFor(() => {
       expect(fake.take).toHaveBeenCalledTimes(1);
     });
@@ -217,11 +218,11 @@ describe("the notes", () => {
     await renderNote();
     report({ trouble: "moved" });
     await tick();
-    expect(screen.getByText("We lost track of your save file")).toBeVisible();
+    expect(screen.getByText(m.sync_moved_title())).toBeVisible();
     expect(screen.getByText(/FieldsOfMistria/)).toBeVisible();
-    expect(screen.getByRole("button", { name: "Can’t drag?" })).toBeVisible();
+    expect(screen.getByRole("button", { name: m.sync_find_cant_drag() })).toBeVisible();
 
-    await dropSave(saveFile(), "Drop your autosave here");
+    await dropSave(saveFile(), m.sync_find_drop());
     await waitFor(() => {
       expect(fake.take).toHaveBeenCalledTimes(1);
     });
@@ -231,14 +232,14 @@ describe("the notes", () => {
     await renderNote();
     report({ trouble: "moved" });
     await tick();
-    await dropSave(new File(["nope"], "notes.sav"), "Drop your autosave here");
-    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn’t read that one/);
+    await dropSave(new File(["nope"], "notes.sav"), m.sync_find_drop());
+    expect(await screen.findByRole("alert")).toHaveTextContent(m.sync_find_bad_file());
     expect(fake.take).not.toHaveBeenCalled();
   });
 
   it.each([
-    [{ trouble: "other-window" }, "Your save file is already syncing in another window."],
-    [{ upload: "paused" }, "Sync is paused for now"],
+    [{ trouble: "other-window" }, m.sync_other_window()],
+    [{ upload: "paused" }, m.sync_paused_title()],
     [{ codeRenewed: true }, "We made a new code for your save file."],
   ] as const)("says so for %o", async (status, text) => {
     await renderNote();
@@ -251,7 +252,7 @@ describe("the notes", () => {
     await renderNote();
     report({ upload: "unreachable" });
     await tick();
-    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_try_again() }));
     expect(fake.retry).toHaveBeenCalledTimes(1);
   });
 
@@ -259,9 +260,9 @@ describe("the notes", () => {
     await renderNote();
     report({ upload: "refused" });
     await tick();
-    expect(screen.getByText("Sync said no to that one")).toBeVisible();
-    expect(screen.queryByText("We can’t connect right now")).toBeNull();
-    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(screen.getByText(m.sync_refused_title())).toBeVisible();
+    expect(screen.queryByText(m.sync_unreachable_title())).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_try_again() }));
     expect(fake.retry).toHaveBeenCalledTimes(1);
   });
 
@@ -279,8 +280,8 @@ describe("the notes", () => {
     report({ upload: "update" });
     await tick();
     expect(screen.getByText(/This tracker needs a refresh/u)).toBeVisible();
-    expect(screen.getByRole("button", { name: "Refresh" })).toBeVisible();
-    expect(screen.queryByText("We can’t connect right now")).toBeNull();
+    expect(screen.getByRole("button", { name: m.sync_update_refresh() })).toBeVisible();
+    expect(screen.queryByText(m.sync_unreachable_title())).toBeNull();
   });
 
   it.each(["refused", "update"] as const)(
@@ -307,7 +308,7 @@ describe("the notes", () => {
     await renderNote({ key: KEY, kind: "following" });
     report({ trouble: "unreadable" });
     await tick();
-    expect(screen.queryByText("Hmm, we can’t read your save file")).toBeNull();
+    expect(screen.queryByText(m.sync_unreadable_title())).toBeNull();
   });
 });
 
@@ -319,13 +320,13 @@ describe("Data's sync card", () => {
       { syncPendingRetires: [retire] },
       { retire: () => answer.promise },
     );
-    expect(screen.getByText("Turning off your old code…")).toBeVisible();
-    expect(screen.getByRole("status")).toHaveTextContent("It still works until this finishes.");
+    expect(screen.getByText(m.sync_old_code_turning_off())).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent(m.sync_old_code_still_works());
 
     await userState.confirmRetired([retire]);
     await tick();
-    expect(screen.queryByText("Turning off your old code…")).toBeNull();
-    expect(screen.getByRole("status")).toHaveTextContent("Your old code is off.");
+    expect(screen.queryByText(m.sync_old_code_turning_off())).toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent(m.sync_old_code_off());
   });
 
   it("opens to show an old code that outlasted its lane", async () => {
@@ -335,7 +336,7 @@ describe("Data's sync card", () => {
       { syncLane: undefined, syncPendingRetires: [retire] },
       { retire: () => answer.promise },
     );
-    expect(screen.getByText("Turning off your old code…")).toBeVisible();
+    expect(screen.getByText(m.sync_old_code_turning_off())).toBeVisible();
   });
 
   it("stops showing progress once the relay refuses, & says it'll try again", async () => {
@@ -348,12 +349,12 @@ describe("Data's sync card", () => {
     await waitFor(() => {
       expect(screen.getByText(/We couldn’t turn off your old code yet/u)).toBeVisible();
     });
-    expect(screen.queryByText("Turning off your old code…")).toBeNull();
+    expect(screen.queryByText(m.sync_old_code_turning_off())).toBeNull();
   });
 
   it("says nothing about an old code when none is waiting", async () => {
     await renderCard();
-    expect(screen.queryByText("Turning off your old code…")).toBeNull();
+    expect(screen.queryByText(m.sync_old_code_turning_off())).toBeNull();
   });
 
   it("takes each new save file where it isn't watched", async () => {
@@ -362,9 +363,9 @@ describe("Data's sync card", () => {
     await tick();
     expect(screen.getByText(/drop your save file in again/)).toBeVisible();
     expect(screen.queryByText(/Keep this tab open/)).toBeNull();
-    expect(screen.getByRole("button", { name: "Can’t drag?" })).toBeVisible();
+    expect(screen.getByRole("button", { name: m.sync_find_cant_drag() })).toBeVisible();
 
-    await dropSave(saveFile(), "Drop in your latest save file");
+    await dropSave(saveFile(), m.sync_redrop_label());
     await waitFor(() => {
       expect(fake.take).toHaveBeenCalledTimes(1);
     });
@@ -375,7 +376,7 @@ describe("Data's sync card", () => {
     await renderCard();
     report({ fileName: "game-1315159680-autosave.sav", source: "watched" });
     await tick();
-    expect(screen.queryByRole("group", { name: "Drop in your latest save file" })).toBeNull();
+    expect(screen.queryByRole("group", { name: m.sync_redrop_label() })).toBeNull();
     expect(screen.getByText(/Keep this tab open/)).toBeVisible();
     expect(screen.getByText("game-1315159680-autosave.sav")).toBeVisible();
   });
@@ -384,15 +385,15 @@ describe("Data's sync card", () => {
     await renderCard();
     report({ source: "unknown" });
     await tick();
-    expect(screen.queryByRole("group", { name: "Drop in your latest save file" })).toBeNull();
+    expect(screen.queryByRole("group", { name: m.sync_redrop_label() })).toBeNull();
     report({ source: "unknown", trouble: "other-window" });
     await tick();
-    expect(screen.queryByRole("group", { name: "Drop in your latest save file" })).toBeNull();
+    expect(screen.queryByRole("group", { name: m.sync_redrop_label() })).toBeNull();
   });
 
   it("checks the save when the code is shown again", async () => {
     await renderCard();
-    await fireEvent.click(screen.getByRole("button", { name: "Show code" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_phone_show() }));
     await waitFor(() => {
       expect(fake.check).toHaveBeenCalledTimes(1);
     });
@@ -406,7 +407,7 @@ describe("the status panel", () => {
     render(Panel);
     report({ source: "file" });
     await tick();
-    expect(screen.getByRole("link", { name: "Drop in your latest save file" })).toBeVisible();
+    expect(screen.getByRole("link", { name: m.sync_redrop_label() })).toBeVisible();
     expect(screen.queryByText(/Keep this tab open/)).toBeNull();
   });
 });
@@ -420,11 +421,11 @@ describe("sharing", () => {
         create: vi.fn(() => created.promise),
       },
     );
-    await fireEvent.click(screen.getByRole("button", { name: "Show code" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_phone_show() }));
     await waitFor(() => {
       expect(relay.create).toHaveBeenCalledTimes(1);
     });
-    expect(screen.getByText("Generating the code…")).toBeVisible();
+    expect(screen.getByText(m.sync_making_code())).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
     expect(fake.check).not.toHaveBeenCalled();
 
@@ -440,9 +441,9 @@ describe("sharing", () => {
       { syncLane: { kind: "computer" } },
       { create: vi.fn().mockResolvedValue({ kind: "unreachable" }) },
     );
-    await fireEvent.click(screen.getByRole("button", { name: "Show code" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_phone_show() }));
     await waitFor(() => {
-      expect(screen.getByText("We can’t connect right now")).toBeVisible();
+      expect(screen.getByText(m.sync_unreachable_title())).toBeVisible();
     });
     expect(screen.queryByRole("img")).toBeNull();
     expect(fake.check).not.toHaveBeenCalled();
@@ -453,18 +454,18 @@ describe("sharing", () => {
       { syncLane: { kind: "computer" } },
       { create: vi.fn().mockResolvedValue({ kind: "refused" }) },
     );
-    await fireEvent.click(screen.getByRole("button", { name: "Show code" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_phone_show() }));
     await waitFor(() => {
-      expect(screen.getByText("Sync said no to that one")).toBeVisible();
+      expect(screen.getByText(m.sync_refused_title())).toBeVisible();
     });
-    expect(screen.queryByText("We can’t connect right now")).toBeNull();
-    expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
+    expect(screen.queryByText(m.sync_unreachable_title())).toBeNull();
+    expect(screen.getByRole("button", { name: m.sync_try_again() })).toBeVisible();
   });
 
   it("makes a code at the first “Copy link” too", async () => {
     vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
     const relay = await renderCodeArea({ syncLane: { kind: "computer" } });
-    await fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_phone_copy_link() }));
     await waitFor(() => {
       expect(relay.create).toHaveBeenCalledTimes(1);
     });
@@ -474,24 +475,22 @@ describe("sharing", () => {
 describe("computer setup", () => {
   it("creates nothing for “No thanks”, & hands the save file to the courier", async () => {
     const { relay, userState } = await renderSetup();
-    await dropSave(saveFile(), "When you’ve found your autosave, drop it here.");
-    await fireEvent.click(await screen.findByRole("button", { name: "Yep!" }));
+    await dropSave(saveFile(), m.sync_find_drop_next());
+    await fireEvent.click(await screen.findByRole("button", { name: m.sync_farm_yes() }));
     await waitFor(() => {
       expect(fake.take).toHaveBeenCalledTimes(1);
     });
     expect(userState.syncLane).toEqual({ kind: "computer" });
 
-    await fireEvent.click(
-      await screen.findByRole("button", { name: "No thanks, I’ll track here" }),
-    );
+    await fireEvent.click(await screen.findByRole("button", { name: m.sync_phone_no() }));
     expect(relay.create).not.toHaveBeenCalled();
     expect(screen.getByText(/drop your save file in again/)).toBeVisible();
   });
 
   it("creates nothing, & starts nothing, for a wrong file", async () => {
     const { relay, userState } = await renderSetup();
-    await dropSave(saveFile(), "When you’ve found your autosave, drop it here.");
-    await fireEvent.click(await screen.findByRole("button", { name: "Hmm, no, try that again" }));
+    await dropSave(saveFile(), m.sync_find_drop_next());
+    await fireEvent.click(await screen.findByRole("button", { name: m.sync_farm_no() }));
     expect(fake.take).not.toHaveBeenCalled();
     expect(relay.create).not.toHaveBeenCalled();
     expect(userState.syncLane).toBeUndefined();
@@ -500,25 +499,20 @@ describe("computer setup", () => {
   it("promises watching only for a save file with a handle", async () => {
     await renderSetup();
     const handle = { getFile: () => Promise.resolve(saveFile()), kind: "file" };
-    await fireEvent.drop(
-      screen.getByRole("group", { name: "When you’ve found your autosave, drop it here." }),
-      {
-        dataTransfer: {
-          files: [saveFile()],
-          items: [
-            {
-              getAsFile: saveFile,
-              getAsFileSystemHandle: () => Promise.resolve(handle),
-              kind: "file",
-            },
-          ],
-        },
+    await fireEvent.drop(screen.getByRole("group", { name: m.sync_find_drop_next() }), {
+      dataTransfer: {
+        files: [saveFile()],
+        items: [
+          {
+            getAsFile: saveFile,
+            getAsFileSystemHandle: () => Promise.resolve(handle),
+            kind: "file",
+          },
+        ],
       },
-    );
-    await fireEvent.click(await screen.findByRole("button", { name: "Yep!" }));
-    await fireEvent.click(
-      await screen.findByRole("button", { name: "No thanks, I’ll track here" }),
-    );
+    });
+    await fireEvent.click(await screen.findByRole("button", { name: m.sync_farm_yes() }));
+    await fireEvent.click(await screen.findByRole("button", { name: m.sync_phone_no() }));
     expect(screen.getByText(/we’ll sync your save file every time you sleep/)).toBeVisible();
   });
 });
@@ -531,9 +525,7 @@ describe("the done screen", () => {
     render(Setup, { announce: vi.fn(), linkOrigin: "https://mistria.fyi" });
     report({ source: "unknown", trouble: "other-window" });
     await tick();
-    await fireEvent.click(
-      await screen.findByRole("button", { name: "No thanks, I’ll track here" }),
-    );
+    await fireEvent.click(await screen.findByRole("button", { name: m.sync_phone_no() }));
     expect(screen.getByText(/we’ll sync your save file every time you sleep/)).toBeVisible();
   });
 });

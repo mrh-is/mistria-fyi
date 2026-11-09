@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import * as m from "#lib/paraglide/messages.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
@@ -17,7 +18,9 @@ describe("error page", () => {
     expect(queries.getByText("404")).toBeTruthy();
     expect(text).toContain("This page doesn’t exist");
     expect(text).toContain("tend the fields");
-    expect(queries.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/en");
+    expect(queries.getByRole("link", { name: m.error_back_home() }).getAttribute("href")).toBe(
+      "/en",
+    );
   });
 
   it("renders the generic message for non-404 errors", () => {
@@ -26,7 +29,7 @@ describe("error page", () => {
     const { queries, text } = renderToFragmentWithFeedback(ErrorPage, { props: {} });
 
     expect(queries.getByText("500")).toBeTruthy();
-    expect(text).toContain("Something went wrong on our end, but your progress is safe.");
+    expect(text).toContain(m.error_generic());
     expect(text).not.toContain("tend the fields");
   });
 });
