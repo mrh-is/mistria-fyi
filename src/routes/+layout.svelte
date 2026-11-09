@@ -127,7 +127,8 @@
 
   <Toaster
     position="bottom-center"
-    expand={userState.starterItems !== undefined}
+    expand
+    gap={14}
     offset={{
       bottom: toastBottom,
       left: toastOffset,
