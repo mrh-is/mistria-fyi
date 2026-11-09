@@ -236,7 +236,7 @@
   });
 </script>
 
-<PageHeader title={m.sync_page_title()} backLabel={m.common_go_back()} historyBack />
+<PageHeader title={m.sync_page_title()} />
 
 <div class="sync-page">
   <div class="sr-only" role="status" aria-live="polite">{announcement}</div>
