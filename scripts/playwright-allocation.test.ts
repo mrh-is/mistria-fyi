@@ -109,6 +109,20 @@ describe("accessibility duration allocation", () => {
 });
 
 describe("supported Playwright selection", () => {
+  it("runs every accessibility test exactly once across the native file shards", async () => {
+    const [unsharded, first, second] = await Promise.all([
+      listTests(),
+      listTests(["--shard=1/2"]),
+      listTests(["--shard=2/2"]),
+    ]);
+    expect(first.length).toBeGreaterThan(0);
+    expect(second.length).toBeGreaterThan(0);
+    expect([...first, ...second].toSorted()).toEqual(unsharded.toSorted());
+    expect(new Set([...first, ...second]).size).toBe(unsharded.length);
+    const firstFiles = new Set(first.map((test) => test.split(" › ")[1]));
+    expect(second.every((test) => !firstFiles.has(test.split(" › ")[1]))).toBe(true);
+  }, 90_000);
+
   it("enumerates every unsharded accessibility test exactly once across the actual test lists", async () => {
     const directory = mkdtempSync(join(tmpdir(), "mistria-allocation-"));
     try {

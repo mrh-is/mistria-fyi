@@ -379,8 +379,8 @@ export default defineConfig(({ command }) => ({
     ],
     restoreMocks: true,
     retry,
-    // This spike measures Vitest's default sequencer in CI. Keep local relay runs unchanged.
-    sequence: { sequencer: relayChanged && !process.env.CI ? RelayFirstSequencer : undefined },
+    // With no relay tests outside CI, let the CLI select Vitest's built-in shuffle sequencer.
+    sequence: { sequencer: relayChanged || process.env.CI ? RelayFirstSequencer : undefined },
     testTimeout: loadTolerantTimeoutMs,
     unstubEnvs: true,
     unstubGlobals: true,
