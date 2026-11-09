@@ -37,7 +37,7 @@
 
   let { locale }: { locale: LocaleCode } = $props();
 
-  const checkOff = createRowCheckOff<QuestId>(undefined, false);
+  const checkOff = createRowCheckOff<QuestId>({ animateLeaving: false });
   const sectionGrouping = createSectionGrouping<QuestType>();
 
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));

@@ -35,16 +35,19 @@ export interface CheckOff<Id, SectionKey> {
   rowDisplay: (id: Id, visibility: undefined | VisibilityCondition) => TrackerRowDisplay;
 }
 
-interface CheckOffOptions<Id, SectionKey> {
+interface RowCheckOffOptions {
   /**
    * Play the leave animation when a check-off completes a row. Defaults to true; a page whose rows
    * don’t animate out of their shelf turns it off.
    */
   animateLeaving?: boolean;
-  category: CategoryKey;
-  grouping: Pick<SectionGrouping<SectionKey>, "hold">;
   /** A guard the page also uses for other prompts, such as mines’ floor seals. */
   guard?: SpoilerGuard;
+}
+
+interface CheckOffOptions<Id, SectionKey> extends RowCheckOffOptions {
+  category: CategoryKey;
+  grouping: Pick<SectionGrouping<SectionKey>, "hold">;
   isCompleted: (id: Id) => boolean;
   toggle: (id: Id) => void;
 }
@@ -72,10 +75,10 @@ interface RowCheckOff<Id> {
 }
 
 /** Shared interaction for rows whose progress actions have different undo results. */
-export function createRowCheckOff<Id>(
-  guard = createSpoilerGuard(),
+export function createRowCheckOff<Id>({
   animateLeaving = true,
-): RowCheckOff<Id> {
+  guard = createSpoilerGuard(),
+}: RowCheckOffOptions = {}): RowCheckOff<Id> {
   const leaving = createLeavingSet<Id>();
   return {
     guard,
@@ -105,10 +108,11 @@ export function createRowCheckOff<Id>(
   };
 }
 
+/** Connects a category’s binary progress toggle to its row display, spoiler guard, & undo toast. */
 export function createCheckOff<Id, SectionKey>(
   options: CheckOffOptions<Id, SectionKey>,
 ): CheckOff<Id, SectionKey> {
-  const checkOff = createRowCheckOff<Id>(options.guard, options.animateLeaving);
+  const checkOff = createRowCheckOff<Id>(options);
   return {
     guard: checkOff.guard,
     isLeaving: checkOff.isLeaving,
