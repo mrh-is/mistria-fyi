@@ -85,6 +85,21 @@
     }
   });
 
+  $effect(() => {
+    toolbarState.filterPanelAvailable = Boolean(toolbar?.filter);
+    return () => {
+      toolbarState.filterPanelAvailable = false;
+    };
+  });
+
+  // Another component, like the empty-state link, asked for the filter panel.
+  $effect(() => {
+    if (toolbarState.filterPanelRequest === 0) return;
+    untrack(() => {
+      if (toolbar?.filter && activePanel !== "visibility") togglePanel("visibility");
+    });
+  });
+
   // Keeps toasts (an Undo, say) from covering the open panel's controls. The fixed panel's
   // `offsetTop` is viewport-relative and ignores its fly-in transform, unlike the bounding box.
   $effect(() => {

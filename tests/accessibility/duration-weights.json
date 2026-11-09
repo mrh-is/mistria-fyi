@@ -48,7 +48,7 @@
     "[] › geometry.spec.ts › tracker paper touch geometry › spoiler covers stay text-height while their targets reach 44 pixels": 3017,
     "[] › home-search.spec.ts › replacing a deeply scrolled home query shows the new first screenful": 2375,
     "[] › home-stripes.spec.ts › home stripe counts fit before their ribbons": 6543,
-    "[] › keyboard.spec.ts › keyboard and focus accessibility › data management returns to the page that opened it": 2270,
+    "[] › keyboard.spec.ts › keyboard and focus accessibility › data management links home from a category page": 2270,
     "[] › keyboard.spec.ts › keyboard and focus accessibility › feedback dialog contains focus and restores it on Escape": 1645,
     "[] › keyboard.spec.ts › keyboard and focus accessibility › quick settings operates with Enter and Space": 3151,
     "[] › keyboard.spec.ts › keyboard and focus accessibility › row removal moves focus and Undo is keyboard operable": 2555,

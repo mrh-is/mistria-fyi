@@ -48,7 +48,7 @@ Ordered by risk:
 1. **`quick-settings-theme-picker`**: theme choice and its `localStorage` persistence.
 2. **`ai-disclosure-dialog`** & **`persistence-warning`**: open, dismiss, and dismissal memory.
 3. **Category compositors** (`*-content.svelte`): a smoke test per page that a spoilered row opens
-   `confirm-spoiler-dialog` and that "Yes, and update my progress" changes progression.
+   `confirm-spoiler-dialog` and that "Yes, and prerequisites too" changes progression.
 4. **Camera stream** in sync’s `qr-scanner`: the real `getUserMedia` path belongs in the Playwright
    layer with a fake media stream, if it is covered at all.
 5. **`animals-content` & its sections**: variant & cosmetic toggles (the store is tested).
@@ -76,6 +76,12 @@ Reuse these from `src/lib/test-utils/` rather than copying a local version into 
   decorative markup (an SVG stroke count, a class that drives a visual state).
 - Assert observable outcomes: text, `aria-*` state, focus, and store state that the user would see
   reflected. Do not assert on internal component variables.
+- In component & store tests, use the expected Paraglide message function for localized copy. Pass
+  the expected parameters from the test fixture so the assertion catches the wrong message or input.
+  For example, query a check-off button with
+  `{ name: m.tracker_row_check({ name: "Copper Ore" }) }`. Keep literals when testing wording,
+  pluralization, or formatting, or when they make an accessibility or end-to-end flow easier to
+  read.
 - Cover in-flight, success, and failure states for asynchronous actions, and always assert that a
   failure leaves progress untouched.
 - Clean up with `cleanup()` and `userState.resetAll()`, then `await tick()` so the next test mounts

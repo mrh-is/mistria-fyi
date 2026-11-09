@@ -11,7 +11,7 @@ export async function openFeedbackValidation(page: Page): Promise<void> {
   const dialog = page.getByRole("dialog", { name: "Send feedback" });
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { exact: true, name: "Send" }).click();
-  await expect(dialog.getByRole("alert")).toHaveText("Please enter a message.");
+  await expect(dialog.getByRole("alert")).toHaveText("What did you wanna say?");
 }
 
 export async function openSearch(page: Page, query: string): Promise<void> {

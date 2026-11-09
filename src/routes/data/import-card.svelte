@@ -11,13 +11,10 @@
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import { Separator } from "#lib/components/ui/separator/index.js";
   import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
-  import {
-    extractSaveProgress,
-    parseExtractedSaveFiles,
-    SavArchiveError,
-    unpackSavFile,
-  } from "#lib/engine/import-save.js";
+  import { extractSaveProgress, SavArchiveError, unpackSavFile } from "#lib/engine/import-save.js";
   import { readSaveIdentity } from "#lib/engine/save-identity.js";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import { describeErrorForReport } from "#lib/feedback/error-details.js";
   import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { progressImport } from "#lib/progress/index.js";
@@ -28,11 +25,7 @@
   import { page } from "$app/state";
 
   import DataCard from "./data-card.svelte";
-  import {
-    formatExtractedSaveFilesError,
-    formatSavArchiveError,
-    formatSaveImportWarning,
-  } from "./data-error-messages.js";
+  import { formatSavArchiveError, formatSaveImportWarning } from "./data-error-messages.js";
   import LastImport from "./last-import.svelte";
   import MergeSummary from "./merge-summary.svelte";
 
@@ -55,7 +48,7 @@
   // Narrowing it again isn't possible: iOS maps `accept` to UTIs, and an unregistered extension
   // only conforms to public.data, which every file does. So iOS gets a hint instead.
   let onIos = $state(false);
-  let acceptSaveTypes = $derived(onIos ? undefined : ".sav,.json");
+  let acceptSaveTypes = $derived(onIos ? undefined : ".sav");
   onMount(() => {
     onIos = isIosDevice();
   });
@@ -63,8 +56,11 @@
   // ── Import state ──
   let importResult = $state<null | SaveImportReport>(null);
   let importError = $state<null | string>(null);
-  let importErrorDetails = $state<string[]>([]);
-  let showSavFallbackHelp = $state(false);
+  /** The error is the unreadable-save one, whose "send us feedback" opens the feedback form. */
+  let importErrorOffersFeedback = $state(false);
+  /** Redacted exception details for the feedback draft, when the failure threw one. */
+  let importErrorReportDetails = $state<string | undefined>();
+  const feedbackContext = getFeedbackContext();
   let importing = $state(false);
   let importStatus = $state("");
   let filesUsed = $state<string[]>([]);
@@ -96,6 +92,13 @@
     setTimeout(() => {
       copied = false;
     }, 2000);
+  }
+
+  /** The feedback draft: the error the player saw, then any redacted details for debugging. */
+  function importErrorReport(error: string): string {
+    return importErrorReportDetails === undefined
+      ? error
+      : `${error}\n\n${m.import_error_feedback_details({ details: importErrorReportDetails })}`;
   }
 
   function copyPath() {
@@ -131,52 +134,37 @@
     importing = true;
     importResult = null;
     importError = null;
-    importErrorDetails = [];
-    showSavFallbackHelp = false;
+    importErrorOffersFeedback = false;
+    importErrorReportDetails = undefined;
     importStatus = "";
     filesUsed = [];
 
     try {
-      // Check if user selected a .sav file
-      const savFile = [...files].find((file) => isSavFile(file));
+      const savFile = files[0];
+      if (!savFile || files.some((file) => !isSavFile(file))) {
+        importError = m.import_error_choose_sav();
+        return;
+      }
 
       let bundle;
-      let parseWarnings: SaveImportWarning[] = [];
-      if (savFile) {
-        importStatus = m.import_status_unpacking();
-        try {
-          bundle = await unpackSavFile(savFile);
-        } catch (error) {
-          importError =
-            error instanceof SavArchiveError
-              ? formatSavArchiveError(error.detail)
-              : m.import_error_unexpected();
-          showSavFallbackHelp = true;
-          return;
-        }
-      } else {
-        const result = await parseExtractedSaveFiles(files);
-        if (result.error || !result.bundle) {
-          importError = result.error
-            ? formatExtractedSaveFilesError(result.error)
-            : m.import_error_parse_failed();
-          if (result.error?.code === "no-valid-files") {
-            importErrorDetails = result.error.problems.map(formatSaveImportWarning);
-          }
-          return;
-        }
-        bundle = result.bundle;
-        parseWarnings = result.warnings ?? [];
+      importStatus = m.import_status_unpacking();
+      try {
+        bundle = await unpackSavFile(savFile);
+      } catch (error) {
+        // A failure the archive reader doesn't recognize is worth a report, so it links to feedback.
+        const known = error instanceof SavArchiveError;
+        importError = known
+          ? formatSavArchiveError(error.detail)
+          : m.import_error_parse_failed({
+              feedback: m.import_error_feedback_link(),
+              tryAutosave: m.import_error_try_autosave(),
+            });
+        importErrorOffersFeedback = !known;
+        if (!known) importErrorReportDetails = describeErrorForReport(error);
+        return;
       }
 
-      // The archive's internal names aren't files the player chose.
-      if (savFile) {
-        filesUsed = [savFile.name];
-      } else {
-        if (bundle.player) filesUsed.push("player.json");
-        if (bundle.gamedata) filesUsed.push("gamedata.json");
-        if (bundle.quests) filesUsed.push("quests.json");
-      }
+      filesUsed = [savFile.name];
 
       importStatus = m.import_status_importing();
       const { completed, day, playtime, warnings } = extractSaveProgress(bundle);
@@ -187,7 +175,7 @@
           metadata: { ...readSaveIdentity(bundle), importedAt: Date.now() },
           playtime,
         },
-        [...parseWarnings, ...warnings],
+        warnings,
       );
     } catch {
       importError = m.import_error_unexpected();
@@ -289,7 +277,6 @@
       aria-label={m.import_file_input_aria()}
       accept={acceptSaveTypes}
       disabled={importing || farmPrompt !== null}
-      multiple
       class="hidden"
       onchange={handleInputChange}
     />
@@ -382,45 +369,20 @@
 
     {#if importError}
       <StatusNote class="mt-3 text-base" tone="error">
-        <p>{importError}</p>
-        {#if importErrorDetails.length > 0}
-          <ul class="mt-2 list-disc ps-5 text-sm">
-            {#each importErrorDetails as detail, index (index)}
-              <li>{detail}</li>
-            {/each}
-          </ul>
-        {/if}
-        {#if showSavFallbackHelp}
-          <p class="mt-2 text-sm">
-            {m.import_fallback_before_vaultc()}
-            <!-- eslint-disable local/no-hardcoded-ui-text -- proper noun, same in every locale -->
-            <a
-              href="https://github.com/NPC-Studio/vaultc"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="underline">vaultc</a
-            >
-            <!-- eslint-enable local/no-hardcoded-ui-text -->
-            {m.import_fallback_between()}
-            <!-- eslint-disable local/no-hardcoded-ui-text -- proper noun, same in every locale -->
-            <a
-              href="https://github.com/lordp/VaultGo"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="underline">VaultGo</a
-            >
-            <!-- eslint-enable local/no-hardcoded-ui-text -->
-            {m.import_fallback_after_vaultgo()}
-          </p>
-          <p class="mt-2 text-sm">
-            {#each messageParts( (slot) => m.import_fallback_files( { player: slot("player"), gamedata: slot("gamedata"), quests: slot("quests") } ) ) as part, index (index)}
-              {#if typeof part === "string"}{part}{:else if part.slot === "player"}<code
-                  >player.json</code
-                >{:else if part.slot === "gamedata"}<code>gamedata.json</code>{:else}<code
-                  >quests.json</code
+        {#if importErrorOffersFeedback}
+          <p>
+            {#each messageParts( (slot) => m.import_error_parse_failed( { feedback: slot("feedback"), tryAutosave: m.import_error_try_autosave() } ) ) as part, index (index)}
+              {#if typeof part === "string"}{part}{:else}<button
+                  type="button"
+                  class="cursor-pointer underline underline-offset-2"
+                  onclick={() => {
+                    if (importError) feedbackContext.reportError(importErrorReport(importError));
+                  }}>{m.import_error_feedback_link()}</button
                 >{/if}
             {/each}
           </p>
+        {:else}
+          <p>{importError}</p>
         {/if}
       </StatusNote>
     {/if}

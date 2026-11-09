@@ -4,6 +4,7 @@ import { CURRENT_GAME_VERSION } from "./game-version.js";
 
 export interface CliOptions {
   assetsDir?: string;
+  gameTermLexiconOnly: boolean;
   parseOnly: boolean;
   parseProfile?: "canonical";
   sprites: boolean;
@@ -14,6 +15,7 @@ export interface CliOptions {
 /** Parses the pipeline's public CLI before reading game assets or writing outputs. */
 export function parseCliOptions(args: readonly string[]): CliOptions {
   const options: CliOptions = {
+    gameTermLexiconOnly: false,
     parseOnly: false,
     sprites: false,
     villagerSpritesOnly: false,
@@ -32,6 +34,10 @@ export function parseCliOptions(args: readonly string[]): CliOptions {
     if (seen.has(name)) throw new Error(`Duplicate option: ${name}`);
     seen.add(name);
     switch (name) {
+      case "--game-term-lexicon-only":
+        if (value !== undefined) throw new Error(`Unknown option: ${arg}`);
+        options.gameTermLexiconOnly = true;
+        break;
       case "--parse-only":
         if (value !== undefined) throw new Error(`Unknown option: ${arg}`);
         options.parseOnly = true;
@@ -60,6 +66,12 @@ export function parseCliOptions(args: readonly string[]): CliOptions {
   }
   if (options.parseProfile && !options.parseOnly) {
     throw new Error("--parse-profile requires --parse-only.");
+  }
+  if (
+    options.gameTermLexiconOnly &&
+    (options.parseOnly || options.sprites || options.villagerSpritesOnly)
+  ) {
+    throw new Error("--game-term-lexicon-only cannot be combined with other extraction flags.");
   }
   if (options.parseOnly && (options.sprites || options.villagerSpritesOnly)) {
     throw new Error("--parse-only cannot be combined with sprite extraction flags.");

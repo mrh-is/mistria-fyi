@@ -7,6 +7,7 @@ import { getName } from "#lib/data/names.js";
 import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
 import { showUndoToast } from "#lib/effects/undo-toast.js";
 import { getMaxMineFloor } from "#lib/engine/progress.js";
+import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordKeys } from "#lib/utils/record.js";
@@ -48,7 +49,9 @@ it("undoing an untick doesn't celebrate", async () => {
   userState.toggleSpell(lastSpell);
   renderWithFeedback(MinesContent, { defaultOpen: true, locale: "en" });
   // Every finished list sits under a closed Completed shelf.
-  const completedHeadings = await screen.findAllByRole("heading", { name: "Completed" });
+  const completedHeadings = await screen.findAllByRole("heading", {
+    name: m.common_completed_heading(),
+  });
   await Promise.all(
     completedHeadings.map((heading) => fireEvent.click(within(heading).getByRole("button"))),
   );

@@ -62,17 +62,18 @@ dependencies, so after a `git pull` that changes the lockfile, run `pnpm install
 first:
 
 ```sh
-pnpm run worktree:new <issue-number>-<short-description> [starting-branch]
+pnpm run worktree:new <slug> [starting-branch]
 ```
 
-The script validates the slug (`<issue-number>-<short-description>`, lowercase), fetches the
-starting branch (default `main`), creates `.worktrees/<slug>` on a matching branch from the
-refreshed `origin/<starting-branch>` under the main checkout, removes the worktree & branch again if
-a later step fails, refuses to run if `.worktrees/` is not gitignored, links `pipeline/input/` &
-every `.worktreeinclude` entry from the main checkout, and runs `pnpm install --frozen-lockfile` and
-`pnpm run prepare` (Husky hooks, Paraglide output, & `svelte-kit sync`). The link & install steps
-live in `scripts/setup-worktree.ts`, which skips entries already present or missing from the main
-checkout. Both scripts run under Node so Windows behaves the same; see
+The slug uses lowercase letters & digits separated by single hyphens. `start-work issue` adds the
+issue number prefix. The script validates the slug, fetches the starting branch (default `main`),
+creates `.worktrees/<slug>` on a matching branch from the refreshed `origin/<starting-branch>` under
+the main checkout, removes the worktree & branch again if a later step fails, refuses to run if
+`.worktrees/` is not gitignored, links `pipeline/input/` & every `.worktreeinclude` entry from the
+main checkout, and runs `pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks,
+Paraglide output, & `svelte-kit sync`). The link & install steps live in
+`scripts/setup-worktree.ts`, which skips entries already present or missing from the main checkout.
+Both scripts run under Node so Windows behaves the same; see
 [Worktrees & Verification on Windows](#worktrees--verification-on-windows).
 
 Before creating the harness worktree, fetch the intended starting branch and use its refreshed
@@ -130,8 +131,8 @@ store in the parent shell for subsequent commands & approved setup retries:
 pnpm_config_confirm_modules_purge=false node scripts/setup-worktree.ts
 ```
 
-Preparation still needs permission to write shared Git hook metadata. Do not use this retry to
-replace another session’s dependency directory, or set `CI=true` merely to bypass a prompt.
+Preparation generates hooks in the checkout. Configure the shared hook path once per clone using
+[machine setup](machine-setup.md#git-hooks).
 
 GitHub CLI downloads run logs into its cache even though `gh run view --log` is read-only against
 GitHub. Use a writable temporary cache in the sandbox instead of granting access to `~/.cache/gh`:
@@ -900,15 +901,14 @@ offline fallback, registration, or activation behavior.
 - **Cause**: Lifecycle scripts (including `prepare`) may be disabled or skipped in some
   environments. `core.hooksPath` is stored in the shared `.git/config` and may already be set by
   another worktree, but the `.husky/_` directory that Husky generates is worktree-local and will be
-  absent until `prepare` is run. A parallel setup can also hold the shared `.git/config` lock;
-  `scripts/install-git-hooks.ts` retries Husky's install, and `prepare` fails with the lock error if
-  it never frees.
+  absent until `prepare` is run. For a new clone, configure the shared path first using
+  [machine setup](machine-setup.md#git-hooks).
 - **Recovery**: Run `pnpm run prepare` from within the worktree directory after installation:
   ```sh
   pnpm run prepare
   ```
-  Verify installation by confirming `core.hooksPath` is set to `.husky/_` and the Husky wrapper
-  exists:
+  Verify that `core.hooksPath` points to the expected hook directory and that its Husky wrapper
+  exists. For the recommended relative path:
   ```sh
   git config --get core.hooksPath   # should print .husky/_
   ls .husky/_/pre-commit            # should exist

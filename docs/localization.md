@@ -207,6 +207,15 @@ takes only a few options as flags and would emit a runtime with the default stra
 
 ## Adding a new UI string (agents & humans)
 
+When translating `messages/*.json`, look up in-game terms in
+`pipeline/output/game-term-lexicon.json`. Run `pnpm run pipeline:assets -- --game-term-lexicon-only`
+if the file is missing or its `version` differs from `CURRENT_GAME_VERSION` in
+`pipeline/src/game-version.ts`. Look up the English term under `locales.en`, then use the same
+native key under the target locale. For example, `locations/water_seal/name` gives `水の封印` in
+`ja`, so the game uses `封印` for the seal. The lexicon also covers Almanac category labels and
+skill names. The song crystal category is omitted while its Japanese translation is missing. The
+lexicon lives outside the app's bundled data.
+
 1. Add the English string to `messages/en.json` under a descriptive key (snake_case, prefixed by
    feature area — e.g. `feedback_submit_button`, `about_maintainer_intro`).
 2. Add the same key to all 7 other `messages/<locale>.json` files (`es`, `fr`, `ja`, `ko`, `ru`,

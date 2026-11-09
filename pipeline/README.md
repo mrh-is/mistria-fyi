@@ -21,6 +21,7 @@ MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
 pnpm run pipeline -- /path/to/assets --parse-only --parse-profile=canonical
 pnpm run pipeline:assets
+pnpm run pipeline:assets -- --game-term-lexicon-only
 ```
 
 `pnpm run pipeline:assets` is the local-development shortcut for the ignored `pipeline/input`
@@ -28,6 +29,10 @@ game-files root, at the canonical game version (`--version=current`, which reads
 `CURRENT_GAME_VERSION` in `src/game-version.ts` and picks `pipeline/input/vX.Y.Z/assets`). Pass
 other pipeline flags after `--`; it avoids a shell environment assignment and is the preferred
 command for routine regeneration in a configured worktree.
+
+`--game-term-lexicon-only` uses extracted game assets to generate the versioned translator reference
+under `pipeline/output/`. Missing or blank translations fail this mode before writing. Full tracker
+regeneration runs separately and keeps its usual beta translation fallbacks.
 
 `pipeline/input` holds one `vX.Y.Z/assets` folder per release. Given a directory with version
 folders and no `fiddle/` of its own, the pipeline reads `vX.Y.Z/assets` for the `--version` you pass
@@ -407,13 +412,14 @@ translation directly, so English suffix rules never alter translated strings.
 
 ## Artifacts
 
-| Output                                       | Contents                                                              |
-| -------------------------------------------- | --------------------------------------------------------------------- |
-| `src/lib/data/tracker-data.json`             | Committed app data, pretty-printed so regenerations diff readably     |
-| `src/lib/data/locales.json`                  | Locale manifest generated from `l10n.meta.toml`                       |
-| `src/lib/data/locales/<locale>/*.json`       | Per-locale name chunks, one file per category                         |
-| `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--villager-sprites-only` |
-| `pipeline/output/asset-atlas/`               | Per-version asset inventories & diffs, from `pnpm run pipeline:atlas` |
+| Output                                       | Contents                                                               |
+| -------------------------------------------- | ---------------------------------------------------------------------- |
+| `src/lib/data/tracker-data.json`             | Committed app data, pretty-printed so regenerations diff readably      |
+| `src/lib/data/locales.json`                  | Locale manifest generated from `l10n.meta.toml`                        |
+| `src/lib/data/locales/<locale>/*.json`       | Per-locale name chunks, one file per category                          |
+| `pipeline/output/game-term-lexicon.json`     | Local translator reference keyed by locale and native localization key |
+| `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--villager-sprites-only`  |
+| `pipeline/output/asset-atlas/`               | Per-version asset inventories & diffs, from `pnpm run pipeline:atlas`  |
 
 Review a regeneration with `pnpm run data:diff [base-ref]`, which compares the committed tracker
 data at a Git ref (default `origin/main`) with the working copy and prints each added (`+`), removed

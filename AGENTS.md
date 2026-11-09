@@ -29,12 +29,10 @@ session limits) belong in each contributor’s user config.
 
 ## Task scope
 
-- Before working on an issue, read it, its comments, & its relationships:
-  `gh issue view <number> --json title,body,labels,comments,blockedBy,parent`. Don’t use
-  `--comments` alone, which can return empty output.
-- Don’t start an issue that’s blocked by an open issue, or one labeled `status: blocked` or
-  `status: needs decision`. If an issue already has `status: in progress` or an `agent:*` label,
-  coordinate with its owner.
+- Follow [Start work](docs/agent-workflow.md#start-work) for an issue, an authorized PR takeover, or
+  an ad hoc task. Proceed on an unclaimed issue or an explicit handoff without asking again. Ask
+  when ownership conflicts, required GitHub authentication is unavailable, or scope needs a
+  decision.
 - File an issue, without asking first, for these findings you don’t fix in the current change:
   - a product bug,
   - something that blocks your task,
@@ -72,14 +70,19 @@ session limits) belong in each contributor’s user config.
 
 - Worktrees are optional. Read [agent-reference.md](docs/agent-reference.md#worktree-mechanics)
   before using one.
-- To create one, run `pnpm run worktree:new <issue-number>-<short-description>`. Inside a worktree
-  that a harness created, run `node scripts/setup-worktree.ts` instead. Either command:
+- To create one, run `pnpm run worktree:new <slug>` with lowercase letters, digits, & hyphens.
+  `start-work issue` adds the issue number prefix. Inside a worktree that a harness created, run
+  `node scripts/setup-worktree.ts` instead. Either command:
   - links the game assets & the `.worktreeinclude` entries (env files),
   - installs dependencies with the frozen lockfile,
   - runs `prepare`.
 - Run setup before editing in a harness-created worktree; no hook runs it, and a read-only session
   needs none. Standard setup in an isolated, harness-created worktree is preauthorized, even after a
   missing-dependency preflight failure.
+- In Codex desktop worktrees, run routine setup in the sandbox. Request scoped escalation up front
+  for Git operations that write protected metadata, including fetch, branch creation, staging, &
+  commits. The shared Git hook path is configured once per clone in
+  [machine setup](docs/machine-setup.md#git-hooks).
 - When dependencies are absent, or a merge, pull, or rebase changes the lockfile, pnpm fails with
   `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`. In a linked worktree, run `node scripts/setup-worktree.ts`,
   which also restores missing links. Elsewhere, run `pnpm install --frozen-lockfile`. A deliberate

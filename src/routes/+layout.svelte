@@ -68,12 +68,14 @@
   let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
   let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
-  // Toasts sit just above the toolbar, or above an open toolbar panel so they never cover it.
+  // Toasts sit 8 pixels above the toolbar (12 pixels of inset plus 44-pixel buttons), or above an
+  // open toolbar panel so they never cover it.
   const toastOffset = "calc(56px + env(safe-area-inset-bottom))";
+  const toastAboveToolbar = "calc(64px + env(safe-area-inset-bottom))";
   let toastBottom = $derived(
     toolbarState.panelClearance > 0
-      ? `max(${toastOffset}, ${toolbarState.panelClearance + 8}px)`
-      : toastOffset,
+      ? `max(${toastAboveToolbar}, ${toolbarState.panelClearance + 8}px)`
+      : toastAboveToolbar,
   );
 
   // The server stamps `<html lang>`/`dir` for the first paint; a client-side locale switch (the

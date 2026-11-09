@@ -22,6 +22,7 @@ const NOT_ALLOWED: Record<string, string> = {
   "saves:upload": "publishes private player saves to storage",
   "sprites:upload": "publishes to production storage",
   "sprites:villagers": "rewrites generated sprites from game assets",
+  "start-work": "changes GitHub issue and pull request ownership",
   "test:saves": "reads private player saves; the maintainer runs it deliberately",
   "worktree:cleanup": "a trailing `-- --apply` reaches the same deletion as worktree:cleanup:apply",
   "worktree:cleanup:apply": "deletes worktrees & branches",

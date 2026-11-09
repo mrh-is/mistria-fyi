@@ -24,7 +24,7 @@
 
 <label class="flex cursor-pointer items-center gap-3 text-sm">
   <Switch
-    class="h-5 w-9 rounded-md px-px *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
+    class="h-5 w-9 rounded-md px-px enabled:hover:not-focus-visible:outline-2 enabled:hover:not-focus-visible:outline-offset-2 enabled:hover:not-focus-visible:outline-primary enabled:hover:not-focus-visible:outline-solid *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
     bind:checked
     aria-label={label}
     {onCheckedChange}

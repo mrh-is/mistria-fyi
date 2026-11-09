@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import AlmanacContent from "#lib/components/almanac-content.svelte";
 import { getAlmanacEntryNames, getName } from "#lib/data/names.js";
 import { projectAlmanac } from "#lib/engine/projections/almanac.js";
+import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -47,10 +48,15 @@ it("moves a section finished by a row toggle under Completed once the row has le
   vi.useFakeTimers();
   await fireEvent.click(toggle);
   await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 10);
-  expect(screen.queryByRole("heading", { level: 2, name: "Completed" })).toBeNull();
+  expect(
+    screen.queryByRole("heading", { level: 2, name: m.common_completed_heading() }),
+  ).toBeNull();
 
   await vi.advanceTimersByTimeAsync(10);
-  const completedHeading = screen.getByRole("heading", { level: 2, name: "Completed" });
+  const completedHeading = screen.getByRole("heading", {
+    level: 2,
+    name: m.common_completed_heading(),
+  });
   await fireEvent.click(within(completedHeading).getByRole("button"));
   const sectionTrigger = screen.getByRole("button", { name: sectionName });
   expect(

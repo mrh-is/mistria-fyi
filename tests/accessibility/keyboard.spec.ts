@@ -73,15 +73,15 @@ test.describe("keyboard and focus accessibility", () => {
     await expect(trigger).toBeFocused();
   });
 
-  test("data management returns to the page that opened it", async ({ page }) => {
+  test("data management links home from a category page", async ({ page }) => {
     await gotoApplication(page, "/museum");
     await page.getByRole("button", { name: "Quick settings" }).click();
     await page.getByRole("link", { name: "Data" }).click();
     await expect(page).toHaveURL(/\/data$/);
 
-    await page.getByRole("link", { name: "Go back" }).click();
+    await page.getByRole("link", { name: "Back to home" }).press("Enter");
 
-    await expect(page).toHaveURL(/\/museum$/);
+    await expect(page).toHaveURL(/\/en$/);
   });
 
   test("row removal moves focus and Undo is keyboard operable", critical, async ({ page }) => {
@@ -203,7 +203,7 @@ test.describe("keyboard and focus accessibility", () => {
     // Floor 21 is past the first seal, so the dialog must work from the keyboard too.
     await floorInput.fill("21");
     await floorInput.press("Tab");
-    await page.getByRole("button", { name: "Yes, just this item" }).press("Enter");
+    await page.getByRole("button", { name: "Yes, just this one" }).press("Enter");
     await expect(page.getByRole("group", { name: /Mine floor, 21 of/ })).toBeVisible();
 
     await gotoApplication(page, "/renown");

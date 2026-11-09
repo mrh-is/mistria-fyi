@@ -1,29 +1,23 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { tick } from "svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+
+import * as m from "#lib/paraglide/messages.js";
 
 import AboutPage from "./+page.svelte";
 
-afterEach(async () => {
-  Reflect.deleteProperty(globalThis.history, "length");
-  await tick();
-});
-
 describe("About page navigation and disclosures", () => {
-  it("returns through browser history when history is available", async () => {
-    Object.defineProperty(globalThis.history, "length", { configurable: true, value: 2 });
-    const back = vi.spyOn(globalThis.history, "back").mockReturnValue(undefined);
+  it("links the header arrow to home", () => {
     render(AboutPage);
-
-    await fireEvent.click(screen.getByRole("link", { name: "Go back" }));
-
-    expect(back).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("link", { name: m.page_header_back_to_home() })).toHaveAttribute(
+      "href",
+      "/en",
+    );
   });
 
   it("links the generated open-source license notices from the About footer", () => {
     render(AboutPage);
 
-    expect(screen.getByRole("link", { name: "Open-source licenses" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: m.about_licenses_link() })).toHaveAttribute(
       "href",
       "/licenses.txt",
     );
@@ -32,9 +26,9 @@ describe("About page navigation and disclosures", () => {
   it("opens the AI disclosure from the About footer", async () => {
     render(AboutPage);
 
-    await fireEvent.click(screen.getByRole("button", { name: "AI disclosure" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.about_ai_disclosure_link() }));
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Built with AI assistance")).toBeInTheDocument();
+    expect(screen.getByText(m.ai_disclosure_title())).toBeInTheDocument();
   });
 });

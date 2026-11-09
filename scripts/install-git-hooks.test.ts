@@ -1,49 +1,41 @@
-import { describe, expect, it, vi } from "vitest";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { installGitHooks } from "./install-git-hooks.js";
 
-const LOCK_FAILURE = "error: could not lock config file .git/config: File exists\n";
-
 describe("installGitHooks", () => {
-  it("installs once when Husky succeeds", () => {
-    const install = vi.fn(() => "");
-    const wait = vi.fn();
+  let root: string;
 
-    expect(installGitHooks(install, wait)).toEqual({ message: "", ok: true });
-    expect(install).toHaveBeenCalledTimes(1);
-    expect(wait).not.toHaveBeenCalled();
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), "mistria-hooks-"));
   });
 
-  it("retries while another worktree holds the shared config lock", () => {
-    const install = vi
-      .fn()
-      .mockReturnValueOnce(LOCK_FAILURE)
-      .mockReturnValueOnce(LOCK_FAILURE)
-      .mockReturnValueOnce("");
-    const wait = vi.fn();
-
-    expect(installGitHooks(install, wait)).toEqual({ message: "", ok: true });
-    expect(install).toHaveBeenCalledTimes(3);
-    expect(wait).toHaveBeenCalledTimes(2);
+  afterEach(() => {
+    rmSync(root, { force: true, recursive: true });
   });
 
-  it("fails once the lock never frees", () => {
-    const install = vi.fn(() => LOCK_FAILURE);
-    const wait = vi.fn();
+  it("installs a runnable pre-commit hook without changing shared Git config", () => {
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: root });
+    git("init", "--quiet");
+    git("config", "--local", "core.hooksPath", ".husky/_");
+    const config = join(root, ".git", "config");
+    const before = readFileSync(config, "utf8");
+    mkdirSync(join(root, ".husky"));
+    writeFileSync(join(root, ".husky", "pre-commit"), "echo ran > hook-result\n");
 
-    expect(installGitHooks(install, wait, 3)).toEqual({ message: LOCK_FAILURE, ok: false });
-    expect(install).toHaveBeenCalledTimes(3);
-    expect(wait).toHaveBeenCalledTimes(2);
+    installGitHooks(root, undefined);
+    installGitHooks(root, undefined);
+
+    expect(readFileSync(config, "utf8")).toBe(before);
+    git("hook", "run", "pre-commit");
+    expect(readFileSync(join(root, "hook-result"), "utf8").trim()).toBe("ran");
   });
 
-  it("passes Husky's skip messages through without retrying", () => {
-    const install = vi.fn(() => "HUSKY=0 skip install");
-    const wait = vi.fn();
-
-    expect(installGitHooks(install, wait)).toEqual({
-      message: "HUSKY=0 skip install",
-      ok: true,
-    });
-    expect(install).toHaveBeenCalledTimes(1);
+  it("honors HUSKY=0", () => {
+    installGitHooks(root, "0");
+    expect(() => readFileSync(join(root, ".husky", "_", "h"))).toThrow("ENOENT");
   });
 });

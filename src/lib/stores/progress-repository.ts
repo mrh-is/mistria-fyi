@@ -25,7 +25,12 @@ import type { ManualImport, ManualImportOutcome } from "./progress-import-write.
 import type { LoadedProgress, ProgressReadResult } from "./progress-storage.js";
 import type { BackupReplacementQuestion, StagedLaneStart } from "./progress-writer.js";
 
-export type PersistenceFailureKind = "newer-data" | "unavailable" | "unreadable";
+/**
+ * Why changes aren't being saved: browser storage refused the read at load (`load-blocked`, so no
+ * saved progress is showing) or a later read or write (`unavailable`), the stored progress couldn't
+ * be read and was quarantined, or a newer build wrote it and this one mustn't overwrite it.
+ */
+export type PersistenceFailureKind = "load-blocked" | "newer-data" | "unavailable" | "unreadable";
 
 export interface SerializedPreferences {
   everythingGrouping: "category" | "source";
@@ -194,8 +199,8 @@ export function createProgressRepository(
     saveTimeout = undefined;
   }
 
-  function reportStorageUnavailable(): void {
-    _persistenceFailureKind = "unavailable";
+  function reportStorageUnavailable(kind: "load-blocked" | "unavailable" = "unavailable"): void {
+    _persistenceFailureKind = kind;
     _persistenceFailureGeneration++;
     publishStatus();
   }
@@ -686,7 +691,7 @@ export function createProgressRepository(
         _persistenceReady = false;
         persistenceBlocked = true;
         quarantineAvailable = false;
-        reportStorageUnavailable();
+        reportStorageUnavailable("load-blocked");
         return;
       }
 

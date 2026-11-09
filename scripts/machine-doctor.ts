@@ -1,6 +1,13 @@
 import { CURRENT_GAME_VERSION } from "#game-version";
 import { spawnSync } from "node:child_process";
-import { accessSync, constants, existsSync, readdirSync, readFileSync } from "node:fs";
+import {
+  accessSync,
+  constants,
+  existsSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,6 +56,7 @@ export interface Environment {
   nodeVersion: string;
   platform: NodeJS.Platform;
   read: (path: string) => string | undefined;
+  realpath: (path: string) => string | undefined;
   root: string;
   run: (command: string, args: string[]) => CommandOutput;
   writable: (path: string) => boolean;
@@ -230,6 +238,18 @@ export function checkGit(machine: Environment): CheckResult[] {
           ),
     );
   }
+  const hooksPath = machine.run("git", ["-C", machine.root, "config", "--get", "core.hooksPath"]);
+  results.push(
+    hooksPath.ok && hooksPath.stdout.trim()
+      ? check("git-hooks", "Git hooks", "ok", "core.hooksPath is configured")
+      : check(
+          "git-hooks",
+          "Git hooks",
+          "manual",
+          "core.hooksPath is unset; configure it once per clone from the main checkout",
+          "git config --local core.hooksPath .husky/_",
+        ),
+  );
   const signing = machine.run("git", ["config", "--get", "commit.gpgsign"]);
   const key = machine.run("git", ["config", "--get", "user.signingkey"]);
   results.push(
@@ -319,17 +339,24 @@ const PLAYWRIGHT_BROWSERS = ["chromium", "chromium-headless-shell"];
 
 /**
  * The browser revisions the installed playwright-core expects, from its browsers.json, or undefined
- * before `pnpm install` or when the store holds more than one playwright-core.
+ * before `pnpm install`. pnpm links each package's dependencies beside its real folder, so the
+ * chain from `@playwright/test` through `playwright` reaches the playwright-core it runs.
  */
 export function playwrightRevisions(machine: Environment): Map<string, string> | undefined {
-  const store = join(machine.root, "node_modules", ".pnpm");
-  const cores = machine.list(store).filter((entry) => /^playwright-core@[^_]+$/.test(entry));
-  if (cores.length !== 1) {
+  let dependent = "@playwright/test";
+  let folder = machine.realpath(join(machine.root, "node_modules", dependent));
+  for (const dependency of ["playwright", "playwright-core"]) {
+    if (folder === undefined) {
+      return undefined;
+    }
+    const siblings = dependent.startsWith("@") ? dirname(dirname(folder)) : dirname(folder);
+    folder = machine.realpath(join(siblings, dependency));
+    dependent = dependency;
+  }
+  if (folder === undefined) {
     return undefined;
   }
-  const text = machine.read(
-    join(store, cores[0], "node_modules", "playwright-core", "browsers.json"),
-  );
+  const text = machine.read(join(folder, "browsers.json"));
   try {
     const { browsers } = JSON.parse(text ?? "") as {
       browsers: { name: string; revision: string }[];
@@ -639,6 +666,13 @@ export function realEnvironment(
     read: (path) => {
       try {
         return readFileSync(path, "utf8");
+      } catch {
+        return undefined;
+      }
+    },
+    realpath: (path) => {
+      try {
+        return realpathSync(path);
       } catch {
         return undefined;
       }

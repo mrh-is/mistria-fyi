@@ -2,7 +2,11 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import * as m from "#lib/paraglide/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
+  import { browser } from "$app/env";
   import { page } from "$app/state";
+
+  const from = $derived(browser ? page.url.searchParams.get("from") : null);
+  const source = $derived(from === "about" || from === "data" ? from : undefined);
 
   /** Bump this whenever the policy's meaning changes. */
   const LAST_UPDATED = Date.UTC(2026, 10, 5);
@@ -20,7 +24,11 @@
   </h3>
 {/snippet}
 
-<PageHeader title={m.privacy_title()} backHref="about" backLabel={m.privacy_back_to_about()} />
+<PageHeader
+  title={m.privacy_title()}
+  backHref={source}
+  backLabel={source === undefined ? undefined : m.common_go_back()}
+/>
 
 <div class="flex flex-col gap-6 p-4 text-sm">
   <p class="text-muted-foreground">{m.privacy_last_updated({ date: lastUpdated })}</p>

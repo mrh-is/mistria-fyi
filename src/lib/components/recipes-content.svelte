@@ -5,15 +5,12 @@
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { celebrateProgress } from "#lib/controllers/celebration.js";
-  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { recipePlacements } from "#lib/engine/projections/recipes.js";
   import { factKey } from "#lib/engine/provenance.js";
@@ -24,7 +21,6 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
-  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -33,10 +29,15 @@
 
   let { locale }: { locale: LocaleCode } = $props();
 
-  const spoilerGuard = createSpoilerGuard();
-
-  const recentlyCompleted = createLeavingSet<RecipeId>();
   const sectionGrouping = createSectionGrouping<string>();
+  const checkOff = createCheckOff<RecipeId, string>({
+    category: "recipes",
+    grouping: sectionGrouping,
+    isCompleted: (id) => userState.state.progress.almanacRecipes.has(id),
+    toggle: (id) => {
+      userState.toggleAlmanacRecipe(id);
+    },
+  });
 
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
@@ -114,25 +115,9 @@
       visible: rows.filter(({ shown }) => shown).length,
     };
   });
-
-  function toggleRecipe(entry: RecipeEntry, sectionId: string, sectionRecipeIds: RecipeId[]): void {
-    sectionGrouping.hold(sectionId);
-    celebrateProgress(
-      "recipes",
-      () => {
-        userState.toggleAlmanacRecipe(entry.id);
-      },
-      [() => sectionRecipeIds.every((id) => userState.state.progress.almanacRecipes.has(id))],
-    );
-    const nowCompleted = userState.state.progress.almanacRecipes.has(entry.id);
-    showUndoToast(entry.name, nowCompleted, () => {
-      userState.toggleAlmanacRecipe(entry.id);
-    });
-    if (nowCompleted) recentlyCompleted.markLeaving(entry.id);
-  }
 </script>
 
-<SpoilerGuardDialog guard={spoilerGuard} />
+<SpoilerGuardDialog guard={checkOff.guard} />
 
 <SectionGroups
   forceOpen={!!nameFilter}
@@ -154,18 +139,13 @@
           forceOpen={!!nameFilter}
           getKey={(entry) => entry.id}
           getShelf={rowShelf}
-          isLeaving={(entry) => recentlyCompleted.has(entry.id)}
+          isLeaving={(entry) => checkOff.isLeaving(entry.id)}
           items={filteredEntries}
         >
           {#snippet row(entry)}
-            {@const completed = userState.state.progress.almanacRecipes.has(entry.id)}
             <TrackerRow
               fact={factKey("almanacRecipes", entry.id)}
-              display={trackerRowDisplay({
-                completed,
-                leaving: recentlyCompleted.has(entry.id),
-                spoilered: entry.spoilered,
-              })}
+              display={checkOff.rowDisplay(entry.id, entry.visibility)}
               segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
               name={entry.name}
               reportCategory="recipe"
@@ -173,22 +153,22 @@
               sources={entry.sources}
               sprite={entry.itemId}
               spriteClass="text-(--color-category-recipes)"
-              onToggle={() => {
-                if (!entry.spoilered || completed) {
-                  toggleRecipe(
-                    entry,
-                    group.id,
-                    group.entries.map((candidate) => candidate.id),
-                  );
-                } else {
-                  spoilerGuard.requestGuardedAction(entry.visibility, () => {
-                    toggleRecipe(
-                      entry,
-                      group.id,
-                      group.entries.map((candidate) => candidate.id),
-                    );
-                  });
-                }
+              onToggle={(covered) => {
+                checkOff.onToggle(
+                  {
+                    id: entry.id,
+                    name: entry.name,
+                    sectionChecks: [
+                      () =>
+                        group.entries.every((candidate) =>
+                          userState.state.progress.almanacRecipes.has(candidate.id),
+                        ),
+                    ],
+                    sectionKey: group.id,
+                    visibility: entry.visibility,
+                  },
+                  covered,
+                );
               }}
             />
           {/snippet}

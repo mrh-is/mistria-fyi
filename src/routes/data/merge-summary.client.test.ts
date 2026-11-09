@@ -2,6 +2,7 @@ import { render } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
+import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { formatNumber, formatPercent } from "#lib/utils/format.js";
 
@@ -12,19 +13,19 @@ import type { ProgressState } from "#lib/types/user-progress.js";
 
 const CASES: { expected: string; imported: Partial<ProgressState>; setup?: () => void }[] = [
   {
-    expected: "Child choice updated",
+    expected: m.merge_label_child_choice(),
     imported: { childChoice: "yes" },
     setup: () => {
       userState.setVillagerRelationship("adeline" as VillagerId, "married");
     },
   },
-  { expected: "Upper floor unlocked", imported: { hasUpperFloor: true } },
+  { expected: m.merge_label_has_upper_floor(), imported: { hasUpperFloor: true } },
   {
     expected: "Villager relationships: +1",
     imported: { villagerRelationships: { ["adeline" as never]: "romantic" } },
   },
   { expected: "Perks: +1", imported: { unlockedPerks: new Set(["review-perk" as never]) } },
-  { expected: "Season progression updated", imported: { reachedSeason: "summer" } },
+  { expected: m.merge_label_reached_season(), imported: { reachedSeason: "summer" } },
   {
     expected: "Recipes: +1",
     imported: { almanacRecipes: new Set(["review-recipe" as never]) },
@@ -51,7 +52,9 @@ describe("merge summary integration", () => {
     );
     const delta = view.getByText("Almanac: +1,737");
     expect(delta).not.toBeVisible();
-    expect(delta.closest("details")?.querySelector("summary")).toHaveTextContent("What we added");
+    expect(delta.closest("details")?.querySelector("summary")).toHaveTextContent(
+      m.merge_changes_details(),
+    );
   });
 
   it.each(CASES)(
@@ -67,7 +70,7 @@ describe("merge summary integration", () => {
       });
 
       expect(container).toHaveTextContent(expected);
-      expect(container).not.toHaveTextContent("No new data to import");
+      expect(container).not.toHaveTextContent(m.data_no_new_data_import());
     },
   );
 });
@@ -88,7 +91,7 @@ describe("merge summary household conflicts", () => {
     expect(container).toHaveTextContent("Adeline");
     expect(container).toHaveTextContent("Balor");
     const link = container.querySelector("a[href$='/villagers']");
-    expect(link?.textContent).toContain("Correct this manually");
+    expect(link?.textContent).toContain(m.merge_conflict_correction_link());
   });
 
   it("renders a child-choice conflict", async () => {
@@ -106,7 +109,7 @@ describe("merge summary household conflicts", () => {
     });
 
     expect(container).toHaveTextContent("Adeline");
-    expect(container).toHaveTextContent("Kids");
-    expect(container).toHaveTextContent("Child-free");
+    expect(container).toHaveTextContent(m.relationship_action_yes());
+    expect(container).toHaveTextContent(m.relationship_action_no());
   });
 });

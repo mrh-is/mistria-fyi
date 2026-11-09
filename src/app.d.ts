@@ -29,7 +29,6 @@ declare global {
       locale: LocaleCode;
       metadata: PageMetadata;
     }
-    // interface PageState {}
   }
 
   interface Window {

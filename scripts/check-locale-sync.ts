@@ -27,8 +27,11 @@ const DEFAULT_BASE = "origin/main";
  * the English value still equals `english`, so a later edit to the English text is checked again.
  */
 export interface AllowlistEntry {
-  /** The English text the exception was reviewed against. */
-  english: string;
+  /**
+   * The English text the exception was reviewed against: a string, or a plural message's variant
+   * array exactly as `messages/en.json` holds it.
+   */
+  english: readonly unknown[] | string;
   key: string;
   locale: string;
   reason: string;
@@ -71,7 +74,8 @@ export function parseAllowlist(parsed: unknown): AllowlistEntry[] {
   if (!Array.isArray(parsed)) throw new Error("locale-sync-allowlist.json must be an array.");
   return parsed.map((entry: unknown, index) => {
     const { english, key, locale, reason } = (entry ?? {}) as Record<string, unknown>;
-    for (const [name, value] of Object.entries({ english, key, locale, reason })) {
+    const englishText = Array.isArray(english) && english.length > 0 ? "variants" : english;
+    for (const [name, value] of Object.entries({ english: englishText, key, locale, reason })) {
       if (typeof value !== "string" || value.trim() === "") {
         throw new Error(`locale-sync-allowlist.json entry ${index} needs a non-empty "${name}".`);
       }

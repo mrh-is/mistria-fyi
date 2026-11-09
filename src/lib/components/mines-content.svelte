@@ -7,14 +7,13 @@
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { celebrateProgress } from "#lib/controllers/celebration.js";
-  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { getMaxMineFloor } from "#lib/engine/progress.js";
   import { mineFloorProgress, sealsBefore } from "#lib/engine/projections/mines.js";
   import { factKey } from "#lib/engine/provenance.js";
@@ -24,34 +23,26 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
-  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { SpellId } from "#lib/types/tracker-data.js";
 
-  const spoilerGuard = createSpoilerGuard();
   const sectionGrouping = createSectionGrouping<"floors" | "spells">();
-  const leavingSpells = createLeavingSet<SpellId>();
+  // Floor seals and spell spoilers share one dialog, which this page owns.
+  const spoilerGuard = createSpoilerGuard();
+  const checkOff = createCheckOff<SpellId, "floors" | "spells">({
+    category: "mines",
+    grouping: sectionGrouping,
+    guard: spoilerGuard,
+    isCompleted: (id) => userState.state.progress.spells.has(id),
+    toggle: (id) => {
+      userState.toggleSpell(id);
+    },
+  });
 
   function isSpellSpoilered(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility;
     return !isConditionVisible(visibility, userState.progressionState);
-  }
-
-  function toggleSpell(spellId: SpellId): void {
-    sectionGrouping.hold("spells");
-    celebrateProgress(
-      "mines",
-      () => {
-        userState.toggleSpell(spellId);
-      },
-      [allSpellsComplete],
-    );
-    const completed = userState.state.progress.spells.has(spellId);
-    showUndoToast(getName("spells", spellId, locale), completed, () => {
-      userState.toggleSpell(spellId);
-    });
-    if (completed) leavingSpells.markLeaving(spellId);
   }
 
   let {
@@ -96,9 +87,13 @@
   function requestFloor(floor: number): void {
     const seals = sealsBefore(userState.state.progress, floor);
     if (seals) {
-      spoilerGuard.requestGuardedAction(seals, () => {
-        setFloorWithCelebration(floor);
-      });
+      spoilerGuard.requestGuardedAction(
+        seals,
+        () => {
+          setFloorWithCelebration(floor);
+        },
+        { floor },
+      );
     } else {
       setFloorWithCelebration(floor);
     }
@@ -194,33 +189,28 @@
           forceOpen={!!nameFilter}
           getKey={(spell) => spell.id}
           getShelf={rowShelf}
-          isLeaving={(spell) => leavingSpells.has(spell.id)}
+          isLeaving={(spell) => checkOff.isLeaving(spell.id)}
           items={visibleSpells}
         >
           {#snippet row(spell)}
-            {@const completed = userState.state.progress.spells.has(spell.id)}
             <TrackerRow
               fact={factKey("spells", spell.id)}
-              display={trackerRowDisplay({
-                completed,
-                leaving: leavingSpells.has(spell.id),
-                spoilered: isSpellSpoilered(spell.id),
-              })}
+              display={checkOff.rowDisplay(spell.id, trackerData.mines.spells[spell.id].visibility)}
               name={spell.name}
               reportCategory="spell"
               reportEntityId={spell.id}
               sources={spell.sources}
-              onToggle={() => {
-                if (!isSpellSpoilered(spell.id) || completed) {
-                  toggleSpell(spell.id);
-                } else {
-                  spoilerGuard.requestGuardedAction(
-                    trackerData.mines.spells[spell.id].visibility,
-                    () => {
-                      toggleSpell(spell.id);
-                    },
-                  );
-                }
+              onToggle={(covered) => {
+                checkOff.onToggle(
+                  {
+                    id: spell.id,
+                    name: spell.name,
+                    sectionChecks: [allSpellsComplete],
+                    sectionKey: "spells",
+                    visibility: trackerData.mines.spells[spell.id].visibility,
+                  },
+                  covered,
+                );
               }}
             />
           {/snippet}

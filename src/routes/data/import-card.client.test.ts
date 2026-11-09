@@ -1,10 +1,12 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { fireEvent, screen, waitFor, within } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
+import * as m from "#lib/paraglide/messages.js";
 import { PROGRESS_STORAGE_KEY, QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { buildSavFile } from "#lib/test-utils/sav.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
@@ -17,16 +19,16 @@ beforeEach(async () => {
 });
 
 async function importFiles(files: File[]) {
-  render(ImportCard, { open: true });
-  await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
+  renderWithFeedback(ImportCard, { open: true });
+  await fireEvent.change(screen.getByLabelText(m.import_file_input_aria()), {
     target: { files },
   });
 }
 
 describe("save import", () => {
   it("offers a next step after success without a desktop transfer callback", async () => {
-    await importFiles([new File([JSON.stringify({ items_acquired: [] })], "player.json")]);
-    const next = await screen.findByRole("link", { name: "See what’s left" });
+    await importFiles([buildSavFile({ player: { items_acquired: [] } })]);
+    const next = await screen.findByRole("link", { name: m.import_view_progress() });
     expect(next).toBeVisible();
     expect(next).toHaveAttribute("href", "/en/everything");
   });
@@ -50,26 +52,26 @@ describe("save import", () => {
     );
     const before = userState.exportBackup();
     await importFiles([save]);
-    const dialog = await screen.findByRole("dialog", { name: "This save is for a different farm" });
+    const dialog = await screen.findByRole("dialog", { name: m.import_farm_title() });
     expect(userState.exportBackup()).toBe(before);
-    await fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await fireEvent.click(within(dialog).getByRole("button", { name: m.import_farm_cancel() }));
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
     expect(userState.exportBackup()).toBe(before);
 
-    await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
+    await fireEvent.change(screen.getByLabelText(m.import_file_input_aria()), {
       target: { files: [save] },
     });
     const retry = await screen.findByRole("dialog");
-    await fireEvent.click(within(retry).getByRole("button", { name: "Merge progress" }));
+    await fireEvent.click(within(retry).getByRole("button", { name: m.import_farm_merge() }));
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+      expect(screen.getByRole("status")).toHaveTextContent(m.import_status_completed());
     });
     expect(userState.state.progress.renown).toBe(7);
     expect(userState.state.lastImport?.identity.saveNumber).toBe("456");
-    const source = screen.getByText("Imported from game-456-autosave.sav");
+    const source = screen.getByText(m.merge_imported_from({ files: "game-456-autosave.sav" }));
     expect(source).not.toBeVisible();
     expect(screen.queryByText("Imported from player.json")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "See what’s left" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: m.import_view_progress() })).toHaveAttribute(
       "href",
       "/en/everything",
     );
@@ -96,14 +98,14 @@ describe("save import", () => {
 
     await importFiles([save]);
     const dialog = await screen.findByRole("dialog", {
-      name: "Is this the farm you’ve been tracking?",
+      name: m.sync_farm_question_title(),
     });
     expect(userState.exportBackup()).toBe(before);
-    await fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await fireEvent.click(within(dialog).getByRole("button", { name: m.import_farm_cancel() }));
     expect(dialog).toBeInTheDocument();
     expect(dialog).toHaveAttribute("data-state", "closed");
-    expect(dialog).toHaveTextContent("Is this the farm you’ve been tracking?");
-    expect(dialog).toHaveTextContent("We can’t tell which farm this save belongs to.");
+    expect(dialog).toHaveTextContent(m.sync_farm_question_title());
+    expect(dialog).toHaveTextContent(m.import_farm_unnumbered_description());
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
 
     expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(stored);
@@ -113,17 +115,17 @@ describe("save import", () => {
 
   it("imports unnumbered progress into a hand-tracked lane without a farm question", async () => {
     await importFiles([
-      new File(
-        [JSON.stringify({ farm_name: "Fern", items_acquired: [], name: "Ada" })],
-        "player.json",
+      buildSavFile(
+        { player: { farm_name: "Fern", items_acquired: [], name: "Ada" } },
+        "renamed.sav",
       ),
     ]);
     const history = await screen.findByTestId("last-import");
     expect(history).toHaveTextContent("Fern · Ada");
     expect(history).toHaveTextContent("Last imported now");
-    expect(history).toHaveTextContent("unknown version");
+    expect(history).toHaveTextContent(m.import_unknown_version());
     expect(screen.getByText(/Created in unknown version/)).not.toBeVisible();
-    expect(history.querySelector("summary")).toHaveTextContent("Save details");
+    expect(history.querySelector("summary")).toHaveTextContent(m.import_save_details());
     expect(userState.state.lastImport?.identity).toEqual({
       creationVersion: null,
       saveNumber: null,
@@ -141,10 +143,10 @@ describe("save import", () => {
       playerName: "Ada",
     };
     await userState.mergeFromSave({}, { metadata });
-    render(ImportCard, { open: true });
+    renderWithFeedback(ImportCard, { open: true });
     expect(screen.getByTestId("last-import")).toHaveTextContent("Save #123456 · Created in 0.11.7");
     expect(screen.getByTestId("last-import")).toHaveTextContent("Last imported 2 minutes ago");
-    await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
+    await fireEvent.change(screen.getByLabelText(m.import_file_input_aria()), {
       target: { files: [new File(["{"], "player.json")] },
     });
     await screen.findByRole("alert");
@@ -152,40 +154,47 @@ describe("save import", () => {
   });
 
   it("announces no new data on a repeated import after a successful source-file summary", async () => {
-    render(ImportCard, { open: true });
-    const input = screen.getByLabelText("Choose save files to import");
-    const files = [new File([JSON.stringify({ items_acquired: [] })], "player.json")];
+    renderWithFeedback(ImportCard, { open: true });
+    const input = screen.getByLabelText(m.import_file_input_aria());
+    const files = [buildSavFile({ player: { items_acquired: [] } })];
 
     await fireEvent.change(input, { target: { files } });
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+      expect(screen.getByRole("status")).toHaveTextContent(m.import_status_completed());
     });
-    expect(screen.getByText(/Imported from player.json/)).toBeInTheDocument();
-    expect(screen.getByText(/Imported from player.json/)).not.toBeVisible();
-    expect(screen.getByRole("link", { name: "See what’s left" })).toBeVisible();
+    expect(
+      screen.getByText(m.merge_imported_from({ files: "game-1315159680-autosave.sav" })),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(m.merge_imported_from({ files: "game-1315159680-autosave.sav" })),
+    ).not.toBeVisible();
+    expect(screen.getByRole("link", { name: m.import_view_progress() })).toBeVisible();
     expect(screen.queryByRole("alert")).toBeNull();
 
     await fireEvent.change(input, { target: { files } });
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("No new data to import.");
+      expect(screen.getByRole("status")).toHaveTextContent(m.data_no_new_data_import());
     });
-    expect(screen.getByText("No new data to import", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText(m.data_no_new_data_import(), { exact: true })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("shows a successful source-file summary and warning count", async () => {
     await importFiles([
-      new File(
-        [JSON.stringify({ items_acquired: ["animated_waterfall_v2"], perks: ["unknown_perk"] })],
-        "player.json",
-      ),
+      buildSavFile({
+        player: { items_acquired: ["animated_waterfall_v2"], perks: ["unknown_perk"] },
+      }),
     ]);
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+      expect(screen.getByRole("status")).toHaveTextContent(m.import_status_completed());
     });
-    expect(screen.getByText(/Imported from player.json/)).toBeInTheDocument();
-    expect(screen.getByText("1 warnings", { exact: true })).toBeInTheDocument();
+    expect(
+      screen.getByText(m.merge_imported_from({ files: "game-1315159680-autosave.sav" })),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(m.import_warnings_summary({ count: 1 }), { exact: true }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -193,12 +202,11 @@ describe("save import", () => {
     const cosmeticId = recordKeys(trackerData.cosmetics)[0];
 
     await importFiles([
-      new File([JSON.stringify({ cosmetic_unlocks: [cosmeticId] })], "player.json"),
-      new File([JSON.stringify({ playtime: 3600.25 })], "header.json"),
+      buildSavFile({ header: { playtime: 3600.25 }, player: { cosmetic_unlocks: [cosmeticId] } }),
     ]);
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
+      expect(screen.getByRole("status")).toHaveTextContent(m.import_status_completed());
     });
     expect(userState.lastSavePlaytime).toBe(3600.25);
     expect(userState.provenanceOf(`cosmetics/${cosmeticId}`)).toEqual({
@@ -207,44 +215,38 @@ describe("save import", () => {
     });
   });
 
-  it("imports extracted JSON files and lists each warning", async () => {
+  it("renders repeated warnings from the same save", async () => {
     const cosmeticId = recordKeys(trackerData.cosmetics)[0];
-    const player = new File(
-      [JSON.stringify({ cosmetic_unlocks: [cosmeticId, "not_a_cosmetic", "not_a_cosmetic"] })],
-      "player.json",
-    );
+    await importFiles([
+      buildSavFile({
+        player: { cosmetic_unlocks: [cosmeticId, "not_a_cosmetic", "not_a_cosmetic"] },
+      }),
+    ]);
 
-    await importFiles([player, new File(["{"], "gamedata.json")]);
-
-    await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
-    });
-    expect(userState.state.progress.cosmetics.has(cosmeticId)).toBe(true);
-    // The duplicate warnings also exercise the index-keyed list, which a text key would break.
     expect(
-      screen.getAllByText("player.cosmetic_unlocks: unrecognized ID not_a_cosmetic; skipped"),
+      await screen.findAllByText(
+        "player.cosmetic_unlocks: unrecognized ID not_a_cosmetic; skipped",
+      ),
     ).toHaveLength(2);
-    expect(screen.getByText("gamedata.json isn’t valid JSON; skipped")).toBeInTheDocument();
+    expect(userState.state.progress.cosmetics.has(cosmeticId)).toBe(true);
   });
 
-  it("reports unparseable JSON files and preserves tracker state", async () => {
-    enableSpoilers();
+  it.each(["picker", "drop"])("rejects extracted JSON through the %s", async (entry) => {
     const before = userState.exportBackup();
-
-    await importFiles([new File(["{"], "player.json")]);
-
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "None of the selected save files could be read.",
-      );
-    });
-    expect(
-      within(screen.getByRole("alert")).getByText("player.json isn’t valid JSON; skipped"),
-    ).toBeInTheDocument();
+    const files = [new File(['{"items_acquired":["turnip"]}'], "player.json")];
+    if (entry === "picker") {
+      await importFiles(files);
+    } else {
+      renderWithFeedback(ImportCard, { open: true });
+      await fireEvent.drop(screen.getByRole("button", { name: m.import_browse_files() }), {
+        dataTransfer: { files },
+      });
+    }
+    expect(await screen.findByRole("alert")).toHaveTextContent(/^Choose a \.sav file\.$/);
     expect(userState.exportBackup()).toBe(before);
   });
 
-  it("offers the manual extraction fallback for an unreadable .sav and preserves tracker state", async () => {
+  it("offers autosave guidance for an unreadable .sav and preserves tracker state", async () => {
     enableSpoilers();
     const before = userState.exportBackup();
 
@@ -252,27 +254,9 @@ describe("save import", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "This file isn’t a readable Fields of Mistria save. It may be corrupt.",
+        "Hmm, we can’t read this as a Fields of Mistria save. It might be damaged, or a different file. Try the newest file that ends in “autosave”.",
       );
     });
-    expect(screen.getByRole("link", { name: "vaultc" })).toHaveAttribute(
-      "href",
-      "https://github.com/NPC-Studio/vaultc",
-    );
-    expect(screen.getByRole("link", { name: "VaultGo" })).toHaveAttribute(
-      "href",
-      "https://github.com/lordp/VaultGo",
-    );
-    expect(screen.getByRole("alert")).toHaveTextContent("VaultGo (on Linux).");
-    const fallback = screen.getByText(/Then import from the resulting/);
-    expect(fallback).toHaveTextContent(
-      "Then import from the resulting player.json, gamedata.json, and quests.json files.",
-    );
-    expect([...fallback.querySelectorAll("code")].map((code) => code.textContent)).toEqual([
-      "player.json",
-      "gamedata.json",
-      "quests.json",
-    ]);
     expect(userState.exportBackup()).toBe(before);
   });
 });
@@ -289,9 +273,9 @@ describe("save import atomicity", () => {
       localStorage.setItem(PROGRESS_STORAGE_KEY, newer);
       if (loaded) userState.loadFromStorage();
 
-      await importFiles([new File(['{"items_acquired":["turnip"]}'], "player.json")]);
+      await importFiles([buildSavFile({ player: { items_acquired: ["turnip"] } })]);
       expect(await screen.findByRole("alert")).toHaveTextContent(
-        "Your progress was saved by a newer version. Update to continue.",
+        m.persistence_warning_newer_data(),
       );
       expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(newer);
       expect(localStorage.getItem(QUARANTINE_STORAGE_KEY)).toBe(quarantine);
@@ -310,7 +294,7 @@ describe("save import atomicity", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "This save file is too large (8 MB). The maximum supported size is 8 MB.",
+        "Mamma mia, that’s a big file. This app can only read save files up to 8 MB, and that file is 8 MB. Maybe double-check you picked the right one?",
       );
     });
     expect(arrayBuffer).not.toHaveBeenCalled();
@@ -320,11 +304,8 @@ describe("save import atomicity", () => {
 
 describe("save import file picker", () => {
   it("filters the picker to save files on desktop", () => {
-    render(ImportCard, { open: true });
-    expect(screen.getByLabelText("Choose save files to import")).toHaveAttribute(
-      "accept",
-      ".sav,.json",
-    );
+    renderWithFeedback(ImportCard, { open: true });
+    expect(screen.getByLabelText(m.import_file_input_aria())).toHaveAttribute("accept", ".sav");
   });
 
   it("drops the accept filter on iPadOS, which reports a desktop Mac user agent", async () => {
@@ -333,9 +314,9 @@ describe("save import file picker", () => {
       platform: "MacIntel",
       userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
     });
-    render(ImportCard, { open: true });
+    renderWithFeedback(ImportCard, { open: true });
     await waitFor(() => {
-      expect(screen.getByLabelText("Choose save files to import")).not.toHaveAttribute("accept");
+      expect(screen.getByLabelText(m.import_file_input_aria())).not.toHaveAttribute("accept");
     });
   });
 
@@ -350,7 +331,7 @@ describe("save import file picker", () => {
   });
 
   it("shows the picker hint on iOS only", async () => {
-    const { unmount } = render(ImportCard, { open: true });
+    const { unmount } = renderWithFeedback(ImportCard, { open: true });
     expect(screen.queryByTestId("ios-picker-hint")).toBeNull();
     unmount();
 
@@ -359,7 +340,7 @@ describe("save import file picker", () => {
       platform: "iPhone",
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
     });
-    render(ImportCard, { open: true });
+    renderWithFeedback(ImportCard, { open: true });
     expect(await screen.findByTestId("ios-picker-hint")).toHaveTextContent(".sav");
   });
 });

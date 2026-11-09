@@ -31,7 +31,7 @@
             aria-hidden={open}
             class="overflow-hidden text-xs text-muted-foreground transition-[max-height,margin-top,opacity] duration-150 ease-out motion-reduce:transition-none {open
               ? 'mt-0 max-h-0 opacity-0'
-              : 'mt-1.5 max-h-4 opacity-100'}"
+              : 'mt-1.5 max-h-12 opacity-100'}"
           >
             {summary}
           </span>

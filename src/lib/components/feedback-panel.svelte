@@ -406,10 +406,16 @@
     <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} isModal={false} {onClose}>
       <div class="feedback-form">
         <div>
+          <!-- The textarea's own name & aria-required carry this heading for screen readers. -->
+          <p class="feedback-form__section mb-1.5" aria-hidden="true">
+            {m.feedback_message_label()}
+            <span class="feedback-form__section-note">{m.feedback_required_note()}</span>
+          </p>
           <textarea
             bind:this={messageInput}
             id="feedback-message"
             aria-label={m.feedback_message_label()}
+            aria-required="true"
             aria-invalid={messageInvalid}
             aria-describedby={messageInvalid ? "feedback-message-error" : undefined}
             class="feedback-form__message {messageInvalid
@@ -429,7 +435,10 @@
           <IconUserShield class="size-4 shrink-0" />{m.feedback_privacy_notice()}
         </p>
 
-        <p class="feedback-form__optional">{m.feedback_optional_label()}</p>
+        <p class="feedback-form__section">
+          {m.feedback_extra_data_heading()}
+          <span class="feedback-form__section-note">{m.feedback_optional_note()}</span>
+        </p>
         <div class="feedback-form__options">
           <div class="feedback-form__option">
             <Checkbox
@@ -706,7 +715,26 @@
     font-size: var(--text-xs);
   }
 
-  .feedback-form__optional,
+  .feedback-form__section {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    color: var(--color-ink-muted);
+    font-family: var(--font-controls);
+    font-size: var(--text-3xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* A margin note beside the section name, not another segment of it. */
+  .feedback-form__section-note {
+    font-family: var(--font-annotation);
+    font-size: var(--text-2xs);
+    font-style: italic;
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
   .feedback-form__version {
     color: var(--color-ink-muted);
     font-family: var(--font-controls);
