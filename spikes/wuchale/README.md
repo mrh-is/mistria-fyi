@@ -1,10 +1,9 @@
 # Wuchale localization spike
 
-**Recommendation: defer adoption.** Source text and small catalogs make the search copy easier to
-review. On this fixture, Wuchale also reduced the initial Spanish search payload. The default client
-loader adds a second mutable locale boundary, however, and its eager loading of all groups in the
-selected locale leaves route-level savings on the table. Keep Paraglide in the app while evaluating
-a loader that uses the committed route locale.
+**Recommendation: continue with a single-route pilot.** Source text and split catalogs make search
+copy easier to review, and the Spanish search fixture shipped about 20% less compressed JavaScript.
+Fix the hover-preload bug by activating translations when navigation commits. Then measure one route
+with production prerendering and offline caching before deciding whether to migrate the whole app.
 
 ## Run from the workspace root
 
