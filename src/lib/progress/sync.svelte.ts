@@ -23,6 +23,7 @@ interface SyncShell {
   readonly laneChoiceNeeded: boolean;
   readonly local: DeviceLocalState;
   readonly ready: boolean;
+  readonly resetGeneration: number;
   takePendingHandEdit: () => (() => void) | undefined;
   readonly worldState: WorldState;
 }
@@ -133,13 +134,17 @@ export function createSyncFacade(
       return written;
     },
     async startTrackingByHand(): Promise<boolean> {
+      const generation = shell.resetGeneration;
       const pending = shell.takePendingHandEdit();
       if (shell.ready) {
-        const written = await repository.writeLocal((stored) => ({
-          ...(structuredClone(stored) as DeviceLocalState),
-          trackingLane: stored.syncLane ? "sync" : "manual",
-        }));
-        if (!written) return false;
+        const written = await repository.writeLocal((stored) => {
+          if (generation !== shell.resetGeneration) return undefined;
+          return {
+            ...(structuredClone(stored) as DeviceLocalState),
+            trackingLane: stored.syncLane ? "sync" : "manual",
+          };
+        });
+        if (!written || generation !== shell.resetGeneration) return false;
       }
       pending?.();
       return true;
