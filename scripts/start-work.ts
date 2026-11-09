@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 interface Issue {
   assignees: { login: string }[];
   blockedBy: { nodes: { state: string }[] };
+  closedByPullRequestsReferences: { url: string }[];
   labels: { name: string }[];
   state: string;
 }
@@ -34,7 +35,13 @@ function ghJson(args: string[]): unknown {
 }
 
 function issueView(number: string): Issue {
-  return ghJson(["issue", "view", number, "--json", "state,assignees,labels,blockedBy"]) as Issue;
+  return ghJson([
+    "issue",
+    "view",
+    number,
+    "--json",
+    "state,assignees,labels,blockedBy,closedByPullRequestsReferences",
+  ]) as Issue;
 }
 
 function checkIssue(issue: Issue, takeover: boolean): void {
@@ -53,6 +60,15 @@ function checkIssue(issue: Issue, takeover: boolean): void {
       labels.some((label) => label === "status: in progress" || label.startsWith("agent:")))
   ) {
     throw new Error("Issue already has an owner or active label. Coordinate with the human owner.");
+  }
+  if (!takeover) {
+    for (const { url } of issue.closedByPullRequestsReferences) {
+      if (read("gh", ["pr", "view", url, "--json", "state", "--jq", ".state"]) === "OPEN") {
+        throw new Error(
+          `Issue already has an open implementation PR (${url}). Coordinate with its owner.`,
+        );
+      }
+    }
   }
 }
 
@@ -210,9 +226,15 @@ export function startWork(args: string[]): void {
     throw new Error("Takeover requires an open PR.");
   }
   const issue = linkedIssue(pr, repositoryUrl);
-  const openIssue = issue && issueView(issue).state === "OPEN" ? issue : undefined;
-  if (openIssue) {
-    checkIssue(issueView(openIssue), true);
+  const linked = issue ? issueView(issue) : undefined;
+  const openIssue = linked?.state === "OPEN" ? issue : undefined;
+  if (linked?.state === "OPEN") {
+    checkIssue(linked, true);
+  }
+  if (!issue) {
+    console.warn(
+      "No linked issue found. Check issue ownership manually if this PR implements one.",
+    );
   }
   run("gh", ["pr", "checkout", target]);
   nodeScript("setup-worktree.ts");

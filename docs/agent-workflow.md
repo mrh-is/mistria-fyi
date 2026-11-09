@@ -51,7 +51,9 @@ For issue-backed work, read the issue, comments, & relationships with
 `gh issue view <number> --json title,body,labels,assignees,comments,blockedBy,parent`. An open
 blocker, `status: blocked`, or `status: needs decision` prevents starting. An assignee,
 `status: in progress`, an `agent:*` label, or an existing implementation PR calls for coordination
-unless the user explicitly authorized a handoff.
+unless the user explicitly authorized a handoff. The command checks open PRs that GitHub lists as
+closing the issue. Check for existing work that uses a `Refs` line or another informal reference
+when reviewing the issue.
 
 ```sh
 pnpm run start-work issue 123 short-description codex
@@ -68,7 +70,7 @@ pnpm run start-work takeover 456 --current codex
 - **Takeover** runs in a clean, dedicated linked worktree. It checks out the existing PR branch,
   runs setup, & updates ownership on the PR and its single linked open issue, if any. The command
   recognizes closing references & standalone `Refs #N` lines. Coordinate multi-issue handoffs
-  manually.
+  manually. If the command finds no linked issue, it prompts you to check issue ownership manually.
 
 Issue & takeover use the authenticated GitHub account. Pass an expected login as the final argument
 when the user specifies one. Proceed directly on an unclaimed issue or an explicit PR takeover. Ask

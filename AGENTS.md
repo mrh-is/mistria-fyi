@@ -70,8 +70,9 @@ session limits) belong in each contributor’s user config.
 
 - Worktrees are optional. Read [agent-reference.md](docs/agent-reference.md#worktree-mechanics)
   before using one.
-- To create one, run `pnpm run worktree:new <issue-number>-<short-description>`. Inside a worktree
-  that a harness created, run `node scripts/setup-worktree.ts` instead. Either command:
+- To create one, run `pnpm run worktree:new <slug>` with lowercase letters, digits, & hyphens.
+  `start-work issue` adds the issue number prefix. Inside a worktree that a harness created, run
+  `node scripts/setup-worktree.ts` instead. Either command:
   - links the game assets & the `.worktreeinclude` entries (env files),
   - installs dependencies with the frozen lockfile,
   - runs `prepare`.
