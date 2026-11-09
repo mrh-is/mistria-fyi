@@ -37,8 +37,9 @@
 
 <style>
   /*
-   * A toast is a paper slip tucked into the journal: a bookmark ribbon in the toast's kind color
-   * hangs from its top edge & pokes out below, and an action sits on a stub past a dashed tear line.
+   * A toast is a paper slip tucked into the journal: a short bookmark ribbon in the toast's kind
+   * color hangs from its top edge, and an action sits on a stub past a dashed tear line. A plain
+   * toast, such as an undo, is the quiet kind: a petite slip with no ribbon, easy to ignore.
    * Every rule starts at the themed toaster so it outranks Sonner's own theme rules.
    */
 
@@ -57,7 +58,8 @@
     --toast-accent: var(--color-brand-accent);
     --toast-ribbon-inset: 12px;
     --toast-ribbon-width: 22px;
-    --toast-ribbon-overhang: 6px;
+    --toast-ribbon-length: 2rem;
+    --toast-ribbon-notch: 6px;
     --toast-pad: 12px;
 
     display: flex;
@@ -90,6 +92,34 @@
     }
   }
 
+  /* Quiet: a plain toast is petite & ribbonless. It's a chance to undo a stray tap, not news. */
+  :global([data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-type="default"]) {
+    --toast-pad: 8px;
+
+    min-block-size: 2.75rem;
+    padding-inline-start: 14px;
+    box-shadow: var(--shadow-small), var(--shadow-medium);
+  }
+
+  /* On wider screens a quiet slip is only as wide as its words, centered under the others. */
+  @media (min-width: 601px) {
+    :global([data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-type="default"]) {
+      inset-inline: 0;
+      inline-size: fit-content;
+      min-inline-size: 16rem;
+      max-inline-size: 100%;
+      margin-inline: auto;
+    }
+  }
+
+  :global(
+    [data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-type="default"] [data-button]
+  ) {
+    min-inline-size: 4rem;
+    min-block-size: 1.875rem;
+    padding-block: 4px;
+  }
+
   /* Kinds: the ribbon & the action's hover carry the color; the paper stays paper. */
   :global([data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-type="success"]) {
     --toast-accent: var(--color-status-success);
@@ -120,20 +150,20 @@
     border-color: color-mix(in srgb, var(--destructive) 55%, transparent);
   }
 
-  /* The ribbon: hangs over the top border and ends in a swallowtail below the slip. */
-  :global([data-sonner-toaster][data-sonner-theme] [data-sonner-toast] [data-content]::before) {
+  /* The ribbon: hangs over the top border, just long enough to carry the icon, and ends in a
+   * swallowtail. Quiet toasts have none. */
+  :global(
+    [data-sonner-toaster][data-sonner-theme]
+      [data-sonner-toast]:not([data-type="default"])
+      [data-content]::before
+  ) {
     position: absolute;
-    inset-block: -1px calc(-1 * var(--toast-ribbon-overhang));
+    inset-block-start: -1px;
     inset-inline-start: var(--toast-ribbon-inset);
+    block-size: var(--toast-ribbon-length);
     inline-size: var(--toast-ribbon-width);
     background: var(--toast-accent);
-    clip-path: polygon(
-      0 0,
-      100% 0,
-      100% 100%,
-      50% calc(100% - var(--toast-ribbon-overhang)),
-      0 100%
-    );
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - var(--toast-ribbon-notch)), 0 100%);
     content: "";
   }
 
@@ -189,12 +219,13 @@
     color: var(--color-ink-muted);
   }
 
-  /* The stub's action: a steady minimum footprint, labelled like the toolbar's controls. Labels
-   * wrap between words only; the max width fits the longest single word in the shipped locales. */
+  /* The stub's action: labelled like the toolbar's controls, with a steady minimum footprint. It's
+   * only as wide as its longest word, so a longer label stacks onto a second line instead of
+   * taking room from the message (a wrapped box would otherwise keep its full one-line width). */
   :global([data-sonner-toaster][data-sonner-theme] [data-sonner-toast] [data-button]) {
     flex-shrink: 0;
+    inline-size: min-content;
     min-inline-size: 4.75rem;
-    max-inline-size: 9rem;
     min-block-size: 2.25rem;
     margin-inline-start: var(--toast-pad);
     padding: 6px 10px;
@@ -204,7 +235,6 @@
     letter-spacing: 0.06em;
     text-align: center;
     text-transform: uppercase;
-    text-wrap: balance;
     overflow-wrap: normal;
     color: var(--color-ink);
     cursor: pointer;

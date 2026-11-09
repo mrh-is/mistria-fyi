@@ -8,8 +8,15 @@ import type { LocaleCode } from "#lib/types/locale.js";
 import type { RecipeId } from "#lib/types/tracker-data.js";
 import type { QuestState } from "#lib/types/user-progress.js";
 
-/** The visible undo toast, if any; only one shows at a time. */
-let currentToastId: number | string | undefined;
+/** How many toasts the toaster shows at once; Sonner hides any beyond it until one closes. */
+export const VISIBLE_TOASTS = 3;
+
+/**
+ * The visible undo toasts, oldest first, keyed by the name they undo. An undo replays a toggle or
+ * restores a snapshot, so an older toast for the same thing would undo the wrong change: a new toast
+ * for a name replaces that name's toast instead of stacking beside it.
+ */
+const undoToasts = new Map<string, number | string>();
 
 /** The toast copy for a quest toggle that landed on `state`, unlocking `newlyAdded` recipes. */
 export function questToastMessage(
@@ -41,18 +48,18 @@ export function showQuestToast(
   locale: LocaleCode,
   onUndo: () => void,
 ): void {
-  showSingleUndoToast(questToastMessage(name, state, newlyAdded, locale), onUndo);
+  showStackedUndoToast(`quest:${name}`, questToastMessage(name, state, newlyAdded, locale), onUndo);
 }
 
 /**
- * Show a toast with an "Undo" action for check-off state changes.
- * Only one toast is visible at a time; subsequent calls replace the current toast.
+ * Show a toast with an "Undo" action for check-off state changes. Toasts for different items
+ * stack; a second toast for the same item replaces its first.
  */
 export function showUndoToast(itemName: string, completed: boolean, onUndo: () => void): void {
   const message = completed
     ? m.undo_marked_complete({ name: itemName })
     : m.undo_unmarked({ name: itemName });
-  showSingleUndoToast(message, onUndo);
+  showStackedUndoToast(`item:${itemName}`, message, onUndo);
 }
 
 /** The starter batch keeps its own Undo while the player continues checking things off. */
@@ -70,17 +77,44 @@ export function showStarterItemsToast(
   return () => toast.dismiss(id);
 }
 
-function showSingleUndoToast(message: string, onUndo: () => void): void {
+/** Dismiss every undo toast and forget them, as a fresh page would. */
+export function clearUndoToasts(): void {
+  for (const id of undoToasts.values()) toast.dismiss(id);
+  undoToasts.clear();
+}
+
+function showStackedUndoToast(key: string, message: string, onUndo: () => void): void {
   // An edit waiting for a tracking lane hasn't happened, so there's nothing to undo yet.
   if (userState.trackingLaneNeeded) return;
-  if (currentToastId !== undefined) {
-    toast.dismiss(currentToastId);
+  const previous = undoToasts.get(key);
+  if (previous !== undefined) {
+    toast.dismiss(previous);
+    undoToasts.delete(key);
   }
-  currentToastId = toast(message, {
+  // Undo toasts take only the slots other toasts leave free, dropping their oldest to make room,
+  // so a stack of undos never hides an error or the starter batch's undo. One always shows.
+  const undoIds = new Set(undoToasts.values());
+  const others = toast.getActiveToasts().filter((active) => !undoIds.has(active.id)).length;
+  const room = Math.max(1, VISIBLE_TOASTS - others);
+  for (const [oldestKey, oldestId] of undoToasts) {
+    if (undoToasts.size < room) break;
+    toast.dismiss(oldestId);
+    undoToasts.delete(oldestKey);
+  }
+  const forget = (): void => {
+    if (undoToasts.get(key) === id) undoToasts.delete(key);
+  };
+  const id = toast(message, {
     cancel: {
       label: m.action_undo(),
-      onClick: onUndo,
+      onClick: () => {
+        forget();
+        onUndo();
+      },
     },
     duration: 30_000,
+    onAutoClose: forget,
+    onDismiss: forget,
   });
+  undoToasts.set(key, id);
 }

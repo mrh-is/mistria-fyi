@@ -2,23 +2,56 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
-import { questToastMessage, showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
+import {
+  clearUndoToasts,
+  questToastMessage,
+  showQuestToast,
+  showUndoToast,
+} from "#lib/effects/undo-toast.js";
 import * as m from "#lib/paraglide/messages.js";
 import { recordKeys } from "#lib/utils/record.js";
 
+interface UndoToastOptions {
+  cancel: { label: string; onClick: () => void };
+  duration: number;
+  onAutoClose: () => void;
+}
+
 const dismiss = vi.hoisted(() => vi.fn());
+/** Toasts other than undos that the page is showing, such as an error. */
+const otherToasts = vi.hoisted((): { id: string }[] => []);
 const toast = vi.hoisted(() => {
   let nextId = 0;
-  return vi.fn((): string => {
+  return vi.fn((_message: string, _options: UndoToastOptions): string => {
     nextId += 1;
     return `toast-${nextId}`;
   });
 });
 
-vi.mock("svelte-sonner", () => ({ toast: Object.assign(toast, { dismiss }) }));
+/** The message & options of the newest toast. */
+function lastToast(): [message: string, options: UndoToastOptions] {
+  const call = toast.mock.calls.at(-1);
+  if (call === undefined) throw new Error("No toast was shown");
+  return call;
+}
+
+vi.mock("svelte-sonner", () => ({
+  toast: Object.assign(toast, {
+    dismiss,
+    // The undo toasts this module showed & hasn't dismissed, plus the page's other toasts.
+    getActiveToasts: () => [
+      ...toast.mock.results
+        .map((result) => ({ id: result.value as string }))
+        .filter(({ id }) => !dismiss.mock.calls.some(([dismissed]) => dismissed === id)),
+      ...otherToasts,
+    ],
+  }),
+}));
 
 describe("showUndoToast", () => {
   beforeEach(() => {
+    clearUndoToasts();
+    otherToasts.length = 0;
     toast.mockClear();
     dismiss.mockClear();
   });
@@ -28,27 +61,63 @@ describe("showUndoToast", () => {
 
     showUndoToast("Copper Sword", true, onUndo);
 
-    expect(toast).toHaveBeenCalledWith(
-      m.undo_marked_complete({ name: "Copper Sword" }),
-      expect.objectContaining({
-        cancel: { label: m.action_undo(), onClick: onUndo },
-        duration: 30_000,
-      }),
-    );
+    const [message, options] = lastToast();
+    expect(message).toBe(m.undo_marked_complete({ name: "Copper Sword" }));
+    expect(options.cancel.label).toBe(m.action_undo());
+    expect(options.duration).toBe(30_000);
+    options.cancel.onClick();
+    expect(onUndo).toHaveBeenCalledTimes(1);
   });
 
-  it("dismisses the previous toast before showing the next one", () => {
+  it("stacks undo toasts for different items", () => {
+    showUndoToast("Copper Sword", true, vi.fn());
+    showUndoToast("Chub", true, vi.fn());
+
+    expect(toast).toHaveBeenCalledTimes(2);
+    expect(dismiss).not.toHaveBeenCalled();
+  });
+
+  it("replaces an item's own toast, since an older undo would flip it the wrong way", () => {
     showUndoToast("Copper Sword", true, vi.fn());
     const firstId = toast.mock.results.at(-1)?.value as string;
-    dismiss.mockClear();
+    showUndoToast("Chub", true, vi.fn());
 
     showUndoToast("Copper Sword", false, vi.fn());
 
     expect(dismiss).toHaveBeenCalledExactlyOnceWith(firstId);
-    expect(toast).toHaveBeenCalledTimes(2);
     expect(dismiss.mock.invocationCallOrder[0]).toBeLessThan(
-      toast.mock.invocationCallOrder[1] ?? 0,
+      toast.mock.invocationCallOrder[2] ?? 0,
     );
+  });
+
+  it("keeps at most three undo toasts, dropping the oldest", () => {
+    showUndoToast("Copper Sword", true, vi.fn());
+    const oldestId = toast.mock.results.at(-1)?.value as string;
+    showUndoToast("Chub", true, vi.fn());
+    showUndoToast("Carp", true, vi.fn());
+
+    showUndoToast("Perch", true, vi.fn());
+
+    expect(dismiss).toHaveBeenCalledExactlyOnceWith(oldestId);
+  });
+
+  it("leaves the slots other toasts hold, so undos never hide an error", () => {
+    otherToasts.push({ id: "save-error" }, { id: "starter-items" });
+    showUndoToast("Copper Sword", true, vi.fn());
+    const firstId = toast.mock.results.at(-1)?.value as string;
+
+    showUndoToast("Chub", true, vi.fn());
+
+    expect(dismiss).toHaveBeenCalledExactlyOnceWith(firstId);
+  });
+
+  it("frees an item's slot once its toast closes", () => {
+    showUndoToast("Copper Sword", true, vi.fn());
+    lastToast()[1].onAutoClose();
+
+    showUndoToast("Copper Sword", false, vi.fn());
+
+    expect(dismiss).not.toHaveBeenCalled();
   });
 });
 
@@ -85,6 +154,9 @@ describe("questToastMessage", () => {
 
 describe("showQuestToast", () => {
   beforeEach(() => {
+    clearUndoToasts();
+    otherToasts.length = 0;
+    otherToasts.length = 0;
     toast.mockClear();
     dismiss.mockClear();
   });
@@ -94,22 +166,22 @@ describe("showQuestToast", () => {
 
     showQuestToast("Fishing", "completed", [], "en", onUndo);
 
-    expect(toast).toHaveBeenCalledWith(
-      m.quest_marked_completed({ name: "Fishing" }, { locale: "en" }),
-      expect.objectContaining({
-        cancel: { label: m.action_undo(), onClick: onUndo },
-        duration: 30_000,
-      }),
-    );
+    const [message, options] = lastToast();
+    expect(message).toBe(m.quest_marked_completed({ name: "Fishing" }, { locale: "en" }));
+    expect(options.cancel.label).toBe(m.action_undo());
+    expect(options.duration).toBe(30_000);
+    options.cancel.onClick();
+    expect(onUndo).toHaveBeenCalledTimes(1);
   });
 
-  it("replaces any visible undo toast, including a check-off toast", () => {
+  it("stacks with check-off toasts and replaces its own quest's toast", () => {
     showUndoToast("Copper Sword", true, vi.fn());
-    const firstId = toast.mock.results.at(-1)?.value as string;
-    dismiss.mockClear();
-
     showQuestToast("Fishing", "obtained", [], "en", vi.fn());
+    const questId = toast.mock.results.at(-1)?.value as string;
+    expect(dismiss).not.toHaveBeenCalled();
 
-    expect(dismiss).toHaveBeenCalledExactlyOnceWith(firstId);
+    showQuestToast("Fishing", "completed", [], "en", vi.fn());
+
+    expect(dismiss).toHaveBeenCalledExactlyOnceWith(questId);
   });
 });
