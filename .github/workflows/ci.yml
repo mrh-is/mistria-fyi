@@ -393,15 +393,15 @@ jobs:
         name: Run accessibility tests
         continue-on-error: true
         run: |
-          if [[ "$SPIKE_NATIVE_SHARDS" == "true" ]]; then
-            pnpm run verify -- --step=test:accessibility --shard=${{ matrix.shard }}
-          else
+          selection="--shard=${{ matrix.shard }}"
+          if [[ "$SPIKE_NATIVE_SHARDS" != "true" ]]; then
             pnpm exec tsx scripts/playwright-allocation.ts ${{ matrix.shard }}
-            pnpm run verify -- --step=test:accessibility --test-list=.playwright-artifacts/test-list.txt
+            selection="--test-list=.playwright-artifacts/test-list.txt"
           fi
+          pnpm run verify -- --step=test:accessibility "$selection"
         env:
           PLAYWRIGHT_SKIP_BUILD: "true"
-          SPIKE_NATIVE_SHARDS: "true"
+          SPIKE_NATIVE_SHARDS: "false"
       - if: >-
           steps.accessibility-tests.outcome == 'failure' ||
           hashFiles('.playwright-results/**/trace.zip') != ''
