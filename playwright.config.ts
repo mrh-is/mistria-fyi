@@ -26,8 +26,7 @@ export default defineConfig({
     timeout: 10_000,
   },
   forbidOnly: isCi,
-  // Playwright shards by file when fully parallel mode is off.
-  fullyParallel: false,
+  fullyParallel: true,
   outputDir: ".playwright-results",
   reporter: isCi
     ? [
