@@ -3,8 +3,8 @@
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
-  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
+  import TrackerRowSection from "#lib/components/tracker-row-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
@@ -176,7 +176,7 @@
         />
       </ExpandableSection>
     {:else if !nameFilter || visibleSpells.length > 0}
-      <ExpandableSection
+      <TrackerRowSection
         {locale}
         forceOpen={!!nameFilter}
         name={getName("ui", "magic_spells", locale)}
@@ -184,38 +184,35 @@
         reportCategory="mines"
         reportEntityId="spells"
         {defaultOpen}
+        forceShelvesOpen={!!nameFilter}
+        getKey={(spell) => spell.id}
+        getShelf={rowShelf}
+        isLeaving={(spell) => checkOff.isLeaving(spell.id)}
+        items={visibleSpells}
       >
-        <ShelfRows
-          forceOpen={!!nameFilter}
-          getKey={(spell) => spell.id}
-          getShelf={rowShelf}
-          isLeaving={(spell) => checkOff.isLeaving(spell.id)}
-          items={visibleSpells}
-        >
-          {#snippet row(spell)}
-            <TrackerRow
-              fact={factKey("spells", spell.id)}
-              display={checkOff.rowDisplay(spell.id, trackerData.mines.spells[spell.id].visibility)}
-              name={spell.name}
-              reportCategory="spell"
-              reportEntityId={spell.id}
-              sources={spell.sources}
-              onToggle={(covered) => {
-                checkOff.onToggle(
-                  {
-                    id: spell.id,
-                    name: spell.name,
-                    sectionChecks: [allSpellsComplete],
-                    sectionKey: "spells",
-                    visibility: trackerData.mines.spells[spell.id].visibility,
-                  },
-                  covered,
-                );
-              }}
-            />
-          {/snippet}
-        </ShelfRows>
-      </ExpandableSection>
+        {#snippet row(spell)}
+          <TrackerRow
+            fact={factKey("spells", spell.id)}
+            display={checkOff.rowDisplay(spell.id, trackerData.mines.spells[spell.id].visibility)}
+            name={spell.name}
+            reportCategory="spell"
+            reportEntityId={spell.id}
+            sources={spell.sources}
+            onToggle={(covered) => {
+              checkOff.onToggle(
+                {
+                  id: spell.id,
+                  name: spell.name,
+                  sectionChecks: [allSpellsComplete],
+                  sectionKey: "spells",
+                  visibility: trackerData.mines.spells[spell.id].visibility,
+                },
+                covered,
+              );
+            }}
+          />
+        {/snippet}
+      </TrackerRowSection>
     {/if}
   {/snippet}
 </SectionGroups>

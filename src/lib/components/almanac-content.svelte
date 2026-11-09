@@ -1,9 +1,8 @@
 <script lang="ts">
   import AllCompleted from "#lib/components/all-completed.svelte";
-  import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
-  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
+  import TrackerRowSection from "#lib/components/tracker-row-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
@@ -101,52 +100,49 @@
 >
   {#snippet section({ canonicalIds, id, progress, visibleRows })}
     {#if !nameFilter || visibleRows.length > 0}
-      <ExpandableSection
+      <TrackerRowSection
         {locale}
         forceOpen={!!nameFilter}
         name={getName("ui", id, locale)}
         reportCategory="almanac"
         reportEntityId={id}
         {progress}
+        forceShelvesOpen={!!nameFilter}
+        getKey={(item) => item.canonicalId}
+        getShelf={rowShelf}
+        isLeaving={(item) => checkOff.isLeaving(item.canonicalId)}
+        items={visibleRows}
       >
-        <ShelfRows
-          forceOpen={!!nameFilter}
-          getKey={(item) => item.canonicalId}
-          getShelf={rowShelf}
-          isLeaving={(item) => checkOff.isLeaving(item.canonicalId)}
-          items={visibleRows}
-        >
-          {#snippet row(row)}
-            {@const { canonicalId, item, name, sources, variant } = row}
-            {@const itemVisibility = item.visibility}
-            <TrackerRow
-              fact={factKey("almanac", canonicalId)}
-              display={checkOff.rowDisplay(canonicalId, itemVisibility)}
-              segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
-              {name}
-              subtitle={variant}
-              {variant}
-              reportCategory="almanac-item"
-              reportEntityId={canonicalId}
-              {sources}
-              sprite={canonicalId}
-              spriteClass="text-(--color-category-almanac)"
-              onToggle={(covered) => {
-                checkOff.onToggle(
-                  {
-                    id: canonicalId,
-                    name,
-                    sectionChecks: [() => canonicalIds.every((itemId) => isItemCompleted(itemId))],
-                    sectionKey: id,
-                    visibility: itemVisibility,
-                  },
-                  covered,
-                );
-              }}
-            />
-          {/snippet}
-        </ShelfRows>
-      </ExpandableSection>
+        {#snippet row(row)}
+          {@const { canonicalId, item, name, sources, variant } = row}
+          {@const itemVisibility = item.visibility}
+          <TrackerRow
+            fact={factKey("almanac", canonicalId)}
+            display={checkOff.rowDisplay(canonicalId, itemVisibility)}
+            segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
+            {name}
+            subtitle={variant}
+            {variant}
+            reportCategory="almanac-item"
+            reportEntityId={canonicalId}
+            {sources}
+            sprite={canonicalId}
+            spriteClass="text-(--color-category-almanac)"
+            onToggle={(covered) => {
+              checkOff.onToggle(
+                {
+                  id: canonicalId,
+                  name,
+                  sectionChecks: [() => canonicalIds.every((itemId) => isItemCompleted(itemId))],
+                  sectionKey: id,
+                  visibility: itemVisibility,
+                },
+                covered,
+              );
+            }}
+          />
+        {/snippet}
+      </TrackerRowSection>
     {/if}
   {/snippet}
 </SectionGroups>
