@@ -120,6 +120,11 @@
   --color-season-summer: var(--color-hue-amber);
   --color-season-fall: var(--color-hue-brown);
   --color-season-winter: var(--color-hue-blue);
+  --color-feedback-public: var(--color-hue-amber);
+  --color-feedback-private: var(--color-hue-green);
+  --color-feedback-outline-number: var(--color-hue-blue);
+  --color-feedback-outline-boolean: var(--color-hue-green);
+  --color-feedback-outline-redacted: var(--color-hue-rose);
 
   --color-home-accent: #8a642e;
   --color-home-accent-foreground: var(--color-ribbon-foreground);

@@ -44,6 +44,41 @@ test.describe("keyboard and focus accessibility", () => {
     await expect(trigger).toBeFocused();
   });
 
+  test("feedback extras card & preview sheet close one layer at a time", async ({ page }) => {
+    await gotoApplication(page, "/");
+    await page
+      .getByRole("navigation", { name: "Tracker tools" })
+      .getByRole("button", { name: "Send feedback" })
+      .click();
+    const form = page.getByRole("dialog", { name: "Send feedback" });
+    await form.getByRole("button", { name: "What the extras send" }).click();
+    const card = page.getByRole("dialog", { name: "What the extras send" });
+    const slip = card.getByRole("button", { name: "Peek at my progress" });
+    await slip.focus();
+    await page.keyboard.press("Enter");
+    const sheet = page.getByRole("dialog", { name: "Your progress" });
+    await expect(sheet).toBeVisible();
+
+    for (let step = 0; step < 4; step++) {
+      await page.keyboard.press("Tab");
+      await expect
+        .poll(() => sheet.evaluate((element) => element.contains(document.activeElement)))
+        .toBe(true);
+    }
+    await expect(sheet.getByRole("checkbox", { name: "Attach progress" })).not.toBeChecked();
+
+    await page.keyboard.press("Escape");
+    await expect(sheet).toBeHidden();
+    await expect(card).toBeVisible();
+    await expect(slip).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(card).toBeHidden();
+    await expect(form).toBeVisible();
+    await expect(form.getByRole("checkbox", { name: "Attach progress" })).not.toBeChecked();
+    await page.keyboard.press("Escape");
+    await expect(form).toBeHidden();
+  });
+
   test("quick settings operates with Enter and Space", async ({ page }) => {
     await gotoApplication(page, "/");
     const trigger = page.getByRole("button", { exact: true, name: "Quick settings" });
