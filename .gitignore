@@ -69,7 +69,7 @@ pipeline/output
 CLAUDE.local.md
 # Isolated Wuchale spike build and generated catalog modules
 /spikes/wuchale/build/
-/spikes/wuchale/catalogs/.wuchale/
-/spikes/wuchale/catalogs/ui.loader*.svelte.js
+/spikes/wuchale/catalogs/.wuchale/*
+!/spikes/wuchale/catalogs/.wuchale/*.d.ts
 /spikes/wuchale/catalogs/data.js
 /spikes/wuchale/catalogs/plural.js

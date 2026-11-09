@@ -8,7 +8,7 @@ export default defineConfig({
   adapters: {
     ui: adapter({
       files: "src/features/**/*.svelte",
-      loader: "sveltekit",
+      loader: "custom",
       loading: { granular: true },
       storage: splitStorage,
     }),

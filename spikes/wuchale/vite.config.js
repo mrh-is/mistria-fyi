@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
         files: {
           hooks: { server: baseline ? "src/baseline/hooks.server" : "src/hooks.server" },
         },
+        serviceWorker: { register: false },
       }),
     ],
     resolve: {

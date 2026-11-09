@@ -1,9 +1,9 @@
 # Wuchale localization spike
 
-**Recommendation: continue with a single-route pilot.** Source text and split catalogs make search
-copy easier to review, and the Spanish search fixture shipped about 20% less compressed JavaScript.
-Fix the hover-preload bug by activating translations when navigation commits. Then measure one route
-with production prerendering and offline caching before deciding whether to migrate the whole app.
+**Recommendation: pilot one app route before a full migration.** The isolated pilot fixed the
+hover-preload bug and shipped about 21% less compressed JavaScript. It also verified prerendering
+and a warm-cache offline reload. The next step is to test the loader with the app's actual route
+layout and offline precache.
 
 ## Run from the workspace root
 
@@ -30,17 +30,16 @@ pnpm exec wrangler --cwd spikes/wuchale pages dev --port 4381 --ip 127.0.0.1
 ```
 
 Run the probe in a second terminal. An optional directory argument saves desktop and mobile
-screenshots. Stop the local server, repeat the build with `build paraglide`, and run the same probe
-against the rebuilt fixture. Both builds use the same output directory.
+screenshots. Stop the local server, repeat the build with `build paraglide`, and run the probe
+without `--wuchale` against the rebuilt fixture. Both builds use the same output directory.
 
 ```sh
-pnpm exec node spikes/wuchale/browser-probe.js http://127.0.0.1:4381
+pnpm exec node spikes/wuchale/browser-probe.js http://127.0.0.1:4381 --wuchale
 ```
 
 The launcher sets the fixture working directory before invoking Vite's multi-environment builder.
 The explicit CLI config path keeps pnpm at the workspace root after Vite creates a local cache. For
-development, `pnpm exec node spikes/wuchale/run-vite.js dev` serves the fixture on port 4380. On the
-Wuchale build, append `--observe-preload` to reproduce the hover-preload failure below.
+development, `pnpm exec node spikes/wuchale/run-vite.js dev` serves the fixture on port 4380.
 
 ## Catalog storage and extraction
 
@@ -86,49 +85,55 @@ diff when wording changes so reviewers can assess whether reuse is justified.
 Both variants ran on SvelteKit 3.1.1, Svelte 5.57 and a local Cloudflare Pages Worker with
 `nodejs_compat`. The probe checks concurrent multilingual SSR, invalid-locale fallback to English,
 Spanish hydration using the same server-rendered input, reactive plural rendering, Spanish to
-Traditional Chinese navigation and back, and empty/error branches. The fixture uses a route
-parameter directly. Production prerendering, bare-path stubs, and offline precaching are separate
-integration work.
+Traditional Chinese navigation and back, and empty/error branches. The separate `/[locale]/pilot`
+route renders the same search panel and prerenders HTML for all eight locales.
 
 The production app resolves locale in its root load and passes it to game-data loaders and
 components. The fixture derives both UI and game locale from the same route parameter, using the
-existing `loadNames` and `getName` unchanged. Paraglide can render with an explicit locale.
-Wuchale's default integration requires SSR startup catalog loading, a request-local
-`AsyncLocalStorage` context, and a browser catalog commit in addition to that route-derived locale.
-SvelteKit tracks the route parameter read in `load`; a first attempt using only server locals failed
-to refresh the locale on client navigation.
+existing `loadNames` and `getName` unchanged. Paraglide can render with an explicit locale. The
+Wuchale fixture uses SSR startup catalog loading, a request-local `AsyncLocalStorage` context, and a
+browser catalog commit in addition to that route-derived locale. SvelteKit tracks the route
+parameter read in `load`; a first attempt using only server locals failed to refresh the locale on
+client navigation.
 
-With production-style hover preloading enabled on the Traditional Chinese link, hovering it changed
-the Wuchale heading to Traditional Chinese while the current URL and game name stayed Spanish. The
-default loader commits catalog state in `load`, which Kit can run speculatively. The fixture leaves
-hover preloading off for ordinary navigation and exposes the mismatch as an explicit browser probe.
+The default Wuchale loader changed the heading to Traditional Chinese during hover preloading while
+the URL and game name stayed Spanish. The custom client loader now prepares an isolated snapshot for
+the destination route and locale. The root layout activates that snapshot before hydration or the
+committed navigation's DOM update. Chromium verified that the destination catalog finished loading
+on hover while the current page stayed Spanish, then verified that clicking changed the UI, game
+name and document language together.
 
 Cold Chromium load of `/es/search?q=té`, through hydration and the count interaction. The probe
 counts distinct JavaScript asset paths, sums file bytes and sums separately gzipped files. The
-totals include SvelteKit, Svelte, and the fetched game vocabulary chunk.
+totals include SvelteKit, Svelte, and the fetched game vocabulary chunk. For `/es/pilot`, the probe
+measures the JavaScript the fixture service worker stored after the first online visit, then reloads
+offline and verifies that the count button still updates the translated result.
 
-| Fixture   | JS requests | JS bytes | Gzip bytes | English search copy fetched | Spanish settings copy fetched |
-| --------- | ----------: | -------: | ---------: | --------------------------- | ----------------------------- |
-| Paraglide |          15 |  142,708 |     50,004 | Yes                         | No                            |
-| Wuchale   |          19 |  112,867 |     39,976 | No                          | Yes                           |
+| Fixture   | Search JS requests | Search gzip bytes | Prerendered pilot JS cached | Pilot gzip bytes |
+| --------- | -----------------: | ----------------: | --------------------------: | ---------------: |
+| Paraglide |                 17 |            50,382 |                          17 |           50,362 |
+| Wuchale   |                 19 |            39,966 |                          19 |           39,943 |
 
 The baseline imports the app's compiled Paraglide modules and passes locale explicitly. Its dynamic
-locale dispatch retained multiple languages for the search route, while the settings copy stayed out
-of the initial search payload. This is a fixture comparison, not a measurement of the production
-app's locale-split or prerendered assets. Wuchale emitted separate locale/group chunks, but its
-default browser `loadLocale(locale)` fetched all three groups for Spanish, and the server loader
-preloaded every group and locale. Storage shards and runtime groups are independent. The fixture
-gives no production cold-start, cache, or offline budget estimate.
+locale dispatch retained multiple languages for the search route. The Wuchale client requested only
+the destination feature group and locale. The original default loader fetched the Spanish settings
+copy during search. Neither final search build fetched that copy. The Wuchale server still preloads
+every group and locale, and the custom loader requires an explicit route-to-group mapping. Storage
+shards and runtime groups are independent.
+
+The offline test covers a previously visited Spanish route using the fixture's small service worker.
+Production precache selection, first offline access to an unvisited route, version upgrades,
+bare-path stubs, and page-load timings remain open.
 
 ## Adoption and rollback
 
-A subsequent experiment would need to commit browser messages only when the navigation commits, and
-measure route-only loading against production-style prerendering and PWA caching. A gradual
-migration would keep app UI and game ownership separate, pin the compiler and adapter versions,
-preserve message context and plural rules in the conversion, and retain the existing checks for
-unconverted routes. This spike rolls back by removing the fixture and its two development
-dependencies. Production migration would require preserving the original keyed messages until both
-paths have been verified so a route can switch back without losing translations.
+A pilot in the production app should measure the loader with the real layout, prerender pipeline,
+and PWA precache before expanding to other routes. A gradual migration would keep app UI and game
+ownership separate, pin the compiler and adapter versions, preserve message context and plural rules
+in the conversion, and retain the existing checks for unconverted routes. This spike rolls back by
+removing the fixture and its two development dependencies. Production migration would require
+preserving the original keyed messages until both paths have been verified so a route can switch
+back without losing translations.
 
 Upstream references: [Svelte adapter](https://wuchale.dev/adapters/svelte/),
 [catalog loading](https://wuchale.dev/guides/loading/),

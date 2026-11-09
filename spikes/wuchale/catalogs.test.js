@@ -29,7 +29,10 @@ await test("real extraction round-trips split catalogs and exposes missing or st
   });
   const catalogDir = path.join(root, "catalogs");
   await cp(path.join(fixture, "catalogs"), catalogDir, {
-    filter: (file) => file.endsWith(".json") || file === path.join(fixture, "catalogs"),
+    filter: (file) =>
+      file.endsWith(".json") ||
+      file.endsWith(".svelte.js") ||
+      file === path.join(fixture, "catalogs"),
     recursive: true,
   });
   const config = await getConfig(path.join(fixture, "wuchale.config.js"));

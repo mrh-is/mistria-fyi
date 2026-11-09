@@ -1,3 +1,1 @@
-import "../../catalogs/ui.loader.svelte.js";
-
-export { loadLocale as loadUi } from "wuchale/load-utils";
+export { prepareUi } from "../../catalogs/ui.loader.svelte.js";

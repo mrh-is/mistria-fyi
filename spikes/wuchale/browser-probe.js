@@ -7,11 +7,25 @@ import { gzipSync } from "node:zlib";
 import spanishNames from "../../src/lib/data/locales/es/ui.json" with { type: "json" };
 import taiwanNames from "../../src/lib/data/locales/zh-Hant/ui.json" with { type: "json" };
 
-const [origin, screenshotArg, preloadArg] = process.argv.slice(2);
-const screenshots = screenshotArg === "--observe-preload" ? undefined : screenshotArg;
-const observePreload = screenshotArg === "--observe-preload" || preloadArg === "--observe-preload";
+const [origin, ...options] = process.argv.slice(2);
+const screenshots = options.find((option) => !option.startsWith("--"));
+const wuchale = options.includes("--wuchale");
 const browser = await chromium.launch();
 const searchUrl = new URL("/es/search?q=té", origin).href;
+
+/** @param {Iterable<string>} paths */
+async function measureJs(paths) {
+  const files = await Promise.all(
+    [...paths].map(async (file) => readFile(path.join(import.meta.dirname, "build", file))),
+  );
+  return {
+    containsEnglishSearchCopy: files.some((file) => file.includes("No items found")),
+    containsSpanishSettingsCopy: files.some((file) => file.includes("Ajustes rápidos")),
+    jsBytes: files.reduce((total, file) => total + file.length, 0),
+    jsGzipBytes: files.reduce((total, file) => total + gzipSync(file).length, 0),
+    jsRequests: files.length,
+  };
+}
 
 try {
   // Simultaneous requests exercise the server's shared process with different active locales.
@@ -68,18 +82,11 @@ try {
   await expect(page.getByText("2 resultados")).toBeVisible();
   await page.waitForLoadState("networkidle");
 
-  const files = await Promise.all(
-    [...assets].map(async (file) => readFile(path.join(import.meta.dirname, "build", file))),
-  );
-  process.stdout.write(
-    `${JSON.stringify({
-      containsEnglishSearchCopy: files.some((file) => file.includes("No items found")),
-      containsSpanishSettingsCopy: files.some((file) => file.includes("Ajustes rápidos")),
-      searchJsBytes: files.reduce((total, file) => total + file.length, 0),
-      searchJsGzipBytes: files.reduce((total, file) => total + gzipSync(file).length, 0),
-      searchJsRequests: assets.size,
-    })}\n`,
-  );
+  const search = await measureJs(assets);
+  if (wuchale) {
+    assert.equal(search.containsSpanishSettingsCopy, false);
+    assert.equal(search.containsEnglishSearchCopy, false);
+  }
 
   if (screenshots) {
     await mkdir(screenshots, { recursive: true });
@@ -89,7 +96,22 @@ try {
     await page.screenshot({ path: path.join(screenshots, "search-mobile.png") });
   }
 
-  await page.getByRole("link", { name: "繁體中文" }).click();
+  const taiwanLink = page.getByRole("link", { name: "繁體中文" });
+  if (wuchale) {
+    // Verify the destination catalog really arrived before checking that the current locale held.
+    const catalogFetched = page.waitForResponse(async (response) => {
+      if (!response.url().includes("/_app/immutable/") || !response.ok()) return false;
+      const source = await response.text();
+      return source.includes("搜尋物品");
+    });
+    await taiwanLink.hover();
+    await catalogFetched;
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("heading")).toHaveText("Buscar elementos");
+    await expect(page.locator("[data-game-name]")).toHaveText(spanishNames.fish);
+    await expect(page).toHaveURL(searchUrl);
+  }
+  await taiwanLink.click();
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-Hant");
   await expect(page.getByRole("heading")).toHaveText("搜尋物品");
   await expect(page.locator("[data-game-name]")).toHaveText(taiwanNames.fish);
@@ -117,18 +139,47 @@ try {
   await expect(page.locator("main p").last()).toContainText("búsqueda");
   assert.deepEqual(errors, []);
 
-  if (observePreload) {
-    // Reproduce the production app's hover preloading without enabling it on ordinary fixture links.
-    const taiwanLink = page.getByRole("link", { name: "繁體中文" });
-    await taiwanLink.evaluate((link) => {
-      if (link instanceof HTMLAnchorElement) link.dataset.sveltekitPreloadData = "hover";
-    });
-    await taiwanLink.hover();
-    await expect(page.getByRole("heading")).toHaveText("搜尋物品");
-    await expect(page.locator("[data-game-name]")).toHaveText(spanishNames.fish);
-    await expect(page).toHaveURL(new URL("/es/search?error", origin).href);
-    process.stdout.write("Hover preloading changed the Wuchale UI before locale navigation.\n");
+  // Exercise a prerendered route with a warm locale cache and an offline reload.
+  const pilotUrl = new URL("/es/pilot", origin).href;
+  const staticResponse = await fetch(pilotUrl);
+  assert.equal(staticResponse.status, 200);
+  const staticHtml = await staticResponse.text();
+  assert.ok(staticHtml.includes("Buscar elementos"));
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.register("/service-worker.js");
+    await navigator.serviceWorker.ready;
+  });
+  await page.goto(pilotUrl);
+  await expect(page.getByRole("heading")).toHaveText("Buscar elementos");
+  await page.getByRole("button", { name: "Reintentar" }).click();
+  await expect(page.getByText("2 resultados")).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  const cachedPaths = await page.evaluate(async () => {
+    const names = await caches.keys();
+    const key = names.find((name) => name.startsWith("localization-pilot-"));
+    if (!key) throw new Error("Pilot cache was not created");
+    const cache = await caches.open(key);
+    const requests = await cache.keys();
+    return requests.map((request) => new URL(request.url).pathname);
+  });
+  assert.ok(cachedPaths.includes("/es/pilot"));
+  const cachedJs = cachedPaths.filter((file) => file.endsWith(".js"));
+  assert.ok(cachedJs.length > 0);
+  const pilot = await measureJs(cachedJs);
+  if (wuchale) assert.equal(pilot.containsSpanishSettingsCopy, false);
+  await page.context().setOffline(true);
+  await page.reload();
+  await expect(page.locator("[data-game-name]")).toHaveText(spanishNames.fish);
+  await expect(page.getByRole("heading")).toHaveText("Buscar elementos");
+  await page.getByRole("button", { name: "Reintentar" }).click();
+  await expect(page.getByText("2 resultados")).toBeVisible();
+  if (screenshots) {
+    await page.screenshot({ path: path.join(screenshots, "pilot-desktop.png") });
+    await page.setViewportSize({ height: 720, width: 390 });
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await page.screenshot({ path: path.join(screenshots, "pilot-mobile.png") });
   }
+  process.stdout.write(`${JSON.stringify({ pilot, search })}\n`);
 } finally {
   await browser.close();
 }

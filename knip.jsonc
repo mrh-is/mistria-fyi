@@ -13,6 +13,9 @@
         "relay/worker.ts",
         // This separate SvelteKit fixture has its own Vite config and generated module graph.
         "spikes/wuchale/{*.js,src/**/*.{js,svelte}}",
+        // Wuchale injects loader imports and generates the JS peers of these declarations.
+        "spikes/wuchale/catalogs/*.svelte.js",
+        "spikes/wuchale/catalogs/.wuchale/*.d.ts",
       ],
       "ignore": [
         // `scripts/locale-fonts/` is its own pnpm package with its own scripts & dependencies.
