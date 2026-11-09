@@ -1,0 +1,59 @@
+diff --git a/src/core/sync/write_types/index.js b/src/core/sync/write_types/index.js
+index 83f8eed24bd4db9b23ac64bab75b6cb00323c7fa..fa2d836950d8ccc9dd75cd3bffb43fde1910e5c1 100644
+--- a/src/core/sync/write_types/index.js
++++ b/src/core/sync/write_types/index.js
+@@ -6,6 +6,18 @@ import { compact } from '../../../utils/array.js';
+ import { posixify } from '../../../utils/os.js';
+ import { ts } from '../ts.js';
+ import { is_page_route } from '../create_manifest_data/index.js';
++
++// mistria-fyi patch (sveltejs/kit#17694): replace the file atomically, so a concurrent reader
++// never sees it truncated
++/**
++ * @param {string} file
++ * @param {string} code
++ */
++function write_atomic(file, code) {
++	const temp = `${file}.${process.pid}.tmp`;
++	fs.writeFileSync(temp, code);
++	fs.renameSync(temp, file);
++}
+ const remove_relative_parent_traversals = (/** @type {string} */ path) =>
+ 	path.replace(/\.\.\//g, '');
+ const is_whitespace = (/** @type {string} */ char) => /\s/.test(char);
+@@ -136,7 +148,7 @@ export function write_all_types(config, manifest_data, root) {
+ 		if (!current_route_ids.has(id)) delete meta_data[id];
+ 	}
+ 
+-	fs.writeFileSync(meta_data_file, JSON.stringify(meta_data, null, '\t'));
++	write_atomic(meta_data_file, JSON.stringify(meta_data, null, '\t'));
+ }
+ 
+ /**
+@@ -368,7 +380,7 @@ function update_types(config, routes, route, root, to_delete = new Set()) {
+ 		.filter(Boolean)
+ 		.join('\n\n');
+ 
+-	fs.writeFileSync(`${outdir}/$types.d.ts`, output);
++	write_atomic(`${outdir}/$types.d.ts`, output);
+ 	to_delete.delete('$types.d.ts');
+ 
+ 	for (const file of to_delete) {
+@@ -406,7 +418,7 @@ function process_node(node, outdir, is_page, proxies, root, all_pages_have_load
+ 		const basename = path.basename(node.server);
+ 		const proxy = proxies.server;
+ 		if (proxy?.modified) {
+-			fs.writeFileSync(`${outdir}/proxy${basename}`, proxy.code);
++			write_atomic(`${outdir}/proxy${basename}`, proxy.code);
+ 		}
+ 
+ 		server_data = get_data_type(node.server, 'null', proxy, true);
+@@ -459,7 +471,7 @@ function process_node(node, outdir, is_page, proxies, root, all_pages_have_load
+ 	if (node.universal) {
+ 		const proxy = proxies.universal;
+ 		if (proxy?.modified) {
+-			fs.writeFileSync(`${outdir}/proxy${path.basename(node.universal)}`, proxy.code);
++			write_atomic(`${outdir}/proxy${path.basename(node.universal)}`, proxy.code);
+ 		}
+ 
+ 		const type = get_data_type(
