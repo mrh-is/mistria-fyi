@@ -155,6 +155,38 @@ servers. Submitting it checks the form & Turnstile (Cloudflare’s bot check) bu
 Instead, the page shows a “Preview build” notice, and that notice is the expected result
 ([Feedback credentials](app-architecture.md#8-feedback-credentials)).
 
+### Desktop screenshot capture
+
+Use standalone Playwright Chromium for desktop evidence. The in-app browser pane can lay out the
+page at 1280 CSS pixels but crop the right edge to the pane width, making a centered column appear
+off-center.
+
+Run this from the workspace root. Replace the example URL with the dev server URL and route you're
+verifying. For an interaction state, perform the interaction before taking the screenshot.
+
+```sh
+pnpm exec node --input-type=module - http://localhost:5173/en/data /tmp/mistria-data.png <<'JS'
+import { chromium } from "@playwright/test";
+
+const [url, output] = process.argv.slice(2);
+const browser = await chromium.launch();
+try {
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 800 },
+    reducedMotion: "reduce",
+  });
+  await page.goto(url);
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: output, scale: "css", animations: "disabled" });
+} finally {
+  await browser.close();
+}
+JS
+```
+
+Check that the PNG is 1280 × 800 and that both edges of the viewport are present before attaching
+it.
+
 ### One-off comparisons
 
 When a before & after would help review a visual change, open the PR’s base & head revisions in
