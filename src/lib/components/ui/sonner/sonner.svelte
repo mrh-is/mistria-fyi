@@ -44,9 +44,10 @@
 
   /* Sonner's own stylesheet uses a huge z-index; the token keeps it in the app's order. */
   :global([data-sonner-toaster][data-sonner-theme]) {
-    /* A little wider than Sonner's 356px, so an error's description doesn't stack into a column.
-     * Sonner sets its width as an inline style, so only an important declaration can widen it. */
-    --width: 24rem !important;
+    /* A little wider than Sonner's 356px, so an error's description doesn't stack into a column,
+     * but never wider than the window at a large default font size. Sonner sets its width as an
+     * inline style, so only an important declaration can widen it. */
+    --width: min(24rem, calc(100vw - 2rem)) !important;
 
     z-index: var(--z-toast);
     font-family: var(--font-body);
@@ -76,6 +77,12 @@
       inset 0 1px 0 color-mix(in srgb, var(--color-paper-raised) 60%, #fff);
   }
 
+  /* The slip's shadow above replaces Sonner's focus ring, so focus gets its own. */
+  :global([data-sonner-toaster][data-sonner-theme] [data-sonner-toast]:focus-visible) {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
   /* Phones keep Sonner's own inset width; wider screens fill the toaster's column. */
   @media (min-width: 601px) {
     :global([data-sonner-toaster][data-sonner-theme] [data-sonner-toast]) {
@@ -94,6 +101,15 @@
 
   :global([data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-type="warning"]) {
     --toast-accent: var(--color-status-warning);
+  }
+
+  /* Paper-colored ink keeps the icon at 3:1 on dark mode's lighter amber ribbon. */
+  :global(
+    [data-sonner-toaster][data-sonner-theme="dark"]
+      [data-sonner-toast][data-type="warning"]
+      [data-icon]
+  ) {
+    color: var(--color-paper);
   }
 
   /* An error can cost progress, so its whole edge reads as one, not just its ribbon. */
@@ -128,8 +144,11 @@
     inset-block-start: 9px;
     inset-inline-start: var(--toast-ribbon-inset);
     display: flex;
+    align-items: center;
     justify-content: center;
     inline-size: var(--toast-ribbon-width);
+    /* Matches the icons' size-3.5, so a loading spinner centers like the other icons. */
+    block-size: 0.875rem;
     color: var(--color-ribbon-foreground);
   }
 
@@ -170,11 +189,12 @@
     color: var(--color-ink-muted);
   }
 
-  /* The stub's action: one fixed footprint whatever the label, labelled like the toolbar's controls. */
+  /* The stub's action: a steady minimum footprint, labelled like the toolbar's controls. Labels
+   * wrap between words only; the max width fits the longest single word in the shipped locales. */
   :global([data-sonner-toaster][data-sonner-theme] [data-sonner-toast] [data-button]) {
     flex-shrink: 0;
     min-inline-size: 4.75rem;
-    max-inline-size: 7.5rem;
+    max-inline-size: 9rem;
     min-block-size: 2.25rem;
     margin-inline-start: var(--toast-pad);
     padding: 6px 10px;
@@ -185,6 +205,7 @@
     text-align: center;
     text-transform: uppercase;
     text-wrap: balance;
+    overflow-wrap: normal;
     color: var(--color-ink);
     cursor: pointer;
     background: var(--color-paper);
@@ -214,7 +235,8 @@
     outline-offset: 2px;
   }
 
-  /* Should the stack ever collapse, the slips behind show only their edge, not their words. */
+  /* The layout keeps the stack expanded, so this is a guard: should it ever collapse, the slips
+   * behind show only their edge, not their words. Sonner's own rule for this is styled-mode only. */
   :global(
     [data-sonner-toaster][data-sonner-theme]
       [data-sonner-toast][data-expanded="false"][data-front="false"]
