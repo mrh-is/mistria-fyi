@@ -659,10 +659,14 @@
     font-size: var(--text-xs);
   }
 
+  /*
+   * The ⓘ hangs 4px below its heading, & the first row’s tap area reaches 5px above the row, so a
+   * 9px gap lets the two meet without overlapping.
+   */
   .feedback-form__extras {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 9px;
   }
 
   /* Styled like a shelf heading's label & ⓘ, so the extras read as a quiet second tier. */

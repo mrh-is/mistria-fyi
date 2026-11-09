@@ -12,6 +12,8 @@
   import { outlineLines } from "#lib/feedback/outline.js";
   import * as m from "#lib/paraglide/messages.js";
 
+  import type { OutlineLine } from "#lib/feedback/outline.js";
+
   let {
     attached,
     data,
@@ -41,7 +43,11 @@
           title: m.feedback_preview_sync_log_title(),
         },
   );
-  let lines = $derived(open ? outlineLines(data) : []);
+  // Kept while the sheet slides away, after the caller stops computing its data.
+  let lines = $state<OutlineLine[]>([]);
+  $effect(() => {
+    if (open) lines = outlineLines(data);
+  });
   const DASH = "- ";
 </script>
 

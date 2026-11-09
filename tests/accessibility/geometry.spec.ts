@@ -142,6 +142,22 @@ test("feedback backdrop covers overscroll while the form and toolbar receive cli
   await expect(dialog).toBeHidden();
 });
 
+test("feedback extras info button keeps its own tap area above the first row", async ({ page }) => {
+  await initializeApplication(page, "light");
+  await page.setViewportSize({ height: 844, width: 390 });
+  await gotoApplication(page, "/");
+  await page.getByRole("button", { exact: true, name: "Send feedback" }).click();
+  const info = page
+    .getByRole("dialog", { name: "Send feedback" })
+    .getByRole("button", { name: "What the extras send" });
+  const box = await requireBox(info);
+  const hit = await page.evaluate(
+    ({ x, y }) => document.elementFromPoint(x, y)?.closest("button")?.getAttribute("aria-label"),
+    { x: box.x + box.width / 2, y: box.y + box.height - 1 },
+  );
+  expect(hit).toBe("What the extras send");
+});
+
 test.describe("interactive target geometry", () => {
   test.beforeEach(async ({ page }) => {
     await initializeApplication(page, "light");
