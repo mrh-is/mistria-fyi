@@ -264,8 +264,6 @@ jobs:
       - name: Test with timing budgets
         env:
           VITEST_COVERAGE: ${{ github.event_name == 'schedule' }}
-          VITEST_MAX_WORKERS: "3"
-          VITEST_SPIKE_FILE_SHUFFLE: "true"
           VITEST_RELAY_CHANGED: ${{ needs.changes.outputs.relay }}
           VITEST_SCRIPTS_CHANGED: ${{ needs.changes.outputs.scripts }}
           VITEST_TOUCHED_TEST_FILES: ${{ needs.changes.outputs.tests }}
@@ -403,7 +401,7 @@ jobs:
           pnpm run verify -- --step=test:accessibility "$selection"
         env:
           PLAYWRIGHT_SKIP_BUILD: "true"
-          SPIKE_NATIVE_SHARDS: "false"
+          SPIKE_NATIVE_SHARDS: "true"
       - if: >-
           steps.accessibility-tests.outcome == 'failure' ||
           hashFiles('.playwright-results/**/trace.zip') != ''
