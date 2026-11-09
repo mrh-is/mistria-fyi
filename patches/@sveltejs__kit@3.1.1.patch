@@ -1,5 +1,5 @@
 diff --git a/src/core/sync/write_types/index.js b/src/core/sync/write_types/index.js
-index a542b76344ebebe5ca424a4a72ab7bc68c4ab3ac..ee40fb87249294add3121f1d640473d703e6c37c 100644
+index 83f8eed24bd4db9b23ac64bab75b6cb00323c7fa..fa2d836950d8ccc9dd75cd3bffb43fde1910e5c1 100644
 --- a/src/core/sync/write_types/index.js
 +++ b/src/core/sync/write_types/index.js
 @@ -6,6 +6,18 @@ import { compact } from '../../../utils/array.js';
@@ -21,8 +21,8 @@ index a542b76344ebebe5ca424a4a72ab7bc68c4ab3ac..ee40fb87249294add3121f1d640473d7
  const remove_relative_parent_traversals = (/** @type {string} */ path) =>
  	path.replace(/\.\.\//g, '');
  const is_whitespace = (/** @type {string} */ char) => /\s/.test(char);
-@@ -129,7 +141,7 @@ export function write_all_types(config, manifest_data, root) {
- 		}
+@@ -136,7 +148,7 @@ export function write_all_types(config, manifest_data, root) {
+ 		if (!current_route_ids.has(id)) delete meta_data[id];
  	}
  
 -	fs.writeFileSync(meta_data_file, JSON.stringify(meta_data, null, '\t'));
@@ -30,7 +30,7 @@ index a542b76344ebebe5ca424a4a72ab7bc68c4ab3ac..ee40fb87249294add3121f1d640473d7
  }
  
  /**
-@@ -361,7 +373,7 @@ function update_types(config, routes, route, root, to_delete = new Set()) {
+@@ -368,7 +380,7 @@ function update_types(config, routes, route, root, to_delete = new Set()) {
  		.filter(Boolean)
  		.join('\n\n');
  
@@ -39,7 +39,7 @@ index a542b76344ebebe5ca424a4a72ab7bc68c4ab3ac..ee40fb87249294add3121f1d640473d7
  	to_delete.delete('$types.d.ts');
  
  	for (const file of to_delete) {
-@@ -399,7 +411,7 @@ function process_node(node, outdir, is_page, proxies, root, all_pages_have_load
+@@ -406,7 +418,7 @@ function process_node(node, outdir, is_page, proxies, root, all_pages_have_load
  		const basename = path.basename(node.server);
  		const proxy = proxies.server;
  		if (proxy?.modified) {
@@ -48,7 +48,7 @@ index a542b76344ebebe5ca424a4a72ab7bc68c4ab3ac..ee40fb87249294add3121f1d640473d7
  		}
  
  		server_data = get_data_type(node.server, 'null', proxy, true);
-@@ -452,7 +464,7 @@ function process_node(node, outdir, is_page, proxies, root, all_pages_have_load
+@@ -459,7 +471,7 @@ function process_node(node, outdir, is_page, proxies, root, all_pages_have_load
  	if (node.universal) {
  		const proxy = proxies.universal;
  		if (proxy?.modified) {
