@@ -238,6 +238,18 @@ export function checkGit(machine: Environment): CheckResult[] {
           ),
     );
   }
+  const hooksPath = machine.run("git", ["-C", machine.root, "config", "--get", "core.hooksPath"]);
+  results.push(
+    hooksPath.ok && hooksPath.stdout.trim()
+      ? check("git-hooks", "Git hooks", "ok", "core.hooksPath is configured")
+      : check(
+          "git-hooks",
+          "Git hooks",
+          "manual",
+          "core.hooksPath is unset; configure it once per clone from the main checkout",
+          "git config --local core.hooksPath .husky/_",
+        ),
+  );
   const signing = machine.run("git", ["config", "--get", "commit.gpgsign"]);
   const key = machine.run("git", ["config", "--get", "user.signingkey"]);
   results.push(

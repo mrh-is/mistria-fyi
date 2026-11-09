@@ -130,8 +130,8 @@ store in the parent shell for subsequent commands & approved setup retries:
 pnpm_config_confirm_modules_purge=false node scripts/setup-worktree.ts
 ```
 
-Preparation still needs permission to write shared Git hook metadata. Do not use this retry to
-replace another session’s dependency directory, or set `CI=true` merely to bypass a prompt.
+Preparation generates hooks in the checkout. Configure the shared hook path once per clone using
+[machine setup](machine-setup.md#git-hooks).
 
 GitHub CLI downloads run logs into its cache even though `gh run view --log` is read-only against
 GitHub. Use a writable temporary cache in the sandbox instead of granting access to `~/.cache/gh`:
@@ -900,15 +900,14 @@ offline fallback, registration, or activation behavior.
 - **Cause**: Lifecycle scripts (including `prepare`) may be disabled or skipped in some
   environments. `core.hooksPath` is stored in the shared `.git/config` and may already be set by
   another worktree, but the `.husky/_` directory that Husky generates is worktree-local and will be
-  absent until `prepare` is run. A parallel setup can also hold the shared `.git/config` lock;
-  `scripts/install-git-hooks.ts` retries Husky's install, and `prepare` fails with the lock error if
-  it never frees.
+  absent until `prepare` is run. For a new clone, configure the shared path first using
+  [machine setup](machine-setup.md#git-hooks).
 - **Recovery**: Run `pnpm run prepare` from within the worktree directory after installation:
   ```sh
   pnpm run prepare
   ```
-  Verify installation by confirming `core.hooksPath` is set to `.husky/_` and the Husky wrapper
-  exists:
+  Verify that `core.hooksPath` points to the expected hook directory and that its Husky wrapper
+  exists. For the recommended relative path:
   ```sh
   git config --get core.hooksPath   # should print .husky/_
   ls .husky/_/pre-commit            # should exist

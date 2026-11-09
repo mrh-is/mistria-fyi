@@ -60,7 +60,8 @@ setup itself, require agents to stop & report them; see “Tooling failures” i
    `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN` until dependencies match the lockfile, rather than installing
    them implicitly. The install also links the pinned Node at `node_modules/.bin/node`, which the
    committed VS Code settings point the Vitest extension at; Windows needs a local override (see
-   [test file placement](development-workflow.md#test-file-placement)).
+   [test file placement](development-workflow.md#test-file-placement)). Configure
+   [Git hooks](#git-hooks) once per clone to enable the pre-commit check.
 7. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
    `gpg.ssh.program = ssh-keygen`, per [git identity](agent-workflow.md#git-identity). The doctor
    lists this as a todo, never a failure, because cloud sandboxes legitimately skip it. If
@@ -154,14 +155,28 @@ sandbox access when needed instead of selecting a separate store.
 
 pnpm 11 ignores the legacy `npm_config_store_dir` spelling. In a Codex shell, the doctor fails when
 the variable is unset, legacy-only, relative, inside the repository, different from the store pnpm
-reports, or the store directory or existing `v11/index.db` is unwritable from that shell. Hook
-installation during `prepare` writes shared Git metadata, which the sandbox may need the user to
-approve.
+reports, or the store directory or existing `v11/index.db` is unwritable from that shell.
 
 Git metadata has a separate sandbox boundary from checkout files, including in desktop-created
 worktrees. See [Codex Git sandbox](codex-git-sandbox.md) before changing writable roots or
 diagnosing an “index.lock” denial. Command allowlists do not grant filesystem access, & restarting
 Codex with unchanged settings does not remove that protection.
+
+## Git hooks
+
+Configure the repository's pre-commit hook once per clone from the main checkout:
+
+```sh
+git config --local core.hooksPath .husky/_
+```
+
+Skip this step if `git config --get core.hooksPath` already prints `.husky/_` or an absolute path to
+the main checkout's `.husky/_`. An absolute path uses the main checkout's generated hooks for every
+worktree. The relative path uses each worktree's own generated hooks. If the clone uses a custom
+hooks path, keep that configuration and arrange for its pre-commit hook to run
+`pnpm exec lint-staged`. The setting is shared by linked worktrees. The command needs an approved
+Git metadata write when run from a restricted Codex shell. Routine `prepare` only generates hook
+files inside the checkout. The machine doctor reports an unset hook path as a manual setup step.
 
 ## Verify the result
 
