@@ -40,7 +40,9 @@ export function shuffleSharedClientFiles<T extends { moduleId: string; project: 
 export default class RelayFirstSequencer extends BaseSequencer {
   override async sort(files: TestSpecification[]): Promise<TestSpecification[]> {
     // oxlint-disable-next-line unicorn/no-array-sort -- Vitest's sequencer API names this method sort; it is not Array.sort.
-    const ordered = prioritizeRelay(await super.sort(files));
+    const sorted = await super.sort(files);
+    const ordered =
+      process.env.VITEST_SPIKE_CLIENT_ONLY === "true" ? sorted : prioritizeRelay(sorted);
     if (!process.env.CI || files.filter((file) => isSharedClient(file)).length < 2) return ordered;
 
     const { root, sequence } = this.ctx.config;
