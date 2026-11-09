@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
@@ -8,8 +9,8 @@ import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
 import BackupCard from "./backup-card.svelte";
 
 async function restoreFromFile(file: File) {
-  await fireEvent.click(screen.getByRole("button", { name: "Restore from backup" }));
-  const input = screen.getByLabelText("Choose a backup file to restore");
+  await fireEvent.click(screen.getByRole("button", { name: m.backup_restore_action() }));
+  const input = screen.getByLabelText(m.backup_choose_file_aria());
   await fireEvent.change(input, { target: { files: [file] } });
 }
 
@@ -25,7 +26,7 @@ describe("BackupCard export", () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockReturnValue(undefined);
     render(BackupCard, { open: true });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Export backup" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.backup_export_action() }));
 
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     const [blob] = createObjectURL.mock.calls[0];
@@ -52,11 +53,11 @@ describe("BackupCard restore", () => {
     await restoreFromFile(new File([backup], "backup.json", { type: "application/json" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("All set, your backup is restored!");
+      expect(screen.getByRole("status")).toHaveTextContent(m.backup_restored_success());
     });
     expect(screen.queryByRole("alert")).toBeNull();
     expect(userState.state.progress.renown).toBe(7);
-    expect(screen.getByRole("button", { name: "Restore from backup" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: m.backup_restore_action() })).toBeEnabled();
   });
 
   it("rejects malformed JSON and leaves the current state untouched", async () => {
@@ -66,7 +67,7 @@ describe("BackupCard restore", () => {
 
     await restoreFromFile(new File(["{not json"], "broken.json", { type: "application/json" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/doesn’t look like a backup file/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(m.backup_error_malformed_json());
     expect(screen.getByRole("status")).toHaveTextContent("");
     expect(userState.exportBackup()).toBe(before);
   });
@@ -76,7 +77,7 @@ describe("BackupCard restore", () => {
 
     await restoreFromFile(new File(['{"version":1}'], "partial.json"));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/missing some data/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(m.backup_error_invalid_fields());
   });
 
   it("rejects a backup from a newer version", async () => {
@@ -85,7 +86,7 @@ describe("BackupCard restore", () => {
     const future = JSON.stringify({ version: CURRENT_SERIALIZATION_VERSION + 1 });
     await restoreFromFile(new File([future], "future.json"));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/future version/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(m.backup_error_newer_version());
   });
 
   it("reports an unreadable file", async () => {
@@ -95,10 +96,8 @@ describe("BackupCard restore", () => {
 
     await restoreFromFile(file);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "We couldn’t open that file, so we left your progress as it was. Make sure you picked a backup you downloaded from here.",
-    );
-    expect(screen.getByRole("button", { name: "Restore from backup" })).toBeEnabled();
+    expect(await screen.findByRole("alert")).toHaveTextContent(m.backup_could_not_read());
+    expect(screen.getByRole("button", { name: m.backup_restore_action() })).toBeEnabled();
   });
 
   it("clears a previous error once a later restore succeeds", async () => {
@@ -109,7 +108,7 @@ describe("BackupCard restore", () => {
     await restoreFromFile(new File([userState.exportBackup()], "backup.json"));
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("All set, your backup is restored!");
+      expect(screen.getByRole("status")).toHaveTextContent(m.backup_restored_success());
     });
     expect(screen.queryByRole("alert")).toBeNull();
   });
@@ -119,7 +118,9 @@ describe("BackupCard unreadable data", () => {
   it("hides the download action when nothing was quarantined", () => {
     render(BackupCard, { open: true });
 
-    expect(screen.queryByRole("button", { name: "Download unreadable data" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: m.backup_download_unreadable_action() }),
+    ).toBeNull();
   });
 
   it("downloads stored progress that couldn't be read", async () => {
@@ -133,7 +134,9 @@ describe("BackupCard unreadable data", () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockReturnValue(undefined);
     render(BackupCard, { open: true });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Download unreadable data" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: m.backup_download_unreadable_action() }),
+    );
 
     const [blob] = createObjectURL.mock.calls[0];
     if (!(blob instanceof Blob)) throw new Error("Expected the unreadable download to use a Blob");

@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { describe, expect, it, vi } from "vitest";
 
+import * as m from "#lib/paraglide/messages.js";
+
 import FindSaveStep from "../../../routes/sync/find-save-step.svelte";
 import SaveDrop from "./save-drop.svelte";
 
@@ -66,21 +68,23 @@ describe("dropping", () => {
     vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
     render(FindSaveStep, { onread: vi.fn() });
     const box = screen.getByRole("group");
-    const copyHalf = screen.getByRole("button", { name: "Copy" }).closest(".find__half");
+    const copyHalf = screen
+      .getByRole("button", { name: m.sync_find_copy() })
+      .closest(".find__half");
     const dropHalf = box.closest(".find__half");
     expect(copyHalf).toHaveClass("find__half--active");
     expect(dropHalf).not.toHaveClass("find__half--active");
     expect(box).not.toHaveClass("save-drop--emphasized");
     expect(box).not.toHaveAttribute("aria-disabled");
-    expect(box).toHaveAccessibleName("When you’ve found your autosave, drop it here.");
-    await fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    expect(box).toHaveAccessibleName(m.sync_find_drop_next());
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_find_copy() }));
     await waitFor(() => {
       expect(dropHalf).toHaveClass("find__half--active");
     });
     expect(copyHalf).not.toHaveClass("find__half--active");
     expect(box).toHaveClass("save-drop--emphasized");
     expect(box).not.toHaveAttribute("aria-disabled");
-    expect(box).toHaveAccessibleName("Drop your autosave here");
+    expect(box).toHaveAccessibleName(m.sync_find_drop());
   });
 
   it("also advances the guidance when the path is copied by hand", async () => {
@@ -93,7 +97,7 @@ describe("dropping", () => {
     selection?.addRange(range);
     await fireEvent.copy(document);
     expect(screen.getByRole("group")).toHaveClass("save-drop--emphasized");
-    expect(screen.getByRole("button", { name: "Copied!" })).toBeVisible();
+    expect(screen.getByRole("button", { name: m.sync_find_copied() })).toBeVisible();
     selection?.removeAllRanges();
   });
 
@@ -102,8 +106,8 @@ describe("dropping", () => {
     render(FindSaveStep, { onread });
     await fireEvent.drop(screen.getByRole("group"), { dataTransfer: transfer() });
     // This fixture isn't a save: reaching the reader's error proves Copy didn't gate delivery.
-    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn’t read that one/);
-    expect(screen.getByRole("button", { name: "Copy" })).toBeVisible();
+    expect(await screen.findByRole("alert")).toHaveTextContent(m.sync_find_bad_file());
+    expect(screen.getByRole("button", { name: m.sync_find_copy() })).toBeVisible();
     expect(onread).not.toHaveBeenCalled();
   });
 
@@ -124,7 +128,7 @@ describe("dropping", () => {
     await fireEvent.drop(screen.getByRole("group", { name: "Drop it here" }), {
       dataTransfer: transfer(),
     });
-    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn’t read that one/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(m.sync_find_bad_file());
   });
 });
 
@@ -186,7 +190,7 @@ describe("pasting", () => {
   it("keeps its ids apart with two drop boxes on the page", async () => {
     render(SaveDrop, { label: "One", onsource: vi.fn(), platform: "windows" });
     render(SaveDrop, { label: "Two", onsource: vi.fn(), platform: "windows" });
-    const [first, second] = screen.getAllByRole("button", { name: "Can’t drag?" });
+    const [first, second] = screen.getAllByRole("button", { name: m.sync_find_cant_drag() });
     await fireEvent.click(first);
     await fireEvent.click(second);
     const described = ["One", "Two"].map((name) =>
@@ -213,9 +217,9 @@ describe("“Can’t drag?”", () => {
   ] as const)("explains pasting on %s where the browser gives handles", async (platform, body) => {
     givesHandles(true);
     renderDrop({ platform });
-    await fireEvent.click(screen.getByRole("button", { name: "Can’t drag?" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_find_cant_drag() }));
     expect(screen.getByText(body)).toBeVisible();
-    expect(screen.queryByText("Choose the save file")).toBeNull();
+    expect(screen.queryByText(m.sync_find_choose())).toBeNull();
     await waitFor(() => {
       expect(screen.getByRole("group", { name: "Drop it here" })).toHaveFocus();
     });
@@ -228,9 +232,9 @@ describe("“Can’t drag?”", () => {
   ] as const)("offers the picker on %s where it doesn't", async (platform, body) => {
     givesHandles(false);
     const onsource = renderDrop({ platform });
-    await fireEvent.click(screen.getByRole("button", { name: "Can’t drag?" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_find_cant_drag() }));
     expect(screen.getByText(body)).toBeVisible();
-    const input = screen.getByLabelText("Choose the save file");
+    const input = screen.getByLabelText(m.sync_find_choose());
     await fireEvent.change(input, { target: { files: [FILE] } });
     await waitFor(() => {
       expect(onsource).toHaveBeenCalledWith({ file: FILE, kind: "file" });
@@ -240,7 +244,7 @@ describe("“Can’t drag?”", () => {
   it("no longer mentions a Desktop copy", async () => {
     givesHandles(false);
     renderDrop();
-    await fireEvent.click(screen.getByRole("button", { name: "Can’t drag?" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_find_cant_drag() }));
     expect(screen.queryByText(/Desktop|copy/i)).toBeNull();
   });
 });

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import SkillsContent from "#lib/components/skills-content.svelte";
 import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { perksOfSkill } from "#lib/engine/projections/skills.js";
+import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
@@ -34,6 +35,8 @@ describe("SkillsContent", () => {
     userState.togglePerk(lastPerk);
     flushSync();
     expect(miningRecord()).toBeNull();
-    expect(screen.getByRole("button", { expanded: false, name: "Completed" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { expanded: false, name: m.common_completed_heading() }),
+    ).toBeInTheDocument();
   });
 });

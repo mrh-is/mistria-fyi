@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
+import * as m from "#lib/paraglide/messages.js";
 
 import type { GuardSubject } from "#lib/controllers/spoiler-guard.svelte.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";
@@ -32,53 +33,63 @@ function buttonNames(dialog: HTMLElement): string[] {
 describe("ConfirmSpoilerDialog", () => {
   it("teases a covered item & offers to update progress when the condition can be inverted", async () => {
     renderDialog(invertible);
-    const dialog = await screen.findByRole("alertdialog", { name: "Check off this item?" });
+    const dialog = await screen.findByRole("alertdialog", {
+      name: m.spoiler_dialog_masked_title(),
+    });
 
-    expect(dialog).toHaveTextContent("You haven’t even revealed its name!");
+    expect(dialog).toHaveTextContent(m.spoiler_dialog_masked_description());
     expect(buttonNames(dialog)).toEqual([
-      "Never mind",
-      "YOLO (just this one thing)",
-      "YOLO, and prerequisites",
+      m.spoiler_dialog_cancel(),
+      m.spoiler_dialog_yolo_item(),
+      m.spoiler_dialog_yolo_and_update(),
     ]);
   });
 
   it("drops “just this” from a covered item's only confirmation", async () => {
     renderDialog(nonInvertible);
-    const dialog = await screen.findByRole("alertdialog", { name: "Check off this item?" });
+    const dialog = await screen.findByRole("alertdialog", {
+      name: m.spoiler_dialog_masked_title(),
+    });
 
-    expect(buttonNames(dialog)).toEqual(["Never mind", "YOLO"]);
+    expect(buttonNames(dialog)).toEqual([m.spoiler_dialog_cancel(), m.spoiler_dialog_yolo()]);
   });
 
   it("names a revealed item & asks plainly", async () => {
     renderDialog(invertible, { name: "Copper Ore" });
-    const dialog = await screen.findByRole("alertdialog", { name: "Check off Copper Ore?" });
+    const dialog = await screen.findByRole("alertdialog", {
+      name: m.spoiler_dialog_title({ name: "Copper Ore" }),
+    });
 
     expect(dialog).toHaveTextContent(
       "Based on your tracked progress, it doesn’t seem like you should be able to get this yet.",
     );
     expect(buttonNames(dialog)).toEqual([
-      "Never mind",
-      "Yes, just this one",
-      "Yes, and prerequisites too",
+      m.spoiler_dialog_cancel(),
+      m.spoiler_dialog_confirm_item(),
+      m.spoiler_dialog_confirm_and_update(),
     ]);
   });
 
   it("drops “just this” from a revealed item's only confirmation", async () => {
     renderDialog(nonInvertible, { name: "Copper Ore" });
-    const dialog = await screen.findByRole("alertdialog", { name: "Check off Copper Ore?" });
+    const dialog = await screen.findByRole("alertdialog", {
+      name: m.spoiler_dialog_title({ name: "Copper Ore" }),
+    });
 
-    expect(buttonNames(dialog)).toEqual(["Never mind", "Yes"]);
+    expect(buttonNames(dialog)).toEqual([m.spoiler_dialog_cancel(), m.spoiler_dialog_confirm()]);
   });
 
   it("names the floor past an unbroken seal", async () => {
     renderDialog(invertible, { floor: 21 });
-    const dialog = await screen.findByRole("alertdialog", { name: "Head down to floor 21?" });
+    const dialog = await screen.findByRole("alertdialog", {
+      name: m.spoiler_dialog_floor_title({ floor: 21 }),
+    });
 
-    expect(dialog).toHaveTextContent("you haven’t broken the seal on the way there yet");
+    expect(dialog).toHaveTextContent(m.spoiler_dialog_floor_description());
     expect(buttonNames(dialog)).toEqual([
-      "Never mind",
-      "Yes, just this one",
-      "Yes, and prerequisites too",
+      m.spoiler_dialog_cancel(),
+      m.spoiler_dialog_confirm_item(),
+      m.spoiler_dialog_confirm_and_update(),
     ]);
   });
 
@@ -87,7 +98,7 @@ describe("ConfirmSpoilerDialog", () => {
     const dialog = await screen.findByRole("alertdialog");
 
     await fireEvent.click(
-      within(dialog).getByRole("button", { name: "YOLO (just this one thing)" }),
+      within(dialog).getByRole("button", { name: m.spoiler_dialog_yolo_item() }),
     );
     expect(handlers.onComplete).toHaveBeenCalledTimes(1);
     expect(handlers.onCompleteAndUpdate).not.toHaveBeenCalled();
@@ -98,7 +109,9 @@ describe("ConfirmSpoilerDialog", () => {
     const handlers = renderDialog(invertible);
     const dialog = await screen.findByRole("alertdialog");
 
-    await fireEvent.click(within(dialog).getByRole("button", { name: "YOLO, and prerequisites" }));
+    await fireEvent.click(
+      within(dialog).getByRole("button", { name: m.spoiler_dialog_yolo_and_update() }),
+    );
     expect(handlers.onCompleteAndUpdate).toHaveBeenCalledTimes(1);
     expect(handlers.onComplete).not.toHaveBeenCalled();
   });
@@ -107,7 +120,7 @@ describe("ConfirmSpoilerDialog", () => {
     const handlers = renderDialog(invertible);
     const dialog = await screen.findByRole("alertdialog");
 
-    await fireEvent.click(within(dialog).getByRole("button", { name: "Never mind" }));
+    await fireEvent.click(within(dialog).getByRole("button", { name: m.spoiler_dialog_cancel() }));
     expect(handlers.onCancel).toHaveBeenCalledTimes(1);
     expect(handlers.onComplete).not.toHaveBeenCalled();
     expect(handlers.onCompleteAndUpdate).not.toHaveBeenCalled();

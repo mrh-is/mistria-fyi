@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import * as celebration from "#lib/effects/celebrate.js";
 import { factKey } from "#lib/engine/provenance.js";
+import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
@@ -50,10 +51,15 @@ it("splits source types around a single Completed divider and opens an anchored 
   const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
   await tick();
   const completed = view.getByTestId("everything-completed");
-  await fireEvent.click(within(completed).getByRole("button", { name: "Completed" }));
-  const finishedType = within(completed).getByRole("button", { name: "Stores" });
+  await fireEvent.click(
+    within(completed).getByRole("button", { name: m.common_completed_heading() }),
+  );
+  const finishedType = within(completed).getByRole("button", { name: m.source_filter_stores() });
   expect(finishedType).toHaveAttribute("aria-expanded", "false");
-  expect(view.getByRole("button", { name: "Fishing" })).toHaveAttribute("aria-expanded", "true");
+  expect(view.getByRole("button", { name: m.source_filter_fishing() })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
   expect(within(completed).queryByRole("button", { name: /Balor/ })).not.toBeInTheDocument();
   expect(completed.querySelector("#sources-stores")).not.toBeNull();
   await fireEvent.click(finishedType);
@@ -67,7 +73,7 @@ it("splits source types around a single Completed divider and opens an anchored 
   expect(within(completed).getByRole("button", { name: "Uncheck Acorn" })).toBeInTheDocument();
   expect(view.container.querySelectorAll("#store-balor")).toHaveLength(1);
   await tick();
-  expect(view.getAllByRole("button", { name: "Stores" })).toHaveLength(1);
+  expect(view.getAllByRole("button", { name: m.source_filter_stores() })).toHaveLength(1);
 });
 
 function checklistRow(id: string, completed: boolean, sources: Source[]) {
@@ -141,11 +147,11 @@ describe("while a source section changes lists", () => {
     row.focus();
     await fireEvent.click(row);
     await tick();
-    expect(view.queryByRole("button", { name: "Fishing" })).toBeInTheDocument();
+    expect(view.queryByRole("button", { name: m.source_filter_fishing() })).toBeInTheDocument();
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS);
     await tick();
     await tick();
-    expect(view.queryByRole("button", { name: "Fishing" })).not.toBeInTheDocument();
+    expect(view.queryByRole("button", { name: m.source_filter_fishing() })).not.toBeInTheDocument();
     expect(document.activeElement?.matches("button[data-section-trigger]")).toBe(true);
     expect(document.activeElement?.closest("[hidden]")).toBeNull();
   });
@@ -159,12 +165,16 @@ describe("while a source section changes lists", () => {
     row.focus();
     await fireEvent.click(row);
     await tick();
-    expect(within(completed).queryByRole("button", { name: "Fishing" })).toBeNull();
+    expect(within(completed).queryByRole("button", { name: m.source_filter_fishing() })).toBeNull();
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS);
     await tick();
     await tick();
-    await fireEvent.click(within(completed).getByRole("button", { name: "Completed" }));
-    expect(within(completed).getByRole("button", { name: "Fishing" })).toBeInTheDocument();
+    await fireEvent.click(
+      within(completed).getByRole("button", { name: m.common_completed_heading() }),
+    );
+    expect(
+      within(completed).getByRole("button", { name: m.source_filter_fishing() }),
+    ).toBeInTheDocument();
     expect(document.activeElement?.matches("button[data-section-trigger]")).toBe(true);
     expect(document.activeElement?.closest("[hidden]")).toBeNull();
   });

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import * as m from "#lib/paraglide/messages.js";
+
 async function runLoad(): Promise<unknown> {
   vi.resetModules();
   const { load } = await import("./+page.js");
@@ -10,6 +12,6 @@ async function runLoad(): Promise<unknown> {
 describe("the sync page", () => {
   it("loads its metadata", async () => {
     const result = (await runLoad()) as { metadata: { title: string } };
-    expect(result.metadata.title).toContain("Sync your save file");
+    expect(result.metadata.title).toContain(m.sync_page_title());
   });
 });

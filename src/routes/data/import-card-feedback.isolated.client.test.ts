@@ -1,6 +1,7 @@
 import { fireEvent, screen, within } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
@@ -22,22 +23,26 @@ beforeEach(async () => {
 describe("an unreadable save the archive reader doesn't recognize", () => {
   it("links to the feedback form with the error & its redacted details as the draft", async () => {
     const { feedbackContext } = renderWithFeedback(ImportCard, { open: true });
-    await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
+    await fireEvent.change(screen.getByLabelText(m.import_file_input_aria()), {
       target: { files: [new File([new Uint8Array([1])], "game-1-autosave.sav")] },
     });
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(
-      "We couldn’t read that save file. Try the newest file that ends in “autosave”. If that one doesn’t work either, send us feedback and we’ll look into it.",
-    );
+    const errorMessage = m.import_error_parse_failed({
+      feedback: m.import_error_feedback_link(),
+      tryAutosave: m.import_error_try_autosave(),
+    });
+    expect(alert).toHaveTextContent(errorMessage);
     expect(feedbackContext.errorReportRequest).toBeUndefined();
 
-    await fireEvent.click(within(alert).getByRole("button", { name: "send us feedback" }));
+    await fireEvent.click(
+      within(alert).getByRole("button", { name: m.import_error_feedback_link() }),
+    );
 
     const draft = feedbackContext.errorReportRequest?.message;
-    expect(draft).toMatch(/^We couldn’t read that save file/);
-    expect(draft).toMatch(
-      /\n\nTechnical details: RangeError: offset \[redacted\] is out of bounds$/,
-    );
+    const details = m.import_error_feedback_details({
+      details: "RangeError: offset [redacted] is out of bounds",
+    });
+    expect(draft).toBe(`${errorMessage}\n\n${details}`);
   });
 });

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/sv
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as m from "#lib/paraglide/messages.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
@@ -176,10 +177,10 @@ describe("the question dialog", () => {
     await renderHost();
     report(FARM);
     await tick();
-    expect(screen.getByText("Is this the farm you’ve been tracking?")).toBeVisible();
+    expect(screen.getByText(m.sync_farm_question_title())).toBeVisible();
     // The save's farm, whatever the stored progress is called (F5).
     expect(screen.getByText(/This save file is for Saved Acres/)).toBeVisible();
-    await fireEvent.click(screen.getByRole("button", { name: "Yep, same farm" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_farm_question_same() }));
     expect(fake.answer).toHaveBeenCalledWith("farm:1", "same-farm");
   });
 
@@ -187,9 +188,9 @@ describe("the question dialog", () => {
     await renderHost();
     report(FARM);
     await tick();
-    await fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_question_later() }));
     await waitFor(() => {
-      expect(screen.queryByText("Is this the farm you’ve been tracking?")).toBeNull();
+      expect(screen.queryByText(m.sync_farm_question_title())).toBeNull();
     });
     expect(fake.answer).not.toHaveBeenCalled();
 
@@ -198,7 +199,7 @@ describe("the question dialog", () => {
       questions: [{ id: "older", kind: "older-save", lastPlaytime: 9, playtime: 3 }],
     });
     await tick();
-    expect(screen.getByText("Go back to an older save file?")).toBeVisible();
+    expect(screen.getByText(m.sync_older_title())).toBeVisible();
   });
 
   it("says a backup will be replaced, naming it", async () => {
@@ -211,7 +212,7 @@ describe("the question dialog", () => {
     });
     await tick();
     expect(screen.getByText(/replaces your backup of Old Acres/)).toBeVisible();
-    await fireEvent.click(screen.getByRole("button", { name: "Replace it" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_replace_confirm() }));
     expect(fake.answer).toHaveBeenCalledWith("replace", "accept");
   });
 });
@@ -225,12 +226,12 @@ describe("the notes", () => {
   });
 
   it.each([
-    ["unreadable", "Your computer is having trouble reading your save file"],
+    ["unreadable", m.sync_unreadable_away_title()],
     ["update-computer", "The tracker on your computer needs a refresh"],
     ["update-here", "This tracker needs a refresh"],
-    ["retired", "Your computer stopped sharing this save file"],
-    ["switch-failed", "We didn’t switch farms"],
-    ["write-failed", "We couldn’t store your latest save file"],
+    ["retired", m.sync_retired_title()],
+    ["switch-failed", m.sync_switch_failed_title()],
+    ["write-failed", m.sync_write_failed_title()],
     ["blocked", "this device’s data needs a look"],
   ] as const)("shows %s", async (kind, text) => {
     await renderNote();
@@ -243,7 +244,7 @@ describe("the notes", () => {
     await renderNote();
     report({ kind: "write-failed" });
     await tick();
-    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_try_again() }));
     expect(fake.refresh).toHaveBeenCalledTimes(1);
   });
 
@@ -256,8 +257,8 @@ describe("the notes", () => {
 
     syncReceiver.dismissQuestion();
     await tick();
-    expect(screen.getByRole("status")).toHaveTextContent("has a question for you");
-    await fireEvent.click(screen.getByRole("button", { name: "Answer it" }));
+    expect(screen.getByRole("status")).toHaveTextContent(m.sync_question_waiting());
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_question_open() }));
     expect(syncReceiver.question?.id).toBe("farm:1");
   });
 });
@@ -275,11 +276,11 @@ describe("the status panel", () => {
     const { default: Panel } = await import("./sync-status-panel.svelte");
     render(Panel);
     await tick();
-    expect(screen.getByText("Your gaming computer")).toBeVisible();
-    expect(screen.getByText("Last save file")).toBeVisible();
-    expect(screen.getByText("In-game date")).toBeVisible();
+    expect(screen.getByText(m.sync_panel_from_computer())).toBeVisible();
+    expect(screen.getByText(m.sync_panel_last())).toBeVisible();
+    expect(screen.getByText(m.sync_panel_date())).toBeVisible();
     expect(screen.getByText(/14, Year 2/)).toBeVisible();
-    expect(screen.getByRole("link", { name: "Sync & data settings" })).toBeVisible();
+    expect(screen.getByRole("link", { name: m.sync_panel_settings() })).toBeVisible();
   });
 
   it("offers “Try again” when the relay can't be reached", async () => {
@@ -288,7 +289,7 @@ describe("the status panel", () => {
     render(Panel);
     report({ kind: "unreachable" });
     await tick();
-    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.sync_try_again() }));
     expect(fake.refresh).toHaveBeenCalledTimes(1);
   });
 });

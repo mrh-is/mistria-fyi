@@ -4,13 +4,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import MinesContent from "#lib/components/mines-content.svelte";
 import { trackerData } from "#lib/data/index.js";
+import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 const waterQuest = trackerData.mines.seals[0].questId;
 
 async function stepDown(): Promise<void> {
-  await fireEvent.click(screen.getByRole("button", { name: "Go down one floor" }));
+  await fireEvent.click(screen.getByRole("button", { name: m.mines_floor_down() }));
   await tick();
 }
 
@@ -41,7 +42,7 @@ describe("MinesContent floor stepper", () => {
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
     expect(userState.state.progress.mineFloor).toBe(20);
-    await confirm("Never mind");
+    await confirm(m.spoiler_dialog_cancel());
     expect(userState.state.progress.mineFloor).toBe(20);
   });
 
@@ -49,7 +50,7 @@ describe("MinesContent floor stepper", () => {
     userState.setMineFloor(20);
     flushSync();
     await stepDown();
-    await confirm("Yes, just this one");
+    await confirm(m.spoiler_dialog_confirm_item());
 
     expect(userState.state.progress.mineFloor).toBe(21);
     expect(userState.state.progress.questStates[waterQuest]).toBeUndefined();
@@ -59,7 +60,7 @@ describe("MinesContent floor stepper", () => {
     userState.setMineFloor(20);
     flushSync();
     await stepDown();
-    await confirm("Yes, and prerequisites too");
+    await confirm(m.spoiler_dialog_confirm_and_update());
 
     expect(userState.state.progress.mineFloor).toBe(21);
     expect(userState.state.progress.questStates[waterQuest]).toBe("completed");
@@ -72,7 +73,7 @@ describe("MinesContent floor stepper", () => {
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
     expect(input.value).toBe("0");
-    await confirm("Never mind");
+    await confirm(m.spoiler_dialog_cancel());
     expect(userState.state.progress.mineFloor).toBe(0);
   });
 });
