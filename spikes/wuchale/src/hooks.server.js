@@ -4,7 +4,13 @@ import { key, loadCatalog, loadCount } from "../catalogs/ui.loader.server.svelte
 import { locales } from "./locale.js";
 import { localizeRequest } from "./request-locale.js";
 
-const ready = loadLocales(key, loadCount, loadCatalog, locales);
+// The loader is generated during extraction or build. Declare its interface for clean checkouts.
+const ready = loadLocales(
+  (key),
+  (loadCount),
+  (loadCatalog),
+  locales,
+);
 
 /** @param {{event: Parameters<typeof localizeRequest>[0], resolve: Parameters<typeof localizeRequest>[1]}} input */
 export const handle = async ({ event, resolve }) => {
