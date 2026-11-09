@@ -62,17 +62,18 @@ dependencies, so after a `git pull` that changes the lockfile, run `pnpm install
 first:
 
 ```sh
-pnpm run worktree:new <issue-number>-<short-description> [starting-branch]
+pnpm run worktree:new <slug> [starting-branch]
 ```
 
-The script validates the slug (`<issue-number>-<short-description>`, lowercase), fetches the
-starting branch (default `main`), creates `.worktrees/<slug>` on a matching branch from the
-refreshed `origin/<starting-branch>` under the main checkout, removes the worktree & branch again if
-a later step fails, refuses to run if `.worktrees/` is not gitignored, links `pipeline/input/` &
-every `.worktreeinclude` entry from the main checkout, and runs `pnpm install --frozen-lockfile` and
-`pnpm run prepare` (Husky hooks, Paraglide output, & `svelte-kit sync`). The link & install steps
-live in `scripts/setup-worktree.ts`, which skips entries already present or missing from the main
-checkout. Both scripts run under Node so Windows behaves the same; see
+The slug uses lowercase letters & digits separated by single hyphens. `start-work issue` adds the
+issue number prefix. The script validates the slug, fetches the starting branch (default `main`),
+creates `.worktrees/<slug>` on a matching branch from the refreshed `origin/<starting-branch>` under
+the main checkout, removes the worktree & branch again if a later step fails, refuses to run if
+`.worktrees/` is not gitignored, links `pipeline/input/` & every `.worktreeinclude` entry from the
+main checkout, and runs `pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks,
+Paraglide output, & `svelte-kit sync`). The link & install steps live in
+`scripts/setup-worktree.ts`, which skips entries already present or missing from the main checkout.
+Both scripts run under Node so Windows behaves the same; see
 [Worktrees & Verification on Windows](#worktrees--verification-on-windows).
 
 Before creating the harness worktree, fetch the intended starting branch and use its refreshed

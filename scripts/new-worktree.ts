@@ -1,5 +1,5 @@
 // Creates and sets up an isolated agent worktree per AGENTS.md, Worktrees.
-// Usage: pnpm run worktree:new <issue-number>-<short-description> [starting-branch]
+// Usage: pnpm run worktree:new <slug> [starting-branch]
 //
 // A Node script so Git for Windows records a Windows-readable gitdir: from `cmd.exe`, `bash` can
 // resolve to WSL, whose Git writes `/mnt/c/...` paths that Git for Windows reports as prunable.
@@ -10,8 +10,8 @@ import { existsSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const USAGE = "Usage: pnpm run worktree:new <issue-number>-<short-description> [starting-branch]";
-const SLUG = /^[0-9]+-[a-z0-9]+(-[a-z0-9]+)*$/;
+const USAGE = "Usage: pnpm run worktree:new <slug> [starting-branch]";
+const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 function git(args: string[], inherit = false): number {
   const result = spawnSync("git", args, { stdio: inherit ? "inherit" : "ignore" });
@@ -33,9 +33,7 @@ function main(args: string[]): number {
     return 1;
   }
   if (!SLUG.test(slug)) {
-    console.error(
-      `error: slug "${slug}" must look like <issue-number>-<short-description> (lowercase, digits, hyphens).`,
-    );
+    console.error(`error: slug "${slug}" must use lowercase letters, digits, and hyphens.`);
     return 1;
   }
   // Always resolve to the main checkout, even when invoked from inside another worktree.
