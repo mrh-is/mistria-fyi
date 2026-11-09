@@ -30,6 +30,15 @@ export function trapFocus(onClose: () => void): Attachment<HTMLElement> {
         return;
       }
       if (event.key !== "Tab") return;
+      const activeElement = document.activeElement;
+      // A modal dialog opened over the panel, like a tag dialog, contains its own focus.
+      if (
+        activeElement &&
+        !element.contains(activeElement) &&
+        activeElement.closest('[role="dialog"][aria-modal="true"], [role="alertdialog"]')
+      ) {
+        return;
+      }
       const focusable = [...element.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter(
         (candidate) => canFocus(candidate),
       );
@@ -39,7 +48,6 @@ export function trapFocus(onClose: () => void): Attachment<HTMLElement> {
         event.preventDefault();
         return;
       }
-      const activeElement = document.activeElement;
       if (event.shiftKey && (activeElement === first || !element.contains(activeElement))) {
         event.preventDefault();
         last.focus();

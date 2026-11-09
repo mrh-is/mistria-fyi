@@ -1,18 +1,18 @@
 <script lang="ts">
-  import IconChevronDown from "@tabler/icons-svelte-runes/icons/chevron-down";
   import IconCopy from "@tabler/icons-svelte-runes/icons/copy";
+  import IconInfoCircle from "@tabler/icons-svelte-runes/icons/info-circle";
   import IconPointer from "@tabler/icons-svelte-runes/icons/pointer";
-  import IconShield from "@tabler/icons-svelte-runes/icons/shield";
+  import IconUserShield from "@tabler/icons-svelte-runes/icons/user-shield";
   import IconX from "@tabler/icons-svelte-runes/icons/x";
   import { onDestroy, tick, untrack } from "svelte";
   import { toast } from "svelte-sonner";
-  import { prefersReducedMotion } from "svelte/motion";
-  import { slide } from "svelte/transition";
 
   import FeedbackPicker from "#lib/components/feedback-picker.svelte";
+  import ExtraRow from "#lib/components/feedback/extra-row.svelte";
+  import ExtrasCard from "#lib/components/feedback/extras-card.svelte";
+  import PreviewSheet from "#lib/components/feedback/preview-sheet.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
   import PanelOverlay from "#lib/components/panel-overlay.svelte";
-  import { Checkbox } from "#lib/components/ui/checkbox/index.js";
   import { trackerData } from "#lib/data/index.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { progressAttachment } from "#lib/feedback/progress-attachment.js";
@@ -22,6 +22,7 @@
   import { ensureTurnstileScript } from "#lib/turnstile.js";
   import { version } from "$app/env";
 
+  import type { Preview } from "#lib/components/feedback/preview-sheet.svelte";
   import type { ReportTarget } from "#lib/feedback/types.js";
   import type { SerializedState } from "#lib/stores/progress-storage.js";
 
@@ -57,14 +58,17 @@
   let wantsReply = $state(false);
   let includeSaveData = $state(false);
   let includeSyncLog = $state(false);
-  let showSyncLog = $state(false);
-  let syncLog = $derived(
-    allowSyncLog && includeSyncLog
+  let extrasCardOpen = $state(false);
+  let previewOpen = $state(false);
+  // Kept after the sheet closes, so its content stays put while it slides away.
+  let preview = $state<Preview>("progress");
+  // Previewing never opts in: each extra's toggle alone decides whether its data is sent.
+  let syncLogSnapshot = $derived(
+    allowSyncLog && (includeSyncLog || (previewOpen && preview === "syncLog"))
       ? syncDiagnostics.snapshot(version, userState.syncLane?.kind ?? "manual")
       : undefined,
   );
-  let showProgressInfo = $state(false);
-  let showSaveDataPreview = $state(false);
+  let syncLog = $derived(includeSyncLog ? syncLogSnapshot : undefined);
   let submitting = $state(false);
   let submitError = $state("");
   let messageInput = $state<HTMLTextAreaElement | null>(null);
@@ -100,15 +104,32 @@
   );
   let submitShake = $state(false);
 
-  let saveDataPreview = $derived.by(() => {
-    if (!includeSaveData) return "";
+  function currentProgressAttachment(): Record<string, unknown> | undefined {
     try {
       const exported = JSON.parse(userState.exportBackup()) as SerializedState;
-      return JSON.stringify(progressAttachment(exported.progress), null, 2);
+      return progressAttachment(exported.progress);
     } catch {
-      return "(could not load progress data)";
+      // Serialization failed; there's nothing to show or send.
+      return undefined;
     }
-  });
+  }
+
+  let progressPreview = $derived(
+    previewOpen && preview === "progress" ? currentProgressAttachment() : undefined,
+  );
+
+  function openPreview(next: Preview): void {
+    preview = next;
+    previewOpen = true;
+  }
+
+  function setAttached(extra: Preview, attached: boolean): void {
+    if (extra === "progress") {
+      includeSaveData = attached;
+    } else {
+      includeSyncLog = attached;
+    }
+  }
 
   function removeTurnstileWidget(): void {
     if (turnstileWidgetId !== undefined && globalThis.turnstile) {
@@ -263,15 +284,7 @@
     submitTimeout = timeout;
 
     try {
-      let saveData: Record<string, unknown> | undefined;
-      if (includeSaveData) {
-        try {
-          const exported = JSON.parse(userState.exportBackup()) as SerializedState;
-          saveData = progressAttachment(exported.progress);
-        } catch {
-          // Serialization failed; submit without save data
-        }
-      }
+      const saveData = includeSaveData ? currentProgressAttachment() : undefined;
 
       const response = await fetch("/api/feedback", {
         body: JSON.stringify({
@@ -311,9 +324,8 @@
       emailTouched = false;
       includeSaveData = false;
       includeSyncLog = false;
-      showSyncLog = false;
-      showProgressInfo = false;
-      showSaveDataPreview = false;
+      previewOpen = false;
+      extrasCardOpen = false;
       selectedElement = undefined;
       onClose();
 
@@ -398,6 +410,7 @@
     closeLabel={m.feedback_close_aria()}
     label={m.toolbar_send_feedback()}
     {onClose}
+    scrim
     style={accentColor === undefined
       ? undefined
       : `--primary: ${accentColor}; --ring: ${accentColor};`}
@@ -405,11 +418,6 @@
     <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} isModal={false} {onClose}>
       <div class="feedback-form">
         <div>
-          <!-- The textarea's own name & aria-required carry this heading for screen readers. -->
-          <p class="feedback-form__section mb-1.5" aria-hidden="true">
-            {m.feedback_message_label()}
-            <span class="feedback-form__section-note">{m.feedback_required_note()}</span>
-          </p>
           <textarea
             bind:this={messageInput}
             id="feedback-message"
@@ -428,143 +436,63 @@
               {m.feedback_message_required()}
             </p>
           {/if}
+          <p class="feedback-form__privacy">
+            <IconUserShield
+              class="size-4 shrink-0"
+              aria-hidden="true"
+            />{m.feedback_privacy_notice()}
+          </p>
         </div>
 
-        <p class="feedback-form__privacy">
-          <IconShield class="size-4 shrink-0" />{m.feedback_privacy_notice()}
-        </p>
-
-        <p class="feedback-form__section">
-          {m.feedback_extra_data_heading()}
-          <span class="feedback-form__section-note">{m.feedback_optional_note()}</span>
-        </p>
-        <div class="feedback-form__options">
-          <div class="flex items-center gap-2">
-            <Checkbox
-              class="rounded-sm"
+        <div class="feedback-form__extras">
+          <div class="feedback-form__extras-heading">
+            <span>{m.feedback_extras_heading()}</span>
+            <button
+              class="feedback-form__extras-info"
+              type="button"
+              aria-haspopup="dialog"
+              aria-label={m.feedback_extras_info_aria()}
+              onclick={() => (extrasCardOpen = true)}
+              ><IconInfoCircle class="size-3.5" aria-hidden="true" /></button
+            >
+          </div>
+          <div class="feedback-form__rows">
+            <ExtraRow
               id="include-save-data"
               checked={includeSaveData}
-              onCheckedChange={(checked) => {
-                includeSaveData = checked;
-                if (!checked) showSaveDataPreview = false;
+              description={m.feedback_extra_progress_description()}
+              label={m.feedback_attach_progress_label()}
+              onCheckedChange={(checked) => (includeSaveData = checked)}
+              peek={{
+                label: m.feedback_peek_progress_aria(),
+                onclick: () => openPreview("progress"),
               }}
+              visibility="public"
             />
-            <label for="include-save-data" class="flex-1 text-xs select-none">
-              {m.feedback_attach_progress_label()}
-            </label>
-            <button
-              class="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground"
-              type="button"
-              onclick={() => {
-                showProgressInfo = !showProgressInfo;
-              }}
-            >
-              <IconChevronDown
-                class="size-3 transition-transform motion-reduce:transition-none {showProgressInfo
-                  ? 'rotate-180'
-                  : ''}"
-              />
-              {showProgressInfo ? m.feedback_toggle_less() : m.feedback_toggle_read_more()}
-            </button>
-          </div>
-
-          {#if showProgressInfo}
-            <div
-              class="space-y-1 pl-7"
-              transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
-            >
-              <p class="text-2xs leading-relaxed text-muted-foreground">
-                {m.feedback_save_data_description()}
-                <strong>{m.feedback_save_data_public_warning()}</strong>
-              </p>
-              <button
-                class="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground"
-                type="button"
-                onclick={() => {
-                  showSaveDataPreview = !showSaveDataPreview;
-                }}
-              >
-                <IconChevronDown
-                  class="size-3 transition-transform motion-reduce:transition-none {showSaveDataPreview
-                    ? 'rotate-180'
-                    : ''}"
-                />
-                {showSaveDataPreview
-                  ? m.feedback_hide_progress_data()
-                  : m.feedback_show_progress_data()}
-              </button>
-              {#if showSaveDataPreview}
-                <!-- prettier-ignore -->
-                <pre
-                  class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-2xs leading-tight"
-                  transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
-                >{saveDataPreview}</pre>
-              {/if}
-            </div>
-          {/if}
-
-          {#if allowSyncLog}
-            <div class="flex items-center gap-2">
-              <Checkbox
-                class="rounded-sm"
+            {#if allowSyncLog}
+              <ExtraRow
                 id="include-sync-log"
                 checked={includeSyncLog}
-                onCheckedChange={(checked) => {
-                  includeSyncLog = checked;
-                  if (!checked) showSyncLog = false;
+                description={m.feedback_extra_sync_log_description()}
+                label={m.feedback_attach_sync_log()}
+                onCheckedChange={(checked) => (includeSyncLog = checked)}
+                peek={{
+                  label: m.feedback_peek_sync_log_aria(),
+                  onclick: () => openPreview("syncLog"),
                 }}
+                visibility="public"
               />
-              <label for="include-sync-log" class="flex-1 text-xs select-none">
-                {m.feedback_attach_sync_log()}
-              </label>
-            </div>
-            {#if includeSyncLog}
-              <div class="space-y-1 pl-7">
-                <p class="text-2xs leading-relaxed text-muted-foreground">
-                  {m.feedback_sync_log_description()}
-                </p>
-                <button
-                  class="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground"
-                  type="button"
-                  aria-expanded={showSyncLog}
-                  onclick={() => {
-                    showSyncLog = !showSyncLog;
-                  }}
-                >
-                  <IconChevronDown class="size-3" />
-                  {showSyncLog ? m.feedback_hide_sync_log() : m.feedback_show_sync_log()}
-                </button>
-                {#if showSyncLog}
-                  <pre
-                    class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-2xs leading-tight">{JSON.stringify(
-                      syncLog,
-                      null,
-                      2,
-                    )}</pre>
-                {/if}
-              </div>
             {/if}
-          {/if}
-
-          <div class="flex items-center gap-2">
-            <Checkbox
-              class="rounded-sm"
+            <ExtraRow
               id="wants-reply"
               checked={wantsReply}
+              description={m.feedback_extra_reply_description()}
+              label={m.feedback_wants_reply_label()}
               onCheckedChange={(checked) => {
                 wantsReply = checked;
                 if (!checked) emailTouched = false;
               }}
-            />
-            <label for="wants-reply" class="text-xs select-none"
-              >{m.feedback_wants_reply_label()}</label
-            >
-          </div>
-
-          {#if wantsReply}
-            <div
-              class="feedback-form__email"
-              transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+              visibility="private"
             >
               <input
                 id="feedback-email"
@@ -572,11 +500,11 @@
                 aria-invalid={emailInvalid}
                 aria-describedby={emailInvalid ? "feedback-email-error" : "feedback-email-note"}
                 autocomplete="email"
-                class="w-full border bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {emailInvalid
-                  ? 'border-destructive ring-destructive/30'
-                  : 'border-input'} {submitShake && emailInvalid
-                  ? 'motion-safe:animate-shake'
-                  : ''}"
+                class={[
+                  "feedback-form__email",
+                  emailInvalid && "feedback-form__email--invalid",
+                  submitShake && emailInvalid && "motion-safe:animate-shake",
+                ]}
                 type="email"
                 name="email"
                 placeholder={m.feedback_email_placeholder()}
@@ -592,21 +520,21 @@
                 }}
               />
               {#if emailInvalid}
-                <p id="feedback-email-error" class="mt-1 text-2xs text-destructive" role="alert">
+                <p
+                  id="feedback-email-error"
+                  class="feedback-form__email-note feedback-form__email-note--error"
+                  role="alert"
+                >
                   {emailMissing ? m.feedback_email_missing() : m.feedback_email_invalid()}
                 </p>
               {:else}
-                <p id="feedback-email-note" class="mt-2 text-2xs text-muted-foreground">
+                <p id="feedback-email-note" class="feedback-form__email-note">
                   {m.feedback_email_note()}
                 </p>
               {/if}
-            </div>
-          {/if}
+            </ExtraRow>
+          </div>
         </div>
-
-        <p class="feedback-form__version">
-          {m.feedback_version_info({ appVersion: version, gameVersion: trackerData.version })}
-        </p>
 
         {#if submitError}
           <div
@@ -686,6 +614,15 @@
       </div>
     </FoldoutPanel>
   </PanelOverlay>
+
+  <ExtrasCard {allowSyncLog} bind:open={extrasCardOpen} onPeek={openPreview} />
+  <PreviewSheet
+    bind:open={previewOpen}
+    {preview}
+    attached={preview === "progress" ? includeSaveData : includeSyncLog}
+    data={preview === "progress" ? progressPreview : syncLogSnapshot}
+    onAttachedChange={(attached) => setAttached(preview, attached)}
+  />
 {/if}
 
 <style>
@@ -715,51 +652,90 @@
   .feedback-form__privacy {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    margin-top: 6px;
     color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-xs);
   }
 
-  .feedback-form__section {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    color: var(--color-ink-muted);
-    font-family: var(--font-controls);
-    font-size: var(--text-3xs);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  /* A margin note beside the section name, not another segment of it. */
-  .feedback-form__section-note {
-    font-family: var(--font-annotation);
-    font-size: var(--text-2xs);
-    font-style: italic;
-    letter-spacing: normal;
-    text-transform: none;
-  }
-
-  .feedback-form__version {
-    color: var(--color-ink-muted);
-    font-family: var(--font-controls);
-    font-size: var(--text-3xs);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .feedback-form__options {
+  /*
+   * The ⓘ hangs 4px below its heading, & the first row’s tap area reaches 5px above the row, so a
+   * 9px gap lets the two meet without overlapping.
+   */
+  .feedback-form__extras {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 13px;
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 42%, transparent);
-    background: var(--color-paper-sunken);
+    gap: 9px;
+  }
+
+  /* Styled like a shelf heading's label & ⓘ, so the extras read as a quiet second tier. */
+  .feedback-form__extras-heading {
+    display: flex;
+    min-height: 28px;
+    align-items: center;
+    gap: 2px;
+    color: var(--color-ink-muted);
+    font-family: var(--font-controls);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .feedback-form__extras-info {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    margin-block: -4px;
+    place-items: center;
+    color: var(--color-ink-muted);
+  }
+
+  .feedback-form__extras-info:is(:hover, :focus-visible) {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+
+  /* Rows share these columns, so every row's tag lines up on the right edge. */
+  .feedback-form__rows {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto max-content;
+    gap: 8px 10px;
   }
 
   .feedback-form__email {
-    padding-left: 28px;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 7px 10px;
+    background: var(--color-paper-raised);
+    font-family: var(--font-data);
+  }
+
+  .feedback-form__email::placeholder {
+    color: var(--color-ink-muted);
+  }
+
+  .feedback-form__email:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 1px;
+  }
+
+  .feedback-form__email--invalid {
+    border-color: var(--destructive);
+    outline: 1px solid var(--destructive);
+  }
+
+  .feedback-form__email-note {
+    margin-top: 5px;
+    color: var(--color-ink-muted);
+    font-family: var(--font-data);
+    font-size: var(--text-2xs);
+    line-height: 1.45;
+  }
+
+  .feedback-form__email-note--error {
+    color: var(--destructive);
   }
 
   .feedback-form__actions {

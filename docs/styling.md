@@ -63,7 +63,7 @@ Every token is defined in `src/app.css`, and nowhere else.
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | Paper & ink   | `--color-paper`, `--color-paper-raised`, `--color-paper-sunken`, `--color-ink`, `--color-ink-muted`, `--color-ink-hairline`                             | `:root` (light) & `.dark`          |
 | Hues          | `--color-hue-green`, `-amber`, `-rose`, `-blue`, `-brown` (only role aliases read these)                                                                | `:root` & `.dark`                  |
-| Color roles   | `--color-brand-*`, `--color-status-*`, `--color-tracker-*`, `--color-progress-*`, `--color-toolbar-*`, `--color-season-*`                               | `:root` (aliases of hues)          |
+| Color roles   | `--color-brand-*`, `--color-status-*`, `--color-tracker-*`, `--color-progress-*`, `--color-toolbar-*`, `--color-season-*`, `--color-feedback-*`         | `:root` (aliases of hues)          |
 | Domain colors | `--color-category-*`, `--color-home-accent`, `--color-ribbon-*`, `--color-tag-*`, `--color-sprite-slot-outline`                                         | `:root` & `.dark`                  |
 | Shadcn colors | `--background`, `--primary`, `--muted`, …                                                                                                               | `:root` & `.dark`                  |
 | Elevation     | `--shadow-small`, `--shadow-medium`, `--shadow-large`, `--shadow-overlay`                                                                               | `:root` & `.dark`                  |
