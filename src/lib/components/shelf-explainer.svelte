@@ -87,6 +87,8 @@
   }
 
   .shelf-tag__footer {
+    display: flex;
+    justify-content: flex-end;
     padding: 0 16px 14px;
   }
 </style>

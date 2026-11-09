@@ -72,10 +72,12 @@ describe("Vitest projects", () => {
   // Both listings load the full Vite config; running them together halves the probe's wall time.
   // Each extra listing costs about 3 s on CI's two cores, so one listing covers every gate.
   beforeAll(async () => {
-    [listing.files, listing.gated] = await Promise.all([
-      listProjectFiles([]),
-      listProjectFiles(gates),
-    ]);
+    const [files, gated] = await Promise.all([listProjectFiles([]), listProjectFiles(gates)]);
+    // Other suites write short-lived, untracked probe tests (such as lint-ownership's
+    // `src/lib/sync/lint-probe-*/blocked.test.ts`) while these listings run. Only tracked files count.
+    const tracked = new Set(trackedTestFiles());
+    listing.files = files.filter(({ file }) => tracked.has(file));
+    listing.gated = gated.filter(({ file }) => tracked.has(file));
   }, 60_000);
 
   it("run every tracked test file", () => {
