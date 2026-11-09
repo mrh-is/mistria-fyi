@@ -78,7 +78,7 @@
   });
 </script>
 
-<PageHeader title={m.data_title()} backLabel={m.common_go_back()} historyBack />
+<PageHeader title={m.data_title()} />
 
 <div class="data-page">
   <section aria-labelledby="data-sync-heading">
@@ -109,7 +109,7 @@
   </section>
 
   <footer class="data-page__footer">
-    <p><a href={localizedHref("privacy")}>{m.privacy_title()}</a></p>
+    <p><a href={`${localizedHref("privacy")}?from=data`}>{m.privacy_title()}</a></p>
     <p>{m.data_footer_versions({ appVersion: version, gameVersion: trackerData.version })}</p>
   </footer>
 </div>

@@ -1,23 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { tick } from "svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import AboutPage from "./+page.svelte";
 
-afterEach(async () => {
-  Reflect.deleteProperty(globalThis.history, "length");
-  await tick();
-});
-
 describe("About page navigation and disclosures", () => {
-  it("returns through browser history when history is available", async () => {
-    Object.defineProperty(globalThis.history, "length", { configurable: true, value: 2 });
-    const back = vi.spyOn(globalThis.history, "back").mockReturnValue(undefined);
+  it("links the header arrow to home", () => {
     render(AboutPage);
-
-    await fireEvent.click(screen.getByRole("link", { name: "Go back" }));
-
-    expect(back).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("link", { name: "Back to home" })).toHaveAttribute("href", "/en");
   });
 
   it("links the generated open-source license notices from the About footer", () => {
