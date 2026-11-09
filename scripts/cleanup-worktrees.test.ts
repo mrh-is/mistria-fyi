@@ -63,8 +63,10 @@ function fixture() {
   mkdirSync(bin);
   mkdirSync(prs);
   gitIn(primary, "init", "-q", "--initial-branch=main");
+  gitIn(primary, "remote", "add", "origin", primary);
   writeFileSync(join(primary, ".gitignore"), "/.worktrees/\n");
   commit(primary, "base");
+  gitIn(primary, "update-ref", "refs/remotes/origin/main", gitIn(primary, "rev-parse", "HEAD"));
   writeFileSync(
     join(bin, "gh"),
     // It drains stdin first, as the real gh can, so a missing `</dev/null` loses later worktrees.
@@ -92,6 +94,14 @@ exit 0
     if (state) writeFileSync(join(prs, branch), `${state} ${head}\n`);
     return path;
   };
+  const detachedWorktree = (
+    name: string,
+    { commitChanges = false, path = join(directory, name) } = {},
+  ) => {
+    gitIn(primary, "worktree", "add", "-q", "--detach", path, "main");
+    if (commitChanges) commit(path, name);
+    return path;
+  };
   const run = (args: string[] = [], idleMinutes = "0", cwd = primary) =>
     spawnSync("bash", [script, ...args], {
       cwd,
@@ -103,7 +113,7 @@ exit 0
       },
     });
   const branches = () => gitIn(primary, "branch", "--format=%(refname:short)").split("\n");
-  return { branches, directory, primary, prs, run, worktree };
+  return { branches, detachedWorktree, directory, primary, prs, run, worktree };
 }
 
 describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
@@ -113,6 +123,58 @@ describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
     const result = run();
     expect(result.status).toBe(0);
     expect(result.stdout).toContain(`would remove ${path} (done, PR MERGED)`);
+    expect(existsSync(path)).toBe(true);
+  });
+
+  it("previews and removes a detached worktree reachable from a remote branch", () => {
+    const { detachedWorktree, run } = fixture();
+    const path = detachedWorktree("detached");
+    const preview = run();
+    expect(preview.status).toBe(0);
+    expect(preview.stdout).toContain(`would remove ${path} (detached, reachable from origin/main)`);
+    expect(existsSync(path)).toBe(true);
+
+    const applied = run(["--apply"]);
+    expect(applied.status).toBe(0);
+    expect(applied.stdout).toContain(`removed ${path} (detached, reachable from origin/main)`);
+    expect(existsSync(path)).toBe(false);
+  });
+
+  it("keeps a detached worktree whose head isn't reachable from a remote branch", () => {
+    const { detachedWorktree, run } = fixture();
+    const path = detachedWorktree("unpublished", { commitChanges: true });
+    const result = run(["--apply"]);
+    expect(result.stdout).toContain(
+      `keep ${path}: detached HEAD isn't reachable from a current remote branch`,
+    );
+    expect(existsSync(path)).toBe(true);
+  });
+
+  it("keeps a detached worktree when its remote branch was deleted but its tracking ref is stale", () => {
+    const { detachedWorktree, primary, run } = fixture();
+    const path = detachedWorktree("deleted-topic", { commitChanges: true });
+    const head = gitIn(path, "rev-parse", "HEAD");
+    gitIn(primary, "update-ref", "refs/heads/topic", head);
+    gitIn(primary, "update-ref", "refs/remotes/origin/topic", head);
+    gitIn(primary, "update-ref", "-d", "refs/heads/topic");
+    expect(gitIn(primary, "branch", "--list", "topic")).toBe("");
+    expect(gitIn(primary, "rev-parse", "refs/remotes/origin/topic")).toBe(head);
+
+    const result = run(["--apply"]);
+    expect(result.stdout).toContain(
+      `keep ${path}: detached HEAD isn't reachable from a current remote branch`,
+    );
+    expect(existsSync(path)).toBe(true);
+    expect(gitIn(primary, "branch", "-r", "--list", "origin/topic")).toBe("");
+  });
+
+  it("keeps a detached worktree when it can't refresh remote heads", () => {
+    const { detachedWorktree, directory, primary, run } = fixture();
+    const path = detachedWorktree("offline");
+    gitIn(primary, "remote", "set-url", "origin", join(directory, "missing-origin"));
+
+    const result = run(["--apply"]);
+    expect(result.stdout).toContain(`keep ${path}: couldn't verify current remote branches`);
     expect(existsSync(path)).toBe(true);
   });
 
@@ -143,15 +205,12 @@ describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
     for (const path of [open, none, dirty]) expect(existsSync(path)).toBe(true);
   });
 
-  it("never lists locked or detached worktrees", () => {
-    const { directory, primary, run, worktree } = fixture();
+  it("logs locked worktrees", () => {
+    const { primary, run, worktree } = fixture();
     const locked = worktree("locked", "MERGED");
     gitIn(primary, "worktree", "lock", locked);
-    const detached = join(directory, "detached");
-    gitIn(primary, "worktree", "add", "-q", "--detach", detached);
     const result = run();
-    expect(result.stdout).not.toContain(locked);
-    expect(result.stdout).not.toContain(detached);
+    expect(result.stdout).toContain(`keep ${locked}: locked`);
   });
 
   it("handles a worktree path with a space", () => {
