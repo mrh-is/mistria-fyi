@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import CategoryGrid from "#lib/components/category-grid.svelte";
+import * as m from "#lib/paraglide/messages.js";
 import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
@@ -93,8 +94,8 @@ describe("CategoryGrid", () => {
 
     expect(queries.getByRole("list", { name: "To do categories" })).toBeTruthy();
     expect(queries.getByRole("list", { name: "Completed categories" })).toBeTruthy();
-    expect(queries.getByRole("heading", { name: "To do" })).toBeTruthy();
-    expect(queries.getByRole("heading", { name: "Completed" })).toBeTruthy();
+    expect(queries.getByRole("heading", { name: m.shelf_to_do() })).toBeTruthy();
+    expect(queries.getByRole("heading", { name: m.common_completed_heading() })).toBeTruthy();
   });
 
   it.each([

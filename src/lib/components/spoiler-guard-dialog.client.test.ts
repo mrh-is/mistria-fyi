@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
 import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
+import * as m from "#lib/paraglide/messages.js";
 
 describe("SpoilerGuardDialog", () => {
   it("renders nothing until the guard holds a condition", () => {
@@ -23,7 +24,7 @@ describe("SpoilerGuardDialog", () => {
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
     expect(action).not.toHaveBeenCalled();
-    await fireEvent.click(screen.getByRole("button", { name: "YOLO (just this one thing)" }));
+    await fireEvent.click(screen.getByRole("button", { name: m.spoiler_dialog_yolo_item() }));
     expect(action).toHaveBeenCalledTimes(1);
   });
 });

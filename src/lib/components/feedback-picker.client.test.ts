@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import FeedbackPicker from "#lib/components/feedback-picker.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import * as m from "#lib/paraglide/messages.js";
 
 import type { ReportTarget } from "#lib/feedback/types.js";
 
@@ -92,7 +93,7 @@ describe("FeedbackPicker", () => {
     context.startPicking(vi.fn());
     render(FeedbackPicker, { active: true, feedbackContext: context });
 
-    const cancel = await screen.findByRole("button", { name: "Cancel item picker" });
+    const cancel = await screen.findByRole("button", { name: m.feedback_picker_cancel_aria() });
     await waitFor(() => {
       expect(cancel).toHaveFocus();
     });

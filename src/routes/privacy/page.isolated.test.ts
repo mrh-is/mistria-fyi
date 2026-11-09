@@ -14,9 +14,15 @@ describe("privacy page sync sections", () => {
   it("splits into “Without sync” & “With sync”", () => {
     const { queries } = renderPage();
 
-    expect(queries.getByRole("heading", { level: 2, name: "Without sync" })).toBeTruthy();
-    expect(queries.getByRole("heading", { level: 2, name: "With sync" })).toBeTruthy();
-    expect(queries.getByRole("heading", { level: 3, name: "The short version" })).toBeTruthy();
+    expect(
+      queries.getByRole("heading", { level: 2, name: m.privacy_without_sync_heading() }),
+    ).toBeTruthy();
+    expect(
+      queries.getByRole("heading", { level: 2, name: m.privacy_with_sync_heading() }),
+    ).toBeTruthy();
+    expect(
+      queries.getByRole("heading", { level: 3, name: m.privacy_short_heading() }),
+    ).toBeTruthy();
   });
 
   it("covers each sync disclosure", () => {
@@ -46,7 +52,9 @@ describe("privacy page sync sections", () => {
   it("says what encryption covers & that players still trust the code they’re served", () => {
     const { queries, text } = renderPage();
 
-    expect(queries.getByRole("heading", { level: 3, name: "What you’re trusting" })).toBeTruthy();
+    expect(
+      queries.getByRole("heading", { level: 3, name: m.privacy_sync_trust_heading() }),
+    ).toBeTruthy();
     expect(text).toContain("Encryption protects the save file the server stores");
     expect(text).toContain("you’re trusting the app your browser gets from us");
     expect(text).toContain("the Cloudflare Turnstile script");
@@ -70,7 +78,7 @@ describe("privacy page sync sections", () => {
     const { queries } = renderPage();
 
     expect(
-      queries.getByRole("link", { name: "Turnstile Privacy Addendum" }).getAttribute("href"),
+      queries.getByRole("link", { name: m.privacy_sync_turnstile_link() }).getAttribute("href"),
     ).toBe("https://www.cloudflare.com/turnstile-privacy-policy/");
   });
 

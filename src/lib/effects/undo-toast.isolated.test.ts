@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { questToastMessage, showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
+import * as m from "#lib/paraglide/messages.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 const dismiss = vi.hoisted(() => vi.fn());
@@ -28,9 +29,9 @@ describe("showUndoToast", () => {
     showUndoToast("Copper Sword", true, onUndo);
 
     expect(toast).toHaveBeenCalledWith(
-      "Checked off “Copper Sword”",
+      m.undo_marked_complete({ name: "Copper Sword" }),
       expect.objectContaining({
-        cancel: { label: "Undo", onClick: onUndo },
+        cancel: { label: m.action_undo(), onClick: onUndo },
         duration: 30_000,
       }),
     );
@@ -55,20 +56,29 @@ describe("questToastMessage", () => {
   const [firstRecipe, secondRecipe] = recordKeys(trackerData.recipes);
 
   it("describes each state a quest toggle lands on", () => {
-    expect(questToastMessage("Fishing", "obtained", [], "en")).toBe("Started “Fishing”");
-    expect(questToastMessage("Fishing", "completed", [], "en")).toBe("Checked off “Fishing”");
-    expect(questToastMessage("Fishing", "none", [], "en")).toBe("Reset “Fishing”");
+    expect(questToastMessage("Fishing", "obtained", [], "en")).toBe(
+      m.quest_marked_obtained({ name: "Fishing" }, { locale: "en" }),
+    );
+    expect(questToastMessage("Fishing", "completed", [], "en")).toBe(
+      m.quest_marked_completed({ name: "Fishing" }, { locale: "en" }),
+    );
+    expect(questToastMessage("Fishing", "none", [], "en")).toBe(
+      m.quest_reset({ name: "Fishing" }, { locale: "en" }),
+    );
   });
 
   it("names a single unlocked recipe", () => {
     expect(questToastMessage("Fishing", "completed", [firstRecipe], "en")).toBe(
-      `Checked off “Fishing” and unlocked “${getName("recipes", firstRecipe, "en")}”`,
+      m.quest_marked_completed_with_recipe(
+        { name: "Fishing", recipe: getName("recipes", firstRecipe, "en") },
+        { locale: "en" },
+      ),
     );
   });
 
   it("counts several unlocked recipes", () => {
     expect(questToastMessage("Fishing", "completed", [firstRecipe, secondRecipe], "en")).toBe(
-      "Checked off “Fishing” and unlocked 2 recipes",
+      m.quest_marked_completed_with_recipes({ count: 2, name: "Fishing" }, { locale: "en" }),
     );
   });
 });
@@ -85,8 +95,11 @@ describe("showQuestToast", () => {
     showQuestToast("Fishing", "completed", [], "en", onUndo);
 
     expect(toast).toHaveBeenCalledWith(
-      "Checked off “Fishing”",
-      expect.objectContaining({ cancel: { label: "Undo", onClick: onUndo }, duration: 30_000 }),
+      m.quest_marked_completed({ name: "Fishing" }, { locale: "en" }),
+      expect.objectContaining({
+        cancel: { label: m.action_undo(), onClick: onUndo },
+        duration: 30_000,
+      }),
     );
   });
 
