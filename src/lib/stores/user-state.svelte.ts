@@ -33,6 +33,7 @@ export type { UserState } from "./progress-shell.svelte.js";
 const shell = createProgressShell();
 const { persistence, repository } = shell;
 const hand = createHandEdits(shell);
+let resetGeneration = 0;
 
 function replaceProgress(loaded: Omit<LoadedProgress, "local">): void {
   hand.clearStarterItems();
@@ -42,7 +43,10 @@ function replaceProgress(loaded: Omit<LoadedProgress, "local">): void {
 repository.onExternalChange(replaceProgress);
 
 export const progressBackup = createBackupFacade(repository, {
-  clearLaneChoice: hand.takePendingHandEdit,
+  clearLaneChoice() {
+    resetGeneration += 1;
+    hand.takePendingHandEdit();
+  },
   emptyProgress: shell.emptyProgress,
   get local() {
     return shell.local;
@@ -81,6 +85,9 @@ export const progressSync = createSyncFacade(repository, {
   },
   get ready() {
     return persistence.ready;
+  },
+  get resetGeneration() {
+    return resetGeneration;
   },
   takePendingHandEdit: hand.takePendingHandEdit,
   get worldState() {

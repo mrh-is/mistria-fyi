@@ -1110,6 +1110,42 @@ describe("serialized progress writes", () => {
 });
 
 describe("this device's local section", () => {
+  it.each(["resetProgress", "resetAll", "cancelLaneChoice"] as const)(
+    "settles a queued manual choice followed by %s",
+    async (action) => {
+      const { locks } = sharedLocks();
+      const storage = memoryStorage({});
+      vi.stubGlobal("localStorage", storage);
+      vi.stubGlobal("navigator", { locks });
+      const { PERSIST_DEBOUNCE_MS, userState: store } = await openTab();
+      const item = "turnip" as ItemId;
+      store.toggleAlmanacItem(item);
+      expect(store.trackingLaneNeeded).toBe(true);
+
+      const gate = Promise.withResolvers<undefined>();
+      const held = locks.request(WRITE_LOCK, () => gate.promise);
+      await vi.advanceTimersByTimeAsync(1);
+      const chosen = store.startTrackingByHand();
+      expect(store.trackingLaneNeeded).toBe(false);
+      expect(storage.getItem(PROGRESS_KEY)).toBeNull();
+      store[action]();
+      gate.resolve(undefined);
+      await held;
+      await settle(PERSIST_DEBOUNCE_MS);
+
+      // The dialog sends the same close notification when a choice closes it automatically.
+      const kept = action === "cancelLaneChoice";
+      await expect(chosen).resolves.toBe(kept);
+      expect(store.state.progress.almanac.has(item)).toBe(kept);
+      expect(JSON.parse(storage.getItem(PROGRESS_KEY) ?? "null")).toMatchObject({
+        progress: { almanac: kept ? [item] : [] },
+      });
+      const fresh = await openTab();
+      expect(fresh.userState.state.progress.almanac.has(item)).toBe(kept);
+      expect(fresh.userState.trackingLane).toBe(kept ? "manual" : undefined);
+    },
+  );
+
   const local = {
     farmSwitchBackup: { note: "progress before switching farms" },
     syncReceipt: { counter: 3600, hash: "h".repeat(43) },
