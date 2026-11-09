@@ -4,6 +4,7 @@
   import SectionGroups from "#lib/components/section-groups.svelte";
   import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
+  import TrackerRowSection from "#lib/components/tracker-row-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
@@ -208,7 +209,7 @@
           {@const visibleCosmetics = cosmetics.filter(isVisible)}
           {#if visibleCosmetics.length > 0}
             {#if nested}
-              <ExpandableSection
+              <TrackerRowSection
                 {locale}
                 depth={1}
                 forceOpen={!!nameFilter}
@@ -216,17 +217,13 @@
                 progress={cosmeticsProgress(cosmetics)}
                 reportCategory="cosmetic"
                 reportEntityId={`${slot}:${subCategory}`}
-              >
-                <ShelfRows
-                  forceOpen={!!nameFilter}
-                  level={4}
-                  getKey={(cosmetic) => cosmetic.id}
-                  getShelf={(cosmetic) => rowShelf(cosmeticFacts(cosmetic))}
-                  items={visibleCosmetics}
-                  row={cosmeticRow}
-                  showEmpty={false}
-                />
-              </ExpandableSection>
+                forceShelvesOpen={!!nameFilter}
+                getKey={(cosmetic) => cosmetic.id}
+                getShelf={(cosmetic) => rowShelf(cosmeticFacts(cosmetic))}
+                items={visibleCosmetics}
+                row={cosmeticRow}
+                showEmpty={false}
+              />
             {:else}
               <ShelfRows
                 forceOpen={!!nameFilter}

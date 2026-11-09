@@ -53,58 +53,94 @@ function isSpoilered(visibility: undefined | VisibilityCondition): boolean {
   return !isConditionVisible(visibility, userState.progressionState);
 }
 
-/**
- * Owns the wiring every tracker-row page repeats: the spoiler guard, the leaving animation, & the
- * check-off sequence (hold the section, celebrate, toast with undo). Call it during component setup.
- */
+interface RowCheckOffAction<Id, Result> {
+  category: CategoryKey;
+  covered: boolean;
+  finish: (result: Result) => boolean;
+  hold: () => readonly (() => boolean)[] | undefined;
+  id: Id;
+  name: string;
+  needsGuard: boolean;
+  toggle: () => Result;
+  visibility: undefined | VisibilityCondition;
+}
+
+interface RowCheckOff<Id> {
+  guard: SpoilerGuard;
+  isLeaving: (id: Id) => boolean;
+  run: <Result>(action: RowCheckOffAction<Id, Result>) => void;
+}
+
+/** Shared interaction for rows whose progress actions have different undo results. */
+export function createRowCheckOff<Id>(
+  guard = createSpoilerGuard(),
+  animateLeaving = true,
+): RowCheckOff<Id> {
+  const leaving = createLeavingSet<Id>();
+  return {
+    guard,
+    isLeaving: (id): boolean => leaving.has(id),
+    run<Result>({
+      category,
+      covered,
+      finish,
+      hold,
+      id,
+      name,
+      needsGuard,
+      toggle,
+      visibility,
+    }: RowCheckOffAction<Id, Result>): void {
+      const perform = () => {
+        const sectionChecks = hold();
+        const completed = finish(celebrateProgress(category, toggle, sectionChecks));
+        if (completed && animateLeaving) leaving.markLeaving(id);
+      };
+      if (needsGuard) {
+        guard.requestGuardedAction(visibility, perform, covered ? undefined : { name });
+      } else {
+        perform();
+      }
+    },
+  };
+}
+
 export function createCheckOff<Id, SectionKey>(
   options: CheckOffOptions<Id, SectionKey>,
 ): CheckOff<Id, SectionKey> {
-  const guard = options.guard ?? createSpoilerGuard();
-  const leaving = createLeavingSet<Id>();
-  const animateLeaving = options.animateLeaving ?? true;
-
-  function checkOff({
-    id,
-    name,
-    sectionChecks,
-    sectionKey,
-  }: CheckOffRequest<Id, SectionKey>): void {
-    options.grouping.hold(sectionKey);
-    celebrateProgress(
-      options.category,
-      () => {
-        options.toggle(id);
-      },
-      sectionChecks,
-    );
-    const completed = options.isCompleted(id);
-    showUndoToast(name, completed, () => {
-      options.toggle(id);
-    });
-    if (completed && animateLeaving) leaving.markLeaving(id);
-  }
-
+  const checkOff = createRowCheckOff<Id>(options.guard, options.animateLeaving);
   return {
-    guard,
-    isLeaving: (id) => leaving.has(id),
+    guard: checkOff.guard,
+    isLeaving: checkOff.isLeaving,
     onToggle(request, covered): void {
-      if (!isSpoilered(request.visibility) || options.isCompleted(request.id)) {
-        checkOff(request);
-      } else {
-        guard.requestGuardedAction(
-          request.visibility,
-          () => {
-            checkOff(request);
-          },
-          covered ? undefined : { name: request.name },
-        );
-      }
+      const { id, name, sectionChecks, sectionKey, visibility } = request;
+      checkOff.run({
+        category: options.category,
+        covered,
+        finish: () => {
+          const completed = options.isCompleted(id);
+          showUndoToast(name, completed, () => {
+            options.toggle(id);
+          });
+          return completed;
+        },
+        hold: () => {
+          options.grouping.hold(sectionKey);
+          return sectionChecks;
+        },
+        id,
+        name,
+        needsGuard: isSpoilered(visibility) && !options.isCompleted(id),
+        toggle: () => {
+          options.toggle(id);
+        },
+        visibility,
+      });
     },
     rowDisplay: (id, visibility) =>
       trackerRowDisplay({
         completed: options.isCompleted(id),
-        leaving: leaving.has(id),
+        leaving: checkOff.isLeaving(id),
         spoilered: isSpoilered(visibility),
       }),
   };

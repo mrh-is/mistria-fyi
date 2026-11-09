@@ -3,8 +3,8 @@
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
   import ShelfGroups from "#lib/components/shelf-groups.svelte";
-  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
+  import TrackerRowSection from "#lib/components/tracker-row-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
@@ -176,7 +176,7 @@
         >
           {#snippet group(sets)}
             {#each sets as set (set.setId)}
-              <ExpandableSection
+              <TrackerRowSection
                 {locale}
                 depth={1}
                 forceOpen={!!nameFilter}
@@ -184,48 +184,44 @@
                 progress={set.progress}
                 reportCategory="museum-set"
                 reportEntityId={set.setId}
+                forceShelvesOpen={!!nameFilter}
+                getKey={(row) => row.id}
+                getShelf={rowShelf}
+                isLeaving={(row) => checkOff.isLeaving(row.id)}
+                items={set.visibleRows}
               >
-                <ShelfRows
-                  forceOpen={!!nameFilter}
-                  level={4}
-                  getKey={(row) => row.id}
-                  getShelf={rowShelf}
-                  isLeaving={(row) => checkOff.isLeaving(row.id)}
-                  items={set.visibleRows}
-                >
-                  {#snippet row({ id: itemId })}
-                    {@const museumItemSources = trackerData.items[itemId].sources}
-                    {@const museumItemVisibility = trackerData.items[itemId].visibility}
-                    <TrackerRow
-                      fact={factKey("museum", itemId)}
-                      display={checkOff.rowDisplay(itemId, museumItemVisibility)}
-                      segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
-                      name={getName("items", itemId, locale)}
-                      reportCategory="museum-item"
-                      reportEntityId={itemId}
-                      sources={museumItemSources}
-                      sprite={itemId}
-                      spriteClass="text-(--color-category-museum)"
-                      onToggle={(covered) => {
-                        const wing = trackerData.museum[wingId];
-                        checkOff.onToggle(
-                          {
-                            id: itemId,
-                            name: getName("items", itemId, locale),
-                            sectionChecks: [
-                              () => isWingComplete(wing),
-                              () => isSetComplete(wing.sets[set.setId]),
-                            ],
-                            sectionKey: wingId,
-                            visibility: museumItemVisibility,
-                          },
-                          covered,
-                        );
-                      }}
-                    />
-                  {/snippet}
-                </ShelfRows>
-              </ExpandableSection>
+                {#snippet row({ id: itemId })}
+                  {@const museumItemSources = trackerData.items[itemId].sources}
+                  {@const museumItemVisibility = trackerData.items[itemId].visibility}
+                  <TrackerRow
+                    fact={factKey("museum", itemId)}
+                    display={checkOff.rowDisplay(itemId, museumItemVisibility)}
+                    segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
+                    name={getName("items", itemId, locale)}
+                    reportCategory="museum-item"
+                    reportEntityId={itemId}
+                    sources={museumItemSources}
+                    sprite={itemId}
+                    spriteClass="text-(--color-category-museum)"
+                    onToggle={(covered) => {
+                      const wing = trackerData.museum[wingId];
+                      checkOff.onToggle(
+                        {
+                          id: itemId,
+                          name: getName("items", itemId, locale),
+                          sectionChecks: [
+                            () => isWingComplete(wing),
+                            () => isSetComplete(wing.sets[set.setId]),
+                          ],
+                          sectionKey: wingId,
+                          visibility: museumItemVisibility,
+                        },
+                        covered,
+                      );
+                    }}
+                  />
+                {/snippet}
+              </TrackerRowSection>
             {/each}
           {/snippet}
         </ShelfGroups>
