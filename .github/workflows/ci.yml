@@ -232,6 +232,7 @@ jobs:
 
   test:
     name: Test
+    # Spike #554 changes this workflow so every candidate runs the same full CI matrix.
     needs: changes
     runs-on: ubuntu-latest
     # The only bound on a hung suite: timing limits never kill a run.
