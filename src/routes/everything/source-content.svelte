@@ -1,21 +1,18 @@
 <script lang="ts">
   import { untrack } from "svelte";
 
-  import ExpandableSection from "#lib/components/expandable-section.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
   import ShelfFold from "#lib/components/shelf-fold.svelte";
-  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
+  import TrackerRowSection from "#lib/components/tracker-row-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { celebrateProgress } from "#lib/controllers/celebration.js";
-  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { createRowCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { categoryForKey, sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { nameCollator } from "#lib/data/names.js";
@@ -64,7 +61,8 @@
     progress: AllProgress;
   } = $props();
 
-  const guard = createSpoilerGuard();
+  const checkOff = createRowCheckOff<string>();
+  const { guard } = checkOff;
 
   function requestFloor(floor: number): void {
     const seals = sealsBefore(userState.state.progress, floor);
@@ -83,7 +81,6 @@
   // Which Progress categories show, per list, so a search can hide the group when none does. A list
   // that unmounts leaves its keys; they're rewritten on remount, and only read while it's mounted.
   const progressShown: Record<string, boolean> = $state({});
-  const leaving = createLeavingSet<string>();
 
   function progressCategoryShown(completed: boolean): boolean {
     return UNSOURCED_CATEGORY_KEYS.some((category) => progressShown[`${completed}:${category}`]);
@@ -285,48 +282,47 @@
   });
 
   function toggle(entry: SourceChecklistRow, covered: boolean): void {
-    const perform = () => {
-      const sourceIds = sections
-        .filter(({ rows }) => rows.some(({ entry: row }) => row.key === entry.key))
-        .map(({ id }) => id);
-      for (const id of sourceIds) sectionGrouping.hold(id);
-      const beforeRecipes = new Set(userState.state.progress.almanacRecipes);
-      const undo = celebrateProgress(
-        entry.category,
-        () => entry.toggle(),
-        sourceIds.map(
-          (id) => () => sections.find((section) => section.id === id)?.state === "done",
-        ),
-      );
-      const updated = entries.find(({ key }) => key === entry.key);
-      if (entry.reportCategory === "quest") {
-        const added = [...userState.state.progress.almanacRecipes].filter(
-          (id) => !beforeRecipes.has(id),
-        );
-        showQuestToast(
-          entry.name,
-          userState.state.progress.questStates[entry.id as QuestId] ?? "none",
-          added,
-          locale,
-          undo,
-        );
-      } else {
-        showUndoToast(entry.name, updated?.completed ?? false, undo);
-      }
-      if (updated?.completed) leaving.markLeaving(entry.key);
-    };
-    if (
-      entry.completed ||
-      (!entry.spoilered && isConditionVisible(entry.visibility, userState.progressionState))
-    ) {
-      perform();
-    } else {
-      guard.requestGuardedAction(
-        entry.visibility,
-        perform,
-        covered ? undefined : { name: entry.name },
-      );
-    }
+    checkOff.run({
+      category: entry.category,
+      covered,
+      finish: ({ beforeRecipes, undo }) => {
+        const completed = entries.find(({ key }) => key === entry.key)?.completed ?? false;
+        if (entry.reportCategory === "quest") {
+          const added = [...userState.state.progress.almanacRecipes].filter(
+            (id) => !beforeRecipes.has(id),
+          );
+          showQuestToast(
+            entry.name,
+            userState.state.progress.questStates[entry.id as QuestId] ?? "none",
+            added,
+            locale,
+            undo,
+          );
+        } else {
+          showUndoToast(entry.name, completed, undo);
+        }
+        return completed;
+      },
+      hold: () => {
+        const sectionChecks: (() => boolean)[] = [];
+        for (const { id, rows } of sections) {
+          if (!rows.some(({ entry: row }) => row.key === entry.key)) continue;
+          sectionGrouping.hold(id);
+          sectionChecks.push(() => sections.find((section) => section.id === id)?.state === "done");
+        }
+        return sectionChecks;
+      },
+      id: entry.key,
+      name: entry.name,
+      needsGuard:
+        !entry.completed &&
+        (entry.spoilered || !isConditionVisible(entry.visibility, userState.progressionState)),
+      toggle: () => {
+        const beforeRecipes = new Set(userState.state.progress.almanacRecipes);
+        return { beforeRecipes, undo: entry.toggle() };
+      },
+      visibility: entry.visibility,
+    });
   }
 </script>
 
@@ -374,7 +370,7 @@
             data-source-status={spoilered ? undefined : section.state}
           >
             <SpoilerSection {name} {spoilered}>
-              <ExpandableSection
+              <TrackerRowSection
                 {locale}
                 depth={1}
                 progress={sectionProgress(section)}
@@ -388,45 +384,41 @@
                       ? m.everything_source_done()
                       : shelfLabel(stateShelf(section.state)),
                 })}
+                forceShelvesOpen={!!toolbarState.searchQuery}
+                getKey={({ entry }) => entry.key}
+                getShelf={rowShelfOf}
+                isLeaving={({ entry }) => checkOff.isLeaving(entry.key)}
+                items={visibleRows}
               >
-                <ShelfRows
-                  forceOpen={!!toolbarState.searchQuery}
-                  level={4}
-                  getKey={({ entry }) => entry.key}
-                  getShelf={rowShelfOf}
-                  isLeaving={({ entry }) => leaving.has(entry.key)}
-                  items={visibleRows}
-                >
-                  {#snippet row({ entry, sources })}
-                    {@const spoileredRow =
-                      entry.spoilered ||
-                      !isConditionVisible(entry.visibility, userState.progressionState)}
-                    <TrackerRow
-                      category={entry.category}
-                      fact={entry.fact}
-                      display={entry.questState === "obtained" && !spoileredRow
-                        ? { mode: "obtained" }
-                        : trackerRowDisplay({
-                            completed: entry.completed,
-                            spoilered: spoileredRow,
-                            leaving: leaving.has(entry.key),
-                          })}
-                      name={entry.name}
-                      variant={entry.category === "almanac" ? entry.subtitle : undefined}
-                      subtitle={[categoryForKey(entry.category, locale).name, entry.subtitle]
-                        .filter(Boolean)
-                        .join(" · ")}
-                      reportCategory={entry.reportCategory}
-                      reportEntityId={entry.id}
-                      sprite={entry.sprite}
-                      spriteClass="text-primary"
-                      {sources}
-                      segmentLookups={{ ...lookups, entityVisibility: entry.visibility }}
-                      onToggle={(covered) => toggle(entry, covered)}
-                    />
-                  {/snippet}
-                </ShelfRows>
-              </ExpandableSection>
+                {#snippet row({ entry, sources })}
+                  {@const spoileredRow =
+                    entry.spoilered ||
+                    !isConditionVisible(entry.visibility, userState.progressionState)}
+                  <TrackerRow
+                    category={entry.category}
+                    fact={entry.fact}
+                    display={entry.questState === "obtained" && !spoileredRow
+                      ? { mode: "obtained" }
+                      : trackerRowDisplay({
+                          completed: entry.completed,
+                          spoilered: spoileredRow,
+                          leaving: checkOff.isLeaving(entry.key),
+                        })}
+                    name={entry.name}
+                    variant={entry.category === "almanac" ? entry.subtitle : undefined}
+                    subtitle={[categoryForKey(entry.category, locale).name, entry.subtitle]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    reportCategory={entry.reportCategory}
+                    reportEntityId={entry.id}
+                    sprite={entry.sprite}
+                    spriteClass="text-primary"
+                    {sources}
+                    segmentLookups={{ ...lookups, entityVisibility: entry.visibility }}
+                    onToggle={(covered) => toggle(entry, covered)}
+                  />
+                {/snippet}
+              </TrackerRowSection>
             </SpoilerSection>
           </div>
         {/each}

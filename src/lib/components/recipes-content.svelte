@@ -1,9 +1,8 @@
 <script lang="ts">
   import AllCompleted from "#lib/components/all-completed.svelte";
-  import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SectionGroups from "#lib/components/section-groups.svelte";
-  import ShelfRows from "#lib/components/shelf-rows.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
+  import TrackerRowSection from "#lib/components/tracker-row-section.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { pageShelfFacts, registerPageSearch } from "#lib/controllers/page-search.svelte.js";
@@ -127,53 +126,50 @@
 >
   {#snippet section({ filteredEntries, group, progress })}
     {#if !nameFilter || filteredEntries.length > 0}
-      <ExpandableSection
+      <TrackerRowSection
         {locale}
         forceOpen={!!nameFilter}
         name={group.name}
         reportCategory="recipe-category"
         reportEntityId={group.id}
         {progress}
+        forceShelvesOpen={!!nameFilter}
+        getKey={(entry) => entry.id}
+        getShelf={rowShelf}
+        isLeaving={(entry) => checkOff.isLeaving(entry.id)}
+        items={filteredEntries}
       >
-        <ShelfRows
-          forceOpen={!!nameFilter}
-          getKey={(entry) => entry.id}
-          getShelf={rowShelf}
-          isLeaving={(entry) => checkOff.isLeaving(entry.id)}
-          items={filteredEntries}
-        >
-          {#snippet row(entry)}
-            <TrackerRow
-              fact={factKey("almanacRecipes", entry.id)}
-              display={checkOff.rowDisplay(entry.id, entry.visibility)}
-              segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
-              name={entry.name}
-              reportCategory="recipe"
-              reportEntityId={entry.id}
-              sources={entry.sources}
-              sprite={entry.itemId}
-              spriteClass="text-(--color-category-recipes)"
-              onToggle={(covered) => {
-                checkOff.onToggle(
-                  {
-                    id: entry.id,
-                    name: entry.name,
-                    sectionChecks: [
-                      () =>
-                        group.entries.every((candidate) =>
-                          userState.state.progress.almanacRecipes.has(candidate.id),
-                        ),
-                    ],
-                    sectionKey: group.id,
-                    visibility: entry.visibility,
-                  },
-                  covered,
-                );
-              }}
-            />
-          {/snippet}
-        </ShelfRows>
-      </ExpandableSection>
+        {#snippet row(entry)}
+          <TrackerRow
+            fact={factKey("almanacRecipes", entry.id)}
+            display={checkOff.rowDisplay(entry.id, entry.visibility)}
+            segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
+            name={entry.name}
+            reportCategory="recipe"
+            reportEntityId={entry.id}
+            sources={entry.sources}
+            sprite={entry.itemId}
+            spriteClass="text-(--color-category-recipes)"
+            onToggle={(covered) => {
+              checkOff.onToggle(
+                {
+                  id: entry.id,
+                  name: entry.name,
+                  sectionChecks: [
+                    () =>
+                      group.entries.every((candidate) =>
+                        userState.state.progress.almanacRecipes.has(candidate.id),
+                      ),
+                  ],
+                  sectionKey: group.id,
+                  visibility: entry.visibility,
+                },
+                covered,
+              );
+            }}
+          />
+        {/snippet}
+      </TrackerRowSection>
     {/if}
   {/snippet}
 </SectionGroups>

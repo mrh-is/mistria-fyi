@@ -4,14 +4,12 @@ import { celebrateProgress } from "#lib/controllers/celebration.js";
 import { showUndoToast } from "#lib/effects/undo-toast.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
-import { createCheckOff } from "./check-off.svelte.js";
+import { createCheckOff, createRowCheckOff } from "./check-off.svelte.js";
 
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 vi.mock("#lib/controllers/celebration.js", () => ({
-  celebrateProgress: vi.fn((_category: string, action: () => void) => {
-    action();
-  }),
+  celebrateProgress: vi.fn((_category: string, action: () => unknown) => action()),
 }));
 vi.mock("#lib/stores/user-state.svelte.js", () => ({
   userState: {
@@ -189,5 +187,52 @@ describe("createCheckOff", () => {
     checkOff.onToggle(row, false);
     expect(done.has("a")).toBe(true);
     expect(checkOff.rowDisplay("a", undefined)).toEqual({ leaving: true, mode: "completed" });
+  });
+});
+
+describe("createRowCheckOff", () => {
+  it.each([false, true])("waits for confirmation and uses the finish result (%s)", (completed) => {
+    vi.useFakeTimers();
+    try {
+      const checkOff = createRowCheckOff<string>();
+      const order: string[] = [];
+      const result = { undo: vi.fn() };
+      const finish = vi.fn(() => {
+        order.push("finish");
+        return completed;
+      });
+
+      checkOff.run({
+        category: "quests",
+        covered: true,
+        finish,
+        hold: () => {
+          order.push("hold");
+          return [];
+        },
+        id: "quest",
+        name: "Quest",
+        needsGuard: true,
+        toggle: () => {
+          order.push("toggle");
+          return result;
+        },
+        visibility: hidden,
+      });
+
+      expect(checkOff.guard.open).toBe(true);
+      expect(order).toEqual([]);
+      expect(checkOff.isLeaving("quest")).toBe(false);
+
+      checkOff.guard.proceed();
+
+      expect(order).toEqual(["hold", "toggle", "finish"]);
+      expect(finish).toHaveBeenCalledExactlyOnceWith(result);
+      expect(checkOff.isLeaving("quest")).toBe(completed);
+      vi.advanceTimersByTime(ROW_LEAVE_MS);
+      expect(checkOff.isLeaving("quest")).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
