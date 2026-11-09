@@ -29,12 +29,10 @@ session limits) belong in each contributor’s user config.
 
 ## Task scope
 
-- Before working on an issue, read it, its comments, & its relationships:
-  `gh issue view <number> --json title,body,labels,comments,blockedBy,parent`. Don’t use
-  `--comments` alone, which can return empty output.
-- Don’t start an issue that’s blocked by an open issue, or one labeled `status: blocked` or
-  `status: needs decision`. If an issue already has `status: in progress` or an `agent:*` label,
-  coordinate with its owner.
+- Follow [Start work](docs/agent-workflow.md#start-work) for an issue, an authorized PR takeover, or
+  an ad hoc task. Proceed on an unclaimed issue or an explicit handoff without asking again. Ask
+  when ownership conflicts, required GitHub authentication is unavailable, or scope needs a
+  decision.
 - File an issue, without asking first, for these findings you don’t fix in the current change:
   - a product bug,
   - something that blocks your task,

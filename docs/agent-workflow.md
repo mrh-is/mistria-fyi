@@ -45,42 +45,75 @@ Use the PR body for the change summary, verification, & decisions.
 - **Edits & handoffs:** keep existing attribution. Trailers & `Agent:` lines record who wrote each
   piece.
 
+## Start work
+
+For issue-backed work, read the issue, comments, & relationships with
+`gh issue view <number> --json title,body,labels,assignees,comments,blockedBy,parent`. An open
+blocker, `status: blocked`, or `status: needs decision` prevents starting. An assignee,
+`status: in progress`, an `agent:*` label, or an existing implementation PR calls for coordination
+unless the user explicitly authorized a handoff.
+
+```sh
+pnpm run start-work issue 123 short-description codex
+pnpm run start-work task short-description
+pnpm run start-work takeover 456 --current codex
+```
+
+- **Issue** prepares `123-short-description` and then claims the issue. It verifies the human
+  assignee, `status: in progress` as the only status, & one `agent:*` label for agent work. Pass the
+  suffix of an existing agent label, such as `codex` or `claude`. Use `human` for work without an
+  agent.
+- **Task** prepares an ad hoc branch without looking up or creating an issue. Both new-worktree
+  modes branch from freshly fetched `origin/main` and leave the primary checkout alone.
+- **Takeover** runs in a clean, dedicated linked worktree. It checks out the existing PR branch,
+  runs setup, & updates ownership on the PR and its single linked open issue, if any. The command
+  recognizes closing references & standalone `Refs #N` lines. Coordinate multi-issue handoffs
+  manually.
+
+Issue & takeover use the authenticated GitHub account. Pass an expected login as the final argument
+when the user specifies one. Proceed directly on an unclaimed issue or an explicit PR takeover. Ask
+a human if authentication is unavailable or ownership conflicts.
+
+Use `--current` in place of the slug for an already-branched harness worktree. When dependencies are
+absent, run `node scripts/start-work.ts` with the pinned Node instead of `pnpm run start-work`. For
+cloud checkouts or harnesses that require separate Git operations, follow
+[Worktrees](../AGENTS.md#worktrees). Apply the same claim with `gh issue edit` & read it back with
+`gh issue view <number> --json labels,assignees` before implementing.
+
+If claiming fails after setup, the prepared worktree remains. Inspect the issue, then use
+`--current` in that worktree if it remains unclaimed. If a takeover fails partway through, inspect
+both assignments before retrying the authorized handoff.
+
 ## Task sequence
 
-1. **Read the issue & resolve open questions.** Follow [Task scope](../AGENTS.md#task-scope). Add
-   `assignees` to the `gh issue view` fields, since an assignee also means the issue has an owner.
+1. **Read the task & resolve open questions.** Follow [Task scope](../AGENTS.md#task-scope) &
+   [Start work](#start-work).
 2. **Scope the change.** A nontrivial feature without clear acceptance criteria needs three to seven
    acceptance items, each describing a state the finished feature must satisfy.
-3. **Assign the issue** to the GitHub user you represent (see “Issue & PR assignees” above).
-4. **Branch.** Work on a branch cut from the freshly fetched remote tip. A worktree is optional (see
-   “Worktrees” in AGENTS.md).
-5. **Check the baseline.** Install dependencies with `pnpm install --frozen-lockfile`, which also
-   supplies the Node version in `.node-version`. You may run it without further approval when
-   project dependencies are missing or stale. Use the configured external store, and leave the
-   lockfile unchanged. If the install fails, report it under “Tooling failures” in AGENTS.md. Then
-   confirm a clean baseline with focused checks, not a full suite.
-6. **Understand the contracts.** Before editing, read the affected subsystem, its boundaries, & its
+3. **Prepare the branch & claim the work** using [Start work](#start-work).
+4. **Check the baseline** with focused checks.
+5. **Understand the contracts.** Before editing, read the affected subsystem, its boundaries, & its
    existing tests.
-7. **Test first.** Add or update tests when behavior changes, ideally before the implementation. Run
+6. **Test first.** Add or update tests when behavior changes, ideally before the implementation. Run
    focused tests during development (see agent-verification.md).
-8. **Verify.** Run `pnpm run lint:fix` before committing. CI runs the full matrix (see
+7. **Verify.** Run `pnpm run lint:fix` before committing. CI runs the full matrix (see
    agent-verification.md).
-9. **Deliver.** Commit with the required co-author trailer, push, & open a PR. The PR needs:
-   - a reference to the issue: `Closes #N`, or `Refs #N` when the issue needs work after the merge
-     (see “Final state” below),
+8. **Deliver.** Commit with the required co-author trailer, push, & open a PR. The PR needs:
+   - for issue-backed work, `Closes #N`, or `Refs #N` when the issue needs work after the merge (see
+     “Final state” below),
    - a deployment or branch preview URL when available (see “Preview URL” below),
    - `data:diff` output, if the PR regenerates tracker data (see “Tracker data changes” below),
    - the GitHub user you represent as its assignee (`--assignee @me`).
 
    Open it as a draft or as ready according to “Draft or ready” below.
 
-10. **Monitor CI.** After opening the PR, watch its checks until they pass, whether the PR is a
-    draft or ready, so you catch & fix CI failures without the user relaying them (see “CI after
-    ready” below). Use whatever PR monitoring the harness offers, such as the `ccd_pr` tools
-    `bind_pr` & `set_monitor` in the Claude Code desktop app. Otherwise, run `gh pr checks`
-    periodically. GitHub sometimes never starts CI for a PR’s `opened` event. If no “CI” run exists
-    for the head commit a few minutes after opening, push an empty commit (see
-    [docs/development-workflow.md](development-workflow.md#ci-doesnt-start-on-a-new-pr)).
+9. **Monitor CI.** After opening the PR, watch its checks until they pass, whether the PR is a draft
+   or ready, so you catch & fix CI failures without the user relaying them (see “CI after ready”
+   below). Use whatever PR monitoring the harness offers, such as the `ccd_pr` tools `bind_pr` &
+   `set_monitor` in the Claude Code desktop app. Otherwise, run `gh pr checks` periodically. GitHub
+   sometimes never starts CI for a PR’s `opened` event. If no “CI” run exists for the head commit a
+   few minutes after opening, push an empty commit (see
+   [docs/development-workflow.md](development-workflow.md#ci-doesnt-start-on-a-new-pr)).
 
 ## Issue triage
 

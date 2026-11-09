@@ -31,6 +31,7 @@
     "test:coverage": "vitest run --project=!assets --project=!saves --coverage",
     "verify": "node scripts/verify.ts",
     "worktree:new": "node scripts/new-worktree.ts",
+    "start-work": "node scripts/start-work.ts",
     "worktree:cleanup": "bash scripts/cleanup-worktrees.sh",
     "worktree:cleanup:apply": "bash scripts/cleanup-worktrees.sh --apply",
     "housekeeping:install": "bash scripts/install-housekeeping-agent.sh",
