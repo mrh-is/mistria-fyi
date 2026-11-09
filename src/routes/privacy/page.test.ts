@@ -13,9 +13,7 @@ describe("privacy policy", () => {
     expect(text).toContain("AI tools never get your email address");
     expect(text).toContain("save file sync log");
     expect(text).not.toContain("any information about how you use the app");
-    expect(queries.getByRole("link", { name: "Back to About" }).getAttribute("href")).toBe(
-      "/en/about",
-    );
+    expect(queries.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/en");
   });
 
   it("shows when the policy last changed", () => {

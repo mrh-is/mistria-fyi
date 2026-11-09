@@ -13,7 +13,7 @@
   let aiDisclosureOpen = $state(false);
 </script>
 
-<PageHeader title={m.about_title()} backLabel={m.common_go_back()} historyBack />
+<PageHeader title={m.about_title()} />
 
 <div class="about-page">
   <!-- eslint-disable local/no-hardcoded-ui-text -- proper nouns (product/person/studio names), same in every locale -->
@@ -64,7 +64,7 @@
 
   <footer>
     <ul class="about-page__footer">
-      <li><a href={localizedHref("privacy")}>{m.about_privacy_link()}</a></li>
+      <li><a href={`${localizedHref("privacy")}?from=about`}>{m.about_privacy_link()}</a></li>
       <li>
         <!-- A build-generated static file (see src/lib/build/licenses.ts), not a SvelteKit route. -->
         <a href="{resolve('/')}licenses.txt" target="_blank" rel="noopener"

@@ -2,7 +2,6 @@
   import IconArrowLeft from "@tabler/icons-svelte-runes/icons/arrow-left";
 
   import { Icon } from "#lib/components/icon/index.js";
-  import { getNavigationHistory } from "#lib/navigation-history.js";
   import * as m from "#lib/paraglide/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
@@ -18,26 +17,19 @@
     backHref = "",
     backLabel = m.page_header_back_to_home(),
     category,
-    historyBack = false,
     icon,
     progress,
     ref = $bindable<HTMLElement | undefined>(undefined),
-    replaceBackEntry = false,
     title,
   }: {
     backHref?: Path;
     backLabel?: string;
     category?: CategoryKey;
-    /** Steps back through app-created history, otherwise follows `backHref`. */
-    historyBack?: boolean;
     icon?: Snippet<[string]>;
     progress?: CategoryProgress;
     ref?: HTMLElement | undefined;
-    replaceBackEntry?: boolean;
     title: string;
   } = $props();
-
-  const navigationHistory = getNavigationHistory();
 
   const pct = $derived(
     progress !== undefined && progress.total > 0
@@ -48,12 +40,6 @@
   const todoPct = $derived(
     progress !== undefined && progress.total > 0 ? (progress.todo / progress.total) * 100 : 0,
   );
-
-  function goBack(event: MouseEvent): void {
-    if (!navigationHistory?.canGoBack()) return;
-    event.preventDefault();
-    history.back();
-  }
 </script>
 
 <header
@@ -66,13 +52,7 @@
     ? `--category-progress-percent: ${pct}%; --category-todo-percent: ${todoPct}%;`
     : undefined}
 >
-  <a
-    class="page-header__back"
-    href={localizedHref(backHref)}
-    aria-label={backLabel}
-    data-sveltekit-replacestate={replaceBackEntry || undefined}
-    onclick={historyBack ? goBack : undefined}
-  >
+  <a class="page-header__back" href={localizedHref(backHref)} aria-label={backLabel}>
     <IconArrowLeft class="size-5" />
   </a>
   {#if category === undefined}

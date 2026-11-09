@@ -24,6 +24,6 @@ describe("about and legal page", () => {
     expect(container.querySelector(".feedback-icon")).not.toBeNull();
     expect(queries.getByRole("link", { name: "Privacy" })).toBeTruthy();
     expect(queries.getByRole("button", { name: "AI disclosure" })).toBeTruthy();
-    expect(queries.getByRole("link", { name: "Go back" }).getAttribute("href")).toBe("/en");
+    expect(queries.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/en");
   });
 });

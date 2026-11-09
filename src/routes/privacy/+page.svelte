@@ -2,25 +2,11 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import * as m from "#lib/paraglide/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
-  import { afterNavigate, goto } from "$app/navigation";
+  import { browser } from "$app/env";
   import { page } from "$app/state";
 
-  afterNavigate(({ type, from, shallow }) => {
-    if (shallow || type !== "link") return;
-    const source = from?.route.id;
-    if (source !== "/about" && source !== "/data") return;
-
-    // Record the source here so both entry links keep their native anchor behavior.
-    // Persist it on this history entry for reloads and browser Forward.
-    void goto(page.url.href, {
-      persistState: true,
-      replace: true,
-      shallow: true,
-      state: { ...page.state, privacyFrom: source === "/data" ? "data" : "about" },
-    });
-  });
-
-  const source = $derived(page.state.privacyFrom);
+  const from = $derived(browser ? page.url.searchParams.get("from") : null);
+  const source = $derived(from === "about" || from === "data" ? from : undefined);
 
   /** Bump this whenever the policy's meaning changes. */
   const LAST_UPDATED = Date.UTC(2026, 10, 5);
@@ -40,10 +26,8 @@
 
 <PageHeader
   title={m.privacy_title()}
-  backHref={source ?? "about"}
-  backLabel={source === undefined ? m.privacy_back_to_about() : m.common_go_back()}
-  historyBack={source !== undefined}
-  replaceBackEntry={source === undefined}
+  backHref={source}
+  backLabel={source === undefined ? undefined : m.common_go_back()}
 />
 
 <div class="flex flex-col gap-6 p-4 text-sm">
