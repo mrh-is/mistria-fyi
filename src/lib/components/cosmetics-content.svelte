@@ -22,7 +22,6 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries } from "#lib/utils/record.js";
-  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { ShelfRow } from "#lib/engine/shelves.js";
@@ -41,7 +40,9 @@
   }
 
   const sectionGrouping = createSectionGrouping<CosmeticSlot>();
+  // Cosmetics rows don't animate out of their shelf when completed, unlike the other pages.
   const checkOff = createCheckOff<CosmeticId, CosmeticSlot>({
+    animateLeaving: false,
     category: "cosmetics",
     grouping: sectionGrouping,
     isCompleted: (id) => userState.state.progress.cosmetics.has(id),
@@ -172,11 +173,9 @@
     {@const slotProgress = cosmeticsProgress(allInSlot)}
     {@const visibleInSlot = allInSlot.filter(isVisible)}
     {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
-      {@const completed = userState.state.progress.cosmetics.has(cosmetic.id)}
-      {@const spoilered = !isConditionVisible(cosmetic.visibility, userState.progressionState)}
       <TrackerRow
         fact={factKey("cosmetics", cosmetic.id)}
-        display={trackerRowDisplay({ completed, spoilered })}
+        display={checkOff.rowDisplay(cosmetic.id, cosmetic.visibility)}
         segmentLookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
         name={cosmetic.name}
         reportCategory="cosmetic"
@@ -189,7 +188,6 @@
               name: getName("cosmetics", cosmetic.id, locale),
               sectionChecks: [() => isSlotComplete(allInSlot)],
               sectionKey: slot,
-              spoilered,
               visibility: cosmetic.visibility,
             },
             covered,

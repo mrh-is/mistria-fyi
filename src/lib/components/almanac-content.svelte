@@ -21,25 +21,14 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
-  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
-  import type { AlmanacRow } from "#lib/engine/projections/almanac.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { AlmanacCategoryId, AlmanacEntry, ItemId } from "#lib/types/tracker-data.js";
-  import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 
   function isItemCompleted(itemId: ItemId): boolean {
     return userState.state.progress.almanac.has(itemId);
-  }
-
-  function rowDisplay(row: AlmanacRow): TrackerRowDisplay {
-    return trackerRowDisplay({
-      completed: row.completed,
-      leaving: checkOff.leaving.has(row.canonicalId),
-      spoilered: row.spoilered,
-    });
   }
 
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
@@ -124,15 +113,15 @@
           forceOpen={!!nameFilter}
           getKey={(item) => item.canonicalId}
           getShelf={rowShelf}
-          isLeaving={(item) => checkOff.leaving.has(item.canonicalId)}
+          isLeaving={(item) => checkOff.isLeaving(item.canonicalId)}
           items={visibleRows}
         >
           {#snippet row(row)}
-            {@const { canonicalId, item, name, sources, spoilered, variant } = row}
+            {@const { canonicalId, item, name, sources, variant } = row}
             {@const itemVisibility = item.visibility}
             <TrackerRow
               fact={factKey("almanac", canonicalId)}
-              display={rowDisplay(row)}
+              display={checkOff.rowDisplay(canonicalId, itemVisibility)}
               segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
               {name}
               subtitle={variant}
@@ -149,7 +138,6 @@
                     name,
                     sectionChecks: [() => canonicalIds.every((itemId) => isItemCompleted(itemId))],
                     sectionKey: id,
-                    spoilered,
                     visibility: itemVisibility,
                   },
                   covered,

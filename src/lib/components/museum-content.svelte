@@ -29,7 +29,6 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries, recordValues } from "#lib/utils/record.js";
-  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { MuseumRow } from "#lib/engine/projections/museum.js";
@@ -41,7 +40,6 @@
     MuseumWingSet,
     MuseumWingSetId,
   } from "#lib/types/tracker-data.js";
-  import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 
@@ -53,14 +51,6 @@
   let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
   let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
-
-  function rowDisplay(itemId: ItemId): TrackerRowDisplay {
-    return trackerRowDisplay({
-      completed: userState.state.progress.museum.has(itemId),
-      leaving: checkOff.leaving.has(itemId),
-      spoilered: isItemSpoilered(itemId),
-    });
-  }
 
   const sectionGrouping = createSectionGrouping<MuseumWingId>();
   const checkOff = createCheckOff<ItemId, MuseumWingId>({
@@ -200,7 +190,7 @@
                   level={4}
                   getKey={(row) => row.id}
                   getShelf={rowShelf}
-                  isLeaving={(row) => checkOff.leaving.has(row.id)}
+                  isLeaving={(row) => checkOff.isLeaving(row.id)}
                   items={set.visibleRows}
                 >
                   {#snippet row({ id: itemId })}
@@ -208,7 +198,7 @@
                     {@const museumItemVisibility = trackerData.items[itemId].visibility}
                     <TrackerRow
                       fact={factKey("museum", itemId)}
-                      display={rowDisplay(itemId)}
+                      display={checkOff.rowDisplay(itemId, museumItemVisibility)}
                       segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
                       name={getName("items", itemId, locale)}
                       reportCategory="museum-item"
@@ -227,7 +217,6 @@
                               () => isSetComplete(wing.sets[set.setId]),
                             ],
                             sectionKey: wingId,
-                            spoilered: isItemSpoilered(itemId),
                             visibility: museumItemVisibility,
                           },
                           covered,

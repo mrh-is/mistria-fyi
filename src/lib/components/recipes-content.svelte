@@ -21,7 +21,6 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
-  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -140,18 +139,13 @@
           forceOpen={!!nameFilter}
           getKey={(entry) => entry.id}
           getShelf={rowShelf}
-          isLeaving={(entry) => checkOff.leaving.has(entry.id)}
+          isLeaving={(entry) => checkOff.isLeaving(entry.id)}
           items={filteredEntries}
         >
           {#snippet row(entry)}
-            {@const completed = userState.state.progress.almanacRecipes.has(entry.id)}
             <TrackerRow
               fact={factKey("almanacRecipes", entry.id)}
-              display={trackerRowDisplay({
-                completed,
-                leaving: checkOff.leaving.has(entry.id),
-                spoilered: entry.spoilered,
-              })}
+              display={checkOff.rowDisplay(entry.id, entry.visibility)}
               segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
               name={entry.name}
               reportCategory="recipe"
@@ -171,7 +165,6 @@
                         ),
                     ],
                     sectionKey: group.id,
-                    spoilered: entry.spoilered,
                     visibility: entry.visibility,
                   },
                   covered,
