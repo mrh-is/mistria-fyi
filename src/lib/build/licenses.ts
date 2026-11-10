@@ -12,6 +12,7 @@ export const LICENSES_FILE_NAME = "licenses.txt";
  * text lives instead & why shipping without it is fine.
  */
 export const LICENSE_ALLOWLIST: Readonly<Record<string, string>> = {
+  "@wuchale/svelte": "The reviewed upstream MIT license is included in the Wuchale runtime notice.",
   wuchale: "The reviewed upstream MIT license is included in the Wuchale runtime notice.",
 };
 

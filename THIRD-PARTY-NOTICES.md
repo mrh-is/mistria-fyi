@@ -42,8 +42,8 @@ SOFTWARE.
 
 ## Wuchale runtime
 
-Wuchale 0.26.7 declares MIT in its package metadata. The published package omits the license file,
-so the build includes the notice from the
+Wuchale 0.26.7 and its Svelte adapter 0.21.4 declare MIT. The published packages omit the license
+file, so the build includes the notice from the
 [upstream repository](https://github.com/wuchalejs/wuchale/blob/main/LICENSE).
 
 ```

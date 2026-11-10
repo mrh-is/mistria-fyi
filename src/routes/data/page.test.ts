@@ -37,7 +37,7 @@ describe("data management page", () => {
     expect(container.querySelector("a[href='/about']")).toBeNull();
     expect(container.querySelector("a[href='/privacy']")).toBeNull();
     expect(text).not.toContain(m.toolbar_send_feedback());
-    expect(text).not.toContain(m.about_ai_disclosure_link());
+    expect(text).not.toContain("AI disclosure");
   });
 
   // The page is prerendered, so the server never sees `?section=`; the browser opens the tool.

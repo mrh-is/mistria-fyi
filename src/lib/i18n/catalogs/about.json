@@ -1,6 +1,50 @@
 [
   {
     "translations": {
+      "en": "<0/>AI disclosure",
+      "ja": "<0/>AIに関する開示",
+      "zh-Hans": "<0/>AI 使用说明",
+      "zh-Hant": "<0/>AI 使用說明",
+      "es": "<0/>Divulgación sobre IA",
+      "fr": "<0/>Divulgation IA",
+      "ko": "<0/>AI 사용 안내",
+      "ru": "<0/>Раскрытие об ИИ"
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-copy.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "About",
+      "ja": "このガイドについて",
+      "zh-Hans": "关于",
+      "zh-Hant": "關於",
+      "es": "Acerca de",
+      "fr": "À propos",
+      "ko": "소개",
+      "ru": "О проекте"
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-metadata.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Data",
       "ja": "データ",
       "zh-Hans": "数据",
@@ -12,7 +56,7 @@
     },
     "references": [
       {
-        "file": "src/routes/about/about-data-copy.svelte",
+        "file": "src/routes/about/about-copy.svelte",
         "refs": [
           null
         ]
@@ -34,7 +78,161 @@
     },
     "references": [
       {
-        "file": "src/routes/about/about-data-copy.svelte",
+        "file": "src/routes/about/about-copy.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Learn about the unofficial Mistria Field Guide for Fields of Mistria.",
+      "ja": "Fields of Mistria非公式のMistria Field Guideについて。",
+      "zh-Hans": "了解非官方的 Fields of Mistria 田野指南。",
+      "zh-Hant": "了解非官方的 Fields of Mistria 田野指南。",
+      "es": "Descubre más sobre la guía no oficial Mistria Field Guide para Fields of Mistria.",
+      "fr": "En savoir plus sur le Mistria Field Guide non officiel pour Fields of Mistria.",
+      "ko": "Fields of Mistria용 비공식 Mistria 필드 가이드에 대해 알아보세요.",
+      "ru": "Узнайте больше о неофициальном Mistria Field Guide для Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-metadata.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Open-source licenses",
+      "ja": "オープンソースライセンス",
+      "zh-Hans": "开源许可证",
+      "zh-Hant": "開源授權",
+      "es": "Licencias de código abierto",
+      "fr": "Licences open source",
+      "ko": "오픈 소스 라이선스",
+      "ru": "Лицензии открытого ПО"
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-copy.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Privacy",
+      "ja": "プライバシー",
+      "zh-Hans": "隐私",
+      "zh-Hant": "隱私",
+      "es": "Privacidad",
+      "fr": "Confidentialité",
+      "ko": "개인정보",
+      "ru": "Конфиденциальность"
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-copy.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Project status",
+      "ja": "プロジェクトの状況",
+      "zh-Hans": "项目状态",
+      "zh-Hant": "專案狀態",
+      "es": "Estado del proyecto",
+      "fr": "État du projet",
+      "ko": "프로젝트 상태",
+      "ru": "Статус проекта"
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-copy.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Questions & requests",
+      "ja": "質問・要望",
+      "zh-Hans": "问题与请求",
+      "zh-Hant": "問題與請求",
+      "es": "Preguntas y solicitudes",
+      "fr": "Questions et demandes",
+      "ko": "질문 및 요청",
+      "ru": "Вопросы и запросы"
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-copy.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Report issues through the feedback tool (the <0/> icon in the bottom toolbar) at any point! For anything more serious, you can also <1>contact me privately</1>.",
+      "ja": "いつでもフィードバックツール（下部ツールバーの<0/>アイコン）から問題を報告できます！より深刻な内容の場合は、<1>個別に連絡</1>することもできます。",
+      "zh-Hans": "随时可以通过反馈工具（底部工具栏中的 <0/> 图标）报告问题！如需反馈更严重的问题，你也可以<1>私下联系我</1>。",
+      "zh-Hant": "隨時可以透過回饋工具（底部工具列中的 <0/> 圖示）回報問題！如需回報更嚴重的問題，你也可以<1>私下聯絡我</1>。",
+      "es": "Informa de problemas a través de la herramienta de comentarios (el icono <0/> en la barra de herramientas inferior) en cualquier momento. Para algo más serio, también puedes <1>contactarme en privado</1>.",
+      "fr": "Signalez les problèmes via l’outil de retour (l’icône <0/> dans la barre d’outils du bas) à tout moment ! Pour tout ce qui est plus sérieux, vous pouvez aussi <1>me contacter en privé</1>.",
+      "ko": "언제든지 피드백 도구(하단 툴바의 <0/> 아이콘)를 통해 문제를 신고할 수 있습니다! 더 심각한 사안이라면 <1>개인적으로 연락</1>할 수도 있습니다.",
+      "ru": "Сообщайте о проблемах через инструмент обратной связи (значок <0/> в нижней панели инструментов) в любой момент! По более серьёзным вопросам вы также можете <1>связаться со мной лично</1>."
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-copy.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "The Mistria Field Guide is an independent, unofficial, & noncommercial fan project to help players track their progress in <0/>.",
+      "ja": "Mistria Field Guideは、プレイヤーの進捗記録を助けるための独立した非公式・非営利のファンプロジェクトで、対象は<0/>です。",
+      "zh-Hans": "Mistria 田野指南是一个独立、非官方、非商业的粉丝项目，旨在帮助玩家追踪他们在 <0/> 中的进度。",
+      "zh-Hant": "Mistria 田野指南是一個獨立、非官方、非商業的粉絲專案，旨在幫助玩家追蹤他們在 <0/> 中的進度。",
+      "es": "Mistria Field Guide es un proyecto de fans independiente, no oficial y sin fines comerciales, creado para ayudar a los jugadores a seguir su progreso en <0/>.",
+      "fr": "Le Mistria Field Guide est un projet de fan indépendant, non officiel et non commercial destiné à aider les joueurs à suivre leur progression dans <0/>.",
+      "ko": "Mistria 필드 가이드는 플레이어가 진행 상황을 추적할 수 있도록 돕는 독립적이고 비공식적인 비영리 팬 프로젝트로, 대상은 <0/>입니다.",
+      "ru": "Mistria Field Guide — независимый, неофициальный и некоммерческий фанатский проект, помогающий игрокам отслеживать свой прогресс в <0/>."
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-copy.svelte",
         "refs": [
           null
         ]
@@ -56,7 +254,7 @@
     },
     "references": [
       {
-        "file": "src/routes/about/about-data-copy.svelte",
+        "file": "src/routes/about/about-copy.svelte",
         "refs": [
           {
             "placeholders": [
@@ -66,6 +264,28 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "The guide is maintained by <0/>. It’s not affiliated with, endorsed by, supported by, or sponsored by <1/> (though, call me!).",
+      "ja": "このガイドは<0/>が管理しています。本作は<1/>から提携・承認・支援・スポンサーを受けていません（でも連絡はぜひ！）。",
+      "zh-Hans": "本指南由 <0/> 维护。它与 <1/> 没有隶属、认可、支持或赞助关系（不过，欢迎联系我！）。",
+      "zh-Hant": "本指南由 <0/> 維護。它與 <1/> 沒有隸屬、認可、支持或贊助關係（不過，歡迎聯絡我！）。",
+      "es": "La guía la mantiene <0/>. No está afiliada, avalada, respaldada ni patrocinada por <1/> (¡aunque puedes contactarme!).",
+      "fr": "Le guide est maintenu par <0/>. Il n’est ni affilié, ni approuvé, ni soutenu, ni sponsorisé par <1/> (mais appelez-moi quand même !).",
+      "ko": "이 가이드는 <0/>가 관리하고 있습니다. 이 가이드는 <1/>와 제휴, 승인, 지원 또는 후원 관계가 없습니다(그래도 연락은 환영합니다!).",
+      "ru": "Путеводитель поддерживает <0/>. Он не связан с <1/>, не одобрен, не поддерживается и не спонсируется ею (хотя, звоните!)."
+    },
+    "references": [
+      {
+        "file": "src/routes/about/about-copy.svelte",
+        "refs": [
+          null
         ]
       }
     ],

@@ -1,41 +1,5 @@
 [
   {
-    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
-    "key": "about_data_version_notice",
-    "locale": "es",
-    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
-  },
-  {
-    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
-    "key": "about_data_version_notice",
-    "locale": "ja",
-    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
-  },
-  {
-    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
-    "key": "about_data_version_notice",
-    "locale": "ko",
-    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
-  },
-  {
-    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
-    "key": "about_data_version_notice",
-    "locale": "ru",
-    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
-  },
-  {
-    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
-    "key": "about_data_version_notice",
-    "locale": "zh-Hans",
-    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
-  },
-  {
-    "english": "The current guide data was generated based on game version {version}. When there’s a game update, this guide will briefly be out of date while I update everything.",
-    "key": "about_data_version_notice",
-    "locale": "zh-Hant",
-    "reason": "Only the English apostrophes changed (straight to curly); this locale’s wording is unaffected."
-  },
-  {
     "english": "Backup & restore",
     "key": "backup_card_title",
     "locale": "es",

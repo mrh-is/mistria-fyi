@@ -45,6 +45,7 @@ try {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.ok(html.includes("Los datos actuales de la guía"));
+  assert.ok(html.includes("<title>Acerca de"));
   await page.goto(about);
   await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true");
   await expect(page.getByRole("heading", { exact: true, name: "Datos" })).toBeVisible();
@@ -79,7 +80,12 @@ try {
   await expect(page).toHaveURL(about);
   await target.click();
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-Hant");
+  await expect(page).toHaveTitle(/關於/u);
   await expect(page.getByRole("heading", { exact: true, name: "資料" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "私下聯絡我" })).toHaveAttribute(
+    "href",
+    "mailto:michael@mistria.fyi",
+  );
 
   // Warm the locale from Home. About has never been opened in this browser context.
   const offline = await browser.newPage({
@@ -110,6 +116,10 @@ try {
   await expect(offline.locator("html")).toHaveAttribute("data-hydrated", "true");
   await expect(offline.getByRole("heading", { exact: true, name: "Datos" })).toBeVisible();
   await expect(offline.getByText(/Los datos actuales de la guía se generaron/u)).toBeVisible();
+  await expect(offline.getByRole("link", { name: "contactarme en privado" })).toHaveAttribute(
+    "href",
+    "mailto:michael@mistria.fyi",
+  );
   if (screenshots) {
     await mkdir(screenshots, { recursive: true });
     await offline.screenshot({

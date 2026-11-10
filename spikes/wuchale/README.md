@@ -1,9 +1,9 @@
 # Wuchale localization spike
 
 **Recommendation: expand by feature and measure with both systems present.** The isolated fixture
-shipped about 21% less compressed JavaScript. The About pilot verified the app's layout and offline
-precache and was roughly flat for initial JavaScript. A complete migration would need separate
-evidence for rich text, script-authored messages, and metadata.
+shipped about 21% less compressed JavaScript. Moving About's body, footer, and metadata reduced the
+real Spanish route's initial JavaScript by 2,934 gzip bytes. A full migration still needs evidence
+for shared chrome, dynamic script messages, and the URL and offline fallback paths.
 
 ## Run from the workspace root
 
@@ -134,13 +134,23 @@ The root layout already remounts the page when the locale commits. The manifest 
 catalogs into the same per-locale cache delivery mechanism as the game chunks, while the two systems
 retain separate source files and ownership.
 
-Chromium measured **365,072 gzip bytes across 58 JavaScript files** on Spanish About, compared with
-**365,577 across 57** before the partial migration. The rest of the app still loads Paraglide, so
-this difference does not project a full migration. The browser verified that the Traditional Chinese
-catalog arrived on hover and the page stayed Spanish until click. In a fresh context, visiting
-Spanish Home cached the Spanish and English About catalogs under the existing bilingual-search
-policy. The other six stayed out of the cache. About then hydrated on its first visit with the
-network disabled.
+The data-section-only pilot measured **365,072 gzip bytes across 58 JavaScript files** on Spanish
+About, compared with **365,577 across 57** before the partial migration. The rest of the app still
+loads Paraglide, so this difference does not project a full migration. The browser verified that the
+Traditional Chinese catalog arrived on hover and the page stayed Spanish until click. In a fresh
+context, visiting Spanish Home cached the Spanish and English About catalogs under the existing
+bilingual-search policy. The other six stayed out of the cache. About then hydrated on its first
+visit with the network disabled.
+
+The expanded pilot moves About's linked sentences, footer controls, page heading, and metadata.
+Svelte's inline tags let the catalog place links and icons in the translated sentence. A file-scoped
+script adapter uses the runtime explicitly passed by the page load. Both adapters share the About
+catalog, and the page header uses the same title as metadata. The rest of the app, including shared
+components on About, continues to use Paraglide.
+
+The expanded pilot measured **362,643 gzip bytes across 57 JavaScript files** against the same
+365,577-byte Paraglide baseline. Chromium verified Spanish prerendered metadata, Traditional Chinese
+metadata after navigation, and the correct contact link on the first offline About visit.
 
 ```sh
 pnpm run build

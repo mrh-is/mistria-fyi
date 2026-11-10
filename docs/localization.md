@@ -131,11 +131,11 @@ lint concern. See [Limits of the tooling](#limits-of-the-tooling) below.
 
 ### Source text
 
-The About page's data section is the Wuchale pilot. Its English text lives in
-`src/routes/about/about-data-copy.svelte`, and all eight locales share the feature catalog in
-`src/lib/i18n/catalogs/about.json`. After editing source text, run `pnpm exec wuchale --clean` from
-the workspace root, review the catalog diff, and fill every locale before running
-`pnpm run check:i18n`. The rest of the app uses the Paraglide authoring flow below.
+The About page's route-owned copy is the Wuchale pilot. Its English text lives in
+`src/routes/about/about-copy.svelte` and `src/routes/about/about-metadata.ts`. All eight locales
+share the feature catalog in `src/lib/i18n/catalogs/about.json`. After editing source text, run
+`pnpm exec wuchale --clean` from the workspace root, review the catalog diff, and fill every locale
+before running `pnpm run check:i18n`. The rest of the app uses the Paraglide authoring flow below.
 
 Acquisition sources ("Purchase from the General Store (after repairing)") are sentences assembled
 from game names, and parts of them can be spoilered or gated behind progress. `source-segments.ts`
@@ -239,10 +239,10 @@ lexicon lives outside the app's bundled data.
 
 ### Sentences around links & icons
 
-A sentence that wraps a link or icon is one message with a placeholder per element, never fragments
-glued around it, since fragments force English word order. Render it with `messageParts` from
-`src/lib/utils/message-parts.ts` (`about/+page.svelte` is the model) and place each slot in a
-snippet or `{#each}`; a message that drops a placeholder throws.
+A sentence that wraps a link or icon is one message with a placeholder per element so translators
+can move it. In the Wuchale pilot, write the markup inline and keep its numbered tags in the
+translation. In Paraglide, render with `messageParts` from `src/lib/utils/message-parts.ts` and
+place each slot in a snippet or `{#each}`. A Paraglide message that drops a placeholder throws.
 
 The `ui/` `Dialog.Content` hardcodes an English "Close" label, so dialogs pass
 `showCloseButton={false}` & render `dialog-close-button.svelte`, which uses `common_close`.
@@ -250,9 +250,10 @@ The `ui/` `Dialog.Content` hardcodes an English "Close" label, so dialogs pass
 ### Page metadata & manifest
 
 `SITE_NAME` is the product name, a proper noun that is the same in every locale (`app_name`). Every
-page's title and description come from messages through `localizedPageLoad`. `static/manifest.json`
-is a single static file, so it stays English and declares `"lang": "en"` & `"id": "/"`; a per-locale
-manifest would need a route and a locale-aware `<link rel="manifest">`.
+page's title and description come from localized messages. About passes its locale's Wuchale runtime
+directly to the metadata function. The other pages use Paraglide through `localizedPageLoad`.
+`static/manifest.json` is a single static file, so it stays English and declares `"lang": "en"` &
+`"id": "/"`; a per-locale manifest would need a route and a locale-aware `<link rel="manifest">`.
 
 ### Offline page
 
