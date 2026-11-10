@@ -85,11 +85,10 @@ describe("Vitest projects", () => {
     expect(trackedTestFiles().filter((file) => !listedFiles.has(file))).toEqual([]);
   });
 
-  // These three load the browser suites' specs, fixtures, or app modules, which app & test changes
+  // These load browser fixtures or app modules, which app & test changes
   // can break. Every other scripts/ test reads only scripts/, pipeline/, & the CI filter's inputs.
   it("exclude only the relay & other scripts/ tests when every gate is off", () => {
     const alwaysRun = [
-      "scripts/playwright-allocation.test.ts",
       "scripts/playwright-satoshi.test.ts",
       "scripts/sprites/sprite-manifest.test.ts",
     ];
