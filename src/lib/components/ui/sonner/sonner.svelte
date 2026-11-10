@@ -58,7 +58,8 @@
     --toast-accent: var(--color-brand-accent);
     --toast-ribbon-inset: 12px;
     --toast-ribbon-width: 22px;
-    --toast-ribbon-length: 2rem;
+    /* The icon sits 10px below the ribbon's top, and the notch's point sits 10px below the icon. */
+    --toast-ribbon-length: 2.5rem;
     --toast-ribbon-notch: 6px;
     --toast-pad: 12px;
 
