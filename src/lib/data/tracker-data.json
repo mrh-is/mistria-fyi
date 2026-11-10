@@ -12443,7 +12443,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "capes",
@@ -12471,7 +12475,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "subCategory": "capes",
@@ -13257,7 +13265,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "robe",
@@ -13285,7 +13297,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "subCategory": "robe",
@@ -13299,7 +13315,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "subCategory": "robe",
@@ -13313,7 +13333,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "subCategory": "robe",
@@ -13526,7 +13550,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "sapling_cool"
+          "monsterId": "sapling_cool",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "subCategory": "glasses"
@@ -14490,7 +14518,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "subCategory": "crown",
@@ -14522,7 +14554,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "subCategory": "crown",
@@ -14858,7 +14894,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "crown",
@@ -14914,11 +14954,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "enchantern"
+          "monsterId": "enchantern",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "enchantern_blue"
+          "monsterId": "enchantern_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "subCategory": "hat"
@@ -14928,11 +14976,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "bat"
+          "monsterId": "bat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "bat_blue"
+          "monsterId": "bat_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "subCategory": "hat"
@@ -15001,7 +15057,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "subCategory": "head_gear_misc",
@@ -15026,11 +15086,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "spirit"
+          "monsterId": "spirit",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "spirit_purple"
+          "monsterId": "spirit_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "hat"
@@ -15093,7 +15161,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "tome"
+          "monsterId": "tome",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "hat"
@@ -15121,7 +15193,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "griffin_statue"
+          "monsterId": "griffin_statue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "hat"
@@ -15168,7 +15244,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "cat"
+          "monsterId": "cat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "subCategory": "hat"
@@ -15220,7 +15300,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "subCategory": "hat",
@@ -15254,19 +15338,35 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "mushroom"
+          "monsterId": "mushroom",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mushroom_blue"
+          "monsterId": "mushroom_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mushroom_green"
+          "monsterId": "mushroom_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mushroom_purple"
+          "monsterId": "mushroom_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "subCategory": "hat"
@@ -15290,19 +15390,35 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "copperclod"
+          "monsterId": "copperclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "goldclod"
+          "monsterId": "goldclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "ironclod"
+          "monsterId": "ironclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "silverclod"
+          "monsterId": "silverclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "subCategory": "hat"
@@ -15386,19 +15502,35 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "rockclod"
+          "monsterId": "rockclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_blue"
+          "monsterId": "rockclod_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_green"
+          "monsterId": "rockclod_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_red"
+          "monsterId": "rockclod_red",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "subCategory": "hat"
@@ -15408,7 +15540,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "rock_stack"
+          "monsterId": "rock_stack",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "hat"
@@ -15436,27 +15572,51 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "sapling"
+          "monsterId": "sapling",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_blue"
+          "monsterId": "sapling_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_cool"
+          "monsterId": "sapling_cool",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_orange"
+          "monsterId": "sapling_orange",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_pink"
+          "monsterId": "sapling_pink",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_purple"
+          "monsterId": "sapling_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "subCategory": "hat"
@@ -15475,7 +15635,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "sapling_pink"
+          "monsterId": "sapling_pink",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "head_gear_misc"
@@ -15514,15 +15678,27 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "stalagmite"
+          "monsterId": "stalagmite",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "stalagmite_green"
+          "monsterId": "stalagmite_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "stalagmite_purple"
+          "monsterId": "stalagmite_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "subCategory": "hat"
@@ -15647,7 +15823,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "cat_void"
+          "monsterId": "cat_void",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "hat"
@@ -15906,7 +16086,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "subCategory": "boots",
@@ -15959,7 +16143,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "subCategory": "boots",
@@ -16069,7 +16257,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "subCategory": "boots",
@@ -16144,7 +16336,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "subCategory": "sandals",
@@ -16158,7 +16354,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "subCategory": "sandals",
@@ -16398,7 +16598,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "subCategory": "suit",
@@ -23184,7 +23388,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23198,7 +23406,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23212,7 +23424,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23226,7 +23442,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23316,7 +23536,11 @@
         },
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23330,7 +23554,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23344,7 +23572,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23358,7 +23590,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23372,7 +23608,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23386,7 +23626,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23400,7 +23644,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23414,7 +23662,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23428,7 +23680,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23442,7 +23698,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23456,7 +23716,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23470,7 +23734,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23484,7 +23752,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23498,7 +23770,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23512,7 +23788,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23526,7 +23806,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -23540,7 +23824,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -31300,7 +31588,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31314,7 +31606,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31328,7 +31624,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31342,7 +31642,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31356,7 +31660,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31370,7 +31678,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31384,7 +31696,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31398,7 +31714,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31412,7 +31732,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31426,7 +31750,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31440,7 +31768,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31454,7 +31786,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31468,7 +31804,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31482,7 +31822,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31496,7 +31840,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31510,7 +31858,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31524,7 +31876,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31538,7 +31894,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -31552,7 +31912,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -32122,7 +32486,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32136,7 +32504,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32150,7 +32522,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32164,7 +32540,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32178,7 +32558,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32192,7 +32576,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32215,7 +32603,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32229,7 +32621,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32243,7 +32639,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32257,7 +32657,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32271,7 +32675,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32285,7 +32693,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32299,7 +32711,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32313,7 +32729,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32327,7 +32747,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32341,7 +32765,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -32355,7 +32783,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -34939,7 +35371,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -34953,7 +35389,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -34967,7 +35407,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -34981,7 +35425,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -34995,7 +35443,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35009,7 +35461,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35023,7 +35479,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35037,7 +35497,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35051,7 +35515,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35065,7 +35533,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35079,7 +35551,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35093,7 +35569,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35107,7 +35587,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35121,7 +35605,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35135,7 +35623,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35149,7 +35641,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35163,7 +35659,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35177,7 +35677,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35191,7 +35695,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35205,7 +35713,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35219,7 +35731,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -35233,7 +35749,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -37942,7 +38462,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -37956,7 +38480,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -37970,7 +38498,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -37984,7 +38516,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -37998,7 +38534,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38012,7 +38552,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38026,7 +38570,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38040,7 +38588,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38054,7 +38606,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38068,7 +38624,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38082,7 +38642,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38096,7 +38660,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38110,7 +38678,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38124,7 +38696,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -38477,7 +39053,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38491,7 +39071,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38505,7 +39089,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38519,7 +39107,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38533,7 +39125,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38547,7 +39143,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38561,7 +39161,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38575,7 +39179,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38589,7 +39197,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38603,7 +39215,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38617,7 +39233,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38631,7 +39251,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38645,7 +39269,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38659,7 +39287,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38673,7 +39305,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38687,7 +39323,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38701,7 +39341,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38715,7 +39359,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38729,7 +39377,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38743,7 +39395,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38757,7 +39413,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38771,7 +39431,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38785,7 +39449,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38799,7 +39467,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38813,7 +39485,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38827,7 +39503,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -38891,7 +39571,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -38904,7 +39588,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -38917,7 +39605,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -38930,7 +39622,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -38943,7 +39639,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -38956,7 +39656,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -38969,7 +39673,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -38982,7 +39690,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -38995,7 +39707,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -39008,7 +39724,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -39101,7 +39821,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39114,7 +39838,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39127,7 +39855,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39140,7 +39872,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39153,7 +39889,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39171,7 +39911,11 @@
         },
         {
           "type": "monster",
-          "monsterId": "cat"
+          "monsterId": "cat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ]
     },
@@ -39180,7 +39924,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39193,7 +39941,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39206,7 +39958,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39219,7 +39975,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39232,7 +39992,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -39325,7 +40089,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39338,7 +40106,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39351,7 +40123,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39364,7 +40140,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39377,7 +40157,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39430,7 +40214,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39443,7 +40231,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39456,7 +40248,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39469,7 +40265,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39482,7 +40282,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39495,7 +40299,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -39558,7 +40366,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39571,7 +40383,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39584,7 +40400,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39597,7 +40417,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39610,7 +40434,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39623,7 +40451,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39636,7 +40468,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39649,7 +40485,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39662,7 +40502,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39675,7 +40519,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -39768,7 +40616,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -39781,7 +40633,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -39794,7 +40650,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -39807,7 +40667,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -39820,7 +40684,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -39833,7 +40701,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -39846,7 +40718,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -39859,7 +40735,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -39872,7 +40752,11 @@
       "sources": [
         {
           "type": "mine_fish",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -40210,7 +41094,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -40223,7 +41111,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -40236,7 +41128,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -40249,7 +41145,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -40262,7 +41162,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -40345,7 +41249,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -40358,7 +41266,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -40371,7 +41283,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -40384,7 +41300,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -40397,7 +41317,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -40520,7 +41444,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -40533,7 +41461,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -40546,7 +41478,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -40559,7 +41495,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -40572,7 +41512,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -40695,7 +41639,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -40708,7 +41656,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -40721,7 +41673,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -40734,7 +41690,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -40747,7 +41707,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -40870,7 +41834,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -40883,7 +41851,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -40896,7 +41868,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -40909,7 +41885,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -40922,7 +41902,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -41157,7 +42141,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -41170,7 +42158,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -41183,7 +42175,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -41196,7 +42192,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -41209,7 +42209,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -41222,7 +42226,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -41235,7 +42243,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -41248,7 +42260,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -41261,7 +42277,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -41274,15 +42294,27 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mistrilclod"
+          "monsterId": "mistrilclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_purple"
+          "monsterId": "rockclod_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -42940,7 +43972,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ],
       "visibility": {
@@ -42963,7 +43999,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ],
       "visibility": {
@@ -42986,7 +44026,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ],
       "visibility": {
@@ -43009,7 +44053,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ],
       "visibility": {
@@ -43032,7 +44080,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -45187,7 +46239,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -45390,7 +46446,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -45472,7 +46532,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -45589,7 +46653,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -45611,7 +46679,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -45635,7 +46707,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -45649,7 +46725,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -45725,7 +46805,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -45870,7 +46954,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -45962,7 +47050,11 @@
         },
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -46012,11 +47104,19 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "wishing_well",
@@ -46433,7 +47533,11 @@
         },
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -46539,7 +47643,11 @@
         },
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -46580,7 +47688,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -46641,7 +47753,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -46792,7 +47908,11 @@
         },
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -46842,7 +47962,11 @@
         },
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -46884,7 +48008,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "lava_caves"
+          "biomeId": "lava_caves",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "recipe",
@@ -46912,7 +48040,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "deep_earth"
+          "biomeId": "deep_earth",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "recipe",
@@ -46981,7 +48113,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -47046,7 +48182,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -47157,7 +48297,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -47305,7 +48449,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -47844,7 +48992,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "recipe",
@@ -48041,7 +49193,11 @@
         },
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -48141,7 +49297,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "tide_caverns"
+          "biomeId": "tide_caverns",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "recipe",
@@ -48204,7 +49364,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "upper_mines"
+          "biomeId": "upper_mines",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "recipe",
@@ -55295,11 +56459,19 @@
         },
         {
           "type": "monster",
-          "monsterId": "spirit"
+          "monsterId": "spirit",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "spirit_purple"
+          "monsterId": "spirit_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "store",
@@ -55491,11 +56663,19 @@
         },
         {
           "type": "monster",
-          "monsterId": "spirit"
+          "monsterId": "spirit",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "spirit_purple"
+          "monsterId": "spirit_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "artifact_dig"
@@ -55540,15 +56720,27 @@
         },
         {
           "type": "monster",
-          "monsterId": "cat"
+          "monsterId": "cat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "enchantern"
+          "monsterId": "enchantern",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "enchantern_blue"
+          "monsterId": "enchantern_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "store",
@@ -55743,11 +56935,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "copperclod"
+          "monsterId": "copperclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "stalagmite"
+          "monsterId": "stalagmite",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "store",
@@ -55769,7 +56969,11 @@
         },
         {
           "type": "monster",
-          "monsterId": "silverclod"
+          "monsterId": "silverclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "store",
@@ -55799,7 +57003,11 @@
         },
         {
           "type": "monster",
-          "monsterId": "copperclod"
+          "monsterId": "copperclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "store",
@@ -55825,7 +57033,11 @@
         },
         {
           "type": "monster",
-          "monsterId": "ironclod"
+          "monsterId": "ironclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "store",
@@ -55851,7 +57063,11 @@
         },
         {
           "type": "monster",
-          "monsterId": "goldclod"
+          "monsterId": "goldclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "store",
@@ -55864,11 +57080,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "mistrilclod"
+          "monsterId": "mistrilclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_purple"
+          "monsterId": "rockclod_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "store",
@@ -55893,11 +57117,19 @@
         },
         {
           "type": "monster",
-          "monsterId": "goldclod"
+          "monsterId": "goldclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "stalagmite_purple"
+          "monsterId": "stalagmite_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ]
     },
@@ -55918,7 +57150,11 @@
         },
         {
           "type": "monster",
-          "monsterId": "mistrilclod"
+          "monsterId": "mistrilclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -55939,11 +57175,19 @@
         },
         {
           "type": "monster",
-          "monsterId": "ironclod"
+          "monsterId": "ironclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "stalagmite_green"
+          "monsterId": "stalagmite_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ]
     },
@@ -55964,7 +57208,11 @@
         },
         {
           "type": "monster",
-          "monsterId": "silverclod"
+          "monsterId": "silverclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ]
     },
@@ -55985,31 +57233,59 @@
         },
         {
           "type": "monster",
-          "monsterId": "cat"
+          "monsterId": "cat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rock_stack"
+          "monsterId": "rock_stack",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod"
+          "monsterId": "rockclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_blue"
+          "monsterId": "rockclod_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_green"
+          "monsterId": "rockclod_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_purple"
+          "monsterId": "rockclod_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_red"
+          "monsterId": "rockclod_red",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "store",
@@ -56402,7 +57678,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -56415,7 +57695,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "cat_void"
+          "monsterId": "cat_void",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -56423,7 +57707,11 @@
       "category": "materials",
       "sources": [
         {
-          "type": "mine_fish"
+          "type": "mine_fish",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -56450,7 +57738,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -57495,7 +58787,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "any"
+          "monsterId": "any",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -57504,7 +58800,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "any"
+          "monsterId": "any",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -57513,7 +58813,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "any"
+          "monsterId": "any",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -57634,7 +58938,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -57787,7 +59095,11 @@
       "sources": [
         {
           "type": "mine",
-          "biomeId": "ancient_ruins"
+          "biomeId": "ancient_ruins",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ],
       "visibility": {
@@ -58243,7 +59555,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "any"
+          "monsterId": "any",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -58262,7 +59578,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "any"
+          "monsterId": "any",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -58476,35 +59796,67 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "sapling"
+          "monsterId": "sapling",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_blue"
+          "monsterId": "sapling_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_cool"
+          "monsterId": "sapling_cool",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_orange"
+          "monsterId": "sapling_orange",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_orange_mini"
+          "monsterId": "sapling_orange_mini",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_pink"
+          "monsterId": "sapling_pink",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_purple"
+          "monsterId": "sapling_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "tome"
+          "monsterId": "tome",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58513,39 +59865,75 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "griffin_statue"
+          "monsterId": "griffin_statue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling"
+          "monsterId": "sapling",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_blue"
+          "monsterId": "sapling_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_cool"
+          "monsterId": "sapling_cool",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_orange"
+          "monsterId": "sapling_orange",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_orange_mini"
+          "monsterId": "sapling_orange_mini",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_pink"
+          "monsterId": "sapling_pink",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_purple"
+          "monsterId": "sapling_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "tome"
+          "monsterId": "tome",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58554,7 +59942,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "mushroom"
+          "monsterId": "mushroom",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -58563,7 +59955,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "mushroom_green"
+          "monsterId": "mushroom_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ]
     },
@@ -58572,7 +59968,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "mushroom_blue"
+          "monsterId": "mushroom_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ]
     },
@@ -58581,19 +59981,35 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "mushroom"
+          "monsterId": "mushroom",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mushroom_blue"
+          "monsterId": "mushroom_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mushroom_green"
+          "monsterId": "mushroom_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mushroom_purple"
+          "monsterId": "mushroom_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ]
     },
@@ -58602,7 +60018,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "mushroom_purple"
+          "monsterId": "mushroom_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ]
     },
@@ -58611,35 +60031,67 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "copperclod"
+          "monsterId": "copperclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "goldclod"
+          "monsterId": "goldclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "ironclod"
+          "monsterId": "ironclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod"
+          "monsterId": "rockclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_blue"
+          "monsterId": "rockclod_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_green"
+          "monsterId": "rockclod_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_red"
+          "monsterId": "rockclod_red",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "silverclod"
+          "monsterId": "silverclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ]
     },
@@ -58648,7 +60100,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "any"
+          "monsterId": "any",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -58657,19 +60113,35 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "enchantern"
+          "monsterId": "enchantern",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "enchantern_blue"
+          "monsterId": "enchantern_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "spirit"
+          "monsterId": "spirit",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "spirit_purple"
+          "monsterId": "spirit_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58678,15 +60150,27 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "stalagmite"
+          "monsterId": "stalagmite",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "stalagmite_green"
+          "monsterId": "stalagmite_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "stalagmite_purple"
+          "monsterId": "stalagmite_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ]
     },
@@ -58695,11 +60179,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "bat"
+          "monsterId": "bat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "bat_blue"
+          "monsterId": "bat_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ]
     },
@@ -58708,11 +60200,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "bat"
+          "monsterId": "bat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "bat_blue"
+          "monsterId": "bat_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ]
     },
@@ -58721,11 +60221,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "cat"
+          "monsterId": "cat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "cat_void"
+          "monsterId": "cat_void",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58734,11 +60242,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "griffin_statue"
+          "monsterId": "griffin_statue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rock_stack"
+          "monsterId": "rock_stack",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58747,27 +60263,51 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "sapling"
+          "monsterId": "sapling",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_blue"
+          "monsterId": "sapling_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_cool"
+          "monsterId": "sapling_cool",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_orange"
+          "monsterId": "sapling_orange",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_pink"
+          "monsterId": "sapling_pink",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         },
         {
           "type": "monster",
-          "monsterId": "sapling_purple"
+          "monsterId": "sapling_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ]
     },
@@ -58776,19 +60316,35 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "mushroom"
+          "monsterId": "mushroom",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mushroom_blue"
+          "monsterId": "mushroom_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mushroom_green"
+          "monsterId": "mushroom_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "mushroom_purple"
+          "monsterId": "mushroom_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ]
     },
@@ -58797,19 +60353,35 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "rockclod"
+          "monsterId": "rockclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_blue"
+          "monsterId": "rockclod_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_green"
+          "monsterId": "rockclod_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "rockclod_red"
+          "monsterId": "rockclod_red",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ]
     },
@@ -58818,19 +60390,35 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "copperclod"
+          "monsterId": "copperclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "goldclod"
+          "monsterId": "goldclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "ironclod"
+          "monsterId": "ironclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "silverclod"
+          "monsterId": "silverclod",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ]
     },
@@ -58839,15 +60427,27 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "stalagmite"
+          "monsterId": "stalagmite",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "stalagmite_green"
+          "monsterId": "stalagmite_green",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         },
         {
           "type": "monster",
-          "monsterId": "stalagmite_purple"
+          "monsterId": "stalagmite_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ]
     },
@@ -58856,7 +60456,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "cat"
+          "monsterId": "cat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         }
       ]
     },
@@ -58865,7 +60469,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "cat_void"
+          "monsterId": "cat_void",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58874,11 +60482,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "spirit"
+          "monsterId": "spirit",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 60
+          }
         },
         {
           "type": "monster",
-          "monsterId": "spirit_purple"
+          "monsterId": "spirit_purple",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58887,7 +60503,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "rock_stack"
+          "monsterId": "rock_stack",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58896,7 +60516,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "griffin_statue"
+          "monsterId": "griffin_statue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58905,7 +60529,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "tome"
+          "monsterId": "tome",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 80
+          }
         }
       ]
     },
@@ -58914,11 +60542,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "bat"
+          "monsterId": "bat",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         },
         {
           "type": "monster",
-          "monsterId": "bat_blue"
+          "monsterId": "bat_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 40
+          }
         }
       ]
     },
@@ -58927,11 +60563,19 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "enchantern"
+          "monsterId": "enchantern",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         },
         {
           "type": "monster",
-          "monsterId": "enchantern_blue"
+          "monsterId": "enchantern_blue",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 20
+          }
         }
       ]
     },
@@ -58940,7 +60584,11 @@
       "sources": [
         {
           "type": "monster",
-          "monsterId": "mimic"
+          "monsterId": "mimic",
+          "availability": {
+            "type": "mineFloor",
+            "floor": 1
+          }
         }
       ]
     },
@@ -61034,7 +62682,11 @@
         "sources": [
           {
             "type": "monster",
-            "monsterId": "sapling_pink"
+            "monsterId": "sapling_pink",
+            "availability": {
+              "type": "mineFloor",
+              "floor": 80
+            }
           }
         ]
       }

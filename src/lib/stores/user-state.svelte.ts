@@ -151,7 +151,7 @@ const core = {
   },
   setSeason(season: Season) {
     const { worldState } = shell.state;
-    Object.assign(worldState, applySaveDay(worldState, { season, weather: undefined }));
+    shell.state.worldState = applySaveDay(worldState, { season, weather: undefined });
   },
   setWeather(weather: Weather) {
     if (isWeatherInSeason(weather, shell.state.worldState.season)) {

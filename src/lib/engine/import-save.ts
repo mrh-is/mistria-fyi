@@ -145,6 +145,7 @@ export interface SaveIdentity {
 
 /** The in-game day the save was made on, from `gamedata.date` & `gamedata.weather`. */
 export interface SaveDayFields {
+  day?: number;
   season: ExtractedField<Season>;
   weather: ExtractedField<Weather>;
 }
@@ -260,7 +261,11 @@ export function progressOfExtraction(extraction: SaveExtraction): {
   }
   return {
     completed: completed as Partial<ProgressState>,
-    day: { season: extraction.day.season.value, weather: extraction.day.weather.value },
+    day: {
+      ...(extraction.day.day === undefined ? {} : { day: extraction.day.day }),
+      season: extraction.day.season.value,
+      weather: extraction.day.weather.value,
+    },
     playtime: extraction.identity.playtime.value,
     warnings: extraction.diagnostics.filter(isSaveImportWarning),
   };
@@ -813,6 +818,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   };
   return {
     day: {
+      ...(today === undefined ? {} : { day: today.day }),
       season: collector.finish("season", today?.season),
       weather: collector.finish("weather", weather),
     },

@@ -350,7 +350,14 @@ function readImportSnapshot(json: null | string | undefined): LoadedProgress | u
 
 /** Apply the save & normalize once, after all clock edits have been combined. */
 function resolveImportDay(stored: WorldState, clock: WorldState, day?: SaveDay): WorldState {
-  if (!day && clock.season === stored.season && clock.weather === stored.weather) return stored;
+  if (
+    !day &&
+    clock.season === stored.season &&
+    clock.weather === stored.weather &&
+    clock.day === stored.day
+  ) {
+    return stored;
+  }
   return applySaveDay(clock, day ?? { season: undefined, weather: undefined });
 }
 

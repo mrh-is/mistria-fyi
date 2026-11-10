@@ -1,8 +1,11 @@
-import { trackerData } from "#lib/data/index.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { getPartnerId } from "#lib/engine/relationships.js";
+import { recordValues } from "#lib/utils/record.js";
 
 import type { DayContext } from "#lib/engine/availability.js";
-import type { VillagerId } from "#lib/types/tracker-data.js";
+import type { UserProgressionState } from "#lib/engine/visibility.js";
+import type { WorldDay } from "#lib/engine/world-state.js";
+import type { MuseumWingId, TrackerData, VillagerId } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -37,6 +40,33 @@ export interface NormalizedLevel {
 /** What category projections read: progress, & what decides whether a row is doable today. */
 export interface ProgressContext extends DayContext {
   progress: DeepReadonly<ProgressState>;
+}
+
+export function createProgressContext(
+  progress: DeepReadonly<ProgressState>,
+  progressionState: UserProgressionState,
+  worldState: WorldDay,
+): ProgressContext {
+  const museum: Partial<TrackerData["museum"]> = trackerData.museum;
+  const archaeology = museum["archaeology" as MuseumWingId];
+  return {
+    acquiredItems: {
+      get: (id) => {
+        const canonical = trackerIndex.memberToCanonicalAlmanacId.get(id);
+        return canonical === undefined ? undefined : progress.almanac.has(canonical);
+      },
+    },
+    festivals: trackerData.festivals,
+    progress,
+    progressionState,
+    // The museum installs the replicator after the first complete Archaeology set.
+    replicatorUnlocked:
+      archaeology &&
+      recordValues(archaeology.sets).some(({ items }) =>
+        items.every((id) => progress.museum.has(id)),
+      ),
+    worldState,
+  };
 }
 
 /**

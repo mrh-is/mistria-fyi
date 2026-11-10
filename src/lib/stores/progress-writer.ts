@@ -174,6 +174,8 @@ export function planSyncApply(
     }
   }
 
+  const { day: _previousFarmDay, ...undatedClock } = base.worldState;
+  const clock = result.farmSwitch ? undatedClock : base.worldState;
   const next: ProgressSnapshot = {
     history: result.state.history,
     // Declining a rollback keeps both the current farm's names and its clock.
@@ -183,8 +185,7 @@ export function planSyncApply(
         : { ...request.metadata, identity: result.state.farm ?? request.metadata.identity },
     progress: result.state.progress,
     retained: result.farmSwitch ? fresh.retained : base.retained,
-    worldState:
-      result.rollback === "declined" ? base.worldState : applySaveDay(base.worldState, request.day),
+    worldState: result.rollback === "declined" ? base.worldState : applySaveDay(clock, request.day),
   };
   const nextLocal = { ...local, ...stampedLocal(local.syncFreshness, request) };
   const built = result.farmSwitch

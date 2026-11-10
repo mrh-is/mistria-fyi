@@ -1,8 +1,9 @@
 import { evaluateAvailabilityCondition, extractDisplayBadges } from "./availability-condition.js";
 import { isConditionVisible } from "./visibility.js";
 
+import type { WorldDay } from "#lib/engine/world-state.js";
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
-import type { Season, Weather } from "#lib/types/tracker-data.js";
+import type { TrackerData } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 import type { AvailabilityContext, DisplayBadges } from "./availability-condition.js";
@@ -10,9 +11,12 @@ import type { UserProgressionState } from "./visibility.js";
 
 /** What decides whether a row is doable: today's season & weather, & the player's recorded progress. */
 export interface DayContext {
+  acquiredItems?: AvailabilityContext["acquiredItems"];
+  festivals?: Partial<TrackerData["festivals"]>;
   /** Derived without "Show spoilers", which only changes what the spoiler UI reveals. */
   progressionState: UserProgressionState;
-  worldState: { season: Season; weather: Weather };
+  replicatorUnlocked?: boolean;
+  worldState: WorldDay;
 }
 
 /** A row whose availability is decided by its sources & its own spoiler gate. */
@@ -54,6 +58,25 @@ export function isRowShown(
  */
 export function isSourceDoable(source: Source, ctx: DayContext): boolean {
   if (!isConditionVisible(getSourceVisibility(source), ctx.progressionState)) return false;
+  if (source.type === "festival" || source.type === "festival_activity") {
+    const date = ctx.festivals?.[source.festivalId]?.date;
+    if (
+      date &&
+      (date.season !== ctx.worldState.season ||
+        (ctx.worldState.day !== undefined && date.day !== ctx.worldState.day))
+    ) {
+      return false;
+    }
+  }
+  if (source.type === "artifact_replicator") {
+    if (ctx.replicatorUnlocked === false) return false;
+    const acquired = isAvailabilityDoable(
+      { type: "itemAcquired", itemId: source.originalItemId },
+      ctx,
+      { acquiredItems: ctx.acquiredItems },
+    );
+    if (!acquired) return false;
+  }
   return isAvailabilityDoable(getAvailabilityCondition(source), ctx);
 }
 
