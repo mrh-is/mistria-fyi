@@ -10,7 +10,10 @@ const aboutStorage = partitionedStorage(["about"], () => "about");
 export default defineConfig({
   adapters: {
     about: adapter({
-      files: "src/routes/about/about-copy.svelte",
+      files: [
+        "src/routes/about/about-copy.svelte",
+        "src/lib/components/ai-disclosure-dialog.svelte",
+      ],
       loader: "custom",
       // The route owns a runtime snapshot, and the root layout remounts it on locale change.
       runtime: { initReactive: () => false },

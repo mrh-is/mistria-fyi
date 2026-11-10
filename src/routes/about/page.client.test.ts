@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { pageMetadata } from "#lib/data/page-metadata.js";
@@ -37,7 +37,23 @@ describe("About page navigation and disclosures", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: "AI disclosure" }));
 
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText(m.ai_disclosure_title())).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "Built with AI assistance" });
+    const close = within(dialog).getByRole("button", { name: "Close" });
+    expect(within(dialog).getAllByRole("button", { name: /close/iu })).toHaveLength(1);
+    await fireEvent.click(close);
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+  });
+
+  it("renders the AI disclosure in the About catalog's locale", async () => {
+    const spanishCatalog = await loadAboutCatalog("es");
+    render(AboutPage, { data: { aboutCatalog: spanishCatalog, locale: "es", metadata } });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Divulgación sobre IA" }));
+
+    expect(await screen.findByRole("heading", { name: "Creado con ayuda de IA" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "escribirme" })).toHaveAttribute(
+      "href",
+      "mailto:michael@mistria.fyi",
+    );
   });
 });

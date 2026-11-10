@@ -130,9 +130,9 @@ lint concern. See [Limits of the tooling](#limits-of-the-tooling) below.
 
 ### Source text
 
-The About page's route-owned copy is the Wuchale pilot. Its English text lives in
-`src/routes/about/about-copy.svelte` and `src/routes/about/about-metadata.ts`. All eight locales
-share the feature catalog in `src/lib/i18n/catalogs/about.json`. After editing source text, run
+The About page's route copy and AI disclosure use native Wuchale extraction. The English text lives
+in the Svelte components and `src/routes/about/about-metadata.ts`. All eight locales share the
+feature catalog in `src/lib/i18n/catalogs/about.json`. After editing source text, run
 `pnpm exec wuchale --clean` from the workspace root, review the catalog diff, and fill every locale
 before running `pnpm run check:i18n`. The rest of the app uses the keyed authoring flow below.
 
