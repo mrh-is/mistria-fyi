@@ -18,7 +18,7 @@
   import { Toaster } from "#lib/components/ui/sonner/index.js";
   import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
   import { errorPageMetadata } from "#lib/data/page-metadata.js";
-  import { showStarterItemsToast } from "#lib/effects/undo-toast.js";
+  import { showStarterItemsToast, VISIBLE_TOASTS } from "#lib/effects/undo-toast.js";
   import { FeedbackContext, setFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { localeFontStylesheet } from "#lib/fonts/locale-fonts.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -127,7 +127,9 @@
 
   <Toaster
     position="bottom-center"
-    expand={userState.starterItems !== undefined}
+    expand
+    gap={14}
+    visibleToasts={VISIBLE_TOASTS}
     offset={{
       bottom: toastBottom,
       left: toastOffset,
