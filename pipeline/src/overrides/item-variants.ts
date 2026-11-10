@@ -4,7 +4,8 @@ import type { ItemVariant } from "#lib/types/tracker-data.js";
  * A reviewed set of almanac rows that share an English name within one category, such as the six
  * “Animated Clouds Window” rows. Each row’s variant names a feature that distinguishes it within
  * the set (“A large arched oak window …” → “Oak”).
- * The procedure for reviewing these is in `docs/game-version-update-protocol.md`.
+ * For variants derived from sprite comparisons, see the evidence in PR #624 and the review
+ * procedure in `docs/game-version-update-protocol.md`.
  */
 export interface ItemVariantSet {
   /** The rows’ shared English name, for readers; the extractor checks it. */
