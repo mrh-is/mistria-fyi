@@ -2,31 +2,18 @@ import type { ItemVariant } from "#lib/types/tracker-data.js";
 
 /**
  * A reviewed set of almanac rows that share an English name within one category, such as the six
- * “Animated Clouds Window” rows. The game names none of its colorways, so each row’s name is the
- * phrase its description doesn’t share with the others (“A large arched oak window …” → “Oak”).
+ * “Animated Clouds Window” rows. Each row’s variant names a feature that distinguishes it within
+ * the set (“A large arched oak window …” → “Oak”).
  * The procedure for reviewing these is in `docs/game-version-update-protocol.md`.
  */
-export type ItemVariantSet = NamedItemVariantSet | UnnamedItemVariantSet;
-
-export interface NamedItemVariantSet {
+export interface ItemVariantSet {
   /** The rows’ shared English name, for readers; the extractor checks it. */
   name: string;
   /**
-   * Each row’s canonical item ID, with its variant & the English description it came from. The
+   * Each row’s canonical item ID, with its variant & the English description at review time. The
    * extractor throws when a description changes, so a reworded game update gets reviewed again.
    */
   named: Readonly<Record<string, { description: string; variant: ItemVariant }>>;
-}
-
-/** Rows left unnamed because none of them has a differentiator, such as bare `_v1` & `_v2` IDs. */
-export interface UnnamedItemVariantSet {
-  name: string;
-  reason: string;
-  /**
-   * Each row’s canonical item ID & English description. The extractor throws when one changes,
-   * since a reworded update may give the set a differentiator.
-   */
-  unnamed: Readonly<Record<string, string>>;
 }
 
 /** Every same-named row set in v1.0.8, sorted by name. */
