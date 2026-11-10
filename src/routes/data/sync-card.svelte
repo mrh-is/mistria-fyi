@@ -17,7 +17,6 @@
   import { retireStatus } from "#lib/sync/retire-status.svelte.js";
   import { guessPlatform } from "#lib/sync/save-folders.js";
   import { makeNewCode, resumeStoppedRetires, stopSyncing } from "#lib/sync/sharing.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
@@ -50,9 +49,9 @@
 
   // The stuck note's own alert speaks for itself.
   const oldCodeAnnouncement = $derived.by(() => {
-    if (oldCodeDone) return m.sync_old_code_off();
+    if (oldCodeDone) return "Your old code is off.";
     if (!oldCodeActive || working || oldCodeStuck) return "";
-    return `${m.sync_old_code_turning_off()} ${m.sync_old_code_still_works()}`;
+    return `${"Turning off your old code…"} ${"It still works until this finishes."}`;
   });
 
   onMount(() => {
@@ -82,11 +81,7 @@
   const gameDate = $derived.by(() => {
     const date = userState.syncFreshness?.gameDate;
     if (!date) return undefined;
-    return m.source_date_label_year({
-      day: String(date.day),
-      season: getName("ui", date.season, page.data.locale),
-      year: String(date.year),
-    });
+    return `${getName("ui", date.season, page.data.locale)} ${String(date.day)}, Year ${String(date.year)}`;
   });
 
   async function confirmNewCode(): Promise<void> {
@@ -108,17 +103,19 @@
 <!-- Always here, so a screen reader announces each change to it. -->
 <div class="sr-only" role="status">{oldCodeAnnouncement}</div>
 
-<DataCard bind:open title={m.sync_card_title()} summary={m.sync_card_summary()}>
+<DataCard bind:open title="Save file sync" summary="Sync your save file from your gaming computer.">
   {#if oldCodeActive && !working}
     <div class="sync-card__old-code">
       {#if oldCodeStuck}
-        <StatusNote tone="warning">{m.sync_old_code_stuck()}</StatusNote>
+        <StatusNote tone="warning"
+          >We couldn’t turn off your old code yet. We’ll try again next time you’re here.</StatusNote
+        >
       {:else}
         <div class="sync-card__turning-off" aria-hidden="true">
           <IconLoader2 class="size-4 animate-spin motion-reduce:animate-none" />
           <div>
-            <p class="sync-card__turning-off-title">{m.sync_old_code_turning_off()}</p>
-            <p>{m.sync_old_code_still_works()}</p>
+            <p class="sync-card__turning-off-title">Turning off your old code…</p>
+            <p>It still works until this finishes.</p>
           </div>
         </div>
       {/if}
@@ -126,53 +123,61 @@
   {/if}
   {#if lane === undefined}
     <div class="sync-card">
-      <p class="sync-card__note">{m.sync_card_setup_sub()}</p>
+      <p class="sync-card__note">
+        Read your save file here, or scan a code from your gaming computer.
+      </p>
       <Button href={localizedHref("sync")} class="w-full">
         <IconSparkles />
-        {m.sync_home_sync()}
+        Sync from my farm automagically
       </Button>
     </div>
   {:else}
     <div class="sync-card">
       <dl class="sync-card__facts">
         {#if lane.kind === "computer" && courier.fileName}
-          <dt>{m.sync_panel_file()}</dt>
+          <dt>Save file</dt>
           <dd>{courier.fileName}</dd>
         {:else}
-          <dt>{m.sync_panel_from()}</dt>
+          <dt>Save file from</dt>
           <dd>
-            {lane.kind === "computer" ? m.sync_panel_from_here() : m.sync_panel_from_computer()}
+            {lane.kind === "computer" ? "This computer" : "Your gaming computer"}
           </dd>
         {/if}
         {#if lastSaveTime}
-          <dt>{m.sync_panel_last()}</dt>
+          <dt>Last save file</dt>
           <dd>{lastSaveTime}</dd>
         {/if}
         {#if gameDate}
-          <dt>{m.sync_panel_date()}</dt>
+          <dt>In-game date</dt>
           <dd>{gameDate}</dd>
         {/if}
         {#if lastImport?.playerName}
-          <dt>{m.sync_panel_farmer()}</dt>
+          <dt>Farmer</dt>
           <dd>{lastImport.playerName}</dd>
         {/if}
         {#if lastImport?.farmName}
-          <dt>{m.sync_panel_farm()}</dt>
+          <dt>Farm</dt>
           <dd>{lastImport.farmName}</dd>
         {/if}
       </dl>
 
       {#if lane.kind === "computer" && takesSaves}
-        <p class="sync-card__note">{m.sync_done_redrop()}</p>
+        <p class="sync-card__note">
+          Whenever you’re done playing, drop your save file in again and we’ll sync it.
+        </p>
         <div class="sync-card__drop">
-          <SaveDrop label={m.sync_redrop_label()} onsource={syncCourier.offer} {platform} />
+          <SaveDrop label="Drop in your latest save file" onsource={syncCourier.offer} {platform} />
         </div>
       {:else if lane.kind === "computer"}
-        <p class="sync-card__note">{m.sync_status_keep_open()}</p>
+        <p class="sync-card__note">
+          Keep this tab open while you play so we can sync your save file.
+        </p>
       {/if}
 
       {#if newCodeFailed}
-        <StatusNote tone="warning">{m.sync_new_code_failed()}</StatusNote>
+        <StatusNote tone="warning"
+          >We couldn’t make a new code right now, so your old one still works. Try again in a bit.</StatusNote
+        >
       {/if}
 
       {#if showCode && lane.kind === "computer"}
@@ -191,9 +196,9 @@
             aria-expanded={showCode}
           >
             <IconQrcode />
-            {m.sync_phone_show()}
+            Show code
           </Button>
-          <p>{m.sync_show_code_sub()}</p>
+          <p>Add your phone or another device.</p>
           {#if lane.code}
             <Button
               variant="outline"
@@ -203,16 +208,16 @@
               }}
             >
               <IconRefresh />
-              {m.sync_new_code()}
+              Make a new code
             </Button>
-            <p>{m.sync_new_code_sub()}</p>
+            <p>Stops the old code, in case it ended up on stream or somewhere you didn’t mean.</p>
           {/if}
         {:else}
           <Button variant="outline" href={localizedHref("sync")}>
             <IconCamera />
-            {m.sync_scan_other()}
+            Scan a different code
           </Button>
-          <p>{m.sync_scan_other_sub()}</p>
+          <p>Sync a save file from a different computer.</p>
         {/if}
         <Button
           variant="outline"
@@ -221,9 +226,9 @@
           }}
         >
           <IconPlayerPause />
-          {m.sync_stop()}
+          <!-- @wc-context: sync stop -->Stop syncing
         </Button>
-        <p>{m.sync_stop_sub()}</p>
+        <p>Go back to checking things off by hand. Your progress stays.</p>
       </div>
     </div>
   {/if}
@@ -231,31 +236,37 @@
 
 <SyncTagDialog
   bind:open={newCodeOpen}
-  title={m.sync_new_code()}
-  body={m.sync_new_code_body()}
+  title="Make a new code"
+  body="Showed your code on stream? No problem. A new code replaces the old one, which takes a moment to turn off, so your other devices will need to scan again."
   actions={[
     {
-      label: m.sync_new_code_cancel(),
+      label: /* @wc-context: sync new code cancel */ "Never mind",
       onclick: () => {
         newCodeOpen = false;
       },
     },
-    { label: m.sync_new_code_confirm(), onclick: () => void confirmNewCode(), primary: true },
+    { label: "Make a new code", onclick: () => void confirmNewCode(), primary: true },
   ]}
 />
 
 <SyncTagDialog
   bind:open={stopOpen}
-  title={m.sync_stop_title()}
-  body={lane?.kind === "computer" ? m.sync_stop_body_computer() : m.sync_stop_body()}
+  title="Stop syncing?"
+  body={lane?.kind === "computer"
+    ? "Your progress stays right here, and you’ll check things off by hand from now on. Your other devices will stop getting your save file. If you sync your save file again later, it’ll start fresh."
+    : "Your progress stays right here, and you’ll check things off by hand from now on. If you sync your save file again later, it’ll start fresh."}
   actions={[
     {
-      label: m.sync_stop_cancel(),
+      label: "Cancel",
       onclick: () => {
         stopOpen = false;
       },
     },
-    { label: m.sync_stop_confirm(), onclick: () => void confirmStop(), primary: true },
+    {
+      label: /* @wc-context: sync stop confirm */ "Stop syncing",
+      onclick: () => void confirmStop(),
+      primary: true,
+    },
   ]}
 />
 

@@ -14,7 +14,6 @@
   import { CATEGORY_KEYS, getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { building } from "$app/env";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
@@ -92,7 +91,7 @@
   });
 </script>
 
-<PageHeader bind:ref={headerEl} title={m.home_everything_label()} progress={overallProgress}>
+<PageHeader bind:ref={headerEl} title="Everything" progress={overallProgress}>
   {#snippet icon(cls)}
     <Icon.Category category="all" useCategoryColor class={cls} />
   {/snippet}
@@ -100,15 +99,15 @@
 
 <div class="flex flex-col gap-6 px-4 pb-4" style="--section-header-sticky-top: {headerHeight}px">
   <label class="flex items-center gap-3 self-start font-controls text-sm">
-    <span>{m.everything_group_by()}</span>
+    <span>Group by</span>
     <select
       class="min-h-11 rounded border border-border bg-background px-3 py-1 text-foreground"
-      aria-label={m.everything_group_by()}
+      aria-label="Group by"
       value={grouping}
       onchange={changeGrouping}
     >
-      <option value="category">{m.everything_group_category()}</option>
-      <option value="source">{m.everything_group_source()}</option>
+      <option value="category">Category</option>
+      <option value="source">Source</option>
     </select>
   </label>
   <PageSearchStatus locale={data.locale} />

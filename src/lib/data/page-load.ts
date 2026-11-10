@@ -1,5 +1,6 @@
 import { loadNames } from "#lib/data/names.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
+import { loadMetadataUi } from "#lib/i18n/metadata-ui.js";
 
 import type { NameChunk } from "#lib/data/names.js";
 import type { PageMetadata, PageMetadataInput } from "#lib/data/page-metadata.js";
@@ -23,7 +24,7 @@ export function localizedPageLoad(
 ): (event: LocalizedPageLoadEvent) => Promise<{ metadata: PageMetadata }> {
   return async ({ parent }) => {
     const { locale } = await parent();
-    await loadNames(locale, categories);
+    await Promise.all([loadNames(locale, categories), loadMetadataUi(locale)]);
     return { metadata: pageMetadata(metadata(locale)) };
   };
 }

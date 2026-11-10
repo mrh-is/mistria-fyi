@@ -1,5 +1,7 @@
 import { afterAll, vi } from "vitest";
 
+import { ROUTE_UI_GROUPS } from "#lib/i18n/route-ui-groups.js";
+import { loadRouteUi } from "#lib/i18n/route-ui.js";
 import { loadSharedUi } from "#lib/i18n/shared-ui.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
@@ -11,7 +13,12 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 // files in the shared Node app project, too.
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
-await Promise.all(LOCALE_CODES.map((locale) => loadSharedUi(locale)));
+await Promise.all(
+  LOCALE_CODES.flatMap((locale) => [
+    loadSharedUi(locale),
+    ...ROUTE_UI_GROUPS.map(({ path }) => loadRouteUi(locale, `/${path}`)),
+  ]),
+);
 
 afterAll(() => {
   pageStub.reset();

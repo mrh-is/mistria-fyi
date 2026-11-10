@@ -1,6 +1,7 @@
 import { loadNames } from "#lib/data/names.js";
 import { localeFromPath } from "#lib/i18n/locale-path.js";
 import { getLocale } from "#lib/i18n/locale-runtime.js";
+import { loadRouteUi } from "#lib/i18n/route-ui.js";
 import { loadSharedUi } from "#lib/i18n/shared-ui.js";
 
 import type { LayoutLoad } from "./$types";
@@ -21,6 +22,10 @@ export const prerender = true;
  */
 export const load: LayoutLoad = async ({ url }) => {
   const locale = localeFromPath(url.pathname) ?? getLocale();
-  await Promise.all([loadNames(locale, ["ui"]), loadSharedUi(locale)]);
+  await Promise.all([
+    loadNames(locale, ["ui"]),
+    loadSharedUi(locale),
+    loadRouteUi(locale, url.pathname),
+  ]);
   return { locale };
 };

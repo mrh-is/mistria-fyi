@@ -57,4 +57,41 @@ export const sharedSvelteFiles = [
   "src/lib/components/villager-search-result.svelte",
   "src/lib/components/villagers-content.svelte",
   "src/lib/components/welcome-card.svelte",
+  "src/routes/sync/code-area.svelte",
+];
+
+export const routeSvelteFiles = [
+  "src/routes/+page.svelte",
+  "src/routes/data/+page.svelte",
+  "src/routes/data/backup-card.svelte",
+  "src/routes/data/danger-zone-card.svelte",
+  "src/routes/data/sync-card.svelte",
+  "src/routes/data/transfer-card.svelte",
+  "src/routes/everything/+page.svelte",
+  "src/routes/everything/section-header.svelte",
+  "src/routes/privacy/+page.svelte",
+  "src/routes/sync/+page.svelte",
+  "src/routes/sync/computer-setup.svelte",
+  "src/routes/sync/find-save-step.svelte",
+  "src/routes/sync/follow-setup.svelte",
+  "src/routes/sync/only-save-note.svelte",
+  "src/routes/sync/where-choice.svelte",
+];
+
+export const routeMetadataFiles = [
+  "src/routes/(category)/almanac/+page.ts",
+  "src/routes/(category)/animals/+page.ts",
+  "src/routes/(category)/cosmetics/+page.ts",
+  "src/routes/(category)/mines/+page.ts",
+  "src/routes/(category)/museum/+page.ts",
+  "src/routes/(category)/quests/+page.ts",
+  "src/routes/(category)/recipes/+page.ts",
+  "src/routes/(category)/renown/+page.ts",
+  "src/routes/(category)/skills/+page.ts",
+  "src/routes/(category)/villagers/+page.ts",
+  "src/routes/+page.ts",
+  "src/routes/data/+page.ts",
+  "src/routes/everything/+page.ts",
+  "src/routes/privacy/+page.ts",
+  "src/routes/sync/+page.ts",
 ];

@@ -7,7 +7,6 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { stampOf } from "#lib/sync/read-save.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";
 
@@ -45,7 +44,7 @@
   const identity = $derived(save?.metadata ?? userState.state.lastImport);
   const farmSummary = $derived(
     identity?.playerName && identity.farmName
-      ? m.sync_farm_summary({ farm: identity.farmName, farmer: identity.playerName })
+      ? `${identity.playerName} on ${identity.farmName}`
       : undefined,
   );
   const fileSummary = $derived(save?.fileName);
@@ -77,14 +76,14 @@
       if (started && chosen) await syncCourier.take(chosen);
     })();
     step = "share";
-    announce(m.sync_farm_step_title());
+    announce("Is this your farm?");
     void focusStep(() => shareTitle);
   }
 
   function rejectFarm(): void {
     save = null;
     source = null;
-    retryHint = m.sync_farm_no_hint();
+    retryHint = "No worries! Pick the newest file that ends in “autosave”.";
     step = "find";
   }
 
@@ -93,16 +92,20 @@
     void focusStep(() => doneTitle);
   }
 
-  const doneCopy = $derived(watched ? m.sync_done_watched() : m.sync_done_redrop());
+  const doneCopy = $derived(
+    watched
+      ? "While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!"
+      : "Whenever you’re done playing, drop your save file in again and we’ll sync it.",
+  );
 </script>
 
 {#if step === "done"}
   <div class="done" role="status">
-    <h2 bind:this={doneTitle} tabindex="-1">{m.sync_done_title()}</h2>
+    <h2 bind:this={doneTitle} tabindex="-1">Nice, you’re all set!</h2>
     <p>{doneCopy}</p>
     <Button href={localizedHref("")}>
       <IconArrowRight />
-      {m.sync_done_home()}
+      Go to my field guide
     </Button>
   </div>
 {/if}
@@ -110,7 +113,7 @@
 <div class="steps">
   <SetupStep
     numeral="i"
-    title={m.sync_find_title()}
+    title="Find your save file"
     state={step === "find" ? "active" : "done"}
     summary={fileSummary}
   >
@@ -119,7 +122,7 @@
 
   <SetupStep
     numeral="ii"
-    title={m.sync_farm_step_title()}
+    title="Is this your farm?"
     state={step === "farm" ? "active" : step === "find" ? "pending" : "done"}
     summary={farmSummary}
     bind:titleRef={farmTitle}
@@ -127,30 +130,32 @@
     <p class="farm-question">
       {#if save?.metadata.playerName && save.metadata.farmName}
         {@const names = { farm: save.metadata.farmName, farmer: save.metadata.playerName }}
-        {#each messageParts<"farm" | "farmer">( (slot) => m.sync_farm_title( { farm: slot("farm"), farmer: slot("farmer") } ) ) as part, index (index)}
+        {#each messageParts<"farm" | "farmer">((slot) => `Perfect! Looks like that save file is for ${slot("farmer")} on ${slot("farm")}, is that right?`) as part, index (index)}
           {#if typeof part === "string"}{part}{:else}<strong>{names[part.slot]}</strong>{/if}
         {/each}
       {:else}
-        {m.sync_farm_title_unnamed()}
+        Perfect! We found a farm in that save file. Is it yours?
       {/if}
     </p>
     <div class="farm-actions">
       <Button onclick={confirmFarm}>
         <IconCheck />
-        {m.sync_farm_yes()}
+        Yep!
       </Button>
-      <Button variant="outline" onclick={rejectFarm}>{m.sync_farm_no()}</Button>
+      <Button variant="outline" onclick={rejectFarm}>Hmm, no, try that again</Button>
     </div>
   </SetupStep>
 
   <SetupStep
     numeral="iii"
-    title={m.sync_phone_title()}
+    title="Wanna track this on your phone?"
     state={step === "share" ? "active" : step === "done" ? "done" : "pending"}
-    summary={step === "done" ? m.sync_share_skipped() : undefined}
+    summary={step === "done" ? "Skipped. Show a code any time from Data." : undefined}
     bind:titleRef={shareTitle}
   >
-    <p class="share-body">{m.sync_phone_body()}</p>
+    <p class="share-body">
+      Or another device. Scan this code with it, and it’ll sync your save file from here on out.
+    </p>
     <div class="share-code">
       <CodeArea
         {linkOrigin}
@@ -164,15 +169,15 @@
     </div>
     {#snippet footer()}
       {#if paused}
-        <Button onclick={skipSharing}>{m.sync_phone_later()}</Button>
+        <Button onclick={skipSharing}>Okay, I’ll set it up later</Button>
       {:else if hasCode}
         <p class="share-finish">{doneCopy}</p>
         <Button href={localizedHref("")}>
           <IconArrowRight />
-          {m.sync_done_home()}
+          Go to my field guide
         </Button>
       {:else}
-        <Button variant="ghost" onclick={skipSharing}>{m.sync_phone_no()}</Button>
+        <Button variant="ghost" onclick={skipSharing}>No thanks, I’ll track here</Button>
       {/if}
     {/snippet}
   </SetupStep>

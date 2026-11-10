@@ -1,13 +1,12 @@
 import { categoryColor } from "#lib/data/categories.js";
 import { getName } from "#lib/data/names.js";
 import { localizedPageLoad } from "#lib/data/page-load.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = localizedPageLoad(["perks", "skills"], (locale) => ({
+export const load: PageLoad = localizedPageLoad(["perks", "skills"], (_locale) => ({
   accent: categoryColor("skills"),
-  description: m.skills_page_description({}, { locale }),
-  title: getName("ui", "skills", locale),
+  description: "Track skill levels & perks in Fields of Mistria.",
+  title: getName("ui", "skills", _locale),
   toolbar: { search: true },
 }));

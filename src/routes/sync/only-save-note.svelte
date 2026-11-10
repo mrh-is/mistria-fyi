@@ -1,8 +1,6 @@
 <script lang="ts">
   import IconInfoCircle from "@tabler/icons-svelte-runes/icons/info-circle";
 
-  import * as m from "#lib/ui-messages/messages.js";
-
   let { computer }: { computer: boolean } = $props();
 </script>
 
@@ -11,8 +9,12 @@
   <span class="only-save-note__tape" aria-hidden="true"></span>
   <IconInfoCircle class="only-save-note__icon" aria-hidden="true" />
   <div>
-    <p class="only-save-note__title">{m.sync_only_save_title()}</p>
-    <p>{computer ? m.sync_only_save_computer() : m.sync_only_save_phone()}</p>
+    <p class="only-save-note__title">Heads up</p>
+    <p>
+      {computer
+        ? "Only the game’s save file gets synced; anything you check off by hand on this computer stays here. Easiest is to track on one device, like your phone, and let your gaming computer just read the save file."
+        : "Only the game’s save file gets synced; anything you check off by hand on this phone stays here. Easiest is to do all your tracking right here, and let your gaming computer just read the save file."}
+    </p>
   </div>
 </aside>
 

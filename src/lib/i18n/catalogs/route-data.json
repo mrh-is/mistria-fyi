@@ -1,0 +1,1600 @@
+[
+  {
+    "translations": {
+      "en": "<0/> Download unreadable data",
+      "ja": "<0/> 読み込めなかったデータをダウンロード",
+      "zh-Hans": "<0/> 下载无法读取的数据",
+      "zh-Hant": "<0/> 下載無法讀取的資料",
+      "es": "<0/> Descargar datos ilegibles",
+      "fr": "<0/> Télécharger les données illisibles",
+      "ko": "<0/> 읽을 수 없는 데이터 다운로드",
+      "ru": "<0/> Скачать нечитаемые данные"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "<0/> Export backup",
+      "ja": "<0/> バックアップをエクスポート",
+      "zh-Hans": "<0/> 导出备份",
+      "zh-Hant": "<0/> 匯出備份",
+      "es": "<0/> Exportar copia de seguridad",
+      "fr": "<0/> Exporter la sauvegarde",
+      "ko": "<0/> 백업 내보내기",
+      "ru": "<0/> Экспортировать резервную копию"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "<0/> Make a new code",
+      "ja": "<0/> 新しいコードを作る",
+      "zh-Hans": "<0/> 生成新代码",
+      "zh-Hant": "<0/> 產生新代碼",
+      "es": "<0/> Crear un código nuevo",
+      "fr": "<0/> Créer un nouveau code",
+      "ko": "<0/> 새 코드 만들기",
+      "ru": "<0/> Создать новый код"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "<0/> Reset all progress",
+      "ja": "<0/> すべての進捗をリセット",
+      "zh-Hans": "<0/> 重置所有进度",
+      "zh-Hant": "<0/> 重設所有進度",
+      "es": "<0/> Reiniciar todo el progreso",
+      "fr": "<0/> Réinitialiser toute la progression",
+      "ko": "<0/> 모든 진행 상황 초기화",
+      "ru": "<0/> Сбросить весь прогресс"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/danger-zone-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "<0/> Restore from backup",
+      "ja": "<0/> バックアップから復元",
+      "zh-Hans": "<0/> 从备份恢复",
+      "zh-Hant": "<0/> 從備份還原",
+      "es": "<0/> Restaurar desde copia de seguridad",
+      "fr": "<0/> Restaurer depuis une sauvegarde",
+      "ko": "<0/> 백업에서 복원",
+      "ru": "<0/> Восстановить из резервной копии"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "<0/> Scan a different code",
+      "ja": "<0/> 別のコードを読み取る",
+      "zh-Hans": "<0/> 扫描其他代码",
+      "zh-Hant": "<0/> 掃描其他代碼",
+      "es": "<0/> Escanear otro código",
+      "fr": "<0/> Scanner un autre code",
+      "ko": "<0/> 다른 코드 스캔",
+      "ru": "<0/> Сканировать другой код"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "<0/> Show code",
+      "ja": "<0/> コードを表示",
+      "zh-Hans": "<0/> 显示代码",
+      "zh-Hant": "<0/> 顯示代碼",
+      "es": "<0/> Mostrar código",
+      "fr": "<0/> Afficher le code",
+      "ko": "<0/> 코드 보기",
+      "ru": "<0/> Показать код"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "<0/> Sync from my farm automagically",
+      "ja": "<0/> 農場から自動で同期する",
+      "zh-Hans": "<0/> 从我的农场自动同步",
+      "zh-Hant": "<0/> 從我的農場自動同步",
+      "es": "<0/> Sincronizar desde mi granja automágicamente",
+      "fr": "<0/> Synchroniser depuis ma ferme, comme par magie",
+      "ko": "<0/> 농장에서 자동으로 동기화",
+      "ru": "<0/> Синхронизировать с фермы автомагически"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "<0/> Yes, reset everything",
+      "ja": "<0/> はい、すべてリセットします",
+      "zh-Hans": "<0/> 是的，重置全部",
+      "zh-Hant": "<0/> 是的，重設全部",
+      "es": "<0/> Sí, reiniciar todo",
+      "fr": "<0/> Oui, tout réinitialiser",
+      "ko": "<0/> 네, 모두 초기화합니다",
+      "ru": "<0/> Да, сбросить всё"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/danger-zone-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "A time traveler! That backup seems to be from a future version of the field guide. To be safe, we left your progress as it was. Reload this page to get the latest update, then try again.",
+      "ja": "タイムトラベラーですね！そのバックアップは未来のバージョンのフィールドガイドのもののようです。念のため、進行状況はそのままにしてあります。このページを再読み込みして最新版にしてから、もう一度お試しください。",
+      "zh-Hans": "时间旅行者来了！这个备份似乎来自未来版本的田野指南。为了保险起见，你的进度保持原样。请重新加载此页面以获取最新版本，然后再试一次。",
+      "zh-Hant": "時空旅人來了！這個備份似乎來自未來版本的田野指南。為了保險起見，你的進度維持原樣。請重新載入此頁面以取得最新版本，然後再試一次。",
+      "es": "¡Un viaje en el tiempo! Parece que esa copia de seguridad es de una versión futura de la guía de campo. Por si acaso, hemos dejado tu progreso como estaba. Recarga esta página para tener la última actualización e inténtalo de nuevo.",
+      "fr": "Un voyageur temporel ! Cette sauvegarde semble venir d’une future version du guide de terrain. Par prudence, on a laissé votre progression telle quelle. Rechargez cette page pour obtenir la dernière mise à jour, puis réessayez.",
+      "ko": "시간 여행자시군요! 그 백업은 미래 버전의 필드 가이드에서 온 것 같아요. 혹시 모르니 진행 상황은 그대로 두었어요. 이 페이지를 새로고침해서 최신 업데이트를 받은 뒤 다시 시도해 주세요.",
+      "ru": "Гость из будущего! Похоже, эта резервная копия из будущей версии справочника. На всякий случай мы оставили ваш прогресс как был. Перезагрузите эту страницу, чтобы получить последнее обновление, и попробуйте ещё раз."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Add your phone or another device.",
+      "ja": "スマホやほかの端末を追加します。",
+      "zh-Hans": "添加你的手机或其他设备。",
+      "zh-Hant": "加入你的手機或其他裝置。",
+      "es": "Añade tu móvil u otro dispositivo.",
+      "fr": "Ajoutez votre téléphone ou un autre appareil.",
+      "ko": "휴대폰이나 다른 기기를 추가해요.",
+      "ru": "Добавьте телефон или другое устройство."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "All set, your backup is restored!",
+      "ja": "完了！バックアップを復元しました！",
+      "zh-Hans": "搞定，你的备份已恢复！",
+      "zh-Hant": "搞定，你的備份已還原！",
+      "es": "¡Listo, tu copia de seguridad se ha restaurado!",
+      "fr": "C’est bon, votre sauvegarde est restaurée !",
+      "ko": "완료, 백업을 복원했어요!",
+      "ru": "Готово, резервная копия восстановлена!"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Backup & restore",
+      "ja": "バックアップと復元",
+      "zh-Hans": "备份与恢复",
+      "zh-Hant": "備份與還原",
+      "es": "Copia de seguridad y restauración",
+      "fr": "Sauvegarde et restauration",
+      "ko": "백업 및 복원",
+      "ru": "Резервное копирование и восстановление"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Backup of your last farm, from {0}",
+      "ja": "前の農場のバックアップ（{0}）",
+      "zh-Hans": "上一个农场的备份，{0}",
+      "zh-Hant": "上一個農場的備份，{0}",
+      "es": "Copia de tu última granja, del {0}",
+      "fr": "Copie de votre dernière ferme, du {0}",
+      "ko": "이전 농장 백업 ({0})",
+      "ru": "Копия прошлой фермы от {0}"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "date"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Backup of {0}, from {1}",
+      "ja": "{0} のバックアップ（{1}）",
+      "zh-Hans": "{0} 的备份，{1}",
+      "zh-Hant": "{0} 的備份，{1}",
+      "es": "Copia de {0}, del {1}",
+      "fr": "Copie de {0}, du {1}",
+      "ko": "{0} 백업 ({1})",
+      "ru": "Копия фермы {0} от {1}"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "kept.farmName"
+              ],
+              [
+                "1",
+                "date"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Choose a backup file to restore",
+      "ja": "復元するバックアップファイルを選択",
+      "zh-Hans": "选择要恢复的备份文件",
+      "zh-Hant": "選擇要還原的備份檔案",
+      "es": "Elegir un archivo de copia de seguridad para restaurar",
+      "fr": "Choisir un fichier de sauvegarde à restaurer",
+      "ko": "복원할 백업 파일 선택",
+      "ru": "Выбрать файл резервной копии для восстановления"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Danger zone",
+      "ja": "危険な操作",
+      "zh-Hans": "危险区域",
+      "zh-Hant": "危險區域",
+      "es": "Zona de peligro",
+      "fr": "Zone de danger",
+      "ko": "위험 구역",
+      "ru": "Опасная зона"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/danger-zone-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Drop in your latest save file",
+      "ja": "最新のセーブデータをドロップ",
+      "zh-Hans": "拖入你最新的存档",
+      "zh-Hant": "拖入你最新的存檔",
+      "es": "Suelta tu última partida guardada",
+      "fr": "Déposez votre dernière sauvegarde",
+      "ko": "최신 세이브 파일을 놓으세요",
+      "ru": "Перетащите последнее сохранение"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Erase all tracked progress.",
+      "ja": "追跡した進捗をすべて消去します。",
+      "zh-Hans": "清除所有已追踪的进度。",
+      "zh-Hant": "清除所有已追蹤的進度。",
+      "es": "Borra todo el progreso registrado.",
+      "fr": "Effacer toute la progression suivie.",
+      "ko": "추적한 모든 진행 상황을 삭제합니다.",
+      "ru": "Стереть весь отслеженный прогресс."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/danger-zone-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Export or restore all tracker data.",
+      "ja": "トラッカーの全データをエクスポートまたは復元します。",
+      "zh-Hans": "导出或恢复所有追踪器数据。",
+      "zh-Hant": "匯出或還原所有追蹤器資料。",
+      "es": "Exporta o restaura todos los datos del tracker.",
+      "fr": "Exportez ou restaurez toutes les données du tracker.",
+      "ko": "모든 트래커 데이터를 내보내거나 복원합니다.",
+      "ru": "Экспорт или восстановление всех данных трекера."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Farm",
+      "ja": "農場",
+      "zh-Hans": "农场",
+      "zh-Hant": "農場",
+      "es": "Granja",
+      "fr": "Ferme",
+      "ko": "농장",
+      "ru": "Ферма"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Farmer",
+      "ja": "農家",
+      "zh-Hans": "农夫",
+      "zh-Hant": "農夫",
+      "es": "Granjero",
+      "fr": "Fermier",
+      "ko": "농부",
+      "ru": "Фермер"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Field kit",
+      "ja": "フィールドキット",
+      "zh-Hans": "田野工具包",
+      "zh-Hant": "田野工具包",
+      "es": "Kit de campo",
+      "fr": "Trousse à outils",
+      "ko": "필드 키트",
+      "ru": "Набор инструментов"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Fields of Mistria v{0} · Field Guide v{1}",
+      "ja": "Fields of Mistria v{0}・Field Guide v{1}",
+      "zh-Hans": "Fields of Mistria v{0} · 田野指南 v{1}",
+      "zh-Hant": "Fields of Mistria v{0} · 田野指南 v{1}",
+      "es": "Fields of Mistria v{0} · Field Guide v{1}",
+      "fr": "Fields of Mistria v{0} · Field Guide v{1}",
+      "ko": "Fields of Mistria v{0} · 필드 가이드 v{1}",
+      "ru": "Fields of Mistria v{0} · Field Guide v{1}"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/+page.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "trackerData.version"
+              ],
+              [
+                "1",
+                "version"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Go back to checking things off by hand. Your progress stays.",
+      "ja": "手動でチェックをつける方法に戻ります。進捗は残ります。",
+      "zh-Hans": "回到手动勾选。你的进度会保留。",
+      "zh-Hant": "回到手動勾選。你的進度會保留。",
+      "es": "Vuelve a marcar las cosas a mano. Tu progreso se queda.",
+      "fr": "Revenez à tout cocher à la main. Votre progression reste.",
+      "ko": "직접 체크하는 방식으로 돌아가요. 진행 상황은 남아요.",
+      "ru": "Вернуться к отметкам вручную. Прогресс сохранится."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Go to Backup & restore",
+      "ja": "バックアップと復元へ",
+      "zh-Hans": "前往备份与恢复",
+      "zh-Hant": "前往備份與還原",
+      "es": "Ir a Copia de seguridad y restauración",
+      "fr": "Aller à Sauvegarde et restauration",
+      "ko": "백업 및 복원으로 이동",
+      "ru": "Перейти к резервному копированию"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/transfer-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "In-game date",
+      "ja": "ゲーム内の日付",
+      "zh-Hans": "游戏内日期",
+      "zh-Hant": "遊戲內日期",
+      "es": "Fecha en el juego",
+      "fr": "Date en jeu",
+      "ko": "게임 내 날짜",
+      "ru": "Дата в игре"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "It replaces what’s on this device. You’ll stay synced, so your next save file still applies with the usual rules.",
+      "ja": "この端末の内容が置き換えられます。同期は続くので、次のセーブデータはいつものルールで適用されます。",
+      "zh-Hans": "它会替换这台设备上的内容。同步会继续，所以下一个存档仍会按平常的规则应用。",
+      "zh-Hant": "它會取代這台裝置上的內容。同步會繼續，所以下一個存檔仍會按平常的規則套用。",
+      "es": "Reemplaza lo que hay en este dispositivo. Seguirás sincronizando, así que tu próxima partida guardada se aplicará con las reglas de siempre.",
+      "fr": "Elle remplace ce qui se trouve sur cet appareil. La synchro continue, donc votre prochaine sauvegarde s’appliquera selon les règles habituelles.",
+      "ko": "이 기기의 내용이 대체돼요. 동기화는 계속되므로 다음 세이브 파일은 평소 규칙대로 적용돼요.",
+      "ru": "Она заменит данные на этом устройстве. Синхронизация продолжится, поэтому следующее сохранение применится по обычным правилам."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "It still works until this finishes.",
+      "ja": "完了するまでは使える状態です。",
+      "zh-Hans": "在完成之前它仍然有效。",
+      "zh-Hant": "在完成之前它仍然有效。",
+      "es": "Sigue funcionando hasta que esto termine.",
+      "fr": "Il fonctionne encore jusqu’à la fin de l’opération.",
+      "ko": "끝날 때까지는 계속 작동해요.",
+      "ru": "Он работает, пока это не закончится."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Keep this tab open while you play so we can sync your save file.",
+      "ja": "セーブデータを同期できるように、プレイ中はこのタブを開いたままにしてください。",
+      "zh-Hans": "玩的时候请保持这个标签页打开，这样我们才能同步你的存档。",
+      "zh-Hant": "玩的時候請保持這個分頁開著，這樣我們才能同步你的存檔。",
+      "es": "Deja esta pestaña abierta mientras juegas para que podamos sincronizar tu partida guardada.",
+      "fr": "Gardez cet onglet ouvert pendant que vous jouez pour qu’on puisse synchroniser votre sauvegarde.",
+      "ko": "세이브 파일을 동기화할 수 있도록 플레이하는 동안 이 탭을 열어 두세요.",
+      "ru": "Держите эту вкладку открытой во время игры, чтобы мы могли синхронизировать сохранение."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Last save file",
+      "ja": "最新のセーブデータ",
+      "zh-Hans": "最新存档",
+      "zh-Hant": "最新存檔",
+      "es": "Última partida",
+      "fr": "Dernière sauvegarde",
+      "ko": "마지막 세이브 파일",
+      "ru": "Последнее сохранение"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Make a new code",
+      "ja": "新しいコードを作る",
+      "zh-Hans": "生成新代码",
+      "zh-Hant": "產生新代碼",
+      "es": "Crear un código nuevo",
+      "fr": "Créer un nouveau code",
+      "ko": "새 코드 만들기",
+      "ru": "Создать новый код"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Never mind",
+      "ja": "やめておく",
+      "zh-Hans": "算了",
+      "zh-Hant": "算了",
+      "es": "Cancelar",
+      "fr": "Annuler",
+      "ko": "취소",
+      "ru": "Не надо"
+    },
+    "context": "settings spoilers cancel",
+    "references": [
+      {
+        "file": "src/routes/data/danger-zone-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Never mind",
+      "ja": "やめておく",
+      "zh-Hans": "算了",
+      "zh-Hant": "算了",
+      "es": "Da igual",
+      "fr": "Laisser tomber",
+      "ko": "그만둘게요",
+      "ru": "Не надо"
+    },
+    "context": "sync new code cancel",
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Read your save file here, or scan a code from your gaming computer.",
+      "ja": "ここでセーブデータを読み込むか、ゲーム用パソコンのコードを読み取ります。",
+      "zh-Hans": "在这里读取你的存档，或者扫描游戏电脑上的代码。",
+      "zh-Hant": "在這裡讀取你的存檔，或掃描遊戲電腦上的代碼。",
+      "es": "Lee tu partida guardada aquí o escanea un código de tu ordenador de juego.",
+      "fr": "Lisez votre sauvegarde ici, ou scannez un code depuis votre ordinateur de jeu.",
+      "ko": "여기서 세이브 파일을 읽거나, 게임용 컴퓨터의 코드를 스캔하세요.",
+      "ru": "Прочитайте сохранение здесь или отсканируйте код с игрового компьютера."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Reset",
+      "ja": "リセット",
+      "zh-Hans": "重置",
+      "zh-Hant": "重設",
+      "es": "Reinicio",
+      "fr": "Réinitialisation",
+      "ko": "초기화",
+      "ru": "Сброс"
+    },
+    "context": "data reset heading",
+    "references": [
+      {
+        "file": "src/routes/data/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Reset all progress?",
+      "ja": "すべての進捗をリセットしますか?",
+      "zh-Hans": "重置所有进度？",
+      "zh-Hant": "重設所有進度？",
+      "es": "¿Reiniciar todo el progreso?",
+      "fr": "Réinitialiser toute la progression ?",
+      "ko": "모든 진행 상황을 초기화할까요?",
+      "ru": "Сбросить весь прогресс?"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/danger-zone-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Restore it",
+      "ja": "復元する",
+      "zh-Hans": "恢复",
+      "zh-Hant": "還原",
+      "es": "Restaurarla",
+      "fr": "La restaurer",
+      "ko": "복원하기",
+      "ru": "Восстановить"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Restore this backup?",
+      "ja": "このバックアップを復元しますか？",
+      "zh-Hans": "要恢复这个备份吗？",
+      "zh-Hant": "要還原這個備份嗎？",
+      "es": "¿Restaurar esta copia?",
+      "fr": "Restaurer cette copie ?",
+      "ko": "이 백업을 복원할까요?",
+      "ru": "Восстановить эту копию?"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Restored that backup.",
+      "ja": "バックアップを復元しました。",
+      "zh-Hans": "已恢复备份。",
+      "zh-Hant": "已還原備份。",
+      "es": "Copia restaurada.",
+      "fr": "Copie restaurée.",
+      "ko": "백업을 복원했어요.",
+      "ru": "Копия восстановлена."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Restoring backup…",
+      "ja": "バックアップを復元中…",
+      "zh-Hans": "正在恢复备份…",
+      "zh-Hant": "正在還原備份…",
+      "es": "Restaurando copia de seguridad…",
+      "fr": "Restauration de la sauvegarde…",
+      "ko": "백업 복원 중…",
+      "ru": "Восстановление резервной копии…"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Save file",
+      "ja": "セーブデータ",
+      "zh-Hans": "存档",
+      "zh-Hant": "存檔",
+      "es": "Partida guardada",
+      "fr": "Sauvegarde",
+      "ko": "세이브 파일",
+      "ru": "Сохранение"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Save file from",
+      "ja": "セーブデータの送り元",
+      "zh-Hans": "存档来自",
+      "zh-Hant": "存檔來自",
+      "es": "Partida de",
+      "fr": "Sauvegarde de",
+      "ko": "세이브 파일 출처",
+      "ru": "Сохранение с"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Save file sync",
+      "ja": "セーブデータの同期",
+      "zh-Hans": "存档同步",
+      "zh-Hant": "存檔同步",
+      "es": "Sincronización de partida",
+      "fr": "Synchro de la sauvegarde",
+      "ko": "세이브 파일 동기화",
+      "ru": "Синхронизация сохранения"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/+page.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Set up sync",
+      "ja": "同期を設定",
+      "zh-Hans": "设置同步",
+      "zh-Hant": "設定同步",
+      "es": "Configurar sincronización",
+      "fr": "Configurer la synchronisation",
+      "ko": "동기화 설정",
+      "ru": "Настроить синхронизацию"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/transfer-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Showed your code on stream? No problem. A new code replaces the old one, which takes a moment to turn off, so your other devices will need to scan again.",
+      "ja": "配信でコードを映してしまった？大丈夫です。新しいコードを作ると古いコードは少ししてから止まるので、ほかの端末ではもう一度読み取りが必要です。",
+      "zh-Hans": "直播时露出了代码？没问题。新代码会替换旧代码，旧代码需要片刻才会停用，所以你的其他设备需要重新扫描。",
+      "zh-Hant": "直播時露出了代碼？沒問題。新代碼會取代舊代碼，舊代碼需要片刻才會停用，所以你的其他裝置需要重新掃描。",
+      "es": "¿Enseñaste tu código en directo? No pasa nada. Un código nuevo reemplaza al anterior, que tarda un momento en desactivarse, así que tus otros dispositivos tendrán que escanear de nuevo.",
+      "fr": "Vous avez montré votre code en live ? Pas de problème. Un nouveau code remplace l’ancien, qui met un instant à se désactiver, donc vos autres appareils devront scanner de nouveau.",
+      "ko": "방송에서 코드를 보여 줬나요? 괜찮아요. 새 코드를 만들면 이전 코드는 잠시 후에 멈추니, 다른 기기에서 다시 스캔해야 해요.",
+      "ru": "Показали код на стриме? Не беда. Новый код заменяет старый, который отключается не сразу, так что на других устройствах придётся отсканировать его снова."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Stop syncing",
+      "ja": "同期をやめる",
+      "zh-Hans": "停止同步",
+      "zh-Hant": "停止同步",
+      "es": "Dejar de sincronizar",
+      "fr": "Arrêter la synchro",
+      "ko": "동기화 멈추기",
+      "ru": "Остановить синхронизацию"
+    },
+    "context": "sync stop",
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Stop syncing",
+      "ja": "同期をやめる",
+      "zh-Hans": "停止同步",
+      "zh-Hant": "停止同步",
+      "es": "Dejar de sincronizar",
+      "fr": "Arrêter la synchro",
+      "ko": "동기화 멈추기",
+      "ru": "Остановить"
+    },
+    "context": "sync stop confirm",
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Stop syncing?",
+      "ja": "同期をやめますか？",
+      "zh-Hans": "停止同步？",
+      "zh-Hant": "停止同步？",
+      "es": "¿Dejar de sincronizar?",
+      "fr": "Arrêter la synchro ?",
+      "ko": "동기화를 멈출까요?",
+      "ru": "Остановить синхронизацию?"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Stops the old code, in case it ended up on stream or somewhere you didn’t mean.",
+      "ja": "配信などで意図せず映ってしまったときのために、古いコードを止めます。",
+      "zh-Hans": "停用旧代码，以防它出现在直播或你不想要的地方。",
+      "zh-Hant": "停用舊代碼，以免它出現在直播或你不想要的地方。",
+      "es": "Detiene el código anterior, por si acabó en un directo o donde no querías.",
+      "fr": "Arrête l’ancien code, au cas où il se serait retrouvé en live ou ailleurs par erreur.",
+      "ko": "방송이나 원치 않은 곳에 노출됐을 때를 대비해 이전 코드를 멈춰요.",
+      "ru": "Отключает старый код на случай, если он попал на стрим или куда-то ещё."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Sync a save file from a different computer.",
+      "ja": "別のパソコンのセーブデータを同期します。",
+      "zh-Hans": "同步另一台电脑上的存档。",
+      "zh-Hant": "同步另一台電腦上的存檔。",
+      "es": "Sincroniza una partida guardada de otro ordenador.",
+      "fr": "Synchronisez une sauvegarde depuis un autre ordinateur.",
+      "ko": "다른 컴퓨터의 세이브 파일을 동기화해요.",
+      "ru": "Синхронизировать сохранение с другого компьютера."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Sync your save file from your gaming computer.",
+      "ja": "ゲーム用パソコンからセーブデータを同期します。",
+      "zh-Hans": "从你的游戏电脑同步存档。",
+      "zh-Hant": "從你的遊戲電腦同步存檔。",
+      "es": "Sincroniza tu partida guardada desde tu ordenador de juego.",
+      "fr": "Synchronisez votre sauvegarde depuis votre ordinateur de jeu.",
+      "ko": "게임용 컴퓨터에서 세이브 파일을 동기화해요.",
+      "ru": "Синхронизируйте сохранение с игрового компьютера."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Take your progress to another device.",
+      "ja": "進行状況を別の端末に持っていきましょう。",
+      "zh-Hans": "把你的进度带到另一台设备上。",
+      "zh-Hant": "把你的進度帶到另一台裝置上。",
+      "es": "Lleva tu progreso a otro dispositivo.",
+      "fr": "Emportez votre progression sur un autre appareil.",
+      "ko": "진행 상황을 다른 기기로 가져가세요.",
+      "ru": "Возьмите свой прогресс на другое устройство."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/transfer-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "This backup is missing some data, so we left your progress as it was. It might be damaged, or from a different app.",
+      "ja": "このバックアップには足りないデータがあるため、進行状況はそのままにしてあります。壊れているか、別のアプリのものかもしれません。",
+      "zh-Hans": "这个备份缺少一些数据，所以你的进度保持原样。它可能已损坏，或者来自别的应用。",
+      "zh-Hant": "這個備份缺少一些資料，所以你的進度維持原樣。它可能已損毀，或是來自別的應用程式。",
+      "es": "A esta copia de seguridad le faltan datos, así que hemos dejado tu progreso como estaba. Puede que esté dañada o que sea de otra aplicación.",
+      "fr": "Il manque des données à cette sauvegarde, donc on a laissé votre progression telle quelle. Elle est peut-être endommagée, ou elle vient d’une autre application.",
+      "ko": "이 백업에는 빠진 데이터가 있어서 진행 상황은 그대로 두었어요. 손상됐거나 다른 앱의 파일일 수 있어요.",
+      "ru": "В этой резервной копии не хватает данных, поэтому мы оставили ваш прогресс как был. Возможно, она повреждена или создана другим приложением."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "This computer",
+      "ja": "このパソコン",
+      "zh-Hans": "这台电脑",
+      "zh-Hant": "這台電腦",
+      "es": "Este ordenador",
+      "fr": "Cet ordinateur",
+      "ko": "이 컴퓨터",
+      "ru": "Этот компьютер"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "This doesn’t look like a backup file, so we left your progress as it was. Make sure you picked one you downloaded from here.",
+      "ja": "これはバックアップファイルではないようなので、進行状況はそのままにしてあります。ここからダウンロードしたものを選んでいるか確認してください。",
+      "zh-Hans": "这看起来不像备份文件，所以你的进度保持原样。请确认你选的是从这里下载的备份。",
+      "zh-Hant": "這看起來不像備份檔案，所以你的進度維持原樣。請確認你選的是從這裡下載的備份。",
+      "es": "Esto no parece una copia de seguridad, así que hemos dejado tu progreso como estaba. Asegúrate de elegir una que descargaste de aquí.",
+      "fr": "Ce fichier ne ressemble pas à une sauvegarde, donc on a laissé votre progression telle quelle. Vérifiez que vous avez choisi une sauvegarde téléchargée ici.",
+      "ko": "백업 파일이 아닌 것 같아서 진행 상황은 그대로 두었어요. 여기서 내려받은 파일을 골랐는지 확인해 주세요.",
+      "ru": "Это не похоже на резервную копию, поэтому мы оставили ваш прогресс как был. Убедитесь, что выбрали копию, скачанную отсюда."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "This will erase all your tracked progress. This cannot be undone. <0/>",
+      "ja": "追跡したすべての進捗が消去されます。この操作は取り消せません。 <0/>",
+      "zh-Hans": "这将清除你所有已追踪的进度。此操作无法撤销。 <0/>",
+      "zh-Hant": "這將清除你所有已追蹤的進度。此操作無法復原。 <0/>",
+      "es": "Esto borrará todo tu progreso registrado. Esta acción no se puede deshacer. <0/>",
+      "fr": "Cela effacera toute votre progression suivie. Cette action est irréversible. <0/>",
+      "ko": "추적한 모든 진행 상황이 삭제됩니다. 이 작업은 되돌릴 수 없습니다. <0/>",
+      "ru": "Это удалит весь ваш отслеженный прогресс. Это действие нельзя отменить. <0/>"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/danger-zone-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "To move anything you check off by hand, export a backup here, send the file to your other device, and restore it there. Restoring replaces that device’s tracker progress.",
+      "ja": "手動でチェックした内容を移すには、ここでバックアップを書き出し、別の端末にファイルを送って復元してください。復元すると、その端末の記録は置き換わります。",
+      "zh-Hans": "要转移手动勾选的内容，请在这里导出备份，将文件发送到其他设备，再在那里恢复。恢复会替换该设备上的图鉴进度。",
+      "zh-Hant": "要轉移手動勾選的內容，請在這裡匯出備份，將檔案傳送到其他裝置，再在那裡還原。還原會取代該裝置上的圖鑑進度。",
+      "es": "Para mover lo que marques a mano, exporta aquí una copia de seguridad, envíala a tu otro dispositivo y restáurala allí. Esto reemplaza el progreso del registro de ese dispositivo.",
+      "fr": "Pour déplacer ce que vous cochez à la main, exportez une copie ici, envoyez le fichier à votre autre appareil et restaurez-le là-bas. Cela remplace la progression du guide sur cet appareil.",
+      "ko": "직접 체크한 내용을 옮기려면 여기서 백업을 내보내고 다른 기기로 파일을 보내 복원하세요. 복원하면 그 기기의 기록이 교체돼요.",
+      "ru": "Чтобы перенести ручные отметки, экспортируйте здесь резервную копию, отправьте файл на другое устройство и восстановите его там. Восстановление заменяет прогресс справочника на том устройстве."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/transfer-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Transfer to another device",
+      "ja": "他の端末へ転送",
+      "zh-Hans": "传输到其他设备",
+      "zh-Hant": "傳輸到其他裝置",
+      "es": "Transferir a otro dispositivo",
+      "fr": "Transférer vers un autre appareil",
+      "ko": "다른 기기로 전송",
+      "ru": "Перенос на другое устройство"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/transfer-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Turning off your old code…",
+      "ja": "古いコードを無効にしています…",
+      "zh-Hans": "正在停用你的旧代码…",
+      "zh-Hant": "正在停用你的舊代碼…",
+      "es": "Desactivando tu código anterior…",
+      "fr": "Désactivation de votre ancien code…",
+      "ko": "이전 코드를 끄는 중이에요…",
+      "ru": "Отключаем старый код…"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We couldn’t make a new code right now, so your old one still works. Try again in a bit.",
+      "ja": "今は新しいコードを作れなかったので、古いコードがそのまま使えます。少ししてからもう一度試してください。",
+      "zh-Hans": "现在没法生成新代码，所以你的旧代码仍然有效。过一会儿再试吧。",
+      "zh-Hant": "現在沒辦法產生新代碼，所以你的舊代碼仍然有效。過一會兒再試吧。",
+      "es": "No hemos podido crear un código nuevo ahora mismo, así que el anterior sigue funcionando. Inténtalo de nuevo en un rato.",
+      "fr": "Impossible de créer un nouveau code pour l’instant, donc l’ancien fonctionne toujours. Réessayez dans un moment.",
+      "ko": "지금은 새 코드를 만들지 못해서 이전 코드가 계속 작동해요. 잠시 후 다시 시도하세요.",
+      "ru": "Сейчас не получилось создать новый код, так что старый по-прежнему работает. Попробуйте чуть позже."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We couldn’t open that file, so we left your progress as it was. Make sure you picked a backup you downloaded from here.",
+      "ja": "そのファイルを開けなかったので、進行状況はそのままにしてあります。ここからダウンロードしたバックアップを選んでいるか確認してください。",
+      "zh-Hans": "没能打开那个文件，所以你的进度保持原样。请确认你选的是从这里下载的备份。",
+      "zh-Hant": "沒能開啟那個檔案，所以你的進度維持原樣。請確認你選的是從這裡下載的備份。",
+      "es": "No hemos podido abrir ese archivo, así que hemos dejado tu progreso como estaba. Asegúrate de elegir una copia de seguridad que descargaste de aquí.",
+      "fr": "Impossible d’ouvrir ce fichier, donc on a laissé votre progression telle quelle. Vérifiez que vous avez choisi une sauvegarde téléchargée ici.",
+      "ko": "그 파일을 열지 못해서 진행 상황은 그대로 두었어요. 여기서 내려받은 백업을 골랐는지 확인해 주세요.",
+      "ru": "Не удалось открыть этот файл, поэтому мы оставили ваш прогресс как был. Убедитесь, что выбрали резервную копию, скачанную отсюда."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We couldn’t turn off your old code yet. We’ll try again next time you’re here.",
+      "ja": "古いコードをまだ無効にできていません。次に開いたときにもう一度試します。",
+      "zh-Hans": "我们还没能停用你的旧代码。下次你来时会再试一次。",
+      "zh-Hant": "我們還沒能停用你的舊代碼。下次你來時會再試一次。",
+      "es": "Aún no hemos podido desactivar tu código anterior. Lo intentaremos de nuevo la próxima vez que vengas.",
+      "fr": "Nous n’avons pas encore pu désactiver votre ancien code. Nous réessaierons à votre prochaine visite.",
+      "ko": "아직 이전 코드를 끄지 못했어요. 다음에 오시면 다시 시도할게요.",
+      "ru": "Пока не удалось отключить старый код. Попробуем снова при вашем следующем визите."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "With sync, your other device gets your gaming computer’s save file.",
+      "ja": "同期を使うと、別の端末がゲーム用パソコンのセーブファイルを受け取ります。",
+      "zh-Hans": "开启同步后，你的另一台设备会收到游戏电脑上的存档。",
+      "zh-Hant": "開啟同步後，你的另一台裝置會收到遊戲電腦上的存檔。",
+      "es": "Con la sincronización, tu otro dispositivo recibe la partida guardada de tu ordenador de juego.",
+      "fr": "Avec la synchronisation, votre autre appareil reçoit la sauvegarde de votre ordinateur de jeu.",
+      "ko": "동기화를 쓰면 다른 기기가 게임용 컴퓨터의 세이브 파일을 받아요.",
+      "ru": "С синхронизацией ваше другое устройство получает сохранение с игрового компьютера."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/transfer-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your gaming computer",
+      "ja": "ゲーム用パソコン",
+      "zh-Hans": "你的游戏电脑",
+      "zh-Hant": "你的遊戲電腦",
+      "es": "Tu ordenador de juego",
+      "fr": "Votre ordinateur de jeu",
+      "ko": "게임용 컴퓨터",
+      "ru": "Игровой компьютер"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your old code is off.",
+      "ja": "古いコードを無効にしました。",
+      "zh-Hans": "你的旧代码已停用。",
+      "zh-Hant": "你的舊代碼已停用。",
+      "es": "Tu código anterior está desactivado.",
+      "fr": "Votre ancien code est désactivé.",
+      "ko": "이전 코드를 껐어요.",
+      "ru": "Старый код отключён."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your progress stays right here, and you’ll check things off by hand from now on. If you sync your save file again later, it’ll start fresh.",
+      "ja": "進捗はここに残り、これからは手動でチェックをつけます。あとでまたセーブデータを同期すると、最初からやり直しになります。",
+      "zh-Hans": "你的进度会留在这里，之后你将手动勾选。如果以后再同步存档，会重新开始。",
+      "zh-Hant": "你的進度會留在這裡，之後你會手動勾選。如果以後再同步存檔，會重新開始。",
+      "es": "Tu progreso se queda aquí y a partir de ahora marcarás las cosas a mano. Si vuelves a sincronizar tu partida guardada más adelante, empezarás de cero.",
+      "fr": "Votre progression reste ici, et vous cocherez tout à la main à partir de maintenant. Si vous synchronisez de nouveau votre sauvegarde plus tard, vous repartirez de zéro.",
+      "ko": "진행 상황은 여기 그대로 남고, 이제부터는 직접 체크하게 돼요. 나중에 세이브 파일을 다시 동기화하면 새로 시작해요.",
+      "ru": "Ваш прогресс останется здесь, а отмечать всё вы теперь будете вручную. Если позже снова синхронизируете сохранение, всё начнётся заново."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your progress stays right here, and you’ll check things off by hand from now on. Your other devices will stop getting your save file. If you sync your save file again later, it’ll start fresh.",
+      "ja": "進捗はここに残り、これからは手動でチェックをつけます。ほかの端末にはセーブデータが届かなくなります。あとでまたセーブデータを同期すると、最初からやり直しになります。",
+      "zh-Hans": "你的进度会留在这里，之后你将手动勾选。你的其他设备将不再收到你的存档。如果以后再同步存档，会重新开始。",
+      "zh-Hant": "你的進度會留在這裡，之後你會手動勾選。你的其他裝置將不再收到你的存檔。如果以後再同步存檔，會重新開始。",
+      "es": "Tu progreso se queda aquí y a partir de ahora marcarás las cosas a mano. Tus otros dispositivos dejarán de recibir tu partida guardada. Si vuelves a sincronizarla más adelante, empezarás de cero.",
+      "fr": "Votre progression reste ici, et vous cocherez tout à la main à partir de maintenant. Vos autres appareils ne recevront plus votre sauvegarde. Si vous la synchronisez de nouveau plus tard, vous repartirez de zéro.",
+      "ko": "진행 상황은 여기 그대로 남고, 이제부터는 직접 체크하게 돼요. 다른 기기는 더 이상 세이브 파일을 받지 않아요. 나중에 세이브 파일을 다시 동기화하면 새로 시작해요.",
+      "ru": "Ваш прогресс останется здесь, а отмечать всё вы теперь будете вручную. Другие устройства перестанут получать ваше сохранение. Если позже снова синхронизируете его, всё начнётся заново."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your save file will fill most of it back in, so you’ll stay synced.",
+      "ja": "セーブデータがほとんど埋め直してくれるので、同期は続きます。",
+      "zh-Hans": "存档会把大部分内容重新填回来，所以你会保持同步。",
+      "zh-Hant": "存檔會把大部分內容重新填回來，所以你會保持同步。",
+      "es": "Tu partida guardada volverá a rellenar casi todo, así que seguirás sincronizado.",
+      "fr": "Votre sauvegarde remplira de nouveau presque tout, donc vous resterez synchronisé.",
+      "ko": "세이브 파일이 대부분 다시 채워 주니 동기화는 계속돼요.",
+      "ru": "Сохранение снова заполнит почти всё, так что синхронизация продолжится."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/danger-zone-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} {1}, Year {2}",
+      "ja": "{2}年目{0}{1}日",
+      "zh-Hans": "第{2}年{0}{1}日",
+      "zh-Hant": "第{2}年{0}{1}日",
+      "es": "{1} de {0}, año {2}",
+      "fr": "{1} {0}, année {2}",
+      "ko": "{2}년차 {0} {1}일",
+      "ru": "{1}-й день сезона «{0}», год {2}"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "getName(\"ui\", date.season, page.data.locale)"
+              ],
+              [
+                "1",
+                "String(date.day)"
+              ],
+              [
+                "2",
+                "String(date.year)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  }
+]

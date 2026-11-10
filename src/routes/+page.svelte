@@ -12,7 +12,6 @@
   import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
@@ -51,7 +50,7 @@
   >
     <h1 class="flex min-w-0 items-center gap-2 font-brand text-2xl leading-none">
       <IconNotebook class="size-5 shrink-0 text-(--color-brand-mark)" />
-      {m.app_name()}
+      Mistria Field Guide
     </h1>
     <OverallProgress progress={allProgress} />
     <span class="overall-progress-rule" aria-hidden="true"><i></i><b></b></span>
@@ -70,14 +69,10 @@
       <a
         class="everything-link"
         href={localizedHref("everything")}
-        aria-label={m.section_progress_label({
-          completed: totalCompleted,
-          name: m.home_everything_label(),
-          total: grandTotal,
-        })}
+        aria-label={`${"Everything"}, ${totalCompleted} of ${grandTotal} completed`}
       >
         <Icon.Category category="all" class="size-4 shrink-0" />
-        <span class="flex-1">{m.home_everything_label()}</span>
+        <span class="flex-1">Everything</span>
         <span class="font-data text-xs" aria-hidden="true">{totalCompleted} / {grandTotal}</span>
       </a>
     {/if}

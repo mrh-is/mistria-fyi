@@ -17,7 +17,6 @@
   import { syncNotice } from "#lib/sync/notice.svelte.js";
   import { browserGivesHandles } from "#lib/sync/save-source.js";
   import { followCode, retryPendingRetires, stopSyncing, switchCode } from "#lib/sync/sharing.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { goto, replaceState } from "$app/navigation";
   import { page } from "$app/state";
@@ -236,7 +235,7 @@
   });
 </script>
 
-<PageHeader title={m.sync_page_title()} />
+<PageHeader title="Sync your save file" />
 
 <div class="sync-page">
   <div class="sr-only" role="status" aria-live="polite">{announcement}</div>
@@ -245,11 +244,14 @@
     <!-- Nothing renders until stored progress has loaded, so no lane flashes the wrong view. -->
   {:else if userState.syncBlocked}
     <StatusNote tone="warning">
-      <p>{m.sync_blocked()}</p>
-      <a class="underline" href={localizedHref("data")}>{m.data_title()}</a>
+      <p>
+        Before we can sync your save file, this device’s data needs a look. Head to Data to sort it
+        out.
+      </p>
+      <a class="underline" href={localizedHref("data")}>Data management</a>
     </StatusNote>
   {:else if alreadyHere}
-    <StatusNote tone="success">{m.sync_already_here()}</StatusNote>
+    <StatusNote tone="success">Your save file is already on this computer.</StatusNote>
     <ComputerSetup {announce} linkOrigin={page.url.origin} />
   {:else if view === "computer"}
     <ComputerSetup {announce} linkOrigin={page.url.origin} />
@@ -266,7 +268,7 @@
       {#if lane === undefined}
         <button type="button" class="sync-small-button" onclick={trackByHand}>
           <IconPencil aria-hidden="true" />
-          {m.sync_where_hand()}
+          I’ll track it all by hand
         </button>
       {/if}
       {#if computer || lane === undefined}
@@ -280,12 +282,12 @@
           }}
         >
           <IconDeviceDesktop aria-hidden="true" />
-          {m.sync_override_computer()}
+          On a computer?
         </button>
       {/if}
     </div>
   {:else}
-    <h2 class="sync-page__title">{m.sync_where_title()}</h2>
+    <h2 class="sync-page__title">Where’s your save file?</h2>
     <WhereChoice
       mac={device.mac}
       onother={() => {
@@ -310,7 +312,7 @@
         }}
       >
         <IconDeviceMobile aria-hidden="true" />
-        {m.sync_override_phone()}
+        On a phone?
       </button>
     </div>
   {/if}
@@ -318,29 +320,29 @@
 
 <SyncTagDialog
   bind:open={chromeTipOpen}
-  title={m.sync_tip_chrome()}
-  body={m.sync_tip_chrome_body()}
+  title="Let Chrome do this for you"
+  body="In Chrome or Edge, we can sync your save file every time you sleep, no dropping it in again."
   actions={[
     {
-      label: m.sync_tip_chrome_dismiss(),
+      label: "I’ll stick with this browser",
       onclick: () => {
         chromeTipOpen = false;
       },
     },
-    { label: m.sync_tip_chrome_copy(), onclick: () => void copyPageLink(), primary: true },
+    { label: "Copy this page’s link", onclick: () => void copyPageLink(), primary: true },
   ]}
 >
-  <p>{m.sync_tip_chrome_after()}</p>
+  <p>Copy this page’s link, then paste it into Chrome or Edge.</p>
 </SyncTagDialog>
 
 <SyncTagDialog
   bind:open={freshOpen}
-  title={m.sync_fresh_title()}
-  body={m.sync_fresh_body()}
+  title="FYI, this is a fresh start"
+  body="You’ll be starting fresh by syncing your save file, which means anything you’ve tracked on this device will be cleared. Your save file will check off nearly everything on its own, but you can make a quick backup first if you’d like."
   actions={[
-    { label: m.sync_fresh_backup(), onclick: backup },
+    { label: "Make a backup", onclick: backup },
     {
-      label: m.sync_fresh_confirm(),
+      label: "I’m ready to start anew",
       onclick: () => {
         freshConfirmed = true;
         freshOpen = false;
@@ -349,7 +351,7 @@
       primary: true,
     },
     {
-      label: m.sync_fresh_cancel(),
+      label: "Cancel",
       onclick: () => {
         freshOpen = false;
         afterGates = undefined;
@@ -363,11 +365,11 @@
 
 <SyncTagDialog
   bind:open={iosOpen}
-  title={m.sync_ios_title()}
-  body={m.sync_ios_body()}
+  title="Quick question: here, or the home screen app?"
+  body="Safari can clear a site’s data if you don’t visit for a week. The home screen app hangs on to it."
   actions={[
     {
-      label: m.sync_ios_here({ browser: device.browserName }),
+      label: `Sync in ${device.browserName}`,
       onclick: () => {
         iosAnswered = true;
         iosOpen = false;
@@ -378,7 +380,7 @@
       ? []
       : [
           {
-            label: m.sync_ios_app(),
+            label: "I’ll use the app",
             onclick: () => {
               iosSteps = true;
             },
@@ -388,19 +390,22 @@
   ]}
 >
   {#if iosSteps}
-    <p>{m.sync_ios_app_steps()}</p>
+    <p>
+      Tap Share, then “Add to Home Screen”. Open the tracker from your home screen, tap “Sync from
+      my farm automagically”, and scan the code there.
+    </p>
   {/if}
 </SyncTagDialog>
 
 <SyncTagDialog
   bind:open={switchOpen}
-  title={m.sync_switch_title()}
-  body={m.sync_switch_body()}
+  title="Sync this save file instead?"
+  body="This device will start getting a different save file. If it’s a different farm, we’ll back up the current one, but only one backup fits, so you might want to make your own first."
   actions={[
-    { label: m.sync_switch_backup(), onclick: backup },
-    { label: m.sync_switch_confirm(), onclick: () => void confirmSwitch(), primary: true },
+    { label: "Make a backup", onclick: backup },
+    { label: "Switch it", onclick: () => void confirmSwitch(), primary: true },
     {
-      label: m.sync_switch_cancel(),
+      label: "Cancel",
       onclick: () => {
         switchOpen = false;
       },

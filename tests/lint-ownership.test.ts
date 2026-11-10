@@ -116,11 +116,7 @@ describe("lint tool ownership", () => {
 
   it("checks keyed templates and leaves extracted templates to Wuchale", async () => {
     const eslint = new ESLint();
-    for (const file of [
-      "src/lib/components/future-feature.svelte",
-      "src/routes/everything/+page.svelte",
-      "src/routes/+error.svelte",
-    ]) {
+    for (const file of ["src/lib/components/future-feature.svelte", "src/routes/+error.svelte"]) {
       const config = (await eslint.calculateConfigForFile(file)) as
         | undefined
         | { rules?: Record<string, [number]> };
@@ -129,6 +125,7 @@ describe("lint tool ownership", () => {
     for (const file of [
       "src/lib/components/source-segment-text.svelte",
       "src/lib/components/spoiler.svelte",
+      "src/routes/everything/+page.svelte",
       "src/lib/components/ui/dialog/dialog-content.svelte",
       "src/routes/dev/fonts/+page.svelte",
       "src/lib/components/foldout-panel.test-harness.svelte",

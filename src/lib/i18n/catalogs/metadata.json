@@ -1,0 +1,508 @@
+[
+  {
+    "translations": {
+      "en": "Checklist of everything",
+      "ja": "すべてのチェックリスト",
+      "zh-Hans": "全部清单",
+      "zh-Hant": "全部清單",
+      "es": "Lista de todo",
+      "fr": "Liste de tout",
+      "ko": "전체 체크리스트",
+      "ru": "Список всего"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Cosmetics",
+      "ja": "コスメ",
+      "zh-Hans": "装饰",
+      "zh-Hant": "裝飾",
+      "es": "Cosméticos",
+      "fr": "Cosmétiques",
+      "ko": "코스메틱",
+      "ru": "Косметика"
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/cosmetics/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Data management",
+      "ja": "データ管理",
+      "zh-Hans": "数据管理",
+      "zh-Hant": "資料管理",
+      "es": "Gestión de datos",
+      "fr": "Gestion des données",
+      "ko": "데이터 관리",
+      "ru": "Управление данными"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Import, sync, back up, restore, or reset your Mistria Field Guide tracking progress.",
+      "ja": "Mistria Field Guideの進捗をインポート、同期、バックアップ、復元、リセットできます。",
+      "zh-Hans": "导入、同步、备份、恢复或重置你的 Mistria Field Guide 记录进度。",
+      "zh-Hant": "匯入、同步、備份、還原或重設你的 Mistria Field Guide 紀錄進度。",
+      "es": "Importa, sincroniza, guarda, restaura o reinicia tu progreso en Mistria Field Guide.",
+      "fr": "Importez, synchronisez, sauvegardez, restaurez ou réinitialisez votre progression dans Mistria Field Guide.",
+      "ko": "Mistria Field Guide 진행도를 가져오고, 동기화하고, 백업하고, 복원하거나 초기화하세요.",
+      "ru": "Импортируйте, синхронизируйте, сохраняйте, восстанавливайте или сбрасывайте прогресс в Mistria Field Guide."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Mines",
+      "ja": "鉱坑",
+      "zh-Hans": "矿洞",
+      "zh-Hant": "礦洞",
+      "es": "Minas",
+      "fr": "Mines",
+      "ko": "광산",
+      "ru": "Шахты"
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/mines/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Privacy policy",
+      "ja": "プライバシーポリシー",
+      "zh-Hans": "隐私政策",
+      "zh-Hant": "隱私政策",
+      "es": "Política de privacidad",
+      "fr": "Politique de confidentialité",
+      "ko": "개인정보 처리방침",
+      "ru": "Политика конфиденциальности"
+    },
+    "references": [
+      {
+        "file": "src/routes/privacy/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Quests",
+      "ja": "クエスト",
+      "zh-Hans": "任务",
+      "zh-Hant": "任務",
+      "es": "Misiones",
+      "fr": "Quêtes",
+      "ko": "퀘스트",
+      "ru": "Задания"
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/quests/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Read how the Mistria Field Guide stores your Fields of Mistria progress, handles feedback, and protects your privacy.",
+      "ja": "Mistria Field GuideがFields of Mistriaの進捗をどう保存し、フィードバックをどう扱い、プライバシーをどう保護するかについて。",
+      "zh-Hans": "了解 Mistria 田野指南如何存储你在 Fields of Mistria 中的进度、处理反馈以及保护你的隐私。",
+      "zh-Hant": "了解 Mistria 田野指南如何儲存你在 Fields of Mistria 中的進度、處理回饋以及保護你的隱私。",
+      "es": "Lee cómo Mistria Field Guide almacena tu progreso en Fields of Mistria, gestiona los comentarios y protege tu privacidad.",
+      "fr": "Découvrez comment le Mistria Field Guide stocke votre progression dans Fields of Mistria, gère les retours et protège votre vie privée.",
+      "ko": "Mistria 필드 가이드가 Fields of Mistria 진행 상황을 어떻게 저장하고, 피드백을 어떻게 처리하며, 개인정보를 어떻게 보호하는지 알아보세요.",
+      "ru": "Узнайте, как Mistria Field Guide хранит ваш прогресс в Fields of Mistria, обрабатывает отзывы и защищает вашу конфиденциальность."
+    },
+    "references": [
+      {
+        "file": "src/routes/privacy/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Recipes",
+      "ja": "レシピ",
+      "zh-Hans": "食谱",
+      "zh-Hant": "食譜",
+      "es": "Recetas",
+      "fr": "Recettes",
+      "ko": "레시피",
+      "ru": "Рецепты"
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/recipes/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Sync your Fields of Mistria save file to the field guide on any device.",
+      "ja": "Fields of Mistria のセーブデータを、どの端末のガイドにも同期します。",
+      "zh-Hans": "把 Fields of Mistria 的存档同步到任意设备上的指南。",
+      "zh-Hant": "把 Fields of Mistria 的存檔同步到任何裝置上的指南。",
+      "es": "Sincroniza tu partida guardada de Fields of Mistria con la guía en cualquier dispositivo.",
+      "fr": "Synchronisez votre sauvegarde de Fields of Mistria avec le guide, sur n’importe quel appareil.",
+      "ko": "Fields of Mistria 세이브 파일을 어느 기기에서든 가이드와 동기화하세요.",
+      "ru": "Синхронизируйте сохранение Fields of Mistria с путеводителем на любом устройстве."
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Sync your save file",
+      "ja": "セーブデータを同期",
+      "zh-Hans": "同步你的存档",
+      "zh-Hant": "同步你的存檔",
+      "es": "Sincroniza tu partida guardada",
+      "fr": "Synchroniser votre sauvegarde",
+      "ko": "세이브 파일 동기화",
+      "ru": "Синхронизация сохранения"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track animal breeds, colors, & cosmetics on your Fields of Mistria farm.",
+      "ja": "Fields of Mistriaの農場で動物の品種、カラー、コスメを記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》农场中动物的品种、颜色与装饰。",
+      "zh-Hant": "追蹤《Fields of Mistria》農場中動物的品種、顏色與裝飾。",
+      "es": "Sigue las razas, colores y cosméticos de animales en tu granja de Fields of Mistria.",
+      "fr": "Suivez les races, couleurs et cosmétiques des animaux de votre ferme dans Fields of Mistria.",
+      "ko": "Fields of Mistria 농장의 동물 품종, 색상, 코스메틱을 기록하세요.",
+      "ru": "Отслеживайте породы, окрасы и косметику животных на вашей ферме в Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/animals/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track cooking & crafting recipes in Fields of Mistria.",
+      "ja": "Fields of Mistriaの料理とクラフトのレシピを記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中的烹饪与制作食谱。",
+      "zh-Hant": "追蹤《Fields of Mistria》中的烹飪與製作食譜。",
+      "es": "Sigue las recetas de cocina y artesanía en Fields of Mistria.",
+      "fr": "Suivez les recettes de cuisine et d'artisanat dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 요리 및 제작 레시피를 기록하세요.",
+      "ru": "Отслеживайте рецепты кулинарии и крафта в Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/recipes/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track crops, forage, fish, insects, artifacts, & other almanac entries in Fields of Mistria.",
+      "ja": "Fields of Mistriaの作物、採集、釣り、昆虫、アーティファクトなどのアルマナック項目を記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中的作物、采集、钓鱼、昆虫、文物等年鉴条目。",
+      "zh-Hant": "追蹤《Fields of Mistria》中的作物、採集、釣魚、昆蟲、文物等年鑑項目。",
+      "es": "Sigue cultivos, forrajeo, pesca, insectos, artefactos y demás entradas del almanaque en Fields of Mistria.",
+      "fr": "Suivez les cultures, la cueillette, la pêche, les insectes, les artefacts et les autres entrées de l'almanach dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 작물, 채집, 낚시, 곤충, 유물 등 알마낙 항목을 기록하세요.",
+      "ru": "Отслеживайте урожай, собирательство, рыбалку, насекомых, артефакты и другие записи альманаха в Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/almanac/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track every museum collection & donation in Fields of Mistria.",
+      "ja": "Fields of Mistriaの博物館のコレクションと寄贈をすべて記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中所有博物馆收藏与捐赠。",
+      "zh-Hant": "追蹤《Fields of Mistria》中所有博物館收藏與捐贈。",
+      "es": "Sigue todas las colecciones y donaciones del museo en Fields of Mistria.",
+      "fr": "Suivez toutes les collections et dons du musée dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 모든 박물관 컬렉션과 기증을 기록하세요.",
+      "ru": "Отслеживайте все коллекции и пожертвования музея в Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/museum/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track friendship & romance with the villagers of Fields of Mistria.",
+      "ja": "Fields of Mistriaの町の住民との友情や恋愛を記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中与村民的友情与恋爱进度。",
+      "zh-Hant": "追蹤《Fields of Mistria》中與村民的友情與戀愛進度。",
+      "es": "Sigue la amistad y el romance con los aldeanos de Fields of Mistria.",
+      "fr": "Suivez l'amitié et les romances avec les habitants de Fields of Mistria.",
+      "ko": "Fields of Mistria 마을 주민들과의 우정과 로맨스를 기록하세요.",
+      "ru": "Отслеживайте дружбу и романтические отношения с жителями Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/villagers/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track mine floors, spells, & exploration progress in Fields of Mistria.",
+      "ja": "Fields of Mistriaの鉱坑のフロア、魔法、探索の進行状況を記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中矿洞楼层、法术与探索进度。",
+      "zh-Hant": "追蹤《Fields of Mistria》中礦洞樓層、法術與探索進度。",
+      "es": "Sigue los pisos de las minas, los hechizos y el progreso de exploración en Fields of Mistria.",
+      "fr": "Suivez les étages des mines, les sorts et la progression de l'exploration dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 광산 층, 마법, 탐험 진행 상황을 기록하세요.",
+      "ru": "Отслеживайте этажи шахт, заклинания и прогресс исследования в Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/mines/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track museum donations, almanac finds, recipes, relationships, skills, quests, & more in Fields of Mistria, as you work toward 100% completion.",
+      "ja": "Fields of Mistriaの博物館への寄贈、アルマナックの発見、レシピ、交流、スキル、クエストなどを記録して、100%コンプリートを目指しましょう。",
+      "zh-Hans": "追踪《Fields of Mistria》中的博物馆捐赠、年鉴发现、食谱、关系、技能、任务等内容，向 100% 完成度迈进。",
+      "zh-Hant": "追蹤《Fields of Mistria》中的博物館捐贈、年鑑發現、食譜、關係、技能、任務等內容，向 100% 完成度邁進。",
+      "es": "Sigue las donaciones al museo, los hallazgos del almanaque, las recetas, las relaciones, las habilidades, las misiones y más en Fields of Mistria mientras avanzas hacia el 100 % de completado.",
+      "fr": "Suivez les dons au musée, les trouvailles de l’almanach, les recettes, les relations, les compétences, les quêtes et plus encore dans Fields of Mistria, en route vers les 100 % de complétion.",
+      "ko": "Fields of Mistria의 박물관 기증, 알마낙 발견, 레시피, 관계, 스킬, 퀘스트 등을 기록하며 100% 달성을 향해 나아가세요.",
+      "ru": "Отслеживайте пожертвования музею, находки альманаха, рецепты, отношения, умения, задания и многое другое в Fields of Mistria на пути к 100% прохождения."
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track skill levels & perks in Fields of Mistria.",
+      "ja": "Fields of Mistriaのスキルレベルとスキルボーナスを記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中的技能等级与技能特长。",
+      "zh-Hant": "追蹤《Fields of Mistria》中的技能等級與技能特長。",
+      "es": "Sigue los niveles de habilidad y los dones de habilidad en Fields of Mistria.",
+      "fr": "Suivez les niveaux de compétence et les bonus de compétences dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 스킬 레벨과 스킬 특성을 기록하세요.",
+      "ru": "Отслеживайте уровни умений и навыки в Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/skills/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track story quests, requests, & other objectives in Fields of Mistria.",
+      "ja": "Fields of Mistriaのストーリークエスト、依頼、その他の目標を記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中的剧情任务、委托及其他目标。",
+      "zh-Hant": "追蹤《Fields of Mistria》中的劇情任務、委託及其他目標。",
+      "es": "Sigue las misiones de la historia, los encargos y otros objetivos en Fields of Mistria.",
+      "fr": "Suivez les quêtes de l'histoire, les requêtes et autres objectifs dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 스토리 퀘스트, 의뢰, 기타 목표를 기록하세요.",
+      "ru": "Отслеживайте сюжетные задания, поручения и другие цели в Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/quests/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track wardrobe & appearance unlocks in Fields of Mistria.",
+      "ja": "Fields of Mistriaの服装と見た目の解放要素を記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中服装与外观的解锁进度。",
+      "zh-Hant": "追蹤《Fields of Mistria》中服裝與外觀的解鎖進度。",
+      "es": "Sigue los desbloqueos de vestuario y apariencia en Fields of Mistria.",
+      "fr": "Suivez les déblocages de garde-robe et d'apparence dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 의상과 외형 잠금 해제를 기록하세요.",
+      "ru": "Отслеживайте разблокировки гардероба и внешности в Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/cosmetics/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Track your town rank, renown, & rewards in Fields of Mistria.",
+      "ja": "Fields of Mistriaのタウンランク、名声、報酬を記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中你的城镇等级、声望与奖励。",
+      "zh-Hant": "追蹤《Fields of Mistria》中你的城鎮段位、聲望與獎勵。",
+      "es": "Sigue la categoría de tu aldea, su reputación y sus recompensas en Fields of Mistria.",
+      "fr": "Suivez le classement de votre ville, sa renommée et ses récompenses dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 마을 등급, 명성, 보상을 기록하세요.",
+      "ru": "Отслеживайте ранг вашего города, репутацию и награды в Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/renown/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "View & track every Fields of Mistria completion category in one checklist.",
+      "ja": "Fields of Mistriaのすべてのコンプリート項目を1つのチェックリストで確認・記録できます。",
+      "zh-Hans": "在同一份清单中查看并追踪《Fields of Mistria》的所有完成度类别。",
+      "zh-Hant": "在同一份清單中查看並追蹤《Fields of Mistria》的所有完成度類別。",
+      "es": "Consulta y sigue todas las categorías de completado de Fields of Mistria en una sola lista.",
+      "fr": "Consultez et suivez chaque catégorie de complétion de Fields of Mistria dans une seule liste.",
+      "ko": "Fields of Mistria의 모든 달성 카테고리를 하나의 체크리스트에서 확인하고 기록하세요.",
+      "ru": "Просматривайте и отслеживайте все категории прохождения Fields of Mistria в одном списке."
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/+page.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  }
+]

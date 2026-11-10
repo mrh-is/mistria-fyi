@@ -13,9 +13,16 @@ export function builtLocaleChunks(): Record<string, string[]> {
   const worker = readFileSync(`${CLIENT_OUTPUT}/service-worker.js`, "utf8");
   return Object.fromEntries(
     LOCALE_CODES.map((locale) => {
-      const list =
-        new RegExp(`[{,]\\s*["']?${locale}["']?\\s*:\\s*\\[([^\\]]*)\\]`).exec(worker)?.[1] ?? "";
-      return [locale, [...list.matchAll(/["'`]([^"'`]+)["'`]/g)].map(([, path]) => path)];
+      const property = `[{,]\\s*["']?${locale}["']?\\s*:\\s*`;
+      const list = new RegExp(`${property}\\[([^\\]]*)\\]`).exec(worker)?.[1];
+      if (list !== undefined) {
+        return [locale, [...list.matchAll(/["'`]([^"'`]+)["'`]/g)].map(([, path]) => path)];
+      }
+      // The minifier also represents longer arrays as a string followed by .split(",").
+      const packed = new RegExp(`${property}(["'\`])([^"'\`]+)\\1\\.split\\(["'\`],["'\`]\\)`).exec(
+        worker,
+      )?.[2];
+      return [locale, packed?.split(",") ?? []];
     }),
   );
 }

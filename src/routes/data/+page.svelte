@@ -5,7 +5,6 @@
   import PageHeader from "#lib/components/page-header.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { version } from "$app/env";
   import { page } from "$app/state";
@@ -78,16 +77,16 @@
   });
 </script>
 
-<PageHeader title={m.data_title()} />
+<PageHeader title="Data management" />
 
 <div class="data-page">
   <section aria-labelledby="data-sync-heading">
-    <h2 id="data-sync-heading">{m.sync_card_title()}</h2>
+    <h2 id="data-sync-heading">Save file sync</h2>
     <SyncCard />
   </section>
 
   <section aria-labelledby="data-tools-heading">
-    <h2 id="data-tools-heading">{m.data_field_kit_heading()}</h2>
+    <h2 id="data-tools-heading">Field kit</h2>
     <div class="data-page__tools">
       {#if !syncing}
         <div bind:this={importSection}>
@@ -104,13 +103,13 @@
   </section>
 
   <section class="data-page__danger" aria-labelledby="reset-heading">
-    <h2 id="reset-heading">{m.data_reset_heading()}</h2>
+    <h2 id="reset-heading"><!-- @wc-context: data reset heading -->Reset</h2>
     <DangerZoneCard />
   </section>
 
   <footer class="data-page__footer">
-    <p><a href={`${localizedHref("privacy")}?from=data`}>{m.privacy_title()}</a></p>
-    <p>{m.data_footer_versions({ appVersion: version, gameVersion: trackerData.version })}</p>
+    <p><a href={`${localizedHref("privacy")}?from=data`}>Privacy policy</a></p>
+    <p>{`Fields of Mistria v${trackerData.version} · Field Guide v${version}`}</p>
   </footer>
 </div>
 

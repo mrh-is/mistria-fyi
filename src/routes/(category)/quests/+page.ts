@@ -1,16 +1,15 @@
 import { categoryColor } from "#lib/data/categories.js";
 import { localizedPageLoad } from "#lib/data/page-load.js";
 import { SEGMENT_LOOKUP_NAME_CHUNKS } from "#lib/sources/segment-lookups.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = localizedPageLoad(
   ["items", "villagers", "quests", "recipes", ...SEGMENT_LOOKUP_NAME_CHUNKS],
-  (locale) => ({
+  (_locale) => ({
     accent: categoryColor("quests"),
-    description: m.quests_page_description({}, { locale }),
-    title: m.category_quests_name({}, { locale }),
+    description: "Track story quests, requests, & other objectives in Fields of Mistria.",
+    title: "Quests",
     toolbar: { clock: true, filter: true, search: true },
   }),
 );

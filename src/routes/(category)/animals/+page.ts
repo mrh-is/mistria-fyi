@@ -2,16 +2,15 @@ import { categoryColor } from "#lib/data/categories.js";
 import { getName } from "#lib/data/names.js";
 import { localizedPageLoad } from "#lib/data/page-load.js";
 import { SEGMENT_LOOKUP_NAME_CHUNKS } from "#lib/sources/segment-lookups.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = localizedPageLoad(
   ["animals", "mount", "pets/cosmetic_sets", "pets/skins", ...SEGMENT_LOOKUP_NAME_CHUNKS],
-  (locale) => ({
+  (_locale) => ({
     accent: categoryColor("animals"),
-    description: m.animals_page_description({}, { locale }),
-    title: getName("ui", "animals", locale),
+    description: "Track animal breeds, colors, & cosmetics on your Fields of Mistria farm.",
+    title: getName("ui", "animals", _locale),
     toolbar: { clock: true, filter: true, search: true },
   }),
 );

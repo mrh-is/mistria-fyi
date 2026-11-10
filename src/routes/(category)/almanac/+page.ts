@@ -2,16 +2,16 @@ import { categoryColor } from "#lib/data/categories.js";
 import { getName } from "#lib/data/names.js";
 import { localizedPageLoad } from "#lib/data/page-load.js";
 import { SEGMENT_LOOKUP_NAME_CHUNKS } from "#lib/sources/segment-lookups.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = localizedPageLoad(
   ["dates", "items", ...SEGMENT_LOOKUP_NAME_CHUNKS],
-  (locale) => ({
+  (_locale) => ({
     accent: categoryColor("almanac"),
-    description: m.almanac_page_description({}, { locale }),
-    title: getName("ui", "almanac", locale),
+    description:
+      "Track crops, forage, fish, insects, artifacts, & other almanac entries in Fields of Mistria.",
+    title: getName("ui", "almanac", _locale),
     toolbar: { clock: true, filter: true, search: true },
   }),
 );

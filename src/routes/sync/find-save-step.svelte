@@ -6,7 +6,6 @@
   import { readSaveFile } from "#lib/sync/read-save.js";
   import { AUTOSAVE_EXAMPLE } from "#lib/sync/save-folders.js";
   import { fileOf } from "#lib/sync/save-source.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
 
   import type { ReadSave } from "#lib/sync/read-save.js";
@@ -30,9 +29,13 @@
   const openParts = $derived(
     messageParts<"file">((slot) => {
       const file = slot("file");
-      if (platform === "linux") return m.sync_find_open_linux({ file });
-      if (platform === "mac") return m.sync_find_open_mac({ file });
-      return m.sync_find_open({ file });
+      if (platform === "linux") {
+        return `Now open your file manager, press Ctrl+L, paste that, and press Enter. It should take you to a folder with files like ${file}. Drag that autosave file into this box:`;
+      }
+      if (platform === "mac") {
+        return `Now open Finder, press Shift-Command-G, paste that, and press Return. It should take you to a folder with files like ${file}. Drag that autosave file into this box:`;
+      }
+      return `Now open File Explorer and paste that into the address bar at the top. It should take you to a folder with files like ${file}. Drag that autosave file into this box:`;
     }),
   );
 
@@ -42,14 +45,17 @@
 </script>
 
 <div class="find">
-  <p>{m.sync_find_intro()}</p>
+  <p>
+    Gonna be honest, this is the weirdest part of the setup. But once you’re done here, it’s smooth
+    sailing!
+  </p>
 
   <div class="find__half" class:find__half--active={!copied}>
-    <p>{m.sync_find_copy_lead()}</p>
+    <p>First, copy this folder location:</p>
     <SaveFolderPath {platform} bind:copied />
     {#if showOtherPlatforms}
-      <div class="find__platforms" role="radiogroup" aria-label={m.sync_find_other_os()}>
-        {#each [["windows", m.sync_find_os_windows()], ["linux", m.sync_find_os_linux()], ["mac", m.sync_find_os_mac()]] as const as [value, label] (value)}
+      <div class="find__platforms" role="radiogroup" aria-label="On Linux, Steam Deck, or a Mac?">
+        {#each [["windows", "Windows"], ["linux", "Linux & Steam Deck"], ["mac", "Mac, with CrossOver"]] as const as [value, label] (value)}
           <button
             type="button"
             role="radio"
@@ -64,7 +70,9 @@
         {/each}
       </div>
       {#if platform === "linux"}
-        <p class="find__hint">{m.sync_find_linux_hint()}</p>
+        <p class="find__hint">
+          Not there? Look in your Steam library’s steamapps/compatdata/2142790 folder.
+        </p>
       {/if}
     {:else}
       <button
@@ -74,7 +82,7 @@
           showOtherPlatforms = true;
         }}
       >
-        {m.sync_find_other_os()} <span aria-hidden="true">→</span>
+        On Linux, Steam Deck, or a Mac? <span aria-hidden="true">→</span>
       </button>
     {/if}
   </div>
@@ -89,7 +97,7 @@
       <p class="find__hint" role="status">{hint}</p>
     {/if}
     <SaveDrop
-      label={copied ? m.sync_find_drop() : m.sync_find_drop_next()}
+      label={copied ? "Drop your autosave here" : "When you’ve found your autosave, drop it here."}
       emphasized={copied}
       onsource={read}
       {platform}
@@ -104,15 +112,21 @@
       }}
     >
       <IconChevronRight class={showHelp ? "rotate-90" : ""} aria-hidden="true" />
-      {m.sync_find_help()}
+      Can’t find it?
     </button>
     {#if showHelp}
       <div class="find__help">
-        <p>{m.sync_find_help_bar()}</p>
+        <p>
+          Make sure you pasted it into the address bar at the very top of File Explorer, not the
+          search box.
+        </p>
         {#if platform === "linux"}
-          <p>{m.sync_find_linux_hint()}</p>
+          <p>Not there? Look in your Steam library’s steamapps/compatdata/2142790 folder.</p>
         {/if}
-        <p>{m.sync_find_help_run()}</p>
+        <p>
+          Still nothing? Press the Windows key + R, paste the same folder location, and press Enter.
+          (That only opens a folder. Never paste anything else into that box, from us or anyone.)
+        </p>
       </div>
     {/if}
   </div>

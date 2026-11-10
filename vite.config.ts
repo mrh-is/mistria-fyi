@@ -16,6 +16,8 @@ import { compileUiMessages } from "./scripts/compile-ui-messages.js";
 import {
   aboutMetadataFile,
   aboutSvelteFiles,
+  routeMetadataFiles,
+  routeSvelteFiles,
   sharedSvelteFiles,
 } from "./scripts/lib/wuchale-source-files.js";
 import RelayFirstSequencer from "./scripts/vitest-relay-sequencer.js";
@@ -232,7 +234,13 @@ export default defineConfig(({ command }) => ({
         },
       ],
     }),
-    svelteCssCachePlugin([aboutMetadataFile, ...aboutSvelteFiles, ...sharedSvelteFiles]),
+    svelteCssCachePlugin([
+      aboutMetadataFile,
+      ...aboutSvelteFiles,
+      ...routeMetadataFiles,
+      ...routeSvelteFiles,
+      ...sharedSvelteFiles,
+    ]),
   ],
   resolve: { alias: libAlias },
   server: {
