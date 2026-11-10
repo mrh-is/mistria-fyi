@@ -4,6 +4,7 @@ import { recordEntries } from "#lib/utils/record.js";
 import { nextQuestState, seasonOrdinal } from "./domain-primitives.js";
 import { PROGRESS_FIELD_SPECS } from "./progress-fields.js";
 import { changedFacts, factKey } from "./provenance.js";
+import { availableDefaultRecipeIds } from "./quest-rewards.js";
 import { applyEngagementCascade, getSpouseId } from "./relationships.js";
 import { appliedFact } from "./save-progress.js";
 
@@ -202,10 +203,10 @@ export function addStarterItems(progress: ProgressState): {
   }
 
   const almanacRecipes = new Set(progress.almanacRecipes);
-  for (const [id, recipe] of recordEntries(trackerData.recipes)) {
-    if (recipe.sources.some((source) => source.type === "default")) {
-      add(almanacRecipes, id, factKey("almanacRecipes", id));
-    }
+  for (const id of availableDefaultRecipeIds(
+    (questId) => progress.questStates[questId] === "completed",
+  )) {
+    add(almanacRecipes, id, factKey("almanacRecipes", id));
   }
   return { keys, progress: { ...progress, almanacRecipes, animals, cosmetics } };
 }

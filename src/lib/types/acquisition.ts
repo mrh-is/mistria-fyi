@@ -27,7 +27,6 @@ export type LocationId = string & v.Brand<"LocationId">;
 export type MonsterId = string & v.Brand<"MonsterId">;
 export type Source = v.InferOutput<typeof SourceSchema>;
 export type SourceTuple = SourcedEntity["sources"];
-export type ProductionMethod = Extract<Source, { type: "recipe" }>["method"];
 export type StationId = string & v.Brand<"StationId">;
 /** Purchasable home & farm upgrades; each id is also the upgraded item's id. */
 export const UPGRADE_IDS = ["adept_kitchen", "cozy_kitchen", "farm_bridge", "stairs"] as const;

@@ -150,8 +150,9 @@ A store's availability qualifier is a slot, not a suffix. `buildStoreQualifier` 
 `source_scroll_bundle_qualified` messages place it: in parentheses after the store in English, ahead
 of the verb in Japanese, Korean, & Chinese.
 
-Most names come from game-translated chunks: farm animals use `animals` `<id>/core`, stations are
-items, museum wings use `museum_wings`, and locations use `locations` (`locations/<id>/name`). The
+Most names come from game-translated chunks. Farm animals use `animals` `<id>/core`, museum wings
+use `museum_wings`, and locations use `locations` (`locations/<id>/name`). Processing stations such
+as apiaries use item names. Crafting station names use Paraglide’s `source_station_*` messages. The
 game leaves some source names untranslated or unnamed, so `source-names.ts` fills the gaps:
 
 - **Monsters:** the game has no full monster name. Since 1.0.7 a `pets.toml` variant carries only a

@@ -10,12 +10,12 @@ import { requireBiome, requireEntry } from "#lib/utils/format.js";
 import type {
   AvailabilityCondition,
   CutsceneSourceId,
-  ProductionMethod,
   Source,
   UpgradeId,
 } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
+  CraftingStationId,
   LocationId,
   MinesBiomeId,
   PerkId,
@@ -45,6 +45,7 @@ export type SegmentLookups = BaseSegmentLookups &
     museumWingNames: Partial<Record<string, string>>;
     questTypes: Partial<Record<QuestId, QuestType>>;
     questVillagerIds: Partial<Record<QuestId, VillagerId>>;
+    recipeStations: Partial<Record<keyof TrackerData["recipes"], CraftingStationId>>;
     /** The game's season names in the active locale (`ui` chunk). */
     seasonNames: Record<Season, string>;
     stationNames: Partial<Record<string, string>>;
@@ -78,18 +79,16 @@ type VisibilityLookup<T> = Partial<Record<keyof T, VisibilityCondition>>;
 
 const SPOILERED: SourceSegment = { spoilered: true };
 
-const RECIPE_METHOD_MESSAGES: Record<
-  ProductionMethod,
-  (inputs: { recipe: string }, options: { locale: LocaleCode }) => string
-> = {
-  cook: m.source_recipe_cook,
-  craft: m.source_recipe_craft,
-  dragon_forge: m.source_recipe_dragon_forge,
-  mill: m.source_recipe_mill,
-  smith: m.source_recipe_smith,
-};
-
 type FixedMessage = (inputs: Record<string, never>, options: { locale: LocaleCode }) => string;
+
+const CRAFTING_STATION_MESSAGES: Record<CraftingStationId, FixedMessage> = {
+  blacksmithing: m.source_station_blacksmithing,
+  dragon_forge: m.source_station_dragon_forge,
+  kitchen: m.source_station_kitchen,
+  mill: m.source_station_mill,
+  stone_refinery: m.source_station_stone_refinery,
+  woodcrafting: m.source_station_woodcrafting,
+};
 
 const UPGRADE_MESSAGES: Record<UpgradeId, FixedMessage> = {
   adept_kitchen: m.source_upgrade_adept_kitchen,
@@ -356,7 +355,10 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     }
     case "recipe": {
       const recipe = requireEntry(lookups.recipeNames, source.recipeId, "recipeNames");
-      return [RECIPE_METHOD_MESSAGES[source.method]({ recipe }, opts)];
+      const stationId = requireEntry(lookups.recipeStations, source.recipeId, "recipeStations");
+      const station = CRAFTING_STATION_MESSAGES[stationId]({}, opts);
+      const label = m.source_recipe_at_station({ recipe, station }, opts);
+      return productionSourceLabel(label, source.visibility);
     }
     case "renown":
       return [m.source_renown({ level: String(source.level) }, opts)];
@@ -387,7 +389,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     }
     case "station": {
       const station = requireEntry(lookups.stationNames, source.stationId, "stationNames");
-      return [m.source_station({ station }, opts)];
+      return productionSourceLabel(m.source_station({ station }, opts), source.visibility);
     }
     case "store": {
       const storeName = buildStoreName(source.storeId, lookups);
@@ -418,6 +420,10 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     case "wishing_well":
       return [m.source_wishing_well({ cost: String(source.cost) }, opts)];
   }
+}
+
+function productionSourceLabel(label: string, condition?: VisibilityCondition): Segments {
+  return condition && condition.type !== "always" ? [{ condition, unspoilered: [label] }] : [label];
 }
 
 /**

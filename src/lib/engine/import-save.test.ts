@@ -31,7 +31,10 @@ import type { SaveBundle } from "./import-save.js";
 function getDefaultRecipeIds(): Set<RecipeId> {
   const ids = new Set<RecipeId>();
   for (const [id, recipe] of Object.entries(trackerData.recipes)) {
-    if (recipe.sources.some((source) => source.type === "default")) {
+    if (
+      recipe.sources.some((source) => source.type === "default") &&
+      !trackerData.stations[recipe.stationId]?.unlockQuestId
+    ) {
       ids.add(id as RecipeId);
     }
   }
@@ -107,6 +110,17 @@ describe("the save's day", () => {
 });
 
 describe("starting unlocks", () => {
+  it("credits default forge recipes only after their station quest is complete", () => {
+    const player = { items_acquired: [], recipe_unlocks: [] };
+    const early = extractSaveProgress({ player });
+    const unlocked = extractSaveProgress({
+      player,
+      quests: { completed_quests: ["find_the_magic_key"] },
+    });
+    expect(early.completed.almanacRecipes).not.toContain("sword_dragon_forged");
+    expect(unlocked.completed.almanacRecipes).toContain("sword_dragon_forged");
+  });
+
   it("credits every default cosmetic even when the save omits its unlock list", () => {
     const defaults = new Set(
       recordEntries(trackerData.cosmetics)

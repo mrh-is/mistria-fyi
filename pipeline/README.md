@@ -348,6 +348,10 @@ Mines acquisition source. Beta localization fallbacks remain separate from data-
 
 The `enrich/` modules compute spoiler gating from facts extracted in `extract/`.
 
+Each recipe points to one crafting station selected from the game’s station menus. The `stations`
+registry stores quest unlocks. A recipe combines its station gate with its acquisition conditions,
+and a product can become visible through any of its sources.
+
 | Module                                 | Responsibility                                                                                                                                |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `extract/cutscene-quest-map.ts`        | Maps cutscenes to the quests that trigger them, including setup scenes that gate a quest-starting scene.                                      |

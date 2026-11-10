@@ -79,6 +79,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     },
     recipes: {},
     skills: {},
+    stations: {},
     stores: {},
     townRanks: [],
     treasureChestTiers: {},
@@ -89,6 +90,35 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
 }
 
 describe("isConditionVisible", () => {
+  it.each([
+    ["stone_refinery", "stone_refinery"],
+    ["dragon_forge", "find_the_magic_key"],
+  ] as const)("requires the %s station quest to be completed", (stationId, quest) => {
+    const questId = quest as QuestId;
+    const condition = { type: "station", stationId } as const;
+    const stations = { [stationId]: { unlockQuestId: questId } };
+
+    expect(isConditionVisible(condition, makeState({ stations }))).toBe(false);
+    expect(
+      isConditionVisible(
+        condition,
+        makeState({
+          questVisibility: { [questId]: "available" },
+          stations,
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isConditionVisible(
+        condition,
+        makeState({
+          questVisibility: { [questId]: "completed" },
+          stations,
+        }),
+      ),
+    ).toBe(true);
+  });
+
   it("reveals the next town rank quest only after reaching its preceding rank", () => {
     const ids = [
       "reach_copper_star_town_rank",

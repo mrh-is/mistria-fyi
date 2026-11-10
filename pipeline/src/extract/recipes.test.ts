@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
+import { assignRecipeStations } from "./recipe-menus.js";
 import { deriveRecipeLocaleNames, extractRecipes } from "./recipes.js";
 
-import type { RecipeId } from "#lib/types/tracker-data.js";
+import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
 
 import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
 
@@ -27,6 +28,18 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
     ...overrides,
   });
 }
+
+it("rejects recipes that match zero or multiple station menus", () => {
+  const members = new Map([["widget" as RecipeId, ["widget" as ItemId]]]);
+  const menu = { categories: [{ sub_categories: [{ manual_order: ["widget"] }] }] };
+  expect(() => assignRecipeStations(makeFiddle(), members)).toThrow(/widget.*none/);
+  expect(() =>
+    assignRecipeStations(
+      makeFiddle({ ui: { crafting: { milling: menu, refining: menu } } }),
+      members,
+    ),
+  ).toThrow(/widget.*mill, stone_refinery/);
+});
 
 /** A one-bundle set, the Void Chair, whose bundle scroll is stocked by `stores`. */
 function bundleFiddle(stores: Record<string, unknown>) {

@@ -79,6 +79,7 @@ const BASE_LOOKUPS: SegmentLookups = {
   questTypes: {},
   questVillagerIds: {},
   recipeNames: {},
+  recipeStations: {},
   seasonNames: { fall: "Fall", spring: "Spring", summer: "Summer", winter: "Winter" },
   skillNames: { ["cooking" as SkillId]: "Cooking" },
   stationNames: {},
@@ -1191,14 +1192,14 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   it("recipe", () => {
     const source: Source = {
       type: "recipe",
-      method: "dragon_forge",
       recipeId: "iron_ingot" as RecipeId,
     };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
       recipeNames: { iron_ingot: "Iron Ingot" } as Record<RecipeId, string>,
+      recipeStations: { ["iron_ingot" as RecipeId]: "dragon_forge" },
     };
-    expect(buildSourceSegments(source, lookups)).toEqual(["Dragon Forge via Iron Ingot"]);
+    expect(buildSourceSegments(source, lookups)).toEqual(["Craft at Dragon Forge via Iron Ingot"]);
   });
 
   it("ritual_chamber", () => {
@@ -1212,6 +1213,20 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     const source: Source = { type: "station", stationId: "forge" as StationId };
     const lookups: SegmentLookups = { ...BASE_LOOKUPS, stationNames: { forge: "Forge" } };
     expect(buildSourceSegments(source, lookups)).toEqual(["Process at Forge"]);
+  });
+
+  it("covers a locked production source even when its item is visible", () => {
+    const recipeId = "essence_stone_giant" as RecipeId;
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      recipeNames: { [recipeId]: "Giant Essence Stone" },
+      recipeStations: { [recipeId]: "stone_refinery" },
+    };
+    const condition = { type: "station", stationId: "stone_refinery" } as const;
+
+    expect(
+      buildSourceSegments({ type: "recipe", recipeId, visibility: condition }, lookups),
+    ).toEqual([{ condition, unspoilered: ["Craft at Stone Refinery via Giant Essence Stone"] }]);
   });
 
   it("tree", () => {

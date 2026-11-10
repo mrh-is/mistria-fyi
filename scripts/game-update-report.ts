@@ -231,6 +231,10 @@ export const DOMAINS: readonly Domain[] = [
   { entries: (data) => entriesOf(data.recipes, "recipes"), name: "recipes" },
   { entries: (data) => entriesOf(data.skills, "skills"), name: "skills" },
   { entries: perks, name: "perks" },
+  {
+    entries: (data) => entriesOf(data.stations === undefined ? {} : data.stations, "stations"),
+    name: "stations",
+  },
   { entries: (data) => entriesOf(data.stores, "stores"), name: "stores" },
   {
     entries: (data) => entriesOf(data.treasureChestTiers, "treasureChestTiers"),
@@ -263,6 +267,7 @@ export const COVERAGE = {
   quests: ["quests (type/ID)"],
   recipes: ["recipes"],
   skills: ["skills", "perks"],
+  stations: ["stations"],
   stores: ["stores"],
   townRanks: "none",
   treasureChestTiers: ["treasure chest tiers"],
