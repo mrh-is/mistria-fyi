@@ -351,15 +351,21 @@ function assignQuestVisibility(
 
   for (const [questId, quest] of Object.entries(trackerData.quests.story)) {
     const prerequisites = chains.story[questId as QuestId]?.prerequisites ?? [];
-    quest.visibility =
-      prerequisites.length === 0
-        ? ALWAYS_VISIBLE
-        : andSimplify(
-            prerequisites.map((prereq): VisibilityCondition => ({
-              type: "questCompleted",
-              questId: prereq,
-            })),
-          );
+    const conditions: VisibilityCondition[] = prerequisites.map((prereq) => ({
+      type: "questCompleted",
+      questId: prereq,
+    }));
+    if (quest.townRankLevel !== undefined) {
+      const targetIndex = trackerData.townRanks.findIndex(
+        (rank) => rank.levels.start === quest.townRankLevel,
+      );
+      const previousRank = trackerData.townRanks[targetIndex - 1];
+      if (!previousRank) {
+        throw new Error(`Town rank quest "${questId}" has no preceding town rank`);
+      }
+      conditions.push({ type: "renownLevel", level: previousRank.levels.start });
+    }
+    quest.visibility = andSimplify(conditions);
   }
 
   for (const [villagerId, entries] of Object.entries(chains.heart)) {

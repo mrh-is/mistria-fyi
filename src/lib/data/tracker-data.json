@@ -68082,39 +68082,75 @@
       },
       "reach_copper_star_town_rank": {
         "sources": [],
-        "townRankLevel": 20
+        "townRankLevel": 20,
+        "visibility": {
+          "type": "renownLevel",
+          "level": 10
+        }
       },
       "reach_ruby_star_town_rank": {
         "sources": [],
-        "townRankLevel": 30
+        "townRankLevel": 30,
+        "visibility": {
+          "type": "renownLevel",
+          "level": 20
+        }
       },
       "reach_iron_star_town_rank": {
         "sources": [],
-        "townRankLevel": 40
+        "townRankLevel": 40,
+        "visibility": {
+          "type": "renownLevel",
+          "level": 30
+        }
       },
       "reach_sapphire_star_town_rank": {
         "sources": [],
-        "townRankLevel": 50
+        "townRankLevel": 50,
+        "visibility": {
+          "type": "renownLevel",
+          "level": 40
+        }
       },
       "reach_silver_star_town_rank": {
         "sources": [],
-        "townRankLevel": 60
+        "townRankLevel": 60,
+        "visibility": {
+          "type": "renownLevel",
+          "level": 50
+        }
       },
       "reach_emerald_star_town_rank": {
         "sources": [],
-        "townRankLevel": 70
+        "townRankLevel": 70,
+        "visibility": {
+          "type": "renownLevel",
+          "level": 60
+        }
       },
       "reach_gold_star_town_rank": {
         "sources": [],
-        "townRankLevel": 80
+        "townRankLevel": 80,
+        "visibility": {
+          "type": "renownLevel",
+          "level": 70
+        }
       },
       "reach_diamond_star_town_rank": {
         "sources": [],
-        "townRankLevel": 90
+        "townRankLevel": 90,
+        "visibility": {
+          "type": "renownLevel",
+          "level": 80
+        }
       },
       "reach_mistril_star_town_rank": {
         "sources": [],
-        "townRankLevel": 100
+        "townRankLevel": 100,
+        "visibility": {
+          "type": "renownLevel",
+          "level": 90
+        }
       },
       "upgrade_the_saturday_market_plaza": {
         "sources": [],
