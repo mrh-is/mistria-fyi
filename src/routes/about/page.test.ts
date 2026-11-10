@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
+import { loadAboutCatalog } from "#lib/i18n/about-ui.js";
 import * as m from "#lib/paraglide/messages.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import AboutPage from "./+page.svelte";
 
 describe("about and legal page", () => {
-  it("states the project’s identity, ownership boundary, data version, and contact", () => {
-    const { container, queries, text } = renderToFragment(AboutPage, { props: {} });
+  it("states the project’s identity, ownership boundary, data version, and contact", async () => {
+    const aboutCatalog = await loadAboutCatalog("en");
+    const { container, queries, text } = renderToFragment(AboutPage, {
+      props: { data: { aboutCatalog, locale: "en" } },
+    });
 
     expect(text).toContain("independent, unofficial, & noncommercial fan project");
     expect(text).toContain("affiliated with, endorsed by, supported by, or sponsored by");

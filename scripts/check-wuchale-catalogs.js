@@ -1,8 +1,9 @@
-import { readFile } from "node:fs/promises";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { getConfig, Hub } from "wuchale";
+/// <reference types="node" />
 
-import { splitStorage } from "./split-storage.js";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { getConfig, Hub } from "wuchale";
 
 /** @param {import("wuchale").Config} config @param {string} root */
 export async function checkCatalogs(config, root) {
@@ -23,23 +24,29 @@ export async function checkCatalogs(config, root) {
     unlink: () => false,
     write: () => undefined,
   };
-  const sourceLocale = config.locales[0];
-  const storage = await splitStorage({ ...config, fs, root, sourceLocale });
-  const items = await storage.load();
   const errors = [];
-  if (items.length === 0) errors.push("Catalog is empty");
-  for (const { references, translations } of items) {
-    const source = translations.get(sourceLocale);
-    if (references.length === 0) errors.push(`Obsolete message: ${String(source)}`);
-    for (const locale of config.locales) {
-      const value = translations.get(locale);
-      const forms = Array.isArray(value) ? value : [value];
-      if (
-        Array.isArray(value) !== Array.isArray(source) ||
-        forms.length === 0 ||
-        forms.some((form) => typeof form !== "string" || !form.trim())
-      ) {
-        errors.push(`Missing or incomplete ${locale} translation: ${String(source)}`);
+  const storages = await Promise.all(
+    Object.values(config.adapters).map(async (adapter) => {
+      const sourceLocale = adapter.sourceLocale ?? config.locales[0];
+      const storage = await adapter.storage({ ...config, fs, root, sourceLocale });
+      return { items: await storage.load(), sourceLocale };
+    }),
+  );
+  for (const { items, sourceLocale } of storages) {
+    if (items.length === 0) errors.push("Catalog is empty");
+    for (const { references, translations } of items) {
+      const source = translations.get(sourceLocale);
+      if (references.length === 0) errors.push(`Obsolete message: ${String(source)}`);
+      for (const locale of config.locales) {
+        const value = translations.get(locale);
+        const forms = Array.isArray(value) ? value : [value];
+        if (
+          Array.isArray(value) !== Array.isArray(source) ||
+          forms.length === 0 ||
+          forms.some((form) => typeof form !== "string" || !form.trim())
+        ) {
+          errors.push(`Missing or incomplete ${locale} translation: ${String(source)}`);
+        }
       }
     }
   }
@@ -53,8 +60,9 @@ export async function checkCatalogs(config, root) {
 }
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
-  const config = await getConfig(fileURLToPath(new URL("wuchale.config.js", import.meta.url)));
-  const errors = await checkCatalogs(config, import.meta.dirname);
+  const configPath = path.resolve(process.argv[2] ?? "wuchale.config.js");
+  const config = await getConfig(configPath);
+  const errors = await checkCatalogs(config, path.dirname(configPath));
   if (errors.length > 0) {
     process.stderr.write(`${errors.join("\n")}\n`);
     process.exitCode = 1;

@@ -1,9 +1,9 @@
 # Wuchale localization spike
 
-**Recommendation: pilot one app route before a full migration.** The isolated pilot fixed the
-hover-preload bug and shipped about 21% less compressed JavaScript. It also verified prerendering
-and a warm-cache offline reload. The next step is to test the loader with the app's actual route
-layout and offline precache.
+**Recommendation: expand by feature and measure with both systems present.** The isolated fixture
+shipped about 21% less compressed JavaScript. The About pilot verified the app's layout and offline
+precache and was roughly flat for initial JavaScript. A complete migration would need separate
+evidence for rich text, script-authored messages, and metadata.
 
 ## Run from the workspace root
 
@@ -12,7 +12,7 @@ Cloudflare Pages output. Its build reads the real Paraglide messages and game da
 
 ```sh
 pnpm exec wuchale check --full --config spikes/wuchale/wuchale.config.js
-pnpm exec node spikes/wuchale/check-catalogs.js
+pnpm exec node scripts/check-wuchale-catalogs.js spikes/wuchale/wuchale.config.js
 pnpm exec node --test spikes/wuchale/catalogs.test.js
 ```
 
@@ -125,15 +125,35 @@ The offline test covers a previously visited Spanish route using the fixture's s
 Production precache selection, first offline access to an unvisited route, version upgrades,
 bare-path stubs, and page-load timings remain open.
 
+## About in the production app
+
+The About data section uses the same three messages and eight translations as before. Its page load
+imports the Wuchale catalog for the locale resolved by the root layout. The page provides that
+snapshot through Svelte context, so hover preloading can finish without changing the current view.
+The root layout already remounts the page when the locale commits. The manifest plugin puts Wuchale
+catalogs into the same per-locale cache delivery mechanism as the game chunks, while the two systems
+retain separate source files and ownership.
+
+Chromium measured **365,072 gzip bytes across 58 JavaScript files** on Spanish About, compared with
+**365,577 across 57** before the partial migration. The rest of the app still loads Paraglide, so
+this difference does not project a full migration. The browser verified that the Traditional Chinese
+catalog arrived on hover and the page stayed Spanish until click. In a fresh context, visiting
+Spanish Home cached the Spanish and English About catalogs under the existing bilingual-search
+policy. The other six stayed out of the cache. About then hydrated on its first visit with the
+network disabled.
+
+```sh
+pnpm run build
+pnpm exec wrangler pages dev --port 4395 --ip 127.0.0.1
+# In another terminal
+pnpm exec node spikes/wuchale/app-probe.js http://127.0.0.1:4395 --wuchale
+```
+
 ## Adoption and rollback
 
-A pilot in the production app should measure the loader with the real layout, prerender pipeline,
-and PWA precache before expanding to other routes. A gradual migration would keep app UI and game
-ownership separate, pin the compiler and adapter versions, preserve message context and plural rules
-in the conversion, and retain the existing checks for unconverted routes. This spike rolls back by
-removing the fixture and its two development dependencies. Production migration would require
-preserving the original keyed messages until both paths have been verified so a route can switch
-back without losing translations.
+A gradual migration would keep app UI and game ownership separate, pin the compiler and adapter
+versions, preserve message context and plural rules in the conversion, and retain the existing
+checks for unconverted routes. The About pilot can be reverted independently of the fixture.
 
 Upstream references: [Svelte adapter](https://wuchale.dev/adapters/svelte/),
 [catalog loading](https://wuchale.dev/guides/loading/),

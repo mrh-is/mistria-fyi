@@ -1,15 +1,24 @@
 <script lang="ts">
   import IconMessageReport from "@tabler/icons-svelte-runes/icons/message-report";
   import IconRobot from "@tabler/icons-svelte-runes/icons/robot";
+  import { untrack } from "svelte";
 
   import AiDisclosureDialog from "#lib/components/ai-disclosure-dialog.svelte";
   import PageHeader from "#lib/components/page-header.svelte";
   import { trackerData } from "#lib/data/index.js";
+  import { provideAboutCatalog } from "#lib/i18n/about-ui.js";
   import * as m from "#lib/paraglide/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";
   import { resolve } from "$app/paths";
 
+  import AboutDataCopy from "./about-data-copy.svelte";
+
+  import type { PageData } from "./$types";
+
+  let { data }: { data: Pick<PageData, "aboutCatalog" | "locale"> } = $props();
+  // The root layout remounts this page when the active locale changes.
+  untrack(() => provideAboutCatalog(data.aboutCatalog, data.locale));
   let aiDisclosureOpen = $state(false);
 </script>
 
@@ -38,15 +47,7 @@
 
   <div class="divider"></div>
 
-  <section>
-    <h2>{m.about_data_heading()}</h2>
-    <p>
-      {m.about_data_rights()}
-    </p>
-    <p>
-      {m.about_data_version_notice({ version: trackerData.version })}
-    </p>
-  </section>
+  <AboutDataCopy version={trackerData.version} />
 
   <div class="divider"></div>
 
@@ -91,13 +92,15 @@
     font-size: var(--text-sm);
   }
 
-  section {
+  section,
+  .about-page > :global(section) {
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
 
-  h2 {
+  h2,
+  .about-page > :global(section h2) {
     color: var(--color-ink-muted);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
@@ -106,7 +109,8 @@
     text-transform: uppercase;
   }
 
-  p {
+  p,
+  .about-page > :global(section p) {
     line-height: 1.6;
   }
 

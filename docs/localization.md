@@ -131,6 +131,12 @@ lint concern. See [Limits of the tooling](#limits-of-the-tooling) below.
 
 ### Source text
 
+The About page's data section is the Wuchale pilot. Its English text lives in
+`src/routes/about/about-data-copy.svelte`, and all eight locales share the feature catalog in
+`src/lib/i18n/catalogs/about.json`. After editing source text, run `pnpm exec wuchale --clean` from
+the workspace root, review the catalog diff, and fill every locale before running
+`pnpm run check:i18n`. The rest of the app uses the Paraglide authoring flow below.
+
 Acquisition sources ("Purchase from the General Store (after repairing)") are sentences assembled
 from game names, and parts of them can be spoilered or gated behind progress. `source-segments.ts`
 renders each sentence from a `source_*` Paraglide message and `fillMessage` fills its placeholders
@@ -313,7 +319,7 @@ These rules apply to every locale:
 Three checks exist. None is a full localization safety net; see
 [Limits of the tooling](#limits-of-the-tooling).
 
-### Key-shape check (`pnpm run check:i18n`)
+### Catalog check (`pnpm run check:i18n`)
 
 `scripts/check-translation-keys.ts` compares the flattened key set of every `messages/<locale>.json`
 against `messages/en.json` and fails on any missing or extra key. It checks **shape only, not
@@ -321,6 +327,9 @@ content** — a translation can legitimately equal its English source (a short s
 or still be a stale machine translation; this check only prevents a PR from adding an English string
 without adding the corresponding key everywhere else. CI runs it on every pull request, and it's
 part of `pnpm run verify`.
+
+The same command checks Wuchale extraction against the About source and requires a nonblank
+translation in every locale, with valid placeholders and plural forms.
 
 ### Stale-translation check (`pnpm run check:locale-sync`)
 

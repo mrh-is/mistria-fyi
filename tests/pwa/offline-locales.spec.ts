@@ -1,6 +1,6 @@
 import { builtLocaleChunks } from "../../scripts/built-locale-chunks.js";
 import { expect, test } from "../browser/test.js";
-import { waitForControl } from "./service-worker.js";
+import { goOffline, waitForControl, waitForHydration } from "./service-worker.js";
 
 import type { Page } from "@playwright/test";
 
@@ -66,4 +66,22 @@ test("keeps the visited locale offline and leaves other locales to download on d
     }),
   ).toBeVisible();
   await expect(page).toHaveURL(/\/en$/);
+});
+
+test("hydrates About offline on its first visit after caching the current locale", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/es");
+  await waitForControl(page);
+  await expect
+    .poll(() => cachedPaths(page, ["/es/about"]), { timeout: 15_000 })
+    .toEqual(["/es/about"]);
+
+  await goOffline(context);
+  const response = await page.goto("/es/about");
+  expect(response?.fromServiceWorker()).toBe(true);
+  await waitForHydration(page);
+  await expect(page.getByRole("heading", { exact: true, name: "Datos" })).toBeVisible();
+  await expect(page.getByText(/Los datos actuales de la guía se generaron/u)).toBeVisible();
 });

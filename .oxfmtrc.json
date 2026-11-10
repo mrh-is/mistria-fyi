@@ -28,6 +28,7 @@
     "src/lib/data/tracker-data.json",
     "src/lib/paraglide/",
     "spikes/wuchale/catalogs/*.json",
+    "src/lib/i18n/catalogs/*.json",
     "project.inlang/*",
     "!project.inlang/settings.json",
     "src/lib/fonts/locale-fonts-*.css"

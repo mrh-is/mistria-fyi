@@ -11,7 +11,9 @@ export const LICENSES_FILE_NAME = "licenses.txt";
  * reason it was reviewed & accepted. Adding one is a deliberate decision: say where the license
  * text lives instead & why shipping without it is fine.
  */
-export const LICENSE_ALLOWLIST: Readonly<Record<string, string>> = {};
+export const LICENSE_ALLOWLIST: Readonly<Record<string, string>> = {
+  wuchale: "The reviewed upstream MIT license is included in the Wuchale runtime notice.",
+};
 
 /**
  * Filenames that carry a license grant or notice: `LICENSE`, `LICENCE`, `COPYING`, or `NOTICE`, with

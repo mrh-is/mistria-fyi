@@ -10,6 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
+import { wuchale } from "wuchale/vite";
 
 import { getAppVersion } from "./scripts/app-version.js";
 import RelayFirstSequencer from "./scripts/vitest-relay-sequencer.js";
@@ -164,6 +165,7 @@ export default defineConfig(({ command }) => ({
     __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
   },
   plugins: [
+    wuchale({ configPath: path.join(import.meta.dirname, "wuchale.config.js") }),
     tailwindcss(),
     sveltekit({
       adapter: withBarePathStubs(
@@ -196,6 +198,16 @@ export default defineConfig(({ command }) => ({
       generatedFrom: { "src/lib/paraglide/": "@inlang/paraglide-js" },
       stylesheets: ["src/app.css"],
       vendored: [
+        {
+          declared: "MIT",
+          licenseText: () =>
+            noticeBlock(
+              readFileSync(path.join(import.meta.dirname, "THIRD-PARTY-NOTICES.md"), "utf8"),
+              "## Wuchale runtime",
+            ),
+          name: "Wuchale runtime notice",
+          prefix: "src/lib/i18n/about-ui",
+        },
         {
           declared: "MIT",
           licenseText: () =>

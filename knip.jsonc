@@ -16,6 +16,9 @@
         // Wuchale injects loader imports and generates the JS peers of these declarations.
         "spikes/wuchale/catalogs/*.svelte.js",
         "spikes/wuchale/catalogs/.wuchale/*.d.ts",
+        "wuchale.config.js",
+        "src/lib/i18n/catalogs/about.loader.js",
+        "src/lib/i18n/catalogs/.wuchale/*.d.ts",
       ],
       "ignore": [
         // `scripts/locale-fonts/` is its own pnpm package with its own scripts & dependencies.

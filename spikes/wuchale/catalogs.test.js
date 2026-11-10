@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import assert from "node:assert/strict";
 import { cp, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -5,7 +7,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { getConfig, Hub } from "wuchale";
 
-import { checkCatalogs } from "./check-catalogs.js";
+import { checkCatalogs } from "../../scripts/check-wuchale-catalogs.js";
 
 const fixture = import.meta.dirname;
 
